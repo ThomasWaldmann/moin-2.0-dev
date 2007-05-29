@@ -6,7 +6,7 @@
 """
 
 
-from error import NotImplementedError
+from MoinMoin.storage.error import NotImplementedError
 
 
 class StorageBackend(object):
@@ -65,6 +65,7 @@ class StorageBackend(object):
         raise NotImplementedError
         will be created.
         """
+        raise NotImplementedError
 
     def remove_revision(self, name, revno):
         """
