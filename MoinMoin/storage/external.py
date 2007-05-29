@@ -6,7 +6,7 @@
 """
 
 import UserDict
-import interfaces.DataBackend
+from MoinMoin.storage.interfaces import DataBackend
 
 class ItemCollection(UserDict.DictMixin):
     """
@@ -191,7 +191,7 @@ class Metadata(UserDict.DictMixin):
         pass
 
 
-class Data(interfaces.DataBackend):
+class Data(DataBackend):
     """
     Data offers a read and write Proxy to the DataBackend. Changes are only
     written on close() or save(). Reading always occurs on the data in the backend,
