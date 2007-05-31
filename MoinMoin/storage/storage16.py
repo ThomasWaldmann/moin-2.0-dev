@@ -7,11 +7,14 @@
 
 from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import StorageError
-from MoinMoin import config
+from MoinMoin.storage import config
 
-import os.path
-import os
+import MoinMoin.config
+
 import codecs
+import os
+import os.path
+import re
 
 class UserStorage(StorageBackend):
     """
@@ -31,9 +34,24 @@ class UserStorage(StorageBackend):
     def list_items(self, filters=None):
         """ 
         @see MoinMoin.interfaces.StorageBackend.list_items
+        
+        TODO: indexes
         """
-        # TODO: filters
-        return os.listdir(self.path)
+        files = os.listdir(self.path)
+        if not filters:
+            return files
+        else:
+            real_files = []
+            for key, value in filters.iteritems():
+                expression = re.compile(value)
+                if key not in config.indexes:
+                    for name in files:
+                        metadata = self.get_metadata(name, 0)
+                        if metadata.has_key(key) and expression.match(metadata[key]):
+                            real_files.append(name)
+                else:
+                    pass
+            return real_files
 
     def has_item(self, name):
         """
@@ -56,7 +74,7 @@ class UserStorage(StorageBackend):
         @see MoinMoin.interfaces.StorageBackend.remove_item
         """
         if self.has_item(name):
-            fd = os.remove(os.path.join(self.path, name))
+            os.remove(os.path.join(self.path, name))
         else:
             raise StorageError("Item '%s' does not exist" % name)
         
@@ -82,27 +100,31 @@ class UserStorage(StorageBackend):
         """
         return self.__parseMetadata(name)
 
-    def set_metadata(self, name, revno, key, value):
+    def set_metadata(self, name, revno, metadata):
         """
         @see MoinMoin.interfaces.StorageBackend.get_data_backend
         """
-        metadata = self.__parseMetadata(name)
-        metadata[key] = value
-        self.__saveMetadata(name, metadata)
+        old_metadata = self.__parseMetadata(name)
+        for key, value in metadata.iteritems():
+            old_metadata[key] = value
+        self.__saveMetadata(name, old_metadata)
 
-    def remove_metadata(self, name, revno, key):
+    def remove_metadata(self, name, revno, keylist):
         """
         @see MoinMoin.interfaces.StorageBackend.get_data_backend
         """
         metadata = self.__parseMetadata(name)
-        del metadata[key]
+        for key in keylist:
+            del metadata[key]
         self.__saveMetadata(name, metadata)
 
     def __parseMetadata(self, name):
         """
         Read the metadata fromt the file.
+        
+        TODO: caching
         """
-        data = codecs.open(os.path.join(self.path, name), "r", config.charset).readlines()
+        data = codecs.open(os.path.join(self.path, name), "r", MoinMoin.config.charset).readlines()
         user_data = {}
         for line in data:
             if line[0] == '#':
@@ -126,8 +148,10 @@ class UserStorage(StorageBackend):
     def __saveMetadata(self, name, metadata):
         """
         Save the data to the file.
+        
+        TODO: update indexes
         """
-        data = codecs.open(os.path.join(self.path, name), "w", config.charset)
+        data = codecs.open(os.path.join(self.path, name), "w", MoinMoin.config.charset)
         for key, value in metadata.iteritems():
             # Encode list values
             if isinstance(value, list):
