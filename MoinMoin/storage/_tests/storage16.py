@@ -60,7 +60,7 @@ class TestUserBackend(unittest.TestCase):
         
     def test_list_revisions(self):
         self.assertEquals(self.backend.list_revisions(self.names[0]), [1])
-        
+    
     def test_current_revision(self):
         self.assertEquals(self.backend.current_revision(self.names[0]), 1)
         
@@ -87,6 +87,7 @@ class TestUserBackend(unittest.TestCase):
     
     def test_list_items(self):
         self.assertEquals(self.backend.list_items(), self.names)
+        self.assertEquals(self.backend.list_items({'name': 'HeinrichWendel'}), [self.names[0]])
     
     def test_has_item(self):
         self.assertTrue(self.backend.has_item(self.names[0]))
@@ -115,18 +116,18 @@ class TestUserBackend(unittest.TestCase):
         self.__assertDicts(self.backend.get_metadata(self.names[0], 1), self.metadata)
     
     def test_set_metadata(self):
-        self.backend.set_metadata(self.names[0], 0, "aliasname", "test")
+        self.backend.set_metadata(self.names[0], 0, {"aliasname": "test"})
         self.metadata["aliasname"] = "test";        
         self.__assertDicts(self.backend.get_metadata(self.names[0], 1), self.metadata)
-        self.backend.set_metadata(self.names[0], 0, "aliasname", "")
+        self.backend.set_metadata(self.names[0], 0, {"aliasname": ""})
         self.metadata["aliasname"] = ""
         self.__assertDicts(self.backend.get_metadata(self.names[0], 1), self.metadata)
     
     def test_remove_metadata(self):
-        self.backend.set_metadata(self.names[0], 0, "battle", "test")
+        self.backend.set_metadata(self.names[0], 0, {"battle": "test"})
         self.metadata["battle"] = "test";        
         self.__assertDicts(self.backend.get_metadata(self.names[0], 1), self.metadata)
-        self.backend.remove_metadata(self.names[0], 0, "battle")
+        self.backend.remove_metadata(self.names[0], 0, ["battle"])
         del self.metadata["battle"]        
         self.__assertDicts(self.backend.get_metadata(self.names[0], 1), self.metadata)
     

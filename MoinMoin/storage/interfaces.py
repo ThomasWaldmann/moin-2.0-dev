@@ -82,16 +82,17 @@ class StorageBackend(object):
         """
         raise NotImplementedError
 
-    def set_metadata(self, name, revno, key, value):
+    def set_metadata(self, name, revno, metadata):
         """
-        Set a new metadata key. If revno is 0 the current revision will be
-        used. If revno is -1 the item-wide metadata will be used.
+        Sets metadata values. If revno is 0 the current revision will be
+        used. If revno is -1 the item-wide metadata will be used. Metadata
+        is a dict with key -> value pairs.
         """
         raise NotImplementedError
 
-    def remove_metadata(self, name, revno, key):
+    def remove_metadata(self, name, revno, keylist):
         """
-        Removes a specified key from the metadata. If revno is 0 the current
+        Removes alls keys in keylist from the metadata. If revno is 0 the current
         revision will be used. If revno is -1 the item-wide metadata will be
         used.
         """

@@ -5,8 +5,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import UserDict
 from MoinMoin.storage.interfaces import DataBackend
+
+import UserDict
 
 class ItemCollection(UserDict.DictMixin):
     """
@@ -14,29 +15,37 @@ class ItemCollection(UserDict.DictMixin):
     correct backend and maybe caching.
     """
 
+    backend = None
+    userobj = None
+
     def __init__(self, backend, userobj):
         """
         Initializes the proper StorageBackend. 
         """
-        pass
+        self.backend = backend
+        self.userobj = userobj
 
     def __contains__(self, name):
         """
         Checks if an Item exists.
         """
-        pass
+        return self.backend.has_item(name)
 
     def __getitem__(self, name):
         """
         Loads an Item.
         """
-        pass
+        if self.backend.has_item(name):
+            item = Item(name, self.backend, self.userobj)
+            return item
+        else:
+            raise KeyError("No such item '%s'" % name)
 
     def __delitem__(self, name):
         """
         Deletes an Item.
         """
-        pass
+        self.backend.remove_item(name)
 
     def keys(self, filters=None):
         """
@@ -44,14 +53,15 @@ class ItemCollection(UserDict.DictMixin):
         filtering stuff which is described more detailed in
         StorageBackend.list_items(...).
         """
-        pass
+        return self.backend.list_items(filters)
 
     def new_item(self, name):
         """
         Returns a new Item with the given name.
         """
-        pass
-
+        item = Item(name, self.backend, self.userobj)
+        item.new = True
+        return item
 
 class Item(UserDict.DictMixin):
     """
@@ -67,7 +77,7 @@ class Item(UserDict.DictMixin):
 
     metadata = Metadata()
 
-    def __init__(self, name, userobj, backend):
+    def __init__(self, name, backend, userobj):
         """
         Initializes the Item with the required parameters.
         """
