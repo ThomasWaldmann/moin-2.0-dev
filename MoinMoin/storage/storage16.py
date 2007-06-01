@@ -5,16 +5,17 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+
+import codecs
+import os
+import re
+
+import MoinMoin.config
+
 from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import StorageError
 from MoinMoin.storage import config
 
-import MoinMoin.config
-
-import codecs
-import os
-import os.path
-import re
 
 class UserStorage(StorageBackend):
     """
@@ -41,17 +42,17 @@ class UserStorage(StorageBackend):
         if not filters:
             return files
         else:
-            real_files = []
+            filtered_files = []
             for key, value in filters.iteritems():
                 expression = re.compile(value)
                 if key not in config.indexes:
                     for name in files:
                         metadata = self.get_metadata(name, 0)
                         if metadata.has_key(key) and expression.match(metadata[key]):
-                            real_files.append(name)
+                            filtered_files.append(name)
                 else:
                     pass
-            return real_files
+            return filtered_files
 
     def has_item(self, name):
         """
@@ -64,8 +65,8 @@ class UserStorage(StorageBackend):
         @see MoinMoin.interfaces.StorageBackend.create_item
         """
         if not self.has_item(name):
-            fd = open(os.path.join(self.path, name), "w")
-            fd.close()
+            file_descriptor = open(os.path.join(self.path, name), "w")
+            file_descriptor.close()
         else:
             raise StorageError("Item '%s' already exists" % name)
 
@@ -86,44 +87,39 @@ class UserStorage(StorageBackend):
         """
         return [1]
 
-    def current_revision(self, name):
-        """
-        @see MoinMoin.interfaces.StorageBackend.current_revision
-        
-        Users have no revisions.
-        """
-        return 1
-
     def get_metadata(self, name, revno):
         """
         @see MoinMoin.interfaces.StorageBackend.get_metadata
         """
-        return self.__parseMetadata(name)
+        return self.__parse_metadata(name)
 
     def set_metadata(self, name, revno, metadata):
         """
         @see MoinMoin.interfaces.StorageBackend.get_data_backend
         """
-        old_metadata = self.__parseMetadata(name)
-        for key, value in metadata.iteritems():
-            old_metadata[key] = value
-        self.__saveMetadata(name, old_metadata)
+        old_metadata = self.__parse_metadata(name)
+        old_metadata.update(metadata)
+        self.__save_metadata(name, old_metadata)
 
     def remove_metadata(self, name, revno, keylist):
         """
         @see MoinMoin.interfaces.StorageBackend.get_data_backend
         """
-        metadata = self.__parseMetadata(name)
+        metadata = self.__parse_metadata(name)
         for key in keylist:
             del metadata[key]
-        self.__saveMetadata(name, metadata)
+        self.__save_metadata(name, metadata)
 
-    def __parseMetadata(self, name):
+    def __parse_metadata(self, name):
         """
         Read the metadata fromt the file.
         
         TODO: caching
         """
+        
+        if not self.has_item(name):
+            raise StorageError("Item '%s' does not exist" % name)
+        
         data = codecs.open(os.path.join(self.path, name), "r", MoinMoin.config.charset).readlines()
         user_data = {}
         for line in data:
@@ -135,17 +131,17 @@ class UserStorage(StorageBackend):
                 # Decode list values
                 if key.endswith('[]'):
                     key = key[:-2]
-                    val = decodeList(val)
+                    val = decode_list(val)
                 # Decode dict values
                 elif key.endswith('{}'):
                     key = key[:-2]
-                    val = decodeDict(val)
+                    val = decode_dict(val)
                 user_data[key] = val
             except ValueError:
                 pass
         return user_data
     
-    def __saveMetadata(self, name, metadata):
+    def __save_metadata(self, name, metadata):
         """
         Save the data to the file.
         
@@ -156,16 +152,16 @@ class UserStorage(StorageBackend):
             # Encode list values
             if isinstance(value, list):
                 key += '[]'
-                value = encodeList(value)
+                value = encode_list(value)
             # Encode dict values
             elif isinstance(value, dict):
                 key += '{}'
-                value = encodeDict(value)
+                value = encode_dict(value)
             line = u"%s=%s\n" % (key, unicode(value))
             data.write(line)
         data.close()
 
-def encodeList(items):
+def encode_list(items):
     """ Encode list of items in user data file
 
     Items are separated by '\t' characters.
@@ -184,10 +180,10 @@ def encodeList(items):
     line = '\t'.join(line)
     return line
 
-def decodeList(line):
+def decode_list(line):
     """ Decode list of items from user data file
     
-    @param line: line containing list of items, encoded with encodeList
+    @param line: line containing list of items, encoded with encode_list
     @rtype: list of unicode strings
     @return: list of items in encoded in line
     """
@@ -199,7 +195,7 @@ def decodeList(line):
         items.append(item)
     return items
 
-def encodeDict(items):
+def encode_dict(items):
     """ Encode dict of items in user data file
 
     Items are separated by '\t' characters.
@@ -216,10 +212,10 @@ def encodeDict(items):
     line = '\t'.join(line)
     return line
 
-def decodeDict(line):
+def decode_dict(line):
     """ Decode dict of key:value pairs from user data file
     
-    @param line: line containing a dict, encoded with encodeDict
+    @param line: line containing a dict, encoded with encode_dict
     @rtype: dict
     @return: dict  unicode:unicode items
     """
