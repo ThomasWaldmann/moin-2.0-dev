@@ -80,9 +80,9 @@ class Item(UserDict.DictMixin):
     new = False
     changed = {'added' : [], 'removed': []}   # a dict of changed revisions
 
-    metadata = None
     name = None
-    
+    metadata = None
+
     userobj = None
     backend = None
     
@@ -211,7 +211,7 @@ class Metadata(UserDict.DictMixin):
 
     revision = None
     
-    metadata = None
+    __metadata = None
 
     def __init__(self, revision):
         """"
@@ -224,42 +224,42 @@ class Metadata(UserDict.DictMixin):
         Checks if a key exists.
         """
         self.lazy_load()
-        return name in self.metadata
+        return name in self.__metadata
 
     def __getitem__(self, name):
         """
         Returns a specified value.
         """
         self.lazy_load()
-        return self.metadata[name]
+        return self.__metadata[name]
 
     def __setitem__(self, name, value):
         """
         Adds a value.
         """
         self.lazy_load()
-        self.metadata[name] = value
+        self.__metadata[name] = value
 
     def __delitem__(self, name):
         """
         Deletes a value.
         """
         self.lazy_load()
-        del self.metadata[name]
+        del self.__metadata[name]
 
     def keys(self):
         """
         Return sa list of all metadata keys.
         """
         self.lazy_load()
-        return self.metadata.keys()
+        return self.__metadata.keys()
     
     def lazy_load(self):
         """
         Lazy load the metadata.
         """
-        if self.metadata == None:
-            self.metadata = self.revision.item.backend.get_metadata(self.revision.item.name, self.revision.revno)
+        if self.__metadata == None:
+            self.__metadata = self.revision.item.backend.get_metadata(self.revision.item.name, self.revision.revno)
 
 class Data(DataBackend):
     """

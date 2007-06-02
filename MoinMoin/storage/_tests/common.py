@@ -5,8 +5,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import unittest
-
 datadir = "data/user"
 
 names = [ "1180352194.13.59241", "1180424607.34.55818", "1180424618.59.18110" ]
@@ -43,13 +41,19 @@ metadata = {u'aliasname' : u'',
             u'wikiname_add_spaces' : u'0'
             }
     
-def assertDicts(case, dict1, dict2):
+def assert_dicts(dict1, dict2):
+    """
+    Assert the equality of two dictionaries.
+    """
     for key, value in dict1.iteritems():
-        case.assertEquals(dict2[key], value)
+        assert dict2[key] == value
 
-def assertLists(case, list1, list2):
+def assert_lists(list1, list2):
+    """
+    Assert the equality of two lists.
+    """
     for key in list1:
-        case.assertTrue(key in list2)
+        assert key in list2
         
     for key in list2:
-        case.assertTrue(key in list1)
+        assert key in list1

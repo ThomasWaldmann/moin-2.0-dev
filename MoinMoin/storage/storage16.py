@@ -74,9 +74,9 @@ class UserStorage(StorageBackend):
         """
         @see MoinMoin.interfaces.StorageBackend.remove_item
         """
-        if self.has_item(name):
+        try:
             os.remove(os.path.join(self.path, name))
-        else:
+        except:
             raise StorageError("Item '%s' does not exist" % name)
         
     def list_revisions(self, name):
@@ -117,10 +117,11 @@ class UserStorage(StorageBackend):
         TODO: caching
         """
         
-        if not self.has_item(name):
+        try:
+            data = codecs.open(os.path.join(self.path, name), "r", MoinMoin.config.charset).readlines()
+        except:
             raise StorageError("Item '%s' does not exist" % name)
-        
-        data = codecs.open(os.path.join(self.path, name), "r", MoinMoin.config.charset).readlines()
+            
         user_data = {}
         for line in data:
             if line[0] == '#':
