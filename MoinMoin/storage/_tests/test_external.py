@@ -5,7 +5,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from common import *
+from common import datadir, names, metadata
 
 from MoinMoin.storage.storage16 import UserStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata, Data
@@ -159,5 +159,5 @@ class TestMetadata():
         assert not "xyz" in self.metadata
         
     def test_keys(self):
-        assert_lists(self.metadata.keys(), metadata.keys())
+        assert set(self.metadata.keys()) == set(metadata.keys())
     
