@@ -119,7 +119,7 @@ class UserStorage(StorageBackend):
         
         try:
             data = codecs.open(os.path.join(self.path, name), "r", MoinMoin.config.charset).readlines()
-        except:
+        except IOError:
             raise StorageError("Item '%s' does not exist" % name)
             
         user_data = {}

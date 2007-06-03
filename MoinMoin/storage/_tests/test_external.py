@@ -9,7 +9,7 @@ from common import datadir, names, metadata
 
 from MoinMoin.storage.storage16 import UserStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata, Data
-
+from MoinMoin.storage.error import StorageError
 
 class TestItemCollection():
     
@@ -48,7 +48,7 @@ class TestItemCollection():
         try:
             self.item_collection.new_item(names[0])
             assert False
-        except:
+        except StorageError:
             assert True
     
     def test_delete_item(self):
@@ -78,7 +78,7 @@ class TestItem():
         try:
             self.item[5]
             assert False
-        except:
+        except KeyError:
             assert True
     
     def test_keys(self):
@@ -87,28 +87,40 @@ class TestItem():
     def test_del_add_revision(self):
         self.item.new_revision()
         assert 2 in self.item
+        assert ['add', 2] in self.item.changed
         self.item.new_revision(4)
         assert 4 in self.item
+        assert ['add', 4] in self.item.changed
         del self.item[2]
+        assert ['remove', 2] in self.item.changed
         del self.item[4]
+        assert ['remove', 4] in self.item.changed
         assert not 2 in self.item
         assert not 4 in self.item
         try:
             del self.item[5]
             assert False
-        except:
+        except KeyError:
             assert True
         try:
             self.item.new_revision(1)
             assert False
-        except:
+        except StorageError:
             assert True
     
     def test_save(self):
         """
-        TODO: just do it.
+        TODO: test adding/removing of revisions && test new
         """
-        pass
+        self.item = ItemCollection(UserStorage(datadir), None)[names[0]]
+        del self.item[1].metadata["aliasname"]
+        self.item.save()
+        self.item = ItemCollection(UserStorage(datadir), None)[names[0]]
+        assert "aliasname" not in self.item[1].metadata
+        self.item[1].metadata["aliasname"]= ""
+        self.item.save()
+        self.item = ItemCollection(UserStorage(datadir), None)[names[0]]
+        assert "aliasname" in self.item[1].metadata
 
 
 class TestRevision():
@@ -145,18 +157,25 @@ class TestMetadata():
         try:
             self.metadata["yz"]
             assert False
-        except:
+        except KeyError:
             assert True
     
     def test_set(self):
         self.metadata["name"] = "123"
         assert self.metadata["name"] == "123"
+        assert self.metadata.changed["name"] == "set"
     
     def test_remove(self):
         self.metadata["xyz"] = "123"
         assert "xyz" in self.metadata
+        assert self.metadata.changed["xyz"] == "add"
         del self.metadata["xyz"]
         assert not "xyz" in self.metadata
+        assert "xyz" not in self.metadata.changed
+        del self.metadata["aliasname"]
+        assert not "aliasname" in self.metadata
+        assert self.metadata.changed["aliasname"] == "remove"
+        self.metadata["aliasname"] = ""
         
     def test_keys(self):
         assert set(self.metadata.keys()) == set(metadata.keys())
