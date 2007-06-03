@@ -5,7 +5,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from common import *
+from common import datadir, names, metadata
 
 from MoinMoin.storage.storage16 import UserStorage
 from MoinMoin.storage.error import StorageError
@@ -73,7 +73,7 @@ class TestUserBackend():
             assert True
     
     def test_get_metadata(self):
-        assert_dicts(self.backend.get_metadata(names[0], 1), metadata)
+        assert self.backend.get_metadata(names[0], 1) == metadata
         try:
             self.backend.get_metadata("blub", 0);
             assert False
@@ -83,10 +83,10 @@ class TestUserBackend():
     def test_set_metadata(self):
         self.backend.set_metadata(names[0], 0, {"aliasname": "test"})
         metadata["aliasname"] = "test";        
-        assert_dicts(self.backend.get_metadata(names[0], 1), metadata)
+        assert self.backend.get_metadata(names[0], 1) == metadata
         self.backend.set_metadata(names[0], 0, {"aliasname": ""})
         metadata["aliasname"] = ""
-        assert_dicts(self.backend.get_metadata(names[0], 1), metadata)
+        assert self.backend.get_metadata(names[0], 1) == metadata
         try:
             self.backend.set_metadata("blub", 0, {'test': ''});
             assert False
@@ -96,10 +96,10 @@ class TestUserBackend():
     def test_remove_metadata(self):
         self.backend.set_metadata(names[0], 0, {"battle": "test"})
         metadata["battle"] = "test";        
-        assert_dicts(self.backend.get_metadata(names[0], 1), metadata)
+        assert self.backend.get_metadata(names[0], 1) == metadata
         self.backend.remove_metadata(names[0], 0, ["battle"])
         del metadata["battle"]        
-        assert_dicts(self.backend.get_metadata(names[0], 1), metadata)
+        assert self.backend.get_metadata(names[0], 1) == metadata
         try:
             self.backend.remove_metadata("blub", 0, ['test']);
             assert False
