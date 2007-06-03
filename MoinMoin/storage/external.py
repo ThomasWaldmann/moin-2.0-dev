@@ -16,10 +16,7 @@ class ItemCollection(UserDict.DictMixin):
     The ItemCollection class realizes the access to the stored Items via the
     correct backend and maybe caching.
     """
-
-    backend = None
-    userobj = None
-
+    
     def __init__(self, backend, userobj):
         """
         Initializes the proper StorageBackend. 
@@ -68,7 +65,8 @@ class ItemCollection(UserDict.DictMixin):
         item.new = True
         return item
 
-class Item(UserDict.DictMixin):
+
+class Item(UserDict.DictMixin, object):
     """
     The Item class represents a StorageItem. This Item has a name and revisions.
     An Item can be anything MoinMoin must save, e.g. Pages, Attachements or
@@ -76,15 +74,6 @@ class Item(UserDict.DictMixin):
     you can access the last revision. The specified Revision is only loaded on
     access as well. On every access the ACLs will be checked.
     """
-
-    new = False
-    changed = {'added' : [], 'removed': []}   # a dict of changed revisions
-
-    name = None
-    metadata = None
-
-    userobj = None
-    backend = None
     
     def __init__(self, name, backend, userobj):
         """
@@ -94,6 +83,9 @@ class Item(UserDict.DictMixin):
         self.name = name
         self.backend = backend
         self.userobj = userobj
+        
+        self.new = False
+        self.changed = []
         
         self.__revisions = None
         self.__current = None
@@ -107,61 +99,91 @@ class Item(UserDict.DictMixin):
     def __getitem__(self, revno):
         """
         Returns the revision specified by a revision-number (LazyLoaded). 
-        """
-        if revno in self:
-            return Revision(revno, self)
-        else:
-            raise KeyError("No such revision.")
+        """    
+        if not self.revisions[revno]:
+            self.revisions[revno] = Revision(revno, self)
+        return self.revisions[revno]
 
     def __delitem__(self, revno):
         """
         Deletes the Revision specified by the given revision-number.
         """
-        self.revisions.remove(revno)
+        del self.revisions[revno]
+        
+        self.changed.append(['remove', revno])
 
     def keys(self):
         """
         Returns a sorted (highest first) list of all real revision-numbers.
         """
-        return self.revisions
+        return self.revisions.keys()
 
     def new_revision(self, revno=None):
         """
         Creates and returns a new revision with the given revision-number.
         If the revision number is None the next possible number will be used. 
         """
-        if revno == None:
-            self.revisions = self.revisions + [self.current + 1]
-        elif revno not in self:
-            self.revisions = self.revisions + [revno]
+        if not revno:
+            revno = self.current + 1
+        elif revno in self.revisions:
+            raise StorageError("Revision %s already exists." % revno)
+        
+        self.revisions[revno] = None
+        
+        self.changed.append(['add', revno])
     
     def get_revisions(self):
         """
-        Lazy load revision list.
+        Lazy load the revisions.
         """
-        if self.__revisions == None:
-            self.__revisions = self.backend.list_revisions(self.name)
+        if not self.__revisions:
+            self.__revisions = {}
+            revs = self.backend.list_revisions(self.name)
+            for revno in revs:
+                self.__revisions[revno] = None
         return self.__revisions
-
+    
     revisions = property(get_revisions)
-
+    
     def get_current(self):
         """
-        Lazy load current revision nr.
+        Lazy load the current revision nr.
+        
+        TODO: optimize this
         """
-        return self.__revisions[-1]
-
+        if not self.__current:
+            revs = self.backend.list_revisions(self.name)
+            self.__current = revs[-1]
+        return self.__current
+    
     current = property(get_current)
-
+            
     def save(self):
         """
         Saves the whole item. It checks if the Item must be created, which Revision was
         added/removed, if the data was changed and what metadata keys were changed and
         saves the changes then.
-        
-        TODO: implement it
         """
-        pass
+        if self.new:
+            self.backend.create_item(self.name)
+            
+        for item in self.changed:
+            if item[0] == "add":
+                self.backend.create_revision(self.name, item[1])
+            elif item[0] == "remove":
+                self.backend.remove_revision(self.name, item[1])
+            elif item[0] == "change":
+                add = {}
+                remove = []
+                for key, value in item[1].metadata.changed.iteritems():
+                    if value == "add" or value == "set":
+                        add[key] = item[1].metadata[key]
+                    elif value == "remove":
+                        remove.append(key)
+                if add:
+                    self.backend.set_metadata(self.name, item[1].revno, add)
+                if remove:
+                    self.backend.remove_metadata(self.name, item[1].revno, remove)
 
 
 class Revision(object):
@@ -171,12 +193,6 @@ class Revision(object):
     they take care that their content is loaded lazily. On every access the ACLs
     will be checked.
     """
-
-    data = None
-    metadata = None
-    
-    revno = None
-    item = None
 
     # The following properties provide access to the corresponding metadata keys:
     mtime = None
@@ -200,66 +216,77 @@ class Revision(object):
         self.item = item
 
 
-class Metadata(UserDict.DictMixin):
+class Metadata(UserDict.DictMixin, object):
     """ 
     The metadata of an Item. Access will be via a dict like interface.
     All metadata will be loaded on the first access to one key.
     On every access the ACLs will be checked.
     """
 
-    changed = {'added' : [], 'removed': [], 'changed': []}   # a dict of changed keys
-
-    revision = None
-    
-    __metadata = None
-
     def __init__(self, revision):
         """"
         Initializes the metadata object with the required parameters.
         """
         self.revision = revision
+        self.__metadata = None
+        self.changed = {}
 
-    def __contains__(self, name):
+    def __contains__(self, key):
         """
         Checks if a key exists.
         """
-        self.lazy_load()
-        return name in self.__metadata
+        return key in self.metadata
 
-    def __getitem__(self, name):
+    def __getitem__(self, key):
         """
         Returns a specified value.
         """
-        self.lazy_load()
-        return self.__metadata[name]
+        return self.metadata[key]
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, key, value):
         """
         Adds a value.
         """
-        self.lazy_load()
-        self.__metadata[name] = value
+        if not key in self.metadata:
+            self.changed[key] = 'add'
+        else:
+            self.changed[key] = 'set'  
+        
+        if not ['change', self.revision] in self.revision.item.changed:
+            self.revision.item.changed.append(['change', self.revision])
+            
+        self.metadata[key] = value
 
-    def __delitem__(self, name):
+    def __delitem__(self, key):
         """
         Deletes a value.
         """
-        self.lazy_load()
-        del self.__metadata[name]
+        if key in self.changed and self.changed[key] == "add":
+            del self.changed[key]
+        else:
+            self.changed[key] = 'remove'
+        
+        if not ['change', self.revision] in self.revision.item.changed:
+            self.revision.item.changed.append(['change', self.revision])
+        
+        del self.metadata[key]
 
     def keys(self):
         """
         Return sa list of all metadata keys.
         """
-        self.lazy_load()
-        return self.__metadata.keys()
+        return self.metadata.keys()
     
-    def lazy_load(self):
+    def get_metadata(self):
         """
         Lazy load the metadata.
         """
-        if self.__metadata == None:
+        if not self.__metadata:
             self.__metadata = self.revision.item.backend.get_metadata(self.revision.item.name, self.revision.revno)
+        return self.__metadata
+    
+    metadata = property(get_metadata)
+
 
 class Data(DataBackend):
     """

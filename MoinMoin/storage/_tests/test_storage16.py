@@ -60,7 +60,7 @@ class TestUserBackend():
         try:
             self.backend.create_item(names[0]);
             assert False
-        except:
+        except StorageError:
             assert True
 
         self.backend.remove_item("test");
@@ -69,7 +69,7 @@ class TestUserBackend():
         try:
             self.backend.remove_item("blub");
             assert False
-        except:
+        except StorageError:
             assert True
     
     def test_get_metadata(self):
@@ -77,7 +77,7 @@ class TestUserBackend():
         try:
             self.backend.get_metadata("blub", 0);
             assert False
-        except:
+        except StorageError:
             assert True    
     
     def test_set_metadata(self):
