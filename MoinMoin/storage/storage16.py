@@ -14,7 +14,6 @@ import MoinMoin.config
 
 from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import StorageError
-from MoinMoin.storage import config
 
 
 class UserStorage(StorageBackend):
@@ -22,16 +21,15 @@ class UserStorage(StorageBackend):
     Class that implements the 1.6 compatible storage backend for users.
     """
     
-    path = None
-    
-    def __init__(self, path):
+    def __init__(self, path, cfg):
         """
         Init the Backend with the correct path.
         """
         if not os.path.isdir(path):
             raise StorageError("Invalid path '%s'." % path)
         self.path = path
-    
+        self.cfg = cfg
+        
     def list_items(self, filters=None):
         """ 
         @see MoinMoin.interfaces.StorageBackend.list_items
@@ -45,7 +43,7 @@ class UserStorage(StorageBackend):
             filtered_files = []
             for key, value in filters.iteritems():
                 expression = re.compile(value)
-                if key not in config.indexes:
+                if key not in self.cfg.indexes:
                     for name in files:
                         metadata = self.get_metadata(name, 0)
                         if metadata.has_key(key) and expression.match(metadata[key]):

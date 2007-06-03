@@ -5,18 +5,21 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from common import datadir, names, metadata
+import py.test
+
+from common import datadir, names, metadata, DummyConfig
 
 from MoinMoin.storage.storage16 import UserStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata, Data
 from MoinMoin.storage.error import StorageError
+
 
 class TestItemCollection():
     
     item_collection = None    
     
     def setup_class(self):
-        self.item_collection = ItemCollection(UserStorage(datadir), None)
+        self.item_collection = ItemCollection(UserStorage(datadir, DummyConfig()), None)
     
     def teardown_class(self):
         self.item_collection = None
@@ -33,23 +36,14 @@ class TestItemCollection():
         item = self.item_collection[names[0]]
         assert isinstance(item, Item)
         assert item.name == names[0]
-        try:
-            self.item_collection["test"]
-            assert False
-        except KeyError:
-            assert True
+        py.test.raises(KeyError, lambda: self.item_collection["test"])
     
     def test_new_item(self):
         item  = self.item_collection.new_item("test")
         assert isinstance(item, Item)
         assert item.name == "test"
         assert item.new
-        
-        try:
-            self.item_collection.new_item(names[0])
-            assert False
-        except StorageError:
-            assert True
+        py.test.raises(StorageError, self.item_collection.new_item, names[0])
     
     def test_delete_item(self):
         """
@@ -63,7 +57,7 @@ class TestItem():
     item = None
     
     def setup_class(self):
-        self.item = ItemCollection(UserStorage(datadir), None)[names[0]]
+        self.item = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]]
     
     def teardown_class(self):
         self.item = None
@@ -75,12 +69,8 @@ class TestItem():
         revision = self.item[1]
         assert isinstance(revision, Revision)
         assert revision.revno == 1
-        try:
-            self.item[5]
-            assert False
-        except KeyError:
-            assert True
-    
+        py.test.raises(KeyError, lambda: self.item[5])
+            
     def test_keys(self):
         assert self.item.keys() == [1]
         
@@ -97,29 +87,21 @@ class TestItem():
         assert ['remove', 4] in self.item.changed
         assert not 2 in self.item
         assert not 4 in self.item
-        try:
-            del self.item[5]
-            assert False
-        except KeyError:
-            assert True
-        try:
-            self.item.new_revision(1)
-            assert False
-        except StorageError:
-            assert True
+        py.test.raises(KeyError, lambda: self.item[5])
+        py.test.raises(StorageError, self.item.new_revision, 1)
     
     def test_save(self):
         """
         TODO: test adding/removing of revisions && test new
         """
-        self.item = ItemCollection(UserStorage(datadir), None)[names[0]]
+        self.item = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]]
         del self.item[1].metadata["aliasname"]
         self.item.save()
-        self.item = ItemCollection(UserStorage(datadir), None)[names[0]]
+        self.item = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]]
         assert "aliasname" not in self.item[1].metadata
         self.item[1].metadata["aliasname"]= ""
         self.item.save()
-        self.item = ItemCollection(UserStorage(datadir), None)[names[0]]
+        self.item = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]]
         assert "aliasname" in self.item[1].metadata
 
 
@@ -128,7 +110,7 @@ class TestRevision():
     revision = None
     
     def setup_class(self):
-        self.revision = ItemCollection(UserStorage(datadir), None)[names[0]][1]
+        self.revision = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]][1]
     
     def teardown_class(self):
         self.revision = None
@@ -143,7 +125,7 @@ class TestMetadata():
     metadata = None
     
     def setup_class(self):
-        self.metadata = ItemCollection(UserStorage(datadir), None)[names[0]][1].metadata
+        self.metadata = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]][1].metadata
     
     def teardown_class(self):
         self.metadata = None
@@ -154,11 +136,7 @@ class TestMetadata():
     
     def test_get(self):
         self.metadata["name"]
-        try:
-            self.metadata["yz"]
-            assert False
-        except KeyError:
-            assert True
+        py.test.raises(KeyError, lambda: self.metadata["yz"])
     
     def test_set(self):
         self.metadata["name"] = "123"

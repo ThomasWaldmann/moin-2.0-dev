@@ -40,3 +40,7 @@ metadata = {u'aliasname' : u'',
             u'want_trivial' : u'0',
             u'wikiname_add_spaces' : u'0'
             }
+
+class DummyConfig:
+    user_storage = ""
+    indexes = []

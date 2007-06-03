@@ -24,8 +24,9 @@ unsafe_names = ("id", "key", "val", "user_data", "enc_password")
 
 import os, time, sha, codecs
 
-from MoinMoin import config, caching, wikiutil, i18n
-from MoinMoin.util import timefuncs, filesys
+from MoinMoin import config, wikiutil, i18n
+from MoinMoin.util import timefuncs
+from MoinMoin.storage.external import ItemCollection
 
 
 def getUserList(request):
@@ -35,11 +36,8 @@ def getUserList(request):
     @rtype: list
     @return: all user IDs
     """
-    import re
-    user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
-    files = filesys.dclistdir(request.cfg.user_dir)
-    userlist = [f for f in files if user_re.match(f)]
-    return userlist
+    return ItemCollection(request.cfg.user_backend, request.user).keys()
+
 
 def get_by_email_address(request, email_address):
     """ Searches for a user with a particular e-mail address and returns it. """
@@ -47,46 +45,6 @@ def get_by_email_address(request, email_address):
         theuser = User(request, uid)
         if theuser.valid and theuser.email.lower() == email_address.lower():
             return theuser
-
-def _getUserIdByKey(request, key, search):
-    """ Get the user ID for a specified key/value pair.
-
-    This method must only be called for keys that are
-    guaranteed to be unique.
-
-    @param key: the key to look in
-    @param search: the value to look for
-    @return the corresponding user ID or None
-    """
-    if not search or not key:
-        return None
-    cfg = request.cfg
-    cachekey = '%s2id' % key
-    try:
-        _key2id = getattr(cfg.cache, cachekey)
-    except AttributeError:
-        arena = 'user'
-        cache = caching.CacheEntry(request, arena, cachekey, scope='wiki', use_pickle=True)
-        try:
-            _key2id = cache.content()
-        except caching.CacheError:
-            _key2id = {}
-        setattr(cfg.cache, cachekey, _key2id)
-    uid = _key2id.get(search, None)
-    if uid is None:
-        for userid in getUserList(request):
-            u = User(request, id=userid)
-            if hasattr(u, key):
-                value = getattr(u, key)
-                _key2id[value] = userid
-        arena = 'user'
-        cache = caching.CacheEntry(request, arena, cachekey, scope='wiki', use_pickle=True)
-        try:
-            cache.update(_key2id)
-        except caching.CacheError:
-            pass
-        uid = _key2id.get(search, None)
-    return uid
 
 
 def getUserId(request, searchName):
@@ -96,7 +54,7 @@ def getUserId(request, searchName):
     @rtype: string
     @return: the corresponding user ID or None
     """
-    return _getUserIdByKey(request, 'name', searchName)
+    return ItemCollection(request.cfg.user_backend, request.user).keys({'name': searchName})[0]
 
 
 def getUserIdentification(request, username=None):
