@@ -40,20 +40,3 @@ metadata = {u'aliasname' : u'',
             u'want_trivial' : u'0',
             u'wikiname_add_spaces' : u'0'
             }
-    
-def assert_dicts(dict1, dict2):
-    """
-    Assert the equality of two dictionaries.
-    """
-    for key, value in dict1.iteritems():
-        assert dict2[key] == value
-
-def assert_lists(list1, list2):
-    """
-    Assert the equality of two lists.
-    """
-    for key in list1:
-        assert key in list2
-        
-    for key in list2:
-        assert key in list1
