@@ -100,7 +100,7 @@ class Item(UserDict.DictMixin, object):
         """
         Returns the revision specified by a revision-number (LazyLoaded). 
         """
-        if not revno:
+        if revno == 0:
             revno = self.current
         if not self.revisions[revno]:
             self.revisions[revno] = Revision(revno, self)
@@ -138,7 +138,7 @@ class Item(UserDict.DictMixin, object):
         """
         Lazy load the revisions.
         """
-        if not self.__revisions:
+        if self.__revisions is None:
             self.__revisions = {}
             if not self.new:
                 revs = self.backend.list_revisions(self.name)
@@ -154,7 +154,7 @@ class Item(UserDict.DictMixin, object):
         
         TODO: optimize this
         """
-        if not self.__current:
+        if self.__current is None:
             if not self.new:
                 revs = self.backend.list_revisions(self.name)
                 self.__current = revs[-1]
@@ -182,10 +182,7 @@ class Item(UserDict.DictMixin, object):
             elif item[0] == "change":
                 add = {}
                 remove = []
-                fd = open("d:/test1", "w")
-                fd.write(str(item[1].revno))
                 for key, value in item[1].metadata.changed.iteritems():
-                    fd.write(key + ":" + value)
                     if value == "add" or value == "set":
                         add[key] = item[1].metadata[key]
                     elif value == "remove":
@@ -194,8 +191,6 @@ class Item(UserDict.DictMixin, object):
                     self.backend.set_metadata(self.name, item[1].revno, add)
                 if remove:
                     self.backend.remove_metadata(self.name, item[1].revno, remove)
-                    
-                fd.close()
 
 class Revision(object):
     """
@@ -292,7 +287,7 @@ class Metadata(UserDict.DictMixin, object):
         """
         Lazy load the metadata.
         """
-        if not self.__metadata:
+        if self.__metadata is None:
             if self.revision.item.new:
                 self.__metadata = {}
             else:
