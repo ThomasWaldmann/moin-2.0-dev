@@ -79,7 +79,7 @@ class Item(UserDict.DictMixin, object):
         """
         Initializes the Item with the required parameters.
         """
-        self.metadata = Metadata(Revision(-1, self))
+        self.metadata = Revision(-1, self).metadata
         self.name = name
         self.backend = backend
         self.userobj = userobj
@@ -99,7 +99,9 @@ class Item(UserDict.DictMixin, object):
     def __getitem__(self, revno):
         """
         Returns the revision specified by a revision-number (LazyLoaded). 
-        """    
+        """
+        if not revno:
+            revno = self.current
         if not self.revisions[revno]:
             self.revisions[revno] = Revision(revno, self)
         return self.revisions[revno]
@@ -138,9 +140,10 @@ class Item(UserDict.DictMixin, object):
         """
         if not self.__revisions:
             self.__revisions = {}
-            revs = self.backend.list_revisions(self.name)
-            for revno in revs:
-                self.__revisions[revno] = None
+            if not self.new:
+                revs = self.backend.list_revisions(self.name)
+                for revno in revs:
+                    self.__revisions[revno] = None
         return self.__revisions
     
     revisions = property(get_revisions)
@@ -152,8 +155,11 @@ class Item(UserDict.DictMixin, object):
         TODO: optimize this
         """
         if not self.__current:
-            revs = self.backend.list_revisions(self.name)
-            self.__current = revs[-1]
+            if not self.new:
+                revs = self.backend.list_revisions(self.name)
+                self.__current = revs[-1]
+            else:
+                self.__current = 1
         return self.__current
     
     current = property(get_current)
@@ -166,6 +172,7 @@ class Item(UserDict.DictMixin, object):
         """
         if self.new:
             self.backend.create_item(self.name)
+            self.new = False
             
         for item in self.changed:
             if item[0] == "add":
@@ -175,7 +182,10 @@ class Item(UserDict.DictMixin, object):
             elif item[0] == "change":
                 add = {}
                 remove = []
+                fd = open("d:/test1", "w")
+                fd.write(str(item[1].revno))
                 for key, value in item[1].metadata.changed.iteritems():
+                    fd.write(key + ":" + value)
                     if value == "add" or value == "set":
                         add[key] = item[1].metadata[key]
                     elif value == "remove":
@@ -184,7 +194,8 @@ class Item(UserDict.DictMixin, object):
                     self.backend.set_metadata(self.name, item[1].revno, add)
                 if remove:
                     self.backend.remove_metadata(self.name, item[1].revno, remove)
-
+                    
+                fd.close()
 
 class Revision(object):
     """
@@ -282,7 +293,10 @@ class Metadata(UserDict.DictMixin, object):
         Lazy load the metadata.
         """
         if not self.__metadata:
-            self.__metadata = self.revision.item.backend.get_metadata(self.revision.item.name, self.revision.revno)
+            if self.revision.item.new:
+                self.__metadata = {}
+            else:
+                self.__metadata = self.revision.item.backend.get_metadata(self.revision.item.name, self.revision.revno)
         return self.__metadata
     
     metadata = property(get_metadata)

@@ -15,6 +15,8 @@ import MoinMoin.config
 from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import StorageError
 
+user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
+
 
 class UserStorage(StorageBackend):
     """
@@ -37,14 +39,15 @@ class UserStorage(StorageBackend):
         TODO: indexes
         """
         files = os.listdir(self.path)
+        user_files = [f for f in files if user_re.match(f)]
         if not filters:
-            return files
+            return user_files
         else:
             filtered_files = []
             for key, value in filters.iteritems():
                 expression = re.compile(value)
                 if key not in self.cfg.indexes:
-                    for name in files:
+                    for name in user_files:
                         metadata = self.get_metadata(name, 0)
                         if metadata.has_key(key) and expression.match(metadata[key]):
                             filtered_files.append(name)

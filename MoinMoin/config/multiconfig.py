@@ -676,7 +676,7 @@ reStructuredText Quick Reference
             self.url_prefix_local = self.url_prefix_static
             
         # storage configuration  
-        self.user_backend = UserStorage(os.path.join(data_dir, "user"), self)
+        self.user_backend = UserStorage(self.user_dir, self)
         self.indexes = []
 
 
