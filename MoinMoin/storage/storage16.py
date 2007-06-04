@@ -40,7 +40,7 @@ class UserStorage(StorageBackend):
         """
         files = os.listdir(self.path)
         user_files = [f for f in files if user_re.match(f)]
-        if not filters:
+        if filters is None:
             return user_files
         else:
             filtered_files = []
