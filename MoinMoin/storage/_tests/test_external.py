@@ -43,6 +43,8 @@ class TestItemCollection():
         assert isinstance(item, Item)
         assert item.name == "test"
         assert item.new
+        item.metadata.keys()
+        item.keys()
         py.test.raises(StorageError, self.item_collection.new_item, names[0])
     
     def test_delete_item(self):
