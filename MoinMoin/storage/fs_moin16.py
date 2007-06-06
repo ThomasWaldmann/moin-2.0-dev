@@ -14,8 +14,7 @@ import os
 import re
 import shutil
 
-import MoinMoin.config
-
+from MoinMoin import config
 from MoinMoin.storage.interfaces import DataBackend, StorageBackend
 from MoinMoin.storage.error import StorageError
 
@@ -142,7 +141,7 @@ class UserStorage(AbstractStorage):
         """
         
         try:
-            data = codecs.open(os.path.join(self.path, name), "r", MoinMoin.config.charset).readlines()
+            data = codecs.open(os.path.join(self.path, name), "r", config.charset).readlines()
         except IOError:
             raise StorageError("Item '%s' does not exist" % name)
             
@@ -171,7 +170,7 @@ class UserStorage(AbstractStorage):
         """
         @see MoinMoin.fs_moin16.AbstractStorage._save_metadata
         """
-        data = codecs.open(os.path.join(self.path, name), "w", MoinMoin.config.charset)
+        data = codecs.open(os.path.join(self.path, name), "w", config.charset)
         for key, value in metadata.iteritems():
             # Encode list values
             if isinstance(value, list):
@@ -263,14 +262,14 @@ class PageStorage(AbstractStorage):
         """
         
         try:
-            fileDescriptor = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", MoinMoin.config.charset)
+            data_file = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", config.charset)
         except IOError:
             raise StorageError("Item '%s' or revision '%s' does not exist." % (name, revno))
         
         metadata = {}
         
         started = False
-        for line in fileDescriptor.readlines():
+        for line in data_file.readlines():
             if line.startswith('#'):
                 started = True
                 if line[1] == '#': # two hash marks are a comment
@@ -283,7 +282,7 @@ class PageStorage(AbstractStorage):
                 
             elif started == True:
                 break
-        fileDescriptor.close()
+        data_file.close()
 
         return metadata
     
@@ -292,7 +291,7 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.fs_moin16.AbstractStorage._save_metadata
         """
         try:
-            data = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", MoinMoin.config.charset).readlines()
+            data = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", config.charset).readlines()
         except IOError:
             raise StorageError("Item '%s' or revision '%s' does not exist." % (name, revno))
         
@@ -305,13 +304,12 @@ class PageStorage(AbstractStorage):
 
         # save data
         try:
-            fileDescriptor = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "w", MoinMoin.config.charset)
+            data_file = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "w", config.charset)
         except IOError:
             raise StorageError("Item '%s' or revision '%s' does not exist." % (name, revno))
         
-        fileDescriptor.writelines(new_data)
-        
-        fileDescriptor.close()
+        data_file.writelines(new_data)
+        data_file.close()
         
     def get_data_backend(self, name, revno, mode):
         """
@@ -330,7 +328,7 @@ class PageData(DataBackend):
         Init stuff and open the file.
         """        
         try:
-            self.fd = codecs.open(os.path.join(path, name, "revisions", get_rev_string(revno)), mode, MoinMoin.config.charset)
+            self.fd = codecs.open(os.path.join(path, name, "revisions", get_rev_string(revno)), mode, config.charset)
         except:
             raise StorageError("Item '%s' or revision '%s' does not exist." % (name, str(revno)))
     
