@@ -8,14 +8,9 @@
 
     The UserPreferences form support stuff is in module userform.
 
-    TODO:
-    * code is a mixture of highlevel user stuff and lowlevel storage functions,
-      this has to get separated into:
-      * user object highlevel stuff
-      * storage code
-
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
                 2003-2007 MoinMoin:ThomasWaldmann
+                2007 MoinMoin:Heinrich Wendel
     @license: GNU GPL, see COPYING for details.
 """
 

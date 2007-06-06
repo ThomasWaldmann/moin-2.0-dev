@@ -7,9 +7,9 @@
 
 import py.test
 
-from common import datadir, names, metadata, DummyConfig
+from common import user_dir, names, metadata, DummyConfig
 
-from MoinMoin.storage.storage16 import UserStorage
+from MoinMoin.storage.fs_moin16 import UserStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata, Data
 from MoinMoin.storage.error import StorageError
 
@@ -19,7 +19,7 @@ class TestItemCollection():
     item_collection = None    
     
     def setup_class(self):
-        self.item_collection = ItemCollection(UserStorage(datadir, DummyConfig()), None)
+        self.item_collection = ItemCollection(UserStorage(user_dir, DummyConfig()), None)
     
     def teardown_class(self):
         self.item_collection = None
@@ -59,7 +59,7 @@ class TestItem():
     item = None
     
     def setup_class(self):
-        self.item = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]]
+        self.item = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]]
     
     def teardown_class(self):
         self.item = None
@@ -99,14 +99,14 @@ class TestItem():
         """
         TODO: test adding/removing of revisions && test new
         """
-        self.item = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]]
+        self.item = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]]
         del self.item[1].metadata["aliasname"]
         self.item.save()
-        self.item = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]]
+        self.item = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]]
         assert "aliasname" not in self.item[1].metadata
         self.item[1].metadata["aliasname"]= ""
         self.item.save()
-        self.item = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]]
+        self.item = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]]
         assert "aliasname" in self.item[1].metadata
 
 
@@ -115,7 +115,7 @@ class TestRevision():
     revision = None
     
     def setup_class(self):
-        self.revision = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]][1]
+        self.revision = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]][1]
     
     def teardown_class(self):
         self.revision = None
@@ -130,7 +130,7 @@ class TestMetadata():
     metadata = None
     
     def setup_class(self):
-        self.metadata = ItemCollection(UserStorage(datadir, DummyConfig()), None)[names[0]][1].metadata
+        self.metadata = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]][1].metadata
     
     def teardown_class(self):
         self.metadata = None

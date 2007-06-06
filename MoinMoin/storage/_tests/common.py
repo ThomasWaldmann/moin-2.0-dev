@@ -5,9 +5,13 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-datadir = "data/user"
+user_dir = "data/user"
+
+page_dir = "data/pages"
 
 names = [ "1180352194.13.59241", "1180424607.34.55818", "1180424618.59.18110" ]
+
+pages = [ "New", "Test" ]
 
 metadata = {u'aliasname' : u'',
             u'bookmarks' : {},
