@@ -17,7 +17,7 @@ import MoinMoin.auth as authmodule
 from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
-from MoinMoin.storage.storage16 import UserStorage
+from MoinMoin.storage.fs_moin16 import UserStorage
 
 _url_re_cache = None
 _farmconfig_mtime = None
