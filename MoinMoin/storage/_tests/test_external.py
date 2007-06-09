@@ -11,7 +11,7 @@ from common import user_dir, names, metadata, DummyConfig, page_dir, pages
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata
-from MoinMoin.storage.error import StorageError
+from MoinMoin.storage.error import BackendError
 from MoinMoin.storage.interfaces import DataBackend
 
 
@@ -38,18 +38,18 @@ class TestItemCollection():
         assert isinstance(item, Item)
         assert item.name == names[0]
         py.test.raises(KeyError, lambda: self.item_collection["test"])
-    
+
     def test_new_delete_item(self):
-        item  = self.item_collection.new_item("test")
+        item  = self.item_collection.new_item("1180424618.59.18120")
         assert isinstance(item, Item)
-        assert item.name == "test"
+        assert item.name == "1180424618.59.18120"
         item.metadata.keys()
         item.keys()
-        py.test.raises(StorageError, self.item_collection.new_item, names[0])
-        assert "test" in self.item_collection
-        del self.item_collection["test"]
-        assert not "test" in self.item_collection
-        
+        py.test.raises(BackendError, self.item_collection.new_item, names[0])
+        assert "1180424618.59.18120" in self.item_collection
+        del self.item_collection["1180424618.59.18120"]
+        assert not "1180424618.59.18120" in self.item_collection
+
 
 class TestItem():    
     
@@ -70,12 +70,12 @@ class TestItem():
         assert revision.revno == 1
         revision = self.item[0]
         assert isinstance(revision, Revision)
-        assert revision.revno == 1
+        assert revision.revno == 0
         py.test.raises(KeyError, lambda: self.item[5])
             
     def test_keys(self):
-        assert self.item.keys() == [1]
-        
+        assert self.item.keys() == [0, 1]
+
     def test_del_add_revision(self):
         self.item.new_revision()
         assert 2 in self.item
@@ -86,7 +86,7 @@ class TestItem():
         assert not 2 in self.item
         assert not 4 in self.item
         py.test.raises(KeyError, lambda: self.item[5])
-        py.test.raises(StorageError, self.item.new_revision, 1)
+        py.test.raises(BackendError, self.item.new_revision, 1)
 
 
 class TestRevision():

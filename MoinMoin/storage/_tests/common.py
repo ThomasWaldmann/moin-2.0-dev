@@ -48,3 +48,4 @@ metadata = {u'aliasname' : u'',
 class DummyConfig:
     user_storage = ""
     indexes = []
+    

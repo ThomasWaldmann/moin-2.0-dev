@@ -8,7 +8,7 @@
 import UserDict
 
 
-class ItemCollection(UserDict.DictMixin):
+class ItemCollection(UserDict.DictMixin, object):
     """
     The ItemCollection class realizes the access to the stored Items via the
     correct backend and maybe caching.
@@ -20,18 +20,20 @@ class ItemCollection(UserDict.DictMixin):
         """
         self.backend = backend
         self.userobj = userobj
+        
+        self.__items = None
 
     def __contains__(self, name):
         """
         Checks if an Item exists.
         """
-        return self.backend.has_item(name)
+        return name in self.items
 
     def __getitem__(self, name):
         """
         Loads an Item.
         """
-        if self.backend.has_item(name):
+        if name in self.items:
             return Item(name, self.backend, self.userobj)
         else:
             raise KeyError("No such item '%s'" % name)
@@ -41,6 +43,7 @@ class ItemCollection(UserDict.DictMixin):
         Deletes an Item.
         """
         self.backend.remove_item(name)
+        self.__items = None
 
     def keys(self, filters=None):
         """
@@ -55,8 +58,18 @@ class ItemCollection(UserDict.DictMixin):
         Returns a new Item with the given name.
         """
         self.backend.create_item(name)
-        
+        self.__items = None
         return Item(name, self.backend, self.userobj)
+
+    def get_items(self):
+        """
+        Lazy load items.
+        """
+        if self.__items is None:
+            self.__items = self.backend.list_items()
+        return self.__items
+
+    items = property(get_items)
 
 
 class Item(UserDict.DictMixin, object):
@@ -91,8 +104,6 @@ class Item(UserDict.DictMixin, object):
         """
         Returns the revision specified by a revision-number (LazyLoaded). 
         """
-        if revno == 0:
-            revno = self.current
         if not self.revisions[revno]:
             self.revisions[revno] = Revision(revno, self)
         return self.revisions[revno]
@@ -102,8 +113,7 @@ class Item(UserDict.DictMixin, object):
         Deletes the Revision specified by the given revision-number.
         """
         self.backend.remove_revision(self.name, revno)
-        
-        del self.revisions[revno]
+        self.__revisions = None
 
     def keys(self):
         """
@@ -111,17 +121,13 @@ class Item(UserDict.DictMixin, object):
         """
         return self.revisions.keys()
 
-    def new_revision(self, revno=None):
+    def new_revision(self, revno=0):
         """
         Creates and returns a new revision with the given revision-number.
         If the revision number is None the next possible number will be used. 
-        """                
-        if revno is None:
-            revno = self.current + 1
-        
+        """
         self.backend.create_revision(self.name, revno)
-        
-        self.revisions[revno] = None
+        self.__revisions = None
     
     def get_metadata(self):
         """
@@ -148,14 +154,10 @@ class Item(UserDict.DictMixin, object):
     
     def get_current(self):
         """
-        Lazy load the current revision nr.
-        
-        TODO: optimize this
+        Lazy load the current revision no.
         """
         if self.__current is None:
-            revs = self.backend.list_revisions(self.name)
-            if len(revs) > 0:
-                self.__current = revs[-1]
+            self.__current = self.backend.current_revision(self.name)
         return self.__current
     
     current = property(get_current)
@@ -281,5 +283,3 @@ class Metadata(UserDict.DictMixin, object):
             self.revision.item.backend.set_metadata(self.revision.item.name, self.revision.revno, add)
         if remove:
             self.revision.item.backend.remove_metadata(self.revision.item.name, self.revision.renvo, remove)
-
-    
