@@ -10,7 +10,7 @@
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
                 2003-2007 MoinMoin:ThomasWaldmann
-                2007 MoinMoin:Heinrich Wendel
+                2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -431,7 +431,7 @@ class User:
         for key, value in attrs:
             self._user.metadata[key] = value
         
-        self._user.save()
+        self._user.metadata.save()
 
         if not self.disabled:
             self.valid = 1

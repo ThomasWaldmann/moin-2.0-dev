@@ -7,9 +7,6 @@
 
 import UserDict
 
-from MoinMoin.storage.interfaces import DataBackend
-from MoinMoin.storage.error import StorageError
-
 
 class ItemCollection(UserDict.DictMixin):
     """
@@ -35,8 +32,7 @@ class ItemCollection(UserDict.DictMixin):
         Loads an Item.
         """
         if self.backend.has_item(name):
-            item = Item(name, self.backend, self.userobj)
-            return item
+            return Item(name, self.backend, self.userobj)
         else:
             raise KeyError("No such item '%s'" % name)
 
@@ -58,12 +54,9 @@ class ItemCollection(UserDict.DictMixin):
         """
         Returns a new Item with the given name.
         """
-        if self.backend.has_item(name):
-            raise StorageError("Item '%s' already exists." % name)
+        self.backend.create_item(name)
         
-        item = Item(name, self.backend, self.userobj)
-        item.new = True
-        return item
+        return Item(name, self.backend, self.userobj)
 
 
 class Item(UserDict.DictMixin, object):
@@ -79,17 +72,15 @@ class Item(UserDict.DictMixin, object):
         """
         Initializes the Item with the required parameters.
         """
-        self.metadata = Revision(-1, self).metadata
         self.name = name
         self.backend = backend
         self.userobj = userobj
         
-        self.new = False
-        self.changed = []
+        self.__metadata = None
         
         self.__revisions = None
         self.__current = None
-
+    
     def __contains__(self, revno):
         """
         Checks if a Revision with the given revision-number exists.
@@ -110,9 +101,9 @@ class Item(UserDict.DictMixin, object):
         """
         Deletes the Revision specified by the given revision-number.
         """
-        del self.revisions[revno]
+        self.backend.remove_revision(self.name, revno)
         
-        self.changed.append(['remove', revno])
+        del self.revisions[revno]
 
     def keys(self):
         """
@@ -124,15 +115,23 @@ class Item(UserDict.DictMixin, object):
         """
         Creates and returns a new revision with the given revision-number.
         If the revision number is None the next possible number will be used. 
-        """
-        if not revno:
+        """                
+        if revno is None:
             revno = self.current + 1
-        elif revno in self.revisions:
-            raise StorageError("Revision %s already exists." % revno)
+        
+        self.backend.create_revision(self.name, revno)
         
         self.revisions[revno] = None
-        
-        self.changed.append(['add', revno])
+    
+    def get_metadata(self):
+        """
+        Lazy load metadata.
+        """
+        if self.__metadata is None:
+            self.__metadata = Revision(-1, self).metadata
+        return self.__metadata
+    
+    metadata = property(get_metadata)
     
     def get_revisions(self):
         """
@@ -140,10 +139,9 @@ class Item(UserDict.DictMixin, object):
         """
         if self.__revisions is None:
             self.__revisions = {}
-            if not self.new:
-                revs = self.backend.list_revisions(self.name)
-                for revno in revs:
-                    self.__revisions[revno] = None
+            revs = self.backend.list_revisions(self.name)
+            for revno in revs:
+                self.__revisions[revno] = None
         return self.__revisions
     
     revisions = property(get_revisions)
@@ -155,42 +153,13 @@ class Item(UserDict.DictMixin, object):
         TODO: optimize this
         """
         if self.__current is None:
-            if not self.new:
-                revs = self.backend.list_revisions(self.name)
+            revs = self.backend.list_revisions(self.name)
+            if len(revs) > 0:
                 self.__current = revs[-1]
-            else:
-                self.__current = 1
         return self.__current
     
     current = property(get_current)
-            
-    def save(self):
-        """
-        Saves the whole item. It checks if the Item must be created, which Revision was
-        added/removed, if the data was changed and what metadata keys were changed and
-        saves the changes then.
-        """
-        if self.new:
-            self.backend.create_item(self.name)
-            self.new = False
-            
-        for item in self.changed:
-            if item[0] == "add":
-                self.backend.create_revision(self.name, item[1])
-            elif item[0] == "remove":
-                self.backend.remove_revision(self.name, item[1])
-            elif item[0] == "change":
-                add = {}
-                remove = []
-                for key, value in item[1].metadata.changed.iteritems():
-                    if value == "add" or value == "set":
-                        add[key] = item[1].metadata[key]
-                    elif value == "remove":
-                        remove.append(key)
-                if add:
-                    self.backend.set_metadata(self.name, item[1].revno, add)
-                if remove:
-                    self.backend.remove_metadata(self.name, item[1].revno, remove)
+    
 
 class Revision(object):
     """
@@ -215,12 +184,32 @@ class Revision(object):
         """
         Initalizes the Revision with the required parameters.
         """
-        self.data = Data(self)
-        self.metadata = Metadata(self)
-        
         self.revno = revno
         self.item = item
-
+        
+        self.__data = None
+        self.__metadata  = None
+    
+    def get_metadata(self):
+        """
+        Lazy load metadata.
+        """
+        if self.__metadata is None:
+            self.__metadata = Metadata(self)
+        return self.__metadata
+    
+    metadata = property(get_metadata)
+    
+    def get_data(self):
+        """
+        Lazy load metadata.
+        """
+        if self.__data is None:
+            self.__data = self.item.backend.get_data_backend(self.item.name, self.revno)
+        return self.__data
+    
+    data = property(get_data)
+            
 
 class Metadata(UserDict.DictMixin, object):
     """ 
@@ -234,7 +223,7 @@ class Metadata(UserDict.DictMixin, object):
         Initializes the metadata object with the required parameters.
         """
         self.revision = revision
-        self.__metadata = None
+        self.metadata = revision.item.backend.get_metadata(self.revision.item.name, self.revision.revno)
         self.changed = {}
 
     def __contains__(self, key):
@@ -256,10 +245,7 @@ class Metadata(UserDict.DictMixin, object):
         if not key in self.metadata:
             self.changed[key] = 'add'
         else:
-            self.changed[key] = 'set'  
-        
-        if not ['change', self.revision] in self.revision.item.changed:
-            self.revision.item.changed.append(['change', self.revision])
+            self.changed[key] = 'set'
             
         self.metadata[key] = value
 
@@ -272,9 +258,6 @@ class Metadata(UserDict.DictMixin, object):
         else:
             self.changed[key] = 'remove'
         
-        if not ['change', self.revision] in self.revision.item.changed:
-            self.revision.item.changed.append(['change', self.revision])
-        
         del self.metadata[key]
 
     def keys(self):
@@ -282,33 +265,21 @@ class Metadata(UserDict.DictMixin, object):
         Return sa list of all metadata keys.
         """
         return self.metadata.keys()
-    
-    def get_metadata(self):
+            
+    def save(self):
         """
-        Lazy load the metadata.
+        Saves the metadata.
         """
-        if self.__metadata is None:
-            if self.revision.item.new:
-                self.__metadata = {}
-            else:
-                self.__metadata = self.revision.item.backend.get_metadata(self.revision.item.name, self.revision.revno)
-        return self.__metadata
-    
-    metadata = property(get_metadata)
+        add = {}
+        remove = []
+        for key, value in self.changed.iteritems():
+            if value == "add" or value == "set":
+                add[key] = self.metadata[key]
+            elif value == "remove":
+                remove.append(key)
+        if add:
+            self.revision.item.backend.set_metadata(self.revision.item.name, self.revision.revno, add)
+        if remove:
+            self.revision.item.backend.remove_metadata(self.revision.item.name, self.revision.renvo, remove)
 
-
-class Data(DataBackend):
-    """
-    Data offers a read and write Proxy to the DataBackend. Changes are only
-    written on close() or save(). Reading always occurs on the data in the backend,
-    not on the data written by write(). On every access the ACLs will be checked.
-    """
-
-    changed = False
-
-    def __init__(self, revision):
-        """
-        Initializes the Data object with the required parameters.
-        """
-        pass
     

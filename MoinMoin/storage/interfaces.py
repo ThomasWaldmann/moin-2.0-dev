@@ -89,10 +89,10 @@ class StorageBackend(object):
         """
         raise NotImplementedError
 
-    def get_data_backend(self, name, revno, mode):
+    def get_data_backend(self, name, revno):
         """
         Get the data of an item-revision.
-        mode can be r(ead) or w(rite) or a(append).
+        mode can be r(ead) or w(rite).
         """
         raise NotImplementedError
 

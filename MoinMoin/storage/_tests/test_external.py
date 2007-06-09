@@ -7,11 +7,12 @@
 
 import py.test
 
-from common import user_dir, names, metadata, DummyConfig
+from common import user_dir, names, metadata, DummyConfig, page_dir, pages
 
-from MoinMoin.storage.fs_moin16 import UserStorage
-from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata, Data
+from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
+from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata
 from MoinMoin.storage.error import StorageError
+from MoinMoin.storage.interfaces import DataBackend
 
 
 class TestItemCollection():
@@ -38,28 +39,24 @@ class TestItemCollection():
         assert item.name == names[0]
         py.test.raises(KeyError, lambda: self.item_collection["test"])
     
-    def test_new_item(self):
+    def test_new_delete_item(self):
         item  = self.item_collection.new_item("test")
         assert isinstance(item, Item)
         assert item.name == "test"
-        assert item.new
         item.metadata.keys()
         item.keys()
         py.test.raises(StorageError, self.item_collection.new_item, names[0])
-    
-    def test_delete_item(self):
-        """
-        TODO: it's just one call...
-        """
-        pass
-
+        assert "test" in self.item_collection
+        del self.item_collection["test"]
+        assert not "test" in self.item_collection
+        
 
 class TestItem():    
     
     item = None
     
     def setup_class(self):
-        self.item = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]]
+        self.item = ItemCollection(PageStorage(page_dir, DummyConfig()), None)[pages[0]]
     
     def teardown_class(self):
         self.item = None
@@ -82,32 +79,14 @@ class TestItem():
     def test_del_add_revision(self):
         self.item.new_revision()
         assert 2 in self.item
-        assert ['add', 2] in self.item.changed
         self.item.new_revision(4)
         assert 4 in self.item
-        assert ['add', 4] in self.item.changed
         del self.item[2]
-        assert ['remove', 2] in self.item.changed
         del self.item[4]
-        assert ['remove', 4] in self.item.changed
         assert not 2 in self.item
         assert not 4 in self.item
         py.test.raises(KeyError, lambda: self.item[5])
         py.test.raises(StorageError, self.item.new_revision, 1)
-    
-    def test_save(self):
-        """
-        TODO: test adding/removing of revisions && test new
-        """
-        self.item = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]]
-        del self.item[1].metadata["aliasname"]
-        self.item.save()
-        self.item = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]]
-        assert "aliasname" not in self.item[1].metadata
-        self.item[1].metadata["aliasname"]= ""
-        self.item.save()
-        self.item = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]]
-        assert "aliasname" in self.item[1].metadata
 
 
 class TestRevision():
@@ -115,13 +94,13 @@ class TestRevision():
     revision = None
     
     def setup_class(self):
-        self.revision = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]][1]
+        self.revision = ItemCollection(PageStorage(page_dir, DummyConfig()), None)[pages[0]][1]
     
     def teardown_class(self):
         self.revision = None
     
     def test(self):
-        assert isinstance(self.revision.data, Data)
+        assert isinstance(self.revision.data, DataBackend)
         assert isinstance(self.revision.metadata, Metadata)
     
     
@@ -162,4 +141,10 @@ class TestMetadata():
         
     def test_keys(self):
         assert set(self.metadata.keys()) == set(metadata.keys())
+    
+    def test_save(self):
+        """
+        TODO:
+        """
+        pass
     
