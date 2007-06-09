@@ -43,13 +43,26 @@ class StorageBackend(object):
         Removes (nukes) an item.
         """
         raise NotImplementedError
+    
 
     def list_revisions(self, name):
         """
         Returns a list of integers of all revision-numbers of an item.
         """
         raise NotImplementedError
-
+    
+    def current_revision(self, name):
+        """
+        Returns the last revision-number of an item as integer.
+        """
+        raise NotImplementedError
+    
+    def has_revision(self, name, revno):
+        """
+        Returns whether the given revision number exists for the given item.
+        """
+        raise NotImplementedError  
+  
     def create_revision(self, name, revno):
         """
         Creates a new revision. If revno is 0 the next possible revision

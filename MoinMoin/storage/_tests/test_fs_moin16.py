@@ -11,7 +11,7 @@ import py.test
 from common import user_dir, page_dir, names, metadata, DummyConfig, pages
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
-from MoinMoin.storage.error import StorageError
+from MoinMoin.storage.error import BackendError
 
 
 class TestUserBackend():
@@ -25,7 +25,16 @@ class TestUserBackend():
         self.backend = None
         
     def test_list_revisions(self):
-        assert self.backend.list_revisions(names[0]) == [1]
+        assert self.backend.list_revisions(names[0]) == [0, 1]
+    
+    def test_current_revision(self):
+        assert self.backend.current_revision(names[0]) == 1
+        
+    def test_has_revision(self):
+        assert self.backend.has_revision(names[0], 1)
+        assert self.backend.has_revision(names[1], 0)
+        assert not self.backend.has_revision(names[2], 2)
+        assert not self.backend.has_revision(names[0], -1)
         
     def test_create_revision(self):
         py.test.raises(NotImplementedError, self.backend.create_revision, names[0], 1)
@@ -46,19 +55,19 @@ class TestUserBackend():
         assert not self.backend.has_item("asdf")
   
     def test_create_and_remove_item(self):
-        self.backend.create_item("test");
-        assert self.backend.has_item(names[0])
+        self.backend.create_item("1180424618.59.18120");
+        assert self.backend.has_item("1180424618.59.18120")
         
-        py.test.raises(StorageError, self.backend.create_item, names[0])
+        py.test.raises(BackendError, self.backend.create_item, names[0])
 
-        self.backend.remove_item("test");
-        assert not self.backend.has_item("test")
+        self.backend.remove_item("1180424618.59.18120");
+        assert not self.backend.has_item("1180424618.59.18120")
         
-        py.test.raises(StorageError, self.backend.remove_item, "blub")
+        py.test.raises(BackendError, self.backend.remove_item, "blub")
     
     def test_get_metadata(self):
         assert self.backend.get_metadata(names[0], 1) == metadata
-        py.test.raises(StorageError, self.backend.get_metadata, "blub", 0)   
+        py.test.raises(BackendError, self.backend.get_metadata, "blub", 0)   
     
     def test_set_metadata(self):
         self.backend.set_metadata(names[0], 0, {"aliasname": "test"})
@@ -67,7 +76,7 @@ class TestUserBackend():
         self.backend.set_metadata(names[0], 0, {"aliasname": ""})
         metadata["aliasname"] = ""
         assert self.backend.get_metadata(names[0], 1) == metadata
-        py.test.raises(StorageError, self.backend.set_metadata, "blub", 0, {'test': ''})
+        py.test.raises(BackendError, self.backend.set_metadata, "blub", 0, {'test': ''})
     
     def test_remove_metadata(self):
         self.backend.set_metadata(names[0], 0, {"battle": "test"})
@@ -76,7 +85,7 @@ class TestUserBackend():
         self.backend.remove_metadata(names[0], 0, ["battle"])
         del metadata["battle"]        
         assert self.backend.get_metadata(names[0], 1) == metadata
-        py.test.raises(StorageError, self.backend.remove_metadata, "blub", 0, ['test'])
+        py.test.raises(BackendError, self.backend.remove_metadata, "blub", 0, ['test'])
         py.test.raises(KeyError, self.backend.remove_metadata, names[0], 0, ['NotExist'])
 
 
@@ -92,17 +101,15 @@ class TestPageBackend():
         
     def test_list_items(self):
         assert self.backend.list_items() == pages
+        #assert self.backend.list_items({'format': 'wiki'}) == [names[1]]
     
     def test_has_item(self):
-        """
-        TODO: Test metadata.
-        """
         assert self.backend.has_item(pages[0])
         assert not self.backend.has_item("ad")
         assert not self.backend.has_item("")
     
     def test_create_and_remove_item(self):
-        py.test.raises(StorageError, self.backend.create_item, "Test")
+        py.test.raises(BackendError, self.backend.create_item, "Test")
         self.backend.create_item("Yeah")
         assert os.path.isdir(os.path.join(page_dir, "Yeah"))
         assert os.path.isdir(os.path.join(page_dir, "Yeah", "cache"))
@@ -111,47 +118,62 @@ class TestPageBackend():
         assert os.path.isfile(os.path.join(page_dir, "Yeah", "current"))
         assert os.path.isfile(os.path.join(page_dir, "Yeah", "edit-log"))
         
-        py.test.raises(StorageError, self.backend.remove_item, "ADF")
+        py.test.raises(BackendError, self.backend.remove_item, "ADF")
         self.backend.remove_item("Yeah")
     
+    def test_current_revision(self):
+        assert self.backend.current_revision(pages[0]) == 1
+        assert self.backend.current_revision(pages[1]) == 2
+    
     def test_list_revisions(self):
-        assert self.backend.list_revisions(pages[0]) == [1]
-        assert self.backend.list_revisions(pages[1]) == [1, 2]
-        py.test.raises(StorageError, self.backend.list_revisions, "ADF")
+        assert self.backend.list_revisions(pages[0]) == [0, 1]
+        assert self.backend.list_revisions(pages[1]) == [0, 1, 2]
+        py.test.raises(BackendError, self.backend.list_revisions, "ADF")
+    
+    def test_has_revision(self):
+        assert self.backend.has_revision(pages[0], 0)
+        assert self.backend.has_revision(pages[0], 1)
+        assert not self.backend.has_revision(pages[0], 2)
+        assert self.backend.has_revision(pages[1], 0)
+        assert self.backend.has_revision(pages[1], 1)
+        assert self.backend.has_revision(pages[1], 2)
+        assert not self.backend.has_revision(pages[1], 3)
     
     def test_create_remove_revision(self):
         self.backend.create_revision(pages[0], 3)
         assert os.path.isfile(os.path.join(page_dir, pages[0], "revisions", "00000003"))
+        assert open(os.path.join(page_dir, pages[0], "current"), "r").read() == "00000003"
         self.backend.remove_revision(pages[0], 3)
+        assert open(os.path.join(page_dir, pages[0], "current"), "r").read() == "00000001"
         assert not os.path.isfile(os.path.join(page_dir, pages[0], "revisions", "00000003"))
         
-        py.test.raises(StorageError, self.backend.create_revision, pages[0], 1)
-        py.test.raises(StorageError, self.backend.create_revision, "ADF", 1)
+        py.test.raises(BackendError, self.backend.create_revision, pages[0], 1)
+        py.test.raises(BackendError, self.backend.create_revision, "ADF", 1)
         
-        py.test.raises(StorageError, self.backend.remove_revision, pages[0], 4)
-        py.test.raises(StorageError, self.backend.remove_revision, "ADF", 4)
+        py.test.raises(BackendError, self.backend.remove_revision, pages[0], 4)
+        py.test.raises(BackendError, self.backend.remove_revision, "ADF", 4)
     
     def test_get_data_backend(self):
         data = self.backend.get_data_backend(pages[0], 1)
         data.close()
-        py.test.raises(StorageError, self.backend.get_data_backend, "adsf", 2)
-        py.test.raises(StorageError, self.backend.get_data_backend, pages[0], 3)
+        py.test.raises(BackendError, self.backend.get_data_backend, "adsf", 2)
+        py.test.raises(BackendError, self.backend.get_data_backend, pages[0], 3)
         
     def test_get_metadata(self):
-        py.test.raises(StorageError, self.backend.get_metadata, "adsf", 2)
-        py.test.raises(StorageError, self.backend.get_metadata, pages[0], 3)
+        py.test.raises(BackendError, self.backend.get_metadata, "adsf", 2)
+        py.test.raises(BackendError, self.backend.get_metadata, pages[0], 3)
         assert self.backend.get_metadata(pages[1], 2) == {'format': 'wiki', 'acl':'MoinPagesEditorGroup:read,write,delete,revert All:read', 'language':'sv'}
     
     def test_set_metadata(self):
-        py.test.raises(StorageError, self.backend.set_metadata, "adsf", 2, {'asdf': '123' })
-        py.test.raises(StorageError, self.backend.set_metadata, pages[0], 3, {'asdf': '123' })
+        py.test.raises(BackendError, self.backend.set_metadata, "adsf", 2, {'asdf': '123' })
+        py.test.raises(BackendError, self.backend.set_metadata, pages[0], 3, {'asdf': '123' })
         self.backend.set_metadata(pages[1], 2, {'format': 'test'})
         assert self.backend.get_metadata(pages[1], 2) == {'format': 'test', 'acl':'MoinPagesEditorGroup:read,write,delete,revert All:read', 'language':'sv'}
         self.backend.set_metadata(pages[1], 2, {'format': 'wiki'})
     
     def test_remove_metadata(self):
-        py.test.raises(StorageError, self.backend.remove_metadata, "adsf", 2, ["adf"])
-        py.test.raises(StorageError, self.backend.remove_metadata, pages[0], 3, ["adf"])
+        py.test.raises(BackendError, self.backend.remove_metadata, "adsf", 2, ["adf"])
+        py.test.raises(BackendError, self.backend.remove_metadata, pages[0], 3, ["adf"])
         py.test.raises(KeyError, self.backend.remove_metadata, pages[0], 1, ["adf"])
         self.backend.remove_metadata(pages[1], 2, ['format'])
         assert self.backend.get_metadata(pages[1], 2) == {'acl':'MoinPagesEditorGroup:read,write,delete,revert All:read', 'language':'sv'}

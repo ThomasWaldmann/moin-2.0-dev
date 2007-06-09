@@ -35,9 +35,3 @@ class BackendError(StorageError):
     """
     pass
 
-class ConsistencyError(BackendError):
-    """
-    Raised if the action violates the consistency rules, e.g. when a second Item
-    with the same name will be created.
-    """
-    pass
