@@ -1,3 +1,4 @@
+syntax: regexp
 \{arch\}
 .*\.arch-ids/.*
 .*\.py[co]
@@ -8,4 +9,11 @@ wiki/underlay
 wiki/data/edit-log
 wiki/data/event-log
 wiki/data/cache
+wiki/data/user
+.settings
+.pydevproject
+.project
+.checkstyle
 
+syntax: glob
+*.pyc

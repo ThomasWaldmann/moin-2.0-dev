@@ -8,24 +8,20 @@
 
     The UserPreferences form support stuff is in module userform.
 
-    TODO:
-    * code is a mixture of highlevel user stuff and lowlevel storage functions,
-      this has to get separated into:
-      * user object highlevel stuff
-      * storage code
-
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
                 2003-2007 MoinMoin:ThomasWaldmann
+                2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
 """
 
 # add names here to hide them in the cgitb traceback
 unsafe_names = ("id", "key", "val", "user_data", "enc_password")
 
-import os, time, sha, codecs
+import time, sha, codecs
 
-from MoinMoin import config, caching, wikiutil, i18n
-from MoinMoin.util import timefuncs, filesys
+from MoinMoin import wikiutil, i18n
+from MoinMoin.util import timefuncs
+from MoinMoin.storage.external import ItemCollection
 
 
 def getUserList(request):
@@ -35,11 +31,8 @@ def getUserList(request):
     @rtype: list
     @return: all user IDs
     """
-    import re
-    user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
-    files = filesys.dclistdir(request.cfg.user_dir)
-    userlist = [f for f in files if user_re.match(f)]
-    return userlist
+    return ItemCollection(request.cfg.user_backend, request.user).keys()
+
 
 def get_by_email_address(request, email_address):
     """ Searches for a user with a particular e-mail address and returns it. """
@@ -47,46 +40,6 @@ def get_by_email_address(request, email_address):
         theuser = User(request, uid)
         if theuser.valid and theuser.email.lower() == email_address.lower():
             return theuser
-
-def _getUserIdByKey(request, key, search):
-    """ Get the user ID for a specified key/value pair.
-
-    This method must only be called for keys that are
-    guaranteed to be unique.
-
-    @param key: the key to look in
-    @param search: the value to look for
-    @return the corresponding user ID or None
-    """
-    if not search or not key:
-        return None
-    cfg = request.cfg
-    cachekey = '%s2id' % key
-    try:
-        _key2id = getattr(cfg.cache, cachekey)
-    except AttributeError:
-        arena = 'user'
-        cache = caching.CacheEntry(request, arena, cachekey, scope='wiki', use_pickle=True)
-        try:
-            _key2id = cache.content()
-        except caching.CacheError:
-            _key2id = {}
-        setattr(cfg.cache, cachekey, _key2id)
-    uid = _key2id.get(search, None)
-    if uid is None:
-        for userid in getUserList(request):
-            u = User(request, id=userid)
-            if hasattr(u, key):
-                value = getattr(u, key)
-                _key2id[value] = userid
-        arena = 'user'
-        cache = caching.CacheEntry(request, arena, cachekey, scope='wiki', use_pickle=True)
-        try:
-            cache.update(_key2id)
-        except caching.CacheError:
-            pass
-        uid = _key2id.get(search, None)
-    return uid
 
 
 def getUserId(request, searchName):
@@ -96,7 +49,10 @@ def getUserId(request, searchName):
     @rtype: string
     @return: the corresponding user ID or None
     """
-    return _getUserIdByKey(request, 'name', searchName)
+    try:
+        return ItemCollection(request.cfg.user_backend, request.user).keys({'name': searchName})[0]
+    except IndexError:
+        return None
 
 
 def getUserIdentification(request, username=None):
@@ -179,74 +135,6 @@ def isValidName(request, name):
     return (name == normalized) and not wikiutil.isGroupPage(request, name)
 
 
-def encodeList(items):
-    """ Encode list of items in user data file
-
-    Items are separated by '\t' characters.
-    
-    @param items: list unicode strings
-    @rtype: unicode
-    @return: list encoded as unicode
-    """
-    line = []
-    for item in items:
-        item = item.strip()
-        if not item:
-            continue
-        line.append(item)
-
-    line = '\t'.join(line)
-    return line
-
-def decodeList(line):
-    """ Decode list of items from user data file
-    
-    @param line: line containing list of items, encoded with encodeList
-    @rtype: list of unicode strings
-    @return: list of items in encoded in line
-    """
-    items = []
-    for item in line.split('\t'):
-        item = item.strip()
-        if not item:
-            continue
-        items.append(item)
-    return items
-
-def encodeDict(items):
-    """ Encode dict of items in user data file
-
-    Items are separated by '\t' characters.
-    Each item is key:value.
-    
-    @param items: dict of unicode:unicode
-    @rtype: unicode
-    @return: dict encoded as unicode
-    """
-    line = []
-    for key, value in items.items():
-        item = u'%s:%s' % (key, value)
-        line.append(item)
-    line = '\t'.join(line)
-    return line
-
-def decodeDict(line):
-    """ Decode dict of key:value pairs from user data file
-    
-    @param line: line containing a dict, encoded with encodeDict
-    @rtype: dict
-    @return: dict  unicode:unicode items
-    """
-    items = {}
-    for item in line.split('\t'):
-        item = item.strip()
-        if not item:
-            continue        
-        key, value = item.split(':', 1)
-        items[key] = value
-    return items
-
-
 class User:
     """ A MoinMoin User """
 
@@ -268,6 +156,10 @@ class User:
                                changed by UserPreferences form, default: ().
                                First tuple element was used for authentication.
         """
+        
+        self._item_collection = ItemCollection(request.cfg.user_backend, None)
+        self._user = None
+        
         self._cfg = request.cfg
         self.valid = 0
         self.id = id
@@ -363,21 +255,13 @@ class User:
             if not self.valid and not self.disabled or changed: # do we need to save/update?
                 self.save() # yes, create/update user profile
 
-    def __filename(self):
-        """ Get filename of the user's file on disk
-        
-        @rtype: string
-        @return: full path and filename of user account file
-        """
-        return os.path.join(self._cfg.user_dir, self.id or "...NONE...")
-
     def exists(self):
         """ Do we have a user account for this user?
         
         @rtype: bool
         @return: true, if we have a user account
         """
-        return os.path.exists(self.__filename())
+        return self.id in self._item_collection
 
     def load_from_id(self, check_pass=0):
         """ Load user account data from disk.
@@ -393,30 +277,9 @@ class User:
         if not self.exists():
             return
 
-        data = codecs.open(self.__filename(), "r", config.charset).readlines()
-        user_data = {'enc_password': ''}
-        for line in data:
-            if line[0] == '#':
-                continue
-
-            try:
-                key, val = line.strip().split('=', 1)
-                if key not in self._cfg.user_transient_fields and key[0] != '_':
-                    # Decode list values
-                    if key.endswith('[]'):
-                        key = key[:-2]
-                        val = decodeList(val)
-                    # Decode dict values
-                    elif key.endswith('{}'):
-                        key = key[:-2]
-                        val = decodeDict(val)
-                    # for compatibility reading old files, keep these explicit
-                    # we will store them with [] appended
-                    elif key in ['quicklinks', 'subscribed_pages']:
-                        val = decodeList(val)
-                    user_data[key] = val
-            except ValueError:
-                pass
+        self._user = self._item_collection[self.id]
+        
+        user_data = self._user.metadata
 
         # Validate data from user file. In case we need to change some
         # values, we set 'changed' flag, and later save the user data.
@@ -549,41 +412,26 @@ class User:
                     if key not in self._cfg.user_transient_fields and key[0] != '_']
 
     def save(self):
-        """ Save user account data to user account file on disk.
+        """
+        Save user account data to user account file on disk.
 
         This saves all member variables, except "id" and "valid" and
         those starting with an underscore.
         """
-        if not self.id:
-            return
-
-        user_dir = self._cfg.user_dir
-        if not os.path.exists(user_dir):
-            os.makedirs(user_dir)
+        if not self.exists():
+            self._user = self._item_collection.new_item(self.id)
+               
+        for key in self._user.metadata:
+            del self._user.metadata[key]
 
         self.last_saved = str(time.time())
 
-        # !!! should write to a temp file here to avoid race conditions,
-        # or even better, use locking
-
-        data = codecs.open(self.__filename(), "w", config.charset)
-        data.write("# Data saved '%s' for id '%s'\n" % (
-            time.strftime(self._cfg.datetime_fmt, time.localtime(time.time())),
-            self.id))
         attrs = self.persistent_items()
         attrs.sort()
         for key, value in attrs:
-            # Encode list values
-            if isinstance(value, list):
-                key += '[]'
-                value = encodeList(value)
-            # Encode dict values
-            elif isinstance(value, dict):
-                key += '{}'
-                value = encodeDict(value)
-            line = u"%s=%s\n" % (key, unicode(value))
-            data.write(line)
-        data.close()
+            self._user.metadata[key] = value
+        
+        self._user.metadata.save()
 
         if not self.disabled:
             self.valid = 1
