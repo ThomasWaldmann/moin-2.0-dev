@@ -34,7 +34,7 @@ class TestUserBackend():
          py.test.raises(NotImplementedError, self.backend.remove_revision, names[0], 2)
     
     def test_get_data_backend(self):
-         py.test.raises(NotImplementedError, self.backend.get_data_backend, names[0], 1, "a")
+         py.test.raises(NotImplementedError, self.backend.get_data_backend, names[0], 1)
     
     def test_list_items(self):
         assert self.backend.list_items() == names
@@ -132,9 +132,10 @@ class TestPageBackend():
         py.test.raises(StorageError, self.backend.remove_revision, "ADF", 4)
     
     def test_get_data_backend(self):
-        self.backend.get_data_backend(pages[0], 1, "r")
-        py.test.raises(StorageError, self.backend.get_data_backend, "adsf", 2, "r")
-        py.test.raises(StorageError, self.backend.get_data_backend, pages[0], 3, "r")
+        data = self.backend.get_data_backend(pages[0], 1)
+        data.close()
+        py.test.raises(StorageError, self.backend.get_data_backend, "adsf", 2)
+        py.test.raises(StorageError, self.backend.get_data_backend, pages[0], 3)
         
     def test_get_metadata(self):
         py.test.raises(StorageError, self.backend.get_metadata, "adsf", 2)

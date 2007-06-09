@@ -9,7 +9,6 @@
 
 
 import codecs
-import logging
 import os
 import re
 import shutil
@@ -124,7 +123,7 @@ class UserStorage(AbstractStorage):
         """
         try:
             os.remove(os.path.join(self.path, name))
-        except:
+        except OSError:
             raise StorageError("Item '%s' does not exist" % name)
         
     def list_revisions(self, name):
@@ -226,7 +225,7 @@ class PageStorage(AbstractStorage):
         """
         try:
             shutil.rmtree(os.path.join(self.path, name))
-        except:
+        except OSError:
             raise StorageError("Item '%s' does not exist" % name)
 
     def list_revisions(self, name):
@@ -237,8 +236,9 @@ class PageStorage(AbstractStorage):
         """
         try:
             revs = os.listdir(os.path.join(self.path, name, "revisions"))
+            revs = [rev for rev in revs if rev[-3:] != "tmp"]
             return map(lambda rev: int(rev), revs)
-        except:
+        except OSError:
             raise StorageError("Item '%s' does not exist" % name)
     
     def create_revision(self, name, revno):
@@ -253,7 +253,7 @@ class PageStorage(AbstractStorage):
         """
         try:
             os.remove(os.path.join(self.path, name, "revisions", get_rev_string(revno)))
-        except:
+        except OSError:
             raise StorageError("Item '%s' does not exist" % name)
     
     def _parse_metadata(self, name, revno):
@@ -311,11 +311,11 @@ class PageStorage(AbstractStorage):
         data_file.writelines(new_data)
         data_file.close()
         
-    def get_data_backend(self, name, revno, mode):
+    def get_data_backend(self, name, revno):
         """
         @see MoinMoin.interfaces.StorageBackend.get_data_backend
         """
-        return PageData(self.path, name, revno, mode)
+        return PageData(self.path, name, revno)
     
     
 class PageData(DataBackend):
@@ -323,44 +323,57 @@ class PageData(DataBackend):
     This class implements a File like object for MoinMoin 1.6 Page stuff.
     """
     
-    def __init__(self, path, name, revno, mode):
+    def __init__(self, path, name, revno):
         """
         Init stuff and open the file.
-        """        
+        """
+        self.read_file_name = os.path.join(path, name, "revisions", get_rev_string(revno))
+        self.write_file_name = os.path.join(path, name, "revisions", get_rev_string(revno) + ".tmp")
+        
+        self.changed = False
+        
         try:
-            self.fd = codecs.open(os.path.join(path, name, "revisions", get_rev_string(revno)), mode, config.charset)
-        except:
-            raise StorageError("Item '%s' or revision '%s' does not exist." % (name, str(revno)))
+            self.read_file = codecs.open(self.read_file_name, "r", config.charset)
+            self.write_file = codecs.open(self.write_file_name, "w", config.charset)
+        except IOError:
+            raise StorageError("Item '%s' or revision '%s' does not exist." % (name, revno))
     
     def read(self, size=None):
         """
         @see MoinMoin.interfaces.DataBackend.read
         """
-        return self.fd.read(size)
+        return self.read_file.read(size)
 
     def seek(self, offset):
         """
         @see MoinMoin.interfaces.DataBackend.seek
         """
-        self.fd.seek(offset)
+        self.read_file.seek(offset)
 
     def tell(self):
         """
         @see MoinMoin.interfaces.DataBackend.tell
         """
-        return self.fd.tell()
+        return self.read_file.tell()
 
     def write(self, data):
         """
         @see MoinMoin.interfaces.DataBackend.write
         """
-        self.fd.write(data)
-
+        self.write_file.write(data)
+        self.changed = True
+    
     def close(self):
         """
         @see MoinMoin.interfaces.DataBackend.close
         """
-        self.fd.close()
+        self.write_file.close()
+        self.read_file.close()
+        
+        if self.changed is True:
+            shutil.move(self.write_file_name, self.read_file_name)
+        else:
+            os.remove(self.write_file_name)
     
 
 def encode_list(items):
@@ -453,7 +466,7 @@ def create_file(*path):
         try:
             file_descriptor = open(real_path, "w")
             file_descriptor.close()
-        except:
+        except IOError:
             raise StorageError("Could not create %s." % real_path)
     else:
         raise StorageError("Path %s already exists" % real_path)
