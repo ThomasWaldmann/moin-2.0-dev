@@ -34,4 +34,3 @@ class BackendError(StorageError):
     Raised if the backend couldn't commit the action.
     """
     pass
-
