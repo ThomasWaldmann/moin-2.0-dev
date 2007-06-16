@@ -136,7 +136,7 @@ class UserStorage(AbstractStorage):
         try:
             os.remove(os.path.join(self.path, name))
         except OSError, err:
-            _handle_error(self, err, name, message = "Failed to remove item %r.")
+            _handle_error(self, err, name, message="Failed to remove item %r.")
         
     def list_revisions(self, name):
         """
@@ -165,7 +165,7 @@ class UserStorage(AbstractStorage):
         try:
             data = codecs.open(os.path.join(self.path, name), "r", config.charset).readlines()
         except IOError, err:
-            _handle_error(self, err, name, revno, message = "Failed to parse metadata for item %r with revision %r." % (name, revno))
+            _handle_error(self, err, name, revno, message="Failed to parse metadata for item %r with revision %r." % (name, revno))
             
         user_data = {}
         for line in data:
@@ -193,9 +193,9 @@ class UserStorage(AbstractStorage):
         @see MoinMoin.fs_moin16.AbstractStorage._save_metadata
         """
         try:
-            data = codecs.open(os.path.join(self.path, name), "w", config.charset)
+            data_file = codecs.open(os.path.join(self.path, name), "w", config.charset)
         except IOError, err:
-            _handle_error(self, err, name, revno, message = "Failed to save metadata for item %r with revision %r." % (name, revno))
+            _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
             
         for key, value in metadata.iteritems():
             # Encode list values
@@ -207,8 +207,8 @@ class UserStorage(AbstractStorage):
                 key += '{}'
                 value = encode_dict(value)
             line = u"%s=%s\n" % (key, unicode(value))
-            data.write(line)
-        data.close()
+            data_file.write(line)
+        data_file.close()
 
 
 class PageStorage(AbstractStorage):
@@ -254,7 +254,7 @@ class PageStorage(AbstractStorage):
         try:
             shutil.rmtree(os.path.join(self.path, name))
         except OSError, err: 
-            _handle_error(self, err, name, message = "Failed to remove item %r." % name)
+            _handle_error(self, err, name, message="Failed to remove item %r." % name)
 
     def list_revisions(self, name):
         """
@@ -267,25 +267,28 @@ class PageStorage(AbstractStorage):
             revs.insert(0, "0")
             return [int(rev) for rev in revs if not rev.endswith(".tmp")]
         except OSError, err:
-            _handle_error(self, err, name, message = "Failed to list revisions for item %r." % name)
+            _handle_error(self, err, name, message="Failed to list revisions for item %r." % name)
     
     def current_revision(self, name):
         """
         @see MoinMoin.interfaces.StorageBackend.current_revision
         """
         try:
-            data = open(os.path.join(self.path, name, "current"), "r")
-            rev = data.read()
-            data.close()
+            data_file = file(os.path.join(self.path, name, "current"), "r")
+            rev = data_file.read()
+            data_file.close()
             return int(rev)
         except IOError, err:
-            _handle_error(self, err, name, message = "Failed to get current revision for item %r." % name)
+            _handle_error(self, err, name, message="Failed to get current revision for item %r." % name)
     
     def has_revision(self, name, revno):
         """
         @see MoinMoin.interfaces.StorageBackend.has_revision
         """
-        return revno in self.list_revisions(name)
+        if revno == 0:
+            revno = self.current_revision(name)
+            
+        return os.path.isfile(os.path.join(self.path, name, "revisions", get_rev_string(revno)))
     
     def create_revision(self, name, revno):
         """
@@ -298,7 +301,7 @@ class PageStorage(AbstractStorage):
             create_file(self.path, name, "revisions", get_rev_string(revno))
             self._update_current(name)
         except IOError, err:
-            _handle_error(self, err, name, revno, message = "Failed to create revision for item %r with revision %r."  % (name, revno))
+            _handle_error(self, err, name, revno, message="Failed to create revision for item %r with revision %r."  % (name, revno))
 
     def remove_revision(self, name, revno):
         """
@@ -311,18 +314,18 @@ class PageStorage(AbstractStorage):
             os.remove(os.path.join(self.path, name, "revisions", get_rev_string(revno)))
             self._update_current(name)
         except OSError, err:
-            _handle_error(self, err, name, revno, message = "Failed to remove revision %r for item %r." % (revno, name))
+            _handle_error(self, err, name, revno, message="Failed to remove revision %r for item %r." % (revno, name))
     
     def _update_current(self, name):
         """
         Update the current file.
         """
         try:
-            data = open(os.path.join(self.path, name, "current"), "w")
-            data.write(get_rev_string(self.list_revisions(name)[-1]) + "\n")
-            data.close()
+            data_file = file(os.path.join(self.path, name, "current"), "w")
+            data_file.write(get_rev_string(self.list_revisions(name)[-1]) + "\n")
+            data_file.close()
         except IOError, err:
-            _handle_error(self, err, name, message = "Failed to set current revision for item %r." % name)
+            _handle_error(self, err, name, message="Failed to set current revision for item %r." % name)
     
     def _parse_metadata(self, name, revno):
         """
@@ -331,7 +334,7 @@ class PageStorage(AbstractStorage):
         try:
             data_file = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", config.charset)
         except IOError, err:
-            _handle_error(self, err, name, revno, message = "Failed to parse metadata for item %r with revision %r." % (name, revno))
+            _handle_error(self, err, name, revno, message="Failed to parse metadata for item %r with revision %r." % (name, revno))
         
         metadata = {}
         
@@ -360,7 +363,7 @@ class PageStorage(AbstractStorage):
         try:
             data = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", config.charset).readlines()
         except IOError, err:
-            _handle_error(self, err, name, revno, message = "Failed to save metadata for item %r with revision %r." % (name, revno))
+            _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
         
         # remove metadata
         new_data = [line for line in data if not line.startswith('#') and not line == '#' and not line == '##']
@@ -373,7 +376,7 @@ class PageStorage(AbstractStorage):
         try:
             data_file = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "w", config.charset)
         except IOError, err:
-            _handle_error(self, err, name, revno, message = "Failed to save metadata for item %r with revision %r." % (name, revno))
+            _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
         
         data_file.writelines(new_data)
         data_file.close()
@@ -389,7 +392,7 @@ class PageStorage(AbstractStorage):
             return PageData(self.path, name, revno)
         else:
             if not self.has_item(name):
-                raise ItemNotExistsError("Item %r does not exist." % (name, revno))
+                raise ItemNotExistsError("Item %r does not exist." % name)
             else:
                 raise RevisionNotExistsError("Revision %r of item %r does not exist." % (revno, name))
     
@@ -551,8 +554,7 @@ def create_file(*path):
     real_path = os.path.join(*path)
     
     if not os.path.exists(real_path):
-        file_descriptor = open(real_path, "w")
-        file_descriptor.close()
+        file(real_path, "w").close()
     else:
         raise BackendError("Path %r already exists." % real_path)
 
