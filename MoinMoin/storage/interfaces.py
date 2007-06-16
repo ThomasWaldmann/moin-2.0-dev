@@ -42,8 +42,7 @@ class StorageBackend(object):
         """
         Removes (nukes) an item.
         """
-        raise NotImplementedError
-    
+        raise NotImplementedError    
 
     def list_revisions(self, name):
         """
@@ -146,4 +145,3 @@ class DataBackend(object):
         Close the stream.
         """
         raise NotImplementedError
-    
