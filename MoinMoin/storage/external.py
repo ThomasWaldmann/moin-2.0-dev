@@ -7,6 +7,7 @@
 
 import UserDict
 
+from MoinMoin.storage.error import ItemNotExistsError, RevisionNotExistsError
 
 class ItemCollection(UserDict.DictMixin, object):
     """
@@ -27,16 +28,16 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Checks if an Item exists.
         """
-        return name in self.items
+        return self.backend.has_item(name)
 
     def __getitem__(self, name):
         """
         Loads an Item.
         """
-        if name in self.items:
+        if self.backend.has_item(name):
             return Item(name, self.backend, self.userobj)
         else:
-            raise KeyError("No such item '%s'" % name)
+            raise ItemNotExistsError("No such item %r." % name)
 
     def __delitem__(self, name):
         """
@@ -51,7 +52,10 @@ class ItemCollection(UserDict.DictMixin, object):
         filtering stuff which is described more detailed in
         StorageBackend.list_items(...).
         """
-        return self.backend.list_items(filters)
+        if filters is None:
+            return self.items
+        else:
+            return self.backend.list_items(filters)
 
     def new_item(self, name):
         """
@@ -93,33 +97,38 @@ class Item(UserDict.DictMixin, object):
         
         self.__revisions = None
         self.__current = None
+        self.__revision_objects = dict()
     
     def __contains__(self, revno):
         """
         Checks if a Revision with the given revision-number exists.
         """
-        return revno in self.revisions
+        return self.backend.has_revision(self.name, revno)
 
     def __getitem__(self, revno):
         """
         Returns the revision specified by a revision-number (LazyLoaded). 
         """
-        if not self.revisions[revno]:
-            self.revisions[revno] = Revision(revno, self)
-        return self.revisions[revno]
+        if not self.__revision_objects.has_key(revno):
+            if self.backend.has_revision(self.name, revno):
+                self.__revision_objects[revno] = Revision(revno, self)
+            else:
+                raise RevisionNotExistsError("Revision %r of item %r does not exist." % (revno, self.name))
+        return self.__revision_objects[revno]
 
     def __delitem__(self, revno):
         """
         Deletes the Revision specified by the given revision-number.
         """
         self.backend.remove_revision(self.name, revno)
-        self.__revisions = None
+        if self.__revision_objects.has_key(revno):
+            del self.__revision_objects[revno]
 
     def keys(self):
         """
         Returns a sorted (highest first) list of all real revision-numbers.
         """
-        return self.revisions.keys()
+        return self.revisions
 
     def new_revision(self, revno=0):
         """
@@ -144,10 +153,7 @@ class Item(UserDict.DictMixin, object):
         Lazy load the revisions.
         """
         if self.__revisions is None:
-            self.__revisions = {}
-            revs = self.backend.list_revisions(self.name)
-            for revno in revs:
-                self.__revisions[revno] = None
+            self.__revisions = self.backend.list_revisions(self.name)
         return self.__revisions
     
     revisions = property(get_revisions)

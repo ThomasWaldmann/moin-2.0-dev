@@ -34,3 +34,13 @@ class BackendError(StorageError):
     Raised if the backend couldn't commit the action.
     """
     pass
+
+class ItemNotExistsError(BackendError):
+    """
+    Raised if the requested item does not exist.
+    """
+
+class RevisionNotExistsError(BackendError):
+    """
+    Raised if the requested revision of an item does not exist.
+    """            

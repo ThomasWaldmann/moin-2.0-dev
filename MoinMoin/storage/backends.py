@@ -20,7 +20,7 @@ class MetaBackend(StorageBackend):
         Initialize the namespaces.
         """
         self.backends = backends
-
+        
     def has_item(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_has_item
@@ -112,17 +112,18 @@ class NamespaceBackend(MetaBackend):
         """
         Make sure all keys end with / and don't start with / for easier handling.
         """
-        MetaBackend.__init__(self, backends)
-        if not "/" in self.backends: 
+        if not "/" in backends: 
             raise BackendError("Root ('/') backend is missing from configuration.")
+        
         new_backends = dict()
-        for namespace, backend in self.backends.iteritems():
+        for namespace, backend in backends.iteritems():
             if not namespace.endswith("/"):
                 namespace += "/"
             if namespace.startswith("/"):
                 namespace = namespace[1:]
             new_backends[namespace] = backend
-        self.backends = new_backends
+            
+        MetaBackend.__init__(self, new_backends)
     
     def list_items(self, filters=None):
         """ 
@@ -130,7 +131,7 @@ class NamespaceBackend(MetaBackend):
         """
         items = []
         for namespace, backend in self.backends.iteritems():
-            items.extend([namespace + item for item in backend.list_items(filters)])
+            items.extend([namespace + item for item in backend.list_items(filters) if item not in items])
         return items
     
     def _get_backend(self, name):
@@ -142,23 +143,17 @@ class NamespaceBackend(MetaBackend):
         keys.reverse()
         for namespace in keys:
             if name.startswith(namespace):
-                return namespace, self.backends[namespace]
-        return None
+                name = name.replace(namespace, "", 1)
+                return name, self.backends[namespace]
+        raise BackendError("No such item '%r'." % name)
     
-    def _call(self, method, *args):
+    def _call(self, method, name, *args):
         """
         Call the method from the first matching backend with the given parameters.
         """
-        namespace, backend = self._get_backend(args[0])
+        name, backend = self._get_backend(name)
         
-        # fix the name to query
-        args = list(args)
-        args[0] = args[0].replace(namespace, "", 1)
-        
-        if backend is not None:
-            return getattr(backend, method)(*args)
-        else:
-            raise BackendError("No such item '%s'" % args[0])
+        return getattr(backend, method)(name, *args)
 
 
 class LayerBackend(MetaBackend):
@@ -194,4 +189,4 @@ class LayerBackend(MetaBackend):
                 return getattr(backend, method)(*args)
             except BackendError:
                 pass
-        raise BackendError("No such item '%s'" % args[0])
+        raise BackendError("No such item '%r'." % args[0])
