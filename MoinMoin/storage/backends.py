@@ -145,7 +145,7 @@ class NamespaceBackend(MetaBackend):
             if name.startswith(namespace):
                 name = name.replace(namespace, "", 1)
                 return name, self.backends[namespace]
-        raise BackendError("No such item '%r'." % name)
+        raise BackendError("No such item %r." % name)
     
     def _call(self, method, name, *args):
         """
@@ -189,4 +189,4 @@ class LayerBackend(MetaBackend):
                 return getattr(backend, method)(*args)
             except BackendError:
                 pass
-        raise BackendError("No such item '%r'." % args[0])
+        raise BackendError("No such item %r." % args[0])
