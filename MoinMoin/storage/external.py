@@ -109,20 +109,24 @@ class Item(UserDict.DictMixin, object):
         """
         Returns the revision specified by a revision-number (LazyLoaded). 
         """
-        if not self.__revision_objects.has_key(revno):
+        try:
+            return self.__revision_objects[revno]
+        except KeyError:
             if self.backend.has_revision(self.name, revno):
                 self.__revision_objects[revno] = Revision(revno, self)
+                return self.__revision_objects[revno]
             else:
                 raise RevisionNotExistsError("Revision %r of item %r does not exist." % (revno, self.name))
-        return self.__revision_objects[revno]
 
     def __delitem__(self, revno):
         """
         Deletes the Revision specified by the given revision-number.
         """
         self.backend.remove_revision(self.name, revno)
-        if self.__revision_objects.has_key(revno):
+        try:
             del self.__revision_objects[revno]
+        except KeyError:
+            pass
 
     def keys(self):
         """
