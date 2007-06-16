@@ -13,6 +13,7 @@ from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.backends import LayerBackend, NamespaceBackend
 from MoinMoin.storage.error import BackendError
 
+
 class TestLayerBackend():
     """
     This class Tests the layer backend. It only tests the basic three methods,
@@ -38,7 +39,6 @@ class TestLayerBackend():
     
     def test_remove_item(self):
         py.test.raises(BackendError, self.backend.remove_item, "asdf")
-        
     
 
 class TestNamespaceBackend():
@@ -70,4 +70,3 @@ class TestNamespaceBackend():
     
     def test_remove_item(self):
         py.test.raises(BackendError, self.backend.remove_item, "asdf")
-        
