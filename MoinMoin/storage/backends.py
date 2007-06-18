@@ -132,6 +132,7 @@ class NamespaceBackend(MetaBackend):
         items = []
         for namespace, backend in self.backends.iteritems():
             items.extend([namespace + item for item in backend.list_items(filters) if item not in items])
+        items.sort()
         return items
 
     def _get_backend(self, name):
@@ -169,6 +170,7 @@ class LayerBackend(MetaBackend):
         items = []
         for backend in self.backends:
             items.extend(backend.list_items(filters))
+        items.sort()
         return items
 
     def has_item(self, name):

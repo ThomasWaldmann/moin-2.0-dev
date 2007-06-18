@@ -36,7 +36,7 @@ class TestItemCollection:
         assert not("asdf" in self.item_collection)
 
     def test_keys(self):
-        assert set(self.item_collection.keys()) == set(names)
+        assert self.item_collection.keys() == names
         assert self.item_collection.keys({'name': 'HeinrichWendel'}) == [names[0]]
 
     def test_get_item(self):
@@ -80,7 +80,7 @@ class TestItem:
         py.test.raises(NoSuchRevisionError, lambda: self.item[5])
 
     def test_keys(self):
-        assert set(self.item.keys()) == set([0, 1])
+        assert self.item.keys() == [1, 0]
 
     def test_del_add_revision(self):
         self.item.new_revision()
