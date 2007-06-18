@@ -5,7 +5,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-class StorageError(Exception):
+from MoinMoin.error import CompositeError
+
+
+class StorageError(CompositeError):
     """
     General class for exceptions on the storage layer.
     """
@@ -35,12 +38,12 @@ class BackendError(StorageError):
     """
     pass
 
-class ItemNotExistsError(BackendError):
+class NoSuchItemError(BackendError):
     """
     Raised if the requested item does not exist.
     """
 
-class RevisionNotExistsError(BackendError):
+class NoSuchRevisionError(BackendError):
     """
     Raised if the requested revision of an item does not exist.
     """

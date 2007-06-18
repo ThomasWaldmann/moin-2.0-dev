@@ -6,7 +6,7 @@
 """
 
 from MoinMoin.storage.interfaces import StorageBackend
-from MoinMoin.storage.error import BackendError
+from MoinMoin.storage.error import BackendError, NoSuchItemError
 
 
 class MetaBackend(StorageBackend):
@@ -145,7 +145,7 @@ class NamespaceBackend(MetaBackend):
             if name.startswith(namespace):
                 name = name.replace(namespace, "", 1)
                 return name, self.backends[namespace]
-        raise BackendError("No such item %r." % name)
+        raise NoSuchItemError("No such item %r." % name)
 
     def _call(self, method, name, *args):
         """
@@ -187,7 +187,7 @@ class LayerBackend(MetaBackend):
         for backend in self.backends:
             try:
                 return getattr(backend, method)(*args)
-            except BackendError:
+            except NoSuchItemError:
                 pass
-        raise BackendError("No such item %r." % args[0])
+        raise NoSuchItemError("No such item %r." % args[0])
 

@@ -7,7 +7,7 @@
 
 import UserDict
 
-from MoinMoin.storage.error import ItemNotExistsError, RevisionNotExistsError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 class ItemCollection(UserDict.DictMixin, object):
     """
@@ -37,7 +37,7 @@ class ItemCollection(UserDict.DictMixin, object):
         if self.backend.has_item(name):
             return Item(name, self.backend, self.userobj)
         else:
-            raise ItemNotExistsError("No such item %r." % name)
+            raise NoSuchItemError("No such item %r." % name)
 
     def __delitem__(self, name):
         """
@@ -116,7 +116,7 @@ class Item(UserDict.DictMixin, object):
                 self.__revision_objects[revno] = Revision(revno, self)
                 return self.__revision_objects[revno]
             else:
-                raise RevisionNotExistsError("Revision %r of item %r does not exist." % (revno, self.name))
+                raise NoSuchRevisionError("Revision %r of item %r does not exist." % (revno, self.name))
 
     def __delitem__(self, revno):
         """

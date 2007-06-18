@@ -11,7 +11,7 @@ from common import user_dir, names, metadata, DummyConfig, page_dir, pages
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata
-from MoinMoin.storage.error import BackendError, RevisionNotExistsError, ItemNotExistsError
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.interfaces import DataBackend
 
 
@@ -37,7 +37,7 @@ class TestItemCollection:
         item = self.item_collection[names[0]]
         assert isinstance(item, Item)
         assert item.name == names[0]
-        py.test.raises(ItemNotExistsError, lambda: self.item_collection["test"])
+        py.test.raises(NoSuchItemError, lambda: self.item_collection["test"])
 
     def test_new_delete_item(self):
         item = self.item_collection.new_item("1180424618.59.18120")
@@ -71,7 +71,7 @@ class TestItem:
         revision = self.item[0]
         assert isinstance(revision, Revision)
         assert revision.revno == 0
-        py.test.raises(RevisionNotExistsError, lambda: self.item[5])
+        py.test.raises(NoSuchRevisionError, lambda: self.item[5])
 
     def test_keys(self):
         assert self.item.keys() == [0, 1]
@@ -85,7 +85,7 @@ class TestItem:
         del self.item[4]
         assert not 2 in self.item
         assert not 4 in self.item
-        py.test.raises(RevisionNotExistsError, lambda: self.item[5])
+        py.test.raises(NoSuchRevisionError, lambda: self.item[5])
         py.test.raises(BackendError, self.item.new_revision, 1)
 
 
