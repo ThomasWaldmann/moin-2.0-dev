@@ -17,7 +17,7 @@ import shutil
 from MoinMoin import config
 from MoinMoin.util import filesys
 from MoinMoin.storage.interfaces import DataBackend, StorageBackend
-from MoinMoin.storage.error import BackendError, ItemNotExistsError, RevisionNotExistsError
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
@@ -391,9 +391,9 @@ class PageStorage(AbstractStorage):
             return PageData(self.path, name, revno)
         else:
             if not self.has_item(name):
-                raise ItemNotExistsError("Item %r does not exist." % name)
+                raise NoSuchItemError("Item %r does not exist." % name)
             else:
-                raise RevisionNotExistsError("Revision %r of item %r does not exist." % (revno, name))
+                raise NoSuchRevisionError("Revision %r of item %r does not exist." % (revno, name))
 
 class PageData(DataBackend):
     """
@@ -564,8 +564,8 @@ def _handle_error(backend, err, name, revno=None, message=""):
     """
     if err.errno == errno.ENOENT:
         if not backend.has_item(name):
-            raise ItemNotExistsError("Item %r does not exist." % name)
+            raise NoSuchItemError("Item %r does not exist." % name)
         elif revno is not None and not backend.has_revision(name, revno):
-            raise RevisionNotExistsError("Revision %r of item %r does not exist." % (revno, name))
-    raise BackendError(message + err)
+            raise NoSuchRevisionError("Revision %r of item %r does not exist." % (revno, name))
+    raise BackendError(message)
 

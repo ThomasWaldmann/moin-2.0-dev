@@ -11,7 +11,7 @@ from common import user_dir, page_dir, DummyConfig, pages, names
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.backends import LayerBackend, NamespaceBackend
-from MoinMoin.storage.error import BackendError
+from MoinMoin.storage.error import NoSuchItemError
 
 
 class TestLayerBackend:
@@ -38,7 +38,7 @@ class TestLayerBackend:
         assert not self.backend.has_item("")
 
     def test_remove_item(self):
-        py.test.raises(BackendError, self.backend.remove_item, "asdf")
+        py.test.raises(NoSuchItemError, self.backend.remove_item, "asdf")
 
 
 class TestNamespaceBackend:
@@ -69,5 +69,5 @@ class TestNamespaceBackend:
         assert not self.backend.has_item("")
 
     def test_remove_item(self):
-        py.test.raises(BackendError, self.backend.remove_item, "asdf")
+        py.test.raises(NoSuchItemError, self.backend.remove_item, "asdf")
 
