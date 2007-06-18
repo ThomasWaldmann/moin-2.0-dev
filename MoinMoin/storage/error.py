@@ -43,4 +43,5 @@ class ItemNotExistsError(BackendError):
 class RevisionNotExistsError(BackendError):
     """
     Raised if the requested revision of an item does not exist.
-    """            
+    """
+
