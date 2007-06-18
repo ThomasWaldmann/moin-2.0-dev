@@ -8,10 +8,17 @@
 import os
 import py.test
 
-from common import user_dir, page_dir, names, metadata, DummyConfig, pages
+from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
+
+
+def setup_module(module):
+    setup(module)
+
+def teardown_module(module):
+    teardown(module)
 
 
 class TestUserBackend:
@@ -19,7 +26,7 @@ class TestUserBackend:
     backend = None
 
     def setup_class(self):
-        self.backend = UserStorage(user_dir, DummyConfig())
+        self.backend = UserStorage(get_user_dir(), DummyConfig())
 
     def teardown_class(self):
         self.backend = None
@@ -94,7 +101,7 @@ class TestPageBackend:
     backend = None
 
     def setup_class(self):
-        self.backend = PageStorage(page_dir, DummyConfig())
+        self.backend = PageStorage(get_page_dir(), DummyConfig())
 
     def teardown_class(self):
         self.backend = None
@@ -111,15 +118,14 @@ class TestPageBackend:
     def test_create_and_remove_item(self):
         py.test.raises(BackendError, self.backend.create_item, "Test")
         self.backend.create_item("Yeah")
-        assert os.path.isdir(os.path.join(page_dir, "Yeah"))
-        assert os.path.isdir(os.path.join(page_dir, "Yeah", "cache"))
-        assert os.path.isdir(os.path.join(page_dir, "Yeah", "cache", "__lock__"))
-        assert os.path.isdir(os.path.join(page_dir, "Yeah", "revisions"))
-        assert os.path.isfile(os.path.join(page_dir, "Yeah", "current"))
-        assert os.path.isfile(os.path.join(page_dir, "Yeah", "edit-log"))
+        assert os.path.isdir(os.path.join(get_page_dir(), "Yeah"))
+        assert os.path.isdir(os.path.join(get_page_dir(), "Yeah", "cache"))
+        assert os.path.isdir(os.path.join(get_page_dir(), "Yeah", "cache", "__lock__"))
+        assert os.path.isdir(os.path.join(get_page_dir(), "Yeah", "revisions"))
+        assert os.path.isfile(os.path.join(get_page_dir(), "Yeah", "current"))
+        assert os.path.isfile(os.path.join(get_page_dir(), "Yeah", "edit-log"))
         py.test.raises(NoSuchItemError, self.backend.remove_item, "ADF")
         self.backend.remove_item("Yeah")
-        self.backend.remove_item("ADF")
 
     def test_current_revision(self):
         assert self.backend.current_revision(pages[0]) == 1
@@ -141,11 +147,11 @@ class TestPageBackend:
 
     def test_create_remove_revision(self):
         self.backend.create_revision(pages[0], 3)
-        assert os.path.isfile(os.path.join(page_dir, pages[0], "revisions", "00000003"))
-        assert open(os.path.join(page_dir, pages[0], "current"), "r").read() == "00000003\n"
+        assert os.path.isfile(os.path.join(get_page_dir(), pages[0], "revisions", "00000003"))
+        assert open(os.path.join(get_page_dir(), pages[0], "current"), "r").read() == "00000003\n"
         self.backend.remove_revision(pages[0], 3)
-        assert open(os.path.join(page_dir, pages[0], "current"), "r").read() == "00000001\n"
-        assert not os.path.isfile(os.path.join(page_dir, pages[0], "revisions", "00000003"))
+        assert open(os.path.join(get_page_dir(), pages[0], "current"), "r").read() == "00000001\n"
+        assert not os.path.isfile(os.path.join(get_page_dir(), pages[0], "revisions", "00000003"))
 
         py.test.raises(BackendError, self.backend.create_revision, pages[0], 1)
         py.test.raises(NoSuchItemError, self.backend.create_revision, "ADF", 1)

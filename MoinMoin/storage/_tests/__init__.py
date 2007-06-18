@@ -5,9 +5,13 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-user_dir = "data/user"
+import os
+import py
+import shutil
+import tarfile
+import tempfile
 
-page_dir = "data/pages"
+test_dir = None
 
 names = ["1180352194.13.59241", "1180424607.34.55818", "1180424618.59.18110", ]
 
@@ -44,6 +48,31 @@ metadata = {u'aliasname': u'',
             u'want_trivial': u'0',
             u'wikiname_add_spaces': u'0',
            }
+
+def setup(module):
+    """ 
+    Extract test data to tmp.
+    """
+    global test_dir
+    test_dir = tempfile.mkdtemp()
+    print os.path.join(str(py.magic.autopath().dirpath()), "data.tar")
+    tar_file = tarfile.open(os.path.join(str(py.magic.autopath().dirpath()), u"data.tar"))
+    tar_file.extractall(test_dir)
+    tar_file.close()
+
+def teardown(module):
+    """
+    Remove test data from tmp.
+    """
+    global test_dir
+    shutil.rmtree(test_dir)
+    test_dir = None
+    
+def get_user_dir():
+    return os.path.join(test_dir, "data/user")
+
+def get_page_dir():
+    return os.path.join(test_dir, "data/pages")
 
 class DummyConfig:
     user_storage = ""

@@ -1,5 +1,0 @@
-#acl MoinPagesEditorGroup:read,write,delete,revert All:read
-#language sv
-#format wiki
-
-This is a test Page. It has content and of course it must have some metadata and more then one revision.
