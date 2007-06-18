@@ -109,7 +109,7 @@ class UserStorage(AbstractStorage):
         """ 
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
-        files = [f for f in filesys.dclistdir(self.path)[:] if user_re.match(f)]
+        files = [f for f in os.listdir(self.path)[:] if user_re.match(f)]
 
         return super(UserStorage, self).list_items(files, filters)
 
@@ -219,7 +219,7 @@ class PageStorage(AbstractStorage):
         """ 
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
-        files = filesys.dclistdir(self.path)[:]
+        files = os.listdir(self.path)[:]
 
         return super(PageStorage, self).list_items(files, filters)
 
@@ -262,7 +262,7 @@ class PageStorage(AbstractStorage):
         Users have no revisions.
         """
         try:
-            revs = filesys.dclistdir(os.path.join(self.path, name, "revisions"))[:]
+            revs = os.listdir(os.path.join(self.path, name, "revisions"))[:]
             revs.insert(0, "0")
             return [int(rev) for rev in revs if not rev.endswith(".tmp")]
         except OSError, err:
