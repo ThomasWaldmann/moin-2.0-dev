@@ -40,6 +40,7 @@ class AbstractStorage(StorageBackend):
         """ 
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
+        items.sort()
         if filters is None:
             return items
         else:
@@ -143,7 +144,7 @@ class UserStorage(AbstractStorage):
         
         Users have no revisions.
         """
-        return [0, 1]
+        return [1, 0]
 
     def current_revision(self, name):
         """
@@ -264,7 +265,10 @@ class PageStorage(AbstractStorage):
         try:
             revs = os.listdir(os.path.join(self.path, name, "revisions"))[:]
             revs.insert(0, "0")
-            return [int(rev) for rev in revs if not rev.endswith(".tmp")]
+            revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
+            revs.sort()
+            revs.reverse()
+            return revs
         except OSError, err:
             _handle_error(self, err, name, message="Failed to list revisions for item %r." % name)
 
@@ -321,7 +325,7 @@ class PageStorage(AbstractStorage):
         """
         try:
             data_file = file(os.path.join(self.path, name, "current"), "w")
-            data_file.write(get_rev_string(self.list_revisions(name)[-1]) + "\n")
+            data_file.write(get_rev_string(self.list_revisions(name)[0]) + "\n")
             data_file.close()
         except IOError, err:
             _handle_error(self, err, name, message="Failed to set current revision for item %r." % name)

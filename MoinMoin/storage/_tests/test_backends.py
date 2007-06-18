@@ -36,7 +36,9 @@ class TestLayerBackend:
         self.backend = None
 
     def test_list_items(self):
-        assert set(self.backend.list_items()) == set(pages + names)
+        items = pages + names
+        items.sort()
+        assert self.backend.list_items() == items
 
     def test_has_item(self):
         assert self.backend.has_item(pages[0])
@@ -67,7 +69,9 @@ class TestNamespaceBackend:
         self.backend = None
 
     def test_list_items(self):
-        assert set(self.backend.list_items()) == set(pages + self.new_names)
+        items = pages + self.new_names
+        items.sort()
+        assert self.backend.list_items() == pages + self.new_names
 
     def test_has_item(self):
         assert self.backend.has_item(pages[0])

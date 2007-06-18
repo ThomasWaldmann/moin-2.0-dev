@@ -32,7 +32,7 @@ class TestUserBackend:
         self.backend = None
 
     def test_list_revisions(self):
-        assert set(self.backend.list_revisions(names[0])) == set([0, 1])
+        assert self.backend.list_revisions(names[0]) == [1, 0]
 
     def test_current_revision(self):
         assert self.backend.current_revision(names[0]) == 1
@@ -53,7 +53,7 @@ class TestUserBackend:
         py.test.raises(NotImplementedError, self.backend.get_data_backend, names[0], 1)
 
     def test_list_items(self):
-        assert set(self.backend.list_items()) == set(names)
+        assert self.backend.list_items() == names
         assert self.backend.list_items({'name': 'HeinrichWendel'}) == [names[0]]
 
     def test_has_item(self):
@@ -107,7 +107,7 @@ class TestPageBackend:
         self.backend = None
 
     def test_list_items(self):
-        assert set(self.backend.list_items()) == set(pages)
+        assert self.backend.list_items() == pages
         assert self.backend.list_items({'format': 'wiki'}) == [pages[1]]
 
     def test_has_item(self):
@@ -132,8 +132,8 @@ class TestPageBackend:
         assert self.backend.current_revision(pages[1]) == 2
 
     def test_list_revisions(self):
-        assert set(self.backend.list_revisions(pages[0])) == set([0, 1])
-        assert set(self.backend.list_revisions(pages[1])) == set([0, 1, 2])
+        assert self.backend.list_revisions(pages[0]) == [1, 0]
+        assert self.backend.list_revisions(pages[1]) == [2, 1, 0]
         py.test.raises(NoSuchItemError, self.backend.list_revisions, "ADF")
 
     def test_has_revision(self):
