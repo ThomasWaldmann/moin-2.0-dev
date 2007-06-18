@@ -7,7 +7,7 @@
 
 import py.test
 
-from common import user_dir, names, metadata, DummyConfig, page_dir, pages
+from MoinMoin.storage._tests import names, metadata, DummyConfig, pages, get_page_dir, get_user_dir, setup, teardown
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata
@@ -15,12 +15,18 @@ from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevision
 from MoinMoin.storage.interfaces import DataBackend
 
 
+def setup_module(module):
+    setup(module)
+
+def teardown_module(module):
+    teardown(module)
+
 
 class TestItemCollection:
     item_collection = None
 
     def setup_class(self):
-        self.item_collection = ItemCollection(UserStorage(user_dir, DummyConfig()), None)
+        self.item_collection = ItemCollection(UserStorage(get_user_dir(), DummyConfig()), None)
 
     def teardown_class(self):
         self.item_collection = None
@@ -56,7 +62,7 @@ class TestItem:
     item = None
 
     def setup_class(self):
-        self.item = ItemCollection(PageStorage(page_dir, DummyConfig()), None)[pages[0]]
+        self.item = ItemCollection(PageStorage(get_page_dir(), DummyConfig()), None)[pages[0]]
 
     def teardown_class(self):
         self.item = None
@@ -94,7 +100,7 @@ class TestRevision:
     revision = None
 
     def setup_class(self):
-        self.revision = ItemCollection(PageStorage(page_dir, DummyConfig()), None)[pages[0]][1]
+        self.revision = ItemCollection(PageStorage(get_page_dir(), DummyConfig()), None)[pages[0]][1]
 
     def teardown_class(self):
         self.revision = None
@@ -109,7 +115,7 @@ class TestMetadata:
     metadata = None
 
     def setup_class(self):
-        self.metadata = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]][1].metadata
+        self.metadata = ItemCollection(UserStorage(get_user_dir(), DummyConfig()), None)[names[0]][1].metadata
 
     def teardown_class(self):
         self.metadata = None
