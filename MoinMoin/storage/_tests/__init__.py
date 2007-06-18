@@ -57,7 +57,8 @@ def setup(module):
     test_dir = tempfile.mkdtemp()
     print os.path.join(str(py.magic.autopath().dirpath()), "data.tar")
     tar_file = tarfile.open(os.path.join(str(py.magic.autopath().dirpath()), u"data.tar"))
-    tar_file.extractall(test_dir)
+    for tarinfo in tar_file:
+        tar_file.extract(tarinfo, test_dir)
     tar_file.close()
 
 def teardown(module):
