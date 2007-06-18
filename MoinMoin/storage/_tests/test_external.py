@@ -16,23 +16,23 @@ from MoinMoin.storage.interfaces import DataBackend
 
 
 
-class TestItemCollection():
-    item_collection = None    
-    
+class TestItemCollection:
+    item_collection = None
+
     def setup_class(self):
         self.item_collection = ItemCollection(UserStorage(user_dir, DummyConfig()), None)
-    
+
     def teardown_class(self):
         self.item_collection = None
-        
+
     def test_has_item(self):
         assert names[0] in self.item_collection
         assert not("asdf" in self.item_collection)
-        
+
     def test_keys(self):
         assert self.item_collection.keys() == names
-        assert self.item_collection.keys({'name' : 'HeinrichWendel'}) == [names[0]]
-    
+        assert self.item_collection.keys({'name': 'HeinrichWendel'}) == [names[0]]
+
     def test_get_item(self):
         item = self.item_collection[names[0]]
         assert isinstance(item, Item)
@@ -40,7 +40,7 @@ class TestItemCollection():
         py.test.raises(ItemNotExistsError, lambda: self.item_collection["test"])
 
     def test_new_delete_item(self):
-        item  = self.item_collection.new_item("1180424618.59.18120")
+        item = self.item_collection.new_item("1180424618.59.18120")
         assert isinstance(item, Item)
         assert item.name == "1180424618.59.18120"
         item.metadata.keys()
@@ -51,19 +51,19 @@ class TestItemCollection():
         assert not "1180424618.59.18120" in self.item_collection
 
 
-class TestItem():    
-    
+class TestItem:
+
     item = None
-    
+
     def setup_class(self):
         self.item = ItemCollection(PageStorage(page_dir, DummyConfig()), None)[pages[0]]
-    
+
     def teardown_class(self):
         self.item = None
-    
+
     def test_has_revision(self):
         assert 1 in self.item
-    
+
     def test_get_revision(self):
         revision = self.item[1]
         assert isinstance(revision, Revision)
@@ -72,7 +72,7 @@ class TestItem():
         assert isinstance(revision, Revision)
         assert revision.revno == 0
         py.test.raises(RevisionNotExistsError, lambda: self.item[5])
-            
+
     def test_keys(self):
         assert self.item.keys() == [0, 1]
 
@@ -89,44 +89,44 @@ class TestItem():
         py.test.raises(BackendError, self.item.new_revision, 1)
 
 
-class TestRevision():
-    
+class TestRevision:
+
     revision = None
-    
+
     def setup_class(self):
         self.revision = ItemCollection(PageStorage(page_dir, DummyConfig()), None)[pages[0]][1]
-    
+
     def teardown_class(self):
         self.revision = None
-    
+
     def test(self):
         assert isinstance(self.revision.data, DataBackend)
         assert isinstance(self.revision.metadata, Metadata)
-    
-    
-class TestMetadata():
-    
+
+
+class TestMetadata:
+
     metadata = None
-    
+
     def setup_class(self):
         self.metadata = ItemCollection(UserStorage(user_dir, DummyConfig()), None)[names[0]][1].metadata
-    
+
     def teardown_class(self):
         self.metadata = None
-    
+
     def test_contains(self):
         assert "name" in self.metadata
         assert not "xyz" in self.metadata
-    
+
     def test_get(self):
         self.metadata["name"]
         py.test.raises(KeyError, lambda: self.metadata["yz"])
-    
+
     def test_set(self):
         self.metadata["name"] = "123"
         assert self.metadata["name"] == "123"
         assert self.metadata.changed["name"] == "set"
-    
+
     def test_remove(self):
         self.metadata["xyz"] = "123"
         assert "xyz" in self.metadata
@@ -138,9 +138,10 @@ class TestMetadata():
         assert not "aliasname" in self.metadata
         assert self.metadata.changed["aliasname"] == "remove"
         self.metadata["aliasname"] = ""
-        
+
     def test_keys(self):
         assert set(self.metadata.keys()) == set(metadata.keys())
-    
+
     def test_save(self):
         pass
+
