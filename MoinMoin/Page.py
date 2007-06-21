@@ -274,7 +274,7 @@ class Page(object):
             that it is not in sync with the page file on disk.  This is
             used e.g. by PageEditor when previewing the page.
         """
-        self.body = body
+        self.__body = body
         self.__body_modified = modified
 
     def get_current_from_pagedir(self, pagedir):
@@ -1588,7 +1588,7 @@ class Page(object):
             cache.remove()
 
 
-class RootPage:
+class RootPage(object):
     """
     These functions were removed from the Page class to remove hierarchical
     page storage support until after we have a storage api (and really need it).
@@ -1602,13 +1602,13 @@ class RootPage:
         self.request = request
         self.__item_collection = ItemCollection(request.cfg.page_backend, None)
     
-    def getPagePath(self, file, isfile):
+    def getPagePath(self, fname, isfile):
         """
         TODO: remove this hack.
         
         Just a hack for event and edit log currently.
         """
-        return os.path.join(self.request.cfg.data_dir, "file")
+        return os.path.join(self.request.cfg.data_dir, fname)
                 
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
         """
