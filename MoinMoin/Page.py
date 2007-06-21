@@ -40,6 +40,7 @@ from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.util import filesys
 from MoinMoin.storage.external import ItemCollection
+from MoinMoin.storage.error import NoSuchItemError
 
 
 def is_cache_exception(e):
@@ -175,6 +176,8 @@ class Page(object):
         self.__pi = None # dict of preprocessed page metadata (processing instructions)
         self.__data = None # unicode page data = body - metadata
 
+        self.__item_collection = ItemCollection(request.cfg.page_backend, None)
+        
         self.reset()
 
     def reset(self):
@@ -202,46 +205,32 @@ class Page(object):
         # path to normal / underlay page dir
         self._pagepath = [normalpath, underlaypath]
 
+        # define the item
+        try:
+            self.__item = self.__item_collection[self.page_name]
+        except NoSuchItemError:
+            self.__body = ""
+            self.__meta = dict
+            self.__item = None
+            
     # now we define some properties to lazy load some attributes on first access:
     
     def get_body(self):
         if self.__body is None:
-            # try to open file
-            try:
-                f = codecs.open(self._text_filename(), 'rb', config.charset)
-            except IOError, er:
-                import errno
-                if er.errno == errno.ENOENT:
-                    # just doesn't exist, return empty text (note that we
-                    # never store empty pages, so this is detectable and also
-                    # safe when passed to a function expecting a string)
-                    return ""
-                else:
-                    raise
-
-            # read file content and make sure it is closed properly
-            try:
-                text = f.read()
-                text = self.decodeTextMimeType(text)
-                self.__body = text
-            finally:
-                f.close()
-        return self.__body    
-    def set_body(self, newbody):
-        self.__body = newbody
-        self.__meta = None
-        self.__data = None
-    body = property(fget=get_body, fset=set_body) # complete page text
+            text = self.__item[self.rev].data.read()
+            self.__body = self.decodeTextMimeType(text)
+        return self.__body
+    body = property(fget=get_body) # complete page text
 
     def get_meta(self):
         if self.__meta is None:
-            self.__meta, self.__data = wikiutil.get_processing_instructions(self.body)
+            self.__meta = self.__item[self.rev].metadata
         return self.__meta
     meta = property(fget=get_meta) # processing instructions, ACLs (upper part of page text)
 
     def get_data(self):
         if self.__data is None:
-            self.__meta, self.__data = wikiutil.get_processing_instructions(self.body)
+            bla, self.__data = wikiutil.get_processing_instructions(self.body)
         return self.__data
     data = property(fget=get_data) # content (lower part of page text)
 
@@ -904,7 +893,7 @@ class Page(object):
         request = self.request
         acl = []
         
-        for verb, args in meta:
+        for verb, args in meta.iteritems():
             if verb == "format": # markup format
                 format, formatargs = (args + ' ').split(' ', 1)
                 pi['format'] = format.lower()
@@ -1386,7 +1375,7 @@ class Page(object):
         @rtype: unicode
         @return: page header
         """
-        header = ['#%s %s' % t for t in self.meta]
+        header = ['#%s %s' % t for t in self.meta.iteritems()]
         header = '\n'.join(header)
         if header:
             if length is None:
@@ -1611,7 +1600,7 @@ class RootPage:
         Init the item collection.
         """
         self.request = request
-        self._item_collection = ItemCollection(request.cfg.page_backend, None)
+        self.__item_collection = ItemCollection(request.cfg.page_backend, None)
     
     def getPagePath(self, file, isfile):
         """
@@ -1665,7 +1654,7 @@ class RootPage:
         cachedlist = request.cfg.cache.pagelists.getItem(request, 'all', None)
         if cachedlist is None:
             cachedlist = {}
-            for name in self._item_collection.keys():
+            for name in self.__item_collection.keys():
                 # Unquote file system names
                 pagename = wikiutil.unquoteWikiname(name)
 
@@ -1748,7 +1737,7 @@ class RootPage:
             # WARNING: SLOW
             pages = self.getPageList(user='')
         else:
-            pages = self._item_collection.keys()
+            pages = self.__item_collection.keys()
         count = len(pages)
         self.request.clock.stop('getPageCount')
 

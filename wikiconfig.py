@@ -24,5 +24,6 @@ class Config(DefaultConfig):
         '<a href="http://moinmoin.wikiwikiweb.de/">MoinMoin DesktopEdition Powered</a>',
         '<a href="http://www.python.org/">Python Powered</a>',
     ]
+    show_timings = True
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
