@@ -39,6 +39,8 @@ import os, re, codecs, logging
 from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.util import filesys
+from MoinMoin.storage.external import ItemCollection
+
 
 def is_cache_exception(e):
     args = e.args
@@ -1597,43 +1599,33 @@ class Page(object):
             cache.remove()
 
 
-class RootPage(Page):
-    """ These functions were removed from the Page class to remove hierarchical
-        page storage support until after we have a storage api (and really need it).
-        Currently, there is only 1 instance of this class: request.rootpage
+class RootPage:
     """
+    These functions were removed from the Page class to remove hierarchical
+    page storage support until after we have a storage api (and really need it).
+    Currently, there is only 1 instance of this class: request.rootpage
+    """
+    
     def __init__(self, request):
-        page_name = u''
-        Page.__init__(self, request, page_name)
-
-    def getPageBasePath(self, use_underlay=0):
-        """ Get full path to a page-specific storage area. `args` can
-            contain additional path components that are added to the base path.
-
-        @param use_underlay: force using a specific pagedir, default 0:
-                                1 = use underlay page dir
-                                0 = use standard page dir
-                                Note: we do NOT have special support for -1
-                                      here, that will just behave as 0!
-        @rtype: string
-        @return: int underlay,
-                 str the full path to the storage area
         """
-        if self.cfg.data_underlay_dir is None:
-            use_underlay = 0
-
-        # 'auto' doesn't make sense here. maybe not even 'underlay':
-        if use_underlay == 1:
-            underlay, path = 1, self.cfg.data_underlay_dir
-        # no need to check 'standard' case, we just use path in that case!
-        else:
-            # this is the location of the virtual root page
-            underlay, path = 0, self.cfg.data_dir
-
-        return underlay, path
-
+        Init the item collection.
+        """
+        self.request = request
+        self._item_collection = ItemCollection(request.cfg.page_backend, None)
+    
+    def getPagePath(self, file, isfile):
+        """
+        TODO: remove this hack.
+        
+        Just a hack for event and edit log currently.
+        """
+        return os.path.join(self.request.cfg.data_dir, "file")
+                
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
-        """ List user readable pages under current page
+        """
+        List user readable pages under current page.
+        
+        TODO: makethis method use the storage api more efficiently.
 
         Currently only request.rootpage is used to list pages, but if we
         have true sub pages, any page can list its sub pages.
@@ -1656,14 +1648,15 @@ class RootPage(Page):
         @param user: the user requesting the pages (MoinMoin.user.User)
         @param filter: filter function
         @param exists: filter existing pages
-        @param include_underlay: determines if underlay pages are returned as well
         @param return_objects: lets it return a list of Page objects instead of
-            names
+                               names
         @rtype: list of unicode strings
         @return: user readable wiki page names
         """
+        
         request = self.request
         request.clock.start('getPageList')
+        
         # Check input
         if user is None:
             user = request.user
@@ -1672,7 +1665,7 @@ class RootPage(Page):
         cachedlist = request.cfg.cache.pagelists.getItem(request, 'all', None)
         if cachedlist is None:
             cachedlist = {}
-            for name in self._listPages():
+            for name in self._item_collection.keys():
                 # Unquote file system names
                 pagename = wikiutil.unquoteWikiname(name)
 
@@ -1717,9 +1710,10 @@ class RootPage(Page):
 
         request.clock.stop('getPageList')
         return pages
-
+    
     def getPageDict(self, user=None, exists=1, filter=None, include_underlay=True):
-        """ Return a dictionary of filtered page objects readable by user
+        """
+        Return a dictionary of filtered page objects readable by user.
 
         Invoke getPageList then create a dict from the page list. See
         getPageList docstring for more details.
@@ -1735,60 +1729,9 @@ class RootPage(Page):
             pages[name] = Page(self.request, name)
         return pages
 
-    def _listPages(self):
-        """ Return a list of file system page names
-
-        This is the lowest level disk access, don't use it unless you
-        really need it.
-
-        NOTE: names are returned in file system encoding, not in unicode!
-
-        @rtype: dict
-        @return: dict of page names using file system encoding
-        """
-        # Get pages in standard dir
-        path = self.getPagePath('pages')
-        pages = self._listPageInPath(path)
-
-        if self.cfg.data_underlay_dir is not None:
-            # Merge with pages from underlay
-            path = self.getPagePath('pages', use_underlay=1)
-            underlay = self._listPageInPath(path)
-            pages.update(underlay)
-
-        return pages
-
-    def _listPageInPath(self, path):
-        """ List page names in domain, using path
-
-        This is the lowest level disk access, don't use it unless you
-        really need it.
-
-        NOTE: names are returned in file system encoding, not in unicode!
-
-        @param path: directory to list (string)
-        @rtype: dict
-        @return: dict of page names using file system encoding
-        """
-        pages = {}
-        for name in filesys.dclistdir(path):
-            # Filter non-pages in quoted wiki names
-            # List all pages in pages directory - assume flat namespace.
-            # We exclude everything starting with '.' to get rid of . and ..
-            # directory entries. If we ever create pagedirs starting with '.'
-            # it will be with the intention to have them not show up in page
-            # list (like .name won't show up for ls command under UNIX).
-            # Note that a . within a wiki page name will be quoted to (2e).
-            if not name.startswith('.'):
-                pages[name] = None
-
-        if 'CVS' in pages:
-            del pages['CVS'] # XXX DEPRECATED: remove this directory name just in
-                             # case someone has the pages dir under CVS control.
-        return pages
-
     def getPageCount(self, exists=0):
-        """ Return page count
+        """
+        Return page count.
 
         The default value does the fastest listing, and return count of
         all pages, including deleted pages, ignoring acl rights.
@@ -1805,9 +1748,7 @@ class RootPage(Page):
             # WARNING: SLOW
             pages = self.getPageList(user='')
         else:
-            pages = self.request.pages
-            if not pages:
-                pages = self._listPages()
+            pages = self._item_collection.keys()
         count = len(pages)
         self.request.clock.stop('getPageCount')
 
