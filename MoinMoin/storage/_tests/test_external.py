@@ -83,12 +83,17 @@ class TestItem:
         assert self.item.keys() == [1, 0]
 
     def test_del_add_revision(self):
+        assert self.item.current == 1
         self.item.new_revision()
+        assert self.item.current == 2
         assert 2 in self.item
         self.item.new_revision(4)
         assert 4 in self.item
+        assert self.item.current == 4
         del self.item[2]
+        assert self.item.current == 4
         del self.item[4]
+        assert self.item.current == 1
         assert not 2 in self.item
         assert not 4 in self.item
         py.test.raises(NoSuchRevisionError, lambda: self.item[5])
