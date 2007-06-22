@@ -210,7 +210,7 @@ class Page(object):
             self.__item = self.__item_collection[self.page_name]
         except NoSuchItemError:
             self.__body = ""
-            self.__meta = dict
+            self.__meta = dict()
             self.__item = None
             
     # now we define some properties to lazy load some attributes on first access:
@@ -220,7 +220,13 @@ class Page(object):
             text = self.__item[self.rev].data.read()
             self.__body = self.decodeTextMimeType(text)
         return self.__body
-    body = property(fget=get_body) # complete page text
+    
+    def set_body(self, body):
+        self.__body = body
+        self.__meta = dict()
+        self.__data = None
+    
+    body = property(fget=get_body, fset=set_body) # complete page text
 
     def get_meta(self):
         if self.__meta is None:
@@ -274,7 +280,7 @@ class Page(object):
             that it is not in sync with the page file on disk.  This is
             used e.g. by PageEditor when previewing the page.
         """
-        self.__body = body
+        self.body = body
         self.__body_modified = modified
 
     def get_current_from_pagedir(self, pagedir):
