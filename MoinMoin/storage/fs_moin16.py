@@ -6,6 +6,7 @@
     
     TODO: locking
     TODO: indexes
+    TODO: item wide metadata
 """
 
 import codecs
@@ -319,13 +320,16 @@ class PageStorage(AbstractStorage):
         except OSError, err:
             _handle_error(self, err, name, revno, message="Failed to remove revision %r for item %r." % (revno, name))
 
-    def _update_current(self, name):
+    def _update_current(self, name, revno=0):
         """
         Update the current file.
         """
+        if revno == 0:
+            revno = self.list_revisions(name)[0]
+            
         try:
             data_file = file(os.path.join(self.path, name, "current"), "w")
-            data_file.write(get_rev_string(self.list_revisions(name)[0]) + "\n")
+            data_file.write(get_rev_string(revno) + "\n")
             data_file.close()
         except IOError, err:
             _handle_error(self, err, name, message="Failed to set current revision for item %r." % name)
@@ -334,28 +338,38 @@ class PageStorage(AbstractStorage):
         """
         @see MoinMoin.fs_moin16.AbstractStorage._parse_metadata
         """
-        try:
-            data_file = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", config.charset)
-        except IOError, err:
-            _handle_error(self, err, name, revno, message="Failed to parse metadata for item %r with revision %r." % (name, revno))
-
+        
         metadata = {}
-
-        started = False
-        for line in data_file.readlines():
-            if line.startswith('#'):
-                started = True
-                if line[1] == '#': # two hash marks are a comment
-                    continue
-                elif line == "#":
+        
+        if revno == -1:
+            
+            # Emulate the deleted status via a metadata flag
+            current = self.current_revision(name)
+            if not os.path.exists(os.path.join(self.path, name, "revisions", get_rev_string(current))):
+                metadata['Deleted'] = True
+            
+        else:
+        
+            try:
+                data_file = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", config.charset)
+            except IOError, err:
+                _handle_error(self, err, name, revno, message="Failed to parse metadata for item %r with revision %r." % (name, revno))
+    
+            started = False
+            for line in data_file.readlines():
+                if line.startswith('#'):
+                    started = True
+                    if line[1] == '#': # two hash marks are a comment
+                        continue
+                    elif line == "#":
+                        break
+    
+                    verb, args = (line[1:] + ' ').split(' ', 1) # split at the first blank
+                    metadata[verb.lower()] = args.strip()
+    
+                elif started is True:
                     break
-
-                verb, args = (line[1:] + ' ').split(' ', 1) # split at the first blank
-                metadata[verb.lower()] = args.strip()
-
-            elif started is True:
-                break
-        data_file.close()
+            data_file.close()
 
         return metadata
 
@@ -363,26 +377,36 @@ class PageStorage(AbstractStorage):
         """
         @see MoinMoin.fs_moin16.AbstractStorage._save_metadata
         """
-        try:
-            data = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", config.charset).readlines()
-        except IOError, err:
-            _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
+        
+        if revno == -1:
+            
+            if metadata['Deleted'] == True:
+                self._update_current(name, self.current_revision(name) + 1)
+            else:
+                self._update_current(name)
 
-        # remove metadata
-        new_data = [line for line in data if not line.startswith('#') and not line == '#' and not line == '##']
-
-        # add metadata
-        for key, value in metadata.iteritems():
-            new_data.insert(0, "#%s %s\n" % (key, value))
-
-        # save data
-        try:
-            data_file = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "w", config.charset)
-        except IOError, err:
-            _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
-
-        data_file.writelines(new_data)
-        data_file.close()
+        else:
+        
+            try:
+                data = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", config.charset).readlines()
+            except IOError, err:
+                _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
+    
+            # remove metadata
+            new_data = [line for line in data if not line.startswith('#') and not line == '#' and not line == '##']
+    
+            # add metadata
+            for key, value in metadata.iteritems():
+                new_data.insert(0, "#%s %s\n" % (key, value))
+    
+            # save data
+            try:
+                data_file = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "w", config.charset)
+            except IOError, err:
+                _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
+    
+            data_file.writelines(new_data)
+            data_file.close()
 
     def get_data_backend(self, name, revno):
         """
