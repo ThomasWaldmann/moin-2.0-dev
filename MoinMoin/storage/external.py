@@ -123,6 +123,7 @@ class Item(UserDict.DictMixin, object):
         Deletes the Revision specified by the given revision-number.
         """
         self.backend.remove_revision(self.name, revno)
+        self.__current = None
         try:
             del self.__revision_objects[revno]
         except KeyError:
@@ -141,6 +142,7 @@ class Item(UserDict.DictMixin, object):
         """
         self.backend.create_revision(self.name, revno)
         self.__revisions = None
+        self.__current = None
 
     def get_metadata(self):
         """

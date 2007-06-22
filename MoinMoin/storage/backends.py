@@ -43,7 +43,7 @@ class MetaBackend(StorageBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
         """
-        return self._call("list_revisins", name)
+        return self._call("list_revisions", name)
 
     def current_revision(self, name):
         """
