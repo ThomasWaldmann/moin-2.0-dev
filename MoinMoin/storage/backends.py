@@ -179,7 +179,7 @@ class LayerBackend(MetaBackend):
         """
         for backend in self.backends:
             if backend.has_item(name):
-                return True
+                return backend
         return False
 
     def _call(self, method, *args):
@@ -192,4 +192,3 @@ class LayerBackend(MetaBackend):
             except NoSuchItemError:
                 pass
         raise NoSuchItemError("No such item %r." % args[0])
-
