@@ -180,7 +180,7 @@ class LayerBackend(MetaBackend):
         for backend in self.backends:
             if backend.has_item(name):
                 return backend
-        return False
+        return None
 
     def _call(self, method, *args):
         """

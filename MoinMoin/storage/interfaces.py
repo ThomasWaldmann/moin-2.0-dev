@@ -5,6 +5,16 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+"""
+First define some constants.
+"""
+
+DELETED = "Deleted"
+
+"""
+Then the actual interface.
+"""
+
 class StorageBackend(object):
     """
     This class describes the main interface a StorageBackend must implement.
@@ -26,9 +36,8 @@ class StorageBackend(object):
 
     def has_item(self, name):
         """
-        Checks whether the item exists. Even if the current revision is deleted,
-        this will return True. Returns the backend that the item is in on success,
-        False on error.
+        Checks whether the item exists, even if the current revision is deleted.
+        Returns the backend the item belongs to on success, None on error.
         """
         raise NotImplementedError
 

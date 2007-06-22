@@ -8,6 +8,7 @@
 import UserDict
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.interfaces import DELETED
 
 class ItemCollection(UserDict.DictMixin, object):
     """
@@ -183,7 +184,7 @@ class Item(UserDict.DictMixin, object):
         """
         if self.__deleted is None:
             try:
-                self.__deleted = self.metadata["Deleted"]
+                self.__deleted = self.metadata[DELETED]
             except KeyError:
                 self.__deleted = False
         return self.__deleted
@@ -192,7 +193,7 @@ class Item(UserDict.DictMixin, object):
         """
         Set the deleted flag.
         """
-        self.metadata["Deleted"] = value
+        self.metadata[DELETED] = value
         self.__deleted = None
     
     deleted = property(get_deleted, set_deleted)
