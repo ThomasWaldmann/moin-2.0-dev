@@ -34,7 +34,7 @@ class StorageBackend(object):
 
     def create_item(self, name):
         """
-        Creates a new item.
+        Creates a new item. Returns the backend in which it was created.
         """
         raise NotImplementedError
 

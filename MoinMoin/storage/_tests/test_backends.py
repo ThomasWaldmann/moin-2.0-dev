@@ -41,8 +41,8 @@ class TestLayerBackend:
         assert self.backend.list_items() == items
 
     def test_has_item(self):
-        assert self.backend.has_item(pages[0])
-        assert self.backend.has_item(names[0])
+        assert self.backend.has_item(pages[0]).name == "pages"
+        assert self.backend.has_item(names[0]).name == "user"
         assert not self.backend.has_item("ad")
         assert not self.backend.has_item("")
 
@@ -74,8 +74,8 @@ class TestNamespaceBackend:
         assert self.backend.list_items() == pages + self.new_names
 
     def test_has_item(self):
-        assert self.backend.has_item(pages[0])
-        assert self.backend.has_item(self.new_names[0])
+        assert self.backend.has_item(pages[0]).name == "pages"
+        assert self.backend.has_item(self.new_names[0]).name == "user"
         assert not self.backend.has_item("ad")
         assert not self.backend.has_item("")
 
