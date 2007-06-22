@@ -109,7 +109,7 @@ class PluginScript(MoinScript):
             pagename = pagename.strip()
             page = Page(request, pagename)
             try:
-                underlay, path = page.getPagePath(check_create = 0)
+                underlay, path = page.getPageBasePath(-1)
                 shutil.rmtree(path)
             except:
                 pass
