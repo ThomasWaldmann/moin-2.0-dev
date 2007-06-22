@@ -62,9 +62,9 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Returns a new Item with the given name.
         """
-        self.backend.create_item(name)
+        backend = self.backend.create_item(name)
         self.__items = None
-        return Item(name, self.backend, self.userobj)
+        return Item(name, backend, self.userobj)
 
     def get_items(self):
         """

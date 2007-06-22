@@ -86,8 +86,7 @@ class Load(ActionBase):
             filecontent = unicode(filecontent, config.charset)
             self.pagename = wikiutil.escape(target)
             page = Page(self.request, self.pagename)
-            pagedir = page.getPagePath("", check_create=0)
-            rev = Page.get_current_from_pagedir(page, pagedir)
+            rev = page.current_rev()
             pg = PageEditor(self.request, self.pagename, do_editor_backup=0, uid_override=author)
             try:
                 msg = pg.saveText(filecontent, rev)

@@ -129,6 +129,7 @@ class UserStorage(AbstractStorage):
         @see MoinMoin.interfaces.StorageBackend.create_item
         """
         create_file(self.path, name)
+        return self
 
     def remove_item(self, name):
         """
@@ -246,6 +247,8 @@ class PageStorage(AbstractStorage):
             create_file(self.path, name, "edit-log")
         else:
             raise BackendError("Item %r already exists" % name)
+
+        return self
 
     def remove_item(self, name):
         """

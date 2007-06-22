@@ -677,8 +677,8 @@ reStructuredText Quick Reference
             self.url_prefix_local = self.url_prefix_static
             
         # storage configuration  
-        self.user_backend = UserStorage(self.user_dir, self)
-        self.page_backend = LayerBackend([PageStorage(os.path.join(self.data_dir, "pages"), self), PageStorage(os.path.join(self.data_underlay_dir, "pages"), self)])
+        self.user_backend = UserStorage(self.user_dir, self, "user")
+        self.page_backend = LayerBackend([PageStorage(os.path.join(self.data_dir, "pages"), self, "pages"), PageStorage(os.path.join(self.data_underlay_dir, "pages"), self, "underlay")])
         self.indexes = []
 
 
