@@ -34,8 +34,9 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Loads an Item.
         """
-        if self.backend.has_item(name):
-            return Item(name, self.backend, self.userobj)
+        backend = self.backend.has_item(name)
+        if backend:
+            return Item(name, backend, self.userobj)
         else:
             raise NoSuchItemError("No such item %r." % name)
 
@@ -189,7 +190,7 @@ class Item(UserDict.DictMixin, object):
     
     def set_deleted(self, value):
         """
-        Set the deleted value.
+        Set the deleted flag.
         """
         self.metadata["Deleted"] = value
         self.__deleted = None

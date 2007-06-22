@@ -30,7 +30,7 @@ class TestLayerBackend:
     backend = None
 
     def setup_class(self):
-        self.backend = LayerBackend([PageStorage(get_page_dir(), DummyConfig()), UserStorage(get_user_dir(), DummyConfig())])
+        self.backend = LayerBackend([PageStorage(get_page_dir(), DummyConfig(), "pages"), UserStorage(get_user_dir(), DummyConfig(), "user")])
 
     def teardown_class(self):
         self.backend = None
@@ -59,7 +59,7 @@ class TestNamespaceBackend:
     backend = None
 
     def setup_class(self):
-        self.backend = NamespaceBackend({'/': PageStorage(get_page_dir(), DummyConfig()), '/usr': UserStorage(get_user_dir(), DummyConfig())})
+        self.backend = NamespaceBackend({'/': PageStorage(get_page_dir(), DummyConfig(), "pages"), '/usr': UserStorage(get_user_dir(), DummyConfig(), "user")})
 
         self.new_names = []
         for item in names:

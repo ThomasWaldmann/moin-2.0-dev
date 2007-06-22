@@ -28,7 +28,7 @@ class AbstractStorage(StorageBackend):
     Abstract Storage Implementation for common methods.
     """
 
-    def __init__(self, path, cfg):
+    def __init__(self, path, cfg, name):
         """
         Init the Backend with the correct path.
         """
@@ -36,6 +36,7 @@ class AbstractStorage(StorageBackend):
             raise BackendError("Invalid path %r." % path)
         self.path = path
         self.cfg = cfg
+        self.name = name
 
     def list_items(self, items, filters=None):
         """ 
@@ -119,10 +120,9 @@ class UserStorage(AbstractStorage):
         """
         @see MoinMoin.interfaces.StorageBackend.has_item
         """
-        if name:
-            return os.path.isfile(os.path.join(self.path, name))
-        else:
-            return False
+        if name and os.path.isfile(os.path.join(self.path, name)):
+            return self
+        return False
 
     def create_item(self, name):
         """
@@ -229,10 +229,9 @@ class PageStorage(AbstractStorage):
         """
         @see MoinMoin.interfaces.StorageBackend.has_item
         """
-        if name:
-            return os.path.isdir(os.path.join(self.path, name))
-        else:
-            return False
+        if name and os.path.isdir(os.path.join(self.path, name)):
+            return self
+        return False
 
     def create_item(self, name):
         """

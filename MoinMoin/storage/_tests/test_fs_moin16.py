@@ -26,10 +26,13 @@ class TestUserBackend:
     backend = None
 
     def setup_class(self):
-        self.backend = UserStorage(get_user_dir(), DummyConfig())
+        self.backend = UserStorage(get_user_dir(), DummyConfig(), "user")
 
     def teardown_class(self):
         self.backend = None
+
+    def test_name(self):
+        assert self.backend.name == "user"
 
     def test_list_revisions(self):
         assert self.backend.list_revisions(names[0]) == [1, 0]
@@ -101,11 +104,14 @@ class TestPageBackend:
     backend = None
 
     def setup_class(self):
-        self.backend = PageStorage(get_page_dir(), DummyConfig())
+        self.backend = PageStorage(get_page_dir(), DummyConfig(), "pages")
 
     def teardown_class(self):
         self.backend = None
 
+    def test_name(self):
+        assert self.backend.name == "pages"
+        
     def test_list_items(self):
         assert self.backend.list_items() == pages
         assert self.backend.list_items({'format': 'wiki'}) == [pages[1]]

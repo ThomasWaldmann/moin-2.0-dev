@@ -27,7 +27,8 @@ class StorageBackend(object):
     def has_item(self, name):
         """
         Checks whether the item exists. Even if the current revision is deleted,
-        this will return True.
+        this will return True. Returns the backend that the item is in on success,
+        False on error.
         """
         raise NotImplementedError
 

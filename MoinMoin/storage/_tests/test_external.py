@@ -9,6 +9,7 @@ import py.test
 
 from MoinMoin.storage._tests import names, metadata, DummyConfig, pages, get_page_dir, get_user_dir, setup, teardown
 
+from MoinMoin.storage.backends import LayerBackend
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
@@ -26,7 +27,7 @@ class TestItemCollection:
     item_collection = None
 
     def setup_class(self):
-        self.item_collection = ItemCollection(UserStorage(get_user_dir(), DummyConfig()), None)
+        self.item_collection = ItemCollection(LayerBackend([UserStorage(get_user_dir(), DummyConfig(), "user")]), None)
 
     def teardown_class(self):
         self.item_collection = None
@@ -43,6 +44,7 @@ class TestItemCollection:
         item = self.item_collection[names[0]]
         assert isinstance(item, Item)
         assert item.name == names[0]
+        assert item.backend.name == "user"
         py.test.raises(NoSuchItemError, lambda: self.item_collection["test"])
 
     def test_new_delete_item(self):
@@ -62,7 +64,7 @@ class TestItem:
     item = None
 
     def setup_class(self):
-        self.item = ItemCollection(PageStorage(get_page_dir(), DummyConfig()), None)[pages[0]]
+        self.item = ItemCollection(PageStorage(get_page_dir(), DummyConfig(), "user"), None)[pages[0]]
 
     def teardown_class(self):
         self.item = None
@@ -111,7 +113,7 @@ class TestRevision:
     revision = None
 
     def setup_class(self):
-        self.revision = ItemCollection(PageStorage(get_page_dir(), DummyConfig()), None)[pages[0]][1]
+        self.revision = ItemCollection(PageStorage(get_page_dir(), DummyConfig(), "pages"), None)[pages[0]][1]
 
     def teardown_class(self):
         self.revision = None
@@ -126,7 +128,7 @@ class TestMetadata:
     metadata = None
 
     def setup_class(self):
-        self.metadata = ItemCollection(UserStorage(get_user_dir(), DummyConfig()), None)[names[0]][1].metadata
+        self.metadata = ItemCollection(UserStorage(get_user_dir(), DummyConfig(), "user"), None)[names[0]][1].metadata
 
     def teardown_class(self):
         self.metadata = None
