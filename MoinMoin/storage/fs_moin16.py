@@ -17,7 +17,7 @@ import shutil
 
 from MoinMoin import config
 from MoinMoin.util import filesys
-from MoinMoin.storage.interfaces import DataBackend, StorageBackend
+from MoinMoin.storage.interfaces import DataBackend, StorageBackend, DELETED
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
@@ -122,7 +122,7 @@ class UserStorage(AbstractStorage):
         """
         if name and os.path.isfile(os.path.join(self.path, name)):
             return self
-        return False
+        return None
 
     def create_item(self, name):
         """
@@ -232,7 +232,7 @@ class PageStorage(AbstractStorage):
         """
         if name and os.path.isdir(os.path.join(self.path, name)):
             return self
-        return False
+        return None
 
     def create_item(self, name):
         """
@@ -348,7 +348,7 @@ class PageStorage(AbstractStorage):
             # Emulate the deleted status via a metadata flag
             current = self.current_revision(name)
             if not os.path.exists(os.path.join(self.path, name, "revisions", get_rev_string(current))):
-                metadata['Deleted'] = True
+                metadata[DELETED] = True
             
         else:
         
@@ -382,7 +382,7 @@ class PageStorage(AbstractStorage):
         
         if revno == -1:
             
-            if metadata['Deleted'] == True:
+            if metadata[DELETED] == True:
                 self._update_current(name, self.current_revision(name) + 1)
             else:
                 self._update_current(name)
