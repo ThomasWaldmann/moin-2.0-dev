@@ -98,6 +98,8 @@ class Item(UserDict.DictMixin, object):
         self.__revisions = None
         self.__current = None
         self.__revision_objects = dict()
+        
+        self.__deleted = None
 
     def __contains__(self, revno):
         """
@@ -173,6 +175,26 @@ class Item(UserDict.DictMixin, object):
         return self.__current
 
     current = property(get_current)
+
+    def get_deleted(self):
+        """
+        Lazy load deleted flag.
+        """
+        if self.__deleted is None:
+            try:
+                self.__deleted = self.metadata["Deleted"]
+            except KeyError:
+                self.__deleted = False
+        return self.__deleted
+    
+    def set_deleted(self, value):
+        """
+        Set the deleted value.
+        """
+        self.metadata["Deleted"] = value
+        self.__deleted = None
+    
+    deleted = property(get_deleted, set_deleted)
 
 
 class Revision(object):

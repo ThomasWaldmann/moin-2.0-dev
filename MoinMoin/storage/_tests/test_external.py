@@ -98,6 +98,12 @@ class TestItem:
         assert not 4 in self.item
         py.test.raises(NoSuchRevisionError, lambda: self.item[5])
         py.test.raises(BackendError, self.item.new_revision, 1)
+    
+    def test_deleted(self):
+        assert self.item.deleted == False
+        self.item.deleted = True
+        self.item.metadata.save()
+        assert self.item.deleted == True
 
 
 class TestRevision:
