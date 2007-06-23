@@ -528,13 +528,7 @@ class Page(object):
             if self.__body is not None:
                 return len(self.__body)
 
-        try:
-            return os.path.getsize(self._text_filename(rev=rev))
-        except EnvironmentError, e:
-            import errno
-            if e.errno == errno.ENOENT:
-                return 0
-            raise
+        return self.__item[rev].data.size()
 
     def mtime_usecs(self):
         """ Get modification timestamp of this page.
