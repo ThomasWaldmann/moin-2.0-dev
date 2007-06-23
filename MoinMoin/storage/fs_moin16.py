@@ -120,7 +120,7 @@ class UserStorage(AbstractStorage):
         """
         @see MoinMoin.interfaces.StorageBackend.has_item
         """
-        if name and os.path.isfile(os.path.join(self.path, name)):
+        if name and os.path.isfile(os.path.join(self.path, name, "revisions")):
             return self
         return None
 
