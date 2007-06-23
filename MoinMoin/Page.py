@@ -207,7 +207,7 @@ class Page(object):
 
         # define the item
         try:
-            self.__item = self.__item_collection[self.page_name]
+            self.__item = self.__item_collection[qpagename]
         except NoSuchItemError:
             self.__body = ""
             self.__meta = dict()
@@ -283,6 +283,45 @@ class Page(object):
         self.body = body
         self.__body_modified = modified
 
+    # revision methods
+
+    def getRevList(self):
+        """
+        Get a page revision list of this page, including the current version,
+        sorted by revision number in descending order (current page first).
+
+        @rtype: list of ints
+        @return: page revisions
+        """
+        revisions = []
+        if self.__item:
+            revisions = self.__item.keys()[:]
+            revisions.remove(0)
+        return revisions
+
+    def current_rev(self):
+        """
+        Return number of current revision.
+        
+        @return: int revision
+        """
+        if self.__item:
+            return self.__item.current
+        return 99999999
+
+    def get_real_rev(self):
+        """
+        Returns the real revision number of this page.
+        A rev==0 is translated to the current revision.
+
+        @returns: revision number > 0
+        @rtype: int
+        """
+        if self.rev == 0:
+            return self.current_rev()
+        return self.rev
+    
+    
     def get_current_from_pagedir(self, pagedir):
         """ Get the current revision number from an arbitrary pagedir.
             Does not modify page object's state, uncached, direct disk access.
@@ -396,27 +435,6 @@ class Page(object):
             request.cfg.cache.meta.putItem(request, cache_name, cache_key, data)
 
         return data
-
-    def current_rev(self):
-        """ Return number of current revision.
-        
-        This is the same as get_rev()[1].
-        
-        @return: int revision
-        """
-        pagefile, rev, exists = self.get_rev()
-        return rev
-
-    def get_real_rev(self):
-        """ Returns the real revision number of this page.
-            A rev==0 is translated to the current revision.
-
-        @returns: revision number > 0
-        @rtype: int
-        """
-        if self.rev == 0:
-            return self.current_rev()
-        return self.rev
 
     def getPageBasePath(self, use_underlay=-1):
         """ Get full path to a page-specific storage area. `args` can
@@ -1328,41 +1346,6 @@ class Page(object):
         missingpage._text_filename_force = missingpagefn
         missingpage.send_page(content_only=1, send_missing_page=1)
 
-
-    def getRevList(self):
-        """ Get a page revision list of this page, including the current version,
-        sorted by revision number in descending order (current page first).
-
-        @rtype: list of ints
-        @return: page revisions
-        """
-        revisions = []
-        if self.page_name:
-            rev_dir = self.getPagePath('revisions', check_create=0)
-            if os.path.isdir(rev_dir):
-                for rev in filesys.dclistdir(rev_dir):
-                    try:
-                        revint = int(rev)
-                        revisions.append(revint)
-                    except ValueError:
-                        pass
-                revisions.sort()
-                revisions.reverse()
-        return revisions
-
-    def olderrevision(self, rev=0):
-        """ Get revision of the next older page revision than rev.
-        rev == 0 means this page objects revision (that may be an old
-        revision already!)
-        """
-        if rev == 0:
-            rev = self.rev
-        revisions = self.getRevList()
-        for r in revisions:
-            if r < rev:
-                older = r
-                break
-        return older
 
     def getPageText(self, start=0, length=None):
         """ Convenience function to get the page text, skipping the header
