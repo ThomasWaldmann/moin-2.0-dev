@@ -495,6 +495,12 @@ class PageData(DataBackend):
             self.write_file.close()
             filesys.rename(self.write_file_name, self.read_file_name)
 
+    def size(self):
+        """
+        @see MoinMoin.interfaces.DataBackend.size
+        """
+        return os.path.getsize(self.read_file_name)
+    
 
 def encode_list(items):
     """

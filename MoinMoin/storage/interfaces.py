@@ -155,3 +155,8 @@ class DataBackend(object):
         """
         raise NotImplementedError
 
+    def size(self):
+        """
+        Returns the size of the contents.
+        """
+        raise NotImplementedError
