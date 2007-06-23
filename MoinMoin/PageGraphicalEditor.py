@@ -66,8 +66,6 @@ class PageGraphicalEditor(PageEditor.PageEditor):
         # check edit permissions
         if not request.user.may.write(self.page_name):
             msg = _('You are not allowed to edit this page.')
-        elif not self.isWritable():
-            msg = _('Page is immutable!')
         elif self.rev:
             # Trying to edit an old version, this is not possible via
             # the web interface, but catch it just in case...

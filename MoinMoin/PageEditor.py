@@ -165,8 +165,6 @@ class PageEditor(Page):
         # check edit permissions
         if not request.user.may.write(self.page_name):
             msg = _('You are not allowed to edit this page.')
-        elif not self.isWritable():
-            msg = _('Page is immutable!')
         elif self.rev:
             # Trying to edit an old version, this is not possible via
             # the web interface, but catch it just in case...
@@ -1063,9 +1061,6 @@ Try a different name.""") % (newpagename,)
         if not request.user.may.save(self, newtext, rev, **kw):
             msg = _('You are not allowed to edit this page!')
             raise self.AccessDenied, msg
-        elif not self.isWritable():
-            msg = _('Page is immutable!')
-            raise self.Immutable, msg
         elif not newtext:
             msg = _('You cannot save empty pages.')
             raise self.EmptyPage, msg

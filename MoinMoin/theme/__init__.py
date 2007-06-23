@@ -1114,7 +1114,7 @@ actionsMenuInit('%(label)s');
         If the user want to show both editors, it will display "Edit
         (Text)", otherwise as "Edit".
         """
-        if not (page.isWritable() and
+        if not (page.exists() and
                 self.request.user.may.write(page.page_name)):
             return self.disabledEdit()
 
@@ -1152,7 +1152,7 @@ actionsMenuInit('%(label)s');
         the browser is compatible with the editor.
         """
         page = d['page']
-        if not (page.isWritable() and
+        if not (page.exists() and
                 self.request.user.may.write(page.page_name) and
                 self.showBothEditLinks() and
                 self.guiworks(page)):
