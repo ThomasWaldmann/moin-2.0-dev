@@ -678,7 +678,9 @@ reStructuredText Quick Reference
             
         # storage configuration  
         self.user_backend = UserStorage(self.user_dir, self, "user")
-        self.page_backend = LayerBackend([PageStorage(os.path.join(self.data_dir, "pages"), self, "pages"), PageStorage(os.path.join(self.data_underlay_dir, "pages"), self, "underlay")])
+        self.page_backend = PageStorage(os.path.join(self.data_dir, "pages"), self, "pages")
+        self.underlay_backend = PageStorage(os.path.join(self.data_underlay_dir, "pages"), self, "underlay")
+        self.data_backend = LayerBackend([self.page_backend, self.underlay_backend])
         self.indexes = []
 
 
