@@ -34,11 +34,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, re, codecs, logging
+import os, re, logging
 
 from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
-from MoinMoin.util import filesys
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError
 
@@ -176,7 +175,9 @@ class Page(object):
         self.__pi = None # dict of preprocessed page metadata (processing instructions)
         self.__data = None # unicode page data = body - metadata
 
-        self.__item_collection = ItemCollection(request.cfg.page_backend, None)
+        self.__items_standard = ItemCollection(request.cfg.page_backend, None)
+        self.__items_underlay = ItemCollection(request.cfg.underlay_backend, None)
+        self.__items_all = ItemCollection(request.cfg.data_backend, None)
         
         self.reset()
 
@@ -207,7 +208,7 @@ class Page(object):
 
         # define the item
         try:
-            self.__item = self.__item_collection[qpagename]
+            self.__item = self.__items_all[qpagename]
         except NoSuchItemError:
             self.__body = ""
             self.__meta = dict()
@@ -610,7 +611,8 @@ class Page(object):
         return os.access(self._text_filename(), os.W_OK) or not self.exists()
 
     def isUnderlayPage(self, includeDeleted=True):
-        """ Does this page live in the underlay dir?
+        """
+        Does this page live in the underlay dir?
 
         Return true even if the data dir has a copy of this page. To
         check for underlay only page, use ifUnderlayPage() and not
@@ -620,10 +622,11 @@ class Page(object):
         @rtype: bool
         @return: true if page lives in the underlay dir
         """
-        return self.exists(domain='underlay', includeDeleted=includeDeleted)
+        return self.__item.backend.name == "underlay"
 
     def isStandardPage(self, includeDeleted=True):
-        """ Does this page live in the data dir?
+        """
+        Does this page live in the data dir?
 
         Return true even if this is a copy of an underlay page. To check
         for data only page, use isStandardPage() and not isUnderlayPage().
@@ -632,10 +635,11 @@ class Page(object):
         @rtype: bool
         @return: true if page lives in the data dir
         """
-        return self.exists(domain='standard', includeDeleted=includeDeleted)
+        return self.__item.backend.name != "underlay"
 
     def exists(self, rev=0, domain=None, includeDeleted=False):
-        """ Does this page exist?
+        """
+        Does this page exist?
 
         This is the lower level method for checking page existence. Use
         the higher level methods isUnderlayPage and isStandardPage for
@@ -649,31 +653,24 @@ class Page(object):
         @return: true, if page exists
         """
         # Edge cases
+        if not self.__item:
+            return False
+        
         if domain == 'underlay' and not self.request.cfg.data_underlay_dir:
             return False
-
-        if includeDeleted:
-            # Look for page directory, ignore page state
-            if domain is None:
-                checklist = [0, 1]
-            else:
-                checklist = [domain == 'underlay']
-            for use_underlay in checklist:
-                pagedir = self.getPagePath(use_underlay=use_underlay, check_create=0)
-                if os.path.exists(pagedir):
-                    return True
+        
+        if rev and not self.__item.has_key(rev):
             return False
-        else:
-            # Look for non-deleted pages only, using get_rev
-            if not rev and self.rev:
-                rev = self.rev
 
-            if domain is None:
-                use_underlay = -1
-            else:
-                use_underlay = domain == 'underlay'
-            d, d, exists = self.get_rev(use_underlay, rev)
-            return exists
+        if not includeDeleted and self.__item.deleted:
+            return False
+            
+        if domain is None:
+            return True
+        elif domain == 'underlay':
+            return self.__item.backend.name == 'underlay'            
+        else:
+            return self.__item.backend.name != 'underlay'
 
     def size(self, rev=0):
         """ Get Page size.
@@ -1589,7 +1586,7 @@ class RootPage(object):
         Init the item collection.
         """
         self.request = request
-        self.__item_collection = ItemCollection(request.cfg.page_backend, None)
+        self.__items = ItemCollection(request.cfg.data_backend, None)
     
     def getPagePath(self, fname, isfile):
         """
@@ -1643,7 +1640,7 @@ class RootPage(object):
         cachedlist = request.cfg.cache.pagelists.getItem(request, 'all', None)
         if cachedlist is None:
             cachedlist = {}
-            for name in self.__item_collection.keys():
+            for name in self.__items.keys():
                 # Unquote file system names
                 pagename = wikiutil.unquoteWikiname(name)
 
@@ -1668,7 +1665,7 @@ class RootPage(object):
                 page = Page(request, name)
 
                 # Filter underlay pages
-                if not include_underlay and page.getPageStatus()[0]: # is an underlay page
+                if not include_underlay and page.isUnderlayPage(): # is an underlay page
                     continue
 
                 # Filter deleted pages
@@ -1726,7 +1723,7 @@ class RootPage(object):
             # WARNING: SLOW
             pages = self.getPageList(user='')
         else:
-            pages = self.__item_collection.keys()
+            pages = self.__items.keys()
         count = len(pages)
         self.request.clock.stop('getPageCount')
 
