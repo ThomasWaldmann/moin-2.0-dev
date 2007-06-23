@@ -1182,6 +1182,8 @@ class PageLock:
                         self.timeout = int(lockinfo[1]) * 60
                     except ValueError:
                         pass
+        
+        self.locktype = None
 
 
     def acquire(self):

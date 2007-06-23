@@ -182,33 +182,13 @@ class Page(object):
         self.reset()
 
     def reset(self):
-        """ Reset page state """
-        page_name = self.page_name
-        # page_name quoted for file system usage, needs to be reset to
-        # None when pagename changes
+        """ 
+        Reset page state.
+        """
+        self.page_name_fs = wikiutil.quoteWikinameFS(self.page_name)
 
-        qpagename = wikiutil.quoteWikinameFS(page_name)
-        self.page_name_fs = qpagename
-
-        # the normal and the underlay path used for this page
-        normalpath = os.path.join(self.cfg.data_dir, "pages", qpagename)
-        if not self.cfg.data_underlay_dir is None:
-            underlaypath = os.path.join(self.cfg.data_underlay_dir, "pages", qpagename)
-        else:
-            underlaypath = None
-
-        # TUNING - remember some essential values
-
-        # does the page come from normal page storage (0) or from
-        # underlay dir (1) (can be used as index into following list)
-        self._underlay = None
-
-        # path to normal / underlay page dir
-        self._pagepath = [normalpath, underlaypath]
-
-        # define the item
         try:
-            self.__item = self.__items_all[qpagename]
+            self.__item = self.__items_all[self.page_name_fs]
         except NoSuchItemError:
             self.__body = ""
             self.__meta = dict()
@@ -321,158 +301,13 @@ class Page(object):
         if self.rev == 0:
             return self.current_rev()
         return self.rev
-    
-    
-    def get_current_from_pagedir(self, pagedir):
-        """ Get the current revision number from an arbitrary pagedir.
-            Does not modify page object's state, uncached, direct disk access.
-            @param pagedir: the pagedir with the 'current' file to read
-            @return: int currentrev
+
+    def getPagePath(self, *args, **kw):
         """
-        revfilename = os.path.join(pagedir, 'current')
-        try:
-            revfile = file(revfilename)
-            revstr = revfile.read().strip()
-            revfile.close()
-            rev = int(revstr)
-        except:
-            rev = 99999999 # XXX do some better error handling
-        return rev
-
-    def get_rev_dir(self, pagedir, rev=0):
-        """ Get a revision of a page from an arbitrary pagedir.
+        TODO: This is still very hackish.
         
-        Does not modify page object's state, uncached, direct disk access.
-
-        @param pagedir: the path to the page storage area
-        @param rev: int revision to get (default is 0 and means the current
-                    revision (in this case, the real revint is returned)
-        @return: (str path to file of the revision,
-                  int realrevint,
-                  bool exists)
-        """
-        if rev == 0:
-            rev = self.get_current_from_pagedir(pagedir)
-
-        revstr = '%08d' % rev
-        pagefile = os.path.join(pagedir, 'revisions', revstr)
-        if rev != 99999999:
-            exists = os.path.exists(pagefile)
-            if exists:
-                self._setRealPageName(pagedir)
-        else:
-            exists = False
-        return pagefile, rev, exists
-
-    def _setRealPageName(self, pagedir):
-        """ Set page_name to the real case of page name
-        
-        On case insensitive file system, "pagename" exists even if the
-        real page name is "PageName" or "PAGENAME". This leads to
-        confusion in urls, links and logs.
-        See MoinMoinBugs/MacHfsPlusCaseInsensitive
-        
-        Correct the case of the page name. Elements created from the
-        page name in reset() are not updated because it's too messy, and
-        this fix seems to be enough for 1.3.
-        
-        Problems to fix later:
-        
-         - ["helponnavigation"] link to HelpOnNavigation but not
-           considered as backlink.
-        
-        @param pagedir: the storage path to the page directory
-        """
-        realPath = util.filesys.realPathCase(pagedir)
-        if not realPath is None:
-            realPath = wikiutil.unquoteWikiname(realPath)
-            self.page_name = realPath[-len(self.page_name):]
-
-    def get_rev(self, use_underlay=-1, rev=0):
-        """ Get information about a revision.
-
-        filename, number, and (existance test) of this page and revision.
-
-        @param use_underlay: -1 == auto, 0 == normal, 1 == underlay
-        @param rev: int revision to get (default is 0 and means the current
-                    revision (in this case, the real revint is returned)
-        @return: (str path to current revision of page,
-                  int realrevint,
-                  bool exists)
-        """
-        def layername(underlay):
-            if underlay == -1:
-                return 'layer_auto'
-            elif underlay == 0:
-                return 'layer_normal'
-            else: # 1
-                return 'layer_underlay'
-
-        request = self.request
-        cache_name = self.page_name
-        cache_key = layername(use_underlay)
-        if self._text_filename_force is None:
-            cache_data = request.cfg.cache.meta.getItem(request, cache_name, cache_key)
-            if cache_data and (rev == 0 or rev == cache_data[1]):
-                # we got the correct rev data from the cache
-                #logging.debug("got data from cache: %r %r %r" % cache_data)
-                return cache_data
-
-        # Figure out if we should use underlay or not, if needed.
-        if use_underlay == -1:
-            underlay, pagedir = self.getPageStatus(check_create=0)
-        else:
-            underlay, pagedir = use_underlay, self._pagepath[use_underlay]
-
-        # Find current revision, if automatic selection is requested.
-        if rev == 0:
-            realrev = self.get_current_from_pagedir(pagedir)
-        else:
-            realrev = rev
-
-        data = self.get_rev_dir(pagedir, realrev)
-        if rev == 0 and self._text_filename_force is None:
-            # we only save the current rev to the cache
-            request.cfg.cache.meta.putItem(request, cache_name, cache_key, data)
-
-        return data
-
-    def getPageBasePath(self, use_underlay=-1):
-        """ Get full path to a page-specific storage area. `args` can
-            contain additional path components that are added to the base path.
-
-        @param use_underlay: force using a specific pagedir, default -1
-                                -1 = automatically choose page dir
-                                1 = use underlay page dir
-                                0 = use standard page dir
-        @rtype: string
-        @return: int underlay,
-                 str the full path to the storage area
-        """
-        standardpath, underlaypath = self._pagepath
-        if underlaypath is None:
-            use_underlay = 0
-
-        if use_underlay == -1: # automatic
-            if self._underlay is None:
-                underlay, path = 0, standardpath
-                pagefile, rev, exists = self.get_rev(use_underlay=0)
-                if not exists:
-                    pagefile, rev, exists = self.get_rev(use_underlay=1)
-                    if exists:
-                        underlay, path = 1, underlaypath
-                self._underlay = underlay
-            else:
-                underlay = self._underlay
-                path = self._pagepath[underlay]
-        else: # normal or underlay
-            underlay, path = use_underlay, self._pagepath[use_underlay]
-
-        return underlay, path
-
-    def getPageStatus(self, *args, **kw):
-        """ Get full path to a page-specific storage area. `args` can
-            contain additional path components that are added to the base path.
+        Get full path to a page-specific storage area. `args` can
+        contain additional path components that are added to the base path.
 
         @param args: additional path components
         @keyword use_underlay: force using a specific pagedir, default '-1'
@@ -490,7 +325,19 @@ class Page(object):
         check_create = kw.get('check_create', 1)
         isfile = kw.get('isfile', 0)
         use_underlay = kw.get('use_underlay', -1)
-        underlay, path = self.getPageBasePath(use_underlay)
+        
+        if use_underlay == -1:
+            if self.__item is None:
+                path = os.path.join(self.request.cfg.data_dir, "pages", self.page_name_fs)
+            elif self.__item.backend.name == "underlay":
+                path = os.path.join(self.request.cfg.data_underlay_dir, "pages", self.page_name_fs)
+            else:
+                path = os.path.join(self.request.cfg.data_dir, "pages", self.page_name_fs)
+        elif use_underlay == 1:
+            path = os.path.join(self.request.cfg.data_underlay_dir, "pages", self.page_name_fs)
+        else:
+            path = os.path.join(self.request.cfg.data_dir, "pages", self.page_name_fs)
+        
         fullpath = os.path.join(*((path,) + args))
         if check_create:
             if isfile:
@@ -499,14 +346,13 @@ class Page(object):
                 dirname = fullpath
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
-        return underlay, fullpath
-
-    def getPagePath(self, *args, **kw):
-        """ Return path to the page storage area. """
-        return self.getPageStatus(*args, **kw)[1]
+        return fullpath
 
     def _text_filename(self, **kw):
-        """ The name of the page file, possibly of an older page.
+        """
+        TODO: remove this
+        
+        The name of the page file, possibly of an older page.
 
         @keyword rev: page revision, overriding self.rev
         @rtype: string
@@ -515,10 +361,10 @@ class Page(object):
         if self._text_filename_force is not None:
             return self._text_filename_force
         rev = kw.get('rev', 0)
-        if not rev and self.rev:
-            rev = self.rev
-        fname, rev, exists = self.get_rev(-1, rev)
-        return fname
+        if rev == 0:
+            rev = self.get_real_rev()
+        return self.getPagePath("revisions", '%08d' % rev, check_create = False)
+
 
     # XXX TODO clean up the mess, rewrite _last_edited, last_edit, lastEditInfo for new logs,
     # XXX TODO do not use mtime() calls any more
