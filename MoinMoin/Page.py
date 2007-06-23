@@ -448,14 +448,6 @@ class Page(object):
         time = request.user.getFormattedDateTime(time)
         return {'editor': editor, 'time': time}
 
-    def isWritable(self):
-        """ Can this page be changed?
-
-        @rtype: bool
-        @return: true, if this page is writable or does not exist
-        """
-        return os.access(self._text_filename(), os.W_OK) or not self.exists()
-
     def isUnderlayPage(self, includeDeleted=True):
         """
         Does this page live in the underlay dir?
