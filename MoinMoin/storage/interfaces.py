@@ -10,6 +10,7 @@ First define some constants.
 """
 
 DELETED = "Deleted"
+SIZE = "Size"
 
 """
 Then the actual interface.

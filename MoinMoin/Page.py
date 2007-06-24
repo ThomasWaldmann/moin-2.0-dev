@@ -31,6 +31,7 @@
                 2005-2007 by MoinMoin:ThomasWaldmann,
                 2006 by MoinMoin:FlorianFesti,
                 2007 by MoinMoin:ReimarBauer
+                2007 by MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -40,6 +41,7 @@ from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError
+from MoinMoin.storage.interfaces import SIZE
 
 
 def is_cache_exception(e):
@@ -276,13 +278,15 @@ class Page(object):
         """
         revisions = []
         if self.__item:
-            revisions = self.__item.keys()[:]
+            revisions = self.__item.keys()
             revisions.remove(0)
         return revisions
 
     def current_rev(self):
         """
         Return number of current revision.
+        
+        TODO: remove the 99999999 hack
         
         @return: int revision
         """
@@ -520,7 +524,7 @@ class Page(object):
             if self.__body is not None:
                 return len(self.__body)
 
-        return self.__item[rev].data.size()
+        return self.__item[rev].metadata[SIZE]
 
     def mtime_usecs(self):
         """ Get modification timestamp of this page.
@@ -1466,7 +1470,7 @@ class RootPage(object):
         cachedlist = request.cfg.cache.pagelists.getItem(request, 'all', None)
         if cachedlist is None:
             cachedlist = {}
-            for name in self.__items.keys():
+            for name in self.__items:
                 # Unquote file system names
                 pagename = wikiutil.unquoteWikiname(name)
 
@@ -1549,7 +1553,7 @@ class RootPage(object):
             # WARNING: SLOW
             pages = self.getPageList(user='')
         else:
-            pages = self.__items.keys()
+            pages = self.__items
         count = len(pages)
         self.request.clock.stop('getPageCount')
 
