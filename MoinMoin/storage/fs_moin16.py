@@ -17,7 +17,7 @@ import shutil
 
 from MoinMoin import config
 from MoinMoin.util import filesys
-from MoinMoin.storage.interfaces import DataBackend, StorageBackend, DELETED
+from MoinMoin.storage.interfaces import DataBackend, StorageBackend, DELETED, SIZE
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
@@ -112,7 +112,7 @@ class UserStorage(AbstractStorage):
         """ 
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
-        files = [f for f in os.listdir(self.path)[:] if user_re.match(f)]
+        files = [f for f in os.listdir(self.path) if user_re.match(f)]
 
         return super(UserStorage, self).list_items(files, filters)
 
@@ -222,7 +222,7 @@ class PageStorage(AbstractStorage):
         """ 
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
-        files = os.listdir(self.path)[:]
+        files = os.listdir(self.path)
 
         return super(PageStorage, self).list_items(files, filters)
 
@@ -266,7 +266,7 @@ class PageStorage(AbstractStorage):
         Users have no revisions.
         """
         try:
-            revs = os.listdir(os.path.join(self.path, name, "revisions"))[:]
+            revs = os.listdir(os.path.join(self.path, name, "revisions"))
             revs.insert(0, "0")
             revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
             revs.sort()
@@ -373,6 +373,9 @@ class PageStorage(AbstractStorage):
                     break
             data_file.close()
 
+            # add size metadata
+            metadata[SIZE] = os.path.getsize(os.path.join(self.path, name, "revisions", get_rev_string(revno)))
+
         return metadata
 
     def _save_metadata(self, name, revno, metadata):
@@ -396,7 +399,13 @@ class PageStorage(AbstractStorage):
     
             # remove metadata
             new_data = [line for line in data if not line.startswith('#') and not line == '#' and not line == '##']
-    
+
+            # remove size metadata
+            try:
+                del metadata[SIZE]
+            except KeyError:
+                pass
+
             # add metadata
             for key, value in metadata.iteritems():
                 new_data.insert(0, "#%s %s\n" % (key, value))
@@ -495,12 +504,6 @@ class PageData(DataBackend):
             self.write_file.close()
             filesys.rename(self.write_file_name, self.read_file_name)
 
-    def size(self):
-        """
-        @see MoinMoin.interfaces.DataBackend.size
-        """
-        return os.path.getsize(self.read_file_name)
-    
 
 def encode_list(items):
     """
