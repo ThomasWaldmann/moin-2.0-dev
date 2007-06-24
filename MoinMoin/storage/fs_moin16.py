@@ -7,6 +7,7 @@
     TODO: locking
     TODO: indexes
     TODO: item wide metadata
+    TODO: wiki wide metadata
 """
 
 import codecs
@@ -19,6 +20,7 @@ from MoinMoin import config
 from MoinMoin.util import filesys
 from MoinMoin.storage.interfaces import DataBackend, StorageBackend, DELETED, SIZE
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
@@ -222,7 +224,7 @@ class PageStorage(AbstractStorage):
         """ 
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
-        files = os.listdir(self.path)
+        files = [unquoteWikiname(f) for f in os.listdir(self.path)]
 
         return super(PageStorage, self).list_items(files, filters)
 
@@ -230,21 +232,21 @@ class PageStorage(AbstractStorage):
         """
         @see MoinMoin.interfaces.StorageBackend.has_item
         """
-        if name and os.path.isdir(os.path.join(self.path, name)):
+        if name and os.path.isdir(self.get_page_path(name)):
             return self
         return None
 
     def create_item(self, name):
         """
         @see MoinMoin.interfaces.StorageBackend.create_item
-        """
+        """        
         if not self.has_item(name):
-            os.mkdir(os.path.join(self.path, name))
-            os.mkdir(os.path.join(self.path, name, "cache"))
-            os.mkdir(os.path.join(self.path, name, "cache", "__lock__"))
-            os.mkdir(os.path.join(self.path, name, "revisions"))
-            create_file(self.path, name, "current")
-            create_file(self.path, name, "edit-log")
+            os.mkdir(self.get_page_path(name))
+            os.mkdir(self.get_page_path(name, "cache"))
+            os.mkdir(self.get_page_path(name, "cache", "__lock__"))
+            os.mkdir(self.get_page_path(name, "revisions"))
+            create_file(self.get_page_path(name, "current"))
+            create_file(self.get_page_path(name, "edit-log"))
         else:
             raise BackendError("Item %r already exists" % name)
 
@@ -255,7 +257,7 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.interfaces.StorageBackend.remove_item
         """
         try:
-            shutil.rmtree(os.path.join(self.path, name))
+            shutil.rmtree(self.get_page_path(name))
         except OSError, err:
             _handle_error(self, err, name, message="Failed to remove item %r." % name)
 
@@ -266,7 +268,7 @@ class PageStorage(AbstractStorage):
         Users have no revisions.
         """
         try:
-            revs = os.listdir(os.path.join(self.path, name, "revisions"))
+            revs = os.listdir(self.get_page_path(name, "revisions"))
             revs.insert(0, "0")
             revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
             revs.sort()
@@ -280,7 +282,7 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.interfaces.StorageBackend.current_revision
         """
         try:
-            data_file = file(os.path.join(self.path, name, "current"), "r")
+            data_file = file(self.get_page_path(name, "current"), "r")
             rev = data_file.read()
             data_file.close()
             return int(rev)
@@ -294,7 +296,7 @@ class PageStorage(AbstractStorage):
         if revno == 0:
             revno = self.current_revision(name)
 
-        return os.path.isfile(os.path.join(self.path, name, "revisions", get_rev_string(revno)))
+        return os.path.isfile(self.get_page_path(name, "revisions", get_rev_string(revno)))
 
     def create_revision(self, name, revno):
         """
@@ -304,7 +306,7 @@ class PageStorage(AbstractStorage):
             revno = self.current_revision(name) + 1
 
         try:
-            create_file(self.path, name, "revisions", get_rev_string(revno))
+            create_file(self.get_page_path(name, "revisions", get_rev_string(revno)))
             self._update_current(name)
         except IOError, err:
             _handle_error(self, err, name, revno, message="Failed to create revision for item %r with revision %r."  % (name, revno))
@@ -317,7 +319,7 @@ class PageStorage(AbstractStorage):
             revno = self.current_revision(name)
 
         try:
-            os.remove(os.path.join(self.path, name, "revisions", get_rev_string(revno)))
+            os.remove(self.get_page_path(name, "revisions", get_rev_string(revno)))
             self._update_current(name)
         except OSError, err:
             _handle_error(self, err, name, revno, message="Failed to remove revision %r for item %r." % (revno, name))
@@ -330,7 +332,7 @@ class PageStorage(AbstractStorage):
             revno = self.list_revisions(name)[0]
             
         try:
-            data_file = file(os.path.join(self.path, name, "current"), "w")
+            data_file = file(self.get_page_path(name, "current"), "w")
             data_file.write(get_rev_string(revno) + "\n")
             data_file.close()
         except IOError, err:
@@ -347,13 +349,13 @@ class PageStorage(AbstractStorage):
             
             # Emulate the deleted status via a metadata flag
             current = self.current_revision(name)
-            if not os.path.exists(os.path.join(self.path, name, "revisions", get_rev_string(current))):
+            if not os.path.exists(self.get_page_path(name, "revisions", get_rev_string(current))):
                 metadata[DELETED] = True
             
         else:
         
             try:
-                data_file = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", config.charset)
+                data_file = codecs.open(self.get_page_path(name, "revisions", get_rev_string(revno)), "r", config.charset)
             except IOError, err:
                 _handle_error(self, err, name, revno, message="Failed to parse metadata for item %r with revision %r." % (name, revno))
     
@@ -374,7 +376,7 @@ class PageStorage(AbstractStorage):
             data_file.close()
 
             # add size metadata
-            metadata[SIZE] = os.path.getsize(os.path.join(self.path, name, "revisions", get_rev_string(revno)))
+            metadata[SIZE] = os.path.getsize(self.get_page_path(name, "revisions", get_rev_string(revno)))
 
         return metadata
 
@@ -393,7 +395,7 @@ class PageStorage(AbstractStorage):
         else:
         
             try:
-                data = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "r", config.charset).readlines()
+                data = codecs.open(self.get_page_path(name, "revisions", get_rev_string(revno)), "r", config.charset).readlines()
             except IOError, err:
                 _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
     
@@ -412,7 +414,7 @@ class PageStorage(AbstractStorage):
     
             # save data
             try:
-                data_file = codecs.open(os.path.join(self.path, name, "revisions", get_rev_string(revno)), "w", config.charset)
+                data_file = codecs.open(self.get_page_path(name, "revisions", get_rev_string(revno)), "w", config.charset)
             except IOError, err:
                 _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
     
@@ -427,24 +429,35 @@ class PageStorage(AbstractStorage):
             revno = self.current_revision(name)
 
         if self.has_revision(name, revno):
-            return PageData(self.path, name, revno)
+            return PageData(self.path, name, revno, self)
         else:
             if not self.has_item(name):
                 raise NoSuchItemError("Item %r does not exist." % name)
             else:
                 raise NoSuchRevisionError("Revision %r of item %r does not exist." % (revno, name))
 
+    def get_page_path(self, name, *args):
+        """
+        Returns the full path with fs quoted page name.
+        
+        TODO: cache the quoted name?
+        """
+        return os.path.join(self.path, quoteWikinameFS(name), *args)
+
+
 class PageData(DataBackend):
     """
     This class implements a File like object for MoinMoin 1.6 Page stuff.
     """
 
-    def __init__(self, path, name, revno):
+    def __init__(self, path, name, revno, backend):
         """
         Init stuff and open the file.
         """
-        self.read_file_name = os.path.join(path, name, "revisions", get_rev_string(revno))
-        self.write_file_name = os.path.join(path, name, "revisions", get_rev_string(revno) + ".tmp")
+        self.backend = backend
+        
+        self.read_file_name = backend.get_page_path(name, "revisions", get_rev_string(revno))
+        self.write_file_name = backend.get_page_path(name, "revisions", get_rev_string(revno) + ".tmp")
 
         self.__read_file = None
         self.__write_file = None
