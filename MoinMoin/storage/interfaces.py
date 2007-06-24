@@ -155,9 +155,3 @@ class DataBackend(object):
         Close the stream.
         """
         raise NotImplementedError
-
-    def size(self):
-        """
-        Returns the size of the contents.
-        """
-        raise NotImplementedError
