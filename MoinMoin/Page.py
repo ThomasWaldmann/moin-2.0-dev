@@ -1467,16 +1467,14 @@ class RootPage(object):
         if cachedlist is None:
             cachedlist = {}
             for name in self.__items:
-                # Unquote file system names
-                pagename = wikiutil.unquoteWikiname(name)
 
                 # Filter those annoying editor backups - current moin does not create
                 # those pages any more, but users have them already in data/pages
                 # until we remove them by a mig script...
-                if pagename.endswith(u'/MoinEditorBackup'):
+                if name.endswith(u'/MoinEditorBackup'):
                     continue
 
-                cachedlist[pagename] = None
+                cachedlist[name] = None
             request.cfg.cache.pagelists.putItem(request, 'all', None, cachedlist)
 
         if user or exists or filter or not include_underlay or return_objects:
