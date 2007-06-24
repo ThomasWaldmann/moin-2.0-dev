@@ -187,10 +187,8 @@ class Page(object):
         """ 
         Reset page state.
         """
-        self.page_name_fs = wikiutil.quoteWikinameFS(self.page_name)
-
         try:
-            self.__item = self.__items_all[self.page_name_fs]
+            self.__item = self.__items_all[self.page_name]
         except NoSuchItemError:
             self.__body = ""
             self.__meta = dict()
@@ -332,15 +330,13 @@ class Page(object):
         
         if use_underlay == -1:
             if self.__item is None:
-                path = os.path.join(self.request.cfg.data_dir, "pages", self.page_name_fs)
-            elif self.__item.backend.name == "underlay":
-                path = os.path.join(self.request.cfg.data_underlay_dir, "pages", self.page_name_fs)
+                path = self.request.cfg.page_backend.get_page_path(self.page_name)
             else:
-                path = os.path.join(self.request.cfg.data_dir, "pages", self.page_name_fs)
+                path = self.__item.backend.get_page_path(self.page_name)
         elif use_underlay == 1:
-            path = os.path.join(self.request.cfg.data_underlay_dir, "pages", self.page_name_fs)
+            self.request.cfg.page_backend.get_underlay_path(self.page_name)
         else:
-            path = os.path.join(self.request.cfg.data_dir, "pages", self.page_name_fs)
+            self.request.cfg.page_backend.get_page_path(self.page_name)
         
         fullpath = os.path.join(*((path,) + args))
         if check_create:
