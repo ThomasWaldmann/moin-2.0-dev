@@ -122,7 +122,7 @@ class UserStorage(AbstractStorage):
         """
         @see MoinMoin.interfaces.StorageBackend.has_item
         """
-        if name and os.path.isfile(os.path.join(self.path, name)):
+        if os.path.isfile(os.path.join(self.path, name)):
             return self
         return None
 
@@ -224,7 +224,7 @@ class PageStorage(AbstractStorage):
         """ 
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
-        files = [unquoteWikiname(f) for f in os.listdir(self.path)]
+        files = [unquoteWikiname(f) for f in os.listdir(self.path) if os.path.exists(os.path.join(self.path, f, "current"))]
 
         return super(PageStorage, self).list_items(files, filters)
 
@@ -232,7 +232,7 @@ class PageStorage(AbstractStorage):
         """
         @see MoinMoin.interfaces.StorageBackend.has_item
         """
-        if name and os.path.isdir(self.get_page_path(name)):
+        if os.path.isfile(self.get_page_path(name, "current")):
             return self
         return None
 
@@ -277,14 +277,16 @@ class PageStorage(AbstractStorage):
         except OSError, err:
             _handle_error(self, err, name, message="Failed to list revisions for item %r." % name)
 
-    def current_revision(self, name):
+    def current_revision(self, name, real=True):
         """
         @see MoinMoin.interfaces.StorageBackend.current_revision
         """
         try:
             data_file = file(self.get_page_path(name, "current"), "r")
-            rev = data_file.read()
+            rev = data_file.read().strip()
             data_file.close()
+            if real and not os.path.exists(self.get_page_path(name, "revisions", rev)):
+                return int(rev) - 1
             return int(rev)
         except IOError, err:
             _handle_error(self, err, name, message="Failed to get current revision for item %r." % name)
@@ -348,7 +350,7 @@ class PageStorage(AbstractStorage):
         if revno == -1:
             
             # Emulate the deleted status via a metadata flag
-            current = self.current_revision(name)
+            current = self.current_revision(name, real=False)
             if not os.path.exists(self.get_page_path(name, "revisions", get_rev_string(current))):
                 metadata[DELETED] = True
             
@@ -369,7 +371,14 @@ class PageStorage(AbstractStorage):
                         break
     
                     verb, args = (line[1:] + ' ').split(' ', 1) # split at the first blank
-                    metadata[verb.lower()] = args.strip()
+                    
+                    # metadata can be multiline
+                    if verb == 'acl':
+                        if verb not in metadata:
+                            metadata[verb] = []
+                        metadata[verb].append(args.strip())
+                    else:
+                        metadata[verb.lower()] = args.strip()
     
                 elif started is True:
                     break
@@ -410,7 +419,13 @@ class PageStorage(AbstractStorage):
 
             # add metadata
             for key, value in metadata.iteritems():
-                new_data.insert(0, "#%s %s\n" % (key, value))
+                
+                # special handling for list metadata like acl's
+                if isinstance(value, list):
+                    for line in value:
+                        new_data.insert(0, "#%s %s\n" % (key, line))
+                else:
+                    new_data.insert(0, "#%s %s\n" % (key, value))
     
             # save data
             try:

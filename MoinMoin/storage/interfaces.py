@@ -9,8 +9,9 @@
 First define some constants.
 """
 
-DELETED = "Deleted"
-SIZE = "Size"
+DELETED = "deleted"
+SIZE = "size"
+ACL = "acl"
 
 """
 Then the actual interface.

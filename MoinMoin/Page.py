@@ -334,9 +334,9 @@ class Page(object):
             else:
                 path = self.__item.backend.get_page_path(self.page_name)
         elif use_underlay == 1:
-            self.request.cfg.page_backend.get_underlay_path(self.page_name)
+            path = self.request.cfg.underlay_backend.get_page_path(self.page_name)
         else:
-            self.request.cfg.page_backend.get_page_path(self.page_name)
+            path = self.request.cfg.page_backend.get_page_path(self.page_name)
         
         fullpath = os.path.join(*((path,) + args))
         if check_create:
@@ -727,7 +727,6 @@ class Page(object):
             return a dict of PIs and the non-PI rest of the body.
         """
         from MoinMoin import i18n
-        from MoinMoin import security
         pi = {} # we collect the processing instructions here
     
         body = self.body
@@ -744,16 +743,12 @@ class Page(object):
         pi['formatargs'] = ''
         pi['lines'] = len(meta)
         request = self.request
-        acl = []
         
         for verb, args in meta.iteritems():
             if verb == "format": # markup format
                 format, formatargs = (args + ' ').split(' ', 1)
                 pi['format'] = format.lower()
                 pi['formatargs'] = formatargs.strip()
-
-            elif verb == "acl":
-                acl.append(args)
 
             elif verb == "language":
                 # Page language. Check if args is a known moin language
@@ -796,7 +791,6 @@ class Page(object):
                 else:
                     request.setPragma(key, val)
 
-        pi['acl'] = security.AccessControlList(request.cfg, acl)
         return pi
 
     def send_raw(self, content_disposition=None):
@@ -1294,61 +1288,18 @@ class Page(object):
         return None
 
     def getACL(self, request):
-        """ Get cached ACLs of this page.
+        """
+        Get cached ACLs of this page.
         
         Return cached ACL or invoke parseACL and update the cache.
+
+        TODO: cache?
 
         @param request: the request object
         @rtype: MoinMoin.security.AccessControlList
         @return: ACL of this page
         """
-        try:
-            return self.__acl # for request.page, this is n-1 times used
-        except AttributeError:
-            # the caching here is still useful for pages != request.page,
-            # when we have multiple page objects for the same page name.
-            request.clock.start('getACL')
-            # Try the cache or parse acl and update the cache
-            currentRevision = self.current_rev()
-            cache_name = self.page_name
-            cache_key = 'acl'
-            cache_data = request.cfg.cache.meta.getItem(request, cache_name, cache_key)
-            if cache_data is None:
-                aclRevision, acl = None, None
-            else:
-                aclRevision, acl = cache_data
-            #logging.debug("currrev: %r, cachedaclrev: %r" % (currentRevision, aclRevision))
-            if aclRevision != currentRevision:
-                acl = self.parseACL()
-                if currentRevision != 99999999:
-                    # don't use cache for non existing pages
-                    # otherwise in the process of creating copies by filesys.copytree (PageEditor.copyPage)
-                    # the first may test will create a cache entry with the default_acls for a non existing page 
-                    # At the time the page is created acls on that page would be ignored until the process
-                    # is completed by adding a log entry into edit-log
-                    cache_data = (currentRevision, acl)
-                    request.cfg.cache.meta.putItem(request, cache_name, cache_key, cache_data)
-            self.__acl = acl
-            request.clock.stop('getACL')
-            return acl
-
-    def parseACL(self):
-        """ Return ACLs parsed from the last available revision 
-        
-        The effective ACL is always from the last revision, even if
-        you access an older revision.
-        """
-        from MoinMoin import security
-        if self.exists() and self.rev == 0:
-            return self.pi['acl']
-        try:
-            lastRevision = self.getRevList()[0]
-        except IndexError:
-            return security.AccessControlList(self.request.cfg)
-        if self.rev == lastRevision:
-            return self.pi['acl']
-
-        return Page(self.request, self.page_name, rev=lastRevision).parseACL()
+        return self.__item.acl
 
     # Text format -------------------------------------------------------
 

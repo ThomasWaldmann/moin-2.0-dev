@@ -64,7 +64,7 @@ class TestItem:
     item = None
 
     def setup_class(self):
-        self.item = ItemCollection(PageStorage(get_page_dir(), DummyConfig(), "user"), None)[pages[0]]
+        self.item = ItemCollection(PageStorage(get_page_dir(), DummyConfig(), "pages"), None)[pages[0]]
 
     def teardown_class(self):
         self.item = None
@@ -106,6 +106,14 @@ class TestItem:
         self.item.deleted = True
         self.item.metadata.save()
         assert self.item.deleted == True
+        assert self.item.current == 1
+        self.item.deleted = False
+        self.item.metadata.save()
+        assert self.item.deleted == False
+        assert self.item.current == 1
+    
+    def test_acl(self):
+        assert self.item.acl
 
 
 class TestRevision:
