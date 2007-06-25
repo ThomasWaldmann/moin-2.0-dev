@@ -1299,7 +1299,11 @@ class Page(object):
         @rtype: MoinMoin.security.AccessControlList
         @return: ACL of this page
         """
-        return self.__item.acl
+        if self.__item:
+            return self.__item.acl
+        else:
+            from MoinMoin.security import AccessControlList
+            return AccessControlList(self.request.cfg)
 
     # Text format -------------------------------------------------------
 
