@@ -139,7 +139,7 @@ class NamespaceBackend(MetaBackend):
         """
         Returns the backend that should contain the given item.
         """
-        for namespace in sorted(self.backends, reverse = True):
+        for namespace in sorted(self.backends, reverse=True):
             if name.startswith(namespace):
                 name = name.replace(namespace, "", 1)
                 return name, self.backends[namespace]

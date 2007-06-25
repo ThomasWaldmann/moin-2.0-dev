@@ -6,9 +6,9 @@
 """
 
 import UserDict
-
+    
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage.interfaces import DELETED
+from MoinMoin.storage.interfaces import DELETED, ACL
 
 class ItemCollection(UserDict.DictMixin, object):
     """
@@ -96,13 +96,19 @@ class Item(UserDict.DictMixin, object):
         self.userobj = userobj
 
         self.__metadata = None
-
+        self.__deleted = None
+        
+        self.reset()
+    
+    def reset(self):
+        """
+        Reset the lazy loaded stuff which is dependend on adding/removing revisions.
+        """
         self.__revisions = None
         self.__current = None
         self.__revision_objects = dict()
+        self.__acl = None
         
-        self.__deleted = None
-
     def __contains__(self, revno):
         """
         Checks if a Revision with the given revision-number exists.
@@ -127,12 +133,8 @@ class Item(UserDict.DictMixin, object):
         Deletes the Revision specified by the given revision-number.
         """
         self.backend.remove_revision(self.name, revno)
-        self.__current = None
-        try:
-            del self.__revision_objects[revno]
-        except KeyError:
-            pass
-
+        self.reset()
+        
     def keys(self):
         """
         Returns a sorted (highest first) list of all real revision-numbers.
@@ -145,8 +147,7 @@ class Item(UserDict.DictMixin, object):
         If the revision number is None the next possible number will be used. 
         """
         self.backend.create_revision(self.name, revno)
-        self.__revisions = None
-        self.__current = None
+        self.reset()
 
     def get_metadata(self):
         """
@@ -197,6 +198,22 @@ class Item(UserDict.DictMixin, object):
         self.__deleted = None
     
     deleted = property(get_deleted, set_deleted)
+    
+    def get_acl(self):
+        """
+        Get the acl property.
+        """
+        if self.__acl is None:
+            try:
+                lines = self[0].metadata[ACL]
+            except KeyError:
+                lines = []
+                
+            from MoinMoin.security import AccessControlList
+            self.__acl = AccessControlList(self.backend.cfg, lines)
+        return self.__acl
+    
+    acl = property(get_acl)
 
 
 class Revision(object):
