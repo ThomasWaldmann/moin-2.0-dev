@@ -167,7 +167,7 @@ Please review the page and save then. Do not save this page as it is!""")
             raw_body = self.get_raw_body()
         elif 'template' in form:
             # If the page does not exists, we try to get the content from the template parameter.
-            template_page = wikiutil.unquoteWikiname(form['template'][0])
+            template_page = form['template'][0]
             if request.user.may.read(template_page):
                 raw_body = Page(request, template_page).get_raw_body()
                 if raw_body:

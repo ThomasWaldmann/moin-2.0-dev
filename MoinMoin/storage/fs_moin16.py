@@ -372,13 +372,14 @@ class PageStorage(AbstractStorage):
     
                     verb, args = (line[1:] + ' ').split(' ', 1) # split at the first blank
                     
+                    verb = verb.lower()
+                    args = args.strip()
+                    
                     # metadata can be multiline
                     if verb == 'acl':
-                        if verb not in metadata:
-                            metadata[verb] = []
-                        metadata[verb].append(args.strip())
+                        metadata.setdefault(verb, []).append(args)
                     else:
-                        metadata[verb.lower()] = args.strip()
+                        metadata[verb] = args
     
                 elif started is True:
                     break
@@ -418,14 +419,17 @@ class PageStorage(AbstractStorage):
                 pass
 
             # add metadata
+            metadata_data = ""
             for key, value in metadata.iteritems():
                 
-                # special handling for list metadata like acl's
+                # special handling for list metadata like acls
                 if isinstance(value, list):
                     for line in value:
-                        new_data.insert(0, "#%s %s\n" % (key, line))
+                        metadata_data += "#%s %s\n" % (key, line)
                 else:
-                    new_data.insert(0, "#%s %s\n" % (key, value))
+                    metadata_data += "#%s %s\n" % (key, value)
+            
+            new_data.insert(0, metadata_data)
     
             # save data
             try:
