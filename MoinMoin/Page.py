@@ -168,7 +168,7 @@ class Page(object):
 
         self.output_charset = config.charset # correct for wiki pages
 
-        self._text_filename_force = None
+        self._page_name_force = None
         self.hilite_re = None
 
         self.__body = None # unicode page body == metadata + data
@@ -328,15 +328,20 @@ class Page(object):
         isfile = kw.get('isfile', 0)
         use_underlay = kw.get('use_underlay', -1)
         
+        if self._page_name_force is not None:
+            name = self._page_name_force
+        else:
+            name = self.page_name
+        
         if use_underlay == -1:
             if self.__item is None:
-                path = self.request.cfg.page_backend.get_page_path(self.page_name)
+                path = self.request.cfg.page_backend.get_page_path(name)
             else:
-                path = self.__item.backend.get_page_path(self.page_name)
+                path = self.__item.backend.get_page_path(name)
         elif use_underlay == 1:
-            path = self.request.cfg.underlay_backend.get_page_path(self.page_name)
+            path = self.request.cfg.underlay_backend.get_page_path(name)
         else:
-            path = self.request.cfg.page_backend.get_page_path(self.page_name)
+            path = self.request.cfg.page_backend.get_page_path(name)
         
         fullpath = os.path.join(*((path,) + args))
         if check_create:
@@ -358,8 +363,6 @@ class Page(object):
         @rtype: string
         @return: complete filename (including path) to this page
         """
-        if self._text_filename_force is not None:
-            return self._text_filename_force
         rev = kw.get('rev', 0)
         if rev == 0:
             rev = self.get_real_rev()
@@ -1164,9 +1167,8 @@ class Page(object):
             missingpage = wikiutil.getLocalizedPage(request, 'MissingHomePage')
         else:
             missingpage = wikiutil.getLocalizedPage(request, 'MissingPage')
-        missingpagefn = missingpage._text_filename()
+        missingpage._page_name_force = missingpage.page_name
         missingpage.page_name = self.page_name
-        missingpage._text_filename_force = missingpagefn
         missingpage.send_page(content_only=1, send_missing_page=1)
 
 
