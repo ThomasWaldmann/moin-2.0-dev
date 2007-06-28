@@ -232,7 +232,7 @@ class PageStorage(AbstractStorage):
         """
         @see MoinMoin.interfaces.StorageBackend.has_item
         """
-        if os.path.isfile(self.get_page_path(name, "current")):
+        if os.path.isdir(self.get_page_path(name, "revisions")):
             return self
         return None
 
