@@ -132,8 +132,8 @@ class Item(UserDict.DictMixin, object):
         """
         Deletes the Revision specified by the given revision-number.
         """
-        self.backend.remove_revision(self.name, revno)
         self.reset()
+        self.backend.remove_revision(self.name, revno)
         
     def keys(self):
         """
@@ -146,8 +146,8 @@ class Item(UserDict.DictMixin, object):
         Creates and returns a new revision with the given revision-number.
         If the revision number is None the next possible number will be used. 
         """
-        self.backend.create_revision(self.name, revno)
         self.reset()
+        return self.backend.create_revision(self.name, revno)
 
     def get_metadata(self):
         """

@@ -312,6 +312,8 @@ class PageStorage(AbstractStorage):
             self._update_current(name)
         except IOError, err:
             _handle_error(self, err, name, revno, message="Failed to create revision for item %r with revision %r."  % (name, revno))
+        
+        return revno
 
     def remove_revision(self, name, revno):
         """
@@ -325,6 +327,8 @@ class PageStorage(AbstractStorage):
             self._update_current(name)
         except OSError, err:
             _handle_error(self, err, name, revno, message="Failed to remove revision %r for item %r." % (revno, name))
+            
+        return revno
 
     def _update_current(self, name, revno=0):
         """
