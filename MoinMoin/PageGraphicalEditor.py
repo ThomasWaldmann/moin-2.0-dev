@@ -21,14 +21,6 @@ from MoinMoin.widget.dialog import Status
 from MoinMoin.util import web
 from MoinMoin.parser.text_moin_wiki import Parser as WikiParser
 
-def execute(pagename, request):
-    if not request.user.may.write(pagename):
-        _ = request.getText
-        Page(request, pagename).send_page(msg=_('You are not allowed to edit this page.'))
-        return
-
-    PageGraphicalEditor(request, pagename).sendEditor()
-
 
 class PageGraphicalEditor(PageEditor.PageEditor):
     """ Same as PageEditor, but use the GUI editor (FCKeditor) """
