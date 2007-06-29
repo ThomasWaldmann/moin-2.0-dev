@@ -76,15 +76,16 @@ class StorageBackend(object):
     def create_revision(self, name, revno):
         """
         Creates a new revision. If revno is 0 the next possible revision
-        raise NotImplementedError
-        will be created.
+        will be created. The return value is the newly created revision
+        number.
         """
         raise NotImplementedError
 
     def remove_revision(self, name, revno):
         """
         Removes a specified revision. If revno is 0 the last revision
-        will be deleted (nuked).
+        will be deleted (nuked). The return value is the removed revision
+        number.
         """
         raise NotImplementedError
 

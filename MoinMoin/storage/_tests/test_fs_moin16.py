@@ -152,10 +152,10 @@ class TestPageBackend:
         assert not self.backend.has_revision(pages[1], 3)
 
     def test_create_remove_revision(self):
-        self.backend.create_revision(pages[0], 3)
+        assert self.backend.create_revision(pages[0], 3) == 3
         assert os.path.isfile(os.path.join(get_page_dir(), pages[0], "revisions", "00000003"))
         assert open(os.path.join(get_page_dir(), pages[0], "current"), "r").read() == "00000003\n"
-        self.backend.remove_revision(pages[0], 3)
+        assert self.backend.remove_revision(pages[0], 3) == 3
         assert open(os.path.join(get_page_dir(), pages[0], "current"), "r").read() == "00000001\n"
         assert not os.path.isfile(os.path.join(get_page_dir(), pages[0], "revisions", "00000003"))
 
