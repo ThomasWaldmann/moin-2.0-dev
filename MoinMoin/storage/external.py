@@ -77,18 +77,20 @@ class ItemCollection(UserDict.DictMixin, object):
     def copy_item(self, name, newname):
         """
         Copies an Item.
-        """
-        if newname in self.items:
-            raise BackendError("Copy failed because an item with name %r already exists." % newname)
         
+        TODO: copy edit log
+        """
         if newname == name:
             raise BackendError("Copy failed because name and newname are equal.");
         
-        if not name in self.items:
-            raise NoSuchItemError("Copy failed because there is no item with name %r." % name)
+        if newname in self.items:
+            raise BackendError("Copy failed because an item with name %r already exists." % newname)
         
         if not newname:
-            raise BackendError("You can't copy to an empty page name.");
+            raise BackendError("You cannot copy to an empty page name.");
+        
+        if not name in self.items:
+            raise NoSuchItemError("Copy failed because there is no item with name %r." % name)
         
         self.new_item(newname)
         item = self[name]
