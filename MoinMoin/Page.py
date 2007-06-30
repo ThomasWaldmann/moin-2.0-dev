@@ -171,12 +171,6 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        self._body = None # unicode page body == metadata + data
-        self._body_modified = 0 # was __body modified in RAM so it differs from disk?
-        self._meta = None # list of raw tuples of page metadata (currently: the # stuff at top of the page)
-        self._pi = None # dict of preprocessed page metadata (processing instructions)
-        self._data = None # unicode page data = body - metadata
-
         self._items_standard = ItemCollection(request.cfg.page_backend, None)
         self._items_underlay = ItemCollection(request.cfg.underlay_backend, None)
         self._items_all = ItemCollection(request.cfg.data_backend, None)
@@ -187,8 +181,14 @@ class Page(object):
         """ 
         Reset page state.
         """
+        self._pi = None
+        self._data = None
+        self._body_modified = 0
+        
         try:
             self._item = self._items_all[self.page_name]
+            self._body = None
+            self._meta = None
         except NoSuchItemError:
             self._body = ""
             self._meta = dict()
@@ -199,6 +199,7 @@ class Page(object):
     def get_body(self):
         if self._body is None:
             text = self._item[self.rev].data.read()
+            self._item[self.rev].data.close()
             self._body = self.decodeTextMimeType(text)
         return self._body
     
