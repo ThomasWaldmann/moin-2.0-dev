@@ -34,7 +34,7 @@ class TestItemCollection:
 
     def test_has_item(self):
         assert pages[0] in self.item_collection
-        assert not ("asdf" in self.item_collection)
+        assert not "asdf" in self.item_collection
 
     def test_keys(self):
         assert self.item_collection.keys() == pages

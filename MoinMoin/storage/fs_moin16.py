@@ -277,7 +277,7 @@ class PageStorage(AbstractStorage):
         try:
             os.rename(self.get_page_path(name), self.get_page_path(newname))
         except OSError, err:
-            _handle_error(self, err, name, message = "Failed to rename item %r to %r." % (name, newname))
+            _handle_error(self, err, name, message="Failed to rename item %r to %r." % (name, newname))
 
     def list_revisions(self, name):
         """

@@ -83,11 +83,11 @@ class ItemCollection(UserDict.DictMixin, object):
         if newname == name:
             raise BackendError("Copy failed because name and newname are equal.");
         
+        if not newname:
+            raise BackendError("You cannot copy to an empty item name.");
+        
         if newname in self.items:
             raise BackendError("Copy failed because an item with name %r already exists." % newname)
-        
-        if not newname:
-            raise BackendError("You cannot copy to an empty page name.");
         
         if not name in self.items:
             raise NoSuchItemError("Copy failed because there is no item with name %r." % name)
