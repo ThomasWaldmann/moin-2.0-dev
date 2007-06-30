@@ -171,15 +171,15 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        self.__body = None # unicode page body == metadata + data
-        self.__body_modified = 0 # was __body modified in RAM so it differs from disk?
-        self.__meta = None # list of raw tuples of page metadata (currently: the # stuff at top of the page)
-        self.__pi = None # dict of preprocessed page metadata (processing instructions)
-        self.__data = None # unicode page data = body - metadata
+        self._body = None # unicode page body == metadata + data
+        self._body_modified = 0 # was __body modified in RAM so it differs from disk?
+        self._meta = None # list of raw tuples of page metadata (currently: the # stuff at top of the page)
+        self._pi = None # dict of preprocessed page metadata (processing instructions)
+        self._data = None # unicode page data = body - metadata
 
-        self.__items_standard = ItemCollection(request.cfg.page_backend, None)
-        self.__items_underlay = ItemCollection(request.cfg.underlay_backend, None)
-        self.__items_all = ItemCollection(request.cfg.data_backend, None)
+        self._items_standard = ItemCollection(request.cfg.page_backend, None)
+        self._items_underlay = ItemCollection(request.cfg.underlay_backend, None)
+        self._items_all = ItemCollection(request.cfg.data_backend, None)
         
         self.reset()
 
@@ -188,43 +188,43 @@ class Page(object):
         Reset page state.
         """
         try:
-            self.__item = self.__items_all[self.page_name]
+            self._item = self._items_all[self.page_name]
         except NoSuchItemError:
-            self.__body = ""
-            self.__meta = dict()
-            self.__item = None
+            self._body = ""
+            self._meta = dict()
+            self._item = None
             
     # now we define some properties to lazy load some attributes on first access:
     
     def get_body(self):
-        if self.__body is None:
-            text = self.__item[self.rev].data.read()
-            self.__body = self.decodeTextMimeType(text)
-        return self.__body
+        if self._body is None:
+            text = self._item[self.rev].data.read()
+            self._body = self.decodeTextMimeType(text)
+        return self._body
     
     def set_body(self, body):
-        self.__body = body
-        self.__meta = dict()
-        self.__data = None
+        self._body = body
+        self._meta = dict()
+        self._data = None
     
     body = property(fget=get_body, fset=set_body) # complete page text
 
     def get_meta(self):
-        if self.__meta is None:
-            self.__meta = self.__item[self.rev].metadata
-        return self.__meta
+        if self._meta is None:
+            self._meta = self._item[self.rev].metadata
+        return self._meta
     meta = property(fget=get_meta) # processing instructions, ACLs (upper part of page text)
 
     def get_data(self):
-        if self.__data is None:
-            bla, self.__data = wikiutil.get_processing_instructions(self.body)
-        return self.__data
+        if self._data is None:
+            bla, self._data = wikiutil.get_processing_instructions(self.body)
+        return self._data
     data = property(fget=get_data) # content (lower part of page text)
 
     def get_pi(self):
-        if self.__pi is None:
-            self.__pi = self.parse_processing_instructions()
-        return self.__pi
+        if self._pi is None:
+            self._pi = self.parse_processing_instructions()
+        return self._pi
     pi = property(fget=get_pi) # processed meta stuff
     
     def getlines(self):
@@ -262,7 +262,7 @@ class Page(object):
             used e.g. by PageEditor when previewing the page.
         """
         self.body = body
-        self.__body_modified = modified
+        self._body_modified = modified
 
     # revision methods
 
@@ -275,8 +275,8 @@ class Page(object):
         @return: page revisions
         """
         revisions = []
-        if self.__item:
-            revisions = self.__item.keys()
+        if self._item:
+            revisions = self._item.keys()
             revisions.remove(0)
         return revisions
 
@@ -288,8 +288,8 @@ class Page(object):
         
         @return: int revision
         """
-        if self.__item:
-            return self.__item.current
+        if self._item:
+            return self._item.current
         return 99999999
 
     def get_real_rev(self):
@@ -334,10 +334,10 @@ class Page(object):
             name = self.page_name
         
         if use_underlay == -1:
-            if self.__item is None:
+            if self._item is None:
                 path = self.request.cfg.page_backend.get_page_path(name)
             else:
-                path = self.__item.backend.get_page_path(name)
+                path = self._item.backend.get_page_path(name)
         elif use_underlay == 1:
             path = self.request.cfg.underlay_backend.get_page_path(name)
         else:
@@ -463,7 +463,7 @@ class Page(object):
         @rtype: bool
         @return: true if page lives in the underlay dir
         """
-        return self.__item.backend.name == "underlay"
+        return self._item.backend.name == "underlay"
 
     def isStandardPage(self, includeDeleted=True):
         """
@@ -476,7 +476,7 @@ class Page(object):
         @rtype: bool
         @return: true if page lives in the data dir
         """
-        return self.__item.backend.name != "underlay"
+        return self._item.backend.name != "underlay"
 
     def exists(self, rev=0, domain=None, includeDeleted=False):
         """
@@ -494,24 +494,24 @@ class Page(object):
         @return: true, if page exists
         """
         # Edge cases
-        if not self.__item:
+        if not self._item:
             return False
         
         if domain == 'underlay' and not self.request.cfg.data_underlay_dir:
             return False
         
-        if rev and not self.__item.has_key(rev):
+        if rev and not self._item.has_key(rev):
             return False
 
-        if not includeDeleted and self.__item.deleted:
+        if not includeDeleted and self._item.deleted:
             return False
             
         if domain is None:
             return True
         elif domain == 'underlay':
-            return self.__item.backend.name == 'underlay'            
+            return self._item.backend.name == 'underlay'            
         else:
-            return self.__item.backend.name != 'underlay'
+            return self._item.backend.name != 'underlay'
 
     def size(self, rev=0):
         """ Get Page size.
@@ -520,10 +520,10 @@ class Page(object):
         @return: page size, 0 for non-existent pages.
         """
         if rev == self.rev: # same revision as self
-            if self.__body is not None:
-                return len(self.__body)
+            if self._body is not None:
+                return len(self._body)
 
-        return self.__item[rev].metadata[SIZE]
+        return self._item[rev].metadata[SIZE]
 
     def mtime_usecs(self):
         """ Get modification timestamp of this page.
@@ -1054,7 +1054,7 @@ class Page(object):
         """
         if (not self.rev and
             not self.hilite_re and
-            not self.__body_modified and
+            not self._body_modified and
             self.getFormatterName() in self.cfg.caching_formats):
             # Everything is fine, now check the parser:
             if parser is None:
@@ -1301,8 +1301,8 @@ class Page(object):
         @rtype: MoinMoin.security.AccessControlList
         @return: ACL of this page
         """
-        if self.__item:
-            return self.__item.acl
+        if self._item:
+            return self._item.acl
         else:
             from MoinMoin.security import AccessControlList
             return AccessControlList(self.request.cfg)

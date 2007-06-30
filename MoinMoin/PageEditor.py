@@ -25,6 +25,7 @@ from MoinMoin.widget.dialog import Status
 from MoinMoin.logfile import editlog, eventlog
 from MoinMoin.util import filesys, timefuncs, web
 from MoinMoin.mail import sendmail
+from MoinMoin.storage.error import BackendError
 
 
 # used for merging
@@ -497,58 +498,33 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         request = self.request
         _ = self._
 
-        if not newpagename:
-            return False, _("You can't copy to an empty pagename.")
-
         if not self.request.user.may.write(newpagename):
             return False, _('You are not allowed to copy this page!')
 
+        try:
+            self._items_all.copy_item(self.page_name, newpagename)
+        except BackendError, err:
+            return False, _(err.message)
+
         newpage = PageEditor(request, newpagename)
 
-        pageexists_error = _("""'''A page with the name {{{'%s'}}} already exists.'''
-Try a different name.""") % (newpagename,)
-
-        # Check whether a page with the new name already exists
-        if newpage.exists(includeDeleted=1):
-            return False, pageexists_error
-
         # Get old page text
-        savetext = self.get_raw_body()
+        savetext = newpage.get_raw_body()
 
-        oldpath = self.getPagePath(check_create=0)
-        newpath = newpage.getPagePath(check_create=0)
+        if not comment:
+            comment = u"## page was copied from %s" % self.page_name
 
-        # Copy page
-        # NOTE: might fail if another process created newpagename just
-        try:
-            filesys.copytree(oldpath, newpath)
-            self.error = None
-            if not comment:
-                comment = u"## page was copied from %s" % self.page_name
-            if request.user.may.write(newpagename):
-                # Save page text with a comment about the old name and log entry
-                savetext = u"## page was copied from %s\n%s" % (self.page_name, savetext)
-                newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE')
-            else:
-                # if user is  not able to write to the page itselfs we set a log entry only
-                from MoinMoin import packages
-                rev = newpage.current_rev()
-                packages.edit_logfile_append(self, newpagename, newpath, rev, 'SAVENEW', logname='edit-log',
-                                       comment=comment, author=u"CopyPage action")
+        # Save page text with a comment about the old name and log entry
+        savetext = u"## page was copied from %s\n%s" % (self.page_name, savetext)
+        newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE')
 
-            if request.cfg.xapian_search:
-                from MoinMoin.search.Xapian import Index
-                index = Index(request)
-                if index.exists():
-                    index.update_page(newpagename)
-            return True, None
-        except OSError, err:
-            # Try to understand what happened. Maybe its better to check
-            # the error code, but I just reused the available code above...
-            if newpage.exists(includeDeleted=1):
-                return False, pageexists_error
-            else:
-                return False, _('Could not copy page because of file system error: %s.') % unicode(err)
+        if request.cfg.xapian_search:
+            from MoinMoin.search.Xapian import Index
+            index = Index(request)
+            if index.exists():
+                index.update_page(newpagename)
+                
+        return True, None
 
     def renamePage(self, newpagename, comment=None):
         """ Rename the current version of the page (making a backup before deletion
@@ -565,67 +541,43 @@ Try a different name.""") % (newpagename,)
                 and request.user.may.write(newpagename)):
             msg = _('You are not allowed to rename this page!')
             raise self.AccessDenied, msg
-
-        if not newpagename:
-            return False, _("You can't rename to an empty pagename.")
+        
+        try:
+            self._items_all.rename_item(self.page_name, newpagename)
+        except BackendError, err:
+            return False, _(err.message)
 
         newpage = PageEditor(request, newpagename)
+        
+        savetext = newpage.get_raw_body()
+        
+        if not comment:
+            comment = u"## page was renamed from %s" % self.page_name
+            
+        savetext = u"## page was renamed from %s\n%s" % (self.page_name, savetext)
+        newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE/RENAME')
+        
+        # delete pagelinks
+        arena = newpage
+        key = 'pagelinks'
+        cache = caching.CacheEntry(request, arena, key, scope='item')
+        cache.remove()
 
-        pageexists_error = _("""'''A page with the name {{{'%s'}}} already exists.'''
-
-Try a different name.""") % (newpagename,)
-
-        # Check whether a page with the new name already exists
-        if newpage.exists(includeDeleted=1):
-            return False, pageexists_error
-
-        # Get old page text
-        savetext = self.get_raw_body()
-
-        oldpath = self.getPagePath(check_create=0)
-        newpath = newpage.getPagePath(check_create=0)
-
-        # Rename page
-
-        # NOTE: might fail if another process created newpagename just
-        # NOW, while you read this comment. Rename is atomic for files -
-        # but for directories, rename will fail if the directory
-        # exists. We should have global edit-lock to avoid this.
-        # See http://docs.python.org/lib/os-file-dir.html
-        try:
-            os.rename(oldpath, newpath)
-            self.error = None
-            # Save page text with a comment about the old name
-            savetext = u"## page was renamed from %s\n%s" % (self.page_name, savetext)
-            newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE/RENAME')
-            # delete pagelinks
+        # clean the cache
+        for formatter_name in self.cfg.caching_formats:
             arena = newpage
-            key = 'pagelinks'
+            key = formatter_name
             cache = caching.CacheEntry(request, arena, key, scope='item')
             cache.remove()
 
-            # clean the cache
-            for formatter_name in self.cfg.caching_formats:
-                arena = newpage
-                key = formatter_name
-                cache = caching.CacheEntry(request, arena, key, scope='item')
-                cache.remove()
+        if request.cfg.xapian_search:
+            from MoinMoin.search.Xapian import Index
+            index = Index(request)
+            if index.exists():
+                index.remove_item(self.page_name, now=0)
+                index.update_page(newpagename)
 
-            if request.cfg.xapian_search:
-                from MoinMoin.search.Xapian import Index
-                index = Index(request)
-                if index.exists():
-                    index.remove_item(self.page_name, now=0)
-                    index.update_page(newpagename)
-
-            return True, None
-        except OSError, err:
-            # Try to understand what happened. Maybe its better to check
-            # the error code, but I just reused the available code above...
-            if newpage.exists(includeDeleted=1):
-                return False, pageexists_error
-            else:
-                return False, _('Could not rename page because of file system error: %s.') % unicode(err)
+        return True, None
 
     def deletePage(self, comment=None):
         """ Delete the current version of the page (making a backup before deletion
@@ -901,23 +853,6 @@ Try a different name.""") % (newpagename,)
         except caching.CacheError:
             return None
 
-    def copy_underlay_page(self):
-        # renamed from copypage to avoid conflicts with copyPage
-        """ Copy a page from underlay directory to page directory """
-        src = self.getPagePath(use_underlay=1, check_create=0)
-        dst = self.getPagePath(use_underlay=0, check_create=0)
-        if src and dst and src != dst and os.path.exists(src):
-            try:
-                os.rmdir(dst) # simply remove empty dst dirs
-                # XXX in fact, we should better remove anything we regard as an
-                # empty page, maybe also if there is also an edit-lock or
-                # empty cache. revisions subdir...
-            except:
-                pass
-            if not os.path.exists(dst):
-                filesys.copytree(src, dst)
-                self.reset() # reinit stuff
-
     def _write_file(self, text, action='SAVE', comment=u'', extra=u'', deleted=False):
         """ Write the text to the page file (and make a backup of old page).
 
@@ -929,8 +864,6 @@ Try a different name.""") % (newpagename,)
         request = self.request
         _ = self._
         was_deprecated = self.pi.get('deprecated', False)
-
-        self.copy_underlay_page()
 
         # remember conflict state
         self.setConflict(wikiutil.containsConflictMarker(text))
