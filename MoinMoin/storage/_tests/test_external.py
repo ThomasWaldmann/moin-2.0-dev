@@ -63,6 +63,12 @@ class TestItemCollection:
         assert "asdf" in self.item_collection
         self.item_collection.rename_item("asdf", pages[0])
         assert pages[0] in self.item_collection
+        
+    def test_copy_item(self):
+        self.item_collection.copy_item(pages[0], "asdf")
+        assert "asdf" in self.item_collection
+        del self.item_collection["asdf"]
+        assert not "asdf" in self.item_collection
 
 
 class TestItem:

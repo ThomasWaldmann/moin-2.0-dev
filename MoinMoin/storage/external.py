@@ -7,7 +7,7 @@
 
 import UserDict
     
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError
 from MoinMoin.storage.interfaces import DELETED, ACL
 
 class ItemCollection(UserDict.DictMixin, object):
@@ -72,6 +72,34 @@ class ItemCollection(UserDict.DictMixin, object):
         Renames an Item.
         """
         self.backend.rename_item(name, newname)
+        self.__items = None
+
+    def copy_item(self, name, newname):
+        """
+        Copies an Item.
+        """
+        if newname in self.items:
+            raise BackendError("Copy failed because an item with name %r already exists." % newname)
+        
+        if newname == name:
+            raise BackendError("Copy failed because name and newname are equal.");
+        
+        if not name in self.items:
+            raise NoSuchItemError("Copy failed because there is no item with name %r." % name)
+        
+        self.new_item(newname)
+        item = self[name]
+        newitem = self[newname]
+        for rev in item:
+            if rev != 0:
+                newitem.new_revision(rev)
+                newitem[rev].data.write(item[rev].data.read())
+                newitem[rev].data.close()
+                for key, value in item[rev].metadata.iteritems():
+                    newitem[rev].metadata[key] = value
+                newitem[rev].metadata.save()
+        
+        
         self.__items = None
 
     def get_items(self):
