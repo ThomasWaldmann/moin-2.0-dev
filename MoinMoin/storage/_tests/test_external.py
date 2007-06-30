@@ -98,7 +98,7 @@ class TestItem:
         py.test.raises(NoSuchRevisionError, lambda: self.item[5])
 
     def test_keys(self):
-        assert self.item.keys() == [1, 0]
+        assert self.item.keys() == [1]
 
     def test_del_add_revision(self):
         assert self.item.current == 1

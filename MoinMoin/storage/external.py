@@ -98,15 +98,14 @@ class ItemCollection(UserDict.DictMixin, object):
         newitem = self[newname]
         
         for revno in olditem:
-            if revno != 0:
-                newrev = newitem.new_revision(revno)
-                odlrev = olditem[revno]
-                
-                newrev.data.write(odlrev.data.read())
-                newrev.data.close()
-                for key, value in odlrev.metadata.iteritems():
-                    newrev.metadata[key] = value
-                newrev.metadata.save()
+            newrev = newitem.new_revision(revno)
+            odlrev = olditem[revno]
+            
+            newrev.data.write(odlrev.data.read())
+            newrev.data.close()
+            for key, value in odlrev.metadata.iteritems():
+                newrev.metadata[key] = value
+            newrev.metadata.save()
         
         
         self.__items = None
