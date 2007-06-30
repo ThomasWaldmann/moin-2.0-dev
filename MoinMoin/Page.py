@@ -278,7 +278,6 @@ class Page(object):
         revisions = []
         if self._item:
             revisions = self._item.keys()
-            revisions.remove(0)
         return revisions
 
     def current_rev(self):

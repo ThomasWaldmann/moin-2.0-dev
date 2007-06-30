@@ -30,7 +30,7 @@ class TestUserBackend(BackendTest):
         assert self.backend.name == "user"
 
     def test_list_revisions(self):
-        assert self.backend.list_revisions(names[0]) == [1, 0]
+        assert self.backend.list_revisions(names[0]) == [1]
 
     def test_current_revision(self):
         assert self.backend.current_revision(names[0]) == 1
@@ -132,8 +132,8 @@ class TestPageBackend(BackendTest):
         assert self.backend.current_revision(pages[1]) == 2
 
     def test_list_revisions(self):
-        assert self.backend.list_revisions(pages[0]) == [1, 0]
-        assert self.backend.list_revisions(pages[1]) == [2, 1, 0]
+        assert self.backend.list_revisions(pages[0]) == [1]
+        assert self.backend.list_revisions(pages[1]) == [2, 1]
         py.test.raises(NoSuchItemError, self.backend.list_revisions, "ADF")
 
     def test_has_revision(self):

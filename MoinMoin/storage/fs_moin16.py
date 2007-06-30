@@ -148,7 +148,7 @@ class UserStorage(AbstractStorage):
         
         Users have no revisions.
         """
-        return [1, 0]
+        return [1]
 
     def current_revision(self, name):
         """
@@ -160,7 +160,7 @@ class UserStorage(AbstractStorage):
         """
         @see MoinMoin.interfaces.StorageBackend.has_revision
         """
-        return revno in self.list_revisions(name)
+        return revno == 0 or revno in self.list_revisions(name)
 
     def _parse_metadata(self, name, revno):
         """
@@ -292,7 +292,6 @@ class PageStorage(AbstractStorage):
         """
         try:
             revs = os.listdir(self.get_page_path(name, "revisions"))
-            revs.insert(0, "0")
             revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
             revs.sort()
             revs.reverse()
