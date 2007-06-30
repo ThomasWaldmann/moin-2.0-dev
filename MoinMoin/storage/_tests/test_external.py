@@ -69,6 +69,10 @@ class TestItemCollection:
         assert "asdf" in self.item_collection
         del self.item_collection["asdf"]
         assert not "asdf" in self.item_collection
+        py.test.raises(BackendError, self.item_collection.copy_item, pages[0], "")
+        py.test.raises(BackendError, self.item_collection.copy_item, pages[0], pages[0])
+        py.test.raises(BackendError, self.item_collection.copy_item, pages[0], pages[1])
+        py.test.raises(BackendError, self.item_collection.copy_item, "asdf", pages[1])
 
 
 class TestItem:

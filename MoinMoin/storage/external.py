@@ -87,6 +87,9 @@ class ItemCollection(UserDict.DictMixin, object):
         if not name in self.items:
             raise NoSuchItemError("Copy failed because there is no item with name %r." % name)
         
+        if not newname:
+            raise BackendError("You can't copy to an empty page name.");
+        
         self.new_item(newname)
         item = self[name]
         newitem = self[newname]

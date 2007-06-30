@@ -203,6 +203,7 @@ class TestPageBackend:
         assert self.backend.has_item(pages[0])
         py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[0])
         py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[1])
+        py.test.raises(BackendError, self.backend.rename_item, pages[0], "")
         
 
 class TestPageData:
