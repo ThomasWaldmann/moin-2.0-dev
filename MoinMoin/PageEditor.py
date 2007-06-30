@@ -868,16 +868,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         # remember conflict state
         self.setConflict(wikiutil.containsConflictMarker(text))
 
-        # Write always on the standard directory, never change the
-        # underlay directory copy!
-        pagedir = self.getPagePath(use_underlay=0, check_create=0)
-
-        revdir = os.path.join(pagedir, 'revisions')
-        cfn = os.path.join(pagedir, 'current')
-        clfn = os.path.join(pagedir, 'current-locked')
-
-        # !!! these log objects MUST be created outside the locked area !!!
-
         # The local log should be the standard edit log, not the
         # underlay copy log!
         pagelog = self.getPagePath('edit-log', use_underlay=0, isfile=1)
@@ -885,77 +875,45 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
                                uid_override=self.uid_override)
         # Open the global log
         glog = editlog.EditLog(request, uid_override=self.uid_override)
+            
+        if not self._item:
+            self._item = self._items_all.new_item(self.page_name) 
+        
+        if not was_deprecated:
+            if self.do_revision_backup or self._item.current == 0:
+                newrev = self._item.new_revision()
+        else:
+            newrev = self._item[0]
 
-        if not os.path.exists(pagedir): # new page, create and init pagedir
-            os.mkdir(pagedir)
-        if not os.path.exists(revdir):
-            os.mkdir(revdir)
-            f = file(cfn, 'w')
-            f.write('%08d\n' % 0)
-            f.close()
+        rev = newrev.revno
 
-        got_lock = False
-        retry = 0
+        if not deleted:
+            
+            newrev.data.write(text)
+            newrev.data.close()
+            for key, value in self.meta.iteritems():
+                newrev.metadata[key] = value
+            newrev.metadata.save()
+            
+        else:
+            self._item.deleted = True
+            self._item.metadata.save()
 
-        try:
-            while not got_lock and retry < 100:
-                retry += 1
-                try:
-                    filesys.rename(cfn, clfn)
-                    got_lock = True
-                except OSError, err:
-                    got_lock = False
-                    if err.errno == 2: # there was no 'current' file
-                        time.sleep(0.1)
-                    else:
-                        raise self.CouldNotLock, _("Page could not get locked. Unexpected error (errno=%d).") % err.errno
+        # reset page object
+        self.reset()
+        
+        mtime_usecs = wikiutil.timestamp2version(time.time())
+        
+        # write the editlog entry
+        # for now simply make 2 logs, better would be some multilog stuff maybe
+        if self.do_revision_backup:
+            # do not globally log edits with no revision backup
+            # if somebody edits a deprecated page, log it in global log, but not local log
+            glog.add(request, mtime_usecs, rev, action, self.page_name, None, extra, comment)
+        if not was_deprecated and self.do_revision_backup:
+            # if we did not create a new revision number, do not locally log it
+            llog.add(request, mtime_usecs, rev, action, self.page_name, None, extra, comment)
 
-            if not got_lock:
-                raise self.CouldNotLock, _("Page could not get locked. Missing 'current' file?")
-
-            # increment rev number of current(-locked) page
-            f = file(clfn)
-            revstr = f.read()
-            f.close()
-            rev = int(revstr)
-            if not was_deprecated:
-                if self.do_revision_backup or rev == 0:
-                    rev += 1
-            revstr = '%08d' % rev
-            f = file(clfn, 'w')
-            f.write(revstr+'\n')
-            f.close()
-
-            if not deleted:
-                # save to page file
-                pagefile = os.path.join(revdir, revstr)
-                f = codecs.open(pagefile, 'wb', config.charset)
-                # Write the file using text/* mime type
-                f.write(self.encodeTextMimeType(text))
-                f.close()
-                mtime_usecs = wikiutil.timestamp2version(os.path.getmtime(pagefile))
-                # set in-memory content
-                self.set_raw_body(text)
-            else:
-                mtime_usecs = wikiutil.timestamp2version(time.time())
-                # set in-memory content
-                self.set_raw_body(None)
-
-            # reset page object
-            self.reset()
-
-            # write the editlog entry
-            # for now simply make 2 logs, better would be some multilog stuff maybe
-            if self.do_revision_backup:
-                # do not globally log edits with no revision backup
-                # if somebody edits a deprecated page, log it in global log, but not local log
-                glog.add(request, mtime_usecs, rev, action, self.page_name, None, extra, comment)
-            if not was_deprecated and self.do_revision_backup:
-                # if we did not create a new revision number, do not locally log it
-                llog.add(request, mtime_usecs, rev, action, self.page_name, None, extra, comment)
-        finally:
-            if got_lock:
-                filesys.rename(clfn, cfn)
 
         # add event log entry
         elog = eventlog.EventLog(request)

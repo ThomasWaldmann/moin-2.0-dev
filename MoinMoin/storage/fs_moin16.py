@@ -241,12 +241,17 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.interfaces.StorageBackend.create_item
         """        
         if not self.has_item(name):
-            os.mkdir(self.get_page_path(name))
-            os.mkdir(self.get_page_path(name, "cache"))
-            os.mkdir(self.get_page_path(name, "cache", "__lock__"))
-            os.mkdir(self.get_page_path(name, "revisions"))
+            if not os.path.isdir(self.get_page_path(name)):
+                os.mkdir(self.get_page_path(name))
+            if not os.path.isdir(self.get_page_path(name, "cache")):
+                os.mkdir(self.get_page_path(name, "cache"))
+            if not os.path.isdir(self.get_page_path(name, "cache", "__lock__")):
+                os.mkdir(self.get_page_path(name, "cache", "__lock__"))
+            if not os.path.isdir(self.get_page_path(name, "revisions")):
+                os.mkdir(self.get_page_path(name, "revisions"))
             create_file(self.get_page_path(name, "current"))
-            create_file(self.get_page_path(name, "edit-log"))
+            if not os.path.isfile(self.get_page_path(name, "edit-log")):
+                create_file(self.get_page_path(name, "edit-log"))
         else:
             raise BackendError(_("Item %r already exists") % name)
 
@@ -394,7 +399,7 @@ class PageStorage(AbstractStorage):
     
                     verb, args = (line[1:] + ' ').split(' ', 1) # split at the first blank
                     
-                    verb = verb.lower()
+                    verb = verb.lower().strip()
                     args = args.strip()
                     
                     # metadata can be multiline

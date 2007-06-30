@@ -94,16 +94,19 @@ class ItemCollection(UserDict.DictMixin, object):
             raise NoSuchItemError(_("Copy failed because there is no item with name %r.") % name)
         
         self.new_item(newname)
-        item = self[name]
+        olditem = self[name]
         newitem = self[newname]
-        for rev in item:
-            if rev != 0:
-                newitem.new_revision(rev)
-                newitem[rev].data.write(item[rev].data.read())
-                newitem[rev].data.close()
-                for key, value in item[rev].metadata.iteritems():
-                    newitem[rev].metadata[key] = value
-                newitem[rev].metadata.save()
+        
+        for revno in olditem:
+            if revno != 0:
+                newrev = newitem.new_revision(revno)
+                odlrev = olditem[revno]
+                
+                newrev.data.write(odlrev.data.read())
+                newrev.data.close()
+                for key, value in odlrev.metadata.iteritems():
+                    newrev.metadata[key] = value
+                newrev.metadata.save()
         
         
         self.__items = None
@@ -188,7 +191,8 @@ class Item(UserDict.DictMixin, object):
         If the revision number is None the next possible number will be used. 
         """
         self.reset()
-        return self.backend.create_revision(self.name, revno)
+        rev = self.backend.create_revision(self.name, revno)
+        return self[rev]
 
     def get_metadata(self):
         """

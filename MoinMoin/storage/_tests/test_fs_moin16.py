@@ -124,6 +124,7 @@ class TestPageBackend(BackendTest):
         assert os.path.isfile(os.path.join(get_page_dir(), "Yeah", "current"))
         assert os.path.isfile(os.path.join(get_page_dir(), "Yeah", "edit-log"))
         py.test.raises(NoSuchItemError, self.backend.remove_item, "ADF")
+        assert self.backend.current_revision("Yeah") == 0
         self.backend.remove_item("Yeah")
 
     def test_current_revision(self):
