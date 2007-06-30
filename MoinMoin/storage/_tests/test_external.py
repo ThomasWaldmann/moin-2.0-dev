@@ -27,25 +27,25 @@ class TestItemCollection:
     item_collection = None
 
     def setup_class(self):
-        self.item_collection = ItemCollection(LayerBackend([UserStorage(get_user_dir(), DummyConfig(), "user")]), None)
+        self.item_collection = ItemCollection(LayerBackend([PageStorage(get_page_dir(), DummyConfig(), "pages")]), None)
 
     def teardown_class(self):
         self.item_collection = None
 
     def test_has_item(self):
-        assert names[0] in self.item_collection
-        assert not("asdf" in self.item_collection)
+        assert pages[0] in self.item_collection
+        assert not ("asdf" in self.item_collection)
 
     def test_keys(self):
-        assert self.item_collection.keys() == names
-        assert self.item_collection.keys({'name': 'HeinrichWendel'}) == [names[0]]
+        assert self.item_collection.keys() == pages
+        assert self.item_collection.keys({'format': 'wiki'}) == [pages[1]]
 
     def test_get_item(self):
-        item = self.item_collection[names[0]]
+        item = self.item_collection[pages[0]]
         assert isinstance(item, Item)
-        assert item.name == names[0]
-        assert item.backend.name == "user"
-        py.test.raises(NoSuchItemError, lambda: self.item_collection["test"])
+        assert item.name == pages[0]
+        assert item.backend.name == "pages"
+        py.test.raises(NoSuchItemError, lambda: self.item_collection["asdf"])
 
     def test_new_delete_item(self):
         item = self.item_collection.new_item("1180424618.59.18120")
@@ -53,10 +53,16 @@ class TestItemCollection:
         assert item.name == "1180424618.59.18120"
         item.metadata.keys()
         item.keys()
-        py.test.raises(BackendError, self.item_collection.new_item, names[0])
+        py.test.raises(BackendError, self.item_collection.new_item, pages[0])
         assert "1180424618.59.18120" in self.item_collection
         del self.item_collection["1180424618.59.18120"]
         assert not "1180424618.59.18120" in self.item_collection
+    
+    def test_rename_item(self):
+        self.item_collection.rename_item(pages[0], "asdf")
+        assert "asdf" in self.item_collection
+        self.item_collection.rename_item("asdf", pages[0])
+        assert pages[0] in self.item_collection
 
 
 class TestItem:

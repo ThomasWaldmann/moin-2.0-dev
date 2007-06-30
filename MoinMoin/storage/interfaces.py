@@ -55,6 +55,12 @@ class StorageBackend(object):
         """
         raise NotImplementedError
 
+    def rename_item(self, name, newname):
+        """
+        Renames an item to newname.
+        """
+        raise NotImplementedError
+
     def list_revisions(self, name):
         """
         Returns a list of integers of all revision-numbers of an item.
