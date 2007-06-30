@@ -11,6 +11,8 @@ import shutil
 import tarfile
 import tempfile
 
+from MoinMoin.storage.error import BackendError
+
 test_dir = None
 
 names = ["1180352194.13.59241", "1180424607.34.55818", "1180424618.59.18110", ]
@@ -75,7 +77,22 @@ def get_user_dir():
 def get_page_dir():
     return os.path.join(test_dir, "data/pages")
 
+
 class DummyConfig:
     user_storage = ""
     indexes = []
+
+
+class BackendTest:
+    backend = None
+    
+    def test_has_item(self):
+        assert not self.backend.has_item("")
+
+    def test_rename_item(self):
+        py.test.raises(BackendError, self.backend.rename_item, pages[0], "")
+        py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[0])
+
+    def teardown_class(self):
+        self.backend = None
 

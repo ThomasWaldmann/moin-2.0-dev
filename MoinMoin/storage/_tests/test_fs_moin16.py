@@ -8,7 +8,7 @@
 import os
 import py.test
 
-from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown
+from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown, BackendTest
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
@@ -21,15 +21,10 @@ def teardown_module(module):
     teardown(module)
 
 
-class TestUserBackend:
-
-    backend = None
+class TestUserBackend(BackendTest):
 
     def setup_class(self):
         self.backend = UserStorage(get_user_dir(), DummyConfig(), "user")
-
-    def teardown_class(self):
-        self.backend = None
 
     def test_name(self):
         assert self.backend.name == "user"
@@ -64,8 +59,8 @@ class TestUserBackend:
 
     def test_has_item(self):
         assert self.backend.has_item(names[0])
-        assert not self.backend.has_item("")
         assert not self.backend.has_item("asdf")
+        BackendTest.test_has_item(self)
 
     def test_create_and_remove_item(self):
         self.backend.create_item("1180424618.59.18120")
@@ -101,16 +96,11 @@ class TestUserBackend:
         py.test.raises(NoSuchItemError, self.backend.remove_metadata, "blub", 0, ['test'])
         py.test.raises(KeyError, self.backend.remove_metadata, names[0], 0, ['NotExist'])
 
-
-class TestPageBackend:
-
-    backend = None
+        
+class TestPageBackend(BackendTest):
 
     def setup_class(self):
         self.backend = PageStorage(get_page_dir(), DummyConfig(), "pages")
-
-    def teardown_class(self):
-        self.backend = None
 
     def test_name(self):
         assert self.backend.name == "pages"
@@ -122,7 +112,7 @@ class TestPageBackend:
     def test_has_item(self):
         assert self.backend.has_item(pages[0])
         assert not self.backend.has_item("ad")
-        assert not self.backend.has_item("")
+        BackendTest.test_has_item(self)
 
     def test_create_and_remove_item(self):
         py.test.raises(BackendError, self.backend.create_item, "Test")
@@ -201,9 +191,8 @@ class TestPageBackend:
         self.backend.rename_item("abcde", pages[0])
         assert os.path.isdir(os.path.join(get_page_dir(), pages[0]))
         assert self.backend.has_item(pages[0])
-        py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[0])
         py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[1])
-        py.test.raises(BackendError, self.backend.rename_item, pages[0], "")
+        BackendTest.test_rename_item(self)
         
 
 class TestPageData:
