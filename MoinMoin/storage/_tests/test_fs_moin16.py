@@ -55,6 +55,9 @@ class TestUserBackend:
     def test_get_data_backend(self):
         py.test.raises(NotImplementedError, self.backend.get_data_backend, names[0], 1)
 
+    def test_rename_item(self):
+        py.test.raises(NotImplementedError, self.backend.rename_item, names[0], names[1])
+
     def test_list_items(self):
         assert self.backend.list_items() == names
         assert self.backend.list_items({'name': 'HeinrichWendel'}) == [names[0]]
@@ -191,6 +194,16 @@ class TestPageBackend:
         assert self.backend.get_metadata(pages[1], 2) == {'size': 179L, 'acl':['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language':'sv'}
         self.backend.set_metadata(pages[1], 2, {'format': 'wiki'})
 
+    def test_rename_item(self):
+        self.backend.rename_item(pages[0], "abcde")
+        assert os.path.isdir(os.path.join(get_page_dir(), "abcde"))
+        assert self.backend.has_item("abcde")
+        self.backend.rename_item("abcde", pages[0])
+        assert os.path.isdir(os.path.join(get_page_dir(), pages[0]))
+        assert self.backend.has_item(pages[0])
+        py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[0])
+        py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[1])
+        
 
 class TestPageData:
     """

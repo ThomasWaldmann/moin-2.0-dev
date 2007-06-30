@@ -67,6 +67,13 @@ class ItemCollection(UserDict.DictMixin, object):
         self.__items = None
         return Item(name, backend, self.userobj)
 
+    def rename_item(self, name, newname):
+        """
+        Renames an Item.
+        """
+        self.backend.rename_item(name, newname)
+        self.__items = None
+
     def get_items(self):
         """
         Lazy load items.

@@ -261,6 +261,21 @@ class PageStorage(AbstractStorage):
         except OSError, err:
             _handle_error(self, err, name, message="Failed to remove item %r." % name)
 
+    def rename_item(self, name, newname):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.rename_item
+        """
+        if self.has_item(newname):
+            raise BackendError("Failed to rename item because an item with name %r already exists." % newname)
+        
+        if name == newname:
+            raise BackendError("Failed to rename item because name and newname are equal.")
+        
+        try:
+            os.rename(self.get_page_path(name), self.get_page_path(newname))
+        except OSError, err:
+            _handle_error(self, err, name, message = "Failed to rename item %r to %r." % (name, newname))
+
     def list_revisions(self, name):
         """
         @see MoinMoin.interfaces.StorageBackend.list_revisions
@@ -287,7 +302,7 @@ class PageStorage(AbstractStorage):
             data_file.close()
             if real and not os.path.exists(self.get_page_path(name, "revisions", rev)):
                 return int(rev) - 1
-            return int(rev)
+            return int(rev or 0)
         except IOError, err:
             _handle_error(self, err, name, message="Failed to get current revision for item %r." % name)
 

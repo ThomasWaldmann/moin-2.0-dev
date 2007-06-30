@@ -39,6 +39,12 @@ class MetaBackend(StorageBackend):
         """
         return self._call("remove_item", name)
 
+    def rename_item(self, name, newname):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.rename_item
+        """
+        return self._call("rename_item", name, newname)
+
     def list_revisions(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
