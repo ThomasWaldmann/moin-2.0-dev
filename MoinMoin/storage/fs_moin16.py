@@ -35,7 +35,7 @@ class AbstractStorage(StorageBackend):
         Init the Backend with the correct path.
         """
         if not os.path.isdir(path):
-            raise BackendError("Invalid path %r." % path)
+            raise BackendError(_("Invalid path %r.") % path)
         self.path = path
         self.cfg = cfg
         self.name = name
@@ -140,7 +140,7 @@ class UserStorage(AbstractStorage):
         try:
             os.remove(os.path.join(self.path, name))
         except OSError, err:
-            _handle_error(self, err, name, message="Failed to remove item %r.")
+            _handle_error(self, err, name, message=_("Failed to remove item %r.") % name)
 
     def list_revisions(self, name):
         """
@@ -169,7 +169,7 @@ class UserStorage(AbstractStorage):
         try:
             data = codecs.open(os.path.join(self.path, name), "r", config.charset).readlines()
         except IOError, err:
-            _handle_error(self, err, name, revno, message="Failed to parse metadata for item %r with revision %r." % (name, revno))
+            _handle_error(self, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
 
         user_data = {}
         for line in data:
@@ -199,7 +199,7 @@ class UserStorage(AbstractStorage):
         try:
             data_file = codecs.open(os.path.join(self.path, name), "w", config.charset)
         except IOError, err:
-            _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
+            _handle_error(self, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
         for key, value in metadata.iteritems():
             # Encode list values
@@ -248,7 +248,7 @@ class PageStorage(AbstractStorage):
             create_file(self.get_page_path(name, "current"))
             create_file(self.get_page_path(name, "edit-log"))
         else:
-            raise BackendError("Item %r already exists" % name)
+            raise BackendError(_("Item %r already exists") % name)
 
         return self
 
@@ -259,25 +259,25 @@ class PageStorage(AbstractStorage):
         try:
             shutil.rmtree(self.get_page_path(name))
         except OSError, err:
-            _handle_error(self, err, name, message="Failed to remove item %r." % name)
+            _handle_error(self, err, name, message=_("Failed to remove item %r.") % name)
 
     def rename_item(self, name, newname):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.rename_item
         """
         if name == newname:
-            raise BackendError("Failed to rename item because name and newname are equal.")
+            raise BackendError(_("Failed to rename item because name and newname are equal."))
         
         if not newname:
-            raise BackendError("You cannot rename to an empty page name.");
+            raise BackendError(_("You cannot rename to an empty page name."));
         
         if self.has_item(newname):
-            raise BackendError("Failed to rename item because an item with name %r already exists." % newname)
+            raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
         
         try:
             os.rename(self.get_page_path(name), self.get_page_path(newname))
         except OSError, err:
-            _handle_error(self, err, name, message="Failed to rename item %r to %r." % (name, newname))
+            _handle_error(self, err, name, message=_("Failed to rename item %r to %r.") % (name, newname))
 
     def list_revisions(self, name):
         """
@@ -293,7 +293,7 @@ class PageStorage(AbstractStorage):
             revs.reverse()
             return revs
         except OSError, err:
-            _handle_error(self, err, name, message="Failed to list revisions for item %r." % name)
+            _handle_error(self, err, name, message=_("Failed to list revisions for item %r.") % name)
 
     def current_revision(self, name, real=True):
         """
@@ -307,7 +307,7 @@ class PageStorage(AbstractStorage):
                 return int(rev) - 1
             return int(rev or 0)
         except IOError, err:
-            _handle_error(self, err, name, message="Failed to get current revision for item %r." % name)
+            _handle_error(self, err, name, message=_("Failed to get current revision for item %r.") % name)
 
     def has_revision(self, name, revno):
         """
@@ -329,7 +329,7 @@ class PageStorage(AbstractStorage):
             create_file(self.get_page_path(name, "revisions", get_rev_string(revno)))
             self._update_current(name)
         except IOError, err:
-            _handle_error(self, err, name, revno, message="Failed to create revision for item %r with revision %r."  % (name, revno))
+            _handle_error(self, err, name, revno, message=_("Failed to create revision for item %r with revision %r.")  % (name, revno))
         
         return revno
 
@@ -344,7 +344,7 @@ class PageStorage(AbstractStorage):
             os.remove(self.get_page_path(name, "revisions", get_rev_string(revno)))
             self._update_current(name)
         except OSError, err:
-            _handle_error(self, err, name, revno, message="Failed to remove revision %r for item %r." % (revno, name))
+            _handle_error(self, err, name, revno, message=_("Failed to remove revision %r for item %r.") % (revno, name))
             
         return revno
 
@@ -360,7 +360,7 @@ class PageStorage(AbstractStorage):
             data_file.write(get_rev_string(revno) + "\n")
             data_file.close()
         except IOError, err:
-            _handle_error(self, err, name, message="Failed to set current revision for item %r." % name)
+            _handle_error(self, err, name, message=_("Failed to set current revision for item %r.") % name)
 
     def _parse_metadata(self, name, revno):
         """
@@ -381,7 +381,7 @@ class PageStorage(AbstractStorage):
             try:
                 data_file = codecs.open(self.get_page_path(name, "revisions", get_rev_string(revno)), "r", config.charset)
             except IOError, err:
-                _handle_error(self, err, name, revno, message="Failed to parse metadata for item %r with revision %r." % (name, revno))
+                _handle_error(self, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
     
             started = False
             for line in data_file.readlines():
@@ -429,7 +429,7 @@ class PageStorage(AbstractStorage):
             try:
                 data = codecs.open(self.get_page_path(name, "revisions", get_rev_string(revno)), "r", config.charset).readlines()
             except IOError, err:
-                _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
+                _handle_error(self, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
     
             # remove metadata
             new_data = [line for line in data if not line.startswith('#') and not line == '#' and not line == '##']
@@ -457,7 +457,7 @@ class PageStorage(AbstractStorage):
             try:
                 data_file = codecs.open(self.get_page_path(name, "revisions", get_rev_string(revno)), "w", config.charset)
             except IOError, err:
-                _handle_error(self, err, name, revno, message="Failed to save metadata for item %r with revision %r." % (name, revno))
+                _handle_error(self, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
     
             data_file.writelines(new_data)
             data_file.close()
@@ -473,9 +473,9 @@ class PageStorage(AbstractStorage):
             return PageData(self.path, name, revno, self)
         else:
             if not self.has_item(name):
-                raise NoSuchItemError("Item %r does not exist." % name)
+                raise NoSuchItemError(_("Item %r does not exist.") % name)
             else:
-                raise NoSuchRevisionError("Revision %r of item %r does not exist." % (revno, name))
+                raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, name))
 
     def get_page_path(self, name, *args):
         """
@@ -648,7 +648,7 @@ def create_file(*path):
     if not os.path.exists(real_path):
         file(real_path, "w").close()
     else:
-        raise BackendError("Path %r already exists." % real_path)
+        raise BackendError(_("Path %r already exists.") % real_path)
 
 
 def _handle_error(backend, err, name, revno=None, message=""):
@@ -657,8 +657,9 @@ def _handle_error(backend, err, name, revno=None, message=""):
     """
     if err.errno == errno.ENOENT:
         if not backend.has_item(name):
-            raise NoSuchItemError("Item %r does not exist." % name)
+            raise NoSuchItemError(_("Item %r does not exist.") % name)
         elif revno is not None and not backend.has_revision(name, revno):
-            raise NoSuchRevisionError("Revision %r of item %r does not exist." % (revno, name))
+            raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, name))
     raise BackendError(message)
 
+_ = lambda x:x
