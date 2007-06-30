@@ -271,6 +271,9 @@ class PageStorage(AbstractStorage):
         if name == newname:
             raise BackendError("Failed to rename item because name and newname are equal.")
         
+        if not newname:
+            raise BackendError("You can't copy to an empty page name.");
+        
         try:
             os.rename(self.get_page_path(name), self.get_page_path(newname))
         except OSError, err:
