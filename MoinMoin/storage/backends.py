@@ -119,7 +119,7 @@ class NamespaceBackend(MetaBackend):
         Make sure all keys end with / and don't start with / for easier handling.
         """
         if not "/" in backends:
-            raise BackendError("Root ('/') backend is missing from configuration.")
+            raise BackendError(_("Root ('/') backend is missing from configuration."))
 
         new_backends = dict()
         for namespace, backend in backends.iteritems():
@@ -149,7 +149,7 @@ class NamespaceBackend(MetaBackend):
             if name.startswith(namespace):
                 name = name.replace(namespace, "", 1)
                 return name, self.backends[namespace]
-        raise NoSuchItemError("No such item %r." % name)
+        raise NoSuchItemError(_("No such item %r.") % name)
 
     def _call(self, method, name, *args):
         """
@@ -194,4 +194,7 @@ class LayerBackend(MetaBackend):
                 return getattr(backend, method)(*args)
             except NoSuchItemError:
                 pass
-        raise NoSuchItemError("No such item %r." % args[0])
+        raise NoSuchItemError(_("No such item %r.") % args[0])
+
+
+_ = lambda x:x

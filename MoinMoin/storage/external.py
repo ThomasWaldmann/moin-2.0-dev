@@ -10,6 +10,7 @@ import UserDict
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError
 from MoinMoin.storage.interfaces import DELETED, ACL
 
+
 class ItemCollection(UserDict.DictMixin, object):
     """
     The ItemCollection class realizes the access to the stored Items via the
@@ -39,7 +40,7 @@ class ItemCollection(UserDict.DictMixin, object):
         if backend:
             return Item(name, backend, self.userobj)
         else:
-            raise NoSuchItemError("No such item %r." % name)
+            raise NoSuchItemError(_("No such item %r.") % name)
 
     def __delitem__(self, name):
         """
@@ -81,16 +82,16 @@ class ItemCollection(UserDict.DictMixin, object):
         TODO: copy edit log
         """
         if newname == name:
-            raise BackendError("Copy failed because name and newname are equal.");
+            raise BackendError(_("Copy failed because name and newname are equal."));
         
         if not newname:
-            raise BackendError("You cannot copy to an empty item name.");
+            raise BackendError(_("You cannot copy to an empty item name."));
         
         if newname in self.items:
-            raise BackendError("Copy failed because an item with name %r already exists." % newname)
+            raise BackendError(_("Copy failed because an item with name %r already exists.") % newname)
         
         if not name in self.items:
-            raise NoSuchItemError("Copy failed because there is no item with name %r." % name)
+            raise NoSuchItemError(_("Copy failed because there is no item with name %r.") % name)
         
         self.new_item(newname)
         item = self[name]
@@ -166,7 +167,7 @@ class Item(UserDict.DictMixin, object):
                 self.__revision_objects[revno] = Revision(revno, self)
                 return self.__revision_objects[revno]
             else:
-                raise NoSuchRevisionError("Revision %r of item %r does not exist." % (revno, self.name))
+                raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, self.name))
 
     def __delitem__(self, revno):
         """
@@ -377,3 +378,5 @@ class Metadata(UserDict.DictMixin, object):
         if remove:
             self.revision.item.backend.remove_metadata(self.revision.item.name, self.revision.renvo, remove)
 
+
+_ = lambda x:x
