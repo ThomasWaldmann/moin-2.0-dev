@@ -11,6 +11,7 @@ import py.test
 from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown, BackendTest
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
+from MoinMoin.storage.interfaces import DELETED, SIZE, ACL, LOCK_TIMESTAMP, LOCK_USER
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 
 
@@ -168,22 +169,28 @@ class TestPageBackend(BackendTest):
     def test_get_metadata(self):
         py.test.raises(NoSuchItemError, self.backend.get_metadata, "adsf", 2)
         py.test.raises(NoSuchRevisionError, self.backend.get_metadata, pages[0], 3)
-        assert self.backend.get_metadata(pages[1], 2) == {'size': 192L, 'format': 'wiki', 'acl':['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language':'sv'}
+        assert self.backend.get_metadata(pages[1], 2) == {SIZE: 192L, 'format': 'wiki', 'acl':['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language':'sv'}
+        assert self.backend.get_metadata(pages[0], -1) == {LOCK_TIMESTAMP: '1183317594000000', LOCK_USER: '1183317550.72.7782'}
+        assert self.backend.get_metadata(pages[1], -1) == {LOCK_TIMESTAMP: '1182452549000000', LOCK_USER: '127.0.0.1'}
 
     def test_set_metadata(self):
         py.test.raises(NoSuchItemError, self.backend.set_metadata, "adsf", 2, {'asdf': '123' })
         py.test.raises(NoSuchRevisionError, self.backend.set_metadata, pages[0], 3, {'asdf': '123' })
         self.backend.set_metadata(pages[1], 2, {'format': 'test'})
-        assert self.backend.get_metadata(pages[1], 2) == {'size': 192L, 'format': 'test', 'acl':['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language':'sv'}
+        assert self.backend.get_metadata(pages[1], 2) == {SIZE: 192L, 'format': 'test', 'acl':['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language':'sv'}
         self.backend.set_metadata(pages[1], 2, {'format': 'wiki'})
+        self.backend.set_metadata(pages[1], -1, {LOCK_TIMESTAMP: '1283317594000000', LOCK_USER: '192.168.0.1'})
+        assert self.backend.get_metadata(pages[1], -1) == {LOCK_TIMESTAMP: '1283317594000000', LOCK_USER: '192.168.0.1'}
 
     def test_remove_metadata(self):
         py.test.raises(NoSuchItemError, self.backend.remove_metadata, "adsf", 2, ["adf"])
         py.test.raises(NoSuchRevisionError, self.backend.remove_metadata, pages[0], 3, ["adf"])
         py.test.raises(KeyError, self.backend.remove_metadata, pages[0], 1, ["adf"])
         self.backend.remove_metadata(pages[1], 2, ['format'])
-        assert self.backend.get_metadata(pages[1], 2) == {'size': 179L, 'acl':['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language':'sv'}
+        assert self.backend.get_metadata(pages[1], 2) == {SIZE: 179L, 'acl':['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language':'sv'}
         self.backend.set_metadata(pages[1], 2, {'format': 'wiki'})
+        self.backend.remove_metadata(pages[1], -1, [LOCK_TIMESTAMP, LOCK_USER])
+        assert self.backend.get_metadata(pages[1], -1) == {}
 
     def test_rename_item(self):
         self.backend.rename_item(pages[0], "abcde")

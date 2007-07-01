@@ -8,7 +8,7 @@
 import UserDict
     
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError
-from MoinMoin.storage.interfaces import DELETED, ACL
+from MoinMoin.storage.interfaces import DELETED, ACL, LOCK_TIMESTAMP, LOCK_USER
 
 
 class ItemCollection(UserDict.DictMixin, object):
@@ -150,6 +150,7 @@ class Item(UserDict.DictMixin, object):
         self.__current = None
         self.__revision_objects = dict()
         self.__acl = None
+        self.__lock = None
         
     def __contains__(self, revno):
         """
@@ -236,6 +237,7 @@ class Item(UserDict.DictMixin, object):
     def set_deleted(self, value):
         """
         Set the deleted flag.
+        You still have to call item.metadata.save() to actually save the change.
         """
         self.metadata[DELETED] = value
         self.__deleted = None
@@ -257,6 +259,35 @@ class Item(UserDict.DictMixin, object):
         return self.__acl
     
     acl = property(get_acl)
+    
+    def get_lock(self):
+        """
+        Get the lock property.
+        It is a tuple containing the timestamp of the lock and the user.
+        """
+        if self.__lock is None:
+            try:
+                self.__lock = (self.metadata[LOCK_TIMESTAMP], self.metadata[LOCK_USER])
+            except KeyError:
+                self.__lock = False
+        return self.__lock
+    
+    def set_lock(self, lock):
+        """
+        Set the lock property.
+        You still have to call item.metadata.save() to actually save the change.
+        """
+        if lock is None:
+            del self.metadata[LOCK_TIMESTAMP]
+            del self.metadata[LOCK_USER]
+        elif len(lock) == 2:
+            self.metadata[LOCK_TIMESTAMP] = lock[0]
+            self.metadata[LOCK_USER] = lock[1]
+        else:
+            raise ValueError(_("Lock must be a tuple containing TIMESTAMP and USER."))
+        self.__lock = None 
+    
+    lock = property(get_lock, set_lock)
 
 
 class Revision(object):
@@ -378,7 +409,7 @@ class Metadata(UserDict.DictMixin, object):
         if add:
             self.revision.item.backend.set_metadata(self.revision.item.name, self.revision.revno, add)
         if remove:
-            self.revision.item.backend.remove_metadata(self.revision.item.name, self.revision.renvo, remove)
+            self.revision.item.backend.remove_metadata(self.revision.item.name, self.revision.revno, remove)
 
 
 _ = lambda x:x
