@@ -12,6 +12,8 @@ First define some constants.
 DELETED = "deleted"
 SIZE = "size"
 ACL = "acl"
+LOCK_TIMESTAMP = "lock-timestamp"
+LOCK_USER = "lock-user"
 
 """
 Then the actual interface.
@@ -69,7 +71,8 @@ class StorageBackend(object):
 
     def current_revision(self, name):
         """
-        Returns the last revision-number of an item as integer.
+        Returns the last revision-number of an item as integer. If there is
+        no revision it returns 0.
         """
         raise NotImplementedError
 

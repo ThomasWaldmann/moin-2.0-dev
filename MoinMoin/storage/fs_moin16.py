@@ -18,7 +18,7 @@ import shutil
 
 from MoinMoin import config
 from MoinMoin.util import filesys
-from MoinMoin.storage.interfaces import DataBackend, StorageBackend, DELETED, SIZE
+from MoinMoin.storage.interfaces import DataBackend, StorageBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
 
@@ -379,6 +379,15 @@ class PageStorage(AbstractStorage):
             current = self.current_revision(name, real=False)
             if not os.path.exists(self.get_page_path(name, "revisions", get_rev_string(current))):
                 metadata[DELETED] = True
+                
+            # Emulate edit-lock
+            if os.path.exists(self.get_page_path(name, "edit-lock")):
+                line = file(self.get_page_path(name, "edit-lock"), "r").read().split("\t")
+                metadata[LOCK_TIMESTAMP] = line[0]
+                if line[6]:
+                    metadata[LOCK_USER] = line[6]
+                else:
+                    metadata[LOCK_USER] = line[4]
             
         else:
         
@@ -423,10 +432,20 @@ class PageStorage(AbstractStorage):
         
         if revno == -1:
             
-            if metadata[DELETED] == True:
+            # Emulate deleted
+            if DELETED in metadata and metadata[DELETED] == True:
                 self._update_current(name, self.current_revision(name) + 1)
             else:
                 self._update_current(name)
+
+            # Emulate edilock
+            if LOCK_TIMESTAMP in metadata and LOCK_USER in metadata:
+                data_file = file(self.get_page_path(name, "edit-lock"), "w")
+                string = "\t".join([metadata[LOCK_TIMESTAMP], "0", "0", "0", "0", "0", metadata[LOCK_USER]])
+                data_file.write(string)
+                data_file.close()
+            elif os.path.isfile(self.get_page_path(name, "edit-lock")):
+                os.remove(self.get_page_path(name, "edit-lock"))
 
         else:
         

@@ -130,6 +130,12 @@ class TestItem:
     
     def test_acl(self):
         assert self.item.acl
+        
+    def test_lock(self):
+        assert self.item.lock == ('1183317594000000', '1183317550.72.7782')
+        self.item.lock = None
+        self.item.metadata.save()
+        assert self.item.lock == False
 
 
 class TestRevision:
