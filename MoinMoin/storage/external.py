@@ -82,10 +82,10 @@ class ItemCollection(UserDict.DictMixin, object):
         TODO: copy edit log
         """
         if newname == name:
-            raise BackendError(_("Copy failed because name and newname are equal."));
+            raise BackendError(_("Copy failed because name and newname are equal."))
         
         if not newname:
-            raise BackendError(_("You cannot copy to an empty item name."));
+            raise BackendError(_("You cannot copy to an empty item name."))
         
         if newname in self.items:
             raise BackendError(_("Copy failed because an item with name %r already exists.") % newname)
@@ -93,9 +93,8 @@ class ItemCollection(UserDict.DictMixin, object):
         if not name in self.items:
             raise NoSuchItemError(_("Copy failed because there is no item with name %r.") % name)
         
-        self.new_item(newname)
+        newitem = self.new_item(newname)
         olditem = self[name]
-        newitem = self[newname]
         
         for revno in olditem:
             newrev = newitem.new_revision(revno)
@@ -103,6 +102,8 @@ class ItemCollection(UserDict.DictMixin, object):
             
             newrev.data.write(oldrev.data.read())
             newrev.data.close()
+            oldrev.data.close()
+            
             for key, value in oldrev.metadata.iteritems():
                 newrev.metadata[key] = value
             newrev.metadata.save()
@@ -124,7 +125,7 @@ class Item(UserDict.DictMixin, object):
     """
     The Item class represents a StorageItem. This Item has a name and revisions.
     An Item can be anything MoinMoin must save, e.g. Pages, Attachements or
-    Users. A list of revision-numbers is only loaded on access. Via Item[0]
+    Users. A list of revision numbers is only loaded on access. Via Item[0]
     you can access the last revision. The specified Revision is only loaded on
     access as well. On every access the ACLs will be checked.
     """
@@ -154,13 +155,13 @@ class Item(UserDict.DictMixin, object):
         
     def __contains__(self, revno):
         """
-        Checks if a Revision with the given revision-number exists.
+        Checks if a Revision with the given revision number exists.
         """
         return self.backend.has_revision(self.name, revno)
 
     def __getitem__(self, revno):
         """
-        Returns the revision specified by a revision-number (LazyLoaded). 
+        Returns the revision specified by a revision number (LazyLoaded). 
         """
         try:
             return self.__revision_objects[revno]
@@ -173,20 +174,20 @@ class Item(UserDict.DictMixin, object):
 
     def __delitem__(self, revno):
         """
-        Deletes the Revision specified by the given revision-number.
+        Deletes the Revision specified by the given revision number.
         """
         self.reset()
         self.backend.remove_revision(self.name, revno)
         
     def keys(self):
         """
-        Returns a sorted (highest first) list of all real revision-numbers.
+        Returns a sorted (highest first) list of all real revision numbers.
         """
         return self.revisions
 
     def new_revision(self, revno=0):
         """
-        Creates and returns a new revision with the given revision-number.
+        Creates and returns a new revision with the given revision number.
         If the revision number is None the next possible number will be used. 
         """
         self.reset()
@@ -266,7 +267,7 @@ class Item(UserDict.DictMixin, object):
         It is a tuple containing the timestamp of the lock and the user.
         """
         if self.__lock is None:
-            if LOCK_TIMESTAMP and LOCK_USER in self.metadata:
+            if LOCK_TIMESTAMP in self.metadata and LOCK_USER in self.metadata:
                 self.__lock = (True, long(self.metadata[LOCK_TIMESTAMP]), self.metadata[LOCK_USER])
             else:
                 self.__lock = False, 0, None
@@ -281,7 +282,7 @@ class Item(UserDict.DictMixin, object):
         if lock is False:
             del self.metadata[LOCK_TIMESTAMP]
             del self.metadata[LOCK_USER]
-        elif len(lock) == 2:
+        elif isinstance(lock, tuple) and len(lock) == 2:
             self.metadata[LOCK_TIMESTAMP] = str(lock[0])
             self.metadata[LOCK_USER] = lock[1]
         else:
