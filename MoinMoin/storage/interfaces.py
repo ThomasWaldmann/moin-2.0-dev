@@ -12,8 +12,8 @@ First define some constants.
 DELETED = "deleted"
 SIZE = "size"
 ACL = "acl"
-LOCK_TIMESTAMP = "lock-timestamp"
-LOCK_USER = "lock-user"
+LOCK_TIMESTAMP = "lock_timestamp"
+LOCK_USER = "lock_user"
 
 """
 Then the actual interface.

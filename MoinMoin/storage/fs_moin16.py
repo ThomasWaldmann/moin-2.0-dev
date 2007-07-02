@@ -382,12 +382,12 @@ class PageStorage(AbstractStorage):
                 
             # Emulate edit-lock
             if os.path.exists(self.get_page_path(name, "edit-lock")):
-                line = file(self.get_page_path(name, "edit-lock"), "r").read().split("\t")
-                metadata[LOCK_TIMESTAMP] = line[0]
-                if line[6]:
-                    metadata[LOCK_USER] = line[6]
+                (timestamp, rev, action, page, addr, host, user, extra, comment) = file(self.get_page_path(name, "edit-lock"), "r").read().split("\t")
+                metadata[LOCK_TIMESTAMP] = timestamp
+                if user:
+                    metadata[LOCK_USER] = user
                 else:
-                    metadata[LOCK_USER] = line[4]
+                    metadata[LOCK_USER] = addr
             
         else:
         
@@ -433,16 +433,16 @@ class PageStorage(AbstractStorage):
         if revno == -1:
             
             # Emulate deleted
-            if DELETED in metadata and metadata[DELETED] == True:
+            if DELETED in metadata and metadata[DELETED]:
                 self._update_current(name, self.current_revision(name) + 1)
             else:
                 self._update_current(name)
 
             # Emulate edilock
-            if LOCK_TIMESTAMP in metadata and LOCK_USER in metadata:
+            if LOCK_TIMESTAMP and LOCK_USER in metadata:
                 data_file = file(self.get_page_path(name, "edit-lock"), "w")
-                string = "\t".join([metadata[LOCK_TIMESTAMP], "0", "0", "0", "0", "0", metadata[LOCK_USER]])
-                data_file.write(string)
+                line = "\t".join([metadata[LOCK_TIMESTAMP], "0", "0", "0", "0", "0", metadata[LOCK_USER], "0", "0"])
+                data_file.write(line + "\n")
                 data_file.close()
             elif os.path.isfile(self.get_page_path(name, "edit-lock")):
                 os.remove(self.get_page_path(name, "edit-lock"))
