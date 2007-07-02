@@ -266,25 +266,26 @@ class Item(UserDict.DictMixin, object):
         It is a tuple containing the timestamp of the lock and the user.
         """
         if self.__lock is None:
-            try:
-                self.__lock = (self.metadata[LOCK_TIMESTAMP], self.metadata[LOCK_USER])
-            except KeyError:
-                self.__lock = False
+            if LOCK_TIMESTAMP and LOCK_USER in self.metadata:
+                self.__lock = (True, self.metadata[LOCK_TIMESTAMP], self.metadata[LOCK_USER])
+            else:
+                self.__lock = False, None, None
         return self.__lock
     
     def set_lock(self, lock):
         """
         Set the lock property.
+        It must either be False or a tuple containing timestamp and user.
         You still have to call item.metadata.save() to actually save the change.
         """
-        if lock is None:
+        if lock is False:
             del self.metadata[LOCK_TIMESTAMP]
             del self.metadata[LOCK_USER]
         elif len(lock) == 2:
             self.metadata[LOCK_TIMESTAMP] = lock[0]
             self.metadata[LOCK_USER] = lock[1]
         else:
-            raise ValueError(_("Lock must be a tuple containing TIMESTAMP and USER."))
+            raise ValueError(_("Lock must be either False or a tuple containing timestamp and user."))
         self.__lock = None 
     
     lock = property(get_lock, set_lock)
