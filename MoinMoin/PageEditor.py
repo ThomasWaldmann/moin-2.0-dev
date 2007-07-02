@@ -16,15 +16,16 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, time, codecs, errno
+import time, errno
 
-from MoinMoin import caching, config, user, wikiutil, error
+from MoinMoin import caching, user, wikiutil, error
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
 from MoinMoin.logfile import editlog, eventlog
-from MoinMoin.util import filesys, timefuncs, web
+from MoinMoin.util import timefuncs, web
 from MoinMoin.mail import sendmail
+from MoinMoin.user import User
 from MoinMoin.storage.error import BackendError
 
 
@@ -1151,8 +1152,9 @@ To leave the editor, press the Cancel button.""") % {
         """ Load lock info if not yet loaded. """
         if self.locktype:
             (lock, self.timestamp, self.owner) = self.pageobj._item.lock
-            self.owner_html = self.owner
             self.timestamp = wikiutil.version2timestamp(self.timestamp)
+            user = User(self.request, self.owner)
+            self.owner_html = user.valid and user.name or self.owner
         else:
             _ = self._
             self.owner = None
