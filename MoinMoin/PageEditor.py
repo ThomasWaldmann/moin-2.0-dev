@@ -1147,43 +1147,26 @@ To leave the editor, press the Cancel button.""") % {
                 self._deleteLockFile()
 
 
-    def _filename(self):
-        """ Get path and filename for edit-lock file. """
-        return self.pageobj.getPagePath('edit-lock', isfile=1)
-
-
     def _readLockFile(self):
         """ Load lock info if not yet loaded. """
-        _ = self._
-        self.owner = None
-        self.owner_html = wikiutil.escape(_("<unknown>"))
-        self.timestamp = 0
-
         if self.locktype:
-            try:
-                entry = editlog.EditLog(self.request, filename=self._filename()).next()
-            except StopIteration:
-                entry = None
-
-            if entry:
-                self.owner = entry.userid or entry.addr
-                self.owner_html = entry.getEditor(self.request)
-                self.timestamp = wikiutil.version2timestamp(entry.ed_time_usecs)
+            (lock, self.timestamp, self.owner) = self.pageobj._item.lock
+            self.owner_html = self.owner
+            self.timestamp = wikiutil.version2timestamp(self.timestamp)
+        else:
+            _ = self._
+            self.owner = None
+            self.owner_html = wikiutil.escape(_("<unknown>"))
+            self.timestamp = 0
 
 
     def _writeLockFile(self):
         """ Write new lock file. """
-        self._deleteLockFile()
-        try:
-            editlog.EditLog(self.request, filename=self._filename()).add(
-               self.request, wikiutil.timestamp2version(self.now), 0, "LOCK", self.page_name)
-        except IOError:
-            pass
+        self.pageobj._item.lock = (wikiutil.timestamp2version(self.now), self.uid)
+        self.pageobj._item.metadata.save()
 
     def _deleteLockFile(self):
         """ Delete the lock file unconditionally. """
-        try:
-            os.remove(self._filename())
-        except OSError:
-            pass
+        self.pageobj._item.lock = False
+        self.pageobj._item.metadata.save()
 

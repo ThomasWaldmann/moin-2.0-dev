@@ -267,9 +267,9 @@ class Item(UserDict.DictMixin, object):
         """
         if self.__lock is None:
             if LOCK_TIMESTAMP and LOCK_USER in self.metadata:
-                self.__lock = (True, self.metadata[LOCK_TIMESTAMP], self.metadata[LOCK_USER])
+                self.__lock = (True, long(self.metadata[LOCK_TIMESTAMP]), self.metadata[LOCK_USER])
             else:
-                self.__lock = False, None, None
+                self.__lock = False, 0, None
         return self.__lock
     
     def set_lock(self, lock):
@@ -282,7 +282,7 @@ class Item(UserDict.DictMixin, object):
             del self.metadata[LOCK_TIMESTAMP]
             del self.metadata[LOCK_USER]
         elif len(lock) == 2:
-            self.metadata[LOCK_TIMESTAMP] = lock[0]
+            self.metadata[LOCK_TIMESTAMP] = str(lock[0])
             self.metadata[LOCK_USER] = lock[1]
         else:
             raise ValueError(_("Lock must be either False or a tuple containing timestamp and user."))
