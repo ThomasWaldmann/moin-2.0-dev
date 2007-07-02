@@ -65,13 +65,13 @@ class StorageBackend(object):
 
     def list_revisions(self, name):
         """
-        Returns a list of integers of all revision-numbers of an item.
+        Returns a list of integers of all revision numbers of an item.
         """
         raise NotImplementedError
 
     def current_revision(self, name):
         """
-        Returns the last revision-number of an item as integer. If there is
+        Returns the last revision number of an item as integer. If there is
         no revision it returns 0.
         """
         raise NotImplementedError

@@ -274,7 +274,7 @@ class PageStorage(AbstractStorage):
             raise BackendError(_("Failed to rename item because name and newname are equal."))
         
         if not newname:
-            raise BackendError(_("You cannot rename to an empty page name."));
+            raise BackendError(_("You cannot rename to an empty page name."))
         
         if self.has_item(newname):
             raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
@@ -439,7 +439,7 @@ class PageStorage(AbstractStorage):
                 self._update_current(name)
 
             # Emulate edilock
-            if LOCK_TIMESTAMP and LOCK_USER in metadata:
+            if LOCK_TIMESTAMP in metadata and LOCK_USER in metadata:
                 data_file = file(self.get_page_path(name, "edit-lock"), "w")
                 line = "\t".join([metadata[LOCK_TIMESTAMP], "0", "0", "0", "0", "0", metadata[LOCK_USER], "0", "0"])
                 data_file.write(line + "\n")
