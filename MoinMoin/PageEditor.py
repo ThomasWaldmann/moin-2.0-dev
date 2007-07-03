@@ -1151,7 +1151,7 @@ To leave the editor, press the Cancel button.""") % {
     def _readLockFile(self):
         """ Load lock info if not yet loaded. """
         if self.locktype:
-            (lock, self.timestamp, self.owner) = self.pageobj._item.lock
+            (lock, self.timestamp, self.owner) = self.pageobj._item.edit_lock
             self.timestamp = wikiutil.version2timestamp(self.timestamp)
             user = User(self.request, self.owner)
             self.owner_html = user.valid and user.name or self.owner
@@ -1164,11 +1164,11 @@ To leave the editor, press the Cancel button.""") % {
 
     def _writeLockFile(self):
         """ Write new lock file. """
-        self.pageobj._item.lock = (wikiutil.timestamp2version(self.now), self.uid)
+        self.pageobj._item.edit_lock = (wikiutil.timestamp2version(self.now), self.uid)
         self.pageobj._item.metadata.save()
 
     def _deleteLockFile(self):
         """ Delete the lock file unconditionally. """
-        self.pageobj._item.lock = False
+        self.pageobj._item.edit_lock = False
         self.pageobj._item.metadata.save()
 

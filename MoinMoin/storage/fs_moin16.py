@@ -512,6 +512,7 @@ class PageStorage(AbstractStorage):
 class PageData(DataBackend):
     """
     This class implements a File like object for MoinMoin 1.6 Page stuff.
+    Changes will only be saved on close().
     """
 
     def __init__(self, path, name, revno, backend):
