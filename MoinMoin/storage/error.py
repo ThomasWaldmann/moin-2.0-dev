@@ -26,9 +26,10 @@ class ACLError(AccessError):
     """
     pass
 
-class LockedError(AccessError):
+class LockingError(AccessError):
     """
-    Raised if the action could not be commited because the Item is locked.
+    Raised if the action could not be commited because the Item is locked
+    or the if the item could not be locked.
     """
     pass
 

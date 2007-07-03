@@ -12,7 +12,7 @@ from MoinMoin.storage._tests import names, metadata, DummyConfig, pages, get_pag
 from MoinMoin.storage.backends import LayerBackend
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata
-from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
 from MoinMoin.storage.interfaces import DataBackend
 
 
@@ -140,6 +140,12 @@ class TestItem:
         self.item.metadata.save()
         assert self.item.edit_lock == (True, 1183317594000000L, '1183317550.72.7782')
 
+    def test_lock(self):
+        assert self.item.lock == False
+        self.item.lock = True
+        assert self.item.lock == True
+        self.item.lock = False
+        assert self.item.lock == False
 
 class TestRevision:
 

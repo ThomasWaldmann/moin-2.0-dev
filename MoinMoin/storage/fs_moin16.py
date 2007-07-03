@@ -4,7 +4,7 @@
     @copyright: 2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
     
-    TODO: locking
+    TODO: internal locking?
     TODO: indexes
     TODO: item wide metadata
     TODO: wiki wide metadata
@@ -15,11 +15,12 @@ import errno
 import os
 import re
 import shutil
+import time
 
 from MoinMoin import config
-from MoinMoin.util import filesys
+from MoinMoin.util import filesys, lock
 from MoinMoin.storage.interfaces import DataBackend, StorageBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER
-from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
 from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
@@ -220,6 +221,8 @@ class PageStorage(AbstractStorage):
     This class implements the MoinMoin 1.6 compatible Page Storage Stuff.
     """
 
+    locks = dict()
+
     def list_items(self, filters=None):
         """ 
         @see MoinMoin.interfaces.StorageBackend.list_items
@@ -247,11 +250,11 @@ class PageStorage(AbstractStorage):
                 os.mkdir(self.get_page_path(name, "cache"))
             if not os.path.isdir(self.get_page_path(name, "cache", "__lock__")):
                 os.mkdir(self.get_page_path(name, "cache", "__lock__"))
-            if not os.path.isdir(self.get_page_path(name, "revisions")):
-                os.mkdir(self.get_page_path(name, "revisions"))
             create_file(self.get_page_path(name, "current"))
             if not os.path.isfile(self.get_page_path(name, "edit-log")):
                 create_file(self.get_page_path(name, "edit-log"))
+            if not os.path.isdir(self.get_page_path(name, "revisions")):
+                os.mkdir(self.get_page_path(name, "revisions"))
         else:
             raise BackendError(_("Item %r already exists") % name)
 
@@ -358,11 +361,16 @@ class PageStorage(AbstractStorage):
         """
         if revno == 0:
             revno = self.list_revisions(name)[0]
-            
+        
+        tmp_data = self.get_page_path(name, "current.tmp")
+        data = self.get_page_path(name, "current")
+        
         try:
-            data_file = file(self.get_page_path(name, "current"), "w")
+            data_file = file(tmp_data, "w")
             data_file.write(get_rev_string(revno) + "\n")
             data_file.close()
+        
+            filesys.rename(tmp_data, data)
         except IOError, err:
             _handle_error(self, err, name, message=_("Failed to set current revision for item %r.") % name)
 
@@ -449,8 +457,11 @@ class PageStorage(AbstractStorage):
 
         else:
         
+            read_filename = self.get_page_path(name, "revisions", get_rev_string(revno))
+            write_filename = self.get_page_path(name, "revisions", get_rev_string(revno) + ".meta")
+        
             try:
-                data = codecs.open(self.get_page_path(name, "revisions", get_rev_string(revno)), "r", config.charset).readlines()
+                data = codecs.open(read_filename, "r", config.charset).readlines()
             except IOError, err:
                 _handle_error(self, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
     
@@ -478,12 +489,14 @@ class PageStorage(AbstractStorage):
     
             # save data
             try:
-                data_file = codecs.open(self.get_page_path(name, "revisions", get_rev_string(revno)), "w", config.charset)
+                data_file = codecs.open(write_filename, "w", config.charset)
             except IOError, err:
                 _handle_error(self, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
     
             data_file.writelines(new_data)
             data_file.close()
+            
+            filesys.rename(write_filename, read_filename)
 
     def get_data_backend(self, name, revno):
         """
@@ -508,6 +521,25 @@ class PageStorage(AbstractStorage):
         """
         return os.path.join(self.path, quoteWikinameFS(name), *args)
 
+    def lock_item(self, name):
+        """
+        @see MoinMoin.interfaces.StorageBackend.lock_item
+        """
+        write_lock = lock.WriteLock(self.get_page_path(name, "lock"), 60)
+        if not write_lock.acquire(10):
+            raise LockingError(_("Item %r is already locked.") % name)
+        self.locks[name] = write_lock
+            
+    def unlock_item(self, name):
+        """
+        @see MoinMoin.interfaces.StorageBackend.unlock_item
+        """
+        try:
+            self.locks[name].release()
+            del self.locks[name]
+        except KeyError:
+            pass
+        
 
 class PageData(DataBackend):
     """

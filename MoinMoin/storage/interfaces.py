@@ -128,6 +128,24 @@ class StorageBackend(object):
         mode can be r(ead) or w(rite).
         """
         raise NotImplementedError
+    
+    def lock_item(self, name):
+        """
+        Locks an item.
+        """
+        raise NotImplementedError
+
+    def unlock_item(self, name):
+        """
+        Unlocks an item.
+        """
+        raise NotImplementedError
+    
+    def has_lock(self, name):
+        """
+        Checks wether an item is locked.
+        """
+        raise NotImplementedError
 
 
 class DataBackend(object):
