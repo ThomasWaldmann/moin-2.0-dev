@@ -151,7 +151,7 @@ class Item(UserDict.DictMixin, object):
         self.__current = None
         self.__revision_objects = dict()
         self.__acl = None
-        self.__lock = None
+        self.__edit_lock = None
         
     def __contains__(self, revno):
         """
@@ -261,35 +261,35 @@ class Item(UserDict.DictMixin, object):
     
     acl = property(get_acl)
     
-    def get_lock(self):
+    def get_edit_lock(self):
         """
         Get the lock property.
         It is a tuple containing the timestamp of the lock and the user.
         """
-        if self.__lock is None:
+        if self.__edit_lock is None:
             if LOCK_TIMESTAMP in self.metadata and LOCK_USER in self.metadata:
-                self.__lock = (True, long(self.metadata[LOCK_TIMESTAMP]), self.metadata[LOCK_USER])
+                self.__edit_lock = (True, long(self.metadata[LOCK_TIMESTAMP]), self.metadata[LOCK_USER])
             else:
-                self.__lock = False, 0, None
-        return self.__lock
+                self.__edit_lock = False, 0, None
+        return self.__edit_lock
     
-    def set_lock(self, lock):
+    def set_edit_lock(self, edit_lock):
         """
         Set the lock property.
         It must either be False or a tuple containing timestamp and user.
         You still have to call item.metadata.save() to actually save the change.
         """
-        if lock is False:
+        if edit_lock is False:
             del self.metadata[LOCK_TIMESTAMP]
             del self.metadata[LOCK_USER]
-        elif isinstance(lock, tuple) and len(lock) == 2:
-            self.metadata[LOCK_TIMESTAMP] = str(lock[0])
-            self.metadata[LOCK_USER] = lock[1]
+        elif isinstance(edit_lock, tuple) and len(edit_lock) == 2:
+            self.metadata[LOCK_TIMESTAMP] = str(edit_lock[0])
+            self.metadata[LOCK_USER] = edit_lock[1]
         else:
             raise ValueError(_("Lock must be either False or a tuple containing timestamp and user."))
-        self.__lock = None 
+        self.__edit_lock = None 
     
-    lock = property(get_lock, set_lock)
+    edit_lock = property(get_edit_lock, set_edit_lock)
 
 
 class Revision(object):
@@ -346,7 +346,8 @@ class Metadata(UserDict.DictMixin, object):
     """ 
     The metadata of an Item. Access will be via a dict like interface.
     All metadata will be loaded on the first access to one key.
-    On every access the ACLs will be checked.
+    On every access the ACLs will be checked. After changing values you
+    have to call save() to persist the changes to disk.
     """
 
     def __init__(self, revision):
