@@ -11,8 +11,8 @@ import py.test
 from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown, BackendTest
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
-from MoinMoin.storage.interfaces import DELETED, SIZE, ACL, LOCK_TIMESTAMP, LOCK_USER
-from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.interfaces import SIZE, LOCK_TIMESTAMP, LOCK_USER
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
 
 
 def setup_module(module):
@@ -201,7 +201,14 @@ class TestPageBackend(BackendTest):
         assert self.backend.has_item(pages[0])
         py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[1])
         BackendTest.test_rename_item(self)
-        
+    
+    def test_lock_unlock_item(self):
+        self.backend.lock_item(pages[0])
+        assert os.path.isdir(os.path.join(get_page_dir(), pages[0], "lock"))
+        py.test.raises(LockingError, self.backend.lock_item, pages[0])
+        self.backend.unlock_item(pages[0])
+        assert not os.path.isdir(os.path.join(get_page_dir(), pages[0], "lock"))
+
 
 class TestPageData:
     """

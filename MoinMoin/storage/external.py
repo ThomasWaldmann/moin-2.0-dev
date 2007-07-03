@@ -140,6 +140,7 @@ class Item(UserDict.DictMixin, object):
 
         self.__metadata = None
         self.__deleted = None
+        self.__lock = False
         
         self.reset()
     
@@ -290,6 +291,24 @@ class Item(UserDict.DictMixin, object):
         self.__edit_lock = None 
     
     edit_lock = property(get_edit_lock, set_edit_lock)
+
+    def get_lock(self):
+        """
+        Checks if the item is locked.
+        """
+        return self.__lock
+    
+    def set_lock(self, lock):
+        """
+        Set the item lock state.
+        """
+        if lock is True:
+            self.backend.lock_item(self.name)
+        else:
+            self.backend.unlock_item(self.name)
+        self.__lock = lock
+        
+    lock = property(get_lock, set_lock)
 
 
 class Revision(object):
