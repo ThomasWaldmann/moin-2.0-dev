@@ -49,7 +49,7 @@ class TestUserBackend(BackendTest):
         py.test.raises(NotImplementedError, self.backend.remove_revision, names[0], 2)
 
     def test_get_data_backend(self):
-        py.test.raises(NotImplementedError, self.backend.get_data_backend, names[0], 1)
+        py.test.raises(NotImplementedError, self.backend.get_data_backend, names[0], 1, "rw")
 
     def test_rename_item(self):
         py.test.raises(NotImplementedError, self.backend.rename_item, names[0], names[1])
@@ -161,10 +161,10 @@ class TestPageBackend(BackendTest):
         py.test.raises(NoSuchItemError, self.backend.remove_revision, "ADF", 4)
 
     def test_get_data_backend(self):
-        data = self.backend.get_data_backend(pages[0], 1)
+        data = self.backend.get_data_backend(pages[0], 1, "rw")
         data.close()
-        py.test.raises(NoSuchItemError, self.backend.get_data_backend, "adsf", 2)
-        py.test.raises(NoSuchRevisionError, self.backend.get_data_backend, pages[0], 3)
+        py.test.raises(NoSuchItemError, self.backend.get_data_backend, "adsf", 2, "rw")
+        py.test.raises(NoSuchRevisionError, self.backend.get_data_backend, pages[0], 3, "rw")
 
     def test_get_metadata(self):
         py.test.raises(NoSuchItemError, self.backend.get_metadata, "adsf", 2)
@@ -203,11 +203,12 @@ class TestPageBackend(BackendTest):
         BackendTest.test_rename_item(self)
     
     def test_lock_unlock_item(self):
-        self.backend.lock_item(pages[0])
-        assert os.path.isdir(os.path.join(get_page_dir(), pages[0], "lock"))
-        py.test.raises(LockingError, self.backend.lock_item, pages[0])
-        self.backend.unlock_item(pages[0])
-        assert not os.path.isdir(os.path.join(get_page_dir(), pages[0], "lock"))
+        self.backend.lock(pages[0])
+        py.test.raises(LockingError, self.backend.lock, pages[0])
+        self.backend.unlock(pages[0])
+        self.backend.lock(pages[0], timeout=1)
+        py.test.raises(LockingError, self.backend.lock, pages[0], 1)
+        self.backend.unlock(pages[0])
 
 
 class TestPageData:

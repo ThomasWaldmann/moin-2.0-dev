@@ -103,13 +103,13 @@ class TestItem:
     def test_del_add_revision(self):
         assert self.item.current == 1
         assert isinstance(self.item.new_revision(), Revision)
-        assert self.item.current == 2
+        assert self.item.current == 1
         assert 2 in self.item
         assert isinstance(self.item.new_revision(4), Revision)
         assert 4 in self.item
-        assert self.item.current == 4
+        assert self.item.current == 1
         del self.item[2]
-        assert self.item.current == 4
+        assert self.item.current == 1
         del self.item[4]
         assert self.item.current == 1
         assert not 2 in self.item
