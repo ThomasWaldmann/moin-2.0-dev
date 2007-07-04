@@ -303,9 +303,10 @@ class Item(UserDict.DictMixin, object):
         Set the item lock state.
         """
         if lock is True:
-            self.backend.lock_item(self.name)
+            self.backend.lock(self.name)
+            self.reset()
         else:
-            self.backend.unlock_item(self.name)
+            self.backend.unlock(self.name)
         self.__lock = lock
         
     lock = property(get_lock, set_lock)
@@ -355,7 +356,7 @@ class Revision(object):
         Lazy load metadata.
         """
         if self.__data is None:
-            self.__data = self.item.backend.get_data_backend(self.item.name, self.revno)
+            self.__data = self.item.backend.get_data_backend(self.item.name, self.revno, "rw")
         return self.__data
 
     data = property(get_data)

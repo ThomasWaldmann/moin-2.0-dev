@@ -72,7 +72,8 @@ class StorageBackend(object):
     def current_revision(self, name):
         """
         Returns the last revision number of an item as integer. If there is
-        no revision it returns 0.
+        no revision it returns 0. It only returns the revision if there is
+        already data in it otherwise it will return the revision before.
         """
         raise NotImplementedError
 
@@ -122,28 +123,22 @@ class StorageBackend(object):
         """
         raise NotImplementedError
 
-    def get_data_backend(self, name, revno):
+    def get_data_backend(self, name, revno, mode):
         """
         Get the data of an item-revision.
-        mode can be r(ead) or w(rite).
+        Mode can be one of r(ead), w(rite) or r(ead)w(rite).
         """
         raise NotImplementedError
     
-    def lock_item(self, name):
+    def lock(self, name, timeout, lifetime):
         """
-        Locks an item.
+        Removes a lock for the given string.
         """
         raise NotImplementedError
 
-    def unlock_item(self, name):
+    def unlock(self, string):
         """
-        Unlocks an item.
-        """
-        raise NotImplementedError
-    
-    def has_lock(self, name):
-        """
-        Checks wether an item is locked.
+        Creates a lock for the given string.
         """
         raise NotImplementedError
 
