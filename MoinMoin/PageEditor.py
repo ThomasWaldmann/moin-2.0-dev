@@ -92,7 +92,7 @@ class PageEditor(Page):
         self.do_editor_backup = keywords.get('do_editor_backup', 1)
         self.uid_override = keywords.get('uid_override', None)
 
-        if not self._item:
+        if self._item is None:
             self._item = self._items_all.new_item(self.page_name)
             
         self.lock = PageLock(self)
@@ -879,9 +879,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
                                uid_override=self.uid_override)
         # Open the global log
         glog = editlog.EditLog(request, uid_override=self.uid_override)
-            
-        if not self._item:
-            self._item = self._items_all.new_item(self.page_name) 
         
         if not was_deprecated and not deleted:
             if self.do_revision_backup or self._item.current == 0:
@@ -1153,7 +1150,7 @@ To leave the editor, press the Cancel button.""") % {
 
     def _readLockFile(self):
         """ Load lock info if not yet loaded. """
-        if self.locktype and self.pageobj._item:
+        if self.locktype:
             (lock, self.timestamp, self.owner) = self.pageobj._item.edit_lock
             self.timestamp = wikiutil.version2timestamp(self.timestamp)
             user = User(self.request, self.owner)

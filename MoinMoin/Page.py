@@ -40,7 +40,7 @@ import os, re, logging
 from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage.external import ItemCollection
-from MoinMoin.storage.error import NoSuchItemError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.interfaces import SIZE
 
 
@@ -198,9 +198,13 @@ class Page(object):
     
     def get_body(self):
         if self._body is None:
-            text = self._item[self.rev].data.read()
-            self._item[self.rev].data.close()
-            self._body = self.decodeTextMimeType(text)
+            try:
+                text = self._item[self.rev].data.read()
+                self._item[self.rev].data.close()
+                self._body = self.decodeTextMimeType(text)
+            except NoSuchRevisionError:
+                self._body = ""
+                self._meta = dict()
         return self._body
     
     def set_body(self, body):
@@ -522,8 +526,11 @@ class Page(object):
         if rev == self.rev: # same revision as self
             if self._body is not None:
                 return len(self._body)
-
-        return self._item[rev].metadata[SIZE]
+        
+        try:
+            return self._item[rev].metadata[SIZE]
+        except NoSuchRevisionError:
+            return 0L
 
     def mtime_usecs(self):
         """ Get modification timestamp of this page.
