@@ -41,8 +41,8 @@ import tempfile
 
 from MoinMoin import config
 from MoinMoin.util import filesys, lock
-from MoinMoin.storage.interfaces import DataBackend, StorageBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER
-from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError, AccessError
+from MoinMoin.storage.interfaces import DataBackend, StorageBackend, MetadataBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
 from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
@@ -76,54 +76,79 @@ class AbstractStorage(StorageBackend):
                 expression = re.compile(value)
                 if key not in self.cfg.indexes:
                     for name in items:
-                        metadata = self.get_metadata(name, 0)
+                        metadata = self.get_metadata_backend(name, 0)
                         if metadata.has_key(key) and expression.match(metadata[key]):
                             filtered_files.append(name)
                 else:
                     pass
             return filtered_files
-
-    def get_metadata(self, name, revno):
+    
+    def get_page_path(self, name, *args):
         """
-        @see MoinMoin.interfaces.StorageBackend.get_metadata
+        Returns the full path with fs quoted page name.
         """
-        if revno == 0:
-            revno = self.current_revision(name)
+        return os.path.join(self.path, name, *args)
 
-        return self._parse_metadata(name, revno)
 
-    def set_metadata(self, name, revno, metadata):
+class AbstractMetadata(MetadataBackend):
+    """
+    Abstract metadata class.
+    """
+    def __init__(self, backend, name, revno):
+        """"
+        Initializes the metadata object with the required parameters.
         """
-        @see MoinMoin.interfaces.StorageBackend.set_metadata
-        """
-        if revno == 0:
-            revno = self.current_revision(name)
+        self._backend = backend
 
-        old_metadata = self._parse_metadata(name, revno)
-        old_metadata.update(metadata)
-        self._save_metadata(name, revno, old_metadata)
-
-    def remove_metadata(self, name, revno, keylist):
+        self._name = name
+        self._revno = revno
+        self._metadata = self._parse_metadata(name, revno)
+        
+    def __contains__(self, key):
         """
-        @see MoinMoin.interfaces.StorageBackend.remove_metadata
+        @see MoinMoin.storage.external.Metadata.__contains__
         """
-        if revno == 0:
-            revno = self.current_revision(name)
+        return key in self._metadata
 
-        metadata = self._parse_metadata(name, revno)
-        for key in keylist:
-            del metadata[key]
-        self._save_metadata(name, revno, metadata)
-
-    def _parse_metadata(self, name):
+    def __getitem__(self, key):
         """
-        Read the metadata from the file.
+        @see MoinMoin.storage.external.Metadata.__getitem__
+        """
+        return self._metadata[key]
+
+    def __setitem__(self, key, value):
+        """
+        @see MoinMoin.storage.external.Metadata.__setitem__
+        """
+        self._metadata[key] = value
+
+    def __delitem__(self, key):
+        """
+        @see MoinMoin.storage.external.Metadata.__delitem__
+        """
+        del self._metadata[key]
+
+    def keys(self):
+        """
+        @see MoinMoin.storage.external.Metadata.keys
+        """
+        return self._metadata.keys()
+
+    def save(self):
+        """
+        @see MoinMoin.storage.external.Metadata.save
+        """
+        self._save_metadata(self._name, self._revno, self._metadata)
+    
+    def _parse_metadata(self, name, revno):
+        """
+        @see MoinMoin.fs_moin16.AbstractStorage._parse_metadata
         """
         raise NotImplementedError
 
-    def _save_metadata(self, name, metadata):
+    def _save_metadata(self, name, revno, metadata):
         """
-        Save the data to the file.
+        @see MoinMoin.fs_moin16.AbstractStorage._save_metadata
         """
         raise NotImplementedError
 
@@ -135,7 +160,7 @@ class UserStorage(AbstractStorage):
 
     def list_items(self, filters=None):
         """ 
-        @see MoinMoin.interfaces.StorageBackend.list_items
+        @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
         files = [f for f in os.listdir(self.path) if user_re.match(f)]
 
@@ -143,7 +168,7 @@ class UserStorage(AbstractStorage):
 
     def has_item(self, name):
         """
-        @see MoinMoin.interfaces.StorageBackend.has_item
+        @see MoinMoin.storage.interfaces.StorageBackend.has_item
         """
         if os.path.isfile(os.path.join(self.path, name)):
             return self
@@ -151,14 +176,14 @@ class UserStorage(AbstractStorage):
 
     def create_item(self, name):
         """
-        @see MoinMoin.interfaces.StorageBackend.create_item
+        @see MoinMoin.storage.interfaces.StorageBackend.create_item
         """
         create_file(self.path, name)
         return self
 
     def remove_item(self, name):
         """
-        @see MoinMoin.interfaces.StorageBackend.remove_item
+        @see MoinMoin.storage.interfaces.StorageBackend.remove_item
         """
         try:
             os.remove(os.path.join(self.path, name))
@@ -167,7 +192,7 @@ class UserStorage(AbstractStorage):
 
     def list_revisions(self, name):
         """
-        @see MoinMoin.interfaces.StorageBackend.list_revisions
+        @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
         
         Users have no revisions.
         """
@@ -175,24 +200,36 @@ class UserStorage(AbstractStorage):
 
     def current_revision(self, name):
         """
-        @see MoinMoin.interfaces.StorageBackend.current_revision
+        @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
         return 1
 
     def has_revision(self, name, revno):
         """
-        @see MoinMoin.interfaces.StorageBackend.has_revision
+        @see MoinMoin.storage.interfaces.StorageBackend.has_revision
         """
         return revno == 0 or revno in self.list_revisions(name)
 
+    def get_metadata_backend(self, name, revno):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
+        """
+        return UserMetadata(self, name, revno)
+
+
+class UserMetadata(AbstractMetadata):
+    """
+    Metadata class for the user backend.
+    """
+    
     def _parse_metadata(self, name, revno):
         """
-        @see MoinMoin.fs_moin16.AbstractStorage._parse_metadata
+        @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
         """
         try:
-            data = codecs.open(os.path.join(self.path, name), "r", config.charset).readlines()
+            data = codecs.open(self._backend.get_page_path(name), "r", config.charset).readlines()
         except IOError, err:
-            _handle_error(self, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
+            _handle_error(self._backend, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
 
         user_data = {}
         for line in data:
@@ -217,7 +254,7 @@ class UserStorage(AbstractStorage):
 
     def _save_metadata(self, name, revno, metadata):
         """
-        @see MoinMoin.fs_moin16.AbstractStorage._save_metadata
+        @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
         """
         
         tmp = tempfile.mkstemp()
@@ -225,7 +262,7 @@ class UserStorage(AbstractStorage):
         try:
             data_file = codecs.getwriter(config.charset)(os.fdopen(tmp[0], "w"))
         except IOError, err:
-            _handle_error(self, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+            _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
         for key, value in metadata.iteritems():
             # Encode list values
@@ -241,9 +278,9 @@ class UserStorage(AbstractStorage):
         data_file.close()
         
         try:
-            filesys.rename(tmp[1], os.path.join(self.path, name))
+            filesys.rename(tmp[1], self._backend.get_page_path(name))
         except IOError, err:
-            _handle_error(self, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+            _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
 
 class PageStorage(AbstractStorage):
@@ -256,7 +293,7 @@ class PageStorage(AbstractStorage):
 
     def list_items(self, filters=None):
         """ 
-        @see MoinMoin.interfaces.StorageBackend.list_items
+        @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
         files = [unquoteWikiname(f) for f in os.listdir(self.path) if os.path.exists(os.path.join(self.path, f, "current"))]
 
@@ -264,7 +301,7 @@ class PageStorage(AbstractStorage):
 
     def has_item(self, name):
         """
-        @see MoinMoin.interfaces.StorageBackend.has_item
+        @see MoinMoin.storage.interfaces.StorageBackend.has_item
         """
         if os.path.isdir(self.get_page_path(name, "revisions")):
             return self
@@ -272,7 +309,7 @@ class PageStorage(AbstractStorage):
 
     def create_item(self, name):
         """
-        @see MoinMoin.interfaces.StorageBackend.create_item
+        @see MoinMoin.storage.interfaces.StorageBackend.create_item
         """        
         if not self.has_item(name):
             if not os.path.isdir(self.get_page_path(name)):
@@ -293,7 +330,7 @@ class PageStorage(AbstractStorage):
 
     def remove_item(self, name):
         """
-        @see MoinMoin.interfaces.StorageBackend.remove_item
+        @see MoinMoin.storage.interfaces.StorageBackend.remove_item
         """
         try:
             shutil.rmtree(self.get_page_path(name))
@@ -320,7 +357,7 @@ class PageStorage(AbstractStorage):
 
     def list_revisions(self, name):
         """
-        @see MoinMoin.interfaces.StorageBackend.list_revisions
+        @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
         """
         try:
             revs = os.listdir(self.get_page_path(name, "revisions"))
@@ -334,7 +371,7 @@ class PageStorage(AbstractStorage):
         
     def current_revision(self, name, real=True):
         """
-        @see MoinMoin.interfaces.StorageBackend.current_revision
+        @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
         try:
             data_file = file(self.get_page_path(name, "current"), "r")
@@ -344,25 +381,25 @@ class PageStorage(AbstractStorage):
             _handle_error(self, err, name, message=_("Failed to get current revision for item %r.") % name)
         
         rev = int(rev or 0)
-        if rev == 0:
-            return rev
         
         # Emulate deleted
-        if real and not os.path.isfile(self.get_page_path(name, "revisions", get_rev_string(rev))):
-            return rev - 1
+        if not real or rev == 0:
+            return rev
         
         # Don't return revisions which are empty
-        def get_latest_not_empty(rev):
+        def get_latest_not_empty(rev):     
+            if rev == 0:
+                return rev       
             filename = self.get_page_path(name, "revisions", get_rev_string(rev))
             if not os.path.isfile(filename) or os.path.getsize(filename) == 0L:
                 return get_latest_not_empty(rev - 1)
             return rev
 
-        return get_latest_not_empty(int(rev or 0))
+        return get_latest_not_empty(int(rev))
         
     def has_revision(self, name, revno):
         """
-        @see MoinMoin.interfaces.StorageBackend.has_revision
+        @see MoinMoin.storage.interfaces.StorageBackend.has_revision
         """
         if revno == 0:
             revno = self.current_revision(name)
@@ -371,7 +408,7 @@ class PageStorage(AbstractStorage):
 
     def create_revision(self, name, revno):
         """
-        @see MoinMoin.interfaces.StorageBackend.create_revisions
+        @see MoinMoin.storage.interfaces.StorageBackend.create_revisions
         """
         if revno == 0:
             revno = self.current_revision(name) + 1
@@ -387,7 +424,7 @@ class PageStorage(AbstractStorage):
 
     def remove_revision(self, name, revno):
         """
-        @see MoinMoin.interfaces.StorageBackend.remove_revisions
+        @see MoinMoin.storage.interfaces.StorageBackend.remove_revisions
         """
         if revno == 0:
             revno = self.current_revision(name)
@@ -422,22 +459,155 @@ class PageStorage(AbstractStorage):
         except OSError, err:
             _handle_error(self, err, name, message=_("Failed to set current revision for item %r.") % name)
 
+    def get_data_backend(self, name, revno):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
+        """
+        if revno == 0:
+            revno = self.current_revision(name)
+
+        if self.has_revision(name, revno):
+            return PageData(self, name, revno)
+                
+        else:
+            if not self.has_item(name):
+                raise NoSuchItemError(_("Item %r does not exist.") % name)
+            else:
+                raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, name))
+            
+    def get_metadata_backend(self, name, revno):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
+        """
+        if revno == 0:
+            revno = self.current_revision(name)
+            
+        return PageMetadata(self, name, revno)
+    
+    def lock(self, string, timeout=10, lifetime=60):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.lock
+        """
+        write_lock = lock.ExclusiveLock(os.path.join(self.lockdir, string), lifetime)
+        if not write_lock.acquire(timeout):
+            raise LockingError(_("There is already a lock for %r") % string)
+        self.locks[string] = write_lock
+            
+    def unlock(self, string):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.unlock
+        """
+        try:
+            self.locks[string].release()
+            del self.locks[string]
+        except KeyError:
+            pass
+        
+    def get_page_path(self, name, *args):
+        """
+        @see MoinMoin.storage.fs_moin16.AbstractStorage.get_page_path
+        
+        TODO: cache the quoted name?
+        """
+        return AbstractStorage.get_page_path(self, quoteWikinameFS(name), *args)
+   
+
+class PageData(DataBackend):
+    """
+    This class implements a read only, file like object for MoinMoin 1.6 Page stuff.
+    Changes will only be saved on close().
+    """
+
+    def __init__(self, backend, name, revno):
+        """
+        Init stuff and open the file.
+        """
+        self._backend = backend
+        self._name = name
+        self._revno = revno
+
+        self._read_file_name = self._backend.get_page_path(self._name, "revisions", get_rev_string(self._revno))
+            
+        self._read_property = None
+        self._write_property = None
+
+    def _get_read_file(self):
+        """
+        Lazy load read_file.
+        """
+        if self._read_property is None:        
+            self._read_property = codecs.open(self._read_file_name, "r", config.charset)
+        return self._read_property
+
+    _read_file = property(_get_read_file)
+
+    def _get_write_file(self):
+        """
+        Lazy load write file.
+        """
+        if self._write_property is None:
+            self._tmp = tempfile.mkstemp()
+            self._write_property = codecs.getwriter(config.charset)(os.fdopen(self._tmp[0], "w"))
+        return self._write_property
+
+    _write_file = property(_get_write_file)
+    
+    def read(self, size=None):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.read
+        """
+        return self._read_file.read(size)
+
+    def seek(self, offset):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.seek
+        """
+        self._read_file.seek(offset)
+
+    def tell(self):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.tell
+        """
+        return self._read_file.tell()
+
+    def write(self, data):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.write
+        """
+        self._write_file.write(data)
+
+    def close(self):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.close
+        """
+        if not self._read_property is None:
+            self._read_file.close()
+        if not self._write_property is None:
+            self._write_file.close()
+            filesys.rename(self._tmp[1], self._read_file_name)
+            
+
+class PageMetadata(AbstractMetadata):
+    """ 
+    Metadata implementation of the page backend.
+    """
+    
     def _parse_metadata(self, name, revno):
         """
-        @see MoinMoin.fs_moin16.AbstractStorage._parse_metadata
+        @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
         """
         metadata = {}
         
         if revno == -1:
             
             # Emulate the deleted status via a metadata flag
-            current = self.current_revision(name, real=False)
-            if not os.path.exists(self.get_page_path(name, "revisions", get_rev_string(current))):
+            current = self._backend.current_revision(name, real=False)
+            if not os.path.exists(self._backend.get_page_path(name, "revisions", get_rev_string(current))):
                 metadata[DELETED] = True
                 
             # Emulate edit-lock
-            if os.path.exists(self.get_page_path(name, "edit-lock")):
-                line = file(self.get_page_path(name, "edit-lock"), "r").read().strip()
+            if os.path.exists(self._backend.get_page_path(name, "edit-lock")):
+                line = file(self._backend.get_page_path(name, "edit-lock"), "r").read().strip()
                 if line:
                     values = line.split("\t")
                     metadata[LOCK_TIMESTAMP] = values[0]
@@ -449,9 +619,9 @@ class PageStorage(AbstractStorage):
         else:
         
             try:
-                data_file = codecs.open(self.get_page_path(name, "revisions", get_rev_string(revno)), "r", config.charset)
+                data_file = codecs.open(self._backend.get_page_path(name, "revisions", get_rev_string(revno)), "r", config.charset)
             except IOError, err:
-                _handle_error(self, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
+                _handle_error(self._backend, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
     
             started = False
             for line in data_file.readlines():
@@ -478,54 +648,52 @@ class PageStorage(AbstractStorage):
             data_file.close()
 
             # add size metadata
-            metadata[SIZE] = os.path.getsize(self.get_page_path(name, "revisions", get_rev_string(revno)))
+            metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
 
         return metadata
 
     def _save_metadata(self, name, revno, metadata):
         """
-        @see MoinMoin.fs_moin16.AbstractStorage._save_metadata
+        @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
         """
         
         if revno == -1:
             
             # Emulate deleted
             if DELETED in metadata and metadata[DELETED]:
-                self._update_current(name, self.current_revision(name) + 1)
+                self._backend._update_current(name, self._backend.current_revision(name) + 1)
             else:
-                self._update_current(name)
+                self._backend._update_current(name)
 
             # Emulate edilock
             if LOCK_TIMESTAMP in metadata and LOCK_USER in metadata:
-                data_file = file(self.get_page_path(name, "edit-lock"), "w")
+                data_file = file(self._backend.get_page_path(name, "edit-lock"), "w")
                 line = "\t".join([metadata[LOCK_TIMESTAMP], "0", "0", "0", "0", "0", metadata[LOCK_USER], "0", "0"])
                 data_file.write(line + "\n")
                 data_file.close()
-            elif os.path.isfile(self.get_page_path(name, "edit-lock")):
-                os.remove(self.get_page_path(name, "edit-lock"))
+            elif os.path.isfile(self._backend.get_page_path(name, "edit-lock")):
+                os.remove(self._backend.get_page_path(name, "edit-lock"))
 
         else:
         
             tmp = tempfile.mkstemp()
-            read_filename = self.get_page_path(name, "revisions", get_rev_string(revno))
+            read_filename = self._backend.get_page_path(name, "revisions", get_rev_string(revno))
         
             try:
                 data = codecs.open(read_filename, "r", config.charset).readlines()
             except IOError, err:
-                _handle_error(self, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+                _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
     
             # remove metadata
             new_data = [line for line in data if not line.startswith('#') and not line == '#' and not line == '##']
 
-            # remove size metadata
-            try:
-                del metadata[SIZE]
-            except KeyError:
-                pass
-
             # add metadata
             metadata_data = ""
             for key, value in metadata.iteritems():
+                
+                # remove size metadata
+                if key == SIZE:
+                    continue
                 
                 # special handling for list metadata like acls
                 if isinstance(value, list):
@@ -540,7 +708,7 @@ class PageStorage(AbstractStorage):
             try:
                 data_file = codecs.getwriter(config.charset)(os.fdopen(tmp[0], "w"))
             except IOError, err:
-                _handle_error(self, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+                _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
     
             data_file.writelines(new_data)
             data_file.close()
@@ -548,218 +716,10 @@ class PageStorage(AbstractStorage):
             try:
                 filesys.rename(tmp[1], read_filename)
             except OSError, err:
-                _handle_error(self, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
-
-    def get_data_backend(self, name, revno, mode):
-        """
-        @see MoinMoin.interfaces.StorageBackend.get_data_backend
-        """
-        if revno == 0:
-            revno = self.current_revision(name)
-
-        if self.has_revision(name, revno):
-            if mode == "r":
-                return ReadablePageData(self, name, revno)
-            elif mode == "w":
-                return WriteablePageData(self, name, revno)
-            elif mode == "rw":
-                return ReadableWriteablePageData(self, name, revno)
+                _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
                 
-        else:
-            if not self.has_item(name):
-                raise NoSuchItemError(_("Item %r does not exist.") % name)
-            else:
-                raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, name))
-
-    def lock(self, string, timeout=10, lifetime=60):
-        """
-        @see MoinMoin.interfaces.StorageBackend.lock
-        """
-        write_lock = lock.ExclusiveLock(os.path.join(self.lockdir, string), lifetime)
-        if not write_lock.acquire(timeout):
-            raise LockingError(_("There is already a lock for %r") % string)
-        self.locks[string] = write_lock
-            
-    def unlock(self, string):
-        """
-        @see MoinMoin.interfaces.StorageBackend.unlock
-        """
-        try:
-            self.locks[string].release()
-            del self.locks[string]
-        except KeyError:
-            pass
-        
-    def get_page_path(self, name, *args):
-        """
-        Returns the full path with fs quoted page name.
-        
-        TODO: cache the quoted name?
-        """
-        return os.path.join(self.path, quoteWikinameFS(name), *args)
-   
-
-class ReadablePageData(DataBackend):
-    """
-    This class implements a read only, file like object for MoinMoin 1.6 Page stuff.
-    Changes will only be saved on close().
-    """
-
-    def __init__(self, backend, name, revno):
-        """
-        Init stuff and open the file.
-        """
-        self.backend = backend
-        
-        self.read_file_name = backend.get_page_path(name, "revisions", get_rev_string(revno))
-
-        self.__read_file = None
-
-    def get_read_file(self):
-        """
-        Lazy load read_file.
-        """
-        if self.__read_file is None:
-            self.__read_file = codecs.open(self.read_file_name, "r", config.charset)
-        return self.__read_file
-
-    read_file = property(get_read_file)
-
-    def read(self, size=None):
-        """
-        @see MoinMoin.interfaces.DataBackend.read
-        """
-        return self.read_file.read(size)
-
-    def seek(self, offset):
-        """
-        @see MoinMoin.interfaces.DataBackend.seek
-        """
-        self.read_file.seek(offset)
-
-    def tell(self):
-        """
-        @see MoinMoin.interfaces.DataBackend.tell
-        """
-        return self.read_file.tell()
-
-    def write(self, data):
-        """
-        @see MoinMoin.interfaces.DataBackend.write
-        """
-        raise AccessError("This data is read-only.")
-
-    def close(self):
-        """
-        @see MoinMoin.interfaces.DataBackend.close
-        """
-        if not self.__read_file is None:
-            self.read_file.close()
-
-
-class WriteablePageData(DataBackend):
-    """
-    This class implements a write only, file like object for MoinMoin 1.6 Page stuff.
-    Changes will only be saved on close().
-    """
-
-    def __init__(self, backend, name, revno):
-        """
-        Init stuff and open the file.
-        """
-        self.backend = backend
-        
-        self.read_file_name = backend.get_page_path(name, "revisions", get_rev_string(revno))
-        self.tmp = tempfile.mkstemp()
-
-        self.__write_file = None
-
-    def get_write_file(self):
-        """
-        Lazy load write file.
-        """
-        if self.__write_file is None:
-            self.__write_file = codecs.getwriter(config.charset)(os.fdopen(self.tmp[0], "w"))
-        return self.__write_file
-
-    write_file = property(get_write_file)
-
-    def read(self, size=None):
-        """
-        @see MoinMoin.interfaces.DataBackend.read
-        """
-        raise AccessError("This data is write-only.")
-
-    def seek(self, offset):
-        """
-        @see MoinMoin.interfaces.DataBackend.seek
-        """
-        raise AccessError("This data is write-only.")
-
-    def tell(self):
-        """
-        @see MoinMoin.interfaces.DataBackend.tell
-        """
-        raise AccessError("This data is write-only.")
-
-    def write(self, data):
-        """
-        @see MoinMoin.interfaces.DataBackend.write
-        """
-        self.write_file.write(data)
-
-    def close(self):
-        """
-        @see MoinMoin.interfaces.DataBackend.close
-        """
-        if not self.__write_file is None:
-            self.write_file.close()
-            filesys.rename(self.tmp[1], self.read_file_name)
-
-
-class ReadableWriteablePageData(ReadablePageData, WriteablePageData):
-    """
-    This class implements a read/write, file like object for MoinMoin 1.6 Page stuff.
-    Changes will only be saved on close().
-    """
-
-    def __init__(self, backend, name, revno):
-        """
-        Init stuff and open the file.
-        """
-        ReadablePageData.__init__(self, backend, name, revno)
-        WriteablePageData.__init__(self, backend, name, revno)
-
-    def read(self, size=None):
-        """
-        @see MoinMoin.interfaces.DataBackend.read
-        """
-        return ReadablePageData.read(self, size)
-
-    def seek(self, offset):
-        """
-        @see MoinMoin.interfaces.DataBackend.seek
-        """
-        ReadablePageData.seek(self, offset)
-
-    def tell(self):
-        """
-        @see MoinMoin.interfaces.DataBackend.tell
-        """
-        return ReadablePageData.tell(self)
-
-    def write(self, data):
-        """
-        @see MoinMoin.interfaces.DataBackend.write
-        """
-        WriteablePageData.write(self, data)
-
-    def close(self):
-        """
-        @see MoinMoin.interfaces.DataBackend.close
-        """
-        ReadablePageData.close(self)
-        WriteablePageData.close(self)
+            # update size
+            metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
 
 
 def encode_list(items):

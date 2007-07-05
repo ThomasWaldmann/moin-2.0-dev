@@ -7,13 +7,13 @@
 
 import py.test
 
-from MoinMoin.storage._tests import names, metadata, DummyConfig, pages, get_page_dir, get_user_dir, setup, teardown
+from MoinMoin.storage._tests import DummyConfig, pages, get_page_dir, setup, teardown
 
 from MoinMoin.storage.backends import LayerBackend
-from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
-from MoinMoin.storage.external import ItemCollection, Item, Revision, Metadata
-from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
-from MoinMoin.storage.interfaces import DataBackend
+from MoinMoin.storage.fs_moin16 import PageStorage
+from MoinMoin.storage.external import ItemCollection, Item, Revision
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.interfaces import DataBackend, MetadataBackend
 
 
 def setup_module(module):
@@ -159,47 +159,5 @@ class TestRevision:
 
     def test(self):
         assert isinstance(self.revision.data, DataBackend)
-        assert isinstance(self.revision.metadata, Metadata)
-
-
-class TestMetadata:
-
-    metadata = None
-
-    def setup_class(self):
-        self.metadata = ItemCollection(UserStorage(get_user_dir(), DummyConfig(), "user"), None)[names[0]][1].metadata
-
-    def teardown_class(self):
-        self.metadata = None
-
-    def test_contains(self):
-        assert "name" in self.metadata
-        assert not "xyz" in self.metadata
-
-    def test_get(self):
-        self.metadata["name"]
-        py.test.raises(KeyError, lambda: self.metadata["yz"])
-
-    def test_set(self):
-        self.metadata["name"] = "123"
-        assert self.metadata["name"] == "123"
-        assert self.metadata.changed["name"] == "set"
-
-    def test_remove(self):
-        self.metadata["xyz"] = "123"
-        assert "xyz" in self.metadata
-        assert self.metadata.changed["xyz"] == "add"
-        del self.metadata["xyz"]
-        assert not "xyz" in self.metadata
-        assert "xyz" not in self.metadata.changed
-        del self.metadata["aliasname"]
-        assert not "aliasname" in self.metadata
-        assert self.metadata.changed["aliasname"] == "remove"
-        self.metadata["aliasname"] = ""
-
-    def test_keys(self):
-        assert set(self.metadata.keys()) == set(metadata.keys())
-
-    def test_save(self):
-        pass
+        assert isinstance(self.revision.metadata, MetadataBackend)
 

@@ -3,12 +3,14 @@
 
     @copyright: 2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
+    
+    TODO: acl checking, write locking
 """
 
 import UserDict
-    
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError
-from MoinMoin.storage.interfaces import DELETED, ACL, LOCK_TIMESTAMP, LOCK_USER
+
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, AccessError
+from MoinMoin.storage.interfaces import DataBackend, MetadataBackend, DELETED, ACL, LOCK_TIMESTAMP, LOCK_USER
 
 
 class ItemCollection(UserDict.DictMixin, object):
@@ -346,7 +348,7 @@ class Revision(object):
         Lazy load metadata.
         """
         if self.__metadata is None:
-            self.__metadata = Metadata(self)
+            self.__metadata = self.item.backend.get_metadata_backend(self.item.name, self.revno)
         return self.__metadata
 
     metadata = property(get_metadata)
@@ -356,83 +358,190 @@ class Revision(object):
         Lazy load metadata.
         """
         if self.__data is None:
-            self.__data = self.item.backend.get_data_backend(self.item.name, self.revno, "rw")
+            self.__data = self.item.backend.get_data_backend(self.item.name, self.revno)
         return self.__data
 
     data = property(get_data)
 
 
-class Metadata(UserDict.DictMixin, object):
+class ReadonlyMetadata(MetadataBackend):
     """ 
-    The metadata of an Item. Access will be via a dict like interface.
-    All metadata will be loaded on the first access to one key.
-    On every access the ACLs will be checked. After changing values you
-    have to call save() to persist the changes to disk.
+    Readonly Metadata implementation.
     """
 
-    def __init__(self, revision):
+    def __init__(self, metadata):
         """"
-        Initializes the metadata object with the required parameters.
+        Init stuff.
         """
-        self.revision = revision
-        self.metadata = revision.item.backend.get_metadata(self.revision.item.name, self.revision.revno)
-        self.changed = {}
+        self._metadata = metadata
 
     def __contains__(self, key):
         """
-        Checks if a key exists.
+        @see MoinMoin.storage.external.Metadata.__contains__
         """
-        return key in self.metadata
+        return key in self._metadata
 
     def __getitem__(self, key):
         """
-        Returns a specified value.
+        @see MoinMoin.storage.external.Metadata.__getitem__
         """
-        return self.metadata[key]
+        return self._metadata[key]
 
     def __setitem__(self, key, value):
         """
-        Adds a value.
+        @see MoinMoin.storage.external.Metadata.__setitem_
         """
-        if not key in self.metadata:
-            self.changed[key] = 'add'
-        else:
-            self.changed[key] = 'set'
-
-        self.metadata[key] = value
+        raise AccessError(_("This item is readonly"))
 
     def __delitem__(self, key):
         """
-        Deletes a value.
+        @see MoinMoin.storage.external.Metadata.__delitem__
         """
-        if key in self.changed and self.changed[key] == "add":
-            del self.changed[key]
-        else:
-            self.changed[key] = 'remove'
-
-        del self.metadata[key]
+        raise AccessError(_("This item is readonly"))
 
     def keys(self):
         """
-        Return sa list of all metadata keys.
+        @see MoinMoin.storage.external.Metadata.keys
         """
-        return self.metadata.keys()
+        return self._metadata.keys()
 
     def save(self):
         """
-        Saves the metadata.
+        @see MoinMoin.storage.external.Metadata.save
         """
-        add = {}
-        remove = []
-        for key, value in self.changed.iteritems():
-            if value == "add" or value == "set":
-                add[key] = self.metadata[key]
-            elif value == "remove":
-                remove.append(key)
-        if add:
-            self.revision.item.backend.set_metadata(self.revision.item.name, self.revision.revno, add)
-        if remove:
-            self.revision.item.backend.remove_metadata(self.revision.item.name, self.revision.revno, remove)
+        raise AccessError(_("This item is readonly"))
+
+
+class WriteonlyMetadata(MetadataBackend):
+    """ 
+    Writeonly Metadata implementation.
+    """
+
+    def __init__(self, metadata):
+        """"
+        Init stuff.
+        """
+        self._metadata = metadata
+
+    def __contains__(self, key):
+        """
+        @see MoinMoin.storage.external.Metadata.__contains__
+        """
+        raise AccessError(_("This item is writeonly"))
+
+    def __getitem__(self, key):
+        """
+        @see MoinMoin.storage.external.Metadata.__getitem__
+        """
+        raise AccessError(_("This item is writeonly"))
+
+    def __setitem__(self, key, value):
+        """
+        @see MoinMoin.storage.external.Metadata.__setitem__
+        """
+        self._metadata[key] = value
+
+    def __delitem__(self, key):
+        """
+        @see MoinMoin.storage.external.Metadata.__delitem__
+        """
+        del self._metadata[key]
+
+    def keys(self):
+        """
+        @see MoinMoin.storage.external.Metadata.keys
+        """
+        raise AccessError(_("This item is writeonly"))
+
+    def save(self):
+        """
+        @see MoinMoin.storage.external.Metadata.save
+        """
+        self._metadata.save()
+
+
+class ReadOnlyDataBackend(DataBackend):
+    """
+    This class implements read only access to the DataBackend.
+    """
+
+    def __init__(self, data_backend):
+        """
+        Init stuff.
+        """
+        self._data_backend = data_backend
+    
+    def read(self, size=None):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.read
+        """
+        return self._data_backend.read(size)
+
+    def seek(self, offset):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.seek
+        """
+        self._data_backend.seek(offset)
+
+    def tell(self):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.tell
+        """
+        return self._data_backend.tell()
+
+    def write(self, data):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.write
+        """
+        raise AccessError(_("This item is readonly."))
+
+    def close(self):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.close
+        """
+        self._data_backend.close()
+
+
+class WriteOnlyDataBackend(DataBackend):
+    """
+    This class implements write only access to the DataBackend.
+    """
+
+    def __init__(self, data_backend):
+        """
+        Init stuff.
+        """
+        self._data_backend = data_backend
+    
+    def read(self, size=None):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.read
+        """
+        raise AccessError(_("This item is writeonly."))
+
+    def seek(self, offset):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.seek
+        """
+        raise AccessError(_("This item is writeonly."))
+
+    def tell(self):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.tell
+        """
+        raise AccessError(_("This item is writeonly."))
+
+    def write(self, data):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.write
+        """
+        self._data_backend.write(data)
+
+    def close(self):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.close
+        """
+        self._data_backend.close()
 
 
 _ = lambda x:x
