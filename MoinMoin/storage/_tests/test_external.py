@@ -12,7 +12,7 @@ from MoinMoin.storage._tests import DummyConfig, pages, get_page_dir, setup, tea
 from MoinMoin.storage.backends import LayerBackend
 from MoinMoin.storage.fs_moin16 import PageStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision
-from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, AccessError
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend
 
 
@@ -101,6 +101,7 @@ class TestItem:
         assert self.item.keys() == [1]
 
     def test_del_add_revision(self):
+        self.item.lock = True
         assert self.item.current == 1
         assert isinstance(self.item.new_revision(), Revision)
         assert self.item.current == 1
@@ -116,8 +117,10 @@ class TestItem:
         assert not 4 in self.item
         py.test.raises(NoSuchRevisionError, lambda: self.item[5])
         py.test.raises(BackendError, self.item.new_revision, 1)
+        self.item.lock = False
     
     def test_deleted(self):
+        self.item.lock = True
         assert self.item.deleted == False
         self.item.deleted = True
         self.item.metadata.save()
@@ -127,11 +130,13 @@ class TestItem:
         self.item.metadata.save()
         assert self.item.deleted == False
         assert self.item.current == 1
+        self.item.lock = False
     
     def test_acl(self):
         assert self.item.acl
         
     def test_edit_lock(self):
+        self.item.lock = True
         assert self.item.edit_lock == (True, 1183317594000000L, '1183317550.72.7782')
         self.item.edit_lock = False
         self.item.metadata.save()
@@ -139,6 +144,7 @@ class TestItem:
         self.item.edit_lock = (1183317594000000L, '1183317550.72.7782')
         self.item.metadata.save()
         assert self.item.edit_lock == (True, 1183317594000000L, '1183317550.72.7782')
+        self.item.lock = False
 
     def test_lock(self):
         assert self.item.lock == False
@@ -146,6 +152,8 @@ class TestItem:
         assert self.item.lock == True
         self.item.lock = False
         assert self.item.lock == False
+        py.test.raises(AccessError, self.item.new_revision, 1)
+        # TODO add more tests here
 
 class TestRevision:
 
