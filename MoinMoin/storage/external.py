@@ -96,6 +96,8 @@ class ItemCollection(UserDict.DictMixin, object):
             raise NoSuchItemError(_("Copy failed because there is no item with name %r.") % name)
         
         newitem = self.new_item(newname)
+        newitem.lock = True
+        
         olditem = self[name]
         
         for revno in olditem:
@@ -109,6 +111,8 @@ class ItemCollection(UserDict.DictMixin, object):
             for key, value in oldrev.metadata.iteritems():
                 newrev.metadata[key] = value
             newrev.metadata.save()
+        
+        newitem.lock = False
         
         self.__items = None
 
@@ -179,6 +183,8 @@ class Item(UserDict.DictMixin, object):
         """
         Deletes the Revision specified by the given revision number.
         """
+        self._check_lock()
+        
         self.reset()
         self.backend.remove_revision(self.name, revno)
         
@@ -193,6 +199,8 @@ class Item(UserDict.DictMixin, object):
         Creates and returns a new revision with the given revision number.
         If the revision number is None the next possible number will be used. 
         """
+        self._check_lock()
+        
         self.reset()
         rev = self.backend.create_revision(self.name, revno)
         return self[rev]
@@ -243,6 +251,8 @@ class Item(UserDict.DictMixin, object):
         Set the deleted flag.
         You still have to call item.metadata.save() to actually save the change.
         """
+        self._check_lock()
+        
         self.metadata[DELETED] = value
         self.__deleted = None
     
@@ -282,6 +292,8 @@ class Item(UserDict.DictMixin, object):
         It must either be False or a tuple containing timestamp and user.
         You still have to call item.metadata.save() to actually save the change.
         """
+        self._check_lock()
+        
         if edit_lock is False:
             del self.metadata[LOCK_TIMESTAMP]
             del self.metadata[LOCK_USER]
@@ -312,6 +324,13 @@ class Item(UserDict.DictMixin, object):
         self.__lock = lock
         
     lock = property(get_lock, set_lock)
+    
+    def _check_lock(self):
+        """
+        Checks whether the item is locked and raises an exception otherwise.
+        """
+        if not self.lock == True:
+            raise AccessError(_("This item is readonly"))
 
 
 class Revision(object):
@@ -348,7 +367,11 @@ class Revision(object):
         Lazy load metadata.
         """
         if self.__metadata is None:
-            self.__metadata = self.item.backend.get_metadata_backend(self.item.name, self.revno)
+            metadata = self.item.backend.get_metadata_backend(self.item.name, self.revno)
+            if self.item.lock == True:
+                self.__metadata = metadata
+            else:
+                self.__metadata = ReadonlyMetadata(metadata)
         return self.__metadata
 
     metadata = property(get_metadata)
@@ -358,7 +381,11 @@ class Revision(object):
         Lazy load metadata.
         """
         if self.__data is None:
-            self.__data = self.item.backend.get_data_backend(self.item.name, self.revno)
+            data = self.item.backend.get_data_backend(self.item.name, self.revno)
+            if self.item.lock == True:
+                self.__data = data
+            else:
+                self.__data = ReadonlyData(data)
         return self.__data
 
     data = property(get_data)
@@ -460,7 +487,7 @@ class WriteonlyMetadata(MetadataBackend):
         self._metadata.save()
 
 
-class ReadOnlyDataBackend(DataBackend):
+class ReadonlyData(DataBackend):
     """
     This class implements read only access to the DataBackend.
     """
@@ -502,7 +529,7 @@ class ReadOnlyDataBackend(DataBackend):
         self._data_backend.close()
 
 
-class WriteOnlyDataBackend(DataBackend):
+class WriteonlyData(DataBackend):
     """
     This class implements write only access to the DataBackend.
     """
