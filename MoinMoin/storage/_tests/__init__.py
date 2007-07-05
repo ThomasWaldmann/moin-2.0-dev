@@ -83,16 +83,11 @@ class DummyConfig:
     indexes = []
 
 
-class BackendTest:
-    backend = None
-    
+class BackendTest:    
     def test_has_item(self):
         assert not self.backend.has_item("")
 
     def test_rename_item(self):
         py.test.raises(BackendError, self.backend.rename_item, pages[0], "")
         py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[0])
-
-    def teardown_class(self):
-        self.backend = None
 

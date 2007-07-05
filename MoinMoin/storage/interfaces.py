@@ -5,6 +5,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import UserDict
+
 """
 First define some constants.
 """
@@ -99,34 +101,17 @@ class StorageBackend(object):
         """
         raise NotImplementedError
 
-    def get_metadata(self, name, revno):
+    def get_metadata_backend(self, name, revno):
         """
-        Returns a dictionary of all metadata of an item. If revno is 0 the current
-        revision will be used. If revno is -1 the item-wide metadata will be
-        used.
-        """
-        raise NotImplementedError
-
-    def set_metadata(self, name, revno, metadata):
-        """
-        Sets metadata values. If revno is 0 the current revision will be
-        used. If revno is -1 the item-wide metadata will be used. Metadata
-        is a dict with key -> value pairs.
+        Returns a metadata backend object which behaves like a dictionary.
+        If revno is 0 the current revision will be used. If revno is -1 the
+        item-wide metadata will be used.
         """
         raise NotImplementedError
 
-    def remove_metadata(self, name, revno, keylist):
-        """
-        Removes alls keys in keylist from the metadata. If revno is 0 the current
-        revision will be used. If revno is -1 the item-wide metadata will be
-        used.
-        """
-        raise NotImplementedError
-
-    def get_data_backend(self, name, revno, mode):
+    def get_data_backend(self, name, revno):
         """
         Get the data of an item-revision.
-        Mode can be one of r(ead), w(rite) or r(ead)w(rite).
         """
         raise NotImplementedError
     
@@ -179,3 +164,48 @@ class DataBackend(object):
         Close the stream.
         """
         raise NotImplementedError
+
+class MetadataBackend(UserDict.DictMixin, object):
+    """ 
+    The metadata of an Item. Access will be via a dict like interface.
+    All metadata will be loaded on the first access to one key.
+    On every access the ACLs will be checked. After changing values you
+    have to call save() to persist the changes to disk.
+    """
+        
+    def __contains__(self, key):
+        """
+        Checks if a key exists.
+        """
+        raise NotImplementedError
+
+    def __getitem__(self, key):
+        """
+        Returns a specified value.
+        """
+        raise NotImplementedError
+
+    def __setitem__(self, key, value):
+        """
+        Adds a value.
+        """
+        raise NotImplementedError
+
+    def __delitem__(self, key):
+        """
+        Deletes a value.
+        """
+        raise NotImplementedError
+
+    def keys(self):
+        """
+        Return sa list of all metadata keys.
+        """
+        raise NotImplementedError
+
+    def save(self):
+        """
+        Saves the metadata.
+        """
+        raise NotImplementedError
+    
