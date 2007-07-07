@@ -4,17 +4,16 @@ MoinMoin Testing Framework
 --------------------------
 
 All test modules must be named test_modulename to be included in the
-test suit. If you are testing a package, name the test module
+test suite. If you are testing a package, name the test module
 test_package_module.
 
 Tests that need the current request, for example to create a page
 instance, can refer to self.request. It is injected into all test case
 classes by the framework.
 
-Tests that require certain configuration, like section_numbers = 1, must
-use a TestConfig to create the required configuration before the
-test. Deleting the TestConfig instance will restore the previous
-configuration.
+Tests that require a certain configuration, like section_numbers = 1, must
+use a TestConfig to create the required configuration before the test.
+Deleting the TestConfig instance will restore the previous configuration.
 
 @copyright: 2005 Nir Soffer, 2007 Alexander Schremmer
 @license: GNU GPL, see COPYING for details.
@@ -74,25 +73,28 @@ except ImportError:
 def init_test_request(static_state=[False]):
     from MoinMoin.request import CLI
     from MoinMoin.user import User
+    from MoinMoin.formatter.text_html import Formatter as HtmlFormatter
     if not static_state[0]:
         maketestwiki.run(True)
         static_state[0] = True
     request = CLI.Request()
     request.form = request.args = request.setup_args()
     request.user = User(request)
+    request.html_formatter = HtmlFormatter(request)
+    request.formatter = request.html_formatter
     return request
 
 
 class TestConfig:
     """ Custom configuration for unit tests
-    
-    Some test assume specific configuration, and will fail if the wiki admin
-    will change the configuration. For example, DateTime macro test assume 
+
+    Some tests assume a specific configuration, and will fail if the wiki admin
+    changed the configuration. For example, DateTime macro test assume
     the default datetime_fmt.
-    
+
     When you set custom values in a TestConfig, the previous values are saved,
     and when the TestConfig is called specifically, they are restored automatically.
-    
+
     Typical Usage
     -------------
     ::
@@ -106,7 +108,7 @@ class TestConfig:
     """
 
     def __init__(self, request):
-        """ Create temporary configuration for a test 
+        """ Create temporary configuration for a test
 
         @param request: current request
         """
@@ -115,7 +117,7 @@ class TestConfig:
         self.new = []  # New added attributes
 
     def __call__(self, defaults=(), **custom):
-        """ Initialise a temporary configuration for a test 
+        """ Initialise a temporary configuration for a test
 
         @param defaults: list of keys that should use the default value
         @param custom: other keys using non default values, or new keys
@@ -128,7 +130,7 @@ class TestConfig:
 
     def setDefaults(self, defaults=()):
         """ Set default values for keys in defaults list
-        
+
         Non existing default will raise an AttributeError.
         """
         from MoinMoin.config import multiconfig
@@ -149,8 +151,8 @@ class TestConfig:
         setattr(self.request.cfg, key, value)
 
     def restore(self):
-        """ Restore previous request.cfg 
-        
+        """ Restore previous request.cfg
+
         Set old keys to old values and delete new keys.
         """
         for key, value in self.old.items():
@@ -160,23 +162,8 @@ class TestConfig:
     __del__ = restore # XXX __del__ semantics are currently broken
 
 
-class Module(py.test.collect.Module):
-    def __init__(self, *args, **kwargs):
-        self.request = init_test_request()
-        super(Module, self).__init__(*args, **kwargs)
 
-    def run(self, *args, **kwargs):
-        if coverage is not None:
-            coverage_modules.update(getattr(self.obj, 'coverage_modules', []))
-        return super(Module, self).run(*args, **kwargs)
-
-    def join(self, name):
-        obj = getattr(self.obj, name)
-        if isclass(obj):
-            return MoinClassCollector(name, parent=self)
-        elif hasattr(obj, 'func_code'):
-            return MoinTestFunction(name, parent=self)
-
+# py.test customization starts here
 
 class MoinTestFunction(py.test.collect.Function):
     def execute(self, target, *args):
@@ -196,3 +183,18 @@ class MoinClassCollector(py.test.collect.Class):
         cls.request = self.parent.request
         cls.TestConfig = TestConfig(cls.request)
         super(MoinClassCollector, self).setup()
+
+
+class Module(py.test.collect.Module):
+    Class = MoinClassCollector
+    Function = MoinTestFunction
+
+    def __init__(self, *args, **kwargs):
+        self.request = init_test_request()
+        super(Module, self).__init__(*args, **kwargs)
+
+    def run(self, *args, **kwargs):
+        if coverage is not None:
+            coverage_modules.update(getattr(self.obj, 'coverage_modules', []))
+        return super(Module, self).run(*args, **kwargs)
+

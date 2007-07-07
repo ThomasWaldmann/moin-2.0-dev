@@ -1,15 +1,15 @@
 # -*- coding: iso-8859-1 -*-
 """
     MoinMoin - Page class
-    
+
     Page is used for read-only access to a wiki page. For r/w access see PageEditor.
     A Page object is used to access a wiki page (in general) as well as to access
     some specific revision of a wiki page.
-    
-    The RootPage is some virtual page located at / and is mainly used to do namespace
-    operations like getting the page list. 
 
-    Currently, this is all a big mixture between high-level page code, intermediate 
+    The RootPage is some virtual page located at / and is mainly used to do namespace
+    operations like getting the page list.
+
+    Currently, this is all a big mixture between high-level page code, intermediate
     data/underlay layering code, caching code and low-level filesystem storage code.
     To see the filesystem storage layout we use, best is to look into data/pages/
     (underlay dir uses the same format).
@@ -195,7 +195,7 @@ class Page(object):
             self._item = None
             
     # now we define some properties to lazy load some attributes on first access:
-    
+
     def get_body(self):
         if self._body is None:
             try:
@@ -231,7 +231,7 @@ class Page(object):
             self._pi = self.parse_processing_instructions()
         return self._pi
     pi = property(fget=get_pi) # processed meta stuff
-    
+
     def getlines(self):
         """ Return a list of all lines in body.
 
@@ -287,9 +287,9 @@ class Page(object):
     def current_rev(self):
         """
         Return number of current revision.
-        
+
         TODO: remove the 99999999 hack
-        
+
         @return: int revision
         """
         if self._item:
@@ -347,7 +347,7 @@ class Page(object):
         else:
             path = self.request.cfg.page_backend.get_page_path(name)
         
-        fullpath = os.path.join(*((path,) + args))
+        fullpath = os.path.join(*((path, ) + args))
         if check_create:
             if isfile:
                 dirname, filename = os.path.split(fullpath)
@@ -377,7 +377,7 @@ class Page(object):
     # XXX TODO do not use mtime() calls any more
     def _last_edited(self, request):
         # as it is implemented now, this is rather a _last_changed as it just uses
-        # the last log entry, which could be not only from an edit, but also from 
+        # the last log entry, which could be not only from an edit, but also from
         # an attachment operation. See different semantics in .mtime().
         cache_name = self.page_name
         cache_key = 'lastlog'
@@ -587,8 +587,7 @@ class Page(object):
 
         # look for the end of words and the start of a new word,
         # and insert a space there
-        split_re = re.compile('([%s])([%s])' % (config.chars_lower, config.chars_upper))
-        splitted = split_re.sub(r'\1 \2', self.page_name)
+        splitted = config.split_regex.sub(r'\1 \2', self.page_name)
         return splitted
 
     def url(self, request, querystr=None, anchor=None, relative=True, **kw):
@@ -737,13 +736,19 @@ class Page(object):
             return a dict of PIs and the non-PI rest of the body.
         """
         from MoinMoin import i18n
+        request = self.request
         pi = {} # we collect the processing instructions here
-    
+
+        # default language from cfg
+        pi['language'] = self.cfg.language_default or "en"
+
         body = self.body
+        # TODO: remove this hack once we have separate metadata and can use mimetype there
         if body.startswith('<?xml'): # check for XML content
             pi['lines'] = 0
             pi['format'] = "xslt"
             pi['formatargs'] = ''
+            pi['acl'] = security.AccessControlList(request.cfg, []) # avoid KeyError on acl check
             return pi
 
         meta = self.meta
@@ -752,8 +757,7 @@ class Page(object):
         pi['format'] = self.cfg.default_markup or "wiki"
         pi['formatargs'] = ''
         pi['lines'] = len(meta)
-        request = self.request
-        
+
         for verb, args in meta.iteritems():
             if verb == "format": # markup format
                 format, formatargs = (args + ' ').split(' ', 1)
@@ -784,7 +788,7 @@ class Page(object):
                         else:
                             url = Page(request, target).url(request)
                         pi['refresh'] = (delay, url)
-                    except (ValueError,):
+                    except (ValueError, ):
                         pass
 
             elif verb == "redirect":
@@ -807,7 +811,7 @@ class Page(object):
         """ Output the raw page data (action=raw).
             With no content_disposition, the browser usually just displays the
             data on the screen, with content_disposition='attachment', it will
-            offer a dialogue to save it to disk (used by Save action).            
+            offer a dialogue to save it to disk (used by Save action).
         """
         request = self.request
         request.setHttpHeader("Content-type: text/plain; charset=%s" % config.charset)
@@ -877,7 +881,7 @@ class Page(object):
             request.http_redirect('%s/%s?action=show&redirect=%s' % (
                 request.getScriptname(),
                 wikiutil.quoteWikinameURL(pi['redirect']),
-                wikiutil.url_quote_plus(self.page_name, ''),))
+                wikiutil.url_quote_plus(self.page_name, ''), ))
             return
 
         # if necessary, load the formatter
@@ -914,7 +918,7 @@ class Page(object):
         lang = self.pi.get('language', request.cfg.language_default)
         request.setContentLanguage(lang)
 
-        # start document output        
+        # start document output
         page_exists = self.exists()
         if not content_only:
             if emit_headers:
@@ -1228,12 +1232,12 @@ class Page(object):
         return links
 
     def parsePageLinks(self, request):
-        """ Parse page links by formatting with a pagelinks formatter 
-        
+        """ Parse page links by formatting with a pagelinks formatter
+
         This is a old hack to get the pagelinks by rendering the page
         with send_page. We can remove this hack after factoring
         send_page and send_page_content into small reuseable methods.
-        
+
         More efficient now by using special pagelinks formatter and
         redirecting possible output into null file.
         """
@@ -1299,7 +1303,7 @@ class Page(object):
     def getACL(self, request):
         """
         Get cached ACLs of this page.
-        
+
         Return cached ACL or invoke parseACL and update the cache.
 
         TODO: cache?
@@ -1345,7 +1349,7 @@ class Page(object):
 
     def isConflict(self):
         """ Returns true if there is a known editing conflict for that page.
-        
+
         @return: true if there is a known conflict.
         """
 
@@ -1354,7 +1358,7 @@ class Page(object):
 
     def setConflict(self, state):
         """ Sets the editing conflict flag.
-        
+
         @param state: bool, true if there is a conflict.
         """
         cache = caching.CacheEntry(self.request, self, 'conflict', scope='item')

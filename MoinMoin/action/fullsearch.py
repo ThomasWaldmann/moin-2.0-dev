@@ -3,7 +3,7 @@
     MoinMoin - fullsearch action
 
     This is the backend of the search form. Search pages and print results.
-    
+
     @copyright: 2001 by Juergen Hermann <jh@web.de>
     @license: GNU GPL, see COPYING for details.
 """
@@ -16,7 +16,7 @@ from MoinMoin.support.parsedatetime.parsedatetime import Calendar
 def checkTitleSearch(request):
     """ Return 1 for title search, 0 for full text search, -1 for idiot spammer
         who tries to press all buttons at once.
-    
+
     When used in FullSearch macro, we have 'titlesearch' parameter with
     '0' or '1'. In standard search, we have either 'titlesearch' or
     'fullsearch' with localized string. If both missing, default to
@@ -118,13 +118,19 @@ def execute(pagename, request, fieldname='value', titlesearch=0):
             else:
                 # didn't work, let's try parsedatetime
                 cal = Calendar()
-                mtime_parsed = cal.parse(mtime)
-
-                if mtime_parsed[1] == 0 and mtime_parsed[0] <= time.localtime():
-                    mtime = time.mktime(mtime_parsed[0])
+                mtime_parsed, invalid_flag = cal.parse(mtime)
+                # XXX it is unclear if usage of localtime here and in parsedatetime module is correct.
+                # time.localtime is the SERVER's local time and of no relevance to the user (being
+                # somewhere in the world)
+                # mktime is reverse function for localtime, so this maybe fixes it again!?
+                if not invalid_flag and mtime_parsed <= time.localtime():
+                    mtime = time.mktime(mtime_parsed)
+                else:
+                    mtime_parsed = None # we don't use invalid stuff
 
             # show info
             if mtime_parsed:
+                # XXX mtime_msg is not shown in some cases
                 mtime_msg = _("(!) Only pages changed since '''%s''' are being "
                         "displayed!") % request.user.getFormattedDateTime(mtime)
             else:

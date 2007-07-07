@@ -6,7 +6,7 @@ MoinMoin - MoinMoin.text_html_text_moin_wiki Tests
 @license: GNU GPL, see COPYING for details.
 """
 
-import unittest
+import unittest # LEGACY UNITTEST, PLEASE DO NOT IMPORT unittest IN NEW TESTS, PLEASE CONSULT THE py.test DOCS
 
 import py
 py.test.skip("Many broken tests, much broken code, broken, broken, broken.")
@@ -26,7 +26,7 @@ class TestBase(unittest.TestCase):
 
     def setUp(self):
         self.cfg = self.TestConfig(bang_meta=True)
-        
+
     def tearDown(self):
         del self.cfg
 
@@ -56,11 +56,11 @@ class MinimalRequest(object):
     def __init__(self, request):
         self.request = request
         self.clock = Clock()
-        
+
         # This is broken - tests that need correct content_lang will fail
         self.content_lang = None
         self.current_lang = None
-        
+
         self.form = {}
         self._page_headings = {}
         self.result = []
@@ -223,7 +223,7 @@ class TestConvertBlockRepeatable(TestBase):
     def testListSuccess07(self):
         test = ur"""
  * test
-  
+
  * test
 
 """
@@ -242,7 +242,7 @@ class TestConvertBlockRepeatable(TestBase):
     def testListSuccess08(self):
         test = ur"""
  1. test
-  
+
  1. test
 
 """
@@ -261,7 +261,7 @@ class TestConvertBlockRepeatable(TestBase):
     def testListSuccess09(self):
         test = ur"""
  test:: test
-  
+
  test:: test
 
 """
@@ -732,7 +732,7 @@ test
 """
         output = ur"""
 <ul>
-<li><p>test 
+<li><p>test
 </p>
 <pre>
 test
@@ -1133,7 +1133,4 @@ class TestConvertBrokenBrowser(TestBase):
 
 """
         self.do(test, output)
-
-if __name__ == '__main__':
-    unittest.main()
 

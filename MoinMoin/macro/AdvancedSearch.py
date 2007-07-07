@@ -20,7 +20,7 @@ Dependencies = ['pages']
 
 def form_get(request, name, default=''):
     """ Fetches a form field
-    
+
     @param request: current request
     @param name: name of the field
     @keyword default: value if not present (default: '')
@@ -90,7 +90,7 @@ def advanced_ui(macro):
     # mimetype selection
     mimetype = form_get(request, 'mimetype')
     mt_select = makeSelection('mimetype',
-            [('', 'any mimetype')] + [(m[1], '*%s - %s' % m) for m in sorted(mimetypes.types_map.items())],
+            [('', _('any mimetype'))] + [(m[1], '*%s - %s' % m) for m in sorted(mimetypes.types_map.items())],
             mimetype)
 
 

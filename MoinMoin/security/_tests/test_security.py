@@ -9,7 +9,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import unittest
+import py
+import unittest # LEGACY UNITTEST, PLEASE DO NOT IMPORT unittest IN NEW TESTS, PLEASE CONSULT THE py.test DOCS
 from MoinMoin import security
 
 acliter = security.ACLStringIterator
@@ -215,17 +216,17 @@ class TestAcl(unittest.TestCase):
             ('Admin2',              ('read', 'write', 'admin', 'revert', 'delete')),
             ('Admin3',              ('read', 'write', 'admin')),
             ('JoeDoe',              ('read', 'write')),
-            ('SomeGuy',             ('read',)),
+            ('SomeGuy',             ('read', )),
             # Extended names or mix of extended and CamelCase
-            ('name with spaces',    ('read','write',)),
-            ('another one',         ('read','write',)),
-            ('CamelCase',           ('read','write',)),
-            ('extended name',       ('read','write',)),
+            ('name with spaces',    ('read', 'write', )),
+            ('another one',         ('read', 'write', )),
+            ('CamelCase',           ('read', 'write', )),
+            ('extended name',       ('read', 'write', )),
             # Blocking bad guys
             ('BadGuy',              ()),
             # All other users - every one not mentioned in the acl lines
-            ('All',                 ('read',)),
-            ('Anonymous',           ('read',)),
+            ('All',                 ('read', )),
+            ('Anonymous',           ('read', )),
             )
 
         # Check rights
@@ -245,6 +246,7 @@ class TestAcl(unittest.TestCase):
         """ tests what are the page rights if edit-log entry doesn't exist
             for a page where no access is given to
         """
+        py.test.skip("test tricks out the caching system, page modifications without making an edit-log entry are not supported")
         import os
         from MoinMoin.Page import Page
         pagename = u'AutoCreatedMoinMoinTemporaryTestPage'
@@ -266,7 +268,7 @@ class TestAcl(unittest.TestCase):
                 file(os.path.join(revisionsDir, current), 'w').write(text)
             except Exception, err:
                 py.test.skip("Can not be create test page: %s" % err)
-    
+
             assert not self.request.user.may.write(pagename)
         finally:
             if os.path.exists(path):

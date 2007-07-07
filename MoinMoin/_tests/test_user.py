@@ -6,7 +6,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import unittest, os
+import unittest, os # LEGACY UNITTEST, PLEASE DO NOT IMPORT unittest IN NEW TESTS, PLEASE CONSULT THE py.test DOCS
 
 import py
 
@@ -51,10 +51,11 @@ class TestLoginWithPassword(unittest.TestCase):
 
         # Prevent user list caching - we create and delete users too fast for that.
         filesys.dcdisable()
+        self.user = None
 
     def tearDown(self):
         """ Run after each test
-        
+
         Remove user and reset user listing cache.
         """
         # Remove user file and user
@@ -72,7 +73,10 @@ class TestLoginWithPassword(unittest.TestCase):
 
         # Remove user name to id cache, or next test will fail
         caching.CacheEntry(self.request, 'user', 'name2id', scope='wiki').remove()
-        del self.request.cfg.cache.name2id
+        try:
+            del self.request.cfg.cache.name2id
+        except:
+            pass
 
         # Prevent user list caching - we create and delete users too fast for that.
         filesys.dcdisable()
@@ -84,7 +88,7 @@ class TestLoginWithPassword(unittest.TestCase):
         password = name
         self.createUser(name, password)
 
-        # Try to "login"           
+        # Try to "login"
         theUser = user.User(self.request, name=name, password=password)
         self.failUnless(theUser.valid, "Can't login with ascii password")
 
@@ -101,9 +105,9 @@ class TestLoginWithPassword(unittest.TestCase):
 
     def testOldNonAsciiPassword(self):
         """ user: login with non-ascii password in pre 1.3 user file
-        
-        When trying to login with an old non-ascii password in the user 
-        file, utf-8 encoded password will not match. In this case, try 
+
+        When trying to login with an old non-ascii password in the user
+        file, utf-8 encoded password will not match. In this case, try
         all other encoding available on pre 1.3 before failing.
         """
         # Create test user
@@ -113,14 +117,14 @@ class TestLoginWithPassword(unittest.TestCase):
         password = name
         self.createUser(name, password, charset='iso-8859-1')
 
-        # Try to "login"           
+        # Try to "login"
         theUser = user.User(self.request, name=name, password=password)
         self.failUnless(theUser.valid, "Can't login with old unicode password")
 
     def testReplaceOldNonAsciiPassword(self):
         """ user: login replace old non-ascii password in pre 1.3 user file
-        
-        When trying to login with an old non-ascii password in the user 
+
+        When trying to login with an old non-ascii password in the user
         file, the password hash should be replaced with new utf-8 hash.
         """
         # Create test user
@@ -129,14 +133,14 @@ class TestLoginWithPassword(unittest.TestCase):
         name = u'__Jürgen Herman__'
         password = name
         self.createUser(name, password, charset='iso-8859-1')
-        # Login - this should replace the old password in the user file         
+        # Login - this should replace the old password in the user file
         theUser = user.User(self.request, name=name, password=password)
         # Login again - the password should be new unicode password
         expected = user.encodePassword(password)
         theUser = user.User(self.request, name=name, password=password)
         self.assertEqual(theUser.enc_password, expected,
                          "User password was not replaced with new")
-        
+
     def testSubscriptionSubscribedPage(self):
         """ user: tests isSubscribedTo  """
         pagename = u'HelpMiscellaneous'
@@ -147,7 +151,7 @@ class TestLoginWithPassword(unittest.TestCase):
         theUser = user.User(self.request, name=name, password=password)
         theUser.subscribe(pagename)
         expected = True
-        result = theUser.isSubscribedTo(pagename)
+        result = theUser.isSubscribedTo([pagename]) # list(!) of pages to check
         self.assertEqual(result, expected,
                  'Expected "%(expected)s" but got "%(result)s"' % locals())
 
@@ -162,15 +166,15 @@ class TestLoginWithPassword(unittest.TestCase):
         theUser = user.User(self.request, name=name, password=password)
         theUser.subscribe(pagename)
         expected = False
-        result = theUser.isSubscribedTo(testPagename)
+        result = theUser.isSubscribedTo([testPagename]) # list(!) of pages to check
         self.assertEqual(result, expected,
                  'Expected "%(expected)s" but got "%(result)s"' % locals())
-        
+
     # Helpers ---------------------------------------------------------
 
     def createUser(self, name, password, charset='utf-8'):
-        """ helper to create test user 
-        
+        """ helper to create test user
+
         charset is used to create user with pre 1.3 password hash
         """
         # Hack self.request form to contain the password

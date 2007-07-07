@@ -41,4 +41,9 @@ def execute(pagename, request):
         caching.CacheEntry(request, pg, key, scope='item').remove()
         caching.CacheEntry(request, pg, "pagelinks", scope='item').remove()
 
+        # Notify observers
+        from MoinMoin.events import PageRevertedEvent, send_event
+        e = PageRevertedEvent(request, pagename, request.rev, revstr)
+        send_event(e)
+
     pg.send_page(msg=msg)

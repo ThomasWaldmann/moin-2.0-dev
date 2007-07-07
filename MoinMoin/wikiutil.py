@@ -37,7 +37,7 @@ def decodeWindowsPath(text):
     """ Decode Windows path names correctly. This is needed because many CGI
     servers follow the RFC recommendation and re-encode the path_info variable
     according to the file system semantics.
-    
+
     @param text: the text to decode, string
     @rtype: unicode
     @return: decoded text
@@ -86,7 +86,7 @@ def decodeUnknownInput(text):
 def decodeUserInput(s, charsets=[config.charset]):
     """
     Decodes input from the user.
-    
+
     @param s: the string to unquote
     @param charsets: list of charsets to assume the string is in
     @rtype: unicode
@@ -106,7 +106,7 @@ def decodeUserInput(s, charsets=[config.charset]):
 def url_quote(s, safe='/', want_unicode=False):
     """
     Wrapper around urllib.quote doing the encoding/decoding as usually wanted:
-    
+
     @param s: the string to quote (can be str or unicode, if it is unicode,
               config.charset is used to encode it before calling urllib)
     @param safe: just passed through to urllib
@@ -126,7 +126,7 @@ def url_quote(s, safe='/', want_unicode=False):
 def url_quote_plus(s, safe='/', want_unicode=False):
     """
     Wrapper around urllib.quote_plus doing the encoding/decoding as usually wanted:
-    
+
     @param s: the string to quote (can be str or unicode, if it is unicode,
               config.charset is used to encode it before calling urllib)
     @param safe: just passed through to urllib
@@ -146,7 +146,7 @@ def url_quote_plus(s, safe='/', want_unicode=False):
 def url_unquote(s, want_unicode=True):
     """
     Wrapper around urllib.unquote doing the encoding/decoding as usually wanted:
-    
+
     @param s: the string to unquote (can be str or unicode, if it is unicode,
               config.charset is used to encode it before calling urllib)
     @param want_unicode: for the less usual case that you want to get back
@@ -180,7 +180,7 @@ def parseQueryString(qstr, want_unicode=True):
 
 def makeQueryString(qstr=None, want_unicode=False, **kw):
     """ Make a querystring from arguments.
-        
+
     kw arguments overide values in qstr.
 
     If a string is passed in, it's returned verbatim and
@@ -203,7 +203,7 @@ def makeQueryString(qstr=None, want_unicode=False, **kw):
 def quoteWikinameURL(pagename, charset=config.charset):
     """ Return a url encoding of filename in plain ascii
 
-    Use urllib.quote to quote any character that is not always safe. 
+    Use urllib.quote to quote any character that is not always safe.
 
     @param pagename: the original pagename (unicode)
     @param charset: url text encoding, 'utf-8' recommended. Other charset
@@ -218,11 +218,11 @@ def quoteWikinameURL(pagename, charset=config.charset):
 
 def escape(s, quote=0):
     """ Escape possible html tags
-    
+
     Replace special characters '&', '<' and '>' by SGML entities.
     (taken from cgi.escape so we don't have to include that, even if we
     don't use cgi at all)
-    
+
     @param s: (unicode) string to escape
     @param quote: bool, should transform '\"' to '&quot;'
     @rtype: when called with a unicode object, return unicode object - otherwise return string object
@@ -283,11 +283,11 @@ QUOTED = re.compile(r'\(([a-fA-F0-9]+)\)')
 
 def quoteWikinameFS(wikiname, charset=config.charset):
     """ Return file system representation of a Unicode WikiName.
-            
+
     Warning: will raise UnicodeError if wikiname can not be encoded using
     charset. The default value of config.charset, 'utf-8' can encode any
     character.
-        
+
     @param wikiname: Unicode string possibly containing non-ascii characters
     @param charset: charset to encode string
     @rtype: string
@@ -301,7 +301,7 @@ def quoteWikinameFS(wikiname, charset=config.charset):
         # append leading safe stuff
         quoted.append(filename[location:needle.start()])
         location = needle.end()
-        # Quote and append unsafe stuff           
+        # Quote and append unsafe stuff
         quoted.append('(')
         for character in needle.group():
             quoted.append('%02x' % ord(character))
@@ -314,17 +314,17 @@ def quoteWikinameFS(wikiname, charset=config.charset):
 
 def unquoteWikiname(filename, charsets=[config.charset]):
     """ Return Unicode WikiName from quoted file name.
-    
+
     We raise an InvalidFileNameError if we find an invalid name, so the
     wiki could alarm the admin or suggest the user to rename a page.
     Invalid file names should never happen in normal use, but are rather
-    cheap to find. 
-    
+    cheap to find.
+
     This function should be used only to unquote file names, not page
     names we receive from the user. These are handled in request by
     urllib.unquote, decodePagename and normalizePagename.
-    
-    Todo: search clients of unquoteWikiname and check for exceptions. 
+
+    Todo: search clients of unquoteWikiname and check for exceptions.
 
     @param filename: string using charset and possibly quoted parts
     @param charsets: list of charsets used by string
@@ -378,7 +378,7 @@ def timestamp2version(ts):
     """ Convert UNIX timestamp (may be float or int) to our version
         (long) int.
         We don't want to use floats, so we just scale by 1e6 to get
-        an integer in usecs. 
+        an integer in usecs.
     """
     return long(ts*1000000L) # has to be long for py 2.2.x
 
@@ -494,6 +494,8 @@ def quoteName(name):
 
 def unquoteName(name):
     """ if there are quotes around the name, strip them """
+    if not name:
+        return name
     for quote_char in QUOTE_CHARS:
         if quote_char == name[0] == name[-1]:
             return name[1:-1]
@@ -587,7 +589,7 @@ def load_wikimap(request):
 
 def split_wiki(wikiurl):
     """ Split a wiki url, e.g:
-    
+
     'MoinMoin:FrontPage' -> "MoinMoin", "FrontPage", ""
     'FrontPage' -> "Self", "FrontPage", ""
     'MoinMoin:"Page with blanks" link title' -> "MoinMoin", "Page with blanks", "link title"
@@ -624,7 +626,7 @@ def split_wiki(wikiurl):
 
 def resolve_wiki(request, wikiurl):
     """ Resolve an interwiki link.
-    
+
     @param request: the request object
     @param wikiurl: the InterWiki:PageName link
     @rtype: tuple
@@ -640,10 +642,10 @@ def resolve_wiki(request, wikiurl):
 def join_wiki(wikiurl, wikitail):
     """
     Add a (url_quoted) page name to an interwiki url.
-   
+
     Note: We can't know what kind of URL quoting a remote wiki expects.
           We just use a utf-8 encoded string with standard URL quoting.
-          
+
     @param wikiurl: wiki url, maybe including a $PAGE placeholder
     @param wikitail: page name
     @rtype: string
@@ -662,7 +664,7 @@ def join_wiki(wikiurl, wikitail):
 
 def isSystemPage(request, pagename):
     """ Is this a system page? Uses AllSystemPagesGroup internally.
-    
+
     @param request: the request object
     @param pagename: the page name
     @rtype: bool
@@ -674,7 +676,7 @@ def isSystemPage(request, pagename):
 
 def isTemplatePage(request, pagename):
     """ Is this a template page?
-    
+
     @param pagename: the page name
     @rtype: bool
     @return: true if page is a template page
@@ -697,11 +699,11 @@ def filterCategoryPages(request, pagelist):
 
     WARNING: DO NOT USE THIS TO FILTER THE FULL PAGE LIST! Use
     getPageList with a filter function.
-        
+
     If you pass a list with a single pagename, either that is returned
     or an empty list, thus you can use this function like a `isCategoryPage`
     one.
-       
+
     @param pagelist: a list of pages
     @rtype: list
     @return: only the category pages of pagelist
@@ -712,7 +714,7 @@ def filterCategoryPages(request, pagelist):
 
 def getLocalizedPage(request, pagename): # was: getSysPage
     """ Get a system page according to user settings and available translations.
-    
+
     We include some special treatment for the case that <pagename> is the
     currently rendered page, as this is the case for some pages used very
     often, like FrontPage, RecentChanges etc. - in that case we reuse the
@@ -765,7 +767,7 @@ def getHomePage(request, username=None):
     those who have not created a homepage.
 
     DEPRECATED - try to use getInterwikiHomePage (see below)
-    
+
     @param request: the request object
     @param username: the user's name
     @rtype: Page
@@ -789,13 +791,13 @@ def getHomePage(request, username=None):
 def getInterwikiHomePage(request, username=None):
     """
     Get a user's homepage.
-    
+
     cfg.user_homewiki influences behaviour of this:
     'Self' does mean we store user homepage in THIS wiki.
     When set to our own interwikiname, it behaves like with 'Self'.
-    
+
     'SomeOtherWiki' means we store user homepages in another wiki.
-    
+
     @param request: the request object
     @param username: the user's name
     @rtype: tuple (or None for anon users)
@@ -1007,7 +1009,7 @@ class PluginAttributeError(PluginError):
 
 def importPlugin(cfg, kind, name, function="execute"):
     """ Import wiki or builtin plugin
-    
+
     Returns function from a plugin module name. If name can not be
     imported, raise PluginMissingError. If function is missing, raise
     PluginAttributeError.
@@ -1018,7 +1020,7 @@ def importPlugin(cfg, kind, name, function="execute"):
     Wiki plugins will always override builtin plugins. If you want
     specific plugin, use either importWikiPlugin or importBuiltinPlugin
     directly.
-    
+
     @param cfg: wiki config instance
     @param kind: what kind of module we want to import
     @param name: the name of the module
@@ -1034,7 +1036,7 @@ def importPlugin(cfg, kind, name, function="execute"):
 
 def importWikiPlugin(cfg, kind, name, function="execute"):
     """ Import plugin from the wiki data directory
-    
+
     See importPlugin docstring.
     """
     if not name in wikiPlugins(kind, cfg):
@@ -1044,8 +1046,8 @@ def importWikiPlugin(cfg, kind, name, function="execute"):
 
 
 def importBuiltinPlugin(kind, name, function="execute"):
-    """ Import builtin plugin from MoinMoin package 
-    
+    """ Import builtin plugin from MoinMoin package
+
     See importPlugin docstring.
     """
     if not name in builtinPlugins(kind):
@@ -1055,8 +1057,8 @@ def importBuiltinPlugin(kind, name, function="execute"):
 
 
 def importNameFromPlugin(moduleName, name):
-    """ Return name from plugin module 
-    
+    """ Return name from plugin module
+
     Raise PluginAttributeError if name does not exists.
     """
     module = __import__(moduleName, globals(), {}, [name])
@@ -1068,7 +1070,7 @@ def importNameFromPlugin(moduleName, name):
 
 def builtinPlugins(kind):
     """ Gets a list of modules in MoinMoin.'kind'
-    
+
     @param kind: what kind of modules we look for
     @rtype: list
     @return: module names
@@ -1079,10 +1081,10 @@ def builtinPlugins(kind):
 
 def wikiPlugins(kind, cfg):
     """ Gets a list of modules in data/plugin/'kind'
- 
+
     Require valid plugin directory. e.g missing 'parser' directory or
     missing '__init__.py' file will raise errors.
-    
+
     @param kind: what kind of modules we look for
     @rtype: list
     @return: module names
@@ -1094,7 +1096,7 @@ def wikiPlugins(kind, cfg):
 
 def getPlugins(kind, cfg):
     """ Gets a list of plugin names of kind
-    
+
     @param kind: what kind of modules we look for
     @rtype: list
     @return: module names
@@ -1178,7 +1180,7 @@ def parseAttributes(request, attrstring, endtoken=None, extension=None):
     a tuple (found_flag, msg). found_flag is whether it did find and process
     something, msg is '' when all was OK or any other string to return an error
     message.
-    
+
     @param request: the request object
     @param attrstring: string containing the attributes to be parsed
     @param endtoken: token terminating parsing
@@ -1263,28 +1265,28 @@ class ParameterParser:
          String   | s      | 'Stri\'ng'
          Boolean  | b      | 0 1 True false
          Name     |        | case_sensitive | converted to string
-        
-        So say you want to parse three things, name, age and if the 
+
+        So say you want to parse three things, name, age and if the
         person is male or not:
-        
+
         The pattern will be: %(name)s%(age)i%(male)b
-        
+
         As a result, the returned dict will put the first value into
         male, second into age etc. If some argument is missing, it will
-        get None as its value. This also means that all the identifiers 
+        get None as its value. This also means that all the identifiers
         in the pattern will exist in the dict, they will just have the
         value None if they were not specified by the caller.
-        
+
         So if we call it with the parameters as follows:
             ("John Smith", 18)
         this will result in the following dict:
             {"name": "John Smith", "age": 18, "male": None}
-        
+
         Another way of calling would be:
             ("John Smith", male=True)
         this will result in the following dict:
             {"name": "John Smith", "age": None, "male": True}
-        
+
         @copyright: 2004 by Florian Festi,
                     2006 by Mikko Virkkilä
         @license: GNU GPL, see COPYING for details.
@@ -1343,6 +1345,10 @@ class ParameterParser:
         i = 0
         start = 0
         named = False
+
+        if not params:
+            params = '""'
+
         while start < len(params):
             match = re.match(self.param_re, params[start:])
             if not match:
@@ -1370,6 +1376,7 @@ class ParameterParser:
             parameter_list.append(value)
             if match.group("name"):
                 if match.group("name") not in self.param_dict:
+                    # TODO we should think on inheritance of parameters
                     raise ValueError, "Unknown parameter name '%s'" % match.group("name")
                 nr = self.param_dict[match.group("name")]
                 if check_list[nr]:
@@ -1395,7 +1402,6 @@ class ParameterParser:
             i += 1
 
         return parameter_list, parameter_dict
-
 
 """ never used:
     def _check_type(value, type, format):
@@ -1427,7 +1433,7 @@ def main():
     param = ' 4,"DI\'NG", b=retry, a="DING"'
 
     #p_list, p_dict = parse_parameters(param)
-    
+
     print 'Pattern :', pattern
     print 'Param :', param
 
@@ -1447,7 +1453,7 @@ def taintfilename(basename):
     """
     Make a filename that is supposed to be a plain name secure, i.e.
     remove any possible path components that compromise our system.
-    
+
     @param basename: (possibly unsafe) filename
     @rtype: string
     @return: (safer) filename
@@ -1461,7 +1467,7 @@ def taintfilename(basename):
 def mapURL(request, url):
     """
     Map URLs according to 'cfg.url_mappings'.
-    
+
     @param url: a URL
     @rtype: string
     @return: mapped URL
@@ -1482,7 +1488,7 @@ def getUnicodeIndexGroup(name):
     """
     Return a group letter for `name`, which must be a unicode string.
     Currently supported: Hangul Syllables (U+AC00 - U+D7AF)
-    
+
     @param name: a string
     @rtype: string
     @return: group letter or None
@@ -1494,10 +1500,10 @@ def getUnicodeIndexGroup(name):
         return c.upper() # we put lower and upper case words into the same index group
 
 
-def isStrictWikiname(name, word_re=re.compile(ur"^(?:[%(u)s][%(l)s]+){2,}$" % {'u':config.chars_upper, 'l':config.chars_lower})):
+def isStrictWikiname(name, word_re=re.compile(ur"^(?:[%(u)s][%(l)s]+){2,}$" % {'u': config.chars_upper, 'l': config.chars_lower})):
     """
     Check whether this is NOT an extended name.
-    
+
     @param name: the wikiname in question
     @rtype: bool
     @return: true if name matches the word_re
@@ -1508,7 +1514,7 @@ def isStrictWikiname(name, word_re=re.compile(ur"^(?:[%(u)s][%(l)s]+){2,}$" % {'
 def isPicture(url):
     """
     Is this a picture's url?
-    
+
     @param url: the url in question
     @rtype: bool
     @return: true if url points to a picture
@@ -1601,7 +1607,22 @@ def pagediff(request, pagename1, rev1, pagename2, rev2, **kw):
 def createTicket(request, tm=None):
     """Create a ticket using a site-specific secret (the config)"""
     import sha
-    ticket = tm or "%010x" % time.time()
+    if tm is None:
+        tm = "%010x" % time.time()
+
+    # make the ticket specific to the page and action:
+    try:
+        pagename = quoteWikinameURL(request.page.page_name)
+    except:
+        pagename = 'None'
+
+    try:
+        action = request.action
+    except:
+        action = 'None'
+
+
+    ticket = "%s.%s.%s" % (tm, pagename, action)
     digest = sha.new()
     digest.update(ticket)
 
@@ -1647,10 +1668,10 @@ def renderText(request, Parser, text, line_anchors=False):
 
 def get_processing_instructions(body):
     """ Extract the processing instructions / acl / etc. at the beginning of a page's body.
-    
+
         Hint: if you have a Page object p, you already have the result of this function in
               p.meta and (even better) parsed/processed stuff in p.pi.
-    
+
         Returns a list of (pi, restofline) tuples and a string with the rest of the body.
     """
     pi = []

@@ -1,7 +1,7 @@
 # -*- coding: iso-8859-1 -*-
 """
     MoinMoin - PageEditor class
-    
+
     PageEditor is used for r/w access to a wiki page (edit, rename, delete operations).
 
     TODO:
@@ -9,7 +9,7 @@
     * The editor code should be modularized so we will be able to use it for any
       text/* mimetype data with some special features enabled depending on the
       mimetype (e.g. enable wiki markup help when editing wiki mimetype).
-  
+
     @copyright: 2000-2004 by Juergen Hermann <jh@web.de>,
                 2005-2007 by MoinMoin:ThomasWaldmann,
                 2007 by MoinMoin:ReimarBauer
@@ -27,7 +27,7 @@ from MoinMoin.util import timefuncs, web
 from MoinMoin.mail import sendmail
 from MoinMoin.user import User
 from MoinMoin.storage.error import BackendError
-
+from MoinMoin.events import PageDeletedEvent, send_event
 
 # used for merging
 conflict_markers = ("\n---- /!\\ '''Edit conflict - other version:''' ----\n",
@@ -78,7 +78,7 @@ class PageEditor(Page):
 
     def __init__(self, request, page_name, **keywords):
         """ Create page editor object.
-        
+
         @param page_name: name of the page
         @param request: the request object
         @keyword do_revision_backup: if 0, suppress making a page backup per revision
@@ -279,11 +279,11 @@ Please review the page and save then. Do not save this page as it is!""")
             if request.user.may.read(template_page):
                 raw_body = Page(request, template_page).get_raw_body()
                 if raw_body:
-                    request.write(_("[Content of new page loaded from %s]") % (template_page,), '<br>')
+                    request.write(_("[Content of new page loaded from %s]") % (template_page, ), '<br>')
                 else:
-                    request.write(_("[Template %s not found]") % (template_page,), '<br>')
+                    request.write(_("[Template %s not found]") % (template_page, ), '<br>')
             else:
-                request.write(_("[You may not read %s]") % (template_page,), '<br>')
+                request.write(_("[You may not read %s]") % (template_page, ), '<br>')
 
         # Make backup on previews - but not for new empty pages
         if not use_draft and preview and raw_body:
@@ -326,7 +326,7 @@ Please review the page and save then. Do not save this page as it is!""")
 
         # Generate default content for new pages
         if not raw_body:
-            raw_body = _('Describe %s here.') % (self.page_name,)
+            raw_body = _('Describe %s here.') % (self.page_name, )
 
         # send form
         request.write('<form id="editor" method="post" action="%s/%s#preview" onSubmit="flgChange = false;">' % (
@@ -342,7 +342,7 @@ Please review the page and save then. Do not save this page as it is!""")
         request.write(unicode(html.INPUT(type="hidden", name="action", value="edit")))
 
         # Send revision of the page our edit is based on
-        request.write('<input type="hidden" name="rev" value="%d">' % (rev,))
+        request.write('<input type="hidden" name="rev" value="%d">' % (rev, ))
 
         # Create and send a ticket, so we can check the POST
         request.write('<input type="hidden" name="ticket" value="%s">' % wikiutil.createTicket(request))
@@ -373,12 +373,12 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         request.write('''
 <input class="button" type="submit" name="button_save" value="%s" onClick="flgChange = false;">
 <input class="button" type="submit" name="button_preview" value="%s" onClick="flgChange = false;">
-''' % (save_button_text, _('Preview'),))
+''' % (save_button_text, _('Preview'), ))
 
         if not (request.cfg.editor_force and request.cfg.editor_default == 'text'):
             request.write('''
 <input id="switch2gui" style="display: none;" class="button" type="submit" name="button_switch" value="%s">
-''' % (_('GUI Mode'),))
+''' % (_('GUI Mode'), ))
 
         if loadable_draft:
             request.write('''
@@ -391,7 +391,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 %s
 <input class="button" type="submit" name="button_cancel" value="%s">
 <input type="hidden" name="editor" value="text">
-''' % (button_spellcheck, cancel_button_text,))
+''' % (button_spellcheck, cancel_button_text, ))
 
         # Add textarea with page text
         self.sendconfirmleaving()
@@ -600,10 +600,13 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             raise self.AccessDenied, msg
 
         try:
+            event = PageDeletedEvent(request, self, comment)
+            send_event(event)
+
             msg = self.saveText(u"deleted\n", 0, comment=comment or u'', index=1, deleted=True)
             msg = msg.replace(
                 _("Thank you for your changes. Your attention to detail is appreciated."),
-                _('Page "%s" was successfully deleted!') % (self.page_name,))
+                _('Page "%s" was successfully deleted!') % (self.page_name, ))
 
         except self.SaveError, message:
             # XXX do not only catch base class SaveError here, but
@@ -624,95 +627,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             cache = caching.CacheEntry(request, arena, key, scope='item')
             cache.remove()
         return success, msg
-
-    def _sendNotification(self, comment, emails, email_lang, revisions, trivial):
-        """ Send notification email for a single language.
-
-        @param comment: editor's comment given when saving the page
-        @param emails: list of email addresses
-        @param email_lang: language of emails
-        @param revisions: revisions of this page (newest first!)
-        @param trivial: the change is marked as trivial
-        @rtype: int
-        @return: sendmail result
-        """
-        request = self.request
-        _ = lambda s, formatted=True, r=request, l=email_lang: r.getText(s, formatted=formatted, lang=l)
-
-        if len(revisions) >= 2:
-            querystr = {'action': 'diff',
-                        'rev2': str(revisions[0]),
-                        'rev1': str(revisions[1])}
-        else:
-            querystr = {}
-        pagelink = request.getQualifiedURL(self.url(request, querystr, relative=False))
-
-        mailBody = _("Dear Wiki user,\n\n"
-            'You have subscribed to a wiki page or wiki category on "%(sitename)s" for change notification.\n\n'
-            "The following page has been changed by %(editor)s:\n"
-            "%(pagelink)s\n\n", formatted=False) % {
-                'editor': self.uid_override or user.getUserIdentification(request),
-                'pagelink': pagelink,
-                'sitename': self.cfg.sitename or request.getBaseURL(),
-        }
-
-        if comment:
-            mailBody = mailBody + \
-                _("The comment on the change is:\n%(comment)s\n\n", formatted=False) % {'comment': comment}
-
-        # append a diff (or append full page text if there is no diff)
-        if len(revisions) < 2:
-            mailBody = mailBody + \
-                _("New page:\n", formatted=False) + \
-                self.get_raw_body()
-        else:
-            lines = wikiutil.pagediff(request, self.page_name, revisions[1],
-                                      self.page_name, revisions[0])
-            if lines:
-                mailBody = mailBody + "%s\n%s\n" % (("-" * 78), '\n'.join(lines))
-            else:
-                mailBody = mailBody + _("No differences found!\n", formatted=False)
-
-        return sendmail.sendmail(request, emails,
-            _('[%(sitename)s] %(trivial)sUpdate of "%(pagename)s" by %(username)s', formatted=False) % {
-                'trivial': (trivial and _("Trivial ", formatted=False)) or "",
-                'sitename': self.cfg.sitename or "Wiki",
-                'pagename': self.page_name,
-                'username': self.uid_override or user.getUserIdentification(request),
-            },
-            mailBody, mail_from=self.cfg.mail_from)
-
-
-    def _notifySubscribers(self, comment, trivial):
-        """ Send email to all subscribers of this page.
-
-        @param comment: editor's comment given when saving the page
-        @param trivial: editor's suggestion that the change is trivial (Subscribers may ignore this)
-        @rtype: string
-        @return: message, indicating success or errors.
-        """
-        _ = self._
-        subscribers = self.getSubscribers(self.request, return_users=1, trivial=trivial)
-        if subscribers:
-            # get a list of old revisions, and append a diff
-            revisions = self.getRevList()
-
-            # send email to all subscribers
-            results = [_('Status of sending notification mails:')]
-            for lang in subscribers:
-                emails = [u.email for u in subscribers[lang]]
-                names = [u.name for u in subscribers[lang]]
-                mailok, status = self._sendNotification(comment, emails, lang, revisions, trivial)
-                recipients = ", ".join(names)
-                results.append(_('[%(lang)s] %(recipients)s: %(status)s') % {
-                    'lang': lang, 'recipients': recipients, 'status': status})
-
-            # Return mail sent results. Ignore trivial - we don't have
-            # to lie. If mail was sent, just tell about it.
-            return '<p>\n%s\n</p> ' % '<br>'.join(results)
-
-        # No mail sent, no message.
-        return ''
 
     def _get_local_timestamp(self):
         """ Returns the string that can be used by the TIME substitution.
@@ -743,7 +657,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
     def _expand_variables(self, text):
         """ Expand @VARIABLE@ in `text`and return the expanded text.
-        
+
         @param text: current text of wikipage
         @rtype: string
         @return: new text of wikipage, variables replaced
@@ -996,7 +910,7 @@ Please review the page and save then. Do not save this page as it is!""")
             # of wating for next request.
             acl = self.getACL(request)
             if (not request.user.may.admin(self.page_name) and
-                parseACL(request, newtext) != acl and
+                parseACL(request, newtext).acl != acl.acl and
                 action != "SAVE/REVERT"):
                 msg = _("You can't change ACLs on this page since you have no admin rights on it!")
                 raise self.NoAdmin, msg
@@ -1006,7 +920,7 @@ Please review the page and save then. Do not save this page as it is!""")
             # set success msg
             msg = _("Thank you for your changes. Your attention to detail is appreciated.")
 
-            # determine action for edit log 
+            # determine action for edit log
             if action == 'SAVE' and not self.exists():
                 action = 'SAVENEW'
             comment = kw.get('comment', u'')
@@ -1017,9 +931,11 @@ Please review the page and save then. Do not save this page as it is!""")
             mtime_usecs, rev = self._write_file(newtext, action, comment, extra, deleted=deleted)
             self._save_draft(None, None) # everything fine, kill the draft for this page
 
-            # send notification mails
-            if request.cfg.mail_enabled:
-                msg = msg + self._notifySubscribers(comment, trivial)
+            # send notifications
+            from MoinMoin import events
+            e = events.PageChangedEvent(self.request, self, comment, trivial)
+            messages = events.send_event(e)
+            msg = msg + "".join(messages)
 
             if kw.get('index', 1) and request.cfg.xapian_search:
                 from MoinMoin.search.Xapian import Index

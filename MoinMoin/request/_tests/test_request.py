@@ -8,8 +8,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import unittest
-from MoinMoin import config
+import unittest # LEGACY UNITTEST, PLEASE DO NOT IMPORT unittest IN NEW TESTS, PLEASE CONSULT THE py.test DOCS
+from MoinMoin import config, wikiutil
 
 class TestNormalizePagename(unittest.TestCase):
 
@@ -86,11 +86,10 @@ class TestGroupPages(unittest.TestCase):
 
     def testNormalizeGroupName(self):
         """ request: normalize pagename: restrict groups to alpha numeric Unicode
-        
+
         Spaces should normalize after invalid chars removed!
         """
         import re
-        group = re.compile(r'.+Group', re.UNICODE)
         cases = (
             # current acl chars
             (u'Name,:Group', u'NameGroup'),
@@ -99,11 +98,11 @@ class TestGroupPages(unittest.TestCase):
             )
         for test, expected in cases:
             # validate we are testing valid group names
-            assert group.search(test)
-            result = self.request.normalizePagename(test)
-            self.assertEqual(result, expected,
-                             ('Expected "%(expected)s" but got "%(result)s"') %
-                             locals())
+            if wikiutil.isGroupPage(self.request, test):
+                result = self.request.normalizePagename(test)
+                self.assertEqual(result, expected,
+                                 ('Expected "%(expected)s" but got "%(result)s"') %
+                                 locals())
 
 
 class TestHTTPDate(unittest.TestCase):

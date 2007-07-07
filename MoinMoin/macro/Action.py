@@ -13,6 +13,7 @@
         Same with custom text.
 
     @copyright: 2004 Johannes Berg <johannes@sipsolutions.de>
+                2007 by MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -22,7 +23,7 @@ Dependencies = ["language"]
 
 
 class ActionLink:
-    """ ActionLink - link to page with action """
+    """ ActionLink - link to page with valid action """
 
     arguments = ['action', 'text']
 
@@ -30,6 +31,20 @@ class ActionLink:
         self.macro = macro
         self.request = macro.request
         self.args = self.getArgs(args)
+
+    def getValidActions(self):
+        """ lists all valid actions """
+        from MoinMoin import action
+        # builtin
+        actions_builtin = action.names
+        # global
+        actions_global = ([x for x in action.modules
+                           if not x in self.macro.request.cfg.actions_excluded])
+        # local
+        actions_local = ([x for x in wikiutil.wikiPlugins('action', self.macro.cfg)
+                          if not x in self.macro.request.cfg.actions_excluded])
+
+        return actions_builtin + actions_global + actions_local
 
     def getArgs(self, argstr):
         """ Temporary function until Oliver Graf args parser is finished
@@ -59,19 +74,18 @@ class ActionLink:
         # Use translated text or action name
         text = self.args.get('text', action)
         text = _(text, formatted=False)
-
-        # Escape user input
-        action = wikiutil.escape(action, 1)
         text = wikiutil.escape(text, 1)
-
-        # Create link
-        page = self.macro.formatter.page
-        link = page.link_to(self.request, text, querystr='action=%s' % action)
-        return link
-
+        if action in self.getValidActions():
+            # Escape user input
+            action = wikiutil.escape(action, 1)
+            # Create link
+            page = self.macro.formatter.page
+            link = page.link_to(self.request, text, querystr='action=%s' % action)
+            return link
+        else:
+            return text
 
 def execute(macro, args):
     """ Temporary glue code to use with moin current macro system """
     return ActionLink(macro, args).renderInText()
-
 

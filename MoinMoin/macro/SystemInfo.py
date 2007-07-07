@@ -79,7 +79,7 @@ class SystemInfo:
                 ftversion = None
             except AttributeError:
                 ftversion = 'N/A'
-    
+
             if ftversion:
                 row(_('4Suite Version'), ftversion)
 
@@ -144,13 +144,30 @@ class SystemInfo:
 
         try:
             import xapian
-            xapVersion = xapian.xapian_version_string()
+            try:
+                xapVersion = xapian.version_string()
+            except AttributeError:
+                xapVersion = xapian.xapian_version_string() # deprecated since xapian 0.9.6, removal in 1.1.0
         except ImportError:
             xapVersion = _('Xapian and/or Python Xapian bindings not installed')
 
         row(_('Xapian search'), xapRow)
         row(_('Xapian Version'), xapVersion)
-        row(_('Xapian stemming'), xapState[request.cfg.xapian_stemming])
+
+        stems = [nonestr]
+        try:
+            import Stemmer
+            try:
+                stems = Stemmer.algorithms()
+                stemVersion = Stemmer.version()
+            except:
+                stemVersion = _('!PyStemmer not installed')
+        except ImportError:
+            stemVersion = _('!PyStemmer not installed')
+
+        row(_('Stemming for Xapian'), xapState[request.cfg.xapian_stemming])
+        row(_('!PyStemmer Version'), stemVersion)
+        row(_('!PyStemmer stems'), ', '.join(stems) or nonestr)
 
         try:
             from threading import activeCount
@@ -164,4 +181,7 @@ class SystemInfo:
         return buf.getvalue()
 
 def execute(macro, args):
-        return SystemInfo(macro, args).render()
+    if macro.request.isSpiderAgent: # reduce bot cpu usage
+        return ''
+    return SystemInfo(macro, args).render()
+

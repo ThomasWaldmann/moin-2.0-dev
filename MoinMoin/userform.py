@@ -9,6 +9,7 @@
 
 import time
 from MoinMoin import user, util, wikiutil
+import MoinMoin.events as events
 from MoinMoin.widget import html
 
 _debug = 0
@@ -20,7 +21,7 @@ _debug = 0
 def savedata(request):
     """ Handle POST request of the user preferences form.
 
-    Return error msg or None.  
+    Return error msg or None.
     """
     return UserSettingsHandler(request).handle_form()
 
@@ -133,6 +134,10 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
 
         # save data
         theuser.save()
+
+        user_created = events.UserCreatedEvent(self.request, theuser)
+        events.send_event(user_created)
+
         if form.has_key('create_and_mail'):
             theuser.mailAccountData()
 
@@ -226,13 +231,28 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
 
             # Email should be unique - see also MoinMoin/script/accounts/moin_usercheck.py
             if theuser.email and self.request.cfg.user_email_unique:
-                users = user.getUserList(self.request)
-                for uid in users:
-                    if uid == theuser.id:
-                        continue
-                    thisuser = user.User(self.request, uid, auth_method='userform:283')
-                    if thisuser.email == theuser.email:
-                        return _("This email already belongs to somebody else.")
+                other = user.get_by_email_address(self.request, theuser.email)
+                if other is not None and other.id != theuser.id:
+                    return _("This email already belongs to somebody else.")
+
+        if not 'jid' in theuser.auth_attribs:
+            # try to get the jid
+            jid = wikiutil.clean_input(form.get('jid', "")).strip()
+
+            jid_changed = theuser.jid != jid
+            previous_jid = theuser.jid
+            theuser.jid = jid
+
+            if theuser.jid and self.request.cfg.user_jid_unique:
+                other = user.get_by_jabber_id(self.request, theuser.jid)
+                if other is not None and other.id != theuser.id:
+                    return _("This jabber id already belongs to somebody else.")
+
+            if jid_changed:
+                set_event = events.JabberIDSetEvent(self.request, theuser.jid)
+                unset_event = events.JabberIDUnsetEvent(self.request, previous_jid)
+                events.send_event(unset_event)
+                events.send_event(set_event)
 
         if not 'aliasname' in theuser.auth_attribs:
             # aliasname
@@ -284,7 +304,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
         already_handled = ['name', 'password', 'password2', 'email',
                            'aliasname', 'edit_rows', 'editor_default',
                            'editor_ui', 'tz_offset', 'datetime_fmt',
-                           'theme_name', 'language']
+                           'theme_name', 'language', 'jid']
         for field in self.cfg.user_form_fields:
             key = field[0]
             if ((key in self.cfg.user_form_disable)
@@ -310,6 +330,10 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
 
         # subscription for page change notification
         theuser.subscribed_pages = self._decode_pagelist('subscribed_pages')
+
+        # subscription to various events
+        available = events.get_subscribable_events()
+        theuser.subscribed_events = [ev for ev in form.get('events', [])]
 
         # save data
         theuser.save()
@@ -447,6 +471,24 @@ class UserSettings:
 
         return util.web.makeSelection('theme_name', options, cur_theme)
 
+    def _event_select(self):
+        """ Create event subscription list. """
+
+        event_list = events.get_subscribable_events()
+        selected = self.request.user.subscribed_events
+        super = self.request.user.isSuperUser()
+
+        # Create a list of (value, name) tuples for display in <select>
+        # Only include super-user visible events if current user has these rights.
+        # It's cosmetic - the check for super-user rights should be performed
+        # in event handling code as well!
+        allowed = []
+        for key in event_list.keys():
+            if not event_list[key]['superuser'] or super:
+                allowed.append((key, event_list[key]['desc']))
+
+        return util.web.makeMultiSelection('events', allowed, selectedvals=selected)
+
     def _editor_default_select(self):
         """ Create editor selection. """
         editor_default = self.request.user.valid and self.request.user.editor_default or self.cfg.editor_default
@@ -580,6 +622,10 @@ class UserSettings:
                     .append('\n'.join(self.request.user.getQuickLinks())),
             ], valign="top")
 
+            # FIXME: this depends on Jabber ATM, but may not do so in the future
+            if self.cfg.jabber_enabled:
+                self.make_row(_('Subscribed events'), [self._event_select()])
+
             # subscribed pages
             if self.cfg.mail_enabled:
                 # Get list of subscribe pages, DO NOT sort! it should
@@ -621,6 +667,9 @@ class UserSettings:
 
         if self.cfg.mail_enabled:
             buttons.append(("account_sendmail", _('Mail me my account data')))
+
+        if self.cfg.jabber_enabled:
+            buttons.append(("account_sendjabber", _('Send me my account data with Jabber')))
 
         if create_only:
             buttons = [("create_only", _('Create Profile'))]
@@ -731,6 +780,7 @@ def do_user_browser(request):
         #Column('id', label=('ID'), align='right'),
         Column('name', label=('Username')),
         Column('email', label=('Email')),
+        Column('jabber', label=('Jabber')),
         Column('action', label=_('Action')),
     ]
 
@@ -746,16 +796,30 @@ def do_user_browser(request):
 
         data.addRow((
             #request.formatter.code(1) + uid + request.formatter.code(0),
+            # 0
             request.formatter.rawHTML(namelink),
+            # 1
             (request.formatter.url(1, 'mailto:' + account.email, css='mailto', do_escape=0) +
              request.formatter.text(account.email) +
              request.formatter.url(0)),
-            request.page.link_to(request, text=_('Mail me my account data'),
-                                 querystr={"action":"userform",
+            # 2
+            (request.formatter.url(1, 'xmpp:' + account.jid, css='mailto', do_escape=0) +
+             request.formatter.text(account.jid) +
+             request.formatter.url(0)),
+            # 3
+            (request.page.link_to(request, text=_('Mail me my account data'),
+                                 querystr={"action": "userform",
                                            "email": account.email,
                                            "account_sendmail": "1",
                                            "sysadm": "users", },
                                  rel='nofollow')
+            + " " +
+            request.page.link_to(request, text=_('Send me my account data with Jabber'),
+                                 querystr={"action": "userform",
+                                           "jid": account.jid,
+                                           "account_sendjabber": "1",
+                                           "sysadm": "users", },
+                                  rel='nofollow'))
         ))
 
     if data:

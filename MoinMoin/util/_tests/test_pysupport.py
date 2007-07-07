@@ -6,7 +6,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import unittest, os, errno
+import unittest, os, errno # LEGACY UNITTEST, PLEASE DO NOT IMPORT unittest IN NEW TESTS, PLEASE CONSULT THE py.test DOCS
 
 import py
 
@@ -80,7 +80,7 @@ class TestImportExisting(TestImportNameFromPlugin):
 
     def testExisting(self):
         """ pysupport: import existing wiki plugin
-        
+
         Tests if a module can be imported from an arbitrary path
         like it is done in moin for plugins. Some strange bug
         in the old implementation failed on an import of os,
