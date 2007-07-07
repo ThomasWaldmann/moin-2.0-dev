@@ -371,7 +371,7 @@ class PageStorage(AbstractStorage):
             raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
 
         try:
-            os.rename(self.get_page_path(name), self.get_page_path(newname))
+            shutil.move(self.get_page_path(name), self.get_page_path(newname))
         except OSError, err:
             _handle_error(self, err, name, message=_("Failed to rename item %r to %r.") % (name, newname))
 
