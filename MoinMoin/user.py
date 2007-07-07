@@ -289,7 +289,8 @@ class User:
 
         self._user = self._item_collection[self.id]
 
-        user_data = self._user.metadata
+        user_data = dict()
+        user_data.update(self._user.metadata)
 
         # Validate data from user file. In case we need to change some
         # values, we set 'changed' flag, and later save the user data.
