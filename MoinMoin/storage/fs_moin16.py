@@ -7,11 +7,12 @@
     TODO: indexes
     TODO: item wide metadata
     TODO: wiki wide metadata
+    TODO: use a better tempdir
 
     NOTE: This implementation is not really thread safe on windows. Some
           operations will fail if there are still open file descriptors
           on one of the files belonging to the item. These operations are
-          shutil.move and filesys.rmtree which are used by...
+          os.remove, shutil.move and shutil.rmtree which are used by...
 
           _save_metadata: Not critical since the operation will simply fail.
 
@@ -20,7 +21,8 @@
                        this is not critical, because the method is not called
                        by the user of the wiki, but only by the administrator.
 
-          rename_item: Not critical since the operation will simply fail.
+          rename_item: This could lead to a copy of the item and a not completly
+                       deleted old version.
 
           _update_current: This will lead to an inconsistent state since
                            create_revision and remove_revision will first
@@ -40,7 +42,7 @@ import shutil
 import tempfile
 
 from MoinMoin import config
-from MoinMoin.util import filesys, lock
+from MoinMoin.util import lock
 from MoinMoin.storage.interfaces import DataBackend, StorageBackend, MetadataBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
 from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
