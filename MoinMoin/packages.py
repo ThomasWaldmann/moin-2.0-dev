@@ -306,7 +306,6 @@ class ScriptEngine:
             except PageEditor.Unchanged:
                 pass
             self.request.user = save_user
-            page.clean_acl_cache()
         else:
             self.msg += u"action add revision: not enough rights - nothing done \n"
 
@@ -379,7 +378,6 @@ class ScriptEngine:
             pass
         self.request.pages = {}
         caching.CacheEntry(self.request, 'wikidicts', 'dicts_groups', scope='wiki').remove()
-        page.clean_acl_cache()
 
     def runScript(self, commands):
         """ Runs the commands.

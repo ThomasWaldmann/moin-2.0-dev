@@ -89,7 +89,7 @@ class PackagePages:
             raise ActionError(self.makeform(_('Invalid filename "%s"!') % wikiutil.escape(packagename)))
 
         # get directory, and possibly create it
-        attach_dir = Page(self.request, self.page.page_name).getPagePath("attachments", check_create=1)
+        attach_dir = AttachFile.getAttachDir(self.request, self.page.page_name, 1)
         fpath = os.path.join(attach_dir, target).encode(config.charset)
         if os.path.exists(fpath):
             raise ActionError(_("Attachment '%(target)s' (remote name '%(filename)s') already exists.") % {

@@ -186,7 +186,7 @@ def parseargs(args, defpagename, defyear, defmonth, defoffset, defoffset2, defhe
     """ parse macro arguments """
     strpagename = args.group('basepage')
     if strpagename:
-        parmpagename = wikiutil.unquoteWikiname(strpagename)
+        parmpagename = strpagename
     else:
         parmpagename = defpagename
     # multiple pagenames separated by "*" - split into list of pagenames
@@ -194,7 +194,7 @@ def parseargs(args, defpagename, defyear, defmonth, defoffset, defoffset2, defhe
 
     strtemplate = args.group('template')
     if strtemplate:
-        parmtemplate = wikiutil.unquoteWikiname(strtemplate)
+        parmtemplate = strtemplate
     else:
         parmtemplate = deftemplate
 
