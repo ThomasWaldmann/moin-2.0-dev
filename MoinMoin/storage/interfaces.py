@@ -115,7 +115,7 @@ class StorageBackend(object):
         """
         raise NotImplementedError
     
-    def lock(self, identifier, timeout, lifetime):
+    def lock(self, identifier, timeout=1, lifetime=60):
         """
         Removes a lock for the given identifier.
         """

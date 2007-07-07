@@ -77,12 +77,6 @@ class TestUserBackend(BackendTest):
 
     def test_get_data_backend(self):
         py.test.raises(NotImplementedError, self.backend.get_data_backend, names[0], 1)
-    
-    def test_lock(self):
-        py.test.raises(NotImplementedError, self.backend.lock, "test", 0, 0)
-        
-    def test_unlock(self):
-        py.test.raises(NotImplementedError, self.backend.unlock, "test")
 
 
 class TestUserMetadata:
@@ -203,14 +197,6 @@ class TestPageBackend(BackendTest):
         self.backend.get_metadata_backend(pages[1], 2)
         py.test.raises(NoSuchItemError, self.backend.get_metadata_backend, "adsf", 2)
         py.test.raises(NoSuchRevisionError, self.backend.get_metadata_backend, pages[0], 3)
-
-    def test_lock_unlock_item(self):
-        self.backend.lock(pages[0])
-        py.test.raises(LockingError, self.backend.lock, pages[0])
-        self.backend.unlock(pages[0])
-        self.backend.lock(pages[0], timeout=1)
-        py.test.raises(LockingError, self.backend.lock, pages[0], 1)
-        self.backend.unlock(pages[0])
 
 
 class TestPageMetadata:

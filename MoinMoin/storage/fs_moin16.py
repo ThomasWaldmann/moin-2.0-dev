@@ -53,6 +53,9 @@ class AbstractStorage(StorageBackend):
     Abstract Storage Implementation for common methods.
     """
 
+    locks = dict()
+    lockdir = tempfile.mkdtemp()
+    
     def __init__(self, path, cfg, name):
         """
         Init the Backend with the correct path.
@@ -88,7 +91,25 @@ class AbstractStorage(StorageBackend):
         Returns the full path with fs quoted page name.
         """
         return os.path.join(self.path, name, *args)
-
+    
+    def lock(self, identifier, timeout=1, lifetime=60):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.lock
+        """
+        write_lock = lock.ExclusiveLock(os.path.join(self.lockdir, identifier), lifetime)
+        if not write_lock.acquire(timeout):
+            raise LockingError(_("There is already a lock for %r") % identifier)
+        self.locks[identifier] = write_lock
+            
+    def unlock(self, identifier):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.unlock
+        """
+        try:
+            self.locks[identifier].release()
+            del self.locks[identifier]
+        except KeyError:
+            pass
 
 class AbstractMetadata(MetadataBackend):
     """
@@ -227,7 +248,9 @@ class UserMetadata(AbstractMetadata):
         @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
         """
         try:
-            data = codecs.open(self._backend.get_page_path(name), "r", config.charset).readlines()
+            data_file = codecs.open(self._backend.get_page_path(name), "r", config.charset)
+            data = data_file.readlines()
+            data_file.close()
         except IOError, err:
             _handle_error(self._backend, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
 
@@ -287,9 +310,6 @@ class PageStorage(AbstractStorage):
     """
     This class implements the MoinMoin 1.6 compatible Page Storage Stuff.
     """
-
-    locks = dict()
-    lockdir = tempfile.mkdtemp()
 
     def list_items(self, filters=None):
         """ 
@@ -483,25 +503,6 @@ class PageStorage(AbstractStorage):
             revno = self.current_revision(name)
             
         return PageMetadata(self, name, revno)
-    
-    def lock(self, identifier, timeout=10, lifetime=60):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.lock
-        """
-        write_lock = lock.ExclusiveLock(os.path.join(self.lockdir, identifier), lifetime)
-        if not write_lock.acquire(timeout):
-            raise LockingError(_("There is already a lock for %r") % identifier)
-        self.locks[identifier] = write_lock
-            
-    def unlock(self, identifier):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.unlock
-        """
-        try:
-            self.locks[identifier].release()
-            del self.locks[identifier]
-        except KeyError:
-            pass
         
     def get_page_path(self, name, *args):
         """
@@ -680,7 +681,9 @@ class PageMetadata(AbstractMetadata):
             read_filename = self._backend.get_page_path(name, "revisions", get_rev_string(revno))
         
             try:
-                data = codecs.open(read_filename, "r", config.charset).readlines()
+                data_file = codecs.open(read_filename, "r", config.charset)
+                data = data_file.readlines()
+                data_file.close()
             except IOError, err:
                 _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
     
