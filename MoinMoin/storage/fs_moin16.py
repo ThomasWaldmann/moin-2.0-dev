@@ -11,7 +11,7 @@
     NOTE: This implementation is not really thread safe on windows. Some
           operations will fail if there are still open file descriptors
           on one of the files belonging to the item. These operations are
-          filesys.rename, os.rename and filesys.rmtree which are used by...
+          shutil.move and filesys.rmtree which are used by...
 
           _save_metadata: Not critical since the operation will simply fail.
 
@@ -301,7 +301,7 @@ class UserMetadata(AbstractMetadata):
         data_file.close()
 
         try:
-            filesys.rename(tmp[1], self._backend.get_page_path(name))
+            shutil.move(tmp[1], self._backend.get_page_path(name))
         except IOError, err:
             _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
@@ -371,7 +371,7 @@ class PageStorage(AbstractStorage):
             raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
 
         try:
-            os.rename(self.get_page_path(name), self.get_page_path(newname))
+            shutil.move(self.get_page_path(name), self.get_page_path(newname))
         except OSError, err:
             _handle_error(self, err, name, message=_("Failed to rename item %r to %r.") % (name, newname))
 
@@ -475,7 +475,7 @@ class PageStorage(AbstractStorage):
             _handle_error(self, err, name, message=_("Failed to set current revision for item %r.") % name)
 
         try:
-            filesys.rename(tmp[1], self.get_page_path(name, "current"))
+            shutil.move(tmp[1], self.get_page_path(name, "current"))
         except OSError, err:
             _handle_error(self, err, name, message=_("Failed to set current revision for item %r.") % name)
 
@@ -585,7 +585,7 @@ class PageData(DataBackend):
             self._read_file.close()
         if not self._write_property is None:
             self._write_file.close()
-            filesys.rename(self._tmp[1], self._read_file_name)
+            shutil.move(self._tmp[1], self._read_file_name)
 
 
 class PageMetadata(AbstractMetadata):
@@ -719,7 +719,7 @@ class PageMetadata(AbstractMetadata):
             data_file.close()
 
             try:
-                filesys.rename(tmp[1], read_filename)
+                shutil.move(tmp[1], read_filename)
             except OSError, err:
                 _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
