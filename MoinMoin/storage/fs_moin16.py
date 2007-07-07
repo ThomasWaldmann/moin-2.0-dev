@@ -608,7 +608,9 @@ class PageMetadata(AbstractMetadata):
                 
             # Emulate edit-lock
             if os.path.exists(self._backend.get_page_path(name, "edit-lock")):
-                line = file(self._backend.get_page_path(name, "edit-lock"), "r").read().strip()
+                data_file = file(self._backend.get_page_path(name, "edit-lock"), "r")
+                line = data_file.read().strip()
+                data_file.close()
                 if line:
                     values = line.split("\t")
                     metadata[LOCK_TIMESTAMP] = values[0]
