@@ -41,8 +41,8 @@ class ThemeBase:
         'diff':       (_("Diffs"),               "moin-diff.png",   15, 11),
         'info':       (_("Info"),                "moin-info.png",   12, 11),
         'edit':       (_("Edit"),                "moin-edit.png",   12, 12),
-        'unsubscribe':(_("Unsubscribe"),         "moin-unsubscribe.png",  14, 10),
-        'subscribe':  (_("Subscribe"),           "moin-subscribe.png",14, 10),
+        'unsubscribe': (_("Unsubscribe"),         "moin-unsubscribe.png",  14, 10),
+        'subscribe':  (_("Subscribe"),           "moin-subscribe.png", 14, 10),
         'raw':        (_("Raw"),                 "moin-raw.png",    12, 13),
         'xml':        (_("XML"),                 "moin-xml.png",    20, 13),
         'print':      (_("Print"),               "moin-print.png",  16, 14),
@@ -53,9 +53,9 @@ class ThemeBase:
         'attach':     ("%(attach_count)s",       "moin-attach.png",  7, 15),
         # RecentChanges
         'rss':        (_("[RSS]"),               "moin-rss.png",    36, 14),
-        'deleted':    (_("[DELETED]"),           "moin-deleted.png",60, 12),
-        'updated':    (_("[UPDATED]"),           "moin-updated.png",60, 12),
-        'renamed':    (_("[RENAMED]"),           "moin-renamed.png",60, 12),
+        'deleted':    (_("[DELETED]"),           "moin-deleted.png", 60, 12),
+        'updated':    (_("[UPDATED]"),           "moin-updated.png", 60, 12),
+        'renamed':    (_("[RENAMED]"),           "moin-renamed.png", 60, 12),
         'conflict':   (_("[CONFLICT]"),          "moin-conflict.png", 60, 12),
         'new':        (_("[NEW]"),               "moin-new.png",    31, 12),
         'diffrc':     (_("[DIFF]"),              "moin-diff.png",   15, 11),
@@ -809,7 +809,7 @@ var search_hint = "%(search_hint)s";
         """
         request = self.request
         url = page.url(request, querystr={
-                'action':'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0, relative=False)
+                'action': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0, relative=False)
         return url
 
     def rsslink(self, d):
@@ -962,7 +962,7 @@ var search_hint = "%(search_hint)s";
 
         # Add custom actions not in the standard menu, except for
         # some actions like AttachFile (we have them on top level)
-        more = [item for item in available if not item in titles and not item in ('AttachFile',)]
+        more = [item for item in available if not item in titles and not item in ('AttachFile', )]
         more.sort()
         if more:
             # Add separator
@@ -1368,7 +1368,7 @@ var gui_editor_link_text = "%(text)s";
                             str(day),
                             self.request.formatter, rel='nofollow'))
             days = ' | '.join(days)
-            html += (_("Show %s days.") % (days,))
+            html += (_("Show %s days.") % (days, ))
 
         if d['rc_update_bookmark']:
             html += " %(rc_update_bookmark)s %(rc_curr_bookmark)s" % d
@@ -1528,9 +1528,9 @@ var gui_editor_link_text = "%(text)s";
         output.append('<link rel="Start" href="%s/%s">\n' % (scriptname, wikiutil.quoteWikinameURL(page_front_page)))
         if pagename:
             output.append('<link rel="Alternate" title="%s" href="%s/%s?action=raw">\n' % (
-                _('Wiki Markup'), scriptname, pagename_quoted,))
+                _('Wiki Markup'), scriptname, pagename_quoted, ))
             output.append('<link rel="Alternate" media="print" title="%s" href="%s/%s?action=print">\n' % (
-                _('Print View'), scriptname, pagename_quoted,))
+                _('Print View'), scriptname, pagename_quoted, ))
 
             # !!! currently disabled due to Mozilla link prefetching, see
             # http://www.mozilla.org/projects/netlib/Link_Prefetching_FAQ.html

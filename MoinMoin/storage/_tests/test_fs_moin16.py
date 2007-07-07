@@ -49,16 +49,16 @@ class TestUserBackend(BackendTest):
         assert not self.backend.has_item("1180424618.59.18120")
 
         py.test.raises(NoSuchItemError, self.backend.remove_item, "blub")
-        
+
     def test_rename_item(self):
         py.test.raises(NotImplementedError, self.backend.rename_item, names[0], names[1])
-        
+
     def test_list_revisions(self):
         assert self.backend.list_revisions(names[0]) == [1]
 
     def test_current_revision(self):
         assert self.backend.current_revision(names[0]) == 1
-        
+
     def test_has_revision(self):
         assert self.backend.has_revision(names[0], 1)
         assert self.backend.has_revision(names[1], 0)
@@ -84,7 +84,7 @@ class TestUserMetadata:
     def setup_class(self):
         self.backend = UserStorage(get_user_dir(), DummyConfig(), "user")
         self.metadata = self.backend.get_metadata_backend(names[0], 1)
-        
+
     def test_get(self):
         assert self.metadata == metadata
 
@@ -93,7 +93,7 @@ class TestUserMetadata:
         self.metadata.save()
         metadata["aliasname"] = "test"
         assert self.metadata == metadata
-        
+
         self.metadata["aliasname"] = ""
         self.metadata.save()
         metadata["aliasname"] = ""
@@ -104,7 +104,7 @@ class TestUserMetadata:
         self.metadata.save()
         metadata["battle"] = "test"
         assert self.metadata == metadata
-        
+
         del self.metadata["battle"]
         self.metadata.save()
         del metadata["battle"]
@@ -118,7 +118,7 @@ class TestPageBackend(BackendTest):
 
     def test_name(self):
         assert self.backend.name == "pages"
-        
+
     def test_list_items(self):
         assert self.backend.list_items() == pages
         assert self.backend.list_items({'format': 'wiki'}) == [pages[1]]
@@ -150,12 +150,12 @@ class TestPageBackend(BackendTest):
         assert self.backend.has_item(pages[0])
         py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[1])
         BackendTest.test_rename_item(self)
-        
+
     def test_list_revisions(self):
         assert self.backend.list_revisions(pages[0]) == [1]
         assert self.backend.list_revisions(pages[1]) == [2, 1]
         py.test.raises(NoSuchItemError, self.backend.list_revisions, "ADF")
-    
+
     def test_current_revision(self):
         assert self.backend.current_revision(pages[0]) == 1
         assert self.backend.current_revision(pages[1]) == 2
@@ -192,7 +192,7 @@ class TestPageBackend(BackendTest):
         self.backend.get_metadata_backend(pages[0], 1)
         py.test.raises(NoSuchItemError, self.backend.get_data_backend, "adsf", 2)
         py.test.raises(NoSuchRevisionError, self.backend.get_data_backend, pages[0], 3)
-        
+
     def test_metadata(self):
         self.backend.get_metadata_backend(pages[1], 2)
         py.test.raises(NoSuchItemError, self.backend.get_metadata_backend, "adsf", 2)
@@ -203,9 +203,9 @@ class TestPageMetadata:
 
     def setup_class(self):
         self.backend = PageStorage(get_page_dir(), DummyConfig(), "pages")
-        
+
     def test_get(self):
-        assert self.backend.get_metadata_backend(pages[1], 2) == {SIZE: 192L, 'format': 'wiki', 'acl':['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language':'sv'}
+        assert self.backend.get_metadata_backend(pages[1], 2) == {SIZE: 192L, 'format': 'wiki', 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
         assert self.backend.get_metadata_backend(pages[0], -1) == {LOCK_TIMESTAMP: '1183317594000000', LOCK_USER: '1183317550.72.7782'}
         assert self.backend.get_metadata_backend(pages[1], -1) == {LOCK_TIMESTAMP: '1182452549000000', LOCK_USER: '127.0.0.1'}
 
@@ -213,10 +213,10 @@ class TestPageMetadata:
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
         metadata1['format'] = 'test'
         metadata1.save()
-        assert metadata1 == {SIZE: 192L, 'format': 'test', 'acl':['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language':'sv'}
+        assert metadata1 == {SIZE: 192L, 'format': 'test', 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
         metadata1['format'] = 'wiki'
         metadata1.save()
-        
+
         metadata2 = self.backend.get_metadata_backend(pages[1], -1)
         metadata2[LOCK_TIMESTAMP] = '1283317594000000'
         metadata2[LOCK_USER]= '192.168.0.1'
@@ -227,16 +227,15 @@ class TestPageMetadata:
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
         del metadata1['format']
         metadata1.save()
-        assert metadata1 == {SIZE: 179L, 'acl':['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language':'sv'}
-        
+        assert metadata1 == {SIZE: 179L, 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
+
         metadata2 = self.backend.get_metadata_backend(pages[1], -1)
         del metadata2[LOCK_TIMESTAMP]
         del metadata2[LOCK_USER]
         metadata2.save()
         assert metadata2 == {}
 
-        
-    
+
 class TestPageData:
     """
     TODO: write this test.
