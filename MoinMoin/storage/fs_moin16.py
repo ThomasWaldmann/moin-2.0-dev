@@ -484,22 +484,22 @@ class PageStorage(AbstractStorage):
             
         return PageMetadata(self, name, revno)
     
-    def lock(self, string, timeout=10, lifetime=60):
+    def lock(self, identifier, timeout=10, lifetime=60):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.lock
         """
-        write_lock = lock.ExclusiveLock(os.path.join(self.lockdir, string), lifetime)
+        write_lock = lock.ExclusiveLock(os.path.join(self.lockdir, identifier), lifetime)
         if not write_lock.acquire(timeout):
-            raise LockingError(_("There is already a lock for %r") % string)
-        self.locks[string] = write_lock
+            raise LockingError(_("There is already a lock for %r") % identifier)
+        self.locks[identifier] = write_lock
             
-    def unlock(self, string):
+    def unlock(self, identifier):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.unlock
         """
         try:
-            self.locks[string].release()
-            del self.locks[string]
+            self.locks[identifier].release()
+            del self.locks[identifier]
         except KeyError:
             pass
         

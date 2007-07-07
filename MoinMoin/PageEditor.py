@@ -880,6 +880,8 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         # Open the global log
         glog = editlog.EditLog(request, uid_override=self.uid_override)
         
+        self._item.lock = True
+        
         if not was_deprecated and not deleted:
             if self.do_revision_backup or self._item.current == 0:
                 newrev = self._item.new_revision()
@@ -891,14 +893,17 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         if not deleted:
             newrev.data.write(text)
             newrev.data.close()
-            for key, value in self.meta.iteritems():
-                newrev.metadata[key] = value
-            newrev.metadata.save()
+            if not was_deprecated:
+                for key, value in self.meta.iteritems():
+                    newrev.metadata[key] = value
+                    newrev.metadata.save()
             
         else:
             self._item.deleted = True
             self._item.metadata.save()
             rev = 0
+        
+        self._item.lock = False
 
         # reset page object
         self.reset()
@@ -1164,11 +1169,15 @@ To leave the editor, press the Cancel button.""") % {
 
     def _writeLockFile(self):
         """ Write new lock file. """
+        self.pageobj._item.lock = True
         self.pageobj._item.edit_lock = (wikiutil.timestamp2version(self.now), self.uid)
         self.pageobj._item.metadata.save()
+        self.pageobj._item.lock = False
 
     def _deleteLockFile(self):
         """ Delete the lock file unconditionally. """
+        self.pageobj._item.lock = True
         self.pageobj._item.edit_lock = False
         self.pageobj._item.metadata.save()
+        self.pageobj._item.lock = False
 
