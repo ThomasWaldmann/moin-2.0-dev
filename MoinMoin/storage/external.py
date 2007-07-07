@@ -4,12 +4,12 @@
     @copyright: 2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
     
-    TODO: acl checking, write locking
+    TODO: acl checking, properties on revision
 """
 
 import UserDict
 
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, AccessError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, AccessError, LockingError
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend, DELETED, ACL, LOCK_TIMESTAMP, LOCK_USER
 
 
@@ -144,8 +144,6 @@ class Item(UserDict.DictMixin, object):
         self.backend = backend
         self.userobj = userobj
 
-        self.__metadata = None
-        self.__deleted = None
         self.__lock = False
         
         self.reset()
@@ -159,6 +157,8 @@ class Item(UserDict.DictMixin, object):
         self.__revision_objects = dict()
         self.__acl = None
         self.__edit_lock = None
+        self.__metadata = None
+        self.__deleted = None
         
     def __contains__(self, revno):
         """
@@ -294,7 +294,7 @@ class Item(UserDict.DictMixin, object):
         """
         self._check_lock()
         
-        if edit_lock is False:
+        if not edit_lock:
             del self.metadata[LOCK_TIMESTAMP]
             del self.metadata[LOCK_USER]
         elif isinstance(edit_lock, tuple) and len(edit_lock) == 2:
@@ -316,7 +316,7 @@ class Item(UserDict.DictMixin, object):
         """
         Set the item lock state.
         """
-        if lock is True:
+        if lock:
             self.backend.lock(self.name)
             self.reset()
         else:
@@ -329,8 +329,8 @@ class Item(UserDict.DictMixin, object):
         """
         Checks whether the item is locked and raises an exception otherwise.
         """
-        if not self.lock == True:
-            raise AccessError(_("This item is readonly"))
+        if not self.lock:
+            raise LockingError(_("This item currently not locked so you can only use it readonly."))
 
 
 class Revision(object):
@@ -368,7 +368,7 @@ class Revision(object):
         """
         if self.__metadata is None:
             metadata = self.item.backend.get_metadata_backend(self.item.name, self.revno)
-            if self.item.lock == True:
+            if self.item.lock:
                 self.__metadata = metadata
             else:
                 self.__metadata = ReadonlyMetadata(metadata)
@@ -382,7 +382,7 @@ class Revision(object):
         """
         if self.__data is None:
             data = self.item.backend.get_data_backend(self.item.name, self.revno)
-            if self.item.lock == True:
+            if self.item.lock:
                 self.__data = data
             else:
                 self.__data = ReadonlyData(data)

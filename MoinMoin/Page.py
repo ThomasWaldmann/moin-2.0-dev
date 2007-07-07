@@ -190,7 +190,7 @@ class Page(object):
             self._body = None
             self._meta = None
         except NoSuchItemError:
-            self._body = ""
+            self._body = u""
             self._meta = dict()
             self._item = None
             
@@ -203,7 +203,7 @@ class Page(object):
                 self._item[self.rev].data.close()
                 self._body = self.decodeTextMimeType(text)
             except NoSuchRevisionError:
-                self._body = ""
+                self._body = u""
                 self._meta = dict()
         return self._body
     
