@@ -1055,7 +1055,6 @@ To leave the editor, press the Cancel button.""") % {
 
         return result
 
-
     def release(self, force=0):
         """ Release lock, if we own it.
 
@@ -1067,7 +1066,6 @@ To leave the editor, press the Cancel button.""") % {
             self._readLockFile()
             if force or self.uid == self.owner:
                 self._deleteLockFile()
-
 
     def _readLockFile(self):
         """ Load lock info if not yet loaded. """
@@ -1081,7 +1079,6 @@ To leave the editor, press the Cancel button.""") % {
             self.owner = None
             self.owner_html = wikiutil.escape(_("<unknown>"))
             self.timestamp = 0
-
 
     def _writeLockFile(self):
         """ Write new lock file. """
