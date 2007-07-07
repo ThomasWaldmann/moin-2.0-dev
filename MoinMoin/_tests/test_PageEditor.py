@@ -6,7 +6,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import unittest
+import unittest # LEGACY UNITTEST, PLEASE DO NOT IMPORT unittest IN NEW TESTS, PLEASE CONSULT THE py.test DOCS
 
 import py
 
@@ -40,7 +40,7 @@ class TestExpandVars(unittest.TestCase):
 
 class TestExpandUserName(unittest.TestCase):
     """ Base class for user name tests
-    
+
     Set user name during tests.
     """
     pagename = u'AutoCreatedMoinMoinTemporaryTestPage'
@@ -128,7 +128,7 @@ class TestExpandPrivateVariables(TestExpandUserName):
 
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
-        
+
         TODO: this code is very fragile, any change in the
         implementation will break this test. Need to factor PageEditor
         to make it possible to create page without loging and notifying.

@@ -1,6 +1,7 @@
 # -*- coding: iso-8859-1 -*-
 """
-    MoinMoin - Wiki Security Interface
+    MoinMoin - Wiki Security Interface and Access Control Lists
+
 
     This implements the basic interface for user permissions and
     system policy. If you want to define your own policy, inherit
@@ -10,7 +11,11 @@
     Then assign your new class to "SecurityPolicy" in wikiconfig;
     and I mean the class, not an instance of it!
 
-    @copyright: 2000-2004 Juergen Hermann <jh@web.de>
+    @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
+                2003 MoinMoin:ThomasWaldmann,
+                2003 Gustavo Niemeyer,
+                2005 Oliver Graf,
+                2007 Alexander Schremmer
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -23,6 +28,9 @@ from MoinMoin.Page import Page
 #############################################################################
 
 def _check(request, pagename, user, right):
+    if request.cfg.acl_hierarchic:
+        return _checkHierarchically(request, pagename, user, right)
+
     if request.page is not None and pagename == request.page.page_name:
         p = request.page # reuse is good
     else:
@@ -31,51 +39,115 @@ def _check(request, pagename, user, right):
     return acl.may(request, user, right)
 
 
+def _checkHierarchically(request, pagename, username, attr):
+    """ Get permission by traversing page hierarchy
+
+    We check each page in the hierarchy. We start with the deepest page and
+    recurse to the top of the tree. If one of those permits, True is returned.
+
+    This method should not be called by users, use __getattr__ instead.
+
+    @param request: the current request object
+    @param pagename: pagename to get permissions from
+    @param username: the user name
+    @param attr: the attribute to check
+
+    @rtype: bool
+    @return: True if you have permission or False
+    """
+    # Use page hierarchy
+    pages = pagename.split('/')
+
+    # check before
+    allowed = request.cfg.cache.acl_rights_before.may(request, username, attr)
+    if allowed is not None:
+        return allowed
+
+    # Get permission
+    some_acl = False
+    for i in range(len(pages), 0, -1):
+        # Create the next pagename in the hierarchy
+        # starting at the leaf, going to the root
+        name = '/'.join(pages[:i])
+        # Get page acl and ask for permission
+        acl = Page(request, name).getACL(request)
+        if acl.acl:
+            some_acl = True
+            allowed = acl.may(request, username, attr)
+            if allowed is not None:
+                return allowed
+    if not some_acl:
+        allowed = request.cfg.cache.acl_rights_default.may(request, username, attr)
+        if allowed is not None:
+            return allowed
+
+    # check after
+    allowed = request.cfg.cache.acl_rights_after.may(request, username, attr)
+    if allowed is not None:
+        return allowed
+
+    return False
+
+
 class Permissions:
     """ Basic interface for user permissions and system policy.
 
-        Note that you still need to allow some of the related actions, this
-        just controls their behaviour, not their activation.
+    Note that you still need to allow some of the related actions, this
+    just controls their behavior, not their activation.
+
+    When sub classing this class, you must extend the class methods, not
+    replace them, or you might break the acl in the wiki. Correct sub
+    classing looks like this:
+
+    def read(self, pagename):
+        # Your special security rule
+        if something:
+            return false
+
+        # Do not return True or you break acl!
+        # This call will use the default acl rules
+        return Permissions.read(pagename)
     """
 
     def __init__(self, user):
-        """ Calculate the permissons `user` has.
-        """
         self.name = user.name
         self.request = user._request
 
     def save(self, editor, newtext, rev, **kw):
         """ Check whether user may save a page.
 
-            `editor` is the PageEditor instance, the other arguments are
-            those of the `PageEditor.saveText` method.
+        `editor` is the PageEditor instance, the other arguments are
+        those of the `PageEditor.saveText` method.
+
+        @param editor: PageEditor instance.
+        @param newtext: new page text, you can enable of disable saving according
+            to the content of the text, e.g. prevent link spam.
+        @param rev: new revision number? XXX
+        @param kw: XXX
+        @rtype: bool
+        @return: True if you can save or False
         """
         return self.write(editor.page_name)
 
     def __getattr__(self, attr):
-        """ if attr is one of the rights in acl_rights_valid, then return a
-            checking function for it. Else raise an error.
+        """ Shortcut to export getPermission function for all known ACL rights
+
+        if attr is one of the rights in acl_rights_valid, then return a
+        checking function for it. Else raise an AttributeError.
+
+        @param attr: one of ACL rights as defined in acl_rights_valid
+        @rtype: function
+        @return: checking function for that right, accepting a pagename
         """
         request = self.request
-        if attr in request.cfg.acl_rights_valid:
-            return lambda pagename: _check(self.request, pagename, self.name, attr)
-            ##return lambda pagename, Page=Page, request=request, attr=attr: Page(request, pagename).getACL(request).may(request, self.name, attr)
-        else:
+        if attr not in request.cfg.acl_rights_valid:
             raise AttributeError, attr
+        return lambda pagename: _check(self.request, pagename, self.name, attr)
 
 
 # make an alias for the default policy
 Default = Permissions
 
-
-# moved from MoinMoin.wikiacl ------------------------------------------------
-"""
-    MoinMoin Access Control Lists
-
-    @copyright: 2003 by Thomas Waldmann, http://linuxwiki.de/ThomasWaldmann
-    @copyright: 2003 by Gustavo Niemeyer, http://moin.conectiva.com.br/GustavoNiemeyer
-    @license: GNU GPL, see COPYING for details.
-"""
 
 class AccessControlList:
     ''' Access Control List
@@ -83,7 +155,7 @@ class AccessControlList:
     Control who may do what on or with a wiki page.
 
     Syntax of an ACL string:
-    
+
         [+|-]User[,User,...]:[right[,right,...]] [[+|-]SomeGroup:...] ...
         ... [[+|-]Known:...] [[+|-]All:...]
 
@@ -123,9 +195,9 @@ class AccessControlList:
         right list are automatically set to NO.
 
     Using Prefixes
-        
+
         To make the system more flexible, there are also two modifiers:
-        the prefixes "+" and "-". 
+        the prefixes "+" and "-".
 
             +SomeUser:read -OtherUser:write
 
@@ -135,13 +207,13 @@ class AccessControlList:
         above acl line does not define if he can or can not write. He
         will be able to write if acl_rights_before or acl_rights_after
         allow this (see configuration options).
-        
+
         Using prefixes, this acl line:
-        
+
             SomeUser:read,write SomeGroup:read,write,admin All:read
 
         Can be written as:
-        
+
             -SomeUser:admin SomeGroup:read,write,admin All:read
 
         Or even:
@@ -153,7 +225,7 @@ class AccessControlList:
         useful on the moin configuration entries though.
 
    Configuration options
-   
+
        cfg.acl_rights_default
            It is is ONLY used when no other ACLs are given.
            Default: "Known:read,write,delete All:read,write",
@@ -167,7 +239,7 @@ class AccessControlList:
            When the page has ACL entries, this will be inserted AFTER
            any page entries.
            Default: ""
-       
+
        cfg.acl_rights_valid
            These are the acceptable (known) rights (and the place to
            extend, if necessary).
@@ -254,7 +326,7 @@ class AccessControlList:
                 allowed = rightsdict.get(dowhat)
             if allowed is not None:
                 return allowed
-        return 0
+        return allowed # should be None
 
     def getString(self, b='#acl ', e='\n'):
         """print the acl strings we were fed with"""

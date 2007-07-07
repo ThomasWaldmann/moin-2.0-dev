@@ -36,7 +36,7 @@ def execute(pagename, request):
     try:
         rev2 = int(request.form.get('rev2', [0])[0])
     except StandardError:
-        rev1 = 0
+        rev2 = 0
 
     if rev1 == -1 and rev2 == 0:
         rev1 = request.rev
@@ -50,8 +50,8 @@ def execute(pagename, request):
 
     # get a list of old revisions, and back out if none are available
     currentpage = Page(request, pagename)
-    revisions = currentpage.getRevList()
-    if len(revisions) < 2:
+    currentrev = currentpage.current_rev()
+    if currentrev < 2:
         currentpage.send_page(msg=_("No older revisions available!"))
         return
 
@@ -71,57 +71,36 @@ def execute(pagename, request):
     request.setContentLanguage(request.lang)
 
     request.emit_http_headers()
-    request.theme.send_title(_('Diff for "%s"') % (pagename,), pagename=pagename, allow_doubleclick=1)
+    request.theme.send_title(_('Diff for "%s"') % (pagename, ), pagename=pagename, allow_doubleclick=1)
 
     if rev1 > 0 and rev2 > 0 and rev1 > rev2 or rev1 == 0 and rev2 > 0:
         rev1, rev2 = rev2, rev1
 
-    oldrev1, oldcount1 = None, 0
-    oldrev2, oldcount2 = None, 0
-
-    # get the filename of the version to compare to
-    edit_count = 0
-    for rev in revisions:
-        edit_count += 1
-        if rev <= rev1:
-            oldrev1, oldcount1 = rev, edit_count
-        if rev2 and rev >= rev2:
-            oldrev2, oldcount2 = rev, edit_count
-        if oldrev1 and oldrev2 or oldrev1 and not rev2:
-            break
-
     if rev1 == -1:
-        oldpage = Page(request, pagename, rev=revisions[1])
-        oldcount1 -= 1
+        oldrev = currentrev - 1
+        oldpage = Page(request, pagename, rev=oldrev)
     elif rev1 == 0:
+        oldrev = currentrev
         oldpage = currentpage
-        # oldcount1 is still on init value 0
     else:
-        if oldrev1:
-            oldpage = Page(request, pagename, rev=oldrev1)
-        else:
-            oldpage = Page(request, "$EmptyPage$") # hack
-            oldpage.set_raw_body("")    # avoid loading from disk
-            oldrev1 = 0 # XXX
+        oldrev = rev1
+        oldpage = Page(request, pagename, rev=oldrev)
 
     if rev2 == 0:
+        newrev = currentrev
         newpage = currentpage
-        # oldcount2 is still on init value 0
     else:
-        if oldrev2:
-            newpage = Page(request, pagename, rev=oldrev2)
-        else:
-            newpage = Page(request, "$EmptyPage$") # hack
-            newpage.set_raw_body("")    # avoid loading from disk
-            oldrev2 = 0 # XXX
+        newrev = rev2
+        newpage = Page(request, pagename, rev=newrev)
 
-    edit_count = abs(oldcount1 - oldcount2)
+    edit_count = abs(newrev - oldrev)
+
     f = request.formatter
     request.write(f.div(1, id="content"))
     request.write(f.paragraph(1, css_class="diff-header"))
     request.write(f.text(_('Differences between revisions %d and %d') % (oldpage.get_real_rev(), newpage.get_real_rev())))
     if edit_count > 1:
-        request.write(f.text(' ' + _('(spanning %d versions)') % (edit_count,)))
+        request.write(f.text(' ' + _('(spanning %d versions)') % (edit_count, )))
     request.write(f.paragraph(0))
 
     if request.user.show_fancy_diff:

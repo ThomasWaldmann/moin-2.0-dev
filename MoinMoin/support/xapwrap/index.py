@@ -308,7 +308,10 @@ class ExceptionTranslater:
                     db.add_database(xapian.Database(path))
                 return klass(db)
             else:
-                return klass(xapian.open(*args, **kwargs))
+                try:
+                    return klass(xapian.WritableDatabase(*args, **kwargs)) # for xapian 1.0+
+                except AttributeError:
+                    return klass(xapian.open(*args, **kwargs)) # for xapian 0.9.x
         except (IOError, RuntimeError, ValueError), e:
             errorMsg = e.args[0]
             for subString, exceptionClass in klass.exceptionStrMap.iteritems():
@@ -582,7 +585,10 @@ class ReadOnlyIndex:
         q = query.prepare(self.qp)
         # uggg. this mess is due to the fact that xapain Query objects
         # don't hash in a sane way.
-        qString = q.get_description()
+        try:
+            qString = q.get_description() # deprecated since xapian 1.0, removal in 1.1
+        except AttributeError:
+            qString = str(q)
 
         # the only thing we use sortKey for is to set sort index
         if sortKey is not None:

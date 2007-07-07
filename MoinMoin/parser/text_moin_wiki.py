@@ -11,7 +11,7 @@
 import re
 from MoinMoin import config, wikiutil, macro
 
-Dependencies = []
+Dependencies = ['user'] # {{{#!wiki comment ... }}} has different output depending on the user's profile settings
 
 class Parser:
     """
@@ -26,7 +26,7 @@ class Parser:
 
     # allow caching
     caching = 1
-    Dependencies = []
+    Dependencies = Dependencies
 
     # some common strings
     PARENT_PREFIX = wikiutil.PARENT_PREFIX
@@ -112,7 +112,7 @@ class Parser:
         'word_rule': word_rule,
         'smiley': u'|'.join([re.escape(s) for s in config.smileys])}
 
-    # Don't start p before these 
+    # Don't start p before these
     no_new_p_before = ("heading rule table tableZ tr td "
                        "ul ol dl dt dd li li_none indent "
                        "macro parser pre")
@@ -184,13 +184,10 @@ class Parser:
             result.append(self.formatter.definition_desc(0))
         #result.append("<!-- close item end -->\n")
 
-
     def interwiki(self, target_and_text, **kw):
         # TODO: maybe support [wiki:Page http://wherever/image.png] ?
         scheme, rest = target_and_text.split(':', 1)
         wikiname, pagename, text = wikiutil.split_wiki(rest)
-        if not pagename:
-            pagename = self.formatter.page.page_name
         if not text:
             text = pagename
         #self.request.log("interwiki: split_wiki -> %s.%s.%s" % (wikiname,pagename,text))
@@ -242,7 +239,7 @@ class Parser:
                     pagename = self.formatter.page.page_name
                     url = AttachFile.getAttachUrl(pagename, fname, self.request, escaped=1)
                     return self.formatter.rawHTML(EmbedObject.embed(EmbedObject(macro, wikiutil.escape(fname)), mt, url))
-    
+
         return self.formatter.attachment_link(fname, text)
 
     def _u_repl(self, word):
@@ -260,11 +257,7 @@ class Parser:
         """Handle remarks."""
         # XXX we don't really enforce the correct sequence /* ... */ here
         self.is_remark = not self.is_remark
-        span_kw = {
-            'style': self.request.user.show_comments and "display:''" or "display:none",
-            'class': "comment",
-        }
-        return self.formatter.span(self.is_remark, **span_kw)
+        return self.formatter.span(self.is_remark, css_class='comment')
 
     def _small_repl(self, word):
         """Handle small."""
@@ -286,7 +279,7 @@ class Parser:
 
     def _emph_repl(self, word):
         """Handle emphasis, i.e. '' and '''."""
-        ##print "#", self.is_b, self.is_em, "#"
+        ## print "#", self.is_b, self.is_em, "#"
         if len(word) == 3:
             self.is_b = not self.is_b
             if self.is_em and self.is_b:
@@ -316,7 +309,7 @@ class Parser:
 
     def _emph_ib_or_bi_repl(self, word):
         """Handle mixed emphasis, exactly five '''''."""
-        ##print "*", self.is_b, self.is_em, "*"
+        ## print "*", self.is_b, self.is_em, "*"
         b_before_em = self.is_b > self.is_em > 0
         self.is_b = not self.is_b
         self.is_em = not self.is_em
@@ -324,7 +317,6 @@ class Parser:
             return self.formatter.strong(self.is_b) + self.formatter.emphasis(self.is_em)
         else:
             return self.formatter.emphasis(self.is_em) + self.formatter.strong(self.is_b)
-
 
     def _sup_repl(self, word):
         """Handle superscript."""
@@ -350,7 +342,6 @@ class Parser:
             result = result + self.formatter.rule(size)
         return result
 
-
     def _word_repl(self, word, text=None):
         """Handle WikiNames."""
 
@@ -361,7 +352,6 @@ class Parser:
             if not text:
                 text = word
             word = '/'.join([x for x in self.formatter.page.page_name.split('/')[:-1] + [word[wikiutil.PARENT_PREFIX_LEN:]] if x])
-
         if not text:
             # if a simple, self-referencing link, emit it as plain text
             if word == self.formatter.page.page_name:
@@ -413,7 +403,6 @@ class Parser:
                     self.formatter.text(word) +
                     self.formatter.url(0))
 
-
     def _wikiname_bracket_repl(self, text):
         """Handle special-char wikinames with link text, like:
            ["Jim O'Brian" Jim's home page] or ['Hello "world"!' a page with doublequotes]i
@@ -431,7 +420,6 @@ class Parser:
             return self._word_repl(target, linktext)
         else:
             return self.formatter.text(text)
-
 
     def _url_bracket_repl(self, word):
         """Handle bracketed URLs."""
@@ -476,13 +464,11 @@ class Parser:
                     self.formatter.text(words[1]) +
                     self.formatter.url(0))
 
-
     def _email_repl(self, word):
         """Handle email addresses (without a leading mailto:)."""
         return (self.formatter.url(1, "mailto:" + word, css='mailto') +
                 self.formatter.text(word) +
                 self.formatter.url(0))
-
 
     def _ent_repl(self, word):
         """Handle SGML entities."""
@@ -550,11 +536,9 @@ class Parser:
         ])
         return ''.join(result)
 
-
     def _indent_level(self):
         """Return current char-wise indent level."""
         return len(self.list_indents) and self.list_indents[-1]
-
 
     def _indent_to(self, new_level, list_type, numtype, numstart):
         """Close and open lists."""
@@ -612,7 +596,6 @@ class Parser:
         self.in_list = self.list_types != []
         return ''.join(closelist) + ''.join(openlist)
 
-
     def _undent(self):
         """Close all open lists."""
         result = []
@@ -630,13 +613,11 @@ class Parser:
         self.list_types = []
         return ''.join(result)
 
-
     def _tt_repl(self, word):
         """Handle inline code."""
         return self.formatter.code(1) + \
             self.formatter.text(word[3:-3]) + \
             self.formatter.code(0)
-
 
     def _tt_bt_repl(self, word):
         """Handle backticked inline code."""
@@ -644,7 +625,6 @@ class Parser:
         return self.formatter.code(1, css="backtick") + \
             self.formatter.text(word[1:-1]) + \
             self.formatter.code(0)
-
 
     def _getTableAttrs(self, attrdef):
         # skip "|" and initial "<"
@@ -781,7 +761,6 @@ class Parser:
         else:
             return self.formatter.text(word)
 
-
     def _heading_repl(self, word):
         """Handle section headings."""
         import sha
@@ -860,13 +839,11 @@ class Parser:
             return self.formatter.text(word)
         return self.formatter.text(word)
 
-
     def _smiley_repl(self, word):
         """Handle smileys."""
         return self.formatter.smiley(word)
 
     _smileyA_repl = _smiley_repl
-
 
     def _comment_repl(self, word):
         # if we are in a paragraph, we must close it so that normal text following
@@ -905,8 +882,10 @@ class Parser:
         lastpos = 0
 
         ###result.append(u'<span class="info">[scan: <tt>"%s"</tt>]</span>' % line)
-        if line.count('{{{') > 1: 
-            self.in_nested_pre = line.count('{{{') -  line.count('}}}')
+        if line.count('{{{') > 1:
+            self.in_nested_pre = line.count('{{{') - line.count('}}}')
+            if self.in_nested_pre == 0:
+                self.in_nested_pre = 1
             if line.startswith('{{{'):
                 line = line[3:].strip()
             self.in_pre = 'no_parser'
@@ -917,8 +896,8 @@ class Parser:
             if lastpos < match.start():
 
                 ###result.append(u'<span class="info">[add text before match: <tt>"%s"</tt>]</span>' % line[lastpos:match.start()])
-                # self.no_862 is added to solve the issue of macros called inline 
-                if not (inhibit_p or self.inhibit_p or self.in_pre or self.formatter.in_p or self.no_862) :
+                # self.no_862 is added to solve the issue of macros called inline
+                if not (inhibit_p or self.inhibit_p or self.in_pre or self.formatter.in_p or self.no_862):
                     result.append(self.formatter.paragraph(1, css_class="line862"))
                 result.append(self.formatter.text(line[lastpos:match.start()]))
 
@@ -1010,17 +989,13 @@ class Parser:
         self.in_processing_instructions = 1
 
         if self.wrapping_div_class:
-            div_kw = {'css_class': self.wrapping_div_class, }
-            if 'comment' in self.wrapping_div_class.split():
-                # show comment divs depending on user profile (and wiki configuration)
-                div_kw['style'] = self.request.user.show_comments and "display:''" or "display:none"
-            self.request.write(self.formatter.div(1, **div_kw))
+            self.request.write(self.formatter.div(1, css_class=self.wrapping_div_class))
 
         # Main loop
         for line in self.lines:
-            if ']][[' in line.replace(' ',''):
+            if ']][[' in line.replace(' ', ''):
                 self.no_862 = True
-            self.lineno += 1
+
             self.line_anchor_printed = 0
             if not self.in_table:
                 self.request.write(self._line_anchordef())
@@ -1059,13 +1034,33 @@ class Parser:
                         self.parser_name = parser_name
                         continue
                     else:
-                        self.request.write(self._closeP() +
-                                           self.formatter.preformatted(1))
+                        if not line.count('{{{') > 1:
+                            self.request.write(self._closeP() +
+                                self.formatter.preformatted(1))
                         self.in_pre = 'no_parser'
+
                 if self.in_pre == 'found_parser':
+                    self.in_nested_pre += line.count('{{{')
+                    if self.in_nested_pre - line.count('}}}') == 0:
+                        self.in_nested_pre = 1
                     # processing mode
                     try:
-                        endpos = line.index("}}}")
+                        if line.endswith("}}}"):
+                            if self.in_nested_pre == 1:
+                                endpos = len(line) - 3
+                            else:
+                                self.parser_lines.append(line)
+                                self.in_nested_pre -= 1
+                                continue
+                        else:
+                            if self.in_nested_pre == 1:
+                                endpos = line.index("}}}")
+                            else:
+                                self.parser_lines.append(line)
+                                if "}}}" in line:
+                                    self.in_nested_pre -= 1
+                                continue
+
                     except ValueError:
                         self.parser_lines.append(line)
                         continue
@@ -1130,7 +1125,7 @@ class Parser:
                 self.request.write(self._indent_to(indlen, indtype, numtype, numstart))
 
                 # Table mode
-                # TODO: move into function?                
+                # TODO: move into function?
                 if (not self.in_table and line[indlen:indlen + 2] == "||"
                     and line.endswith("|| ") and len(line) >= 5 + indlen):
                     # Start table
@@ -1168,6 +1163,7 @@ class Parser:
             if self.in_pre == 'no_parser':
                 self.request.write(self.formatter.linebreak())
 
+
         # Close code displays, paragraphs, tables and open lists
         self.request.write(self._undent())
         if self.in_pre: self.request.write(self.formatter.preformatted(0))
@@ -1176,6 +1172,7 @@ class Parser:
 
         if self.wrapping_div_class:
             self.request.write(self.formatter.div(0))
+
 
     # Private helpers ------------------------------------------------------------
 

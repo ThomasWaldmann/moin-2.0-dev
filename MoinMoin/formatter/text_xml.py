@@ -71,7 +71,7 @@ class Formatter(FormatterBase):
         return '<attachment href="%s">%s</attachment>' % (url, text)
 
     def attachment_image(self, url, **kw):
-        return '<attachmentimage href="%s"></attachmentimage>' % (url,)
+        return '<attachmentimage href="%s"></attachmentimage>' % (url, )
 
     def attachment_drawing(self, url, text, **kw):
         return '<attachmentdrawing href="%s">%s</attachmentdrawing>' % (url, text)
@@ -82,14 +82,14 @@ class Formatter(FormatterBase):
         return self._escape(text)
 
     def rule(self, size=0, **kw):
-        return "\n<br/>%s<br/>\n" % ("-" * 78,) # <hr/> not supported in stylebook
+        return "\n<br/>%s<br/>\n" % ("-" * 78, ) # <hr/> not supported in stylebook
 #        if size:
-#            return '<hr size="%d"/>\n' % (size,)
+#            return '<hr size="%d"/>\n' % (size, )
 #        else:
 #            return '<hr/>\n'
 
     def icon(self, type):
-        return '<icon type="%s" />' % type            
+        return '<icon type="%s" />' % type
 
     def strong(self, on, **kw):
         return ['<strong>', '</strong>'][not on]
@@ -117,6 +117,12 @@ class Formatter(FormatterBase):
 
     def code(self, on, **kw):
         return ['<code>', '</code>'][not on]
+
+    def small(self, on, **kw):
+        return ['<small>', '</small>'][not on]
+
+    def big(self, on, **kw):
+        return ['<big>', '</big>'][not on]
 
     def sup(self, on, **kw):
         return ['<sup>', '</sup>'][not on]

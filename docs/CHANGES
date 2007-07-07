@@ -49,36 +49,6 @@ Version 1.7.current:
       many themes!
 
 
-Branch moin-1.6-xapian:
-  /!\ This needs to be merged together with Franz' CHANGES file into the section
-      below.
-
-  New Features:
-    * Added Xapian (see http://xapian.org/) based indexed search code.
-      Our implementation is still buggy, only use it if you want to help
-      debugging it or to implement / test indexing filters (see
-      MoinMoin/filter/). To use this:
-      * Install xapian-core and xapian-bindings on your machine.
-        We used 0.9.4, but newer code should hopefully work, too.
-      * cfg.xapian_search = True
-      * Execute this to build the index:
-        $ moin ... index build   # indexes pages and attachments
-        $ moin ... index build --files=files.lst  # same plus a list of files
-        You should run those commands as the same user you use for your wiki,
-        usually this is the webserver userid, e.g.:
-        $ sudo -u www-data moin --config=... --wiki-url=wiki.example.org/ \
-               index build --files=files.lst
-  ToDo:
-    * fix/improve query parsing (xapian_term member functions)
-    * fix/improve evaluation of search result
-    * maybe add some "xapian native query" mode (can we make it working without
-      the _moinSearch post-processing (not possible as it uses the same query))
-
-  Other Changes:
-    * Removed Lupy based indexed search code. If you were brave enough to
-      use cfg.lupy_search, you maybe want to try cfg.xapian_search instead.
-
-
 Version 1.6.current:
 
   Developer notes (these should be moved to the end in the release):
@@ -182,6 +152,35 @@ Version 1.6.current:
       'quicklinks' which will be lost when downgrading.)
 
   New Features:
+    * Added Xapian (see http://xapian.org/) based indexed search code.
+      To use this:
+      * Install xapian-core and xapian-bindings on your machine.
+        We used 0.9.4, but newer code should hopefully work, too.
+      * cfg.xapian_search = True
+      * Execute this to build the index:
+        $ moin ... index build   # indexes pages and attachments
+        $ moin ... index build --files=files.lst  # same plus a list of files
+        You should run those commands as the same user you use for your wiki,
+        usually this is the webserver userid, e.g.:
+        $ sudo -u www-data moin --config=... --wiki-url=wiki.example.org/ \
+               index build --files=files.lst
+    * New searches:
+        - LanguageSearch: language:de
+        - CategorySearch: category:Homepage
+        - MimetypeSearch: mimetype:image/png (for attachments/files)
+        - DomainSearch: domain:underlay or domain:standard
+        - History Search: available in advanced ui
+      Note: Some currently only available when Xapian is used
+    * New config options:
+        xapian_search        0      enables xapian-powered search
+        xapian_index_dir     None   directory for xapian indices
+                                    (can be shared for wiki farms)
+        xapian_stemming      1      toggles usage of stemmer, fallback
+                                    to False if no stemmer installed
+        search_results_per_page 10  determines how many hits should be
+                                    shown on a fullsearch action
+        xapian_index_history False  indexes all revisions of pages to
+                                    allow searching in their history
     * The action menu now calls the actions for the revision of the page you
       are currently viewing. If you are viewing the current page revision, you
       get the same behaviour as in moin 1.5, but if you are viewing an old
@@ -262,7 +261,10 @@ Version 1.6.current:
       * interwikiName -- method to get the IWID and the interwiki moniker
       * getAllPagesEx -- method to get the pagelist in a special way (revnos,
         no system pages etc.)
-      * getUser -- method to remotely authenticate a user and get profile data
+      * getAuthToken -- make and authentication token by supplying username/password
+      * applyAuthToken -- set request.user for following xmlrpc calls (within the
+                          same multicall)
+      * getUserProfile -- method to get user profile data for request.user
     * IWID support - i.e. every wiki instance has a unique ID
     * The list of InterWiki sites is editable in the wiki (page InterWikiMap),
       it is getting reloaded every minute
@@ -290,10 +292,6 @@ Version 1.6.current:
     * cfg.quicklinks_default and cfg.subscribed_pages_default can be used to
       preload new user profiles with configurable values.
     * added support for ircs: URLs (secure IRC)
-    * it is allowed now to use interwiki links with empty pagename, like
-      MoinMoin: (no page name after the colon). MoinMoin then uses the current
-      page name as the default. This is a useful abbreviation for TwinPages in
-      other wikis.
     * it is now supported to resize an image from within the gui editor 
     * we now log a rename action as SAVE/RENAME in edit-log and display
       appropriate comments if the user did not supply an own comment.
@@ -367,6 +365,8 @@ Version 1.6.current:
       inline:song.mp3 embeds the audio controls into your page
     * action=view does use mimetypes of EmbedObject too and text files will be shown
       by using their colorized parsers
+    * Hierarchical ACLs are now supported, i.e. pages inheriting permissions
+      from higher-level pages. See HelpOnAccessControlLists.
 
 
   Bugfixes:
@@ -509,9 +509,84 @@ Version 1.6.current:
       Reasons: it had trouble with FCKEditor and was not updated since a longer
                time. OTOH, Microsoft released IE7. And there are lots of
                other and better browsers anyway.
+    * Removed Lupy based indexed search code. If you were brave enough to
+      use cfg.lupy_search, you maybe want to try cfg.xapian_search instead.
+
+Version 1.5.8:
+  New features:
+    * Added timing.log to help performance debugging. Use cfg.log_timing = True
+      to update <data_dir>/timing.log (default is False, meaning no logging).
+
+      Example log entries:
 
 
-Version 1.5.current:
+      Timestamp       PID   Timing Flag action     URL
+      -----------------------------------------------------------------------------
+      20070512 184401 22690 vvv         None       moinmoin.wikiwikiweb.de/RssFeeds
+      20070512 184401 22690 0.267s    - show       moinmoin.wikiwikiweb.de/RssFeeds
+
+      Timestamp: YYYYMMDD HHMMSS (UTC)
+      PID: the process ID of the moin process
+      Timing: when action starts, it will be "vvv"
+              when it ends, it logs the total time it needed for execution
+      Flag (some are only logged at end of action):
+      +   Page exists
+      -   Page does not exist
+      B   user agent was recognized as bot / spider
+      !x! Action took rather long (the higher the x, the longer it took - this
+          makes it easy to grep for problematic stuff).
+      Action: action name (None is when no action was specified, moin assumes
+              "show" for that case)
+      URL: the requested URL
+
+      For more information about tuning your moin setup, see:
+      http://moinmoin.wikiwikiweb.de/PerformanceTuning
+    * Added support for ircs, webcal, xmpp, ed2k and rootz protocols - we
+      moved all protocols to config.url_schemas, so this is not empty any more.
+      It is possible to use these protocols now on wiki pages and in the
+      navi_bar. We just generate the URLs, it is up to your browser what it
+      does when clicking on those links.
+    * cfg.traceback_show (default: 1) can be used to disable showing tracebacks.
+      cfg.traceback_log_dir (default: None) can be used to set a directory
+      that is used to dump traceback files to. Your users will get a notice to
+      which (random) file in that directory the traceback was been written.
+      NOTE: while you can feel free to set traceback_show = 0 and
+      traceback_log_dir = None, we will also feel free to reject bug reports
+      when you (or your site's users) don't give us enough information (like a
+      traceback file) to debug the problem. If you set traceback_show = 0,
+      we recommend pointing traceback_log_dir to a directory with reasonable
+      free space and putting a page onto your wiki that describes who has to
+      get contacted (usually the wiki server admin) in case a traceback happens.
+      The admin can then locate the traceback file and submit it to moin
+      development, if the bug is not already known (see MoinMoin:MoinMoinBugs).
+      Of course we will also need all the other details of a bug report, not
+      only the traceback file.
+
+  Other changes:
+    * Updated spider agents list.
+    * Reduce bot/spider cpu usage for SystemInfo, OrphanedPages, WantedPages,
+      PageHits, PageSize, WordIndex macros (we just return nothing for bots).
+
+  Bugfixes:
+    * XSS fixes, see http://secunia.com/advisories/24138/ (item 1 and 2).
+    * ACL security fixes:
+      * MonthCalendar respects ACLs of day pages now.
+      * Check the ACL for the rst markup include directive.
+    * Fixed cleaning of edit comments (control chars in there could damage
+      edit-log).
+    * Fixed in-process caching of antispam patterns (didn't update the cache
+      for multi-process, persistent servers).
+    * Correct encoding/decoding for surge-log data, fixes leftover
+      surge-logXXXXXXX.tmp files in data/cache/surgeprotect.
+    * Fixed mode of cache files (mkstemp creates them with 0600 mode).
+    * Symbolic entities with numbers (like &sup2;) did not work, fixed.
+    * We open data/error.log earlier now and we also use it for FastCGI.
+    * Fixed unicode cfg.page_group_regex.
+    * Fixed moin.spec to use english date format.
+    * GUI converter: fixed conversion of relative wiki links.
+    * Fixed NewPage macro button label to not be formatted as wiki text.
+
+Version 1.5.7:
   New features:
     * added url_prefix_local which is used for stuff that must be loaded from
       same site as the wiki engine (e.g. FCKeditor GUI editor applet), while
@@ -575,9 +650,10 @@ Version 1.5.current:
       * We support self-signed ssl certs for ldaps - completely untested.
       * New cfg.ldap_surname_attribute (usually 'sn'), was hardcoded before.
       * New cfg.ldap_givenname_attribute (usually 'givenName'), hardcoded before.
-      * New cfg.ldap_aliasname_attribute (usually 'displayName').
-      * For setting up moin's aliasname, we first try the ldap_aliasname_attribute
-        and in case that fails, we use givenname and surname to make it up.
+      * New cfg.ldap_aliasname_attribute (usually 'displayName') - if this
+        attribute is not there or empty (in the results of the ldap lookup for
+        the user), we just make up the aliasname from surname and givenname
+        attribute.
       * We only request the attributes we need from ldap (was: all attrs).
       * We deny user login (and break out of auth chain) for the following cases:
         * if a user is not found by ldap lookup
@@ -586,6 +662,8 @@ Version 1.5.current:
         * if some exception happens
       * Please note that there is an updated ldap sample config in directory
         wiki/config/more_samples/.
+      * Added experimental LDAP SSL/TLS support (untested, please help testing),
+        see also the sample config.
     * Work around a IE7 rendering problem with long pages getting more and
       more narrow. We just applied the same "fix" as we used for IE6, using
       "display: none" for span.anchor for IE browsers.

@@ -172,8 +172,7 @@ class EditLog(LogFile):
         else:
             hostname = host
 
-        remap_chars = {u'\t': u' ', u'\r': u' ', u'\n': u' ', }
-        comment = comment.translate(remap_chars)
+        comment = wikiutil.clean_input(comment)
         user_id = request.user.valid and request.user.id or ''
 
         if self.uid_override is not None:
@@ -203,7 +202,7 @@ class EditLog(LogFile):
         result = EditLogLine(self._usercache)
         (result.ed_time_usecs, result.rev, result.action,
          result.pagename, result.addr, result.hostname, result.userid,
-         result.extra, result.comment,) = fields[:self._NUM_FIELDS]
+         result.extra, result.comment, ) = fields[:self._NUM_FIELDS]
         if not result.hostname:
             result.hostname = result.addr
         result.pagename = wikiutil.unquoteWikiname(result.pagename.encode('ascii'))
@@ -234,6 +233,8 @@ class EditLog(LogFile):
         items = []
         for line in self:
             items.append(line.pagename)
+            if line.action == 'SAVE/RENAME':
+                items.append(line.extra) # == old page name
 
         newposition = self.position()
         logging.log(logging.NOTSET, "editlog.news: new pos: %r new items: %r", newposition, items)

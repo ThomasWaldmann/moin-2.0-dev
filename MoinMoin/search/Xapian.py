@@ -61,7 +61,7 @@ def getWikiAnalyzerFactory(request=None, language='en'):
 
 class WikiAnalyzer:
     """ A text analyzer for wiki syntax
-    
+
     The purpose of this class is to anaylze texts/pages in wiki syntax
     and yield yielding single terms for xapwrap to feed into the xapian
     database.
@@ -219,16 +219,20 @@ class Index(BaseIndex):
 
     def _check_version(self):
         """ Checks if the correct version of Xapian is installed """
-        # every version greater than or equal to 0.9.6 is allowed for now
-        # Note: fails if crossing the 10.x barrier
-        if xapian.xapian_version_string() >= '0.9.6':
+        # every version greater than or equal to XAPIAN_MIN_VERSION is allowed
+        XAPIAN_MIN_VERSION = (0, 9, 6)
+        try:
+            major, minor, revision = xapian.major_version(), xapian.minor_version(), xapian.revision()
+        except AttributeError:
+            major, minor, revision = xapian.xapian_major_version(), xapian.xapian_minor_version(), xapian.xapian_revision() # deprecated since xapian 0.9.6, removal in 1.1.0
+        if (major, minor, revision) >= XAPIAN_MIN_VERSION:
             return
 
         from MoinMoin.error import ConfigurationError
-        raise ConfigurationError('MoinMoin needs at least Xapian version '
-                '0.9.6 to work correctly. Either disable Xapian '
-                'completetly in your wikiconfig or upgrade your Xapian '
-                'installation!')
+        raise ConfigurationError(('MoinMoin needs at least Xapian version '
+                '%d.%d.%d to work correctly. Either disable Xapian '
+                'completetly in your wikiconfig or upgrade your Xapian %d.%d.%d '
+                'installation!') % (XAPIAN_MIN_VERSION + (major, minor, revision)))
 
     def _main_dir(self):
         """ Get the directory of the xapian index """
@@ -244,7 +248,7 @@ class Index(BaseIndex):
 
     def _search(self, query, sort='weight', historysearch=0):
         """ Perform the search using xapian (read-lock acquired)
-        
+
         @param query: the search query objects
         @keyword sort: the sorting of the results (default: 'weight')
         @keyword historysearch: whether to search in all page revisions (default: 0) TODO: use/implement this
@@ -313,7 +317,7 @@ class Index(BaseIndex):
 
     def termpositions(self, uid, term):
         """ Fetches all positions of a term in a document
-        
+
         @param uid: document id of the item in the xapian index
         @param term: the term as a string
         """
@@ -372,7 +376,7 @@ class Index(BaseIndex):
                     doc.uid = uid
                     id = writer.index(doc)
                 elif mode == 'add':
-                    if debug: request.log("%s (add)" % (filename,))
+                    if debug: request.log("%s (add)" % (filename, ))
                     id = writer.index(doc)
         except (OSError, IOError):
             pass
@@ -389,12 +393,18 @@ class Index(BaseIndex):
         # language available
         if page.request.cfg.xapian_stemming:
             lang = page.pi['language']
+            # Stemmer(lang) has an exception bug if the language is not available
+            # TypeError: exceptions must be strings, classes, or instances, not exceptions.KeyError
             try:
                 Stemmer(lang)
                 # if there is no exception, lang is stemmable
                 return (lang, lang)
             except KeyError:
                 # lang is not stemmable
+                pass
+            except TypeError:
+                # Stemmer(lang) has an exception bug if the language is not available
+                # TypeError: exceptions must be strings, classes, or instances,
                 pass
 
         if not lang:
@@ -510,7 +520,7 @@ class Index(BaseIndex):
                 doc.uid = uid
                 id = writer.index(doc)
             elif mode == 'add':
-                if debug: request.log("%s (add)" % (pagename,))
+                if debug: request.log("%s (add)" % (pagename, ))
                 id = writer.index(doc)
 
         from MoinMoin.action import AttachFile
@@ -568,7 +578,7 @@ class Index(BaseIndex):
                     doc.uid = uid
                     id = writer.index(doc)
                 elif mode == 'add':
-                    if debug: request.log("%s (add)" % (pagename,))
+                    if debug: request.log("%s (add)" % (pagename, ))
                     id = writer.index(doc)
         #writer.flush()
 
@@ -601,9 +611,9 @@ class Index(BaseIndex):
 
     def _index_pages(self, request, files=None, mode='update'):
         """ Index all pages (and all given files)
-        
+
         This should be called from indexPages or indexPagesInNewThread only!
-        
+
         This may take some time, depending on the size of the wiki and speed
         of the machine.
 

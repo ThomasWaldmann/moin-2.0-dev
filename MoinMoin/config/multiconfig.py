@@ -27,10 +27,10 @@ _config_cache = {}
 
 def _importConfigModule(name):
     """ Import and return configuration module and its modification time
-    
+
     Handle all errors except ImportError, because missing file is not
     always an error.
-    
+
     @param name: module name
     @rtype: tuple
     @return: module, modification time
@@ -91,7 +91,7 @@ use wikiconfig.py.
 
 
 def _makeConfig(name):
-    """ Create and return a config instance 
+    """ Create and return a config instance
 
     Timestamp config with either module mtime or farmconfig mtime. This
     mtime can be used later to invalidate older caches.
@@ -214,6 +214,7 @@ class DefaultConfig:
     acl_rights_before = u""
     acl_rights_after = u""
     acl_rights_valid = ['read', 'write', 'delete', 'revert', 'admin']
+    acl_hierarchic = False
 
     actions_excluded = [] # ['DeletePage', 'AttachFile', 'RenamePage', 'test', ]
     allow_xslt = False
@@ -263,11 +264,11 @@ class DefaultConfig:
     default_markup = 'wiki'
     docbook_html_dir = r"/usr/share/xml/docbook/stylesheet/nwalsh/html/" # correct for debian sarge
 
-    edit_bar = ['Edit', 'Comments', 'Discussion', 'Info', 'Subscribe', 'Quicklink', 'Attachments', 'ActionsMenu'] 
+    edit_bar = ['Edit', 'Comments', 'Discussion', 'Info', 'Subscribe', 'Quicklink', 'Attachments', 'ActionsMenu']
     editor_default = 'text' # which editor is called when nothing is specified
     editor_ui = 'freechoice' # which editor links are shown on user interface
     editor_force = False
-    editor_quickhelp = {# editor markup hints quickhelp 
+    editor_quickhelp = {# editor markup hints quickhelp
         'wiki': _("""\
  Emphasis:: [[Verbatim('')]]''italics''[[Verbatim('')]]; [[Verbatim(''')]]'''bold'''[[Verbatim(''')]]; [[Verbatim(''''')]]'''''bold italics'''''[[Verbatim(''''')]]; [[Verbatim('')]]''mixed ''[[Verbatim(''')]]'''''bold'''[[Verbatim(''')]] and italics''[[Verbatim('')]]; [[Verbatim(----)]] horizontal rule.
  Headings:: [[Verbatim(=)]] Title 1 [[Verbatim(=)]]; [[Verbatim(==)]] Title 2 [[Verbatim(==)]]; [[Verbatim(===)]] Title 3 [[Verbatim(===)]];   [[Verbatim(====)]] Title 4 [[Verbatim(====)]]; [[Verbatim(=====)]] Title 5 [[Verbatim(=====)]].
@@ -283,15 +284,15 @@ Emphasis: <i>*italic*</i> <b>**bold**</b> ``monospace``<br/>
 Headings: Heading 1  Heading 2  Heading 3
           =========  ---------  ~~~~~~~~~
 
-Horizontal rule: ---- 
-Links: TrailingUnderscore_ `multi word with backticks`_ external_ 
+Horizontal rule: ----
+Links: TrailingUnderscore_ `multi word with backticks`_ external_
 
 .. _external: http://external-site.net/foo/
 
 Lists: * bullets; 1., a. numbered items.
 </pre>
 <br/>
-(!) For more help, see the 
+(!) For more help, see the
 <a href="http://docutils.sourceforge.net/docs/user/rst/quickref.html">
 reStructuredText Quick Reference
 </a>.
@@ -326,11 +327,12 @@ reStructuredText Quick Reference
 
     log_reverse_dns_lookups = True  # if we do reverse dns lookups for logging hostnames
                                     # instead of just IPs
+    log_timing = False              # update <data_dir>/timing.log?
 
     xapian_search = False
     xapian_index_dir = None
     xapian_stemming = True
-    xapian_index_history = True
+    xapian_index_history = False
     search_results_per_page = 10
 
     mail_login = None # or "user pwd" if you need to use SMTP AUTH
@@ -347,7 +349,7 @@ reStructuredText Quick Reference
 
     # some dangerous mimetypes (we don't use "content-disposition: inline" for them when a user
     # downloads such attachments, because the browser might execute e.g. Javascript contained
-    # in the HTML and steal your moin cookie or do other nasty stuff) 
+    # in the HTML and steal your moin cookie or do other nasty stuff)
     mimetypes_xss_protect = [
         'text/html',
         'application/x-shockwave-flash',
@@ -378,11 +380,21 @@ reStructuredText Quick Reference
 
     navi_bar = [u'RecentChanges', u'FindPage', u'HelpContents', ]
     nonexist_qm = False
+    notification_bot_uri = None
 
     page_credits = [
-        '<a href="http://moinmoin.wikiwikiweb.de/">MoinMoin Powered</a>',
-        '<a href="http://www.python.org/">Python Powered</a>',
-        '<a href="http://validator.w3.org/check?uri=referer">Valid HTML 4.01</a>',
+        # Feel free to add other credits, but PLEASE do NOT change or remove
+        # the following links - you help us by keeping them "as is":
+        '<a href="http://moinmoin.wikiwikiweb.de/" title="This site uses the MoinMoin Wiki software.">MoinMoin Powered</a>',
+        '<a href="http://moinmo.in/Python" title="MoinMoin is written in Python.">Python Powered</a>',
+
+        # Optional credits:
+        # if you think it can be maybe misunderstood as applying to content or topic of your wiki,
+        # feel free to remove this one:
+        '<a href="http://moinmo.in/GPL" title="MoinMoin is GPL licensed.">GPL licensed</a>',
+
+        # if you don't need/want to check the html output, feel free to remove this one:
+        '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 4.01</a>',
         ]
     page_footer1 = ''
     page_footer2 = ''
@@ -424,8 +436,8 @@ reStructuredText Quick Reference
     rss_cache = 60 # suggested caching time for RecentChanges RSS, in seconds
     sistersites = [
         #('Self', 'http://localhost:8080/?action=sisterpages'),
-        ('EmacsWiki', 'http://www.emacswiki.org/cgi-bin/test?action=sisterpages'),
-        ('JspWiki', 'http://www.jspwiki.org/SisterSites.jsp'),
+        #('EmacsWiki', 'http://www.emacswiki.org/cgi-bin/test?action=sisterpages'),
+        #('JspWiki', 'http://www.jspwiki.org/SisterSites.jsp'),
     ] # list of (sistersitename, sisterpagelistfetchurl)
     shared_intermap = None # can be string or list of strings (filenames)
     show_hosts = True
@@ -437,6 +449,7 @@ reStructuredText Quick Reference
     siteid = 'default'
     stylesheets = [] # list of tuples (media, csshref) to insert after theme css, before user css
     subscribed_pages_default = [] # preload user subscribed pages with this page list
+    subscribed_events_default = [] # preload user subscribed events with this list
     superuser = [] # list of unicode user names that have super powers :)
     supplementation_page = False
     supplementation_page_name = u'Discussion'
@@ -459,16 +472,20 @@ reStructuredText Quick Reference
     theme_default = 'modern'
     theme_force = False
 
+    traceback_show = 1
+    traceback_log_dir = None
+
     trail_size = 5
     tz_offset = 0.0 # default time zone offset in hours from UTC
 
     user_autocreate = False # do we auto-create user profiles
     user_email_unique = True # do we check whether a user's email is unique?
+    user_jid_unique = True # do we check whether a user's email is unique?
 
     # a regex of HTTP_USER_AGENTS that should be excluded from logging
     # and receive a FORBIDDEN for anything except viewing a page
     ua_spiders = ('archiver|cfetch|crawler|curl|gigabot|googlebot|holmes|htdig|httrack|httpunit|jeeves|larbin|leech|'
-                  'linkbot|linkmap|linkwalk|mercator|mirror|msnbot|neomo|nutbot|omniexplorer|puf|robot|scooter|seekbot|'
+                  'linkbot|linkmap|linkwalk|mercator|mirror|msnbot|msrbot|neomo|nutbot|omniexplorer|puf|robot|scooter|seekbot|'
                   'sherlock|slurp|sitecheck|spider|teleport|voyager|webreaper|wget')
 
     # Wiki identity
@@ -548,6 +565,7 @@ reStructuredText Quick Reference
         ('password', _('Password'), "password", "36", ''),
         ('password2', _('Password repeat'), "password", "36", _('(Only for password change or new account)')),
         ('email', _('Email'), "text", "36", ''),
+        ('jid', _('Jabber ID'), "text", "36", ''),
         ('css_url', _('User CSS URL'), "text", "40", _('(Leave it empty for disabling user CSS)')),
         ('edit_rows', _('Editor size'), "text", "3", ''),
     ]
@@ -558,6 +576,7 @@ reStructuredText Quick Reference
         'password': '',
         'password2': '',
         'email': '',
+        'jid': '',
         'css_url': '',
         'edit_rows': "20",
     }
@@ -659,6 +678,14 @@ reStructuredText Quick Reference
         # check if mail is possible and set flag:
         self.mail_enabled = (self.mail_smarthost is not None or self.mail_sendmail is not None) and self.mail_from
 
+        # check if jabber bot is available and set flag:
+        self.jabber_enabled = self.notification_bot_uri is not None
+
+        # if we are to use the jabber bot, instantiate a server object for future use
+        if self.jabber_enabled:
+            from xmlrpclib import Server
+            self.notification_server = Server(self.notification_bot_uri, )
+
         # Cache variables for the properties below
         self._iwid = self._iwid_full = self._meta_dict = None
 
@@ -708,7 +735,6 @@ reStructuredText Quick Reference
             The full IWID containing the interwiki name is available as cfg.iwid_full
             This method is called by the property.
         """
-
         try:
             iwid = self.meta_dict['IWID']
         except KeyError:
@@ -724,7 +750,7 @@ reStructuredText Quick Reference
 
     def _config_check(self):
         """ Check namespace and warn about unknown names
-        
+
         Warn about names which are not used by DefaultConfig, except
         modules, classes, _private or __magic__ names.
 
@@ -746,13 +772,13 @@ configuration for typos before requesting support or reporting a bug.
 
     def _decode(self):
         """ Try to decode certain names, ignore unicode values
-        
-        Try to decode str using utf-8. If the decode fail, raise FatalError. 
+
+        Try to decode str using utf-8. If the decode fail, raise FatalError.
 
         Certain config variables should contain unicode values, and
         should be defined with u'text' syntax. Python decode these if
         the file have a 'coding' line.
-        
+
         This will allow utf-8 users to use simple strings using, without
         using u'string'. Other users will have to use u'string' for
         these names, because we don't know what is the charset of the
@@ -848,7 +874,7 @@ also the spelling of the directory name.
                     plugin_parent_dir = os.path.abspath(os.path.join(self.plugin_dir, '..'))
                     fp, path, info = imp.find_module('plugin', [plugin_parent_dir])
                     try:
-                        # Load the module and set in sys.modules             
+                        # Load the module and set in sys.modules
                         module = imp.load_module(name, fp, path, info)
                         sys.modules[self.siteid].plugin = module
                     finally:
@@ -885,6 +911,6 @@ that the data/plugin directory has an __init__.py file.
         """ Make it possible to access a config object like a dict """
         return getattr(self, item)
 
-# remove the gettext pseudo function 
+# remove the gettext pseudo function
 del _
 
