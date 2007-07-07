@@ -208,4 +208,3 @@ class MetadataBackend(UserDict.DictMixin, object):
         Saves the metadata.
         """
         raise NotImplementedError
-    

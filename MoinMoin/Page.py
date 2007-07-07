@@ -174,17 +174,17 @@ class Page(object):
         self._items_standard = ItemCollection(request.cfg.page_backend, None)
         self._items_underlay = ItemCollection(request.cfg.underlay_backend, None)
         self._items_all = ItemCollection(request.cfg.data_backend, None)
-        
+
         self.reset()
 
     def reset(self):
-        """ 
+        """
         Reset page state.
         """
         self._pi = None
         self._data = None
         self._body_modified = 0
-        
+
         try:
             self._item = self._items_all[self.page_name]
             self._body = None
@@ -193,7 +193,7 @@ class Page(object):
             self._body = u""
             self._meta = dict()
             self._item = None
-            
+
     # now we define some properties to lazy load some attributes on first access:
 
     def get_body(self):
@@ -206,12 +206,12 @@ class Page(object):
                 self._body = u""
                 self._meta = dict()
         return self._body
-    
+
     def set_body(self, body):
         self._body = body
         self._meta = dict()
         self._data = None
-    
+
     body = property(fget=get_body, fset=set_body) # complete page text
 
     def get_meta(self):
@@ -311,7 +311,7 @@ class Page(object):
     def getPagePath(self, *args, **kw):
         """
         TODO: This is still very hackish.
-        
+
         Get full path to a page-specific storage area. `args` can
         contain additional path components that are added to the base path.
 
@@ -331,12 +331,12 @@ class Page(object):
         check_create = kw.get('check_create', 1)
         isfile = kw.get('isfile', 0)
         use_underlay = kw.get('use_underlay', -1)
-        
+
         if self._page_name_force is not None:
             name = self._page_name_force
         else:
             name = self.page_name
-        
+
         if use_underlay == -1:
             if self._item is None:
                 path = self.request.cfg.page_backend.get_page_path(name)
@@ -346,7 +346,7 @@ class Page(object):
             path = self.request.cfg.underlay_backend.get_page_path(name)
         else:
             path = self.request.cfg.page_backend.get_page_path(name)
-        
+
         fullpath = os.path.join(*((path, ) + args))
         if check_create:
             if isfile:
@@ -360,7 +360,7 @@ class Page(object):
     def _text_filename(self, **kw):
         """
         TODO: remove this
-        
+
         The name of the page file, possibly of an older page.
 
         @keyword rev: page revision, overriding self.rev
@@ -500,20 +500,20 @@ class Page(object):
         # Edge cases
         if not self._item:
             return False
-        
+
         if domain == 'underlay' and not self.request.cfg.data_underlay_dir:
             return False
-        
+
         if rev and not self._item.has_key(rev):
             return False
 
         if not includeDeleted and self._item.deleted:
             return False
-            
+
         if domain is None:
             return True
         elif domain == 'underlay':
-            return self._item.backend.name == 'underlay'            
+            return self._item.backend.name == 'underlay'
         else:
             return self._item.backend.name != 'underlay'
 
@@ -526,7 +526,7 @@ class Page(object):
         if rev == self.rev: # same revision as self
             if self._body is not None:
                 return len(self._body)
-        
+
         try:
             return self._item[rev].metadata[SIZE]
         except NoSuchRevisionError:
@@ -1374,26 +1374,26 @@ class RootPage(object):
     page storage support until after we have a storage api (and really need it).
     Currently, there is only 1 instance of this class: request.rootpage
     """
-    
+
     def __init__(self, request):
         """
         Init the item collection.
         """
         self.request = request
         self.__items = ItemCollection(request.cfg.data_backend, None)
-    
+
     def getPagePath(self, fname, isfile):
         """
         TODO: remove this hack.
-        
+
         Just a hack for event and edit log currently.
         """
         return os.path.join(self.request.cfg.data_dir, fname)
-                
+
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
         """
         List user readable pages under current page.
-        
+
         TODO: makethis method use the storage api more efficiently.
 
         Currently only request.rootpage is used to list pages, but if we
@@ -1422,10 +1422,10 @@ class RootPage(object):
         @rtype: list of unicode strings
         @return: user readable wiki page names
         """
-        
+
         request = self.request
         request.clock.start('getPageList')
-        
+
         # Check input
         if user is None:
             user = request.user
@@ -1477,7 +1477,7 @@ class RootPage(object):
 
         request.clock.stop('getPageList')
         return pages
-    
+
     def getPageDict(self, user=None, exists=1, filter=None, include_underlay=True):
         """
         Return a dictionary of filtered page objects readable by user.

@@ -94,7 +94,7 @@ class PageEditor(Page):
 
         if self._item is None:
             self._item = self._items_all.new_item(self.page_name)
-            
+
         self.lock = PageLock(self)
 
     def mergeEditConflict(self, origrev):
@@ -527,7 +527,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             index = Index(request)
             if index.exists():
                 index.update_page(newpagename)
-                
+
         return True, None
 
     def renamePage(self, newpagename, comment=None):
@@ -545,22 +545,22 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
                 and request.user.may.write(newpagename)):
             msg = _('You are not allowed to rename this page!')
             raise self.AccessDenied, msg
-        
+
         try:
             self._items_all.rename_item(self.page_name, newpagename)
         except BackendError, err:
             return False, _(err.message)
 
         newpage = PageEditor(request, newpagename)
-        
+
         savetext = newpage.get_raw_body()
-        
+
         if not comment:
             comment = u"## page was renamed from %s" % self.page_name
-            
+
         savetext = u"## page was renamed from %s\n%s" % (self.page_name, savetext)
         newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE/RENAME')
-        
+
         # delete pagelinks
         arena = newpage
         key = 'pagelinks'
@@ -793,9 +793,9 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
                                uid_override=self.uid_override)
         # Open the global log
         glog = editlog.EditLog(request, uid_override=self.uid_override)
-        
+
         self._item.lock = True
-        
+
         if not was_deprecated and not deleted:
             if self.do_revision_backup or self._item.current == 0:
                 newrev = self._item.new_revision()
@@ -811,19 +811,19 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
                 for key, value in self.meta.iteritems():
                     newrev.metadata[key] = value
                     newrev.metadata.save()
-            
+
         else:
             self._item.deleted = True
             self._item.metadata.save()
             rev = 0
-        
+
         self._item.lock = False
 
         # reset page object
         self.reset()
-        
+
         mtime_usecs = wikiutil.timestamp2version(time.time())
-        
+
         # write the editlog entry
         # for now simply make 2 logs, better would be some multilog stuff maybe
         if self.do_revision_backup:
