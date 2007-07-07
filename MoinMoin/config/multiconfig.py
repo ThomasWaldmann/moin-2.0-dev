@@ -702,8 +702,8 @@ reStructuredText Quick Reference
 
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
-            
-        # storage configuration  
+
+        # storage configuration
         self.user_backend = UserStorage(self.user_dir, self, "user")
         self.page_backend = PageStorage(os.path.join(self.data_dir, "pages"), self, "pages")
         self.underlay_backend = PageStorage(os.path.join(self.data_underlay_dir, "pages"), self, "underlay")

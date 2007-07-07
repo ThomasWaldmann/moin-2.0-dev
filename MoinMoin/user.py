@@ -165,10 +165,10 @@ class User:
                                changed by UserPreferences form, default: ().
                                First tuple element was used for authentication.
         """
-        
+
         self._item_collection = ItemCollection(request.cfg.user_backend, None)
         self._user = None
-        
+
         self._cfg = request.cfg
         self.valid = 0
         self.id = id
@@ -288,7 +288,7 @@ class User:
             return
 
         self._user = self._item_collection[self.id]
-        
+
         user_data = self._user.metadata
 
         # Validate data from user file. In case we need to change some
@@ -430,7 +430,7 @@ class User:
         """
         if not self.exists():
             self._user = self._item_collection.new_item(self.id)
-               
+
         self._user.lock = True
         for key in self._user.metadata:
             del self._user.metadata[key]
@@ -441,10 +441,10 @@ class User:
         attrs.sort()
         for key, value in attrs:
             self._user.metadata[key] = value
-        
+
         self._user.metadata.save()
         self._user.lock = False
-        
+
         if not self.disabled:
             self.valid = 1
 
