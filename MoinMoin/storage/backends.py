@@ -75,30 +75,30 @@ class MetaBackend(StorageBackend):
         """
         return self._call("remove_revision", name, revno)
 
-    def get_metadata(self, name, revno):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.get_metadata
-        """
-        return self._call("get_metadata", name, revno)
-
-    def set_metadata(self, name, revno, metadata):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.set_metadata
-        """
-        return self._call("set_metadata", name, revno, metadata)
-
-    def remove_metadata(self, name, revno, keylist):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.remove_metadata
-        """
-        return self._call("remove_metadata", name, revno, keylist)
-
     def get_data_backend(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
         """
         return self._call("get_data_backend", name, revno)
 
+    def get_metadata_backend(self, name, revno):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
+        """
+        return self._call("get_metadata_backend", name, revno)
+
+    def lock(self, identifier, timeout=1, lifetime=60):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.lock
+        """
+        return self._call("lock", identifier, timeout, lifetime)
+    
+    def unlock(self, identifier):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.unlock
+        """
+        return self._call("unlock", identifier)
+    
     def _call(self, method, *args):
         """
         Call the method from the first matching backend with the given parameters.

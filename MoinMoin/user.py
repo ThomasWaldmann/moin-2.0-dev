@@ -431,6 +431,7 @@ class User:
         if not self.exists():
             self._user = self._item_collection.new_item(self.id)
                
+        self._user.lock = True
         for key in self._user.metadata:
             del self._user.metadata[key]
 
@@ -442,7 +443,8 @@ class User:
             self._user.metadata[key] = value
         
         self._user.metadata.save()
-
+        self._user.lock = False
+        
         if not self.disabled:
             self.valid = 1
 

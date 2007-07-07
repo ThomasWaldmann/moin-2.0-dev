@@ -11,7 +11,7 @@ import shutil
 import tarfile
 import tempfile
 
-from MoinMoin.storage.error import BackendError
+from MoinMoin.storage.error import BackendError, LockingError
 
 test_dir = None
 
@@ -91,3 +91,10 @@ class BackendTest:
         py.test.raises(BackendError, self.backend.rename_item, pages[0], "")
         py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[0])
 
+    def test_lock_unlock_item(self):
+        self.backend.lock("id")
+        py.test.raises(LockingError, self.backend.lock, "id")
+        self.backend.unlock("id")
+        self.backend.lock("id", timeout=1)
+        py.test.raises(LockingError, self.backend.lock, "id", 1)
+        self.backend.unlock("id")
