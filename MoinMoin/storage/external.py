@@ -3,7 +3,7 @@
 
     @copyright: 2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
-    
+
     TODO: acl checking, properties on revision
 """
 
@@ -21,7 +21,7 @@ class ItemCollection(UserDict.DictMixin, object):
 
     def __init__(self, backend, userobj):
         """
-        Initializes the proper StorageBackend. 
+        Initializes the proper StorageBackend.
         """
         self.backend = backend
         self.userobj = userobj
@@ -80,40 +80,40 @@ class ItemCollection(UserDict.DictMixin, object):
     def copy_item(self, name, newname):
         """
         Copies an Item.
-        
+
         TODO: copy edit log
         """
         if newname == name:
             raise BackendError(_("Copy failed because name and newname are equal."))
-        
+
         if not newname:
             raise BackendError(_("You cannot copy to an empty item name."))
-        
+
         if newname in self.items:
             raise BackendError(_("Copy failed because an item with name %r already exists.") % newname)
-        
+
         if not name in self.items:
             raise NoSuchItemError(_("Copy failed because there is no item with name %r.") % name)
-        
+
         newitem = self.new_item(newname)
         newitem.lock = True
-        
+
         olditem = self[name]
-        
+
         for revno in olditem:
             newrev = newitem.new_revision(revno)
             oldrev = olditem[revno]
-            
+
             newrev.data.write(oldrev.data.read())
             newrev.data.close()
             oldrev.data.close()
-            
+
             for key, value in oldrev.metadata.iteritems():
                 newrev.metadata[key] = value
             newrev.metadata.save()
-        
+
         newitem.lock = False
-        
+
         self.__items = None
 
     def get_items(self):
@@ -145,9 +145,9 @@ class Item(UserDict.DictMixin, object):
         self.userobj = userobj
 
         self.__lock = False
-        
+
         self.reset()
-    
+
     def reset(self):
         """
         Reset the lazy loaded stuff which is dependend on adding/removing revisions.
@@ -159,7 +159,7 @@ class Item(UserDict.DictMixin, object):
         self.__edit_lock = None
         self.__metadata = None
         self.__deleted = None
-        
+
     def __contains__(self, revno):
         """
         Checks if a Revision with the given revision number exists.
@@ -168,7 +168,7 @@ class Item(UserDict.DictMixin, object):
 
     def __getitem__(self, revno):
         """
-        Returns the revision specified by a revision number (LazyLoaded). 
+        Returns the revision specified by a revision number (LazyLoaded).
         """
         try:
             return self.__revision_objects[revno]
@@ -184,10 +184,10 @@ class Item(UserDict.DictMixin, object):
         Deletes the Revision specified by the given revision number.
         """
         self._check_lock()
-        
+
         self.reset()
         self.backend.remove_revision(self.name, revno)
-        
+
     def keys(self):
         """
         Returns a sorted (highest first) list of all real revision numbers.
@@ -197,10 +197,10 @@ class Item(UserDict.DictMixin, object):
     def new_revision(self, revno=0):
         """
         Creates and returns a new revision with the given revision number.
-        If the revision number is None the next possible number will be used. 
+        If the revision number is None the next possible number will be used.
         """
         self._check_lock()
-        
+
         self.reset()
         rev = self.backend.create_revision(self.name, revno)
         return self[rev]
@@ -245,19 +245,19 @@ class Item(UserDict.DictMixin, object):
             except KeyError:
                 self.__deleted = False
         return self.__deleted
-    
+
     def set_deleted(self, value):
         """
         Set the deleted flag.
         You still have to call item.metadata.save() to actually save the change.
         """
         self._check_lock()
-        
+
         self.metadata[DELETED] = value
         self.__deleted = None
-    
+
     deleted = property(get_deleted, set_deleted)
-    
+
     def get_acl(self):
         """
         Get the acl property.
@@ -267,13 +267,13 @@ class Item(UserDict.DictMixin, object):
                 lines = self[0].metadata[ACL]
             except KeyError:
                 lines = []
-                
+
             from MoinMoin.security import AccessControlList
             self.__acl = AccessControlList(self.backend.cfg, lines)
         return self.__acl
-    
+
     acl = property(get_acl)
-    
+
     def get_edit_lock(self):
         """
         Get the lock property.
@@ -285,7 +285,7 @@ class Item(UserDict.DictMixin, object):
             else:
                 self.__edit_lock = False, 0, None
         return self.__edit_lock
-    
+
     def set_edit_lock(self, edit_lock):
         """
         Set the lock property.
@@ -293,7 +293,7 @@ class Item(UserDict.DictMixin, object):
         You still have to call item.metadata.save() to actually save the change.
         """
         self._check_lock()
-        
+
         if not edit_lock:
             del self.metadata[LOCK_TIMESTAMP]
             del self.metadata[LOCK_USER]
@@ -302,8 +302,8 @@ class Item(UserDict.DictMixin, object):
             self.metadata[LOCK_USER] = edit_lock[1]
         else:
             raise ValueError(_("Lock must be either False or a tuple containing timestamp and user."))
-        self.__edit_lock = None 
-    
+        self.__edit_lock = None
+
     edit_lock = property(get_edit_lock, set_edit_lock)
 
     def get_lock(self):
@@ -311,7 +311,7 @@ class Item(UserDict.DictMixin, object):
         Checks if the item is locked.
         """
         return self.__lock
-    
+
     def set_lock(self, lock):
         """
         Set the item lock state.
@@ -322,9 +322,9 @@ class Item(UserDict.DictMixin, object):
         else:
             self.backend.unlock(self.name)
         self.__lock = lock
-        
+
     lock = property(get_lock, set_lock)
-    
+
     def _check_lock(self):
         """
         Checks whether the item is locked and raises an exception otherwise.
@@ -392,7 +392,7 @@ class Revision(object):
 
 
 class ReadonlyMetadata(MetadataBackend):
-    """ 
+    """
     Readonly Metadata implementation.
     """
 
@@ -416,7 +416,7 @@ class ReadonlyMetadata(MetadataBackend):
 
     def __setitem__(self, key, value):
         """
-        @see MoinMoin.storage.external.Metadata.__setitem_
+        @see MoinMoin.storage.external.Metadata.__setitem__
         """
         raise AccessError(_("This item is readonly"))
 
@@ -440,7 +440,7 @@ class ReadonlyMetadata(MetadataBackend):
 
 
 class WriteonlyMetadata(MetadataBackend):
-    """ 
+    """
     Writeonly Metadata implementation.
     """
 
@@ -497,7 +497,7 @@ class ReadonlyData(DataBackend):
         Init stuff.
         """
         self._data_backend = data_backend
-    
+
     def read(self, size=None):
         """
         @see MoinMoin.storage.interfaces.DataBackend.read
@@ -539,7 +539,7 @@ class WriteonlyData(DataBackend):
         Init stuff.
         """
         self._data_backend = data_backend
-    
+
     def read(self, size=None):
         """
         @see MoinMoin.storage.interfaces.DataBackend.read
@@ -571,4 +571,4 @@ class WriteonlyData(DataBackend):
         self._data_backend.close()
 
 
-_ = lambda x:x
+_ = lambda x: x

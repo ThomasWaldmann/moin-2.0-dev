@@ -27,12 +27,12 @@ class StorageBackend(object):
     """
 
     def list_items(self, filters=None):
-        """ 
+        """
         Returns a list of all item names that match the given filters.
         If filters is None all items will be returned. Filters is a
         dictionary. One entry specifies a metadata key and a regular expression
         that the metadata key must match.
-        
+
         For faster access the backend may use indexes which are defined in the
         the configuration. Indexes specify metadata keys for which the backend
         will hold special caches for faster access. This can be compared
@@ -114,7 +114,7 @@ class StorageBackend(object):
         Get the data of an item-revision.
         """
         raise NotImplementedError
-    
+
     def lock(self, identifier, timeout=1, lifetime=60):
         """
         Removes a lock for the given identifier.
@@ -149,7 +149,7 @@ class DataBackend(object):
 
     def tell(self):
         """
-        Returns the current position in the stream. 
+        Returns the current position in the stream.
         """
         raise NotImplementedError
 
@@ -166,13 +166,13 @@ class DataBackend(object):
         raise NotImplementedError
 
 class MetadataBackend(UserDict.DictMixin, object):
-    """ 
+    """
     The metadata of an Item. Access will be via a dict like interface.
     All metadata will be loaded on the first access to one key.
     On every access the ACLs will be checked. After changing values you
     have to call save() to persist the changes to disk.
     """
-        
+
     def __contains__(self, key):
         """
         Checks if a key exists.

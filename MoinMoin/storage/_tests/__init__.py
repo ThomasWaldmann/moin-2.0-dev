@@ -52,7 +52,7 @@ metadata = {u'aliasname': u'',
            }
 
 def setup(module):
-    """ 
+    """
     Extract test data to tmp.
     """
     global test_dir
@@ -70,7 +70,7 @@ def teardown(module):
     global test_dir
     shutil.rmtree(test_dir)
     test_dir = None
-    
+
 def get_user_dir():
     return os.path.join(test_dir, "data/user")
 
@@ -83,7 +83,7 @@ class DummyConfig:
     indexes = []
 
 
-class BackendTest:    
+class BackendTest:
     def test_has_item(self):
         assert not self.backend.has_item("")
 

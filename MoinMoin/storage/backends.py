@@ -92,13 +92,13 @@ class MetaBackend(StorageBackend):
         @see MoinMoin.storage.interfaces.StorageBackend.lock
         """
         return self._call("lock", identifier, timeout, lifetime)
-    
+
     def unlock(self, identifier):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.unlock
         """
         return self._call("unlock", identifier)
-    
+
     def _call(self, method, *args):
         """
         Call the method from the first matching backend with the given parameters.
@@ -109,7 +109,7 @@ class MetaBackend(StorageBackend):
 class NamespaceBackend(MetaBackend):
     """
     This class implements backends structured via namespaces.
-    
+
     e.g. /tmp/ -> TmpBackend
          /    -> PageBackend
     """
@@ -132,7 +132,7 @@ class NamespaceBackend(MetaBackend):
         MetaBackend.__init__(self, new_backends)
 
     def list_items(self, filters=None):
-        """ 
+        """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
         items = []
@@ -167,7 +167,7 @@ class LayerBackend(MetaBackend):
     """
 
     def list_items(self, filters=None):
-        """ 
+        """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
         items = []
@@ -197,4 +197,4 @@ class LayerBackend(MetaBackend):
         raise NoSuchItemError(_("No such item %r.") % args[0])
 
 
-_ = lambda x:x
+_ = lambda x: x

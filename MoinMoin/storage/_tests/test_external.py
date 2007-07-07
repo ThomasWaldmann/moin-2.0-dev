@@ -57,13 +57,13 @@ class TestItemCollection:
         assert "1180424618.59.18120" in self.item_collection
         del self.item_collection["1180424618.59.18120"]
         assert not "1180424618.59.18120" in self.item_collection
-    
+
     def test_rename_item(self):
         self.item_collection.rename_item(pages[0], "asdf")
         assert "asdf" in self.item_collection
         self.item_collection.rename_item("asdf", pages[0])
         assert pages[0] in self.item_collection
-        
+
     def test_copy_item(self):
         self.item_collection.copy_item(pages[0], "asdf")
         assert "asdf" in self.item_collection
@@ -118,7 +118,7 @@ class TestItem:
         py.test.raises(NoSuchRevisionError, lambda: self.item[5])
         py.test.raises(BackendError, self.item.new_revision, 1)
         self.item.lock = False
-    
+
     def test_deleted(self):
         self.item.lock = True
         assert self.item.deleted == False
@@ -131,10 +131,10 @@ class TestItem:
         assert self.item.deleted == False
         assert self.item.current == 1
         self.item.lock = False
-    
+
     def test_acl(self):
         assert self.item.acl
-        
+
     def test_edit_lock(self):
         self.item.lock = True
         assert self.item.edit_lock == (True, 1183317594000000L, '1183317550.72.7782')

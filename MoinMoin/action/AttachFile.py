@@ -197,7 +197,7 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     fpath = os.path.join(attach_dir, target).encode(config.charset)
     exists = os.path.exists(fpath)
     if exists and not overwrite:
-        msg = _("Attachment '%(target)s' already exists.") % { 'target': target, }
+        msg = _("Attachment '%(target)s' already exists.") % {'target': target, }
     else:
         if exists:
             try:
@@ -596,7 +596,7 @@ def execute(pagename, request):
         else:
             msg = _('You are not allowed to view attachments of this page.')
     else:
-        msg = _('Unsupported upload action: %s') % (request.form['do'][0],)
+        msg = _('Unsupported upload action: %s') % (request.form['do'][0], )
 
     if msg:
         error_msg(pagename, request, msg)
