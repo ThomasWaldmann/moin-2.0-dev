@@ -17,6 +17,8 @@ import MoinMoin.auth as authmodule
 from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
+from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
+from MoinMoin.storage.backends import LayerBackend
 
 _url_re_cache = None
 _farmconfig_mtime = None
@@ -700,6 +702,13 @@ reStructuredText Quick Reference
 
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
+
+        # storage configuration
+        self.user_backend = UserStorage(self.user_dir, self, "user")
+        self.page_backend = PageStorage(os.path.join(self.data_dir, "pages"), self, "pages")
+        self.underlay_backend = PageStorage(os.path.join(self.data_underlay_dir, "pages"), self, "underlay")
+        self.data_backend = LayerBackend([self.page_backend, self.underlay_backend])
+        self.indexes = []
 
 
     def load_meta_dict(self):

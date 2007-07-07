@@ -14,7 +14,7 @@ class TestPage:
     def testMeta(self):
         page = Page(self.request, u'FrontPage')
         meta = page.meta
-        for k, v in meta:
+        for k, v in meta.iteritems():
             if k == u'format':
                 assert v == u'wiki'
             elif k == u'language':
