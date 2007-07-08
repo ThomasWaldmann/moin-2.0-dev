@@ -122,10 +122,9 @@ class AbstractMetadata(MetadataBackend):
         Initializes the metadata object with the required parameters.
         """
         self._backend = backend
-
         self._name = name
         self._revno = revno
-        self._metadata = self._parse_metadata(name, revno)
+        self._metadata_property = None
 
     def __contains__(self, key):
         """
@@ -174,6 +173,16 @@ class AbstractMetadata(MetadataBackend):
         @see MoinMoin.fs_moin16.AbstractStorage._save_metadata
         """
         raise NotImplementedError
+
+    def get_metadata(self):
+        """
+        Lazy load metadata.
+        """
+        if self._metadata_property is None:
+            self._metadata_property = self._parse_metadata(self._name, self._revno)
+        return self._metadata_property
+
+    _metadata = property(get_metadata)
 
 
 class UserStorage(AbstractStorage):
@@ -488,14 +497,7 @@ class PageStorage(AbstractStorage):
         if revno == 0:
             revno = self.current_revision(name)
 
-        if self.has_revision(name, revno):
-            return PageData(self, name, revno)
-
-        else:
-            if not self.has_item(name):
-                raise NoSuchItemError(_("Item %r does not exist.") % name)
-            else:
-                raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, name))
+        return PageData(self, name, revno)
 
     def get_metadata_backend(self, name, revno):
         """
@@ -585,9 +587,11 @@ class PageData(DataBackend):
         """
         if not self._read_property is None:
             self._read_file.close()
+            self._read_property = None
         if not self._write_property is None:
             self._write_file.close()
             shutil.move(self._tmp[1], self._read_file_name)
+            self._write_property = None
 
 
 class PageMetadata(AbstractMetadata):

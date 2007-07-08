@@ -73,7 +73,6 @@ class TestUserBackend(BackendTest):
 
     def test_get_metadata_backend(self):
         self.backend.get_metadata_backend(names[0], 1)
-        py.test.raises(NoSuchItemError, self.backend.get_metadata_backend, "NoItem", 1)
 
     def test_get_data_backend(self):
         py.test.raises(NotImplementedError, self.backend.get_data_backend, names[0], 1)
@@ -185,18 +184,9 @@ class TestPageBackend(BackendTest):
 
     def test_get_data_backend(self):
         self.backend.get_data_backend(pages[0], 1)
-        py.test.raises(NoSuchItemError, self.backend.get_data_backend, "adsf", 2)
-        py.test.raises(NoSuchRevisionError, self.backend.get_data_backend, pages[0], 3)
 
     def test_get_metadata_backend(self):
         self.backend.get_metadata_backend(pages[0], 1)
-        py.test.raises(NoSuchItemError, self.backend.get_data_backend, "adsf", 2)
-        py.test.raises(NoSuchRevisionError, self.backend.get_data_backend, pages[0], 3)
-
-    def test_metadata(self):
-        self.backend.get_metadata_backend(pages[1], 2)
-        py.test.raises(NoSuchItemError, self.backend.get_metadata_backend, "adsf", 2)
-        py.test.raises(NoSuchRevisionError, self.backend.get_metadata_backend, pages[0], 3)
 
 
 class TestPageMetadata:
