@@ -94,7 +94,7 @@ class TestItem:
         assert revision.revno == 1
         revision = self.item[0]
         assert isinstance(revision, Revision)
-        assert revision.revno == 0
+        assert revision.revno == 1
         py.test.raises(NoSuchRevisionError, lambda: self.item[5])
 
     def test_keys(self):

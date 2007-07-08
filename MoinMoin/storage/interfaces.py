@@ -82,6 +82,8 @@ class StorageBackend(object):
     def has_revision(self, name, revno):
         """
         Returns whether the given revision number exists for the given item.
+        It also returns True if the revision is empty. If revno is 0 it will
+        be checked if there is any revision.
         """
         raise NotImplementedError
 
@@ -105,13 +107,16 @@ class StorageBackend(object):
         """
         Returns a metadata backend object which behaves like a dictionary.
         If revno is 0 the current revision will be used. If revno is -1 the
-        item-wide metadata will be used.
+        item-wide metadata will be used. Raises no error if the name or revno
+        does not exists. The error will only raised on access.
         """
         raise NotImplementedError
 
     def get_data_backend(self, name, revno):
         """
-        Get the data of an item-revision.
+        Get the data of an item-revision. If revno is 0 the current revision
+        will be used. Raises no error if the name or revno does not exists. The
+        error will only raised on access.
         """
         raise NotImplementedError
 

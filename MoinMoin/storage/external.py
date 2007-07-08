@@ -5,6 +5,7 @@
     @license: GNU GPL, see COPYING for details.
 
     TODO: acl checking, properties on revision
+    TODO: __item_dict use editlog to reach sanity
 """
 
 import UserDict
@@ -18,6 +19,8 @@ class ItemCollection(UserDict.DictMixin, object):
     The ItemCollection class realizes the access to the stored Items via the
     correct backend and maybe caching.
     """
+
+    __item_dict = dict()
 
     def __init__(self, backend, userobj):
         """
@@ -38,11 +41,16 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Loads an Item.
         """
-        backend = self.backend.has_item(name)
-        if backend:
-            return Item(name, backend, self.userobj)
-        else:
-            raise NoSuchItemError(_("No such item %r.") % name)
+        try:
+            return self.__item_dict[name]
+        except KeyError:
+            backend = self.backend.has_item(name)
+            if backend:
+                item = Item(name, backend, self.userobj)
+                self.__item_dict[name] = item
+                return item
+            else:
+                raise NoSuchItemError(_("No such item %r.") % name)
 
     def __delitem__(self, name):
         """
@@ -153,8 +161,8 @@ class Item(UserDict.DictMixin, object):
         Reset the lazy loaded stuff which is dependend on adding/removing revisions.
         """
         self.__revisions = None
-        self.__current = None
         self.__revision_objects = dict()
+        self.__current = None
         self.__acl = None
         self.__edit_lock = None
         self.__metadata = None
@@ -170,12 +178,16 @@ class Item(UserDict.DictMixin, object):
         """
         Returns the revision specified by a revision number (LazyLoaded).
         """
+        if revno == 0:
+            revno = self.current
+
         try:
             return self.__revision_objects[revno]
         except KeyError:
             if self.backend.has_revision(self.name, revno):
-                self.__revision_objects[revno] = Revision(revno, self)
-                return self.__revision_objects[revno]
+                rev = Revision(revno, self)
+                self.__revision_objects[revno] = rev
+                return rev
             else:
                 raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, self.name))
 
@@ -184,7 +196,6 @@ class Item(UserDict.DictMixin, object):
         Deletes the Revision specified by the given revision number.
         """
         self._check_lock()
-
         self.reset()
         self.backend.remove_revision(self.name, revno)
 
@@ -200,7 +211,6 @@ class Item(UserDict.DictMixin, object):
         If the revision number is None the next possible number will be used.
         """
         self._check_lock()
-
         self.reset()
         rev = self.backend.create_revision(self.name, revno)
         return self[rev]

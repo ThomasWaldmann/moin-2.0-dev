@@ -184,27 +184,68 @@ class Page(object):
         self._pi = None
         self._data = None
         self._body_modified = 0
+        self.__item = None
+        self.__rev = None
+        self._body = None
+        self._meta = None
+        self._loaded = False
+
+    def lazy_load(self):
+        """
+        Lazy load the page storage stuff.
+        """
+        if not self._loaded:
+            self._loaded = True
+        else:
+            return
 
         try:
-            self._item = self._items_all[self.page_name]
+            self.__item = self._items_all[self.page_name]
+            self.__rev = self._item[self.rev]
             self._body = None
             self._meta = None
         except NoSuchItemError:
+            self.__item = None
+            self.__rev = None
             self._body = u""
             self._meta = dict()
-            self._item = None
+        except NoSuchRevisionError:
+            self.__rev = None
+            self._body = u""
+            self._meta = dict()
+
+    def set_item(self, item):
+        """
+        Set item method.
+        """
+        self.__item = item
+
+    def get_item(self):
+        """
+        Get item method.
+        """
+        self.lazy_load()
+        return self.__item
+
+    _item = property(get_item, set_item)
+
+    def get_rev(self):
+        """
+        Get rev method.
+        """
+        self.lazy_load()
+        return self.__rev
+
+    _rev = property(get_rev)
 
     # now we define some properties to lazy load some attributes on first access:
 
     def get_body(self):
         if self._body is None:
-            try:
-                text = self._item[self.rev].data.read()
-                self._item[self.rev].data.close()
+            if self._rev is not None:
+                text = self._rev.data.read()
+                self._rev.data.close()
                 self._body = self.decodeTextMimeType(text)
-            except NoSuchRevisionError:
-                self._body = u""
-                self._meta = dict()
         return self._body
 
     def set_body(self, body):
@@ -216,7 +257,8 @@ class Page(object):
 
     def get_meta(self):
         if self._meta is None:
-            self._meta = self._item[self.rev].metadata
+            if self._rev is not None:
+                self._meta = self._rev.metadata
         return self._meta
     meta = property(fget=get_meta) # processing instructions, ACLs (upper part of page text)
 
@@ -498,13 +540,10 @@ class Page(object):
         @return: true, if page exists
         """
         # Edge cases
-        if not self._item:
+        if self._item is None or self._rev is None:
             return False
 
         if domain == 'underlay' and not self.request.cfg.data_underlay_dir:
-            return False
-
-        if rev and not self._item.has_key(rev):
             return False
 
         if not includeDeleted and self._item.deleted:
@@ -1306,8 +1345,6 @@ class Page(object):
 
         Return cached ACL or invoke parseACL and update the cache.
 
-        TODO: cache?
-
         @param request: the request object
         @rtype: MoinMoin.security.AccessControlList
         @return: ACL of this page
@@ -1317,6 +1354,7 @@ class Page(object):
         else:
             from MoinMoin.security import AccessControlList
             return AccessControlList(self.request.cfg)
+
 
     # Text format -------------------------------------------------------
 
@@ -1430,25 +1468,10 @@ class RootPage(object):
         if user is None:
             user = request.user
 
-        # Get pages cache or create it
-        cachedlist = request.cfg.cache.pagelists.getItem(request, 'all', None)
-        if cachedlist is None:
-            cachedlist = {}
-            for name in self.__items:
-
-                # Filter those annoying editor backups - current moin does not create
-                # those pages any more, but users have them already in data/pages
-                # until we remove them by a mig script...
-                if name.endswith(u'/MoinEditorBackup'):
-                    continue
-
-                cachedlist[name] = None
-            request.cfg.cache.pagelists.putItem(request, 'all', None, cachedlist)
-
         if user or exists or filter or not include_underlay or return_objects:
             # Filter names
             pages = []
-            for name in cachedlist:
+            for name in self.__items:
                 # First, custom filter - exists and acl check are very
                 # expensive!
                 if filter and not filter(name):
@@ -1473,7 +1496,7 @@ class RootPage(object):
                 else:
                     pages.append(name)
         else:
-            pages = cachedlist.keys()
+            pages = self.__items.keys()
 
         request.clock.stop('getPageList')
         return pages

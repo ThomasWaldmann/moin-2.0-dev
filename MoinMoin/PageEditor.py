@@ -890,7 +890,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
                 saved_page = Page(request, self.page_name, rev=int(next_line.rev))
                 if newtext == saved_page.get_raw_body():
                     msg = _("You already saved this page!")
-                    return msg
                 else:
                     msg = _("You already edited this page! Please do not use the back button.")
                     raise self.EditConflict, msg
@@ -901,6 +900,7 @@ Please review the page and save then. Do not save this page as it is!""")
             raise self.EditConflict, msg
         elif newtext == self.get_raw_body():
             msg = _('You did not change the page content, not saved!')
+            print newtext
             raise self.Unchanged, msg
         else:
             from MoinMoin.security import parseACL

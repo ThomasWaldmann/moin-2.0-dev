@@ -8,9 +8,9 @@
 import os
 import py
 import shutil
-import tarfile
 import tempfile
 
+from MoinMoin.support import tarfile
 from MoinMoin.storage.error import BackendError, LockingError
 
 test_dir = None
