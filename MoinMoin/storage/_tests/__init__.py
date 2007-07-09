@@ -83,6 +83,11 @@ class DummyConfig:
     tmp_dir = tempfile.gettempdir()
 
 
+class RequestDummy:
+    user = None
+    editlog = None
+    
+
 class BackendTest:
     def test_has_item(self):
         assert not self.backend.has_item("")

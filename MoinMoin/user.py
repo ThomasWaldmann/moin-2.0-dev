@@ -31,7 +31,7 @@ def getUserList(request):
     @rtype: list
     @return: all user IDs
     """
-    return ItemCollection(request.cfg.user_backend, request.user).keys()
+    return ItemCollection(request.cfg.user_backend, request).keys()
 
 def get_by_filter(request, filter_func):
     """ Searches for an user with a given filter function """
@@ -59,7 +59,7 @@ def getUserId(request, searchName):
     @return: the corresponding user ID or None
     """
     try:
-        return ItemCollection(request.cfg.user_backend, request.user).keys({'name': searchName})[0]
+        return ItemCollection(request.cfg.user_backend, request).keys({'name': searchName})[0]
     except IndexError:
         return None
 

@@ -7,7 +7,7 @@
 
 import py.test
 
-from MoinMoin.storage._tests import DummyConfig, pages, get_page_dir, setup, teardown
+from MoinMoin.storage._tests import DummyConfig, pages, get_page_dir, setup, teardown, RequestDummy
 
 from MoinMoin.storage.backends import LayerBackend
 from MoinMoin.storage.fs_moin16 import PageStorage
@@ -27,7 +27,7 @@ class TestItemCollection:
     item_collection = None
 
     def setup_class(self):
-        self.item_collection = ItemCollection(LayerBackend([PageStorage(get_page_dir(), DummyConfig(), "pages")]), None)
+        self.item_collection = ItemCollection(LayerBackend([PageStorage(get_page_dir(), DummyConfig(), "pages")]), RequestDummy())
 
     def teardown_class(self):
         self.item_collection = None
@@ -80,7 +80,7 @@ class TestItem:
     item = None
 
     def setup_class(self):
-        self.item = ItemCollection(PageStorage(get_page_dir(), DummyConfig(), "pages"), None)[pages[0]]
+        self.item = ItemCollection(PageStorage(get_page_dir(), DummyConfig(), "pages"), RequestDummy())[pages[0]]
 
     def teardown_class(self):
         self.item = None
@@ -160,7 +160,7 @@ class TestRevision:
     revision = None
 
     def setup_class(self):
-        self.revision = ItemCollection(PageStorage(get_page_dir(), DummyConfig(), "pages"), None)[pages[0]][1]
+        self.revision = ItemCollection(PageStorage(get_page_dir(), DummyConfig(), "pages"), RequestDummy())[pages[0]][1]
 
     def teardown_class(self):
         self.revision = None

@@ -5,8 +5,7 @@
     @license: GNU GPL, see COPYING for details.
 
     TODO: indexes
-    TODO: item wide metadata
-    TODO: wiki wide metadata
+    TODO: edit log
 
     NOTE: This implementation is not really thread safe on windows. Some
           operations will fail if there are still open file descriptors
@@ -509,8 +508,6 @@ class PageStorage(AbstractStorage):
     def get_page_path(self, name, *args):
         """
         @see MoinMoin.storage.fs_moin16.AbstractStorage.get_page_path
-
-        TODO: cache the quoted name?
         """
         return AbstractStorage.get_page_path(self, quoteWikinameFS(name), *args)
 
