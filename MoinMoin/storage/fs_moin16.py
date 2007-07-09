@@ -7,7 +7,6 @@
     TODO: indexes
     TODO: item wide metadata
     TODO: wiki wide metadata
-    TODO: use a better tempdir
 
     NOTE: This implementation is not really thread safe on windows. Some
           operations will fail if there are still open file descriptors
@@ -56,7 +55,6 @@ class AbstractStorage(StorageBackend):
     """
 
     locks = dict()
-    lockdir = tempfile.mkdtemp()
 
     def __init__(self, path, cfg, name):
         """
@@ -98,7 +96,7 @@ class AbstractStorage(StorageBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.lock
         """
-        write_lock = lock.ExclusiveLock(os.path.join(self.lockdir, identifier), lifetime)
+        write_lock = lock.ExclusiveLock(os.path.join(self.cfg.tmp_dir, identifier), lifetime)
         if not write_lock.acquire(timeout):
             raise LockingError(_("There is already a lock for %r") % identifier)
         self.locks[identifier] = write_lock
@@ -291,7 +289,7 @@ class UserMetadata(AbstractMetadata):
         @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
         """
 
-        tmp = tempfile.mkstemp()
+        tmp = tempfile.mkstemp(dir=self._backend.cfg.tmp_dir)
 
         try:
             data_file = codecs.getwriter(config.charset)(os.fdopen(tmp[0], "w"))
@@ -476,7 +474,7 @@ class PageStorage(AbstractStorage):
         if revno == 0:
             revno = self.list_revisions(name)[0]
 
-        tmp = tempfile.mkstemp()
+        tmp = tempfile.mkstemp(dir=self.cfg.tmp_dir)
 
         try:
             tmp_file = os.fdopen(tmp[0], "w")
@@ -551,7 +549,7 @@ class PageData(DataBackend):
         Lazy load write file.
         """
         if self._write_property is None:
-            self._tmp = tempfile.mkstemp()
+            self._tmp = tempfile.mkstemp(dir=self._backend.cfg.tmp_dir)
             self._write_property = codecs.getwriter(config.charset)(os.fdopen(self._tmp[0], "w"))
         return self._write_property
 
@@ -685,7 +683,7 @@ class PageMetadata(AbstractMetadata):
 
         else:
 
-            tmp = tempfile.mkstemp()
+            tmp = tempfile.mkstemp(dir=self._backend.cfg.tmp_dir)
             read_filename = self._backend.get_page_path(name, "revisions", get_rev_string(revno))
 
             try:
