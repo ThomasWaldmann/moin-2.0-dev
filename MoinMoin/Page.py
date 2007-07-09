@@ -1217,6 +1217,7 @@ class Page(object):
             missingpage = wikiutil.getLocalizedPage(request, 'MissingHomePage')
         else:
             missingpage = wikiutil.getLocalizedPage(request, 'MissingPage')
+        missingpage.lazy_load()
         missingpage._page_name_force = missingpage.page_name
         missingpage.page_name = self.page_name
         missingpage.send_page(content_only=1, send_missing_page=1)
