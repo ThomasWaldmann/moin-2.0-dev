@@ -35,7 +35,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, re, logging
+import os, logging
 
 from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
