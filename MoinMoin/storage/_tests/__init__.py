@@ -79,8 +79,8 @@ def get_page_dir():
 
 
 class DummyConfig:
-    user_storage = ""
     indexes = []
+    tmp_dir = tempfile.gettempdir()
 
 
 class BackendTest:
