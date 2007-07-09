@@ -171,9 +171,9 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        self._items_standard = ItemCollection(request.cfg.page_backend, None)
-        self._items_underlay = ItemCollection(request.cfg.underlay_backend, None)
-        self._items_all = ItemCollection(request.cfg.data_backend, None)
+        self._items_standard = ItemCollection(request.cfg.page_backend, request)
+        self._items_underlay = ItemCollection(request.cfg.underlay_backend, request)
+        self._items_all = ItemCollection(request.cfg.data_backend, request)
 
         self.reset()
 
@@ -1419,7 +1419,7 @@ class RootPage(object):
         Init the item collection.
         """
         self.request = request
-        self.__items = ItemCollection(request.cfg.data_backend, None)
+        self.__items = ItemCollection(request.cfg.data_backend, request)
 
     def getPagePath(self, fname, isfile):
         """

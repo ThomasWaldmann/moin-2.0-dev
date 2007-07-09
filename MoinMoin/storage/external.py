@@ -4,10 +4,11 @@
     @copyright: 2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
 
-    TODO: acl checking, properties on revision
-    TODO: __item_dict use editlog to reach sanity
+    TODO: acl checking
+    TODO: properties on revision
 """
 
+import logging
 import UserDict
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, LockingError
@@ -21,13 +22,14 @@ class ItemCollection(UserDict.DictMixin, object):
     """
 
     __item_dict = dict()
+    log_pos = None
 
-    def __init__(self, backend, userobj):
+    def __init__(self, backend, request=None):
         """
         Initializes the proper StorageBackend.
         """
         self.backend = backend
-        self.userobj = userobj
+        self.request = request
 
         self.__items = None
 
@@ -41,12 +43,13 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Loads an Item.
         """
+        self.refresh()
         try:
             return self.__item_dict[name]
         except KeyError:
             backend = self.backend.has_item(name)
             if backend:
-                item = Item(name, backend, self.userobj)
+                item = Item(name, backend, self.request.user)
                 self.__item_dict[name] = item
                 return item
             else:
@@ -76,7 +79,7 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         backend = self.backend.create_item(name)
         self.__items = None
-        return Item(name, backend, self.userobj)
+        return Item(name, backend, self.request.user)
 
     def rename_item(self, name, newname):
         """
@@ -133,6 +136,25 @@ class ItemCollection(UserDict.DictMixin, object):
         return self.__items
 
     items = property(get_items)
+    
+    def refresh(self):
+        """
+        Refresh the cached items based on the editlog.
+        """
+        if self.request.editlog is None:
+            self.__item_dict = dict()
+            return
+        
+        new_pos, items = self.request.editlog.news(self.log_pos)
+        if items:
+            for item in items:
+                logging.info("cache: removing %r" % item)
+                try:
+                    del self.__item_dict[item]
+                except KeyError:
+                    pass
+            self.__items = None
+        self.log_pos = new_pos
 
 
 class Item(UserDict.DictMixin, object):
