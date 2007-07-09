@@ -18,13 +18,12 @@
 
 import time, errno
 
-from MoinMoin import caching, user, wikiutil, error
+from MoinMoin import caching, wikiutil, error
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
 from MoinMoin.logfile import editlog, eventlog
 from MoinMoin.util import timefuncs, web
-from MoinMoin.mail import sendmail
 from MoinMoin.user import User
 from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, send_event
