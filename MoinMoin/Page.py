@@ -102,14 +102,17 @@ class Page(object):
         """
         Reset page state.
         """
-        self._pi = None
-        self._data = None
-        self._body_modified = 0
         self.__item = None
         self.__rev = None
-        self._body = None
-        self._meta = None
+
         self._loaded = False
+
+        self._body = None
+        self._data = None
+        self._meta = None
+        self._pi = None
+
+        self._body_modified = 0
 
     def lazy_load(self):
         """
@@ -340,10 +343,9 @@ class Page(object):
     def last_edit(self, printable=False):
         """
         Return the last edit.
-        
+
         TODO: Fix up editor.
 
-        @param request: the request object
         @param printable: whether to return the date in printable form
         @rtype: dict
         @return: timestamp and editor information
@@ -355,7 +357,7 @@ class Page(object):
             'timestamp': self.mtime(printable),
             'editor': '',
         }
-        
+
         return result
 
     def mtime(self, printable=False):
@@ -378,49 +380,42 @@ class Page(object):
         """
         Does this page live in the underlay dir?
 
-        Return true even if the data dir has a copy of this page. To
-        check for underlay only page, use ifUnderlayPage() and not
-        isStandardPage()
-
         @param includeDeleted: include deleted pages
         @rtype: bool
         @return: true if page lives in the underlay dir
         """
+        if not includeDeleted and self._item.deleted:
+            return False
         return self._item.backend.name == "underlay"
 
     def isStandardPage(self, includeDeleted=True):
         """
         Does this page live in the data dir?
 
-        Return true even if this is a copy of an underlay page. To check
-        for data only page, use isStandardPage() and not isUnderlayPage().
-
         @param includeDeleted: include deleted pages
         @rtype: bool
         @return: true if page lives in the data dir
         """
+        if not includeDeleted and self._item.deleted:
+            return False
         return self._item.backend.name != "underlay"
 
     def exists(self, rev=0, domain=None, includeDeleted=False):
         """
         Does this page exist?
 
-        This is the lower level method for checking page existence. Use
-        the higher level methods isUnderlayPage and isStandardPage for
-        cleaner code.
-
         @param rev: revision to look for. Default: check current
         @param domain: where to look for the page. Default: look in all,
                        available values: 'underlay', 'standard'
-        @param includeDeleted: ignore page state, just check its pagedir
+        @param includeDeleted: include deleted pages?
         @rtype: bool
-        @return: true, if page exists
+        @return: true if page exists otherwise false
         """
         # Edge cases
-        if self._item is None or self._rev is None:
+        if domain == 'underlay' and not self.request.cfg.data_underlay_dir:
             return False
 
-        if domain == 'underlay' and not self.request.cfg.data_underlay_dir:
+        if self._item is None or not rev and not self._rev or not rev in self._item:
             return False
 
         if not includeDeleted and self._item.deleted:
@@ -434,7 +429,8 @@ class Page(object):
             return self._item.backend.name != 'underlay'
 
     def size(self, rev=0):
-        """ Get Page size.
+        """
+        Get Page size.
 
         @rtype: int
         @return: page size, 0 for non-existent pages.
@@ -447,6 +443,19 @@ class Page(object):
             return self._item[rev].metadata[SIZE]
         except NoSuchRevisionError:
             return 0L
+
+    def getACL(self):
+        """
+        Get ACLs of this page.
+
+        @rtype: MoinMoin.security.AccessControlList
+        @return: ACL of this page
+        """
+        if self._item:
+            return self._item.acl
+        else:
+            from MoinMoin.security import AccessControlList
+            return AccessControlList(self.request.cfg)
 
     def split_title(self, force=0):
         """ Return a string with the page name split by spaces, if the user wants that.
@@ -622,7 +631,6 @@ class Page(object):
             pi['lines'] = 0
             pi['format'] = "xslt"
             pi['formatargs'] = ''
-            pi['acl'] = security.AccessControlList(request.cfg, []) # avoid KeyError on acl check
             return pi
 
         meta = self.meta
@@ -1175,23 +1183,6 @@ class Page(object):
                     return parent
         return None
 
-    def getACL(self, request):
-        """
-        Get cached ACLs of this page.
-
-        Return cached ACL or invoke parseACL and update the cache.
-
-        @param request: the request object
-        @rtype: MoinMoin.security.AccessControlList
-        @return: ACL of this page
-        """
-        if self._item:
-            return self._item.acl
-        else:
-            from MoinMoin.security import AccessControlList
-            return AccessControlList(self.request.cfg)
-
-
     # Text format -------------------------------------------------------
 
     def encodeTextMimeType(self, text):
@@ -1254,7 +1245,7 @@ class RootPage(object):
         Init the item collection.
         """
         self.request = request
-        self.__items = ItemCollection(request.cfg.data_backend, request)
+        self._items = ItemCollection(request.cfg.data_backend, request)
 
     def getPagePath(self, fname, isfile):
         """
@@ -1307,7 +1298,7 @@ class RootPage(object):
         if user or exists or filter or not include_underlay or return_objects:
             # Filter names
             pages = []
-            for name in self.__items:
+            for name in self._items:
                 # First, custom filter - exists and acl check are very
                 # expensive!
                 if filter and not filter(name):
@@ -1332,7 +1323,7 @@ class RootPage(object):
                 else:
                     pages.append(name)
         else:
-            pages = self.__items.keys()
+            pages = self._items.keys()
 
         request.clock.stop('getPageList')
         return pages
@@ -1374,7 +1365,7 @@ class RootPage(object):
             # WARNING: SLOW
             pages = self.getPageList(user='')
         else:
-            pages = self.__items
+            pages = self._items
         count = len(pages)
         self.request.clock.stop('getPageCount')
 

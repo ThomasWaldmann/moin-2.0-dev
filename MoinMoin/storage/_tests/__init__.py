@@ -57,7 +57,6 @@ def setup(module):
     """
     global test_dir
     test_dir = tempfile.mkdtemp()
-    print os.path.join(str(py.magic.autopath().dirpath()), "data.tar")
     tar_file = tarfile.open(os.path.join(str(py.magic.autopath().dirpath()), u"data.tar"))
     for tarinfo in tar_file:
         tar_file.extract(tarinfo, test_dir)
@@ -81,7 +80,7 @@ def get_page_dir():
 class DummyConfig:
     indexes = []
     tmp_dir = tempfile.gettempdir()
-    
+
 
 class BackendTest:
     def test_has_item(self):
