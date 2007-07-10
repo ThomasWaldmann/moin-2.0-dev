@@ -11,8 +11,8 @@ import py.test
 from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown, BackendTest
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
-from MoinMoin.storage.interfaces import SIZE, LOCK_TIMESTAMP, LOCK_USER
-from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
+from MoinMoin.storage.interfaces import SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 
 
 def setup_module(module):
@@ -195,15 +195,18 @@ class TestPageMetadata:
         self.backend = PageStorage(get_page_dir(), DummyConfig(), "pages")
 
     def test_get(self):
-        assert self.backend.get_metadata_backend(pages[1], 2) == {SIZE: 192L, 'format': 'wiki', 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
-        assert self.backend.get_metadata_backend(pages[0], -1) == {LOCK_TIMESTAMP: '1183317594000000', LOCK_USER: '1183317550.72.7782'}
-        assert self.backend.get_metadata_backend(pages[1], -1) == {LOCK_TIMESTAMP: '1182452549000000', LOCK_USER: '127.0.0.1'}
+        metadata1 = self.backend.get_metadata_backend(pages[1], 2)
+        assert metadata1 == {MTIME: metadata1['mtime'], SIZE: 192L, 'format': 'wiki', 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
+        metadata2 = self.backend.get_metadata_backend(pages[0], -1)
+        assert metadata2 == {LOCK_TIMESTAMP: '1183317594000000', LOCK_USER: '1183317550.72.7782'}
+        metadata3 = self.backend.get_metadata_backend(pages[1], -1)
+        assert metadata3 == {LOCK_TIMESTAMP: '1182452549000000', LOCK_USER: '127.0.0.1'}
 
     def test_set(self):
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
         metadata1['format'] = 'test'
         metadata1.save()
-        assert metadata1 == {SIZE: 192L, 'format': 'test', 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
+        assert metadata1 == {MTIME: metadata1['mtime'], SIZE: 192L, 'format': 'test', 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
         metadata1['format'] = 'wiki'
         metadata1.save()
 
@@ -217,7 +220,7 @@ class TestPageMetadata:
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
         del metadata1['format']
         metadata1.save()
-        assert metadata1 == {SIZE: 179L, 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
+        assert metadata1 == {MTIME: metadata1['mtime'], SIZE: 179L, 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
 
         metadata2 = self.backend.get_metadata_backend(pages[1], -1)
         del metadata2[LOCK_TIMESTAMP]

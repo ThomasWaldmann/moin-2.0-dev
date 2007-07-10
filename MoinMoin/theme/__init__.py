@@ -691,12 +691,12 @@ class ThemeBase:
         _ = self.request.getText
         html = ''
         if self.shouldShowPageinfo(page):
-            info = page.lastEditInfo()
+            info = page.last_edit(printable=True)
             if info:
                 if info['editor']:
-                    info = _("last edited %(time)s by %(editor)s") % info
+                    info = _("last edited %(timestamp)s by %(editor)s") % info
                 else:
-                    info = _("last modified %(time)s") % info
+                    info = _("last modified %(timestamp)s") % info
                 pagename = page.page_name
                 if self.request.cfg.show_interwiki:
                     pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
@@ -1622,7 +1622,7 @@ var gui_editor_link_text = "%(text)s";
                 'page': page,
                 'rev': rev,
                 'pagesize': pagename and page.size() or 0,
-                'last_edit_info': pagename and page.lastEditInfo() or '',
+                'last_edit_info': pagename and page.last_edit(printable=True) or '',
                 'page_name': pagename or '',
                 'page_find_page': page_find_page,
                 'page_front_page': page_front_page,

@@ -41,7 +41,7 @@ import tempfile
 
 from MoinMoin import config
 from MoinMoin.util import lock
-from MoinMoin.storage.interfaces import DataBackend, StorageBackend, MetadataBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER
+from MoinMoin.storage.interfaces import DataBackend, StorageBackend, MetadataBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
 from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
 
@@ -651,8 +651,9 @@ class PageMetadata(AbstractMetadata):
                     break
             data_file.close()
 
-            # add size metadata
+            # add size and mtime
             metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
+            metadata[MTIME] = os.stat(self._backend.get_page_path(name, "revisions", get_rev_string(revno))).st_mtime
 
         return metadata
 
@@ -698,7 +699,7 @@ class PageMetadata(AbstractMetadata):
             for key, value in metadata.iteritems():
 
                 # remove size metadata
-                if key == SIZE:
+                if key == SIZE or key == MTIME:
                     continue
 
                 # special handling for list metadata like acls
@@ -724,8 +725,9 @@ class PageMetadata(AbstractMetadata):
             except OSError, err:
                 _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
-            # update size
+            # update size and mtime
             metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
+            metadata[MTIME] = os.stat(self._backend.get_page_path(name, "revisions", get_rev_string(revno))).st_mtime
 
 
 def encode_list(items):
