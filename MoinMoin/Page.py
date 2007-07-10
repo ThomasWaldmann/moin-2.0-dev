@@ -35,7 +35,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, logging
+import os
 
 from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
@@ -47,85 +47,6 @@ from MoinMoin.storage.interfaces import SIZE, MTIME
 def is_cache_exception(e):
     args = e.args
     return not (len(args) != 1 or args[0] != 'CacheNeedsUpdate')
-
-
-class ItemCache:
-    """ Cache some page item related data, as meta data or pagelist
-
-        We only cache this to RAM in request.cfg (this is the only kind of
-        server object we have), because it might be too big for pickling it
-        in and out.
-    """
-    def __init__(self, name):
-        """ Initialize ItemCache object.
-            @param name: name of the object, used for display in logging and
-                         influences behaviour of refresh().
-        """
-        self.name = name
-        self.cache = {}
-        self.log_pos = None # TODO: initialize this to EOF pos of log
-                            # to avoid reading in the whole log on first request
-        self.requests = 0
-        self.hits = 0
-        self.loglevel = logging.NOTSET
-
-    def putItem(self, request, name, key, data):
-        """ Remembers some data for item name under a key.
-            @param request: currently unused
-            @param name: name of the item (page), unicode
-            @param key: used as secondary access key after name
-            @param data: the data item that should be remembered
-        """
-        d = self.cache.setdefault(name, {})
-        d[key] = data
-
-    def getItem(self, request, name, key):
-        """ Returns some item stored for item name under key.
-            @param request: the request object
-            @param name: name of the item (page), unicode
-            @param key: used as secondary access key after name
-            @return: the data or None, if there is no such name or key.
-        """
-        self.refresh(request)
-        try:
-            data = self.cache[name][key]
-            self.hits += 1
-            hit_str = 'hit'
-        except KeyError:
-            data = None
-            hit_str = 'miss'
-        self.requests += 1
-        logging.log(self.loglevel, "%s cache %s (h/r %2.1f%%) for %r %r" % (
-            self.name,
-            hit_str,
-            float(self.hits * 100) / self.requests,
-            name,
-            key,
-        ))
-        return data
-
-    def refresh(self, request):
-        """ Refresh the cache - if anything has changed in the wiki, we see it
-            in the edit-log and either delete cached data for the changed items
-            (for 'meta') or the complete cache ('pagelists').
-            @param request: the request object
-        """
-        elog = request.editlog
-        old_pos = self.log_pos
-        new_pos, items = elog.news(old_pos)
-        if items:
-            if self.name == 'meta':
-                for item in items:
-                    logging.log(self.loglevel, "cache: removing %r" % item)
-                    try:
-                        del self.cache[item]
-                    except:
-                        pass
-            elif self.name == 'pagelists':
-                logging.log(self.loglevel, "cache: clearing pagelist cache")
-                self.cache = {}
-        self.log_pos = new_pos # important to do this at the end -
-                               # avoids threading race conditions
 
 
 class Page(object):
