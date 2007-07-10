@@ -899,7 +899,6 @@ Please review the page and save then. Do not save this page as it is!""")
             raise self.EditConflict, msg
         elif newtext == self.get_raw_body():
             msg = _('You did not change the page content, not saved!')
-            print newtext
             raise self.Unchanged, msg
         else:
             from MoinMoin.security import parseACL
@@ -907,7 +906,7 @@ Please review the page and save then. Do not save this page as it is!""")
             # they are not the sames, the user must have admin
             # rights. This is a good place to update acl cache - instead
             # of wating for next request.
-            acl = self.getACL(request)
+            acl = self.getACL()
             if (not request.user.may.admin(self.page_name) and
                 parseACL(request, newtext).acl != acl.acl and
                 action != "SAVE/REVERT"):

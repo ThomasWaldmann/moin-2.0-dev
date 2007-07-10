@@ -136,7 +136,7 @@ class ItemCollection(UserDict.DictMixin, object):
         return self.__items
 
     items = property(get_items)
-    
+
     def refresh(self):
         """
         Refresh the cached items based on the editlog.
@@ -144,7 +144,7 @@ class ItemCollection(UserDict.DictMixin, object):
         if self.request.editlog is None:
             self.__item_dict = dict()
             return
-        
+
         new_pos, items = self.request.editlog.news(self.log_pos)
         if items:
             for item in items:

@@ -35,7 +35,7 @@ def _check(request, pagename, user, right):
         p = request.page # reuse is good
     else:
         p = Page(request, pagename)
-    acl = p.getACL(request) # this will be fast in a reused page obj
+    acl = p.getACL() # this will be fast in a reused page obj
     return acl.may(request, user, right)
 
 
@@ -70,7 +70,7 @@ def _checkHierarchically(request, pagename, username, attr):
         # starting at the leaf, going to the root
         name = '/'.join(pages[:i])
         # Get page acl and ask for permission
-        acl = Page(request, name).getACL(request)
+        acl = Page(request, name).getACL()
         if acl.acl:
             some_acl = True
             allowed = acl.may(request, username, attr)

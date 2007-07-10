@@ -154,7 +154,7 @@ class TestItem:
         assert self.item.lock == False
         py.test.raises(LockingError, self.item.new_revision, 1)
         py.test.raises(LockingError, self.item[0].data.write, "test")
-        
+
 
 class TestRevision:
 
