@@ -403,7 +403,7 @@ class Revision(object):
             if self.item.lock:
                 self.__metadata = metadata
             else:
-                self.__metadata = ReadonlyMetadata(metadata, LockingError(_("This item is currently readonly.")))
+                self.__metadata = ReadonlyMetadata(metadata, LockingError, _("This item is currently readonly."))
         return self.__metadata
 
     metadata = property(get_metadata)
@@ -417,7 +417,7 @@ class Revision(object):
             if self.item.lock:
                 self.__data = data
             else:
-                self.__data = ReadonlyData(data, LockingError(_("This item is currently readonly.")))
+                self.__data = ReadonlyData(data, LockingError, _("This item is currently readonly."))
         return self.__data
 
     data = property(get_data)
@@ -428,12 +428,13 @@ class ReadonlyMetadata(MetadataBackend):
     Readonly Metadata implementation.
     """
 
-    def __init__(self, metadata, exception):
+    def __init__(self, metadata, exception, message):
         """"
         Init stuff.
         """
         self._metadata = metadata
         self._exception = exception
+        self._message = message
 
     def __contains__(self, key):
         """
@@ -451,13 +452,13 @@ class ReadonlyMetadata(MetadataBackend):
         """
         @see MoinMoin.storage.external.Metadata.__setitem__
         """
-        raise self._exception
+        raise self._exception(self._message)
 
     def __delitem__(self, key):
         """
         @see MoinMoin.storage.external.Metadata.__delitem__
         """
-        raise self._exception
+        raise self._exception(self._message)
 
     def keys(self):
         """
@@ -469,7 +470,7 @@ class ReadonlyMetadata(MetadataBackend):
         """
         @see MoinMoin.storage.external.Metadata.save
         """
-        raise self._exception
+        raise self._exception(self._message)
 
 
 class WriteonlyMetadata(MetadataBackend):
@@ -477,24 +478,25 @@ class WriteonlyMetadata(MetadataBackend):
     Writeonly Metadata implementation.
     """
 
-    def __init__(self, metadata, exception):
+    def __init__(self, metadata, exception, message):
         """"
         Init stuff.
         """
         self._metadata = metadata
         self._exception = exception
+        self._message = message
 
     def __contains__(self, key):
         """
         @see MoinMoin.storage.external.Metadata.__contains__
         """
-        raise self._exception
+        raise self._exception(self._message)
 
     def __getitem__(self, key):
         """
         @see MoinMoin.storage.external.Metadata.__getitem__
         """
-        raise self._exception
+        raise self._exception(self._message)
 
     def __setitem__(self, key, value):
         """
@@ -512,7 +514,7 @@ class WriteonlyMetadata(MetadataBackend):
         """
         @see MoinMoin.storage.external.Metadata.keys
         """
-        raise self._exception
+        raise self._exception(self._message)
 
     def save(self):
         """
@@ -526,12 +528,13 @@ class ReadonlyData(DataBackend):
     This class implements read only access to the DataBackend.
     """
 
-    def __init__(self, data_backend, exception):
+    def __init__(self, data_backend, exception, message):
         """
         Init stuff.
         """
         self._data_backend = data_backend
         self._exception = exception
+        self._message = message
 
     def read(self, size=None):
         """
@@ -555,7 +558,7 @@ class ReadonlyData(DataBackend):
         """
         @see MoinMoin.storage.interfaces.DataBackend.write
         """
-        raise self._exception
+        raise self._exception(self._message)
 
     def close(self):
         """
@@ -569,30 +572,31 @@ class WriteonlyData(DataBackend):
     This class implements write only access to the DataBackend.
     """
 
-    def __init__(self, data_backend, exception):
+    def __init__(self, data_backend, exception, message):
         """
         Init stuff.
         """
         self._data_backend = data_backend
         self._exception = exception
+        self._message = message
 
     def read(self, size=None):
         """
         @see MoinMoin.storage.interfaces.DataBackend.read
         """
-        raise self._exception
+        raise self._exception(self._message)
 
     def seek(self, offset):
         """
         @see MoinMoin.storage.interfaces.DataBackend.seek
         """
-        raise self._exception
+        raise self._exception(self._message)
 
     def tell(self):
         """
         @see MoinMoin.storage.interfaces.DataBackend.tell
         """
-        raise self._exception
+        raise self._exception(self._message)
 
     def write(self, data):
         """
