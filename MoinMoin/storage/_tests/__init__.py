@@ -81,11 +81,6 @@ def get_page_dir():
 class DummyConfig:
     indexes = []
     tmp_dir = tempfile.gettempdir()
-
-
-class RequestDummy:
-    user = None
-    editlog = None
     
 
 class BackendTest:
