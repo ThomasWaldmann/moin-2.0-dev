@@ -694,6 +694,6 @@ class Search:
                     if (not wikiname in thiswiki or
                        page.exists() and userMayRead(page.page_name) or
                        page.page_name.startswith(fs_rootpage)) and
-                       (not self.mtime or self.mtime <= page.mtime_usecs()/1000000)]
+                       (not self.mtime or self.mtime <= page.mtime())]
         return filtered
 

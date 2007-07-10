@@ -16,6 +16,7 @@ SIZE = "size"
 ACL = "acl"
 LOCK_TIMESTAMP = "lock_timestamp"
 LOCK_USER = "lock_user"
+MTIME = "mtime"
 
 """
 Then the actual interface.

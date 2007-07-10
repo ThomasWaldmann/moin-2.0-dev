@@ -41,7 +41,7 @@ from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage.interfaces import SIZE
+from MoinMoin.storage.interfaces import SIZE, MTIME
 
 
 def is_cache_exception(e):
@@ -414,88 +414,44 @@ class Page(object):
             rev = self.get_real_rev()
         return self.getPagePath("revisions", '%08d' % rev, check_create = False)
 
+    # Last Edit stuff
 
-    # XXX TODO clean up the mess, rewrite _last_edited, last_edit, lastEditInfo for new logs,
-    # XXX TODO do not use mtime() calls any more
-    def _last_edited(self, request):
-        # as it is implemented now, this is rather a _last_changed as it just uses
-        # the last log entry, which could be not only from an edit, but also from
-        # an attachment operation. See different semantics in .mtime().
-        cache_name = self.page_name
-        cache_key = 'lastlog'
-        log = request.cfg.cache.meta.getItem(request, cache_name, cache_key)
-        if log is None:
-            from MoinMoin.logfile import editlog
-            try:
-                logfile = editlog.EditLog(request, rootpage=self.page_name)
-                logfile.to_end()
-                log = logfile.previous()
-            except StopIteration:
-                log = () # don't use None!
-            request.cfg.cache.meta.putItem(request, cache_name, cache_key, log)
-        return log
-
-    def last_edit(self, request):
-        """ Return the last edit.
-        This is used by MoinMoin/xmlrpc/__init__.py.
+    def last_edit(self, printable=False):
+        """
+        Return the last edit.
+        
+        TODO: Fix up editor.
 
         @param request: the request object
+        @param printable: whether to return the date in printable form
         @rtype: dict
         @return: timestamp and editor information
         """
         if not self.exists():
             return None
 
-        result = None
-        if not self.rev:
-            log = self._last_edited(request)
-            if log:
-                editordata = log.getInterwikiEditorData(request)
-                editor = editordata[1]
-                if editordata[0] == 'interwiki':
-                    editor = "%s:%s" % editordata[1]
-                else: # 'ip'
-                    editor = editordata[1]
-                result = {
-                    'timestamp': log.ed_time_usecs,
-                    'editor': editor,
-                }
-                del log
-        if not result:
-            version = self.mtime_usecs()
-            result = {
-                'timestamp': version,
-                'editor': '?',
-            }
-
+        result = {
+            'timestamp': self.mtime(printable),
+            'editor': '',
+        }
+        
         return result
 
-    def lastEditInfo(self, request=None):
-        """ Return the last edit info.
-
-        @param request: the request object
-        @rtype: dict
-        @return: timestamp and editor information
+    def mtime(self, printable=False):
         """
-        if not self.exists():
-            return {}
-        if request is None:
-            request = self.request
+        Get modification timestamp of this page.
 
-        # Try to get data from log
-        log = self._last_edited(request)
-        if log:
-            editor = log.getEditor(request)
-            time = wikiutil.version2timestamp(log.ed_time_usecs)
-            del log
-        # Or from the file system
-        else:
-            editor = ''
-            time = os.path.getmtime(self._text_filename())
-
-        # Use user time format
-        time = request.user.getFormattedDateTime(time)
-        return {'editor': editor, 'time': time}
+        @param printable: whether to return the date in printable form
+        @rtype: double
+        @return: mtime of page (or 0 if page does not exist)
+        """
+        timestamp = self._rev.metadata[MTIME]
+        if printable:
+            if not timestamp:
+                timestamp = "0"
+            else:
+                timestamp = self.request.user.getFormattedDateTime(timestamp)
+        return timestamp
 
     def isUnderlayPage(self, includeDeleted=True):
         """
@@ -570,48 +526,6 @@ class Page(object):
             return self._item[rev].metadata[SIZE]
         except NoSuchRevisionError:
             return 0L
-
-    def mtime_usecs(self):
-        """ Get modification timestamp of this page.
-
-        @rtype: long
-        @return: mtime of page (or 0 if page does not exist)
-        """
-        request = self.request
-        cache_name = self.page_name
-        cache_key = 'lastpagechange'
-        mtime = request.cfg.cache.meta.getItem(request, cache_name, cache_key)
-        current_wanted = (self.rev == 0) # True if we search for the current revision
-        if mtime is None or not current_wanted:
-            from MoinMoin.logfile import editlog
-            wanted_rev = "%08d" % self.rev
-            mtime = 0L
-            try:
-                logfile = editlog.EditLog(self.request, rootpagename=self.page_name)
-                for line in logfile.reverse():
-                    if (current_wanted and line.rev != 99999999) or line.rev == wanted_rev:
-                        mtime = line.ed_time_usecs
-                        break
-            except StopIteration:
-                pass
-            if current_wanted:
-                request.cfg.cache.meta.putItem(request, cache_name, cache_key, mtime)
-
-        return mtime
-
-    def mtime_printable(self, request):
-        """ Get printable (as per user's preferences) modification timestamp of this page.
-
-        @rtype: string
-        @return: formatted string with mtime of page
-        """
-        t = self.mtime_usecs()
-        if not t:
-            result = "0" # TODO: i18n, "Ever", "Beginning of time"...?
-        else:
-            result = request.user.getFormattedDateTime(
-                wikiutil.version2timestamp(t))
-        return result
 
     def split_title(self, force=0):
         """ Return a string with the page name split by spaces, if the user wants that.
@@ -859,7 +773,7 @@ class Page(object):
             # to ensure cacheability where supported. Because we are sending
             # RAW (file) content, the file mtime is correct as Last-Modified header.
             request.setHttpHeader("Status: 200 OK")
-            request.setHttpHeader("Last-Modified: %s" % util.timefuncs.formathttpdate(os.path.getmtime(self._text_filename())))
+            request.setHttpHeader("Last-Modified: %s" % util.timefuncs.formathttpdate(self.mtime()))
             text = self.encodeTextMimeType(self.body)
             request.setHttpHeader("Content-Length: %d" % len(text))
             if content_disposition:
@@ -974,7 +888,7 @@ class Page(object):
                         # TODO: we need to know if a page generates dynamic content -
                         # if it does, we must not use the page file mtime as last modified value
                         # The following code is commented because it is incorrect for dynamic pages:
-                        #lastmod = os.path.getmtime(self._text_filename())
+                        #lastmod = self.mtime()
                         #request.setHttpHeader("Last-Modified: %s" % util.timefuncs.formathttpdate(lastmod))
                         pass
                 else:
@@ -989,7 +903,7 @@ class Page(object):
                     msg = "<strong>%s</strong><br>%s" % (
                         _('Revision %(rev)d as of %(date)s') % {
                             'rev': self.rev,
-                            'date': self.mtime_printable(request)
+                            'date': self.mtime(printable=True)
                         }, msg)
 
                 # This redirect message is very annoying.

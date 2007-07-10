@@ -35,7 +35,7 @@ class TestPage:
 
     def testLastEdit(self):
         page = Page(self.request, u'FrontPage')
-        last_edit = page.last_edit(self.request)
+        last_edit = page.last_edit()
         assert 'editor' in last_edit
         assert 'timestamp' in last_edit
 
