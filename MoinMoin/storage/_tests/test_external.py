@@ -12,7 +12,7 @@ from MoinMoin.storage._tests import DummyConfig, pages, get_page_dir, setup, tea
 from MoinMoin.storage.backends import LayerBackend
 from MoinMoin.storage.fs_moin16 import PageStorage
 from MoinMoin.storage.external import ItemCollection, Item, Revision
-from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, AccessError
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend
 
 
@@ -152,8 +152,9 @@ class TestItem:
         assert self.item.lock == True
         self.item.lock = False
         assert self.item.lock == False
-        py.test.raises(AccessError, self.item.new_revision, 1)
-        # TODO add more tests here
+        py.test.raises(LockingError, self.item.new_revision, 1)
+        py.test.raises(LockingError, self.item[0].data.write, "test")
+        
 
 class TestRevision:
 
