@@ -373,17 +373,6 @@ class Revision(object):
     will be checked.
     """
 
-    # The following properties provide access to the corresponding metadata keys:
-    mtime = None
-    author = None
-    ip = None
-    hostname = None
-    size = None
-    comment = None
-    mime_type = None
-    acl = None
-    action = None
-
     def __init__(self, revno, item):
         """
         Initalizes the Revision with the required parameters.
