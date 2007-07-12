@@ -64,6 +64,17 @@ def getUserId(request, searchName):
         return None
 
 
+def getUserIdByOpenId(request, openid):
+    """ Get the user ID for a specific OpenID.
+
+    @param openid: the openid to look up
+    @rtype: string
+    @return: the corresponding user ID or None
+    """
+    filter_func = lambda user: user.valid and openid in user.openids
+    return get_by_filter(request, filter_func)
+
+
 def getUserIdentification(request, username=None):
     """ Return user name or IP or '<unknown>' indicator.
 
@@ -176,6 +187,8 @@ class User:
         self.auth_method = kw.get('auth_method', 'internal')
         self.auth_attribs = kw.get('auth_attribs', ())
         self.bookmarks = {} # interwikiname: bookmark
+        self.notify_by_email = True
+        self.notify_by_jabber = False
 
         # create some vars automatically
         self.__dict__.update(self._cfg.user_form_defaults)
