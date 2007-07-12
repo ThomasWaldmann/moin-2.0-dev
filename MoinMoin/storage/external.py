@@ -30,6 +30,16 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         self.backend = backend
         self.request = request
+        
+        if self.request is not None and hasattr(self.request, "user"):
+            self.user = self.request.user
+        else:
+            self.user = None
+            
+        if self.request is not None and hasattr(self.request, "editlog"):
+            self.editlog = self.request.editlog
+        else:
+            self.editlog = None
 
         self.__items = None
 
@@ -49,7 +59,7 @@ class ItemCollection(UserDict.DictMixin, object):
         except KeyError:
             backend = self.backend.has_item(name)
             if backend:
-                item = Item(name, backend, self.request.user)
+                item = Item(name, backend, self.user)
                 self.__item_dict[name] = item
                 return item
             else:
@@ -79,7 +89,7 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         backend = self.backend.create_item(name)
         self.__items = None
-        return Item(name, backend, self.request.user)
+        return Item(name, backend, self.user)
 
     def rename_item(self, name, newname):
         """
@@ -141,11 +151,11 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Refresh the cached items based on the editlog.
         """
-        if self.request.editlog is None:
+        if self.editlog is None:
             self.__item_dict = dict()
             return
 
-        new_pos, items = self.request.editlog.news(self.log_pos)
+        new_pos, items = self.editlog.news(self.log_pos)
         if items:
             for item in items:
                 logging.info("cache: removing %r" % item)

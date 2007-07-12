@@ -177,7 +177,7 @@ class User:
                                First tuple element was used for authentication.
         """
 
-        self._item_collection = ItemCollection(request.cfg.user_backend, request)
+        self._item_collection = ItemCollection(request.cfg.user_backend, None)
         self._user = None
 
         self._cfg = request.cfg
