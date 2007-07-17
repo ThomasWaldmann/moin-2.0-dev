@@ -30,7 +30,6 @@ import os, time, zipfile, mimetypes
 from MoinMoin import config, wikiutil, packages
 from MoinMoin.Page import Page
 from MoinMoin.util import filesys, timefuncs
-from MoinMoin.events import FileAttachedEvent, send_event
 import MoinMoin.events.notification as notification
 
 action_name = __name__.split('.')[-1]
@@ -45,14 +44,6 @@ def htdocs_access(request):
 
 class AttachmentAlreadyExists(Exception):
     pass
-
-def getBasePath(request):
-    """ Get base path where page dirs for attachments are stored.
-    """
-    if htdocs_access(request):
-        return request.cfg.attachments['dir']
-    else:
-        return request.rootpage.getPagePath('pages')
 
 
 def getAttachDir(request, pagename, create=0):
@@ -553,21 +544,18 @@ def execute(pagename, request):
     _ = request.getText
 
     msg = None
-    do = request.form.get('do')
-    if do is not None:
-        do = do[0]
     if action_name in request.cfg.actions_excluded:
         msg = _('File attachments are not allowed in this wiki!')
     elif 'do' not in request.form:
         upload_form(pagename, request)
-    elif do == 'savedrawing':
+    elif request.form['do'][0] == 'savedrawing':
         if request.user.may.write(pagename):
             save_drawing(pagename, request)
             request.emit_http_headers()
             request.write("OK")
         else:
             msg = _('You are not allowed to save a drawing on this page.')
-    elif do == 'upload':
+    elif request.form['do'][0] == 'upload':
         if request.user.may.write(pagename):
             if 'file' in request.form:
                 do_upload(pagename, request)
@@ -577,17 +565,17 @@ def execute(pagename, request):
                 msg = _("No file content. Delete non ASCII characters from the file name and try again.")
         else:
             msg = _('You are not allowed to attach a file to this page.')
-    elif do == 'del':
+    elif request.form['do'][0] == 'del':
         if request.user.may.delete(pagename):
             del_file(pagename, request)
         else:
             msg = _('You are not allowed to delete attachments on this page.')
-    elif do == 'move':
+    elif request.form['do'][0] == 'move':
         if request.user.may.delete(pagename):
             send_moveform(pagename, request)
         else:
             msg = _('You are not allowed to move attachments from this page.')
-    elif do == 'attachment_move':
+    elif request.form['do'][0] == 'attachment_move':
         if 'cancel' in request.form:
             msg = _('Move aborted!')
             error_msg(pagename, request, msg)
@@ -600,28 +588,28 @@ def execute(pagename, request):
             attachment_move(pagename, request)
         else:
             msg = _('You are not allowed to move attachments from this page.')
-    elif do == 'get':
+    elif request.form['do'][0] == 'get':
         if request.user.may.read(pagename):
             get_file(pagename, request)
         else:
             msg = _('You are not allowed to get attachments from this page.')
-    elif do == 'unzip':
+    elif request.form['do'][0] == 'unzip':
         if request.user.may.delete(pagename) and request.user.may.read(pagename) and request.user.may.write(pagename):
             unzip_file(pagename, request)
         else:
             msg = _('You are not allowed to unzip attachments of this page.')
-    elif do == 'install':
+    elif request.form['do'][0] == 'install':
         if request.user.isSuperUser():
             install_package(pagename, request)
         else:
             msg = _('You are not allowed to install files.')
-    elif do == 'view':
+    elif request.form['do'][0] == 'view':
         if request.user.may.read(pagename):
             view_file(pagename, request)
         else:
             msg = _('You are not allowed to view attachments of this page.')
     else:
-        msg = _('Unsupported upload action: %s') % (wikiutil.escape(do), )
+        msg = _('Unsupported upload action: %s') % (request.form['do'][0], )
 
     if msg:
         error_msg(pagename, request, msg)
