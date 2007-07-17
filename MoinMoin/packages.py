@@ -279,7 +279,7 @@ class ScriptEngine:
                 raise RuntimeScriptException(_("Installation of '%(filename)s' failed.") % {
                     'filename': filename} + "\n" + package.msg)
         else:
-            raise RuntimeScriptException(_('The file %s is not a MoinMoin package file.') % filename)
+            raise RuntimeScriptException(_('The file %s is not a MoinMoin package file.' % filename))
 
         self.msg += package.msg
 
@@ -306,7 +306,6 @@ class ScriptEngine:
             except PageEditor.Unchanged:
                 pass
             self.request.user = save_user
-            page.clean_acl_cache()
         else:
             self.msg += u"action add revision: not enough rights - nothing done \n"
 
@@ -379,7 +378,6 @@ class ScriptEngine:
             pass
         self.request.pages = {}
         caching.CacheEntry(self.request, 'wikidicts', 'dicts_groups', scope='wiki').remove()
-        page.clean_acl_cache()
 
     def runScript(self, commands):
         """ Runs the commands.
@@ -533,8 +531,8 @@ Example:
         request_url = "localhost/"
 
     # Setup MoinMoin environment
-    from MoinMoin.request import request_cli
-    request = request_cli.Request(url='localhost/')
+    from MoinMoin.request import CLI
+    request = CLI.Request(url='localhost/')
     request.form = request.args = request.setup_args()
 
     package = ZipPackage(request, packagefile)

@@ -65,7 +65,7 @@ def convert_quicklinks(string):
 
     names = [name.strip() for name in string.split(',')]
     names = [wikiutil.unquoteWikiname(name) for name in names if name != '']
-    string = user.encodeList(names)
+    string = user.encode_list(names)
     return string
 
 
@@ -78,7 +78,7 @@ def convert_subscribed_pages(string):
     # This might break pages that contain ',' in the name, we can't do
     # anything about it. This was the reason we changed the format.
     names = [name.strip() for name in string.split(',')]
-    string = user.encodeList(names)
+    string = user.encode_list(names)
     return string
 
 

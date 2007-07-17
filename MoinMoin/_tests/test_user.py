@@ -60,11 +60,6 @@ class TestLoginWithPassword(unittest.TestCase):
         """
         # Remove user file and user
         if self.user is not None:
-            try:
-                path = self.user._User__filename()
-                os.remove(path)
-            except OSError:
-                pass
             del self.user
 
         # Restore original user

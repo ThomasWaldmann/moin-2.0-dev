@@ -36,23 +36,23 @@ class ThemeBase:
         # key         alt                        icon filename      w   h
         # ------------------------------------------------------------------
         # navibar
-        'help':        ("%(page_help_contents)s", "moin-help.png",   12, 11),
-        'find':        ("%(page_find_page)s",     "moin-search.png", 12, 12),
-        'diff':        (_("Diffs"),               "moin-diff.png",   15, 11),
-        'info':        (_("Info"),                "moin-info.png",   12, 11),
-        'edit':        (_("Edit"),                "moin-edit.png",   12, 12),
-        'unsubscribe': (_("Unsubscribe"),         "moin-unsubscribe.png", 14, 10),
-        'subscribe':   (_("Subscribe"),           "moin-subscribe.png", 14, 10),
-        'raw':         (_("Raw"),                 "moin-raw.png",    12, 13),
-        'xml':         (_("XML"),                 "moin-xml.png",    20, 13),
-        'print':       (_("Print"),               "moin-print.png",  16, 14),
-        'view':        (_("View"),                "moin-show.png",   12, 13),
-        'home':        (_("Home"),                "moin-home.png",   13, 12),
-        'up':          (_("Up"),                  "moin-parent.png", 15, 13),
+        'help':       ("%(page_help_contents)s", "moin-help.png",   12, 11),
+        'find':       ("%(page_find_page)s",     "moin-search.png", 12, 12),
+        'diff':       (_("Diffs"),               "moin-diff.png",   15, 11),
+        'info':       (_("Info"),                "moin-info.png",   12, 11),
+        'edit':       (_("Edit"),                "moin-edit.png",   12, 12),
+        'unsubscribe': (_("Unsubscribe"),         "moin-unsubscribe.png",  14, 10),
+        'subscribe':  (_("Subscribe"),           "moin-subscribe.png", 14, 10),
+        'raw':        (_("Raw"),                 "moin-raw.png",    12, 13),
+        'xml':        (_("XML"),                 "moin-xml.png",    20, 13),
+        'print':      (_("Print"),               "moin-print.png",  16, 14),
+        'view':       (_("View"),                "moin-show.png",   12, 13),
+        'home':       (_("Home"),                "moin-home.png",   13, 12),
+        'up':         (_("Up"),                  "moin-parent.png", 15, 13),
         # FileAttach
         'attach':     ("%(attach_count)s",       "moin-attach.png",  7, 15),
         # RecentChanges
-        'rss':        (_("[RSS]"),               "moin-rss.png",    24, 24),
+        'rss':        (_("[RSS]"),               "moin-rss.png",    36, 14),
         'deleted':    (_("[DELETED]"),           "moin-deleted.png", 60, 12),
         'updated':    (_("[UPDATED]"),           "moin-updated.png", 60, 12),
         'renamed':    (_("[RENAMED]"),           "moin-renamed.png", 60, 12),
@@ -691,12 +691,12 @@ class ThemeBase:
         _ = self.request.getText
         html = ''
         if self.shouldShowPageinfo(page):
-            info = page.lastEditInfo()
+            info = page.last_edit(printable=True)
             if info:
                 if info['editor']:
-                    info = _("last edited %(time)s by %(editor)s") % info
+                    info = _("last edited %(timestamp)s by %(editor)s") % info
                 else:
-                    info = _("last modified %(time)s") % info
+                    info = _("last modified %(timestamp)s") % info
                 pagename = page.page_name
                 if self.request.cfg.show_interwiki:
                     pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
@@ -1114,7 +1114,7 @@ actionsMenuInit('%(label)s');
         If the user want to show both editors, it will display "Edit
         (Text)", otherwise as "Edit".
         """
-        if not (page.isWritable() and
+        if not (page.exists() and
                 self.request.user.may.write(page.page_name)):
             return self.disabledEdit()
 
@@ -1152,7 +1152,7 @@ actionsMenuInit('%(label)s');
         the browser is compatible with the editor.
         """
         page = d['page']
-        if not (page.isWritable() and
+        if not (page.exists() and
                 self.request.user.may.write(page.page_name) and
                 self.showBothEditLinks() and
                 self.guiworks(page)):
@@ -1622,7 +1622,7 @@ var gui_editor_link_text = "%(text)s";
                 'page': page,
                 'rev': rev,
                 'pagesize': pagename and page.size() or 0,
-                'last_edit_info': pagename and page.lastEditInfo() or '',
+                'last_edit_info': pagename and page.last_edit(printable=True) or '',
                 'page_name': pagename or '',
                 'page_find_page': page_find_page,
                 'page_front_page': page_front_page,

@@ -384,8 +384,8 @@ class XmlRpcBase:
             return self.noSuchPageFault()
 
         # Get page info
-        last_edit = page.last_edit(self.request)
-        mtime = wikiutil.version2timestamp(long(last_edit['timestamp'])) # must be long for py 2.2.x
+        last_edit = page.last_edit()
+        mtime = last_edit['timestamp'] # must be long for py 2.2.x
         gmtuple = tuple(time.gmtime(mtime))
 
         version = rev # our new rev numbers: 1,2,3,4,....
@@ -593,7 +593,7 @@ class XmlRpcBase:
 
     # authorization methods
 
-    def _cleanup_stale_tokens(self, request):
+    def _cleanup_stale_tokens(request):
         items = caching.get_cache_list(request, 'xmlrpc-session', 'farm')
         tnow = time.time()
         for item in items:
@@ -637,7 +637,9 @@ class XmlRpcBase:
         and Jabber bot.
 
         @param jid: a bare Jabber ID
+
         """
+
         if self.cfg.secret != secret:
             return ""
 
