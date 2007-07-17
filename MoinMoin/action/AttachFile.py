@@ -30,6 +30,7 @@ import os, time, zipfile, mimetypes
 from MoinMoin import config, wikiutil, packages
 from MoinMoin.Page import Page
 from MoinMoin.util import filesys, timefuncs
+from MoinMoin.events import FileAttachedEvent, send_event
 import MoinMoin.events.notification as notification
 
 action_name = __name__.split('.')[-1]
