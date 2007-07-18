@@ -30,12 +30,12 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         self.backend = backend
         self.request = request
-        
+
         if self.request is not None and hasattr(self.request, "user"):
             self.user = self.request.user
         else:
             self.user = None
-            
+
         if self.request is not None and hasattr(self.request, "editlog"):
             self.editlog = self.request.editlog
         else:

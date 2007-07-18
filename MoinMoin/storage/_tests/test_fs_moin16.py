@@ -10,7 +10,7 @@ import py.test
 
 from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown, BackendTest
 
-from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
+from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage, Indexes
 from MoinMoin.storage.interfaces import SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 
@@ -234,4 +234,13 @@ class TestPageData:
     TODO: write this test.
     """
     pass
+
+
+class TestIndexes:
+    def setup_class(self):
+        self.backend = PageStorage(get_page_dir(), DummyConfig(), "pages")
+        self.indexes = Indexes(self.backend, DummyConfig())
+
+    def test_rebuild_indexes(self):
+        self.indexes.rebuild_indexes()
 
