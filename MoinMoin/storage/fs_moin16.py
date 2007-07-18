@@ -229,7 +229,6 @@ class AbstractMetadata(MetadataBackend):
         @see MoinMoin.storage.external.Metadata.save
         """
         self._save_metadata(self._name, self._revno, self._metadata)
-        self._update_indexes()
 
     def _parse_metadata(self, name, revno):
         """
@@ -253,17 +252,6 @@ class AbstractMetadata(MetadataBackend):
 
     _metadata = property(get_metadata)
 
-    def _rebuild_indexes(self):
-        """
-        Rebuids all indexes.
-        """
-        pass
-
-    def _update_indexes(self):
-        """
-        Just update the index values for this item.
-        """
-        pass
 
 class UserStorage(AbstractStorage):
     """
