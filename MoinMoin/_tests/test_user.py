@@ -31,7 +31,7 @@ class TestEncodePassword(unittest.TestCase):
 
     def testUnicode(self):
         """ user: encode unicode password """
-        result = user.encodePassword(u'סיסמה סודית בהחלט') # Hebrew
+        result = user.encodePassword(u'×¡×™×¡×ž×” ×¡×•×“×™×ª ×‘×”×—×œ×˜') # Hebrew
         expected = "{SHA}GvvkgYzv5MoF9Ljivv2oc81FmkE="
         self.assertEqual(result, expected,
                          'Expected "%(expected)s" but got "%(result)s"' % locals())
@@ -90,7 +90,7 @@ class TestLoginWithPassword(unittest.TestCase):
     def testUnicodePassword(self):
         """ user: login with non-ascii password """
         # Create test user
-        name = u'__שם משתמש לא קיים__' # Hebrew
+        name = u'__×©×� ×ž×©×ª×ž×© ×œ×� ×§×™×™×�__' # Hebrew
         password = name
         self.createUser(name, password)
 
@@ -108,7 +108,7 @@ class TestLoginWithPassword(unittest.TestCase):
         # Create test user
         # Use iso charset to create user with old enc_password, as if
         # the user file was migrated from pre 1.3 wiki.
-        name = u'__Jürgen Herman__'
+        name = u'__JÃ¼rgen Herman__'
         password = name
         self.createUser(name, password, charset='iso-8859-1')
 
@@ -125,7 +125,7 @@ class TestLoginWithPassword(unittest.TestCase):
         # Create test user
         # Use iso charset to create user with old enc_password, as if
         # the user file was migrated from pre 1.3 wiki.
-        name = u'__Jürgen Herman__'
+        name = u'__JÃ¼rgen Herman__'
         password = name
         self.createUser(name, password, charset='iso-8859-1')
         # Login - this should replace the old password in the user file
@@ -139,7 +139,7 @@ class TestLoginWithPassword(unittest.TestCase):
     def testSubscriptionSubscribedPage(self):
         """ user: tests isSubscribedTo  """
         pagename = u'HelpMiscellaneous'
-        name = u'__Jürgen Herman__'
+        name = u'__JÃ¼rgen Herman__'
         password = name
         self.createUser(name, password, charset='iso-8859-1')
         # Login - this should replace the old password in the user file
