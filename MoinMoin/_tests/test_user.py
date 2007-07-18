@@ -31,7 +31,7 @@ class TestEncodePassword(unittest.TestCase):
 
     def testUnicode(self):
         """ user: encode unicode password """
-        result = user.encodePassword(u'×¡×™×¡×ž×” ×¡×•×“×™×ª ×‘×”×—×œ×˜') # Hebrew
+        result = user.encodePassword(u'סיסמה סודית בהחלט') # Hebrew
         expected = "{SHA}GvvkgYzv5MoF9Ljivv2oc81FmkE="
         self.assertEqual(result, expected,
                          'Expected "%(expected)s" but got "%(result)s"' % locals())
@@ -90,7 +90,7 @@ class TestLoginWithPassword(unittest.TestCase):
     def testUnicodePassword(self):
         """ user: login with non-ascii password """
         # Create test user
-        name = u'__×©×� ×ž×©×ª×ž×© ×œ×� ×§×™×™×�__' # Hebrew
+        name = u'__שם משתמש לא קיים__' # Hebrew
         password = name
         self.createUser(name, password)
 
