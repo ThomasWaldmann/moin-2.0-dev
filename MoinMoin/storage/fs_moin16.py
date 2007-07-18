@@ -36,6 +36,7 @@ import codecs
 import errno
 import os
 import re
+import shelve
 import shutil
 import tempfile
 
@@ -46,6 +47,74 @@ from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevision
 from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
+
+
+class Indexes(object):
+    """
+    This class provides access to the indexes.
+    """
+
+    def __init__(self, backend, cfg):
+        """
+        Initialises the class.
+        """
+        if not os.path.isdir(cfg.indexes_dir):
+            raise BackendError(_("Invalid path %r.") % cfg.indexes_dir)
+        self.path = cfg.indexes_dir
+        self.indexes = cfg.indexes
+        self.backend = backend
+
+    def rebuild_indexes(self):
+        """
+        Rebuilds all indexes.
+        """
+        indexes = dict()
+
+        for item in self.backend.list_items():
+            metadata_last = self.backend.get_metadata_backend(item, 0)
+            metadata_all = self.backend.get_metadata_backend(item, -1)
+            metadata = dict()
+            metadata.update(metadata_last)
+            metadata.update(metadata_all)
+            for index in self.indexes:
+                if index in metadata:
+                    indexes.setdefault(index, {}).setdefault(metadata[index].encode("utf-8"), []).append(item)
+
+        for index, values in indexes.iteritems():
+            db = shelve.open(os.path.join(self.path, index), "n", writeback=True)
+            db.update(values)
+            db.close()
+
+    def get_items(self, key, expression):
+        """
+        Returns the items that have a key which maches the expression.
+        """
+        db = shelve.open(self._get_filename(key))
+
+        values = []
+        for key in db.keys():
+            if expression.match(key):
+                values.extend(db[key])
+
+        db.close()
+        return values
+
+    def update_indexes(self, item, oldmetadata, newmetadata):
+        """
+        Updates the index values for item from oldmetadata to the newmetadata.
+
+        TODO:
+        """
+        pass
+
+    def _get_filename(self, index):
+        """
+        Returns the filename and rebuilds the index when it does not exist yet.
+        """
+        filename = os.path.join(self.path, index)
+        if not os.path.isfile(filename):
+            self.rebuild_indexes()
+        return filename
 
 
 class AbstractStorage(StorageBackend):
@@ -82,7 +151,9 @@ class AbstractStorage(StorageBackend):
                         if metadata.has_key(key) and expression.match(metadata[key]):
                             filtered_files.append(name)
                 else:
-                    pass
+                    items = Indexes(self, self.cfg).get_items(key, expression)
+                    filtered_files.extend(items)
+
             return filtered_files
 
     def get_page_path(self, name, *args):
@@ -158,6 +229,7 @@ class AbstractMetadata(MetadataBackend):
         @see MoinMoin.storage.external.Metadata.save
         """
         self._save_metadata(self._name, self._revno, self._metadata)
+        self._update_indexes()
 
     def _parse_metadata(self, name, revno):
         """
@@ -181,6 +253,17 @@ class AbstractMetadata(MetadataBackend):
 
     _metadata = property(get_metadata)
 
+    def _rebuild_indexes(self):
+        """
+        Rebuids all indexes.
+        """
+        pass
+
+    def _update_indexes(self):
+        """
+        Just update the index values for this item.
+        """
+        pass
 
 class UserStorage(AbstractStorage):
     """

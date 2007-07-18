@@ -533,10 +533,10 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             index = Index(request)
             if index.exists():
                 index.update_page(newpagename)
-                
+
         event = PageCopiedEvent(request, newpage, self, comment)
         send_event(event)
-            
+
         return True, None
 
     def renamePage(self, newpagename, comment=None):

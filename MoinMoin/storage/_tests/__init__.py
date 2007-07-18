@@ -67,7 +67,7 @@ def teardown(module):
     Remove test data from tmp.
     """
     global test_dir
-    shutil.rmtree(test_dir)
+    #shutil.rmtree(test_dir)
     test_dir = None
 
 def get_user_dir():
@@ -78,8 +78,11 @@ def get_page_dir():
 
 
 class DummyConfig:
-    indexes = []
     tmp_dir = tempfile.gettempdir()
+    indexes = ["language", "format"]
+
+    def __init__(self):
+        self.indexes_dir = test_dir
 
 
 class BackendTest:
