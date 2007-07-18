@@ -18,6 +18,8 @@ import MoinMoin.events as events
 from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
+from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
+from MoinMoin.storage.backends import LayerBackend
 
 _url_re_cache = None
 _farmconfig_mtime = None
@@ -612,10 +614,6 @@ reStructuredText Quick Reference
         self.siteid = siteid
         self.cache = CacheClass()
 
-        from MoinMoin.Page import ItemCache
-        self.cache.meta = ItemCache('meta')
-        self.cache.pagelists = ItemCache('pagelists')
-
         if self.config_check_enabled:
             self._config_check()
 
@@ -623,7 +621,7 @@ reStructuredText Quick Reference
         self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ('user', 'cache', 'plugin'):
+        for dirname in ('user', 'cache', 'plugin', 'tmp', "indexes"):
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
@@ -727,6 +725,13 @@ reStructuredText Quick Reference
         # Register a list of available event handlers - this has to stay at the
         # end, because loading plugins depends on having a config object
         self.event_handlers = events.get_handlers(self)
+
+        # storage configuration
+        self.user_backend = UserStorage(self.user_dir, self, "user")
+        self.page_backend = PageStorage(os.path.join(self.data_dir, "pages"), self, "pages")
+        self.underlay_backend = PageStorage(os.path.join(self.data_underlay_dir, "pages"), self, "underlay")
+        self.data_backend = LayerBackend([self.page_backend, self.underlay_backend])
+        self.indexes = []
 
 
     def load_meta_dict(self):

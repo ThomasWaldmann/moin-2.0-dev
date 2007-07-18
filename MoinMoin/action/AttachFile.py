@@ -46,14 +46,6 @@ def htdocs_access(request):
 class AttachmentAlreadyExists(Exception):
     pass
 
-def getBasePath(request):
-    """ Get base path where page dirs for attachments are stored.
-    """
-    if htdocs_access(request):
-        return request.cfg.attachments['dir']
-    else:
-        return request.rootpage.getPagePath('pages')
-
 
 def getAttachDir(request, pagename, create=0):
     """ Get directory where attachments for page `pagename` are stored.

@@ -8,7 +8,6 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 import sys, os
 from MoinMoin.config.multiconfig import DefaultConfig
 
-
 class Config(DefaultConfig):
     # vvv DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO vvv
     moinmoin_dir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
@@ -25,11 +24,6 @@ class Config(DefaultConfig):
         '<a href="http://moinmoin.wikiwikiweb.de/">MoinMoin DesktopEdition Powered</a>',
         '<a href="http://www.python.org/">Python Powered</a>',
     ]
+    show_timings = True
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
 
-    # developers, add your testing config values in this file
-    # (and don't add it to your repository):
-    try:
-        from wikiconfig_local import *
-    except ImportError:
-        pass
