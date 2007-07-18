@@ -737,7 +737,7 @@ class SearchResults:
             rev_str = 'rev: %d (%s)' % (rev, _('current'))
         else:
             rev_str = 'rev: %d' % (rev, )
-        lastmod_str = _('last modified: %s') % p.mtime_printable(request)
+        lastmod_str = _('last modified: %s') % p.mtime(printable=True)
 
         result = f.paragraph(1, attr={'class': 'searchhitinfobar'}) + \
                  f.text('%s - %s %s' % (size_str, rev_str, lastmod_str)) + \
