@@ -36,13 +36,12 @@ import codecs
 import copy
 import errno
 import os
-import cPickle
 import re
 import shutil
 import tempfile
 
 from MoinMoin import config
-from MoinMoin.util import lock
+from MoinMoin.util import lock, pickle
 from MoinMoin.storage.interfaces import DataBackend, StorageBackend, MetadataBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
 from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
@@ -90,7 +89,7 @@ class Indexes(object):
         for index, values in indexes.iteritems():
             db = bsddb.hashopen(self._get_filename(index), "n")
             for key, value in values.iteritems():
-                db[key.encode("utf-8")] = cPickle.dumps(value, protocol=2)
+                db[key.encode("utf-8")] = pickle.dumps(value)
             db.close()
 
     def get_items(self, key, value):
@@ -101,7 +100,7 @@ class Indexes(object):
 
         pvalue = value.encode("utf-8")
         if pvalue in db:
-            values = cPickle.loads(db[pvalue])
+            values = pickle.loads(db[pvalue])
         else:
             values = []
 
@@ -124,16 +123,16 @@ class Indexes(object):
                 db = bsddb.hashopen(self._get_filename(index, create=True))
                 for key in self.__parse_keys(oldmetadata[index]):
                     pkey = key.encode("utf-8")
-                    data = cPickle.loads(db[pkey])
+                    data = pickle.loads(db[pkey])
                     data.remove(item)
-                    db[pkey] = cPickle.dumps(data, protocol=2)
+                    db[pkey] = pickle.dumps(data)
                 for key in self.__parse_keys(newmetadata[index]):
                     pkey = key.encode("utf-8")
                     if not pkey in db:
-                        db[pkey] = cPickle.dumps([], protocol=2)
-                    data = cPickle.loads(db[pkey])
+                        db[pkey] = pickle.dumps([])
+                    data = pickle.loads(db[pkey])
                     data.append(item)
-                    db[pkey] = cPickle.dumps(data, protocol=2)
+                    db[pkey] = pickle.dumps(data)
                 db.close()
 
             elif index in oldmetadata:
@@ -141,9 +140,9 @@ class Indexes(object):
                 db = bsddb.hashopen(self._get_filename(index, create=True))
                 for key in self.__parse_keys(oldmetadata[index]):
                     pkey = key.encode("utf-8")
-                    data = cPickle.loads(db[pkey])
+                    data = pickle.loads(db[pkey])
                     data.remove(item)
-                    db[pkey] = cPickle.dumps(data, protocol=2)
+                    db[pkey] = pickle.dumps(data)
                 db.close()
 
             elif index in newmetadata:
@@ -152,10 +151,10 @@ class Indexes(object):
                 for key in self.__parse_keys(newmetadata[index]):
                     pkey = key.encode("utf-8")
                     if not pkey in db:
-                        db[pkey] = cPickle.dumps([], protocol=2)
-                    data = cPickle.loads(db[pkey])
+                        db[pkey] = pickle.dumps([])
+                    data = pickle.loads(db[pkey])
                     data.append(item)
-                    db[pkey] = cPickle.dumps(data, protocol=2)
+                    db[pkey] = pickle.dumps(data)
                 db.close()
 
     def _get_filename(self, index, create=False):
