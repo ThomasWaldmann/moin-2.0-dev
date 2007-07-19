@@ -231,16 +231,14 @@ class TestPageMetadata:
 
 class TestPageData:
     """
-    TODO: write this test.
+    must not really be tested.
     """
     pass
 
 
 class TestIndexes:
-    def setup_class(self):
-        self.backend = PageStorage(get_page_dir(), DummyConfig(), "pages")
-        self.indexes = Indexes(self.backend, DummyConfig())
-
-    def test_rebuild_indexes(self):
-        self.indexes.rebuild_indexes()
+    """
+    Already tested by the other code.
+    """
+    pass
 

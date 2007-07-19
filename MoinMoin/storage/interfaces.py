@@ -31,7 +31,7 @@ class StorageBackend(object):
         """
         Returns a list of all item names that match the given filters.
         If filters is None all items will be returned. Filters is a
-        dictionary. One entry specifies a metadata key and a regular expression
+        dictionary. One entry specifies a metadata key and a value
         that the metadata key must match.
 
         For faster access the backend may use indexes which are defined in the

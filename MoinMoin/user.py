@@ -33,22 +33,24 @@ def getUserList(request):
     """
     return ItemCollection(request.cfg.user_backend, request).keys()
 
-def get_by_filter(request, filter_func):
-    """ Searches for an user with a given filter function """
-    for uid in getUserList(request):
-        theuser = User(request, uid)
-        if filter_func(theuser):
-            return theuser
+
+def get_by_filter(request, key, value):
+    """ Searches for an user with a given filter """
+    identifier = ItemCollection(request.cfg.user_backend, request).keys({key: value})
+    if len(identifier) > 0:
+        return User(request, identifier[0])
 
 def get_by_email_address(request, email_address):
     """ Searches for an user with a particular e-mail address and returns it. """
-    filter_func = lambda user: user.valid and user.email.lower() == email_address.lower()
-    return get_by_filter(request, filter_func)
+    return get_by_filter(request, 'email', email_address)
 
 def get_by_jabber_id(request, jabber_id):
     """ Searches for an user with a perticular jabber id and returns it. """
-    filter_func = lambda user: user.valid and user.jid.lower() == jabber_id.lower()
-    return get_by_filter(request, filter_func)
+    return get_by_filter(request, 'jid', jabber_id)
+
+def getUserIdByOpenId(request, openid):
+    """ Searches for an user with a perticular openid id and returns it. """
+    return get_by_filter(request, 'openids', openid)
 
 
 def getUserId(request, searchName):
@@ -62,17 +64,6 @@ def getUserId(request, searchName):
         return ItemCollection(request.cfg.user_backend, request).keys({'name': searchName})[0]
     except IndexError:
         return None
-
-
-def getUserIdByOpenId(request, openid):
-    """ Get the user ID for a specific OpenID.
-
-    @param openid: the openid to look up
-    @rtype: string
-    @return: the corresponding user ID or None
-    """
-    filter_func = lambda user: user.valid and openid in user.openids
-    return get_by_filter(request, filter_func)
 
 
 def getUserIdentification(request, username=None):
