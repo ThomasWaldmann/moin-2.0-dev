@@ -4,7 +4,6 @@
     @copyright: 2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
 
-    TODO: indexes
     TODO: edit log
 
     NOTE: This implementation is not really thread safe on windows. Some
@@ -32,11 +31,13 @@
           or retrying of some operations must be implemented.
 """
 
+import bsddb
 import codecs
+import copy
 import errno
 import os
+import pickle
 import re
-import shelve
 import shutil
 import tempfile
 
@@ -71,50 +72,112 @@ class Indexes(object):
         indexes = dict()
 
         for item in self.backend.list_items():
-            metadata_last = self.backend.get_metadata_backend(item, 0)
-            metadata_all = self.backend.get_metadata_backend(item, -1)
+            # get metadata
             metadata = dict()
-            metadata.update(metadata_last)
+            metadata_all = self.backend.get_metadata_backend(item, -1)
             metadata.update(metadata_all)
+            if self.backend.has_revision(item, 0):
+                metadata_last = self.backend.get_metadata_backend(item, 0)
+                metadata.update(metadata_last)
+
+            # set metadata
             for index in self.indexes:
                 if index in metadata:
-                    indexes.setdefault(index, {}).setdefault(metadata[index].encode("utf-8"), []).append(item)
+                    for key in self.__parse_keys(metadata[index]):
+                        indexes.setdefault(index, {}).setdefault(key, []).append(item)
 
+        # write indexes
         for index, values in indexes.iteritems():
-            db = shelve.open(os.path.join(self.path, index), "n", writeback=True)
-            db.update(values)
+            db = bsddb.hashopen(self._get_filename(index), "n")
+            for key, value in values.iteritems():
+                db[key.encode("utf-8")] = pickle.dumps(value)
             db.close()
 
-    def get_items(self, key, expression):
+    def get_items(self, key, value):
         """
-        Returns the items that have a key which maches the expression.
+        Returns the items that have a key which maches the value.
         """
-        db = shelve.open(self._get_filename(key))
+        db = bsddb.hashopen(self._get_filename(key, create=True))
 
-        values = []
-        for key in db.keys():
-            if expression.match(key):
-                values.extend(db[key])
+        pvalue = value.encode("utf-8")
+        if pvalue in db:
+            values = pickle.loads(db[pvalue])
+        else:
+            values = []
 
         db.close()
+
         return values
 
     def update_indexes(self, item, oldmetadata, newmetadata):
         """
         Updates the index values for item from oldmetadata to the newmetadata.
 
-        TODO:
+        This is not the nicest code, but it works.
         """
-        pass
+        for index in self.indexes:
 
-    def _get_filename(self, index):
+            if index in oldmetadata and index in newmetadata:
+                if oldmetadata[index] == newmetadata[index]:
+                    continue
+
+                db = bsddb.hashopen(self._get_filename(index, create=True))
+                for key in self.__parse_keys(oldmetadata[index]):
+                    pkey = key.encode("utf-8")
+                    data = pickle.loads(db[pkey])
+                    data.remove(item)
+                    db[pkey] = pickle.dumps(data)
+                for key in self.__parse_keys(newmetadata[index]):
+                    pkey = key.encode("utf-8")
+                    if not pkey in db:
+                        db[pkey] = pickle.dumps([])
+                    data = pickle.loads(db[pkey])
+                    data.append(item)
+                    db[pkey] = pickle.dumps(data)
+                db.close()
+
+            elif index in oldmetadata:
+                # remove old values
+                db = bsddb.hashopen(self._get_filename(index, create=True))
+                for key in self.__parse_keys(oldmetadata[index]):
+                    pkey = key.encode("utf-8")
+                    data = pickle.loads(db[pkey])
+                    data.remove(item)
+                    db[pkey] = pickle.dumps(data)
+                db.close()
+
+            elif index in newmetadata:
+                # set new values
+                db = bsddb.hashopen(self._get_filename(index, create=True))
+                for key in self.__parse_keys(newmetadata[index]):
+                    pkey = key.encode("utf-8")
+                    if not pkey in db:
+                        db[pkey] = pickle.dumps([])
+                    data = pickle.loads(db[pkey])
+                    data.append(item)
+                    db[pkey] = pickle.dumps(data)
+                db.close()
+
+    def _get_filename(self, index, create=False):
         """
         Returns the filename and rebuilds the index when it does not exist yet.
         """
         filename = os.path.join(self.path, index)
-        if not os.path.isfile(filename):
+        if create and not os.path.isfile(filename):
             self.rebuild_indexes()
         return filename
+
+    def __parse_keys(self, value):
+        """
+        Return all keys that should be added to an index depending on the value of an metadata key.
+        """
+        if isinstance(value, list):
+            keys = value
+        elif isinstance(value, dict):
+            keys = []
+        else:
+            keys = [value]
+        return keys
 
 
 class AbstractStorage(StorageBackend):
@@ -144,14 +207,13 @@ class AbstractStorage(StorageBackend):
         else:
             filtered_files = []
             for key, value in filters.iteritems():
-                expression = re.compile(value)
                 if key not in self.cfg.indexes:
                     for name in items:
                         metadata = self.get_metadata_backend(name, 0)
-                        if metadata.has_key(key) and expression.match(metadata[key]):
+                        if metadata.has_key(key) and metadata[key] == value:
                             filtered_files.append(name)
                 else:
-                    items = Indexes(self, self.cfg).get_items(key, expression)
+                    items = Indexes(self, self.cfg).get_items(key, value)
                     filtered_files.extend(items)
 
             return filtered_files
@@ -193,6 +255,7 @@ class AbstractMetadata(MetadataBackend):
         self._name = name
         self._revno = revno
         self._metadata_property = None
+        self._org_metadata = None
 
     def __contains__(self, key):
         """
@@ -229,6 +292,8 @@ class AbstractMetadata(MetadataBackend):
         @see MoinMoin.storage.external.Metadata.save
         """
         self._save_metadata(self._name, self._revno, self._metadata)
+        Indexes(self._backend, self._backend.cfg).update_indexes(self._name, self._org_metadata, self._metadata)
+        self._org_metadata = copy.copy(self._metadata_property)
 
     def _parse_metadata(self, name, revno):
         """
@@ -248,6 +313,7 @@ class AbstractMetadata(MetadataBackend):
         """
         if self._metadata_property is None:
             self._metadata_property = self._parse_metadata(self._name, self._revno)
+            self._org_metadata = copy.copy(self._metadata_property)
         return self._metadata_property
 
     _metadata = property(get_metadata)
