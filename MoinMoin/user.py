@@ -37,20 +37,33 @@ def getUserList(request):
 def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
     identifier = ItemCollection(request.cfg.user_backend, request).keys({key: value})
-    if len(identifier) > 0:
-        return User(request, identifier[0])
+    users = []
+    for user in identifier:
+        users.append(User(request, user))
+    return users
+
 
 def get_by_email_address(request, email_address):
     """ Searches for an user with a particular e-mail address and returns it. """
-    return get_by_filter(request, 'email', email_address)
+    users = get_by_filter(request, 'email', email_address)
+    if len(users) > 0:
+        return users[0]
 
 def get_by_jabber_id(request, jabber_id):
     """ Searches for an user with a perticular jabber id and returns it. """
-    return get_by_filter(request, 'jid', jabber_id)
+    users = get_by_filter(request, 'jid', jabber_id)[0]
+    if len(users) > 0:
+        return users[0]
 
 def getUserIdByOpenId(request, openid):
     """ Searches for an user with a perticular openid id and returns it. """
-    return get_by_filter(request, 'openids', openid)
+    users = get_by_filter(request, 'openids', openid)[0]
+    if len(users) > 0:
+        return users[0]
+
+def getUserIdBySubscription(request, page):
+    """ Searches for users with a perticular page in the subscription list and returns it. """
+    return get_by_filter(request, 'subscribed_pages', page)
 
 
 def getUserId(request, searchName):

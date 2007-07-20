@@ -208,6 +208,7 @@ class AbstractStorage(StorageBackend):
             for key, value in filters.iteritems():
                 if key not in self.cfg.indexes:
                     for name in items:
+                        # TODO: fix this
                         metadata = self.get_metadata_backend(name, 0)
                         if metadata.has_key(key) and metadata[key] == value:
                             filtered_files.append(name)
