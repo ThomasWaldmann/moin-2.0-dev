@@ -27,7 +27,7 @@ class TestItemCollection:
     item_collection = None
 
     def setup_class(self):
-        self.item_collection = ItemCollection(LayerBackend([PageStorage(get_page_dir(), DummyConfig(), "pages")]), self.request)
+        self.item_collection = ItemCollection(LayerBackend([PageStorage("pages", get_page_dir(), DummyConfig())]), None)
 
     def teardown_class(self):
         self.item_collection = None
@@ -80,7 +80,7 @@ class TestItem:
     item = None
 
     def setup_class(self):
-        self.item = ItemCollection(PageStorage(get_page_dir(), DummyConfig(), "pages"), self.request)[pages[0]]
+        self.item = ItemCollection(PageStorage("pages", get_page_dir(), DummyConfig()), None)[pages[0]]
 
     def teardown_class(self):
         self.item = None
@@ -161,7 +161,7 @@ class TestRevision:
     revision = None
 
     def setup_class(self):
-        self.revision = ItemCollection(PageStorage(get_page_dir(), DummyConfig(), "pages"), self.request)[pages[0]][1]
+        self.revision = ItemCollection(PageStorage("pages", get_page_dir(), DummyConfig()), None)[pages[0]][1]
 
     def teardown_class(self):
         self.revision = None

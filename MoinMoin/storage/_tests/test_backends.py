@@ -28,7 +28,7 @@ class TestLayerBackend(BackendTest):
     """
 
     def setup_class(self):
-        self.backend = LayerBackend([PageStorage(get_page_dir(), DummyConfig(), "pages"), UserStorage(get_user_dir(), DummyConfig(), "user")])
+        self.backend = LayerBackend([PageStorage("pages", get_page_dir(), DummyConfig()), UserStorage("user", get_user_dir(), DummyConfig())])
 
     def test_list_items(self):
         items = pages + names
@@ -52,7 +52,7 @@ class TestNamespaceBackend(BackendTest):
     """
 
     def setup_class(self):
-        self.backend = NamespaceBackend({'/': PageStorage(get_page_dir(), DummyConfig(), "pages"), '/usr': UserStorage(get_user_dir(), DummyConfig(), "user")})
+        self.backend = NamespaceBackend({'/': PageStorage("pages", get_page_dir(), DummyConfig()), '/usr': UserStorage("user", get_user_dir(), DummyConfig())})
 
         self.new_names = []
         for item in names:

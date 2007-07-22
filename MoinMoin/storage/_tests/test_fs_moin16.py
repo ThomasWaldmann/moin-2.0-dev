@@ -25,7 +25,7 @@ def teardown_module(module):
 class TestUserBackend(BackendTest):
 
     def setup_class(self):
-        self.backend = UserStorage(get_user_dir(), DummyConfig(), "user")
+        self.backend = UserStorage("user", get_user_dir(), DummyConfig())
 
     def test_name(self):
         assert self.backend.name == "user"
@@ -81,7 +81,7 @@ class TestUserBackend(BackendTest):
 class TestUserMetadata:
 
     def setup_class(self):
-        self.backend = UserStorage(get_user_dir(), DummyConfig(), "user")
+        self.backend = UserStorage("user", get_user_dir(), DummyConfig())
         self.metadata = self.backend.get_metadata_backend(names[0], 1)
 
     def test_get(self):
@@ -113,7 +113,7 @@ class TestUserMetadata:
 class TestPageBackend(BackendTest):
 
     def setup_class(self):
-        self.backend = PageStorage(get_page_dir(), DummyConfig(), "pages")
+        self.backend = PageStorage("pages", get_page_dir(), DummyConfig())
 
     def test_name(self):
         assert self.backend.name == "pages"
@@ -192,7 +192,7 @@ class TestPageBackend(BackendTest):
 class TestPageMetadata:
 
     def setup_class(self):
-        self.backend = PageStorage(get_page_dir(), DummyConfig(), "pages")
+        self.backend = PageStorage("pages", get_page_dir(), DummyConfig())
 
     def test_get(self):
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)

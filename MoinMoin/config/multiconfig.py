@@ -781,11 +781,11 @@ reStructuredText Quick Reference
         self.event_handlers = events.get_handlers(self)
 
         # storage configuration
-        self.user_backend = UserStorage(self.user_dir, self, "user")
-        self.page_backend = PageStorage(os.path.join(self.data_dir, "pages"), self, "pages")
-        self.underlay_backend = PageStorage(os.path.join(self.data_underlay_dir, "pages"), self, "underlay")
+        self.indexes = ["name", "openids", "jid", "email", "deleted"]
+        self.user_backend = UserStorage("user", self.user_dir, self)
+        self.page_backend = PageStorage("pages", os.path.join(self.data_dir, "pages"), self)
+        self.underlay_backend = PageStorage("underlay", os.path.join(self.data_underlay_dir, "pages"), self)
         self.data_backend = LayerBackend([self.page_backend, self.underlay_backend])
-        self.indexes = ["name", "openids", "jid", "email", "subscribed_pages"]
 
 
     def load_meta_dict(self):

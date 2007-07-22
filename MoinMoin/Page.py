@@ -41,7 +41,7 @@ from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage.interfaces import SIZE, MTIME
+from MoinMoin.storage.interfaces import SIZE, MTIME, DELETED
 
 
 def is_cache_exception(e):
@@ -1304,10 +1304,15 @@ class RootPage(object):
         if user is None:
             user = request.user
 
+        if exists:
+            index_filters = {DELETED: 'False'}
+        else:
+            index_filters = {}
+
         if user or exists or filter or not include_underlay or return_objects:
             # Filter names
             pages = []
-            for name in self._items:
+            for name in self._items.keys(index_filters):
                 # First, custom filter - exists and acl check are very
                 # expensive!
                 if filter and not filter(name):
@@ -1317,10 +1322,6 @@ class RootPage(object):
 
                 # Filter underlay pages
                 if not include_underlay and page.isUnderlayPage(): # is an underlay page
-                    continue
-
-                # Filter deleted pages
-                if exists and not page.exists():
                     continue
 
                 # Filter out page user may not read.

@@ -526,7 +526,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         # Save page text with a comment about the old name and log entry
         savetext = u"## page was copied from %s\n%s" % (self.page_name, savetext)
-        newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE')
+        newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE', notify=False)
 
         if request.cfg.xapian_search:
             from MoinMoin.search.Xapian import Index
@@ -568,7 +568,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             comment = u"## page was renamed from %s" % self.page_name
 
         savetext = u"## page was renamed from %s\n%s" % (self.page_name, savetext)
-        newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE/RENAME')
+        newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE/RENAME', notify=False)
 
         # delete pagelinks
         arena = newpage
