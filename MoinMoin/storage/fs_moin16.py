@@ -633,6 +633,19 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.storage.fs_moin16.AbstractStorage.get_page_path
         """
         return AbstractStorage.get_page_path(self, quoteWikinameFS(name), *args)
+    
+    def lock(self, identifier, timeout=1, lifetime=60):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.lock
+        """
+        AbstractStorage.lock(self, quoteWikinameFS(identifier), timeout, lifetime)
+
+    def unlock(self, identifier):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.unlock
+        """
+
+        AbstractStorage.unlock(self, quoteWikinameFS(identifier))
 
 
 class PageData(DataBackend):
