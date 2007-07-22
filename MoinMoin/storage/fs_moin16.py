@@ -72,24 +72,20 @@ class Indexes(object):
 
         for item in self.backend.list_items():
             # get metadata
-            metadata = dict()
-            metadata_all = self.backend.get_metadata_backend(item, -1)
-            metadata.update(metadata_all)
-            if self.backend.has_revision(item, 0):
-                metadata_last = self.backend.get_metadata_backend(item, 0)
-                metadata.update(metadata_last)
+            metadata = _get_last_metadata(self.backend, item)
 
             # set metadata
             for index in self.indexes:
                 if index in metadata:
-                    for key in self.__parse_keys(metadata[index]):
+                    for key in _parse_value(metadata[index]):
                         indexes.setdefault(index, {}).setdefault(key, []).append(item)
 
         # write indexes
         for index, values in indexes.iteritems():
             db = bsddb.hashopen(self._get_filename(index), "n")
             for key, value in values.iteritems():
-                db[key.encode("utf-8")] = pickle.dumps(value)
+                pkey = unicode(key).encode("utf-8")
+                db[pkey] = pickle.dumps(value)
             db.close()
 
     def get_items(self, key, value):
@@ -98,7 +94,7 @@ class Indexes(object):
         """
         db = bsddb.hashopen(self._get_filename(key, create=True))
 
-        pvalue = value.encode("utf-8")
+        pvalue = unicode(value).encode("utf-8")
         if pvalue in db:
             values = pickle.loads(db[pvalue])
         else:
@@ -121,13 +117,13 @@ class Indexes(object):
                     continue
 
                 db = bsddb.hashopen(self._get_filename(index, create=True))
-                for key in self.__parse_keys(oldmetadata[index]):
-                    pkey = key.encode("utf-8")
+                for key in _parse_value(oldmetadata[index]):
+                    pkey = unicode(key).encode("utf-8")
                     data = pickle.loads(db[pkey])
                     data.remove(item)
                     db[pkey] = pickle.dumps(data)
-                for key in self.__parse_keys(newmetadata[index]):
-                    pkey = key.encode("utf-8")
+                for key in _parse_value(newmetadata[index]):
+                    pkey = unicode(key).encode("utf-8")
                     if not pkey in db:
                         db[pkey] = pickle.dumps([])
                     data = pickle.loads(db[pkey])
@@ -138,8 +134,8 @@ class Indexes(object):
             elif index in oldmetadata:
                 # remove old values
                 db = bsddb.hashopen(self._get_filename(index, create=True))
-                for key in self.__parse_keys(oldmetadata[index]):
-                    pkey = key.encode("utf-8")
+                for key in _parse_value(oldmetadata[index]):
+                    pkey = unicode(key).encode("utf-8")
                     data = pickle.loads(db[pkey])
                     data.remove(item)
                     db[pkey] = pickle.dumps(data)
@@ -148,8 +144,8 @@ class Indexes(object):
             elif index in newmetadata:
                 # set new values
                 db = bsddb.hashopen(self._get_filename(index, create=True))
-                for key in self.__parse_keys(newmetadata[index]):
-                    pkey = key.encode("utf-8")
+                for key in _parse_value(newmetadata[index]):
+                    pkey = unicode(key).encode("utf-8")
                     if not pkey in db:
                         db[pkey] = pickle.dumps([])
                     data = pickle.loads(db[pkey])
@@ -165,18 +161,6 @@ class Indexes(object):
         if create and not os.path.isfile(filename):
             self.rebuild_indexes()
         return filename
-
-    def __parse_keys(self, value):
-        """
-        Return all keys that should be added to an index depending on the value of an metadata key.
-        """
-        if isinstance(value, list):
-            keys = value
-        elif isinstance(value, dict):
-            keys = []
-        else:
-            keys = [value]
-        return keys
 
 
 class AbstractStorage(StorageBackend):
@@ -207,11 +191,11 @@ class AbstractStorage(StorageBackend):
             filtered_files = []
             for key, value in filters.iteritems():
                 if key not in self.cfg.indexes:
-                    for name in items:
-                        # TODO: fix this
-                        metadata = self.get_metadata_backend(name, 0)
-                        if metadata.has_key(key) and metadata[key] == value:
-                            filtered_files.append(name)
+                    for item in items:
+                        metadata = _get_last_metadata(self, item)
+                        if key in metadata:
+                            if unicode(value) in _parse_value(metadata[key]):
+                                filtered_files.append(item)
                 else:
                     items = Indexes(self, self.cfg).get_items(key, value)
                     filtered_files.extend(items)
@@ -227,6 +211,8 @@ class AbstractStorage(StorageBackend):
     def lock(self, identifier, timeout=1, lifetime=60):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.lock
+        
+        TODO: use quoteWikiNameFS here
         """
         write_lock = lock.ExclusiveLock(os.path.join(self.cfg.tmp_dir, identifier), lifetime)
         if not write_lock.acquire(timeout):
@@ -959,6 +945,32 @@ def create_file(*path):
         raise BackendError(_("Path %r already exists.") % real_path)
 
 
+def _parse_value(value):
+    """
+    Return all keys that should be added to an index depending on the value of an metadata key.
+    """
+    ttype = type(value)
+    if ttype in ['list', 'tuple']:
+        keys = value
+    elif ttype in ['dict']:
+        keys = value.keys()
+    else:
+        keys = [value]
+    return keys
+
+
+def _get_last_metadata(backend, item):
+    """
+    Returns the metadata of revisions -1 and if exists 0 of an item.
+    """
+    metadata = dict()
+    metadata_all = backend.get_metadata_backend(item, -1)
+    metadata.update(metadata_all)
+    if backend.has_revision(item, 0):
+        metadata_last = backend.get_metadata_backend(item, 0)
+        metadata.update(metadata_last)
+    return metadata
+
 def _handle_error(backend, err, name, revno=None, message=""):
     """
     Handle error messages.
@@ -970,4 +982,6 @@ def _handle_error(backend, err, name, revno=None, message=""):
             raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, name))
     raise BackendError(message)
 
+
 _ = lambda x: x
+
