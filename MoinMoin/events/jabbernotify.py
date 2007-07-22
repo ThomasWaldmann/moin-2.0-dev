@@ -32,7 +32,9 @@ def handle(event):
         return
 
     if isinstance(event, ev.PageChangedEvent):
-        return handle_page_changed(event)
+        return handle_page_changed(event, False)
+    elif isinstance(event, ev.TrivialPageChangedEvent):
+        return handle_page_changed(event, True)
     elif isinstance(event, ev.JabberIDSetEvent) or isinstance(event, ev.JabberIDUnsetEvent):
         return handle_jid_changed(event)
     elif isinstance(event, ev.FileAttachedEvent):
@@ -80,7 +82,7 @@ def handle_file_attached(event):
         data = notification.attachment_added(request, event.pagename, event.name, event.size)
 
         for usr in subscribers[lang]:
-            if usr.notify_by_jabber and usr.jid and event_name in usr.subscribed_events:
+            if usr.jid and event_name in usr.jabber_subscribed_events:
                 jids.append(usr.jid)
             else:
                 continue
@@ -91,12 +93,12 @@ def handle_file_attached(event):
     return notification.Success(names)
 
 
-def handle_page_changed(event):
+def handle_page_changed(event, trivial):
     """ Handles events related to page changes """
     request = event.request
     page = event.page
 
-    subscribers = page.getSubscribers(request, return_users=1, trivial=event.trivial)
+    subscribers = page.getSubscribers(request, return_users=1, trivial=trivial)
     notification.filter_subscriber_list(event, subscribers, True)
     return page_change("page_changed", request, page, subscribers, \
                        revisions=page.getRevList(), comment=event.comment)
@@ -139,17 +141,15 @@ def handle_user_created(event):
 
     for id in user_ids:
         usr = User(event.request, id=id)
-        if not usr.notify_by_jabber:
-            continue
 
         # Currently send this only to super users
-        if usr.isSuperUser() and usr.jid and event_name in usr.subscribed_events:
+        if usr.isSuperUser() and usr.jid and event_name in usr.jabber_subscribed_events:
             jids.append(usr.jid)
 
-    send_notification(event.request, jids, msg % (event.user.name, email), data['subject'])
+    send_notification(event.request, jids, data['body'], data['subject'])
 
 
-def page_change(type, request, page, subscribers, **kwargs):
+def page_change(change_type, request, page, subscribers, **kwargs):
     """Sends notification about page being changed in some way"""
     _ = request.getText
 
@@ -160,7 +160,7 @@ def page_change(type, request, page, subscribers, **kwargs):
         for lang in subscribers:
             jids = [u.jid for u in subscribers[lang] if u.jid]
             names = [u.name for u in subscribers[lang] if u.jid]
-            msg = notification.page_change_message(type, request, page, lang, **kwargs)
+            msg = notification.page_change_message(change_type, request, page, lang, **kwargs)
             result = send_notification(request, jids, msg)
 
             if result:

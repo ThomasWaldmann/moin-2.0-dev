@@ -18,9 +18,8 @@ from pyxmpp.iq import Iq
 import pyxmpp.jabber.dataforms as forms
 
 import jabberbot.commands as cmd
-from jabberbot.i18n import getText
+import jabberbot.i18n as i18n
 
-_ = getText
 
 class Contact:
     """Abstraction of a roster item / contact
@@ -28,9 +27,18 @@ class Contact:
     This class handles some logic related to keeping track of
     contact availability, status, etc."""
 
-    def __init__(self, jid, resource, priority, show):
+    # Default Time To Live of a contact. If there are no registered
+    # resources for that period of time, the contact should be removed
+    default_ttl = 3600 * 24 # default of one day
+
+    def __init__(self, jid, resource, priority, show, language=None):
         self.jid = jid
         self.resources = {resource: {'show': show, 'priority': priority, 'forms': False}}
+        self.language = language
+
+        # The last time when this contact was seen online.
+        # This value has meaning for offline contacts only.
+        self.last_online = None
 
         # Queued messages, waiting for contact to change its "show"
         # status to something different than "dnd". The messages should
@@ -38,6 +46,15 @@ class Contact:
         # "dnd", as we can't guarantee, that the bot will be up and running
         # the next time she becomes "available".
         self.messages = []
+
+    def is_valid(self, current_time):
+        """Check if this contact entry is still valid and should be kept
+
+        @param time: current time in seconds
+
+        """
+        # No resources == offline
+        return self.resources or current_time < self.last_online + self.default_ttl
 
     def add_resource(self, resource, show, priority):
         """Adds information about a connected resource
@@ -48,12 +65,15 @@ class Contact:
 
         """
         self.resources[resource] = {'show': show, 'priority': priority}
+        self.last_online = None
 
     def set_supports_forms(self, resource):
+        """Flag the given resource as supporting Data Forms"""
         if resource in self.resources:
             self.resources[resource]["forms"] = True
 
     def supports_forms(self, resource):
+        """Check if the given resource supports Data Forms"""
         if resource in self.resources:
             return self.resources[resource]["forms"]
         else:
@@ -69,6 +89,9 @@ class Contact:
             del self.resources[resource]
         else:
             raise ValueError("No such resource!")
+
+        if not self.resources:
+            self.last_online = time.time()
 
     def is_dnd(self):
         """Checks if contact is DoNotDisturb
@@ -86,7 +109,8 @@ class Contact:
                 max_prio = resource['priority']
                 max_prio_show = resource['show']
 
-        return max_prio_show == u'dnd'
+        # If there are no resources the contact is offline, not dnd
+        return self.resources and max_prio_show == u'dnd'
 
     def set_show(self, resource, show):
         """Sets show property for a given resource
@@ -109,7 +133,6 @@ class Contact:
         retval = "%s (%s) has %d queued messages"
         res = ", ".join([name + " is " + res['show'] for name, res in self.resources.items()])
         return retval % (self.jid.as_utf8(), res, len(self.messages))
-
 
 class XMPPBot(Client, Thread):
     """A simple XMPP bot"""
@@ -135,6 +158,12 @@ class XMPPBot(Client, Thread):
         # A dictionary of contact objects, ordered by bare JID
         self.contacts = {}
 
+        # The last time when contacts were checked for expiration, in seconds
+        self.last_expiration = time.time()
+
+        # How often should the contacts be checked for expiration, in seconds
+        self.contact_check = 600
+
         self.known_xmlrpc_cmds = [cmd.GetPage, cmd.GetPageHTML, cmd.GetPageList, cmd.GetPageInfo, cmd.Search]
         self.internal_commands = ["ping", "help", "searchform"]
 
@@ -154,7 +183,7 @@ class XMPPBot(Client, Thread):
     def loop(self, timeout=1):
         """Main event loop - stream and command handling"""
 
-        while 1:
+        while True:
             stream = self.get_stream()
             if not stream:
                 break
@@ -164,6 +193,44 @@ class XMPPBot(Client, Thread):
                 # Process all available commands
                 while self.poll_commands(): pass
                 self.idle()
+
+    def idle(self):
+        """Do some maintenance"""
+
+        Client.idle(self)
+
+        current_time = time.time()
+        if self.last_expiration + self.contact_check < current_time:
+            self.expire_contacts(current_time)
+            self.last_expiration = current_time
+
+    def expire_contacts(self, current_time):
+        """Check which contats have been offline for too long and should be removed
+
+        @param current_time: current time in seconds
+
+        """
+        for jid, contact in self.contacts.items():
+            if not contact.is_valid(current_time):
+                del self.contacts[jid]
+
+    def get_text(self, jid):
+        """Returns a gettext function (_) for the given JID
+
+        @param jid: bare Jabber ID of the user we're going to communicate with
+        @type jid: str or pyxmpp.jid.JID
+
+        """
+        language = "en"
+        if isinstance(jid, str) or isinstance(jid, unicode):
+            jid = JID(jid).bare().as_utf8()
+        else:
+            jid = jid.bare().as_utf8()
+
+        if jid in self.contacts:
+            language = self.contacts[jid].language
+
+        return lambda text: i18n.get_text(text, lang=language)
 
     def poll_commands(self):
         """Checks for new commands in the input queue and executes them
@@ -205,6 +272,10 @@ class XMPPBot(Client, Thread):
 
                 self.send_message(jid, text)
 
+            return
+
+        _ = self.get_text(command.jid)
+
         # Handle subscribtion management commands
         if isinstance(command, cmd.AddJIDToRosterCommand):
             jid = JID(node_or_jid=command.jid)
@@ -215,7 +286,8 @@ class XMPPBot(Client, Thread):
             self.remove_subscription(jid)
 
         elif isinstance(command, cmd.GetPage) or isinstance(command, cmd.GetPageHTML):
-            msg = _("""Here's the page "%(pagename)s" that you've requested:\n\n%(data)s""")
+            msg = _(u"""Here's the page "%(pagename)s" that you've requested:\n\n%(data)s""")
+
             self.send_message(command.jid, msg % {
                       'pagename': command.pagename,
                       'data': command.data,
@@ -223,7 +295,8 @@ class XMPPBot(Client, Thread):
 
         elif isinstance(command, cmd.GetPageList):
             msg = _("That's the list of pages accesible to you:\n\n%s")
-            pagelist = "\n".join(command.data)
+            pagelist = u"\n".join(command.data)
+
             self.send_message(command.jid, msg % (pagelist, ))
 
         elif isinstance(command, cmd.GetPageInfo):
@@ -234,6 +307,10 @@ is available::\n\n%(data)s""")
                       'pagename': command.pagename,
                       'data': command.data,
             })
+
+        elif isinstance(command, cmd.GetUserLanguage):
+            if command.jid in self.contacts:
+                self.contacts[command.jid].language = command.language
 
     def ask_for_subscription(self, jid):
         """Sends a <presence/> stanza with type="subscribe"
@@ -258,7 +335,7 @@ is available::\n\n%(data)s""")
         stanza = Presence(to_jid=jid, stanza_type="unsubscribed")
         self.get_stream().send(stanza)
 
-    def send_message(self, jid, text, subject="", msg_type=u"chat", form=None):
+    def send_message(self, jid, text, subject="", msg_type=u"chat"):
         """Sends a message
 
         @param jid: JID to send the message to
@@ -274,14 +351,24 @@ is available::\n\n%(data)s""")
         pass
 
     def send_search_form(self, jid):
-        help_form = _("Submit this form to perform a wiki search")
+        _ = self.get_text(jid)
 
-        title_search = forms.Option("t", _("Title search"))
-        full_search = forms.Option("f", _("Full-text search"))
+        # These encode()s may look weird, but due to some pyxmpp oddness we have
+        # to provide an utf-8 string instead of unicode. Bug reported, patches submitted...
+        form_title = _("Wiki search").encode("utf-8")
+        help_form = _("Submit this form to perform a wiki search").encode("utf-8")
+        search_type1 = _("Title search")
+        search_type2 = _("Full-text search")
+        search_label = _("Search type")
+        search_label2 = _("Search text")
 
-        form = forms.Form(xmlnode_or_type="form", title=_("Wiki search"), instructions=help_form)
-        form.add_field(name="search_type", options=[title_search, full_search], field_type="list-single", label="Search type")
-        form.add_field(name="search", field_type="text-single", label=_("Search text"))
+
+        title_search = forms.Option("t", search_type1)
+        full_search = forms.Option("f", search_type2)
+
+        form = forms.Form(xmlnode_or_type="form", title=form_title, instructions=help_form)
+        form.add_field(name="search_type", options=[title_search, full_search], field_type="list-single", label=search_label)
+        form.add_field(name="search", field_type="text-single", label=search_label2)
 
         message = Message(to_jid=jid, body=_("Please specify the search criteria."), subject=_("Wiki search"))
         message.add_content(form)
@@ -293,8 +380,8 @@ is available::\n\n%(data)s""")
         @type command: unicode
 
         """
-        for cmd in self.internal_commands:
-            if cmd.lower() == command:
+        for internal_cmd in self.internal_commands:
+            if internal_cmd.lower() == command:
                 return True
 
         return False
@@ -305,8 +392,8 @@ is available::\n\n%(data)s""")
         @type command: unicode
 
         """
-        for cmd in self.xmlrpc_commands:
-            if cmd.lower() == command:
+        for xmlrpc_cmd in self.xmlrpc_commands:
+            if xmlrpc_cmd.lower() == command:
                 return True
 
         return False
@@ -335,9 +422,9 @@ is available::\n\n%(data)s""")
         elif self.is_xmlrpc(command[0]):
             response = self.handle_xmlrpc_command(sender, command)
         else:
-            response = self.reply_help()
+            response = self.reply_help(sender)
 
-        if not response == u"":
+        if response:
             self.send_message(sender, response)
 
     def handle_internal_command(self, sender, command):
@@ -348,13 +435,15 @@ is available::\n\n%(data)s""")
         @type sender: pyxmpp.jid.JID
 
         """
+        _ = self.get_text(sender)
+
         if command[0] == "ping":
             return "pong"
         elif command[0] == "help":
             if len(command) == 1:
-                return self.reply_help()
+                return self.reply_help(sender)
             else:
-                return self.help_on(command[1])
+                return self.help_on(sender, command[1])
         elif command[0] == "searchform":
             jid = sender.bare().as_utf8()
             resource = sender.resource
@@ -365,7 +454,7 @@ is available::\n\n%(data)s""")
                 self.send_message(sender, msg, u"Error")
         else:
             # For unknown command return a generic help message
-            return self.reply_help()
+            return self.reply_help(sender)
 
     def do_search(self, jid, term, search_type):
         """Performs a Wiki search of term
@@ -381,7 +470,7 @@ is available::\n\n%(data)s""")
         search = cmd.Search(jid, term, search_type)
         self.from_commands.put_nowait(search)
 
-    def help_on(self, command):
+    def help_on(self, jid, command):
         """Returns a help message on a given topic
 
         @param command: a command to describe in a help message
@@ -389,6 +478,8 @@ is available::\n\n%(data)s""")
         @return: a help message
 
         """
+        _ = self.get_text(jid)
+
         if command == "help":
             return _("""The "help" command prints a short, helpful message \
 about a given topic or function.\n\nUsage: help [topic_or_function]""")
@@ -404,7 +495,7 @@ as it's received.""")
         else:
             if command in self.xmlrpc_commands:
                 classobj = self.xmlrpc_commands[command]
-                help_str = _("%(command)s - %(description)s\n\nUsage: %(command)s %(params)s")
+                help_str = _(u"%(command)s - %(description)s\n\nUsage: %(command)s %(params)s")
                 return help_str % {'command': command,
                                    'description': classobj.description,
                                    'params': classobj.parameter_list,
@@ -419,6 +510,7 @@ as it's received.""")
         @type command: list representing a command, name and parameters
 
         """
+        _ = self.get_text(sender)
         command_class = self.xmlrpc_commands[command[0]]
 
         # Add sender's JID to the argument list
@@ -472,7 +564,7 @@ The call should look like:\n\n%(command)s %(params)s")
                 # alive the next time this contact becomes available.
                 if len(contact.resources) == 1:
                     self.send_queued_messages(contact, ignore_dnd=True)
-                    del self.contacts[bare_jid]
+                    contact.remove_resource(jid.resource)
                 else:
                     contact.remove_resource(jid.resource)
 
@@ -528,10 +620,20 @@ The call should look like:\n\n%(command)s %(params)s")
         else:
             self.contacts[bare_jid] = Contact(jid, jid.resource, priority, show)
             self.supports_dataforms(jid)
+            self.get_user_language(bare_jid)
             self.log.debug(self.contacts[bare_jid])
 
         # Confirm that we've handled this stanza
         return True
+
+    def get_user_language(self, jid):
+        """Request user's language setting from the wiki
+
+        @param jid: bare Jabber ID of the user to query for
+        @type jid: unicode
+        """
+        request = cmd.GetUserLanguage(jid)
+        self.from_commands.put_nowait(request)
 
     def supports_dataforms(self, jid):
         """Check if a clients supports data forms.
@@ -575,18 +677,20 @@ The call should look like:\n\n%(command)s %(params)s")
         for command in contact.messages:
             self.handle_command(command, ignore_dnd)
 
-    def reply_help(self):
+    def reply_help(self, jid):
         """Constructs a generic help message
 
         It's sent in response to an uknown message or the "help" command.
 
         """
+        _ = self.get_text(jid)
+
         msg = _("Hello there! I'm a MoinMoin Notification Bot. Available commands:\
 \n\n%(internal)s\n%(xmlrpc)s")
         internal = ", ".join(self.internal_commands)
         xmlrpc = ", ".join(self.xmlrpc_commands.keys())
 
-        return msg % (internal, xmlrpc)
+        return msg % {'internal': internal, 'xmlrpc': xmlrpc}
 
     def authenticated(self):
         """Called when authentication succeedes"""

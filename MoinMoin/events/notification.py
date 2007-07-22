@@ -42,7 +42,7 @@ class Success(Result):
         """
         self.recipients = recipients
 
-class UnknownChangeType:
+class UnknownChangeType(Exception):
     """ Used to signal an invalid page change event """
     pass
 
@@ -73,7 +73,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
     pagelink = request.getQualifiedURL(page.url(request, querystr, relative=False))
 
     if msgtype == "page_changed":
-        messageBody = _("Dear Wiki user,\n\n"
+        msg_body = _("Dear Wiki user,\n\n"
         'You have subscribed to a wiki page or wiki category on "%(sitename)s" for change notification.\n\n'
         "The following page has been changed by %(editor)s:\n"
         "%(pagelink)s\n\n", formatted=False) % {
@@ -84,19 +84,19 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
 
         # append a diff (or append full page text if there is no diff)
         if len(revisions) < 2:
-            messageBody = messageBody + \
+            messageBody = msg_body + \
                 _("New page:\n", formatted=False) + \
                 page.get_raw_body()
         else:
             lines = wikiutil.pagediff(request, page.page_name, revisions[1],
                                       page.page_name, revisions[0])
             if lines:
-                messageBody = messageBody + "%s\n%s\n" % (("-" * 78), '\n'.join(lines))
+                msg_body = msg_body + "%s\n%s\n" % (("-" * 78), '\n'.join(lines))
             else:
-                messageBody = messageBody + _("No differences found!\n", formatted=False)
+                msg_body = msg_body + _("No differences found!\n", formatted=False)
 
     elif msgtype == "page_deleted":
-        messageBody = _("Dear wiki user,\n\n"
+        msg_body = _("Dear wiki user,\n\n"
             'You have subscribed to a wiki page "%(sitename)s" for change notification.\n\n'
             "The following page has been deleted by %(editor)s:\n"
             "%(pagelink)s\n\n", formatted=False) % {
@@ -106,7 +106,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
         }
 
     elif msgtype == "page_renamed":
-        messageBody = _("Dear wiki user,\n\n"
+        msg_body = _("Dear wiki user,\n\n"
             'You have subscribed to a wiki page "%(sitename)s" for change notification.\n\n'
             "The following page has been renamed from %(oldname)s by %(editor)s:\n"
             "%(pagelink)s\n\n", formatted=False) % {
@@ -119,10 +119,10 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
         raise UnknownChangeType()
 
     if 'comment' in kwargs and kwargs['comment']:
-        messageBody = messageBody + \
+        msg_body = msg_body + \
             _("The comment on the change is:\n%(comment)s", formatted=False) % {'comment': kwargs['comment']}
 
-    return messageBody
+    return msg_body
 
 def user_created_message(request, sitename, username, email):
     """Formats a message used to notify about accounts being created
@@ -176,11 +176,12 @@ def attachment_added(request, page_name, attach_name, attach_size):
     return {'body': body, 'subject': subject}
 
 
+# XXX: clean up this method to take a notification type instead of bool for_jabber
 def filter_subscriber_list(event, subscribers, for_jabber):
     """Filter a list of page subscribers to honor event subscriptions
 
     @param subscribers: list of subscribers (dict of lists, language is the key)
-    @param for_jabber: require jid and notify_by_jabber
+    @param for_jabber: require jid
     @type subscribers: dict
 
     """
@@ -193,11 +194,11 @@ def filter_subscriber_list(event, subscribers, for_jabber):
 
         if for_jabber:
             for usr in subscribers[lang]:
-                if usr.jid and usr.notify_by_jabber and event_name in usr.subscribed_events:
+                if usr.jid and event_name in usr.jabber_subscribed_events:
                     userlist.append(usr)
         else:
             for usr in subscribers[lang]:
-                if usr.notify_by_email and event_name in usr.subscribed_events:
+                if usr.email and event_name in usr.email_subscribed_events:
                     userlist.append(usr)
 
         subscribers[lang] = userlist

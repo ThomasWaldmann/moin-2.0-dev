@@ -15,6 +15,9 @@ import time
 from MoinMoin import config, error, util, wikiutil
 import MoinMoin.auth as authmodule
 import MoinMoin.events as events
+from MoinMoin.events import PageChangedEvent, PageRenamedEvent
+from MoinMoin.events import PageDeletedEvent, PageCopiedEvent
+from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
 from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
@@ -206,9 +209,6 @@ class CacheClass:
 
 class DefaultConfig:
     """ default config values """
-
-    # internal dict for plugin `modules' lists
-    _site_plugin_lists = {}
 
     # setting DesktopEdition = True gives all local users special powers - ONLY use for MMDE style usage!
     DesktopEdition = False
@@ -435,6 +435,59 @@ reStructuredText Quick Reference
         'view':        ({}, _("View"), "view"),
         }
 
+
+    def password_checker(username, password):
+        """ Check if a password is secure enough.
+            First (and in any case), we use a built-in check to get rid of the
+            worst passwords. If there is cracklib installed, we use it for
+            additional checks.
+            If you don't want to check passwords, use password_checker = None.
+
+            @return: None if there is no problem with the password,
+                     some string with an error msg, if the password is problematic.
+        """
+        try:
+            set
+        except:
+            from sets import Set as set
+
+        try:
+            # in any case, do a very simple built-in check to avoid the worst passwords
+            if len(password) < 6:
+                raise ValueError("Password too short.")
+            if len(set(password)) < 4:
+                raise ValueError("Password has not enough different characters.")
+
+            username_lower = username.lower()
+            password_lower = password.lower()
+            if username in password or password in username or \
+               username_lower in password_lower or password_lower in username_lower:
+                raise ValueError("Password too easy (containment).")
+
+            keyboards = (ur"`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./", # US kbd
+                         ur"^1234567890ß´qwertzuiopü+asdfghjklöä#yxcvbnm,.-", # german kbd
+                        ) # add more keyboards!
+            for kbd in keyboards:
+                rev_kbd = kbd[::-1]
+                if password in kbd or password in rev_kbd or \
+                   password_lower in kbd or password_lower in rev_kbd:
+                    raise ValueError("Password too easy (kbd sequence)")
+            try:
+                # to use advanced checking, you need to install python-crack,
+                # cracklib-runtime (dict processing) and do not forget to
+                # initialize the crack dicts!
+                import crack
+                # instead of some "old password" we give the username to check
+                # whether the password is too similar to the username
+                crack.VeryFascistCheck(password, username) # raises ValueError on bad passwords
+            except ImportError:
+                pass
+            return None
+        except ValueError, err:
+            return str(err)
+
+    password_checker = staticmethod(password_checker)
+
     quicklinks_default = [] # preload user quicklinks with this page list
     refresh = None # (minimum_delay, type), e.g.: (2, 'internal')
     rss_cache = 60 # suggested caching time for RecentChanges RSS, in seconds
@@ -454,7 +507,15 @@ reStructuredText Quick Reference
     stylesheets = [] # list of tuples (media, csshref) to insert after theme css, before user css
     _subscribable_events = None # A list of event types that user can subscribe to
     subscribed_pages_default = [] # preload user subscribed pages with this page list
-    subscribed_events_default = [] # preload user subscribed events with this list
+    email_subscribed_events_default = [
+        PageChangedEvent.__name__,
+        PageRenamedEvent.__name__,
+        PageDeletedEvent.__name__,
+        PageCopiedEvent.__name__,
+        PageRevertedEvent.__name__,
+        FileAttachedEvent.__name__,
+    ]
+    jabber_subscribed_events_default = []
     superuser = [] # list of unicode user names that have super powers :)
     supplementation_page = False
     supplementation_page_name = u'Discussion'
@@ -536,7 +597,6 @@ reStructuredText Quick Reference
         ('show_fancy_diff', lambda _: _('Show fancy diffs')),
         ('wikiname_add_spaces', lambda _: _('Add spaces to displayed wiki names')),
         ('remember_me', lambda _: _('Remember login information')),
-        ('want_trivial', lambda _: _('Subscribe to trivial changes')),
 
         ('disabled', lambda _: _('Disable this account forever')),
         # if an account is disabled, it may be used for looking up
@@ -555,11 +615,10 @@ reStructuredText Quick Reference
                               'show_fancy_diff':     1,
                               'wikiname_add_spaces': 0,
                               'remember_me':         1,
-                              'want_trivial':        0,
                              }
 
     # don't let the user change those
-    # user_checkbox_disable = ['disabled', 'want_trivial']
+    # user_checkbox_disable = ['disabled']
     user_checkbox_disable = []
 
     # remove those checkboxes:
@@ -600,8 +659,8 @@ reStructuredText Quick Reference
 
     user_homewiki = 'Self' # interwiki name for where user homepages are located
 
-    unzip_single_file_size = 2.0 * 1000**2
-    unzip_attachments_space = 200.0 * 1000**2
+    unzip_single_file_size = 2.0 * 1000 ** 2
+    unzip_attachments_space = 200.0 * 1000 ** 2
     unzip_attachments_count = 101 # 1 zip file + 100 files contained in it
 
     xmlrpc_putpage_enabled = False # if False, putpage will write to a test page only
@@ -669,6 +728,10 @@ reStructuredText Quick Reference
                 self.chart_options = None
 
         # post process
+
+        # internal dict for plugin `modules' lists
+        self._site_plugin_lists = {}
+
         # we replace any string placeholders with config values
         # e.g u'%(page_front_page)s' % self
         self.navi_bar = [elem % self for elem in self.navi_bar]
@@ -695,15 +758,6 @@ reStructuredText Quick Reference
 
             from xmlrpclib import Server
             self.notification_server = Server(self.notification_bot_uri, )
-
-            # Add checkbox fields that allow user to select means of notification
-            self.user_checkbox_fields.extend([
-                  ('notify_by_email', lambda _: _('Notify me about changes via email')),
-                  ('notify_by_jabber', lambda _: _('Notify me about changes via jabber')),
-                  ])
-
-            new_defaults = {'notify_by_email': 1, 'notify_by_jabber': 0}
-            self.user_checkbox_defaults.update(new_defaults)
 
         # Cache variables for the properties below
         self._iwid = self._iwid_full = self._meta_dict = None

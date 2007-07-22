@@ -6,18 +6,19 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import datetime, logging, time, xmlrpclib, Queue
+import logging, xmlrpclib, Queue
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from threading import Thread
 
 import jabberbot.commands as cmd
 from jabberbot.multicall import MultiCall
-from jabberbot.i18n import getText
+from jabberbot.i18n import get_text
 
-_ = getText
+_ = get_text
 
 class ConfigurationError(Exception):
     def __init__(self, message):
+        Exception.__init__()
         self.message = message
 
 class XMLRPCClient(Thread):
@@ -74,13 +75,21 @@ class XMLRPCClient(Thread):
             self.get_page_list(command)
         elif isinstance(command, cmd.GetPageInfo):
             self.get_page_info(command)
+        elif isinstance(command, cmd.GetUserLanguage):
+            self.get_language_by_jid(command)
 
     def report_error(self, jid, text):
         report = cmd.NotificationCommand(jid, text, _("Error"), async=False)
         self.commands_out.put_nowait(report)
 
     def get_auth_token(self, jid):
-        token = self.connection.getAuthToken(jid, self.config.secret)
+        """Get an auth token using user's Jabber ID
+
+        @type jid: unicode
+        """
+        # We have to use a bare JID
+        jid = jid.split('/')[0]
+        token = self.connection.getJabberAuthToken(jid, self.config.secret)
         if token:
             self.token = token
 
@@ -137,12 +146,13 @@ class XMLRPCClient(Thread):
 
         if not self.token:
             self.warn_no_credentials(command.jid)
-            getpage_result = self.multicall()
+            getpage_result = self.multicall()[0]
         else:
-            getpage_result, token_result = self.multicall()
+            token_result, getpage_result = self.multicall()
+            if token_result != u"SUCCESS":
+                self.warn_no_credentials(command.jid)
 
-        # FIXME: warn if token turned out being wrong
-        command.data = getpage_result[0]
+        command.data = getpage_result
 
     get_page = _xmlrpc_decorator(get_page)
 
@@ -154,12 +164,13 @@ class XMLRPCClient(Thread):
 
         if not self.token:
             self.warn_no_credentials(command.jid)
-            getpagehtml_result = self.multicall()
+            getpagehtml_result = self.multicall()[0]
         else:
             token_result, getpagehtml_result = self.multicall()
+            if token_result != u"SUCCESS":
+                self.warn_no_credentials(command.jid)
 
-        # FIXME: warn if token turned out being wrong
-        command.data = getpagehtml_result[0]
+        command.data = getpagehtml_result
 
     get_page_html = _xmlrpc_decorator(get_page_html)
 
@@ -175,12 +186,13 @@ class XMLRPCClient(Thread):
 
         if not self.token:
             # FIXME: notify the user that he may not have full rights on the wiki
-            getpagelist_result = self.multicall()
+            getpagelist_result = self.multicall()[0]
         else:
             token_result, getpagelist_result = self.multicall()
+            if token_result != u"SUCCESS":
+                self.warn_no_credentials(command.jid)
 
-        # FIXME: warn if token turned out being wrong
-        command.data = getpagelist_result[0]
+        command.data = getpagelist_result
 
     get_page_list = _xmlrpc_decorator(get_page_list)
 
@@ -191,18 +203,18 @@ class XMLRPCClient(Thread):
         self.multicall.getPageInfo(command.pagename)
 
         if not self.token:
-            # FIXME: notify the user that he may not have full rights on the wiki
-            getpageinfo_result = self.multicall()
+            self.warn_no_credentials(command.jid)
+            getpageinfo_result = self.multicall()[0]
         else:
             token_result, getpageinfo_result = self.multicall()
+            if token_result != u"SUCCESS":
+                self.warn_no_credentials(command.jid)
 
-        # FIXME: warn if token turned out being wrong
-
-        author = getpageinfo_result[0]['author']
+        author = getpageinfo_result['author']
         if author.startswith("Self:"):
-            author = getpageinfo_result[0]['author'][5:]
+            author = getpageinfo_result['author'][5:]
 
-        datestr = str(getpageinfo_result[0]['lastModified'])
+        datestr = str(getpageinfo_result['lastModified'])
         date = u"%(year)s-%(month)s-%(day)s at %(time)s" % {
                     'year': datestr[:4],
                     'month': datestr[4:6],
@@ -215,12 +227,30 @@ Last modification: %(modification)s
 Current version: %(version)s""") % {
              'author': author,
              'modification': date,
-             'version': getpageinfo_result[0]['version'],
+             'version': getpageinfo_result['version'],
          }
 
         command.data = msg
 
     get_page_info = _xmlrpc_decorator(get_page_info)
+
+    def get_language_by_jid(self, command):
+        """Returns language of the a user identified by the given JID"""
+
+        server = xmlrpclib.ServerProxy(self.config.wiki_url + "?action=xmlrpc2")
+        language = "en"
+
+        try:
+            language = server.getUserLanguageByJID(command.jid)
+        except xmlrpclib.Fault, fault:
+            self.log.error(str(fault))
+        except xmlrpclib.Error, err:
+            self.log.error(str(err))
+        except Exception, exc:
+            self.log.critical(str(exc))
+
+        command.language = language
+        self.commands_out.put_nowait(command)
 
 
 class XMLRPCServer(Thread):

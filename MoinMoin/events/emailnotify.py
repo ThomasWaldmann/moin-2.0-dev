@@ -17,8 +17,8 @@ except:
 from MoinMoin import user
 from MoinMoin.Page import Page
 from MoinMoin.mail import sendmail
-from MoinMoin.events import PageChangedEvent, UserCreatedEvent, FileAttachedEvent
 from MoinMoin.user import User, getUserList
+import MoinMoin.events as ev
 import MoinMoin.events.notification as notification
 
 
@@ -79,8 +79,10 @@ def notify_subscribers(request, page, comment, trivial):
 
         # send email to all subscribers
         for lang in subscribers:
-            emails = [u.email for u in subscribers[lang] if u.notify_by_email]
-            names = [u.name for u in subscribers[lang] if u.notify_by_email]
+            users = [u for u in subscribers[lang]
+                     if ev.PageChangedEvent.__name__ in u.email_subscribed_events]
+            emails = [u.email for u in users]
+            names = [u.name for u in users]
             data = prep_page_changed_mail(request, page, comment, lang, revisions, trivial)
 
             if send_notification(request, mail_from, emails, data):
@@ -105,13 +107,11 @@ def handle_user_created(event):
 
     data = notification.user_created_message(event.request, sitename, username, email)
 
-    for id in user_ids:
-        usr = User(event.request, id=id)
-        if not usr.notify_by_email:
-            continue
+    for usr_id in user_ids:
+        usr = User(event.request, id=usr_id)
 
         # Currently send this only to super users
-        if usr.isSuperUser() and event_name in usr.subscribed_events and usr.notify_by_email:
+        if usr.isSuperUser() and event_name in usr.email_subscribed_events:
             emails.append(usr.email)
 
     send_notification(event.request, from_address, emails, data)
@@ -135,7 +135,7 @@ def handle_file_attached(event):
         emails = []
 
         for usr in subscribers[lang]:
-            if usr.notify_by_email and event_name in usr.subscribed_events:
+            if usr.email and event_name in usr.email_subscribed_events:
                 emails.append(usr.email)
             else:
                 continue
@@ -152,9 +152,11 @@ def handle(event):
     if not event.request.cfg.mail_enabled:
         return
 
-    if isinstance(event, PageChangedEvent):
-        return notify_subscribers(event.request, event.page, event.comment, event.trivial)
-    elif isinstance(event, UserCreatedEvent):
+    if isinstance(event, ev.PageChangedEvent):
+        return notify_subscribers(event.request, event.page, event.comment, False)
+    elif isinstance(event, ev.TrivialPageChangedEvent):
+        return notify_subscribers(event.request, event.page, event.comment, True)
+    elif isinstance(event, ev.UserCreatedEvent):
         return handle_user_created(event)
-    elif isinstance(event, FileAttachedEvent):
+    elif isinstance(event, ev.FileAttachedEvent):
         return handle_file_attached(event)
