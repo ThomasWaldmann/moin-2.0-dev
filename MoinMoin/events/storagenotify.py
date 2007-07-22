@@ -33,7 +33,7 @@ def handle(event):
     elif isinstance(event, ev.UserCreatedEvent):
         handle_user_changed(event.request, event.user.id)
     elif isinstance(event, ev.UserChangedEvent):
-        handle_user_changed(event.request, event.user.ids)
+        handle_user_changed(event.request, event.user.id)
 
 
 def handle_page_changed(request, pagename):

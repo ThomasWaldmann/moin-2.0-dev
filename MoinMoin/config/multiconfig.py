@@ -23,6 +23,7 @@ from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.backends import LayerBackend
+from MoinMoin.storage.interfaces import DELETED
 
 _url_re_cache = None
 _farmconfig_mtime = None
@@ -781,7 +782,7 @@ reStructuredText Quick Reference
         self.event_handlers = events.get_handlers(self)
 
         # storage configuration
-        self.indexes = ["name", "openids", "jid", "email", "deleted"]
+        self.indexes = ["name", "openids", "jid", "email", DELETED]
         self.user_backend = UserStorage("user", self.user_dir, self)
         self.page_backend = PageStorage("pages", os.path.join(self.data_dir, "pages"), self)
         self.underlay_backend = PageStorage("underlay", os.path.join(self.data_underlay_dir, "pages"), self)

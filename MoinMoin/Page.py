@@ -575,13 +575,6 @@ class Page(object):
         # add current page name for list matching
         pageList.append(self.page_name)
 
-        # interwiki stuff
-        for page in pageList:
-            if self.cfg.interwikiname:
-                newPage = "%s:%s" % (self.cfg.interwikiname, page)
-                pageList.remove(page)
-                pageList.append(newPage)
-
         if self.cfg.SecurityPolicy:
             UserPerms = self.cfg.SecurityPolicy
         else:
@@ -592,15 +585,12 @@ class Page(object):
         # the user is not the current editor
         # Also, if the change is trivial (send email isn't ticked) only send email to users
         # who want_trivial changes (typically Admins on public sites)
-
-        userlist = []
-        for page in pageList:
-            userlist.extend(user.getUserIdBySubscription(request, page))
-
+        userlist = user.getUserList(request)
         subscriber_list = {}
-        for subscriber in userlist:
-            if subscriber.id == request.user.id and not include_self:
+        for uid in userlist:
+            if uid == request.user.id and not include_self:
                 continue # no self notification
+            subscriber = user.User(request, uid)
 
             # This is a bit wrong if return_users=1 (which implies that the caller will process
             # user attributes and may, for example choose to send an SMS)
@@ -613,13 +603,14 @@ class Page(object):
             if not UserPerms(subscriber).read(self.page_name):
                 continue
 
-            lang = subscriber.language or request.cfg.language_default
-            if not lang in subscriber_list:
-                subscriber_list[lang] = []
-            if return_users:
-                subscriber_list[lang].append(subscriber)
-            else:
-                subscriber_list[lang].append(subscriber.email)
+            if subscriber.isSubscribedTo(pageList):
+                lang = subscriber.language or request.cfg.language_default
+                if not lang in subscriber_list:
+                    subscriber_list[lang] = []
+                if return_users:
+                    subscriber_list[lang].append(subscriber)
+                else:
+                    subscriber_list[lang].append(subscriber.email)
 
         return subscriber_list
 
