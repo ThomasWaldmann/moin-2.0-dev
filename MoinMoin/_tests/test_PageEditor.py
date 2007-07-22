@@ -170,30 +170,38 @@ class TestExpandPrivateVariables(TestExpandUserName):
         return page.getPagePath(use_underlay=0, check_create=0)
 
 
-def testSave(request):
-    """Test if saveText() is interrupted if PagePreSave event handler returns Abort"""
+class TestSave:
 
-    def handler(event):
-        from MoinMoin.events import Abort
-        return Abort("This is just a test")
+    def setup_method(self, method):
+        self.old_handlers = self.request.cfg.event_handlers
+        gain_superuser_rights(self.request)
 
-    pagename = u'AutoCreatedMoinMoinTemporaryTestPageFortestSave'
-    testtext = u'ThisIsSomeStupidTestPageText!'
+    def teardown_method(self, method):
+        self.request.cfg.event_handlers = self.old_handlers
 
-    gain_superuser_rights(request)
-    cfg = request.cfg
-    cfg.event_handlers = [handler]
+    def testSaveAbort(self):
+        """Test if saveText() is interrupted if PagePreSave event handler returns Abort"""
 
-    page = Page(request, pagename)
-    if page.exists():
-        deleter = PageEditor(request, pagename)
-        deleter.deletePage()
-        print 'BODY:', deleter.body
+        def handler(event):
+            from MoinMoin.events import Abort
+            return Abort("This is just a test")
 
-    editor = PageEditor(request, pagename)
-    print 'BODY:', editor.body
-    editor.saveText(testtext, 0)
+        pagename = u'AutoCreatedMoinMoinTemporaryTestPageFortestSave'
+        testtext = u'ThisIsSomeStupidTestPageText!'
 
-    print "PageEditor can't save a page if Abort is returned from PreSave event handlers"
-    page = Page(request, pagename)
-    assert page.body != testtext
+        self.request.cfg.event_handlers = [handler]
+
+        page = Page(self.request, pagename)
+        if page.exists():
+            deleter = PageEditor(self.request, pagename)
+            deleter.deletePage()
+
+        editor = PageEditor(self.request, pagename)
+        editor.saveText(testtext, 0)
+
+        print "PageEditor can't save a page if Abort is returned from PreSave event handlers"
+        page = Page(self.request, pagename)
+        assert page.body != testtext
+
+
+coverage_modules = ['MoinMoin.PageEditor']

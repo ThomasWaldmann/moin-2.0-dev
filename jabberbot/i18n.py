@@ -5,20 +5,59 @@
     @copyright: 2007 by Karol Nowak <grywacz@gmail.com>
     @license: GNU GPL, see COPYING for details.
 """
+import logging, xmlrpclib
 
-translations = None
+TRANSLATIONS = None
 
-def getText(original, lang="en"):
-    global translations
 
-    if not translations:
+def get_text(original, lang="en"):
+    """ Return a translation of text in the user's language.
+
+        @type original: unicode
+    """
+    if original == u"":
+        return u""
+
+    global TRANSLATIONS
+    if not TRANSLATIONS:
         init_i18n()
 
     try:
-        return translations[lang][original]
+        return TRANSLATIONS[lang][original]
     except KeyError:
         return original
 
-def init_i18n():
-    global translations
-    translations = {'en': {}}
+
+def init_i18n(config):
+    """Prepare i18n
+
+    @type config: jabberbot.config.BotConfig
+
+    """
+    global TRANSLATIONS
+    TRANSLATIONS = request_translations(config) or {'en': {}}
+
+
+def request_translations(config):
+    """Download translations from wiki using xml rpc
+
+    @type config: jabberbot.config.BotConfig
+
+    """
+
+    wiki = xmlrpclib.Server(config.wiki_url + "?action=xmlrpc2")
+    log = logging.getLogger("log")
+    log.debug("Initialising i18n...")
+
+    try:
+        translations =  wiki.getBotTranslations()
+        return translations
+    except xmlrpclib.Fault, fault:
+        log.error("XML RPC fault occured while getting translations: %s" % (str(fault), ))
+    except xmlrpclib.Error, error:
+        log.error("XML RPC error occured while getting translations: %s" % (str(error), ))
+    except Exception, exc:
+        log.error("Unexpected exception occured while getting translations: %s" % (str(exc), ))
+
+    log.error("Translations could not be downloaded, is wiki is accesible?")
+    return None

@@ -19,7 +19,7 @@ unsafe_names = ("id", "key", "val", "user_data", "enc_password")
 
 import time, sha, codecs
 
-from MoinMoin import wikiutil, i18n
+from MoinMoin import events, wikiutil, i18n
 from MoinMoin.util import timefuncs
 from MoinMoin.storage.external import ItemCollection
 
@@ -191,8 +191,6 @@ class User:
         self.auth_method = kw.get('auth_method', 'internal')
         self.auth_attribs = kw.get('auth_attribs', ())
         self.bookmarks = {} # interwikiname: bookmark
-        self.notify_by_email = True
-        self.notify_by_jabber = False
 
         # create some vars automatically
         self.__dict__.update(self._cfg.user_form_defaults)
@@ -219,11 +217,13 @@ class User:
         #self.edit_cols = 80
         self.tz_offset = int(float(self._cfg.tz_offset) * 3600)
         self.language = ""
+        self.loaded = False
         self.date_fmt = ""
         self.datetime_fmt = ""
         self.quicklinks = self._cfg.quicklinks_default
         self.subscribed_pages = self._cfg.subscribed_pages_default
-        self.subscribed_events = self._cfg.subscribed_events_default
+        self.email_subscribed_events = self._cfg.email_subscribed_events_default
+        self.jabber_subscribed_events = self._cfg.jabber_subscribed_events_default
         self.theme_name = self._cfg.theme_default
         self.editor_default = self._cfg.editor_default
         self.editor_ui = self._cfg.editor_ui
@@ -357,6 +357,9 @@ class User:
         if not self.disabled:
             self.valid = 1
 
+        # Mark this user as loaded from disk, so UserCreatedEvent is not sent
+        self.loaded = True
+
         # If user data has been changed, save fixed user data.
         if changed:
             self.save()
@@ -465,6 +468,10 @@ class User:
 
         if not self.disabled:
             self.valid = 1
+
+        if not self.loaded:
+            event = events.UserCreatedEvent(self._request, self)
+            events.send_event(event)
 
     # -----------------------------------------------------------------
     # Time and date formatting

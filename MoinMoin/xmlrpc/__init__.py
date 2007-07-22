@@ -591,6 +591,22 @@ class XmlRpcBase:
             userdata = dict(u.persistent_items())
         return userdata
 
+    def xmlrpc_getUserLanguageByJID(self, jid):
+        """ Returns user's language given his/her Jabber ID
+
+        It makes no sense to consider this a secret, right? Therefore
+        an authentication token is not required. We return a default
+        of "en" if user is not found.
+
+        TODO: surge protection? Do we fear account enumeration?
+        """
+        retval = "en"
+        u = user.get_by_jabber_id(self.request, jid)
+        if u:
+            retval = u.language
+
+        return retval
+
     # authorization methods
 
     def _cleanup_stale_tokens(self, request):
@@ -606,11 +622,16 @@ class XmlRpcBase:
             except caching.CacheError:
                 pass
 
-    def _generate_auth_token(self):
+    def _generate_auth_token(self, usr):
+        """Generate a token that can be used to authorize next requests
+
+        @type usr: MoinMoin.user
+
+        """
         token = random_string(32, 'abcdefghijklmnopqrstuvwxyz0123456789')
         centry = caching.CacheEntry(self.request, 'xmlrpc-session', token,
                                     scope='farm', use_pickle=True)
-        centry.update((time.time() + 15*3600, u.id))
+        centry.update((time.time() + 15*3600, usr.id))
         return token
 
     def xmlrpc_getAuthToken(self, username, password, *args):
@@ -625,7 +646,7 @@ class XmlRpcBase:
                                      password=password, login=True)
 
         if u and u.valid:
-            return _generate_auth_token()
+            return self._generate_auth_token(u)
         else:
             return ""
 
@@ -647,7 +668,7 @@ class XmlRpcBase:
         u = self.request.handle_jid_auth(jid)
 
         if u and u.valid:
-            return _generate_auth_token()
+            return self._generate_auth_token(u)
         else:
             return ""
 
@@ -943,6 +964,15 @@ class XmlRpcBase:
         return xmlrpclib.Boolean(1)
 
     # XXX END WARNING XXX
+
+
+    def xmlrpc_getBotTranslations(self):
+        """ Return translations to be used by notification bot
+
+        @return: a dict (indexed by language) of dicts of translated strings (indexed by original ones)
+        """
+        from MoinMoin.i18n import bot_translations
+        return bot_translations(self.request)
 
 
 class XmlRpc1(XmlRpcBase):

@@ -57,6 +57,11 @@ class BaseDataCommand(object):
     parameter_list = u""
 
     def __init__(self, jid):
+        """A constructor
+
+        @param jid: Jabber ID to send the reply to
+        @type jid: unicode
+        """
         self.jid = jid
         self.data = None
 
@@ -104,3 +109,13 @@ class Search(BaseDataCommand):
         BaseDataCommand.__init__(self, jid)
         self.term = term
         self.search_type = search_type
+
+class GetUserLanguage:
+    """Request user's language information from wiki"""
+
+    def __init__(self, jid):
+        """
+        @param jid: user's (bare) Jabber ID
+        """
+        self.jid = jid
+        self.language = None
