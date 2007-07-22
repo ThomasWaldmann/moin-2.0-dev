@@ -282,10 +282,7 @@ class Item(UserDict.DictMixin, object):
         Lazy load deleted flag.
         """
         if self.__deleted is None:
-            try:
-                self.__deleted = self.metadata[DELETED]
-            except KeyError:
-                self.__deleted = False
+            self.__deleted = self.metadata[DELETED]
         return self.__deleted
 
     def set_deleted(self, value):
