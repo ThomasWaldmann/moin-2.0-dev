@@ -8,8 +8,8 @@
     TODO: properties on revision
 """
 
-import logging
 import UserDict
+import logging
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, LockingError
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend, DELETED, ACL, LOCK_TIMESTAMP, LOCK_USER
@@ -22,24 +22,15 @@ class ItemCollection(UserDict.DictMixin, object):
     """
 
     __item_dict = dict()
+    __cache_updates = []
     log_pos = None
 
-    def __init__(self, backend, request=None):
+    def __init__(self, backend, user=None):
         """
         Initializes the proper StorageBackend.
         """
         self.backend = backend
-        self.request = request
-
-        if self.request is not None and hasattr(self.request, "user"):
-            self.user = self.request.user
-        else:
-            self.user = None
-
-        if self.request is not None and hasattr(self.request, "editlog"):
-            self.editlog = self.request.editlog
-        else:
-            self.editlog = None
+        self.user = user
 
         self.__items = None
 
@@ -70,7 +61,7 @@ class ItemCollection(UserDict.DictMixin, object):
         Deletes an Item.
         """
         self.backend.remove_item(name)
-        self.__items = None
+        self.update_cache(name)
 
     def keys(self, filters=None):
         """
@@ -78,6 +69,7 @@ class ItemCollection(UserDict.DictMixin, object):
         filtering stuff which is described more detailed in
         StorageBackend.list_items(...).
         """
+        self.refresh()
         if filters is None:
             return self.items
         else:
@@ -87,16 +79,17 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Returns a new Item with the given name.
         """
-        backend = self.backend.create_item(name)
+        self.backend.create_item(name)
         self.__items = None
-        return Item(name, backend, self.user)
+        return self[name]
 
     def rename_item(self, name, newname):
         """
         Renames an Item.
         """
         self.backend.rename_item(name, newname)
-        self.__items = None
+        self.update_cache(name)
+        self.update_cache(newname)
 
     def copy_item(self, name, newname):
         """
@@ -135,7 +128,7 @@ class ItemCollection(UserDict.DictMixin, object):
 
         newitem.lock = False
 
-        self.__items = None
+        self.update_cache(newname)
 
     def get_items(self):
         """
@@ -147,24 +140,25 @@ class ItemCollection(UserDict.DictMixin, object):
 
     items = property(get_items)
 
+    def update_cache(self, item):
+        """
+        Add an item to the cache to update.
+        """
+        if not item in self.__cache_updates:
+            self.__cache_updates.append(item)
+
     def refresh(self):
         """
-        Refresh the cached items based on the editlog.
+        Refresh the cached items based on the previous recorded entries.
         """
-        if self.editlog is None:
-            self.__item_dict = dict()
-            return
-
-        new_pos, items = self.editlog.news(self.log_pos)
-        if items:
-            for item in items:
-                logging.info("cache: removing %r" % item)
-                try:
-                    del self.__item_dict[item]
-                except KeyError:
-                    pass
+        for item in self.__cache_updates:
+            try:
+                del self.__item_dict[item]
+                logging.info("Removed item from cache: %s" % item)
+            except KeyError:
+                pass
+        if len(self.__cache_updates) > 0:
             self.__items = None
-        self.log_pos = new_pos
 
 
 class Item(UserDict.DictMixin, object):

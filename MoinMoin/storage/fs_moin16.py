@@ -60,9 +60,9 @@ class Indexes(object):
         """
         if not os.path.isdir(cfg.indexes_dir):
             raise BackendError(_("Invalid path %r.") % cfg.indexes_dir)
+        self.backend = backend
         self.path = cfg.indexes_dir
         self.indexes = cfg.indexes
-        self.backend = backend
 
     def rebuild_indexes(self):
         """
@@ -157,7 +157,7 @@ class Indexes(object):
         """
         Returns the filename and rebuilds the index when it does not exist yet.
         """
-        filename = os.path.join(self.path, index)
+        filename = os.path.join(self.path, self.backend.name + "-" + index)
         if create and not os.path.isfile(filename):
             self.rebuild_indexes()
         return filename
@@ -170,15 +170,17 @@ class AbstractStorage(StorageBackend):
 
     locks = dict()
 
-    def __init__(self, path, cfg, name):
+    def __init__(self, name, path, cfg):
         """
         Init the Backend with the correct path.
         """
+        self.indexes = os.path.join(path, "indexes")
         if not os.path.isdir(path):
             raise BackendError(_("Invalid path %r.") % path)
         self.path = path
-        self.cfg = cfg
         self.name = name
+        self.cfg = cfg
+        self.indexes = Indexes(self, cfg)
 
     def list_items(self, items, filters=None):
         """
@@ -197,7 +199,7 @@ class AbstractStorage(StorageBackend):
                             if unicode(value) in _parse_value(metadata[key]):
                                 filtered_files.append(item)
                 else:
-                    items = Indexes(self, self.cfg).get_items(key, value)
+                    items = self.indexes.get_items(key, value)
                     filtered_files.extend(items)
 
             return filtered_files
@@ -276,7 +278,7 @@ class AbstractMetadata(MetadataBackend):
         @see MoinMoin.storage.external.Metadata.save
         """
         self._save_metadata(self._name, self._revno, self._metadata)
-        Indexes(self._backend, self._backend.cfg).update_indexes(self._name, self._org_metadata, self._metadata)
+        self._backend.indexes.update_indexes(self._name, self._org_metadata, self._metadata)
         self._org_metadata = copy.copy(self._metadata_property)
 
     def _parse_metadata(self, name, revno):
