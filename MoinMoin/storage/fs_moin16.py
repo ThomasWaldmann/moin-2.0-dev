@@ -120,7 +120,10 @@ class Indexes(object):
                 for key in _parse_value(oldmetadata[index]):
                     pkey = unicode(key).encode("utf-8")
                     data = pickle.loads(db[pkey])
-                    data.remove(item)
+                    try:
+                        data.remove(item)
+                    except ValueError:
+                        pass
                     db[pkey] = pickle.dumps(data)
                 for key in _parse_value(newmetadata[index]):
                     pkey = unicode(key).encode("utf-8")
@@ -137,7 +140,10 @@ class Indexes(object):
                 for key in _parse_value(oldmetadata[index]):
                     pkey = unicode(key).encode("utf-8")
                     data = pickle.loads(db[pkey])
-                    data.remove(item)
+                    try:
+                        data.remove(item)
+                    except ValueError:
+                        pass
                     db[pkey] = pickle.dumps(data)
                 db.close()
 

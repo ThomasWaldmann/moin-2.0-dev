@@ -808,15 +808,14 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         self._item.lock = True
 
-        if not was_deprecated and not deleted:
+        if was_deprecated:
+            newrev = self._item[0]
+        elif not deleted:
             if self.do_revision_backup or self._item.current == 0:
                 newrev = self._item.new_revision()
-        else:
-            newrev = self._item[0]
-
-        rev = newrev.revno
 
         if not deleted:
+            rev = newrev.revno
             newrev.data.write(text)
             newrev.data.close()
             if not was_deprecated:

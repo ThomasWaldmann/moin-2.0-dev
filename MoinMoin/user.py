@@ -473,7 +473,8 @@ class User:
             event = events.UserCreatedEvent(self._request, self)
         else:
             event = events.UserChangedEvent(self._request, self)
-            events.send_event(event)
+        events.send_event(event)
+
     # -----------------------------------------------------------------
     # Time and date formatting
 
