@@ -121,14 +121,14 @@ class TestItem:
 
     def test_deleted(self):
         self.item.lock = True
-        assert self.item.deleted == False
+        assert not self.item.deleted
         self.item.deleted = True
         self.item.metadata.save()
-        assert self.item.deleted == True
+        assert self.item.deleted
         assert self.item.current == 1
         self.item.deleted = False
         self.item.metadata.save()
-        assert self.item.deleted == False
+        assert not self.item.deleted
         assert self.item.current == 1
         self.item.lock = False
 
@@ -147,11 +147,11 @@ class TestItem:
         self.item.lock = False
 
     def test_lock(self):
-        assert self.item.lock == False
+        assert not self.item.lock
         self.item.lock = True
-        assert self.item.lock == True
+        assert self.item.lock
         self.item.lock = False
-        assert self.item.lock == False
+        assert not self.item.lock
         py.test.raises(LockingError, self.item.new_revision, 1)
         py.test.raises(LockingError, self.item[0].data.write, "test")
 
