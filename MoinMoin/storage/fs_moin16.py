@@ -211,8 +211,6 @@ class AbstractStorage(StorageBackend):
     def lock(self, identifier, timeout=1, lifetime=60):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.lock
-        
-        TODO: use quoteWikiNameFS here
         """
         write_lock = lock.ExclusiveLock(os.path.join(self.cfg.tmp_dir, identifier), lifetime)
         if not write_lock.acquire(timeout):
@@ -633,7 +631,7 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.storage.fs_moin16.AbstractStorage.get_page_path
         """
         return AbstractStorage.get_page_path(self, quoteWikinameFS(name), *args)
-    
+
     def lock(self, identifier, timeout=1, lifetime=60):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.lock
