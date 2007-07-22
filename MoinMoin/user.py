@@ -51,13 +51,13 @@ def get_by_email_address(request, email_address):
 
 def get_by_jabber_id(request, jabber_id):
     """ Searches for an user with a perticular jabber id and returns it. """
-    users = get_by_filter(request, 'jid', jabber_id)[0]
+    users = get_by_filter(request, 'jid', jabber_id)
     if len(users) > 0:
         return users[0]
 
 def getUserIdByOpenId(request, openid):
     """ Searches for an user with a perticular openid id and returns it. """
-    users = get_by_filter(request, 'openids', openid)[0]
+    users = get_by_filter(request, 'openids', openid)
     if len(users) > 0:
         return users[0]
 
