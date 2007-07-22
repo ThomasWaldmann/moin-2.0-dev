@@ -742,6 +742,8 @@ class PageMetadata(AbstractMetadata):
             current = self._backend.current_revision(name, real=False)
             if not os.path.exists(self._backend.get_page_path(name, "revisions", get_rev_string(current))):
                 metadata[DELETED] = True
+            else:
+                metadata[DELETED] = False
 
             # Emulate edit-lock
             if os.path.exists(self._backend.get_page_path(name, "edit-lock")):
@@ -801,7 +803,7 @@ class PageMetadata(AbstractMetadata):
         if revno == -1:
 
             # Emulate deleted
-            if DELETED in metadata and metadata[DELETED]:
+            if metadata[DELETED]:
                 self._backend._update_current(name, self._backend.current_revision(name) + 1)
             else:
                 self._backend._update_current(name)
@@ -968,7 +970,7 @@ def _parse_value(value):
     elif ttype in ['dict']:
         keys = value.keys()
     else:
-        keys = [value]
+        keys = [unicode(value)]
     return keys
 
 
@@ -983,6 +985,7 @@ def _get_last_metadata(backend, item):
         metadata_last = backend.get_metadata_backend(item, 0)
         metadata.update(metadata_last)
     return metadata
+
 
 def _handle_error(backend, err, name, revno=None, message=""):
     """
