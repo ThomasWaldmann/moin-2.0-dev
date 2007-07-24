@@ -17,6 +17,10 @@ ACL = "acl"
 LOCK_TIMESTAMP = "lock_timestamp"
 LOCK_USER = "lock_user"
 MTIME = "mtime"
+USER = "user"
+HOST = "host"
+IP = "ip"
+COMMENT = "comment"
 
 """
 Then the actual interface.

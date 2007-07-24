@@ -42,9 +42,9 @@ import tempfile
 
 from MoinMoin import config
 from MoinMoin.util import lock, pickle
-from MoinMoin.storage.interfaces import DataBackend, StorageBackend, MetadataBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME
+from MoinMoin.storage.interfaces import DataBackend, StorageBackend, MetadataBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME, USER, IP, HOST, COMMENT
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
-from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
+from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS, version2timestamp
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
@@ -385,9 +385,7 @@ class UserMetadata(AbstractMetadata):
         @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
         """
         try:
-            data_file = codecs.open(self._backend.get_page_path(name), "r", config.charset)
-            data = data_file.readlines()
-            data_file.close()
+            data = codecs.open(self._backend.get_page_path(name), "r", config.charset)
         except IOError, err:
             _handle_error(self._backend, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
 
@@ -409,6 +407,8 @@ class UserMetadata(AbstractMetadata):
                 user_data[key] = val
             except ValueError:
                 pass
+
+        data.close()
 
         return user_data
 
@@ -754,15 +754,15 @@ class PageMetadata(AbstractMetadata):
             # Emulate edit-lock
             if os.path.exists(self._backend.get_page_path(name, "edit-lock")):
                 data_file = file(self._backend.get_page_path(name, "edit-lock"), "r")
-                line = data_file.read().strip()
+                line = data_file.read()
                 data_file.close()
-                if line:
-                    values = line.split("\t")
-                    metadata[LOCK_TIMESTAMP] = values[0]
-                    if len(values) >= 7:
-                        metadata[LOCK_USER] = values[6]
-                    else:
-                        metadata[LOCK_USER] = values[4]
+
+                values = _parse_log_line(line)
+                metadata[LOCK_TIMESTAMP] = values[0]
+                if values[6]:
+                    metadata[LOCK_USER] = values[6]
+                else:
+                    metadata[LOCK_USER] = values[4]
 
         else:
 
@@ -772,7 +772,7 @@ class PageMetadata(AbstractMetadata):
                 _handle_error(self._backend, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
 
             started = False
-            for line in data_file.readlines():
+            for line in data_file:
                 if line.startswith('#'):
                     started = True
                     if line[1] == '#': # two hash marks are a comment
@@ -797,7 +797,33 @@ class PageMetadata(AbstractMetadata):
 
             # add size and mtime
             metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
-            metadata[MTIME] = os.stat(self._backend.get_page_path(name, "revisions", get_rev_string(revno))).st_mtime
+
+            user = ""
+            ip = ""
+            host = ""
+            comment = ""
+            mtime = ""
+
+            try:
+                data_file = file(self._backend.get_page_path(name, "edit-log"), "r")
+
+                for line in data_file:
+                    values = _parse_log_line(line)
+                    mtime = version2timestamp(int(values[0]))
+                    ip = values[4]
+                    host = values[5]
+                    user = values[6]
+                    comment = values[8]
+
+            except IOError:
+                pass
+
+            data_file.close()
+            metadata[MTIME] = mtime
+            metadata[USER] = user
+            metadata[IP] = ip
+            metadata[HOST] = host
+            metadata[COMMENT] = comment
 
         return metadata
 
@@ -829,21 +855,21 @@ class PageMetadata(AbstractMetadata):
             read_filename = self._backend.get_page_path(name, "revisions", get_rev_string(revno))
 
             try:
-                data_file = codecs.open(read_filename, "r", config.charset)
-                data = data_file.readlines()
-                data_file.close()
+                data = codecs.open(read_filename, "r", config.charset)
             except IOError, err:
                 _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
             # remove metadata
             new_data = [line for line in data if not line.startswith('#') and not line == '#' and not line == '##']
 
+            data.close()
+
             # add metadata
             metadata_data = ""
             for key, value in metadata.iteritems():
 
                 # remove size metadata
-                if key == SIZE or key == MTIME:
+                if key in [SIZE, MTIME, USER, IP, HOST, COMMENT]:
                     continue
 
                 # special handling for list metadata like acls
@@ -1003,6 +1029,17 @@ def _handle_error(backend, err, name, revno=None, message=""):
         elif revno is not None and not backend.has_revision(name, revno):
             raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, name))
     raise BackendError(message)
+
+
+def _parse_log_line(line):
+    """
+    Parses a line from the edit-log or lock.
+    """
+    fields = line.strip().split("\t")
+    missing = 9 - len(fields)
+    if missing:
+        fields.extend([''] * missing)
+    return fields
 
 
 _ = lambda x: x

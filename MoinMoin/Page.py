@@ -41,7 +41,7 @@ from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage.interfaces import SIZE, MTIME, DELETED
+from MoinMoin.storage.interfaces import SIZE, MTIME, DELETED, USER, HOST, IP
 
 
 def is_cache_exception(e):
@@ -344,8 +344,6 @@ class Page(object):
         """
         Return the last edit.
 
-        TODO: Fix up editor.
-
         @param printable: whether to return the date in printable form
         @rtype: dict
         @return: timestamp and editor information
@@ -355,10 +353,27 @@ class Page(object):
 
         result = {
             'timestamp': self.mtime(printable),
-            'editor': '',
+            'editor': self.last_editor(printable),
         }
 
         return result
+
+    def last_editor(self, printable=False):
+        """
+        Return the last editor.
+
+        @param printable: whether to return the date in printable form
+        @rtype: string
+        @return: the last editor, either printable or not.
+        """
+        if not printable:
+            editordata = user.get_editor(self.request, self._rev.metadata[USER], self._rev.metadata[IP], self._rev.metadata[HOST])
+            if editordata[0] == 'interwiki':
+                return "%s:%s" % editordata[1]
+            else:
+                return editordata[1]
+        else:
+            return user.get_printable_editor(self.request, self._rev.metadata[USER], self._rev.metadata[IP], self._rev.metadata[HOST])
 
     def mtime(self, printable=False):
         """

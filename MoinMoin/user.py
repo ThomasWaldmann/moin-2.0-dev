@@ -95,6 +95,65 @@ def getUserIdentification(request, username=None):
     return username or (request.cfg.show_hosts and request.remote_addr) or _("<unknown>")
 
 
+def get_editor(request, userid, addr, hostname):
+    """ Return a tuple of type id and string or Page object
+        representing the user that did the edit.
+
+        The type id is one of 'ip' (DNS or numeric IP), 'user' (user name)
+        or 'homepage' (Page instance of user's homepage).
+    """
+    result = 'ip', request.cfg.show_hosts and hostname or ''
+    if userid:
+        userdata = User(request, userid)
+        if userdata.mailto_author and userdata.email:
+            return ('email', userdata.email)
+        elif userdata.name:
+            interwiki = wikiutil.getInterwikiHomePage(request, username=userdata.name)
+            if interwiki:
+                result = ('interwiki', interwiki)
+    return result
+
+
+def get_printable_editor(request, userid, addr, hostname):
+    """ Return a HTML-safe string representing the user that did the edit.
+    """
+    if request.cfg.show_hosts:
+        title = " @ %s[%s]" % (hostname, addr)
+    else:
+        title = ""
+    kind, info = get_editor(request, userid, addr, hostname)
+    userdata = User(request, userid)
+    if kind == 'interwiki':
+        name = userdata.name
+        aliasname = userdata.aliasname
+        if not aliasname:
+            aliasname = name
+        title = wikiutil.escape(aliasname + title)
+        text = (request.formatter.interwikilink(1, title=title, generated=True, *info) +
+                request.formatter.text(name) +
+                request.formatter.interwikilink(0, title=title, *info))
+    elif kind == 'email':
+        name = userdata.name
+        aliasname = userdata.aliasname
+        if not aliasname:
+            aliasname = name
+        title = wikiutil.escape(aliasname + title)
+        url = 'mailto:%s' % info
+        text = (request.formatter.url(1, url, css='mailto', title=title) +
+                request.formatter.text(name) +
+                request.formatter.url(0))
+    elif kind == 'ip':
+        try:
+            idx = info.index('.')
+        except ValueError:
+            idx = len(info)
+        title = wikiutil.escape('???' + title)
+        text = wikiutil.escape(info[:idx])
+    else:
+        raise Exception("unknown EditorData type")
+    return '<span title="%s">%s</span>' % (title, text)
+
+
 def encodePassword(pwd, charset='utf-8'):
     """ Encode a cleartext password
 
