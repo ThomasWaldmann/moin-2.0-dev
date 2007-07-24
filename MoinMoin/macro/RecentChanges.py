@@ -156,7 +156,9 @@ def print_abandoned(macro, args, **kw):
     pages = request.rootpage.getPageList()
     last_edits = []
     for name in pages:
-        log = Page(request, name)._last_edited(request)
+        logfile = editlog.EditLog(request, rootpage=name)
+        logfile.to_end()
+        log = logfile.previous()
         if log:
             last_edits.append(log)
         #   we don't want all Systempages at the beginning of the abandoned list
