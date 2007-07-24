@@ -384,8 +384,8 @@ class XmlRpcBase:
             return self.noSuchPageFault()
 
         # Get page info
-        last_edit = page.last_edit(self.request)
-        mtime = wikiutil.version2timestamp(long(last_edit['timestamp'])) # must be long for py 2.2.x
+        last_edit = page.last_edit()
+        mtime = last_edit['timestamp'] # must be long for py 2.2.x
         gmtuple = tuple(time.gmtime(mtime))
 
         version = rev # our new rev numbers: 1,2,3,4,....

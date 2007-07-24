@@ -50,31 +50,6 @@ class EditLogLine:
             return user.id == self.userid
         return request.remote_addr == self.addr
 
-    def getEditorData(self, request):
-        """ Return a tuple of type id and string or Page object
-            representing the user that did the edit.
-
-            DEPRECATED - try to use getInterwikiEditorData
-            NOT USED ANY MORE BY MOIN CODE!
-
-            The type id is one of 'ip' (DNS or numeric IP), 'user' (user name)
-            or 'homepage' (Page instance of user's homepage).
-        """
-        result = 'ip', request.cfg.show_hosts and self.hostname or ''
-        if self.userid:
-            if self.userid not in self._usercache:
-                self._usercache[self.userid] = user.User(request, self.userid, auth_method="editlog:53")
-            userdata = self._usercache[self.userid]
-            if userdata.name:
-                pg = wikiutil.getHomePage(request, username=userdata.name)
-                if pg:
-                    result = ('homepage', pg)
-                else:
-                    result = ('user', userdata.name)
-
-        return result
-
-
     def getInterwikiEditorData(self, request):
         """ Return a tuple of type id and string or Page object
             representing the user that did the edit.
@@ -82,57 +57,12 @@ class EditLogLine:
             The type id is one of 'ip' (DNS or numeric IP), 'user' (user name)
             or 'homepage' (Page instance of user's homepage).
         """
-        result = 'ip', request.cfg.show_hosts and self.hostname or ''
-        if self.userid:
-            if self.userid not in self._usercache:
-                self._usercache[self.userid] = user.User(request, self.userid, auth_method="editlog:75")
-            userdata = self._usercache[self.userid]
-            if userdata.mailto_author and userdata.email:
-                return ('email', userdata.email)
-            elif userdata.name:
-                interwiki = wikiutil.getInterwikiHomePage(request, username=userdata.name)
-                if interwiki:
-                    result = ('interwiki', interwiki)
-        return result
-
+        return user.get_editor(request, self.userid, self.addr, self.hostname)
 
     def getEditor(self, request):
         """ Return a HTML-safe string representing the user that did the edit.
         """
-        if request.cfg.show_hosts:
-            title = " @ %s[%s]" % (self.hostname, self.addr)
-        else:
-            title = ""
-        kind, info = self.getInterwikiEditorData(request)
-        if kind == 'interwiki':
-            name = self._usercache[self.userid].name
-            aliasname = self._usercache[self.userid].aliasname
-            if not aliasname:
-                aliasname = name
-            title = wikiutil.escape(aliasname + title)
-            text = (request.formatter.interwikilink(1, title=title, generated=True, *info) +
-                    request.formatter.text(name) +
-                    request.formatter.interwikilink(0, title=title, *info))
-        elif kind == 'email':
-            name = self._usercache[self.userid].name
-            aliasname = self._usercache[self.userid].aliasname
-            if not aliasname:
-                aliasname = name
-            title = wikiutil.escape(aliasname + title)
-            url = 'mailto:%s' % info
-            text = (request.formatter.url(1, url, css='mailto', title=title) +
-                    request.formatter.text(name) +
-                    request.formatter.url(0))
-        elif kind == 'ip':
-            try:
-                idx = info.index('.')
-            except ValueError:
-                idx = len(info)
-            title = wikiutil.escape('???' + title)
-            text = wikiutil.escape(info[:idx])
-        else:
-            raise Exception("unknown EditorData type")
-        return '<span title="%s">%s</span>' % (title, text)
+        return user.get_printable_editor(request, self.userid, self.addr, self.hostname)
 
 
 class EditLog(LogFile):
