@@ -529,8 +529,7 @@ def get_max_mtime(file_list, page):
     page page. """
     timestamps = [os.stat(filename).st_mtime for filename in file_list]
     if page.exists():
-        # exists() is cached and thus cheaper than mtime_usecs()
-        timestamps.append(version2timestamp(page.mtime_usecs()))
+        timestamps.append(page.mtime())
     return max(timestamps)
 
 
@@ -2153,3 +2152,4 @@ def get_processing_instructions(body):
         pi.append((verb.lower(), args.strip()))
 
     return pi, body
+
