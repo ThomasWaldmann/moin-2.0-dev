@@ -9,7 +9,6 @@
 """
 
 import UserDict
-import logging
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, LockingError
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend, DELETED, ACL, LOCK_TIMESTAMP, LOCK_USER
@@ -21,8 +20,6 @@ class ItemCollection(UserDict.DictMixin, object):
     correct backend and maybe caching.
     """
 
-    __item_dict = dict()
-    __cache_updates = []
     log_pos = None
 
     def __init__(self, backend, user=None):
@@ -44,24 +41,18 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Loads an Item.
         """
-        self.refresh()
-        try:
-            return self.__item_dict[name]
-        except KeyError:
-            backend = self.backend.has_item(name)
-            if backend:
-                item = Item(name, backend, self.user)
-                self.__item_dict[name] = item
-                return item
-            else:
-                raise NoSuchItemError(_("No such item %r.") % name)
+        backend = self.backend.has_item(name)
+        if backend:
+            return Item(name, backend, self.user)
+        else:
+            raise NoSuchItemError(_("No such item %r.") % name)
 
     def __delitem__(self, name):
         """
         Deletes an Item.
         """
         self.backend.remove_item(name)
-        self.update_cache(name)
+        self.__items = None
 
     def keys(self, filters=None):
         """
@@ -69,7 +60,6 @@ class ItemCollection(UserDict.DictMixin, object):
         filtering stuff which is described more detailed in
         StorageBackend.list_items(...).
         """
-        self.refresh()
         if filters is None:
             return self.items
         else:
@@ -88,8 +78,7 @@ class ItemCollection(UserDict.DictMixin, object):
         Renames an Item.
         """
         self.backend.rename_item(name, newname)
-        self.update_cache(name)
-        self.update_cache(newname)
+        self.__items = None
 
     def copy_item(self, name, newname):
         """
@@ -128,7 +117,7 @@ class ItemCollection(UserDict.DictMixin, object):
 
         newitem.lock = False
 
-        self.update_cache(newname)
+        self.___items = None
 
     def get_items(self):
         """
@@ -139,26 +128,6 @@ class ItemCollection(UserDict.DictMixin, object):
         return self.__items
 
     items = property(get_items)
-
-    def update_cache(self, item):
-        """
-        Add an item to the cache to update.
-        """
-        if not item in self.__cache_updates:
-            self.__cache_updates.append(item)
-
-    def refresh(self):
-        """
-        Refresh the cached items based on the previous recorded entries.
-        """
-        for item in self.__cache_updates:
-            try:
-                del self.__item_dict[item]
-                logging.info("Removed item from cache: %s" % item)
-            except KeyError:
-                pass
-        if len(self.__cache_updates) > 0:
-            self.__items = None
 
 
 class Item(UserDict.DictMixin, object):
