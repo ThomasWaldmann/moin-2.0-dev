@@ -49,21 +49,19 @@ def get_by_email_address(request, email_address):
     if len(users) > 0:
         return users[0]
 
+
 def get_by_jabber_id(request, jabber_id):
     """ Searches for an user with a perticular jabber id and returns it. """
     users = get_by_filter(request, 'jid', jabber_id)
     if len(users) > 0:
         return users[0]
 
+
 def getUserIdByOpenId(request, openid):
     """ Searches for an user with a perticular openid id and returns it. """
     users = get_by_filter(request, 'openids', openid)
     if len(users) > 0:
         return users[0]
-
-def getUserIdBySubscription(request, page):
-    """ Searches for users with a perticular page in the subscription list and returns it. """
-    return get_by_filter(request, 'subscribed_pages', page)
 
 
 def getUserId(request, searchName):
