@@ -161,7 +161,6 @@ class Item(UserDict.DictMixin, object):
         self.__acl = None
         self.__edit_lock = None
         self.__metadata = None
-        self.__deleted = None
 
     def __contains__(self, revno):
         """
@@ -239,26 +238,6 @@ class Item(UserDict.DictMixin, object):
         return self.__current
 
     current = property(get_current)
-
-    def get_deleted(self):
-        """
-        Lazy load deleted flag.
-        """
-        if self.__deleted is None:
-            self.__deleted = self.metadata[DELETED]
-        return self.__deleted
-
-    def set_deleted(self, value):
-        """
-        Set the deleted flag.
-        You still have to call item.metadata.save() to actually save the change.
-        """
-        self._check_lock()
-
-        self.metadata[DELETED] = value
-        self.__deleted = None
-
-    deleted = property(get_deleted, set_deleted)
 
     def get_acl(self):
         """

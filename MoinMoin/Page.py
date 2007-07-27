@@ -383,13 +383,15 @@ class Page(object):
         @rtype: double
         @return: mtime of page (or 0 if page does not exist)
         """
-        timestamp = self._rev.metadata[MTIME]
-        if printable:
-            if not timestamp:
-                timestamp = "0"
-            else:
-                timestamp = self.request.user.getFormattedDateTime(timestamp)
-        return timestamp
+        if self._rev is not None:
+            timestamp = self._rev.metadata[MTIME]
+            if printable:
+                if not timestamp:
+                    timestamp = "0"
+                else:
+                    timestamp = self.request.user.getFormattedDateTime(timestamp)
+            return timestamp
+        return 0
 
     def isUnderlayPage(self, includeDeleted=True):
         """
@@ -399,7 +401,7 @@ class Page(object):
         @rtype: bool
         @return: true if page lives in the underlay dir
         """
-        if not includeDeleted and self._item.deleted:
+        if not includeDeleted and self._rev.metadata[DELETED]:
             return False
         return self._item.backend.name == "underlay"
 
@@ -411,7 +413,7 @@ class Page(object):
         @rtype: bool
         @return: true if page lives in the data dir
         """
-        if not includeDeleted and self._item.deleted:
+        if not includeDeleted and self._rev.metadata[DELETED]:
             return False
         return self._item.backend.name != "underlay"
 
@@ -430,10 +432,10 @@ class Page(object):
         if domain == 'underlay' and not self.request.cfg.data_underlay_dir:
             return False
 
-        if self._item is None or not rev and not self._rev or not rev in self._item:
+        if self._item is None or self._rev is None:
             return False
 
-        if not includeDeleted and self._item.deleted:
+        if not includeDeleted and self._rev.metadata[DELETED]:
             return False
 
         if domain is None:

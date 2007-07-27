@@ -502,7 +502,7 @@ class PageStorage(AbstractStorage):
             raise BackendError(_("Failed to rename item because name and newname are equal."))
 
         if not newname:
-            raise BackendError(_("You cannot rename to an empty page name."))
+            raise BackendError(_("You cannot rename to an empty item name."))
 
         if self.has_item(newname):
             raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
@@ -512,21 +512,27 @@ class PageStorage(AbstractStorage):
         except OSError, err:
             _handle_error(self, err, name, message=_("Failed to rename item %r to %r.") % (name, newname))
 
-    def list_revisions(self, name):
+    def list_revisions(self, name, real=False):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
         """
-        try:
-            revs = os.listdir(self.get_page_path(name, "revisions"))
-        except OSError, err:
-            _handle_error(self, err, name, message=_("Failed to list revisions for item %r.") % name)
+        if real:
+            try:
+                revs = os.listdir(self.get_page_path(name, "revisions"))
+            except OSError, err:
+                _handle_error(self, err, name, message=_("Failed to list revisions for item %r.") % name)
 
-        revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
-        revs.sort()
+            revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
+            revs.sort()
+
+        else:
+            last = self.current_revision(name, includeEmpty=True)
+            revs = range(1, last + 1)
+
         revs.reverse()
         return revs
 
-    def current_revision(self, name, real=True):
+    def current_revision(self, name, includeEmpty=False):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
@@ -539,8 +545,7 @@ class PageStorage(AbstractStorage):
 
         rev = int(rev or 0)
 
-        # Emulate deleted
-        if not real or rev == 0:
+        if rev == 0:
             return rev
 
         # Don't return revisions which are empty
@@ -548,27 +553,30 @@ class PageStorage(AbstractStorage):
             if rev == 0:
                 return rev
             filename = self.get_page_path(name, "revisions", get_rev_string(rev))
-            if not os.path.isfile(filename) or os.path.getsize(filename) == 0L:
+            if os.path.isfile(filename) and os.path.getsize(filename) == 0L:
                 return get_latest_not_empty(rev - 1)
             return rev
 
-        return get_latest_not_empty(int(rev))
+        if not includeEmpty:
+            return get_latest_not_empty(rev)
+
+        return rev
 
     def has_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_revision
         """
         if revno == 0:
-            revno = self.current_revision(name)
+            revno = self.current_revision(name, includeEmpty=True)
 
-        return os.path.isfile(self.get_page_path(name, "revisions", get_rev_string(revno)))
+        return revno <= self.current_revision(name, includeEmpty=True)
 
     def create_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.create_revisions
         """
         if revno == 0:
-            revno = self.current_revision(name) + 1
+            revno = self.current_revision(name, includeEmpty=True) + 1
 
         try:
             create_file(self.get_page_path(name, "revisions", get_rev_string(revno)))
@@ -584,7 +592,7 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.storage.interfaces.StorageBackend.remove_revisions
         """
         if revno == 0:
-            revno = self.current_revision(name)
+            revno = self.current_revision(name, includeEmpty=True)
 
         try:
             os.remove(self.get_page_path(name, "revisions", get_rev_string(revno)))
@@ -600,7 +608,7 @@ class PageStorage(AbstractStorage):
         Update the current file.
         """
         if revno == 0:
-            revno = self.list_revisions(name)[0]
+            revno = self.list_revisions(name, real=True)[0]
 
         tmp = tempfile.mkstemp(dir=self.cfg.tmp_dir)
 
@@ -621,18 +629,24 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
         """
         if revno == 0:
-            revno = self.current_revision(name)
+            revno = self.current_revision(name, includeEmpty=True)
 
-        return PageData(self, name, revno)
+        if revno != -1 and not os.path.exists(self.get_page_path(name, "revisions", get_rev_string(revno))):
+            return DeletedPageData(self, name, revno)
+        else:
+            return PageData(self, name, revno)
 
     def get_metadata_backend(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
         """
         if revno == 0:
-            revno = self.current_revision(name)
+            revno = self.current_revision(name, includeEmpty=True)
 
-        return PageMetadata(self, name, revno)
+        if revno != -1 and not os.path.exists(self.get_page_path(name, "revisions", get_rev_string(revno))):
+            return DeletedPageMetadata(self, name, revno)
+        else:
+            return PageMetadata(self, name, revno)
 
     def get_page_path(self, name, *args):
         """
@@ -744,13 +758,6 @@ class PageMetadata(AbstractMetadata):
 
         if revno == -1:
 
-            # Emulate the deleted status via a metadata flag
-            current = self._backend.current_revision(name, real=False)
-            if not os.path.exists(self._backend.get_page_path(name, "revisions", get_rev_string(current))):
-                metadata[DELETED] = True
-            else:
-                metadata[DELETED] = False
-
             # Emulate edit-lock
             if os.path.exists(self._backend.get_page_path(name, "edit-lock")):
                 data_file = file(self._backend.get_page_path(name, "edit-lock"), "r")
@@ -796,7 +803,10 @@ class PageMetadata(AbstractMetadata):
             data_file.close()
 
             # add size and mtime
-            metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
+            try:
+                metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
+            except OSError:
+                metadata[SIZE] = 0L
 
             user = ""
             ip = ""
@@ -824,6 +834,7 @@ class PageMetadata(AbstractMetadata):
             metadata[IP] = ip
             metadata[HOST] = host
             metadata[COMMENT] = comment
+            metadata[DELETED] = False
 
         return metadata
 
@@ -833,13 +844,6 @@ class PageMetadata(AbstractMetadata):
         """
 
         if revno == -1:
-
-            # Emulate deleted
-            if metadata[DELETED]:
-                self._backend._update_current(name, self._backend.current_revision(name) + 1)
-            else:
-                self._backend._update_current(name)
-
             # Emulate edilock
             if LOCK_TIMESTAMP in metadata and LOCK_USER in metadata:
                 data_file = file(self._backend.get_page_path(name, "edit-lock"), "w")
@@ -869,7 +873,7 @@ class PageMetadata(AbstractMetadata):
             for key, value in metadata.iteritems():
 
                 # remove size metadata
-                if key in [SIZE, MTIME, USER, IP, HOST, COMMENT]:
+                if key in [SIZE, MTIME, USER, IP, HOST, COMMENT, DELETED]:
                     continue
 
                 # special handling for list metadata like acls
@@ -898,6 +902,80 @@ class PageMetadata(AbstractMetadata):
             # update size and mtime
             metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
             metadata[MTIME] = os.stat(self._backend.get_page_path(name, "revisions", get_rev_string(revno))).st_mtime
+
+            # Emulate deleted
+            exists = os.path.exists(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
+            if metadata[DELETED] and exists:
+                os.remove(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
+
+
+class DeletedPageMetadata(AbstractMetadata):
+    """
+    Metadata implementation of a deleted item.
+    """
+
+    def _parse_metadata(self, name, revno):
+        """
+        @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
+        """
+        metadata = {}
+        metadata[DELETED] = True
+        metadata[MTIME] = 0
+        metadata[SIZE] = 0
+        metadata[USER] = ""
+        metadata[IP] = ""
+        metadata[HOST] = ""
+        metadata[COMMENT] = ""
+        return metadata
+
+    def _save_metadata(self, name, revno, metadata):
+        """
+        @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
+        """
+        if not metadata[DELETED]:
+            self._backend.create_revision(revno)
+
+
+class DeletedPageData(DataBackend):
+    """
+    This class implements the Data of a deleted item.
+    """
+
+    def __init__(self, backend, name, revno):
+        """
+        Init stuff and open the file.
+        """
+        pass
+
+    def read(self, size=None):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.read
+        """
+        return ""
+
+    def seek(self, offset):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.seek
+        """
+        pass
+
+    def tell(self):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.tell
+        """
+        return 0
+
+    def write(self, data):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.write
+        """
+        pass
+
+    def close(self):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.close
+        """
+        pass
 
 
 def encode_list(items):

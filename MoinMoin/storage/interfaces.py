@@ -76,11 +76,12 @@ class StorageBackend(object):
         """
         raise NotImplementedError
 
-    def current_revision(self, name):
+    def current_revision(self, name, includeEmpty=False):
         """
         Returns the last revision number of an item as integer. If there is
-        no revision it returns 0. It only returns the revision if there is
-        already data in it otherwise it will return the revision before.
+        no revision it returns 0. IncludeEmpty specifies wether a revision
+        number should be return if there is no data in it. If False the first
+        revision with data in it will be returend.
         """
         raise NotImplementedError
 
