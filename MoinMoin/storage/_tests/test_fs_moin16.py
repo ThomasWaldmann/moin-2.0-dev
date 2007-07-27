@@ -169,12 +169,16 @@ class TestPageBackend(BackendTest):
         assert not self.backend.has_revision(pages[1], 3)
 
     def test_create_remove_revision(self):
-        assert self.backend.create_revision(pages[0], 3) == 3
-        assert os.path.isfile(os.path.join(get_page_dir(), pages[0], "revisions", "00000003"))
-        assert open(os.path.join(get_page_dir(), pages[0], "current"), "r").read() == "00000003\n"
-        assert self.backend.remove_revision(pages[0], 3) == 3
+        assert self.backend.create_revision(pages[0], 2) == 2
+        assert os.path.isfile(os.path.join(get_page_dir(), pages[0], "revisions", "00000002"))
+        assert open(os.path.join(get_page_dir(), pages[0], "current"), "r").read() == "00000002\n"
+        assert self.backend.current_revision(pages[0]) == 1
+        assert self.backend.current_revision(pages[0], includeEmpty=True) == 2
+        assert self.backend.remove_revision(pages[0], 2) == 2
         assert open(os.path.join(get_page_dir(), pages[0], "current"), "r").read() == "00000001\n"
-        assert not os.path.isfile(os.path.join(get_page_dir(), pages[0], "revisions", "00000003"))
+        assert not os.path.isfile(os.path.join(get_page_dir(), pages[0], "revisions", "00000002"))
+        assert self.backend.current_revision(pages[0]) == 1
+        assert self.backend.current_revision(pages[0], includeEmpty=True) == 1
 
         py.test.raises(BackendError, self.backend.create_revision, pages[0], 1)
         py.test.raises(NoSuchItemError, self.backend.create_revision, "ADF", 1)
@@ -229,17 +233,4 @@ class TestPageMetadata:
         metadata2.save()
         assert metadata2 == {}
 
-
-class TestPageData:
-    """
-    must not really be tested.
-    """
-    pass
-
-
-class TestIndexes:
-    """
-    Already tested by the other code.
-    """
-    pass
 
