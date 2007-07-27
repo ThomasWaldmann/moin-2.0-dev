@@ -11,7 +11,7 @@
 import UserDict
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, LockingError
-from MoinMoin.storage.interfaces import DataBackend, MetadataBackend, DELETED, ACL, LOCK_TIMESTAMP, LOCK_USER
+from MoinMoin.storage.interfaces import DataBackend, MetadataBackend, ACL, LOCK_TIMESTAMP, LOCK_USER
 
 
 class ItemCollection(UserDict.DictMixin, object):
