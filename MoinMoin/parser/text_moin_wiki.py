@@ -11,6 +11,7 @@
 import re
 from MoinMoin import config, wikiutil, macro
 
+
 Dependencies = ['user'] # {{{#!wiki comment ... }}} has different output depending on the user's profile settings
 
 class Parser:
@@ -157,7 +158,6 @@ class Parser:
         self.no_862 = False
         self.in_table = 0
         self.inhibit_p = 0 # if set, do not auto-create a <p>aragraph
-        self.titles = request._page_headings
 
         # holds the nesting level (in chars) of open lists
         self.list_indents = []
@@ -433,9 +433,11 @@ class Parser:
                 words = words * 2
 
             if words[0].startswith('#'): # anchor link
-                return (self.formatter.url(1, words[0]) +
-                        self.formatter.text(words[1]) +
-                        self.formatter.url(0))
+                res = []
+                res.append(self.formatter.anchorlink(1, words[0][1:]))
+                res.append(self.formatter.text(words[1]))
+                res.append(self.formatter.anchorlink(0))
+                return ''.join(res)
         else:
             scheme, rest = scheme_and_rest
             if scheme == "wiki":
@@ -755,29 +757,20 @@ class Parser:
 
     def _heading_repl(self, word):
         """Handle section headings."""
-        import sha
-
         h = word.strip()
         level = 1
         while h[level:level+1] == '=':
             level += 1
         depth = min(5, level)
 
-        # FIXME: needed for Included pages but might still result in unpredictable results
-        # when included the same page multiple times
         title_text = h[level:-level].strip()
-        pntt = self.formatter.page.page_name + title_text
-        self.titles.setdefault(pntt, 0)
-        self.titles[pntt] += 1
 
-        unique_id = ''
-        if self.titles[pntt] > 1:
-            unique_id = '-%d' % self.titles[pntt]
-        result = self._closeP()
-        result += self.formatter.heading(1, depth, id="head-"+sha.new(pntt.encode(config.charset)).hexdigest()+unique_id)
-
-        return (result + self.formatter.text(title_text) +
-                self.formatter.heading(0, depth))
+        return ''.join([
+            self._closeP(),
+            self.formatter.heading(1, depth, id=title_text),
+            self.formatter.text(title_text),
+            self.formatter.heading(0, depth),
+        ])
 
     def _parser_repl(self, word):
         """Handle parsed code displays."""
