@@ -106,30 +106,17 @@ class TestItem:
         assert isinstance(self.item.new_revision(), Revision)
         assert self.item.current == 1
         assert 2 in self.item
-        assert isinstance(self.item.new_revision(4), Revision)
-        assert 4 in self.item
+        assert isinstance(self.item.new_revision(3), Revision)
+        assert 3 in self.item
+        assert self.item.current == 1
+        del self.item[3]
         assert self.item.current == 1
         del self.item[2]
         assert self.item.current == 1
-        del self.item[4]
-        assert self.item.current == 1
         assert not 2 in self.item
-        assert not 4 in self.item
+        assert not 3 in self.item
         py.test.raises(NoSuchRevisionError, lambda: self.item[5])
         py.test.raises(BackendError, self.item.new_revision, 1)
-        self.item.lock = False
-
-    def test_deleted(self):
-        self.item.lock = True
-        assert not self.item.deleted
-        self.item.deleted = True
-        self.item.metadata.save()
-        assert self.item.deleted
-        assert self.item.current == 1
-        self.item.deleted = False
-        self.item.metadata.save()
-        assert not self.item.deleted
-        assert self.item.current == 1
         self.item.lock = False
 
     def test_acl(self):

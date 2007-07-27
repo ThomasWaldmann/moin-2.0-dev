@@ -196,18 +196,18 @@ class TestPageMetadata:
 
     def test_get(self):
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
-        assert metadata1 == {IP: '127.0.0.1', HOST: 'localhost', COMMENT: '', USER: '1180352194.13.59241', MTIME: metadata1['mtime'], SIZE: 192L, 'format': 'wiki', 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
+        assert metadata1 == {DELETED: False, IP: '127.0.0.1', HOST: 'localhost', COMMENT: '', USER: '1180352194.13.59241', MTIME: metadata1['mtime'], SIZE: 192L, 'format': 'wiki', 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
         metadata2 = self.backend.get_metadata_backend(pages[0], -1)
-        assert metadata2 == {DELETED: False, LOCK_TIMESTAMP: '1183317594000000', LOCK_USER: '1183317550.72.7782'}
+        assert metadata2 == {LOCK_TIMESTAMP: '1183317594000000', LOCK_USER: '1183317550.72.7782'}
         metadata3 = self.backend.get_metadata_backend(pages[1], -1)
-        assert metadata3 == {DELETED: False, LOCK_TIMESTAMP: '1182452549000000', LOCK_USER: '127.0.0.1'}
+        assert metadata3 == {LOCK_TIMESTAMP: '1182452549000000', LOCK_USER: '127.0.0.1'}
 
     def test_set(self):
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
         metadata1['format'] = 'test'
         metadata1.save()
         print metadata1
-        assert metadata1 == {IP: '127.0.0.1', HOST: 'localhost', COMMENT: '', USER: '1180352194.13.59241', MTIME: metadata1['mtime'], SIZE: 192L, 'format': 'test', 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
+        assert metadata1 == {DELETED: False, IP: '127.0.0.1', HOST: 'localhost', COMMENT: '', USER: '1180352194.13.59241', MTIME: metadata1['mtime'], SIZE: 192L, 'format': 'test', 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
         metadata1['format'] = 'wiki'
         metadata1.save()
 
@@ -215,19 +215,19 @@ class TestPageMetadata:
         metadata2[LOCK_TIMESTAMP] = '1283317594000000'
         metadata2[LOCK_USER]= '192.168.0.1'
         metadata2.save()
-        assert metadata2 == {DELETED: False, LOCK_TIMESTAMP: '1283317594000000', LOCK_USER: '192.168.0.1'}
+        assert metadata2 == {LOCK_TIMESTAMP: '1283317594000000', LOCK_USER: '192.168.0.1'}
 
     def test_del(self):
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
         del metadata1['format']
         metadata1.save()
-        assert metadata1 == {IP: '127.0.0.1', HOST: 'localhost', COMMENT: '', USER: '1180352194.13.59241', MTIME: metadata1['mtime'], SIZE: 179L, 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
+        assert metadata1 == {DELETED: False, IP: '127.0.0.1', HOST: 'localhost', COMMENT: '', USER: '1180352194.13.59241', MTIME: metadata1['mtime'], SIZE: 179L, 'acl': ['MoinPagesEditorGroup:read,write,delete,revert All:read'], 'language': 'sv'}
 
         metadata2 = self.backend.get_metadata_backend(pages[1], -1)
         del metadata2[LOCK_TIMESTAMP]
         del metadata2[LOCK_USER]
         metadata2.save()
-        assert metadata2 == {DELETED: False}
+        assert metadata2 == {}
 
 
 class TestPageData:
