@@ -805,8 +805,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         # The local log should be the standard edit log, not the
         # underlay copy log!
-        pagelog = self.getPagePath('edit-log', use_underlay=0, isfile=1)
-        llog = editlog.EditLog(request, filename=pagelog,
+        llog = editlog.EditLog(request, rootpagename=self.page_name,
                                uid_override=self.uid_override)
         # Open the global log
         glog = editlog.EditLog(request, uid_override=self.uid_override)
@@ -901,9 +900,8 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         elif rev != 0 and rev != self.current_rev():
             # check if we already saved that page
             other = False
-            pagelog = self.getPagePath('edit-log', use_underlay=0, isfile=1)
             next_line = None
-            for line in editlog.EditLog(request, pagelog).reverse():
+            for line in editlog.EditLog(request, rootpagename=self.page_name).reverse():
                 if int(line.rev) == int(rev):
                     break
                 if not line.is_from_current_user(request):
