@@ -17,6 +17,7 @@ from MoinMoin import config
 from MoinMoin.util import lock, pickle
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
 
 
 class Indexes(object):
@@ -146,7 +147,7 @@ class AbstractStorage(StorageBackend):
 
     locks = dict()
 
-    def __init__(self, name, path, cfg):
+    def __init__(self, name, path, cfg, quoted=True):
         """
         Init the Backend with the correct path.
         """
@@ -157,11 +158,14 @@ class AbstractStorage(StorageBackend):
         self.name = name
         self.cfg = cfg
         self.indexes = Indexes(self, cfg)
+        self.quoted = quoted
 
     def list_items(self, items, filters=None):
         """
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
+        if self.quoted:
+            items = [unquoteWikiname(f) for f in items]
         items.sort()
         if filters is None:
             return items
@@ -184,12 +188,16 @@ class AbstractStorage(StorageBackend):
         """
         Returns the full path with fs quoted page name.
         """
+        if self.quoted:
+            name = quoteWikinameFS(name)
         return os.path.join(self.path, name, *args)
 
     def lock(self, identifier, timeout=1, lifetime=60):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.lock
         """
+        if self.quoted:
+            identifier = quoteWikinameFS(identifier)
         write_lock = lock.ExclusiveLock(os.path.join(self.cfg.tmp_dir, identifier), lifetime)
         if not write_lock.acquire(timeout):
             raise LockingError(_("There is already a lock for %r") % identifier)
@@ -199,6 +207,8 @@ class AbstractStorage(StorageBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.unlock
         """
+        if self.quoted:
+            identifier = quoteWikinameFS(identifier)
         try:
             self.locks[identifier].release()
             del self.locks[identifier]
