@@ -499,6 +499,10 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         page = backto and Page(request, backto) or self
         page.send_page(msg=_('Edit was cancelled.'))
 
+        if self.getRevList() == []:
+            del self._items_all[self.page_name]
+        self.reset()
+
     def copyPage(self, newpagename, comment=None):
         """ Copy the current version of the page (keeping the backups, logs and attachments).
 
