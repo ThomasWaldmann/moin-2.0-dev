@@ -70,6 +70,8 @@ class Page(object):
         self.cfg = request.cfg
         self.page_name = page_name
         self.rev = kw.get('rev', 0) # revision of this page
+        if self.rev is None:
+            self.rev = 0
         self.include_self = kw.get('include_self', 0)
 
         formatter = kw.get('formatter', None)
@@ -1031,7 +1033,9 @@ class Page(object):
     def loadCache(self, request):
         """ Return page content cache or raises 'CacheNeedsUpdate' """
         cache = caching.CacheEntry(request, self, self.getFormatterName(), scope='item')
-        attachmentsPath = self.getPagePath('attachments', check_create=0)
+
+        from MoinMoin.action.AttachFile import getAttachDir
+        attachmentsPath = getAttachDir(self.page_name)
         if cache.needsUpdate(self._text_filename(), attachmentsPath):
             raise Exception('CacheNeedsUpdate')
 
