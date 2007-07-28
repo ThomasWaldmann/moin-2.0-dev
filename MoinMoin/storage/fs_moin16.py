@@ -39,9 +39,9 @@ import tempfile
 
 from MoinMoin import config
 from MoinMoin.storage.fs_storage import AbstractStorage, AbstractData, AbstractMetadata, _handle_error, get_rev_string, create_file
-from MoinMoin.storage.interfaces import DataBackend, DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME, USER, IP, HOST, COMMENT
+from MoinMoin.storage.interfaces import DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME, USER, IP, HOST, COMMENT
 from MoinMoin.storage.error import BackendError
-from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS, version2timestamp
+from MoinMoin.wikiutil import version2timestamp
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
@@ -50,6 +50,12 @@ class UserStorage(AbstractStorage):
     """
     Class that implements the 1.6 compatible storage backend for users.
     """
+
+    def __init__(self, name, path, cfg):
+        """
+        Init the Backend with the correct path.
+        """
+        AbstractStorage.__init__(self, name, path, cfg, False)
 
     def list_items(self, filters=None):
         """
@@ -187,7 +193,7 @@ class PageStorage(AbstractStorage):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        files = [unquoteWikiname(f) for f in os.listdir(self.path) if os.path.exists(os.path.join(self.path, f, "current"))]
+        files = [f for f in os.listdir(self.path) if os.path.exists(os.path.join(self.path, f, "current"))]
 
         return super(PageStorage, self).list_items(files, filters)
 
@@ -382,24 +388,6 @@ class PageStorage(AbstractStorage):
             return DeletedPageMetadata(self, name, revno)
         else:
             return PageMetadata(self, name, revno)
-
-    def get_page_path(self, name, *args):
-        """
-        @see MoinMoin.storage.fs_moin16.AbstractStorage.get_page_path
-        """
-        return AbstractStorage.get_page_path(self, quoteWikinameFS(name), *args)
-
-    def lock(self, identifier, timeout=1, lifetime=60):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.lock
-        """
-        AbstractStorage.lock(self, quoteWikinameFS(identifier), timeout, lifetime)
-
-    def unlock(self, identifier):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.unlock
-        """
-        AbstractStorage.unlock(self, quoteWikinameFS(identifier))
 
 
 class PageData(AbstractData):
@@ -601,7 +589,7 @@ class DeletedPageMetadata(AbstractMetadata):
             self._backend.create_revision(revno)
 
 
-class DeletedPageData(DataBackend):
+class DeletedPageData(AbstractData):
     """
     This class implements the Data of a deleted item.
     """
