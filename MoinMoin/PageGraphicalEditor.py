@@ -21,14 +21,6 @@ from MoinMoin.widget.dialog import Status
 from MoinMoin.util import web
 from MoinMoin.parser.text_moin_wiki import Parser as WikiParser
 
-def execute(pagename, request):
-    if not request.user.may.write(pagename):
-        _ = request.getText
-        Page(request, pagename).send_page(msg=_('You are not allowed to edit this page.'))
-        return
-
-    PageGraphicalEditor(request, pagename).sendEditor()
-
 
 class PageGraphicalEditor(PageEditor.PageEditor):
     """ Same as PageEditor, but use the GUI editor (FCKeditor) """
@@ -66,8 +58,6 @@ class PageGraphicalEditor(PageEditor.PageEditor):
         # check edit permissions
         if not request.user.may.write(self.page_name):
             msg = _('You are not allowed to edit this page.')
-        elif not self.isWritable():
-            msg = _('Page is immutable!')
         elif self.rev:
             # Trying to edit an old version, this is not possible via
             # the web interface, but catch it just in case...
@@ -169,7 +159,7 @@ Please review the page and save then. Do not save this page as it is!""")
             raw_body = self.get_raw_body()
         elif 'template' in form:
             # If the page does not exists, we try to get the content from the template parameter.
-            template_page = wikiutil.unquoteWikiname(form['template'][0])
+            template_page = form['template'][0]
             if request.user.may.read(template_page):
                 raw_body = Page(request, template_page).get_raw_body()
                 if raw_body:
