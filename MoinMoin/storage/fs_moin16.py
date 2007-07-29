@@ -39,7 +39,7 @@ import tempfile
 
 from MoinMoin import config
 from MoinMoin.storage.fs_storage import AbstractStorage, AbstractData, AbstractMetadata, _handle_error, get_rev_string, create_file
-from MoinMoin.storage.interfaces import DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME, USER, IP, HOST, COMMENT
+from MoinMoin.storage.interfaces import DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME, USERID, ADDR, HOSTNAME, COMMENT, EXTRA, ACTION
 from MoinMoin.storage.error import BackendError
 from MoinMoin.wikiutil import version2timestamp
 
@@ -463,11 +463,7 @@ class PageMetadata(AbstractMetadata):
             except OSError:
                 metadata[SIZE] = 0L
 
-            user = ""
-            ip = ""
-            host = ""
-            comment = ""
-            mtime = ""
+            user, ip, host, comment, mtime, action, extra = "", "", "", "", "", "", ""
 
             try:
                 data_file = file(self._backend.get_page_path(name, "edit-log"), "r")
@@ -475,9 +471,11 @@ class PageMetadata(AbstractMetadata):
                 for line in data_file:
                     values = _parse_log_line(line)
                     mtime = version2timestamp(int(values[0]))
+                    action = values[2]
                     ip = values[4]
                     host = values[5]
                     user = values[6]
+                    extra = values[7]
                     comment = values[8]
 
             except IOError:
@@ -485,9 +483,11 @@ class PageMetadata(AbstractMetadata):
 
             data_file.close()
             metadata[MTIME] = mtime
-            metadata[USER] = user
-            metadata[IP] = ip
-            metadata[HOST] = host
+            metadata[ACTION] = action
+            metadata[USERID] = user
+            metadata[ADDR] = ip
+            metadata[HOSTNAME] = host
+            metadata[EXTRA] = extra
             metadata[COMMENT] = comment
             metadata[DELETED] = False
 
@@ -528,7 +528,7 @@ class PageMetadata(AbstractMetadata):
             for key, value in metadata.iteritems():
 
                 # remove size metadata
-                if key in [SIZE, MTIME, USER, IP, HOST, COMMENT, DELETED]:
+                if key in [SIZE, MTIME, ACTION, USERID, ADDR, HOSTNAME, EXTRA, COMMENT, DELETED]:
                     continue
 
                 # special handling for list metadata like acls
@@ -575,11 +575,13 @@ class DeletedPageMetadata(AbstractMetadata):
         """
         metadata = {}
         metadata[DELETED] = True
-        metadata[MTIME] = 0
         metadata[SIZE] = 0
-        metadata[USER] = ""
-        metadata[IP] = ""
-        metadata[HOST] = ""
+        metadata[MTIME] = 0
+        metadata[ACTION] = ""
+        metadata[USERID] = ""
+        metadata[ADDR] = ""
+        metadata[HOSTNAME] = ""
+        metadata[EXTRA] = ""
         metadata[COMMENT] = ""
         return metadata
 
