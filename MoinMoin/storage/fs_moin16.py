@@ -349,7 +349,9 @@ class PageStorage(AbstractStorage):
         Update the current file.
         """
         if revno == 0:
-            revno = self.list_revisions(name, real=True)[0]
+            revnos = self.list_revisions(name, real=True)
+            if revnos:
+                revno = revnos[0]
 
         tmp = tempfile.mkstemp(dir=self.cfg.tmp_dir)
 
