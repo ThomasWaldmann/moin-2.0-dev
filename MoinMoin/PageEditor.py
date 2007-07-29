@@ -16,7 +16,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import codecs
 import errno
 import time
 
@@ -825,7 +824,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         rev = newrev.revno
 
         if not deleted:
-            newrev.data.write(codecs.encode(text, config.charset))
+            newrev.data.write(text.encode(config.charset))
             newrev.data.close()
             if rev != 1:
                 for key, value in self.meta.iteritems():
