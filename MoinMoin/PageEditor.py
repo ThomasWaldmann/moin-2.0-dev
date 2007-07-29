@@ -16,14 +16,16 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import time, errno
+import codecs
+import errno
+import time
 
 try:
     set
 except:
     from sets import Set as set
 
-from MoinMoin import caching, wikiutil, error
+from MoinMoin import config, caching, wikiutil, error
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
@@ -823,7 +825,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         rev = newrev.revno
 
         if not deleted:
-            newrev.data.write(text)
+            newrev.data.write(codecs.encode(text, config.charset))
             newrev.data.close()
             if rev != 1:
                 for key, value in self.meta.iteritems():

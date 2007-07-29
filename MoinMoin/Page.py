@@ -35,6 +35,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import codecs
 import os
 
 from MoinMoin import config, caching, user, util, wikiutil
@@ -171,6 +172,7 @@ class Page(object):
             if self._rev is not None:
                 text = self._rev.data.read()
                 self._rev.data.close()
+                text = codecs.decode(text, config.charset)
                 self._body = self.decodeTextMimeType(text)
         return self._body
 
@@ -1035,7 +1037,7 @@ class Page(object):
         cache = caching.CacheEntry(request, self, self.getFormatterName(), scope='item')
 
         from MoinMoin.action.AttachFile import getAttachDir
-        attachmentsPath = getAttachDir(self.page_name)
+        attachmentsPath = getAttachDir(request, self.page_name)
         if cache.needsUpdate(self._text_filename(), attachmentsPath):
             raise Exception('CacheNeedsUpdate')
 

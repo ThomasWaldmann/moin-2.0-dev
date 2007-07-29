@@ -7,13 +7,11 @@
 
 import bsddb
 import copy
-import codecs
 import errno
 import os
 import shutil
 import tempfile
 
-from MoinMoin import config
 from MoinMoin.util import lock, pickle
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, NoSuchRevisionError
@@ -316,7 +314,7 @@ class AbstractData(DataBackend):
         Lazy load read_file.
         """
         if self._read_property is None:
-            self._read_property = codecs.open(self._read_file_name, "r", config.charset)
+            self._read_property = file(self._read_file_name, "rb")
         return self._read_property
 
     _read_file = property(_get_read_file)
@@ -327,7 +325,7 @@ class AbstractData(DataBackend):
         """
         if self._write_property is None:
             self._tmp = tempfile.mkstemp(dir=self._backend.cfg.tmp_dir)
-            self._write_property = codecs.getwriter(config.charset)(os.fdopen(self._tmp[0], "w"))
+            self._write_property = os.fdopen(self._tmp[0], "wb")
         return self._write_property
 
     _write_file = property(_get_write_file)
@@ -336,7 +334,10 @@ class AbstractData(DataBackend):
         """
         @see MoinMoin.storage.interfaces.DataBackend.read
         """
-        return self._read_file.read(size)
+        if size:
+            return self._read_file.read(size)
+        else:
+            return self._read_file.read()
 
     def seek(self, offset):
         """
