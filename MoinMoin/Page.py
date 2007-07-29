@@ -35,7 +35,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import codecs
 import os
 
 from MoinMoin import config, caching, user, util, wikiutil
@@ -170,10 +169,10 @@ class Page(object):
     def get_body(self):
         if self._body is None:
             if self._rev is not None:
-                text = self._rev.data.read()
+                data = self._rev.data.read()
                 self._rev.data.close()
-                text = codecs.decode(text, config.charset)
-                self._body = self.decodeTextMimeType(text)
+                data = data.decode(config.charset)
+                self._body = self.decodeTextMimeType(data)
         return self._body
 
     def set_body(self, body):
