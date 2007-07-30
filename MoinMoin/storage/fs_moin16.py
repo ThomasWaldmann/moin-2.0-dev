@@ -41,7 +41,7 @@ from MoinMoin import config
 from MoinMoin.storage.fs_storage import AbstractStorage, AbstractData, AbstractMetadata, _handle_error, get_rev_string, create_file
 from MoinMoin.storage.interfaces import DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME, USERID, ADDR, HOSTNAME, COMMENT, EXTRA, ACTION
 from MoinMoin.storage.error import BackendError
-from MoinMoin.wikiutil import version2timestamp
+from MoinMoin.wikiutil import version2timestamp, timestamp2version
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
@@ -554,9 +554,32 @@ class PageMetadata(AbstractMetadata):
             except OSError, err:
                 _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
-            # update size and mtime
-            metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
-            metadata[MTIME] = os.stat(self._backend.get_page_path(name, "revisions", get_rev_string(revno))).st_mtime
+            # save edit-log
+            try:
+                edit_log = codecs.open(self._backend.get_page_path(name, "edit-log"), "r")
+            except IOError, err:
+                _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+
+            result = []
+            newline = "\t".join((str(timestamp2version(metadata[MTIME])), get_rev_string(revno), metadata[ACTION], name, metadata[ADDR], metadata[HOSTNAME], metadata[USERID], metadata[EXTRA], metadata[COMMENT])) + "\n"
+            for line in edit_log:
+                values = _parse_log_line(line)
+                rev = int(values[1])
+                if revno == rev:
+                    continue
+                if rev > revno:
+                    result.append(newline)
+                result.append(line)
+            if not newline in result:
+                result.append(newline)
+            edit_log.close()
+
+            try:
+                edit_log = codecs.open(self._backend.get_page_path(name, "edit-log"), "w")
+                edit_log.writelines(result)
+                edit_log.close()
+            except IOError, err:
+                _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
             # Emulate deleted
             exists = os.path.exists(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
