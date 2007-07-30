@@ -32,7 +32,7 @@ from MoinMoin.logfile import editlog, eventlog
 from MoinMoin.util import timefuncs, web
 from MoinMoin.user import User
 from MoinMoin.storage.error import BackendError
-from MoinMoin.storage.interfaces import DELETED
+from MoinMoin.storage.interfaces import DELETED, READONLY_METADATA
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 import MoinMoin.events.notification as notification
@@ -829,13 +829,13 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             if rev != 1:
                 for key, value in self.meta.iteritems():
                     if key == "deprecated" and not was_deprecated:
-                        pass
-                    elif key == DELETED:
-                        value = False
+                        continue
+                    elif key in READONLY_METADATA + [DELETED]:
+                        continue
                     newrev.metadata[key] = value
                     newrev.metadata.save()
         else:
-            newrev.metadata[DELETED] = True
+            newrev.deleted = True
             newrev.metadata.save()
 
         self._item.lock = False

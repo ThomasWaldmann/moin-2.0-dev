@@ -39,7 +39,9 @@ import tempfile
 
 from MoinMoin import config
 from MoinMoin.storage.fs_storage import AbstractStorage, AbstractData, AbstractMetadata, _handle_error, get_rev_string, create_file
-from MoinMoin.storage.interfaces import DELETED, SIZE, LOCK_TIMESTAMP, LOCK_USER, MTIME, USERID, ADDR, HOSTNAME, COMMENT, EXTRA, ACTION
+from MoinMoin.storage.interfaces import DELETED, SIZE, EDIT_LOCK, EDIT_LOG
+from MoinMoin.storage.interfaces import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
+from MoinMoin.storage.interfaces import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
 from MoinMoin.storage.error import BackendError
 from MoinMoin.wikiutil import version2timestamp, timestamp2version
 
@@ -420,11 +422,11 @@ class PageMetadata(AbstractMetadata):
                 data_file.close()
 
                 values = _parse_log_line(line)
-                metadata[LOCK_TIMESTAMP] = values[0]
+                metadata[EDIT_LOCK_TIMESTAMP] = values[0]
                 if values[6]:
-                    metadata[LOCK_USER] = values[6]
+                    metadata[EDIT_LOCK_USER] = values[6]
                 else:
-                    metadata[LOCK_USER] = values[4]
+                    metadata[EDIT_LOCK_USER] = values[4]
 
         else:
 
@@ -448,48 +450,41 @@ class PageMetadata(AbstractMetadata):
                     args = args.strip()
 
                     # metadata can be multiline
-                    if verb == 'acl':
-                        metadata.setdefault(verb, []).append(args)
-                    else:
-                        metadata[verb] = args
+                    metadata.setdefault(verb, []).append(args)
 
                 elif started is True:
                     break
             data_file.close()
 
-            # add size and mtime
+            for key, value in metadata.iteritems():
+                if len(value) == 1:
+                    metadata[key] = value[0]
+
+            # emulated metadata
             try:
                 metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
             except OSError:
-                metadata[SIZE] = 0L
-
-            user, ip, host, comment, mtime, action, extra = "", "", "", "", "", "", ""
+                pass
 
             try:
                 data_file = file(self._backend.get_page_path(name, "edit-log"), "r")
 
                 for line in data_file:
                     values = _parse_log_line(line)
-                    mtime = version2timestamp(int(values[0]))
-                    action = values[2]
-                    ip = values[4]
-                    host = values[5]
-                    user = values[6]
-                    extra = values[7]
-                    comment = values[8]
+                    rev = int(values[1])
+                    if rev == revno:
+                        metadata[EDIT_LOG_MTIME] = version2timestamp(int(values[0]))
+                        metadata[EDIT_LOG_ACTION] = values[2]
+                        metadata[EDIT_LOG_ADDR] =  values[4]
+                        metadata[EDIT_LOG_HOSTNAME] = values[5]
+                        metadata[EDIT_LOG_USERID] = values[6]
+                        metadata[EDIT_LOG_EXTRA] = values[7]
+                        metadata[EDIT_LOG_COMMENT] = values[8]
+                        break
 
+                data_file.close()
             except IOError:
                 pass
-
-            data_file.close()
-            metadata[MTIME] = mtime
-            metadata[ACTION] = action
-            metadata[USERID] = user
-            metadata[ADDR] = ip
-            metadata[HOSTNAME] = host
-            metadata[EXTRA] = extra
-            metadata[COMMENT] = comment
-            metadata[DELETED] = False
 
         return metadata
 
@@ -499,10 +494,10 @@ class PageMetadata(AbstractMetadata):
         """
 
         if revno == -1:
-            # Emulate edilock
-            if LOCK_TIMESTAMP in metadata and LOCK_USER in metadata:
+            # Emulate editlock
+            if EDIT_LOCK_TIMESTAMP in metadata and EDIT_LOCK_USER in metadata:
                 data_file = file(self._backend.get_page_path(name, "edit-lock"), "w")
-                line = "\t".join([metadata[LOCK_TIMESTAMP], "0", "0", "0", "0", "0", metadata[LOCK_USER], "0", "0"])
+                line = "\t".join([metadata[EDIT_LOCK_TIMESTAMP], "0", "0", "0", "0", "0", metadata[EDIT_LOCK_USER], "0", "0"])
                 data_file.write(line + "\n")
                 data_file.close()
             elif os.path.isfile(self._backend.get_page_path(name, "edit-lock")):
@@ -527,8 +522,8 @@ class PageMetadata(AbstractMetadata):
             metadata_data = ""
             for key, value in metadata.iteritems():
 
-                # remove size metadata
-                if key in [SIZE, MTIME, ACTION, USERID, ADDR, HOSTNAME, EXTRA, COMMENT, DELETED]:
+                # remove emulated metadata
+                if key in [SIZE, DELETED] + EDIT_LOG + EDIT_LOCK:
                     continue
 
                 # special handling for list metadata like acls
@@ -555,35 +550,39 @@ class PageMetadata(AbstractMetadata):
                 _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
             # save edit-log
-            try:
-                edit_log = codecs.open(self._backend.get_page_path(name, "edit-log"), "r")
-            except IOError, err:
-                _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+            for key in EDIT_LOG:
+                if not key in metadata:
+                    break
+            else:
+                try:
+                    edit_log = codecs.open(self._backend.get_page_path(name, "edit-log"), "r", config.charset)
+                except IOError, err:
+                    _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
-            result = []
-            newline = "\t".join((str(timestamp2version(metadata[MTIME])), get_rev_string(revno), metadata[ACTION], name, metadata[ADDR], metadata[HOSTNAME], metadata[USERID], metadata[EXTRA], metadata[COMMENT])) + "\n"
-            for line in edit_log:
-                values = _parse_log_line(line)
-                rev = int(values[1])
-                if revno == rev:
-                    continue
-                if rev > revno:
+                result = []
+                newline = "\t".join((str(timestamp2version(metadata[EDIT_LOG_MTIME])), get_rev_string(revno), metadata[EDIT_LOG_ACTION], name, metadata[EDIT_LOG_ADDR], metadata[EDIT_LOG_HOSTNAME], metadata[EDIT_LOG_USERID], metadata[EDIT_LOG_EXTRA], metadata[EDIT_LOG_COMMENT])) + "\n"
+                for line in edit_log:
+                    values = _parse_log_line(line)
+                    rev = int(values[1])
+                    if revno == rev:
+                        continue
+                    if rev > revno:
+                        result.append(newline)
+                    result.append(line)
+                if not newline in result:
                     result.append(newline)
-                result.append(line)
-            if not newline in result:
-                result.append(newline)
-            edit_log.close()
-
-            try:
-                edit_log = codecs.open(self._backend.get_page_path(name, "edit-log"), "w")
-                edit_log.writelines(result)
                 edit_log.close()
-            except IOError, err:
-                _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+
+                try:
+                    edit_log = codecs.open(self._backend.get_page_path(name, "edit-log"), "w", config.charset)
+                    edit_log.writelines(result)
+                    edit_log.close()
+                except IOError, err:
+                    _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
             # Emulate deleted
             exists = os.path.exists(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
-            if metadata[DELETED] and exists:
+            if DELETED in metadata and metadata[DELETED] and exists:
                 os.remove(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
 
 
@@ -598,21 +597,13 @@ class DeletedPageMetadata(AbstractMetadata):
         """
         metadata = {}
         metadata[DELETED] = True
-        metadata[SIZE] = 0
-        metadata[MTIME] = 0
-        metadata[ACTION] = ""
-        metadata[USERID] = ""
-        metadata[ADDR] = ""
-        metadata[HOSTNAME] = ""
-        metadata[EXTRA] = ""
-        metadata[COMMENT] = ""
         return metadata
 
     def _save_metadata(self, name, revno, metadata):
         """
         @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
         """
-        if not metadata[DELETED]:
+        if not DELETED in metadata or not metadata[DELETED]:
             self._backend.create_revision(revno)
 
 

@@ -41,7 +41,7 @@ from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage.interfaces import SIZE, MTIME, DELETED, USERID, HOSTNAME, ADDR
+from MoinMoin.storage.interfaces import DELETED
 
 
 def is_cache_exception(e):
@@ -370,13 +370,13 @@ class Page(object):
         @return: the last editor, either printable or not.
         """
         if not printable:
-            editordata = user.get_editor(self.request, self._rev.metadata[USERID], self._rev.metadata[ADDR], self._rev.metadata[HOSTNAME])
+            editordata = user.get_editor(self.request, self._rev.userid, self._rev.addr, self._rev.hostname)
             if editordata[0] == 'interwiki':
                 return "%s:%s" % editordata[1]
             else:
                 return editordata[1]
         else:
-            return user.get_printable_editor(self.request, self._rev.metadata[USERID], self._rev.metadata[ADDR], self._rev.metadata[HOSTNAME])
+            return user.get_printable_editor(self.request, self._rev.userid, self._rev.addr, self._rev.hostname)
 
     def mtime(self, printable=False):
         """
@@ -387,7 +387,7 @@ class Page(object):
         @return: mtime of page (or 0 if page does not exist)
         """
         if self._rev is not None:
-            timestamp = self._rev.metadata[MTIME]
+            timestamp = self._rev.mtime
             if printable:
                 if not timestamp:
                     timestamp = "0"
@@ -404,7 +404,7 @@ class Page(object):
         @rtype: bool
         @return: true if page lives in the underlay dir
         """
-        if not includeDeleted and self._rev.metadata[DELETED]:
+        if not includeDeleted and self._rev.deleted:
             return False
         return self._item.backend.name == "underlay"
 
@@ -416,7 +416,7 @@ class Page(object):
         @rtype: bool
         @return: true if page lives in the data dir
         """
-        if not includeDeleted and self._rev.metadata[DELETED]:
+        if not includeDeleted and self._rev.deleted:
             return False
         return self._item.backend.name != "underlay"
 
@@ -438,7 +438,7 @@ class Page(object):
         if self._item is None or self._rev is None:
             return False
 
-        if not includeDeleted and self._rev.metadata[DELETED]:
+        if not includeDeleted and self._rev.deleted:
             return False
 
         if domain is None:
@@ -460,7 +460,7 @@ class Page(object):
                 return len(self._body)
 
         try:
-            return self._item[rev].metadata[SIZE]
+            return self._item[rev].size
         except NoSuchRevisionError:
             return 0L
 
