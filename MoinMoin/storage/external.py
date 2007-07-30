@@ -5,13 +5,12 @@
     @license: GNU GPL, see COPYING for details.
 
     TODO: acl checking
-    TODO: properties on revision
 """
 
 import UserDict
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, LockingError
-from MoinMoin.storage.interfaces import DataBackend, MetadataBackend, ACL, LOCK_TIMESTAMP, LOCK_USER
+from MoinMoin.storage.interfaces import DataBackend, MetadataBackend, ACL, EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER, DELETED, SIZE
 
 
 class ItemCollection(UserDict.DictMixin, object):
@@ -83,8 +82,6 @@ class ItemCollection(UserDict.DictMixin, object):
     def copy_item(self, name, newname):
         """
         Copies an Item.
-
-        TODO: copy edit log
         """
         if newname == name:
             raise BackendError(_("Copy failed because name and newname are equal."))
@@ -117,7 +114,7 @@ class ItemCollection(UserDict.DictMixin, object):
 
         newitem.lock = False
 
-        self.___items = None
+        self.__items = None
 
     def get_items(self):
         """
@@ -244,13 +241,8 @@ class Item(UserDict.DictMixin, object):
         Get the acl property.
         """
         if self.__acl is None:
-            try:
-                lines = self[0].metadata[ACL]
-            except KeyError:
-                lines = []
-
             from MoinMoin.security import AccessControlList
-            self.__acl = AccessControlList(self.backend.cfg, lines)
+            self.__acl = AccessControlList(self.backend.cfg, self[0].acl)
         return self.__acl
 
     acl = property(get_acl)
@@ -261,8 +253,8 @@ class Item(UserDict.DictMixin, object):
         It is a tuple containing the timestamp of the lock and the user.
         """
         if self.__edit_lock is None:
-            if LOCK_TIMESTAMP in self.metadata and LOCK_USER in self.metadata:
-                self.__edit_lock = (True, long(self.metadata[LOCK_TIMESTAMP]), self.metadata[LOCK_USER])
+            if EDIT_LOCK_TIMESTAMP in self.metadata and EDIT_LOCK_USER in self.metadata:
+                self.__edit_lock = (True, long(self.metadata[EDIT_LOCK_TIMESTAMP]), self.metadata[EDIT_LOCK_USER])
             else:
                 self.__edit_lock = False, 0, None
         return self.__edit_lock
@@ -276,11 +268,11 @@ class Item(UserDict.DictMixin, object):
         self._check_lock()
 
         if not edit_lock:
-            del self.metadata[LOCK_TIMESTAMP]
-            del self.metadata[LOCK_USER]
+            del self.metadata[EDIT_LOCK_TIMESTAMP]
+            del self.metadata[EDIT_LOCK_USER]
         elif isinstance(edit_lock, tuple) and len(edit_lock) == 2:
-            self.metadata[LOCK_TIMESTAMP] = str(edit_lock[0])
-            self.metadata[LOCK_USER] = edit_lock[1]
+            self.metadata[EDIT_LOCK_TIMESTAMP] = str(edit_lock[0])
+            self.metadata[EDIT_LOCK_USER] = edit_lock[1]
         else:
             raise ValueError(_("Lock must be either False or a tuple containing timestamp and user."))
         self.__edit_lock = None
@@ -329,8 +321,31 @@ class Revision(object):
         self.revno = revno
         self.item = item
 
+        self.reset()
+
+    def reset(self):
+        """
+        Reset, you know what i mean?
+        """
         self.__data = None
         self.__metadata  = None
+
+        self.__acl = None
+        self.__deleted = None
+        self.__size = None
+
+        for attr in ('mtime', 'action', 'addr', 'hostname', 'userid', 'extra', 'comment'):
+            setattr(self, "__" + attr, None)
+
+    def __getattr__(self, name):
+        """
+        Get edit lock values.
+        """
+        if name in ('mtime', 'action', 'addr', 'hostname', 'userid', 'extra', 'comment'):
+            if getattr(self, "__" + name) is None:
+                setattr(self, "__" + name, self._get_value("edit_log_" + name, ""))
+            return getattr(self, "__" + name)
+        raise AttributeError(_("No such attribute: %s" % name))
 
     def get_metadata(self):
         """
@@ -359,6 +374,67 @@ class Revision(object):
         return self.__data
 
     data = property(get_data)
+
+    def get_acl(self):
+        """
+        ACL Property.
+        """
+        if self.__acl is None:
+            acl = self._get_value(ACL, [])
+            if type(acl) != list:
+                acl = [acl]
+            self.__acl = acl
+        return self.__acl
+
+    def set_acl(self, value):
+        """
+        ACL Property.
+        """
+        self.metadata[ACL] = value
+        self.__acl = None
+
+    acl = property(get_acl, set_acl)
+
+    def get_deleted(self):
+        """
+        Deleted Property.
+        """
+        if self.__deleted is None:
+            self.__deleted = self._get_value(DELETED, False)
+        return self.__deleted
+
+    def set_deleted(self, value):
+        """
+        Deleted Property.
+        """
+        self.metadata[DELETED] = value
+        self.__deleted = None
+
+    deleted = property(get_deleted, set_deleted)
+
+    def get_size(self):
+        """
+        Size Property.
+        """
+        if self.__size is None:
+            size = self._get_value(SIZE, 0L)
+            if not size:
+                size = len(self.data.read())
+                self.data.close()
+            self.__size = size
+        return self.__size
+
+    size = property(get_size)
+
+    def _get_value(self, key, default):
+        """
+        Returns a value from the metadata or the default if the value is not in the metadata.
+        """
+        try:
+            value = self.metadata[key]
+        except KeyError:
+            value = default
+        return value
 
 
 class ReadonlyMetadata(MetadataBackend):
