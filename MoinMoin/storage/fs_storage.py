@@ -265,6 +265,7 @@ class AbstractMetadata(MetadataBackend):
         self._save_metadata(self._name, self._revno, self._metadata)
         self._backend.indexes.update_indexes(self._name, self._org_metadata, self._metadata)
         self._org_metadata = copy.copy(self._metadata_property)
+        self._metadata_property = None
 
     def _parse_metadata(self, name, revno):
         """
