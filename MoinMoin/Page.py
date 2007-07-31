@@ -309,13 +309,13 @@ class Page(object):
 
         if use_underlay == -1:
             if self._item is None:
-                path = self.request.cfg.page_backend.get_page_path(name)
+                path = self.request.cfg.page_backend._get_page_path(name)
             else:
-                path = self._item.backend.get_page_path(name)
+                path = self._item._backend._get_page_path(name)
         elif use_underlay == 1:
-            path = self.request.cfg.underlay_backend.get_page_path(name)
+            path = self.request.cfg.underlay_backend._get_page_path(name)
         else:
-            path = self.request.cfg.page_backend.get_page_path(name)
+            path = self.request.cfg.page_backend._get_page_path(name)
 
         fullpath = os.path.join(*((path, ) + args))
         if check_create:
@@ -407,7 +407,7 @@ class Page(object):
         """
         if not includeDeleted and self._rev.deleted:
             return False
-        return self._item.backend.name == "underlay"
+        return self._item._backend.name == "underlay"
 
     def isStandardPage(self, includeDeleted=True):
         """
@@ -419,7 +419,7 @@ class Page(object):
         """
         if not includeDeleted and self._rev.deleted:
             return False
-        return self._item.backend.name != "underlay"
+        return self._item._backend.name != "underlay"
 
     def exists(self, rev=0, domain=None, includeDeleted=False):
         """
@@ -445,9 +445,9 @@ class Page(object):
         if domain is None:
             return True
         elif domain == 'underlay':
-            return self._item.backend.name == 'underlay'
+            return self._item._backend.name == 'underlay'
         else:
-            return self._item.backend.name != 'underlay'
+            return self._item._backend.name != 'underlay'
 
     def size(self, rev=0):
         """
@@ -639,7 +639,7 @@ class Page(object):
         """ Parse page text and extract processing instructions,
             return a dict of PIs and the non-PI rest of the body.
 
-            TODO: move this to external.py
+            TODO: move this to external.py?
         """
         from MoinMoin import i18n
         request = self.request
@@ -1284,7 +1284,7 @@ class RootPage(object):
         """
         List user readable pages under current page.
 
-        TODO: makethis method use the storage api more efficiently.
+        TODO: use the storage api more efficiently.
 
         Currently only request.rootpage is used to list pages, but if we
         have true sub pages, any page can list its sub pages.

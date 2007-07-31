@@ -12,10 +12,10 @@ import os
 import shutil
 import tempfile
 
-from MoinMoin.util import lock, pickle
+from MoinMoin import wikiutil
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, NoSuchRevisionError
-from MoinMoin.wikiutil import unquoteWikiname, quoteWikinameFS
+from MoinMoin.util import lock, pickle
 
 
 class Indexes(object):
@@ -29,22 +29,22 @@ class Indexes(object):
         """
         if not os.path.isdir(cfg.indexes_dir):
             raise BackendError(_("Invalid path %r.") % cfg.indexes_dir)
-        self.backend = backend
-        self.path = cfg.indexes_dir
-        self.indexes = cfg.indexes
+        self._backend = backend
+        self._path = cfg.indexes_dir
+        self._indexes = cfg.indexes
 
-    def rebuild_indexes(self):
+    def _rebuild_indexes(self):
         """
         Rebuilds all indexes.
         """
         indexes = dict()
 
-        for item in self.backend.list_items():
+        for item in self._backend.list_items():
             # get metadata
-            metadata = _get_last_metadata(self.backend, item)
+            metadata = _get_last_metadata(self._backend, item)
 
             # set metadata
-            for index in self.indexes:
+            for index in self._indexes:
                 if index in metadata:
                     for key in _parse_value(metadata[index]):
                         indexes.setdefault(index, {}).setdefault(key, []).append(item)
@@ -79,7 +79,7 @@ class Indexes(object):
 
         This is not the nicest code, but it works.
         """
-        for index in self.indexes:
+        for index in self._indexes:
 
             if index in oldmetadata and index in newmetadata:
                 if oldmetadata[index] == newmetadata[index]:
@@ -132,9 +132,9 @@ class Indexes(object):
         """
         Returns the filename and rebuilds the index when it does not exist yet.
         """
-        filename = os.path.join(self.path, self.backend.name + "-" + index)
+        filename = os.path.join(self._path, self._backend.name + "-" + index)
         if create and not os.path.isfile(filename):
-            self.rebuild_indexes()
+            self._rebuild_indexes()
         return filename
 
 
@@ -149,54 +149,53 @@ class AbstractStorage(StorageBackend):
         """
         Init the Backend with the correct path.
         """
-        self.indexes = os.path.join(path, "indexes")
+        StorageBackend.__init__(self, name)
         if not os.path.isdir(path):
             raise BackendError(_("Invalid path %r.") % path)
-        self.path = path
-        self.name = name
-        self.cfg = cfg
-        self.indexes = Indexes(self, cfg)
-        self.quoted = quoted
+        self._path = path
+        self._cfg = cfg
+        self._indexes = Indexes(self, cfg)
+        self._quoted = quoted
 
     def list_items(self, items, filters=None):
         """
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
-        if self.quoted:
-            items = [unquoteWikiname(f) for f in items]
+        if self._quoted:
+            items = [wikiutil.unquoteWikiname(f) for f in items]
         items.sort()
         if filters is None:
             return items
         else:
             filtered_files = []
             for key, value in filters.iteritems():
-                if key not in self.cfg.indexes:
+                if key not in self._cfg.indexes:
                     for item in items:
                         metadata = _get_last_metadata(self, item)
                         if key in metadata:
                             if unicode(value) in _parse_value(metadata[key]):
                                 filtered_files.append(item)
                 else:
-                    items = self.indexes.get_items(key, value)
+                    items = self._indexes.get_items(key, value)
                     filtered_files.extend(items)
 
             return filtered_files
 
-    def get_page_path(self, name, *args):
+    def _get_page_path(self, name, *args):
         """
         Returns the full path with fs quoted page name.
         """
-        if self.quoted:
-            name = quoteWikinameFS(name)
-        return os.path.join(self.path, name, *args)
+        if self._quoted:
+            name = wikiutil.quoteWikinameFS(name)
+        return os.path.join(self._path, name, *args)
 
     def lock(self, identifier, timeout=1, lifetime=60):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.lock
         """
-        if self.quoted:
-            identifier = quoteWikinameFS(identifier)
-        write_lock = lock.ExclusiveLock(os.path.join(self.cfg.tmp_dir, identifier), lifetime)
+        if self._quoted:
+            identifier = wikiutil.quoteWikinameFS(identifier)
+        write_lock = lock.ExclusiveLock(os.path.join(self._cfg.tmp_dir, identifier), lifetime)
         if not write_lock.acquire(timeout):
             raise LockingError(_("There is already a lock for %r") % identifier)
         self.locks[identifier] = write_lock
@@ -205,8 +204,8 @@ class AbstractStorage(StorageBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.unlock
         """
-        if self.quoted:
-            identifier = quoteWikinameFS(identifier)
+        if self._quoted:
+            identifier = wikiutil.quoteWikinameFS(identifier)
         try:
             self.locks[identifier].release()
             del self.locks[identifier]
@@ -263,7 +262,7 @@ class AbstractMetadata(MetadataBackend):
         @see MoinMoin.storage.external.Metadata.save
         """
         self._save_metadata(self._name, self._revno, self._metadata)
-        self._backend.indexes.update_indexes(self._name, self._org_metadata, self._metadata)
+        self._backend._indexes.update_indexes(self._name, self._org_metadata, self._metadata)
         self._org_metadata = copy.copy(self._metadata_property)
         self._metadata_property = None
 
@@ -305,7 +304,7 @@ class AbstractData(DataBackend):
         self._name = name
         self._revno = revno
 
-        self._read_file_name = self._backend.get_page_path(self._name, "revisions", get_rev_string(self._revno))
+        self._read_file_name = self._backend._get_page_path(self._name, "revisions", _get_rev_string(self._revno))
 
         self._read_property = None
         self._write_property = None
@@ -325,7 +324,7 @@ class AbstractData(DataBackend):
         Lazy load write file.
         """
         if self._write_property is None:
-            self._tmp = tempfile.mkstemp(dir=self._backend.cfg.tmp_dir)
+            self._tmp = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
             self._write_property = os.fdopen(self._tmp[0], "wb")
         return self._write_property
 
@@ -398,7 +397,7 @@ def _parse_value(value):
     return keys
 
 
-def get_rev_string(revno):
+def _get_rev_string(revno):
     """
     Returns the string for a given revision integer.
     e.g. 00000001 for 1
@@ -406,7 +405,7 @@ def get_rev_string(revno):
     return '%08d' % revno
 
 
-def create_file(*path):
+def _create_file(*path):
     """
     Creates a file and raises an error if creating failed or the path already exists.
     """

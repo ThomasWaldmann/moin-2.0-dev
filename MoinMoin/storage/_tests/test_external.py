@@ -44,7 +44,7 @@ class TestItemCollection:
         item = self.item_collection[pages[0]]
         assert isinstance(item, Item)
         assert item.name == pages[0]
-        assert item.backend.name == "pages"
+        assert item._backend.name == "pages"
         py.test.raises(NoSuchItemError, lambda: self.item_collection["asdf"])
 
     def test_new_delete_item(self):

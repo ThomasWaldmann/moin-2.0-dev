@@ -37,13 +37,13 @@ import re
 import shutil
 import tempfile
 
-from MoinMoin import config
-from MoinMoin.storage.fs_storage import AbstractStorage, AbstractData, AbstractMetadata, _handle_error, get_rev_string, create_file
-from MoinMoin.storage.interfaces import DELETED, SIZE, EDIT_LOCK, EDIT_LOG
+from MoinMoin import config, wikiutil
+from MoinMoin.storage.error import BackendError
+from MoinMoin.storage.fs_storage import AbstractStorage, AbstractData, AbstractMetadata, _handle_error, _get_rev_string, _create_file
+from MoinMoin.storage.interfaces import DELETED, SIZE, EDIT_LOG
 from MoinMoin.storage.interfaces import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
 from MoinMoin.storage.interfaces import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
-from MoinMoin.storage.error import BackendError
-from MoinMoin.wikiutil import version2timestamp, timestamp2version, split_body, add_metadata_to_body
+
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
@@ -63,7 +63,7 @@ class UserStorage(AbstractStorage):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        files = [f for f in os.listdir(self.path) if user_re.match(f)]
+        files = [f for f in os.listdir(self._path) if user_re.match(f)]
 
         return super(UserStorage, self).list_items(files, filters)
 
@@ -71,7 +71,7 @@ class UserStorage(AbstractStorage):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_item
         """
-        if os.path.isfile(os.path.join(self.path, name)):
+        if os.path.isfile(os.path.join(self._path, name)):
             return self
         return None
 
@@ -79,7 +79,7 @@ class UserStorage(AbstractStorage):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.create_item
         """
-        create_file(self.path, name)
+        _create_file(self._path, name)
         return self
 
     def remove_item(self, name):
@@ -87,7 +87,7 @@ class UserStorage(AbstractStorage):
         @see MoinMoin.storage.interfaces.StorageBackend.remove_item
         """
         try:
-            os.remove(os.path.join(self.path, name))
+            os.remove(os.path.join(self._path, name))
         except OSError, err:
             _handle_error(self, err, name, message=_("Failed to remove item %r.") % name)
 
@@ -128,7 +128,7 @@ class UserMetadata(AbstractMetadata):
         @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
         """
         try:
-            data = codecs.open(self._backend.get_page_path(name), "r", config.charset)
+            data = codecs.open(self._backend._get_page_path(name), "r", config.charset)
         except IOError, err:
             _handle_error(self._backend, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
 
@@ -142,11 +142,11 @@ class UserMetadata(AbstractMetadata):
                 # Decode list values
                 if key.endswith('[]'):
                     key = key[:-2]
-                    val = decode_list(val)
+                    val = _decode_list(val)
                 # Decode dict values
                 elif key.endswith('{}'):
                     key = key[:-2]
-                    val = decode_dict(val)
+                    val = _decode_dict(val)
                 user_data[key] = val
             except ValueError:
                 pass
@@ -160,7 +160,7 @@ class UserMetadata(AbstractMetadata):
         @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
         """
 
-        tmp = tempfile.mkstemp(dir=self._backend.cfg.tmp_dir)
+        tmp = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
 
         try:
             data_file = codecs.getwriter(config.charset)(os.fdopen(tmp[0], "w"))
@@ -171,17 +171,17 @@ class UserMetadata(AbstractMetadata):
             # Encode list values
             if isinstance(value, list):
                 key += '[]'
-                value = encode_list(value)
+                value = _encode_list(value)
             # Encode dict values
             elif isinstance(value, dict):
                 key += '{}'
-                value = encode_dict(value)
+                value = _encode_dict(value)
             line = u"%s=%s\n" % (key, unicode(value))
             data_file.write(line)
         data_file.close()
 
         try:
-            shutil.move(tmp[1], self._backend.get_page_path(name))
+            shutil.move(tmp[1], self._backend._get_page_path(name))
         except IOError, err:
             _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
@@ -195,7 +195,7 @@ class PageStorage(AbstractStorage):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        files = [f for f in os.listdir(self.path) if os.path.exists(os.path.join(self.path, f, "current"))]
+        files = [f for f in os.listdir(self._path) if os.path.exists(os.path.join(self._path, f, "current"))]
 
         return super(PageStorage, self).list_items(files, filters)
 
@@ -203,7 +203,7 @@ class PageStorage(AbstractStorage):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_item
         """
-        if os.path.isdir(self.get_page_path(name, "revisions")):
+        if os.path.isdir(self._get_page_path(name, "revisions")):
             return self
         return None
 
@@ -212,17 +212,17 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.storage.interfaces.StorageBackend.create_item
         """
         if not self.has_item(name):
-            if not os.path.isdir(self.get_page_path(name)):
-                os.mkdir(self.get_page_path(name))
-            if not os.path.isdir(self.get_page_path(name, "cache")):
-                os.mkdir(self.get_page_path(name, "cache"))
-            if not os.path.isdir(self.get_page_path(name, "cache", "__lock__")):
-                os.mkdir(self.get_page_path(name, "cache", "__lock__"))
-            create_file(self.get_page_path(name, "current"))
-            if not os.path.isfile(self.get_page_path(name, "edit-log")):
-                create_file(self.get_page_path(name, "edit-log"))
-            if not os.path.isdir(self.get_page_path(name, "revisions")):
-                os.mkdir(self.get_page_path(name, "revisions"))
+            if not os.path.isdir(self._get_page_path(name)):
+                os.mkdir(self._get_page_path(name))
+            if not os.path.isdir(self._get_page_path(name, "cache")):
+                os.mkdir(self._get_page_path(name, "cache"))
+            if not os.path.isdir(self._get_page_path(name, "cache", "__lock__")):
+                os.mkdir(self._get_page_path(name, "cache", "__lock__"))
+            _create_file(self._get_page_path(name, "current"))
+            if not os.path.isfile(self._get_page_path(name, "edit-log")):
+                _create_file(self._get_page_path(name, "edit-log"))
+            if not os.path.isdir(self._get_page_path(name, "revisions")):
+                os.mkdir(self._get_page_path(name, "revisions"))
         else:
             raise BackendError(_("Item %r already exists") % name)
 
@@ -233,7 +233,7 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.storage.interfaces.StorageBackend.remove_item
         """
         try:
-            shutil.rmtree(self.get_page_path(name))
+            shutil.rmtree(self._get_page_path(name))
         except OSError, err:
             _handle_error(self, err, name, message=_("Failed to remove item %r.") % name)
 
@@ -251,7 +251,7 @@ class PageStorage(AbstractStorage):
             raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
 
         try:
-            shutil.move(self.get_page_path(name), self.get_page_path(newname))
+            shutil.move(self._get_page_path(name), self._get_page_path(newname))
         except OSError, err:
             _handle_error(self, err, name, message=_("Failed to rename item %r to %r.") % (name, newname))
 
@@ -261,7 +261,7 @@ class PageStorage(AbstractStorage):
         """
         if real:
             try:
-                revs = os.listdir(self.get_page_path(name, "revisions"))
+                revs = os.listdir(self._get_page_path(name, "revisions"))
             except OSError, err:
                 _handle_error(self, err, name, message=_("Failed to list revisions for item %r.") % name)
 
@@ -280,7 +280,7 @@ class PageStorage(AbstractStorage):
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
         try:
-            data_file = file(self.get_page_path(name, "current"), "r")
+            data_file = file(self._get_page_path(name, "current"), "r")
             rev = data_file.read().strip()
             data_file.close()
         except IOError, err:
@@ -295,7 +295,7 @@ class PageStorage(AbstractStorage):
         def get_latest_not_empty(rev):
             if rev == 0:
                 return rev
-            filename = self.get_page_path(name, "revisions", get_rev_string(rev))
+            filename = self._get_page_path(name, "revisions", _get_rev_string(rev))
             if os.path.isfile(filename) and os.path.getsize(filename) == 0L:
                 return get_latest_not_empty(rev - 1)
             return rev
@@ -322,7 +322,7 @@ class PageStorage(AbstractStorage):
             revno = self.current_revision(name, includeEmpty=True) + 1
 
         try:
-            create_file(self.get_page_path(name, "revisions", get_rev_string(revno)))
+            _create_file(self._get_page_path(name, "revisions", _get_rev_string(revno)))
         except IOError, err:
             _handle_error(self, err, name, revno, message=_("Failed to create revision for item %r with revision %r.")  % (name, revno))
 
@@ -338,7 +338,7 @@ class PageStorage(AbstractStorage):
             revno = self.current_revision(name, includeEmpty=True)
 
         try:
-            os.remove(self.get_page_path(name, "revisions", get_rev_string(revno)))
+            os.remove(self._get_page_path(name, "revisions", _get_rev_string(revno)))
         except OSError, err:
             _handle_error(self, err, name, revno, message=_("Failed to remove revision %r for item %r.") % (revno, name))
 
@@ -355,17 +355,17 @@ class PageStorage(AbstractStorage):
             if revnos:
                 revno = revnos[0]
 
-        tmp = tempfile.mkstemp(dir=self.cfg.tmp_dir)
+        tmp = tempfile.mkstemp(dir=self._cfg.tmp_dir)
 
         try:
             tmp_file = os.fdopen(tmp[0], "w")
-            tmp_file.write(get_rev_string(revno) + "\n")
+            tmp_file.write(_get_rev_string(revno) + "\n")
             tmp_file.close()
         except IOError, err:
             _handle_error(self, err, name, message=_("Failed to set current revision for item %r.") % name)
 
         try:
-            shutil.move(tmp[1], self.get_page_path(name, "current"))
+            shutil.move(tmp[1], self._get_page_path(name, "current"))
         except OSError, err:
             _handle_error(self, err, name, message=_("Failed to set current revision for item %r.") % name)
 
@@ -376,7 +376,7 @@ class PageStorage(AbstractStorage):
         if revno == 0:
             revno = self.current_revision(name, includeEmpty=True)
 
-        if revno != -1 and not os.path.exists(self.get_page_path(name, "revisions", get_rev_string(revno))):
+        if revno != -1 and not os.path.exists(self._get_page_path(name, "revisions", _get_rev_string(revno))):
             return DeletedPageData(self, name, revno)
         else:
             return PageData(self, name, revno)
@@ -388,7 +388,7 @@ class PageStorage(AbstractStorage):
         if revno == 0:
             revno = self.current_revision(name, includeEmpty=True)
 
-        if revno != -1 and not os.path.exists(self.get_page_path(name, "revisions", get_rev_string(revno))):
+        if revno != -1 and not os.path.exists(self._get_page_path(name, "revisions", _get_rev_string(revno))):
             return DeletedPageMetadata(self, name, revno)
         else:
             return PageMetadata(self, name, revno)
@@ -404,7 +404,7 @@ class PageData(AbstractData):
         @see MoinMoin.storage.interfaces.DataBackend.read
         """
         data = AbstractData.read(self, size)
-        metadata, data = split_body(data)
+        metadata, data = wikiutil.split_body(data)
         return data
 
 
@@ -422,8 +422,8 @@ class PageMetadata(AbstractMetadata):
         if revno == -1:
 
             # Emulate edit-lock
-            if os.path.exists(self._backend.get_page_path(name, "edit-lock")):
-                data_file = file(self._backend.get_page_path(name, "edit-lock"), "r")
+            if os.path.exists(self._backend._get_page_path(name, "edit-lock")):
+                data_file = file(self._backend._get_page_path(name, "edit-lock"), "r")
                 line = data_file.read()
                 data_file.close()
 
@@ -437,28 +437,28 @@ class PageMetadata(AbstractMetadata):
         else:
 
             try:
-                data_file = codecs.open(self._backend.get_page_path(name, "revisions", get_rev_string(revno)), "r", config.charset)
+                data_file = codecs.open(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)), "r", config.charset)
                 data = data_file.read()
                 data_file.close()
             except IOError, err:
                 _handle_error(self._backend, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
 
-            metadata, data = split_body(data)
+            metadata, data = wikiutil.split_body(data)
 
             # emulated metadata
             try:
-                metadata[SIZE] = os.path.getsize(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
+                metadata[SIZE] = os.path.getsize(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)))
             except OSError:
                 pass
 
             try:
-                data_file = file(self._backend.get_page_path(name, "edit-log"), "r")
+                data_file = file(self._backend._get_page_path(name, "edit-log"), "r")
 
                 for line in data_file:
                     values = _parse_log_line(line)
                     rev = int(values[1])
                     if rev == revno:
-                        metadata[EDIT_LOG_MTIME] = version2timestamp(int(values[0]))
+                        metadata[EDIT_LOG_MTIME] = wikiutil.version2timestamp(int(values[0]))
                         metadata[EDIT_LOG_ACTION] = values[2]
                         metadata[EDIT_LOG_ADDR] =  values[4]
                         metadata[EDIT_LOG_HOSTNAME] = values[5]
@@ -481,17 +481,17 @@ class PageMetadata(AbstractMetadata):
         if revno == -1:
             # Emulate editlock
             if EDIT_LOCK_TIMESTAMP in metadata and EDIT_LOCK_USER in metadata:
-                data_file = file(self._backend.get_page_path(name, "edit-lock"), "w")
+                data_file = file(self._backend._get_page_path(name, "edit-lock"), "w")
                 line = "\t".join([metadata[EDIT_LOCK_TIMESTAMP], "0", "0", "0", "0", "0", metadata[EDIT_LOCK_USER], "0", "0"])
                 data_file.write(line + "\n")
                 data_file.close()
-            elif os.path.isfile(self._backend.get_page_path(name, "edit-lock")):
-                os.remove(self._backend.get_page_path(name, "edit-lock"))
+            elif os.path.isfile(self._backend._get_page_path(name, "edit-lock")):
+                os.remove(self._backend._get_page_path(name, "edit-lock"))
 
         else:
 
-            tmp = tempfile.mkstemp(dir=self._backend.cfg.tmp_dir)
-            read_filename = self._backend.get_page_path(name, "revisions", get_rev_string(revno))
+            tmp = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
+            read_filename = self._backend._get_page_path(name, "revisions", _get_rev_string(revno))
 
             try:
                 data = codecs.open(read_filename, "r", config.charset)
@@ -501,10 +501,10 @@ class PageMetadata(AbstractMetadata):
                 _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
             # remove metadata
-            old_metadata, new_data = split_body(old_data)
+            old_metadata, new_data = wikiutil.split_body(old_data)
 
             # add metadata
-            new_data = add_metadata_to_body(metadata, new_data)
+            new_data = wikiutil.add_metadata_to_body(metadata, new_data)
 
             # save data
             try:
@@ -526,12 +526,12 @@ class PageMetadata(AbstractMetadata):
                     break
             else:
                 try:
-                    edit_log = codecs.open(self._backend.get_page_path(name, "edit-log"), "r", config.charset)
+                    edit_log = codecs.open(self._backend._get_page_path(name, "edit-log"), "r", config.charset)
                 except IOError, err:
                     _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
                 result = []
-                newline = "\t".join((str(timestamp2version(metadata[EDIT_LOG_MTIME])), get_rev_string(revno), metadata[EDIT_LOG_ACTION], name, metadata[EDIT_LOG_ADDR], metadata[EDIT_LOG_HOSTNAME], metadata[EDIT_LOG_USERID], metadata[EDIT_LOG_EXTRA], metadata[EDIT_LOG_COMMENT])) + "\n"
+                newline = "\t".join((str(wikiutil.timestamp2version(metadata[EDIT_LOG_MTIME])), _get_rev_string(revno), metadata[EDIT_LOG_ACTION], name, metadata[EDIT_LOG_ADDR], metadata[EDIT_LOG_HOSTNAME], metadata[EDIT_LOG_USERID], metadata[EDIT_LOG_EXTRA], metadata[EDIT_LOG_COMMENT])) + "\n"
                 for line in edit_log:
                     values = _parse_log_line(line)
                     rev = int(values[1])
@@ -545,16 +545,16 @@ class PageMetadata(AbstractMetadata):
                 edit_log.close()
 
                 try:
-                    edit_log = codecs.open(self._backend.get_page_path(name, "edit-log"), "w", config.charset)
+                    edit_log = codecs.open(self._backend._get_page_path(name, "edit-log"), "w", config.charset)
                     edit_log.writelines(result)
                     edit_log.close()
                 except IOError, err:
                     _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
             # Emulate deleted
-            exists = os.path.exists(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
+            exists = os.path.exists(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)))
             if DELETED in metadata and metadata[DELETED] and exists:
-                os.remove(self._backend.get_page_path(name, "revisions", get_rev_string(revno)))
+                os.remove(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)))
 
 
 class DeletedPageMetadata(AbstractMetadata):
@@ -620,7 +620,7 @@ class DeletedPageData(AbstractData):
         pass
 
 
-def encode_list(items):
+def _encode_list(items):
     """
     Encode list of items in user data file
 
@@ -641,11 +641,11 @@ def encode_list(items):
     return line
 
 
-def decode_list(line):
+def _decode_list(line):
     """
     Decode list of items from user data file
 
-    @param line: line containing list of items, encoded with encode_list
+    @param line: line containing list of items, encoded with _encode_list
     @rtype: list of unicode strings
     @return: list of items in encoded in line
     """
@@ -658,7 +658,7 @@ def decode_list(line):
     return items
 
 
-def encode_dict(items):
+def _encode_dict(items):
     """
     Encode dict of items in user data file
 
@@ -677,11 +677,11 @@ def encode_dict(items):
     return line
 
 
-def decode_dict(line):
+def _decode_dict(line):
     """
     Decode dict of key:value pairs from user data file
 
-    @param line: line containing a dict, encoded with encode_dict
+    @param line: line containing a dict, encoded with _encode_dict
     @rtype: dict
     @return: dict  unicode:unicode items
     """
