@@ -130,15 +130,18 @@ class Page(object):
             self.__rev = self._item[self.rev]
             self._body = None
             self._meta = None
+            self._data = None
         except NoSuchItemError:
             self.__item = None
             self.__rev = None
             self._body = u""
             self._meta = dict()
+            self._data = u""
         except NoSuchRevisionError:
             self.__rev = None
             self._body = u""
             self._meta = dict()
+            self._data = u""
 
     def set_item(self, item):
         """
@@ -168,17 +171,13 @@ class Page(object):
 
     def get_body(self):
         if self._body is None:
-            if self._rev is not None:
-                data = self._rev.data.read()
-                self._rev.data.close()
-                data = data.decode(config.charset)
-                self._body = self.decodeTextMimeType(data)
+            if self.meta is not None and self.data is not None:
+                self._body = wikiutil.add_metadata_to_body(self.meta, self.data)
         return self._body
 
     def set_body(self, body):
         self._body = body
-        self._meta = dict()
-        self._data = None
+        self._meta, self._data = wikiutil.split_body(body)
 
     body = property(fget=get_body, fset=set_body) # complete page text
 
@@ -191,7 +190,11 @@ class Page(object):
 
     def get_data(self):
         if self._data is None:
-            bla, self._data = wikiutil.get_processing_instructions(self.body)
+            if self._rev is not None:
+                data = self._rev.data.read()
+                self._rev.data.close()
+                data = data.decode(config.charset)
+                self._data = self.decodeTextMimeType(data)
         return self._data
     data = property(fget=get_data) # content (lower part of page text)
 
@@ -451,7 +454,7 @@ class Page(object):
         Get Page size.
 
         @rtype: int
-        @return: page size, 0 for non-existent pages.
+        @return: page size, -1 for non-existent pages.
         """
         if rev == self.rev: # same revision as self
             if self._body is not None:
@@ -460,7 +463,7 @@ class Page(object):
         try:
             return self._item[rev].size
         except NoSuchRevisionError:
-            return 0L
+            return -1
 
     def getACL(self):
         """
@@ -635,6 +638,8 @@ class Page(object):
     def parse_processing_instructions(self):
         """ Parse page text and extract processing instructions,
             return a dict of PIs and the non-PI rest of the body.
+
+            TODO: move this to external.py
         """
         from MoinMoin import i18n
         request = self.request

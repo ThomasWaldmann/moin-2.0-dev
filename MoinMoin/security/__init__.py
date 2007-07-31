@@ -22,6 +22,7 @@
 import re
 from MoinMoin import wikiutil, user
 from MoinMoin.Page import Page
+from MoinMoin.storage.interfaces import ACL
 
 #############################################################################
 ### Basic Permissions Interface -- most features enabled by default
@@ -447,7 +448,10 @@ class ACLStringIterator:
 
 def parseACL(request, text):
     """ Parse acl lines from text and return ACL object """
-    pi, dummy = wikiutil.get_processing_instructions(text)
-    acl_lines = [args for verb, args in pi if verb == 'acl']
-    return AccessControlList(request.cfg, acl_lines)
+    pi, dummy = wikiutil.split_body(text)
+    if ACL in pi:
+        acl = pi[ACL]
+    else:
+        acl = []
+    return AccessControlList(request.cfg, acl)
 

@@ -11,7 +11,7 @@ import py.test
 from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown, BackendTest
 
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
-from MoinMoin.storage.interfaces import SIZE, DELETED, ACL
+from MoinMoin.storage.interfaces import SIZE, ACL
 from MoinMoin.storage.interfaces import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
 from MoinMoin.storage.interfaces import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_COMMENT, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
@@ -213,6 +213,7 @@ class TestPageMetadata:
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
         metadata1['format'] = 'test'
         metadata1.save()
+        print metadata1
         assert metadata1 == {EDIT_LOG_EXTRA: '', EDIT_LOG_ACTION: 'SAVE', EDIT_LOG_ADDR: '127.0.0.1', EDIT_LOG_HOSTNAME: 'localhost', EDIT_LOG_COMMENT: '', EDIT_LOG_USERID: '1180352194.13.59241', EDIT_LOG_MTIME: metadata1[EDIT_LOG_MTIME], SIZE: 192L, 'format': 'test', ACL: 'MoinPagesEditorGroup:read,write,delete,revert All:read', 'language': 'sv'}
         metadata1['format'] = 'wiki'
         metadata1.save()

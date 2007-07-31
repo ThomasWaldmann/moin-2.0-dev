@@ -32,7 +32,6 @@ from MoinMoin.logfile import editlog, eventlog
 from MoinMoin.util import timefuncs, web
 from MoinMoin.user import User
 from MoinMoin.storage.error import BackendError
-from MoinMoin.storage.interfaces import DELETED, READONLY_METADATA
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 import MoinMoin.events.notification as notification
@@ -824,14 +823,11 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         rev = newrev.revno
 
         if not deleted:
-            newrev.data.write(text.encode(config.charset))
+            metadata, data = wikiutil.split_body(text)
+            newrev.data.write(data.encode(config.charset))
             newrev.data.close()
             if rev != 1:
-                for key, value in self.meta.iteritems():
-                    if key == "deprecated" and not was_deprecated:
-                        continue
-                    elif key in READONLY_METADATA + [DELETED]:
-                        continue
+                for key, value in metadata.iteritems():
                     newrev.metadata[key] = value
                     newrev.metadata.save()
         else:
