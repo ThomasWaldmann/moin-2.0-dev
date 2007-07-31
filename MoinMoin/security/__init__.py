@@ -449,9 +449,4 @@ class ACLStringIterator:
 def parseACL(request, text):
     """ Parse acl lines from text and return ACL object """
     pi, dummy = wikiutil.split_body(text)
-    if ACL in pi:
-        acl = pi[ACL]
-    else:
-        acl = []
-    return AccessControlList(request.cfg, acl)
-
+    return AccessControlList(request.cfg, pi.get(ACL, []))

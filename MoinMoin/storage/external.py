@@ -25,24 +25,24 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Initializes the proper StorageBackend.
         """
-        self.backend = backend
-        self.user = user
+        self._backend = backend
+        self._user = user
 
-        self.__items = None
+        self._items = None
 
     def __contains__(self, name):
         """
         Checks if an Item exists.
         """
-        return self.backend.has_item(name)
+        return self._backend.has_item(name)
 
     def __getitem__(self, name):
         """
         Loads an Item.
         """
-        backend = self.backend.has_item(name)
+        backend = self._backend.has_item(name)
         if backend:
-            return Item(name, backend, self.user)
+            return Item(name, backend, self._user)
         else:
             raise NoSuchItemError(_("No such item %r.") % name)
 
@@ -50,8 +50,8 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Deletes an Item.
         """
-        self.backend.remove_item(name)
-        self.__items = None
+        self._backend.remove_item(name)
+        self._items = None
 
     def keys(self, filters=None):
         """
@@ -62,22 +62,22 @@ class ItemCollection(UserDict.DictMixin, object):
         if filters is None:
             return self.items
         else:
-            return self.backend.list_items(filters)
+            return self._backend.list_items(filters)
 
     def new_item(self, name):
         """
         Returns a new Item with the given name.
         """
-        self.backend.create_item(name)
-        self.__items = None
+        self._backend.create_item(name)
+        self._items = None
         return self[name]
 
     def rename_item(self, name, newname):
         """
         Renames an Item.
         """
-        self.backend.rename_item(name, newname)
-        self.__items = None
+        self._backend.rename_item(name, newname)
+        self._items = None
 
     def copy_item(self, name, newname):
         """
@@ -114,15 +114,15 @@ class ItemCollection(UserDict.DictMixin, object):
 
         newitem.lock = False
 
-        self.__items = None
+        self._items = None
 
     def get_items(self):
         """
         Lazy load items.
         """
-        if self.__items is None:
-            self.__items = self.backend.list_items()
-        return self.__items
+        if self._items is None:
+            self._items = self._backend.list_items()
+        return self._items
 
     items = property(get_items)
 
@@ -141,10 +141,11 @@ class Item(UserDict.DictMixin, object):
         Initializes the Item with the required parameters.
         """
         self.name = name
-        self.backend = backend
-        self.userobj = userobj
 
-        self.__lock = False
+        self._backend = backend
+        self._userobj = userobj
+
+        self._lock = False
 
         self.reset()
 
@@ -152,18 +153,18 @@ class Item(UserDict.DictMixin, object):
         """
         Reset the lazy loaded stuff which is dependend on adding/removing revisions.
         """
-        self.__revisions = None
-        self.__revision_objects = dict()
-        self.__current = None
-        self.__acl = None
-        self.__edit_lock = None
-        self.__metadata = None
+        self._revisions = None
+        self._revision_objects = dict()
+        self._current = None
+        self._acl = None
+        self._edit_lock = None
+        self._metadata = None
 
     def __contains__(self, revno):
         """
         Checks if a Revision with the given revision number exists.
         """
-        return self.backend.has_revision(self.name, revno)
+        return self._backend.has_revision(self.name, revno)
 
     def __getitem__(self, revno):
         """
@@ -173,11 +174,11 @@ class Item(UserDict.DictMixin, object):
             revno = self.current
 
         try:
-            return self.__revision_objects[revno]
+            return self._revision_objects[revno]
         except KeyError:
-            if self.backend.has_revision(self.name, revno):
+            if self._backend.has_revision(self.name, revno):
                 rev = Revision(revno, self)
-                self.__revision_objects[revno] = rev
+                self._revision_objects[revno] = rev
                 return rev
             else:
                 raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, self.name))
@@ -188,7 +189,7 @@ class Item(UserDict.DictMixin, object):
         """
         self._check_lock()
         self.reset()
-        self.backend.remove_revision(self.name, revno)
+        self._backend.remove_revision(self.name, revno)
 
     def keys(self):
         """
@@ -203,16 +204,16 @@ class Item(UserDict.DictMixin, object):
         """
         self._check_lock()
         self.reset()
-        rev = self.backend.create_revision(self.name, revno)
+        rev = self._backend.create_revision(self.name, revno)
         return self[rev]
 
     def get_metadata(self):
         """
         Lazy load metadata.
         """
-        if self.__metadata is None:
-            self.__metadata = Revision(-1, self).metadata
-        return self.__metadata
+        if self._metadata is None:
+            self._metadata = Revision(-1, self).metadata
+        return self._metadata
 
     metadata = property(get_metadata)
 
@@ -220,9 +221,9 @@ class Item(UserDict.DictMixin, object):
         """
         Lazy load the revisions.
         """
-        if self.__revisions is None:
-            self.__revisions = self.backend.list_revisions(self.name)
-        return self.__revisions
+        if self._revisions is None:
+            self._revisions = self._backend.list_revisions(self.name)
+        return self._revisions
 
     revisions = property(get_revisions)
 
@@ -230,9 +231,9 @@ class Item(UserDict.DictMixin, object):
         """
         Lazy load the current revision no.
         """
-        if self.__current is None:
-            self.__current = self.backend.current_revision(self.name)
-        return self.__current
+        if self._current is None:
+            self._current = self._backend.current_revision(self.name)
+        return self._current
 
     current = property(get_current)
 
@@ -240,10 +241,10 @@ class Item(UserDict.DictMixin, object):
         """
         Get the acl property.
         """
-        if self.__acl is None:
+        if self._acl is None:
             from MoinMoin.security import AccessControlList
-            self.__acl = AccessControlList(self.backend.cfg, self[0].acl)
-        return self.__acl
+            self._acl = AccessControlList(self._backend._cfg, self[0].acl)
+        return self._acl
 
     acl = property(get_acl)
 
@@ -252,12 +253,12 @@ class Item(UserDict.DictMixin, object):
         Get the lock property.
         It is a tuple containing the timestamp of the lock and the user.
         """
-        if self.__edit_lock is None:
+        if self._edit_lock is None:
             if EDIT_LOCK_TIMESTAMP in self.metadata and EDIT_LOCK_USER in self.metadata:
-                self.__edit_lock = (True, long(self.metadata[EDIT_LOCK_TIMESTAMP]), self.metadata[EDIT_LOCK_USER])
+                self._edit_lock = (True, long(self.metadata[EDIT_LOCK_TIMESTAMP]), self.metadata[EDIT_LOCK_USER])
             else:
-                self.__edit_lock = False, 0, None
-        return self.__edit_lock
+                self._edit_lock = False, 0, None
+        return self._edit_lock
 
     def set_edit_lock(self, edit_lock):
         """
@@ -275,7 +276,7 @@ class Item(UserDict.DictMixin, object):
             self.metadata[EDIT_LOCK_USER] = edit_lock[1]
         else:
             raise ValueError(_("Lock must be either False or a tuple containing timestamp and user."))
-        self.__edit_lock = None
+        self._edit_lock = None
 
     edit_lock = property(get_edit_lock, set_edit_lock)
 
@@ -283,18 +284,18 @@ class Item(UserDict.DictMixin, object):
         """
         Checks if the item is locked.
         """
-        return self.__lock
+        return self._lock
 
     def set_lock(self, lock):
         """
         Set the item lock state.
         """
         if lock:
-            self.backend.lock(self.name)
+            self._backend.lock(self.name)
             self.reset()
         else:
-            self.backend.unlock(self.name)
-        self.__lock = lock
+            self._backend.unlock(self.name)
+        self._lock = lock
 
     lock = property(get_lock, set_lock)
 
@@ -321,43 +322,20 @@ class Revision(object):
         self.revno = revno
         self.item = item
 
-        self.reset()
-
-    def reset(self):
-        """
-        Reset, you know what i mean?
-        """
-        self.__data = None
-        self.__metadata  = None
-
-        self.__acl = None
-        self.__deleted = None
-        self.__size = None
-
-        for attr in ('mtime', 'action', 'addr', 'hostname', 'userid', 'extra', 'comment'):
-            setattr(self, "__" + attr, None)
-
-    def __getattribute__(self, name):
-        """
-        Get edit lock values.
-        """
-        if name in ('mtime', 'action', 'addr', 'hostname', 'userid', 'extra', 'comment'):
-            if getattr(self, "__" + name) is None:
-                setattr(self, "__" + name, self._get_value("edit_log_" + name, ""))
-            return getattr(self, "__" + name)
-        return object.__getattribute__(self, name)
+        self._data = None
+        self._metadata  = None
 
     def get_metadata(self):
         """
         Lazy load metadata.
         """
-        if self.__metadata is None:
-            metadata = self.item.backend.get_metadata_backend(self.item.name, self.revno)
+        if self._metadata is None:
+            metadata = self.item._backend.get_metadata_backend(self.item.name, self.revno)
             if self.item.lock:
-                self.__metadata = metadata
+                self._metadata = metadata
             else:
-                self.__metadata = ReadonlyMetadata(metadata, LockingError, _("This item is currently readonly."))
-        return self.__metadata
+                self._metadata = ReadonlyMetadata(metadata, LockingError, _("This item is currently readonly."))
+        return self._metadata
 
     metadata = property(get_metadata)
 
@@ -365,13 +343,13 @@ class Revision(object):
         """
         Lazy load metadata.
         """
-        if self.__data is None:
-            data = self.item.backend.get_data_backend(self.item.name, self.revno)
+        if self._data is None:
+            data = self.item._backend.get_data_backend(self.item.name, self.revno)
             if self.item.lock:
-                self.__data = data
+                self._data = data
             else:
-                self.__data = ReadonlyData(data, LockingError, _("This item is currently readonly."))
-        return self.__data
+                self._data = ReadonlyData(data, LockingError, _("This item is currently readonly."))
+        return self._data
 
     data = property(get_data)
 
@@ -379,19 +357,16 @@ class Revision(object):
         """
         ACL Property.
         """
-        if self.__acl is None:
-            acl = self._get_value(ACL, [])
-            if type(acl) != list:
-                acl = [acl]
-            self.__acl = acl
-        return self.__acl
+        acl = self.metadata.get(ACL, [])
+        if type(acl) != list:
+            acl = [acl]
+        return acl
 
     def set_acl(self, value):
         """
         ACL Property.
         """
         self.metadata[ACL] = value
-        self.__acl = None
 
     acl = property(get_acl, set_acl)
 
@@ -399,16 +374,13 @@ class Revision(object):
         """
         Deleted Property.
         """
-        if self.__deleted is None:
-            self.__deleted = self._get_value(DELETED, False)
-        return self.__deleted
+        return self.metadata.get(DELETED, False)
 
     def set_deleted(self, value):
         """
         Deleted Property.
         """
         self.metadata[DELETED] = value
-        self.__deleted = None
 
     deleted = property(get_deleted, set_deleted)
 
@@ -416,25 +388,21 @@ class Revision(object):
         """
         Size Property.
         """
-        if self.__size is None:
-            size = self._get_value(SIZE, 0L)
-            if not size:
-                size = len(self.data.read())
-                self.data.close()
-            self.__size = size
-        return self.__size
+        size = self.metadata.get(SIZE, 0L)
+        if not size:
+            size = len(self.data.read())
+            self.data.close()
+        return size
 
     size = property(get_size)
 
-    def _get_value(self, key, default):
+    def __getattribute__(self, name):
         """
-        Returns a value from the metadata or the default if the value is not in the metadata.
+        Get edit lock values.
         """
-        try:
-            value = self.metadata[key]
-        except KeyError:
-            value = default
-        return value
+        if name in ('mtime', 'action', 'addr', 'hostname', 'userid', 'extra', 'comment'):
+            return self.metadata.get("edit_log_" + name, "")
+        return object.__getattribute__(self, name)
 
 
 class ReadonlyMetadata(MetadataBackend):

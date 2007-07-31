@@ -213,7 +213,6 @@ class TestPageMetadata:
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
         metadata1['format'] = 'test'
         metadata1.save()
-        print metadata1
         assert metadata1 == {EDIT_LOG_EXTRA: '', EDIT_LOG_ACTION: 'SAVE', EDIT_LOG_ADDR: '127.0.0.1', EDIT_LOG_HOSTNAME: 'localhost', EDIT_LOG_COMMENT: '', EDIT_LOG_USERID: '1180352194.13.59241', EDIT_LOG_MTIME: metadata1[EDIT_LOG_MTIME], SIZE: 192L, 'format': 'test', ACL: 'MoinPagesEditorGroup:read,write,delete,revert All:read', 'language': 'sv'}
         metadata1['format'] = 'wiki'
         metadata1.save()

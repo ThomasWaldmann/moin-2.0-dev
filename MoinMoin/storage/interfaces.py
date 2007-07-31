@@ -44,6 +44,12 @@ class StorageBackend(object):
     This class describes the main interface a StorageBackend must implement.
     """
 
+    def __init__(self, name):
+        """
+        Init the Backend with the correct path.
+        """
+        self.name = name
+
     def list_items(self, filters=None):
         """
         Returns a list of all item names that match the given filters.
