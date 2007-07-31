@@ -1270,7 +1270,8 @@ class RootPage(object):
         Init the item collection.
         """
         self.request = request
-        self._items = ItemCollection(request.cfg.data_backend, request)
+        self._items_standard = ItemCollection(request.cfg.page_backend, request)
+        self._items_all = ItemCollection(request.cfg.data_backend, request)
 
     def getPagePath(self, fname, isfile):
         """
@@ -1283,8 +1284,6 @@ class RootPage(object):
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
         """
         List user readable pages under current page.
-
-        TODO: use the storage api more efficiently.
 
         Currently only request.rootpage is used to list pages, but if we
         have true sub pages, any page can list its sub pages.
@@ -1325,20 +1324,20 @@ class RootPage(object):
         else:
             index_filters = {}
 
-        if user or exists or filter or not include_underlay or return_objects:
+        if not include_underlay:
+            items = self._items_standard
+        else:
+            items = self._items_all
+
+        if user or filter or return_objects:
             # Filter names
             pages = []
-            for name in self._items.keys(index_filters):
-                # First, custom filter - exists and acl check are very
-                # expensive!
+            for name in items.keys(index_filters):
+                # First, custom filter - acl check are very expensive!
                 if filter and not filter(name):
                     continue
 
                 page = Page(request, name)
-
-                # Filter underlay pages
-                if not include_underlay and page.isUnderlayPage(): # is an underlay page
-                    continue
 
                 # Filter out page user may not read.
                 if user and not user.may.read(name):
@@ -1349,7 +1348,7 @@ class RootPage(object):
                 else:
                     pages.append(name)
         else:
-            pages = self._items.keys()
+            pages = items.keys()
 
         request.clock.stop('getPageList')
         return pages
@@ -1391,7 +1390,7 @@ class RootPage(object):
             # WARNING: SLOW
             pages = self.getPageList(user='')
         else:
-            pages = self._items
+            pages = self._items_all
         count = len(pages)
         self.request.clock.stop('getPageCount')
 
