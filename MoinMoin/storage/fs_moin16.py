@@ -43,7 +43,7 @@ from MoinMoin.storage.interfaces import DELETED, SIZE, EDIT_LOCK, EDIT_LOG
 from MoinMoin.storage.interfaces import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
 from MoinMoin.storage.interfaces import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
 from MoinMoin.storage.error import BackendError
-from MoinMoin.wikiutil import version2timestamp, timestamp2version
+from MoinMoin.wikiutil import version2timestamp, timestamp2version, split_body, add_metadata_to_body
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
@@ -399,7 +399,13 @@ class PageData(AbstractData):
     This class implements a read only, file like object for MoinMoin 1.6 Page stuff.
     Changes will only be saved on close().
     """
-    pass
+    def read(self, size=None):
+        """
+        @see MoinMoin.storage.interfaces.DataBackend.read
+        """
+        data = AbstractData.read(self, size)
+        metadata, data = split_body(data)
+        return data
 
 
 class PageMetadata(AbstractMetadata):
@@ -432,33 +438,12 @@ class PageMetadata(AbstractMetadata):
 
             try:
                 data_file = codecs.open(self._backend.get_page_path(name, "revisions", get_rev_string(revno)), "r", config.charset)
+                data = data_file.read()
+                data_file.close()
             except IOError, err:
                 _handle_error(self._backend, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
 
-            started = False
-            for line in data_file:
-                if line.startswith('#'):
-                    started = True
-                    if line[1] == '#': # two hash marks are a comment
-                        continue
-                    elif line == "#":
-                        break
-
-                    verb, args = (line[1:] + ' ').split(' ', 1) # split at the first blank
-
-                    verb = verb.lower().strip()
-                    args = args.strip()
-
-                    # metadata can be multiline
-                    metadata.setdefault(verb, []).append(args)
-
-                elif started is True:
-                    break
-            data_file.close()
-
-            for key, value in metadata.iteritems():
-                if len(value) == 1:
-                    metadata[key] = value[0]
+            metadata, data = split_body(data)
 
             # emulated metadata
             try:
@@ -510,30 +495,16 @@ class PageMetadata(AbstractMetadata):
 
             try:
                 data = codecs.open(read_filename, "r", config.charset)
+                old_data = data.read()
+                data.close()
             except IOError, err:
                 _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
             # remove metadata
-            new_data = [line for line in data if not line.startswith('#') and not line == '#' and not line == '##']
-
-            data.close()
+            old_metadata, new_data = split_body(old_data)
 
             # add metadata
-            metadata_data = ""
-            for key, value in metadata.iteritems():
-
-                # remove emulated metadata
-                if key in [SIZE, DELETED] + EDIT_LOG + EDIT_LOCK:
-                    continue
-
-                # special handling for list metadata like acls
-                if isinstance(value, list):
-                    for line in value:
-                        metadata_data += "#%s %s\n" % (key, line)
-                else:
-                    metadata_data += "#%s %s\n" % (key, value)
-
-            new_data.insert(0, metadata_data)
+            new_data = add_metadata_to_body(metadata, new_data)
 
             # save data
             try:

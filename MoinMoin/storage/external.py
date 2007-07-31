@@ -337,7 +337,7 @@ class Revision(object):
         for attr in ('mtime', 'action', 'addr', 'hostname', 'userid', 'extra', 'comment'):
             setattr(self, "__" + attr, None)
 
-    def __getattr__(self, name):
+    def __getattribute__(self, name):
         """
         Get edit lock values.
         """
@@ -345,7 +345,7 @@ class Revision(object):
             if getattr(self, "__" + name) is None:
                 setattr(self, "__" + name, self._get_value("edit_log_" + name, ""))
             return getattr(self, "__" + name)
-        raise AttributeError(_("No such attribute: %s" % name))
+        return object.__getattribute__(self, name)
 
     def get_metadata(self):
         """
