@@ -257,13 +257,11 @@ class Page(object):
         """
         Return number of current revision.
 
-        TODO: remove the 99999999 hack
-
         @return: int revision
         """
         if self._item:
             return self._item.current
-        return 99999999
+        return -1
 
     def get_real_rev(self):
         """
