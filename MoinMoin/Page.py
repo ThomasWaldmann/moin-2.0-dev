@@ -1299,9 +1299,7 @@ class RootPage(object):
         filter is usually compiled re match or search method, but can be
         any method that get a unicode argument and return bool. If you
         want to filter the page list, do it with this filter function,
-        and NOT on the output of this function. page.exists() and
-        user.may.read are very expensive, and should be done on the
-        smallest data set.
+        and NOT on the output of this function.
 
         @param user: the user requesting the pages (MoinMoin.user.User)
         @param filter: filter function
@@ -1319,20 +1317,20 @@ class RootPage(object):
         if user is None:
             user = request.user
 
-        if exists:
-            index_filters = {DELETED: 'False'}
+        if include_underlay:
+            item_collection = self._items_all
         else:
-            index_filters = {}
+            item_collection = self._items_standard
 
-        if not include_underlay:
-            items = self._items_standard
-        else:
-            items = self._items_all
+        items = item_collection.keys()
+        if exists:
+            for item in item_collection.keys({DELETED: 'True'}):
+                items.remove(item)
 
         if user or filter or return_objects:
             # Filter names
             pages = []
-            for name in items.keys(index_filters):
+            for name in items:
                 # First, custom filter - acl check are very expensive!
                 if filter and not filter(name):
                     continue
@@ -1348,7 +1346,7 @@ class RootPage(object):
                 else:
                     pages.append(name)
         else:
-            pages = items.keys()
+            pages = items
 
         request.clock.stop('getPageList')
         return pages
@@ -1357,8 +1355,7 @@ class RootPage(object):
         """
         Return a dictionary of filtered page objects readable by user.
 
-        Invoke getPageList then create a dict from the page list. See
-        getPageList docstring for more details.
+        See getPageList docstring for more details.
 
         @param user: the user requesting the pages
         @param filter: filter function
@@ -1375,23 +1372,19 @@ class RootPage(object):
         """
         Return page count.
 
-        The default value does the fastest listing, and return count of
-        all pages, including deleted pages, ignoring acl rights.
-
-        If you want to get a more accurate number, call with
-        exists=1. This will be about 100 times slower though.
-
         @param exists: filter existing pages
         @rtype: int
         @return: number of pages
         """
         self.request.clock.start('getPageCount')
+
+        items = self._items_all.keys()
         if exists:
-            # WARNING: SLOW
-            pages = self.getPageList(user='')
-        else:
-            pages = self._items_all
-        count = len(pages)
+            for item in self._items_all.keys({DELETED: 'True'}):
+                items.remove(item)
+
+        count = len(items)
+
         self.request.clock.stop('getPageCount')
 
         return count
