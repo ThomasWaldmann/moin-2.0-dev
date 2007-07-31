@@ -1313,7 +1313,6 @@ class RootPage(object):
         request = self.request
         request.clock.start('getPageList')
 
-        # Check input
         if user is None:
             user = request.user
 
@@ -1322,7 +1321,7 @@ class RootPage(object):
         else:
             item_collection = self._items_standard
 
-        items = item_collection.keys()
+        items = item_collection.keys()[:]
         if exists:
             for item in item_collection.keys({DELETED: 'True'}):
                 items.remove(item)
@@ -1331,13 +1330,13 @@ class RootPage(object):
             # Filter names
             pages = []
             for name in items:
-                # First, custom filter - acl check are very expensive!
+                # First custom filter - acl checks are very expensive!
                 if filter and not filter(name):
                     continue
 
                 page = Page(request, name)
 
-                # Filter out page user may not read.
+                # Filter out pages user may not read.
                 if user and not user.may.read(name):
                     continue
 
@@ -1378,7 +1377,7 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = self._items_all.keys()
+        items = self._items_all.keys()[:]
         if exists:
             for item in self._items_all.keys({DELETED: 'True'}):
                 items.remove(item)

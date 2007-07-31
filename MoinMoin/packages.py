@@ -13,7 +13,6 @@ import time
 import zipfile
 
 from MoinMoin import config, wikiutil, caching, user
-from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.logfile import editlog, eventlog
 
@@ -133,15 +132,13 @@ class ScriptEngine:
             filename = wikiutil.taintfilename(filename)
             zipname = wikiutil.taintfilename(zipname)
             target = os.path.join(attachments, filename)
-            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
-            rev = page.current_rev()
             mtime = time.time()
             if not os.path.exists(target):
                 self._extractToFile(zipname, target)
                 if os.path.exists(target):
                     os.chmod(target, config.umask )
                     action = 'ATTNEW'
-                    edit_logfile_append(self, pagename, mtime, rev, action, logname='edit-log',
+                    edit_logfile_append(self, pagename, mtime, 99999999, action, logname='edit-log',
                                        comment=u'%(filename)s' % {"filename": filename}, author=author)
                 self.msg += u"%(filename)s attached \n" % {"filename": filename}
             else:
@@ -163,13 +160,11 @@ class ScriptEngine:
             attachments = getAttachDir(self.request, pagename, create=0)
             filename = wikiutil.taintfilename(filename)
             target = os.path.join(attachments, filename)
-            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
-            rev = page.current_rev()
             mtime = time.time()
             if os.path.exists(target):
                 os.remove(target)
                 action = 'ATTDEL'
-                edit_logfile_append(self, pagename, mtime, rev, action, logname='edit-log',
+                edit_logfile_append(self, pagename, mtime, 99999999, action, logname='edit-log',
                                     comment=u'%(filename)s' % {"filename": filename}, author=author)
                 self.msg += u"%(filename)s removed \n" % {"filename": filename}
             else:
@@ -325,8 +320,7 @@ class ScriptEngine:
             page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
             if not page.exists():
                 raise RuntimeScriptException(_("The page %s does not exist.") % pagename)
-            newpage = PageEditor(self.request, newpagename)
-            page.renamePage(newpage.page_name, comment=u"Renamed from '%s'" % (pagename))
+            page.renamePage(newpagename, comment=u"Renamed from '%s'" % (pagename))
             self.msg += u'%(pagename)s renamed to %(newpagename)s\n' % {
                             "pagename": pagename,
                             "newpagename": newpagename}
@@ -529,8 +523,8 @@ Example:
         request_url = "localhost/"
 
     # Setup MoinMoin environment
-    from MoinMoin.request import CLI
-    request = CLI.Request(url='localhost/')
+    from MoinMoin.request import request_cli
+    request = request_cli.Request(url='localhost/')
     request.form = request.args = request.setup_args()
 
     package = ZipPackage(request, packagefile)
