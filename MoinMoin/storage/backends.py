@@ -7,7 +7,7 @@
 
 from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import BackendError, NoSuchItemError
-
+from MoinMoin.support import sorted
 
 class MetaBackend(StorageBackend):
     """

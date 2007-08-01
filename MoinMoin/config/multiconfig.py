@@ -24,6 +24,7 @@ from MoinMoin.security import AccessControlList
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.backends import LayerBackend
 from MoinMoin.storage.interfaces import DELETED
+from MoinMoin.support import set
 
 _url_re_cache = None
 _farmconfig_mtime = None
@@ -447,11 +448,6 @@ reStructuredText Quick Reference
             @return: None if there is no problem with the password,
                      some string with an error msg, if the password is problematic.
         """
-        try:
-            set
-        except:
-            from sets import Set as set
-
         try:
             # in any case, do a very simple built-in check to avoid the worst passwords
             if len(password) < 6:

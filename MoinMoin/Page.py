@@ -42,6 +42,7 @@ from MoinMoin.logfile import eventlog
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.interfaces import DELETED
+from MoinMoin.support import set
 
 
 def is_cache_exception(e):
@@ -1321,10 +1322,9 @@ class RootPage(object):
         else:
             item_collection = self._items_standard
 
-        items = item_collection.keys()
+        items = set(item_collection.keys())
         if exists:
-            for item in item_collection.keys({DELETED: 'True'}):
-                items.remove(item)
+            items = items - set(item_collection.keys({DELETED: 'True'}))
 
         if user or filter or return_objects:
             # Filter names
@@ -1377,10 +1377,9 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = self._items_all.keys()
+        items = set(self._items_all.keys())
         if exists:
-            for item in self._items_all.keys({DELETED: 'True'}):
-                items.remove(item)
+            items = items - set(self._items_all.keys({DELETED: 'True'}))
 
         count = len(items)
 
