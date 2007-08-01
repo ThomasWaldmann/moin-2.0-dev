@@ -9,6 +9,7 @@ from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import BackendError, NoSuchItemError
 from MoinMoin.support import sorted
 
+
 class MetaBackend(StorageBackend):
     """
     Super class which does the _call methods calls. Subclasses need to implement the missing
