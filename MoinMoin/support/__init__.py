@@ -24,6 +24,6 @@ except NameError:
         return l
 
 try:
-    set
+    set = set
 except:
     from sets import Set as set
