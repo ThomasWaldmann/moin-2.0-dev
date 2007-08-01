@@ -9,11 +9,34 @@ from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import BackendError, NoSuchItemError
 
 
-class MetaBackend(StorageBackend):
+class Callable(object):
+    """
+    Class that just does a call to instance.name with the given parameters.
+    """
+    name = ""
+    instance = None
+
+    def __init__(self, name, instance):
+        """
+        Init parameters.
+        """
+        self.name = name
+        self.instance = instance
+
+    def call(self, *args, **kwargs):
+        """
+        Do the call.
+        """
+        return self.instance._call(self.name, *args, **kwargs)
+
+
+class MetaBackend(object):
     """
     Super class which does the _call methods calls. Subclasses need to implement the missing
     backend methods and _call.
     """
+
+    __implements__ = StorageBackend
 
     def __init__(self, backends):
         """
@@ -21,85 +44,13 @@ class MetaBackend(StorageBackend):
         """
         self.backends = backends
 
-    def has_item(self, name):
+    def __getattr__(self, name):
         """
-        @see MoinMoin.storage.interfaces.StorageBackend.list_has_item
+        Get attribute from other backend if we don't have one.
         """
-        return self._call("has_item", name)
+        return Callable(name, self).call
 
-    def create_item(self, name):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.create_item
-        """
-        return self._call("create_item", name)
-
-    def remove_item(self, name):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.remove_item
-        """
-        return self._call("remove_item", name)
-
-    def rename_item(self, name, newname):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.rename_item
-        """
-        return self._call("rename_item", name, newname)
-
-    def list_revisions(self, name):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
-        """
-        return self._call("list_revisions", name)
-
-    def current_revision(self, name):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.current_revision
-        """
-        return self._call("current_revision", name)
-
-    def has_revision(self, name, revno):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.has_revision
-        """
-        return self._call("has_revision", name, revno)
-
-    def create_revision(self, name, revno):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.create_revision
-        """
-        return self._call("create_revision", name, revno)
-
-    def remove_revision(self, name, revno):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.remove_revision
-        """
-        return self._call("remove_revision", name, revno)
-
-    def get_data_backend(self, name, revno):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
-        """
-        return self._call("get_data_backend", name, revno)
-
-    def get_metadata_backend(self, name, revno):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
-        """
-        return self._call("get_metadata_backend", name, revno)
-
-    def lock(self, identifier, timeout=1, lifetime=60):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.lock
-        """
-        return self._call("lock", identifier, timeout, lifetime)
-
-    def unlock(self, identifier):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.unlock
-        """
-        return self._call("unlock", identifier)
-
-    def _call(self, method, *args):
+    def _call(self, method, *args, **kwargs):
         """
         Call the method from the first matching backend with the given parameters.
         """
@@ -151,13 +102,13 @@ class NamespaceBackend(MetaBackend):
                 return name, self.backends[namespace]
         raise NoSuchItemError(_("No such item %r.") % name)
 
-    def _call(self, method, name, *args):
+    def _call(self, method, name, *args, **kwargs):
         """
         Call the method from the first matching backend with the given parameters.
         """
         name, backend = self._get_backend(name)
 
-        return getattr(backend, method)(name, *args)
+        return getattr(backend, method)(name, *args, **kwargs)
 
 
 class LayerBackend(MetaBackend):
@@ -185,16 +136,16 @@ class LayerBackend(MetaBackend):
                 return backend
         return None
 
-    def _call(self, method, *args):
+    def _call(self, method, *args, **kwargs):
         """
         Call the method from the first matching backend with the given parameters.
         """
         for backend in self.backends:
             try:
-                return getattr(backend, method)(*args)
+                return getattr(backend, method)(*args, **kwargs)
             except NoSuchItemError:
                 pass
-        raise NoSuchItemError(_("No such item %r.") % args[0])
+        raise NoSuchItemError(_("No such item %r.") % method)
 
 
 _ = lambda x: x

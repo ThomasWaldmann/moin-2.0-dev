@@ -52,9 +52,6 @@ class TestUserBackend(BackendTest):
 
         py.test.raises(NoSuchItemError, self.backend.remove_item, "blub")
 
-    def test_rename_item(self):
-        py.test.raises(NotImplementedError, self.backend.rename_item, names[0], names[1])
-
     def test_list_revisions(self):
         assert self.backend.list_revisions(names[0]) == [1]
 
@@ -67,17 +64,8 @@ class TestUserBackend(BackendTest):
         assert not self.backend.has_revision(names[2], 2)
         assert not self.backend.has_revision(names[0], -1)
 
-    def test_create_revision(self):
-        py.test.raises(NotImplementedError, self.backend.create_revision, names[0], 1)
-
-    def test_remove_revision(self):
-        py.test.raises(NotImplementedError, self.backend.remove_revision, names[0], 2)
-
     def test_get_metadata_backend(self):
         self.backend.get_metadata_backend(names[0], 1)
-
-    def test_get_data_backend(self):
-        py.test.raises(NotImplementedError, self.backend.get_data_backend, names[0], 1)
 
 
 class TestUserMetadata:
@@ -143,6 +131,8 @@ class TestPageBackend(BackendTest):
         self.backend.remove_item("Yeah")
 
     def test_rename_item(self):
+        py.test.raises(BackendError, self.backend.rename_item, pages[0], "")
+        py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[0])
         self.backend.rename_item(pages[0], "abcde")
         assert os.path.isdir(os.path.join(get_page_dir(), "abcde"))
         assert self.backend.has_item("abcde")
@@ -150,7 +140,6 @@ class TestPageBackend(BackendTest):
         assert os.path.isdir(os.path.join(get_page_dir(), pages[0]))
         assert self.backend.has_item(pages[0])
         py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[1])
-        BackendTest.test_rename_item(self)
 
     def test_list_revisions(self):
         assert self.backend.list_revisions(pages[0]) == [1]
