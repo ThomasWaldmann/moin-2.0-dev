@@ -396,209 +396,117 @@ class Revision(object):
 
     size = property(get_size)
 
-    def __getattribute__(self, name):
+    def __getattr__(self, name):
         """
         Get edit lock values.
         """
         if name in ('mtime', 'action', 'addr', 'hostname', 'userid', 'extra', 'comment'):
             return self.metadata.get("edit_log_" + name, "")
-        return object.__getattribute__(self, name)
+        raise AttributeError, name
 
 
-class ReadonlyMetadata(UserDict.DictMixin):
+class Decorator(object):
+    """
+    Decorator class.
+    """
+
+    def __init__(self, obj, exception, message):
+        """"
+        Init stuff.
+        """
+        self._obj = obj
+        self._exception = exception
+        self._message = message
+
+    def raiseException(self, size=None):
+        """
+        Raises an exception
+        """
+        raise self._exception(self._message)
+
+    def __getattribute__(self, method):
+        """
+        Returns the method.
+        """
+        if method in ["_exception", "_obj", "_message", "raiseException"]:
+            return object.__getattribute__(self, method)
+        else:
+            return getattr(self._obj, method)
+
+class ReadonlyMetadata(Decorator):
     """
     Readonly Metadata implementation.
     """
 
     __implements__ = MetadataBackend
 
-    def __init__(self, metadata, exception, message):
-        """"
-        Init stuff.
+    def __getattribute__(self, method):
         """
-        self._metadata = metadata
-        self._exception = exception
-        self._message = message
-
-    def __contains__(self, key):
+        Returns the method.
         """
-        @see MoinMoin.storage.external.Metadata.__contains__
-        """
-        return key in self._metadata
-
-    def __getitem__(self, key):
-        """
-        @see MoinMoin.storage.external.Metadata.__getitem__
-        """
-        return self._metadata[key]
-
-    def __setitem__(self, key, value):
-        """
-        @see MoinMoin.storage.external.Metadata.__setitem__
-        """
-        raise self._exception(self._message)
-
-    def __delitem__(self, key):
-        """
-        @see MoinMoin.storage.external.Metadata.__delitem__
-        """
-        raise self._exception(self._message)
-
-    def keys(self):
-        """
-        @see MoinMoin.storage.external.Metadata.keys
-        """
-        return self._metadata.keys()
-
-    def save(self):
-        """
-        @see MoinMoin.storage.external.Metadata.save
-        """
-        raise self._exception(self._message)
+        if method in ["__contains__", "__getitem__", "keys"]:
+            return getattr(self._obj, method)
+        elif method in ["__setitem__", "__delitem__", "save"]:
+            return self.raiseException
+        else:
+            return Decorator.__getattribute__(self, method)
 
 
-class WriteonlyMetadata(UserDict.DictMixin):
+class WriteonlyMetadata(Decorator):
     """
     Writeonly Metadata implementation.
     """
 
     __implements__ = MetadataBackend
 
-    def __init__(self, metadata, exception, message):
-        """"
-        Init stuff.
+    def __getattribute__(self, method):
         """
-        self._metadata = metadata
-        self._exception = exception
-        self._message = message
-
-    def __contains__(self, key):
+        Returns the method.
         """
-        @see MoinMoin.storage.external.Metadata.__contains__
-        """
-        raise self._exception(self._message)
-
-    def __getitem__(self, key):
-        """
-        @see MoinMoin.storage.external.Metadata.__getitem__
-        """
-        raise self._exception(self._message)
-
-    def __setitem__(self, key, value):
-        """
-        @see MoinMoin.storage.external.Metadata.__setitem__
-        """
-        self._metadata[key] = value
-
-    def __delitem__(self, key):
-        """
-        @see MoinMoin.storage.external.Metadata.__delitem__
-        """
-        del self._metadata[key]
-
-    def keys(self):
-        """
-        @see MoinMoin.storage.external.Metadata.keys
-        """
-        raise self._exception(self._message)
-
-    def save(self):
-        """
-        @see MoinMoin.storage.external.Metadata.save
-        """
-        self._metadata.save()
+        if method in ["__contains__", "__getitem__", "keys"]:
+            return self.raiseException
+        elif method in ["__setitem__", "__delitem__", "save"]:
+            return getattr(self._obj, method)
+        else:
+            return Decorator.__getattribute__(self, method)
 
 
-class ReadonlyData(object):
+class ReadonlyData(Decorator):
     """
     This class implements read only access to the DataBackend.
     """
 
     __implements__ = DataBackend
 
-    def __init__(self, data_backend, exception, message):
+    def __getattribute__(self, method):
         """
-        Init stuff.
+        Returns the method.
         """
-        self._data_backend = data_backend
-        self._exception = exception
-        self._message = message
-
-    def read(self, size=None):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.read
-        """
-        return self._data_backend.read(size)
-
-    def seek(self, offset):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.seek
-        """
-        self._data_backend.seek(offset)
-
-    def tell(self):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.tell
-        """
-        return self._data_backend.tell()
-
-    def write(self, data):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.write
-        """
-        raise self._exception(self._message)
-
-    def close(self):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.close
-        """
-        self._data_backend.close()
+        if method in ["read", "seek", "tell", "close"]:
+            return getattr(self._obj, method)
+        elif method == "write":
+            return self.raiseException
+        else:
+            return Decorator.__getattribute__(self, method)
 
 
-class WriteonlyData(object):
+class WriteonlyData(Decorator):
     """
     This class implements write only access to the DataBackend.
     """
 
     __implements__ = DataBackend
 
-    def __init__(self, data_backend, exception, message):
+    def __getattribute__(self, method):
         """
-        Init stuff.
+        Returns the method.
         """
-        self._data_backend = data_backend
-        self._exception = exception
-        self._message = message
-
-    def read(self, size=None):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.read
-        """
-        raise self._exception(self._message)
-
-    def seek(self, offset):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.seek
-        """
-        raise self._exception(self._message)
-
-    def tell(self):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.tell
-        """
-        raise self._exception(self._message)
-
-    def write(self, data):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.write
-        """
-        self._data_backend.write(data)
-
-    def close(self):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.close
-        """
-        self._data_backend.close()
+        if method in ["read", "seek", "tell", "close"]:
+            return self.raiseException
+        elif method == "write":
+            return getattr(self._obj, method)
+        else:
+            return Decorator.__getattribute__(self, method)
 
 
 _ = lambda x: x
