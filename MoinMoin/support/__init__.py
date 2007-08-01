@@ -15,6 +15,8 @@ try:
     sorted = sorted
 except NameError:
     def sorted(l, *args, **kw):
+        if type(l) == dict:
+            l = l.keys()
         l = l[:]
         # py2.3 is a bit different
         if 'cmp' in kw:
@@ -25,5 +27,5 @@ except NameError:
 
 try:
     set = set
-except:
+except NameError:
     from sets import Set as set

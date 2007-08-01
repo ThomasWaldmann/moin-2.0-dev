@@ -20,11 +20,12 @@ Deleting the TestConfig instance will restore the previous configuration.
 """
 
 import atexit
-from inspect import isclass
 from sys import modules
 import sys
 
 import py
+
+from MoinMoin.support import set
 
 
 rootdir = py.magic.autopath().dirpath()
