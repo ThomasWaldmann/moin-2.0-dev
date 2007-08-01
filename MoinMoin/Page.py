@@ -1321,7 +1321,7 @@ class RootPage(object):
         else:
             item_collection = self._items_standard
 
-        items = item_collection.keys()[:]
+        items = item_collection.keys()
         if exists:
             for item in item_collection.keys({DELETED: 'True'}):
                 items.remove(item)
@@ -1377,7 +1377,7 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = self._items_all.keys()[:]
+        items = self._items_all.keys()
         if exists:
             for item in self._items_all.keys({DELETED: 'True'}):
                 items.remove(item)

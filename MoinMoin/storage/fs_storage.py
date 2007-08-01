@@ -73,40 +73,15 @@ class Indexes(object):
 
         return values
 
-    def update_indexes(self, item, oldmetadata, newmetadata):
+    def remove_indexes(self, item):
         """
-        Updates the index values for item from oldmetadata to the newmetadata.
-
-        This is not the nicest code, but it works.
+        Remove old index data.
         """
+        metadata = _get_last_metadata(self._backend, item)
         for index in self._indexes:
-
-            if index in oldmetadata and index in newmetadata:
-                if oldmetadata[index] == newmetadata[index]:
-                    continue
-
+            if index in metadata:
                 db = bsddb.hashopen(self._get_filename(index, create=True))
-                for key in _parse_value(oldmetadata[index]):
-                    pkey = unicode(key).encode("utf-8")
-                    data = pickle.loads(db[pkey])
-                    try:
-                        data.remove(item)
-                    except ValueError:
-                        pass
-                    db[pkey] = pickle.dumps(data)
-                for key in _parse_value(newmetadata[index]):
-                    pkey = unicode(key).encode("utf-8")
-                    if not pkey in db:
-                        db[pkey] = pickle.dumps([])
-                    data = pickle.loads(db[pkey])
-                    data.append(item)
-                    db[pkey] = pickle.dumps(data)
-                db.close()
-
-            elif index in oldmetadata:
-                # remove old values
-                db = bsddb.hashopen(self._get_filename(index, create=True))
-                for key in _parse_value(oldmetadata[index]):
+                for key in _parse_value(metadata[index]):
                     pkey = unicode(key).encode("utf-8")
                     data = pickle.loads(db[pkey])
                     try:
@@ -116,10 +91,15 @@ class Indexes(object):
                     db[pkey] = pickle.dumps(data)
                 db.close()
 
-            elif index in newmetadata:
-                # set new values
+    def write_indexes(self, item):
+        """
+        Write new index data.
+        """
+        metadata = _get_last_metadata(self._backend, item)
+        for index in self._indexes:
+            if index in metadata:
                 db = bsddb.hashopen(self._get_filename(index, create=True))
-                for key in _parse_value(newmetadata[index]):
+                for key in _parse_value(metadata[index]):
                     pkey = unicode(key).encode("utf-8")
                     if not pkey in db:
                         db[pkey] = pickle.dumps([])
@@ -261,8 +241,9 @@ class AbstractMetadata(MetadataBackend):
         """
         @see MoinMoin.storage.external.Metadata.save
         """
+        self._backend._indexes.remove_indexes(self._name)
         self._save_metadata(self._name, self._revno, self._metadata)
-        self._backend._indexes.update_indexes(self._name, self._org_metadata, self._metadata)
+        self._backend._indexes.write_indexes(self._name)
         self._metadata_property = None
 
     def _parse_metadata(self, name, revno):
@@ -376,8 +357,9 @@ def _get_last_metadata(backend, item):
     metadata = dict()
     metadata_all = backend.get_metadata_backend(item, -1)
     metadata.update(metadata_all)
-    if backend.has_revision(item, 0):
-        metadata_last = backend.get_metadata_backend(item, 0)
+    current = backend.current_revision(item)
+    if current != 0:
+        metadata_last = backend.get_metadata_backend(item, current)
         metadata.update(metadata_last)
     return metadata
 
