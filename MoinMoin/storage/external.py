@@ -60,9 +60,9 @@ class ItemCollection(UserDict.DictMixin, object):
         StorageBackend.list_items(...).
         """
         if filters is None:
-            return self.items
+            return self.items[:]
         else:
-            return self._backend.list_items(filters)
+            return self._backend.list_items(filters)[:]
 
     def new_item(self, name):
         """
@@ -195,7 +195,7 @@ class Item(UserDict.DictMixin, object):
         """
         Returns a sorted (highest first) list of all real revision numbers.
         """
-        return self.revisions
+        return self.revisions[:]
 
     def new_revision(self, revno=0):
         """
