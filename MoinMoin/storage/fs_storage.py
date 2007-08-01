@@ -400,11 +400,14 @@ class IndexedMetadata(UserDict.DictMixin):
         self._metadata = metadata
         self._backend = backend
 
-    def __getattr__(self, name):
+    def __getattribute__(self, name):
         """
         Get attribute from other backend if we don't have one.
         """
-        return getattr(self._metadata, name)
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            return getattr(self._obj, name)
 
     def save(self):
         """
