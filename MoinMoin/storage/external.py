@@ -418,7 +418,7 @@ class Decorator(object):
         self._exception = exception
         self._message = message
 
-    def raiseException(self, size=None):
+    def raise_exception(self, *args, **kwargs):
         """
         Raises an exception
         """
@@ -448,7 +448,7 @@ class ReadonlyMetadata(Decorator):
         if name in ["__contains__", "__getitem__", "keys"]:
             return getattr(self._obj, name)
         elif name in ["__setitem__", "__delitem__", "save"]:
-            return self.raiseException
+            return self.raise_exception
         else:
             return Decorator.__getattribute__(self, name)
 
@@ -465,7 +465,7 @@ class WriteonlyMetadata(Decorator):
         Returns the name.
         """
         if name in ["__contains__", "__getitem__", "keys"]:
-            return self.raiseException
+            return self.raise_exception
         elif name in ["__setitem__", "__delitem__", "save"]:
             return getattr(self._obj, name)
         else:
@@ -486,7 +486,7 @@ class ReadonlyData(Decorator):
         if name in ["read", "seek", "tell", "close"]:
             return getattr(self._obj, name)
         elif name == "write":
-            return self.raiseException
+            return self.raise_exception
         else:
             return Decorator.__getattribute__(self, name)
 
@@ -503,7 +503,7 @@ class WriteonlyData(Decorator):
         Returns the name.
         """
         if name in ["read", "seek", "tell", "close"]:
-            return self.raiseException
+            return self.raise_exception
         elif name == "write":
             return getattr(self._obj, name)
         else:
