@@ -10,22 +10,3 @@
     @copyright: 2001-2004 Juergen Hermann <jh@web.de>
     @license: GNU GPL, see COPYING for details.
 """
-
-try:
-    sorted = sorted
-except NameError:
-    def sorted(l, *args, **kw):
-        if type(l) == dict:
-            l = l.keys()
-        l = l[:]
-        # py2.3 is a bit different
-        if 'cmp' in kw:
-            args = (kw['cmp'], )
-
-        l.sort(*args)
-        return l
-
-try:
-    set = set
-except NameError:
-    from sets import Set as set

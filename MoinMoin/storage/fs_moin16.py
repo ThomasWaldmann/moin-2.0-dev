@@ -65,7 +65,7 @@ class UserStorage(AbstractStorage):
         """
         files = [f for f in os.listdir(self._path) if user_re.match(f)]
 
-        return super(UserStorage, self).list_items(files, filters)
+        return AbstractStorage.list_items(self, files, filters)
 
     def has_item(self, name):
         """
@@ -197,7 +197,7 @@ class PageStorage(AbstractStorage):
         """
         files = [f for f in os.listdir(self._path) if os.path.exists(os.path.join(self._path, f, "current"))]
 
-        return super(PageStorage, self).list_items(files, filters)
+        return AbstractStorage.list_items(self, files, filters)
 
     def has_item(self, name):
         """

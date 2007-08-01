@@ -28,7 +28,6 @@ from MoinMoin.logfile import editlog, eventlog
 from MoinMoin.util import timefuncs, web
 from MoinMoin.user import User
 from MoinMoin.storage.error import BackendError
-from MoinMoin.support import set
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 import MoinMoin.events.notification as notification

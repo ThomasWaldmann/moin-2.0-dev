@@ -15,7 +15,6 @@ from MoinMoin import wikidicts, wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.packages import packLine, MOIN_PACKAGE_FILE
 from MoinMoin.script import MoinScript
-from MoinMoin.support import set
 
 EXTRA = u'extra'
 NODIST = u'nodist'

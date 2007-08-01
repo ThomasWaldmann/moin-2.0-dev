@@ -18,106 +18,6 @@ from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, 
 from MoinMoin.util import lock, pickle
 
 
-class Indexes(object):
-    """
-    This class provides access to the indexes.
-    """
-
-    def __init__(self, backend, cfg):
-        """
-        Initialises the class.
-        """
-        if not os.path.isdir(cfg.indexes_dir):
-            raise BackendError(_("Invalid path %r.") % cfg.indexes_dir)
-        self._backend = backend
-        self._path = cfg.indexes_dir
-        self._indexes = cfg.indexes
-
-    def _rebuild_indexes(self):
-        """
-        Rebuilds all indexes.
-        """
-        indexes = dict()
-
-        for item in self._backend.list_items():
-            # get metadata
-            metadata = _get_last_metadata(self._backend, item)
-
-            # set metadata
-            for index in self._indexes:
-                if index in metadata:
-                    for key in _parse_value(metadata[index]):
-                        indexes.setdefault(index, {}).setdefault(key, []).append(item)
-
-        # write indexes
-        for index, values in indexes.iteritems():
-            db = bsddb.hashopen(self._get_filename(index), "n")
-            for key, value in values.iteritems():
-                pkey = unicode(key).encode("utf-8")
-                db[pkey] = pickle.dumps(value)
-            db.close()
-
-    def get_items(self, key, value):
-        """
-        Returns the items that have a key which maches the value.
-        """
-        db = bsddb.hashopen(self._get_filename(key, create=True))
-
-        pvalue = unicode(value).encode("utf-8")
-        if pvalue in db:
-            values = pickle.loads(db[pvalue])
-        else:
-            values = []
-
-        db.close()
-
-        return values
-
-    def remove_indexes(self, item):
-        """
-        Remove old index data.
-        """
-        metadata = _get_last_metadata(self._backend, item)
-        for index in self._indexes:
-            if index in metadata:
-                db = bsddb.hashopen(self._get_filename(index, create=True))
-                for key in _parse_value(metadata[index]):
-                    pkey = unicode(key).encode("utf-8")
-                    data = pickle.loads(db[pkey])
-                    try:
-                        data.remove(item)
-                    except ValueError:
-                        pass
-                    db[pkey] = pickle.dumps(data)
-                db.close()
-
-    def write_indexes(self, item):
-        """
-        Write new index data.
-        """
-        metadata = _get_last_metadata(self._backend, item)
-        for index in self._indexes:
-            if index in metadata:
-                db = bsddb.hashopen(self._get_filename(index, create=True))
-                for key in _parse_value(metadata[index]):
-                    pkey = unicode(key).encode("utf-8")
-                    if not pkey in db:
-                        db[pkey] = pickle.dumps([])
-                    data = pickle.loads(db[pkey])
-                    data.append(item)
-                    db[pkey] = pickle.dumps(data)
-                db.close()
-
-    def _get_filename(self, index, create=False):
-        """
-        Returns the filename and rebuilds the index when it does not exist yet.
-        """
-        filename = os.path.join(self._path, self._backend.name + "-" + index)
-        if create and not os.path.isfile(filename):
-            self._rebuild_indexes()
-        return filename
-
-
 class AbstractStorage(StorageBackend):
     """
     Abstract Storage Implementation for common methods.
@@ -134,7 +34,6 @@ class AbstractStorage(StorageBackend):
             raise BackendError(_("Invalid path %r.") % path)
         self._path = path
         self._cfg = cfg
-        self._indexes = Indexes(self, cfg)
         self._quoted = quoted
 
     def list_items(self, items, filters=None):
@@ -143,23 +42,24 @@ class AbstractStorage(StorageBackend):
         """
         if self._quoted:
             items = [wikiutil.unquoteWikiname(f) for f in items]
-        items.sort()
-        if filters is None:
-            return items
-        else:
-            filtered_files = []
-            for key, value in filters.iteritems():
-                if key not in self._cfg.indexes:
-                    for item in items:
-                        metadata = _get_last_metadata(self, item)
-                        if key in metadata:
-                            if unicode(value) in _parse_value(metadata[key]):
-                                filtered_files.append(item)
-                else:
-                    items = self._indexes.get_items(key, value)
-                    filtered_files.extend(items)
 
-            return filtered_files
+        items.sort()
+
+        if filters:
+            exclude = []
+            for item in items:
+                include = False
+                metadata = _get_last_metadata(self, item)
+                for key, value in filters.iteritems():
+                    if key in metadata:
+                        if unicode(value) in _parse_value(metadata[key]):
+                            include = True
+                            break
+                if not include:
+                    exclude.append(item)
+            items = list(set(items) - set(exclude))
+
+        return items
 
     def _get_page_path(self, name, *args):
         """
@@ -241,9 +141,7 @@ class AbstractMetadata(MetadataBackend):
         """
         @see MoinMoin.storage.external.Metadata.save
         """
-        self._backend._indexes.remove_indexes(self._name)
         self._save_metadata(self._name, self._revno, self._metadata)
-        self._backend._indexes.write_indexes(self._name)
         self._metadata_property = None
 
     def _parse_metadata(self, name, revno):
@@ -348,6 +246,165 @@ class AbstractData(DataBackend):
             self._write_file.close()
             shutil.move(self._tmp[1], self._read_file_name)
             self._write_property = None
+
+
+class IndexedBackend(StorageBackend):
+    """
+    This backend provides access to indexes.
+    """
+
+    def __init__(self, backend, cfg):
+        """
+        Initialises the class.
+        """
+        StorageBackend.__init__(self, backend.name)
+        if not os.path.isdir(cfg.indexes_dir):
+            raise BackendError(_("Invalid path %r.") % cfg.indexes_dir)
+        self._backend = backend
+        self._path = cfg.indexes_dir
+        self._indexes = cfg.indexes
+
+    def __getattribute__(self, name):
+        """
+        Get attribute from other backend if we don't have one.
+        """
+        if self.__dict__.has_key(name):
+            return self.__dict[name]
+        else:
+            return getattr(self._backend, name)
+
+    def list_items(self, filters=None):
+        """
+        @see MoinMoin.interfaces.StorageBackend.list_items
+        """
+        index_filters = dict([(key, value) for key, value in filters.iteritems() if key in self._indexes])
+        other_filters = dict([(key, value) for key, value in filters.iteritems() if key not in self._indexes])
+
+        items = set(self._backend.list_items(other_filters))
+
+        for key, value in index_filters.iteritems():
+            items = items | self._get_items(key, value)
+
+        return list(items)
+
+    def get_metadata_backend(self, name, revno):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
+        """
+        return IndexedBackend(self._backend.get_metadata_backend(self, name, revno), self)
+
+    def _rebuild_indexes(self):
+        """
+        Rebuilds all indexes.
+        """
+        indexes = dict()
+
+        for item in self._backend.list_items():
+            # get metadata
+            metadata = _get_last_metadata(self._backend, item)
+
+            # set metadata
+            for index in self._indexes:
+                if index in metadata:
+                    for key in _parse_value(metadata[index]):
+                        indexes.setdefault(index, {}).setdefault(key, []).append(item)
+
+        # write indexes
+        for index, values in indexes.iteritems():
+            db = bsddb.hashopen(self._get_filename(index), "n")
+            for key, value in values.iteritems():
+                pkey = unicode(key).encode("utf-8")
+                db[pkey] = pickle.dumps(value)
+            db.close()
+
+    def _get_items(self, key, value):
+        """
+        Returns the items that have a key which maches the value.
+        """
+        db = bsddb.hashopen(self._get_filename(key, create=True))
+
+        pvalue = unicode(value).encode("utf-8")
+        if pvalue in db:
+            values = pickle.loads(db[pvalue])
+        else:
+            values = []
+
+        db.close()
+
+        return values
+
+    def _remove_indexes(self, item):
+        """
+        Remove old index data.
+        """
+        metadata = _get_last_metadata(self._backend, item)
+        for index in self._indexes:
+            if index in metadata:
+                db = bsddb.hashopen(self._get_filename(index, create=True))
+                for key in _parse_value(metadata[index]):
+                    pkey = unicode(key).encode("utf-8")
+                    data = pickle.loads(db[pkey])
+                    try:
+                        data.remove(item)
+                    except ValueError:
+                        pass
+                    db[pkey] = pickle.dumps(data)
+                db.close()
+
+    def _write_indexes(self, item):
+        """
+        Write new index data.
+        """
+        metadata = _get_last_metadata(self._backend, item)
+        for index in self._indexes:
+            if index in metadata:
+                db = bsddb.hashopen(self._get_filename(index, create=True))
+                for key in _parse_value(metadata[index]):
+                    pkey = unicode(key).encode("utf-8")
+                    if not pkey in db:
+                        db[pkey] = pickle.dumps([])
+                    data = pickle.loads(db[pkey])
+                    data.append(item)
+                    db[pkey] = pickle.dumps(data)
+                db.close()
+
+    def _get_filename(self, index, create=False):
+        """
+        Returns the filename and rebuilds the index when it does not exist yet.
+        """
+        filename = os.path.join(self._path, self._backend.name + "-" + index)
+        if create and not os.path.isfile(filename):
+            self._rebuild_indexes()
+        return filename
+
+
+class IndexedMetadata(MetadataBackend):
+    """
+    Metadata class for indexed metadata.
+    """
+    def __init__(self, metadata, backend):
+        """
+        Initialises the class.
+        """
+        self._metadata = metadata
+        self._backend = backend
+
+    def __getattribute__(self, name):
+        """
+        Get attribute from other backend if we don't have one.
+        """
+        if self.__dict__.has_key(name):
+            return self.__dict[name]
+        else:
+            return getattr(self.metadata, name)
+
+    def save(self):
+        """
+        @see MoinMoin.storage.external.Metadata.save
+        """
+        self._backend._remove_indexes(self._metadata._name)
+        self._metadata.save()
+        self._backend._write_indexes(self._metadata._name)
 
 
 def _get_last_metadata(backend, item):
