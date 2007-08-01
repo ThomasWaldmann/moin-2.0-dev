@@ -9,13 +9,13 @@
 
 import os
 import zipfile
-from sets import Set
 from datetime import datetime
 
 from MoinMoin import wikidicts, wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.packages import packLine, MOIN_PACKAGE_FILE
 from MoinMoin.script import MoinScript
+from MoinMoin.support import set
 
 EXTRA = u'extra'
 NODIST = u'nodist'
@@ -31,7 +31,7 @@ class PluginScript(MoinScript):
         request = self.request
         pageSets = {}
 
-        allPages = Set(request.rootpage.getPageList())
+        allPages = set(request.rootpage.getPageList())
 
         systemPages = wikidicts.Group(request, "SystemPagesGroup").members()
 
@@ -40,21 +40,21 @@ class PluginScript(MoinScript):
                 #print x + " -> " + repr(wikidicts.Group(request, x).members())
                 self.gd.addgroup(request, pagename)
 
-        langPages = Set()
+        langPages = set()
         for name, group in self.gd.dictdict.items():
             group.expandgroups(self.gd)
-            groupPages = Set(group.members() + [name])
+            groupPages = set(group.members() + [name])
             name = name.replace("SystemPagesIn", "").replace("Group", "")
             pageSets[name] = groupPages
             langPages |= groupPages
 
-        specialPages = Set(["SystemPagesGroup"])
+        specialPages = set(["SystemPagesGroup"])
 
         masterNonSystemPages = allPages - langPages - specialPages
 
-        moinI18nPages = Set([x for x in masterNonSystemPages if x.startswith("MoinI18n")])
+        moinI18nPages = set([x for x in masterNonSystemPages if x.startswith("MoinI18n")])
 
-        nodistPages = moinI18nPages | Set(["InterWikiMap", ])
+        nodistPages = moinI18nPages | set(["InterWikiMap", ])
 
         extraPages = masterNonSystemPages - nodistPages
 

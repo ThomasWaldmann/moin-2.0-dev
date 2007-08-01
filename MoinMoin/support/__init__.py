@@ -23,3 +23,7 @@ except NameError:
         l.sort(*args)
         return l
 
+try:
+    set
+except:
+    from sets import Set as set

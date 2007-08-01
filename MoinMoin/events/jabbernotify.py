@@ -10,16 +10,13 @@
 
 import xmlrpclib
 
-try:
-    set
-except:
-    from sets import Set as set
 
 from MoinMoin import error
 from MoinMoin.Page import Page
 from MoinMoin.user import User, getUserList
 import MoinMoin.events.notification as notification
 import MoinMoin.events as ev
+from MoinMoin.support import set
 
 
 def handle(event):

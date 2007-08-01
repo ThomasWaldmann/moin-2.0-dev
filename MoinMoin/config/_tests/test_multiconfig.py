@@ -6,12 +6,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-try:
-    set
-except:
-    from sets import Set as set
 
 import py
+from MoinMoin.support import set
 
 
 class TestPasswordChecker:

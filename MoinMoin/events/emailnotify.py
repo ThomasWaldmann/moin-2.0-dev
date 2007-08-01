@@ -9,17 +9,13 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-try:
-    set
-except:
-    from sets import Set as set
-
 from MoinMoin import user
 from MoinMoin.Page import Page
 from MoinMoin.mail import sendmail
 from MoinMoin.user import User, getUserList
 import MoinMoin.events as ev
 import MoinMoin.events.notification as notification
+from MoinMoin.support import set
 
 
 def prep_page_changed_mail(request, page, comment, email_lang, revisions, trivial):
