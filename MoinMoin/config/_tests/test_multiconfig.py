@@ -8,7 +8,6 @@
 
 
 import py
-from MoinMoin.support import set
 
 
 class TestPasswordChecker:

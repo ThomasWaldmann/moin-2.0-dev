@@ -25,8 +25,6 @@ import sys
 
 import py
 
-from MoinMoin.support import set
-
 
 rootdir = py.magic.autopath().dirpath()
 moindir = rootdir.join("..")
@@ -38,7 +36,7 @@ modules["unittest"] = compat # evil hack
 sys.path.insert(0, str(moindir.join("tests")))
 
 
-coverage_modules = set()
+coverage_modules = []
 
 
 try:

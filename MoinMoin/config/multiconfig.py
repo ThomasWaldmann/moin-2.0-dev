@@ -24,7 +24,6 @@ from MoinMoin.security import AccessControlList
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.backends import LayerBackend
 from MoinMoin.storage.interfaces import DELETED
-from MoinMoin.support import set
 
 _url_re_cache = None
 _farmconfig_mtime = None

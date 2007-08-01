@@ -21,7 +21,6 @@ from MoinMoin.wikisync import TagStore, UnsupportedWikiException, SyncPage, NotA
 from MoinMoin.wikisync import MoinLocalWiki, MoinRemoteWiki, UP, DOWN, BOTH, MIMETYPE_MOIN
 from MoinMoin.util.bdiff import decompress, patch, compress, textdiff
 from MoinMoin.util import diff3, rpc_aggregator
-from MoinMoin.support import set
 
 debug = False
 
