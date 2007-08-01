@@ -89,10 +89,6 @@ class BackendTest:
     def test_has_item(self):
         assert not self.backend.has_item("")
 
-    def test_rename_item(self):
-        py.test.raises(BackendError, self.backend.rename_item, pages[0], "")
-        py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[0])
-
     def test_lock_unlock_item(self):
         self.backend.lock("id")
         py.test.raises(LockingError, self.backend.lock, "id")

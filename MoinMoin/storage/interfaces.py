@@ -5,8 +5,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import UserDict
-
 """
 First define some constants.
 """
@@ -44,11 +42,7 @@ class StorageBackend(object):
     This class describes the main interface a StorageBackend must implement.
     """
 
-    def __init__(self, name):
-        """
-        Init the Backend with the correct path.
-        """
-        self.name = name
+    name = ""
 
     def list_items(self, filters=None):
         """
@@ -62,38 +56,32 @@ class StorageBackend(object):
         will hold special caches for faster access. This can be compared
         with indexes in SQL or LDAP.
         """
-        raise NotImplementedError
 
     def has_item(self, name):
         """
         Checks whether the item exists, even if the current revision is deleted.
         Returns the backend the item belongs to on success, None on error.
         """
-        raise NotImplementedError
 
     def create_item(self, name):
         """
         Creates a new item. Returns the backend in which it was created.
         """
-        raise NotImplementedError
 
     def remove_item(self, name):
         """
         Removes (nukes) an item.
         """
-        raise NotImplementedError
 
     def rename_item(self, name, newname):
         """
         Renames an item to newname.
         """
-        raise NotImplementedError
 
     def list_revisions(self, name):
         """
         Returns a list of integers of all revision numbers of an item.
         """
-        raise NotImplementedError
 
     def current_revision(self, name, includeEmpty=False):
         """
@@ -102,7 +90,6 @@ class StorageBackend(object):
         number should be return if there is no data in it. If False the first
         revision with data in it will be returend.
         """
-        raise NotImplementedError
 
     def has_revision(self, name, revno):
         """
@@ -110,7 +97,6 @@ class StorageBackend(object):
         It also returns True if the revision is empty. If revno is 0 it will
         be checked if there is any revision.
         """
-        raise NotImplementedError
 
     def create_revision(self, name, revno):
         """
@@ -118,7 +104,6 @@ class StorageBackend(object):
         will be created. The return value is the newly created revision
         number.
         """
-        raise NotImplementedError
 
     def remove_revision(self, name, revno):
         """
@@ -126,7 +111,6 @@ class StorageBackend(object):
         will be deleted (nuked). The return value is the removed revision
         number.
         """
-        raise NotImplementedError
 
     def get_metadata_backend(self, name, revno):
         """
@@ -135,7 +119,6 @@ class StorageBackend(object):
         item-wide metadata will be used. Raises no error if the name or revno
         does not exists. The error will only raised on access.
         """
-        raise NotImplementedError
 
     def get_data_backend(self, name, revno):
         """
@@ -143,19 +126,16 @@ class StorageBackend(object):
         will be used. Raises no error if the name or revno does not exists. The
         error will only raised on access.
         """
-        raise NotImplementedError
 
     def lock(self, identifier, timeout=1, lifetime=60):
         """
         Removes a lock for the given identifier.
         """
-        raise NotImplementedError
 
     def unlock(self, identifier):
         """
         Creates a lock for the given identifier.
         """
-        raise NotImplementedError
 
 
 class DataBackend(object):
@@ -169,33 +149,29 @@ class DataBackend(object):
         Read a data block of a specified size from the stream.
         If size is ommitted all data will be read.
         """
-        raise NotImplementedError
 
     def seek(self, offset):
         """
         Set the reader to a specified position in the stream.
         """
-        raise NotImplementedError
 
     def tell(self):
         """
         Returns the current position in the stream.
         """
-        raise NotImplementedError
 
     def write(self, data):
         """
         Write new data into the stream.
         """
-        raise NotImplementedError
 
     def close(self):
         """
         Close the stream.
         """
-        raise NotImplementedError
 
-class MetadataBackend(UserDict.DictMixin, object):
+
+class MetadataBackend(object):
     """
     The metadata of an Item. Access will be via a dict like interface.
     All metadata will be loaded on the first access to one key.
@@ -207,34 +183,28 @@ class MetadataBackend(UserDict.DictMixin, object):
         """
         Checks if a key exists.
         """
-        raise NotImplementedError
 
     def __getitem__(self, key):
         """
         Returns a specified value.
         """
-        raise NotImplementedError
 
     def __setitem__(self, key, value):
         """
         Adds a value.
         """
-        raise NotImplementedError
 
     def __delitem__(self, key):
         """
         Deletes a value.
         """
-        raise NotImplementedError
 
     def keys(self):
         """
         Return sa list of all metadata keys.
         """
-        raise NotImplementedError
 
     def save(self):
         """
         Saves the metadata.
         """
-        raise NotImplementedError

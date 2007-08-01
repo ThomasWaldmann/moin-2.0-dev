@@ -154,6 +154,6 @@ class TestRevision:
         self.revision = None
 
     def test(self):
-        assert isinstance(self.revision.data, DataBackend)
-        assert isinstance(self.revision.metadata, MetadataBackend)
+        self.revision.data
+        self.revision.metadata
 

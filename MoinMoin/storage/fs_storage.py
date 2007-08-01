@@ -12,16 +12,20 @@ import os
 import shutil
 import tempfile
 
+import UserDict
+
 from MoinMoin import wikiutil
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.util import lock, pickle
 
 
-class AbstractStorage(StorageBackend):
+class AbstractStorage(object):
     """
     Abstract Storage Implementation for common methods.
     """
+
+    __implements__ = StorageBackend
 
     locks = dict()
 
@@ -29,7 +33,7 @@ class AbstractStorage(StorageBackend):
         """
         Init the Backend with the correct path.
         """
-        StorageBackend.__init__(self, name)
+        self.name = name
         if not os.path.isdir(path):
             raise BackendError(_("Invalid path %r.") % path)
         self._path = path
@@ -93,10 +97,13 @@ class AbstractStorage(StorageBackend):
             pass
 
 
-class AbstractMetadata(MetadataBackend):
+class AbstractMetadata(UserDict.DictMixin):
     """
     Abstract metadata class.
     """
+
+    __implements__ = MetadataBackend
+
     def __init__(self, backend, name, revno):
         """"
         Initializes the metadata object with the required parameters.
@@ -168,11 +175,13 @@ class AbstractMetadata(MetadataBackend):
     _metadata = property(get_metadata)
 
 
-class AbstractData(DataBackend):
+class AbstractData(object):
     """
     This class implements a read only, file like object.
     Changes will only be saved on close().
     """
+
+    __implements__ = DataBackend
 
     def __init__(self, backend, name, revno):
         """
@@ -248,10 +257,12 @@ class AbstractData(DataBackend):
             self._write_property = None
 
 
-class IndexedBackend(StorageBackend):
+class IndexedBackend(object):
     """
     This backend provides access to indexes.
     """
+
+    __implements__ = StorageBackend
 
     def __init__(self, backend, cfg):
         """
@@ -264,14 +275,11 @@ class IndexedBackend(StorageBackend):
         self._path = cfg.indexes_dir
         self._indexes = cfg.indexes
 
-    def __getattribute__(self, name):
+    def __getattr__(self, name):
         """
         Get attribute from other backend if we don't have one.
         """
-        if self.__dict__.has_key(name):
-            return self.__dict[name]
-        else:
-            return getattr(self._backend, name)
+        return getattr(self._backend, name)
 
     def list_items(self, filters=None):
         """
@@ -378,10 +386,13 @@ class IndexedBackend(StorageBackend):
         return filename
 
 
-class IndexedMetadata(MetadataBackend):
+class IndexedMetadata(UserDict.DictMixin):
     """
     Metadata class for indexed metadata.
     """
+
+    __implements__ = MetadataBackend
+
     def __init__(self, metadata, backend):
         """
         Initialises the class.
@@ -389,14 +400,11 @@ class IndexedMetadata(MetadataBackend):
         self._metadata = metadata
         self._backend = backend
 
-    def __getattribute__(self, name):
+    def __getattr__(self, name):
         """
         Get attribute from other backend if we don't have one.
         """
-        if self.__dict__.has_key(name):
-            return self.__dict[name]
-        else:
-            return getattr(self.metadata, name)
+        return getattr(self._metadata, name)
 
     def save(self):
         """

@@ -405,10 +405,12 @@ class Revision(object):
         return object.__getattribute__(self, name)
 
 
-class ReadonlyMetadata(MetadataBackend):
+class ReadonlyMetadata(UserDict.DictMixin):
     """
     Readonly Metadata implementation.
     """
+
+    __implements__ = MetadataBackend
 
     def __init__(self, metadata, exception, message):
         """"
@@ -455,10 +457,12 @@ class ReadonlyMetadata(MetadataBackend):
         raise self._exception(self._message)
 
 
-class WriteonlyMetadata(MetadataBackend):
+class WriteonlyMetadata(UserDict.DictMixin):
     """
     Writeonly Metadata implementation.
     """
+
+    __implements__ = MetadataBackend
 
     def __init__(self, metadata, exception, message):
         """"
@@ -505,10 +509,12 @@ class WriteonlyMetadata(MetadataBackend):
         self._metadata.save()
 
 
-class ReadonlyData(DataBackend):
+class ReadonlyData(object):
     """
     This class implements read only access to the DataBackend.
     """
+
+    __implements__ = DataBackend
 
     def __init__(self, data_backend, exception, message):
         """
@@ -549,10 +555,12 @@ class ReadonlyData(DataBackend):
         self._data_backend.close()
 
 
-class WriteonlyData(DataBackend):
+class WriteonlyData(object):
     """
     This class implements write only access to the DataBackend.
     """
+
+    __implements__ = DataBackend
 
     def __init__(self, data_backend, exception, message):
         """
