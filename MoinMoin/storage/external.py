@@ -424,14 +424,15 @@ class Decorator(object):
         """
         raise self._exception(self._message)
 
-    def __getattribute__(self, method):
+    def __getattribute__(self, name):
         """
         Returns the method.
         """
-        if method in ["_exception", "_obj", "_message", "raiseException"]:
-            return object.__getattribute__(self, method)
-        else:
-            return getattr(self._obj, method)
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            return getattr(self._obj, name)
+
 
 class ReadonlyMetadata(Decorator):
     """
@@ -440,16 +441,16 @@ class ReadonlyMetadata(Decorator):
 
     __implements__ = MetadataBackend
 
-    def __getattribute__(self, method):
+    def __getattribute__(self, name):
         """
-        Returns the method.
+        Returns the name.
         """
-        if method in ["__contains__", "__getitem__", "keys"]:
-            return getattr(self._obj, method)
-        elif method in ["__setitem__", "__delitem__", "save"]:
+        if name in ["__contains__", "__getitem__", "keys"]:
+            return getattr(self._obj, name)
+        elif name in ["__setitem__", "__delitem__", "save"]:
             return self.raiseException
         else:
-            return Decorator.__getattribute__(self, method)
+            return Decorator.__getattribute__(self, name)
 
 
 class WriteonlyMetadata(Decorator):
@@ -459,16 +460,16 @@ class WriteonlyMetadata(Decorator):
 
     __implements__ = MetadataBackend
 
-    def __getattribute__(self, method):
+    def __getattribute__(self, name):
         """
-        Returns the method.
+        Returns the name.
         """
-        if method in ["__contains__", "__getitem__", "keys"]:
+        if name in ["__contains__", "__getitem__", "keys"]:
             return self.raiseException
-        elif method in ["__setitem__", "__delitem__", "save"]:
-            return getattr(self._obj, method)
+        elif name in ["__setitem__", "__delitem__", "save"]:
+            return getattr(self._obj, name)
         else:
-            return Decorator.__getattribute__(self, method)
+            return Decorator.__getattribute__(self, name)
 
 
 class ReadonlyData(Decorator):
@@ -478,16 +479,16 @@ class ReadonlyData(Decorator):
 
     __implements__ = DataBackend
 
-    def __getattribute__(self, method):
+    def __getattribute__(self, name):
         """
-        Returns the method.
+        Returns the name.
         """
-        if method in ["read", "seek", "tell", "close"]:
-            return getattr(self._obj, method)
-        elif method == "write":
+        if name in ["read", "seek", "tell", "close"]:
+            return getattr(self._obj, name)
+        elif name == "write":
             return self.raiseException
         else:
-            return Decorator.__getattribute__(self, method)
+            return Decorator.__getattribute__(self, name)
 
 
 class WriteonlyData(Decorator):
@@ -497,16 +498,16 @@ class WriteonlyData(Decorator):
 
     __implements__ = DataBackend
 
-    def __getattribute__(self, method):
+    def __getattribute__(self, name):
         """
-        Returns the method.
+        Returns the name.
         """
-        if method in ["read", "seek", "tell", "close"]:
+        if name in ["read", "seek", "tell", "close"]:
             return self.raiseException
-        elif method == "write":
-            return getattr(self._obj, method)
+        elif name == "write":
+            return getattr(self._obj, name)
         else:
-            return Decorator.__getattribute__(self, method)
+            return Decorator.__getattribute__(self, name)
 
 
 _ = lambda x: x
