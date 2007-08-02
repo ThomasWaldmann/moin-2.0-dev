@@ -11,6 +11,7 @@ import UserDict
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, LockingError
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend
+from MoinMoin.support.python23 import partial
 
 
 ACL = "acl"
@@ -433,25 +434,15 @@ def _decorate(instance, obj, exception, message, forbid, forward):
     """
     Decorates a class with forwards or exceptions.
     """
-    class RaiseIt(object):
-        """
-        An exception to be raised.
-        """
-        def __init__(self, exception, message):
-            """
-            Init the arguments.
-            """
-            self._exception = exception
-            self._message = message
 
-        def _raise_exception(self, *args, **kwargs):
-            """
-            Raise the exception.
-            """
-            raise self._exception(self._message)
+    def _raise_exception(exception, message, *args, **kwargs):
+        """
+        Raise the exception.
+        """
+        raise exception(message)
 
     for method in forbid:
-        setattr(instance, method, getattr(RaiseIt(exception, message), "_raise_exception"))
+        setattr(instance, method, partial(_raise_exception, exception, message))
     for method in forward:
         setattr(instance, method, getattr(obj, method))
 

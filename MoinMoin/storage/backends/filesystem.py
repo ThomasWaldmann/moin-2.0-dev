@@ -17,6 +17,7 @@ from MoinMoin import wikiutil
 from MoinMoin.storage.backends.common import CommonBackend, _get_metadata
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.error import BackendError, LockingError
+from MoinMoin.support.python23 import sorted
 from MoinMoin.util import lock, pickle
 
 
