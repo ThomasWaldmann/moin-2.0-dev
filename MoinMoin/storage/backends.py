@@ -13,8 +13,6 @@ class Callable(object):
     """
     Class that just does a call to instance.name with the given parameters.
     """
-    name = ""
-    instance = None
 
     def __init__(self, name, instance):
         """
