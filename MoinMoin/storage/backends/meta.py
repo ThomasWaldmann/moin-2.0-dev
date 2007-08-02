@@ -7,6 +7,7 @@
 
 from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import BackendError, NoSuchItemError
+from MoinMoin.support.python23 import sorted, partial
 
 
 class MetaBackend(object):
@@ -27,25 +28,14 @@ class MetaBackend(object):
         """
         Get attribute from other backend if we don't have one.
         """
-        class Callable(object):
+
+        def call(name, instance, *args, **kwargs):
             """
-            Class that just does a call to instance.name with the given parameters.
+            Do the call.
             """
+            return instance._call(name, *args, **kwargs)
 
-            def __init__(self, name, instance):
-                """
-                Init parameters.
-                """
-                self._name = name
-                self._instance = instance
-
-            def call(self, *args, **kwargs):
-                """
-                Do the call.
-                """
-                return self._instance._call(self._name, *args, **kwargs)
-
-        return Callable(name, self).call
+        return partial(call, name, self)
 
     def _call(self, method, *args, **kwargs):
         """
