@@ -10,6 +10,7 @@ import py.test
 
 from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown, BackendTest
 
+from MoinMoin.storage.fs_storage import IndexedBackend
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.interfaces import SIZE, ACL
 from MoinMoin.storage.interfaces import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
@@ -103,7 +104,7 @@ class TestUserMetadata:
 class TestPageBackend(BackendTest):
 
     def setup_class(self):
-        self.backend = PageStorage("pages", get_page_dir(), DummyConfig())
+        self.backend = IndexedBackend(PageStorage("pages", get_page_dir(), DummyConfig()), DummyConfig())
 
     def test_name(self):
         assert self.backend.name == "pages"
@@ -187,11 +188,10 @@ class TestPageBackend(BackendTest):
 class TestPageMetadata:
 
     def setup_class(self):
-        self.backend = PageStorage("pages", get_page_dir(), DummyConfig())
+        self.backend = IndexedBackend(PageStorage("pages", get_page_dir(), DummyConfig()), DummyConfig())
 
     def test_get(self):
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
-        print metadata1
         assert metadata1 == {EDIT_LOG_EXTRA: '', EDIT_LOG_ACTION: 'SAVE', EDIT_LOG_ADDR: '127.0.0.1', EDIT_LOG_HOSTNAME: 'localhost', EDIT_LOG_COMMENT: '', EDIT_LOG_USERID: '1180352194.13.59241', EDIT_LOG_MTIME: metadata1[EDIT_LOG_MTIME], SIZE: 192L, 'format': 'wiki', ACL: 'MoinPagesEditorGroup:read,write,delete,revert All:read', 'language': 'sv'}
         metadata2 = self.backend.get_metadata_backend(pages[0], -1)
         assert metadata2 == {EDIT_LOCK_TIMESTAMP: '1183317594000000', EDIT_LOCK_USER: '1183317550.72.7782'}
