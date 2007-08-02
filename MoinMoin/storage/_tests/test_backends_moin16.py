@@ -10,10 +10,10 @@ import py.test
 
 from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown, BackendTest
 
-from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
-from MoinMoin.storage.interfaces import SIZE, ACL
-from MoinMoin.storage.interfaces import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
-from MoinMoin.storage.interfaces import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_COMMENT, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
+from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
+from MoinMoin.storage.external import SIZE, ACL
+from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
+from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_COMMENT, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 
 
@@ -27,7 +27,7 @@ def teardown_module(module):
 class TestUserBackend(BackendTest):
 
     def setup_class(self):
-        self.backend = UserStorage("user", get_user_dir(), DummyConfig())
+        self.backend = UserBackend("user", get_user_dir(), DummyConfig())
 
     def test_name(self):
         assert self.backend.name == "user"
@@ -71,7 +71,7 @@ class TestUserBackend(BackendTest):
 class TestUserMetadata:
 
     def setup_class(self):
-        self.backend = UserStorage("user", get_user_dir(), DummyConfig())
+        self.backend = UserBackend("user", get_user_dir(), DummyConfig())
         self.metadata = self.backend.get_metadata_backend(names[0], 1)
 
     def test_get(self):
@@ -103,7 +103,7 @@ class TestUserMetadata:
 class TestPageBackend(BackendTest):
 
     def setup_class(self):
-        self.backend = PageStorage("pages", get_page_dir(), DummyConfig())
+        self.backend = PageBackend("pages", get_page_dir(), DummyConfig())
 
     def test_name(self):
         assert self.backend.name == "pages"
@@ -187,7 +187,7 @@ class TestPageBackend(BackendTest):
 class TestPageMetadata:
 
     def setup_class(self):
-        self.backend = PageStorage("pages", get_page_dir(), DummyConfig())
+        self.backend = PageBackend("pages", get_page_dir(), DummyConfig())
 
     def test_get(self):
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)

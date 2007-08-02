@@ -19,7 +19,7 @@ import urllib
 
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
-from MoinMoin.storage.interfaces import READONLY_METADATA
+from MoinMoin.storage.external import READONLY_METADATA
 from inspect import getargspec, isfunction, isclass, ismethod
 
 

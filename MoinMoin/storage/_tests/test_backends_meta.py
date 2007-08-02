@@ -9,8 +9,8 @@ import py.test
 
 from MoinMoin.storage._tests import get_user_dir, get_page_dir, DummyConfig, pages, names, setup, teardown, BackendTest
 
-from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
-from MoinMoin.storage.backends import LayerBackend, NamespaceBackend
+from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
+from MoinMoin.storage.backends.meta import LayerBackend, NamespaceBackend
 from MoinMoin.storage.error import NoSuchItemError
 
 
@@ -28,7 +28,7 @@ class TestLayerBackend(BackendTest):
     """
 
     def setup_class(self):
-        self.backend = LayerBackend([PageStorage("pages", get_page_dir(), DummyConfig()), UserStorage("user", get_user_dir(), DummyConfig())])
+        self.backend = LayerBackend([PageBackend("pages", get_page_dir(), DummyConfig()), UserBackend("user", get_user_dir(), DummyConfig())])
 
     def test_list_items(self):
         items = pages + names
@@ -52,7 +52,7 @@ class TestNamespaceBackend(BackendTest):
     """
 
     def setup_class(self):
-        self.backend = NamespaceBackend({'/': PageStorage("pages", get_page_dir(), DummyConfig()), '/usr': UserStorage("user", get_user_dir(), DummyConfig())})
+        self.backend = NamespaceBackend({'/': PageBackend("pages", get_page_dir(), DummyConfig()), '/usr': UserBackend("user", get_user_dir(), DummyConfig())})
 
         self.new_names = []
         for item in names:
