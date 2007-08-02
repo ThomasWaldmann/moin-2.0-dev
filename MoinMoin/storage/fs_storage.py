@@ -53,7 +53,7 @@ class AbstractStorage(object):
             exclude = []
             for item in items:
                 include = False
-                metadata = _get_last_metadata(self, item)
+                metadata = _get_metadata(self, item, [-1, 0])
                 for key, value in filters.iteritems():
                     if key in metadata:
                         if unicode(value) in _parse_value(metadata[key]):
@@ -284,22 +284,56 @@ class IndexedBackend(object):
     def list_items(self, filters=None):
         """
         @see MoinMoin.interfaces.StorageBackend.list_items
-        """
-        index_filters = dict((key, value) for key, value in filters.iteritems() if key in self._indexes)
-        other_filters = dict((key, value) for key, value in filters.iteritems() if key not in self._indexes)
+        """        
+        if filters:
+            index_filters = dict((key, value) for key, value in filters.iteritems() if key in self._indexes)
+            other_filters = dict((key, value) for key, value in filters.iteritems() if key not in self._indexes)
+        else:
+            index_filters, other_filters = {}, {}
 
         items = set(self._backend.list_items(other_filters))
 
         for key, value in index_filters.iteritems():
-            items = items | self._get_items(key, value)
+            items = items & set(self._get_items(key, value))
 
-        return list(items)
+        return sorted(list(items))
 
-    def get_metadata_backend(self, name, revno):
+    def remove_item(self, item):
+        """
+        @see MoinMoin.interfaces.StorageBackend.remove_item
+        """
+        self._remove_indexes(item, _get_metadata(self._backend, item, [-1, 0]))
+        self._backend.remove_item(item)
+
+    def rename_item(self, oldname, newname):
+        """
+        @see MoinMoin.interfaces.StorageBackend.rename_item
+        """
+        self._remove_indexes(oldname, _get_metadata(self._backend, oldname, [-1, 0]))
+        self._backend.rename_item(oldname, newname)
+        self._write_indexes(newname, _get_metadata(self._backend, newname, [-1, 0]))
+
+    def create_revision(self, item, revno):
+        """
+        @see MoinMoin.interfaces.StorageBackend.create_revision
+        """
+        self._remove_indexes(item, _get_metadata(self._backend, item, [0]))
+        return self._backend.create_revision(item, revno)
+
+    def remove_revision(self, item, revno):
+        """
+        @see MoinMoin.interfaces.StorageBackend.remove_revision
+        """
+        self._remove_indexes(item, _get_metadata(self._backend, item, [revno]))
+        revno = self._backend.remove_revision(item, revno)
+        self._write_indexes(item, _get_metadata(self._backend, item, [0]))
+        return revno
+
+    def get_metadata_backend(self, item, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
         """
-        return IndexedBackend(self._backend.get_metadata_backend(self, name, revno), self)
+        return IndexedMetadata(self._backend.get_metadata_backend(item, revno), self, item, revno)
 
     def _rebuild_indexes(self):
         """
@@ -309,7 +343,7 @@ class IndexedBackend(object):
 
         for item in self._backend.list_items():
             # get metadata
-            metadata = _get_last_metadata(self._backend, item)
+            metadata = _get_metadata(self._backend, item, [-1, 0])
 
             # set metadata
             for index in self._indexes:
@@ -341,11 +375,10 @@ class IndexedBackend(object):
 
         return values
 
-    def _remove_indexes(self, item):
+    def _remove_indexes(self, item, metadata):
         """
         Remove old index data.
         """
-        metadata = _get_last_metadata(self._backend, item)
         for index in self._indexes:
             if index in metadata:
                 db = bsddb.hashopen(self._get_filename(index, create=True))
@@ -359,11 +392,10 @@ class IndexedBackend(object):
                     db[pkey] = pickle.dumps(data)
                 db.close()
 
-    def _write_indexes(self, item):
+    def _write_indexes(self, item, metadata):
         """
         Write new index data.
         """
-        metadata = _get_last_metadata(self._backend, item)
         for index in self._indexes:
             if index in metadata:
                 db = bsddb.hashopen(self._get_filename(index, create=True))
@@ -393,12 +425,14 @@ class IndexedMetadata(UserDict.DictMixin):
 
     __implements__ = MetadataBackend
 
-    def __init__(self, metadata, backend):
+    def __init__(self, metadata, backend, item, revno):
         """
         Initialises the class.
         """
         self._metadata = metadata
         self._backend = backend
+        self._item = item
+        self._revno = revno
 
         forward = ['__setitem__', '__delitem__', '__getitem__', '__contains__', 'keys']
 
@@ -409,22 +443,19 @@ class IndexedMetadata(UserDict.DictMixin):
         """
         @see MoinMoin.storage.external.Metadata.save
         """
-        self._backend._remove_indexes(self._metadata._name)
+        self._backend._remove_indexes(self._item, _get_metadata(self._backend, self._item, [self._revno]))
         self._metadata.save()
-        self._backend._write_indexes(self._metadata._name)
+        self._backend._write_indexes(self._item, _get_metadata(self._backend, self._item, [self._revno]))
 
 
-def _get_last_metadata(backend, item):
+def _get_metadata(backend, item, revnos):
     """
     Returns the metadata of revisions -1 and if exists 0 of an item.
     """
     metadata = dict()
-    metadata_all = backend.get_metadata_backend(item, -1)
-    metadata.update(metadata_all)
-    current = backend.current_revision(item)
-    if current != 0:
-        metadata_last = backend.get_metadata_backend(item, current)
-        metadata.update(metadata_last)
+    for revno in revnos:
+        metadata_rev = backend.get_metadata_backend(item, revno)
+        metadata.update(metadata_rev)
     return metadata
 
 

@@ -31,14 +31,14 @@ class MetaBackend(object):
             """
             Class that just does a call to instance.name with the given parameters.
             """
-        
+
             def __init__(self, name, instance):
                 """
                 Init parameters.
                 """
                 self._name = name
                 self._instance = instance
-        
+
             def call(self, *args, **kwargs):
                 """
                 Do the call.
@@ -52,7 +52,6 @@ class MetaBackend(object):
         Call the method from the first matching backend with the given parameters.
         """
         raise NotImplementedError
-
 
 
 class NamespaceBackend(MetaBackend):

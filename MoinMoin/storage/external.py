@@ -419,7 +419,7 @@ def _decorate(instance, obj, exception, message, forbid, forward):
             """
             self._exception = exception
             self._message = message
-    
+
         def _raise_exception(self, *args, **kwargs):
             """
             Raise the exception.
