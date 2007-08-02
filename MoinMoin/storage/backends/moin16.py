@@ -38,8 +38,7 @@ import shutil
 import tempfile
 
 from MoinMoin import config, wikiutil
-from MoinMoin.storage.error import BackendError
-from MoinMoin.storage.backends.filesystem import AbstractBackend, AbstractData, AbstractMetadata, _handle_error, _get_rev_string, _create_file
+from MoinMoin.storage.backends.filesystem import AbstractBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file
 from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
@@ -71,25 +70,19 @@ class UserBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_item
         """
-        if os.path.isfile(os.path.join(self._path, name)):
-            return self
-        return None
+        return os.path.isfile(os.path.join(self._path, name))
 
     def create_item(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.create_item
         """
         _create_file(self._path, name)
-        return self
 
     def remove_item(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.remove_item
         """
-        try:
-            os.remove(os.path.join(self._path, name))
-        except OSError, err:
-            _handle_error(self, err, name, message=_("Failed to remove item %r.") % name)
+        os.remove(os.path.join(self._path, name))
 
     def list_revisions(self, name):
         """
@@ -99,7 +92,7 @@ class UserBackend(AbstractBackend):
         """
         return [1]
 
-    def current_revision(self, name):
+    def current_revision(self, name, includeEmpty=False):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
@@ -127,10 +120,7 @@ class UserMetadata(AbstractMetadata):
         """
         @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
         """
-        try:
-            data = codecs.open(self._backend._get_page_path(name), "r", config.charset)
-        except IOError, err:
-            _handle_error(self._backend, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
+        data = codecs.open(self._backend._get_page_path(name), "r", config.charset)
 
         user_data = {}
         for line in data:
@@ -162,10 +152,7 @@ class UserMetadata(AbstractMetadata):
 
         tmp = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
 
-        try:
-            data_file = codecs.getwriter(config.charset)(os.fdopen(tmp[0], "w"))
-        except IOError, err:
-            _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+        data_file = codecs.getwriter(config.charset)(os.fdopen(tmp[0], "w"))
 
         for key, value in metadata.iteritems():
             # Encode list values
@@ -180,10 +167,7 @@ class UserMetadata(AbstractMetadata):
             data_file.write(line)
         data_file.close()
 
-        try:
-            shutil.move(tmp[1], self._backend._get_page_path(name))
-        except IOError, err:
-            _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+        shutil.move(tmp[1], self._backend._get_page_path(name))
 
 
 class PageBackend(AbstractBackend):
@@ -195,7 +179,7 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        files = [f for f in os.listdir(self._path) if os.path.exists(os.path.join(self._path, f, "current"))]
+        files = [f for f in os.listdir(self._path) if os.path.isfile(os.path.join(self._path, f, "current"))]
 
         return AbstractBackend.list_items(self, files, filters)
 
@@ -203,71 +187,39 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_item
         """
-        if os.path.isdir(self._get_page_path(name, "revisions")):
-            return self
-        return None
+        return os.path.isfile(self._get_page_path(name, "current"))
 
     def create_item(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.create_item
         """
-        if not self.has_item(name):
-            if not os.path.isdir(self._get_page_path(name)):
-                os.mkdir(self._get_page_path(name))
-            if not os.path.isdir(self._get_page_path(name, "cache")):
-                os.mkdir(self._get_page_path(name, "cache"))
-            if not os.path.isdir(self._get_page_path(name, "cache", "__lock__")):
-                os.mkdir(self._get_page_path(name, "cache", "__lock__"))
-            _create_file(self._get_page_path(name, "current"))
-            if not os.path.isfile(self._get_page_path(name, "edit-log")):
-                _create_file(self._get_page_path(name, "edit-log"))
-            if not os.path.isdir(self._get_page_path(name, "revisions")):
-                os.mkdir(self._get_page_path(name, "revisions"))
-        else:
-            raise BackendError(_("Item %r already exists") % name)
-
-        return self
+        os.mkdir(self._get_page_path(name))
+        os.mkdir(self._get_page_path(name, "cache"))
+        os.mkdir(self._get_page_path(name, "cache", "__lock__"))
+        _create_file(self._get_page_path(name, "current"))
+        _create_file(self._get_page_path(name, "edit-log"))
+        os.mkdir(self._get_page_path(name, "revisions"))
 
     def remove_item(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.remove_item
         """
-        try:
-            shutil.rmtree(self._get_page_path(name))
-        except OSError, err:
-            _handle_error(self, err, name, message=_("Failed to remove item %r.") % name)
+        shutil.rmtree(self._get_page_path(name))
 
     def rename_item(self, name, newname):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.rename_item
         """
-        if name == newname:
-            raise BackendError(_("Failed to rename item because name and newname are equal."))
-
-        if not newname:
-            raise BackendError(_("You cannot rename to an empty item name."))
-
-        if self.has_item(newname):
-            raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
-
-        try:
-            shutil.move(self._get_page_path(name), self._get_page_path(newname))
-        except OSError, err:
-            _handle_error(self, err, name, message=_("Failed to rename item %r to %r.") % (name, newname))
+        shutil.move(self._get_page_path(name), self._get_page_path(newname))
 
     def list_revisions(self, name, real=False):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
         """
         if real:
-            try:
-                revs = os.listdir(self._get_page_path(name, "revisions"))
-            except OSError, err:
-                _handle_error(self, err, name, message=_("Failed to list revisions for item %r.") % name)
-
+            revs = os.listdir(self._get_page_path(name, "revisions"))
             revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
             revs.sort()
-
         else:
             last = self.current_revision(name, includeEmpty=True)
             revs = range(1, last + 1)
@@ -279,12 +231,9 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
-        try:
-            data_file = file(self._get_page_path(name, "current"), "r")
-            rev = data_file.read().strip()
-            data_file.close()
-        except IOError, err:
-            _handle_error(self, err, name, message=_("Failed to get current revision for item %r.") % name)
+        data_file = file(self._get_page_path(name, "current"), "r")
+        rev = data_file.read().strip()
+        data_file.close()
 
         rev = int(rev or 0)
 
@@ -309,42 +258,21 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_revision
         """
-        if revno == 0:
-            revno = self.current_revision(name, includeEmpty=True)
-
         return revno <= self.current_revision(name, includeEmpty=True)
 
     def create_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.create_revisions
         """
-        if revno == 0:
-            revno = self.current_revision(name, includeEmpty=True) + 1
-
-        try:
-            _create_file(self._get_page_path(name, "revisions", _get_rev_string(revno)))
-        except IOError, err:
-            _handle_error(self, err, name, revno, message=_("Failed to create revision for item %r with revision %r.")  % (name, revno))
-
+        _create_file(self._get_page_path(name, "revisions", _get_rev_string(revno)))
         self._update_current(name)
-
-        return revno
 
     def remove_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.remove_revisions
         """
-        if revno == 0:
-            revno = self.current_revision(name, includeEmpty=True)
-
-        try:
-            os.remove(self._get_page_path(name, "revisions", _get_rev_string(revno)))
-        except OSError, err:
-            _handle_error(self, err, name, revno, message=_("Failed to remove revision %r for item %r.") % (revno, name))
-
+        os.remove(self._get_page_path(name, "revisions", _get_rev_string(revno)))
         self._update_current(name)
-
-        return revno
 
     def _update_current(self, name, revno=0):
         """
@@ -357,25 +285,16 @@ class PageBackend(AbstractBackend):
 
         tmp = tempfile.mkstemp(dir=self._cfg.tmp_dir)
 
-        try:
-            tmp_file = os.fdopen(tmp[0], "w")
-            tmp_file.write(_get_rev_string(revno) + "\n")
-            tmp_file.close()
-        except IOError, err:
-            _handle_error(self, err, name, message=_("Failed to set current revision for item %r.") % name)
+        tmp_file = os.fdopen(tmp[0], "w")
+        tmp_file.write(_get_rev_string(revno) + "\n")
+        tmp_file.close()
 
-        try:
-            shutil.move(tmp[1], self._get_page_path(name, "current"))
-        except OSError, err:
-            _handle_error(self, err, name, message=_("Failed to set current revision for item %r.") % name)
+        shutil.move(tmp[1], self._get_page_path(name, "current"))
 
     def get_data_backend(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
         """
-        if revno == 0:
-            revno = self.current_revision(name, includeEmpty=True)
-
         if revno != -1 and not os.path.exists(self._get_page_path(name, "revisions", _get_rev_string(revno))):
             return DeletedPageData(self, name, revno)
         else:
@@ -385,9 +304,6 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
         """
-        if revno == 0:
-            revno = self.current_revision(name, includeEmpty=True)
-
         if revno != -1 and not os.path.exists(self._get_page_path(name, "revisions", _get_rev_string(revno))):
             return DeletedPageMetadata(self, name, revno)
         else:
@@ -399,6 +315,7 @@ class PageData(AbstractData):
     This class implements a read only, file like object for MoinMoin 1.6 Page stuff.
     Changes will only be saved on close().
     """
+
     def read(self, size=None):
         """
         @see MoinMoin.storage.interfaces.DataBackend.read
@@ -421,7 +338,7 @@ class PageMetadata(AbstractMetadata):
 
         if revno == -1:
 
-            # Emulate edit-lock
+            # emulate edit-lock
             if os.path.exists(self._backend._get_page_path(name, "edit-lock")):
                 data_file = file(self._backend._get_page_path(name, "edit-lock"), "r")
                 line = data_file.read()
@@ -436,21 +353,19 @@ class PageMetadata(AbstractMetadata):
 
         else:
 
-            try:
-                data_file = codecs.open(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)), "r", config.charset)
-                data = data_file.read()
-                data_file.close()
-            except IOError, err:
-                _handle_error(self._backend, err, name, revno, message=_("Failed to parse metadata for item %r with revision %r.") % (name, revno))
+            data_file = codecs.open(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)), "r", config.charset)
+            data = data_file.read()
+            data_file.close()
 
             metadata, data = wikiutil.split_body(data)
 
-            # emulated metadata
+            # emulated size
             try:
                 metadata[SIZE] = os.path.getsize(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)))
             except OSError:
                 pass
 
+            # emulate edit-log
             try:
                 data_file = file(self._backend._get_page_path(name, "edit-log"), "r")
 
@@ -479,7 +394,8 @@ class PageMetadata(AbstractMetadata):
         """
 
         if revno == -1:
-            # Emulate editlock
+
+            # emulate editlock
             if EDIT_LOCK_TIMESTAMP in metadata and EDIT_LOCK_USER in metadata:
                 data_file = file(self._backend._get_page_path(name, "edit-lock"), "w")
                 line = "\t".join([metadata[EDIT_LOCK_TIMESTAMP], "0", "0", "0", "0", "0", metadata[EDIT_LOCK_USER], "0", "0"])
@@ -493,42 +409,24 @@ class PageMetadata(AbstractMetadata):
             tmp = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
             read_filename = self._backend._get_page_path(name, "revisions", _get_rev_string(revno))
 
-            try:
-                data = codecs.open(read_filename, "r", config.charset)
-                old_data = data.read()
-                data.close()
-            except IOError, err:
-                _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+            data = codecs.open(read_filename, "r", config.charset)
+            old_metadata, new_data = wikiutil.split_body(data.read())
+            data.close()
 
-            # remove metadata
-            old_metadata, new_data = wikiutil.split_body(old_data)
-
-            # add metadata
             new_data = wikiutil.add_metadata_to_body(metadata, new_data)
 
-            # save data
-            try:
-                data_file = codecs.getwriter(config.charset)(os.fdopen(tmp[0], "w"))
-            except IOError, err:
-                _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
-
+            data_file = codecs.getwriter(config.charset)(os.fdopen(tmp[0], "w"))
             data_file.writelines(new_data)
             data_file.close()
 
-            try:
-                shutil.move(tmp[1], read_filename)
-            except OSError, err:
-                _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
-
+            shutil.move(tmp[1], read_filename)
+ 
             # save edit-log
             for key in EDIT_LOG:
                 if not key in metadata:
                     break
             else:
-                try:
-                    edit_log = codecs.open(self._backend._get_page_path(name, "edit-log"), "r", config.charset)
-                except IOError, err:
-                    _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+                edit_log = codecs.open(self._backend._get_page_path(name, "edit-log"), "r", config.charset)
 
                 result = []
                 newline = "\t".join((str(wikiutil.timestamp2version(metadata[EDIT_LOG_MTIME])), _get_rev_string(revno), metadata[EDIT_LOG_ACTION], name, metadata[EDIT_LOG_ADDR], metadata[EDIT_LOG_HOSTNAME], metadata[EDIT_LOG_USERID], metadata[EDIT_LOG_EXTRA], metadata[EDIT_LOG_COMMENT])) + "\n"
@@ -542,16 +440,14 @@ class PageMetadata(AbstractMetadata):
                     result.append(line)
                 if not newline in result:
                     result.append(newline)
+
                 edit_log.close()
 
-                try:
-                    edit_log = codecs.open(self._backend._get_page_path(name, "edit-log"), "w", config.charset)
-                    edit_log.writelines(result)
-                    edit_log.close()
-                except IOError, err:
-                    _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
+                edit_log = codecs.open(self._backend._get_page_path(name, "edit-log"), "w", config.charset)
+                edit_log.writelines(result)
+                edit_log.close()
 
-            # Emulate deleted
+            # emulate deleted
             exists = os.path.exists(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)))
             if DELETED in metadata and metadata[DELETED] and exists:
                 os.remove(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)))

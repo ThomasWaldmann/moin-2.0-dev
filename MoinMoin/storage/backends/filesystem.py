@@ -7,7 +7,6 @@
 
 import bsddb
 import copy
-import errno
 import os
 import shutil
 import tempfile
@@ -15,14 +14,15 @@ import tempfile
 import UserDict
 
 from MoinMoin import wikiutil
+from MoinMoin.storage.backends.common import CommonBackend, _get_metadata
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
-from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import BackendError, LockingError
 from MoinMoin.util import lock, pickle
 
 
 class AbstractBackend(object):
     """
-    Abstract Storage Implementation for common methods.
+    Abstract Storage Implementation for common filesystem methods.
     """
 
     __implements__ = StorageBackend
@@ -31,11 +31,11 @@ class AbstractBackend(object):
 
     def __new__(self, name, path, cfg, quoted=True, *kw, **kwargs):
         """
-        Automatically return Indexed Backend.
+        Automatically wrap common and index functionality Backend.
         """
         backend = object.__new__(self, *kw, **kwargs)
         backend.__init__(name, path, cfg, *kw, **kwargs)
-        return IndexedBackend(backend, cfg)
+        return CommonBackend(name, IndexedBackend(backend, cfg))
 
     def __init__(self, name, path, cfg, quoted=True):
         """
@@ -293,8 +293,8 @@ class IndexedBackend(object):
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
         if filters:
-            index_filters = dict((key, value) for key, value in filters.iteritems() if key in self._indexes)
-            other_filters = dict((key, value) for key, value in filters.iteritems() if key not in self._indexes)
+            index_filters = dict([(key, value) for key, value in filters.iteritems() if key in self._indexes])
+            other_filters = dict([(key, value) for key, value in filters.iteritems() if key not in self._indexes])
         else:
             index_filters, other_filters = {}, {}
 
@@ -302,6 +302,8 @@ class IndexedBackend(object):
 
         for key, value in index_filters.iteritems():
             items = items & set(self._get_items(key, value))
+
+        print ""
 
         return sorted(list(items))
 
@@ -325,7 +327,7 @@ class IndexedBackend(object):
         @see MoinMoin.interfaces.StorageBackend.create_revision
         """
         self._remove_indexes(item, _get_metadata(self._backend, item, [0]))
-        return self._backend.create_revision(item, revno)
+        self._backend.create_revision(item, revno)
 
     def remove_revision(self, item, revno):
         """
@@ -334,7 +336,6 @@ class IndexedBackend(object):
         self._remove_indexes(item, _get_metadata(self._backend, item, [revno]))
         revno = self._backend.remove_revision(item, revno)
         self._write_indexes(item, _get_metadata(self._backend, item, [0]))
-        return revno
 
     def get_metadata_backend(self, item, revno):
         """
@@ -351,6 +352,7 @@ class IndexedBackend(object):
         for item in self._backend.list_items():
             # get metadata
             metadata = _get_metadata(self._backend, item, [-1, 0])
+            print metadata
 
             # set metadata
             for index in self._indexes:
@@ -455,17 +457,6 @@ class IndexedMetadata(UserDict.DictMixin):
         self._backend._write_indexes(self._item, _get_metadata(self._backend, self._item, [self._revno]))
 
 
-def _get_metadata(backend, item, revnos):
-    """
-    Returns the metadata of an item and the specified revision numbers.
-    """
-    metadata = dict()
-    for revno in revnos:
-        metadata_rev = backend.get_metadata_backend(item, revno)
-        metadata.update(metadata_rev)
-    return metadata
-
-
 def _parse_value(value):
     """
     Return all keys that should be added to an index depending on the value of an metadata key.
@@ -498,18 +489,6 @@ def _create_file(*path):
         file(real_path, "w").close()
     else:
         raise BackendError(_("Path %r already exists.") % real_path)
-
-
-def _handle_error(backend, err, name, revno=None, message=""):
-    """
-    Handle error messages.
-    """
-    if err.errno == errno.ENOENT:
-        if not backend.has_item(name):
-            raise NoSuchItemError(_("Item %r does not exist.") % name)
-        elif revno is not None and revno != -1 and not backend.has_revision(name, revno):
-            raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, name))
-    raise BackendError(message)
 
 
 _ = lambda x: x
