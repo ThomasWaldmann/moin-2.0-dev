@@ -284,7 +284,7 @@ class IndexedBackend(object):
     def list_items(self, filters=None):
         """
         @see MoinMoin.interfaces.StorageBackend.list_items
-        """        
+        """
         if filters:
             index_filters = dict((key, value) for key, value in filters.iteritems() if key in self._indexes)
             other_filters = dict((key, value) for key, value in filters.iteritems() if key not in self._indexes)
@@ -450,7 +450,7 @@ class IndexedMetadata(UserDict.DictMixin):
 
 def _get_metadata(backend, item, revnos):
     """
-    Returns the metadata of revisions -1 and if exists 0 of an item.
+    Returns the metadata of an item and the specified revision numbers.
     """
     metadata = dict()
     for revno in revnos:
