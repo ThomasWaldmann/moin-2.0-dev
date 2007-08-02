@@ -8,12 +8,6 @@
 import re
 from MoinMoin import version
 
-# this fix is done here because everyone imports config rather early
-from MoinMoin.support import logging_fix
-
-# python 2.3 compatibility
-from MoinMoin.support import python23
-
 # unicode: set the char types (upper, lower, digits, spaces)
 from MoinMoin.util.chartypes import *
 
