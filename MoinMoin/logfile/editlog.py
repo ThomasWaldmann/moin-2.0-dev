@@ -40,7 +40,7 @@ class EditLogLine:
 
     def __cmp__(self, other):
         try:
-            return cmp(self.ed_time_usecs, _other.ed_time_usecs)
+            return cmp(self.ed_time_usecs, other.ed_time_usecs)
         except AttributeError:
             return cmp(self.ed_time_usecs, other)
 

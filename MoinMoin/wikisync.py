@@ -74,7 +74,7 @@ class SyncPage(object):
         return u"%s[%s|%s]<%r:%r>" % (self.name, self.local_name, self.remote_name, self.local_rev, self.remote_rev)
 
     def __lt__(self, other):
-        return self.name < _other.name
+        return self.name < other.name
 
     def __hash__(self):
         """ Ensures that the hash value of this page only depends on the canonical name. """
@@ -83,7 +83,7 @@ class SyncPage(object):
     def __eq__(self, other):
         if not isinstance(other, SyncPage):
             return False
-        return self.name == _other.name
+        return self.name == other.name
 
     def add_missing_pagename(self, local, remote):
         """ Checks if the particular concrete page names are unknown and fills

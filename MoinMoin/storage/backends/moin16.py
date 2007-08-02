@@ -420,7 +420,7 @@ class PageMetadata(AbstractMetadata):
             data_file.close()
 
             shutil.move(tmp[1], read_filename)
- 
+
             # save edit-log
             for key in EDIT_LOG:
                 if not key in metadata:
