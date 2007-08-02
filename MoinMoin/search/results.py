@@ -39,9 +39,9 @@ class Match(object):
         return self.end - self.start
 
     def __eq__(self, other):
-        equal = (self.__class__ == _other.__class__ and
-                 self.start == _other.start and
-                 self.end == _other.end)
+        equal = (self.__class__ == other.__class__ and
+                 self.start == other.start and
+                 self.end == other.end)
         return equal
 
     def __ne__(self, other):
@@ -556,7 +556,7 @@ class SearchResults:
         """ Compute context range
 
         Add context around each match. If there is no room for context
-        before or after the match, show more context on the _other side.
+        before or after the match, show more context on the other side.
 
         @param context: context length
         @param match: current match
@@ -785,7 +785,7 @@ class SearchResults:
 
         Do not call this, it should be called only by the instance code.
 
-        Each request might need different translations or _other user
+        Each request might need different translations or other user
         preferences.
 
         @param request: current request

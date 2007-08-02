@@ -12,7 +12,7 @@ default_markers = ('<<<<<<<<<<<<<<<<<<<<<<<<<\n',
 
 def text_merge(old, other, new, allow_conflicts=1, *markers):
     """ do line by line diff3 merge with three strings """
-    result = merge(old.splitlines(1), _other.splitlines(1), new.splitlines(1),
+    result = merge(old.splitlines(1), other.splitlines(1), new.splitlines(1),
                    allow_conflicts, *markers)
     return ''.join(result)
 
@@ -47,7 +47,7 @@ def merge(old, other, new, allow_conflicts=1, *markers):
             # new is changed
             if new_match != (old_nr, new_nr):
                 new_changed_lines = new_match[0] - old_nr
-                # _other is unchanged
+                # other is unchanged
                 if match(old, other, old_nr, other_nr,
                          new_changed_lines) == new_changed_lines:
                     result.extend(new[new_nr:new_match[1]])
@@ -66,7 +66,7 @@ def merge(old, other, new, allow_conflicts=1, *markers):
                     result.extend(new[new_nr:new_m])
                     result.append(marker3)
                     old_nr, other_nr, new_nr = old_m, other_m, new_m
-            # _other is changed
+            # other is changed
             else:
                 other_changed_lines = other_match[0] - other_nr
                 # new is unchanged
@@ -96,14 +96,14 @@ def merge(old, other, new, allow_conflicts=1, *markers):
     # new added lines
     elif old_nr == old_len and other_nr == other_len:
         result.extend(new[new_nr:])
-    # _other added lines
+    # other added lines
     elif old_nr == old_len and new_nr == new_len:
         result.extend(other[other_nr:])
     # new deleted lines
     elif (new_nr == new_len and (old_len - old_nr == other_len - other_nr) and
           match(old, other, old_nr, other_nr, old_len-old_nr) == old_len - old_nr):
         pass
-    # _other deleted lines
+    # other deleted lines
     elif (other_nr == other_len and (old_len - old_nr == new_len-new_nr) and
           match(old, new, old_nr, new_nr, old_len-old_nr) == old_len - old_nr):
         pass
@@ -122,7 +122,7 @@ def merge(old, other, new, allow_conflicts=1, *markers):
     return result
 
 def tripple_match(old, other, new, other_match, new_match):
-    """find next matching pattern unchanged in both _other and new
+    """find next matching pattern unchanged in both other and new
        return the position in all three lists
     """
     while 1:
@@ -137,7 +137,7 @@ def tripple_match(old, other, new, other_match, new_match):
                 other_match = find_match(old, other,
                                          other_match[0] + match_len,
                                          other_match[1] + match_len)
-        # _other changed more lines
+        # other changed more lines
         elif difference < 0:
             difference = -difference
             match_len = match(old, new, new_match[0], new_match[1],
