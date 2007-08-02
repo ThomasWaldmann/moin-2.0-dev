@@ -39,16 +39,16 @@ import tempfile
 
 from MoinMoin import config, wikiutil
 from MoinMoin.storage.error import BackendError
-from MoinMoin.storage.fs_storage import AbstractStorage, AbstractData, AbstractMetadata, _handle_error, _get_rev_string, _create_file
-from MoinMoin.storage.interfaces import DELETED, SIZE, EDIT_LOG
-from MoinMoin.storage.interfaces import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
-from MoinMoin.storage.interfaces import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
+from MoinMoin.storage.backends.filesystem import AbstractBackend, AbstractData, AbstractMetadata, _handle_error, _get_rev_string, _create_file
+from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG
+from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
+from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
 
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
 
-class UserStorage(AbstractStorage):
+class UserBackend(AbstractBackend):
     """
     Class that implements the 1.6 compatible storage backend for users.
     """
@@ -57,7 +57,7 @@ class UserStorage(AbstractStorage):
         """
         Init the Backend with the correct path.
         """
-        AbstractStorage.__init__(self, name, path, cfg, False)
+        AbstractBackend.__init__(self, name, path, cfg, False)
 
     def list_items(self, filters=None):
         """
@@ -65,7 +65,7 @@ class UserStorage(AbstractStorage):
         """
         files = [f for f in os.listdir(self._path) if user_re.match(f)]
 
-        return AbstractStorage.list_items(self, files, filters)
+        return AbstractBackend.list_items(self, files, filters)
 
     def has_item(self, name):
         """
@@ -186,7 +186,7 @@ class UserMetadata(AbstractMetadata):
             _handle_error(self._backend, err, name, revno, message=_("Failed to save metadata for item %r with revision %r.") % (name, revno))
 
 
-class PageStorage(AbstractStorage):
+class PageBackend(AbstractBackend):
     """
     This class implements the MoinMoin 1.6 compatible Page Storage Stuff.
     """
@@ -197,7 +197,7 @@ class PageStorage(AbstractStorage):
         """
         files = [f for f in os.listdir(self._path) if os.path.exists(os.path.join(self._path, f, "current"))]
 
-        return AbstractStorage.list_items(self, files, filters)
+        return AbstractBackend.list_items(self, files, filters)
 
     def has_item(self, name):
         """

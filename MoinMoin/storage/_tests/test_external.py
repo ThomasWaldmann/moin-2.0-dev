@@ -9,11 +9,10 @@ import py.test
 
 from MoinMoin.storage._tests import DummyConfig, pages, get_page_dir, setup, teardown
 
-from MoinMoin.storage.backends import LayerBackend
-from MoinMoin.storage.fs_moin16 import PageStorage
+from MoinMoin.storage.backends.meta import LayerBackend
+from MoinMoin.storage.backends.moin16 import PageBackend
 from MoinMoin.storage.external import ItemCollection, Item, Revision
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
-from MoinMoin.storage.interfaces import DataBackend, MetadataBackend
 
 
 def setup_module(module):
@@ -27,7 +26,7 @@ class TestItemCollection:
     item_collection = None
 
     def setup_class(self):
-        self.item_collection = ItemCollection(LayerBackend([PageStorage("pages", get_page_dir(), DummyConfig())]), None)
+        self.item_collection = ItemCollection(LayerBackend([PageBackend("pages", get_page_dir(), DummyConfig())]), None)
 
     def teardown_class(self):
         self.item_collection = None
@@ -80,7 +79,7 @@ class TestItem:
     item = None
 
     def setup_class(self):
-        self.item = ItemCollection(PageStorage("pages", get_page_dir(), DummyConfig()), None)[pages[0]]
+        self.item = ItemCollection(PageBackend("pages", get_page_dir(), DummyConfig()), None)[pages[0]]
 
     def teardown_class(self):
         self.item = None
@@ -148,7 +147,7 @@ class TestRevision:
     revision = None
 
     def setup_class(self):
-        self.revision = ItemCollection(PageStorage("pages", get_page_dir(), DummyConfig()), None)[pages[0]][1]
+        self.revision = ItemCollection(PageBackend("pages", get_page_dir(), DummyConfig()), None)[pages[0]][1]
 
     def teardown_class(self):
         self.revision = None

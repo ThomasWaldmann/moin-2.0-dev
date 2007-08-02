@@ -20,7 +20,7 @@ from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, 
 from MoinMoin.util import lock, pickle
 
 
-class AbstractStorage(object):
+class AbstractBackend(object):
     """
     Abstract Storage Implementation for common methods.
     """
@@ -161,13 +161,13 @@ class AbstractMetadata(UserDict.DictMixin):
 
     def _parse_metadata(self, name, revno):
         """
-        @see MoinMoin.fs_moin16.AbstractStorage._parse_metadata
+        @see MoinMoin.fs_moin16.AbstractBackend._parse_metadata
         """
         raise NotImplementedError
 
     def _save_metadata(self, name, revno, metadata):
         """
-        @see MoinMoin.fs_moin16.AbstractStorage._save_metadata
+        @see MoinMoin.fs_moin16.AbstractBackend._save_metadata
         """
         raise NotImplementedError
 
