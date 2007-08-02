@@ -21,7 +21,6 @@ from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
 from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
-from MoinMoin.storage.fs_storage import IndexedBackend
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.backends import LayerBackend
 from MoinMoin.storage.interfaces import DELETED
@@ -779,9 +778,9 @@ reStructuredText Quick Reference
 
         # storage configuration
         self.indexes = ["name", "openids", "jid", "email", DELETED]
-        self.user_backend = IndexedBackend(UserStorage("user", self.user_dir, self), self)
-        self.page_backend = IndexedBackend(PageStorage("pages", os.path.join(self.data_dir, "pages"), self), self)
-        self.underlay_backend = IndexedBackend(PageStorage("underlay", os.path.join(self.data_underlay_dir, "pages"), self), self)
+        self.user_backend = UserStorage("user", self.user_dir, self)
+        self.page_backend = PageStorage("pages", os.path.join(self.data_dir, "pages"), self)
+        self.underlay_backend = PageStorage("underlay", os.path.join(self.data_underlay_dir, "pages"), self)
         self.data_backend = LayerBackend([self.page_backend, self.underlay_backend])
 
 

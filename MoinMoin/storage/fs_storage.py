@@ -29,13 +29,21 @@ class AbstractStorage(object):
 
     locks = dict()
 
+    def __new__(self, name, path, cfg, quoted=True, *kw, **kwargs):
+        """
+        Automatically return Indexed Backend.
+        """
+        backend = object.__new__(self, *kw, **kwargs)
+        backend.__init__(name, path, cfg, *kw, **kwargs)
+        return IndexedBackend(backend, cfg)
+
     def __init__(self, name, path, cfg, quoted=True):
         """
-        Init the Backend with the correct path.
+        Init stuff.
         """
-        self.name = name
         if not os.path.isdir(path):
             raise BackendError(_("Invalid path %r.") % path)
+        self.name = name
         self._path = path
         self._cfg = cfg
         self._quoted = quoted
@@ -268,7 +276,6 @@ class IndexedBackend(object):
         """
         Initialises the class.
         """
-        StorageBackend.__init__(self, backend.name)
         if not os.path.isdir(cfg.indexes_dir):
             raise BackendError(_("Invalid path %r.") % cfg.indexes_dir)
         self._backend = backend
@@ -500,7 +507,7 @@ def _handle_error(backend, err, name, revno=None, message=""):
     if err.errno == errno.ENOENT:
         if not backend.has_item(name):
             raise NoSuchItemError(_("Item %r does not exist.") % name)
-        elif revno is not None and not backend.has_revision(name, revno):
+        elif revno is not None and revno != -1 and not backend.has_revision(name, revno):
             raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, name))
     raise BackendError(message)
 

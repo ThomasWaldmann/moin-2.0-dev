@@ -10,7 +10,6 @@ import py.test
 
 from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown, BackendTest
 
-from MoinMoin.storage.fs_storage import IndexedBackend
 from MoinMoin.storage.fs_moin16 import UserStorage, PageStorage
 from MoinMoin.storage.interfaces import SIZE, ACL
 from MoinMoin.storage.interfaces import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
@@ -104,7 +103,7 @@ class TestUserMetadata:
 class TestPageBackend(BackendTest):
 
     def setup_class(self):
-        self.backend = IndexedBackend(PageStorage("pages", get_page_dir(), DummyConfig()), DummyConfig())
+        self.backend = PageStorage("pages", get_page_dir(), DummyConfig())
 
     def test_name(self):
         assert self.backend.name == "pages"
@@ -188,7 +187,7 @@ class TestPageBackend(BackendTest):
 class TestPageMetadata:
 
     def setup_class(self):
-        self.backend = IndexedBackend(PageStorage("pages", get_page_dir(), DummyConfig()), DummyConfig())
+        self.backend = PageStorage("pages", get_page_dir(), DummyConfig())
 
     def test_get(self):
         metadata1 = self.backend.get_metadata_backend(pages[1], 2)
