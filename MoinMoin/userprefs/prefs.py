@@ -98,7 +98,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
             # Email should be unique - see also MoinMoin/script/accounts/moin_usercheck.py
             if theuser.email and self.request.cfg.user_email_unique:
                 other = user.get_by_email_address(self.request, theuser.email)
-                if other is not None and other.id != theuser.id:
+                if other is not None and _other.id != theuser.id:
                     return _("This email already belongs to somebody else.")
 
         if not 'jid' in theuser.auth_attribs:
@@ -111,7 +111,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
 
             if theuser.jid and self.request.cfg.user_jid_unique:
                 other = user.get_by_jabber_id(self.request, theuser.jid)
-                if other is not None and other.id != theuser.id:
+                if other is not None and _other.id != theuser.id:
                     return _("This jabber id already belongs to somebody else.")
 
             if jid_changed:

@@ -74,7 +74,7 @@ class SyncPage(object):
         return u"%s[%s|%s]<%r:%r>" % (self.name, self.local_name, self.remote_name, self.local_rev, self.remote_rev)
 
     def __lt__(self, other):
-        return self.name < other.name
+        return self.name < _other.name
 
     def __hash__(self):
         """ Ensures that the hash value of this page only depends on the canonical name. """
@@ -83,7 +83,7 @@ class SyncPage(object):
     def __eq__(self, other):
         if not isinstance(other, SyncPage):
             return False
-        return self.name == other.name
+        return self.name == _other.name
 
     def add_missing_pagename(self, local, remote):
         """ Checks if the particular concrete page names are unknown and fills
@@ -144,7 +144,7 @@ class RemoteWiki(object):
         return NotImplemented
 
     def get_interwiki_name(self):
-        """ Returns the interwiki name of the other wiki. """
+        """ Returns the interwiki name of the _other wiki. """
         return NotImplemented
 
     def get_iwid(self):
@@ -396,7 +396,7 @@ class Tag(object):
     def __cmp__(self, other):
         if not isinstance(other, Tag):
             return NotImplemented
-        return cmp(self.current_rev, other.current_rev)
+        return cmp(self.current_rev, _other.current_rev)
 
 
 class AbstractTagStore(object):

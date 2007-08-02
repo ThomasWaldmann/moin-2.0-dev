@@ -267,7 +267,7 @@ class Item(UserDict.DictMixin, object):
         """
         if self._acl is None:
             from MoinMoin.security import AccessControlList
-            self._acl = AccessControlList(self._backend._cfg, self[0].acl)
+            self._acl = AccessControlList(self._backend._other._cfg, self[0].acl)
         return self._acl
 
     acl = property(get_acl)
@@ -435,7 +435,7 @@ def _decorate(instance, obj, exception, message, forbid, forward):
     """
     class RaiseIt(object):
         """
-        An exception to be reaised.
+        An exception to be raised.
         """
         def __init__(self, exception, message):
             """
