@@ -405,109 +405,87 @@ class Revision(object):
         raise AttributeError, name
 
 
-class Decorator(object):
+def _decorate(instance, obj, exception, message, forbid, forward):
     """
-    Decorator class.
+    Decorates a class with forwards or exceptions.
     """
+    class RaiseIt(object):
+        """
+        An exception to be reaised.
+        """
+        def __init__(self, exception, message):
+            """
+            Init the arguments.
+            """
+            self._exception = exception
+            self._message = message
+    
+        def _raise_exception(self, *args, **kwargs):
+            """
+            Raise the exception.
+            """
+            raise self._exception(self._message)
 
-    def __init__(self, obj, exception, message):
-        """"
-        Init stuff.
-        """
-        self._obj = obj
-        self._exception = exception
-        self._message = message
-
-    def raise_exception(self, *args, **kwargs):
-        """
-        Raises an exception
-        """
-        raise self._exception(self._message)
-
-    def __getattribute__(self, name):
-        """
-        Returns the method.
-        """
-        try:
-            return object.__getattribute__(self, name)
-        except AttributeError:
-            return getattr(self._obj, name)
+    for method in forbid:
+        setattr(instance, method, getattr(RaiseIt(exception, message), "_raise_exception"))
+    for method in forward:
+        setattr(instance, method, getattr(obj, method))
 
 
-class ReadonlyMetadata(Decorator):
+class ReadonlyMetadata(UserDict.DictMixin):
     """
     Readonly Metadata implementation.
     """
 
     __implements__ = MetadataBackend
 
-    def __getattribute__(self, name):
-        """
-        Returns the name.
-        """
-        if name in ["__contains__", "__getitem__", "keys"]:
-            return getattr(self._obj, name)
-        elif name in ["__setitem__", "__delitem__", "save"]:
-            return self.raise_exception
-        else:
-            return Decorator.__getattribute__(self, name)
+    forbid = ['__setitem__', '__delitem__', 'save']
+    forward = ['__getitem__', '__contains__', 'keys']
+
+    def __init__(self, obj, exception, message):
+        _decorate(self, obj, exception, message, self.forbid, self.forward)
 
 
-class WriteonlyMetadata(Decorator):
+class WriteonlyMetadata(UserDict.DictMixin):
     """
     Writeonly Metadata implementation.
     """
 
     __implements__ = MetadataBackend
 
-    def __getattribute__(self, name):
-        """
-        Returns the name.
-        """
-        if name in ["__contains__", "__getitem__", "keys"]:
-            return self.raise_exception
-        elif name in ["__setitem__", "__delitem__", "save"]:
-            return getattr(self._obj, name)
-        else:
-            return Decorator.__getattribute__(self, name)
+    forbid = ['__getitem__', '__contains__', 'keys']
+    forward = ['__setitem__', '__delitem__', 'save']
+
+    def __init__(self, obj, exception, message):
+        _decorate(self, obj, exception, message, self.forbid, self.forward)
 
 
-class ReadonlyData(Decorator):
+class ReadonlyData(object):
     """
     This class implements read only access to the DataBackend.
     """
 
     __implements__ = DataBackend
 
-    def __getattribute__(self, name):
-        """
-        Returns the name.
-        """
-        if name in ["read", "seek", "tell", "close"]:
-            return getattr(self._obj, name)
-        elif name == "write":
-            return self.raise_exception
-        else:
-            return Decorator.__getattribute__(self, name)
+    forbid = ['write']
+    forward = ['read', 'seek', 'tell', 'close']
+
+    def __init__(self, obj, exception, message):
+        _decorate(self, obj, exception, message, self.forbid, self.forward)
 
 
-class WriteonlyData(Decorator):
+class WriteonlyData(object):
     """
     This class implements write only access to the DataBackend.
     """
 
     __implements__ = DataBackend
 
-    def __getattribute__(self, name):
-        """
-        Returns the name.
-        """
-        if name in ["read", "seek", "tell", "close"]:
-            return self.raise_exception
-        elif name == "write":
-            return getattr(self._obj, name)
-        else:
-            return Decorator.__getattribute__(self, name)
+    forbid = ['read', 'seek', 'tell', 'close']
+    forward = ['write']
+
+    def __init__(self, obj, exception, message):
+        _decorate(self, obj, exception, message, self.forbid, self.forward)
 
 
 _ = lambda x: x

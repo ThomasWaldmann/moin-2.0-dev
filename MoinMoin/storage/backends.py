@@ -9,25 +9,6 @@ from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import BackendError, NoSuchItemError
 
 
-class Callable(object):
-    """
-    Class that just does a call to instance.name with the given parameters.
-    """
-
-    def __init__(self, name, instance):
-        """
-        Init parameters.
-        """
-        self.name = name
-        self.instance = instance
-
-    def call(self, *args, **kwargs):
-        """
-        Do the call.
-        """
-        return self.instance._call(self.name, *args, **kwargs)
-
-
 class MetaBackend(object):
     """
     Super class which does the _call methods calls. Subclasses need to implement the missing
@@ -46,6 +27,24 @@ class MetaBackend(object):
         """
         Get attribute from other backend if we don't have one.
         """
+        class Callable(object):
+            """
+            Class that just does a call to instance.name with the given parameters.
+            """
+        
+            def __init__(self, name, instance):
+                """
+                Init parameters.
+                """
+                self._name = name
+                self._instance = instance
+        
+            def call(self, *args, **kwargs):
+                """
+                Do the call.
+                """
+                return self._instance._call(self._name, *args, **kwargs)
+
         return Callable(name, self).call
 
     def _call(self, method, *args, **kwargs):
@@ -53,6 +52,7 @@ class MetaBackend(object):
         Call the method from the first matching backend with the given parameters.
         """
         raise NotImplementedError
+
 
 
 class NamespaceBackend(MetaBackend):

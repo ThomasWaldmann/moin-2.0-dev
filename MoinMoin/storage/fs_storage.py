@@ -285,8 +285,8 @@ class IndexedBackend(object):
         """
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
-        index_filters = dict([(key, value) for key, value in filters.iteritems() if key in self._indexes])
-        other_filters = dict([(key, value) for key, value in filters.iteritems() if key not in self._indexes])
+        index_filters = dict((key, value) for key, value in filters.iteritems() if key in self._indexes)
+        other_filters = dict((key, value) for key, value in filters.iteritems() if key not in self._indexes)
 
         items = set(self._backend.list_items(other_filters))
 
@@ -400,14 +400,10 @@ class IndexedMetadata(UserDict.DictMixin):
         self._metadata = metadata
         self._backend = backend
 
-    def __getattribute__(self, name):
-        """
-        Get attribute from other backend if we don't have one.
-        """
-        try:
-            return object.__getattribute__(self, name)
-        except AttributeError:
-            return getattr(self._obj, name)
+        forward = ['__setitem__', '__delitem__', '__getitem__', '__contains__', 'keys']
+
+        for method in forward:
+            setattr(self, method, getattr(metadata, method))
 
     def save(self):
         """
