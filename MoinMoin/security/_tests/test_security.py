@@ -246,34 +246,17 @@ class TestAcl(unittest.TestCase):
         """ tests what are the page rights if edit-log entry doesn't exist
             for a page where no access is given to
         """
-        py.test.skip("test tricks out the caching system, page modifications without making an edit-log entry are not supported")
-        import os
-        from MoinMoin.Page import Page
-        pagename = u'AutoCreatedMoinMoinTemporaryTestPage'
+        pagename = u'AutoCreatedMoinMoinACLTestPage'
 
-        result = self.request.user.may.write(pagename)
-        page = Page(self.request, pagename)
-        path = page.getPagePath(use_underlay=0, check_create=0)
-        if os.path.exists(path):
-            py.test.skip("%s exists. Won't overwrite exiting page" % self.dictPage)
+        self.request.cfg.page_backend.create_item(pagename)
+        self.request.cfg.page_backend.create_revision(pagename, 0)
+        data = self.request.cfg.page_backend.get_data_backend(pagename, 0)
+        data.write(u'#acl All: \n')
+        data.close()
 
-        try:
-            try:
-                os.mkdir(path)
-                revisionsDir = os.path.join(path, 'revisions')
-                os.mkdir(revisionsDir)
-                current = '00000001'
-                file(os.path.join(path, 'current'), 'w').write('%s\n' % current)
-                text = u'#acl All: \n'
-                file(os.path.join(revisionsDir, current), 'w').write(text)
-            except Exception, err:
-                py.test.skip("Can not be create test page: %s" % err)
+        assert not self.request.user.may.write(pagename)
 
-            assert not self.request.user.may.write(pagename)
-        finally:
-            if os.path.exists(path):
-                import shutil
-                shutil.rmtree(path, True)
+        self.request.cfg.page_backend.remove_item(pagename)
 
 coverage_modules = ['MoinMoin.security']
 

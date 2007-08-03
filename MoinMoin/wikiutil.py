@@ -19,6 +19,7 @@ import urllib
 
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
+from MoinMoin.storage.external import READONLY_METADATA
 from inspect import getargspec, isfunction, isclass, ismethod
 
 
@@ -528,8 +529,7 @@ def get_max_mtime(file_list, page):
     page page. """
     timestamps = [os.stat(filename).st_mtime for filename in file_list]
     if page.exists():
-        # exists() is cached and thus cheaper than mtime_usecs()
-        timestamps.append(version2timestamp(page.mtime_usecs()))
+        timestamps.append(page.mtime())
     return max(timestamps)
 
 
@@ -2177,7 +2177,7 @@ def renderText(request, Parser, text, line_anchors=False):
     del out
     return result
 
-def get_processing_instructions(body):
+def split_body(body):
     """ Extract the processing instructions / acl / etc. at the beginning of a page's body.
 
         Hint: if you have a Page object p, you already have the result of this function in
@@ -2185,7 +2185,7 @@ def get_processing_instructions(body):
 
         Returns a list of (pi, restofline) tuples and a string with the rest of the body.
     """
-    pi = []
+    pi = {}
     while body.startswith('#'):
         try:
             line, body = body.split('\n', 1) # extract first line
@@ -2206,6 +2206,31 @@ def get_processing_instructions(body):
                 line = '##%s' % comment
 
         verb, args = (line[1:] + ' ').split(' ', 1) # split at the first blank
-        pi.append((verb.lower(), args.strip()))
+        pi.setdefault(verb.lower(), []).append(args.strip())
+
+    for key, value in pi.iteritems():
+        if len(value) == 1:
+            pi[key] = value[0]
 
     return pi, body
+
+def add_metadata_to_body(metadata, data):
+    """
+    Adds the processing instructions to the data.
+    """
+
+    metadata_data = ""
+    for key, value in metadata.iteritems():
+
+        # remove readonly metadata
+        if key in READONLY_METADATA:
+            continue
+
+        # special handling for list metadata like acls
+        if isinstance(value, list):
+            for line in value:
+                metadata_data += "#%s %s\n" % (key, line)
+        else:
+            metadata_data += "#%s %s\n" % (key, value)
+
+    return metadata_data + data

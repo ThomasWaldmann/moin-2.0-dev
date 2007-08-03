@@ -7,6 +7,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import os
 import time
 
 from MoinMoin.logfile import LogFile
@@ -14,14 +15,8 @@ from MoinMoin import wikiutil
 
 class EventLog(LogFile):
     """ The global event-log is mainly used for statistics (e.g. EventStats) """
-    def __init__(self, request, filename=None, buffer_size=65536, **kw):
-        if filename is None:
-            rootpagename = kw.get('rootpagename', None)
-            if rootpagename:
-                from MoinMoin.Page import Page
-                filename = Page(request, rootpagename).getPagePath('event-log', isfile=1)
-            else:
-                filename = request.rootpage.getPagePath('event-log', isfile=1)
+    def __init__(self, request, buffer_size=65536, **kw):
+        filename = os.path.join(request.cfg.data_dir, 'event-log')
         LogFile.__init__(self, filename, buffer_size)
 
     def add(self, request, eventtype, values=None, add_http_info=1,
