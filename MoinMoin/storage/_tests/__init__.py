@@ -5,94 +5,158 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os
-import py
-import shutil
-import tempfile
+import py.test
 
-from MoinMoin.support import tarfile
-from MoinMoin.storage.error import BackendError, LockingError
-
-test_dir = None
-
-names = ["1180352194.13.59241", "1180424607.34.55818", "1180424618.59.18110", ]
-
-pages = ["New", "Test", ]
-
-metadata = {u'aliasname': u'',
-            u'bookmarks': {},
-            u'css_url': u'',
-            u'date_fmt': u'',
-            u'datetime_fmt': u'',
-            u'disabled': u'0',
-            u'edit_on_doubleclick': u'0',
-            u'edit_rows': u'20',
-            u'editor_default': u'text',
-            u'editor_ui': u'freechoice',
-            u'email': u'h_wendel@cojobo.net',
-            u'enc_password': u'{SHA}ujz/zJOpLgj4LDPFXYh2Zv3zZK4=',
-            u'language': u'',
-            u'last_saved': u'1180435816.61',
-            u'mailto_author': u'0',
-            u'name': u'HeinrichWendel',
-            u'quicklinks': [u'www.google.de', u'www.test.de', u'WikiSandBox', ],
-            u'remember_last_visit': u'0',
-            u'remember_me': u'1',
-            u'show_comments': u'0',
-            u'show_fancy_diff': u'1',
-            u'show_nonexist_qm': u'0',
-            u'show_page_trail': u'1',
-            u'show_toolbar': u'1',
-            u'show_topbottom': u'0',
-            u'subscribed_pages': [u'WikiSandBox', u'FrontPage2', ],
-            u'theme_name': u'modern',
-            u'tz_offset': u'0',
-            u'want_trivial': u'0',
-            u'wikiname_add_spaces': u'0',
-           }
-
-def setup(module):
-    """
-    Extract test data to tmp.
-    """
-    global test_dir
-    test_dir = tempfile.mkdtemp()
-    tar_file = tarfile.open(os.path.join(str(py.magic.autopath().dirpath()), u"data.tar"))
-    for tarinfo in tar_file:
-        tar_file.extract(tarinfo, test_dir)
-    tar_file.close()
-
-def teardown(module):
-    """
-    Remove test data from tmp.
-    """
-    global test_dir
-    #shutil.rmtree(test_dir)
-    test_dir = None
-
-def get_user_dir():
-    return os.path.join(test_dir, "data/user")
-
-def get_page_dir():
-    return os.path.join(test_dir, "data/pages")
+from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.external import SIZE, ACL
+from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
+from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_COMMENT, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
 
 
-class DummyConfig:
-    tmp_dir = tempfile.gettempdir()
-    indexes = ["name", "language", "format"]
+items = ["New", "Test", ]
+items_metadata = { EDIT_LOG_EXTRA: '',
+            EDIT_LOG_ACTION: 'SAVE',
+            EDIT_LOG_ADDR: '127.0.0.1',
+            EDIT_LOG_HOSTNAME: 'localhost',
+            EDIT_LOG_COMMENT: '',
+            EDIT_LOG_USERID: '1180352194.13.59241',
+            EDIT_LOG_MTIME: '',
+            SIZE: '',
+            'format': 'wiki',
+            ACL: 'MoinPagesEditorGroup:read,write,delete,revert All:read',
+            'language' : 'sv', }
 
-    def __init__(self):
-        self.indexes_dir = test_dir
 
+class AbstractBackendTest(object):
+    
+    newname = "Blub"
+    notexist = "Juhu"
 
-class BackendTest:
+    def test_name(self):
+        assert self.backend.name == self.name
+
+    def test_list_items(self):
+        assert self.backend.list_items() == items
+        assert self.backend.list_items({'format': 'wiki'}) == [items[1]]
+
     def test_has_item(self):
+        assert self.backend.has_item(items[0])
+        assert not self.backend.has_item(self.notexist)
         assert not self.backend.has_item("")
 
+    def test_create_item(self):
+        py.test.raises(BackendError, self.backend.create_item, items[1])
+        self.backend.create_item(self.newname)
+        assert self.backend.has_item(self.newname)
+        assert self.backend.list_items() == [self.newname] + items
+        assert self.backend.current_revision(self.newname) == 0
+    
+    def test_remove_item(self):
+        self.backend.remove_item(self.newname)
+        assert not self.backend.has_item(self.newname)
+        assert self.backend.list_items() == items
+        py.test.raises(NoSuchItemError, self.backend.remove_item, self.newname)
+
+    def test_rename_item(self):
+        py.test.raises(BackendError, self.backend.rename_item, items[0], "")
+        py.test.raises(BackendError, self.backend.rename_item, items[0], items[0])
+        py.test.raises(BackendError, self.backend.rename_item, items[0], items[1])
+
+        self.backend.rename_item(items[0], self.newname)
+        assert self.backend.has_item(self.newname)
+        assert not self.backend.has_item(items[0])
+        newitems = items[:]
+        newitems.remove(items[0])
+        newitems.insert(0, self.newname)
+        assert self.backend.list_items() == newitems
+        
+        self.backend.rename_item(self.newname, items[0])
+        assert not self.backend.has_item(self.newname)
+        assert self.backend.has_item(items[0])
+        assert self.backend.list_items() == items
+
+    def test_list_revisions(self):
+        assert self.backend.list_revisions(items[0]) == [1]
+        assert self.backend.list_revisions(items[1]) == [2, 1]
+        py.test.raises(NoSuchItemError, self.backend.list_revisions, self.newname)
+
+    def test_current_revision(self):
+        assert self.backend.current_revision(items[0]) == 1
+        assert self.backend.current_revision(items[1]) == 2
+
+    def test_has_revision(self):
+        assert self.backend.has_revision(items[0], 0)
+        assert self.backend.has_revision(items[0], 1)
+        assert not self.backend.has_revision(items[0], 2)
+        assert self.backend.has_revision(items[1], 0)
+        assert self.backend.has_revision(items[1], 1)
+        assert self.backend.has_revision(items[1], 2)
+        assert not self.backend.has_revision(items[1], 3)
+
+        py.test.raises(NoSuchItemError, self.backend.has_revision, self.notexist, 1)
+
+    def test_create_revision(self):
+        assert self.backend.create_revision(items[0], 2) == 2
+        assert self.backend.has_revision(items[0], 2)
+        assert self.backend.list_revisions(items[0]) == [2, 1]
+        assert self.backend.current_revision(items[0]) == 1
+        assert self.backend.current_revision(items[0], includeEmpty=True) == 2
+
+        py.test.raises(BackendError, self.backend.create_revision, items[0], 1)
+        py.test.raises(NoSuchItemError, self.backend.create_revision, self.notexist, 1)
+
+    def test_remove_revision(self):
+        assert self.backend.remove_revision(items[0], 2) == 2
+        assert not self.backend.has_revision(items[0], 2)
+        assert self.backend.list_revisions(items[0]) == [1]
+        assert self.backend.current_revision(items[0]) == 1
+        assert self.backend.current_revision(items[0], includeEmpty=True) == 1
+
+        py.test.raises(NoSuchRevisionError, self.backend.remove_revision, items[0], 4)
+        py.test.raises(NoSuchItemError, self.backend.remove_revision, self.notexist, 4)
+
+    def test_get_data_backend(self):
+        self.backend.get_data_backend(items[0], 1)
+
+    def test_get_metadata_backend(self):
+        self.backend.get_metadata_backend(items[0], 1)
+
     def test_lock_unlock_item(self):
-        self.backend.lock("id")
-        py.test.raises(LockingError, self.backend.lock, "id")
-        self.backend.unlock("id")
-        self.backend.lock("id", timeout=1)
-        py.test.raises(LockingError, self.backend.lock, "id", 1)
-        self.backend.unlock("id")
+        self.backend.lock(self.newname)
+        py.test.raises(LockingError, self.backend.lock, self.newname)
+        self.backend.unlock(self.newname)
+        self.backend.lock(self.newname, timeout=1)
+        py.test.raises(LockingError, self.backend.lock, self.newname, 1)
+        self.backend.unlock(self.newname)
+
+
+class AbstractMetadataTest(object):
+
+    key = 'abc'
+    totest = items[1]
+    tometadata = items_metadata
+
+    def test_get(self):
+        metadata1 = self.backend.get_metadata_backend(self.totest, 2)
+        self._assertDict(metadata1, self.tometadata)
+
+    def test_set(self):
+        metadata1 = self.backend.get_metadata_backend(self.totest, 2)
+        metadata1[self.key] = 'test'
+        self.tometadata[self.key] = 'test'
+        metadata1.save()
+        self._assertDict(metadata1, self.tometadata)
+
+    def test_del(self):
+        metadata1 = self.backend.get_metadata_backend(self.totest, 2)
+        del metadata1[self.key]
+        del self.tometadata[self.key]
+        metadata1.save()
+        self._assertDict(metadata1, self.tometadata)
+
+    def _assertDict(self, dict1, dict2):
+        for key in dict1:
+            assert key in dict2
+            if key != SIZE and key != EDIT_LOG_MTIME:
+                assert dict1[key] == dict2[key]
+
