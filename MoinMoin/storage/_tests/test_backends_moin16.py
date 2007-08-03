@@ -7,220 +7,201 @@
 
 import os
 import py.test
+import py.magic
+import shutil
+import tempfile
 
-from MoinMoin.storage._tests import get_user_dir, get_page_dir, names, metadata, DummyConfig, pages, setup, teardown, BackendTest
+from MoinMoin.storage._tests import AbstractBackendTest, AbstractMetadataTest, items
 
 from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
-from MoinMoin.storage.external import SIZE, ACL
-from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
-from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_COMMENT, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
-from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import BackendError, NoSuchItemError, StorageError
+
+from MoinMoin.support import tarfile
+
+
+test_dir = None
 
 
 def setup_module(module):
-    setup(module)
+    """
+    Extract test data to tmp.
+    """
+    global test_dir
+    test_dir = tempfile.mkdtemp()
+    tar_file = tarfile.open(os.path.join(str(py.magic.autopath().dirpath()), u"data.tar"))
+    for tarinfo in tar_file:
+        tar_file.extract(tarinfo, test_dir)
+    tar_file.close()
+
 
 def teardown_module(module):
-    teardown(module)
+    """
+    Remove test data from tmp.
+    """
+    global test_dir
+    #shutil.rmtree(test_dir)
+    test_dir = None
 
 
-class TestUserBackend(BackendTest):
+def get_user_dir():
+    return os.path.join(test_dir, "data/user")
+
+def get_page_dir():
+    return os.path.join(test_dir, "data/pages")
+
+
+class DummyConfig:
+    tmp_dir = tempfile.gettempdir()
+    indexes = ["name", "language", "format"]
+
+    def __init__(self):
+        self.indexes_dir = test_dir
+
+
+users = ["1180352194.13.59241", "1180424607.34.55818", "1180424618.59.18110", ]
+
+users_metadata = {u'aliasname': u'',
+            u'bookmarks': {},
+            u'css_url': u'',
+            u'date_fmt': u'',
+            u'datetime_fmt': u'',
+            u'disabled': u'0',
+            u'edit_on_doubleclick': u'0',
+            u'edit_rows': u'20',
+            u'editor_default': u'text',
+            u'editor_ui': u'freechoice',
+            u'email': u'h_wendel@cojobo.net',
+            u'enc_password': u'{SHA}ujz/zJOpLgj4LDPFXYh2Zv3zZK4=',
+            u'language': u'',
+            u'last_saved': u'1180435816.61',
+            u'mailto_author': u'0',
+            u'name': u'HeinrichWendel',
+            u'quicklinks': [u'www.google.de', u'www.test.de', u'WikiSandBox', ],
+            u'remember_last_visit': u'0',
+            u'remember_me': u'1',
+            u'show_comments': u'0',
+            u'show_fancy_diff': u'1',
+            u'show_nonexist_qm': u'0',
+            u'show_page_trail': u'1',
+            u'show_toolbar': u'1',
+            u'show_topbottom': u'0',
+            u'subscribed_pages': [u'WikiSandBox', u'FrontPage2', ],
+            u'theme_name': u'modern',
+            u'tz_offset': u'0',
+            u'want_trivial': u'0',
+            u'wikiname_add_spaces': u'0',
+           }
+
+
+class TestUserBackend(AbstractBackendTest):
+
+    newname = "1182252194.13.52241"
 
     def setup_class(self):
-        self.backend = UserBackend("user", get_user_dir(), DummyConfig())
-
-    def test_name(self):
-        assert self.backend.name == "user"
+        self.name = "users"
+        self.backend = UserBackend("users", get_user_dir(), DummyConfig())
 
     def test_list_items(self):
-        assert self.backend.list_items() == names
-        assert self.backend.list_items({'name': 'HeinrichWendel'}) == [names[0]]
+        assert self.backend.list_items() == users
+        assert self.backend.list_items({'name': 'HeinrichWendel'}) == [users[0]]
 
     def test_has_item(self):
-        assert self.backend.has_item(names[0])
-        assert not self.backend.has_item("asdf")
-        BackendTest.test_has_item(self)
+        assert self.backend.has_item(users[0])
+        assert not self.backend.has_item(self.notexist)
+        assert not self.backend.has_item("")
 
-    def test_create_and_remove_item(self):
-        self.backend.create_item("1180424618.59.18120")
-        assert self.backend.has_item("1180424618.59.18120")
+    def test_create_item(self):
+        py.test.raises(BackendError, self.backend.create_item, users[0])
+        self.backend.create_item(self.newname)
+        assert self.backend.has_item(self.newname)
+        assert self.backend.list_items() == users + [self.newname]
+        assert self.backend.current_revision(self.newname) == 1
 
-        py.test.raises(BackendError, self.backend.create_item, names[0])
-
-        self.backend.remove_item("1180424618.59.18120")
-        assert not self.backend.has_item("1180424618.59.18120")
-
-        py.test.raises(NoSuchItemError, self.backend.remove_item, "blub")
-
-    def test_list_revisions(self):
-        assert self.backend.list_revisions(names[0]) == [1]
-
-    def test_current_revision(self):
-        assert self.backend.current_revision(names[0]) == 1
-
-    def test_has_revision(self):
-        assert self.backend.has_revision(names[0], 1)
-        assert self.backend.has_revision(names[1], 0)
-        assert not self.backend.has_revision(names[2], 2)
-        assert not self.backend.has_revision(names[0], -1)
-
-    def test_get_metadata_backend(self):
-        self.backend.get_metadata_backend(names[0], 1)
-
-
-class TestUserMetadata:
-
-    def setup_class(self):
-        self.backend = UserBackend("user", get_user_dir(), DummyConfig())
-        self.metadata = self.backend.get_metadata_backend(names[0], 1)
-
-    def test_get(self):
-        assert self.metadata == metadata
-
-    def test_set(self):
-        self.metadata["aliasname"] = "test"
-        self.metadata.save()
-        metadata["aliasname"] = "test"
-        assert self.metadata == metadata
-
-        self.metadata["aliasname"] = ""
-        self.metadata.save()
-        metadata["aliasname"] = ""
-        assert self.metadata == metadata
-
-    def test_del(self):
-        self.metadata["battle"] = "test"
-        self.metadata.save()
-        metadata["battle"] = "test"
-        assert self.metadata == metadata
-
-        del self.metadata["battle"]
-        self.metadata.save()
-        del metadata["battle"]
-        assert self.metadata == metadata
-
-
-class TestPageBackend(BackendTest):
-
-    def setup_class(self):
-        self.backend = PageBackend("pages", get_page_dir(), DummyConfig())
-
-    def test_name(self):
-        assert self.backend.name == "pages"
-
-    def test_list_items(self):
-        assert self.backend.list_items() == pages
-        assert self.backend.list_items({'format': 'wiki'}) == [pages[1]]
-
-    def test_has_item(self):
-        assert self.backend.has_item(pages[0])
-        assert not self.backend.has_item("ad")
-        BackendTest.test_has_item(self)
-
-    def test_create_and_remove_item(self):
-        py.test.raises(BackendError, self.backend.create_item, "Test")
-        self.backend.create_item("Yeah")
-        assert os.path.isdir(os.path.join(get_page_dir(), "Yeah"))
-        assert os.path.isdir(os.path.join(get_page_dir(), "Yeah", "cache"))
-        assert os.path.isdir(os.path.join(get_page_dir(), "Yeah", "cache", "__lock__"))
-        assert os.path.isdir(os.path.join(get_page_dir(), "Yeah", "revisions"))
-        assert os.path.isfile(os.path.join(get_page_dir(), "Yeah", "current"))
-        assert os.path.isfile(os.path.join(get_page_dir(), "Yeah", "edit-log"))
-        py.test.raises(NoSuchItemError, self.backend.remove_item, "ADF")
-        assert self.backend.current_revision("Yeah") == 0
-        self.backend.remove_item("Yeah")
+    def test_remove_item(self):
+        self.backend.remove_item(self.newname)
+        assert not self.backend.has_item(self.newname)
+        assert self.backend.list_items() == users
+        py.test.raises(NoSuchItemError, self.backend.remove_item, self.newname)
 
     def test_rename_item(self):
-        py.test.raises(BackendError, self.backend.rename_item, pages[0], "")
-        py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[0])
-        self.backend.rename_item(pages[0], "abcde")
-        assert os.path.isdir(os.path.join(get_page_dir(), "abcde"))
-        assert self.backend.has_item("abcde")
-        self.backend.rename_item("abcde", pages[0])
-        assert os.path.isdir(os.path.join(get_page_dir(), pages[0]))
-        assert self.backend.has_item(pages[0])
-        py.test.raises(BackendError, self.backend.rename_item, pages[0], pages[1])
+        py.test.raises(StorageError, self.backend.rename_item, users[0], self.newname)
 
     def test_list_revisions(self):
-        assert self.backend.list_revisions(pages[0]) == [1]
-        assert self.backend.list_revisions(pages[1]) == [2, 1]
-        py.test.raises(NoSuchItemError, self.backend.list_revisions, "ADF")
+        assert self.backend.list_revisions(users[0]) == [1]
 
     def test_current_revision(self):
-        assert self.backend.current_revision(pages[0]) == 1
-        assert self.backend.current_revision(pages[1]) == 2
+        assert self.backend.current_revision(users[0]) == 1
+        assert self.backend.current_revision(users[1]) == 1
 
     def test_has_revision(self):
-        assert self.backend.has_revision(pages[0], 0)
-        assert self.backend.has_revision(pages[0], 1)
-        assert not self.backend.has_revision(pages[0], 2)
-        assert self.backend.has_revision(pages[1], 0)
-        assert self.backend.has_revision(pages[1], 1)
-        assert self.backend.has_revision(pages[1], 2)
-        assert not self.backend.has_revision(pages[1], 3)
+        assert self.backend.has_revision(users[0], 1)
+        assert self.backend.has_revision(users[1], 0)
+        assert not self.backend.has_revision(users[2], 2)
+        assert not self.backend.has_revision(users[0], -1)
 
-    def test_create_remove_revision(self):
-        #assert self.backend.create_revision(pages[0], 2) == 2
-        #assert os.path.isfile(os.path.join(get_page_dir(), pages[0], "revisions", "00000002"))
-        #assert open(os.path.join(get_page_dir(), pages[0], "current"), "r").read() == "00000002\n"
-        #assert self.backend.current_revision(pages[0]) == 1
-        #assert self.backend.current_revision(pages[0], includeEmpty=True) == 2
-        #assert self.backend.remove_revision(pages[0], 2) == 2
-        #assert open(os.path.join(get_page_dir(), pages[0], "current"), "r").read() == "00000001\n"
-        #assert not os.path.isfile(os.path.join(get_page_dir(), pages[0], "revisions", "00000002"))
-        #assert self.backend.current_revision(pages[0]) == 1
-        #assert self.backend.current_revision(pages[0], includeEmpty=True) == 1
+    def test_create_revision(self):
+        py.test.raises(StorageError, self.backend.create_revision, users[0], 1)
 
-        #py.test.raises(BackendError, self.backend.create_revision, pages[0], 1)
-        #py.test.raises(NoSuchItemError, self.backend.create_revision, "ADF", 1)
-
-        py.test.raises(NoSuchRevisionError, self.backend.remove_revision, pages[0], 4)
-        py.test.raises(NoSuchItemError, self.backend.remove_revision, "ADF", 4)
+    def test_remove_revision(self):
+        py.test.raises(StorageError, self.backend.remove_revision, users[0], 1)
 
     def test_get_data_backend(self):
-        self.backend.get_data_backend(pages[0], 1)
+        py.test.raises(StorageError, self.backend.get_data_backend, users[0], 1)
 
     def test_get_metadata_backend(self):
-        self.backend.get_metadata_backend(pages[0], 1)
+        self.backend.get_metadata_backend(users[0], 1)
 
 
-class TestPageMetadata:
+class TestUserMetadata(AbstractMetadataTest):
+
+    totest = users[0]
+    tometadata = users_metadata
+
+    def setup_class(self):
+        self.backend = UserBackend("user", get_user_dir(), DummyConfig())
+
+
+class TestPageBackend(AbstractBackendTest):
+
+    def setup_class(self):
+        self.name = "pages"
+        self.backend = PageBackend("pages", get_page_dir(), DummyConfig())
+
+    def test_create_item(self):
+        AbstractBackendTest.test_create_item(self)
+        assert os.path.isdir(os.path.join(get_page_dir(), self.newname))
+        assert os.path.isdir(os.path.join(get_page_dir(), self.newname, "cache"))
+        assert os.path.isdir(os.path.join(get_page_dir(), self.newname, "cache", "__lock__"))
+        assert os.path.isdir(os.path.join(get_page_dir(), self.newname, "revisions"))
+        assert os.path.isfile(os.path.join(get_page_dir(), self.newname, "current"))
+        assert os.path.isfile(os.path.join(get_page_dir(), self.newname, "edit-log"))
+
+    def test_remove_item(self):
+        AbstractBackendTest.test_remove_item(self)
+        assert not os.path.exists(os.path.join(get_page_dir(), self.newname))
+
+    def test_rename_item(self):
+        AbstractBackendTest.test_rename_item(self)
+        self.backend.rename_item(items[0], self.newname)
+        assert os.path.isdir(os.path.join(get_page_dir(), self.newname))
+        assert not os.path.isdir(os.path.join(get_page_dir(), items[0]))
+        self.backend.rename_item(self.newname, items[0])
+
+    def test_create_revision(self):
+        AbstractBackendTest.test_create_revision(self)
+        assert os.path.isfile(os.path.join(get_page_dir(), items[0], "revisions", "00000002"))
+        assert open(os.path.join(get_page_dir(), items[0], "current"), "r").read() == "00000002\n"
+
+    def test_remove_revision(self):
+        AbstractBackendTest.test_remove_revision(self)
+        assert open(os.path.join(get_page_dir(), items[0], "current"), "r").read() == "00000001\n"
+        assert not os.path.isfile(os.path.join(get_page_dir(), items[0], "revisions", "00000002"))
+
+
+class TestPageMetadata(AbstractMetadataTest):
+
+    # TODO: test special keys
 
     def setup_class(self):
         self.backend = PageBackend("pages", get_page_dir(), DummyConfig())
-
-    def test_get(self):
-        metadata1 = self.backend.get_metadata_backend(pages[1], 2)
-        assert metadata1 == {EDIT_LOG_EXTRA: '', EDIT_LOG_ACTION: 'SAVE', EDIT_LOG_ADDR: '127.0.0.1', EDIT_LOG_HOSTNAME: 'localhost', EDIT_LOG_COMMENT: '', EDIT_LOG_USERID: '1180352194.13.59241', EDIT_LOG_MTIME: metadata1[EDIT_LOG_MTIME], SIZE: 192L, 'format': 'wiki', ACL: 'MoinPagesEditorGroup:read,write,delete,revert All:read', 'language': 'sv'}
-        metadata2 = self.backend.get_metadata_backend(pages[0], -1)
-        assert metadata2 == {EDIT_LOCK_TIMESTAMP: '1183317594000000', EDIT_LOCK_USER: '1183317550.72.7782'}
-        metadata3 = self.backend.get_metadata_backend(pages[1], -1)
-        assert metadata3 == {EDIT_LOCK_TIMESTAMP: '1182452549000000', EDIT_LOCK_USER: '127.0.0.1'}
-
-    def test_set(self):
-        metadata1 = self.backend.get_metadata_backend(pages[1], 2)
-        metadata1['format'] = 'test'
-        metadata1.save()
-        assert metadata1 == {EDIT_LOG_EXTRA: '', EDIT_LOG_ACTION: 'SAVE', EDIT_LOG_ADDR: '127.0.0.1', EDIT_LOG_HOSTNAME: 'localhost', EDIT_LOG_COMMENT: '', EDIT_LOG_USERID: '1180352194.13.59241', EDIT_LOG_MTIME: metadata1[EDIT_LOG_MTIME], SIZE: 192L, 'format': 'test', ACL: 'MoinPagesEditorGroup:read,write,delete,revert All:read', 'language': 'sv'}
-        metadata1['format'] = 'wiki'
-        metadata1.save()
-
-        metadata2 = self.backend.get_metadata_backend(pages[1], -1)
-        metadata2[EDIT_LOCK_TIMESTAMP] = '1283317594000000'
-        metadata2[EDIT_LOCK_USER]= '192.168.0.1'
-        metadata2.save()
-        assert metadata2 == {EDIT_LOCK_TIMESTAMP: '1283317594000000', EDIT_LOCK_USER: '192.168.0.1'}
-
-    def test_del(self):
-        metadata1 = self.backend.get_metadata_backend(pages[1], 2)
-        del metadata1['format']
-        metadata1.save()
-        assert metadata1 == {EDIT_LOG_EXTRA: '', EDIT_LOG_ACTION: 'SAVE', EDIT_LOG_ADDR: '127.0.0.1', EDIT_LOG_HOSTNAME: 'localhost', EDIT_LOG_COMMENT: '', EDIT_LOG_USERID: '1180352194.13.59241', EDIT_LOG_MTIME: metadata1[EDIT_LOG_MTIME], SIZE: 179L, ACL: 'MoinPagesEditorGroup:read,write,delete,revert All:read', 'language': 'sv'}
-
-        metadata2 = self.backend.get_metadata_backend(pages[1], -1)
-        del metadata2[EDIT_LOCK_TIMESTAMP]
-        del metadata2[EDIT_LOCK_USER]
-        metadata2.save()
-        assert metadata2 == {}
-
 

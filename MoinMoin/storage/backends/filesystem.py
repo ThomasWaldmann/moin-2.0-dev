@@ -17,7 +17,7 @@ from MoinMoin import wikiutil
 from MoinMoin.storage.backends.common import CommonBackend, _get_metadata
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.error import BackendError, LockingError
-from MoinMoin.support.python_compatibility import sorted
+from MoinMoin.support.python_compatibility import sorted, set
 from MoinMoin.util import lock, pickle
 
 
@@ -304,8 +304,6 @@ class IndexedBackend(object):
         for key, value in index_filters.iteritems():
             items = items & set(self._get_items(key, value))
 
-        print ""
-
         return sorted(list(items))
 
     def remove_item(self, item):
@@ -353,7 +351,6 @@ class IndexedBackend(object):
         for item in self._backend.list_items():
             # get metadata
             metadata = _get_metadata(self._backend, item, [-1, 0])
-            print metadata
 
             # set metadata
             for index in self._indexes:
