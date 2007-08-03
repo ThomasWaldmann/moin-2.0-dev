@@ -20,7 +20,6 @@ Deleting the TestConfig instance will restore the previous configuration.
 """
 
 import atexit
-from inspect import isclass
 from sys import modules
 import sys
 
@@ -38,7 +37,7 @@ sys.path.insert(0, str(moindir.join("tests")))
 
 from MoinMoin.support.python_compatibility import set
 
-coverage_modules = set()
+coverage_modules = []
 
 
 try:
