@@ -280,7 +280,7 @@ class Item(UserDict.DictMixin, object):
         """
         if self._edit_lock is None:
             if EDIT_LOCK_TIMESTAMP in self.metadata and EDIT_LOCK_USER in self.metadata:
-                self._edit_lock = (True, long(self.metadata[EDIT_LOCK_TIMESTAMP]), self.metadata[EDIT_LOCK_USER])
+                self._edit_lock = (True, float(self.metadata[EDIT_LOCK_TIMESTAMP]), self.metadata[EDIT_LOCK_USER])
             else:
                 self._edit_lock = False, 0, None
         return self._edit_lock
@@ -399,13 +399,13 @@ class Revision(object):
         """
         Deleted Property.
         """
-        return self.metadata.get(DELETED, False)
+        return bool(self.metadata.get(DELETED, False))
 
     def set_deleted(self, value):
         """
         Deleted Property.
         """
-        self.metadata[DELETED] = value
+        self.metadata[DELETED] = str(value)
 
     deleted = property(get_deleted, set_deleted)
 
@@ -413,7 +413,7 @@ class Revision(object):
         """
         Size Property.
         """
-        size = self.metadata.get(SIZE, 0L)
+        size = long(self.metadata.get(SIZE, 0L))
         if not size:
             size = len(self.data.read())
             self.data.close()
@@ -425,8 +425,10 @@ class Revision(object):
         """
         Get edit lock values.
         """
-        if name in ('mtime', 'action', 'addr', 'hostname', 'userid', 'extra', 'comment'):
+        if name in ('action', 'addr', 'hostname', 'userid', 'extra', 'comment'):
             return self.metadata.get("edit_log_" + name, "")
+        elif name == 'mtime':
+            return float(self.metadata.get("edit_log_" + name, 0.0))
         raise AttributeError, name
 
 

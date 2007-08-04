@@ -29,7 +29,7 @@ except NameError:
 
 try:
     from functools import partial
-except NameError:
+except (NameError, ImportError):
     class partial(object):
         def __init__(*args, **kw):
             self = args[0]
