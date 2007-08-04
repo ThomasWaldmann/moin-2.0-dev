@@ -7,68 +7,50 @@
 
 import py.test
 
-from MoinMoin.storage._tests import get_user_dir, get_page_dir, DummyConfig, pages, names, setup, teardown, BackendTest
+from MoinMoin.storage._tests import AbstractBackendTest, items
+from MoinMoin.storage._tests.test_backends_moin16 import get_page_backend, get_user_backend, setup_module, teardown_module, user
 
-from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
 from MoinMoin.storage.backends.meta import LayerBackend, NamespaceBackend
-from MoinMoin.storage.error import NoSuchItemError
 
 
-def setup_module(module):
-    setup(module)
-
-def teardown_module(module):
-    teardown(module)
-
-
-class TestLayerBackend(BackendTest):
-    """
-    This class tests the layer backend. It only tests the basic three methods,
-    all other methods are like the remove_item method using call.
-    """
+class TestLayerBackend(AbstractBackendTest):
 
     def setup_class(self):
-        self.backend = LayerBackend([PageBackend("pages", get_page_dir(), DummyConfig()), UserBackend("user", get_user_dir(), DummyConfig())])
+        self.backend = LayerBackend([get_page_backend(), get_user_backend()])
+
+    def test_name(self):
+        pass
 
     def test_list_items(self):
-        items = pages + names
-        items.sort()
-        assert self.backend.list_items() == items
+        new_items = items + user
+        new_items.sort()
+        assert self.backend.list_items() == new_items
 
     def test_has_item(self):
-        assert self.backend.has_item(pages[0]).name == "pages"
-        assert self.backend.has_item(names[0]).name == "user"
-        assert not self.backend.has_item("ad")
-        BackendTest.test_has_item(self)
-
-    def test_remove_item(self):
-        py.test.raises(NoSuchItemError, self.backend.remove_item, "asdf")
+        assert self.backend.has_item(items[0]).name == "pages"
+        assert self.backend.has_item(user[0]).name == "user"
+        AbstractBackendTest.test_has_item(self)
 
 
-class TestNamespaceBackend(BackendTest):
-    """
-    This class Tests the namespace backend. It only tests the basic three methods,
-    all other methods are like the remove_item method using call.
-    """
+class TestNamespaceBackend(AbstractBackendTest):
 
     def setup_class(self):
-        self.backend = NamespaceBackend({'/': PageBackend("pages", get_page_dir(), DummyConfig()), '/usr': UserBackend("user", get_user_dir(), DummyConfig())})
+        self.backend = NamespaceBackend({'/': get_page_backend(), '/usr': get_user_backend()})
 
         self.new_names = []
-        for item in names:
+        for item in user:
             self.new_names.append('usr/' + item)
 
+    def test_name(self):
+        pass
+
     def test_list_items(self):
-        items = pages + self.new_names
-        items.sort()
-        assert self.backend.list_items() == pages + self.new_names
+        new_items = items + self.new_names
+        new_items.sort()
+        assert self.backend.list_items() == new_items
 
     def test_has_item(self):
-        assert self.backend.has_item(pages[0]).name == "pages"
+        assert self.backend.has_item(items[0]).name == "pages"
         assert self.backend.has_item(self.new_names[0]).name == "user"
-        assert not self.backend.has_item("ad")
-        BackendTest.test_has_item(self)
-
-    def test_remove_item(self):
-        py.test.raises(NoSuchItemError, self.backend.remove_item, "asdf")
+        AbstractBackendTest.test_has_item(self)
 

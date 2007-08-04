@@ -345,7 +345,7 @@ class PageMetadata(AbstractMetadata):
                 data_file.close()
 
                 values = _parse_log_line(line)
-                metadata[EDIT_LOCK_TIMESTAMP] = values[0]
+                metadata[EDIT_LOCK_TIMESTAMP] = wikiutil.version2timestamp(long(values[0]))
                 if values[6]:
                     metadata[EDIT_LOCK_USER] = values[6]
                 else:
@@ -361,7 +361,7 @@ class PageMetadata(AbstractMetadata):
 
             # emulated size
             try:
-                metadata[SIZE] = os.path.getsize(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)))
+                metadata[SIZE] = str(os.path.getsize(self._backend._get_page_path(name, "revisions", _get_rev_string(revno))))
             except OSError:
                 pass
 
@@ -373,7 +373,7 @@ class PageMetadata(AbstractMetadata):
                     values = _parse_log_line(line)
                     rev = int(values[1])
                     if rev == revno:
-                        metadata[EDIT_LOG_MTIME] = wikiutil.version2timestamp(int(values[0]))
+                        metadata[EDIT_LOG_MTIME] = wikiutil.version2timestamp(long(values[0]))
                         metadata[EDIT_LOG_ACTION] = values[2]
                         metadata[EDIT_LOG_ADDR] =  values[4]
                         metadata[EDIT_LOG_HOSTNAME] = values[5]
@@ -398,7 +398,7 @@ class PageMetadata(AbstractMetadata):
             # emulate editlock
             if EDIT_LOCK_TIMESTAMP in metadata and EDIT_LOCK_USER in metadata:
                 data_file = file(self._backend._get_page_path(name, "edit-lock"), "w")
-                line = "\t".join([metadata[EDIT_LOCK_TIMESTAMP], "0", "0", "0", "0", "0", metadata[EDIT_LOCK_USER], "0", "0"])
+                line = "\t".join([str(wikiutil.timestamp2version(float(metadata[EDIT_LOCK_TIMESTAMP]))), "0", "0", "0", "0", "0", metadata[EDIT_LOCK_USER], "0", "0"])
                 data_file.write(line + "\n")
                 data_file.close()
             elif os.path.isfile(self._backend._get_page_path(name, "edit-lock")):
@@ -429,7 +429,7 @@ class PageMetadata(AbstractMetadata):
                 edit_log = codecs.open(self._backend._get_page_path(name, "edit-log"), "r", config.charset)
 
                 result = []
-                newline = "\t".join((str(wikiutil.timestamp2version(metadata[EDIT_LOG_MTIME])), _get_rev_string(revno), metadata[EDIT_LOG_ACTION], name, metadata[EDIT_LOG_ADDR], metadata[EDIT_LOG_HOSTNAME], metadata[EDIT_LOG_USERID], metadata[EDIT_LOG_EXTRA], metadata[EDIT_LOG_COMMENT])) + "\n"
+                newline = "\t".join((str(wikiutil.timestamp2version(float(metadata[EDIT_LOG_MTIME]))), _get_rev_string(revno), metadata[EDIT_LOG_ACTION], name, metadata[EDIT_LOG_ADDR], metadata[EDIT_LOG_HOSTNAME], metadata[EDIT_LOG_USERID], metadata[EDIT_LOG_EXTRA], metadata[EDIT_LOG_COMMENT])) + "\n"
                 for line in edit_log:
                     values = _parse_log_line(line)
                     rev = int(values[1])
@@ -463,14 +463,14 @@ class DeletedPageMetadata(AbstractMetadata):
         @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
         """
         metadata = {}
-        metadata[DELETED] = True
+        metadata[DELETED] = str(True)
         return metadata
 
     def _save_metadata(self, name, revno, metadata):
         """
         @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
         """
-        if not DELETED in metadata or not metadata[DELETED]:
+        if not DELETED in metadata or not bool(metadata[DELETED]):
             self._backend.create_revision(revno)
 
 
