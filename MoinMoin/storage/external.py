@@ -9,10 +9,10 @@
 
 import UserDict
 
+from MoinMoin.storage.backends.common import get_bool
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, LockingError
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend
 from MoinMoin.support.python_compatibility import partial
-
 
 ACL = "acl"
 
@@ -399,7 +399,7 @@ class Revision(object):
         """
         Deleted Property.
         """
-        return bool(self.metadata.get(DELETED, False))
+        return get_bool(self.metadata.get(DELETED, False))
 
     def set_deleted(self, value):
         """
