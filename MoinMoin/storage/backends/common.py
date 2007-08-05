@@ -197,4 +197,11 @@ def _get_metadata(backend, item, revnos):
     return metadata
 
 
+def get_bool(arg):
+    arg = arg.lower()
+    if arg in [u'1', u'true', u'yes']:
+        return True
+    return False
+
+
 _ = lambda x: x

@@ -7,7 +7,7 @@
 
 import py.test
 
-from MoinMoin.storage._tests.test_backends_moin16 import get_page_backend, setup_module, teardown_module, items
+from MoinMoin.storage._tests.test_backends_moin16 import get_page_backend, setup_module, teardown_module
 
 from MoinMoin.storage.external import ItemCollection, Item, Revision
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, LockingError
@@ -24,17 +24,17 @@ class TestItemCollection:
         self.item_collection = None
 
     def test_has_item(self):
-        assert items[0] in self.item_collection
+        assert self.items[0] in self.item_collection
         assert not "asdf" in self.item_collection
 
     def test_keys(self):
-        assert self.item_collection.keys() == items
-        assert self.item_collection.keys({'format': 'wiki'}) == [items[1]]
+        assert self.item_collection.keys() == self.items
+        assert self.item_collection.keys({'format': 'wiki'}) == [self.items[1]]
 
     def test_get_item(self):
-        item = self.item_collection[items[0]]
+        item = self.item_collection[self.items[0]]
         assert isinstance(item, Item)
-        assert item.name == items[0]
+        assert item.name == self.items[0]
         assert item._backend.name == "pages"
         py.test.raises(NoSuchItemError, lambda: self.item_collection["asdf"])
 
@@ -44,26 +44,26 @@ class TestItemCollection:
         assert item.name == "1180424618.59.18120"
         item.metadata.keys()
         item.keys()
-        py.test.raises(BackendError, self.item_collection.new_item, items[0])
+        py.test.raises(BackendError, self.item_collection.new_item, self.items[0])
         assert "1180424618.59.18120" in self.item_collection
         del self.item_collection["1180424618.59.18120"]
         assert not "1180424618.59.18120" in self.item_collection
 
     def test_rename_item(self):
-        self.item_collection.rename_item(items[0], "asdf")
+        self.item_collection.rename_item(self.items[0], "asdf")
         assert "asdf" in self.item_collection
-        self.item_collection.rename_item("asdf", items[0])
-        assert items[0] in self.item_collection
+        self.item_collection.rename_item("asdf", self.items[0])
+        assert self.items[0] in self.item_collection
 
     def test_copy_item(self):
-        self.item_collection.copy_item(items[0], "asdf")
+        self.item_collection.copy_item(self.items[0], "asdf")
         assert "asdf" in self.item_collection
         del self.item_collection["asdf"]
         assert not "asdf" in self.item_collection
-        py.test.raises(BackendError, self.item_collection.copy_item, items[0], "")
-        py.test.raises(BackendError, self.item_collection.copy_item, items[0], items[0])
-        py.test.raises(BackendError, self.item_collection.copy_item, items[0], items[1])
-        py.test.raises(BackendError, self.item_collection.copy_item, "asdf", items[1])
+        py.test.raises(BackendError, self.item_collection.copy_item, self.items[0], "")
+        py.test.raises(BackendError, self.item_collection.copy_item, self.items[0], self.items[0])
+        py.test.raises(BackendError, self.item_collection.copy_item, self.items[0], self.items[1])
+        py.test.raises(BackendError, self.item_collection.copy_item, "asdf", self.items[1])
 
 
 class TestItem:
@@ -71,7 +71,7 @@ class TestItem:
     item = None
 
     def setup_class(self):
-        self.item = ItemCollection(get_page_backend(), None)[items[0]]
+        self.item = ItemCollection(get_page_backend(), None)[self.items[0]]
 
     def teardown_class(self):
         self.item = None
@@ -139,7 +139,7 @@ class TestRevision:
     revision = None
 
     def setup_class(self):
-        self.revision = ItemCollection(get_page_backend(), None)[items[0]][1]
+        self.revision = ItemCollection(get_page_backend(), None)[self.items[0]][1]
 
     def teardown_class(self):
         self.revision = None

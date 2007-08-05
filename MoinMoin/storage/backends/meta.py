@@ -132,7 +132,7 @@ class LayerBackend(MetaBackend):
                 return getattr(backend, method)(*args, **kwargs)
             except NoSuchItemError:
                 pass
-        raise NoSuchItemError(_("No such item %r.") % method)
+        raise NoSuchItemError(_("No such item %r.") % args[0])
 
 
 _ = lambda x: x

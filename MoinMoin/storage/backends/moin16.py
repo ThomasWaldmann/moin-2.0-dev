@@ -38,6 +38,7 @@ import shutil
 import tempfile
 
 from MoinMoin import config, wikiutil
+from MoinMoin.storage.backends.common import get_bool
 from MoinMoin.storage.backends.filesystem import AbstractBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file
 from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
@@ -84,6 +85,12 @@ class UserBackend(AbstractBackend):
         """
         os.remove(os.path.join(self._path, name))
 
+    def rename_item(self, name, newname):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.rename_item
+        """
+        shutil.move(self._get_page_path(name), self._get_page_path(newname))
+
     def list_revisions(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
@@ -102,7 +109,7 @@ class UserBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_revision
         """
-        return revno == 0 or revno in self.list_revisions(name)
+        return revno in self.list_revisions(name)
 
     def get_metadata_backend(self, name, revno):
         """
@@ -345,7 +352,7 @@ class PageMetadata(AbstractMetadata):
                 data_file.close()
 
                 values = _parse_log_line(line)
-                metadata[EDIT_LOCK_TIMESTAMP] = wikiutil.version2timestamp(long(values[0]))
+                metadata[EDIT_LOCK_TIMESTAMP] = str(wikiutil.version2timestamp(long(values[0])))
                 if values[6]:
                     metadata[EDIT_LOCK_USER] = values[6]
                 else:
@@ -373,7 +380,7 @@ class PageMetadata(AbstractMetadata):
                     values = _parse_log_line(line)
                     rev = int(values[1])
                     if rev == revno:
-                        metadata[EDIT_LOG_MTIME] = wikiutil.version2timestamp(long(values[0]))
+                        metadata[EDIT_LOG_MTIME] = str(wikiutil.version2timestamp(long(values[0])))
                         metadata[EDIT_LOG_ACTION] = values[2]
                         metadata[EDIT_LOG_ADDR] =  values[4]
                         metadata[EDIT_LOG_HOSTNAME] = values[5]
@@ -470,8 +477,8 @@ class DeletedPageMetadata(AbstractMetadata):
         """
         @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
         """
-        if not DELETED in metadata or not bool(metadata[DELETED]):
-            self._backend.create_revision(revno)
+        if not DELETED in metadata or not get_bool(metadata[DELETED]):
+            self._backend.create_revision(self._name, revno)
 
 
 class DeletedPageData(AbstractData):

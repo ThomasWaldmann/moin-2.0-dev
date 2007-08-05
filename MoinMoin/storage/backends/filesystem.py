@@ -441,10 +441,17 @@ class IndexedMetadata(UserDict.DictMixin):
         self._item = item
         self._revno = revno
 
-        forward = ['__setitem__', '__delitem__', '__getitem__', '__contains__', 'keys']
+        # forward underscore methods
+        forward = ['__setitem__', '__delitem__', '__getitem__', '__contains__']
 
         for method in forward:
             setattr(self, method, getattr(metadata, method))
+
+    def __getattr__(self, name):
+        """
+        Forward everything else as well.
+        """
+        return getattr(self._metadata, name)
 
     def save(self):
         """

@@ -19,7 +19,6 @@ import urllib
 
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
-from MoinMoin.storage.external import READONLY_METADATA
 from inspect import getargspec, isfunction, isclass, ismethod
 
 
@@ -2219,6 +2218,7 @@ def add_metadata_to_body(metadata, data):
     Adds the processing instructions to the data.
     """
 
+    from MoinMoin.storage.external import READONLY_METADATA
     metadata_data = ""
     for key, value in metadata.iteritems():
 
