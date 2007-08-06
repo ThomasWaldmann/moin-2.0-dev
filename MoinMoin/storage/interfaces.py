@@ -48,7 +48,7 @@ class StorageBackend(object):
 
     def list_revisions(self, name):
         """
-        Returns a list of integers of all revision numbers of an item.
+        Returns a list of integers of all revision numbers of an item, -1 excluded.
         """
 
     def current_revision(self, name, includeEmpty=False):
@@ -63,21 +63,21 @@ class StorageBackend(object):
         """
         Returns whether the given revision number exists for the given item.
         It also returns True if the revision is empty. If revno is 0 it will
-        be checked if there is any revision.
+        be checked if there is any revision. -1 will return True.
         """
 
     def create_revision(self, name, revno):
         """
         Creates a new revision. If revno is 0 the next possible revision
         will be created. The return value is the newly created revision
-        number.
+        number. revno must be bigger than -1.
         """
 
     def remove_revision(self, name, revno):
         """
         Removes a specified revision. If revno is 0 the last revision
         will be deleted (nuked). The return value is the removed revision
-        number.
+        number. revno must be bigger than -1.
         """
 
     def get_metadata_backend(self, name, revno):
@@ -85,14 +85,14 @@ class StorageBackend(object):
         Returns a metadata backend object which behaves like a dictionary.
         If revno is 0 the current revision will be used. If revno is -1 the
         item-wide metadata will be used. Raises no error if the name or revno
-        does not exists. The error will only raised on access.
+        does not exists. The error will only be raised on access.
         """
 
     def get_data_backend(self, name, revno):
         """
         Get the data of an item-revision. If revno is 0 the current revision
         will be used. Raises no error if the name or revno does not exists. The
-        error will only raised on access.
+        error will only be raised on access.
         """
 
     def lock(self, identifier, timeout=1, lifetime=60):

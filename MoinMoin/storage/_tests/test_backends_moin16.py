@@ -10,7 +10,7 @@ import os
 import shutil
 import tempfile
 
-from MoinMoin.storage._tests import AbstractBackendTest, AbstractMetadataTest, AbstractDataTest, default_items_metadata
+from MoinMoin.storage._tests import AbstractBackendTest, AbstractMetadataTest, AbstractDataTest, default_items_metadata, create_data
 
 from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
 
@@ -34,7 +34,7 @@ def teardown_module(module):
     Remove test data from tmp.
     """
     global test_dir
-    #shutil.rmtree(test_dir)
+    shutil.rmtree(test_dir)
     test_dir = None
 
 
@@ -55,11 +55,17 @@ def get_page_backend(name="pages"):
 
 
 class DummyConfig:
-    tmp_dir = tempfile.gettempdir()
     indexes = ["name", "language", "format"]
+
+    acl_rights_default = u"Trusted:read,write,delete,revert Known:read,write,delete,revert All:read,write"
+    acl_rights_before = u""
+    acl_rights_after = u""
+    acl_rights_valid = ['read', 'write', 'delete', 'revert', 'admin']
+    acl_hierarchic = False
 
     def __init__(self):
         self.indexes_dir = test_dir
+        self.tmp_dir = test_dir
 
 
 user = ["1180352194.13.59241", "1180424607.34.55818", ]
@@ -111,7 +117,8 @@ user_filters = [['name', 'HeinrichWendel', user[0]], ['theme_name', 'modern', us
 class TestUserBackend(AbstractBackendTest):
 
     def setup_class(self):
-        AbstractBackendTest.init("user", get_user_backend(), user, user_revisions, user_data, user_metadata, user_filters, "1182252194.13.52241", "1182252194.13.12241")
+        AbstractBackendTest.init(get_user_backend(), items=user, revisions=user_revisions, data=user_data, metadata=user_metadata, filters=user_filters, name="user", newname="1182252194.13.52241", notexist="1182252194.13.12241")
+        create_data(self)
 
     def test_create_item(self):
         AbstractBackendTest.test_create_item(self)
@@ -128,16 +135,19 @@ class TestUserBackend(AbstractBackendTest):
         assert not os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[0]))
         self.backend.rename_item(self.newname, self.items[0])
 
+
 class TestUserMetadata(AbstractMetadataTest):
 
     def setup_class(self):
-        AbstractMetadataTest.init(get_user_backend(), user, user_revisions, user_metadata)
+        AbstractMetadataTest.init(get_user_backend(), items=user, revisions=user_revisions, metadata=user_metadata, data=user_data)
+        create_data(self)
 
 
 class TestPageBackend(AbstractBackendTest):
 
     def setup_class(self):
-        AbstractBackendTest.init("pages", get_page_backend())
+        AbstractBackendTest.init(get_page_backend(), name="pages")
+        create_data(self)
 
     def test_create_item(self):
         AbstractBackendTest.test_create_item(self)
@@ -202,6 +212,7 @@ class TestPageMetadata(AbstractMetadataTest):
                 metadata[item][revno][SIZE] = ''
 
         AbstractMetadataTest.init(get_page_backend(), metadata=metadata)
+        create_data(self)
 
     def assertDict(self, dict1, dict2):
         for key in [SIZE, EDIT_LOG_MTIME]:
@@ -250,4 +261,4 @@ class TestPageData(AbstractDataTest):
 
     def setup_class(self):
         AbstractDataTest.init(get_page_backend())
-
+        create_data(self)

@@ -29,7 +29,7 @@ default_items_metadata = {}
 default_items_metadata[0] = {}
 default_items_metadata[0][1] = {'format': 'wiki',
             ACL: ['MoinPagesEditorGroup:read,write,delete,revert All:read', 'HeinrichWendel:read'],
-            'language' : 'sv', }
+            'language': 'sv', }
 
 default_items_metadata[0][2] = default_items_metadata[0][1]
 default_items_metadata[1] = {}
@@ -62,12 +62,12 @@ def remove_data(cls):
         cls.backend.remove_item(item)
 
 
-class AbstractBackendTest(object):
+class AbstractTest(object):
 
     @classmethod
-    def init(cls, name, backend, items=None, revisions=None, data=None, metadata=None, filters=None, newname=None, notexist=None):
-        cls.name = name
+    def init(cls, backend, items=None, revisions=None, data=None, metadata=None, filters=None, name=None, newname=None, notexist=None, key=None):
         cls.backend = backend
+
         cls.items = items or default_items
 
         if revisions is None:
@@ -90,13 +90,16 @@ class AbstractBackendTest(object):
         else:
             cls.items_filters = filters
 
+        cls.name = name or "pages"
         cls.newname = newname or "Blub"
         cls.notexist = notexist or "Juhu"
-
-        create_data(cls)
+        cls.key = key or "key"
 
     def teardown_class(self):
         remove_data(self)
+
+
+class AbstractBackendTest(AbstractTest):
 
     def test_name(self):
         assert self.backend.name == self.name
@@ -176,7 +179,8 @@ class AbstractBackendTest(object):
                 assert not self.backend.has_revision(self.items[item], self.items_revisions[item][0] + 1)
                 assert self.backend.has_revision(self.items[item], 0)
                 assert self.backend.has_revision(self.items[item], -1)
-    
+                assert not self.backend.has_revision(self.items[item], -2)
+
             py.test.raises(NoSuchItemError, self.backend.has_revision, self.notexist, 1)
         else:
             for item in self.items:
@@ -184,6 +188,7 @@ class AbstractBackendTest(object):
                 assert self.backend.has_revision(item, 1)
                 assert not self.backend.has_revision(item, -1)
                 assert not self.backend.has_revision(item, 2)
+                assert not self.backend.has_revision(item, -2)
 
     def test_create_revision(self):
         if self.items_revisions:
@@ -194,8 +199,10 @@ class AbstractBackendTest(object):
             assert self.backend.list_revisions(self.items[0]) == [next_revision] + self.items_revisions[0]
             assert self.backend.current_revision(self.items[0]) == current_revision
             assert self.backend.current_revision(self.items[0], includeEmpty=True) == next_revision
-    
+
             py.test.raises(BackendError, self.backend.create_revision, self.items[0], current_revision)
+            py.test.raises(BackendError, self.backend.create_revision, self.items[0], -1)
+            py.test.raises(BackendError, self.backend.create_revision, self.items[0], -2)
             py.test.raises(NoSuchItemError, self.backend.create_revision, self.notexist, current_revision)
 
     def test_remove_revision(self):
@@ -207,8 +214,10 @@ class AbstractBackendTest(object):
             assert self.backend.list_revisions(self.items[0]) == self.items_revisions[0]
             assert self.backend.current_revision(self.items[0]) == current_revision
             assert self.backend.current_revision(self.items[0], includeEmpty=True) == current_revision
-    
+
             py.test.raises(NoSuchRevisionError, self.backend.remove_revision, self.items[0], next_revision)
+            py.test.raises(BackendError, self.backend.remove_revision, self.items[0], -1)
+            py.test.raises(BackendError, self.backend.remove_revision, self.items[0], -2)
             py.test.raises(NoSuchItemError, self.backend.remove_revision, self.notexist, next_revision)
 
     def test_get_data_backend(self):
@@ -228,27 +237,7 @@ class AbstractBackendTest(object):
         self.backend.unlock(self.newname)
 
 
-class AbstractMetadataTest(object):
-
-    @classmethod
-    def init(cls, backend, items=None, revisions=None, metadata=None, key=None):
-        cls.backend = backend
-        cls.items = items or default_items
-
-        if revisions is None:
-            cls.items_revisions = default_items_revisions
-        else:
-            cls.items_revisions = revisions
-
-        cls.items_data = {}
-
-        cls.items_metadata = metadata or default_items_metadata
-
-        cls.key = key or "abc"
-        create_data(cls)
-
-    def teardown_class(self):
-        remove_data(self)
+class AbstractMetadataTest(AbstractTest):
 
     def test_get(self):
         if self.items_revisions:
@@ -281,26 +270,7 @@ class AbstractMetadataTest(object):
             assert dict1[key] == dict2[key]
 
 
-class AbstractDataTest(object):
-
-    @classmethod
-    def init(cls, backend, items=None, revisions=None, data=None):
-        cls.backend = backend
-        cls.items = items or default_items
-
-        if revisions is None:
-            cls.items_revisions = default_items_revisions
-        else:
-            cls.items_revisions = revisions
-
-        cls.items_data = data or default_items_data
-
-        cls.items_metadata = {}
-
-        create_data(cls)
-
-    def teardown_class(self):
-        remove_data(self)
+class AbstractDataTest(AbstractTest):
 
     def test_read(self):
         if self.items_revisions:

@@ -14,6 +14,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, Backend
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend
 from MoinMoin.support.python_compatibility import partial
 
+
 ACL = "acl"
 
 DELETED = "deleted"
@@ -429,7 +430,7 @@ class Revision(object):
             return self.metadata.get("edit_log_" + name, "")
         elif name == 'mtime':
             return float(self.metadata.get("edit_log_" + name, 0.0))
-        raise AttributeError, name
+        raise AttributeError(_("Revision class has no attribute %r.") % name)
 
 
 def _decorate(instance, obj, exception, message, forbid, forward):

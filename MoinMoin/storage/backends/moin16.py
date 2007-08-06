@@ -265,7 +265,7 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_revision
         """
-        return revno <= self.current_revision(name, includeEmpty=True)
+        return revno >= -1 and revno <= self.current_revision(name, includeEmpty=True)
 
     def create_revision(self, name, revno):
         """
@@ -302,7 +302,7 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
         """
-        if revno != -1 and not os.path.exists(self._get_page_path(name, "revisions", _get_rev_string(revno))):
+        if revno == -1 or not os.path.exists(self._get_page_path(name, "revisions", _get_rev_string(revno))):
             return DeletedPageData(self, name, revno)
         else:
             return PageData(self, name, revno)

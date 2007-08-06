@@ -51,7 +51,7 @@ class CommonBackend(object):
             try:
                 revno = self.current_revision(item, includeEmpty=True)
             except Exception, err:
-                _handle_error(self, err, item, revno, message=_("Failed to get current revision for item") % item)
+                _handle_error(self, err, item, revno, message=_("Failed to get current revision for item %r.") % item)
         return revno
 
     def list_items(self, filters=None):
@@ -128,6 +128,8 @@ class CommonBackend(object):
         """
         if revno == 0:
             revno = self._get_revno(name, revno) + 1
+        elif revno <= -1:
+            raise BackendError(_("Invalid revisions number %r") % revno)
 
         self._call("create_revision", _("Failed to create revision %r for item %r.") % (revno, name), name, revno)
 
@@ -137,6 +139,9 @@ class CommonBackend(object):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.remove_revisions
         """
+        if revno <= -1:
+            raise BackendError(_("Invalid revisions number %r") % revno)
+
         revno = self._get_revno(name, revno)
         self._call("remove_revision", _("Failed to remove revision %r for item %r.") % (revno, name), name, revno)
         return revno
@@ -198,10 +203,11 @@ def _get_metadata(backend, item, revnos):
 
 
 def get_bool(arg):
-    arg = arg.lower()
-    if arg in [u'1', u'true', u'yes']:
-        return True
-    return False
+    """
+    Return the boolean value of an argument.
+    Use wikiutil.get_bool if that doesn't need a request anymore.
+    """
+    return str(arg).lower() in [u'1', u'true', u'yes']
 
 
 _ = lambda x: x
