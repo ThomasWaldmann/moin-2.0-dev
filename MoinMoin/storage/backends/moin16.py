@@ -89,13 +89,13 @@ class UserBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.rename_item
         """
-        shutil.move(self._get_page_path(name), self._get_page_path(newname))
+        shutil.move(self._get_item_path(name), self._get_item_path(newname))
 
     def list_revisions(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
 
-        Users have no revisions.
+        Users have only one revision.
         """
         return [1]
 
@@ -127,7 +127,7 @@ class UserMetadata(AbstractMetadata):
         """
         @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
         """
-        data = codecs.open(self._backend._get_page_path(name), "r", config.charset)
+        data = codecs.open(self._backend._get_item_path(name), "r", config.charset)
 
         user_data = {}
         for line in data:
@@ -174,7 +174,7 @@ class UserMetadata(AbstractMetadata):
             data_file.write(line)
         data_file.close()
 
-        shutil.move(tmp[1], self._backend._get_page_path(name))
+        shutil.move(tmp[1], self._backend._get_item_path(name))
 
 
 class PageBackend(AbstractBackend):
@@ -194,37 +194,37 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_item
         """
-        return os.path.isfile(self._get_page_path(name, "current"))
+        return os.path.isfile(self._get_item_path(name, "current"))
 
     def create_item(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.create_item
         """
-        os.mkdir(self._get_page_path(name))
-        os.mkdir(self._get_page_path(name, "cache"))
-        os.mkdir(self._get_page_path(name, "cache", "__lock__"))
-        _create_file(self._get_page_path(name, "current"))
-        _create_file(self._get_page_path(name, "edit-log"))
-        os.mkdir(self._get_page_path(name, "revisions"))
+        os.mkdir(self._get_item_path(name))
+        os.mkdir(self._get_item_path(name, "cache"))
+        os.mkdir(self._get_item_path(name, "cache", "__lock__"))
+        _create_file(self._get_item_path(name, "current"))
+        _create_file(self._get_item_path(name, "edit-log"))
+        os.mkdir(self._get_item_path(name, "revisions"))
 
     def remove_item(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.remove_item
         """
-        shutil.rmtree(self._get_page_path(name))
+        shutil.rmtree(self._get_item_path(name))
 
     def rename_item(self, name, newname):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.rename_item
         """
-        shutil.move(self._get_page_path(name), self._get_page_path(newname))
+        shutil.move(self._get_item_path(name), self._get_item_path(newname))
 
     def list_revisions(self, name, real=False):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
         """
         if real:
-            revs = os.listdir(self._get_page_path(name, "revisions"))
+            revs = os.listdir(self._get_item_path(name, "revisions"))
             revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
             revs.sort()
         else:
@@ -238,7 +238,7 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
-        data_file = file(self._get_page_path(name, "current"), "r")
+        data_file = file(self._get_item_path(name, "current"), "r")
         rev = data_file.read().strip()
         data_file.close()
 
@@ -251,7 +251,7 @@ class PageBackend(AbstractBackend):
         def get_latest_not_empty(rev):
             if rev == 0:
                 return rev
-            filename = self._get_page_path(name, "revisions", _get_rev_string(rev))
+            filename = self._get_item_path(name, "revisions", _get_rev_string(rev))
             if os.path.isfile(filename) and os.path.getsize(filename) == 0L:
                 return get_latest_not_empty(rev - 1)
             return rev
@@ -271,14 +271,14 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.create_revisions
         """
-        _create_file(self._get_page_path(name, "revisions", _get_rev_string(revno)))
+        _create_file(self._get_item_path(name, "revisions", _get_rev_string(revno)))
         self._update_current(name)
 
     def remove_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.remove_revisions
         """
-        os.remove(self._get_page_path(name, "revisions", _get_rev_string(revno)))
+        os.remove(self._get_item_path(name, "revisions", _get_rev_string(revno)))
         self._update_current(name)
 
     def _update_current(self, name, revno=0):
@@ -296,13 +296,13 @@ class PageBackend(AbstractBackend):
         tmp_file.write(_get_rev_string(revno) + "\n")
         tmp_file.close()
 
-        shutil.move(tmp[1], self._get_page_path(name, "current"))
+        shutil.move(tmp[1], self._get_item_path(name, "current"))
 
     def get_data_backend(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
         """
-        if revno == -1 or not os.path.exists(self._get_page_path(name, "revisions", _get_rev_string(revno))):
+        if revno == -1 or not os.path.exists(self._get_item_path(name, "revisions", _get_rev_string(revno))):
             return DeletedPageData(self, name, revno)
         else:
             return PageData(self, name, revno)
@@ -311,7 +311,7 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
         """
-        if revno != -1 and not os.path.exists(self._get_page_path(name, "revisions", _get_rev_string(revno))):
+        if revno != -1 and not os.path.exists(self._get_item_path(name, "revisions", _get_rev_string(revno))):
             return DeletedPageMetadata(self, name, revno)
         else:
             return PageMetadata(self, name, revno)
@@ -346,8 +346,8 @@ class PageMetadata(AbstractMetadata):
         if revno == -1:
 
             # emulate edit-lock
-            if os.path.exists(self._backend._get_page_path(name, "edit-lock")):
-                data_file = file(self._backend._get_page_path(name, "edit-lock"), "r")
+            if os.path.exists(self._backend._get_item_path(name, "edit-lock")):
+                data_file = file(self._backend._get_item_path(name, "edit-lock"), "r")
                 line = data_file.read()
                 data_file.close()
 
@@ -360,7 +360,7 @@ class PageMetadata(AbstractMetadata):
 
         else:
 
-            data_file = codecs.open(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)), "r", config.charset)
+            data_file = codecs.open(self._backend._get_item_path(name, "revisions", _get_rev_string(revno)), "r", config.charset)
             data = data_file.read()
             data_file.close()
 
@@ -368,13 +368,13 @@ class PageMetadata(AbstractMetadata):
 
             # emulated size
             try:
-                metadata[SIZE] = str(os.path.getsize(self._backend._get_page_path(name, "revisions", _get_rev_string(revno))))
+                metadata[SIZE] = str(os.path.getsize(self._backend._get_item_path(name, "revisions", _get_rev_string(revno))))
             except OSError:
                 pass
 
             # emulate edit-log
             try:
-                data_file = file(self._backend._get_page_path(name, "edit-log"), "r")
+                data_file = file(self._backend._get_item_path(name, "edit-log"), "r")
 
                 for line in data_file:
                     values = _parse_log_line(line)
@@ -404,17 +404,17 @@ class PageMetadata(AbstractMetadata):
 
             # emulate editlock
             if EDIT_LOCK_TIMESTAMP in metadata and EDIT_LOCK_USER in metadata:
-                data_file = file(self._backend._get_page_path(name, "edit-lock"), "w")
+                data_file = file(self._backend._get_item_path(name, "edit-lock"), "w")
                 line = "\t".join([str(wikiutil.timestamp2version(float(metadata[EDIT_LOCK_TIMESTAMP]))), "0", "0", "0", "0", "0", metadata[EDIT_LOCK_USER], "0", "0"])
                 data_file.write(line + "\n")
                 data_file.close()
-            elif os.path.isfile(self._backend._get_page_path(name, "edit-lock")):
-                os.remove(self._backend._get_page_path(name, "edit-lock"))
+            elif os.path.isfile(self._backend._get_item_path(name, "edit-lock")):
+                os.remove(self._backend._get_item_path(name, "edit-lock"))
 
         else:
 
             tmp = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
-            read_filename = self._backend._get_page_path(name, "revisions", _get_rev_string(revno))
+            read_filename = self._backend._get_item_path(name, "revisions", _get_rev_string(revno))
 
             data = codecs.open(read_filename, "r", config.charset)
             old_metadata, new_data = wikiutil.split_body(data.read())
@@ -433,7 +433,7 @@ class PageMetadata(AbstractMetadata):
                 if not key in metadata:
                     break
             else:
-                edit_log = codecs.open(self._backend._get_page_path(name, "edit-log"), "r", config.charset)
+                edit_log = codecs.open(self._backend._get_item_path(name, "edit-log"), "r", config.charset)
 
                 result = []
                 newline = "\t".join((str(wikiutil.timestamp2version(float(metadata[EDIT_LOG_MTIME]))), _get_rev_string(revno), metadata[EDIT_LOG_ACTION], name, metadata[EDIT_LOG_ADDR], metadata[EDIT_LOG_HOSTNAME], metadata[EDIT_LOG_USERID], metadata[EDIT_LOG_EXTRA], metadata[EDIT_LOG_COMMENT])) + "\n"
@@ -450,14 +450,14 @@ class PageMetadata(AbstractMetadata):
 
                 edit_log.close()
 
-                edit_log = codecs.open(self._backend._get_page_path(name, "edit-log"), "w", config.charset)
+                edit_log = codecs.open(self._backend._get_item_path(name, "edit-log"), "w", config.charset)
                 edit_log.writelines(result)
                 edit_log.close()
 
             # emulate deleted
-            exists = os.path.exists(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)))
+            exists = os.path.exists(self._backend._get_item_path(name, "revisions", _get_rev_string(revno)))
             if DELETED in metadata and metadata[DELETED] and exists:
-                os.remove(self._backend._get_page_path(name, "revisions", _get_rev_string(revno)))
+                os.remove(self._backend._get_item_path(name, "revisions", _get_rev_string(revno)))
 
 
 class DeletedPageMetadata(AbstractMetadata):

@@ -74,7 +74,7 @@ class AbstractBackend(object):
 
         return items
 
-    def _get_page_path(self, name, *args):
+    def _get_item_path(self, name, *args):
         """
         Returns the full path with fs quoted page name.
         """
@@ -200,7 +200,7 @@ class AbstractData(object):
         self._name = name
         self._revno = revno
 
-        self._read_file_name = self._backend._get_page_path(self._name, "revisions", _get_rev_string(self._revno))
+        self._read_file_name = self._backend._get_item_path(self._name, "revisions", _get_rev_string(self._revno))
 
         self._read_property = None
         self._write_property = None
