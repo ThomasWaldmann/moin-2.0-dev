@@ -49,14 +49,12 @@ class AbstractBackend(object):
         self._cfg = cfg
         self._quoted = quoted
 
-    def list_items(self, items, filters=None):
+    def _filter_items(self, items, filters=None):
         """
-        @see MoinMoin.interfaces.StorageBackend.list_items
+        @see MoinMoin.interfaces.StorageBackend._filter_items
         """
         if self._quoted:
             items = [wikiutil.unquoteWikiname(f) for f in items]
-
-        items.sort()
 
         if filters:
             exclude = []
@@ -71,6 +69,8 @@ class AbstractBackend(object):
                 if not include:
                     exclude.append(item)
             items = list(set(items) - set(exclude))
+
+        items.sort()
 
         return items
 
@@ -187,7 +187,6 @@ class AbstractMetadata(UserDict.DictMixin):
 class AbstractData(object):
     """
     This class implements a read only, file like object.
-    Changes will only be saved on close().
     """
 
     __implements__ = DataBackend
@@ -220,8 +219,8 @@ class AbstractData(object):
         Lazy load write file.
         """
         if self._write_property is None:
-            self._tmp = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
-            self._write_property = os.fdopen(self._tmp[0], "wb")
+            self._tmp_handle, self._tmp_name = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
+            self._write_property = os.fdopen(self._tmp_handle, "wb")
         return self._write_property
 
     _write_file = property(_get_write_file)
@@ -230,7 +229,7 @@ class AbstractData(object):
         """
         @see MoinMoin.storage.interfaces.DataBackend.read
         """
-        if size:
+        if size is not None:
             return self._read_file.read(size)
         else:
             return self._read_file.read()
@@ -262,7 +261,7 @@ class AbstractData(object):
             self._read_property = None
         if not self._write_property is None:
             self._write_file.close()
-            shutil.move(self._tmp[1], self._read_file_name)
+            shutil.move(self._tmp_name, self._read_file_name)
             self._write_property = None
 
 
@@ -289,9 +288,9 @@ class IndexedBackend(object):
         """
         return getattr(self._backend, name)
 
-    def list_items(self, filters=None):
+    def _filter_items(self, filters=None):
         """
-        @see MoinMoin.interfaces.StorageBackend.list_items
+        @see MoinMoin.interfaces.StorageBackend._filter_items
         """
         if filters:
             index_filters = dict([(key, value) for key, value in filters.iteritems() if key in self._indexes])

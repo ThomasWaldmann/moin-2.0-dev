@@ -7,7 +7,7 @@
 
 from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import BackendError, NoSuchItemError
-from MoinMoin.support.python_compatibility import sorted, partial
+from MoinMoin.support.python_compatibility import sorted, partial, set
 
 
 class MetaBackend(object):
@@ -73,11 +73,10 @@ class NamespaceBackend(MetaBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        items = []
+        items = set()
         for namespace, backend in self.backends.iteritems():
-            items.extend([namespace + item for item in backend.list_items(filters) if item not in items])
-        items.sort()
-        return items
+            items = items | set([namespace + item for item in backend.list_items(filters) if item not in items])
+        return sorted(list(items))
 
     def _get_backend(self, name):
         """
@@ -108,11 +107,10 @@ class LayerBackend(MetaBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        items = []
+        items = set()
         for backend in self.backends:
-            items.extend(backend.list_items(filters))
-        items.sort()
-        return items
+            items = items | set(backend.list_items(filters))
+        return sorted(list(items))
 
     def has_item(self, name):
         """

@@ -109,7 +109,7 @@ class StorageBackend(object):
 class DataBackend(object):
     """
     The DataBackend interface provides functionality to access the data of a
-    backend via file like operations.
+    backend via file like operations. Changes will only be saved on close().
     """
 
     def read(self, size=None):

@@ -65,7 +65,7 @@ class UserBackend(AbstractBackend):
         """
         files = [f for f in os.listdir(self._path) if user_re.match(f)]
 
-        return AbstractBackend.list_items(self, files, filters)
+        return AbstractBackend._filter_items(self, files, filters)
 
     def has_item(self, name):
         """
@@ -127,39 +127,39 @@ class UserMetadata(AbstractMetadata):
         """
         @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
         """
-        data = codecs.open(self._backend._get_item_path(name), "r", config.charset)
+        data_file = codecs.open(self._backend._get_item_path(name), "r", config.charset)
 
-        user_data = {}
-        for line in data:
+        metadata = {}
+        for line in data_file:
             if line.startswith('#') or line.strip() == "":
                 continue
 
             try:
-                key, val = line.strip().split('=', 1)
+                key, value = line.strip().split('=', 1)
                 # Decode list values
                 if key.endswith('[]'):
                     key = key[:-2]
-                    val = _decode_list(val)
+                    value = _decode_list(value)
                 # Decode dict values
                 elif key.endswith('{}'):
                     key = key[:-2]
-                    val = _decode_dict(val)
-                user_data[key] = val
+                    value = _decode_dict(value)
+                metadata[key] = value
             except ValueError:
                 pass
 
-        data.close()
+        data_file.close()
 
-        return user_data
+        return metadata
 
     def _save_metadata(self, name, revno, metadata):
         """
         @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
         """
 
-        tmp = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
+        tmp_handle, tmp_name = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
 
-        data_file = codecs.getwriter(config.charset)(os.fdopen(tmp[0], "w"))
+        data_file = codecs.getwriter(config.charset)(os.fdopen(tmp_handle, "w"))
 
         for key, value in metadata.iteritems():
             # Encode list values
@@ -174,7 +174,7 @@ class UserMetadata(AbstractMetadata):
             data_file.write(line)
         data_file.close()
 
-        shutil.move(tmp[1], self._backend._get_item_path(name))
+        shutil.move(tmp_name, self._backend._get_item_path(name))
 
 
 class PageBackend(AbstractBackend):
@@ -188,7 +188,7 @@ class PageBackend(AbstractBackend):
         """
         files = [f for f in os.listdir(self._path) if os.path.isfile(os.path.join(self._path, f, "current"))]
 
-        return AbstractBackend.list_items(self, files, filters)
+        return AbstractBackend._filter_items(self, files, filters)
 
     def has_item(self, name):
         """
@@ -238,9 +238,9 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
-        data_file = file(self._get_item_path(name, "current"), "r")
-        rev = data_file.read().strip()
-        data_file.close()
+        current_file = file(self._get_item_path(name, "current"), "r")
+        rev = current_file.read().strip()
+        current_file.close()
 
         rev = int(rev or 0)
 
@@ -265,7 +265,7 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_revision
         """
-        return revno >= -1 and revno <= self.current_revision(name, includeEmpty=True)
+        return -1 <= revno <= self.current_revision(name, includeEmpty=True)
 
     def create_revision(self, name, revno):
         """
@@ -290,13 +290,13 @@ class PageBackend(AbstractBackend):
             if revnos:
                 revno = revnos[0]
 
-        tmp = tempfile.mkstemp(dir=self._cfg.tmp_dir)
+        tmp_handle, tmp_name = tempfile.mkstemp(dir=self._cfg.tmp_dir)
 
-        tmp_file = os.fdopen(tmp[0], "w")
+        tmp_file = os.fdopen(tmp_handle, "w")
         tmp_file.write(_get_rev_string(revno) + "\n")
         tmp_file.close()
 
-        shutil.move(tmp[1], self._get_item_path(name, "current"))
+        shutil.move(tmp_name, self._get_item_path(name, "current"))
 
     def get_data_backend(self, name, revno):
         """
@@ -319,8 +319,7 @@ class PageBackend(AbstractBackend):
 
 class PageData(AbstractData):
     """
-    This class implements a read only, file like object for MoinMoin 1.6 Page stuff.
-    Changes will only be saved on close().
+    This class implements a file like object for MoinMoin 1.6 Page stuff.
     """
 
     def read(self, size=None):
@@ -347,9 +346,9 @@ class PageMetadata(AbstractMetadata):
 
             # emulate edit-lock
             if os.path.exists(self._backend._get_item_path(name, "edit-lock")):
-                data_file = file(self._backend._get_item_path(name, "edit-lock"), "r")
-                line = data_file.read()
-                data_file.close()
+                lock_file = file(self._backend._get_item_path(name, "edit-lock"), "r")
+                line = lock_file.read()
+                lock_file.close()
 
                 values = _parse_log_line(line)
                 metadata[EDIT_LOCK_TIMESTAMP] = str(wikiutil.version2timestamp(long(values[0])))
@@ -413,7 +412,7 @@ class PageMetadata(AbstractMetadata):
 
         else:
 
-            tmp = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
+            tmp_handle, tmp_name = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
             read_filename = self._backend._get_item_path(name, "revisions", _get_rev_string(revno))
 
             data = codecs.open(read_filename, "r", config.charset)
@@ -422,11 +421,11 @@ class PageMetadata(AbstractMetadata):
 
             new_data = wikiutil.add_metadata_to_body(metadata, new_data)
 
-            data_file = codecs.getwriter(config.charset)(os.fdopen(tmp[0], "w"))
+            data_file = codecs.getwriter(config.charset)(os.fdopen(tmp_handle, "w"))
             data_file.writelines(new_data)
             data_file.close()
 
-            shutil.move(tmp[1], read_filename)
+            shutil.move(tmp_name, read_filename)
 
             # save edit-log
             for key in EDIT_LOG:
