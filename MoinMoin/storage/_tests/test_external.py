@@ -129,14 +129,14 @@ class TestItem(AbstractTest):
 
     def test_edit_lock(self):
         self.item.lock = True
-        assert self.item.edit_lock == (False, 0, None)
-        self.item.edit_lock = (1186389937.832, '1183317550.72.7782')
+        assert self.item.edit_lock == (False, 0, "", "", "")
+        self.item.edit_lock = (1186389937.832, '127.0.0.1', 'localhost', '1183317550.72.7782')
         self.item.metadata.save()
         print self.item.edit_lock
-        assert self.item.edit_lock == (True, 1186389937.8299999, '1183317550.72.7782')
+        assert self.item.edit_lock == (True, 1186389937.8299999, '127.0.0.1', 'localhost', '1183317550.72.7782')
         self.item.edit_lock = False
         self.item.metadata.save()
-        assert self.item.edit_lock == (False, 0, None)
+        assert self.item.edit_lock == (False, 0, "", "", "")
         self.item.lock = False
 
     def test_lock(self):

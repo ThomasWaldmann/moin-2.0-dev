@@ -92,18 +92,10 @@ class EditLog(LogFile):
         if host is None:
             host = request.remote_addr
 
-        if request.cfg.log_reverse_dns_lookups:
-            import socket
-            try:
-                hostname = socket.gethostbyaddr(host)[0]
-                hostname = unicode(hostname, config.charset)
-            except (socket.error, UnicodeError):
-                hostname = host
-        else:
-            hostname = host
+        hostname = wikiutil.get_hostname(host)
+        user_id = request.user.valid and request.user.id or ''
 
         comment = wikiutil.clean_input(comment)
-        user_id = request.user.valid and request.user.id or ''
 
         if self.uid_override is not None:
             user_id = ''

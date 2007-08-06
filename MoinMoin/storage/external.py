@@ -22,9 +22,11 @@ DELETED = "deleted"
 SIZE = "size"
 
 EDIT_LOCK_TIMESTAMP = "edit_lock_timestamp"
-EDIT_LOCK_USER = "edit_lock_user"
+EDIT_LOCK_ADDR = "edit_lock_addr"
+EDIT_LOCK_HOSTNAME = "edit_lock_userid"
+EDIT_LOCK_USERID = "edit_lock_hostname"
 
-EDIT_LOCK = [EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER]
+EDIT_LOCK = [EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID]
 
 EDIT_LOG_MTIME = "edit_log_mtime"
 EDIT_LOG_ACTION = "edit_log_action"
@@ -280,10 +282,12 @@ class Item(UserDict.DictMixin, object):
         It is a tuple containing the timestamp of the lock and the user.
         """
         if self._edit_lock is None:
-            if EDIT_LOCK_TIMESTAMP in self.metadata and EDIT_LOCK_USER in self.metadata:
-                self._edit_lock = (True, float(self.metadata[EDIT_LOCK_TIMESTAMP]), self.metadata[EDIT_LOCK_USER])
+            for key in EDIT_LOCK:
+                if not key in self.metadata:
+                    self._edit_lock = False, 0, "", "", ""
+                    break
             else:
-                self._edit_lock = False, 0, None
+                self._edit_lock = (True, float(self.metadata[EDIT_LOCK_TIMESTAMP]), self.metadata[EDIT_LOCK_ADDR], self.metadata[EDIT_LOCK_HOSTNAME], self.metadata[EDIT_LOCK_USERID])
         return self._edit_lock
 
     def set_edit_lock(self, edit_lock):
@@ -296,10 +300,14 @@ class Item(UserDict.DictMixin, object):
 
         if not edit_lock:
             del self.metadata[EDIT_LOCK_TIMESTAMP]
-            del self.metadata[EDIT_LOCK_USER]
-        elif isinstance(edit_lock, tuple) and len(edit_lock) == 2:
+            del self.metadata[EDIT_LOCK_ADDR]
+            del self.metadata[EDIT_LOCK_HOSTNAME]
+            del self.metadata[EDIT_LOCK_USERID]
+        elif isinstance(edit_lock, tuple) and len(edit_lock) == 4:
             self.metadata[EDIT_LOCK_TIMESTAMP] = str(edit_lock[0])
-            self.metadata[EDIT_LOCK_USER] = edit_lock[1]
+            self.metadata[EDIT_LOCK_ADDR] = edit_lock[1]
+            self.metadata[EDIT_LOCK_HOSTNAME] = edit_lock[2]
+            self.metadata[EDIT_LOCK_USERID] = edit_lock[3]
         else:
             raise ValueError(_("Lock must be either False or a tuple containing timestamp and user."))
         self._edit_lock = None

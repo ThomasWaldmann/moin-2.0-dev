@@ -2178,6 +2178,7 @@ def renderText(request, Parser, text, line_anchors=False):
     del out
     return result
 
+
 def split_body(body):
     """ Extract the processing instructions / acl / etc. at the beginning of a page's body.
 
@@ -2215,6 +2216,7 @@ def split_body(body):
 
     return pi, body
 
+
 def add_metadata_to_body(metadata, data):
     """
     Adds the processing instructions to the data.
@@ -2236,3 +2238,20 @@ def add_metadata_to_body(metadata, data):
             metadata_data += "#%s %s\n" % (key, value)
 
     return metadata_data + data
+
+
+def get_hostname(request, addr):
+    """
+    Looks up the hostname depending on the configuration.
+    """
+    if request.cfg.log_reverse_dns_lookups:
+        import socket
+        try:
+            hostname = socket.gethostbyaddr(addr)[0]
+            hostname = unicode(hostname, config.charset)
+        except (socket.error, UnicodeError):
+            hostname = addr
+    else:
+        hostname = addr
+    return hostname
+
