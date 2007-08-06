@@ -110,7 +110,7 @@ class ItemCollection(UserDict.DictMixin, object):
         Copies an Item.
         """
         if newname == name:
-            raise BackendError(_("Copy failed because name and newname are equal."))
+            raise BackendError(_("Copy failed because name and newname are the same."))
 
         if not newname:
             raise BackendError(_("You cannot copy to an empty item name."))
