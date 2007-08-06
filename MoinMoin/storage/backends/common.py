@@ -37,6 +37,8 @@ class CommonBackend(object):
         try:
             return getattr(self._other, method)(*arg, **kwarg)
         except Exception, err:
+            print err
+            return
             if len(arg) > 1:
                 revno = arg[1]
             else:

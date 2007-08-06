@@ -68,11 +68,9 @@ class AbstractBackend(object):
                             break
                 if not include:
                     exclude.append(item)
-            items = list(set(items) - set(exclude))
+            items = set(items) - set(exclude)
 
-        items.sort()
-
-        return items
+        return sorted(list(items))
 
     def _get_item_path(self, name, *args):
         """
@@ -288,7 +286,7 @@ class IndexedBackend(object):
         """
         return getattr(self._backend, name)
 
-    def _filter_items(self, filters=None):
+    def list_items(self, filters=None):
         """
         @see MoinMoin.interfaces.StorageBackend._filter_items
         """
