@@ -195,7 +195,6 @@ class TestPageBackend(AbstractBackendTest):
 
 class TestPageMetadata(AbstractMetadataTest):
 
-    # TODO: fix edit_lock
     # TODO: fix edit_log
 
     def setup_class(self):
