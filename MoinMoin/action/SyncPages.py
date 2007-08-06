@@ -12,7 +12,6 @@ import re
 import traceback
 import StringIO # not relevant for speed, so we do not need cStringIO
 
-
 from MoinMoin import wikiutil
 from MoinMoin.packages import unpackLine, packLine
 from MoinMoin.PageEditor import PageEditor, conflict_markers
@@ -23,7 +22,6 @@ from MoinMoin.wikisync import MoinLocalWiki, MoinRemoteWiki, UP, DOWN, BOTH, MIM
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.util.bdiff import decompress, patch, compress, textdiff
 from MoinMoin.util import diff3, rpc_aggregator
-
 
 debug = False
 
