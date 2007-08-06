@@ -37,7 +37,7 @@ sys.path.insert(0, str(moindir.join("tests")))
 
 from MoinMoin.support.python_compatibility import set
 
-coverage_modules = []
+coverage_modules = set()
 
 
 try:
