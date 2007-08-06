@@ -40,8 +40,8 @@ import tempfile
 from MoinMoin import config, wikiutil
 from MoinMoin.storage.backends.common import get_bool
 from MoinMoin.storage.backends.filesystem import AbstractBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file
-from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG
-from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
+from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG, EDIT_LOCK
+from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
 
 
@@ -352,10 +352,9 @@ class PageMetadata(AbstractMetadata):
 
                 values = _parse_log_line(line)
                 metadata[EDIT_LOCK_TIMESTAMP] = str(wikiutil.version2timestamp(long(values[0])))
-                if values[6]:
-                    metadata[EDIT_LOCK_USER] = values[6]
-                else:
-                    metadata[EDIT_LOCK_USER] = values[4]
+                metadata[EDIT_LOCK_ADDR] = values[4]
+                metadata[EDIT_LOCK_HOSTNAME] = values[5]
+                metadata[EDIT_LOCK_USERID] = values[6]
 
         else:
 
@@ -402,13 +401,16 @@ class PageMetadata(AbstractMetadata):
         if revno == -1:
 
             # emulate editlock
-            if EDIT_LOCK_TIMESTAMP in metadata and EDIT_LOCK_USER in metadata:
+            for key in EDIT_LOCK:
+                if not key in metadata:
+                    if os.path.isfile(self._backend._get_item_path(name, "edit-lock")):
+                        os.remove(self._backend._get_item_path(name, "edit-lock"))
+                    break
+            else:
                 data_file = file(self._backend._get_item_path(name, "edit-lock"), "w")
-                line = "\t".join([str(wikiutil.timestamp2version(float(metadata[EDIT_LOCK_TIMESTAMP]))), "0", "0", "0", "0", "0", metadata[EDIT_LOCK_USER], "0", "0"])
+                line = "\t".join([str(wikiutil.timestamp2version(float(metadata[EDIT_LOCK_TIMESTAMP]))), "0", "0", "0", metadata[EDIT_LOCK_ADDR], metadata[EDIT_LOCK_HOSTNAME], metadata[EDIT_LOCK_USERID], "0", "0"])
                 data_file.write(line + "\n")
                 data_file.close()
-            elif os.path.isfile(self._backend._get_item_path(name, "edit-lock")):
-                os.remove(self._backend._get_item_path(name, "edit-lock"))
 
         else:
 
@@ -437,7 +439,7 @@ class PageMetadata(AbstractMetadata):
                 result = []
                 newline = "\t".join((str(wikiutil.timestamp2version(float(metadata[EDIT_LOG_MTIME]))), _get_rev_string(revno), metadata[EDIT_LOG_ACTION], name, metadata[EDIT_LOG_ADDR], metadata[EDIT_LOG_HOSTNAME], metadata[EDIT_LOG_USERID], metadata[EDIT_LOG_EXTRA], metadata[EDIT_LOG_COMMENT])) + "\n"
                 for line in edit_log:
-                    values = _parse_log_line(line)
+                    values = _parse_log_line(line)    
                     rev = int(values[1])
                     if revno == rev:
                         continue

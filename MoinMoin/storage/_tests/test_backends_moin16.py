@@ -15,7 +15,7 @@ from MoinMoin.storage._tests import AbstractBackendTest, AbstractMetadataTest, A
 from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
 
 from MoinMoin.storage.external import SIZE, DELETED
-from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_USER
+from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_COMMENT, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
 
 
@@ -229,19 +229,27 @@ class TestPageMetadata(AbstractMetadataTest):
     def test_edit_lock(self):
         metadata = self.backend.get_metadata_backend(self.items[0], -1)
         metadata[EDIT_LOCK_TIMESTAMP] = "1186237890.109"
-        metadata[EDIT_LOCK_USER] = "127.0.0.1"
+        metadata[EDIT_LOCK_ADDR] = "127.0.0.1"
+        metadata[EDIT_LOCK_HOSTNAME] = "localhost"
+        metadata[EDIT_LOCK_USERID] = "1180352194.13.59241"
         metadata.save()
         metadata = self.backend.get_metadata_backend(self.items[0], -1)
         assert metadata[EDIT_LOCK_TIMESTAMP] == "1186237890.11"
-        assert metadata[EDIT_LOCK_USER] == "127.0.0.1"
+        assert metadata[EDIT_LOCK_ADDR] == "127.0.0.1"
+        assert metadata[EDIT_LOCK_HOSTNAME] == "localhost"
+        assert metadata[EDIT_LOCK_USERID] == "1180352194.13.59241"
         assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-lock"))
-        assert open(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-lock"), "r").read() == "1186237890109000\t0\t0\t0\t0\t0\t127.0.0.1\t0\t0\n"
+        assert open(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-lock"), "r").read() == "1186237890109000\t0\t0\t0\t127.0.0.1\tlocalhost\t1180352194.13.59241\t0\t0\n"
         del metadata[EDIT_LOCK_TIMESTAMP]
-        del metadata[EDIT_LOCK_USER]
+        del metadata[EDIT_LOCK_ADDR]
+        del metadata[EDIT_LOCK_HOSTNAME]
+        del metadata[EDIT_LOCK_USERID]
         metadata.save()
         metadata = self.backend.get_metadata_backend(self.items[0], -1)
         assert not EDIT_LOCK_TIMESTAMP in metadata
-        assert not EDIT_LOCK_USER in metadata
+        assert not EDIT_LOCK_ADDR in metadata
+        assert not EDIT_LOCK_HOSTNAME in metadata
+        assert not EDIT_LOCK_USERID in metadata
         assert not os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-lock"))
 
     def test_deleted(self):

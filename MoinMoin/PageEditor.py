@@ -20,14 +20,13 @@ import errno
 import time
 
 
-from MoinMoin import config, caching, wikiutil, error
+from MoinMoin import config, caching, wikiutil, error, user
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
 from MoinMoin.logfile import editlog, eventlog
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.util import timefuncs, web
-from MoinMoin.user import User
 from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
@@ -1096,21 +1095,26 @@ To leave the editor, press the Cancel button.""") % {
 
     def _readLockFile(self):
         """ Load lock info if not yet loaded. """
+        _ = self._
+        self.owner = None
+        self.owner_html = wikiutil.escape(_("<unknown>"))
+        self.timestamp = 0
+
         if self.locktype:
-            (lock, self.timestamp, self.owner) = self.pageobj._item.edit_lock
-            self.timestamp = wikiutil.version2timestamp(self.timestamp)
-            user = User(self.request, self.owner)
-            self.owner_html = user.valid and user.name or self.owner
-        else:
-            _ = self._
-            self.owner = None
-            self.owner_html = wikiutil.escape(_("<unknown>"))
-            self.timestamp = 0
+            (lock, timestamp, addr, hostname, userid) = self.pageobj._item.edit_lock
+            if lock:
+                self.owner = userid or addr
+                self.owner_html = user.get_printable_editor(self.request, userid, addr, hostname)
+                self.timestamp = wikiutil.version2timestamp(timestamp)
 
     def _writeLockFile(self):
         """ Write new lock file. """
+        addr = self.request.remote_addr
+        hostname = wikiutil.get_hostname(self.request, addr)
+        user_id = self.request.user.valid and self.request.user.id or ''
+
         self.pageobj._item.lock = True
-        self.pageobj._item.edit_lock = (wikiutil.timestamp2version(self.now), self.uid)
+        self.pageobj._item.edit_lock = (wikiutil.timestamp2version(self.now), addr, hostname, user_id)
         self.pageobj._item.metadata.save()
         self.pageobj._item.lock = False
 
