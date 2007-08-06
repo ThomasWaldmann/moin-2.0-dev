@@ -309,13 +309,13 @@ class Page(object):
 
         if use_underlay == -1:
             if self._item is None:
-                path = self.request.cfg.page_backend._get_page_path(name)
+                path = self.request.cfg.page_backend._get_item_path(name)
             else:
-                path = self._item._backend._get_page_path(name)
+                path = self._item._backend._get_item_path(name)
         elif use_underlay == 1:
-            path = self.request.cfg.underlay_backend._get_page_path(name)
+            path = self.request.cfg.underlay_backend._get_item_path(name)
         else:
-            path = self.request.cfg.page_backend._get_page_path(name)
+            path = self.request.cfg.page_backend._get_item_path(name)
 
         fullpath = os.path.join(*((path, ) + args))
         if check_create:

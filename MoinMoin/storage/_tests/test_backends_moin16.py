@@ -122,17 +122,17 @@ class TestUserBackend(AbstractBackendTest):
 
     def test_create_item(self):
         AbstractBackendTest.test_create_item(self)
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.newname))
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.newname))
 
     def test_remove_item(self):
         AbstractBackendTest.test_remove_item(self)
-        assert not os.path.isfile(os.path.join(self.backend._get_page_path(""), self.newname))
+        assert not os.path.isfile(os.path.join(self.backend._get_item_path(""), self.newname))
 
     def test_rename_item(self):
         AbstractBackendTest.test_rename_item(self)
         self.backend.rename_item(self.items[0], self.newname)
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.newname))
-        assert not os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[0]))
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.newname))
+        assert not os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0]))
         self.backend.rename_item(self.newname, self.items[0])
 
 
@@ -151,46 +151,46 @@ class TestPageBackend(AbstractBackendTest):
 
     def test_create_item(self):
         AbstractBackendTest.test_create_item(self)
-        assert os.path.isdir(os.path.join(self.backend._get_page_path(""), self.newname))
-        assert os.path.isdir(os.path.join(self.backend._get_page_path(""), self.newname, "cache"))
-        assert os.path.isdir(os.path.join(self.backend._get_page_path(""), self.newname, "cache", "__lock__"))
-        assert os.path.isdir(os.path.join(self.backend._get_page_path(""), self.newname, "revisions"))
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.newname, "current"))
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.newname, "edit-log"))
+        assert os.path.isdir(os.path.join(self.backend._get_item_path(""), self.newname))
+        assert os.path.isdir(os.path.join(self.backend._get_item_path(""), self.newname, "cache"))
+        assert os.path.isdir(os.path.join(self.backend._get_item_path(""), self.newname, "cache", "__lock__"))
+        assert os.path.isdir(os.path.join(self.backend._get_item_path(""), self.newname, "revisions"))
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.newname, "current"))
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.newname, "edit-log"))
 
     def test_remove_item(self):
         AbstractBackendTest.test_remove_item(self)
-        assert not os.path.exists(os.path.join(self.backend._get_page_path(""), self.newname))
+        assert not os.path.exists(os.path.join(self.backend._get_item_path(""), self.newname))
 
     def test_rename_item(self):
         AbstractBackendTest.test_rename_item(self)
         self.backend.rename_item(self.items[0], self.newname)
-        assert os.path.isdir(os.path.join(self.backend._get_page_path(""), self.newname))
-        assert not os.path.isdir(os.path.join(self.backend._get_page_path(""), self.items[0]))
+        assert os.path.isdir(os.path.join(self.backend._get_item_path(""), self.newname))
+        assert not os.path.isdir(os.path.join(self.backend._get_item_path(""), self.items[0]))
         self.backend.rename_item(self.newname, self.items[0])
 
     def test_current_revision(self):
         AbstractBackendTest.test_current_revision(self)
-        assert open(os.path.join(self.backend._get_page_path(""), self.items[0], "current"), "r").read() == "00000002\n"
-        assert open(os.path.join(self.backend._get_page_path(""), self.items[1], "current"), "r").read() == "00000003\n"
+        assert open(os.path.join(self.backend._get_item_path(""), self.items[0], "current"), "r").read() == "00000002\n"
+        assert open(os.path.join(self.backend._get_item_path(""), self.items[1], "current"), "r").read() == "00000003\n"
 
     def test_has_revision(self):
         AbstractBackendTest.test_has_revision(self)
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[0], "revisions", "00000001"))
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[0], "revisions", "00000002"))
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[1], "revisions", "00000001"))
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[1], "revisions", "00000002"))
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[1], "revisions", "00000003"))
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000001"))
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000002"))
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[1], "revisions", "00000001"))
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[1], "revisions", "00000002"))
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[1], "revisions", "00000003"))
 
     def test_create_revision(self):
         AbstractBackendTest.test_create_revision(self)
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[0], "revisions", "00000003"))
-        assert open(os.path.join(self.backend._get_page_path(""), self.items[0], "current"), "r").read() == "00000003\n"
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000003"))
+        assert open(os.path.join(self.backend._get_item_path(""), self.items[0], "current"), "r").read() == "00000003\n"
 
     def test_remove_revision(self):
         AbstractBackendTest.test_remove_revision(self)
-        assert open(os.path.join(self.backend._get_page_path(""), self.items[0], "current"), "r").read() == "00000002\n"
-        assert not os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[0], "revisions", "00000003"))
+        assert open(os.path.join(self.backend._get_item_path(""), self.items[0], "current"), "r").read() == "00000002\n"
+        assert not os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000003"))
 
 
 class TestPageMetadata(AbstractMetadataTest):
@@ -234,15 +234,15 @@ class TestPageMetadata(AbstractMetadataTest):
         metadata = self.backend.get_metadata_backend(self.items[0], -1)
         assert metadata[EDIT_LOCK_TIMESTAMP] == "1186237890.11"
         assert metadata[EDIT_LOCK_USER] == "127.0.0.1"
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[0], "edit-lock"))
-        assert open(os.path.join(self.backend._get_page_path(""), self.items[0], "edit-lock"), "r").read() == "1186237890109000\t0\t0\t0\t0\t0\t127.0.0.1\t0\t0\n"
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-lock"))
+        assert open(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-lock"), "r").read() == "1186237890109000\t0\t0\t0\t0\t0\t127.0.0.1\t0\t0\n"
         del metadata[EDIT_LOCK_TIMESTAMP]
         del metadata[EDIT_LOCK_USER]
         metadata.save()
         metadata = self.backend.get_metadata_backend(self.items[0], -1)
         assert not EDIT_LOCK_TIMESTAMP in metadata
         assert not EDIT_LOCK_USER in metadata
-        assert not os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[0], "edit-lock"))
+        assert not os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-lock"))
 
     def test_deleted(self):
         metadata = self.backend.get_metadata_backend(self.items[0], self.items_revisions[0][0])
@@ -250,11 +250,11 @@ class TestPageMetadata(AbstractMetadataTest):
         metadata.save()
         assert self.backend.current_revision(self.items[0], 0) == self.items_revisions[0][0]
         assert self.backend.create_revision(self.items[0], 0) == self.items_revisions[0][0] + 1
-        assert not os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[0], "revisions", "00000002"))
+        assert not os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000002"))
         metadata = self.backend.get_metadata_backend(self.items[0], self.items_revisions[0][0])
         metadata[DELETED] = "False"
         metadata.save()
-        assert os.path.isfile(os.path.join(self.backend._get_page_path(""), self.items[0], "revisions", "00000002"))
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000002"))
 
 
 class TestPageData(AbstractDataTest):
