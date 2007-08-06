@@ -309,7 +309,7 @@ class Item(UserDict.DictMixin, object):
             self.metadata[EDIT_LOCK_HOSTNAME] = edit_lock[2]
             self.metadata[EDIT_LOCK_USERID] = edit_lock[3]
         else:
-            raise ValueError(_("Lock must be either False or a tuple containing timestamp and user."))
+            raise ValueError(_("Lock must be either False or a tuple containing timestamp, addr, hostname and user."))
         self._edit_lock = None
 
     edit_lock = property(get_edit_lock, set_edit_lock)
