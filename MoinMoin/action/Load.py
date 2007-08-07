@@ -31,7 +31,6 @@ class Load(ActionBase):
         status = False
         _ = self._
         form = self.form
-        author = self.request.user.name
 
         rename = form.get('rename', [u''])[0]
 
@@ -87,7 +86,7 @@ class Load(ActionBase):
             self.pagename = wikiutil.escape(target)
             page = Page(self.request, self.pagename)
             rev = page.current_rev()
-            pg = PageEditor(self.request, self.pagename, do_editor_backup=0, uid_override=author)
+            pg = PageEditor(self.request, self.pagename, do_editor_backup=0)
             try:
                 msg = pg.saveText(filecontent, rev)
                 status = True

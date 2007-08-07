@@ -195,8 +195,6 @@ class TestPageBackend(AbstractBackendTest):
 
 class TestPageMetadata(AbstractMetadataTest):
 
-    # TODO: fix edit_log
-
     def setup_class(self):
         metadata = copy.copy(default_items_metadata)
         for item in metadata:
@@ -207,7 +205,7 @@ class TestPageMetadata(AbstractMetadataTest):
                 metadata[item][revno][EDIT_LOG_HOSTNAME] = 'localhost'
                 metadata[item][revno][EDIT_LOG_COMMENT] = ''
                 metadata[item][revno][EDIT_LOG_USERID] = '1180352194.13.59241'
-                metadata[item][revno][EDIT_LOG_MTIME] = '1186237890.109'
+                metadata[item][revno][EDIT_LOG_MTIME] = '1186237890.110'
                 metadata[item][revno][SIZE] = ''
 
         AbstractMetadataTest.init(get_page_backend(), metadata=metadata)
@@ -227,7 +225,7 @@ class TestPageMetadata(AbstractMetadataTest):
 
     def test_edit_lock(self):
         metadata = self.backend.get_metadata_backend(self.items[0], -1)
-        metadata[EDIT_LOCK_TIMESTAMP] = "1186237890.109"
+        metadata[EDIT_LOCK_TIMESTAMP] = "1186237890.110"
         metadata[EDIT_LOCK_ADDR] = "127.0.0.1"
         metadata[EDIT_LOCK_HOSTNAME] = "localhost"
         metadata[EDIT_LOCK_USERID] = "1180352194.13.59241"
@@ -238,7 +236,7 @@ class TestPageMetadata(AbstractMetadataTest):
         assert metadata[EDIT_LOCK_HOSTNAME] == "localhost"
         assert metadata[EDIT_LOCK_USERID] == "1180352194.13.59241"
         assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-lock"))
-        assert open(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-lock"), "r").read() == "1186237890109000\t0\t0\t0\t127.0.0.1\tlocalhost\t1180352194.13.59241\t0\t0\n"
+        assert open(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-lock"), "r").read() == "1186237890110000\t0\t0\t0\t127.0.0.1\tlocalhost\t1180352194.13.59241\t0\t0\n"
         del metadata[EDIT_LOCK_TIMESTAMP]
         del metadata[EDIT_LOCK_ADDR]
         del metadata[EDIT_LOCK_HOSTNAME]
@@ -257,12 +255,72 @@ class TestPageMetadata(AbstractMetadataTest):
         metadata.save()
         assert self.backend.current_revision(self.items[0], 0) == self.items_revisions[0][0]
         assert self.backend.create_revision(self.items[0], 0) == self.items_revisions[0][0] + 1
+        assert self.backend.remove_revision(self.items[0], 0) == self.items_revisions[0][0] + 1
         assert not os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000002"))
         metadata = self.backend.get_metadata_backend(self.items[0], self.items_revisions[0][0])
         metadata[DELETED] = "False"
         metadata.save()
         assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000002"))
 
+    def test_edit_log(self):
+        assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-log"))
+        data = "1186237890110000\t00000001\tSAVE\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n1186237890110000\t00000002\tSAVE\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n"
+        data2 = open(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-log"), "r").read()
+        assert data == data2
+
+        metadata = self.backend.get_metadata_backend(self.items[0], 1)
+        metadata[EDIT_LOG_EXTRA] = ''
+        metadata[EDIT_LOG_ACTION] = 'SAVE/NEW'
+        metadata[EDIT_LOG_ADDR] = '127.0.0.1'
+        metadata[EDIT_LOG_HOSTNAME] = 'localhost'
+        metadata[EDIT_LOG_COMMENT] = ''
+        metadata[EDIT_LOG_USERID] = '1180352194.13.59241'
+        metadata[EDIT_LOG_MTIME] = '1186237890.110'
+        metadata.save()
+        data = "1186237890110000\t00000001\tSAVE/NEW\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n1186237890110000\t00000002\tSAVE\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n"
+        data2 = open(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-log"), "r").read()
+        assert data == data2
+
+        metadata = self.backend.get_metadata_backend(self.items[0], 2)
+        metadata[EDIT_LOG_EXTRA] = ''
+        metadata[EDIT_LOG_ACTION] = 'SAVE/NEW'
+        metadata[EDIT_LOG_ADDR] = '127.0.0.1'
+        metadata[EDIT_LOG_HOSTNAME] = 'localhost'
+        metadata[EDIT_LOG_COMMENT] = ''
+        metadata[EDIT_LOG_USERID] = '1180352194.13.59241'
+        metadata[EDIT_LOG_MTIME] = '1186237890.110'
+        metadata.save()
+        data = "1186237890110000\t00000001\tSAVE/NEW\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n1186237890110000\t00000002\tSAVE/NEW\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n"
+        data2 = open(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-log"), "r").read()
+        assert data == data2
+
+        self.backend.create_revision(self.items[0], 3)
+        metadata = self.backend.get_metadata_backend(self.items[0], 3)
+        metadata[EDIT_LOG_EXTRA] = ''
+        metadata[EDIT_LOG_ACTION] = 'SAVE/NEW'
+        metadata[EDIT_LOG_ADDR] = '127.0.0.1'
+        metadata[EDIT_LOG_HOSTNAME] = 'localhost'
+        metadata[EDIT_LOG_COMMENT] = ''
+        metadata[EDIT_LOG_USERID] = '1180352194.13.59241'
+        metadata[EDIT_LOG_MTIME] = '1186237890.110'
+        metadata.save()
+        data = "1186237890110000\t00000001\tSAVE/NEW\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n1186237890110000\t00000002\tSAVE/NEW\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n1186237890110000\t00000003\tSAVE/NEW\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n"
+        data2 = open(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-log"), "r").read()
+        assert data == data2
+
+        self.backend.create_revision(self.items[0], 5)
+        metadata = self.backend.get_metadata_backend(self.items[0], 5)
+        metadata[EDIT_LOG_EXTRA] = ''
+        metadata[EDIT_LOG_ACTION] = 'SAVE/NEW'
+        metadata[EDIT_LOG_ADDR] = '127.0.0.1'
+        metadata[EDIT_LOG_HOSTNAME] = 'localhost'
+        metadata[EDIT_LOG_COMMENT] = ''
+        metadata[EDIT_LOG_USERID] = '1180352194.13.59241'
+        metadata[EDIT_LOG_MTIME] = '1186237890.110'
+        metadata.save()
+        data = "1186237890110000\t00000001\tSAVE/NEW\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n1186237890110000\t00000002\tSAVE/NEW\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n1186237890110000\t00000003\tSAVE/NEW\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n1186237890110000\t00000005\tSAVE/NEW\tNew\t127.0.0.1\tlocalhost\t1180352194.13.59241\t\t\n"
+        data2 = open(os.path.join(self.backend._get_item_path(""), self.items[0], "edit-log"), "r").read()
+        assert data == data2
 
 class TestPageData(AbstractDataTest):
 

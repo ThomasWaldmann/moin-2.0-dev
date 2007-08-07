@@ -8,7 +8,9 @@
 """
 
 import UserDict
+import time
 
+from MoinMoin import wikiutil
 from MoinMoin.storage.backends.common import get_bool
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, LockingError
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend
@@ -23,8 +25,8 @@ SIZE = "size"
 
 EDIT_LOCK_TIMESTAMP = "edit_lock_timestamp"
 EDIT_LOCK_ADDR = "edit_lock_addr"
-EDIT_LOCK_HOSTNAME = "edit_lock_userid"
-EDIT_LOCK_USERID = "edit_lock_hostname"
+EDIT_LOCK_HOSTNAME = "edit_lock_hostname"
+EDIT_LOCK_USERID = "edit_lock_userid"
 
 EDIT_LOCK = [EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID]
 
@@ -49,12 +51,12 @@ class ItemCollection(UserDict.DictMixin, object):
 
     log_pos = None
 
-    def __init__(self, backend, user=None):
+    def __init__(self, backend, request=None):
         """
         Initializes the proper StorageBackend.
         """
         self._backend = backend
-        self._user = user
+        self._request = request
 
         self._items = None
 
@@ -70,7 +72,7 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         backend = self._backend.has_item(name)
         if backend:
-            return Item(name, backend, self._user)
+            return Item(name, backend, self._request)
         else:
             raise NoSuchItemError(_("No such item %r.") % name)
 
@@ -164,14 +166,14 @@ class Item(UserDict.DictMixin, object):
     access as well. On every access the ACLs will be checked.
     """
 
-    def __init__(self, name, backend, userobj):
+    def __init__(self, name, backend, request):
         """
         Initializes the Item with the required parameters.
         """
         self.name = name
 
         self._backend = backend
-        self._userobj = userobj
+        self._request = request
 
         self._lock = False
 
@@ -284,7 +286,7 @@ class Item(UserDict.DictMixin, object):
         if self._edit_lock is None:
             for key in EDIT_LOCK:
                 if not key in self.metadata:
-                    self._edit_lock = False, 0, "", "", ""
+                    self._edit_lock = False, 0.0, "", "", ""
                     break
             else:
                 self._edit_lock = (True, float(self.metadata[EDIT_LOCK_TIMESTAMP]), self.metadata[EDIT_LOCK_ADDR], self.metadata[EDIT_LOCK_HOSTNAME], self.metadata[EDIT_LOCK_USERID])
@@ -292,24 +294,26 @@ class Item(UserDict.DictMixin, object):
 
     def set_edit_lock(self, edit_lock):
         """
-        Set the lock property.
-        It must either be False or a tuple containing timestamp and user.
-        You still have to call item.metadata.save() to actually save the change.
+        Set the lock property to True or False.
         """
-        self._check_lock()
+        self.lock = True
+        if edit_lock:
+            timestamp = time.time()
+            addr = self._request.remote_addr
+            hostname = wikiutil.get_hostname(self._request, addr)
+            userid = self._request.user.valid and self._request.user.id or ''
 
-        if not edit_lock:
+            self.metadata[EDIT_LOCK_TIMESTAMP] = str(timestamp)
+            self.metadata[EDIT_LOCK_ADDR] = addr
+            self.metadata[EDIT_LOCK_HOSTNAME] = hostname
+            self.metadata[EDIT_LOCK_USERID] = userid
+        else:
             del self.metadata[EDIT_LOCK_TIMESTAMP]
             del self.metadata[EDIT_LOCK_ADDR]
             del self.metadata[EDIT_LOCK_HOSTNAME]
             del self.metadata[EDIT_LOCK_USERID]
-        elif isinstance(edit_lock, tuple) and len(edit_lock) == 4:
-            self.metadata[EDIT_LOCK_TIMESTAMP] = str(edit_lock[0])
-            self.metadata[EDIT_LOCK_ADDR] = edit_lock[1]
-            self.metadata[EDIT_LOCK_HOSTNAME] = edit_lock[2]
-            self.metadata[EDIT_LOCK_USERID] = edit_lock[3]
-        else:
-            raise ValueError(_("Lock must be either False or a tuple containing timestamp, addr, hostname and user."))
+        self.metadata.save()
+        self.lock = False
         self._edit_lock = None
 
     edit_lock = property(get_edit_lock, set_edit_lock)
@@ -414,6 +418,8 @@ class Revision(object):
         """
         Deleted Property.
         """
+        if not value in [True, False]:
+            raise ValueError(_("Invalid value for deleted, must be a boolean, is %r.") % value)
         self.metadata[DELETED] = str(value)
 
     deleted = property(get_deleted, set_deleted)
@@ -439,6 +445,32 @@ class Revision(object):
         elif name == 'mtime':
             return float(self.metadata.get("edit_log_" + name, 0.0))
         raise AttributeError(_("Revision class has no attribute %r.") % name)
+
+    def save(self, action="SAVE", extra="", comment=""):
+        """
+        Saves the revision and sets new edit-log values.
+        """
+        # set edit-log
+        if self._data is not None:
+            timestamp = time.time()
+            if hasattr(self.item._request, "uid_override"):
+                addr = ""
+                hostname = self.item._request.uid_override
+                userid = ""
+            else:
+                addr = self.item._request.remote_addr
+                hostname = wikiutil.get_hostname(self.item._request, addr)
+                userid = self.item._request.user.valid and self.item._request.user.id or ''
+            self.metadata[EDIT_LOG_MTIME] = str(timestamp)
+            self.metadata[EDIT_LOG_ACTION] = action
+            self.metadata[EDIT_LOG_ADDR] = addr
+            self.metadata[EDIT_LOG_HOSTNAME] = hostname
+            self.metadata[EDIT_LOG_USERID] = userid
+            self.metadata[EDIT_LOG_EXTRA] = extra
+            self.metadata[EDIT_LOG_COMMENT] = comment
+            self.data.close()
+        if self._metadata is not None:
+            self.metadata.save()
 
 
 def _decorate(instance, obj, exception, message, forbid, forward):

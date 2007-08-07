@@ -19,7 +19,7 @@ class TestItemCollection(AbstractTest):
     def setup_class(self):
         AbstractTest.init(get_page_backend())
         create_data(self)
-        self.item_collection = ItemCollection(self.backend, None)
+        self.item_collection = ItemCollection(self.backend, self.request)
 
     def test_has_item(self):
         assert self.items[0] in self.item_collection
@@ -77,7 +77,7 @@ class TestItem(AbstractTest):
     def setup_class(self):
         AbstractTest.init(get_page_backend())
         create_data(self)
-        self.item = ItemCollection(self.backend, None)[self.items[0]]
+        self.item = ItemCollection(self.backend, self.request)[self.items[0]]
 
     def test_has_revision(self):
         assert 1 in self.item
@@ -128,16 +128,16 @@ class TestItem(AbstractTest):
         assert isinstance(self.item.acl, AccessControlList)
 
     def test_edit_lock(self):
-        self.item.lock = True
-        assert self.item.edit_lock == (False, 0, "", "", "")
-        self.item.edit_lock = (1186389937.832, '127.0.0.1', 'localhost', '1183317550.72.7782')
-        self.item.metadata.save()
-        print self.item.edit_lock
-        assert self.item.edit_lock == (True, 1186389937.8299999, '127.0.0.1', 'localhost', '1183317550.72.7782')
+        assert self.item.edit_lock == (False, 0.0, "", "", "")
+        self.item.edit_lock = True
+        edit_lock = self.item.edit_lock
+        assert edit_lock[0]
+        assert isinstance(edit_lock[1], float)
+        assert isinstance(edit_lock[2], str)
+        assert isinstance(edit_lock[3], str)
+        assert isinstance(edit_lock[4], str)
         self.item.edit_lock = False
-        self.item.metadata.save()
-        assert self.item.edit_lock == (False, 0, "", "", "")
-        self.item.lock = False
+        assert self.item.edit_lock == (False, 0.0, "", "", "")
 
     def test_lock(self):
         assert not self.item.lock
@@ -154,7 +154,7 @@ class TestRevision(AbstractTest):
     def setup_class(self):
         AbstractTest.init(get_page_backend())
         create_data(self)
-        self.item = ItemCollection(self.backend, None)[self.items[0]]
+        self.item = ItemCollection(self.backend, self.request)[self.items[0]]
 
     def test_data(self):
         self.item[0].data
@@ -166,14 +166,10 @@ class TestRevision(AbstractTest):
         self.item.lock = True
         assert self.item[0].acl == ['MoinPagesEditorGroup:read,write,delete,revert All:read', 'HeinrichWendel:read']
         self.item[0].acl = ""
-        self.item[0].metadata.save()
-        self.item.lock = False
-        self.item.lock = True
+        self.item[0].save()
         assert self.item[0].acl == ['']
         self.item[0].acl = ['MoinPagesEditorGroup:read,write,delete,revert All:read', 'HeinrichWendel:read']
-        self.item[0].metadata.save()
-        self.item.lock = False
-        self.item.lock = True
+        self.item[0].save()
         assert self.item[0].acl == ['MoinPagesEditorGroup:read,write,delete,revert All:read', 'HeinrichWendel:read']
         self.item.lock = False
 
@@ -181,12 +177,12 @@ class TestRevision(AbstractTest):
         self.item.lock = True
         assert not self.item[0].deleted
         self.item[0].deleted = True
-        self.item[0].metadata.save()
+        self.item[0].save()
         self.item.lock = False
         self.item.lock = True
         assert self.item[0].deleted
         self.item[0].deleted = False
-        self.item[0].metadata.save()
+        self.item[0].save()
         self.item.lock = False
         self.item.lock = True
         assert not self.item[0].deleted
@@ -194,3 +190,23 @@ class TestRevision(AbstractTest):
 
     def test_size(self):
         assert isinstance(self.item[0].size, long)
+
+    def test_edit_log(self):
+        assert self.item[0].action == ""
+        assert isinstance(self.item[0].addr, str)
+        assert isinstance(self.item[0].hostname, str)
+        assert isinstance(self.item[0].userid, str)
+        assert self.item[0].extra == ""
+        assert self.item[0].comment == ""
+        assert isinstance(self.item[0].mtime, float)
+        self.item.lock = True
+        self.item[0].data.write("hallo")
+        self.item[0].save()
+        self.item.lock = False
+        assert self.item[0].action == "SAVE"
+        assert isinstance(self.item[0].addr, str)
+        assert isinstance(self.item[0].hostname, str)
+        assert isinstance(self.item[0].userid, str)
+        assert self.item[0].extra == ""
+        assert self.item[0].comment == ""
+        assert isinstance(self.item[0].mtime, float)

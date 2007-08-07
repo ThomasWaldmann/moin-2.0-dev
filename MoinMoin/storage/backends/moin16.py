@@ -439,7 +439,7 @@ class PageMetadata(AbstractMetadata):
                 result = []
                 newline = "\t".join((str(wikiutil.timestamp2version(float(metadata[EDIT_LOG_MTIME]))), _get_rev_string(revno), metadata[EDIT_LOG_ACTION], name, metadata[EDIT_LOG_ADDR], metadata[EDIT_LOG_HOSTNAME], metadata[EDIT_LOG_USERID], metadata[EDIT_LOG_EXTRA], metadata[EDIT_LOG_COMMENT])) + "\n"
                 for line in edit_log:
-                    values = _parse_log_line(line)    
+                    values = _parse_log_line(line)
                     rev = int(values[1])
                     if revno == rev:
                         continue

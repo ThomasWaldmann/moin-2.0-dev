@@ -82,7 +82,10 @@ class EditLog(LogFile):
 
         # Used by antispam in order to show an internal name instead
         # of a confusing userid
-        self.uid_override = kw.get('uid_override', None)
+        if hasattr(request, "uid_override"):
+            self.uid_override = request.uid_override
+        else:
+            self.uid_override = None
 
     def add(self, request, mtime, rev, action, pagename, host=None, extra=u'', comment=u''):
         """ Generate (and add) a line to the edit-log.
@@ -92,7 +95,7 @@ class EditLog(LogFile):
         if host is None:
             host = request.remote_addr
 
-        hostname = wikiutil.get_hostname(host)
+        hostname = wikiutil.get_hostname(request, host)
         user_id = request.user.valid and request.user.id or ''
 
         comment = wikiutil.clean_input(comment)
