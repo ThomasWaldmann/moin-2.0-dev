@@ -66,7 +66,8 @@ def getblacklist(request, pagename, do_update):
     @return: list of blacklisted regular expressions
     """
     from MoinMoin.PageEditor import PageEditor
-    p = PageEditor(request, pagename, uid_override="Antispam subsystem")
+    request.uid_override = "Antispam subsystem"
+    p = PageEditor(request, pagename)
     mymtime = p.mtime()
     if do_update:
         tooold = time.time() - 1800

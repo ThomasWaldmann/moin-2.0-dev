@@ -49,8 +49,9 @@ def event_logfile(self, pagename, mtime):
     elog.add(self.request, eventtype, {'pagename': pagename}, 1, mtime_usecs)
 
 def edit_logfile_append(self, pagename, mtime, rev, action, logname='edit-log', comment=u'', author=u"Scripting Subsystem"):
-    glog = editlog.EditLog(self.request, uid_override=author)
-    llog = editlog.EditLog(self.request, rootpagename=pagename, uid_override=author)
+    self.request.uid_override = author
+    glog = editlog.EditLog(self.request)
+    llog = editlog.EditLog(self.request, rootpagename=pagename)
     mtime_usecs = wikiutil.timestamp2version(mtime)
     host = '::1'
     extra = u''
@@ -297,7 +298,8 @@ class ScriptEngine:
             theuser = user.User(self.request, uid)
             save_user = self.request.user
             self.request.user = theuser
-            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
+            self.request.uid_override = author
+            page = PageEditor(self.request, pagename, do_editor_backup=0)
             try:
                 page.saveText(self.extract_file(filename).decode("utf-8"), 0, trivial=trivial, comment=comment)
                 self.msg += u"%(pagename)s added \n" % {"pagename": pagename}
@@ -317,7 +319,8 @@ class ScriptEngine:
         """
         if self.request.user.may.write(pagename):
             _ = self.request.getText
-            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
+            self.request.uid_override = author
+            page = PageEditor(self.request, pagename, do_editor_backup=0)
             if not page.exists():
                 raise RuntimeScriptException(_("The page %s does not exist.") % pagename)
             page.renamePage(newpagename, comment=u"Renamed from '%s'" % (pagename))

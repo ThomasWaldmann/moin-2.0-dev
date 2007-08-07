@@ -24,7 +24,7 @@ from MoinMoin import config, caching, wikiutil, error, user
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
-from MoinMoin.logfile import editlog, eventlog
+from MoinMoin.logfile import eventlog
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.util import timefuncs, web
 from MoinMoin.storage.error import BackendError
@@ -86,14 +86,12 @@ class PageEditor(Page):
         @param request: the request object
         @keyword do_revision_backup: if 0, suppress making a page backup per revision
         @keyword do_editor_backup: if 0, suppress saving of draft copies
-        @keyword uid_override: override user id and name (default None)
         """
         Page.__init__(self, request, page_name, **keywords)
         self._ = request.getText
 
         self.do_revision_backup = keywords.get('do_revision_backup', 1)
         self.do_editor_backup = keywords.get('do_editor_backup', 1)
-        self.uid_override = keywords.get('uid_override', None)
 
         if self._item is None:
             self._item = self._items_all.new_item(self.page_name)
@@ -799,13 +797,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         # remember conflict state
         self.setConflict(wikiutil.containsConflictMarker(text))
 
-        # The local log should be the standard edit log, not the
-        # underlay copy log!
-        llog = editlog.EditLog(request, rootpagename=self.page_name,
-                               uid_override=self.uid_override)
-        # Open the global log
-        glog = editlog.EditLog(request, uid_override=self.uid_override)
-
         self._item.lock = True
 
         if was_deprecated:
@@ -821,14 +812,13 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         if not deleted:
             metadata, data = wikiutil.split_body(text)
             newrev.data.write(data.encode(config.charset))
-            newrev.data.close()
             if rev != 1:
                 for key, value in metadata.iteritems():
                     newrev.metadata[key] = value
-                    newrev.metadata.save()
         else:
             newrev.deleted = True
-            newrev.metadata.save()
+
+        newrev.save(action, extra, comment)
 
         self._item.lock = False
 
@@ -836,17 +826,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         self.reset()
 
         mtime_usecs = wikiutil.timestamp2version(time.time())
-
-        # write the editlog entry
-        # for now simply make 2 logs, better would be some multilog stuff maybe
-        if self.do_revision_backup:
-            # do not globally log edits with no revision backup
-            # if somebody edits a deprecated page, log it in global log, but not local log
-            glog.add(request, mtime_usecs, rev, action, self.page_name, None, extra, comment)
-        if not was_deprecated and self.do_revision_backup:
-            # if we did not create a new revision number, do not locally log it
-            llog.add(request, mtime_usecs, rev, action, self.page_name, None, extra, comment)
-
 
         # add event log entry
         elog = eventlog.EventLog(request)
@@ -1101,27 +1080,16 @@ To leave the editor, press the Cancel button.""") % {
         self.timestamp = 0
 
         if self.locktype:
-            (lock, timestamp, addr, hostname, userid) = self.pageobj._item.edit_lock
+            (lock, self.timestamp, addr, hostname, userid) = self.pageobj._item.edit_lock
             if lock:
                 self.owner = userid or addr
                 self.owner_html = user.get_printable_editor(self.request, userid, addr, hostname)
-                self.timestamp = wikiutil.version2timestamp(timestamp)
 
     def _writeLockFile(self):
         """ Write new lock file. """
-        addr = self.request.remote_addr
-        hostname = wikiutil.get_hostname(self.request, addr)
-        user_id = self.request.user.valid and self.request.user.id or ''
-
-        self.pageobj._item.lock = True
-        self.pageobj._item.edit_lock = (wikiutil.timestamp2version(self.now), addr, hostname, user_id)
-        self.pageobj._item.metadata.save()
-        self.pageobj._item.lock = False
+        self.pageobj._item.edit_lock = True
 
     def _deleteLockFile(self):
         """ Delete the lock file unconditionally. """
-        self.pageobj._item.lock = True
         self.pageobj._item.edit_lock = False
-        self.pageobj._item.metadata.save()
-        self.pageobj._item.lock = False
 

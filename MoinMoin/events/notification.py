@@ -77,7 +77,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
         'You have subscribed to a wiki page or wiki category on "%(sitename)s" for change notification.\n\n'
         "The following page has been changed by %(editor)s:\n"
         "%(pagelink)s\n\n", formatted=False) % {
-            'editor': page.uid_override or user.getUserIdentification(request),
+            'editor': page.last_editor(),
             'pagelink': pagelink,
             'sitename': page.cfg.sitename or request.getBaseURL(),
         }
@@ -100,7 +100,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
             'You have subscribed to a wiki page "%(sitename)s" for change notification.\n\n'
             "The following page has been deleted by %(editor)s:\n"
             "%(pagelink)s\n\n", formatted=False) % {
-                'editor': page.uid_override or user.getUserIdentification(request),
+                'editor': page.last_editor(),
                 'pagelink': pagelink,
                 'sitename': page.cfg.sitename or request.getBaseURL(),
         }
