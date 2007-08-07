@@ -18,9 +18,9 @@ from MoinMoin.util import timefuncs
 from MoinMoin.logfile import editlog
 
 def execute(pagename, request):
-    log = editlog.EditLog(request)
+    glog = editlog.EditLog(request)
     try:
-        lastmod = wikiutil.version2timestamp(log.date())
+        lastmod = wikiutil.version2timestamp(glog.date())
     except:
         lastmod = 0
 

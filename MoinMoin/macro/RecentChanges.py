@@ -153,27 +153,6 @@ def print_abandoned(macro, args, **kw):
     d['q_page_name'] = wikiutil.quoteWikinameURL(pagename)
     msg = None
 
-    pages = request.rootpage.getPageList()
-    last_edits = []
-    for name in pages:
-        logfile = editlog.EditLog(request, rootpage=name)
-        logfile.to_end()
-        log = logfile.previous()
-        if log:
-            last_edits.append(log)
-        #   we don't want all Systempages at the beginning of the abandoned list
-        #    line = editlog.EditLogLine({})
-        #    line.pagename = page
-        #    line.ed_time = 0
-        #    line.comment = 'not edited'
-        #    line.action = ''
-        #    line.userid = ''
-        #    line.hostname = ''
-        #    line.addr = ''
-        #    last_edits.append(line)
-    del pages
-    last_edits.sort()
-
     # set max size in days
     max_days = min(int(request.form.get('max_days', [0])[0]), _DAYS_SELECTION[-1])
     # default to _MAX_DAYS for users without bookmark
@@ -190,42 +169,35 @@ def print_abandoned(macro, args, **kw):
     d['rc_update_bookmark'] = None
     request.write(request.theme.recentchanges_header(d))
 
-    length = len(last_edits)
-
-    index = 0
-    last_index = 0
-    day_count = 0
-
-    if length > 0:
-        line = last_edits[index]
-        line.time_tuple = request.user.getTime(wikiutil.version2timestamp(line.ed_time_usecs))
-        this_day = line.time_tuple[0:3]
-        day = this_day
-
-    while 1:
-
-        index += 1
-
-        if index > length:
+    pages = set()
+    last = int(time.time()) - (max_days * 24 * 60 * 60)
+    glog = editlog.EditLog(request)
+    for line in glog.reverse():
+        if wikiutil.version2timestamp(line.ed_time_usecs) > last:
+            pages.add(line.pagename)
+        else:
             break
 
-        if index < length:
-            line = last_edits[index]
-            line.time_tuple = request.user.getTime(wikiutil.version2timestamp(line.ed_time_usecs))
-            day = line.time_tuple[0:3]
+    pages = set(request.rootpage.getPageList(include_underlay=False)) - pages
 
-        if (day != this_day) or (index == length):
+    last_edits = []
+    for pagename in pages:
+        llog = editlog.EditLog(request, rootpagename=pagename)
+        for line in llog.reverse():
+            last_edits.append(line)
+            break
+    last_edits.sort()
+    
+    this_day = 0
+    for line in last_edits:
+        line.time_tuple = request.user.getTime(wikiutil.version2timestamp(line.ed_time_usecs))
+        day = line.time_tuple[0:3]
+        if day != this_day:
             d['bookmark_link_html'] = None
-            d['date'] = request.user.getFormattedDate(wikiutil.version2timestamp(last_edits[last_index].ed_time_usecs))
+            d['date'] = request.user.getFormattedDate(wikiutil.version2timestamp(line.ed_time_usecs))
             request.write(request.theme.recentchanges_daybreak(d))
             this_day = day
-
-            for page in last_edits[last_index:index]:
-                request.write(format_page_edits(macro, [page], None))
-            last_index = index
-            day_count += 1
-            if (day_count >= max_days):
-                break
+        request.write(format_page_edits(macro, [line], None))
 
     d['rc_msg'] = msg
     request.write(request.theme.recentchanges_footer(d))
@@ -246,7 +218,7 @@ def execute(macro, args, **kw):
     d['page'] = page
     d['q_page_name'] = wikiutil.quoteWikinameURL(pagename)
 
-    log = editlog.EditLog(request)
+    glog = editlog.EditLog(request)
 
     tnow = time.time()
     msg = ""
@@ -291,7 +263,7 @@ def execute(macro, args, **kw):
     this_day = today
     day_count = 0
 
-    for line in log.reverse():
+    for line in glog.reverse():
 
         if not request.user.may.read(line.pagename):
             continue

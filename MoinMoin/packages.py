@@ -9,12 +9,11 @@
 
 import os
 import sys
-import time
 import zipfile
 
 from MoinMoin import config, wikiutil, caching, user
 from MoinMoin.PageEditor import PageEditor
-from MoinMoin.logfile import editlog, eventlog
+from MoinMoin.logfile import eventlog
 
 MOIN_PACKAGE_FILE = 'MOIN_PACKAGE'
 MAX_VERSION = 1
@@ -47,17 +46,6 @@ def event_logfile(self, pagename, mtime):
     mtime_usecs = wikiutil.timestamp2version(mtime)
     elog = eventlog.EventLog(self.request)
     elog.add(self.request, eventtype, {'pagename': pagename}, 1, mtime_usecs)
-
-def edit_logfile_append(self, pagename, mtime, rev, action, logname='edit-log', comment=u'', author=u"Scripting Subsystem"):
-    self.request.uid_override = author
-    glog = editlog.EditLog(self.request)
-    llog = editlog.EditLog(self.request, rootpagename=pagename)
-    mtime_usecs = wikiutil.timestamp2version(mtime)
-    host = '::1'
-    extra = u''
-    glog.add(self.request, mtime_usecs, rev, action, pagename, host, comment)
-    llog.add(self.request, mtime_usecs, rev, action, pagename, host, extra, comment)
-    event_logfile(self, pagename, mtime)
 
 # Parsing and (un)quoting for script files
 def packLine(items, separator="|"):
@@ -133,14 +121,13 @@ class ScriptEngine:
             filename = wikiutil.taintfilename(filename)
             zipname = wikiutil.taintfilename(zipname)
             target = os.path.join(attachments, filename)
-            mtime = time.time()
             if not os.path.exists(target):
                 self._extractToFile(zipname, target)
                 if os.path.exists(target):
-                    os.chmod(target, config.umask )
-                    action = 'ATTNEW'
-                    edit_logfile_append(self, pagename, mtime, 99999999, action, logname='edit-log',
-                                       comment=u'%(filename)s' % {"filename": filename}, author=author)
+                    os.chmod(target, config.umask)
+                    self.request.uid_override = author
+                    from MoinMoin.action.AttachFile import _addLogEntry
+                    _addLogEntry(self.request, "ATTNEW", pagename, filename)
                 self.msg += u"%(filename)s attached \n" % {"filename": filename}
             else:
                 self.msg += u"%(filename)s not attached \n" % {"filename": filename}
@@ -161,12 +148,10 @@ class ScriptEngine:
             attachments = getAttachDir(self.request, pagename, create=0)
             filename = wikiutil.taintfilename(filename)
             target = os.path.join(attachments, filename)
-            mtime = time.time()
             if os.path.exists(target):
                 os.remove(target)
-                action = 'ATTDEL'
-                edit_logfile_append(self, pagename, mtime, 99999999, action, logname='edit-log',
-                                    comment=u'%(filename)s' % {"filename": filename}, author=author)
+                from MoinMoin.action.AttachFile import _addLogEntry
+                _addLogEntry(self.request, "ATTDEL", pagename, filename)
                 self.msg += u"%(filename)s removed \n" % {"filename": filename}
             else:
                 self.msg += u"%(filename)s not exists \n" % {"filename": filename}

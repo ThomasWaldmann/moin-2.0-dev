@@ -96,9 +96,9 @@ def execute(pagename, request):
             return page.link_to(request, text, querystr=query, **kw)
 
         # read in the complete log of this page
-        log = editlog.EditLog(request, rootpagename=pagename)
+        llog = editlog.EditLog(request, rootpagename=pagename)
         count = 0
-        for line in log.reverse():
+        for line in llog.reverse():
             rev = int(line.rev)
             actions = []
             if line.action in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):

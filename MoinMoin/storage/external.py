@@ -453,10 +453,12 @@ class Revision(object):
         # set edit-log
         if self._data is not None:
             timestamp = time.time()
+            # TODO: just a hack, make this better
             if hasattr(self.item._request, "uid_override"):
                 addr = ""
                 hostname = self.item._request.uid_override
                 userid = ""
+                delattr(self.item._request, "uid_override")
             else:
                 addr = self.item._request.remote_addr
                 hostname = wikiutil.get_hostname(self.item._request, addr)

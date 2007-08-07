@@ -18,7 +18,7 @@
 import logging
 
 from MoinMoin.logfile import LogFile
-from MoinMoin import wikiutil, user, config
+from MoinMoin import wikiutil, user
 from MoinMoin.Page import Page
 
 class EditLogLine:
@@ -69,6 +69,9 @@ class EditLog(LogFile):
     """ Used for accessing the global edit-log (e.g. by RecentChanges) as
         well as for the local edit-log (e.g. PageEditor, info action).
     """
+
+    _usercache = {}
+
     def __init__(self, request, filename=None, buffer_size=4096, **kw):
         if filename is None:
             rootpagename = kw.get('rootpagename', None)
@@ -78,7 +81,6 @@ class EditLog(LogFile):
                 filename = request.rootpage.getPagePath('edit-log', isfile=1)
         LogFile.__init__(self, filename, buffer_size)
         self._NUM_FIELDS = 9
-        self._usercache = {}
 
         # Used by antispam in order to show an internal name instead
         # of a confusing userid

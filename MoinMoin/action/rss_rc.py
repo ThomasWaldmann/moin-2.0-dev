@@ -54,12 +54,12 @@ def execute(pagename, request):
         ddiffs = 0
 
     # get data
-    log = editlog.EditLog(request)
+    glog = editlog.EditLog(request)
     logdata = []
     counter = 0
     pages = {}
     lastmod = 0
-    for line in log.reverse():
+    for line in glog.reverse():
         if not request.user.may.read(line.pagename):
             continue
         if (not line.action.startswith('SAVE') or
@@ -76,7 +76,7 @@ def execute(pagename, request):
         counter += 1
         if counter >= max_items:
             break
-    del log
+    del glog
 
     timestamp = timefuncs.formathttpdate(lastmod)
     etag = "%d-%d-%d-%d-%d" % (lastmod, max_items, diffs, ddiffs, unique)
