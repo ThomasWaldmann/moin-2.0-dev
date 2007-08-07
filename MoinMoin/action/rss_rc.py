@@ -54,7 +54,7 @@ def execute(pagename, request):
         ddiffs = 0
 
     # get data
-    glog = editlog.EditLog(request)
+    glog = editlog.GlobalEditLog(request)
     logdata = []
     counter = 0
     pages = {}

@@ -441,7 +441,7 @@ class PageMetadata(AbstractMetadata):
                 for line in edit_log:
                     values = _parse_log_line(line)
                     rev = int(values[1])
-                    if revno == rev:
+                    if revno == rev or rev == 99999999:
                         continue
                     if rev > revno:
                         result.append(newline)

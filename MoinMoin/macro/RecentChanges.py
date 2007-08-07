@@ -171,7 +171,7 @@ def print_abandoned(macro, args, **kw):
 
     pages = set()
     last = int(time.time()) - (max_days * 24 * 60 * 60)
-    glog = editlog.EditLog(request)
+    glog = editlog.GlobalEditLog(request)
     for line in glog.reverse():
         if wikiutil.version2timestamp(line.ed_time_usecs) > last:
             pages.add(line.pagename)
@@ -182,19 +182,19 @@ def print_abandoned(macro, args, **kw):
 
     last_edits = []
     for pagename in pages:
-        llog = editlog.EditLog(request, rootpagename=pagename)
-        for line in llog.reverse():
+        llog = editlog.LocalEditLog(request, rootpagename=pagename)
+        for line in llog:
             last_edits.append(line)
             break
     last_edits.sort()
-    
+
     this_day = 0
     for line in last_edits:
-        line.time_tuple = request.user.getTime(wikiutil.version2timestamp(line.ed_time_usecs))
+        line.time_tuple = request.user.getTime(line.ed_time_usecs)
         day = line.time_tuple[0:3]
         if day != this_day:
             d['bookmark_link_html'] = None
-            d['date'] = request.user.getFormattedDate(wikiutil.version2timestamp(line.ed_time_usecs))
+            d['date'] = request.user.getFormattedDate(line.ed_time_usecs)
             request.write(request.theme.recentchanges_daybreak(d))
             this_day = day
         request.write(format_page_edits(macro, [line], None))
@@ -218,7 +218,7 @@ def execute(macro, args, **kw):
     d['page'] = page
     d['q_page_name'] = wikiutil.quoteWikinameURL(pagename)
 
-    glog = editlog.EditLog(request)
+    glog = editlog.GlobalEditLog(request)
 
     tnow = time.time()
     msg = ""

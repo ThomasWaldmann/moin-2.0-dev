@@ -873,15 +873,15 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             # check if we already saved that page
             other = False
             next_line = None
-            llog = editlog.EditLog(request, rootpagename=self.page_name)
-            for line in llog.reverse():
-                if int(line.rev) == int(rev):
+            llog = editlog.LocalEditLog(request, rootpagename=self.page_name)
+            for line in llog:
+                if line.rev == rev:
                     break
                 if not line.is_from_current_user(request):
                     other = True
                 next_line = line
             if next_line and next_line.is_from_current_user(request):
-                saved_page = Page(request, self.page_name, rev=int(next_line.rev))
+                saved_page = Page(request, self.page_name, rev=next_line.rev)
                 if newtext == saved_page.get_raw_body():
                     msg = _("You already saved this page!")
                 else:
