@@ -234,12 +234,12 @@ def _addLogEntry(request, action, pagename, filename):
     fname = wikiutil.url_quote(filename, want_unicode=True)
 
     # Write to global log
-    log = editlog.EditLog(request)
-    log.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
+    glog = editlog.EditLog(request)
+    glog.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
 
     # Write to local log
-    log = editlog.EditLog(request, rootpagename=pagename)
-    log.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
+    llog = editlog.EditLog(request, rootpagename=pagename)
+    llog.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
 
 
 def _access_file(pagename, request):

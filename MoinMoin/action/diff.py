@@ -57,8 +57,8 @@ def execute(pagename, request):
 
     if date: # this is how we get called from RecentChanges
         rev1 = 0
-        log = editlog.EditLog(request, rootpagename=pagename)
-        for line in log.reverse():
+        llog = editlog.EditLog(request, rootpagename=pagename)
+        for line in llog.reverse():
             if date >= line.ed_time_usecs and int(line.rev) != 99999999:
                 rev1 = int(line.rev)
                 break

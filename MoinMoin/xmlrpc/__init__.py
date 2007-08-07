@@ -317,8 +317,8 @@ class XmlRpcBase:
 
         return_items = []
 
-        edit_log = editlog.EditLog(self.request)
-        for log in edit_log.reverse():
+        glog = editlog.EditLog(self.request)
+        for log in glog.reverse():
             # get last-modified UTC (DateTime) from log
             gmtuple = tuple(time.gmtime(wikiutil.version2timestamp(log.ed_time_usecs)))
             lastModified_date = xmlrpclib.DateTime(gmtuple)

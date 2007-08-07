@@ -24,7 +24,7 @@ from MoinMoin import config, caching, wikiutil, error, user
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
-from MoinMoin.logfile import eventlog
+from MoinMoin.logfile import eventlog, editlog
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.util import timefuncs, web
 from MoinMoin.storage.error import BackendError
@@ -873,7 +873,8 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             # check if we already saved that page
             other = False
             next_line = None
-            for line in editlog.EditLog(request, rootpagename=self.page_name).reverse():
+            llog = editlog.EditLog(request, rootpagename=self.page_name)
+            for line in llog.reverse():
                 if int(line.rev) == int(rev):
                     break
                 if not line.is_from_current_user(request):
