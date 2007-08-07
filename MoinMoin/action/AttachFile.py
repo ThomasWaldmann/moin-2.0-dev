@@ -233,12 +233,8 @@ def _addLogEntry(request, action, pagename, filename):
     t = wikiutil.timestamp2version(time.time())
     fname = wikiutil.url_quote(filename, want_unicode=True)
 
-    # Write to global log
-    glog = editlog.EditLog(request)
-    glog.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
-
     # Write to local log
-    llog = editlog.EditLog(request, rootpagename=pagename)
+    llog = editlog.LocalEditLog(request, rootpagename=pagename)
     llog.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
 
 

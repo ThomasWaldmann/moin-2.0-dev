@@ -469,7 +469,7 @@ class Revision(object):
             self.metadata[EDIT_LOG_HOSTNAME] = hostname
             self.metadata[EDIT_LOG_USERID] = userid
             self.metadata[EDIT_LOG_EXTRA] = extra
-            self.metadata[EDIT_LOG_COMMENT] = comment
+            self.metadata[EDIT_LOG_COMMENT] = wikiutil.clean_input(comment)
             self.data.close()
         if self._metadata is not None:
             self.metadata.save()

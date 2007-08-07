@@ -20,7 +20,7 @@ def show_editors(request, pagename, timestamp):
     _ = request.getText
 
     timestamp = int(timestamp * 1000000)
-    glog = editlog.EditLog(request)
+    glog = editlog.GlobalEditLog(request)
     editors = {}
     pages = {}
     for line in glog.reverse():
@@ -63,7 +63,7 @@ def show_pages(request, pagename, editor, timestamp):
     _ = request.getText
 
     timestamp = int(timestamp * 1000000)
-    glog = editlog.EditLog(request)
+    glog = editlog.GlobaEditLog(request)
     pages = {}
     #  mimic macro object for use of RecentChanges subfunctions
     macro = tmp()
@@ -100,11 +100,11 @@ def revert_page(request, pagename, editor):
     if not request.user.may.revert(pagename):
         return
 
-    llog = editlog.EditLog(request, rootpagename=pagename)
+    llog = editlog.LocalEditLog(request, rootpagename=pagename)
 
     first = True
     rev = u"00000000"
-    for line in llog.reverse():
+    for line in llog:
         if first:
             first = False
             if line.getEditor(request) != editor:
@@ -135,7 +135,7 @@ def revert_pages(request, editor, timestamp):
 
     editor = wikiutil.url_unquote(editor, want_unicode=False)
     timestamp = int(timestamp * 1000000)
-    glog = editlog.EditLog(request)
+    glog = editlog.GlobalEditLog(request)
     pages = {}
     revertpages = []
     for line in glog.reverse():

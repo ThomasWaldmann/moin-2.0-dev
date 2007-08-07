@@ -4,24 +4,19 @@
     This is used for accessing the global edit-log (e.g. by RecentChanges) as
     well as for the local edit-log (e.g. PageEditor, info action).
 
-    TODO:
-    * when we have items with separate data and metadata storage, we do not
-      need the local edit-log file any more (because everything in it will be
-      stored into the revision's metadata).
-    * maybe we can even get rid of the global edit-log as we know it now (and just
-      maintaining a cache of recent changes metadata)
-
     @copyright: 2006 MoinMoin:ThomasWaldmann
+                2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
 """
 
-import logging
 
-from MoinMoin.logfile import LogFile
 from MoinMoin import wikiutil, user
+from MoinMoin.logfile import LogFile
+from MoinMoin.storage.external import ItemCollection
 from MoinMoin.Page import Page
 
-class EditLogLine:
+
+class EditLogLine(object):
     """
     Has the following attributes
 
@@ -35,8 +30,6 @@ class EditLogLine:
     extra
     comment
     """
-    def __init__(self, usercache):
-        self._usercache = usercache
 
     def __cmp__(self, other):
         try:
@@ -65,46 +58,58 @@ class EditLogLine:
         return user.get_printable_editor(request, self.userid, self.addr, self.hostname)
 
 
-class EditLog(LogFile):
-    """ Used for accessing the global edit-log (e.g. by RecentChanges) as
-        well as for the local edit-log (e.g. PageEditor, info action).
+class LocalEditLog(object):
+    """
+    Used for accessing the local edit-log.
     """
 
-    _usercache = {}
+    def __init__(self, request, rootpagename):
+        """
+        Init stuff.
+        """
+        self.pagename = rootpagename
+        self.item = ItemCollection(request.cfg.data_backend, request)[rootpagename]
+        self.pos = self.item.current
 
-    def __init__(self, request, filename=None, buffer_size=4096, **kw):
-        if filename is None:
-            rootpagename = kw.get('rootpagename', None)
-            if rootpagename:
-                filename = Page(request, rootpagename).getPagePath('edit-log', isfile=1)
-            else:
-                filename = request.rootpage.getPagePath('edit-log', isfile=1)
-        LogFile.__init__(self, filename, buffer_size)
-        self._NUM_FIELDS = 9
+    def __iter__(self):
+        """
+        Iterator.
+        """
+        return self
 
-        # Used by antispam in order to show an internal name instead
-        # of a confusing userid
-        if hasattr(request, "uid_override"):
-            self.uid_override = request.uid_override
+    def next(self):
+        """
+        Returns the next edit-log entry.
+        """
+        result = EditLogLine()
+        result.ed_time_usecs = self.item[self.pos].mtime
+        result.rev = self.pos
+        result.action = self.item[self.pos].action
+        result.pagename = self.pagename
+        result.addr = self.item[self.pos].addr
+        result.hostname = self.item[self.pos].hostname
+        result.userid = self.item[self.pos].userid
+        result.extra = self.item[self.pos].extra
+        result.comment = self.item[self.pos].comment
+
+        if self.pos == 1:
+            raise StopIteration
         else:
-            self.uid_override = None
+            self.pos = self.pos - 1
 
-    def add(self, request, mtime, rev, action, pagename, host=None, extra=u'', comment=u''):
+        return result
+
+    def add(self, request, mtime, rev, action, pagename, host, extra=u'', comment=u''):
         """ Generate (and add) a line to the edit-log.
 
-        If `host` is None, it's read from request vars.
+        TODO: drop that as fast as possible, only used by attachements.
         """
-        if host is None:
-            host = request.remote_addr
-
         hostname = wikiutil.get_hostname(request, host)
         user_id = request.user.valid and request.user.id or ''
 
-        comment = wikiutil.clean_input(comment)
-
-        if self.uid_override is not None:
+        if hasattr(request, "uid_override"):
             user_id = ''
-            hostname = self.uid_override
+            hostname = request.uid_override
             host = ''
 
         line = u"\t".join((str(long(mtime)), # has to be long for py 2.2.x
@@ -117,7 +122,25 @@ class EditLog(LogFile):
                            extra,
                            comment,
                            )) + "\n"
-        self._add(line)
+
+        if self.pagename:
+            filename = Page(request, pagename).getPagePath('edit-log', isfile=1)
+        else:
+            filename = request.rootpage.getPagePath('edit-log', isfile=1)
+
+        log_file = open(filename, "a")
+        log_file.write(line)
+        log_file.close()
+
+
+class GlobalEditLog(LogFile):
+    """
+    Used for accessing the global edit-log.
+    """
+    def __init__(self, request):
+        filename = request.rootpage.getPagePath('edit-log', isfile=1)
+        LogFile.__init__(self, filename, 4096)
+        self._NUM_FIELDS = 9
 
     def parser(self, line):
         """ Parse edit-log line into fields """
@@ -126,7 +149,7 @@ class EditLog(LogFile):
         missing = self._NUM_FIELDS - len(fields)
         if missing:
             fields.extend([''] * missing)
-        result = EditLogLine(self._usercache)
+        result = EditLogLine()
         (result.ed_time_usecs, result.rev, result.action,
          result.pagename, result.addr, result.hostname, result.userid,
          result.extra, result.comment, ) = fields[:self._NUM_FIELDS]
@@ -136,34 +159,9 @@ class EditLog(LogFile):
         result.ed_time_usecs = long(result.ed_time_usecs or '0') # has to be long for py 2.2.x
         return result
 
-    def set_filter(self, **kw):
-        """ optionally filter for specific pagenames, addrs, hostnames, userids """
-        expr = "1"
-        for field in ['pagename', 'addr', 'hostname', 'userid']:
-            if field in kw:
-                expr = "%s and x.%s == %s" % (expr, field, repr(kw[field]))
-
-        if 'ed_time_usecs' in kw:
-            expr = "%s and long(x.ed_time_usecs) == %s" % (expr, long(kw['ed_time_usecs'])) # must be long for py 2.2.x
-
-        self.filter = eval("lambda x: " + expr)
-
-
-    def news(self, oldposition):
-        """ What has changed in the edit-log since <oldposition>?
-            Returns edit-log final position() and list of changed item names.
+    def news(self, time):
         """
-        if oldposition is None:
-            self.to_end()
-        else:
-            self.seek(oldposition)
-        items = []
-        for line in self:
-            items.append(line.pagename)
-            if line.action == 'SAVE/RENAME':
-                items.append(line.extra) # == old page name
-
-        newposition = self.position()
-        logging.log(logging.NOTSET, "editlog.news: new pos: %r new items: %r", newposition, items)
-        return newposition, items
+        TODO: implement that.
+        """
+        pass
 
