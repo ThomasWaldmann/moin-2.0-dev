@@ -87,7 +87,7 @@ def get_data(pagename, request, filterpage=None):
             eventpage = event[2].get('pagename', '')
             if filterpage and eventpage != filterpage:
                 continue
-            time_tuple = request.user.getTime(wikiutil.version2timestamp(event[0]))
+            time_tuple = request.user.getTime(event[0])
             day = tuple(time_tuple[0:3])
             if day != ratchet_day:
                 # new day
@@ -99,11 +99,11 @@ def get_data(pagename, request, filterpage=None):
                     days.append(request.user.getFormattedDate(ratchet_time))
                     views.append(0)
                     edits.append(0)
-                days.append(request.user.getFormattedDate(wikiutil.version2timestamp(event[0])))
+                days.append(request.user.getFormattedDate(event[0]))
                 views.append(0)
                 edits.append(0)
                 ratchet_day = day
-                ratchet_time = wikiutil.version2timestamp(event[0])
+                ratchet_time = event[0]
             if event[1] == 'VIEWPAGE':
                 views[-1] = views[-1] + 1
             elif event[1] == 'SAVEPAGE':

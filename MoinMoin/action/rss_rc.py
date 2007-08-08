@@ -59,19 +59,19 @@ def execute(pagename, request):
     counter = 0
     pages = {}
     lastmod = 0
-    for line in glog.reverse():
+    for line in glog:
         if not request.user.may.read(line.pagename):
             continue
         if (not line.action.startswith('SAVE') or
             ((line.pagename in pages) and unique)): continue
         #if log.dayChanged() and log.daycount > _MAX_DAYS: break
         line.editor = line.getInterwikiEditorData(request)
-        line.time = timefuncs.tmtuple(wikiutil.version2timestamp(line.ed_time_usecs)) # UTC
+        line.time = timefuncs.tmtuple(line.ed_time_usecs) # UTC
         logdata.append(line)
         pages[line.pagename] = None
 
         if not lastmod:
-            lastmod = wikiutil.version2timestamp(line.ed_time_usecs)
+            lastmod = line.ed_time_usecs
 
         counter += 1
         if counter >= max_items:

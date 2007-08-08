@@ -7,6 +7,7 @@
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>
     @license: GNU GPL, see COPYING for details.
 """
+
 import time
 
 from MoinMoin import util, wikiutil
@@ -84,7 +85,7 @@ def format_page_edits(macro, lines, bookmark_usecs):
         else:
             img = 'updated'
         img = request.theme.make_icon(img)
-        html_link = page.link_to_raw(request, img, querystr={'action': 'diff', 'date': '%d' % bookmark_usecs}, rel='nofollow')
+        html_link = page.link_to_raw(request, img, querystr={'action': 'diff', 'date': '%d' % wikiutil.timestamp2version(bookmark_usecs)}, rel='nofollow')
     else:
         # show "DIFF" icon else
         img = request.theme.make_icon('diffrc')
@@ -99,7 +100,7 @@ def format_page_edits(macro, lines, bookmark_usecs):
     # print time of change
     d['time_html'] = None
     if request.cfg.changed_time_fmt:
-        tdiff = long(tnow - wikiutil.version2timestamp(long(line.ed_time_usecs))) / 60 # has to be long for py 2.2.x
+        tdiff = long(tnow - line.ed_time_usecs) / 60 # has to be long for py 2.2.x
         if tdiff < 100:
             d['time_html'] = _("%(mins)dm ago") % {
                 'mins': tdiff}
@@ -172,8 +173,8 @@ def print_abandoned(macro, args, **kw):
     pages = set()
     last = int(time.time()) - (max_days * 24 * 60 * 60)
     glog = editlog.GlobalEditLog(request)
-    for line in glog.reverse():
-        if wikiutil.version2timestamp(line.ed_time_usecs) > last:
+    for line in glog:
+        if line.ed_time_usecs > last:
             pages.add(line.pagename)
         else:
             break
@@ -225,6 +226,7 @@ def execute(macro, args, **kw):
 
     # get bookmark from valid user
     bookmark_usecs = request.user.getBookmark() or 0
+    bookmark_usecs = wikiutil.version2timestamp(bookmark_usecs)
 
     # add bookmark link if valid user
     d['rc_curr_bookmark'] = None
@@ -232,8 +234,7 @@ def execute(macro, args, **kw):
     if request.user.valid:
         d['rc_curr_bookmark'] = _('(no bookmark set)')
         if bookmark_usecs:
-            currentBookmark = wikiutil.version2timestamp(bookmark_usecs)
-            currentBookmark = user.getFormattedDateTime(currentBookmark)
+            currentBookmark = user.getFormattedDateTime(bookmark_usecs)
             currentBookmark = _('(currently set to %s)') % currentBookmark
             deleteBookmark = page.link_to(request, _("Delete bookmark"), querystr={'action': 'bookmark', 'time': 'del'}, rel='nofollow')
             d['rc_curr_bookmark'] = currentBookmark + ' ' + deleteBookmark
@@ -263,12 +264,12 @@ def execute(macro, args, **kw):
     this_day = today
     day_count = 0
 
-    for line in glog.reverse():
+    for line in glog:
 
         if not request.user.may.read(line.pagename):
             continue
 
-        line.time_tuple = request.user.getTime(wikiutil.version2timestamp(line.ed_time_usecs))
+        line.time_tuple = request.user.getTime(line.ed_time_usecs)
         day = line.time_tuple[0:3]
         hilite = line.ed_time_usecs > (bookmark_usecs or line.ed_time_usecs)
 
@@ -286,7 +287,7 @@ def execute(macro, args, **kw):
                 d['bookmark_link_html'] = page.link_to(request, _("Set bookmark"), querystr={'action': 'bookmark', 'time': '%d' % bmtime}, rel='nofollow')
             else:
                 d['bookmark_link_html'] = None
-            d['date'] = request.user.getFormattedDate(wikiutil.version2timestamp(pages[0][0].ed_time_usecs))
+            d['date'] = request.user.getFormattedDate(pages[0][0].ed_time_usecs)
             request.write(request.theme.recentchanges_daybreak(d))
 
             for p in pages:
@@ -328,7 +329,7 @@ def execute(macro, args, **kw):
                 d['bookmark_link_html'] = page.link_to(request, _("Set bookmark"), querystr={'action': 'bookmark', 'time': '%d' % bmtime}, rel='nofollow')
             else:
                 d['bookmark_link_html'] = None
-            d['date'] = request.user.getFormattedDate(wikiutil.version2timestamp(pages[0][0].ed_time_usecs))
+            d['date'] = request.user.getFormattedDate(pages[0][0].ed_time_usecs)
             request.write(request.theme.recentchanges_daybreak(d))
 
             for p in pages:

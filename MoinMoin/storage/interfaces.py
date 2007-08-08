@@ -105,6 +105,13 @@ class StorageBackend(object):
         Creates a lock for the given identifier.
         """
 
+    def news(self, timestamp=0):
+        """
+        Returns a tuple (item, revno, mtime) of all revisions that
+        changed since timestamp. NOTE: This does not include deleted
+        items or deleted revisions.
+        """
+
 
 class DataBackend(object):
     """
@@ -137,7 +144,6 @@ class DataBackend(object):
         """
         Close the stream.
         """
-
 
 class MetadataBackend(object):
     """

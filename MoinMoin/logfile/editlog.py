@@ -11,7 +11,6 @@
 
 
 from MoinMoin import wikiutil, user
-from MoinMoin.logfile import LogFile
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.Page import Page
 
@@ -107,6 +106,8 @@ class LocalEditLog(object):
         hostname = wikiutil.get_hostname(request, host)
         user_id = request.user.valid and request.user.id or ''
 
+        mtime = wikiutil.timestamp2version(mtime)
+
         if hasattr(request, "uid_override"):
             user_id = ''
             hostname = request.uid_override
@@ -133,35 +134,61 @@ class LocalEditLog(object):
         log_file.close()
 
 
-class GlobalEditLog(LogFile):
+class GlobalEditLog(object):
     """
     Used for accessing the global edit-log.
     """
-    def __init__(self, request):
-        filename = request.rootpage.getPagePath('edit-log', isfile=1)
-        LogFile.__init__(self, filename, 4096)
-        self._NUM_FIELDS = 9
 
-    def parser(self, line):
-        """ Parse edit-log line into fields """
-        fields = line.strip().split('\t')
-        # Pad empty fields
-        missing = self._NUM_FIELDS - len(fields)
-        if missing:
-            fields.extend([''] * missing)
+    def __init__(self, request):
+        """
+        Init stuff.
+        """
+        self.request = request
+        self.backend = request.cfg.data_backend
+        self.item_collection = ItemCollection(request.cfg.data_backend, request)
+        self.items = self.backend.news()
+        self.pos = 0
+
+    def __iter__(self):
+        """
+        Iterator.
+        """
+        return self
+
+    def next(self):
+        """
+        Returns the next edit-log entry.
+        """
+        item = self.item_collection[self.items[self.pos][0]]
+        rev = self.items[self.pos][1]
+
         result = EditLogLine()
-        (result.ed_time_usecs, result.rev, result.action,
-         result.pagename, result.addr, result.hostname, result.userid,
-         result.extra, result.comment, ) = fields[:self._NUM_FIELDS]
-        if not result.hostname:
-            result.hostname = result.addr
-        result.pagename = wikiutil.unquoteWikiname(result.pagename.encode('ascii'))
-        result.ed_time_usecs = long(result.ed_time_usecs or '0') # has to be long for py 2.2.x
+        result.ed_time_usecs = self.items[self.pos][2]
+        result.rev = rev
+        result.action = item[rev].action
+        result.pagename = self.items[self.pos][0]
+        result.addr = item[rev].addr
+        result.hostname = item[rev].hostname
+        result.userid = item[rev].userid
+        result.extra = item[rev].extra
+        result.comment = item[rev].comment
+
+        if self.pos >= len(self.items) - 1:
+            raise StopIteration
+        else:
+            self.pos = self.pos + 1
+
         return result
 
-    def news(self, time):
+    def lines(self):
         """
-        TODO: implement that.
+        Returns the number of edit-log entries.
         """
-        pass
+        return len(self.items)
+
+    def date(self):
+        """
+        Returns the date of the newest edit-log entry.
+        """
+        return self.items[0][2]
 

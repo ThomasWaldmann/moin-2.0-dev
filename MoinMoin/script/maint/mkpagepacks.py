@@ -86,7 +86,7 @@ class PluginScript(MoinScript):
             if page.exists():
                 cnt += 1
                 script.append(packLine([function, str(cnt), pagename]))
-                timestamp = wikiutil.version2timestamp(page.mtime_usecs())
+                timestamp = page.mtime()
                 zi = zipfile.ZipInfo(filename=str(cnt), date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
                 zi.compress_type = COMPRESSION_LEVEL
                 zf.writestr(zi, page.get_raw_body().encode("utf-8"))

@@ -19,11 +19,10 @@ from MoinMoin.macro import RecentChanges
 def show_editors(request, pagename, timestamp):
     _ = request.getText
 
-    timestamp = int(timestamp * 1000000)
     glog = editlog.GlobalEditLog(request)
     editors = {}
     pages = {}
-    for line in glog.reverse():
+    for line in glog:
         if line.ed_time_usecs < timestamp:
             break
 
@@ -63,7 +62,7 @@ def show_pages(request, pagename, editor, timestamp):
     _ = request.getText
 
     timestamp = int(timestamp * 1000000)
-    glog = editlog.GlobaEditLog(request)
+    glog = editlog.GlobalEditLog(request)
     pages = {}
     #  mimic macro object for use of RecentChanges subfunctions
     macro = tmp()
@@ -71,7 +70,7 @@ def show_pages(request, pagename, editor, timestamp):
     macro.formatter = request.html_formatter
 
     request.write("<table>")
-    for line in glog.reverse():
+    for line in glog:
         if line.ed_time_usecs < timestamp:
             break
 
@@ -81,7 +80,7 @@ def show_pages(request, pagename, editor, timestamp):
         if not line.pagename in pages:
             pages[line.pagename] = 1
             if line.getEditor(request) == editor:
-                line.time_tuple = request.user.getTime(wikiutil.version2timestamp(line.ed_time_usecs))
+                line.time_tuple = request.user.getTime(line.ed_time_usecs)
                 request.write(RecentChanges.format_page_edits(macro, [line], timestamp))
 
     request.write('''

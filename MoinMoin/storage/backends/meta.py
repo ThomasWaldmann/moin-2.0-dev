@@ -75,8 +75,21 @@ class NamespaceBackend(MetaBackend):
         """
         items = set()
         for namespace, backend in self.backends.iteritems():
-            items = items | set([namespace + item for item in backend.list_items(filters) if item not in items])
+            items = items | set([namespace + item for item in backend.list_items(filters)])
         return sorted(list(items))
+
+    def news(self, timestamp=0):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.list_items
+
+        TODO: remove duplicates
+        """
+        items = set()
+        for namespace, backend in self.backends.iteritems():
+            items = items | set([(namespace + item[0], item[1], item[2]) for item in backend.news(timestamp)])
+        items = list(items)
+        items.sort(key=lambda x: str(x[2]) + str(x[1]) + x[0], reverse=True)
+        return items
 
     def _get_backend(self, name):
         """
@@ -120,6 +133,19 @@ class LayerBackend(MetaBackend):
             if backend.has_item(name):
                 return backend
         return None
+
+    def news(self, timestamp=0):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.list_items
+
+        TODO: remove duplicates
+        """
+        items = set()
+        for backend in self.backends:
+            items = items | set(backend.news(timestamp))
+        items = list(items)
+        items.sort(key=lambda x: str(x[2]) + str(x[1]) + x[0], reverse=True)
+        return items
 
     def _call(self, method, *args, **kwargs):
         """

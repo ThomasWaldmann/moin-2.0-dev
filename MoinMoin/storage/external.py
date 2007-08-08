@@ -50,6 +50,8 @@ class ItemCollection(UserDict.DictMixin, object):
     """
 
     log_pos = None
+    _item_cache = {}
+    timestamp = time.time()
 
     def __init__(self, backend, request=None):
         """
@@ -70,11 +72,16 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Loads an Item.
         """
-        backend = self._backend.has_item(name)
-        if backend:
-            return Item(name, backend, self._request)
-        else:
-            raise NoSuchItemError(_("No such item %r.") % name)
+        self.refresh()
+        try:
+            return self._item_cache[name]
+        except KeyError:
+            backend = self._backend.has_item(name)
+            if backend:
+                self._item_cache[name] = Item(name, backend, self._request)
+                return self._item_cache[name]
+            else:
+                raise NoSuchItemError(_("No such item %r.") % name)
 
     def __delitem__(self, name):
         """
@@ -122,13 +129,10 @@ class ItemCollection(UserDict.DictMixin, object):
         if newname in self.items:
             raise BackendError(_("Copy failed because an item with name %r already exists.") % newname)
 
-        if not name in self.items:
-            raise NoSuchItemError(_("Copy failed because there is no item with name %r.") % name)
+        olditem = self[name]
 
         newitem = self.new_item(newname)
         newitem.lock = True
-
-        olditem = self[name]
 
         for revno in olditem:
             newrev = newitem.new_revision(revno)
@@ -155,6 +159,22 @@ class ItemCollection(UserDict.DictMixin, object):
         return self._items
 
     items = property(get_items)
+
+    def refresh(self):
+        """
+        Refresh item cache.
+        
+        TODO: news is too slow currently
+        """
+        return
+        timestamp = time.time()
+        news = self._backend.news(self.timestamp)
+        for item in news:
+            try:
+                del self._item_cache[item[0]]
+            except KeyError:
+                pass
+        self.timestamp = timestamp
 
 
 class Item(UserDict.DictMixin, object):

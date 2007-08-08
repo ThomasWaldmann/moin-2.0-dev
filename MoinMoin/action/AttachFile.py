@@ -230,12 +230,11 @@ def _addLogEntry(request, action, pagename, filename):
         `action` should be "ATTNEW" or "ATTDEL"
     """
     from MoinMoin.logfile import editlog
-    t = wikiutil.timestamp2version(time.time())
     fname = wikiutil.url_quote(filename, want_unicode=True)
 
     # Write to local log
     llog = editlog.LocalEditLog(request, rootpagename=pagename)
-    llog.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
+    llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname)
 
 
 def _access_file(pagename, request):

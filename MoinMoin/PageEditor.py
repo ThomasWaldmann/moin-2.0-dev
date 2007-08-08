@@ -791,7 +791,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         @return: mtime_usec of new page
         """
         request = self.request
-        _ = self._
         was_deprecated = self.pi.get('deprecated', False)
 
         # remember conflict state
@@ -807,14 +806,11 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             else:
                 newrev = self._rev
 
-        rev = newrev.revno
-
         if not deleted:
             metadata, data = wikiutil.split_body(text)
             newrev.data.write(data.encode(config.charset))
-            if rev != 1:
-                for key, value in metadata.iteritems():
-                    newrev.metadata[key] = value
+            for key, value in metadata.iteritems():
+                newrev.metadata[key] = value
         else:
             newrev.deleted = True
 
@@ -825,13 +821,9 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         # reset page object
         self.reset()
 
-        mtime_usecs = wikiutil.timestamp2version(time.time())
-
         # add event log entry
         elog = eventlog.EventLog(request)
-        elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, mtime_usecs)
-
-        return mtime_usecs, rev
+        elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, time.time())
 
     def saveText(self, newtext, rev, **kw):
         """ Save new text for a page.
@@ -930,7 +922,7 @@ Please review the page and save then. Do not save this page as it is!""")
             trivial = kw.get('trivial', 0)
 
             # write the page file
-            mtime_usecs, rev = self._write_file(newtext, action, comment, extra, deleted=deleted)
+            self._write_file(newtext, action, comment, extra, deleted=deleted)
             self._save_draft(None, None) # everything fine, kill the draft for this page
 
             if notify:

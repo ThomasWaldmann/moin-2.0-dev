@@ -100,7 +100,7 @@ class TestItem(AbstractTest):
     def test_keys(self):
         assert self.item.keys() == [2, 1]
 
-    def test_del_revision(self):
+    def test_add_revision(self):
         self.item.lock = True
         assert self.item.current == 2
         assert isinstance(self.item.new_revision(), Revision)
@@ -111,7 +111,7 @@ class TestItem(AbstractTest):
         assert self.item.current == 2
         self.item.lock = False
 
-    def test_add_revision(self):
+    def test_del_revision(self):
         self.item.lock = True
         del self.item[4]
         assert self.item.current == 2
