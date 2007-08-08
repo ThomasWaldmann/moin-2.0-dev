@@ -67,12 +67,13 @@ class PluginScript(MoinScript):
             for filename in files:
                 pagename = self.options.page + filename_function(filename)
                 #print "Pushing %r as %r" % (filename, pagename)
-                p = PageEditor(request, pagename, do_editor_backup=0, uid_override=self.options.author, do_revision_backup=0)
+                request.uid_override = self.options.author
+                p = PageEditor(request, pagename, do_editor_backup=0, do_revision_backup=0)
                 if p.exists():
                     if filename != files[-1]:
                         continue
                 else:
-                    p = PageEditor(request, pagename, do_editor_backup=0, uid_override=self.options.author)
+                    p = PageEditor(request, pagename, do_editor_backup=0)
 
                 fileObj = open(os.path.join(root, filename), 'rb')
                 try:
