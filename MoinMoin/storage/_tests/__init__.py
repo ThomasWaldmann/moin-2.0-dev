@@ -246,17 +246,18 @@ class AbstractBackendTest(AbstractTest):
         news = self.backend.news(starttime)
         assert len(news) == 1
         assert len(news[0]) == 3
-        assert news[0][0] == self.newname
+        assert news[0][2] == self.newname
         assert news[0][1] == 1
         self.backend.remove_item(self.newname)
         news = self.backend.news()
         newlist = []
         oldtime = 0
         for item in news:
-            newlist.append(item[0] + str(item[1]))
+            newlist.append(str(item[1]) + item[2])
             if oldtime == 0:
                 continue
-            assert oldtime >= item[2]
+            assert oldtime >= item[0]
+            oldtime = item[0]
         assert len(set(newlist)) == len(newlist)
 
 

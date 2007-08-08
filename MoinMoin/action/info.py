@@ -144,7 +144,7 @@ def execute(pagename, request):
 
             history.addRow((
                 rev,
-                request.user.getFormattedDateTime(line.ed_time_usecs),
+                request.user.getFormattedDateTime(line.mtime),
                 str(size),
                 diff,
                 line.getEditor(request) or _("N/A"),

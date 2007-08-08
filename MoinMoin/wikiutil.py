@@ -384,7 +384,7 @@ def timestamp2version(ts):
         We don't want to use floats, so we just scale by 1e6 to get
         an integer in usecs.
     """
-    return long(ts*1000000L) # has to be long for py 2.2.x
+    return long(ts*1000000L)
 
 def version2timestamp(v):
     """ Convert version number to UNIX timestamp (float).

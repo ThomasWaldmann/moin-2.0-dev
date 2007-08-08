@@ -19,7 +19,7 @@ class EditLogLine(object):
     """
     Has the following attributes
 
-    ed_time_usecs
+    mtime
     rev
     action
     pagename
@@ -32,9 +32,9 @@ class EditLogLine(object):
 
     def __cmp__(self, other):
         try:
-            return cmp(self.ed_time_usecs, other.ed_time_usecs)
+            return cmp(self.mtime, other.mtime)
         except AttributeError:
-            return cmp(self.ed_time_usecs, other)
+            return cmp(self.mtime, other)
 
     def is_from_current_user(self, request):
         user = request.user
@@ -81,7 +81,7 @@ class LocalEditLog(object):
         Returns the next edit-log entry.
         """
         result = EditLogLine()
-        result.ed_time_usecs = self.item[self.pos].mtime
+        result.mtime = self.item[self.pos].mtime
         result.rev = self.pos
         result.action = self.item[self.pos].action
         result.pagename = self.pagename
@@ -113,7 +113,7 @@ class LocalEditLog(object):
             hostname = request.uid_override
             host = ''
 
-        line = u"\t".join((str(long(mtime)), # has to be long for py 2.2.x
+        line = u"\t".join((str(mtime),
                            "%08d" % rev,
                            action,
                            wikiutil.quoteWikinameFS(pagename),
@@ -159,14 +159,16 @@ class GlobalEditLog(object):
         """
         Returns the next edit-log entry.
         """
-        item = self.item_collection[self.items[self.pos][0]]
-        rev = self.items[self.pos][1]
+        pos = self.pos
+
+        item = self.item_collection[self.items[pos][0]]
+        mtime, rev, name = self.items[pos]
 
         result = EditLogLine()
-        result.ed_time_usecs = self.items[self.pos][2]
+        result.mtime = mtime
         result.rev = rev
         result.action = item[rev].action
-        result.pagename = self.items[self.pos][0]
+        result.pagename = name
         result.addr = item[rev].addr
         result.hostname = item[rev].hostname
         result.userid = item[rev].userid
@@ -176,7 +178,7 @@ class GlobalEditLog(object):
         if self.pos >= len(self.items) - 1:
             raise StopIteration
         else:
-            self.pos = self.pos + 1
+            self.pos = pos + 1
 
         return result
 

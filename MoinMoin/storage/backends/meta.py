@@ -86,10 +86,8 @@ class NamespaceBackend(MetaBackend):
         """
         items = set()
         for namespace, backend in self.backends.iteritems():
-            items = items | set([(namespace + item[0], item[1], item[2]) for item in backend.news(timestamp)])
-        items = list(items)
-        items.sort(key=lambda x: str(x[2]) + str(x[1]) + x[0], reverse=True)
-        return items
+            items = items | set([(item[0], item[1], namespace + item[2]) for item in backend.news(timestamp)])
+        return sorted(list(items), reverse=True)
 
     def _get_backend(self, name):
         """
@@ -143,9 +141,7 @@ class LayerBackend(MetaBackend):
         items = set()
         for backend in self.backends:
             items = items | set(backend.news(timestamp))
-        items = list(items)
-        items.sort(key=lambda x: str(x[2]) + str(x[1]) + x[0], reverse=True)
-        return items
+        return sorted(list(items), reverse=True)
 
     def _call(self, method, *args, **kwargs):
         """

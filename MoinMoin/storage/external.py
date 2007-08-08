@@ -171,7 +171,7 @@ class ItemCollection(UserDict.DictMixin, object):
         news = self._backend.news(self.timestamp)
         for item in news:
             try:
-                del self._item_cache[item[0]]
+                del self._item_cache[item[2]]
             except KeyError:
                 pass
         self.timestamp = timestamp

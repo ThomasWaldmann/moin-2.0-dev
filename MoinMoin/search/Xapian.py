@@ -344,7 +344,7 @@ class Index(BaseIndex):
                 if docs:
                     doc = docs[0] # there should be only one
                     uid = doc['uid']
-                    docmtime = long(doc['values']['mtime'])
+                    docmtime = doc['values']['mtime']
                     updated = mtime > docmtime
                     if debug: request.log("uid %r: mtime %r > docmtime %r == updated %r" % (uid, mtime, docmtime, updated))
                 else:
