@@ -6,9 +6,11 @@
 """
 
 import py.test
+import time
 
 from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.external import ACL
+from MoinMoin.support.python_compatibility import set
 
 default_items = ["New", "Test" ]
 
@@ -235,6 +237,27 @@ class AbstractBackendTest(AbstractTest):
         self.backend.lock(self.newname, timeout=1)
         py.test.raises(LockingError, self.backend.lock, self.newname, 1)
         self.backend.unlock(self.newname)
+
+    def test_news(self):
+        starttime = time.time()
+        self.backend.create_item(self.newname)
+        if self.items_revisions:
+            self.backend.create_revision(self.newname, 0)
+        news = self.backend.news(starttime)
+        assert len(news) == 1
+        assert len(news[0]) == 3
+        assert news[0][0] == self.newname
+        assert news[0][1] == 1
+        self.backend.remove_item(self.newname)
+        news = self.backend.news()
+        newlist = []
+        oldtime = 0
+        for item in news:
+            newlist.append(item[0] + str(item[1]))
+            if oldtime == 0:
+                continue
+            assert oldtime >= item[2]
+        assert len(set(newlist)) == len(newlist)
 
 
 class AbstractMetadataTest(AbstractTest):

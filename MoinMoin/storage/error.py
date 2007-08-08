@@ -43,9 +43,10 @@ class NoSuchItemError(BackendError):
     """
     Raised if the requested item does not exist.
     """
+    pass
 
 class NoSuchRevisionError(BackendError):
     """
     Raised if the requested revision of an item does not exist.
     """
-
+    pass

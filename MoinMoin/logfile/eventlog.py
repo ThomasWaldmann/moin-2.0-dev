@@ -29,6 +29,8 @@ class EventLog(LogFile):
 
         if mtime_usecs is None:
             mtime_usecs = wikiutil.timestamp2version(time.time())
+        else:
+            mtime_usecs = wikiutil.timestamp2version(mtime_usecs)
 
         if values is None:
             values = {}
@@ -50,7 +52,7 @@ class EventLog(LogFile):
         except ValueError:
             # badly formatted line in file, skip it
             return None
-        return long(time_usecs), eventtype, wikiutil.parseQueryString(kvpairs)
+        return wikiutil.version2timestamp(float(time_usecs)), eventtype, wikiutil.parseQueryString(kvpairs)
 
     def set_filter(self, event_types=None):
         """ optionally filter log for specific event types """

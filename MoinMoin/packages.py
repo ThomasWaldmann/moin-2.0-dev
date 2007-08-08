@@ -43,9 +43,8 @@ class ScriptExit(Exception):
 def event_logfile(self, pagename, mtime):
     # add event log entry
     eventtype = 'SAVENEW'
-    mtime_usecs = wikiutil.timestamp2version(mtime)
     elog = eventlog.EventLog(self.request)
-    elog.add(self.request, eventtype, {'pagename': pagename}, 1, mtime_usecs)
+    elog.add(self.request, eventtype, {'pagename': pagename}, 1, mtime)
 
 # Parsing and (un)quoting for script files
 def packLine(items, separator="|"):

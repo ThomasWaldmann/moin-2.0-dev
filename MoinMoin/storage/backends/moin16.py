@@ -117,6 +117,20 @@ class UserBackend(AbstractBackend):
         """
         return UserMetadata(self, name, revno)
 
+    def news(self, timestamp=0):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.news
+
+        TODO: improve performance
+        """
+        items = []
+        for item in self.list_items():
+            mtime = os.path.getmtime(self._get_item_path(item))
+            if mtime >= timestamp:
+                items.append((item, 1, mtime))
+        items.sort(key=lambda x: str(x[2]) + str(x[1]) + x[0], reverse=True)
+        return items
+
 
 class UserMetadata(AbstractMetadata):
     """
@@ -315,6 +329,24 @@ class PageBackend(AbstractBackend):
             return DeletedPageMetadata(self, name, revno)
         else:
             return PageMetadata(self, name, revno)
+
+    def news(self, timestamp=0):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.news
+
+        TODO: improve performance
+        """
+        items = []
+        for item in self.list_items():
+            for revno in self.list_revisions(item):
+                if not os.path.exists(self._get_item_path(item, "revisions", _get_rev_string(revno))):
+                    continue
+                mtime = os.path.getmtime(self._get_item_path(item, "revisions", _get_rev_string(revno)))
+
+                if mtime >= timestamp:
+                    items.append((item, revno, mtime))
+        items.sort(key=lambda x: str(x[2]) + str(x[1]) + x[0], reverse=True)
+        return items
 
 
 class PageData(AbstractData):
