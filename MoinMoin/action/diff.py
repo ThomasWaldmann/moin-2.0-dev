@@ -23,7 +23,7 @@ def execute(pagename, request):
     try:
         date = request.form['date'][0]
         try:
-            date = long(date) # must be long for py 2.2.x
+            date = date
         except StandardError:
             date = 0
     except KeyError:
@@ -59,7 +59,7 @@ def execute(pagename, request):
         rev1 = 0
         llog = editlog.LocalEditLog(request, rootpagename=pagename)
         for line in llog:
-            if date >= line.ed_time_usecs:
+            if date >= line.mtime:
                 rev1 = line.rev
                 break
         else:

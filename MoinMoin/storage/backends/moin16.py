@@ -127,9 +127,8 @@ class UserBackend(AbstractBackend):
         for item in self.list_items():
             mtime = os.path.getmtime(self._get_item_path(item))
             if mtime >= timestamp:
-                items.append((item, 1, mtime))
-        items.sort(key=lambda x: str(x[2]) + str(x[1]) + x[0], reverse=True)
-        return items
+                items.append((mtime, 1, item))
+        return sorted(items, reverse=True)
 
 
 class UserMetadata(AbstractMetadata):
@@ -339,14 +338,14 @@ class PageBackend(AbstractBackend):
         items = []
         for item in self.list_items():
             for revno in self.list_revisions(item):
-                if not os.path.exists(self._get_item_path(item, "revisions", _get_rev_string(revno))):
+                try:
+                    mtime = os.path.getmtime(self._get_item_path(item, "revisions", _get_rev_string(revno)))
+                except:
                     continue
-                mtime = os.path.getmtime(self._get_item_path(item, "revisions", _get_rev_string(revno)))
 
                 if mtime >= timestamp:
-                    items.append((item, revno, mtime))
-        items.sort(key=lambda x: str(x[2]) + str(x[1]) + x[0], reverse=True)
-        return items
+                    items.append((mtime, revno, item))
+        return sorted(items, reverse=True)
 
 
 class PageData(AbstractData):

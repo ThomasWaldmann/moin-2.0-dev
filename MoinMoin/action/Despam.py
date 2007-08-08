@@ -23,7 +23,7 @@ def show_editors(request, pagename, timestamp):
     editors = {}
     pages = {}
     for line in glog:
-        if line.ed_time_usecs < timestamp:
+        if line.mtime < timestamp:
             break
 
         if not request.user.may.read(line.pagename):
@@ -71,7 +71,7 @@ def show_pages(request, pagename, editor, timestamp):
 
     request.write("<table>")
     for line in glog:
-        if line.ed_time_usecs < timestamp:
+        if line.mtime < timestamp:
             break
 
         if not request.user.may.read(line.pagename):
@@ -80,7 +80,7 @@ def show_pages(request, pagename, editor, timestamp):
         if not line.pagename in pages:
             pages[line.pagename] = 1
             if line.getEditor(request) == editor:
-                line.time_tuple = request.user.getTime(line.ed_time_usecs)
+                line.time_tuple = request.user.getTime(line.mtime)
                 request.write(RecentChanges.format_page_edits(macro, [line], timestamp))
 
     request.write('''
@@ -138,7 +138,7 @@ def revert_pages(request, editor, timestamp):
     pages = {}
     revertpages = []
     for line in glog.reverse():
-        if line.ed_time_usecs < timestamp:
+        if line.mtime < timestamp:
             break
 
         if not request.user.may.read(line.pagename):
