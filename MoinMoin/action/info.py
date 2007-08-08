@@ -96,10 +96,10 @@ def execute(pagename, request):
             return page.link_to(request, text, querystr=query, **kw)
 
         # read in the complete log of this page
-        log = editlog.EditLog(request, rootpagename=pagename)
+        llog = editlog.LocalEditLog(request, rootpagename=pagename)
         count = 0
-        for line in log.reverse():
-            rev = int(line.rev)
+        for line in llog:
+            rev = line.rev
             actions = []
             if line.action in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
                 size = page.size(rev=rev)
@@ -144,7 +144,7 @@ def execute(pagename, request):
 
             history.addRow((
                 rev,
-                request.user.getFormattedDateTime(wikiutil.version2timestamp(line.ed_time_usecs)),
+                request.user.getFormattedDateTime(line.mtime),
                 str(size),
                 diff,
                 line.getEditor(request) or _("N/A"),
