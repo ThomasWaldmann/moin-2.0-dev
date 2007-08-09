@@ -117,18 +117,11 @@ class UserBackend(AbstractBackend):
         """
         return UserMetadata(self, name, revno)
 
-    def news(self, timestamp=0):
+    def _get_rev_path(self, name, revno):
         """
-        @see MoinMoin.storage.interfaces.StorageBackend.news
-
-        TODO: improve performance
+        Returns the path to a specified revision.
         """
-        items = []
-        for item in self.list_items():
-            mtime = os.path.getmtime(self._get_item_path(item))
-            if mtime >= timestamp:
-                items.append((mtime, 1, item))
-        return sorted(items, reverse=True)
+        return self._get_item_path(name)
 
 
 class UserMetadata(AbstractMetadata):
@@ -194,6 +187,12 @@ class PageBackend(AbstractBackend):
     """
     This class implements the MoinMoin 1.6 compatible Page Storage Stuff.
     """
+
+    def __init__(self, name, path, cfg):
+        """
+        Init the Backend with the correct path.
+        """
+        AbstractBackend.__init__(self, name, path, cfg, True)
 
     def list_items(self, filters=None):
         """
@@ -264,7 +263,7 @@ class PageBackend(AbstractBackend):
         def get_latest_not_empty(rev):
             if rev == 0:
                 return rev
-            filename = self._get_item_path(name, "revisions", _get_rev_string(rev))
+            filename = self._get_rev_path(name, rev)
             if os.path.isfile(filename) and os.path.getsize(filename) == 0L:
                 return get_latest_not_empty(rev - 1)
             return rev
@@ -284,14 +283,14 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.create_revisions
         """
-        _create_file(self._get_item_path(name, "revisions", _get_rev_string(revno)))
+        _create_file(self._get_rev_path(name, revno))
         self._update_current(name)
 
     def remove_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.remove_revisions
         """
-        os.remove(self._get_item_path(name, "revisions", _get_rev_string(revno)))
+        os.remove(self._get_rev_path(name, revno))
         self._update_current(name)
 
     def _update_current(self, name, revno=0):
@@ -315,7 +314,7 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
         """
-        if revno == -1 or not os.path.exists(self._get_item_path(name, "revisions", _get_rev_string(revno))):
+        if revno == -1 or not os.path.exists(self._get_rev_path(name, revno)):
             return DeletedPageData(self, name, revno)
         else:
             return PageData(self, name, revno)
@@ -324,28 +323,16 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
         """
-        if revno != -1 and not os.path.exists(self._get_item_path(name, "revisions", _get_rev_string(revno))):
+        if revno != -1 and not os.path.exists(self._get_rev_path(name, revno)):
             return DeletedPageMetadata(self, name, revno)
         else:
             return PageMetadata(self, name, revno)
 
-    def news(self, timestamp=0):
+    def _get_rev_path(self, name, revno):
         """
-        @see MoinMoin.storage.interfaces.StorageBackend.news
-
-        TODO: improve performance
+        Returns the path to a specified revision.
         """
-        items = []
-        for item in self.list_items():
-            for revno in self.list_revisions(item):
-                try:
-                    mtime = os.path.getmtime(self._get_item_path(item, "revisions", _get_rev_string(revno)))
-                except:
-                    continue
-
-                if mtime >= timestamp:
-                    items.append((mtime, revno, item))
-        return sorted(items, reverse=True)
+        return self._get_item_path(name, "revisions", _get_rev_string(revno))
 
 
 class PageData(AbstractData):
@@ -389,7 +376,7 @@ class PageMetadata(AbstractMetadata):
 
         else:
 
-            data_file = codecs.open(self._backend._get_item_path(name, "revisions", _get_rev_string(revno)), "r", config.charset)
+            data_file = codecs.open(self._backend._get_rev_path(name, revno), "r", config.charset)
             data = data_file.read()
             data_file.close()
 
@@ -397,7 +384,7 @@ class PageMetadata(AbstractMetadata):
 
             # emulated size
             try:
-                metadata[SIZE] = str(os.path.getsize(self._backend._get_item_path(name, "revisions", _get_rev_string(revno))))
+                metadata[SIZE] = str(os.path.getsize(self._backend._get_rev_path(name, revno)))
             except OSError:
                 pass
 
@@ -446,7 +433,7 @@ class PageMetadata(AbstractMetadata):
         else:
 
             tmp_handle, tmp_name = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
-            read_filename = self._backend._get_item_path(name, "revisions", _get_rev_string(revno))
+            read_filename = self._backend._get_rev_path(name, revno)
 
             data = codecs.open(read_filename, "r", config.charset)
             old_metadata, new_data = wikiutil.split_body(data.read())
@@ -487,9 +474,9 @@ class PageMetadata(AbstractMetadata):
                 edit_log.close()
 
             # emulate deleted
-            exists = os.path.exists(self._backend._get_item_path(name, "revisions", _get_rev_string(revno)))
+            exists = os.path.exists(self._backend._get_rev_path(name, revno))
             if DELETED in metadata and metadata[DELETED] and exists:
-                os.remove(self._backend._get_item_path(name, "revisions", _get_rev_string(revno)))
+                os.remove(self._backend._get_rev_path(name, revno))
 
 
 class DeletedPageMetadata(AbstractMetadata):
