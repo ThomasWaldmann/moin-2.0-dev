@@ -11,8 +11,6 @@ import os
 import shutil
 import tempfile
 import time
-import sqlite3
-import thread
 
 import UserDict
 
@@ -21,7 +19,7 @@ from MoinMoin.storage.backends.common import CommonBackend, _get_metadata
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.error import BackendError, LockingError
 from MoinMoin.support.python_compatibility import sorted, set
-from MoinMoin.util import lock, pickle
+from MoinMoin.util import lock, pickle, records
 
 
 class AbstractBackend(object):
@@ -291,9 +289,6 @@ class IndexedBackend(object):
         self._path = cfg.indexes_dir
         self._indexes = cfg.indexes
 
-        # news stuff
-        self._connections = {}
-
     def __getattr__(self, name):
         """
         Get attribute from other backend if we don't have one.
@@ -439,41 +434,38 @@ class IndexedBackend(object):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.news
         """
+        items = []
+
         mtime = os.path.getmtime(self._get_news_file(create=True))
-        if mtime > timestamp:
-            c = self._get_cursor(create=True)
-            c.execute("select mtime, revno, item from news where mtime>=? order by mtime DESC", (timestamp, ))
-            try:
-                return c.fetchall()
-            except:
-                return []
-        return []
+        if mtime >= timestamp:
+            c = self._get_record(create=True)
+            for data in c.reverse():
+                if float(data['timestamp']) >= timestamp:
+                    items.append((float(data['timestamp']), int(data['revno']), wikiutil.unquoteWikiname(data['itemname'])))
+                else:
+                    break
+        return items
 
     def _create_db(self):
         """
         Creates the news db.
         """
-        c = self._get_cursor(create=False)
-        c.execute("create table news (mtime real, revno integer, item text)")
-        c.execute("create index index_mtime on news (mtime desc)")
-        c.execute("create unique index prim on news (item, revno)")
+        c = self._get_record(create=False)
+        c.open("ab")
         for item in self.list_items():
             for revno in self.list_revisions(item):
                 try:
                     mtime = os.path.getmtime(self._get_rev_path(item, revno))
-                except:
+                except OSError:
                     continue
-                c.execute("insert into news values (?, ?, ?)", (mtime, revno, item))
+                c.write(timestamp=str(mtime), revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
+        c.close()
 
-    def _get_cursor(self, create=False):
+    def _get_record(self, create=False):
         """
         Returns a cursor to use.
         """
-        try:
-            return self._connections[thread.get_ident()]
-        except KeyError:
-            self._connections[thread.get_ident()] = sqlite3.connect(self._get_news_file(create=create), isolation_level=None).cursor()
-            return self._connections[thread.get_ident()]
+        return records.FixedRecordLogFile(self._get_news_file(create=create), 512, [('timestamp', 24), ('revno', 8), ('itemname', 477), ('magic', 3)])
 
     def _get_news_file(self, create=False):
         """
@@ -488,9 +480,10 @@ class IndexedBackend(object):
         """
         Updates the news cache.
         """
-        c = self._get_cursor(create=True)
-        c.execute("delete from news where revno=? and item=?", (revno, item))
-        c.execute("insert into news values (?, ?, ?)", (time.time(), revno, item))
+        c = self._get_record(create=True)
+        c.open("ab")
+        c.write(timestamp=str(time.time()), revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
+        c.close()
 
 
 class IndexedMetadata(UserDict.DictMixin):
