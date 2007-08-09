@@ -4,8 +4,6 @@
     @copyright: 2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
 
-    TODO: edit log
-
     NOTE: This implementation is not really thread safe on windows. Some
           operations will fail if there are still open file descriptors
           on one of the files belonging to the item. These operations are
