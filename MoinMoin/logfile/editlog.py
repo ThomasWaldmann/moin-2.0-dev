@@ -159,10 +159,14 @@ class GlobalEditLog(object):
         """
         Returns the next edit-log entry.
         """
-        pos = self.pos
+        if self.pos >= len(self.items) - 1:
+            raise StopIteration
+        else:
+            pos = self.pos + 1
+            self.pos = pos
 
-        item = self.item_collection[self.items[pos][0]]
         mtime, rev, name = self.items[pos]
+        item = self.item_collection[name]
 
         result = EditLogLine()
         result.mtime = mtime
@@ -174,11 +178,6 @@ class GlobalEditLog(object):
         result.userid = item[rev].userid
         result.extra = item[rev].extra
         result.comment = item[rev].comment
-
-        if self.pos >= len(self.items) - 1:
-            raise StopIteration
-        else:
-            self.pos = pos + 1
 
         return result
 

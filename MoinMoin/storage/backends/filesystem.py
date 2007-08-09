@@ -10,6 +10,9 @@ import copy
 import os
 import shutil
 import tempfile
+import time
+import sqlite3
+import thread
 
 import UserDict
 
@@ -79,6 +82,12 @@ class AbstractBackend(object):
         if self._quoted:
             name = wikiutil.quoteWikinameFS(name)
         return os.path.join(self._path, name, *args)
+
+    def _get_rev_path(self, name, revno):
+        """
+        Returns the path to a specified revision.
+        """
+        raise NotImplementedError
 
     def lock(self, identifier, timeout=1, lifetime=60):
         """
@@ -197,7 +206,7 @@ class AbstractData(object):
         self._name = name
         self._revno = revno
 
-        self._read_file_name = self._backend._get_item_path(self._name, "revisions", _get_rev_string(self._revno))
+        self._read_file_name = self._backend._get_rev_path(name, revno)
 
         self._read_property = None
         self._write_property = None
@@ -277,8 +286,13 @@ class IndexedBackend(object):
         if not os.path.isdir(cfg.indexes_dir):
             raise BackendError(_("Invalid path %r.") % cfg.indexes_dir)
         self._backend = backend
+
+        # index stuff
         self._path = cfg.indexes_dir
         self._indexes = cfg.indexes
+
+        # news stuff
+        self._connections = {}
 
     def __getattr__(self, name):
         """
@@ -357,7 +371,7 @@ class IndexedBackend(object):
 
         # write indexes
         for index, values in indexes.iteritems():
-            db = bsddb.hashopen(self._get_filename(index), "n")
+            db = bsddb.hashopen(self._get_index_file(index), "n")
             for key, value in values.iteritems():
                 pkey = unicode(key).encode("utf-8")
                 db[pkey] = pickle.dumps(value)
@@ -367,7 +381,7 @@ class IndexedBackend(object):
         """
         Returns the items that have a key which maches the value.
         """
-        db = bsddb.hashopen(self._get_filename(key, create=True))
+        db = bsddb.hashopen(self._get_index_file(key, create=True))
 
         pvalue = unicode(value).encode("utf-8")
         if pvalue in db:
@@ -385,7 +399,7 @@ class IndexedBackend(object):
         """
         for index in self._indexes:
             if index in metadata:
-                db = bsddb.hashopen(self._get_filename(index, create=True))
+                db = bsddb.hashopen(self._get_index_file(index, create=True))
                 for key in _parse_value(metadata[index]):
                     pkey = unicode(key).encode("utf-8")
                     data = pickle.loads(db[pkey])
@@ -402,7 +416,7 @@ class IndexedBackend(object):
         """
         for index in self._indexes:
             if index in metadata:
-                db = bsddb.hashopen(self._get_filename(index, create=True))
+                db = bsddb.hashopen(self._get_index_file(index, create=True))
                 for key in _parse_value(metadata[index]):
                     pkey = unicode(key).encode("utf-8")
                     if not pkey in db:
@@ -412,7 +426,7 @@ class IndexedBackend(object):
                     db[pkey] = pickle.dumps(data)
                 db.close()
 
-    def _get_filename(self, index, create=False):
+    def _get_index_file(self, index, create=False):
         """
         Returns the filename and rebuilds the index when it does not exist yet.
         """
@@ -420,6 +434,63 @@ class IndexedBackend(object):
         if create and not os.path.isfile(filename):
             self._rebuild_indexes()
         return filename
+
+    def news(self, timestamp=0):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.news
+        """
+        mtime = os.path.getmtime(self._get_news_file(create=True))
+        if mtime > timestamp:
+            c = self._get_cursor(create=True)
+            c.execute("select mtime, revno, item from news where mtime>=? order by mtime DESC", (timestamp, ))
+            try:
+                return c.fetchall()
+            except:
+                return []
+        return []
+
+    def _create_db(self):
+        """
+        Creates the news db.
+        """
+        c = self._get_cursor(create=False)
+        c.execute("create table news (mtime real, revno integer, item text)")
+        c.execute("create index index_mtime on news (mtime desc)")
+        c.execute("create unique index prim on news (item, revno)")
+        for item in self.list_items():
+            for revno in self.list_revisions(item):
+                try:
+                    mtime = os.path.getmtime(self._get_rev_path(item, revno))
+                except:
+                    continue
+                c.execute("insert into news values (?, ?, ?)", (mtime, revno, item))
+
+    def _get_cursor(self, create=False):
+        """
+        Returns a cursor to use.
+        """
+        try:
+            return self._connections[thread.get_ident()]
+        except KeyError:
+            self._connections[thread.get_ident()] = sqlite3.connect(self._get_news_file(create=create), isolation_level=None).cursor()
+            return self._connections[thread.get_ident()]
+
+    def _get_news_file(self, create=False):
+        """
+        Returns the path of the newsfile.
+        """
+        filename = os.path.join(self._cfg.tmp_dir, self.name + "-news")
+        if create and not os.path.exists(filename):
+            self._create_db()
+        return filename
+
+    def _update_news(self, item, revno):
+        """
+        Updates the news cache.
+        """
+        c = self._get_cursor(create=True)
+        c.execute("delete from news where revno=? and item=?", (revno, item))
+        c.execute("insert into news values (?, ?, ?)", (time.time(), revno, item))
 
 
 class IndexedMetadata(UserDict.DictMixin):
@@ -457,6 +528,7 @@ class IndexedMetadata(UserDict.DictMixin):
         self._backend._remove_indexes(self._item, _get_metadata(self._backend, self._item, [self._revno]))
         self._metadata.save()
         self._backend._write_indexes(self._item, _get_metadata(self._backend, self._item, [self._revno]))
+        self._backend._update_news(self._item, self._revno)
 
 
 def _parse_value(value):

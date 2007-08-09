@@ -51,7 +51,6 @@ class ItemCollection(UserDict.DictMixin, object):
 
     log_pos = None
     _item_cache = {}
-    timestamp = time.time()
 
     def __init__(self, backend, request=None):
         """
@@ -61,6 +60,7 @@ class ItemCollection(UserDict.DictMixin, object):
         self._request = request
 
         self._items = None
+        self.timestamp = time.time()
 
     def __contains__(self, name):
         """
@@ -163,10 +163,7 @@ class ItemCollection(UserDict.DictMixin, object):
     def refresh(self):
         """
         Refresh item cache.
-        
-        TODO: news is too slow currently
         """
-        return
         timestamp = time.time()
         news = self._backend.news(self.timestamp)
         for item in news:

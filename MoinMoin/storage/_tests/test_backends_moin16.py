@@ -34,7 +34,7 @@ def teardown_module(module):
     Remove test data from tmp.
     """
     global test_dir
-    shutil.rmtree(test_dir)
+    #shutil.rmtree(test_dir)
     test_dir = None
 
 

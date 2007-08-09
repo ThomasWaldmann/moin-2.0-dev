@@ -243,6 +243,9 @@ class AbstractBackendTest(AbstractTest):
         self.backend.create_item(self.newname)
         if self.items_revisions:
             self.backend.create_revision(self.newname, 0)
+        metadata = self.backend.get_metadata_backend(self.newname, 0)
+        metadata["test"] = "test"
+        metadata.save()
         news = self.backend.news(starttime)
         assert len(news) == 1
         assert len(news[0]) == 3
