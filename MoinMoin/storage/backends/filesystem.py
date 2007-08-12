@@ -438,10 +438,12 @@ class IndexedBackend(object):
 
         mtime = os.path.getmtime(self._get_news_file(create=True))
         if mtime >= timestamp:
-            c = self._get_record(create=True)
-            for data in c.reverse():
-                if float(data['timestamp']) >= timestamp:
-                    items.append((float(data['timestamp']), int(data['revno']), wikiutil.unquoteWikiname(data['itemname'])))
+            news_file = self._get_record(create=True)
+            for data in news_file.reverse():
+                assert data['magic'] == "#\r\n"
+                mtime = wikiutil.version2timestamp(float(data['timestamp']))
+                if mtime >= timestamp:
+                    items.append((mtime, int(data['revno']), wikiutil.unquoteWikiname(data['itemname'])))
                 else:
                     break
         return items
@@ -450,16 +452,16 @@ class IndexedBackend(object):
         """
         Creates the news db.
         """
-        c = self._get_record(create=False)
-        c.open("ab")
+        news_file = self._get_record(create=False)
+        news_file.open("ab")
         for item in self.list_items():
             for revno in self.list_revisions(item):
                 try:
                     mtime = os.path.getmtime(self._get_rev_path(item, revno))
                 except OSError:
                     continue
-                c.write(timestamp=str(mtime), revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
-        c.close()
+                news_file.write(timestamp=str(wikiutil.timestamp2version(mtime)), revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
+        news_file.close()
 
     def _get_record(self, create=False):
         """
@@ -480,10 +482,10 @@ class IndexedBackend(object):
         """
         Updates the news cache.
         """
-        c = self._get_record(create=True)
-        c.open("ab")
-        c.write(timestamp=str(time.time()), revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
-        c.close()
+        news_file = self._get_record(create=True)
+        news_file.open("ab")
+        news_file.write(timestamp=str(wikiutil.timestamp2version(time.time())), revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
+        news_file.close()
 
 
 class IndexedMetadata(UserDict.DictMixin):
