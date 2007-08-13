@@ -1,0 +1,82 @@
+MoinMoin Storage Version History
+========================
+
+Version 1.7.current:
+
+  Known issues:
+    * Names in the news() method of moin 1.6 backend are fixed length, this may cause problems.
+
+  New Features:
+	* Storage engine, see external.py for the interface.
+	
+  Developer notes:
+    Logfile:
+    * removed editlog.EditLog
+    * added editlog.GlobalEditLog
+    * added editlog.LocalEditLog
+    * timestamps in the logfile classes are now seconds as float (former usecs)
+    * logfile classes are now always reverse
+    
+    Page:
+    * RootPage no longer inherits from Page
+    * removed RootPage.getPagePath
+    * removed RootPage._listPages
+    * removed RootPage._listPageInPath
+    * removed ItemCache
+    * removed Page.__txt_filename_force
+    * added Page._page_name_force
+    * added Page._item_items_standard
+    * added Page._item_items_underlay
+    * added Page._item_items_all
+    * added Page._item
+    * added Page._rev
+    * Page.meta is now a dict instead of a list of tuples
+    * removed Page.get_current_from_pagedir
+    * removed Page.get_rev_dir
+    * removed Page.get_rev
+    * removed Page._setRealPagename
+    * removed Page.getPageBasePath
+    * removed Page.getPageStatus
+    * removed Page.olderrevision
+    * removed Page._last_edited
+    * changed Page.last_edit(self, request) to Page.last_edit(self, printable)
+    * removed Page.lastEditInfo
+    * removed Page.isWritable
+    * removed Page.mtime_usecs
+    * removed Page.mtime_printable
+    * added Page.mtime(self, printable)
+    * added Page.last_editor(self, printable)
+    * removed Page.parseACL
+    * changed Page.getACL(self, request) to Page.getACL(self)
+    
+    PageEditor:
+    * removed PageEditor.execute
+    * removed PageEditor.copyUnderlayPage
+    * removed PageLock.__filename
+    
+    User:
+    * removed _getUserIdByKey (use ItemCollection.keys(...) now)
+    * added get_editor
+    * added get_printable_editor
+    * removed User.__filename
+    * moved encodeList, decodeList, encodeDict, decodeDict to storage.backends.moin16
+    
+    Wikiutil:
+    * renamed get_processing_instructions to split_body
+    * added add_metadata_to_body
+    * added get_hostnam
+
+    Stuff:
+    * removed action.AttachFile.getBasePath
+    * removed request.editlog
+    * removed packages.edit_logfile_append
+    
+  TODO:
+    * convert caching to the new storage
+    * convert attachements to the new storage
+    * automatically check ACLs in the storage layer and raise exception on violation
+    * fix uid_override
+    * removed RootPage.getPagePath, Page.getPagePath, page.__text_filename
+    * cleanup common.py
+    * check thread safety
+	* improve documentation
