@@ -80,6 +80,9 @@ class LocalEditLog(object):
         """
         Returns the next edit-log entry.
         """
+        if self.pos <= 0:
+            raise StopIteration
+
         result = EditLogLine()
         result.mtime = self.item[self.pos].mtime
         result.rev = self.pos
@@ -91,10 +94,7 @@ class LocalEditLog(object):
         result.extra = self.item[self.pos].extra
         result.comment = self.item[self.pos].comment
 
-        if self.pos == 1:
-            raise StopIteration
-        else:
-            self.pos = self.pos - 1
+        self.pos = self.pos - 1
 
         return result
 
