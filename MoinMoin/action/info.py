@@ -16,8 +16,11 @@ from MoinMoin.widget import html
 
 def execute(pagename, request):
     """ show misc. infos about a page """
-    if not request.user.may.read(pagename):
-        Page(request, pagename).send_page()
+
+    page = Page(request, pagename)
+    
+    if not request.user.may.read(pagename) or not page.exists():
+        page.send_page()
         return
 
     def general(page, pagename, request):
@@ -177,7 +180,7 @@ def execute(pagename, request):
 
     # main function
     _ = request.getText
-    page = Page(request, pagename)
+    
     title = page.split_title()
 
     request.emit_http_headers()

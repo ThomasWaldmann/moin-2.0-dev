@@ -318,7 +318,10 @@ class Item(UserDict.DictMixin, object):
             timestamp = time.time()
             addr = self._request.remote_addr
             hostname = wikiutil.get_hostname(self._request, addr)
-            userid = self._request.user.valid and self._request.user.id or ''
+            if hasattr(self._request, "user"):
+                userid = self._request.user.valid and self._request.user.id or ''
+            else:
+                userid = ''
 
             self.metadata[EDIT_LOCK_TIMESTAMP] = str(timestamp)
             self.metadata[EDIT_LOCK_ADDR] = addr
@@ -479,7 +482,10 @@ class Revision(object):
             else:
                 addr = self.item._request.remote_addr
                 hostname = wikiutil.get_hostname(self.item._request, addr)
-                userid = self.item._request.user.valid and self.item._request.user.id or ''
+                if hasattr(self.item._request, "user"):
+                    userid = self.item._request.user.valid and self.item._request.user.id or ''
+                else:
+                    userid = ""
             self.metadata[EDIT_LOG_MTIME] = str(timestamp)
             self.metadata[EDIT_LOG_ACTION] = action
             self.metadata[EDIT_LOG_ADDR] = addr

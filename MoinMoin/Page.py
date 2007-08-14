@@ -1344,7 +1344,7 @@ class RootPage(object):
                 else:
                     pages.append(name)
         else:
-            pages = items
+            pages = list(items)
 
         request.clock.stop('getPageList')
         return pages
