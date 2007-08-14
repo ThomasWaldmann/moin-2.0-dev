@@ -436,7 +436,9 @@ class IndexedBackend(object):
         """
         items = []
 
-        mtime = os.path.getmtime(self._get_news_file(create=True))
+        mtime_file = open(self._get_news_file(create=True, mtime=True))
+        mtime = wikiutil.version2timestamp(float(mtime_file.read()))
+        mtime_file.close()
         if mtime >= timestamp:
             news_file = self._get_record(create=True)
             for data in news_file.reverse():
@@ -454,14 +456,18 @@ class IndexedBackend(object):
         """
         news_file = self._get_record(create=False)
         news_file.open("ab")
+        mtime = "0"
         for item in self.list_items():
             for revno in self.list_revisions(item):
                 try:
-                    mtime = os.path.getmtime(self._get_rev_path(item, revno))
+                    mtime = str(wikiutil.timestamp2version(os.path.getmtime(self._get_rev_path(item, revno))))
                 except OSError:
                     continue
-                news_file.write(timestamp=str(wikiutil.timestamp2version(mtime)), revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
+                news_file.write(timestamp=mtime, revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
         news_file.close()
+        mtime_file = open(self._get_news_file(create=False, mtime=True), "w")
+        mtime_file.write(mtime)
+        mtime_file.close()
 
     def _get_record(self, create=False):
         """
@@ -469,11 +475,14 @@ class IndexedBackend(object):
         """
         return records.FixedRecordLogFile(self._get_news_file(create=create), 512, [('timestamp', 24), ('revno', 8), ('itemname', 477), ('magic', 3)])
 
-    def _get_news_file(self, create=False):
+    def _get_news_file(self, create=False, mtime=False):
         """
         Returns the path of the newsfile.
         """
-        filename = os.path.join(self._cfg.tmp_dir, self.name + "-news")
+        if mtime:
+            filename = os.path.join(self._cfg.tmp_dir, self.name + "-news.mtime")
+        else:
+            filename = os.path.join(self._cfg.tmp_dir, self.name + "-news")
         if create and not os.path.exists(filename):
             self._create_db()
         return filename
@@ -483,10 +492,13 @@ class IndexedBackend(object):
         Updates the news cache.
         """
         news_file = self._get_record(create=True)
+        mtime = str(wikiutil.timestamp2version(time.time()))
         news_file.open("ab")
-        news_file.write(timestamp=str(wikiutil.timestamp2version(time.time())), revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
+        news_file.write(timestamp=mtime, revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
         news_file.close()
-
+        mtime_file = open(self._get_news_file(create=True, mtime=True), "w")
+        mtime_file.write(mtime)
+        mtime_file.close()
 
 class IndexedMetadata(UserDict.DictMixin):
     """

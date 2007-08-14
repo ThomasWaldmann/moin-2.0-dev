@@ -4,7 +4,8 @@ MoinMoin Storage Version History
 Version 1.7.current:
 
   Known issues:
-    * Names in the news() method of moin 1.6 backend are fixed length, this may cause problems.
+    * In the filesystem storage backends itemnames are limited due to the maximum filename length of filesystems.
+      NTFS, FAT, EXT3, REISER, XFS are limited to a maximum of 255 characters.
 
   New Features:
 	* Storage engine, see external.py for the interface.
@@ -15,7 +16,7 @@ Version 1.7.current:
     * added editlog.GlobalEditLog
     * added editlog.LocalEditLog
     * timestamps in the logfile classes are now seconds as float (former usecs)
-    * logfile classes are now always reverse
+    * entries from the logfile classes are now always given in reverse order
     
     Page:
     * RootPage no longer inherits from Page
@@ -73,10 +74,11 @@ Version 1.7.current:
     
   TODO:
     * convert caching to the new storage
-    * convert attachements to the new storage
+    * convert attachments to the new storage
     * automatically check ACLs in the storage layer and raise exception on violation
     * fix uid_override
     * removed RootPage.getPagePath, Page.getPagePath, page.__text_filename
     * cleanup common.py
     * check thread safety
 	* improve documentation
+	* remove logfile.editlog.LocalEditLog.add
