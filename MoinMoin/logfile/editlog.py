@@ -12,6 +12,7 @@
 
 from MoinMoin import wikiutil, user
 from MoinMoin.storage.external import ItemCollection
+from MoinMoin.storage.error import NoSuchItemError
 from MoinMoin.Page import Page
 
 
@@ -159,25 +160,34 @@ class GlobalEditLog(object):
         """
         Returns the next edit-log entry.
         """
-        if self.pos >= len(self.items) - 1:
+        if self.pos >= len(self.items):
             raise StopIteration
-        else:
-            pos = self.pos + 1
-            self.pos = pos
 
-        mtime, rev, name = self.items[pos]
-        item = self.item_collection[name]
+        mtime, rev, name = self.items[self.pos]
 
         result = EditLogLine()
+
+        try:
+            item = self.item_collection[name]
+            result.action = item[rev].action
+            result.addr = item[rev].addr
+            result.hostname = item[rev].hostname
+            result.userid = item[rev].userid
+            result.extra = item[rev].extra
+            result.comment = item[rev].comment
+        except NoSuchItemError:
+            result.action = ""
+            result.addr = ""
+            result.hostname = ""
+            result.userid = ""
+            result.extra = ""
+            result.comment = ""
+
         result.mtime = mtime
         result.rev = rev
-        result.action = item[rev].action
         result.pagename = name
-        result.addr = item[rev].addr
-        result.hostname = item[rev].hostname
-        result.userid = item[rev].userid
-        result.extra = item[rev].extra
-        result.comment = item[rev].comment
+
+        self.pos = self.pos + 1
 
         return result
 

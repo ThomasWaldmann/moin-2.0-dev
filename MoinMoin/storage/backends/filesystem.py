@@ -17,6 +17,7 @@ import UserDict
 from MoinMoin import wikiutil
 from MoinMoin.storage.backends.common import CommonBackend, _get_metadata
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
+from MoinMoin.storage.external import EDIT_LOG_ACTION, EDIT_LOG_EXTRA
 from MoinMoin.storage.error import BackendError, LockingError
 from MoinMoin.support.python_compatibility import sorted, set
 from MoinMoin.util import lock, pickle, records
@@ -448,25 +449,32 @@ class IndexedBackend(object):
                     items.append((mtime, int(data['revno']), wikiutil.unquoteWikiname(data['itemname'])))
                 else:
                     break
+            news_file.close()
         return items
 
     def _create_db(self):
         """
         Creates the news db.
         """
+        items = []
+        for item in self.list_items():
+            try:
+                log_file = open(self._backend._get_item_path(item, "edit-log"), "r")
+                for line in log_file:
+                    line = _parse_log_line(line)
+                    if line[1] != "99999999":
+                        items.append((line[0], line[1], line[3]))
+                log_file.close()
+            except IOError:
+                pass
         news_file = self._get_record(create=False)
         news_file.open("ab")
-        mtime = "0"
-        for item in self.list_items():
-            for revno in self.list_revisions(item):
-                try:
-                    mtime = str(wikiutil.timestamp2version(os.path.getmtime(self._get_rev_path(item, revno))))
-                except OSError:
-                    continue
-                news_file.write(timestamp=mtime, revno=str(revno), itemname=wikiutil.quoteWikinameFS(item), magic='#\r\n')
+        items.sort()
+        for item in items:
+            news_file.write(timestamp=item[0], revno=item[1], itemname=item[2], magic='#\r\n')
         news_file.close()
         mtime_file = open(self._get_news_file(create=False, mtime=True), "w")
-        mtime_file.write(mtime)
+        mtime_file.write(str(wikiutil.timestamp2version(time.time())))
         mtime_file.close()
 
     def _get_record(self, create=False):
@@ -500,6 +508,7 @@ class IndexedBackend(object):
         mtime_file.write(mtime)
         mtime_file.close()
 
+
 class IndexedMetadata(UserDict.DictMixin):
     """
     Metadata class for indexed metadata.
@@ -532,10 +541,14 @@ class IndexedMetadata(UserDict.DictMixin):
         """
         @see MoinMoin.storage.external.Metadata.save
         """
+        if self._revno != -1:
+            self._backend._update_news(self._item, self._revno)
+            if EDIT_LOG_ACTION in self._metadata and self._metadata[EDIT_LOG_ACTION] == "SAVE/RENAME":
+                self._backend._update_news(self._metadata[EDIT_LOG_EXTRA], self._revno)
+
         self._backend._remove_indexes(self._item, _get_metadata(self._backend, self._item, [self._revno]))
         self._metadata.save()
         self._backend._write_indexes(self._item, _get_metadata(self._backend, self._item, [self._revno]))
-        self._backend._update_news(self._item, self._revno)
 
 
 def _parse_value(value):
@@ -570,6 +583,17 @@ def _create_file(*path):
         file(real_path, "w").close()
     else:
         raise BackendError(_("Path %r already exists.") % real_path)
+
+
+def _parse_log_line(line):
+    """
+    Parses a line from the edit-log or lock.
+    """
+    fields = line.strip().split("\t")
+    missing = 9 - len(fields)
+    if missing:
+        fields.extend([''] * missing)
+    return fields
 
 
 _ = lambda x: x

@@ -37,7 +37,7 @@ import tempfile
 
 from MoinMoin import config, wikiutil
 from MoinMoin.storage.backends.common import get_bool
-from MoinMoin.storage.backends.filesystem import AbstractBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file
+from MoinMoin.storage.backends.filesystem import AbstractBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file, _parse_log_line
 from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG, EDIT_LOCK
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
@@ -613,17 +613,6 @@ def _decode_dict(line):
         key, value = item.split(':', 1)
         items[key] = value
     return items
-
-
-def _parse_log_line(line):
-    """
-    Parses a line from the edit-log or lock.
-    """
-    fields = line.strip().split("\t")
-    missing = 9 - len(fields)
-    if missing:
-        fields.extend([''] * missing)
-    return fields
 
 
 _ = lambda x: x

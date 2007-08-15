@@ -84,4 +84,3 @@ Version 1.7.current:
     * cleanup common.py
     * check thread safety
 	* improve documentation
-	* use local edit log to create history for global
