@@ -563,9 +563,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         savetext = newpage.get_raw_body()
 
-        if not comment:
-            comment = u"## page was renamed from %s" % self.page_name
-
         savetext = u"## page was renamed from %s\n%s" % (self.page_name, savetext)
         newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE/RENAME', notify=False)
 
