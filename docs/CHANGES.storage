@@ -9,7 +9,7 @@ Version 1.7.current:
 
   New Features:
 	* Storage engine, see external.py for the interface.
-	
+
   Developer notes:
     Logfile:
     * removed editlog.EditLog
@@ -17,7 +17,7 @@ Version 1.7.current:
     * added editlog.LocalEditLog
     * timestamps in the logfile classes are now seconds as float (former usecs)
     * entries from the logfile classes are now always given in reverse order
-    
+
     Page:
     * RootPage no longer inherits from Page
     * removed RootPage.getPagePath
@@ -49,19 +49,19 @@ Version 1.7.current:
     * added Page.last_editor(self, printable)
     * removed Page.parseACL
     * changed Page.getACL(self, request) to Page.getACL(self)
-    
+
     PageEditor:
     * removed PageEditor.execute
     * removed PageEditor.copyUnderlayPage
     * removed PageLock.__filename
-    
+
     User:
     * removed _getUserIdByKey (use ItemCollection.keys(...) now)
     * added get_editor
     * added get_printable_editor
     * removed User.__filename
     * moved encodeList, decodeList, encodeDict, decodeDict to storage.backends.moin16
-    
+
     Wikiutil:
     * renamed get_processing_instructions to split_body
     * added add_metadata_to_body
@@ -71,15 +71,17 @@ Version 1.7.current:
     * removed action.AttachFile.getBasePath
     * removed request.editlog
     * removed packages.edit_logfile_append
-    
-  TODO:
+
+  TODO-Post-SOC:
     * convert caching to the new storage
     * convert attachments to the new storage
-    * automatically check ACLs in the storage layer and raise exception on violation
-    * fix uid_override
     * removed RootPage.getPagePath, Page.getPagePath, page.__text_filename
+    * automatically check ACLs in the storage layer and raise exception on violation
+	* remove logfile.editlog.LocalEditLog.add
+
+  TODO:
+    * fix uid_override
     * cleanup common.py
     * check thread safety
 	* improve documentation
-	* remove logfile.editlog.LocalEditLog.add
 	* use local edit log to create history for global
