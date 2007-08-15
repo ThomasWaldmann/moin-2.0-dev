@@ -105,7 +105,7 @@ class SystemInfo:
             self.formatInReadableUnits(self.getDirectorySize(data_dir)))
 
             glog = editlog.GlobalEditLog(request)
-            row(_('Entries in edit log'), "%s (%s)" % (glog.lines(), self.formatInReadableUnits(glog.size())))
+            row(_('Entries in edit log'), "%s" % glog.lines())
 
             # This puts a heavy load on the server when the log is large
             eventlogger = eventlog.EventLog(request)
