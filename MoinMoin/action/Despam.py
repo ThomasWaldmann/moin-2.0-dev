@@ -137,7 +137,7 @@ def revert_pages(request, editor, timestamp):
     glog = editlog.GlobalEditLog(request)
     pages = {}
     revertpages = []
-    for line in glog.reverse():
+    for line in glog:
         if line.mtime < timestamp:
             break
 

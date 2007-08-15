@@ -192,4 +192,3 @@ class GlobalEditLog(object):
         Returns the date of the newest edit-log entry.
         """
         return self.items[0][2]
-

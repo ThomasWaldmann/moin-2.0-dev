@@ -82,3 +82,4 @@ Version 1.7.current:
     * check thread safety
 	* improve documentation
 	* remove logfile.editlog.LocalEditLog.add
+	* use local edit log to create history for global
