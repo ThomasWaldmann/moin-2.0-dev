@@ -18,7 +18,7 @@ def execute(pagename, request):
     """ show misc. infos about a page """
 
     page = Page(request, pagename)
-    
+
     if not request.user.may.read(pagename) or not page.exists():
         page.send_page()
         return
@@ -180,7 +180,7 @@ def execute(pagename, request):
 
     # main function
     _ = request.getText
-    
+
     title = page.split_title()
 
     request.emit_http_headers()
