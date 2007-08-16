@@ -87,7 +87,7 @@ class LocalEditLog(object):
         result = EditLogLine()
         result.mtime = self.item[self.pos].mtime
         result.rev = self.pos
-        result.action = self.item[self.pos].action
+        result.action = self.item[self.pos].action or "SAVE"
         result.pagename = self.pagename
         result.addr = self.item[self.pos].addr
         result.hostname = self.item[self.pos].hostname
