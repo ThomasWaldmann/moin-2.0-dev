@@ -450,22 +450,25 @@ class PageMetadata(AbstractMetadata):
                 if not key in metadata:
                     break
             else:
-                edit_log = codecs.open(self._backend._get_item_path(name, "edit-log"), "r", config.charset)
-
                 result = []
                 newline = "\t".join((str(wikiutil.timestamp2version(float(metadata[EDIT_LOG_MTIME]))), _get_rev_string(revno), metadata[EDIT_LOG_ACTION], name, metadata[EDIT_LOG_ADDR], metadata[EDIT_LOG_HOSTNAME], metadata[EDIT_LOG_USERID], metadata[EDIT_LOG_EXTRA], metadata[EDIT_LOG_COMMENT])) + "\n"
-                for line in edit_log:
-                    values = _parse_log_line(line)
-                    rev = int(values[1])
-                    if revno == rev or rev == 99999999:
-                        continue
-                    if rev > revno:
-                        result.append(newline)
-                    result.append(line)
+
+                try:
+                    edit_log = codecs.open(self._backend._get_item_path(name, "edit-log"), "r", config.charset)
+                    for line in edit_log:
+                        values = _parse_log_line(line)
+                        rev = int(values[1])
+                        if revno == rev or rev == 99999999:
+                            continue
+                        if rev > revno:
+                            result.append(newline)
+                        result.append(line)
+                    edit_log.close()
+                except IOError:
+                    pass
+
                 if not newline in result:
                     result.append(newline)
-
-                edit_log.close()
 
                 edit_log = codecs.open(self._backend._get_item_path(name, "edit-log"), "w", config.charset)
                 edit_log.writelines(result)
