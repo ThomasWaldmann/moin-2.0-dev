@@ -249,8 +249,8 @@ class TestAcl(unittest.TestCase):
         pagename = u'AutoCreatedMoinMoinACLTestPage'
 
         self.request.cfg.page_backend.create_item(pagename)
-        self.request.cfg.page_backend.create_revision(pagename, 0)
-        data = self.request.cfg.page_backend.get_data_backend(pagename, 0)
+        self.request.cfg.page_backend.create_revision(pagename, 1)
+        data = self.request.cfg.page_backend.get_data_backend(pagename, 1)
         data.write(u'#acl All: \n')
         data.close()
 

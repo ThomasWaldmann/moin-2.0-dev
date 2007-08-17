@@ -6,7 +6,7 @@
 """
 
 
-from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError, StorageError
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.interfaces import StorageBackend
 
 
@@ -30,41 +30,11 @@ class CommonBackend(object):
         """
         return getattr(self._other, name)
 
-    def _call(self, method, message, *arg, **kwarg):
-        """
-        Call a function an use _handle_error if required.
-        """
-        try:
-            return getattr(self._other, method)(*arg, **kwarg)
-        except Exception, err:
-            if len(arg) > 1:
-                revno = arg[1]
-            else:
-                revno = None
-            _handle_error(self, err, arg[0], revno, message=message)
-
-    def _get_revno(self, item, revno):
-        """
-        Get the correct revno with correct error handling.
-        """
-        if revno == 0:
-            try:
-                revno = self.current_revision(item, includeEmpty=True)
-            except Exception, err:
-                _handle_error(self, err, item, revno, message=_("Failed to get current revision for item %r.") % item)
-        return revno
-
-    def list_items(self, filters=None):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.list_items
-        """
-        return self._call("list_items", _("Failed to list items"), filters)
-
     def has_item(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_item
         """
-        if self._call("has_item", _("Failed check if item %r exists.") % name, name):
+        if self._other.has_item(name):
             return self
         return None
 
@@ -85,7 +55,10 @@ class CommonBackend(object):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.remove_item
         """
-        return self._call("remove_item", _("Failed to remove item %r.") % name, name)
+        try:
+            self._other.remove_item(name)
+        except Exception, err:
+            _handle_error(self, err, name, None)
 
     def rename_item(self, name, newname):
         """
@@ -100,40 +73,46 @@ class CommonBackend(object):
         if self.has_item(newname):
             raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
 
-        return self._call("rename_item", _("Failed to rename item %r.") % name, name, newname)
-
-    def list_revisions(self, name):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
-        """
-        return self._call("list_revisions", _("Failed to list revisions of item %r.") % name, name)
+        return self._other.rename_item(name, newname)
 
     def current_revision(self, name, includeEmpty=False):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
-        return self._call("current_revision", _("Failed to get current revision for item %r.") % name, name, includeEmpty)
+        try:
+            return self._other.current_revision(name, includeEmpty)
+        except Exception, err:
+            _handle_error(self, err, name)
+
+    def list_revisions(self, name):
+        """
+        @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
+        """
+        try:
+            return self._other.list_revisions(name)
+        except Exception, err:
+            _handle_error(self, err, name)
 
     def has_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_revision
         """
-        revno = self._get_revno(name, revno)
-
-        return self._call("has_revision", _("Failed to check if revision %r for item %r exists.") % (revno, name), name, revno)
+        try:
+            return self._other.has_revision(name, revno)
+        except Exception, err:
+            _handle_error(self, err, name, revno)
 
     def create_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.create_revisions
         """
-        if revno == 0:
-            revno = self._get_revno(name, revno) + 1
-        elif revno <= -1:
+        if revno <= -1:
             raise BackendError(_("Invalid revisions number %r") % revno)
 
-        self._call("create_revision", _("Failed to create revision %r for item %r.") % (revno, name), name, revno)
-
-        return revno
+        try:
+            self._other.create_revision(name, revno)
+        except Exception, err:
+            _handle_error(self, err, name, revno)
 
     def remove_revision(self, name, revno):
         """
@@ -142,51 +121,22 @@ class CommonBackend(object):
         if revno <= -1:
             raise BackendError(_("Invalid revisions number %r") % revno)
 
-        revno = self._get_revno(name, revno)
-        self._call("remove_revision", _("Failed to remove revision %r for item %r.") % (revno, name), name, revno)
-        return revno
-
-    def get_data_backend(self, name, revno):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
-        """
-        revno = self._get_revno(name, revno)
-
-        return self._call("get_data_backend", _("Failed to get data backend with revision %r for item %r.") % (revno, name), name, revno)
-
-    def get_metadata_backend(self, name, revno):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
-        """
-        revno = self._get_revno(name, revno)
-
-        return self._call("get_metadata_backend", _("Failed to get metadata backend with revision %r for item %r.") % (revno, name), name, revno)
-
-    def lock(self, identifier, timeout=1, lifetime=60):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.lock
-        """
-        return self._call("lock", _("Failed to create a log for %r.") % identifier, identifier, timeout, lifetime)
-
-    def unlock(self, identifier):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.unlock
-        """
-        return self._call("unlock", _("Failed to create remove the log for %r.") % identifier, identifier)
+        try:
+            self._other.remove_revision(name, revno)
+        except Exception, err:
+            _handle_error(self, err, name, revno)
 
 
-def _handle_error(backend, err, name, revno=None, message=""):
+def _handle_error(backend, err, name, revno=None):
     """
     Handle error messages.
     """
-    if isinstance(err, StorageError):
-        raise err
-    elif not backend.has_item(name):
+    if not backend.has_item(name):
         raise NoSuchItemError(_("Item %r does not exist.") % name)
     elif revno is not None and revno != -1 and not backend.has_revision(name, revno):
         raise NoSuchRevisionError(_("Revision %r of item %r does not exist.") % (revno, name))
     else:
-        raise StorageError(message)
+        raise err
 
 
 def _get_metadata(backend, item, revnos):
