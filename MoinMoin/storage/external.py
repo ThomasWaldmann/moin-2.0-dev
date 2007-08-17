@@ -3,8 +3,6 @@
 
     @copyright: 2007 MoinMoin:HeinrichWendel
     @license: GNU GPL, see COPYING for details.
-
-    TODO: acl checking
 """
 
 import UserDict
@@ -251,8 +249,12 @@ class Item(UserDict.DictMixin, object):
         """
         self._check_lock()
         self.reset()
-        rev = self._backend.create_revision(self.name, revno)
-        return self[rev]
+
+        if revno == 0:
+            revno = self.current + 1
+
+        self._backend.create_revision(self.name, revno)
+        return self[revno]
 
     def get_metadata(self):
         """

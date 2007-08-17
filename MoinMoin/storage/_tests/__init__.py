@@ -179,14 +179,12 @@ class AbstractBackendTest(AbstractTest):
                 for revno in self.items_revisions[item]:
                     assert self.backend.has_revision(self.items[item], revno)
                 assert not self.backend.has_revision(self.items[item], self.items_revisions[item][0] + 1)
-                assert self.backend.has_revision(self.items[item], 0)
                 assert self.backend.has_revision(self.items[item], -1)
                 assert not self.backend.has_revision(self.items[item], -2)
 
             py.test.raises(NoSuchItemError, self.backend.has_revision, self.notexist, 1)
         else:
             for item in self.items:
-                assert self.backend.has_revision(item, 0)
                 assert self.backend.has_revision(item, 1)
                 assert not self.backend.has_revision(item, -1)
                 assert not self.backend.has_revision(item, 2)
@@ -196,7 +194,7 @@ class AbstractBackendTest(AbstractTest):
         if self.items_revisions:
             current_revision = self.items_revisions[0][0]
             next_revision = self.items_revisions[0][0] + 1
-            assert self.backend.create_revision(self.items[0], next_revision) == next_revision
+            self.backend.create_revision(self.items[0], next_revision)
             assert self.backend.has_revision(self.items[0], next_revision)
             assert self.backend.list_revisions(self.items[0]) == [next_revision] + self.items_revisions[0]
             assert self.backend.current_revision(self.items[0]) == current_revision
@@ -211,7 +209,7 @@ class AbstractBackendTest(AbstractTest):
         if self.items_revisions:
             current_revision = self.items_revisions[0][0]
             next_revision = self.items_revisions[0][0] + 1
-            assert self.backend.remove_revision(self.items[0], next_revision) == next_revision
+            self.backend.remove_revision(self.items[0], next_revision)
             assert not self.backend.has_revision(self.items[0], next_revision)
             assert self.backend.list_revisions(self.items[0]) == self.items_revisions[0]
             assert self.backend.current_revision(self.items[0]) == current_revision
@@ -242,8 +240,8 @@ class AbstractBackendTest(AbstractTest):
         starttime = time.time()
         self.backend.create_item(self.newname)
         if self.items_revisions:
-            self.backend.create_revision(self.newname, 0)
-        metadata = self.backend.get_metadata_backend(self.newname, 0)
+            self.backend.create_revision(self.newname, 1)
+        metadata = self.backend.get_metadata_backend(self.newname, 1)
         metadata["test"] = "test"
         metadata.save()
         news = self.backend.news(starttime)

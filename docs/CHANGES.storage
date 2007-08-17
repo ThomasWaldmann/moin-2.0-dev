@@ -81,8 +81,6 @@ Version 1.7.current:
 
   TODO:
     * fix uid_override
-    * cleanup common.py
-    * check thread safety
 
   TODO-Post-SOC:
     * convert caching to the new storage

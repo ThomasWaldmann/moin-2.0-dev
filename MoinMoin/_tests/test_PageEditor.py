@@ -128,8 +128,8 @@ class TestExpandPrivateVariables(TestExpandUserName):
         """ Create temporary page, bypass logs, notification and backups
         """
         self.request.cfg.page_backend.create_item(self.name)
-        self.request.cfg.page_backend.create_revision(self.name, 0)
-        data = self.request.cfg.page_backend.get_data_backend(self.name, 0)
+        self.request.cfg.page_backend.create_revision(self.name, 1)
+        data = self.request.cfg.page_backend.get_data_backend(self.name, 1)
         data.write(u' ME:: %s\n' % self.name)
         data.close()
 

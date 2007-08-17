@@ -68,31 +68,26 @@ class StorageBackend(object):
 
     def create_revision(self, name, revno):
         """
-        Creates a new revision. If revno is 0 the next possible revision
-        will be created. The return value is the newly created revision
-        number. revno must be bigger than -1.
+        Creates a new revision > 0.
         """
 
     def remove_revision(self, name, revno):
         """
-        Removes a specified revision. If revno is 0 the last revision
-        will be deleted (nuked). The return value is the removed revision
-        number. revno must be bigger than -1.
+        Removes a specified revision > 0.
         """
 
     def get_metadata_backend(self, name, revno):
         """
         Returns a metadata backend object which behaves like a dictionary.
-        If revno is 0 the current revision will be used. If revno is -1 the
-        item-wide metadata will be used. Raises no error if the name or revno
-        does not exists. The error will only be raised on access.
+        If revno is -1 the item-wide metadata will be used. Raises no error
+        if the name or revno does not exists. The error will only be raised
+        on access.
         """
 
     def get_data_backend(self, name, revno):
         """
-        Get the data of an item-revision. If revno is 0 the current revision
-        will be used. Raises no error if the name or revno does not exists. The
-        error will only be raised on access.
+        Get the data of an item-revision. Raises no error if the name or
+        revno does not exists. The error will only be raised on access.
         """
 
     def lock(self, identifier, timeout=1, lifetime=60):
