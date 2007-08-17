@@ -15,13 +15,7 @@ Version 1.7.current:
 	* Refactored Page.py, PageEditor.py, editlog.py, user.py and some other things to make use of it.
 
   Admin Notes:
-    * A few new variables were introduced for the configuration of the wiki.
-      The default values in multiconfig.py should be OK for most uses.
-      * indexes: A list of metadata keys which should be indexed for better performance when searching for them
-      * user_backend: The storage backend to access users
-      * page_backend: The storage backend to access new pages
-      * underlay_backend: The storage backend to access the underlay
-      * data_backend: The storage backend to access all pages
+    * See HelpOnConfiguration/Storage
 
   Developer notes:
     * logfile/editlog.py:
@@ -89,11 +83,11 @@ Version 1.7.current:
     * fix uid_override
     * cleanup common.py
     * check thread safety
-	* improve documentation
 
   TODO-Post-SOC:
     * convert caching to the new storage
     * convert attachments to the new storage
-    * removed RootPage.getPagePath, Page.getPagePath, page.__text_filename
+    * remove RootPage.getPagePath, Page.getPagePath, page.__text_filename
     * automatically check ACLs in the storage layer and raise exception on violation
 	* remove logfile.editlog.LocalEditLog.add
+	* remove data_dir, data_underlay_dir, user_dir from the configuration
