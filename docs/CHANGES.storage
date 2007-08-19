@@ -89,3 +89,4 @@ Version 1.7.current:
     * automatically check ACLs in the storage layer and raise exception on violation
 	* remove logfile.editlog.LocalEditLog.add which is only used by attachments anymore
 	* remove data_dir, data_underlay_dir, user_dir from the configuration
+	* add methods like find oldest item rev newer than <timestamp or find newest page from <editor> to LocalEditLog
