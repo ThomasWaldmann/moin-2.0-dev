@@ -155,6 +155,7 @@ class JabberIDSetEvent(Event):
         Event.__init__(self, request)
         self.jid = jid
 
+
 class JabberIDUnsetEvent(Event):
     """ Sent when Jabber ID is no longer used
 
@@ -166,6 +167,7 @@ class JabberIDUnsetEvent(Event):
         Event.__init__(self, request)
         self.jid = jid
 
+
 class UserCreatedEvent(Event):
     """ Sent when a new user has been created """
 
@@ -176,6 +178,18 @@ class UserCreatedEvent(Event):
     def __init__(self, request, user):
         Event.__init__(self, request)
         self.user = user
+
+
+class UserChangedEvent(Event):
+    """ Sent when a user has been changed. """
+
+    description = _(u"""An account has been changed.""")
+    req_superuser = True
+
+    def __init__(self, request, user):
+        Event.__init__(self, request)
+        self.user = user
+
 
 class PagePreSaveEvent(Event):
     """ Event sent when a page is about to be saved
@@ -196,6 +210,7 @@ class PagePreSaveEvent(Event):
 class EventResult:
     """ This is a base class for messages passed from event handlers """
     pass
+
 
 class Abort(EventResult):
     """ Result returned if handler wants to abort operation that sent the event """
@@ -251,6 +266,7 @@ def send_event(event):
             msg.append(retval)
 
     return msg
+
 
 def get_subscribable_events():
     """Create and return a list of user-visible events
