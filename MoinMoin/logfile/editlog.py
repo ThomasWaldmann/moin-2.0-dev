@@ -102,7 +102,7 @@ class LocalEditLog(object):
     def add(self, request, mtime, rev, action, pagename, host, extra=u'', comment=u''):
         """ Generate (and add) a line to the edit-log.
 
-        TODO: drop that as fast as possible, only used by attachements.
+        @deprecated: drop that as fast as possible, only used by attachements.
         """
         hostname = wikiutil.get_hostname(request, host)
         user_id = request.user.valid and request.user.id or ''

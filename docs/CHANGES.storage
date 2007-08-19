@@ -81,11 +81,12 @@ Version 1.7.current:
 
   TODO:
     * fix uid_override
+    * merge main
 
   TODO-Post-SOC:
     * convert caching to the new storage
     * convert attachments to the new storage
     * remove RootPage.getPagePath, Page.getPagePath, page.__text_filename
     * automatically check ACLs in the storage layer and raise exception on violation
-	* remove logfile.editlog.LocalEditLog.add
+	* remove logfile.editlog.LocalEditLog.add which is only used by attachments anymore
 	* remove data_dir, data_underlay_dir, user_dir from the configuration

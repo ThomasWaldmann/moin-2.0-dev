@@ -40,12 +40,6 @@ class RuntimeScriptException(ScriptException):
 class ScriptExit(Exception):
     """ Raised by the script commands when the script should quit. """
 
-def event_logfile(self, pagename, mtime):
-    # add event log entry
-    eventtype = 'SAVENEW'
-    elog = eventlog.EventLog(self.request)
-    elog.add(self.request, eventtype, {'pagename': pagename}, 1, mtime)
-
 # Parsing and (un)quoting for script files
 def packLine(items, separator="|"):
     """ Packs a list of items into a string that is separated by `separator`. """
