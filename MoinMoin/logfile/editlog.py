@@ -99,7 +99,7 @@ class LocalEditLog(object):
 
         return result
 
-    def add(self, request, mtime, rev, action, pagename, host, extra=u'', comment=u''):
+    def add(self, request, mtime, rev, action, pagename, host, extra=u'', comment=u'', uid_override=None):
         """ Generate (and add) a line to the edit-log.
 
         @deprecated: drop that as fast as possible, only used by attachements.
@@ -109,9 +109,9 @@ class LocalEditLog(object):
 
         mtime = wikiutil.timestamp2version(mtime)
 
-        if hasattr(request, "uid_override"):
+        if uid_override is not None:
             user_id = ''
-            hostname = request.uid_override
+            hostname = uid_override
             host = ''
 
         line = u"\t".join((str(mtime),

@@ -13,7 +13,6 @@ import zipfile
 
 from MoinMoin import config, wikiutil, caching, user
 from MoinMoin.PageEditor import PageEditor
-from MoinMoin.logfile import eventlog
 
 MOIN_PACKAGE_FILE = 'MOIN_PACKAGE'
 MAX_VERSION = 1
@@ -118,9 +117,8 @@ class ScriptEngine:
                 self._extractToFile(zipname, target)
                 if os.path.exists(target):
                     os.chmod(target, config.umask)
-                    self.request.uid_override = author
                     from MoinMoin.action.AttachFile import _addLogEntry
-                    _addLogEntry(self.request, "ATTNEW", pagename, filename)
+                    _addLogEntry(self.request, "ATTNEW", pagename, filename, uid_override=author)
                 self.msg += u"%(filename)s attached \n" % {"filename": filename}
             else:
                 self.msg += u"%(filename)s not attached \n" % {"filename": filename}
@@ -144,7 +142,7 @@ class ScriptEngine:
             if os.path.exists(target):
                 os.remove(target)
                 from MoinMoin.action.AttachFile import _addLogEntry
-                _addLogEntry(self.request, "ATTDEL", pagename, filename)
+                _addLogEntry(self.request, "ATTDEL", pagename, filename, uid_override=author)
                 self.msg += u"%(filename)s removed \n" % {"filename": filename}
             else:
                 self.msg += u"%(filename)s not exists \n" % {"filename": filename}
@@ -276,8 +274,7 @@ class ScriptEngine:
             theuser = user.User(self.request, uid)
             save_user = self.request.user
             self.request.user = theuser
-            self.request.uid_override = author
-            page = PageEditor(self.request, pagename, do_editor_backup=0)
+            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
             try:
                 page.saveText(self.extract_file(filename).decode("utf-8"), 0, trivial=trivial, comment=comment)
                 self.msg += u"%(pagename)s added \n" % {"pagename": pagename}
@@ -297,8 +294,7 @@ class ScriptEngine:
         """
         if self.request.user.may.write(pagename):
             _ = self.request.getText
-            self.request.uid_override = author
-            page = PageEditor(self.request, pagename, do_editor_backup=0)
+            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
             if not page.exists():
                 raise RuntimeScriptException(_("The page %s does not exist.") % pagename)
             page.renamePage(newpagename, comment=u"Renamed from '%s'" % (pagename))

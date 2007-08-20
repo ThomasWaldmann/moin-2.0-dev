@@ -224,7 +224,7 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
 ### Internal helpers
 #############################################################################
 
-def _addLogEntry(request, action, pagename, filename):
+def _addLogEntry(request, action, pagename, filename, uid_override=None):
     """ Add an entry to the edit log on uploads and deletes.
 
         `action` should be "ATTNEW" or "ATTDEL"
@@ -234,7 +234,7 @@ def _addLogEntry(request, action, pagename, filename):
 
     # Write to local log
     llog = editlog.LocalEditLog(request, rootpagename=pagename)
-    llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname)
+    llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname, uid_override=uid_override)
 
 
 def _access_file(pagename, request):
