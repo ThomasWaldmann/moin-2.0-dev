@@ -112,7 +112,7 @@ class FormatterBase:
 
     # Attachments ######################################################
 
-    def attachment_link(self, url, text, **kw):
+    def attachment_link(self, on, url=None, **kw):
         raise NotImplementedError
     def attachment_image(self, url, **kw):
         raise NotImplementedError
@@ -139,7 +139,9 @@ class FormatterBase:
             except IOError:
                 pass
 
-        return self.attachment_link(url, text)
+        return (self.attachment_link(1, url) +
+                self.text(text) +
+                self.attachment_link(0))
 
     def anchordef(self, name):
         return ""
