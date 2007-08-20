@@ -88,12 +88,14 @@ class PageEditor(Page):
         @param request: the request object
         @keyword do_revision_backup: if 0, suppress making a page backup per revision
         @keyword do_editor_backup: if 0, suppress saving of draft copies
+        @keyword uid_override: override user id and name (default None)
         """
         Page.__init__(self, request, page_name, **keywords)
         self._ = request.getText
 
         self.do_revision_backup = keywords.get('do_revision_backup', 1)
         self.do_editor_backup = keywords.get('do_editor_backup', 1)
+        self.uid_override = keywords.get('uid_override', None)
 
         if self._item is None:
             self._item = self._items_all.new_item(self.page_name)
@@ -848,7 +850,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         else:
             newrev.deleted = True
 
-        newrev.save(action, extra, comment)
+        newrev.save(action, extra, comment, self.uid_override)
 
         self._item.lock = False
 

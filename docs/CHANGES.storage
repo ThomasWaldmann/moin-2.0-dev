@@ -79,9 +79,6 @@ Version 1.7.current:
       * removed request.editlog
       * removed packages.edit_logfile_append
 
-  TODO:
-    * fix uid_override
-
   TODO-Post-SOC:
     * convert caching to the new storage
     * convert attachments to the new storage

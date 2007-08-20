@@ -468,19 +468,17 @@ class Revision(object):
             return float(self.metadata.get("edit_log_" + name, 0.0))
         raise AttributeError(_("Revision class has no attribute %r.") % name)
 
-    def save(self, action="SAVE", extra="", comment=""):
+    def save(self, action="SAVE", extra="", comment="", uid_override=None):
         """
         Saves the revision and sets new edit-log values.
         """
         # set edit-log
         if self._data is not None:
             timestamp = time.time()
-            # TODO: just a hack, make this better
-            if hasattr(self.item._request, "uid_override"):
+            if uid_override is not None:
                 addr = ""
-                hostname = self.item._request.uid_override
+                hostname = uid_override
                 userid = ""
-                delattr(self.item._request, "uid_override")
             else:
                 addr = self.item._request.remote_addr
                 hostname = wikiutil.get_hostname(self.item._request, addr)
