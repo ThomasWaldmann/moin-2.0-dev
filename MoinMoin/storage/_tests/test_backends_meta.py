@@ -12,7 +12,6 @@ from MoinMoin.storage._tests.test_backends_moin16 import get_page_backend, setup
 
 from MoinMoin.storage.backends.meta import LayerBackend, NamespaceBackend
 
-
 new_items = ["Zet"]
 new_revisions = {}
 new_revisions[0] = [2, 1]

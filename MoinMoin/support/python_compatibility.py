@@ -23,6 +23,8 @@ except NameError:
             args = (kw['cmp'], )
 
         l.sort(*args)
+        if 'reverse' in kw:
+            l.reverse(*args)
         return l
 
 """

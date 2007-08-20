@@ -42,6 +42,7 @@ from MoinMoin.logfile import eventlog
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.external import DELETED
+from MoinMoin.support.python_compatibility import set
 
 
 def is_cache_exception(e):

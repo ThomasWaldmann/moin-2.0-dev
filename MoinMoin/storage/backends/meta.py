@@ -66,7 +66,6 @@ class NamespaceBackend(MetaBackend):
             if namespace.startswith("/"):
                 namespace = namespace[1:]
             new_backends[namespace] = backend
-
         MetaBackend.__init__(self, new_backends)
 
     def list_items(self, filters=None):

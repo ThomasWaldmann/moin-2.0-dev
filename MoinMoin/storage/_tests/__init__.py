@@ -10,7 +10,7 @@ import time
 
 from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.external import ACL
-from MoinMoin.support.python_compatibility import set
+from MoinMoin.support.python_compatibility import set, sorted
 
 default_items = ["New", "Test" ]
 
@@ -66,7 +66,6 @@ def remove_data(cls):
 
 class AbstractTest(object):
 
-    @classmethod
     def init(cls, backend, items=None, revisions=None, data=None, metadata=None, filters=None, name=None, newname=None, notexist=None, key=None):
         cls.backend = backend
 
@@ -96,6 +95,8 @@ class AbstractTest(object):
         cls.newname = newname or "Blub"
         cls.notexist = notexist or "Juhu"
         cls.key = key or "key"
+
+    init = classmethod(init)
 
     def teardown_class(self):
         remove_data(self)
