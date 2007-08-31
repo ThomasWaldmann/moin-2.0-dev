@@ -9,23 +9,7 @@
     The RootPage is some virtual page located at / and is mainly used to do namespace
     operations like getting the page list.
 
-    Currently, this is all a big mixture between high-level page code, intermediate
-    data/underlay layering code, caching code and low-level filesystem storage code.
-    To see the filesystem storage layout we use, best is to look into data/pages/
-    (underlay dir uses the same format).
-
-    TODO:
-    * Cleanly separate the code into packages for:
-      * Page (or rather: Item)
-      * Layering
-      * Cache
-      * Storage
-    * ACLs should be handled on a low layer, raising an Exception when access
-      is denied, so we won't have security issues just because someone forgot to check
-      user.may.read(secretpage).
-    * The distinction between a item and a item revision should be clearer.
-    * Items can be anything, not just wiki pages, but also files of any mimetype.
-      The mimetype hierarchy should be modelled by a MimeTypeItem class hierarchy.
+    TODO: see CHANGES.storage
 
     @copyright: 2000-2004 by Juergen Hermann <jh@web.de>,
                 2005-2007 by MoinMoin:ThomasWaldmann,
