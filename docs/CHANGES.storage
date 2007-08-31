@@ -80,10 +80,12 @@ Version 1.7.current:
       * removed packages.edit_logfile_append
 
   TODO-Post-SOC:
-    * convert caching to the new storage
+    * convert caching to the new storage and separate it out of Page.py
     * convert attachments to the new storage
     * remove RootPage.getPagePath, Page.getPagePath, page.__text_filename
-    * automatically check ACLs in the storage layer and raise exception on violation
+    * automatically check ACLs in the storage layer and raise exception on violation so user.may.read(secretpage) is not needed anymore
 	* remove logfile.editlog.LocalEditLog.add which is only used by attachments anymore
 	* remove data_dir, data_underlay_dir, user_dir from the configuration
 	* add methods like find oldest item rev newer than <timestamp or find newest page from <editor> to LocalEditLog
+    * implement mime/types
+    
