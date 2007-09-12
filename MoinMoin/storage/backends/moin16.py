@@ -129,7 +129,7 @@ class UserMetadata(AbstractMetadata):
 
     def _parse_metadata(self, name, revno):
         """
-        @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
+        @see MoinMoin.storage.backends.filesystem.AbstractMetadata._parse_metadata
         """
         data_file = codecs.open(self._backend._get_item_path(name), "r", config.charset)
 
@@ -158,7 +158,7 @@ class UserMetadata(AbstractMetadata):
 
     def _save_metadata(self, name, revno, metadata):
         """
-        @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
+        @see MoinMoin.storage.backends.filesystem.AbstractMetadata._save_metadata
         """
 
         tmp_handle, tmp_name = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
@@ -354,7 +354,7 @@ class PageMetadata(AbstractMetadata):
 
     def _parse_metadata(self, name, revno):
         """
-        @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
+        @see MoinMoin.storage.backends.filesystem.AbstractMetadata._parse_metadata
         """
         metadata = {}
 
@@ -411,7 +411,7 @@ class PageMetadata(AbstractMetadata):
 
     def _save_metadata(self, name, revno, metadata):
         """
-        @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
+        @see MoinMoin.storage.backends.filesystem.AbstractMetadata._save_metadata
         """
 
         if revno == -1:
@@ -487,7 +487,7 @@ class DeletedPageMetadata(AbstractMetadata):
 
     def _parse_metadata(self, name, revno):
         """
-        @see MoinMoin.fs_moin16.AbstractMetadata._parse_metadata
+        @see MoinMoin.storage.backends.filesystem.AbstractMetadata._parse_metadata
         """
         metadata = {}
         metadata[DELETED] = str(True)
@@ -495,7 +495,7 @@ class DeletedPageMetadata(AbstractMetadata):
 
     def _save_metadata(self, name, revno, metadata):
         """
-        @see MoinMoin.fs_moin16.AbstractMetadata._save_metadata
+        @see MoinMoin.storage.backends.filesystem.AbstractMetadata._save_metadata
         """
         if not DELETED in metadata or not get_bool(metadata[DELETED]):
             self._backend.create_revision(self._name, revno)
