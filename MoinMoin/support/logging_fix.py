@@ -14,5 +14,6 @@ if not hasattr(logging, 'log'):
         if logging.root.manager.disable >= level:
             return
         if level >= logging.root.getEffectiveLevel():
-            apply(logging.root._log, (level, msg, args), kwargs)
+            logging.root._log(level, msg, args, **kwargs)
     logging.log = log
+

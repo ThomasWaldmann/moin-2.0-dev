@@ -255,8 +255,8 @@ def clean_input(text, max_len=201):
         @return: cleaned text
     """
     # we only have input fields with max 200 chars, but spammers send us more
-    l = len(text)
-    if l == 0 or l > max_len:
+    length = len(text)
+    if length == 0 or length > max_len:
         return u''
     else:
         return text.translate(config.clean_input_translation_map)
@@ -486,21 +486,9 @@ class MetaDict(dict):
 
 # Quoting of wiki names, file names, etc. (in the wiki markup) -----------------------------------
 
-# don't ever change this
+# don't ever change this - DEPRECATED, only needed for 1.5 > 1.6 migration conversion
 QUOTE_CHARS = u'"'
 
-def quoteName(name):
-    """ put quotes around a given name """
-    return '"%s"' % name.replace('"', '""')
-
-def unquoteName(name):
-    """ if there are quotes around the name, strip them """
-    if not name:
-        return name
-    if '"' == name[0] == name[-1]:
-        return name[1:-1].replace('""', '"')
-    else:
-        return name
 
 #############################################################################
 ### InterWiki
@@ -589,56 +577,54 @@ def load_wikimap(request):
     return _interwiki_list
 
 def split_wiki(wikiurl):
-    """ Split a wiki url, e.g:
+    """
+    Split a wiki url.
 
-    'MoinMoin:FrontPage' -> "MoinMoin", "FrontPage", ""
-    'FrontPage' -> "Self", "FrontPage", ""
-    'MoinMoin:"Page with blanks" link title' -> "MoinMoin", "Page with blanks", "link title"
-
-    can also be used for:
-
-    'attachment:"filename with blanks.txt" other title' -> "attachment", "filename with blanks.txt", "other title"
+    *** DEPRECATED FUNCTION FOR OLD 1.5 SYNTAX - ONLY STILL HERE FOR THE 1.5 -> 1.6 MIGRATION ***
+    Use split_interwiki(), see below.
 
     @param wikiurl: the url to split
     @rtype: tuple
-    @return: (wikiname, pagename, linktext)
+    @return: (tag, tail)
     """
+    # !!! use a regex here!
     try:
-        wikiname, rest = wikiurl.split(":", 1) # e.g. MoinMoin:FrontPage
+        wikitag, tail = wikiurl.split(":", 1)
     except ValueError:
         try:
-            wikiname, rest = wikiurl.split("/", 1) # for what is this used?
+            wikitag, tail = wikiurl.split("/", 1)
         except ValueError:
-            wikiname, rest = 'Self', wikiurl
-    if rest:
-        if rest[0] == '"': # quoted pagename
-            idx = 1
-            max = len(rest)
-            while idx < max:
-                if idx + 1 < max:
-                    next = rest[idx + 1]
-                else:
-                    next = None
-                if next == rest[idx] == '"':
-                    idx += 2
-                    continue
-                if next != '"' and rest[idx] == '"':
-                    break
-                idx += 1
-            pagename_linktext = rest[1:idx].replace('""', '"'), rest[idx+1:]
-        else: # not quoted, split on whitespace
-            pagename_linktext = rest.split(None, 1)
-    else:
-        pagename_linktext = "", ""
-    if len(pagename_linktext) == 1:
-        pagename, linktext = pagename_linktext[0], ""
-    else:
-        pagename, linktext = pagename_linktext
-    linktext = linktext.strip()
-    return wikiname, pagename, linktext
+            wikitag, tail = 'Self', wikiurl
+    return wikitag, tail
+
+def split_interwiki(wikiurl):
+    """ Split a interwiki name, into wikiname and pagename, e.g:
+
+    'MoinMoin:FrontPage' -> "MoinMoin", "FrontPage"
+    'FrontPage' -> "Self", "FrontPage"
+    'MoinMoin:Page with blanks' -> "MoinMoin", "Page with blanks"
+    'MoinMoin:' -> "MoinMoin", ""
+
+    can also be used for:
+
+    'attachment:filename with blanks.txt' -> "attachment", "filename with blanks.txt"
+
+    @param wikiurl: the url to split
+    @rtype: tuple
+    @return: (wikiname, pagename)
+    """
+    try:
+        wikiname, pagename = wikiurl.split(":", 1)
+    except ValueError:
+        wikiname, pagename = 'Self', wikiurl
+    return wikiname, pagename
 
 def resolve_wiki(request, wikiurl):
-    """ Resolve an interwiki link.
+    """
+    Resolve an interwiki link.
+
+    *** DEPRECATED FUNCTION FOR OLD 1.5 SYNTAX - ONLY STILL HERE FOR THE 1.5 -> 1.6 MIGRATION ***
+    Use resolve_interwiki(), see below.
 
     @param request: the request object
     @param wikiurl: the InterWiki:PageName link
@@ -646,7 +632,25 @@ def resolve_wiki(request, wikiurl):
     @return: (wikitag, wikiurl, wikitail, err)
     """
     _interwiki_list = load_wikimap(request)
-    wikiname, pagename, linktext = split_wiki(wikiurl)
+    # split wiki url
+    wikiname, pagename = split_wiki(wikiurl)
+
+    # return resolved url
+    if wikiname in _interwiki_list:
+        return (wikiname, _interwiki_list[wikiname], pagename, False)
+    else:
+        return (wikiname, request.getScriptname(), "/InterWiki", True)
+
+def resolve_interwiki(request, wikiname, pagename):
+    """ Resolve an interwiki reference (wikiname:pagename).
+
+    @param request: the request object
+    @param wikiname: interwiki wiki name
+    @param pagename: interwiki page name
+    @rtype: tuple
+    @return: (wikitag, wikiurl, wikitail, err)
+    """
+    _interwiki_list = load_wikimap(request)
     if wikiname in _interwiki_list:
         return (wikiname, _interwiki_list[wikiname], pagename, False)
     else:
@@ -829,7 +833,7 @@ def getInterwikiHomePage(request, username=None):
     return homewiki, username
 
 
-def AbsPageName(request, context, pagename):
+def AbsPageName(context, pagename):
     """
     Return the absolute pagename for a (possibly) relative pagename.
 
@@ -839,18 +843,62 @@ def AbsPageName(request, context, pagename):
     @return: the absolute page name
     """
     if pagename.startswith(PARENT_PREFIX):
-        pagename = '/'.join([x for x in context.split('/')[:-1] + [pagename[PARENT_PREFIX_LEN:]] if x])
+        while context and pagename.startswith(PARENT_PREFIX):
+            context = '/'.join(context.split('/')[:-1])
+            pagename = pagename[PARENT_PREFIX_LEN:]
+        pagename = '/'.join(filter(None, [context, pagename, ]))
     elif pagename.startswith(CHILD_PREFIX):
-        pagename = context + '/' + pagename[CHILD_PREFIX_LEN:]
+        if context:
+            pagename = context + '/' + pagename[CHILD_PREFIX_LEN:]
+        else:
+            pagename = pagename[CHILD_PREFIX_LEN:]
     return pagename
 
-def pagelinkmarkup(pagename):
+def RelPageName(context, pagename):
+    """
+    Return the relative pagename for some context.
+
+    @param context: name of the page where "pagename" appears on
+    @param pagename: the absolute page name
+    @rtype: string
+    @return: the relative page name
+    """
+    if context == '':
+        # special case, context is some "virtual root" page with name == ''
+        # every page is a subpage of this virtual root
+        return CHILD_PREFIX + pagename
+    elif pagename.startswith(context + CHILD_PREFIX):
+        # simple child
+        return pagename[len(context):]
+    else:
+        # some kind of sister/aunt
+        context_frags = context.split('/')   # A, B, C, D, E
+        pagename_frags = pagename.split('/') # A, B, C, F
+        # first throw away common parents:
+        common = 0
+        for cf, pf in zip(context_frags, pagename_frags):
+            if cf == pf:
+                common += 1
+            else:
+                break
+        context_frags = context_frags[common:] # D, E
+        pagename_frags = pagename_frags[common:] # F
+        go_up = len(context_frags)
+        return PARENT_PREFIX * go_up + '/'.join(pagename_frags)
+
+
+def pagelinkmarkup(pagename, text=None):
     """ return markup that can be used as link to page <pagename> """
     from MoinMoin.parser.text_moin_wiki import Parser
-    if re.match(Parser.word_rule + "$", pagename):
+    if re.match(Parser.word_rule + "$", pagename, re.U|re.X) and \
+            (text is None or text == pagename):
         return pagename
     else:
-        return u'["%s"]' % pagename # XXX use quoteName(pagename) later
+        if text is None or text == pagename:
+            text = ''
+        else:
+            text = '|%s' % text
+        return u'[[%s%s]]' % (pagename, text)
 
 #############################################################################
 ### mimetype support

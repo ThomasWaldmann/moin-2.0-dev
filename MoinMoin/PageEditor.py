@@ -159,8 +159,6 @@ class PageEditor(Page):
         request = self.request
         form = request.form
         _ = self._
-        request.disableHttpCaching(level=2)
-        request.emit_http_headers()
 
         raw_body = ''
         msg = None
@@ -200,6 +198,10 @@ class PageEditor(Page):
         if msg:
             self.send_page(msg=msg)
             return
+
+        # Emmit http_headers after checks (send_page)
+        request.disableHttpCaching(level=2)
+        request.emit_http_headers()
 
         # check if we want to load a draft
         use_draft = None
@@ -304,7 +306,7 @@ Please review the page and save then. Do not save this page as it is!""")
                     loadable_draft = True
                     page_rev = rev
                     draft_timestamp_str = request.user.getFormattedDateTime(draft_timestamp)
-                    draft_message = _(u"'''[[BR]]Your draft based on revision %(draft_rev)d (saved %(draft_timestamp_str)s) can be loaded instead of the current revision %(page_rev)d by using the load draft button - in case you lost your last edit somehow without saving it.''' A draft gets saved for you when you do a preview, cancel an edit or unsuccessfully save.") % locals()
+                    draft_message = _(u"'''<<BR>>Your draft based on revision %(draft_rev)d (saved %(draft_timestamp_str)s) can be loaded instead of the current revision %(page_rev)d by using the load draft button - in case you lost your last edit somehow without saving it.''' A draft gets saved for you when you do a preview, cancel an edit or unsuccessfully save.") % locals()
 
         # Setup status message
         status = [kw.get('msg', ''), conflict_msg, edit_lock_message, draft_message]
@@ -405,7 +407,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         request.write(
             u'''\
-<textarea id="editor-textarea" name="savetext" lang="%(lang)s" dir="%(dir)s" rows="%(rows)d"
+<textarea id="editor-textarea" name="savetext" lang="%(lang)s" dir="%(dir)s" rows="%(rows)d" cols="80"
           onChange="flgChange = true;" onKeyPress="flgChange = true;">\
 %(text)s\
 </textarea>''' % {
@@ -417,7 +419,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         request.write("<p>")
         request.write(_("Comment:"),
-            ' <input id="editor-comment" type="text" name="comment" value="%s" maxlength="200"'
+            ' <input id="editor-comment" type="text" name="comment" value="%s" size="80" maxlength="200"'
             ' onChange="flgChange = true;" onKeyPress="flgChange = true;">' % (
                 wikiutil.escape(kw.get('comment', ''), 1), ))
         request.write("</p>")
@@ -650,7 +652,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             msg = self.saveText(u"deleted\n", 0, comment=comment or u'', deleted=True, notify=False)
             msg = msg.replace(
                 _("Thank you for your changes. Your attention to detail is appreciated."),
-                _('Page "%s" was successfully deleted!') % (self.page_name, ))
+                _('Page "%s" was successfully deleted!') % (wikiutil.escape(self.page_name), ))
 
             event = PageDeletedEvent(request, self, comment)
             send_event(event)
@@ -716,17 +718,17 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         signature = u.signature()
         variables = {
             'PAGE': self.page_name,
-            'TIME': "[[DateTime(%s)]]" % now,
-            'DATE': "[[Date(%s)]]" % now,
+            'TIME': "<<DateTime(%s)>>" % now,
+            'DATE': "<<Date(%s)>>" % now,
             'ME': u.name,
             'USERNAME': signature,
             'USER': "-- %s" % signature,
-            'SIG': "-- %s [[DateTime(%s)]]" % (signature, now),
+            'SIG': "-- %s <<DateTime(%s)>>" % (signature, now),
         }
 
         if u.valid and u.name:
             if u.email:
-                variables['MAILTO'] = "[[MailTo(%s)]]" % u.email
+                variables['MAILTO'] = "<<MailTo(%s)>>" % u.email
             # Users can define their own variables via
             # UserHomepage/MyDict, which override the default variables.
             userDictPage = u.name + "/MyDict"
@@ -1081,9 +1083,9 @@ class PageLock:
                 # warn user about existing lock
 
                 result = 1, _(
-"""This page was opened for editing or last previewed at %(timestamp)s by %(owner)s.[[BR]]
+"""This page was opened for editing or last previewed at %(timestamp)s by %(owner)s.<<BR>>
 '''You should ''refrain from editing'' this page for at least another %(mins_valid)d minute(s),
-to avoid editing conflicts.'''[[BR]]
+to avoid editing conflicts.'''<<BR>>
 To leave the editor, press the Cancel button.""") % {
                     'timestamp': timestamp, 'owner': owner, 'mins_valid': mins_valid}
 
