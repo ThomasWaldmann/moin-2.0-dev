@@ -205,7 +205,7 @@ class AbstractData(object):
         self._name = name
         self._revno = revno
 
-        self._read_file_name = self._backend._get_rev_path(name, revno)
+        self._read_file_name = self._backend._get_rev_path(name, revno, 'data')
 
         self._read_property = None
         self._write_property = None
