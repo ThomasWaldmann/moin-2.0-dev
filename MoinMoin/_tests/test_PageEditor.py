@@ -2,43 +2,41 @@
 """
     MoinMoin - MoinMoin.PageEditor Tests
 
-    @copyright: 2003-2004 by Juergen Hermann <jh@web.de>
+    @copyright: 2003-2004 by Juergen Hermann <jh@web.de>,
+                2007 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
-import unittest # LEGACY UNITTEST, PLEASE DO NOT IMPORT unittest IN NEW TESTS, PLEASE CONSULT THE py.test DOCS
-
 import py
 
+from MoinMoin import wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin._tests.common import gain_superuser_rights
 
-class TestExpandVars(unittest.TestCase):
+class TestExpandVars(object):
     """PageEditor: testing page editor"""
-
     pagename = u'AutoCreatedMoinMoinTemporaryTestPage'
 
     _tests = (
         # Variable,             Expanded
-        ("@PAGE@",              pagename),
-        ("em@PAGE@bedded",      "em%sbedded" % pagename),
-        ("@NOVAR@",             "@NOVAR@"),
+        ("@PAGE@", pagename),
+        ("em@PAGE@bedded", "em%sbedded" % pagename),
+        ("@NOVAR@", "@NOVAR@"),
         ("case@Page@sensitive", "case@Page@sensitive"),
         )
 
-    def setUp(self):
+    def setup_method(self, method):
         self.page = PageEditor(self.request, self.pagename)
 
     def testExpandVariables(self):
         """ PageEditor: expand general variables """
         for var, expected in self._tests:
             result = self.page._expand_variables(var)
-            self.assertEqual(result, expected,
-                'Expected "%(expected)s" but got "%(result)s"' % locals())
+            assert result == expected
 
 
-class TestExpandUserName(unittest.TestCase):
+class TestExpandUserName(object):
     """ Base class for user name tests
 
     Set user name during tests.
@@ -46,12 +44,12 @@ class TestExpandUserName(unittest.TestCase):
     pagename = u'AutoCreatedMoinMoinTemporaryTestPage'
     variable = u'@USERNAME@'
 
-    def setUp(self):
+    def setup_method(self, method):
         self.page = PageEditor(self.request, self.pagename)
         self.savedName = self.request.user.name
         self.request.user.name = self.name
 
-    def tearDown(self):
+    def teardown_method(self, method):
         self.request.user.name = self.savedName
 
     def expand(self):
@@ -64,7 +62,7 @@ class TestExpandCamelCaseName(TestExpandUserName):
 
     def testExpandCamelCaseUserName(self):
         """ PageEditor: expand @USERNAME@ CamelCase """
-        self.assertEqual(self.expand(), self.name)
+        assert self.expand() == self.name
 
 
 class TestExpandExtendedName(TestExpandUserName):
@@ -75,7 +73,7 @@ class TestExpandExtendedName(TestExpandUserName):
         """ PageEditor: expand @USERNAME@ extended name - enabled """
         try:
             config = self.TestConfig()
-            self.assertEqual(self.expand(), u'["%s"]' % self.name)
+            assert self.expand() == u'[[%s]]' % self.name
         finally:
             del config
 
@@ -86,21 +84,21 @@ class TestExpandMailto(TestExpandUserName):
     name = u'user name'
     email = 'user@example.com'
 
-    def setUp(self):
-        TestExpandUserName.setUp(self)
+    def setup_method(self, method):
+        super(TestExpandMailto, self).setup_method(method)
         self.savedValid = self.request.user.valid
         self.request.user.valid = 1
         self.savedEmail = self.request.user.email
         self.request.user.email = self.email
 
-    def tearDown(self):
-        TestExpandUserName.tearDown(self)
+    def teardown_method(self, method):
+        super(TestExpandMailto, self).teardown_method(method)
         self.request.user.valid = self.savedValid
         self.request.user.email = self.savedEmail
 
     def testMailto(self):
         """ PageEditor: expand @MAILTO@ """
-        self.assertEqual(self.expand(), u'[[MailTo(%s)]]' % self.email)
+        assert self.expand() == u'<<MailTo(%s)>>' % self.email
 
 
 class TestExpandPrivateVariables(TestExpandUserName):
@@ -109,20 +107,20 @@ class TestExpandPrivateVariables(TestExpandUserName):
     name = u'AutoCreatedMoinMoinTemporaryTestUser'
     dictPage = name + '/MyDict'
 
-    def setUp(self):
-        TestExpandUserName.setUp(self)
+    def setup_method(self, method):
+        super(TestExpandPrivateVariables, self).setup_method(method)
         self.savedValid = self.request.user.valid
         self.request.user.valid = 1
         self.createTestPage()
 
-    def tearDown(self):
-        TestExpandUserName.tearDown(self)
+    def teardown_method(self, method):
+        super(TestExpandPrivateVariables, self).teardown_method(method)
         self.request.user.valid = self.savedValid
         self.deleteTestPage()
 
     def testPrivateVariables(self):
         """ PageEditor: expand user variables """
-        self.assertEqual(self.expand(), self.name)
+        assert self.expand() == self.name
 
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
@@ -138,7 +136,7 @@ class TestExpandPrivateVariables(TestExpandUserName):
         self.request.cfg.page_backend.remove_item(self.name)
 
 
-class TestSave:
+class TestSave(object):
 
     def setup_method(self, method):
         self.old_handlers = self.request.cfg.event_handlers
@@ -172,4 +170,22 @@ class TestSave:
         assert page.body != testtext
 
 
+class TestPageDeletion:
+
+    def testCreateAndDeletePage(self):
+        """
+        simple test if it is possible to delete a page after creation
+        """
+        pagename = u'SomeDict'
+        page = PageEditor(self.request, pagename, do_editor_backup=0)
+        body = u"This is an example text"
+        page.saveText(body, 0)
+
+        success_i, result = page.deletePage()
+
+        expected = u'Page "SomeDict" was successfully deleted!'
+
+        assert result == expected
+
 coverage_modules = ['MoinMoin.PageEditor']
+

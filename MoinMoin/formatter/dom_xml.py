@@ -203,7 +203,7 @@ class Formatter(FormatterBase):
         kw['pagename'] = pagename
         return self._set_tag('interwiki', on, **kw)
 
-    def macro(self, macro_obj, name, args):
+    def macro(self, macro_obj, name, args, markup=None):
         # call the macro
         return self._add_tag('macro', name=name, args=(args or ''))
 
@@ -356,6 +356,12 @@ class Formatter(FormatterBase):
         if src:
             kw['src'] = src
         return self._add_tag('img', **kw)
+
+    def transclusion(self, on, **kw):
+        return self._set_tag('object', on, **kw)
+
+    def transclusion_param(self, **kw):
+        return self._add_tag('param', **kw)
 
     def escapedText(self, text, **kw):
         return wikiutil.escape(text)

@@ -183,7 +183,7 @@ Please review the page and save then. Do not save this page as it is!""")
                     loadable_draft = True
                     page_rev = rev
                     draft_timestamp_str = request.user.getFormattedDateTime(draft_timestamp)
-                    draft_message = _(u"'''[[BR]]Your draft based on revision %(draft_rev)d (saved %(draft_timestamp_str)s) can be loaded instead of the current revision %(page_rev)d by using the load draft button - in case you lost your last edit somehow without saving it.''' A draft gets saved for you when you do a preview, cancel an edit or unsuccessfully save.") % locals()
+                    draft_message = _(u"'''<<BR>>Your draft based on revision %(draft_rev)d (saved %(draft_timestamp_str)s) can be loaded instead of the current revision %(page_rev)d by using the load draft button - in case you lost your last edit somehow without saving it.''' A draft gets saved for you when you do a preview, cancel an edit or unsuccessfully save.") % locals()
 
         # Setup status message
         status = [kw.get('msg', ''), conflict_msg, edit_lock_message, draft_message]
@@ -329,7 +329,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 """)
         request.write("<p>")
         request.write(_("Comment:"),
-            ' <input id="editor-comment" type="text" name="comment" value="%s" maxlength="200">' % (
+            ' <input id="editor-comment" type="text" name="comment" value="%s" size="80" maxlength="200">' % (
                 wikiutil.escape(kw.get('comment', ''), 1), ))
         request.write("</p>")
 

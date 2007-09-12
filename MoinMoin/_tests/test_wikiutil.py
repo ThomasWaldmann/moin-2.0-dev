@@ -66,37 +66,16 @@ class TestCleanInput:
             assert wikiutil.clean_input(instr) == outstr
 
 
-class TestNameQuoting:
-    tests = [(u"", u'""'), # empty
-             (u"test", u'"test"'), # nothing special
-             (u"Sarah O'Connor", u"\"Sarah O'Connor\""),
-             (u'Just "something" quoted', u'"Just ""something"" quoted"'),
-            ]
-    def testQuoteName(self):
-        for name, qname in self.tests:
-            assert wikiutil.quoteName(name) == qname
-
-    def testUnquoteName(self):
-        for name, qname in self.tests:
-            assert wikiutil.unquoteName(qname) == name
-
-
 class TestInterWiki:
     def testSplitWiki(self):
-        tests = [('SomePage', ('Self', 'SomePage', '')),
-                 ('OtherWiki:OtherPage', ('OtherWiki', 'OtherPage', '')),
-                 ('MoinMoin:"Page with blanks" link title', ("MoinMoin", "Page with blanks", "link title")),
-                 ('MoinMoin:"Page with blanks"link title', ("MoinMoin", "Page with blanks", "link title")),
-                 ('MoinMoin:"Page with blanks"', ("MoinMoin", "Page with blanks", "")),
-                 ('MoinMoin:"Page with ""quote""" link title', ("MoinMoin", 'Page with "quote"', "link title")),
-                 ('MoinMoin:"Page with """"double-quote"""link title', ("MoinMoin", 'Page with ""double-quote"', "link title")),
-                 ('MoinMoin:"""starts with quote"link title', ("MoinMoin", '"starts with quote', "link title")),
-                 ('MoinMoin:"ends with quote"""link title', ("MoinMoin", 'ends with quote"', "link title")),
-                 ('MoinMoin:"""page with quotes around"""link title', ("MoinMoin", '"page with quotes around"', "link title")),
-                 ('attachment:"filename with blanks.txt" other title', ("attachment", "filename with blanks.txt", "other title")),
+        tests = [('SomePage', ('Self', 'SomePage')),
+                 ('OtherWiki:OtherPage', ('OtherWiki', 'OtherPage')),
+                 (':OtherPage', ('', 'OtherPage')),
+                 # broken ('/OtherPage', ('Self', '/OtherPage')),
+                 # wrong interpretation ('MainPage/OtherPage', ('Self', 'MainPage/OtherPage')),
                 ]
-        for markup, (wikiname, pagename, linktext) in tests:
-            assert wikiutil.split_wiki(markup) == (wikiname, pagename, linktext)
+        for markup, (wikiname, pagename) in tests:
+            assert wikiutil.split_wiki(markup) == (wikiname, pagename)
 
     def testJoinWiki(self):
         tests = [(('http://example.org/', u'SomePage'), 'http://example.org/SomePage'),
@@ -732,5 +711,54 @@ class TestAnchorNames:
     def _check(self, text, expected):
         encoded = wikiutil.anchor_name_from_text(text)
         assert expected == encoded
+
+class TestPageLinkMarkup:
+    def test_pagelinkmarkup(self):
+        tests = [
+            # pagename (no link text), expected markup
+            (('SomePage', ), 'SomePage'),
+            (('Somepage', ), '[[Somepage]]'),
+            (('somepage', ), '[[somepage]]'),
+            (('Some Page', ), '[[Some Page]]'),
+            # with link text
+            (('SomePage', 'SomePage'), 'SomePage'),
+            (('SomePage', 'some page'), '[[SomePage|some page]]'),
+            (('Some Page', 'Some Page'), '[[Some Page]]'),
+            (('Some Page', 'some Page'), '[[Some Page|some Page]]'),
+        ]
+        for params, expected in tests:
+            yield self._check, params, expected
+
+    def _check(self, params, expected):
+        assert expected == wikiutil.pagelinkmarkup(*params)
+
+class TestRelativeTools:
+    tests = [
+        # test                      expected output
+        # CHILD_PREFIX
+        (('MainPage', '/SubPage1'), 'MainPage/SubPage1'),
+        (('MainPage', '/SubPage1/SubPage2'), 'MainPage/SubPage1/SubPage2'),
+        (('MainPage/SubPage1', '/SubPage2/SubPage3'), 'MainPage/SubPage1/SubPage2/SubPage3'),
+        (('', '/OtherMainPage'), 'OtherMainPage'), # strange
+        # PARENT_PREFIX
+        (('MainPage/SubPage', '../SisterPage'), 'MainPage/SisterPage'),
+        (('MainPage/SubPage1/SubPage2', '../SisterPage'), 'MainPage/SubPage1/SisterPage'),
+        (('MainPage/SubPage1/SubPage2', '../../SisterPage'), 'MainPage/SisterPage'),
+        (('MainPage', '../SisterPage'), 'SisterPage'), # strange
+    ]
+    def test_abs_pagename(self):
+        for (current_page, relative_page), absolute_page in self.tests:
+            yield self._check_abs_pagename, current_page, relative_page, absolute_page
+
+    def _check_abs_pagename(self, current_page, relative_page, absolute_page):
+        assert absolute_page == wikiutil.AbsPageName(current_page, relative_page)
+
+    def test_rel_pagename(self):
+        for (current_page, relative_page), absolute_page in self.tests:
+            yield self._check_rel_pagename, current_page, absolute_page, relative_page
+
+    def _check_rel_pagename(self, current_page, absolute_page, relative_page):
+        assert relative_page == wikiutil.RelPageName(current_page, absolute_page)
+
 
 coverage_modules = ['MoinMoin.wikiutil']
