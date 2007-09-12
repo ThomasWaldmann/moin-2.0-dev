@@ -115,9 +115,11 @@ class UserBackend(AbstractBackend):
         """
         return UserMetadata(self, name, revno)
 
-    def _get_rev_path(self, name, revno):
+    def _get_rev_path(self, name, revno, kind):
         """
         Returns the path to a specified revision.
+
+        1.6 has only a single file (single rev) for a user.
         """
         return self._get_item_path(name)
 
@@ -261,7 +263,7 @@ class PageBackend(AbstractBackend):
         def get_latest_not_empty(rev):
             if rev == 0:
                 return rev
-            filename = self._get_rev_path(name, rev)
+            filename = self._get_rev_path(name, rev, 'data')
             if os.path.isfile(filename) and os.path.getsize(filename) == 0L:
                 return get_latest_not_empty(rev - 1)
             return rev
@@ -281,14 +283,14 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.create_revisions
         """
-        _create_file(self._get_rev_path(name, revno))
+        _create_file(self._get_rev_path(name, revno, 'data'))
         self._update_current(name)
 
     def remove_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.remove_revisions
         """
-        os.remove(self._get_rev_path(name, revno))
+        os.remove(self._get_rev_path(name, revno, 'data'))
         self._update_current(name)
 
     def _update_current(self, name, revno=0):
@@ -312,7 +314,7 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
         """
-        if revno == -1 or not os.path.exists(self._get_rev_path(name, revno)):
+        if revno == -1 or not os.path.exists(self._get_rev_path(name, revno, 'data')):
             return DeletedPageData(self, name, revno)
         else:
             return PageData(self, name, revno)
@@ -321,14 +323,16 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
         """
-        if revno != -1 and not os.path.exists(self._get_rev_path(name, revno)):
+        if revno != -1 and not os.path.exists(self._get_rev_path(name, revno, 'meta')): # gives same result as 'data'
             return DeletedPageMetadata(self, name, revno)
         else:
             return PageMetadata(self, name, revno)
 
-    def _get_rev_path(self, name, revno):
+    def _get_rev_path(self, name, revno, kind):
         """
         Returns the path to a specified revision.
+
+        1.6 uses same file for 'meta' and 'data' kind.
         """
         return self._get_item_path(name, "revisions", _get_rev_string(revno))
 
@@ -374,7 +378,7 @@ class PageMetadata(AbstractMetadata):
 
         else:
 
-            data_file = codecs.open(self._backend._get_rev_path(name, revno), "r", config.charset)
+            data_file = codecs.open(self._backend._get_rev_path(name, revno, 'meta'), "r", config.charset)
             data = data_file.read()
             data_file.close()
 
@@ -382,7 +386,7 @@ class PageMetadata(AbstractMetadata):
 
             # emulated size
             try:
-                metadata[SIZE] = str(os.path.getsize(self._backend._get_rev_path(name, revno)))
+                metadata[SIZE] = str(os.path.getsize(self._backend._get_rev_path(name, revno, 'data')))
             except OSError:
                 pass
 
@@ -431,7 +435,7 @@ class PageMetadata(AbstractMetadata):
         else:
 
             tmp_handle, tmp_name = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
-            read_filename = self._backend._get_rev_path(name, revno)
+            read_filename = self._backend._get_rev_path(name, revno, 'data')
 
             data = codecs.open(read_filename, "r", config.charset)
             old_metadata, new_data = wikiutil.split_body(data.read())
@@ -475,9 +479,9 @@ class PageMetadata(AbstractMetadata):
                 edit_log.close()
 
             # emulate deleted
-            exists = os.path.exists(self._backend._get_rev_path(name, revno))
+            exists = os.path.exists(self._backend._get_rev_path(name, revno, 'data'))
             if DELETED in metadata and metadata[DELETED] and exists:
-                os.remove(self._backend._get_rev_path(name, revno))
+                os.remove(self._backend._get_rev_path(name, revno, 'data'))
 
 
 class DeletedPageMetadata(AbstractMetadata):
