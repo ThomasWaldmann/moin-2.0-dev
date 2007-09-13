@@ -177,6 +177,8 @@ class ItemBackend(AbstractBackend):
 
     def _get_rev_path(self, name, revno, kind):
         """
+        @see MoinMoin.storage.backends.filesystem.AbstractBackend._get_rev_path
+        
         Returns the path to a specified revision of kind 'meta' or 'data'.
         """
         return self._get_item_path(name, "%s.revisions" % kind, _get_rev_string(revno))
