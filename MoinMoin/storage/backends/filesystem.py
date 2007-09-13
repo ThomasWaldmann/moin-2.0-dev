@@ -53,7 +53,7 @@ class AbstractBackend(object):
 
     def _filter_items(self, items, filters=None):
         """
-        @see MoinMoin.interfaces.StorageBackend._filter_items
+        Filter the given items with the given filters by searching the metadata.
         """
         if self._quoted:
             items = [wikiutil.unquoteWikiname(f) for f in items]
@@ -131,50 +131,50 @@ class AbstractMetadata(UserDict.DictMixin):
 
     def __contains__(self, key):
         """
-        @see MoinMoin.storage.external.Metadata.__contains__
+        @see MoinMoin.storage.interfaces.MetadataBackend.__contains__
         """
         return key in self._metadata
 
     def __getitem__(self, key):
         """
-        @see MoinMoin.storage.external.Metadata.__getitem__
+        @see MoinMoin.storage.interfaces.MetadataBackend.__getitem__
         """
         return self._metadata[key]
 
     def __setitem__(self, key, value):
         """
-        @see MoinMoin.storage.external.Metadata.__setitem__
+        @see MoinMoin.storage.interfaces.MetadataBackend.__setitem__
         """
         self._metadata[key] = value
 
     def __delitem__(self, key):
         """
-        @see MoinMoin.storage.external.Metadata.__delitem__
+        @see MoinMoin.storage.interfaces.MetadataBackend.__delitem__
         """
         del self._metadata[key]
 
     def keys(self):
         """
-        @see MoinMoin.storage.external.Metadata.keys
+        @see MoinMoin.storage.interfaces.MetadataBackend.keys
         """
         return self._metadata.keys()
 
     def save(self):
         """
-        @see MoinMoin.storage.external.Metadata.save
+        @see MoinMoin.storage.interfaces.MetadataBackend.save
         """
         self._save_metadata(self._name, self._revno, self._metadata)
         self._metadata_property = None
 
     def _parse_metadata(self, name, revno):
         """
-        @see MoinMoin.fs_moin16.AbstractBackend._parse_metadata
+        @see MoinMoin.storage.interfaces.MetadataBackend._parse_metadata
         """
         raise NotImplementedError
 
     def _save_metadata(self, name, revno, metadata):
         """
-        @see MoinMoin.fs_moin16.AbstractBackend._save_metadata
+        @see MoinMoin.storage.interfaces.MetadataBackend._save_metadata
         """
         raise NotImplementedError
 
@@ -192,7 +192,7 @@ class AbstractMetadata(UserDict.DictMixin):
 
 class AbstractData(object):
     """
-    This class implements a read only, file like object.
+    This class implements a file like object.
     """
 
     __implements__ = DataBackend
@@ -212,7 +212,7 @@ class AbstractData(object):
 
     def _get_read_file(self):
         """
-        Lazy load read_file.
+        Lazy load read file.
         """
         if self._read_property is None:
             self._read_property = file(self._read_file_name, "rb")
@@ -298,7 +298,7 @@ class IndexedBackend(object):
 
     def list_items(self, filters=None):
         """
-        @see MoinMoin.interfaces.StorageBackend._filter_items
+        @see MoinMoin.interfaces.StorageBackend.list_items
         """
         if filters:
             index_filters = dict([(key, value) for key, value in filters.iteritems() if key in self._indexes])
@@ -539,7 +539,7 @@ class IndexedMetadata(UserDict.DictMixin):
 
     def save(self):
         """
-        @see MoinMoin.storage.external.Metadata.save
+        @see MoinMoin.storage.interfaces.MetadataBackend.save
         """
         if self._revno != -1:
             self._backend._update_news(self._item, self._revno)

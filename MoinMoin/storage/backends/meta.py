@@ -79,7 +79,7 @@ class NamespaceBackend(MetaBackend):
 
     def news(self, timestamp=0):
         """
-        @see MoinMoin.storage.interfaces.StorageBackend.list_items
+        @see MoinMoin.storage.interfaces.StorageBackend.news
         """
         items = set()
         for namespace, backend in self.backends.iteritems():
@@ -131,7 +131,7 @@ class LayerBackend(MetaBackend):
 
     def news(self, timestamp=0):
         """
-        @see MoinMoin.storage.interfaces.StorageBackend.list_items
+        @see MoinMoin.storage.interfaces.StorageBackend.news
         """
         items = set()
         for backend in self.backends:

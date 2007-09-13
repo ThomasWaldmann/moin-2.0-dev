@@ -117,7 +117,7 @@ class UserBackend(AbstractBackend):
 
     def _get_rev_path(self, name, revno, kind):
         """
-        Returns the path to a specified revision.
+        @see MoinMoin.storage.backends.filesystem.AbstractBackend._get_rev_path
 
         1.6 has only a single file (single rev) for a user.
         """
@@ -330,7 +330,7 @@ class PageBackend(AbstractBackend):
 
     def _get_rev_path(self, name, revno, kind):
         """
-        Returns the path to a specified revision.
+        @see MoinMoin.storage.backends.filesystem.AbstractBackend._get_rev_path
 
         1.6 uses same file for 'meta' and 'data' kind.
         """

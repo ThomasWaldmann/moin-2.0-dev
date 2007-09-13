@@ -545,7 +545,7 @@ class WriteonlyMetadata(UserDict.DictMixin):
 
 class ReadonlyData(object):
     """
-    This class implements read only access to the DataBackend.
+    This class implements readonly access to the DataBackend.
     """
 
     __implements__ = DataBackend
@@ -559,7 +559,7 @@ class ReadonlyData(object):
 
 class WriteonlyData(object):
     """
-    This class implements write only access to the DataBackend.
+    This class implements writeonly access to the DataBackend.
     """
 
     __implements__ = DataBackend
