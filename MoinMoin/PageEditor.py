@@ -843,7 +843,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
                 newrev = self._item.new_revision()
             else:
                 newrev = self._rev
-        cltfn = os.path.join(pagedir, 'current-locked.tmp')
 
         if not deleted:
             metadata, data = wikiutil.split_body(text)

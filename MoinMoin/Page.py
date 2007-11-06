@@ -313,7 +313,7 @@ class Page(object):
             except OSError, err:
                 if not os.path.exists(dirname):
                     raise err
-        return underlay, fullpath
+        return fullpath
 
     def _text_filename(self, **kw):
         """
