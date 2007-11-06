@@ -8,8 +8,7 @@
 """
 import re, time
 
-from MoinMoin import caching, wikiutil, Page, logfile
-from MoinMoin.logfile.editlog import EditLog
+from MoinMoin import caching, Page
 
 
 # Version of the internal data structure which is pickled.

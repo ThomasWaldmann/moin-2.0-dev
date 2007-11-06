@@ -6,13 +6,13 @@
 
     @license: GNU GPL, see COPYING for details.
 """
+
 import os
+
 from MoinMoin import macro, wikiutil
 from MoinMoin.action.AttachFile import add_attachment
-from MoinMoin.logfile import eventlog
-from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
-from MoinMoin.parser.text_moin_wiki import Parser
+from MoinMoin.parser.text import Parser
 
 class TestImageLink:
     """ImageLink: testing ImageLink macro """
@@ -20,23 +20,15 @@ class TestImageLink:
     def setup_class(self):
         self.pagename = u'AutoCreatedMoinMoinTemporaryTestPageForImageLink'
         self.page = PageEditor(self.request, self.pagename)
-        self.shouldDeleteTestPage = False
+        fpath = os.path.join(self.request.cfg.data_dir, 'event-log')
+        if os.path.exists(fpath):
+            os.remove(fpath)
 
     def teardown_class(self):
-        if self.shouldDeleteTestPage:
-            import shutil
-            page = PageEditor(self.request, self.pagename)
-            page.deletePage()
-            fpath = page.getPagePath(use_underlay=0, check_create=0)
-            shutil.rmtree(fpath, True)
-
-            fpath = self.request.rootpage.getPagePath('event-log', isfile=1)
-            if os.path.exists(fpath):
-                os.remove(fpath)
+        self.request.cfg.page_backend.remove_item(self.pagename)
 
     def _make_macro(self):
         """Test helper"""
-        from MoinMoin.parser.text import Parser
         from MoinMoin.formatter.text_html import Formatter
         p = Parser("##\n", self.request)
         p.formatter = Formatter(self.request)

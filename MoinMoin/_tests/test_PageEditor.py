@@ -106,14 +106,12 @@ class TestExpandPrivateVariables(TestExpandUserName):
     variable = u'@ME@'
     name = u'AutoCreatedMoinMoinTemporaryTestUser'
     dictPage = name + '/MyDict'
-    shouldDeleteTestPage = True
 
     def setup_method(self, method):
         super(TestExpandPrivateVariables, self).setup_method(method)
         self.savedValid = self.request.user.valid
         self.request.user.valid = 1
         self.createTestPage()
-        self.deleteCaches()
 
     def teardown_method(self, method):
         super(TestExpandPrivateVariables, self).teardown_method(method)
@@ -126,46 +124,16 @@ class TestExpandPrivateVariables(TestExpandUserName):
 
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
-
-        TODO: this code is very fragile, any change in the
-        implementation will break this test. Need to factor PageEditor
-        to make it possible to create page without loging and notifying.
         """
-        import os
-        path = self.dictPagePath()
-        if os.path.exists(path):
-            self.shouldDeleteTestPage = False
-            py.test.skip("%s exists. Won't overwrite exiting page" % self.dictPage)
-        try:
-            os.mkdir(path)
-            revisionsDir = os.path.join(path, 'revisions')
-            os.mkdir(revisionsDir)
-            current = '00000001'
-            file(os.path.join(path, 'current'), 'w').write('%s\n' % current)
-            text = u' ME:: %s\n' % self.name
-            file(os.path.join(revisionsDir, current), 'w').write(text)
-        except Exception, err:
-            py.test.skip("Can not be create test page: %s" % err)
-
-    def deleteCaches(self):
-        """ Force the wiki to scan the test page into the dicts """
-        from MoinMoin import caching
-        caching.CacheEntry(self.request, 'wikidicts', 'dicts_groups', scope='wiki').remove()
-        if hasattr(self.request, 'dicts'):
-            del self.request.dicts
-        if hasattr(self.request.cfg, 'DICTS_DATA'):
-            del self.request.cfg.DICTS_DATA
-        self.request.pages = {}
+        self.request.cfg.page_backend.create_item(self.name)
+        self.request.cfg.page_backend.create_revision(self.name, 1)
+        data = self.request.cfg.page_backend.get_data_backend(self.name, 1)
+        data.write(u' ME:: %s\n' % self.name)
+        data.close()
 
     def deleteTestPage(self):
         """ Delete temporary page, bypass logs and notifications """
-        if self.shouldDeleteTestPage:
-            import shutil
-            shutil.rmtree(self.dictPagePath(), True)
-
-    def dictPagePath(self):
-        page = Page(self.request, self.dictPage)
-        return page.getPagePath(use_underlay=0, check_create=0)
+        self.request.cfg.page_backend.remove_item(self.name)
 
 
 class TestSave(object):

@@ -16,3 +16,4 @@ if not hasattr(logging, 'log'):
         if level >= logging.root.getEffectiveLevel():
             logging.root._log(level, msg, args, **kwargs)
     logging.log = log
+

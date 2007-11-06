@@ -56,11 +56,6 @@ class TestLoginWithPassword(object):
         """
         # Remove user file and user
         if self.user is not None:
-            try:
-                path = self.user._User__filename()
-                os.remove(path)
-            except OSError:
-                pass
             del self.user
 
         # Restore original user
@@ -109,7 +104,7 @@ class TestLoginWithPassword(object):
         # Create test user
         # Use iso charset to create user with old enc_password, as if
         # the user file was migrated from pre 1.3 wiki.
-        name = u'__Jürgen Herman__'
+        name = u'__JÃ¼rgen Herman__'
         password = name
         self.createUser(name, password, charset='iso-8859-1')
 
@@ -126,7 +121,7 @@ class TestLoginWithPassword(object):
         # Create test user
         # Use iso charset to create user with old enc_password, as if
         # the user file was migrated from pre 1.3 wiki.
-        name = u'__Jürgen Herman__'
+        name = u'__JÃ¼rgen Herman__'
         password = name
         self.createUser(name, password, charset='iso-8859-1')
         # Login - this should replace the old password in the user file
@@ -139,7 +134,7 @@ class TestLoginWithPassword(object):
     def testSubscriptionSubscribedPage(self):
         """ user: tests isSubscribedTo  """
         pagename = u'HelpMiscellaneous'
-        name = u'__Jürgen Herman__'
+        name = u'__JÃ¼rgen Herman__'
         password = name
         self.createUser(name, password, charset='iso-8859-1')
         # Login - this should replace the old password in the user file

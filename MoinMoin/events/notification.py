@@ -89,7 +89,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
         'You have subscribed to a wiki page or wiki category on "%(sitename)s" for change notification.\n\n'
         'The "%(pagename)s" page has been changed by %(editor)s:\n\n', formatted=False) % {
             'pagename': page.page_name,
-            'editor': page.uid_override or user.getUserIdentification(request),
+            'editor': page.last_editor(),
             'sitename': page.cfg.sitename or request.getBaseURL(),
         }
 
@@ -109,7 +109,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
             'You have subscribed to a wiki page "%(sitename)s" for change notification.\n\n'
             'The page "%(pagename)s" has been deleted by %(editor)s:\n\n', formatted=False) % {
                 'pagename': page.page_name,
-                'editor': page.uid_override or user.getUserIdentification(request),
+                'editor': page.last_editor(),
                 'sitename': page.cfg.sitename or request.getBaseURL(),
         }
 
@@ -118,7 +118,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
             'You have subscribed to a wiki page "%(sitename)s" for change notification.\n\n'
             'The page "%(pagename)s" has been renamed from "%(oldname)s" by %(editor)s:\n',
             formatted=False) % {
-                'editor': page.uid_override or user.getUserIdentification(request),
+                'editor': page.last_editor(),
                 'pagename': page.page_name,
                 'sitename': page.cfg.sitename or request.getBaseURL(),
                 'oldname': kwargs['old_name']

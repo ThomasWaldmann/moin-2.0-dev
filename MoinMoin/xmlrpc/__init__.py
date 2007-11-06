@@ -329,10 +329,10 @@ class XmlRpcBase:
 
         return_items = []
 
-        edit_log = editlog.EditLog(self.request)
-        for log in edit_log.reverse():
+        glog = editlog.GlobalEditLog(self.request)
+        for log in glog:
             # get last-modified UTC (DateTime) from log
-            gmtuple = tuple(time.gmtime(wikiutil.version2timestamp(log.ed_time_usecs)))
+            gmtuple = tuple(time.gmtime(log.mtime))
             lastModified_date = xmlrpclib.DateTime(gmtuple)
 
             # skip if older than "date"
@@ -396,8 +396,8 @@ class XmlRpcBase:
             return self.noSuchPageFault()
 
         # Get page info
-        last_edit = page.last_edit(self.request)
-        mtime = wikiutil.version2timestamp(long(last_edit['timestamp'])) # must be long for py 2.2.x
+        last_edit = page.last_edit()
+        mtime = last_edit['timestamp']
         gmtuple = tuple(time.gmtime(mtime))
 
         version = rev # our new rev numbers: 1,2,3,4,....

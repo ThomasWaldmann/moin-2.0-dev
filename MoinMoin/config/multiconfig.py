@@ -21,6 +21,11 @@ from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
 from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
+#from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
+from MoinMoin.storage.backends.moin16 import              PageBackend
+from MoinMoin.storage.backends.moin17 import UserBackend, ItemBackend
+from MoinMoin.storage.backends.meta import LayerBackend
+from MoinMoin.storage.external import DELETED
 from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
@@ -666,10 +671,6 @@ reStructuredText Quick Reference
         self.siteid = siteid
         self.cache = CacheClass()
 
-        from MoinMoin.Page import ItemCache
-        self.cache.meta = ItemCache('meta')
-        self.cache.pagelists = ItemCache('pagelists')
-
         if self.config_check_enabled:
             self._config_check()
 
@@ -677,7 +678,7 @@ reStructuredText Quick Reference
         self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ('user', 'cache', 'plugin'):
+        for dirname in ('user', 'cache', 'plugin', 'tmp', 'indexes'):
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
@@ -772,6 +773,15 @@ reStructuredText Quick Reference
 
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
+
+
+        # storage configuration
+        self.indexes = ["name", "openids", "jid", "email", DELETED]
+        self.user_backend = UserBackend("user", self.user_dir, self)
+        #self.page_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
+        self.page_backend = ItemBackend("pages", os.path.join(self.data_dir, "items"), self)
+        self.underlay_backend = PageBackend("underlay", os.path.join(self.data_underlay_dir, "pages"), self)
+        self.data_backend = LayerBackend([self.page_backend, self.underlay_backend])
 
 
     def load_meta_dict(self):
