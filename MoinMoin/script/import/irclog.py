@@ -66,8 +66,7 @@ class PluginScript(MoinScript):
             files.sort()
             for filename in files:
                 pagename = self.options.page + filename_function(filename)
-                #print "Pushing %r as %r" % (filename, pagename)
-                p = PageEditor(request, pagename, do_editor_backup=0, uid_override=self.options.author, do_revision_backup=0)
+                p = PageEditor(request, pagename, do_editor_backup=0, do_revision_backup=0, uid_override=self.options.author)
                 if p.exists():
                     if filename != files[-1]:
                         continue

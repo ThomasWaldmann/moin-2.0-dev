@@ -10,7 +10,7 @@
 
 import xmlrpclib
 
-from MoinMoin import error
+
 from MoinMoin.Page import Page
 from MoinMoin.user import User, getUserList
 from MoinMoin.support.python_compatibility import set

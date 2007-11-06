@@ -66,7 +66,6 @@ class SyncPage(object):
         self.remote_deleted = remote_deleted
         self.local_mime_type = MIMETYPE_MOIN   # XXX no usable storage API yet
         self.remote_mime_type = MIMETYPE_MOIN
-        assert remote_rev != 99999999
 
     def __repr__(self):
         return repr("<Sync Page %r>" % unicode(self))
@@ -145,7 +144,7 @@ class RemoteWiki(object):
         return NotImplemented
 
     def get_interwiki_name(self):
-        """ Returns the interwiki name of the other wiki. """
+        """ Returns the interwiki name of the _other wiki. """
         return NotImplemented
 
     def get_iwid(self):
@@ -292,10 +291,9 @@ class MoinRemoteWiki(RemoteWiki):
             normalised_name = normalise_pagename(name, self.prefix)
             if normalised_name is None:
                 continue
-            if abs(revno) != 99999999: # I love sane in-band signalling
-                remote_rev = abs(revno)
-                remote_deleted = revno < 0
-                rpages.append(SyncPage(normalised_name, remote_rev=remote_rev, remote_name=name, remote_deleted=remote_deleted))
+            remote_rev = abs(revno)
+            remote_deleted = revno < 0
+            rpages.append(SyncPage(normalised_name, remote_rev=remote_rev, remote_name=name, remote_deleted=remote_deleted))
         return rpages
 
     def __repr__(self):
@@ -324,9 +322,9 @@ class MoinLocalWiki(RemoteWiki):
         if not self.request.user.may.write(normalised_name):
             return None
         page = Page(self.request, page_name)
-        revno = page.get_real_rev()
-        if revno == 99999999: # I love sane in-band signalling
+        if not page.exists(includeDeleted=True):
             return None
+        revno = page.get_real_rev()
         return SyncPage(normalised_name, local_rev=revno, local_name=page_name, local_deleted=not page.exists())
 
     # Public methods:
@@ -398,7 +396,7 @@ class Tag(object):
     def __cmp__(self, other):
         if not isinstance(other, Tag):
             return NotImplemented
-        return cmp(self.current_rev, other.current_rev)
+        return cmp(self.current_rev, _other.current_rev)
 
 
 class AbstractTagStore(object):

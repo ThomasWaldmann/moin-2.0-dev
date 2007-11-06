@@ -12,15 +12,14 @@
 
 import time
 
-from MoinMoin import wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.util import timefuncs
 from MoinMoin.logfile import editlog
 
 def execute(pagename, request):
-    log = editlog.EditLog(request)
+    glog = editlog.GlobalEditLog(request)
     try:
-        lastmod = wikiutil.version2timestamp(log.date())
+        lastmod = glog.date()
     except:
         lastmod = 0
 
