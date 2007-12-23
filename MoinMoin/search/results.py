@@ -295,7 +295,7 @@ class SearchResults:
         return ''.join(output)
 
     def pageList(self, request, formatter, info=0, numbered=1,
-            paging=True, hitsFrom=0):
+            paging=True, hitsFrom=0, hitsInfo=0):
         """ Format a list of found pages
 
         @param request: current request
@@ -304,6 +304,7 @@ class SearchResults:
         @param numbered: use numbered list for display
         @param paging: toggle paging
         @param hitsFrom: current position in the hits
+        @param hitsInfo: toggle hits info line
         @rtype: unicode
         @return formatted page list
         """
@@ -346,13 +347,18 @@ class SearchResults:
                 matchInfo = ''
                 if info:
                     matchInfo = self.formatInfo(f, page)
+
+                info_for_hits = u''
+                if hitsInfo:
+                    info_for_hits = self.formatHitInfoBar(page)
+
                 item = [
                     f.listitem(1),
                     f.pagelink(1, page.page_name, querystr=querystr),
                     self.formatTitle(page),
                     f.pagelink(0, page.page_name),
                     matchInfo,
-                    self.formatHitInfoBar(page),
+                    info_for_hits,
                     f.listitem(0),
                     ]
                 write(''.join(item))
@@ -365,7 +371,7 @@ class SearchResults:
         return self.getvalue()
 
     def pageListWithContext(self, request, formatter, info=1, context=180,
-                            maxlines=1, paging=True, hitsFrom=0):
+                            maxlines=1, paging=True, hitsFrom=0, hitsInfo=0):
         """ Format a list of found pages with context
 
         The default parameter values will create Google-like search
@@ -380,6 +386,7 @@ class SearchResults:
         @param maxlines: how many contexts lines to show.
         @param paging: toggle paging
         @param hitsFrom: current position in the hits
+        @param hitsInfo: toggle hits info line
         @rtype: unicode
         @return formatted page list with context
         """
