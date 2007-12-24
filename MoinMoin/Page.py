@@ -85,7 +85,7 @@ class Page(object):
 
         self.reset()
 
-    def reset(self):
+    def reset(self, depth=0):
         """
         Reset page state.
         """
@@ -100,6 +100,12 @@ class Page(object):
         self._pi = None
 
         self._body_modified = 0
+        
+        if depth == 0:
+            try:
+                self.request.page.reset(1)
+            except AttributeError:
+                pass
 
     def lazy_load(self):
         """

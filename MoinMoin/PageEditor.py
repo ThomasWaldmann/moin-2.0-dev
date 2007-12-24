@@ -850,6 +850,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             for key, value in metadata.iteritems():
                 newrev.metadata[key] = value
         else:
+            newrev.data.write("")
             newrev.deleted = True
 
         newrev.save(action, extra, comment, self.uid_override)
@@ -861,8 +862,8 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         # add event log entry
         elog = eventlog.EventLog(request)
-        elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, time.time())
-
+        elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, time.time())        
+        
     def saveText(self, newtext, rev, **kw):
         """ Save new text for a page.
 
@@ -962,7 +963,6 @@ Please review the page and save then. Do not save this page as it is!""")
             # write the page file
             self._write_file(newtext, action, comment, extra, deleted=deleted)
             self._save_draft(None, None) # everything fine, kill the draft for this page
-
             if notify:
                 # send notifications
                 from MoinMoin import events

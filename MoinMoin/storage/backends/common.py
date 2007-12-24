@@ -49,7 +49,7 @@ class CommonBackend(object):
             if self._other.has_item(name):
                 raise BackendError(_("Item %r already exists.") % name)
             else:
-                _handle_error(self, err, name, message=_("Failed to create item %r.") % name)
+                _handle_error(self, err, name, None)
 
     def remove_item(self, name):
         """
@@ -75,12 +75,12 @@ class CommonBackend(object):
 
         return self._other.rename_item(name, newname)
 
-    def current_revision(self, name, includeEmpty=False):
+    def current_revision(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
         try:
-            return self._other.current_revision(name, includeEmpty)
+            return self._other.current_revision(name)
         except Exception, err:
             _handle_error(self, err, name)
 
@@ -146,7 +146,7 @@ def _get_metadata(backend, item, revnos):
     metadata = dict()
     for revno in revnos:
         if revno == 0:
-            revno = backend.current_revision(item, includeEmpty=True)
+            revno = backend.current_revision(item)
         if revno != 0:
             metadata_rev = backend.get_metadata_backend(item, revno)
             metadata.update(metadata_rev)

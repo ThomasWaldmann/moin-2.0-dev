@@ -88,4 +88,5 @@ Version 1.7.current:
 	* remove data_dir, data_underlay_dir, user_dir from the configuration
 	* add methods like find oldest item rev newer than <timestamp or find newest page from <editor> to LocalEditLog
     * implement mime/types
+    * implement a new 1.7 storage backend
     

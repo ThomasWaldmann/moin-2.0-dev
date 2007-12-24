@@ -104,17 +104,17 @@ class TestItem(AbstractTest):
         self.item.lock = True
         assert self.item.current == 2
         assert isinstance(self.item.new_revision(), Revision)
-        assert self.item.current == 2
+        assert self.item.current == 3
         assert 3 in self.item
         assert isinstance(self.item.new_revision(4), Revision)
         assert 4 in self.item
-        assert self.item.current == 2
+        assert self.item.current == 4
         self.item.lock = False
 
     def test_del_revision(self):
         self.item.lock = True
         del self.item[4]
-        assert self.item.current == 2
+        assert self.item.current == 3
         del self.item[3]
         assert self.item.current == 2
         assert not 3 in self.item
