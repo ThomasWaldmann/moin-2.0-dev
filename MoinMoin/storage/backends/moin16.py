@@ -27,6 +27,13 @@
 
           To make this really thread safe on windows a better locking mechanism
           or retrying of some operations must be implemented.
+          
+    HOW DELETED WORKS:
+        To be compatible with the 1.6 deleted procedure a few tricks had to be made. 
+        If a page will be deleted a new revision will be created for it. This revision
+        will have no file in the revisions dir or the file will be empty. The current
+        file will list this revision. When parsing such an empty or not-existant revision
+        a DeletedPageData and DeletedPageMetadata file will be created.
 """
 
 import codecs
@@ -34,6 +41,8 @@ import os
 import re
 import shutil
 import tempfile
+
+from MoinMoin.support.python_compatibility import sorted
 
 from MoinMoin import config, wikiutil
 from MoinMoin.storage.backends.common import get_bool
@@ -97,7 +106,7 @@ class UserBackend(AbstractBackend):
         """
         return [1]
 
-    def current_revision(self, name, includeEmpty=False):
+    def current_revision(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
@@ -231,22 +240,16 @@ class PageBackend(AbstractBackend):
         """
         shutil.move(self._get_item_path(name), self._get_item_path(newname))
 
-    def list_revisions(self, name, real=False):
+    def list_revisions(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
         """
-        if real:
-            revs = os.listdir(self._get_item_path(name, "revisions"))
-            revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
-            revs.sort()
-        else:
-            last = self.current_revision(name, includeEmpty=True)
-            revs = range(1, last + 1)
+        revs = os.listdir(self._get_item_path(name, "revisions"))
+        revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
+        
+        return sorted(revs, reverse=True)
 
-        revs.reverse()
-        return revs
-
-    def current_revision(self, name, includeEmpty=False):
+    def current_revision(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
@@ -256,28 +259,13 @@ class PageBackend(AbstractBackend):
 
         rev = int(rev or 0)
 
-        if rev == 0:
-            return rev
-
-        # Don't return revisions which are empty
-        def get_latest_not_empty(rev):
-            if rev == 0:
-                return rev
-            filename = self._get_rev_path(name, rev, 'data')
-            if os.path.isfile(filename) and os.path.getsize(filename) == 0L:
-                return get_latest_not_empty(rev - 1)
-            return rev
-
-        if not includeEmpty:
-            return get_latest_not_empty(rev)
-
         return rev
 
     def has_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_revision
         """
-        return -1 <= revno <= self.current_revision(name, includeEmpty=True)
+        return -1 <= revno <= self.current_revision(name)
 
     def create_revision(self, name, revno):
         """
@@ -293,14 +281,15 @@ class PageBackend(AbstractBackend):
         os.remove(self._get_rev_path(name, revno, 'data'))
         self._update_current(name)
 
-    def _update_current(self, name, revno=0):
+    def _update_current(self, name):
         """
         Update the current file.
         """
-        if revno == 0:
-            revnos = self.list_revisions(name, real=True)
-            if revnos:
-                revno = revnos[0]
+        revnos = self.list_revisions(name)
+        if revnos:
+            revno = revnos[0]
+        else:
+            revno = 0
 
         tmp_handle, tmp_name = tempfile.mkstemp(dir=self._cfg.tmp_dir)
 

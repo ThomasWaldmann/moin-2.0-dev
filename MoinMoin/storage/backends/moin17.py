@@ -2,15 +2,11 @@
     MoinMoin 1.7 storage backend
 
     TODO:
-    * when creating a new page, after the initial SAVE, the wiki still shows MissingPage
-      until you click the hint away
-    * deletion does work on the filesystem, but doesn't show on the UI
-    * get clear about how deletion shall work exactly
     * revision meta data currently only has edit_log* entries
-      * add data size
-      * later: mimetype
-      * maybe sha1 or md5sum
-      * maybe store a pointer to the data file revision into the meta file revision
+        * add data size
+        * later: mimetype
+        * maybe sha1 or md5sum
+        * maybe store a pointer to the data file revision into the meta file revision
     * use YAML for metadata?
 
     @copyright: 2007 MoinMoin:ThomasWaldmann, based on moin16
@@ -20,16 +16,12 @@
 
 import codecs
 import os
-import re
 import shutil
 import tempfile
 
 from MoinMoin import config
-from MoinMoin.storage.backends.common import get_bool
 from MoinMoin.storage.backends.filesystem import AbstractBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file
-from MoinMoin.storage.external import DELETED
-
-from MoinMoin.storage.backends.moin16 import user_re, UserBackend, UserMetadata # new implementation for those later
+from MoinMoin.storage.backends.moin16 import UserBackend # use this from 1.6 for now
 
 class ItemBackend(AbstractBackend):
     """
@@ -79,22 +71,18 @@ class ItemBackend(AbstractBackend):
         """
         shutil.move(self._get_item_path(name), self._get_item_path(newname))
 
-    def list_revisions(self, name, real=False):
+    def list_revisions(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
         """
-        if real:
-            revs = os.listdir(self._get_item_path(name, "meta.revisions"))
-            revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
-            revs.sort()
-        else:
-            last = self.current_revision(name, includeEmpty=True)
-            revs = range(1, last + 1)
+        revs = os.listdir(self._get_item_path(name, "meta.revisions"))
+        revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
+        revs.sort()
 
         revs.reverse()
         return revs
 
-    def current_revision(self, name, includeEmpty=False):
+    def current_revision(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
         """
@@ -104,29 +92,13 @@ class ItemBackend(AbstractBackend):
         except (ValueError, KeyError):
             rev = 0
 
-        if rev == 0:
-            return rev
-
-        # XXX check if we need this after getting clear about deletion
-        # Don't return revisions which are empty
-        def get_latest_not_empty(rev):
-            if rev == 0:
-                return rev
-            filename = self._get_rev_path(name, rev, 'data')
-            if os.path.isfile(filename) and os.path.getsize(filename) == 0L:
-                return get_latest_not_empty(rev - 1)
-            return rev
-
-        if not includeEmpty:
-            return get_latest_not_empty(rev)
-
         return rev
 
     def has_revision(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.has_revision
         """
-        return -1 <= revno <= self.current_revision(name, includeEmpty=True)
+        return -1 <= revno <= self.current_revision(name)
 
     def create_revision(self, name, revno):
         """
@@ -144,14 +116,15 @@ class ItemBackend(AbstractBackend):
         os.remove(self._get_rev_path(name, revno, 'data'))
         self._update_current(name)
 
-    def _update_current(self, name, revno=0):
+    def _update_current(self, name):
         """
         Update the current file.
         """
-        if revno == 0:
-            revnos = self.list_revisions(name, real=True)
-            if revnos:
-                revno = revnos[0]
+        revnos = self.list_revisions(name)
+        if revnos:
+            revno = revnos[0]
+        else:
+            revno = 0
 
         meta = self.get_metadata_backend(name, -1)
         meta['current'] = str(revno)
@@ -161,19 +134,13 @@ class ItemBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_data_backend
         """
-        if revno == -1 or not os.path.exists(self._get_rev_path(name, revno, 'data')):
-            return DeletedItemData(self, name, revno)
-        else:
-            return ItemData(self, name, revno)
+        return ItemData(self, name, revno)
 
     def get_metadata_backend(self, name, revno):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.get_metadata_backend
         """
-        if revno != -1 and not os.path.exists(self._get_rev_path(name, revno, 'meta')):
-            return DeletedItemMetadata(self, name, revno)
-        else:
-            return ItemMetadata(self, name, revno)
+        return ItemMetadata(self, name, revno)
 
     def _get_rev_path(self, name, revno, kind):
         """
@@ -225,69 +192,6 @@ class ItemMetadata(AbstractMetadata):
             shutil.move(tmp_name, self._backend._get_item_path(name, 'meta'))
         else:
             shutil.move(tmp_name, self._backend._get_rev_path(name, revno, 'meta'))
-
-
-class DeletedItemMetadata(AbstractMetadata):
-    """
-    Metadata implementation of a deleted item.
-    """
-
-    def _parse_metadata(self, name, revno):
-        """
-        @see MoinMoin.storage.backends.filesystem.AbstractMetadata._parse_metadata
-        """
-        metadata = {}
-        metadata[DELETED] = str(True)
-        return metadata
-
-    def _save_metadata(self, name, revno, metadata):
-        """
-        @see MoinMoin.storage.backends.filesystem.AbstractMetadata._save_metadata
-        """
-        if not DELETED in metadata or not get_bool(metadata[DELETED]):
-            self._backend.create_revision(self._name, revno)
-
-
-class DeletedItemData(AbstractData):
-    """
-    This class implements the Data of a deleted item.
-    """
-
-    def __init__(self, backend, name, revno):
-        """
-        Init stuff and open the file.
-        """
-        pass
-
-    def read(self, size=None):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.read
-        """
-        return ""
-
-    def seek(self, offset):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.seek
-        """
-        pass
-
-    def tell(self):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.tell
-        """
-        return 0
-
-    def write(self, data):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.write
-        """
-        pass
-
-    def close(self):
-        """
-        @see MoinMoin.storage.interfaces.DataBackend.close
-        """
-        pass
 
 
 def parse_meta(meta):

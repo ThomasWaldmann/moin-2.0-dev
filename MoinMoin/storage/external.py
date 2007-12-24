@@ -233,8 +233,8 @@ class Item(UserDict.DictMixin, object):
         Deletes the Revision specified by the given revision number.
         """
         self._check_lock()
-        self.reset()
         self._backend.remove_revision(self.name, revno)
+        self.reset()
 
     def keys(self):
         """
@@ -248,12 +248,14 @@ class Item(UserDict.DictMixin, object):
         If the revision number is None the next possible number will be used.
         """
         self._check_lock()
-        self.reset()
 
         if revno == 0:
             revno = self.current + 1
 
         self._backend.create_revision(self.name, revno)
+        
+        self.reset()
+        
         return self[revno]
 
     def get_metadata(self):
@@ -450,11 +452,11 @@ class Revision(object):
         """
         Size Property.
         """
-        size = long(self.metadata.get(SIZE, 0L))
+        size = self.metadata.get(SIZE, 0)
         if not size:
             size = len(self.data.read())
             self.data.close()
-        return size
+        return long(size)
 
     size = property(get_size)
 

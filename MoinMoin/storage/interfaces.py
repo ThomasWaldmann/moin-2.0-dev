@@ -51,12 +51,10 @@ class StorageBackend(object):
         Returns a list of integers of all revision numbers of an item, -1 excluded.
         """
 
-    def current_revision(self, name, includeEmpty=False):
+    def current_revision(self, name):
         """
         Returns the last revision number of an item as integer. If there is
-        no revision it returns 0. IncludeEmpty specifies wether a revision
-        number should be return if there is no data in it. If False the first
-        revision with data in it will be returend.
+        no revision it returns 0. 
         """
 
     def has_revision(self, name, revno):

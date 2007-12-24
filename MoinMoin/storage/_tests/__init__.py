@@ -198,8 +198,8 @@ class AbstractBackendTest(AbstractTest):
             self.backend.create_revision(self.items[0], next_revision)
             assert self.backend.has_revision(self.items[0], next_revision)
             assert self.backend.list_revisions(self.items[0]) == [next_revision] + self.items_revisions[0]
-            assert self.backend.current_revision(self.items[0]) == current_revision
-            assert self.backend.current_revision(self.items[0], includeEmpty=True) == next_revision
+            assert self.backend.current_revision(self.items[0]) == current_revision + 1
+            assert self.backend.current_revision(self.items[0]) == next_revision
 
             py.test.raises(BackendError, self.backend.create_revision, self.items[0], current_revision)
             py.test.raises(BackendError, self.backend.create_revision, self.items[0], -1)
@@ -214,7 +214,7 @@ class AbstractBackendTest(AbstractTest):
             assert not self.backend.has_revision(self.items[0], next_revision)
             assert self.backend.list_revisions(self.items[0]) == self.items_revisions[0]
             assert self.backend.current_revision(self.items[0]) == current_revision
-            assert self.backend.current_revision(self.items[0], includeEmpty=True) == current_revision
+            assert self.backend.current_revision(self.items[0]) == current_revision
 
             py.test.raises(NoSuchRevisionError, self.backend.remove_revision, self.items[0], next_revision)
             py.test.raises(BackendError, self.backend.remove_revision, self.items[0], -1)
