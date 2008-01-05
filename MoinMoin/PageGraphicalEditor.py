@@ -75,7 +75,8 @@ class PageGraphicalEditor(PageEditor.PageEditor):
 
         # Did one of the prechecks fail?
         if msg:
-            self.send_page(msg=msg)
+            request.theme.add_msg(msg, "error")
+            self.send_page()
             return
 
         # check if we want to load a draft
