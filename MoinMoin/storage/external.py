@@ -86,7 +86,6 @@ class ItemCollection(UserDict.DictMixin, object):
         Deletes an Item.
         """
         self._backend.remove_item(name)
-        self._items = None
 
     def keys(self, filters=None):
         """
@@ -94,6 +93,7 @@ class ItemCollection(UserDict.DictMixin, object):
         filtering stuff which is described more detailed in
         StorageBackend.list_items(...).
         """
+        self.refresh()
         if filters is None:
             return self.items[:]
         else:
@@ -104,7 +104,6 @@ class ItemCollection(UserDict.DictMixin, object):
         Returns a new Item with the given name.
         """
         self._backend.create_item(name)
-        self._items = None
         return self[name]
 
     def rename_item(self, name, newname):
@@ -112,7 +111,6 @@ class ItemCollection(UserDict.DictMixin, object):
         Renames an Item.
         """
         self._backend.rename_item(name, newname)
-        self._items = None
 
     def copy_item(self, name, newname):
         """
@@ -146,8 +144,6 @@ class ItemCollection(UserDict.DictMixin, object):
 
         newitem.lock = False
 
-        self._items = None
-
     def get_items(self):
         """
         Lazy load items.
@@ -170,6 +166,8 @@ class ItemCollection(UserDict.DictMixin, object):
             except KeyError:
                 pass
         self.timestamp = timestamp
+        if len(news) > 0:
+            self._items = None
 
 
 class Item(UserDict.DictMixin, object):
