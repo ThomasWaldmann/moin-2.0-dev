@@ -67,7 +67,7 @@ def search_box(type, macro):
     # Format
     type = (type == "titlesearch")
     html = [
-        u'<form method="get" action="">',
+        u'<form method="get" action="%s/%s">' % (macro.request.getScriptname(), wikiutil.quoteWikinameURL(macro.request.formatter.page.page_name)),
         u'<div>',
         u'<input type="hidden" name="action" value="fullsearch">',
         u'<input type="hidden" name="titlesearch" value="%i">' % type,
@@ -81,7 +81,8 @@ def search_box(type, macro):
     return macro.formatter.rawHTML(html)
 
 
-def execute(macro, needle):
+def macro_FullSearch(macro, needle=None):
+
     request = macro.request
     _ = request.getText
 
@@ -97,7 +98,7 @@ def execute(macro, needle):
     # TODO: search should implement those errors message for clients
     elif needle.isspace():
         err = _('Please use a more selective search term instead of '
-                '{{{"%s"}}}') % needle
+                '{{{"%s"}}}', wiki=True) % needle
         return '<span class="error">%s</span>' % err
 
     needle = needle.strip()

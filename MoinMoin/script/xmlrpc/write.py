@@ -1,8 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 """
-    MoinMoin - page contents writer
-
-    Commented example of how to edit a page with xmlrpc.
+MoinMoin - page contents writer
 
     @copyright: 2007 MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
@@ -15,6 +13,28 @@ from MoinMoin.script import MoinScript
 from MoinMoin.support.multicall import MultiCall
 
 class PluginScript(MoinScript):
+    """\
+Purpose:
+========
+This tool allows you to edit a page with xmlrpc. It is more of a commented
+example than an actual script.
+
+Detailed Instructions:
+======================
+General syntax: moin [options] xmlrpc write [write-options]
+
+[options] usually should be:
+    --config-dir=/path/to/my/cfg/ --wiki-url=wiki.example.org/
+
+[write-options] see below:
+    0. To edit the page 'FrontPage' on '192.168.0.1' using the username
+       'JohnSmith' and the password 'MyPass', changing the page contents
+       to 'This will be the new contents of the page!'
+       moin ... xmlrpc write 192.168.0.1 JohnSmith MyPass FrontPage
+       This will be the new contents of the page!
+       ^D
+"""
+
     def __init__(self, argv, def_values):
         MoinScript.__init__(self, argv, def_values)
         self.argv = argv
@@ -59,9 +79,10 @@ class PluginScript(MoinScript):
             # but you should definitely access all the results
             # once so that faults are checked and raised
             assert results[0] == 'SUCCESS'
-            assert results[1] == True
+            assert results[1] is True
 
         finally:
             # be nice to the server and clean up the token
             # regardless of what happened
             assert s.deleteAuthToken(token) == 'SUCCESS'
+

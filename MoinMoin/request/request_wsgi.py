@@ -20,7 +20,7 @@ class Request(RequestBase):
             self.stdin = env['wsgi.input']
             self.stdout = StringIO.StringIO()
 
-            # used by MoinMoin.server.wsgi:
+            # used by MoinMoin.server.server_wsgi:
             self.status = '200 OK'
             self.headers = []
 
@@ -30,9 +30,8 @@ class Request(RequestBase):
         except Exception, err:
             self.fail(err)
 
-    def setup_args(self):
-        # TODO: does this include query_string args for POST requests?
-        # see also how CGI works now
+    def _setup_args_from_cgi_form(self):
+        """ Override to create cgi form """
         form = cgi.FieldStorage(fp=self.stdin, environ=self.env, keep_blank_values=1)
         return RequestBase._setup_args_from_cgi_form(self, form)
 
@@ -58,7 +57,7 @@ class Request(RequestBase):
         pass
 
     def output(self):
-        # called by MoinMoin.server.wsgi
+        # called by MoinMoin.server.server_wsgi
         return self.stdout.getvalue()
 
 

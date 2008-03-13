@@ -10,7 +10,6 @@
 
 import xmlrpclib
 
-
 from MoinMoin.Page import Page
 from MoinMoin.user import User, getUserList
 from MoinMoin.support.python_compatibility import set
@@ -70,7 +69,6 @@ def handle_file_attached(event):
     names = set()
     request = event.request
     page = Page(request, event.pagename)
-    event_name = event.name
     subscribers = page.getSubscribers(request, return_users=1)
     notification.filter_subscriber_list(event, subscribers, True)
     recipients = []
@@ -79,10 +77,10 @@ def handle_file_attached(event):
         recipients.extend(subscribers[lang])
 
     attachlink = request.getBaseURL() + getAttachUrl(event.pagename, event.filename, request)
-    pagelink = request.getQualifiedURL(page.url(request, {}, relative=False))
+    pagelink = request.getQualifiedURL(page.url(request, {}))
 
     for lang in subscribers.keys():
-        _ = lambda text: request.getText(text, lang=lang, formatted=False)
+        _ = lambda text: request.getText(text, lang=lang)
         data = notification.attachment_added(request, _, event.pagename, event.filename, event.size)
         links = [{'url': attachlink, 'description': _("Attachment link")},
                   {'url': pagelink, 'description': _("Page link")}]
@@ -172,7 +170,7 @@ def page_change(change_type, request, page, subscribers, **kwargs):
             jids = [u.jid for u in subscribers[lang] if u.jid]
             names = [u.name for u in subscribers[lang] if u.jid]
             msg = notification.page_change_message(change_type, request, page, lang, **kwargs)
-            page_url = request.getQualifiedURL(page.url(request, relative=False))
+            page_url = request.getQualifiedURL(page.url(request))
             url = {'url': page_url, 'description': _("Changed page")}
             data = {'action': change_type, 'subject': _('Page changed'),
                             'url_list': [url], 'text': msg['text'], 'diff': msg.get('diff', ''),

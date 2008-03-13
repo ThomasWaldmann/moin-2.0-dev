@@ -123,7 +123,7 @@ class Macro:
                 execute = lambda _self, _args: _self._wrap(call, _args)
             except AttributeError:
                 if macro_name in i18n.wikiLanguages():
-                    execute = builtins._m_lang
+                    execute = self.__class__._m_lang
                 else:
                     raise ImportError("Cannot load macro %s" % macro_name)
         return execute(self, args)
@@ -166,7 +166,7 @@ class Macro:
 
         # With whitespace argument, return same error message as FullSearch
         if not needle.strip():
-            err = _('Please use a more selective search term instead of {{{"%s"}}}') % needle
+            err = _('Please use a more selective search term instead of {{{"%s"}}}', wiki=True) % needle
             return '<span class="error">%s</span>' % err
 
         # Return a title search for needle, sorted by name.
@@ -275,7 +275,7 @@ class Macro:
 
         page = fmt.page
         allpages_txt = (_('Include system pages'), _('Exclude system pages'))[allpages]
-        allpages_url = page.url(request, querystr={'allpages': allpages and '0' or '1'}, relative=False)
+        allpages_url = page.url(request, querystr={'allpages': allpages and '0' or '1'})
 
         output = [fmt.paragraph(1), _make_index_key(index_letters), fmt.linebreak(0),
                   fmt.url(1, allpages_url), fmt.text(allpages_txt), fmt.url(0), fmt.paragraph(0)] + output
@@ -299,7 +299,7 @@ class Macro:
         """
         _ = self._
         html = [
-            u'<form method="get" action="">',
+            u'<form method="get" action="%s/%s"><div>' % (self.request.getScriptname(), wikiutil.quoteWikinameURL(self.formatter.page.page_name)),
             u'<div>',
             u'<input type="hidden" name="action" value="goto">',
             u'<input type="text" name="target" size="30">',

@@ -144,7 +144,7 @@ class RemoteWiki(object):
         return NotImplemented
 
     def get_interwiki_name(self):
-        """ Returns the interwiki name of the _other wiki. """
+        """ Returns the interwiki name of the other wiki. """
         return NotImplemented
 
     def get_iwid(self):
@@ -179,8 +179,8 @@ class MoinRemoteWiki(RemoteWiki):
             iw_list = self.connection.interwikiName()
         except socket.error:
             raise UnsupportedWikiException(_("The wiki is currently not reachable."))
-        except xmlrpclib.Fault:
-            raise UnsupportedWikiException(_("The remote version of MoinMoin is too old, version 1.6 is required at least."))
+        except xmlrpclib.Fault, err:
+            raise UnsupportedWikiException("xmlrpclib.Fault: %s" % str(err))
 
         if user and password:
             token = self.connection.getAuthToken(user, password)
@@ -396,7 +396,7 @@ class Tag(object):
     def __cmp__(self, other):
         if not isinstance(other, Tag):
             return NotImplemented
-        return cmp(self.current_rev, _other.current_rev)
+        return cmp(self.current_rev, other.current_rev)
 
 
 class AbstractTagStore(object):

@@ -527,6 +527,9 @@ class XmlRpcBase:
 
         pagename = self._instr(pagename)
 
+        if not pagename:
+            return xmlrpclib.Fault("INVALID", "pagename can't be empty")
+
         # check ACLs
         if not self.request.user.may.write(pagename):
             return xmlrpclib.Fault(1, "You are not allowed to edit this page")
@@ -562,7 +565,6 @@ class XmlRpcBase:
         if not self.request.user.may.write(pagename):
             return xmlrpclib.Fault(1, "You are not allowed to edit this page")
 
-        from MoinMoin.PageEditor import PageEditor
         rev = int(self._instr(revision))
         editor = PageEditor(self.request, pagename)
 
@@ -612,7 +614,7 @@ class XmlRpcBase:
 
         return [(self._outstr(hit.page_name),
                  self._outstr(results.formatContext(hit, length, 1)),
-                 self.request.getQualifiedURL(hit.page.url(self.request, {}, relative=False)))
+                 self.request.getQualifiedURL(hit.page.url(self.request, {})))
                 for hit in results.hits]
 
     def xmlrpc_getMoinVersion(self):

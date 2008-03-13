@@ -7,9 +7,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import py
 
-from MoinMoin import wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin._tests.common import gain_superuser_rights
@@ -167,7 +165,7 @@ class TestSave(object):
 
         print "PageEditor can't save a page if Abort is returned from PreSave event handlers"
         page = Page(self.request, pagename)
-        assert page.body != testtext
+        assert not page.exists()
 
 
 class TestDictPageDeletion(object):
@@ -186,6 +184,63 @@ class TestDictPageDeletion(object):
         expected = u'Page "SomeDict" was successfully deleted!'
 
         assert result == expected
+
+class TestCopyPage(object):
+
+    pagename = u'AutoCreatedMoinMoinTemporaryTestPageX'
+    copy_pagename = u'AutoCreatedMoinMoinTemporaryCopyTestPage'
+    text = u'Example'
+
+    def setup_method(self, method):
+        self.savedValid = self.request.user.valid
+        self.request.user.valid = 1
+
+    def teardown_method(self, method):
+        self.request.user.valid = self.savedValid
+        self.deleteTestPage()
+
+    def createTestPage(self):
+        """ Create temporary page, bypass logs, notification and backups
+        """
+        self.request.cfg.page_backend.create_item(self.pagename)
+        self.request.cfg.page_backend.create_revision(self.pagename, 1)
+        data = self.request.cfg.page_backend.get_data_backend(self.pagename, 1)
+        data.write(self.text)
+        data.close()
+
+    def deleteTestPage(self):
+        """ Delete temporary page, bypass logs and notifications """
+        self.request.cfg.page_backend.remove_item(self.pagename)
+        self.request.cfg.page_backend.remove_item(self.copy_pagename)
+
+    def test_copy_page(self):
+        """
+        Tests copying a page without restricted acls
+        """
+        self.createTestPage()
+        result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
+        revision = Page(self.request, self.copy_pagename).current_rev()
+        assert result and revision is 2
+
+    def test_copy_page_acl_read(self):
+        """
+        Tests copying a page without write rights
+        """
+        self.text = u'#acl SomeUser:read,write,delete All:read\n'
+        self.createTestPage()
+        result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
+        revision = Page(self.request, self.copy_pagename).current_rev()
+        assert result and revision is 2
+
+    def test_copy_page_acl_no_read(self):
+        """
+        Tests copying a page without read rights
+        """
+        self.text = u'#acl SomeUser:read,write,delete All:\n'
+        self.createTestPage()
+        result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
+        revision = Page(self.request, self.copy_pagename).current_rev()
+        assert result and revision is 2
 
 coverage_modules = ['MoinMoin.PageEditor']
 

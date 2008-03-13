@@ -34,8 +34,11 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, sys, time, socket, errno, shutil, logging
+import os, sys, time, socket, errno, shutil
 import BaseHTTPServer, SimpleHTTPServer, SocketServer
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin import version, wikiutil
 from MoinMoin.server import Config, switchUID
@@ -542,7 +545,6 @@ def makeServer(config):
 
 class StandaloneConfig(Config):
     """ Standalone server default config """
-
     name = 'moin'
     properties = {}
     docs = '/usr/share/moin/htdocs'
@@ -550,7 +552,6 @@ class StandaloneConfig(Config):
     group = 'www-data'
     port = 8000
     interface = 'localhost'
-    logPath = None
 
     # Advanced options
     serverClass = 'ThreadPoolServer'

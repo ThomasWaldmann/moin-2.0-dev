@@ -1,9 +1,8 @@
-#!/usr/bin/env python2.4
 # -*- coding: iso-8859-1 -*-
 """
     MoinMoin - internationalization (aka i18n)
 
-    We use Python's gettext module now for loading <language>.<domain>.mo files.
+    We use Python's gettext module for loading <language>.<domain>.mo files.
     Domain is "MoinMoin" for MoinMoin distribution code and something else for
     extension translations.
 
@@ -15,18 +14,21 @@
         wikiLanguages() -- return the available wiki user languages
         browserLanguages() -- return the browser accepted languages
         getDirection(lang) -- return the lang direction either 'ltr' or 'rtl'
-        getText(str, request) -- return str translation
+        getText(str, request, lang,  **kw) -- return str translation into lang
 
     TODO: as soon as we have some "farm / server plugin dir", extend this to
           load translations from there, too.
 
     @copyright: 2001-2004 Juergen Hermann <jh@web.de>,
-                2005-2006 MoinMoin:ThomasWaldmann
+                2005-2008 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
-debug = 0
 
 import os, gettext, glob
+from StringIO import StringIO
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin import caching
 
@@ -57,9 +59,11 @@ def i18n_init(request):
     global languages
     request.clock.start('i18n_init')
     if languages is None:
+        logging.debug("trying to load translations from cache")
         meta_cache = caching.CacheEntry(request, 'i18n', 'meta', scope='farm', use_pickle=True)
         i18n_dir = os.path.join(request.cfg.moinmoin_dir, 'i18n')
         if meta_cache.needsUpdate(i18n_dir):
+            logging.debug("cache needs update")
             _languages = {}
             for lang_file in glob.glob(po_filename(request, language='*', domain='MoinMoin')): # XXX only MoinMoin domain for now
                 language, domain, ext = os.path.basename(lang_file).split('.')
@@ -67,12 +71,13 @@ def i18n_init(request):
                 f = file(lang_file)
                 t.load_po(f)
                 f.close()
-                #request.log("load translation %r" % language)
+                logging.debug("loading translation %r" % language)
                 encoding = 'utf-8'
                 _languages[language] = {}
                 for key, value in t.info.items():
-                    #request.log("meta key %s value %r" % (key, value))
+                    #logging.debug("meta key %s value %r" % (key, value))
                     _languages[language][key] = value.decode(encoding)
+            logging.debug("dumping language metadata to disk cache")
             try:
                 meta_cache.update(_languages)
             except caching.CacheError:
@@ -80,6 +85,7 @@ def i18n_init(request):
 
         if languages is None: # another thread maybe has done it before us
             try:
+                logging.debug("loading language metadata from disk cache")
                 _languages = meta_cache.content()
                 if languages is None:
                     languages = _languages
@@ -126,7 +132,6 @@ class Translation(object):
 
     def load_po(self, f):
         """ load the po file """
-        from StringIO import StringIO
         from MoinMoin.i18n.msgfmt import MsgFmt
         mf = MsgFmt()
         mf.read_po(f.readlines())
@@ -140,31 +145,39 @@ class Translation(object):
         # binary files have to be opened in the binary file mode!
         self.translation = gettext.GNUTranslations(f)
         self.info = info = self.translation.info()
-        self.name = info['x-language']
-        self.ename = info['x-language-in-english']
-        self.direction = info['x-direction']
-        assert self.direction in ('ltr', 'rtl', )
-        self.maintainer = info['last-translator']
+        try:
+            self.name = info['x-language']
+            self.ename = info['x-language-in-english']
+            self.direction = info['x-direction']
+            self.maintainer = info['last-translator']
+        except KeyError, err:
+            logging.warning("metadata problem in %r: %s" % (self.language, str(err)))
+        try:
+            assert self.direction in ('ltr', 'rtl', )
+        except (AttributeError, AssertionError), err:
+            logging.warning("direction problem in %r: %s" % (self.language, str(err)))
 
-    def formatMarkup(self, request, text, currentStack=[]):
-        """
-        Formats the text passed according to wiki markup.
+    def formatMarkup(self, request, text, percent):
+        """ Formats the text using the wiki parser/formatter.
+
         This raises an exception if a text needs itself to be translated,
         this could possibly happen with macros.
+
+        @param request: the request object
+        @param text: the text to format
+        @param percent: True if result is used as left-side of a % operator and
+                        thus any GENERATED % needs to be escaped as %%.
         """
-        try:
-            currentStack.index(text)
-            raise Exception("Formatting a text that is being formatted?!")
-        except ValueError:
-            pass
-        currentStack.append(text)
+        logging.debug("formatting: %r" % text)
 
         from MoinMoin.Page import Page
         from MoinMoin.parser.text_moin_wiki import Parser as WikiParser
-        from MoinMoin.formatter.text_html import Formatter
-        import StringIO
+        if percent:
+            from MoinMoin.formatter.text_html_percent import Formatter
+        else:
+            from MoinMoin.formatter.text_html import Formatter
 
-        out = StringIO.StringIO()
+        out = StringIO()
         request.redirect(out)
         parser = WikiParser(text, request, line_anchors=False)
         formatter = Formatter(request, terse=True)
@@ -181,7 +194,6 @@ class Translation(object):
         else:
             request.formatter = reqformatter
         request.redirect()
-        del currentStack[-1]
         text = text.strip()
         return text
 
@@ -190,47 +202,30 @@ class Translation(object):
         cache = caching.CacheEntry(request, arena='i18n', key=self.language, scope='farm', use_pickle=True)
         langfilename = po_filename(request, self.language, self.domain, i18n_dir=trans_dir)
         needsupdate = cache.needsUpdate(langfilename)
-        if debug:
-            request.log("i18n: langfilename %s needsupdate %d" % (langfilename, needsupdate))
         if not needsupdate:
             try:
-                uc_texts, uc_unformatted = cache.content()
+                unformatted = cache.content()
+                logging.debug("pickle %s load success" % self.language)
             except caching.CacheError:
-                if debug:
-                    request.log("i18n: pickle %s load failed" % self.language)
+                logging.debug("pickle %s load failed" % self.language)
                 needsupdate = 1
 
         if needsupdate:
+            logging.debug("langfilename %s needs update" % langfilename)
             f = file(langfilename)
             self.load_po(f)
             f.close()
             trans = self.translation
-            texts = trans._catalog
-            has_wikimarkup = self.info.get('x-haswikimarkup', 'False') == 'True'
-            # convert to unicode
-            if debug:
-                request.log("i18n: processing unformatted texts of lang %s" % self.language)
-            uc_unformatted = {}
-            uc_texts = {}
-            for ukey, utext in texts.items():
-                uc_unformatted[ukey] = utext
-                if has_wikimarkup:
-                    # use the wiki parser now to replace some wiki markup with html
-                    try:
-                        uc_texts[ukey] = self.formatMarkup(request, utext) # XXX RECURSION!!! Calls gettext via markup
-                    except: # infinite recursion or crash
-                        if debug:
-                            request.log("i18n: crashes in language %s on string: %s" % (self.language, utext))
-                        uc_texts[ukey] = u"%s*" % utext
-            if debug:
-                request.log("i18n: dumping lang %s" % self.language)
+            unformatted = trans._catalog
+            self.has_wikimarkup = self.info.get('x-haswikimarkup', 'False') == 'True'
+            logging.debug("dumping lang %s" % self.language)
             try:
-                cache.update((uc_texts, uc_unformatted))
+                cache.update(unformatted)
             except caching.CacheError:
                 pass
 
-        self.formatted = uc_texts
-        self.raw = uc_unformatted
+        self.formatted = {}
+        self.raw = unformatted
         request.clock.stop('loadLanguage')
 
 
@@ -238,8 +233,24 @@ def getDirection(lang):
     """ Return the text direction for a language, either 'ltr' or 'rtl'. """
     return languages[lang]['x-direction']
 
-def getText(original, request, lang, formatted=True):
-    """ Return a translation of text in the user's language. """
+def getText(original, request, lang, **kw):
+    """ Return a translation of some original text.
+
+    @param original: the original (english) text
+    @param request: the request object
+    @lang: the target language for the translation
+    @keyword wiki: True to use the wiki parser/formatter on the translation result,
+                   False to return the translation result "as is"
+    @keyword percent: True if we need special escaping because we use the translation
+                      result as the left side of a % operator: e.g. % chars need to
+                      become %% for that usage. This will only escape generated % chars,
+                      e.g. in wiki links to non-ascii pagenames (%XX%XX%XX).
+                      False, if we don't use it as a left-side of % operator.
+                      Only specify this option for wiki==True, it doesn't do
+                      anything for wiki==False.
+    """
+    formatted = kw.get('wiki', False) # 1.6 and early 1.7 (until 2/2008) used 'formatted' with True as default!
+    percent = kw.get('percent', False)
     if original == u"":
         return u"" # we don't want to get *.po files metadata!
 
@@ -251,13 +262,21 @@ def getText(original, request, lang, formatted=True):
 
     # get the matching entry in the mapping table
     translated = original
-    if formatted:
-        trans_table = translations[lang].formatted
+    translation = translations[lang]
+    if original in translation.raw:
+        translated = translation.raw[original]
+        if formatted:
+            key = (original, percent)
+            if key in translation.formatted:
+                translated = translation.formatted[key]
+                if translated is None:
+                    logging.error("formatting a %r text that is already being formatted: %r" % (lang, original))
+                    translated = original + u'*' # get some error indication to the UI
+            else:
+                translation.formatted[key] = None # we use this as "formatting in progress" indicator
+                translated = translation.formatMarkup(request, translated, percent)
+                translation.formatted[key] = translated # remember it
     else:
-        trans_table = translations[lang].raw
-    try:
-        translated = trans_table[original]
-    except KeyError:
         try:
             language = languages[lang]['x-language-in-english']
             dictpagename = "%sDict" % language
@@ -273,9 +292,11 @@ def getText(original, request, lang, formatted=True):
             # if we don't find an english "translation", we just format it
             # on the fly (this is needed for cfg.editor_quickhelp).
             if lang != 'en':
-                translated = getText(original, request, 'en', formatted)
-            elif formatted:
-                translated = translations[lang].formatMarkup(request, original)
+                logging.debug("falling back to english, requested string not in %r translation: %r" % (lang, original))
+                translated = getText(original, request, 'en', wiki=formatted, percent=percent)
+            elif formatted: # and lang == 'en'
+                logging.debug("formatting for %r on the fly: %r" % (lang, original))
+                translated = translations[lang].formatMarkup(request, original, percent)
     return translated
 
 
@@ -306,19 +327,17 @@ def requestLanguage(request, try_user=True):
 
     # Or try to return one of the user browser accepted languages, if it
     # is available on this wiki...
-    available = wikiLanguages()
-    if not request.cfg.language_ignore_browser:
-        for lang in browserLanguages(request):
-            if lang in available:
-                return lang
-
-    # Or return the wiki default language...
-    if request.cfg.language_default in available:
-        lang = request.cfg.language_default
-    # If everything else fails, read the manual... or return 'en'
-    else:
-        lang = 'en'
+    lang = get_browser_language(request)
+    if not lang:
+        available = wikiLanguages()
+        # Or return the wiki default language...
+        if request.cfg.language_default in available:
+            lang = request.cfg.language_default
+        # If everything else fails, read the manual... or return 'en'
+        else:
+            lang = 'en'
     return lang
+
 
 def wikiLanguages():
     """
@@ -326,6 +345,7 @@ def wikiLanguages():
     As we do everything in unicode (or utf-8) now, everything is available.
     """
     return languages
+
 
 def browserLanguages(request):
     """
@@ -353,4 +373,21 @@ def browserLanguages(request):
                 baselang = lang.split('-')[0]
                 fallback.append(baselang)
     return fallback
+
+def get_browser_language(request):
+    """
+    Return the language that is supported by wiki and what user browser
+    would prefer to get. Return empty string if there is no such language
+    or language_ignore_browser is true.
+
+    @param request: the request object
+    @rtype: string
+    @return: ISO language code, e.g. 'en'
+    """
+    available = wikiLanguages()
+    if not request.cfg.language_ignore_browser:
+        for lang in browserLanguages(request):
+            if lang in available:
+                return lang
+    return ''
 

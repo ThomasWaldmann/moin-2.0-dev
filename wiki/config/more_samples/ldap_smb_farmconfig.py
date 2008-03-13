@@ -11,6 +11,8 @@
 
     This is a sample configuration for a farm using ldap and smb auth plugins.
 
+    !!! NEEDS UPDATE FOR MOIN 1.7 !!!
+
     It works like this:
     * user logs in via moin's form on UserPreferences
     * ldap_login plugin checks username/password against LDAP
@@ -105,6 +107,8 @@ class FarmConfig(DefaultConfig):
     ldap_coding = 'utf-8' # coding used for ldap queries and result values
     ldap_timeout = 10 # how long we wait for the ldap server [s]
     ldap_verbose = True # if True, put lots of LDAP debug info into the log
+    ldap_bindonce = False # set to True to only do one bind.  Useful if
+                          # configured to bind as the user on the first attempt
     cookie_lifetime = 1 # 1 hour after last access ldap login is required again
     user_autocreate = True
 
@@ -229,7 +233,7 @@ class FarmConfig(DefaultConfig):
 
     # Language options --------------------------------------------------
 
-    # See http://moinmoin.wikiwikiweb.de/ConfigMarket for configuration in
+    # See http://moinmo.in/ConfigMarket for configuration in
     # YOUR language that other people contributed.
 
     # The main wiki language, set the direction of the wiki pages

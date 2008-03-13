@@ -117,7 +117,7 @@ def execute(pagename, request):
     # a full interface for categories (add, delete) or just add them by
     # markup.
 
-    if category and category != _('<No addition>', formatted=False): # opera 8.5 needs this
+    if category and category != _('<No addition>'): # opera 8.5 needs this
         # strip trailing whitespace
         savetext = savetext.rstrip()
 
@@ -154,6 +154,9 @@ def execute(pagename, request):
     # Save new text
     else:
         try:
+            from MoinMoin.security.textcha import TextCha
+            if not TextCha(request).check_answer_from_form():
+                raise pg.SaveError(_('TextCha: Wrong answer! Go back and try again...'))
             savemsg = pg.saveText(savetext, rev, trivial=trivial, comment=comment)
         except pg.EditConflict, e:
             msg = e.message
@@ -175,6 +178,8 @@ def execute(pagename, request):
         backto = request.form.get('backto', [None])[0]
         if backto:
             pg = Page(request, backto)
+        else:
+            pg = Page(request, pagename)
 
         # sets revision number to default for further actions
         request.rev = 0

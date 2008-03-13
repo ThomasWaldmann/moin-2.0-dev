@@ -7,7 +7,8 @@
 
     TODO: should be refactored after hitcounts.
 
-    @copyright: 2002-2004 Juergen Hermann <jh@web.de>
+    @copyright: 2002-2004 Juergen Hermann <jh@web.de>,
+                2007 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -45,11 +46,11 @@ def linkto(pagename, request, params=''):
 
 def get_data(request):
     # get results from cache
-    cache = caching.CacheEntry(request, 'charts', 'useragents', scope='wiki')
+    cache = caching.CacheEntry(request, 'charts', 'useragents', scope='wiki', use_pickle=True)
     cache_date, data = 0, {}
     if cache.exists():
         try:
-            cache_date, data = eval(cache.content())
+            cache_date, data = cache.content()
         except:
             cache.remove() # cache gone bad
 
@@ -75,7 +76,7 @@ def get_data(request):
                 data[ua] = data.get(ua, 0) + 1
 
         # write results to cache
-        cache.update("(%r, %r)" % (new_date, data))
+        cache.update((new_date, data))
 
     data = [(cnt, ua) for ua, cnt in data.items()]
     data.sort()
@@ -86,14 +87,13 @@ def text(pagename, request):
     from MoinMoin.util.dataset import TupleDataset, Column
     from MoinMoin.widget.browser import DataBrowserWidget
 
-    fmt = request.formatter
     _ = request.getText
 
     data = get_data(request)
 
-    sum = 0.0
+    total = 0.0
     for cnt, ua in data:
-        sum += cnt
+        total += cnt
 
 
     agents = TupleDataset()
@@ -102,19 +102,21 @@ def text(pagename, request):
 
     cnt_printed = 0
     data = data[:10]
-    for cnt, ua in data:
-        try:
-            ua = unicode(ua)
-            agents.addRow((ua, "%.2f" % (100.0*cnt/sum)))
-            cnt_printed += cnt
-        except UnicodeError:
-            pass
-    agents.addRow((_('Others'), "%.2f" % (100*(sum-cnt_printed)/sum)))
+
+    if total:
+        for cnt, ua in data:
+            try:
+                ua = unicode(ua)
+                agents.addRow((ua, "%.2f" % (100.0 * cnt / total)))
+                cnt_printed += cnt
+            except UnicodeError:
+                pass
+        if total > cnt_printed:
+            agents.addRow((_('Others'), "%.2f" % (100 * (total - cnt_printed) / total)))
 
     table = DataBrowserWidget(request)
     table.setData(agents)
     return table.toHTML()
-
 
 def draw(pagename, request):
     import shutil, cStringIO

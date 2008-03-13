@@ -9,7 +9,7 @@
 from MoinMoin import user, wikiutil, util
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
-import MoinMoin.events as events
+from MoinMoin.security.textcha import TextCha
 
 
 _debug = False
@@ -19,7 +19,11 @@ def _create_user(request):
     form = request.form
 
     if request.request_method != 'POST':
-        return _("Use UserPreferences to change your settings or create an account.")
+        return _("Use UserPreferences to change your settings or create an account.", wiki=True)
+
+    if not TextCha(request).check_answer_from_form():
+        return _('TextCha: Wrong answer! Go back and try again...')
+
     # Create user profile
     theuser = user.User(request, auth_method="new-user")
 
@@ -33,7 +37,7 @@ def _create_user(request):
     if not user.isValidName(request, theuser.name):
         return _("""Invalid user name {{{'%s'}}}.
 Name may contain any Unicode alpha numeric character, with optional one
-space between words. Group page name is not allowed.""") % wikiutil.escape(theuser.name)
+space between words. Group page name is not allowed.""", wiki=True) % wikiutil.escape(theuser.name)
 
     # Name required to be unique. Check if name belong to another user.
     if user.getUserId(request, theuser.name):
@@ -43,17 +47,17 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
     password = form.get('password', [''])[0]
     password2 = form.get('password2', [''])[0]
 
-    pw_checker = request.cfg.password_checker
-    if pw_checker:
-        pw_error = pw_checker(theuser.name, password)
-        if pw_error:
-            return _("Password not acceptable: %s") % pw_error
-
     # Check if password is given and matches with password repeat
     if password != password2:
         return _("Passwords don't match!")
     if not password:
         return _("Please specify a password!")
+
+    pw_checker = request.cfg.password_checker
+    if pw_checker:
+        pw_error = pw_checker(theuser.name, password)
+        if pw_error:
+            return _("Password not acceptable: %s") % pw_error
 
     # Encode password
     if password and not password.startswith('{SHA}'):
@@ -127,6 +131,16 @@ def _create_form(request):
 
     row = html.TR()
     tbl.append(row)
+    row.append(html.TD().append(html.STRONG().append(
+                                  html.Text(_('TextCha (required)')))))
+    td = html.TD()
+    textcha = TextCha(request).render()
+    if textcha:
+        td.append(textcha)
+    row.append(td)
+
+    row = html.TR()
+    tbl.append(row)
     row.append(html.TD())
     td = html.TD()
     row.append(td)
@@ -164,3 +178,4 @@ def execute(pagename, request):
 
         request.theme.send_footer(pagename)
         request.theme.send_closing_html()
+

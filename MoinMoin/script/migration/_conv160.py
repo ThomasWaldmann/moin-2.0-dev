@@ -53,8 +53,15 @@ def markup_converter(request, pagename, text, renames):
     """ Convert the <text> content of page <pagename>, using <renames> dict
         to rename links correctly. Additionally, convert some changed markup.
     """
-    if "#format wiki" not in text and "#format" in text:
-        return text # this is not a wiki page, leave it as is
+    if text.startswith('<?xml'):
+        # would be done with xslt processor
+        return text
+
+    pis, body = wikiutil.get_processing_instructions(text)
+    for pi, val in pis:
+        if pi == 'format' and val != 'wiki':
+            # not wiki page
+            return text
 
     text = convert_wiki(request, pagename, text, renames)
     return text
@@ -71,16 +78,22 @@ class EventLog:
         """ read complete event-log from disk """
         data = []
         try:
+            lineno = 0
             f = file(self.fname, 'r')
             for line in f:
+                lineno += 1
                 line = line.replace('\r', '').replace('\n', '')
                 if not line.strip(): # skip empty lines
                     continue
                 fields = line.split('\t')
-                timestamp, action, kvpairs = fields[:3]
-                timestamp = int(timestamp)
-                kvdict = wikiutil.parseQueryString(kvpairs)
-                data.append((timestamp, action, kvdict))
+                try:
+                    timestamp, action, kvpairs = fields[:3]
+                    timestamp = int(timestamp)
+                    kvdict = wikiutil.parseQueryString(kvpairs)
+                    data.append((timestamp, action, kvdict))
+                except ValueError, err:
+                    # corrupt event log line, log error and skip it
+                    print "Error: invalid event log (%s) line %d, err: %s, SKIPPING THIS LINE!" % (self.fname, lineno, str(err))
             f.close()
         except IOError, err:
             # no event-log
@@ -141,6 +154,7 @@ class EditLog:
             editlog = self.data.items()
             editlog.sort()
             f = file(fname, "w")
+            max_rev = 0
             for key, fields in editlog:
                 timestamp, rev, action, pagename, ip, hostname, userid, extra, comment = fields
                 if action.startswith('ATT'):
@@ -154,6 +168,8 @@ class EditLog:
                 if ('PAGE', pagename) in self.renames:
                     pagename = self.renames[('PAGE', pagename)]
                 timestamp = str(timestamp)
+                if rev != 99999999:
+                    max_rev = max(rev, max_rev)
                 revstr = '%08d' % rev
                 pagename = wikiutil.quoteWikinameFS(pagename)
                 fields = timestamp, revstr, action, pagename, ip, hostname, userid, extra, comment
@@ -161,7 +177,7 @@ class EditLog:
                 f.write(log_str)
             if create_rev and not deleted:
                 timestamp = str(wikiutil.timestamp2version(time.time()))
-                revstr = '%08d' % (rev + 1)
+                revstr = '%08d' % (max_rev + 1)
                 action = 'SAVE'
                 ip = '127.0.0.1'
                 hostname = 'localhost'
@@ -217,7 +233,7 @@ class Attachment:
     def __init__(self, request, attach_dir, attfile):
         self.request = request
         self.path = opj(attach_dir, attfile)
-        self.name = attfile.decode('utf-8')
+        self.name = attfile.decode('utf-8', 'replace')
 
     def copy(self, attach_dir):
         """ copy attachment file from orig path to new destination """
@@ -249,7 +265,11 @@ class Page:
             current_file = file(current_fname, "r")
             current_rev = current_file.read()
             current_file.close()
-            self.current = int(current_rev)
+            try:
+                self.current = int(current_rev)
+            except ValueError:
+                print "Error: invalid current file %s, SKIPPING THIS PAGE!" % current_fname
+                return
         # read edit-log
         editlog_fname = opj(page_dir, 'edit-log')
         if os.path.exists(editlog_fname):
@@ -329,9 +349,9 @@ class Page:
                 att.copy(attach_dir)
 
     def copy(self, pages_dir, renames):
-            self.renames = renames
-            self.read()
-            self.write(pages_dir)
+        self.renames = renames
+        self.read()
+        self.write(pages_dir)
 
 
 class User:
@@ -353,7 +373,11 @@ class User:
             line = line.replace(u'\r', '').replace(u'\n', '')
             if not line.strip() or line.startswith(u'#'): # skip empty or comment lines
                 continue
-            key, value = line.split(u'=', 1)
+            try:
+                key, value = line.split(u'=', 1)
+            except Exception, err:
+                print "Error: User reader can not parse line %r from profile %r (%s)" % (line, fname, str(err))
+                continue
             self.profile[key] = value
         f.close()
         # read bookmarks
@@ -453,10 +477,15 @@ class DataConverter(object):
 
     def save_list(self, fname, what):
         what_sorted = what.keys()
-        what_sorted.sort(cmp=lambda x, y: cmp(x[1:], y[1:]))
+        # make sure we have 3-tuples:
+        what_sorted = [(k + (None, ))[:3] for k in what_sorted]
+        # we only have python 2.3, thus no cmp keyword for the sort() call,
+        # thus we need to do it the more complicated way:
+        what_sorted = [(pn, fn, rtype) for rtype, pn, fn in what_sorted] # shuffle
+        what_sorted.sort() # sort
+        what_sorted = [(rtype, pn, fn) for pn, fn, rtype in what_sorted] # shuffle
         f = codecs.open(fname, 'w', 'utf-8')
-        for k in what_sorted:
-            rtype, pn, fn = (k + (None, ))[:3]
+        for rtype, pn, fn in what_sorted:
             if rtype == 'PAGE':
                 line = (rtype, pn, pn)
             elif rtype == 'FILE':

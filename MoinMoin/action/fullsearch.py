@@ -89,10 +89,10 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
         or_terms = request.form.get('or_terms', [''])[0].strip()
         not_terms = request.form.get('not_terms', [''])[0].strip()
         #xor_terms = request.form.get('xor_terms', [''])[0].strip()
-        categories = request.form.get('categories', [''])[0].strip()
+        categories = request.form.get('categories', [''])
         timeframe = request.form.get('time', [''])[0].strip()
-        language = request.form.get('language', [''])[0]
-        mimetype = request.form.get('mimetype', [0])[0]
+        language = request.form.get('language', [''])
+        mimetype = request.form.get('mimetype', [0])
         excludeunderlay = request.form.get('excludeunderlay', [0])[0]
         nosystemitems = request.form.get('nosystemitems', [0])[0]
         historysearch = request.form.get('historysearch', [0])[0]
@@ -130,28 +130,27 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
             # show info
             if mtime_parsed:
                 # XXX mtime_msg is not shown in some cases
-                mtime_msg = _("(!) Only pages changed since '''%s''' are being "
-                        "displayed!") % request.user.getFormattedDateTime(mtime)
+                mtime_msg = _("(!) Only pages changed since '''%s''' are being displayed!",
+                              wiki=True) % request.user.getFormattedDateTime(mtime)
             else:
                 mtime_msg = _('/!\\ The modification date you entered was not '
                         'recognized and is therefore not considered for the '
-                        'search results!')
+                        'search results!', wiki=True)
         else:
             mtime_msg = None
 
         word_re = re.compile(r'(\"[\w\s]+"|\w+)')
         needle = ''
-        if language:
-            needle += 'language:%s ' % language
-        if mimetype:
-            needle += 'mimetype:%s ' % mimetype
+        if categories[0]:
+            needle += 'category:%s ' % ','.join(categories)
+        if language[0]:
+            needle += 'language:%s ' % ','.join(language)
+        if mimetype[0]:
+            needle += 'mimetype:%s ' % ','.join(mimetype)
         if excludeunderlay:
             needle += '-domain:underlay '
         if nosystemitems:
             needle += '-domain:system '
-        if categories:
-            needle += '(%s) ' % ' or '.join(['category:%s' % cat
-                for cat in word_re.findall(categories)])
         if and_terms:
             needle += '(%s) ' % and_terms
         if not_terms:
@@ -163,7 +162,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
     stripped = needle.strip()
     if len(stripped) == 0:
         request.theme.add_msg(_('Please use a more selective search term instead '
-                'of {{{"%s"}}}') % wikiutil.escape(needle), "error")
+                'of {{{"%s"}}}', wiki=True) % wikiutil.escape(needle), "error")
         Page(request, pagename).send_page()
         return
     needle = stripped
@@ -187,7 +186,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
         results = searchPages(request, query, sort, mtime, historysearch)
     except ValueError: # catch errors in the search query
         request.theme.add_msg(_('Your search query {{{"%s"}}} is invalid. Please refer to '
-                'HelpOnSearching for more information.') % wikiutil.escape(needle), "error")
+                'HelpOnSearching for more information.', wiki=True) % wikiutil.escape(needle), "error")
         Page(request, pagename).send_page()
         return
 
@@ -198,7 +197,12 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
         page = results.hits[0]
         if not page.attachment: # we did not find an attachment
             page = Page(request, page.page_name)
-            url = page.url(request, querystr={'highlight': query.highlight_re()}, relative=False)
+            highlight = query.highlight_re()
+            if highlight:
+                querydict = {'highlight': highlight}
+            else:
+                querydict = {}
+            url = page.url(request, querystr=querydict)
             request.http_redirect(url)
             return
     elif not results.hits: # no hits?
@@ -208,12 +212,11 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
 
         request.theme.add_msg(_('Your search query {{{"%s"}}} didn\'t return any results. '
                 'Please change some terms and refer to HelpOnSearching for '
-                'more information.%s') % (wikiutil.escape(needle),
+                'more information.%s', wiki=True, percent=True) % (wikiutil.escape(needle),
                     titlesearch and ''.join([
                         '<br>',
-                        _('(!) Consider performing a'), ' ',
-                        f.url(1, href=request.page.url(request, querydict,
-                            escape=0, relative=False)),
+                        _('(!) Consider performing a', wiki=True), ' ',
+                        f.url(1, href=request.page.url(request, querydict, escape=0)),
                         _('full-text search with your search terms'),
                         f.url(0), '.',
                     ]) or ''), "error")
@@ -241,10 +244,9 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
 
         hints.append(''.join([
             _("(!) You're performing a title search that might not include"
-                ' all related results of your search query in this wiki. <<BR>>'),
+                ' all related results of your search query in this wiki. <<BR>>', wiki=True),
             ' ',
-            f.url(1, href=request.page.url(request, querydict, escape=0,
-                relative=False)),
+            f.url(1, href=request.page.url(request, querydict, escape=0)),
             f.text(_('Click here to perform a full-text search with your '
                 'search terms!')),
             f.url(0),

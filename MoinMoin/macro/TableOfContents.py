@@ -25,7 +25,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import re
 from MoinMoin.formatter import FormatterBase
 from MoinMoin.Page import Page
 from MoinMoin import wikiutil
@@ -160,7 +159,7 @@ Prints a table of contents.
     result = [
         macro.formatter.div(1, css_class="table-of-contents"),
         macro.formatter.paragraph(1, css_class="table-of-contents-heading"),
-        macro.formatter.text(_('Contents', formatted=False)),
+        macro.formatter.text(_('Contents')),
         macro.formatter.paragraph(0),
     ]
 

@@ -117,7 +117,7 @@ class Permissions:
     def save(self, editor, newtext, rev, **kw):
         """ Check whether user may save a page.
 
-        `editor` is the PageEditor instance, the _other arguments are
+        `editor` is the PageEditor instance, the other arguments are
         those of the `PageEditor.saveText` method.
 
         @param editor: PageEditor instance.
@@ -187,7 +187,7 @@ class AccessControlList:
         For example, the following ACL tells that SomeUser is able to
         read and write the resources protected by that ACL, while any
         member of SomeGroup (besides SomeUser, if part of that group)
-        may also admin that, and every _other user is able to read it.
+        may also admin that, and every other user is able to read it.
 
             SomeUser:read,write SomeGroup:read,write,admin All:read
 
@@ -203,7 +203,7 @@ class AccessControlList:
             +SomeUser:read -OtherUser:write
 
         The acl line above will grant SomeUser read right, and OtherUser
-        write right, but will NOT block automatically all _other rights
+        write right, but will NOT block automatically all other rights
         for these users. For example, if SomeUser ask to write, the
         above acl line does not define if he can or can not write. He
         will be able to write if acl_rights_before or acl_rights_after
@@ -228,7 +228,7 @@ class AccessControlList:
    Configuration options
 
        cfg.acl_rights_default
-           It is is ONLY used when no _other ACLs are given.
+           It is is ONLY used when no other ACLs are given.
            Default: "Known:read,write,delete All:read,write",
 
        cfg.acl_rights_before
@@ -291,7 +291,7 @@ class AccessControlList:
                             rightsdict[right] = (modifier == '+')
                     else:
                         # All rights from acl_rights_valid are added to the
-                        # dict, user rights with value of 1, and _other with
+                        # dict, user rights with value of 1, and other with
                         # value of 0
                         for right in cfg.acl_rights_valid:
                             rightsdict[right] = (right in rights)
@@ -361,10 +361,10 @@ class AccessControlList:
         return None
 
     def __eq__(self, other):
-        return self.acl_lines == _other.acl_lines
+        return self.acl_lines == other.acl_lines
 
     def __ne__(self, other):
-        return self.acl_lines != _other.acl_lines
+        return self.acl_lines != other.acl_lines
 
 
 class ACLStringIterator:

@@ -11,7 +11,7 @@ import cgi
 from MoinMoin.request import RequestBase
 
 class Request(RequestBase):
-    """ specialized on StandAlone Server (MoinMoin.server.standalone) requests """
+    """ specialized on StandAlone Server (MoinMoin.server.server_standalone) requests """
     script_name = ''
 
     def __init__(self, sa, properties={}):
@@ -57,7 +57,8 @@ class Request(RequestBase):
 
     def _setup_args_from_cgi_form(self):
         """ Override to create standalone form """
-        form = cgi.FieldStorage(self.rfile, headers=self.headers, environ={'REQUEST_METHOD': 'POST'})
+        form = cgi.FieldStorage(self.rfile, headers=self.headers, environ={'REQUEST_METHOD': 'POST'},
+                                keep_blank_values=1)
         return RequestBase._setup_args_from_cgi_form(self, form)
 
     def read(self, n=None):

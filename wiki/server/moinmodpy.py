@@ -23,7 +23,7 @@
     (a simple one line change).
 
     TODO: this should be refactored so it uses MoinMoin.server package
-          (see how Twisted, WSGI and Standalone use it)
+          (see how server_twisted, server_wsgi and server_standalone use it)
 
     @copyright: 2004-2005 by Oliver Graf <ograf@bitart.de>
     @license: GNU GPL, see COPYING for details.
@@ -48,17 +48,21 @@ sys.path.insert(0, '/path/to/wikiconfig')
 ## import os
 ## os.environ['MOIN_DEBUG'] = '1'
 
-# Set threads flag, so other code can use proper locking.
-# TODO: It seems that modpy does not use threads, so we don't need to
-# set it here. Do we have another method to check this?
-from MoinMoin import config
-config.use_threads = 1
-del config
+from MoinMoin import log
+log.load_config('.../wiki/config/logging/conffile') # XXX fix path
 
+# Simple way
+#from MoinMoin.server.server_modpython import modpythonHandler as handler
 
-from MoinMoin.request import request_modpython
+# Complex way
+from MoinMoin.server.server_modpython import ModpythonConfig, modpythonHandler
+
+class MyConfig(ModpythonConfig):
+    """ Set up local server-specific stuff here """
+    # Properties
+    # Allow overriding any request property by the value defined in
+    # this dict e.g properties = {'script_name': '/mywiki'}.
+    ## properties = {}
 
 def handler(request):
-    moinreq = request_modpython.Request(request)
-    return moinreq.run(request)
-
+    return modpythonHandler(request, MyConfig)

@@ -29,7 +29,7 @@ class Settings(UserPrefBase):
         self._ = request.getText
         self.cfg = request.cfg
         _ = self._
-        self.title = _("OpenID settings", formatted=False)
+        self.title = _("OpenID settings")
         openid_auth = False
         if not _openid_disabled:
             for authm in self.request.cfg.auth:
@@ -81,8 +81,7 @@ class Settings(UserPrefBase):
             qstr = wikiutil.makeQueryString({'action': 'userprefs',
                                              'handler': 'oid',
                                              'oid.return': '1'})
-            return_to = '%s/%s' % (request.getBaseURL(),
-                                   request.page.url(request, qstr))
+            return_to = request.getQualifiedURL(request.page.url(request, qstr))
             trust_root = request.getBaseURL()
             if oidreq.shouldSendRedirect():
                 redirect_url = oidreq.redirectURL(trust_root, return_to)
@@ -105,8 +104,7 @@ class Settings(UserPrefBase):
         qstr = wikiutil.makeQueryString({'action': 'userprefs',
                                          'handler': 'oid',
                                          'oid.return': '1'})
-        return_to = '%s/%s' % (request.getBaseURL(),
-                               request.page.url(request, qstr))
+        return_to = request.getQualifiedURL(request.page.url(request, qstr))
         info = oidconsumer.complete(query, return_to=return_to)
         if info.status == consumer.FAILURE:
             return _('OpenID error: %s.') % info.message

@@ -10,7 +10,6 @@ import re, time
 
 from MoinMoin import caching, Page
 
-
 # Version of the internal data structure which is pickled.
 # Please increment if you have changed the structure.
 DICTS_PICKLE_VERSION = 6

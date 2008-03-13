@@ -7,6 +7,9 @@
 """
 import os.path, re
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 from MoinMoin.formatter import FormatterBase
 from MoinMoin import wikiutil, i18n
 from MoinMoin.Page import Page
@@ -481,6 +484,7 @@ class Formatter(FormatterBase):
         """
         @keyword title: override using the interwiki wikiname as title
         """
+        querystr = kw.get('querystr', {})
         wikitag, wikiurl, wikitail, wikitag_bad = wikiutil.resolve_interwiki(self.request, interwiki, pagename)
         wikiurl = wikiutil.mapURL(self.request, wikiurl)
         if wikitag == 'Self': # for own wiki, do simple links
@@ -495,6 +499,8 @@ class Formatter(FormatterBase):
         else: # return InterWiki hyperlink
             if on:
                 href = wikiutil.join_wiki(wikiurl, wikitail)
+                if querystr:
+                    href += '?%s' % wikiutil.makeQueryString(querystr)
                 if wikitag_bad:
                     html_class = 'badinterwiki'
                 else:
@@ -609,16 +615,20 @@ class Formatter(FormatterBase):
         """
         assert on in (0, 1, False, True) # make sure we get called the new way, not like the 1.5 api was
         _ = self.request.getText
+        querystr = kw.get('querystr', {})
+        assert isinstance(querystr, dict) # new in 1.6, only support dicts
+        if 'do' not in querystr:
+            querystr['do'] = 'view'
         if on:
             pagename, filename = AttachFile.absoluteName(url, self.page.page_name)
-            #self.request.log("attachment_link: url %s pagename %s filename %s" % (url, pagename, filename))
+            #logging.debug("attachment_link: url %s pagename %s filename %s" % (url, pagename, filename))
             fname = wikiutil.taintfilename(filename)
             if AttachFile.exists(self.request, pagename, fname):
-                target = AttachFile.getAttachUrl(pagename, fname, self.request, do='view')
+                target = AttachFile.getAttachUrl(pagename, fname, self.request, do=querystr['do'])
                 title = "attachment:%s" % url
                 css = 'attachment'
             else:
-                target = AttachFile.getAttachUploadUrl(pagename, fname, self.request)
+                target = AttachFile.getAttachUrl(pagename, fname, self.request, upload=True)
                 title = _('Upload new attachment "%(filename)s"') % {'filename': wikiutil.escape(fname)}
                 css = 'attachment nonexistent'
             return self.url(on, target, css=css, title=title)
@@ -629,24 +639,24 @@ class Formatter(FormatterBase):
         _ = self.request.getText
         pagename, filename = AttachFile.absoluteName(url, self.page.page_name)
         fname = wikiutil.taintfilename(filename)
-        if not AttachFile.exists(self.request, pagename, fname):
-            linktext = _('Upload new attachment "%(filename)s"')
-            return wikiutil.link_tag(
-                self.request,
-                ('%s?action=AttachFile&rename=%s' %
-                 (wikiutil.quoteWikinameURL(pagename),
-                  wikiutil.url_quote_plus(fname))),
-                linktext % {'filename': self.text(fname)})
-        if not 'title' in kw:
-            kw['title'] = _('Inlined image: %(url)s') % {'url': self.text(url)}
-        # alt is required for images:
-        if not 'alt' in kw:
-            kw['alt'] = kw['title']
-        return self.image(
-            title=kw['title'],
-            alt=kw['alt'],
-            src=AttachFile.getAttachUrl(pagename, filename, self.request, addts=1),
-            css="attachment")
+        exists = AttachFile.exists(self.request, pagename, fname)
+        if exists:
+            kw['css'] = 'attachment'
+            kw['src'] = AttachFile.getAttachUrl(pagename, filename, self.request, addts=1)
+            title = _('Inlined image: %(url)s') % {'url': self.text(url)}
+            if not 'title' in kw:
+                kw['title'] = title
+            # alt is required for images:
+            if not 'alt' in kw:
+                kw['alt'] = kw['title']
+            return self.image(**kw)
+        else:
+            title = _('Upload new attachment "%(filename)s"') % {
+                      'filename': wikiutil.escape(fname)}
+            img = self.icon('attachimg')
+            css = 'nonexistent'
+            target = AttachFile.getAttachUrl(pagename, fname, self.request, upload=True)
+            return self.url(1, target, css=css, title=title) + img + self.url(0)
 
     def attachment_drawing(self, url, text, **kw):
         _ = self.request.getText
@@ -665,21 +675,14 @@ class Formatter(FormatterBase):
                 fname, filename = gfname, gfilename
 
         # check whether attachment exists, possibly point to upload form
+        drawing_url = AttachFile.getAttachUrl(pagename, fname, self.request, drawing=drawing, upload=True)
         if not exists:
             linktext = _('Create new drawing "%(filename)s (opens in new window)"')
-            return wikiutil.link_tag(
-                self.request,
-                ('%s?action=AttachFile&rename=%s%s' %
-                 (wikiutil.quoteWikinameURL(pagename),
-                  wikiutil.url_quote_plus(fname),
-                  drawing and ('&drawing=%s' % wikiutil.url_quote(drawing)) or '')),
-                linktext % {'filename': self.text(fname)})
+            return (self.url(1, drawing_url) +
+                    self.text(linktext % {'filename': fname}) +
+                    self.url(0))
 
         mappath = AttachFile.getFilename(self.request, pagename, drawing + u'.map')
-        edit_link = ('%s?action=AttachFile&rename=%s&drawing=%s' % (
-            wikiutil.quoteWikinameURL(pagename),
-            wikiutil.url_quote_plus(fname),
-            wikiutil.url_quote(drawing)))
 
         # check for map file
         if os.path.exists(mappath):
@@ -698,23 +701,18 @@ class Formatter(FormatterBase):
                 map = re.sub('href\s*=\s*"((?!%TWIKIDRAW%).+?)"', r'href="\1" alt="\1" title="\1"', map)
                 # add in edit links plus alt and title attributes
                 alt = title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': self.text(fname)}
-                map = map.replace('%TWIKIDRAW%"', '%s" alt="%s" title="%s"' % (edit_link, alt, title))
+                map = map.replace('%TWIKIDRAW%"', '%s" alt="%s" title="%s"' % (drawing_url, alt, title))
                 # unxml, because 4.01 concrete will not validate />
                 map = map.replace('/>', '>')
                 alt = title = _('Clickable drawing: %(filename)s') % {'filename': self.text(fname)}
-                return (map + self.image(
-                    alt=alt,
-                    title=title,
-                    src=AttachFile.getAttachUrl(pagename, filename, self.request, addts=1),
-                    usemap='#'+mapid, css="drawing"))
+                src = AttachFile.getAttachUrl(pagename, filename, self.request, addts=1)
+                return (map + self.image(alt=alt, title=title, src=src, usemap='#'+mapid, css="drawing"))
         else:
             alt = title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': self.text(fname)}
-            return wikiutil.link_tag(self.request,
-                                     edit_link,
-                                     self.image(alt=alt,
-                                                title=title,
-                                                src=AttachFile.getAttachUrl(pagename, filename, self.request, addts=1), css="drawing"),
-                                     title=title)
+            src = AttachFile.getAttachUrl(pagename, filename, self.request, addts=1)
+            return (self.url(1, drawing_url) +
+                    self.image(alt=alt, title=title, src=src, css="drawing") +
+                    self.url(0))
 
 
     # Text ##############################################################
@@ -1225,7 +1223,7 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
     _allowed_table_attrs = {
         'table': ['class', 'id', 'style'],
         'row': ['class', 'id', 'style'],
-        '': ['colspan', 'rowspan', 'class', 'id', 'style'],
+        '': ['colspan', 'rowspan', 'class', 'id', 'style', 'abbr'],
     }
 
     def _checkTableAttr(self, attrs, prefix):
@@ -1275,7 +1273,7 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
                 pass
         else:
             result['style'] = st
-        #self.request.log("_checkTableAttr returns %r" % result)
+        #logging.debug("_checkTableAttr returns %r" % result)
         return result
 
 
@@ -1389,3 +1387,4 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
 
     def sanitize_to_id(self, text):
         return wikiutil.anchor_name_from_text(text)
+

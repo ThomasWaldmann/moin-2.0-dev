@@ -9,9 +9,13 @@
 """
 
 import os
-import logging
+from StringIO import StringIO
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin import config
+
 
 def switchUID(uid, gid):
     """ Switch identity to safe user and group
@@ -53,46 +57,11 @@ class Config:
     group = None # group ...
     port = None # tcp port number (if supported)
 
-    # log levels for different log handlers
-    # None means "don't use this handler", otherwise specify the minimum loglevel, e.g. logging.DEBUG
-    # TODO: change later to an appropriate level, for now, we want everything
-    loglevel_file = logging.DEBUG # None
-    loglevel_stderr = logging.DEBUG # None
-    logPath = None
-
     def __init__(self):
         """ Validate and post process configuration values
 
         Will raise RuntimeError for any wrong config value.
         """
-        # First, initialize the logging
-        logger = logging.getLogger('') # root logger
-        logger.setLevel(logging.NOTSET) # otherwise it has WARNING by default!
-
-        if self.loglevel_file is not None and self.logPath is not None:
-            # define a Handler which writes to a log file
-            logfile = logging.FileHandler(self.logPath, 'at') # XXX we can't say ", 0" for sync here :(
-            logfile.setLevel(self.loglevel_file)
-            # set a format which is better for logfile use
-            formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-            # tell the handler to use this format
-            logfile.setFormatter(formatter)
-            # add the handler to the root logger
-            logger.addHandler(logfile)
-
-        if self.loglevel_stderr is not None:
-            # define a Handler which writes INFO to sys.stderr
-            logstderr = logging.StreamHandler()
-            logstderr.setLevel(self.loglevel_stderr)
-            # set a format which is simpler for console use
-            formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s', '%H%M%S')
-            # tell the handler to use this format
-            logstderr.setFormatter(formatter)
-            # add the handler to the root logger
-            logger.addHandler(logstderr)
-
-        logging.info("logging initialized")
-
         # Check that docs path is accessible
         if self.docs:
             self.docs = os.path.normpath(os.path.abspath(self.docs))

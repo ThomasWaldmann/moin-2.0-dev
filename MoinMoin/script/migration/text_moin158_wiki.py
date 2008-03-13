@@ -175,7 +175,7 @@ class Parser:
             url = url[10:] # remove "wiki:self:"
             is_self_reference = 1
         elif url2.startswith('wiki:'):
-            url = url[5:] # remove "wiki:
+            url = url[5:] # remove "wiki:"
 
         tag, tail = wikiutil.split_wiki(url)
         if text is None:
@@ -697,7 +697,6 @@ class Parser:
         attr, msg = wikiutil.parseAttributes(self.request, attrdef, '>', table_extension)
         if msg:
             msg = '<strong class="highlight">%s</strong>' % msg
-        #self.request.log("parseAttributes returned %r" % attr)
         return attr, msg
 
     def _tableZ_repl(self, word):

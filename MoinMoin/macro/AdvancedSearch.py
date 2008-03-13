@@ -8,14 +8,34 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from MoinMoin import wikiutil
 from MoinMoin.i18n import languages
 from MoinMoin.widget import html
 from MoinMoin.util.web import makeSelection
 from MoinMoin.support.python_compatibility import sorted
-
 import mimetypes
 
 Dependencies = ['pages']
+
+def getMimetypes():
+    # The types will be listed here, instead of parsing mimetypes.types_map
+    types = [
+        'application',
+        'audio',
+        'image',
+        'message',
+        'text',
+        'video',
+        ]
+    return types
+
+
+def getCategories(request):
+    # This will return all pages with "Category" in the title
+    cat_filter = request.cfg.cache.page_category_regex.search
+    pages = request.rootpage.getPageList(filter=cat_filter)
+    pages.sort()
+    return pages
 
 
 def form_get(request, name, default=''):
@@ -42,7 +62,7 @@ def advanced_ui(macro):
 
     search_boxes = ''.join([
         f.table_row(1),
-        f.table_cell(1, attrs={'rowspan': '6', 'class': 'searchfor'}),
+        f.table_cell(1, attrs={'rowspan': '5', 'class': 'searchfor'}),
         f.text(_('Search for items')),
         f.table_cell(0),
         ''.join([''.join([
@@ -68,14 +88,18 @@ def advanced_ui(macro):
             #    '<input type="text" name="xor_terms" size="30" value="%s">'
             #    % form_get(request, 'xor_terms')),
             # TODO: dropdown-box?
-            (_('belonging to one of the following categories'),
-                '<input type="text" name="categories" size="30" value="%s">'
-                % form_get(request, 'categories')),
             (_('last modified since (e.g. last 2 weeks)'),
                 '<input type="text" name="mtime" size="30" value="%s">'
                 % form_get(request, 'mtime')),
         )])
     ])
+
+    # category selection
+    categories = form_get(request, 'categories')
+    c_select = makeSelection('categories',
+            [('', _('any category'))] +
+            [(cat, '%s' % cat) for cat in getCategories(request)],
+            categories, 3, True)
 
     # language selection
     searchedlang = form_get(request, 'language')
@@ -83,16 +107,17 @@ def advanced_ui(macro):
         for lang, lmeta in languages.items()])
     userlang = macro.request.lang
     lang_select = makeSelection('language',
-            [('', _('any language')), (userlang, langs[userlang])] +
-                sorted(langs.items(), key=lambda i: i[1]),
-            searchedlang)
+            [('', _('any language')),
+            (userlang, langs[userlang])] + sorted(langs.items(), key=lambda i: i[1]),
+            searchedlang, 3, True)
 
     # mimetype selection
     mimetype = form_get(request, 'mimetype')
     mt_select = makeSelection('mimetype',
-            [('', _('any mimetype'))] + [(m[1], '*%s - %s' % m) for m in sorted(mimetypes.types_map.items())],
-            mimetype)
-
+            [('', _('any mimetype'))] +
+            [(type, 'all %s files' % type) for type in getMimetypes()] +
+            [(m[1], '*%s - %s' % m) for m in sorted(mimetypes.types_map.items())],
+            mimetype, 3, True)
 
     # misc search options (checkboxes)
     search_options = ''.join([
@@ -107,6 +132,7 @@ def advanced_ui(macro):
             f.table_cell(0),
             f.table_row(0),
             ]) for txt in (
+                (_('Categories'), unicode(c_select), ''),
                 (_('Language'), unicode(lang_select), ''),
                 (_('File Type'), unicode(mt_select), ''),
                 ('', html.INPUT(type='checkbox', name='titlesearch',
@@ -135,7 +161,7 @@ def advanced_ui(macro):
 
     # the dialogue
     return f.rawHTML('\n'.join([
-        u'<form method="get" action="">',
+        u'<form method="get" action="%s/%s">' % (macro.request.getScriptname(), wikiutil.quoteWikinameURL(macro.request.formatter.page.page_name)),
         u'<div>',
         u'<input type="hidden" name="action" value="fullsearch">',
         u'<input type="hidden" name="advancedsearch" value="1">',

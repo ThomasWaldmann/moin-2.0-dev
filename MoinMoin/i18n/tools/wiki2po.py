@@ -13,13 +13,13 @@ def run():
     lang = sys.argv[1]
 
     if not lang in excluded:
-        wiki = xmlrpclib.ServerProxy("http://moinmaster.wikiwikiweb.de/?action=xmlrpc2")
+        wiki = xmlrpclib.ServerProxy("http://master.moinmo.in/?action=xmlrpc2")
 
         pagename = "MoinI18n/%s" % lang
         print pagename
         pagedata = wiki.getPage(pagename).encode('utf-8').replace("\n", "\r\n")
 
-        f = open("%s.%s.po" % (langfname, DOMAIN), "w")
+        f = open("%s.%s.po" % (lang, DOMAIN), "w")
         f.write(pagedata)
         f.close()
 

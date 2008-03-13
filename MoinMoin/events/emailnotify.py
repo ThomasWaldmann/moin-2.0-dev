@@ -33,10 +33,10 @@ def prep_page_changed_mail(request, page, comment, email_lang, revisions, trivia
 
     """
     change = notification.page_change_message("page_changed", request, page, email_lang, comment=comment, revisions=revisions)
-    _ = lambda s, formatted=True, r=request, l=email_lang: r.getText(s, formatted=formatted, lang=l)
+    _ = lambda s, wiki=False, r=request, l=email_lang: r.getText(s, wiki=wiki, lang=l)
 
-    subject = _('[%(sitename)s] %(trivial)sUpdate of "%(pagename)s" by %(username)s', formatted=False) % {
-            'trivial': (trivial and _("Trivial ", formatted=False)) or "",
+    subject = _('[%(sitename)s] %(trivial)sUpdate of "%(pagename)s" by %(username)s') % {
+            'trivial': (trivial and _("Trivial ")) or "",
             'sitename': page.cfg.sitename or "Wiki",
             'pagename': page.page_name,
             'username': page.last_editor(),
@@ -118,7 +118,6 @@ def handle_file_attached(event):
     """Sends an email to super users that have subscribed to this event type"""
 
     names = set()
-    event_name = event.name
     from_address = event.request.cfg.mail_from
     request = event.request
     page = Page(request, event.pagename)
@@ -131,11 +130,11 @@ def handle_file_attached(event):
         recipients.extend(subscribers[lang])
 
     attachlink = request.getBaseURL() + getAttachUrl(event.pagename, event.filename, request)
-    pagelink = request.getQualifiedURL(page.url(request, {}, relative=False))
+    pagelink = request.getQualifiedURL(page.url(request, {}))
 
     for lang in subscribers:
         emails = []
-        _ = lambda text: request.getText(text, lang=lang, formatted=False)
+        _ = lambda text: request.getText(text, lang=lang)
 
         links = _("Attachment link: %(attach)s\n" \
                   "Page link: %(page)s\n") % {'attach': attachlink, 'page': pagelink}

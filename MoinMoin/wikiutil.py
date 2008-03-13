@@ -5,7 +5,7 @@
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
                 2004 by Florian Festi,
                 2006 by Mikko Virkkil,
-                2005-2007 MoinMoin:ThomasWaldmann,
+                2005-2008 MoinMoin:ThomasWaldmann,
                 2007 MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
@@ -16,6 +16,9 @@ import os
 import re
 import time
 import urllib
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
@@ -161,7 +164,10 @@ def url_unquote(s, want_unicode=True):
         s = s.encode(config.charset) # ascii would also work
     s = urllib.unquote(s)
     if want_unicode:
-        s = s.decode(config.charset)
+        try:
+            s = decodeUserInput(s, [config.charset, 'iso-8859-1', ]) # try hard
+        except UnicodeError:
+            s = s.decode('ascii', 'replace') # better than crashing
     return s
 
 def parseQueryString(qstr, want_unicode=True):
@@ -243,6 +249,7 @@ def escape(s, quote=0):
     s = s.replace(">", "&gt;")
     if quote:
         s = s.replace('"', "&quot;")
+        s = s.replace("'", "&#x27;")
     return s
 
 def clean_input(text, max_len=201):
@@ -744,7 +751,7 @@ def getLocalizedPage(request, pagename): # was: getSysPage
              if it exists
     """
     from MoinMoin.Page import Page
-    i18n_name = request.getText(pagename, formatted=False)
+    i18n_name = request.getText(pagename)
     pageobj = None
     if i18n_name != pagename:
         if request.page and i18n_name == request.page.page_name:
@@ -920,6 +927,10 @@ MIMETYPES_MORE = {
  '.ots': 'application/vnd.oasis.opendocument.spreadsheet-template',
  '.otp': 'application/vnd.oasis.opendocument.presentation-template',
  '.otg': 'application/vnd.oasis.opendocument.graphics-template',
+ # some systems (like Mac OS X) don't have some of these:
+ '.patch': 'text/x-diff',
+ '.diff': 'text/x-diff',
+ '.py': 'text/x-python',
 }
 [mimetypes.add_type(mimetype, ext, True) for ext, mimetype in MIMETYPES_MORE.items()]
 
@@ -988,7 +999,7 @@ class MimeType(object):
         format = format.lower()
         if format in ('plain', 'csv', 'rst', 'docbook', 'latex', 'tex', 'html', 'css',
                       'xml', 'python', 'perl', 'php', 'ruby', 'javascript',
-                      'cplusplus', 'java', 'pascal', 'diff', 'gettext', 'xslt', ):
+                      'cplusplus', 'java', 'pascal', 'diff', 'gettext', 'xslt', 'creole', ):
             mimetype = 'text', format
         else:
             mapping = {
@@ -1567,6 +1578,60 @@ def get_choice(request, arg, name=None, choices=[None]):
     return arg
 
 
+class IEFArgument:
+    """
+    Base class for new argument parsers for
+    invoke_extension_function.
+    """
+    def __init__(self):
+        pass
+
+    def parse_argument(self, s):
+        """
+        Parse the argument given in s (a string) and return
+        the argument for the extension function.
+        """
+        raise NotImplementedError
+
+    def get_default(self):
+        """
+        Return the default for this argument.
+        """
+        raise NotImplementedError
+
+
+class UnitArgument(IEFArgument):
+    """
+    Argument class for invoke_extension_function that forces
+    having any of the specified units given for a value.
+
+    Note that the default unit is "mm".
+
+    Use, for example, "UnitArgument('7mm', float, ['%', 'mm'])".
+    """
+    def __init__(self, default, argtype, units=['mm']):
+        """
+        Initialise a UnitArgument giving the default,
+        argument type and the permitted units.
+        """
+        IEFArgument.__init__(self)
+        self._units = list(units)
+        self._units.sort(cmp=lambda x, y: len(y) - len(x))
+        self._type = argtype
+        self._default = self.parse_argument(default)
+
+    def parse_argument(self, s):
+        for unit in self._units:
+            if s.endswith(unit):
+                ret = (self._type(s[:len(s) - len(unit)]), unit)
+                return ret
+        ## XXX: how can we translate this?
+        raise ValueError("Invalid unit in value %s" % s)
+
+    def get_default(self):
+        return self._default
+
+
 class required_arg:
     """
     Wrap a type in this class and give it as default argument
@@ -1578,7 +1643,8 @@ class required_arg:
         Initialise a required_arg
         @param argtype: the type the argument should have
         """
-        if not argtype in (bool, int, long, float, complex, unicode):
+        if not (argtype in (bool, int, long, float, complex, unicode) or
+                isinstance(argtype, IEFArgument)):
             raise TypeError("argtype must be a valid type")
         self.argtype = argtype
 
@@ -1631,6 +1697,11 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
             return get_float(request, value, name)
         elif default is complex:
             return get_complex(request, value, name)
+        elif isinstance(default, IEFArgument):
+            # defaults handled later
+            if value is None:
+                return None
+            return default.parse_argument(value)
         elif isinstance(default, required_arg):
             return _convert_arg(request, value, default.argtype, name)
         return value
@@ -1725,9 +1796,11 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
             # went wrong (if it does)
             kwargs[argname] = _convert_arg(request, kwargs[argname],
                                            defaults[argname], argname)
-            if (kwargs[argname] is None
-                and isinstance(defaults[argname], required_arg)):
-                raise ValueError(_('Argument "%s" is required') % argname)
+            if kwargs[argname] is None:
+                if isinstance(defaults[argname], required_arg):
+                    raise ValueError(_('Argument "%s" is required') % argname)
+                if isinstance(defaults[argname], IEFArgument):
+                    kwargs[argname] = defaults[argname].get_default()
 
         if not argname in argnames:
             # move argname into _kwargs parameter
@@ -1783,7 +1856,7 @@ def parseAttributes(request, attrstring, endtoken=None, extension=None):
         # call extension function with the current token, the parser, and the dict
         if extension:
             found_flag, msg = extension(key, parser, attrs)
-            #request.log("%r = extension(%r, parser, %r)" % (msg, key, attrs))
+            #logging.debug("%r = extension(%r, parser, %r)" % (msg, key, attrs))
             if found_flag:
                 continue
             elif msg:
@@ -2121,7 +2194,7 @@ def link_tag(request, params, text=None, formatter=None, on=None, **kw):
             tag = '<a%s href="%s/%s">' % (attrs, request.getScriptname(), params)
             if not on:
                 tag = "%s%s</a>" % (tag, text)
-        request.log("Warning: wikiutil.link_tag called without formatter and without request.html_formatter. tag=%r" % (tag, ))
+        logging.warning("wikiutil.link_tag called without formatter and without request.html_formatter. tag=%r" % (tag, ))
     return tag
 
 def containsConflictMarker(text):
@@ -2164,8 +2237,16 @@ def anchor_name_from_text(text):
 ### Tickets - used by RenamePage and DeletePage
 ########################################################################
 
-def createTicket(request, tm=None):
-    """Create a ticket using a site-specific secret (the config)"""
+def createTicket(request, tm=None, action=None):
+    """ Create a ticket using a site-specific secret (the config)
+
+        @param tm: unix timestamp (optional, uses current time if not given)
+        @param action: action name (optional, uses current action if not given)
+                       Note: if you create a ticket for a form that calls another
+                             action than the current one, you MUST specify the
+                             action you call when posting the form.
+    """
+
     import sha
     if tm is None:
         tm = "%010x" % time.time()
@@ -2176,10 +2257,11 @@ def createTicket(request, tm=None):
     except:
         pagename = 'None'
 
-    try:
-        action = request.action
-    except:
-        action = 'None'
+    if action is None:
+        try:
+            action = request.action
+        except:
+            action = 'None'
 
 
     ticket = "%s.%s.%s" % (tm, pagename, action)
@@ -2205,12 +2287,15 @@ def checkTicket(request, ticket):
         timestamp = int(timestamp_str, 16)
     except ValueError:
         # invalid or empty ticket
+        logging.debug("checkTicket: invalid or empty ticket %r" % ticket)
         return False
     now = time.time()
     if timestamp < now - 10 * 3600:
         # we don't accept tickets older than 10h
+        logging.debug("checkTicket: too old ticket, timestamp %r" % timestamp)
         return False
     ourticket = createTicket(request, timestamp_str)
+    logging.debug("checkTicket: returning %r, got %r, expected %r" % (ticket == ourticket, ticket, ourticket))
     return ticket == ourticket
 
 

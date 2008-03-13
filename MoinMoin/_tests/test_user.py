@@ -6,11 +6,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os
 import py
 
 from MoinMoin import user, caching
-from MoinMoin.util import filesys
 
 
 class TestEncodePassword(object):
@@ -45,8 +43,6 @@ class TestLoginWithPassword(object):
         self.request.saved_cookie = ''
         self.request.user = user.User(self.request)
 
-        # Prevent user list caching - we create and delete users too fast for that.
-        filesys.dcdisable()
         self.user = None
 
     def teardown_method(self, method):
@@ -69,9 +65,6 @@ class TestLoginWithPassword(object):
         except:
             pass
 
-        # Prevent user list caching - we create and delete users too fast for that.
-        filesys.dcdisable()
-
     def testAsciiPassword(self):
         """ user: login with ascii password """
         # Create test user
@@ -86,7 +79,7 @@ class TestLoginWithPassword(object):
     def testUnicodePassword(self):
         """ user: login with non-ascii password """
         # Create test user
-        name = u'__שם משתמש לא קיים__' # Hebrew
+        name = u'__ש�? משתמש ל�? קיי�?__' # Hebrew
         password = name
         self.createUser(name, password)
 
@@ -104,7 +97,7 @@ class TestLoginWithPassword(object):
         # Create test user
         # Use iso charset to create user with old enc_password, as if
         # the user file was migrated from pre 1.3 wiki.
-        name = u'__JÃ¼rgen Herman__'
+        name = u'__Jürgen Herman__'
         password = name
         self.createUser(name, password, charset='iso-8859-1')
 
@@ -121,7 +114,7 @@ class TestLoginWithPassword(object):
         # Create test user
         # Use iso charset to create user with old enc_password, as if
         # the user file was migrated from pre 1.3 wiki.
-        name = u'__JÃ¼rgen Herman__'
+        name = u'__Jürgen Herman__'
         password = name
         self.createUser(name, password, charset='iso-8859-1')
         # Login - this should replace the old password in the user file
@@ -134,7 +127,7 @@ class TestLoginWithPassword(object):
     def testSubscriptionSubscribedPage(self):
         """ user: tests isSubscribedTo  """
         pagename = u'HelpMiscellaneous'
-        name = u'__JÃ¼rgen Herman__'
+        name = u'__Jürgen Herman__'
         password = name
         self.createUser(name, password, charset='iso-8859-1')
         # Login - this should replace the old password in the user file
@@ -153,6 +146,25 @@ class TestLoginWithPassword(object):
         theUser = user.User(self.request, name=name, password=password)
         theUser.subscribe(pagename)
         assert not theUser.isSubscribedTo([testPagename]) # list(!) of pages to check
+
+    def testRenameUser(self):
+        """ create user and then rename user and check
+        if the old username is removed from the cache name2id
+        """
+        # Create test user
+        # Use iso charset to create user with old enc_password, as if
+        # the user file was migrated from pre 1.3 wiki.
+        name = u'__Some Name__'
+        password = name
+        self.createUser(name, password)
+        # Login - this should replace the old password in the user file
+        theUser = user.User(self.request, name=name)
+        # Rename user
+        theUser.name = u'__SomeName__'
+        theUser.save()
+        theUser = user.User(self.request, name=name, password=password)
+
+        assert not theUser.exists()
 
     # Helpers ---------------------------------------------------------
 
@@ -230,7 +242,7 @@ class TestIsValidName(object):
             u'Jürgen Hermann', # German
             u'ניר סופר', # Hebrew
             u'CamelCase', # Good old camel case
-            u'가각간갇갈 갉갊감 갬갯걀갼' # Hangul (gibberish)
+            u'가�?간갇갈 갉갊�? 갬갯걀갼' # Hangul (gibberish)
             )
         for test in cases:
             assert user.isValidName(self.request, test)

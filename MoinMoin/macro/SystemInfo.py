@@ -4,7 +4,7 @@
 
     This macro shows some info about your wiki, wiki software and your system.
 
-    @copyright: 2006 MoinMoin:ThomasWaldmann,
+    @copyright: 2006-2008 MoinMoin:ThomasWaldmann,
                 2007 MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
@@ -20,11 +20,10 @@ from MoinMoin.logfile import editlog, eventlog
 from MoinMoin.Page import Page
 
 class SystemInfo:
-    def __init__(self, macro, args):
+    def __init__(self, macro):
         self.macro = macro
         self.request = macro.request
         self.formatter = macro.formatter
-        self.args = args
 
     def formatInReadableUnits(self, size):
         size = float(size)
@@ -161,13 +160,13 @@ class SystemInfo:
                 stems = Stemmer.algorithms()
                 stemVersion = Stemmer.version()
             except:
-                stemVersion = _('!PyStemmer not installed')
+                stemVersion = _('PyStemmer not installed')
         except ImportError:
-            stemVersion = _('!PyStemmer not installed')
+            stemVersion = _('PyStemmer not installed')
 
         row(_('Stemming for Xapian'), xapState[request.cfg.xapian_stemming])
-        row(_('!PyStemmer Version'), stemVersion)
-        row(_('!PyStemmer stems'), ', '.join(stems) or nonestr)
+        row(_('PyStemmer Version'), stemVersion)
+        row(_('PyStemmer stems'), ', '.join(stems) or nonestr)
 
         try:
             from threading import activeCount
@@ -180,8 +179,8 @@ class SystemInfo:
 
         return buf.getvalue()
 
-def execute(macro, args):
+def macro_SystemInfo(macro):
     if macro.request.isSpiderAgent: # reduce bot cpu usage
         return ''
-    return SystemInfo(macro, args).render()
+    return SystemInfo(macro).render()
 
