@@ -8,8 +8,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import time
-from MoinMoin import user, wikiutil
+from MoinMoin import user
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
 
@@ -22,7 +21,7 @@ class Settings(UserPrefBase):
         self._ = request.getText
         _ = request.getText
         self.cfg = request.cfg
-        self.title = _("Change password", formatted=False)
+        self.title = _("Change password")
         self.name = 'changepass'
 
 
@@ -44,12 +43,14 @@ class Settings(UserPrefBase):
         if request.request_method != 'POST':
             return
 
-        password = form.get('password', [''])[0]
+        password = form.get('password1', [''])[0]
         password2 = form.get('password2', [''])[0]
 
         # Check if password is given and matches with password repeat
         if password != password2:
             return _("Passwords don't match!")
+        if not password:
+            return _("Please specify a password!")
 
         pw_checker = request.cfg.password_checker
         if pw_checker:
@@ -73,7 +74,7 @@ class Settings(UserPrefBase):
                                           "enter a new password twice.")))
 
         self.make_row(_('Password'),
-                      [html.INPUT(type="password", size=36, name="password")])
+                      [html.INPUT(type="password", size=36, name="password1")])
         self.make_row(_('Password repeat'),
                       [html.INPUT(type="password", size=36, name="password2")])
 

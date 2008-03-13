@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 """
-    MoinMoin.server.twistedmoin
+    MoinMoin.server.server_twisted
 
     Create standalone twisted based server.
 
@@ -207,7 +207,6 @@ class TwistedConfig(Config):
     interfaces = ['']
     threads = 10
     timeout = 15 * 60 # 15 minutes
-    logPath = None # moin log file
     logPath_twisted = None # Twisted log file
     virtualHosts = None
     memoryProfile = None

@@ -3,7 +3,7 @@
     MoinMoin - Multiple configuration handler and Configuration defaults class
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2005-2006 MoinMoin:ThomasWaldmann.
+                2005-2008 MoinMoin:ThomasWaldmann.
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -11,6 +11,9 @@ import re
 import os
 import sys
 import time
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin import config, error, util, wikiutil
 import MoinMoin.auth as authmodule
@@ -22,7 +25,7 @@ from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
 from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
-from MoinMoin.storage.backends.moin17 import UserBackend, ItemBackend
+#from MoinMoin.storage.backends.moin17 import UserBackend, ItemBackend
 from MoinMoin.storage.backends.meta import LayerBackend
 from MoinMoin.storage.external import DELETED
 from MoinMoin.support.python_compatibility import set
@@ -48,6 +51,7 @@ def _importConfigModule(name):
     except ImportError:
         raise
     except IndentationError, err:
+        logging.exception('Your source code / config file is not correctly indented!')
         msg = '''IndentationError: %(err)s
 
 The configuration files are python modules. Therefore, whitespace is
@@ -58,6 +62,7 @@ You have to use four spaces at the beginning of the line mostly.
 }
         raise error.ConfigurationError(msg)
     except Exception, err:
+        logging.exception('An exception happened.')
         msg = '%s: %s' % (err.__class__.__name__, str(err))
         raise error.ConfigurationError(msg)
     return module, mtime
@@ -77,16 +82,18 @@ def _url_re_list():
         try:
             farmconfig, _farmconfig_mtime = _importConfigModule('farmconfig')
         except ImportError:
-            # Default to wikiconfig for all urls.
+            logging.debug("could not import farmconfig, mapping all URLs to wikiconfig")
             _farmconfig_mtime = 0
             _url_re_cache = [('wikiconfig', re.compile(r'.')), ] # matches everything
         else:
+            logging.info("using farm config: %s" % os.path.abspath(farmconfig.__file__))
             try:
                 cache = []
                 for name, regex in farmconfig.wikis:
                     cache.append((name, re.compile(regex)))
                 _url_re_cache = cache
             except AttributeError:
+                logging.error("required 'wikis' list missing in farmconfig")
                 msg = """
 Missing required 'wikis' list in 'farmconfig.py'.
 
@@ -113,7 +120,9 @@ def _makeConfig(name):
         configClass = getattr(module, 'Config')
         cfg = configClass(name)
         cfg.cfg_mtime = max(mtime, _farmconfig_mtime)
+        logging.info("using wiki config: %s" % os.path.abspath(module.__file__))
     except ImportError, err:
+        logging.exception('Could not import.')
         msg = '''ImportError: %(err)s
 
 Check that the file is in the same directory as the server script. If
@@ -129,6 +138,7 @@ module name does not include the ".py" suffix.
 }
         raise error.ConfigurationError(msg)
     except AttributeError, err:
+        logging.exception('An exception occured.')
         msg = '''AttributeError: %(err)s
 
 Could not find required "Config" class in "%(name)s.py".
@@ -210,7 +220,7 @@ class CacheClass:
     pass
 
 
-class DefaultConfig:
+class DefaultConfig(object):
     """ default config values """
 
     # setting DesktopEdition = True gives all local users special powers - ONLY use for MMDE style usage!
@@ -225,8 +235,7 @@ class DefaultConfig:
 
     actions_excluded = ['xmlrpc'] # ['DeletePage', 'AttachFile', 'RenamePage', 'test', ]
     allow_xslt = False
-    antispam_master_url = "http://moinmaster.wikiwikiweb.de:8000/?action=xmlrpc2"
-    attachments = None # {'dir': path, 'url': url-prefix}
+    antispam_master_url = "http://master.moinmo.in/?action=xmlrpc2"
     auth = [authmodule.MoinLogin()]
     # default to http and xmlrpc_applytoken to get old semantics
     # xmlrpc_applytoken shall be removed once that code is changed
@@ -276,7 +285,9 @@ class DefaultConfig:
     editor_default = 'text' # which editor is called when nothing is specified
     editor_ui = 'freechoice' # which editor links are shown on user interface
     editor_force = False
-    editor_quickhelp = {# editor markup hints quickhelp
+    editor_quickhelp = {
+        # editor markup hints quickhelp
+        # MUST be in wiki markup, even if the help is not for the wiki parser!
         'wiki': _("""\
  Emphasis:: <<Verbatim('')>>''italics''<<Verbatim('')>>; <<Verbatim(''')>>'''bold'''<<Verbatim(''')>>; <<Verbatim(''''')>>'''''bold italics'''''<<Verbatim(''''')>>; <<Verbatim('')>>''mixed ''<<Verbatim(''')>>'''''bold'''<<Verbatim(''')>> and italics''<<Verbatim('')>>; <<Verbatim(----)>> horizontal rule.
  Headings:: <<Verbatim(=)>> Title 1 <<Verbatim(=)>>; <<Verbatim(==)>> Title 2 <<Verbatim(==)>>; <<Verbatim(===)>> Title 3 <<Verbatim(===)>>;   <<Verbatim(====)>> Title 4 <<Verbatim(====)>>; <<Verbatim(=====)>> Title 5 <<Verbatim(=====)>>.
@@ -287,23 +298,22 @@ class DefaultConfig:
 (!) For more help, see HelpOnEditing or SyntaxReference.
 """),
         'rst': _("""\
-Emphasis: <i>*italic*</i> <b>**bold**</b> ``monospace``<br/>
-<br/><pre>
+{{{
+Emphasis: *italic* **bold** ``monospace``
+
 Headings: Heading 1  Heading 2  Heading 3
           =========  ---------  ~~~~~~~~~
 
 Horizontal rule: ----
+
 Links: TrailingUnderscore_ `multi word with backticks`_ external_
 
-.. _external: http://external-site.net/foo/
+.. _external: http://external-site.example.org/foo/
 
 Lists: * bullets; 1., a. numbered items.
-</pre>
-<br/>
+}}}
 (!) For more help, see the
-<a href="http://docutils.sourceforge.net/docs/user/rst/quickref.html">
-reStructuredText Quick Reference
-</a>.
+[[http://docutils.sourceforge.net/docs/user/rst/quickref.html|reStructuredText Quick Reference]].
 """),
     }
     edit_locking = 'warn 10' # None, 'warn <timeout mins>', 'lock <timeout mins>'
@@ -333,15 +343,67 @@ reStructuredText Quick Reference
     language_ignore_browser = False # ignore browser settings, use language_default
                                     # or user prefs
 
+    # ldap / active directory server URI
+    # use ldaps://server:636 url for ldaps,
+    # use  ldap://server for ldap without tls (and set ldap_start_tls to 0),
+    # use  ldap://server for ldap with tls (and set ldap_start_tls to 1 or 2).
+    ldap_uri = 'ldap://localhost'
+
+    # We can either use some fixed user and password for binding to LDAP.
+    # Be careful if you need a % char in those strings - as they are used as
+    # a format string, you have to write %% to get a single % in the end.
+    #ldap_binddn = 'binduser@example.org' # (AD)
+    #ldap_binddn = 'cn=admin,dc=example,dc=org' # (OpenLDAP)
+    #ldap_bindpw = 'secret'
+    # or we can use the username and password we got from the user:
+    #ldap_binddn = '%(username)s@example.org' # DN we use for first bind (AD)
+    #ldap_bindpw = '%(password)s' # password we use for first bind
+    # or we can bind anonymously (if that is supported by your directory).
+    # In any case, ldap_binddn and ldap_bindpw must be defined.
+    ldap_binddn = ''
+    ldap_bindpw = ''
+
+    # base DN we use for searching
+    #ldap_base = 'ou=SOMEUNIT,dc=example,dc=org'
+    ldap_base = ''
+
+    # scope of the search we do (2 == ldap.SCOPE_SUBTREE)
+    ldap_scope = 2 # we do not want to import ldap for everybody just for that
+
+    # LDAP REFERRALS
+    ldap_referrals = 0 # (0 needed for AD)
+
+    # ldap filter used for searching:
+    #ldap_filter = '(sAMAccountName=%(username)s)' # (AD)
+    ldap_filter = '(uid=%(username)s)' # (OpenLDAP)
+    # you can also do more complex filtering like:
+    # "(&(cn=%(username)s)(memberOf=CN=WikiUsers,OU=Groups,DC=example,DC=org))"
+
+    # some attribute names we use to extract information from LDAP:
+    ldap_givenname_attribute = None # ('givenName') ldap attribute we get the first name from
+    ldap_surname_attribute = None # ('sn') ldap attribute we get the family name from
+    ldap_aliasname_attribute = None # ('displayName') ldap attribute we get the aliasname from
+    ldap_email_attribute = None # ('mail') ldap attribute we get the email address from
+    ldap_email_callback = None # called to make up email address
+
+    ldap_coding = 'utf-8' # coding used for ldap queries and result values
+    ldap_timeout = 10 # how long we wait for the ldap server [s]
+    ldap_verbose = True # if True, put lots of LDAP debug info into the log
+
+    # TLS / SSL related defaults
+    ldap_start_tls = 0 # 0 = No, 1 = Try, 2 = Required
+    ldap_tls_cacertdir = ''
+    ldap_tls_cacertfile = ''
+    ldap_tls_certfile = ''
+    ldap_tls_keyfile = ''
+    ldap_tls_require_cert = 0 # 0 == ldap.OPT_X_TLS_NEVER (needed for self-signed certs)
+
+    ldap_bindonce = False # set to True to only do one bind.  Useful if
+                          # configured to bind as the user on the first attempt
+
     log_reverse_dns_lookups = True  # if we do reverse dns lookups for logging hostnames
                                     # instead of just IPs
     log_timing = False              # update <data_dir>/timing.log?
-
-    xapian_search = False
-    xapian_index_dir = None
-    xapian_stemming = True
-    xapian_index_history = False
-    search_results_per_page = 10
 
     mail_login = None # or "user pwd" if you need to use SMTP AUTH
     mail_sendmail = None # "/usr/sbin/sendmail -t -i" to not use SMTP, but sendmail
@@ -390,10 +452,15 @@ reStructuredText Quick Reference
     nonexist_qm = False
     notification_bot_uri = None
 
+    # OpenID server support
+    openid_server_enabled = False
+    openid_server_restricted_users_group = None
+    openid_server_enable_user = False
+
     page_credits = [
         # Feel free to add other credits, but PLEASE do NOT change or remove
         # the following links - you help us by keeping them "as is":
-        '<a href="http://moinmoin.wikiwikiweb.de/" title="This site uses the MoinMoin Wiki software.">MoinMoin Powered</a>',
+        '<a href="http://moinmo.in/" title="This site uses the MoinMoin Wiki software.">MoinMoin Powered</a>',
         '<a href="http://moinmo.in/Python" title="MoinMoin is written in Python.">Python Powered</a>',
 
         # Optional credits:
@@ -431,7 +498,7 @@ reStructuredText Quick Reference
         'diff':        ({'action': 'diff'}, _("Diffs"), "diff"),
         'info':        ({'action': 'info'}, _("Info"), "info"),
         'edit':        ({'action': 'edit'}, _("Edit"), "edit"),
-        'unsubscribe': ({'action': 'subscribe'}, _("UnSubscribe"), "unsubscribe"),
+        'unsubscribe': ({'action': 'unsubscribe'}, _("UnSubscribe"), "unsubscribe"),
         'subscribe':   ({'action': 'subscribe'}, _("Subscribe"), "subscribe"),
         'raw':         ({'action': 'raw'}, _("Raw"), "raw"),
         'xml':         ({'action': 'show', 'mimetype': 'text/xml'}, _("XML"), "xml"),
@@ -535,6 +602,9 @@ reStructuredText Quick Reference
     }
     surge_lockout_time = 3600 # secs you get locked out when you ignore warnings
 
+    textchas = None
+    textchas_disabled_group = None # e.g. u'NoTextChasGroup' if you are a member of this group, you don't get textchas
+
     theme_default = 'modern'
     theme_force = False
 
@@ -550,9 +620,11 @@ reStructuredText Quick Reference
 
     # a regex of HTTP_USER_AGENTS that should be excluded from logging
     # and receive a FORBIDDEN for anything except viewing a page
-    ua_spiders = ('archiver|cfetch|crawler|curl|gigabot|googlebot|holmes|htdig|httrack|httpunit|jeeves|larbin|leech|'
-                  'linkbot|linkmap|linkwalk|mercator|mirror|msnbot|msrbot|neomo|nutbot|omniexplorer|puf|robot|scooter|seekbot|'
-                  'sherlock|slurp|sitecheck|spider|teleport|voyager|webreaper|wget')
+    # list must not contain 'java' because of twikidraw wanting to save drawing uses this useragent
+    ua_spiders = ('archiver|cfetch|charlotte|crawler|curl|gigabot|googlebot|heritrix|holmes|htdig|httrack|httpunit|'
+                  'intelix|jeeves|larbin|leech|libwww-perl|linkbot|linkmap|linkwalk|litefinder|mercator|'
+                  'microsoft.url.control|mirror| mj12bot|msnbot|msrbot|neomo|nutbot|omniexplorer|puf|robot|scooter|seekbot|'
+                  'sherlock|slurp|sitecheck|snoopy|spider|teleport|twiceler|voilabot|voyager|webreaper|wget|yeti')
 
     # Wiki identity
     sitename = u'Untitled Wiki'
@@ -627,7 +699,7 @@ reStructuredText Quick Reference
     user_checkbox_remove = []
 
     user_form_fields = [
-        ('name', _('Name'), "text", "36", _("(Use Firstname''''''Lastname)")),
+        ('name', _('Name'), "text", "36", _("(Use FirstnameLastname)")),
         ('aliasname', _('Alias-Name'), "text", "36", ''),
         ('email', _('Email'), "text", "36", ''),
         ('jid', _('Jabber ID'), "text", "36", ''),
@@ -662,6 +734,12 @@ reStructuredText Quick Reference
     unzip_single_file_size = 2.0 * 1000 ** 2
     unzip_attachments_space = 200.0 * 1000 ** 2
     unzip_attachments_count = 101 # 1 zip file + 100 files contained in it
+
+    xapian_search = False
+    xapian_index_dir = None
+    xapian_stemming = True
+    xapian_index_history = False
+    search_results_per_page = 10
 
     SecurityPolicy = None
 
@@ -734,6 +812,14 @@ reStructuredText Quick Reference
         self.navi_bar = [elem % self for elem in self.navi_bar]
         self.backup_exclude = [elem % self for elem in self.backup_exclude]
 
+        # check if python-xapian is installed
+        if self.xapian_search:
+            try:
+                import xapian
+            except ImportError, err:
+                self.xapian_search = False
+                logging.error("xapian_search was auto-disabled because python-xapian is not installed [%s]." % str(err))
+
         # list to cache xapian searcher objects
         self.xapian_searchers = []
 
@@ -751,7 +837,7 @@ reStructuredText Quick Reference
                 if not self.secret:
                     raise error.ConfigurationError(errmsg)
             except AttributeError, err:
-                    raise error.ConfigurationError(errmsg)
+                raise error.ConfigurationError(errmsg)
 
             from xmlrpclib import Server
             self.notification_server = Server(self.notification_bot_uri, )
@@ -776,9 +862,9 @@ reStructuredText Quick Reference
 
         # storage configuration
         self.indexes = ["name", "openids", "jid", "email", DELETED]
-        self.user_backend = UserBackend("user", self.user_dir, self)
-        self.page_backend = ItemBackend("pages", os.path.join(self.data_dir, "pages"), self)
-        #self.page_backend = PageBackend("pages", os.path.join(self.data_dir, "items"), self)
+        #self.user_backend = UserBackend("user", self.user_dir, self)
+        self.page_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
+        self.page_backend = ItemBackend("pages", os.path.join(self.data_dir, "items"), self)
         self.underlay_backend = PageBackend("underlay", os.path.join(self.data_underlay_dir, "pages"), self)
         self.data_backend = LayerBackend([self.page_backend, self.underlay_backend])
 
@@ -807,8 +893,8 @@ reStructuredText Quick Reference
                 self._subscribable_events = events.get_subscribable_events()
             return getattr(self, "_subscribable_events")
 
-        def setter(self, new_handlers):
-            self._event_handlers = new_handlers
+        def setter(self, new_events):
+            self._subscribable_events = new_events
 
         return property(getter, setter)
     subscribable_events = make_subscribable_events_prop()
@@ -819,7 +905,11 @@ reStructuredText Quick Reference
             if getattr(self, "_event_handlers", None) is None:
                 self._event_handlers = events.get_handlers(self)
             return getattr(self, "_event_handlers")
-        return property(getter)
+
+        def setter(self, new_handlers):
+            self._event_handlers = new_handlers
+
+        return property(getter, setter)
     event_handlers = make_event_handlers_prop()
 
     def load_IWID(self):

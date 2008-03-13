@@ -671,13 +671,13 @@ class SearchResults:
         querydict = wikiutil.parseQueryString(self.request.query_string)
         def page_url(n):
             querydict.update({'from': n * hitsPerPage})
-            return self.request.page.url(self.request, querydict,
-                    escape=0, relative=False)
+            return self.request.page.url(self.request, querydict, escape=0)
 
-        pages = float(hitsNum) / hitsPerPage
-        if pages - int(pages) > 0.0:
-            pages = int(pages) + 1
-        cur_page = hitsFrom / hitsPerPage
+        pages = hitsNum // hitsPerPage
+        remainder = hitsNum % hitsPerPage
+        if remainder:
+            pages += 1
+        cur_page = hitsFrom // hitsPerPage
 
         textlinks = []
 
@@ -741,9 +741,9 @@ class SearchResults:
         size_str = '%.1fk' % (p.size()/1024.0)
         revisions = p.getRevList()
         if len(revisions) and rev == revisions[0]:
-            rev_str = 'rev: %d (%s)' % (rev, _('current'))
+            rev_str = '%s: %d (%s)' % (_('rev'), rev, _('current'))
         else:
-            rev_str = 'rev: %d' % (rev, )
+            rev_str = '%s: %d' % (_('rev'), rev, )
         lastmod_str = _('last modified: %s') % p.mtime(printable=True)
 
         result = f.paragraph(1, attr={'class': 'searchhitinfobar'}) + \
@@ -759,7 +759,9 @@ class SearchResults:
         if querydict is None:
             querydict = {}
         if 'action' not in querydict or querydict['action'] == 'AttachFile':
-            querydict.update({'highlight': self.query.highlight_re()})
+            highlight = self.query.highlight_re()
+            if highlight:
+                querydict.update({'highlight': highlight})
         querystr = wikiutil.makeQueryString(querydict)
         return querystr
 

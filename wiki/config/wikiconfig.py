@@ -18,7 +18,7 @@
     the module MoinMoin.config.multiconfig for a full list of names and their
     default values.
 
-    Also, the URL http://moinmoin.wikiwikiweb.de/HelpOnConfiguration has
+    Also, the URL http://moinmo.in/HelpOnConfiguration has
     a list of config options.
 
     ** Please do not use this file for a wiki farm. Use the sample file
@@ -76,12 +76,12 @@ class Config(DefaultConfig):
 
     # The URL prefix we use to access the static stuff (img, css, js).
     # NOT touching this is maybe the best way to handle this setting as moin
-    # uses a good internal default (something like '/moin_static160' for moin
-    # version 1.6.0).
+    # uses a good internal default (something like '/moin_static170' for moin
+    # version 1.7.0).
     # For Twisted and standalone server, the default will automatically work.
     # For others, you should make a matching server config (e.g. an Apache
     # Alias definition pointing to the directory with the static stuff).
-    #url_prefix_static = '/moin_static160'
+    #url_prefix_static = '/moin_static170'
 
 
     # Security ----------------------------------------------------------
@@ -142,7 +142,7 @@ class Config(DefaultConfig):
 
     # Language options --------------------------------------------------
 
-    # See http://moinmoin.wikiwikiweb.de/ConfigMarket for configuration in
+    # See http://moinmo.in/ConfigMarket for configuration in
     # YOUR language that other people contributed.
 
     # The main wiki language, set the direction of the wiki pages

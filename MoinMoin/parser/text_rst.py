@@ -338,9 +338,13 @@ class MoinTranslator(html4css1.HTMLTranslator):
                 prefix, link = refuri.lstrip().split(':', 1)
 
             # First see if MoinMoin should handle completely. Exits through add_wiki_markup.
-            if ((refuri.startswith('<<') and refuri.endswith('>>')) or
-                    (prefix == 'drawing')):
+            if refuri.startswith('<<') and refuri.endswith('>>'): # moin macro
                 self.process_wiki_text(refuri)
+                self.wiki_text = self.fixup_wiki_formatting(self.wiki_text)
+                self.add_wiki_markup()
+
+            if prefix == 'drawing': # twikidraw drawing
+                self.process_wiki_text("[[%s]]" % refuri)
                 self.wiki_text = self.fixup_wiki_formatting(self.wiki_text)
                 self.add_wiki_markup()
 
@@ -349,12 +353,11 @@ class MoinTranslator(html4css1.HTMLTranslator):
             if prefix == 'attachment':
                 if not AttachFile.exists(self.request, self.request.page.page_name, link):
                     # Attachment doesn't exist, give to MoinMoin to insert upload text.
-                    self.process_wiki_text(refuri)
+                    self.process_wiki_text("[[%s]]" % refuri)
                     self.wiki_text = self.fixup_wiki_formatting(self.wiki_text)
                     self.add_wiki_markup()
                 # Attachment exists, just get a link to it.
-                node['refuri'] = AttachFile.getAttachUrl(self.request.page.page_name,
-                        link, self.request)
+                node['refuri'] = AttachFile.getAttachUrl(self.request.page.page_name, link, self.request)
                 if not [i for i in node.children if i.__class__ == docutils.nodes.image]:
                     node['classes'].append(prefix)
             elif prefix == 'wiki':
@@ -381,7 +384,7 @@ class MoinTranslator(html4css1.HTMLTranslator):
                 if '#' in refuri:
                     pagename, anchor = rsplit(refuri, '#', 1)
                 page = Page(self.request, wikiutil.AbsPageName(self.formatter.page.page_name, pagename))
-                node['refuri'] = page.url(self.request, anchor=anchor, relative=False)
+                node['refuri'] = page.url(self.request, anchor=anchor)
                 if not page.exists():
                     node['classes'].append('nonexistent')
         html4css1.HTMLTranslator.visit_reference(self, node)
@@ -408,13 +411,12 @@ class MoinTranslator(html4css1.HTMLTranslator):
                 # Attachment doesn't exist, MoinMoin should process it
                 if prefix == '':
                     prefix = 'attachment:'
-                self.process_wiki_text(prefix + attach_name)
+                self.process_wiki_text("{{%s%s}}" % (prefix, attach_name))
                 self.wiki_text = self.fixup_wiki_formatting(self.wiki_text)
                 self.add_wiki_markup()
             # Attachment exists, get a link to it.
             # create the url
-            node['uri'] = AttachFile.getAttachUrl(self.request.page.page_name,
-                    attach_name, self.request, addts=1)
+            node['uri'] = AttachFile.getAttachUrl(self.request.page.page_name, attach_name, self.request, addts=1)
             if not node.hasattr('alt'):
                 node['alt'] = node.get('name', uri)
         html4css1.HTMLTranslator.visit_image(self, node)
@@ -477,11 +479,10 @@ class MoinTranslator(html4css1.HTMLTranslator):
 
     # Admonitions are handled here -=- tmacam
     def create_admonition_functor(self, admotion_class):
-        tag_class = 'admonition_' + admotion_class
         def visit_func(self, node):
             self.wiki_text = ''
             self.request.write(self.formatter.div(1,
-                                                  attr={'class': tag_class},
+                                                  attr={'class': admotion_class},
                                                   allowed_attrs=[]))
             self.body.append(self.wiki_text)
         def depart_func(self, node):

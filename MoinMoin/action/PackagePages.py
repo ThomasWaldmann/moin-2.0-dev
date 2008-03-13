@@ -20,6 +20,7 @@ from MoinMoin.action.AttachFile import _addLogEntry
 from MoinMoin.packages import MOIN_PACKAGE_FILE, packLine, unpackLine
 from MoinMoin.action import AttachFile
 from MoinMoin.action.AttachFile import _get_files
+from MoinMoin.search import searchPages
 
 class ActionError(Exception):
     pass
@@ -54,7 +55,7 @@ class PackagePages:
                 self.request.theme.add_msg(_('You are not allowed to edit this page.'), "error")
                 raise ActionError
             elif not self.page.exists():
-                self.request.theme.add_msg(_('This page is already deleted or was never created!', formatted=False))
+                self.request.theme.add_msg(_('This page is already deleted or was never created!'))
                 raise ActionError
 
             self.package()
@@ -62,10 +63,9 @@ class PackagePages:
             return self.page.send_page()
 
     def package(self):
-        """ Packages pages. """
+        """ Calls collectpackage() with the arguments specified. """
         _ = self.request.getText
         form = self.request.form
-        COMPRESSION_LEVEL = zipfile.ZIP_DEFLATED
 
         # Get new name from form and normalize.
         pagelist = form.get('pagelist', [u''])[0]
@@ -75,18 +75,6 @@ class PackagePages:
             self.request.theme.add_msg(self.makeform(), "dialog")
             raise ActionError
 
-        pages = []
-        for pagename in unpackLine(pagelist, ","):
-            pagename = self.request.normalizePagename(pagename)
-            if pagename:
-                page = Page(self.request, pagename)
-                if page.exists() and self.request.user.may.read(pagename):
-                    pages.append(page)
-        if not pages:
-            self.request.theme.add_msg(self.makeform(_('No pages like "%s"!') % wikiutil.escape(pagelist)), "error")
-            raise ActionError
-
-        pagelist = ', '.join([getattr(page, "page_name") for page in pages])
         target = wikiutil.taintfilename(packagename)
 
         if not target:
@@ -101,32 +89,13 @@ class PackagePages:
                 'target': wikiutil.escape(target), 'filename': wikiutil.escape(target)}, "error")
             raise ActionError
 
-        zf = zipfile.ZipFile(fpath, "w", COMPRESSION_LEVEL)
+        # Generate a package
+        output = open(fpath, "wb")
+        package = self.collectpackage(unpackLine(pagelist, ","), output, target)
 
-        cnt = 0
-        script = [packLine(['MoinMoinPackage', '1']),
-                  ]
-
-        for page in pages:
-            cnt += 1
-            files = _get_files(self.request, page.page_name)
-            script.append(packLine(["AddRevision", str(cnt), page.page_name, user.getUserIdentification(self.request), "Created by the PackagePages action."]))
-
-            timestamp = page.mtime()
-            zi = zipfile.ZipInfo(filename=str(cnt), date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
-            zi.compress_type = COMPRESSION_LEVEL
-            zf.writestr(zi, page.get_raw_body().encode("utf-8"))
-            for attname in files:
-                if attname != packagename:
-                    cnt += 1
-                    zipname = "%d_attachment" % cnt
-                    script.append(packLine(["AddAttachment", zipname, attname, page.page_name, user.getUserIdentification(self.request), "Created by the PackagePages action."]))
-                    filename = AttachFile.getFilename(self.request, page.page_name, attname)
-                    zf.write(filename.encode("cp437"), zipname)
-        script += [packLine(['Print', 'Thank you for using PackagePages!'])]
-
-        zf.writestr(MOIN_PACKAGE_FILE, u"\n".join(script).encode("utf-8"))
-        zf.close()
+        if package:
+            self.request.theme.add_msg(self.makeform(), "dialog")
+            raise ActionError
 
         _addLogEntry(self.request, 'ATTNEW', self.pagename, target)
 
@@ -144,9 +113,11 @@ class PackagePages:
         error = u'<p class="error">%s</p>\n' % error
 
         d = {
+            'baseurl': self.request.getScriptname(),
             'error': error,
             'action': self.__class__.__name__,
             'pagename': wikiutil.escape(self.pagename),
+            'pagename_quoted': wikiutil.quoteWikinameURL(self.pagename),
             'package': _('Package pages'),
             'cancel': _('Cancel'),
             'newname_label': _("Package name"),
@@ -154,7 +125,7 @@ class PackagePages:
         }
         form = '''
 %(error)s
-<form method="post" action="">
+<form method="post" action="%(baseurl)s/%(pagename_quoted)s">
 <input type="hidden" name="action" value="%(action)s">
 <table>
     <tr>
@@ -180,6 +151,76 @@ class PackagePages:
 </form>''' % d
 
         return Dialog(self.request, content=form)
+
+    def searchpackage(self, request, searchkey):
+        """ Search MoinMoin for the string specified and return a list of
+        matching pages, provided they are not system pages and not
+        present in the underlay.
+
+        @param request: current request
+        @param searchkey: string to search for
+        @rtype: list
+        @return: list of pages matching searchkey
+        """
+
+        pagelist = searchPages(request, searchkey)
+
+        titles = []
+        for title in pagelist.hits:
+            if not wikiutil.isSystemPage(request, title.page_name) or not title.page.isUnderlayPage():
+                titles.append(title.page_name)
+        return titles
+
+    def collectpackage(self, pagelist, fileobject, pkgname=""):
+        """ Expects a list of pages as an argument, and fileobject to be an open
+        file object, which a zipfile will get written to.
+
+        @param pagelist: pages to package
+        @param fileobject: open file object to write to
+        @param pkgname: optional file name, to prevent self packaging
+        @rtype: string or None
+        @return: error message, if one happened
+        """
+        _ = self.request.getText
+        COMPRESSION_LEVEL = zipfile.ZIP_DEFLATED
+
+        pages = []
+        for pagename in pagelist:
+            pagename = self.request.normalizePagename(pagename)
+            if pagename:
+                page = Page(self.request, pagename)
+                if page.exists() and self.request.user.may.read(pagename):
+                    pages.append(page)
+        if not pages:
+            return (_('No pages like "%s"!') % wikiutil.escape(pagelist))
+
+        # Set zipfile output
+        zf = zipfile.ZipFile(fileobject, "w", COMPRESSION_LEVEL)
+
+        cnt = 0
+        userid = user.getUserIdentification(self.request)
+        script = [packLine(['MoinMoinPackage', '1']), ]
+
+        for page in pages:
+            cnt += 1
+            files = _get_files(self.request, page.page_name)
+            script.append(packLine(["AddRevision", str(cnt), page.page_name, userid, "Created by the PackagePages action."]))
+
+            timestamp = page.mtime()
+            zi = zipfile.ZipInfo(filename=str(cnt), date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
+            zi.compress_type = COMPRESSION_LEVEL
+            zf.writestr(zi, page.get_raw_body().encode("utf-8"))
+            for attname in files:
+                if attname != pkgname:
+                    cnt += 1
+                    zipname = "%d_attachment" % cnt
+                    script.append(packLine(["AddAttachment", zipname, attname, page.page_name, userid, "Created by the PackagePages action."]))
+                    filename = AttachFile.getFilename(self.request, page.page_name, attname)
+                    zf.write(filename.encode("cp437"), zipname)
+        script += [packLine(['Print', 'Thank you for using PackagePages!'])]
+
+        zf.writestr(MOIN_PACKAGE_FILE, u"\n".join(script).encode("utf-8"))
+        zf.close()
 
 def execute(pagename, request):
     """ Glue code for actions """

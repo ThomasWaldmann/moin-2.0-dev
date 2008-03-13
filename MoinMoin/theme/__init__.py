@@ -51,6 +51,7 @@ class ThemeBase:
         'up':          (_("Up"),                  "moin-parent.png", 15, 13),
         # FileAttach
         'attach':     ("%(attach_count)s",       "moin-attach.png",  7, 15),
+        'attachimg':  ("",                       "attach.png",      32, 32),
         # RecentChanges
         'rss':        (_("[RSS]"),               "moin-rss.png",    24, 24),
         'deleted':    (_("[DELETED]"),           "moin-deleted.png", 60, 12),
@@ -223,7 +224,7 @@ class ThemeBase:
         """
         _ = self.request.getText
         content = []
-        if d['title_text'] == d['page_name']: # just showing a page, no action
+        if d['title_text'] == d['page'].split_title(): # just showing a page, no action
             curpage = ''
             segments = d['page_name'].split('/') # was: title_text
             for s in segments[:-1]:
@@ -281,20 +282,20 @@ class ThemeBase:
 
         if request.user.valid:
             if request.user.auth_method in request.cfg.auth_can_logout:
-                userlinks.append(d['page'].link_to(request, text=_('Logout', formatted=False),
+                userlinks.append(d['page'].link_to(request, text=_('Logout'),
                                                    querystr={'action': 'logout', 'logout': 'logout'}, id='logout', rel='nofollow'))
         else:
+            query = {'action': 'login'}
+            # special direct-login link if the auth methods want no input
+            if request.cfg.auth_login_inputs == ['special_no_input']:
+                query['login'] = '1'
             if request.cfg.auth_have_login:
-                userlinks.append(d['page'].link_to(request, text=_("Login", formatted=False),
-                                                   querystr={'action': 'login'}, id='login', rel='nofollow'))
+                userlinks.append(d['page'].link_to(request, text=_("Login"),
+                                                   querystr=query, id='login', rel='nofollow'))
 
         userlinks = [u'<li>%s</li>' % link for link in userlinks]
         html = u'<ul id="username">%s</ul>' % ''.join(userlinks)
         return html
-
-    # Schemas supported in toolbar links, using [url label] format
-    linkSchemas = [r'http://', r'https://', r'ftp://', 'mailto:', r'irc://', r'ircs://', ] + \
-                  [x + ':' for x in config.url_schemas]
 
     def splitNavilink(self, text, localize=1):
         """ Split navibar links into pagename, link to page
@@ -333,8 +334,8 @@ class ThemeBase:
         else:
             pagename = text
 
-        for scheme in self.linkSchemas:
-            if pagename.startswith(scheme):
+        for scheme in config.url_schemas:
+            if pagename.startswith(scheme + ':'):
                 if not title:
                     title = pagename
                 title = wikiutil.escape(title)
@@ -368,6 +369,8 @@ class ThemeBase:
             page = wikiutil.getLocalizedPage(request, pagename)
         else:
             page = Page(request, pagename)
+
+        pagename = page.page_name # can be different, due to i18n
 
         if not title:
             title = page.split_title()
@@ -523,10 +526,13 @@ class ThemeBase:
             vars = {}
         alt, img, w, h = self.get_icon(icon)
         try:
-            alt = alt % vars
+            alt = vars['icon-alt-text'] # if it is possible we take the alt-text from 'page_icons_table'
         except KeyError, err:
-            alt = 'KeyError: %s' % str(err)
-        alt = self.request.getText(alt, formatted=False)
+            try:
+                alt = alt % vars # if not we just leave the  alt-text from 'icons'
+            except KeyError, err:
+                alt = 'KeyError: %s' % str(err)
+        alt = self.request.getText(alt)
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
@@ -539,16 +545,18 @@ class ThemeBase:
         @rtype: string
         @return: html link tag
         """
+        qs = {}
         querystr, title, icon = self.cfg.page_icons_table[which]
-        d['title'] = title % d
-        d['i18ntitle'] = self.request.getText(d['title'], formatted=False)
+        qs.update(querystr) # do not modify the querystr dict in the cfg!
+        d['icon-alt-text'] = d['title'] = title % d
+        d['i18ntitle'] = self.request.getText(d['title'])
         img_src = self.make_icon(icon, d)
         rev = d['rev']
         if rev and which in ['raw', 'print', ]:
-            querystr['rev'] = str(rev)
+            qs['rev'] = str(rev)
         attrs = {'rel': 'nofollow', 'title': d['i18ntitle'], }
         page = d['page']
-        return page.link_to_raw(self.request, text=img_src, querystr=querystr, **attrs)
+        return page.link_to_raw(self.request, text=img_src, querystr=qs, **attrs)
 
     def msg(self, d):
         """ Assemble the msg display
@@ -730,13 +738,15 @@ class ThemeBase:
         updates = {
             'search_label': _('Search:'),
             'search_value': wikiutil.escape(form.get('value', [''])[0], 1),
-            'search_full_label': _('Text', formatted=False),
-            'search_title_label': _('Titles', formatted=False),
+            'search_full_label': _('Text'),
+            'search_title_label': _('Titles'),
+            'baseurl': self.request.getScriptname(),
+            'pagename_quoted': wikiutil.quoteWikinameURL(self.request.page.page_name),
             }
         d.update(updates)
 
         html = u'''
-<form id="searchform" method="get" action="">
+<form id="searchform" method="get" action="%(baseurl)s/%(pagename_quoted)s">
 <div>
 <input type="hidden" name="action" value="fullsearch">
 <input type="hidden" name="context" value="180">
@@ -795,7 +805,7 @@ var search_hint = "%(search_hint)s";
 //-->
 </script>
 """ % {
-    'search_hint': _('Search', formatted=False),
+    'search_hint': _('Search'),
     }
         return script
 
@@ -809,7 +819,7 @@ var search_hint = "%(search_hint)s";
         if not rss_supported:
             return False
         return page.page_name == u'RecentChanges' or \
-           page.page_name == self.request.getText(u'RecentChanges', formatted=False)
+           page.page_name == self.request.getText(u'RecentChanges')
 
     def rsshref(self, page):
         """ Create rss href, used for rss button and head link
@@ -819,7 +829,7 @@ var search_hint = "%(search_hint)s";
         """
         request = self.request
         url = page.url(request, querystr={
-                'action': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0, relative=False)
+                'action': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0)
         return url
 
     def rsslink(self, d):
@@ -919,25 +929,25 @@ var search_hint = "%(search_hint)s";
 
         titles = {
             # action: menu title
-            '__title__': _("More Actions:", formatted=False),
+            '__title__': _("More Actions:"),
             # Translation may need longer or shorter separator
-            '__separator__': _('------------------------', formatted=False),
-            'raw': _('Raw Text', formatted=False),
-            'print': _('Print View', formatted=False),
-            'refresh': _('Delete Cache', formatted=False),
-            'SpellCheck': _('Check Spelling', formatted=False), # rename action!
-            'RenamePage': _('Rename Page', formatted=False),
-            'CopyPage': _('Copy Page', formatted=False),
-            'DeletePage': _('Delete Page', formatted=False),
-            'LikePages': _('Like Pages', formatted=False),
-            'LocalSiteMap': _('Local Site Map', formatted=False),
-            'MyPages': _('My Pages', formatted=False),
-            'SubscribeUser': _('Subscribe User', formatted=False),
-            'Despam': _('Remove Spam', formatted=False),
-            'revert': _('Revert to this revision', formatted=False),
-            'PackagePages': _('Package Pages', formatted=False),
-            'RenderAsDocbook': _('Render as Docbook', formatted=False),
-            'SyncPages': _('Sync Pages', formatted=False),
+            '__separator__': _('------------------------'),
+            'raw': _('Raw Text'),
+            'print': _('Print View'),
+            'refresh': _('Delete Cache'),
+            'SpellCheck': _('Check Spelling'), # rename action!
+            'RenamePage': _('Rename Page'),
+            'CopyPage': _('Copy Page'),
+            'DeletePage': _('Delete Page'),
+            'LikePages': _('Like Pages'),
+            'LocalSiteMap': _('Local Site Map'),
+            'MyPages': _('My Pages'),
+            'SubscribeUser': _('Subscribe User'),
+            'Despam': _('Remove Spam'),
+            'revert': _('Revert to this revision'),
+            'PackagePages': _('Package Pages'),
+            'RenderAsDocbook': _('Render as Docbook'),
+            'SyncPages': _('Sync Pages'),
             }
 
         options = []
@@ -988,14 +998,16 @@ var search_hint = "%(search_hint)s";
                 #title = Page(request, action).split_title(force=1)
                 title = action
                 # Use translated version if available
-                data['title'] = _(title, formatted=False)
+                data['title'] = _(title)
                 options.append(option % data)
 
         data = {
             'label': titles['__title__'],
             'options': '\n'.join(options),
             'rev_field': rev and '<input type="hidden" name="rev" value="%d">' % rev or '',
-            'do_button': _("Do")
+            'do_button': _("Do"),
+            'baseurl': self.request.getScriptname(),
+            'pagename_quoted': wikiutil.quoteWikinameURL(self.request.page.page_name)
             }
         html = '''
 <form class="actionsmenu" method="get" action="">
@@ -1103,18 +1115,32 @@ actionsMenuInit('%(label)s');
         return editbar_actions
 
     def supplementation_page_nameLink(self, page):
-        """  discussion for page """
+        """Return a link to the discussion page
+
+           If the discussion page doesn't exist and the user
+           has no right to create it, show a disabled link.
+        """
         _ = self.request.getText
-        return page.link_to(self.request,
-                            text=_(self.request.cfg.supplementation_page_name, formatted=False),
-                            querystr={'action': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
+        suppl_name = self.request.cfg.supplementation_page_name
+        suppl_name_full = "%s/%s" % (page.page_name, suppl_name)
+
+        test = Page(self.request, suppl_name_full)
+        if not test.exists() and not self.request.user.may.write(suppl_name_full):
+            return ('<span class="disabled">%s</span>' % _(suppl_name))
+        else:
+            return page.link_to(self.request, text=_(suppl_name),
+                                querystr={'action': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
 
     def guiworks(self, page):
         """ Return whether the gui editor / converter can work for that page.
 
             The GUI editor currently only works for wiki format.
+            For simplicity, we also tell it does not work if the admin forces the text editor.
         """
-        return page.pi['format'] == 'wiki'
+        is_wiki = page.pi['format'] == 'wiki'
+        gui_disallowed = self.cfg.editor_force and self.cfg.editor_default == 'text'
+        return is_wiki and not gui_disallowed
+
 
     def editorLink(self, page):
         """ Return a link to the editor
@@ -1133,11 +1159,11 @@ actionsMenuInit('%(label)s');
 
         guiworks = self.guiworks(page)
         if self.showBothEditLinks() and guiworks:
-            text = _('Edit (Text)', formatted=False)
+            text = _('Edit (Text)')
             querystr['editor'] = 'text'
             attrs = {'name': 'texteditlink', 'rel': 'nofollow', }
         else:
-            text = _('Edit', formatted=False)
+            text = _('Edit')
             if guiworks:
                 # 'textonly' will be upgraded dynamically to 'guipossible' by JS
                 querystr['editor'] = 'textonly'
@@ -1176,21 +1202,21 @@ var gui_editor_link_href = "%(url)s";
 var gui_editor_link_text = "%(text)s";
 //-->
 </script>
-""" % {'url': page.url(self.request, querystr={'action': 'edit', 'editor': 'gui', }, relative=False),
-       'text': _('Edit (GUI)', formatted=False),
+""" % {'url': page.url(self.request, querystr={'action': 'edit', 'editor': 'gui', }),
+       'text': _('Edit (GUI)'),
       }
 
     def disabledEdit(self):
         """ Return a disabled edit link """
         _ = self.request.getText
         return ('<span class="disabled">%s</span>'
-                % _('Immutable Page', formatted=False))
+                % _('Immutable Page'))
 
     def infoLink(self, page):
         """ Return link to page information """
         _ = self.request.getText
         return page.link_to(self.request,
-                            text=_('Info', formatted=False),
+                            text=_('Info'),
                             querystr={'action': 'info'}, css_class='nbinfo', rel='nofollow')
 
     def subscribeLink(self, page):
@@ -1204,10 +1230,10 @@ var gui_editor_link_text = "%(text)s";
 
         _ = self.request.getText
         if self.request.user.isSubscribedTo([page.page_name]):
-            text = _("Unsubscribe", formatted=False)
+            action, text = 'unsubscribe', _("Unsubscribe")
         else:
-            text = _("Subscribe", formatted=False)
-        return page.link_to(self.request, text=text, querystr={'action': 'subscribe'}, css_class='nbsubscribe', rel='nofollow')
+            action, text = 'subscribe', _("Subscribe")
+        return page.link_to(self.request, text=text, querystr={'action': action}, css_class='nbsubscribe', rel='nofollow')
 
     def quicklinkLink(self, page):
         """ Return add/remove quicklink link
@@ -1220,16 +1246,16 @@ var gui_editor_link_text = "%(text)s";
 
         _ = self.request.getText
         if self.request.user.isQuickLinkedTo([page.page_name]):
-            text = _("Remove Link", formatted=False)
+            action, text = 'quickunlink', _("Remove Link")
         else:
-            text = _("Add Link", formatted=False)
-        return page.link_to(self.request, text=text, querystr={'action': 'quicklink'}, css_class='nbquicklink', rel='nofollow')
+            action, text = 'quicklink', _("Add Link")
+        return page.link_to(self.request, text=text, querystr={'action': action}, css_class='nbquicklink', rel='nofollow')
 
     def attachmentsLink(self, page):
         """ Return link to page attachments """
         _ = self.request.getText
         return page.link_to(self.request,
-                            text=_('Attachments', formatted=False),
+                            text=_('Attachments'),
                             querystr={'action': 'AttachFile'}, css_class='nbattachments', rel='nofollow')
 
     def startPage(self):
@@ -1432,12 +1458,12 @@ var gui_editor_link_text = "%(text)s";
     def add_msg(self, msg, msg_class="dialog"):
         """ Adds a message to a list which will be used to generate status
         information.
-        
+
         @param msg: additional message
         @param msg_class: html class for the div of the additional message.
         """
         if self._send_title_called:
-            raise Exception("You cannot call add_msg() after send_title()") 
+            raise Exception("You cannot call add_msg() after send_title()")
         self._status.append((msg, msg_class))
 
     # stuff from wikiutil.py
@@ -1467,7 +1493,7 @@ var gui_editor_link_text = "%(text)s";
             pagename = keywords.get('pagename', '')
             page = Page(request, pagename)
         if keywords.get('msg', ''):
-            raise DeprecationWarning ("Using send_page(msg=) is deprecated! Use theme.add_status() instead!")
+            raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
         scriptname = request.getScriptname()
         pagename_quoted = wikiutil.quoteWikinameURL(pagename)
 
@@ -1607,7 +1633,7 @@ var gui_editor_link_text = "%(text)s";
             request.user.edit_on_doubleclick):
             if request.user.may.write(pagename): # separating this gains speed
                 querystr = wikiutil.escape(wikiutil.makeQueryString({'action': 'edit'}))
-                url = page.url(request, querystr, relative=False)
+                url = page.url(request, querystr)
                 bodyattr.append(''' ondblclick="location.href='%s'" ''' % url)
 
         # Set body to the user interface language and direction

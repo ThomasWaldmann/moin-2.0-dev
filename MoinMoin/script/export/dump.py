@@ -1,19 +1,15 @@
 # -*- coding: iso-8859-1 -*-
 """
-    MoinMoin - Dump a MoinMoin wiki to static pages
+MoinMoin - Dump a MoinMoin wiki to static pages
 
-    You must run this script as owner of the wiki files, usually this is the
-    web server user.
-
-    @copyright: 2002-2004 Juergen Hermann <jh@web.de>,
-                2005-2006 MoinMoin:ThomasWaldmann
-    @license: GNU GPL, see COPYING for details.
-
+@copyright: 2002-2004 Juergen Hermann <jh@web.de>,
+            2005-2006 MoinMoin:ThomasWaldmann
+@license: GNU GPL, see COPYING for details.
 """
 
 import sys, os, time, codecs, shutil, re, errno
 
-from MoinMoin import config, wikiutil, Page
+from MoinMoin import config, wikiutil, Page, user
 from MoinMoin import script
 from MoinMoin.action import AttachFile
 
@@ -29,21 +25,39 @@ page_template = u'''<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://ww
 <link rel="stylesheet" type="text/css" media="all" charset="utf-8" href="%(theme)s/css/common.css">
 <link rel="stylesheet" type="text/css" media="screen" charset="utf-8" href="%(theme)s/css/screen.css">
 <link rel="stylesheet" type="text/css" media="print" charset="utf-8" href="%(theme)s/css/print.css">
+<style type="text/css">
+ul.pagetitle{
+  display: inline;
+  margin: 0;
+  padding: 0;
+  font-size: 1.5em;
+}
+li.pagetitle{
+  display: inline;
+  margin: 0;
+}
+td.noborder {
+  border: 0;
+}
+</style>
 </head>
 <body>
 <table>
 <tr>
-<td>
+<td class="noborder">
 %(logo_html)s
 </td>
-<td>
+<td class="noborder">
+<ul class="pagetitle">
+<li class="pagetitle"><a class="backlink">%(pagename)s</a>
+</ul>
+<br><br>
 %(navibar_html)s
 </td>
 </tr>
 </table>
 <hr>
 <div id="page">
-<h1 id="title">%(pagename)s</h1>
 %(pagehtml)s
 </div>
 <hr>
@@ -52,7 +66,8 @@ page_template = u'''<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://ww
 </html>
 '''
 
-def _attachment(request, pagename, filename, outputdir):
+
+def _attachment(request, pagename, filename, outputdir, **kw):
     filename = filename.encode(config.charset)
     source_dir = AttachFile.getAttachDir(request, pagename)
     source_file = os.path.join(source_dir, filename)
@@ -76,13 +91,39 @@ def _attachment(request, pagename, filename, outputdir):
 
 
 class PluginScript(script.MoinScript):
-    """ Dump script class """
+    """\
+Purpose:
+========
+This tool allows you to dump MoinMoin wiki pages to static HTML files.
+
+Detailed Instructions:
+======================
+General syntax: moin [options] export dump [dump-options]
+
+[options] usually should be:
+    --config-dir=/path/to/my/cfg/ --wiki-url=wiki.example.org/
+
+[dump-options] see below:
+    0. You must run this script as owner of the wiki files, usually this is the
+       web server user.
+
+    1. To dump all the pages on the wiki to the directory '/mywiki'
+       moin ... export dump --target-dir=/mywiki
+
+    2. To dump all the pages readable by 'JohnSmith' on the wiki to the directory
+       '/mywiki'
+       moin ... export dump --target-dir=/mywiki --username JohnSmith
+"""
 
     def __init__(self, argv=None, def_values=None):
         script.MoinScript.__init__(self, argv, def_values)
         self.parser.add_option(
-            "-t", "--target-dir", dest="target_dir",
-            help="Write html dump to DIRECTORY"
+            "-t", "--target-dir", dest = "target_dir",
+            help = "Write html dump to DIRECTORY"
+        )
+        self.parser.add_option(
+            "-u", "--username", dest = "dump_user",
+            help = "User the dump will be performed as (for ACL checks, etc)"
         )
 
     def mainloop(self):
@@ -113,6 +154,9 @@ class PluginScript(script.MoinScript):
         # fix url_prefix_static so we get relative paths in output html
         request.cfg.url_prefix_static = url_prefix_static
 
+        # use this user for permissions checks
+        request.user = user.User(request, name=self.options.dump_user)
+
         pages = request.rootpage.getPageList(user='') # get list of all pages in wiki
         pages.sort()
         if self.options.page: # did user request a particular page or group of pages?
@@ -126,7 +170,7 @@ class PluginScript(script.MoinScript):
 
         wikiutil.quoteWikinameURL = lambda pagename, qfn=wikiutil.quoteWikinameFS: (qfn(pagename) + HTML_SUFFIX)
 
-        AttachFile.getAttachUrl = lambda pagename, filename, request: (_attachment(request, pagename, filename, outputdir))
+        AttachFile.getAttachUrl = lambda pagename, filename, request, **kw: _attachment(request, pagename, filename, outputdir, **kw)
 
         errfile = os.path.join(outputdir, 'error.log')
         errlog = open(errfile, 'w')
@@ -138,7 +182,7 @@ class PluginScript(script.MoinScript):
 
         navibar_html = ''
         for p in [page_front_page, page_title_index, page_word_index]:
-            navibar_html += '&nbsp;[<a href="%s">%s</a>]' % (wikiutil.quoteWikinameURL(p), wikiutil.escape(p))
+            navibar_html += '[<a href="%s">%s</a>]&nbsp;' % (wikiutil.quoteWikinameURL(p), wikiutil.escape(p))
 
         urlbase = request.url # save wiki base url
         for pagename in pages:

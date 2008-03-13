@@ -7,7 +7,9 @@
     @copyright: 2007 by MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
-import logging
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin import events as ev
 from MoinMoin import wikidicts
@@ -35,3 +37,4 @@ def handle_groupsdicts_changed(event):
     gd = wikidicts.GroupDict(request)
     gd.scan_dicts()
     logging.debug("groupsdicts changed: scan_dicts finished")
+

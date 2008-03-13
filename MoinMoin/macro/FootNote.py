@@ -18,7 +18,7 @@ from MoinMoin.parser.text_moin_wiki import Parser as WikiParser
 
 Dependencies = ["time"] # footnote macro cannot be cached
 
-def execute(macro, args):
+def macro_FootNote(macro, text=u''):
     request = macro.request
     formatter = macro.formatter
 
@@ -28,27 +28,27 @@ def execute(macro, args):
         request.footnote_ctr = 0
         request.footnote_show_ctr = 0
 
-    if not args:
+    if not text:
         return emit_footnotes(request, formatter)
     else:
         # grab new footnote backref number
         idx = request.footnote_ctr
         request.footnote_ctr += 1
 
-        shahex = sha.new(args.encode(config.charset)).hexdigest()
+        shahex = sha.new(text.encode(config.charset)).hexdigest()
         backlink_id = "fndef-%s-%d" % (shahex, idx)
         fwdlink_id = "fnref-%s" % shahex
 
-        if not args in request.footnotes:
+        if not text in request.footnotes:
             showidx = request.footnote_show_ctr
             request.footnote_show_ctr += 1
-            request.footnotes[args] = ([], fwdlink_id, showidx)
-        flist, dummy, showidx = request.footnotes[args]
-        request.footnotes[args] = (flist + [(backlink_id, idx)], fwdlink_id, showidx)
+            request.footnotes[text] = ([], fwdlink_id, showidx)
+        flist, dummy, showidx = request.footnotes[text]
+        request.footnotes[text] = (flist + [(backlink_id, idx)], fwdlink_id, showidx)
 
         # do index -> text mapping in the same dict, that's fine because
-        # args is always a string and idx alwas a number.
-        request.footnotes[idx] = args
+        # text is always a string and idx alwas a number.
+        request.footnotes[idx] = text
 
         return "%s%s%s%s%s" % (
             formatter.sup(1),
@@ -70,7 +70,7 @@ def emit_footnotes(request, formatter):
 
         # Add footnotes list
         result.append(formatter.number_list(1))
-
+        subidx = 0
         for ctr in range(request.footnote_ctr):
             fn_txt = request.footnotes[ctr]
             if not fn_txt in request.footnotes:
@@ -86,7 +86,7 @@ def emit_footnotes(request, formatter):
             result.append(wikiutil.renderText(request, WikiParser, fn_txt))
 
             items = []
-            subidx = 0
+            # ToDo check why that loop is needed?
             for backlink_id, idx in this_txt_footnotes:
                 # Add item
                 item = formatter.anchorlink(1, backlink_id)

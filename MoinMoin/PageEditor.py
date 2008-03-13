@@ -28,7 +28,7 @@ from MoinMoin.logfile import eventlog, editlog
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.util import timefuncs, web
 from MoinMoin.storage.error import BackendError
-from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent
+from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 import MoinMoin.events.notification as notification
 
@@ -307,7 +307,7 @@ Please review the page and save then. Do not save this page as it is!""")
                     loadable_draft = True
                     page_rev = rev
                     draft_timestamp_str = request.user.getFormattedDateTime(draft_timestamp)
-                    draft_message = _(u"'''<<BR>>Your draft based on revision %(draft_rev)d (saved %(draft_timestamp_str)s) can be loaded instead of the current revision %(page_rev)d by using the load draft button - in case you lost your last edit somehow without saving it.''' A draft gets saved for you when you do a preview, cancel an edit or unsuccessfully save.") % locals()
+                    draft_message = _(u"'''<<BR>>Your draft based on revision %(draft_rev)d (saved %(draft_timestamp_str)s) can be loaded instead of the current revision %(page_rev)d by using the load draft button - in case you lost your last edit somehow without saving it.''' A draft gets saved for you when you do a preview, cancel an edit or unsuccessfully save.", wiki=True) % locals()
 
         # Setup status message
         status = [kw.get('msg', ''), conflict_msg, edit_lock_message, draft_message]
@@ -315,7 +315,7 @@ Please review the page and save then. Do not save this page as it is!""")
         status = ' '.join(status)
         status = Status(request, content=status)
         request.theme.add_msg(status, "dialog")
-        
+
         request.theme.send_title(
             title % {'pagename': self.split_title(), },
             page=self,
@@ -371,7 +371,7 @@ Please review the page and save then. Do not save this page as it is!""")
         if self.cfg.page_license_enabled:
             request.write('<p><em>', _(
 """By hitting '''%(save_button_text)s''' you put your changes under the %(license_link)s.
-If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.""") % {
+If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.""", wiki=True) % {
                 'save_button_text': save_button_text,
                 'cancel_button_text': cancel_button_text,
                      'license_link': wikiutil.getLocalizedPage(request, self.cfg.page_license_page).link_to(request),
@@ -400,6 +400,29 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 <input class="button" type="submit" name="button_cancel" value="%s">
 <input type="hidden" name="editor" value="text">
 ''' % (button_spellcheck, cancel_button_text, ))
+
+        # Trivial Change-checkbox to the top of the page, shows up only if user has JavaScript enabled. It's "linked" with the bottom's box (checking one checks both)
+        if self.cfg.mail_enabled:
+            request.write('''
+<script type="text/javascript">
+    <!--
+    function toggle_trivial(CheckedBox)
+    {
+        TrivialBoxes = document.getElementsByName("trivial");
+        for (var i = 0; i < TrivialBoxes.length; i++)
+            TrivialBoxes[i].checked = CheckedBox.checked;
+    }
+
+    document.write('<input type="checkbox" name="trivial" id="chktrivialtop" value="1" %(checked)s onclick="toggle_trivial(this)">');
+    document.write('<label for="chktrivialtop">%(label)s</label>');
+    //-->
+</script> ''' % {
+                'checked': ('', 'checked')[form.get('trivial', ['0'])[0] == '1'],
+                'label': _("Trivial change"),
+            })
+
+        from MoinMoin.security.textcha import TextCha
+        request.write(TextCha(request).render())
 
         # Add textarea with page text
         self.sendconfirmleaving()
@@ -430,7 +453,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         cat_pages = request.rootpage.getPageList(filter=filterfn)
         cat_pages.sort()
         cat_pages = [wikiutil.pagelinkmarkup(p) for p in cat_pages]
-        cat_pages.insert(0, ('', _('<No addition>', formatted=False)))
+        cat_pages.insert(0, ('', _('<No addition>')))
         request.write("<p>")
         request.write(_('Add to: %(category)s') % {
             'category': unicode(web.makeSelection('category', cat_pages)),
@@ -439,8 +462,11 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         if self.cfg.mail_enabled:
             request.write('''
 &nbsp;
-<input type="checkbox" name="trivial" id="chktrivial" value="1" %(checked)s>
-<label for="chktrivial">%(label)s</label> ''' % {
+
+<input type="checkbox" name="trivial" id="chktrivial" value="1" %(checked)s onclick="toggle_trivial(this)">
+<label for="chktrivial">%(label)s</label>
+
+''' % {
                 'checked': ('', 'checked')[form.get('trivial', ['0'])[0] == '1'],
                 'label': _("Trivial change"),
                 })
@@ -470,7 +496,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         quickhelp = request.cfg.editor_quickhelp.get(markup, "")
         if quickhelp:
             request.write(request.formatter.div(1, id="editor-help"))
-            request.write(_(quickhelp))
+            request.write(_(quickhelp, wiki=True))
             request.write(request.formatter.div(0))
 
         if preview is not None:
@@ -498,14 +524,14 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         backto = request.form.get('backto', [None])[0]
         page = backto and Page(request, backto) or self
-        request.theme.add_msg(_('Edit was cancelled.', formatted=False), "error")
+        request.theme.add_msg(_('Edit was cancelled.'), "error")
         page.send_page()
 
         if self.getRevList() == []:
             del self._items_all[self.page_name]
         self.reset()
 
-    def copyPage(self, newpagename, comment=None):
+    def copyPage(self, newpagename, comment=""):
         """ Copy the current version of the page (keeping the backups, logs and attachments).
 
         @param comment: Comment given by user
@@ -546,7 +572,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         return True, None
 
-    def renamePage(self, newpagename, comment=None):
+    def renamePage(self, newpagename, comment=""):
         """ Rename the current version of the page (making a backup before deletion
             and keeping the backups, logs and attachments).
 
@@ -621,20 +647,18 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             msg = self.saveText(pg.get_raw_body(), 0, extra=revstr, action="SAVE/REVERT", notify=False)
 
             # Remove cache entry (if exists)
-            from MoinMoin import caching
             pg = Page(self.request, self.page_name)
             key = self.request.form.get('key', ['text_html'])[0]
             caching.CacheEntry(self.request, pg, key, scope='item').remove()
             caching.CacheEntry(self.request, pg, "pagelinks", scope='item').remove()
 
             # Notify observers
-            from MoinMoin.events import PageRevertedEvent, send_event
             e = PageRevertedEvent(self.request, self.page_name, revision, revstr)
             send_event(e)
 
             return msg
 
-    def deletePage(self, comment=None):
+    def deletePage(self, comment=""):
         """ Delete the current version of the page (making a backup before deletion
             and keeping the backups, logs and attachments).
 
@@ -761,7 +785,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             # Strip trailing spaces if needed
             if kw.get('stripspaces', 0):
                 lines = [line.rstrip() for line in lines]
-
             # Add final newline if not present, better for diffs (does
             # not include former last line when just adding text to
             # bottom; idea by CliffordAdams)
@@ -864,8 +887,8 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         # add event log entry
         elog = eventlog.EventLog(request)
-        elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, time.time())        
-        
+        elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, time.time())
+
     def saveText(self, newtext, rev, **kw):
         """ Save new text for a page.
 
@@ -1028,6 +1051,7 @@ class PageLock:
                     except ValueError:
                         pass
 
+
     def acquire(self):
         """ Begin an edit lock depending on the mode chosen in the config.
 
@@ -1063,12 +1087,12 @@ class PageLock:
 
             if self.locktype == 'lock':
                 msg.append(_(
-                    "Other users will be ''blocked'' from editing this page until %(bumptime)s."
-                    ) % {'bumptime': bumptime})
+                    "Other users will be ''blocked'' from editing this page until %(bumptime)s.",
+                    wiki=True) % {'bumptime': bumptime})
             else:
                 msg.append(_(
-                    "Other users will be ''warned'' until %(bumptime)s that you are editing this page."
-                    ) % {'bumptime': bumptime})
+                    "Other users will be ''warned'' until %(bumptime)s that you are editing this page.",
+                    wiki=True) % {'bumptime': bumptime})
             msg.append(_(
                 "Use the Preview button to extend the locking period."
                 ))
@@ -1079,8 +1103,8 @@ class PageLock:
                 # lout out user
                 result = 0, _(
                     "This page is currently ''locked'' for editing by %(owner)s until %(timestamp)s,"
-                    " i.e. for %(mins_valid)d minute(s)."
-                    ) % {'owner': owner, 'timestamp': timestamp, 'mins_valid': mins_valid}
+                    " i.e. for %(mins_valid)d minute(s).",
+                    wiki=True) % {'owner': owner, 'timestamp': timestamp, 'mins_valid': mins_valid}
             else:
                 # warn user about existing lock
 
@@ -1088,10 +1112,11 @@ class PageLock:
 """This page was opened for editing or last previewed at %(timestamp)s by %(owner)s.<<BR>>
 '''You should ''refrain from editing'' this page for at least another %(mins_valid)d minute(s),
 to avoid editing conflicts.'''<<BR>>
-To leave the editor, press the Cancel button.""") % {
+To leave the editor, press the Cancel button.""", wiki=True) % {
                     'timestamp': timestamp, 'owner': owner, 'mins_valid': mins_valid}
 
         return result
+
 
     def release(self, force=0):
         """ Release lock, if we own it.

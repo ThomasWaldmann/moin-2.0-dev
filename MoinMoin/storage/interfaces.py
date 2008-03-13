@@ -54,7 +54,7 @@ class StorageBackend(object):
     def current_revision(self, name):
         """
         Returns the last revision number of an item as integer. If there is
-        no revision it returns 0. 
+        no revision it returns 0.
         """
 
     def has_revision(self, name, revno):

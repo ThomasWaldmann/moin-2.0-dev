@@ -12,7 +12,7 @@
     TODO: see CHANGES.storage
 
     @copyright: 2000-2004 by Juergen Hermann <jh@web.de>,
-                2005-2007 by MoinMoin:ThomasWaldmann,
+                2005-2008 by MoinMoin:ThomasWaldmann,
                 2006 by MoinMoin:FlorianFesti,
                 2007 by MoinMoin:ReimarBauer
                 2007 by MoinMoin:HeinrichWendel
@@ -20,6 +20,9 @@
 """
 
 import os
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
@@ -100,7 +103,7 @@ class Page(object):
         self._pi = None
 
         self._body_modified = 0
-        
+
         if depth == 0:
             try:
                 self.request.page.reset(1)
@@ -488,7 +491,7 @@ class Page(object):
         splitted = config.split_regex.sub(r'\1 \2', self.page_name)
         return splitted
 
-    def url(self, request, querystr=None, anchor=None, relative=True, **kw):
+    def url(self, request, querystr=None, anchor=None, relative=False, **kw):
         """ Return complete URL for this page, including scriptname.
             The URL is NOT escaped, if you write it to HTML, use wikiutil.escape
             (at least if you have a querystr, to escape the & chars).
@@ -497,6 +500,8 @@ class Page(object):
         @param querystr: the query string to add after a "?" after the url
             (str or dict, see wikiutil.makeQueryString)
         @param anchor: if specified, make a link to this anchor
+        @param relative: create a relative link (default: False), note that this
+                         changed in 1.7, in 1.6, the default was True.
         @rtype: str
         @return: complete url of this page, including scriptname
         """
@@ -526,7 +531,7 @@ class Page(object):
 
     def link_to_raw(self, request, text, querystr=None, anchor=None, **kw):
         """ core functionality of link_to, without the magic """
-        url = self.url(request, querystr, anchor=anchor)
+        url = self.url(request, querystr, anchor=anchor, relative=True) # scriptName is added by link_tag
         # escaping is done by link_tag -> formatter.url -> ._open()
         link = wikiutil.link_tag(request, url, text,
                                  formatter=getattr(self, 'formatter', None), **kw)
@@ -696,6 +701,10 @@ class Page(object):
             elif verb == "deprecated":
                 pi['deprecated'] = True
 
+            elif verb == "openiduser":
+                if request.cfg.openid_server_enable_user:
+                    pi['openid.user'] = args
+
             elif verb == "pragma":
                 try:
                     key, val = args.split(' ', 1)
@@ -721,7 +730,7 @@ class Page(object):
             request.setHttpHeader("Status: 200 OK")
             request.setHttpHeader("Last-Modified: %s" % util.timefuncs.formathttpdate(self.mtime()))
             text = self.encodeTextMimeType(self.body)
-            request.setHttpHeader("Content-Length: %d" % len(text))
+            #request.setHttpHeader("Content-Length: %d" % len(text))  # XXX WRONG! text is unicode obj, but we send utf-8!
             if content_disposition:
                 # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
                 # There is no solution that is compatible to IE except stripping non-ascii chars
@@ -837,26 +846,30 @@ class Page(object):
                     request.setHttpHeader('Status: 404 NOTFOUND')
                 request.emit_http_headers()
 
+            if not page_exists and self.request.isSpiderAgent:
+                # don't send any 404 content to bots
+                return
+
             request.write(self.formatter.startDocument(self.page_name))
 
             # send the page header
             if self.default_formatter:
                 if self.rev:
-                    request.theme.add_msg("<strong>%s</strong><br>%s" % (
+                    request.theme.add_msg("<strong>%s</strong><br>" % (
                         _('Revision %(rev)d as of %(date)s') % {
                             'rev': self.rev,
                             'date': self.mtime(printable=True)
-                        }, "info"))
+                        }), "info")
 
                 # This redirect message is very annoying.
                 # Less annoying now without the warning sign.
                 if 'redirect' in request.form:
                     redir = request.form['redirect'][0]
-                    request.theme.add_msg('<strong>%s</strong><br>%s' % (
+                    request.theme.add_msg('<strong>%s</strong><br>' % (
                         _('Redirected from page "%(page)s"') % {'page':
                             wikiutil.link_tag(request, wikiutil.quoteWikinameURL(redir) + "?action=show", self.formatter.text(redir))}), "info")
                 if 'redirect' in pi:
-                    request.theme.add_msg('<strong>%s</strong><br>%s' % (
+                    request.theme.add_msg('<strong>%s</strong><br>' % (
                         _('This page redirects to page "%(page)s"') % {'page': wikiutil.escape(pi['redirect'])}), "info")
 
                 # Page trail
@@ -867,10 +880,38 @@ class Page(object):
 
                 title = self.split_title()
 
+                html_head = ''
+                openid_username = self.page_name
+                userid = user.getUserId(request, openid_username)
+                if userid is None and 'openid.user' in self.pi:
+                    openid_username = self.pi['openid.user']
+                    userid = user.getUserId(request, openid_username)
+
+                if request.cfg.openid_server_restricted_users_group:
+                    request.dicts.addgroup(request,
+                                           request.cfg.openid_server_restricted_users_group)
+                if request.cfg.openid_server_enabled:
+                    if userid is not None and not request.cfg.openid_server_restricted_users_group or \
+                      request.dicts.has_member(request.cfg.openid_server_restricted_users_group, openid_username):
+                        html_head = '<link rel="openid2.provider" href="%s">' % \
+                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
+                                                                                querystr={'action': 'serveopenid'})))
+                        html_head += '<link rel="openid.server" href="%s">' % \
+                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
+                                                                                querystr={'action': 'serveopenid'})))
+                        html_head += '<meta http-equiv="x-xrds-location" content="%s">' % \
+                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
+                                                                                querystr={'action': 'serveopenid', 'yadis': 'ep'})))
+                    elif self.page_name == request.cfg.page_front_page:
+                        html_head = '<meta http-equiv="x-xrds-location" content="%s">' % \
+                                        wikiutil.escape(request.getQualifiedURL(self.url(request,
+                                                                                querystr={'action': 'serveopenid', 'yadis': 'idp'})))
+
                 request.theme.send_title(title, page=self,
                                     print_mode=print_mode,
                                     media=media, pi_refresh=pi.get('refresh'),
                                     allow_doubleclick=1, trail=trail,
+                                    html_head=html_head,
                                     )
 
         # new page?
@@ -995,7 +1036,7 @@ class Page(object):
                 except Exception, e:
                     if not is_cache_exception(e):
                         raise
-                    request.log('page cache failed after creation')
+                    logging.error('page cache failed after creation')
                     self.format(parser)
 
         request.clock.stop('send_page_content')
@@ -1039,7 +1080,7 @@ class Page(object):
             # See http://docs.python.org/lib/module-marshal.html
             raise Exception('CacheNeedsUpdate')
         except Exception, err:
-            request.log('fail to load "%s" cache: %s' %
+            logging.info('failed to load "%s" cache: %s' %
                         (self.page_name, str(err)))
             raise Exception('CacheNeedsUpdate')
 
@@ -1162,8 +1203,7 @@ class Page(object):
                 page = Page(request, pagename, formatter=formatter)
                 page.send_page(content_only=1)
             except:
-                import traceback
-                traceback.print_exc(200)
+                logging.exception("pagelinks formatter failed, traceback follows")
         finally:
             request.mode_getpagelinks -= 1
             #logging.debug("mode_getpagelinks == %r" % request.mode_getpagelinks)

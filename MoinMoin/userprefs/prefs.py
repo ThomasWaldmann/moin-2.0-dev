@@ -34,7 +34,7 @@ class Settings(UserPrefBase):
         self._ = request.getText
         self.cfg = request.cfg
         _ = self._
-        self.title = _("Preferences", formatted=False)
+        self.title = _("Preferences")
         self.name = 'prefs'
 
     def _decode_pagelist(self, key):
@@ -61,7 +61,7 @@ class Settings(UserPrefBase):
         form = self.request.form
 
         if self.request.request_method != 'POST':
-            return _("Use UserPreferences to change your settings or create an account.")
+            return _("Use UserPreferences to change your settings or create an account.", wiki=True)
         theuser = self.request.user
         if not theuser:
             return
@@ -74,7 +74,7 @@ class Settings(UserPrefBase):
             if not user.isValidName(self.request, theuser.name):
                 return _("""Invalid user name {{{'%s'}}}.
 Name may contain any Unicode alpha numeric character, with optional one
-space between words. Group page name is not allowed.""") % wikiutil.escape(theuser.name)
+space between words. Group page name is not allowed.""", wiki=True) % wikiutil.escape(theuser.name)
 
             # Is this an existing user trying to change information or a new user?
             # Name required to be unique. Check if name belong to another user.
@@ -158,6 +158,11 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
 
         # try to get the (optional) preferred language
         theuser.language = form.get('language', [''])[0]
+        if theuser.language == u'': # For language-statistics
+            from MoinMoin import i18n
+            theuser.real_language = i18n.get_browser_language(self.request)
+        else:
+            theuser.real_language = ''
 
         # I want to handle all inputs from user_form_fields, but
         # don't want to handle the cases that have already been coded
@@ -170,7 +175,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
         already_handled = ['name', 'email',
                            'aliasname', 'edit_rows', 'editor_default',
                            'editor_ui', 'tz_offset', 'datetime_fmt',
-                           'theme_name', 'language', 'jid']
+                           'theme_name', 'language', 'real_language', 'jid']
         for field in self.cfg.user_form_fields:
             key = field[0]
             if ((key in self.cfg.user_form_disable)
@@ -274,7 +279,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(theus
         cur_lang = self.request.user.valid and self.request.user.language or ''
         langs = i18n.wikiLanguages().items()
         langs.sort(lambda x, y: cmp(x[1]['x-language'], y[1]['x-language']))
-        options = [('', _('<Browser setting>', formatted=False))]
+        options = [('', _('<Browser setting>'))]
         for lang in langs:
             name = lang[1]['x-language']
             options.append((lang[0], name))

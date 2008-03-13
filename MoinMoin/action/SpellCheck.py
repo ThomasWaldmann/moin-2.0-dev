@@ -187,8 +187,8 @@ def checkSpelling(page, request, own_form=1):
 
         # add a form containing the bad words
         if own_form:
-            msg = msg + ('<form method="post" action="">\n'
-                         '<input type="hidden" name="action" value="%s">\n') % action_name
+            msg = msg + ('<form method="post" action="%s/%s">\n'
+                         '<input type="hidden" name="action" value="%s">\n') % (request.getScriptname(), wikiutil.quoteWikinameURL(page.page_name), action_name)
 
         checkbox = '<input type="checkbox" name="newwords" value="%(word)s">%(word)s&nbsp;&nbsp;'
         msg = msg + (
@@ -221,7 +221,7 @@ def execute(pagename, request):
     else:
         badwords = []
         request.theme.add_msg(_("You can't check spelling on a page you can't read."), "error")
-    
+
     request.theme.add_msg(msg, "dialog")
     if badwords:
         page.send_page(hilite_re=badwords_re)

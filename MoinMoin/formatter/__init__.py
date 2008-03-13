@@ -9,6 +9,9 @@
 """
 import re
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 from MoinMoin.util import pysupport
 from MoinMoin import wikiutil
 from MoinMoin.support.python_compatibility import rsplit
@@ -333,10 +336,16 @@ class FormatterBase:
         """
         # attention: this is copied into text_python!
         parser = wikiutil.searchAndImportPlugin(self.request.cfg, "parser", parser_name)
-
-        args = self._get_bang_args(lines[0])
-        if args is not None:
+        args = None
+        if lines:
+            args = self._get_bang_args(lines[0])
+            logging.debug("formatter.parser: parser args %r" % args)
+            if args is not None:
+                lines = lines[1:]
+        if lines and not lines[0]:
             lines = lines[1:]
+        if lines and not lines[-1].strip():
+            lines = lines[:-1]
         p = parser('\n'.join(lines), self.request, format_args=args)
         p.format(self)
         del p

@@ -6,7 +6,10 @@
     @copyright: 2004-2005 Nir Soffer <nirs@freeshell.org>
     @license: GNU GPL, see COPYING for details.
 """
-import sys, os, logging
+import sys, os
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin.support import cgitb
 from MoinMoin.error import ConfigurationError
@@ -83,10 +86,10 @@ function toggleDebugInfo() {
                           'Show debugging information')]
         if self.info[0] != ConfigurationError:
             buttons.append(
-                   f.link('http://moinmoin.wikiwikiweb.de/MoinMoinBugs',
+                   f.link('http://moinmo.in/MoinMoinBugs',
                           'Report bug'))
             buttons.append(
-                   f.link('http://moinmoin.wikiwikiweb.de/FrontPage',
+                   f.link('http://moinmo.in/FrontPage',
                           'Visit MoinMoin wiki'))
         return f.list(buttons, {'class': 'buttons'})
 
@@ -153,7 +156,7 @@ def handle(request, err):
         raise err
 
     savedError = sys.exc_info()
-    logging.error('%s: %s' % (err.__class__.__name__, str(err)), exc_info=savedError)
+    logging.exception('An exception occured.')
     try:
         debug = 'debug' in getattr(request, 'form', {})
         # default to True here to allow an admin setting up the wiki

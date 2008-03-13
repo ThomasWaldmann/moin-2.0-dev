@@ -19,7 +19,7 @@ unsafe_names = ("id", "key", "val", "user_data", "enc_password")
 
 import time, sha, codecs
 
-from MoinMoin import events, wikiutil, i18n
+from MoinMoin import events, wikiutil, i18n, caching
 from MoinMoin.util import timefuncs
 from MoinMoin.storage.external import ItemCollection
 
@@ -274,6 +274,7 @@ class User:
         #self.edit_cols = 80
         self.tz_offset = int(float(self._cfg.tz_offset) * 3600)
         self.language = ""
+        self.real_language = "" # In case user uses "Browser setting". For language-statistics
         self.loaded = False
         self.date_fmt = ""
         self.datetime_fmt = ""
@@ -522,6 +523,14 @@ class User:
 
         self._user.metadata.save()
         self._user.lock = False
+
+        arena = 'user'
+        key = 'name2id'
+        caching.CacheEntry(self._request, arena, key, scope='wiki').remove()
+        try:
+            del self._request.cfg.cache.name2id
+        except:
+            pass
 
         if not self.disabled:
             self.valid = 1
@@ -815,21 +824,23 @@ class User:
     # -----------------------------------------------------------------
     # Trail
 
+    def _wantTrail(self):
+        return (not self.valid and self._request.session.is_stored  # anon session
+                or self.valid and (self.show_page_trail or self.remember_last_visit))  # logged-in session
+
     def addTrail(self, page):
         """ Add page to trail.
 
         @param page: the page (object) to add to the trail
         """
-        if not self.valid or self.show_page_trail or self.remember_last_visit:
+        if self._wantTrail():
             # load trail if not known
             self.getTrail()
 
             pagename = page.page_name
             # Add only existing pages that the user may read
-            if self._request:
-                if not (page.exists() and
-                        self._request.user.may.read(pagename)):
-                    return
+            if not (page.exists() and self._request.user.may.read(pagename)):
+                return
 
             # Save interwiki links internally
             if self._cfg.interwikiname:
@@ -856,8 +867,7 @@ class User:
         @rtype: list
         @return: pages in trail
         """
-        if not self._trail and (
-           not self.valid or self.show_page_trail or self.remember_last_visit):
+        if not self._trail and self._wantTrail():
             trail = self._request.session.get('trail', [])
             trail = [t.strip() for t in trail]
             trail = [t for t in trail if t]
@@ -875,7 +885,7 @@ class User:
     def isSuperUser(self):
         """ Check if this user is superuser """
         request = self._request
-        if request.cfg.DesktopEdition and request.remote_addr == '127.0.0.1' and request.user.valid:
+        if request.cfg.DesktopEdition and request.remote_addr == '127.0.0.1' and request.user and request.user.valid:
             # the DesktopEdition gives any local user superuser powers
             return True
         superusers = request.cfg.superuser
@@ -945,7 +955,7 @@ Login Name: %s
 Login Password: %s
 
 Login URL: %s/%s?action=login
-""", formatted=False) % (
+""") % (
                         self.name, self.enc_password, self._request.getBaseURL(), getLocalizedPage(self._request, 'UserPreferences').page_name)
 
         text = _("""\
@@ -956,12 +966,12 @@ password AS SHOWN into the wiki's password form field (use copy and paste
 for that).
 
 After successfully logging in, it is of course a good idea to set a new and known password.
-""", formatted=False) + text
+""") + text
 
 
         subject = _('[%(sitename)s] Your wiki account data',
-                    formatted=False) % {'sitename': self._cfg.sitename or "Wiki"}
+                ) % {'sitename': self._cfg.sitename or "Wiki"}
         mailok, msg = sendmail.sendmail(self._request, [self.email], subject,
                                     text, mail_from=self._cfg.mail_from)
-        return msg
+        return mailok, msg
 

@@ -3,8 +3,7 @@
     MoinMoin - New Page macro
 
     Thanks to Jos Yule's "blogpost" action and his modified Form for
-    giving me the pieces I needed to figure all this stuff out:
-    http://moinmoin.wikiwikiweb.de/JosYule
+    giving me the pieces I needed to figure all this stuff out: MoinMoin:JosYule
 
     @copyright: 2004 Vito Miliano (vito_moinnewpagewithtemplate@perilith.com),
                 2004 by Nir Soffer <nirs@freeshell.org>,
@@ -86,13 +85,13 @@ class NewPage:
         if label:
             # Try to get a translation, this will probably not work in
             # most cases, but better than nothing.
-            label = self.request.getText(label, formatted=False)
+            label = self.request.getText(label)
         else:
             label = _("Create New Page")
 
         # TODO: better abstract this using the formatter
         html = [
-            u'<form class="macro" method="get" action=""><div>',
+            u'<form class="macro" method="get" action="%s/%s"><div>' % (self.request.getScriptname(), wikiutil.quoteWikinameURL(self.formatter.page.page_name)),
             u'<input type="hidden" name="action" value="newpage">',
             u'<input type="hidden" name="parent" value="%s">' % wikiutil.escape(parent, 1),
             u'<input type="hidden" name="template" value="%s">' % wikiutil.escape(template, 1),

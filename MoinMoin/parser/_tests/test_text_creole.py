@@ -230,24 +230,24 @@ class TestEscapeHTML(ParserTestCase):
 
     def testEscapeInGetTextMacro(self):
         """ parser.wiki: escape html markup in GetText macro """
-        test = "text <<GetText(<escape-me>)>> text"
+        test = u"text <<GetText(<escape-me>)>> text"
         self._test(test)
 
 # Getting double escaping
 #
 #    def testEscapeInGetTextFormatted(self):
 #        """ parser.wiki: escape html markup in getText formatted call """
-#        test = self.request.getText('<escape-me>', formatted=1)
+#        test = self.request.getText('<escape-me>', wiki=True)
 #        self._test(test)
 #
 #    def testEscapeInGetTextFormatedLink(self):
 #        """ parser.wiki: escape html markup in getText formatted call with link """
-#        test = self.request.getText('[[<escape-me>]]', formatted=1)
+#        test = self.request.getText('[[<escape-me>]]', wiki=True)
 #        self._test(test)
 
     def testEscapeInGetTextUnFormatted(self):
         """ parser.wiki: escape html markup in getText non formatted call """
-        test = self.request.getText('<escape-me>', formatted=0)
+        test = self.request.getText('<escape-me>', wiki=False)
         self._test(test)
 
     def _test(self, test):
@@ -395,10 +395,10 @@ class TestLinkingMarkup(ParserTestCase):
         ('[[../something]]', '<a class="nonexistent" href="./something">../something</a>'),
         ('[[/something]]', '<a class="nonexistent" href="./%s/something">/something</a>' % PAGENAME),
         ('[[something#anchor]]', '<a class="nonexistent" href="./something#anchor">something#anchor</a>'),
-        ('[[MoinMoin:something]]', '<a class="interwiki" href="http://moinmoin.wikiwikiweb.de/something" title="MoinMoin">something</a>'),
-        ('[[MoinMoin:something|some text]]', '<a class="interwiki" href="http://moinmoin.wikiwikiweb.de/something" title="MoinMoin">some text</a>'),
-        ('[[MoinMoin:with space]]', '<a class="interwiki" href="http://moinmoin.wikiwikiweb.de/with%20space" title="MoinMoin">with space</a>'),
-        ('[[MoinMoin:with space|some text]]', '<a class="interwiki" href="http://moinmoin.wikiwikiweb.de/with%20space" title="MoinMoin">some text</a>'),
+        ('[[MoinMoin:something]]', '<a class="interwiki" href="http://moinmo.in/something" title="MoinMoin">something</a>'),
+        ('[[MoinMoin:something|some text]]', '<a class="interwiki" href="http://moinmo.in/something" title="MoinMoin">some text</a>'),
+        ('[[MoinMoin:with space]]', '<a class="interwiki" href="http://moinmo.in/with%20space" title="MoinMoin">with space</a>'),
+        ('[[MoinMoin:with space|some text]]', '<a class="interwiki" href="http://moinmo.in/with%20space" title="MoinMoin">some text</a>'),
         ('[[http://google.com/|google]]', '<a class="http" href="http://google.com/">google</a>'),
         ]
 

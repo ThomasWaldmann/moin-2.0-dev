@@ -73,7 +73,7 @@ class NewPage:
         if error:
             # Send back to the page you came from, with an error msg
             page = Page(self.request, self.referrer)
-            request.theme.add_msg(error, "error")
+            self.request.theme.add_msg(error, "error")
             page.send_page()
         else:
             # Redirect to new page using edit action. No error checking
@@ -90,7 +90,7 @@ class NewPage:
             if parent:
                 pagename = "%s/%s" % (parent, pagename)
 
-            url = Page(self.request, pagename).url(self.request, query, relative=False)
+            url = Page(self.request, pagename).url(self.request, query)
             self.request.http_redirect(url)
 
         return ''

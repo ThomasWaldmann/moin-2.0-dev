@@ -184,7 +184,7 @@ Please review the page and save then. Do not save this page as it is!""")
                     loadable_draft = True
                     page_rev = rev
                     draft_timestamp_str = request.user.getFormattedDateTime(draft_timestamp)
-                    draft_message = _(u"'''<<BR>>Your draft based on revision %(draft_rev)d (saved %(draft_timestamp_str)s) can be loaded instead of the current revision %(page_rev)d by using the load draft button - in case you lost your last edit somehow without saving it.''' A draft gets saved for you when you do a preview, cancel an edit or unsuccessfully save.") % locals()
+                    draft_message = _(u"'''<<BR>>Your draft based on revision %(draft_rev)d (saved %(draft_timestamp_str)s) can be loaded instead of the current revision %(page_rev)d by using the load draft button - in case you lost your last edit somehow without saving it.''' A draft gets saved for you when you do a preview, cancel an edit or unsuccessfully save.", wiki=True, percent=True) % locals()
 
         # Setup status message
         status = [kw.get('msg', ''), conflict_msg, edit_lock_message, draft_message]
@@ -192,10 +192,10 @@ Please review the page and save then. Do not save this page as it is!""")
         status = ' '.join(status)
         status = Status(request, content=status)
 
+        request.theme.add_msg(status, "error")
         request.theme.send_title(
             title % {'pagename': self.split_title(), },
             page=self,
-            msg=status,
             html_head=self.lock.locktype and (
                 PageEditor._countdown_js % {
                      'countdown_script': request.theme.externalScript('countdown'),
@@ -252,7 +252,7 @@ Please review the page and save then. Do not save this page as it is!""")
         if self.cfg.page_license_enabled:
             request.write('<p><em>', _(
 """By hitting '''%(save_button_text)s''' you put your changes under the %(license_link)s.
-If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.""") % {
+If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.""", wiki=True, percent=True) % {
                 'save_button_text': save_button_text,
                 'cancel_button_text': cancel_button_text,
                 'license_link': wikiutil.getLocalizedPage(request, self.cfg.page_license_page).link_to(request),
@@ -276,6 +276,26 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 <input class="button" type="submit" name="button_cancel" value="%s">
 <input type="hidden" name="editor" value="gui">
 ''' % (button_spellcheck, cancel_button_text, ))
+        if self.cfg.mail_enabled:
+            request.write('''
+<script type="text/javascript">
+    function toggle_trivial(CheckedBox)
+    {
+        TrivialBoxes = document.getElementsByName("trivial");
+        for (var i = 0; i < TrivialBoxes.length; i++)
+            TrivialBoxes[i].checked = CheckedBox.checked;
+    }
+</script>
+&nbsp;
+<input type="checkbox" name="trivial" id="chktrivialtop" value="1" %(checked)s onclick="toggle_trivial(this)">
+<label for="chktrivialtop">%(label)s</label>
+''' % {
+          'checked': ('', 'checked')[form.get('trivial', ['0'])[0] == '1'],
+          'label': _("Trivial change"),
+       })
+
+        from MoinMoin.security.textcha import TextCha
+        request.write(TextCha(request).render())
 
         self.sendconfirmleaving() # TODO update state of flgChange to make this work, see PageEditor
 
@@ -339,7 +359,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         cat_pages = request.rootpage.getPageList(filter=filterfn)
         cat_pages.sort()
         cat_pages = [wikiutil.pagelinkmarkup(p) for p in cat_pages]
-        cat_pages.insert(0, ('', _('<No addition>', formatted=False)))
+        cat_pages.insert(0, ('', _('<No addition>')))
         request.write("<p>")
         request.write(_('Add to: %(category)s') % {
             'category': unicode(web.makeSelection('category', cat_pages)),
@@ -347,7 +367,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         if self.cfg.mail_enabled:
             request.write('''
 &nbsp;
-<input type="checkbox" name="trivial" id="chktrivial" value="1" %(checked)s>
+<input type="checkbox" name="trivial" id="chktrivial" value="1" %(checked)s onclick="toggle_trivial(this)">
 <label for="chktrivial">%(label)s</label> ''' % {
                 'checked': ('', 'checked')[form.get('trivial', ['0'])[0] == '1'],
                 'label': _("Trivial change"),

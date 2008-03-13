@@ -27,9 +27,9 @@
 
           To make this really thread safe on windows a better locking mechanism
           or retrying of some operations must be implemented.
-          
+
     HOW DELETED WORKS:
-        To be compatible with the 1.6 deleted procedure a few tricks had to be made. 
+        To be compatible with the 1.6 deleted procedure a few tricks had to be made.
         If a page will be deleted a new revision will be created for it. This revision
         will have no file in the revisions dir or the file will be empty. The current
         file will list this revision. When parsing such an empty or not-existant revision
@@ -246,7 +246,7 @@ class PageBackend(AbstractBackend):
         """
         revs = os.listdir(self._get_item_path(name, "revisions"))
         revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
-        
+
         return sorted(revs, reverse=True)
 
     def current_revision(self, name):

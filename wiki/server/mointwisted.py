@@ -32,9 +32,8 @@ from MoinMoin.server.server_twisted import TwistedConfig, makeApp
 
 class Config(TwistedConfig):
 
-    # Server name
-    # Used to create .log, .pid and .prof files
-    name = 'mointwisted'
+    # Server name - used to create .pid and .prof files
+    name = 'moin'
 
     # Path to moin shared files (default '/usr/share/moin/wiki/htdocs')
     docs = '/usr/share/moin/htdocs'
@@ -42,7 +41,7 @@ class Config(TwistedConfig):
     # URL prefix for the static stuff (used to access stuff in docs) - you
     # usually should not need to change this because Twisted moin uses
     # matching defaults for here and for wikiconfig.py:
-    #url_prefix_static = '/moin_static160'
+    #url_prefix_static = '/moin_static170'
 
     # The server will run with as this user and group (default 'www-data')
     user = 'www-data'
@@ -71,9 +70,6 @@ class Config(TwistedConfig):
     # compatible logfiles are useful because there are quite a few programs
     # which analyze them and display statistics.
     ## logPath_twisted = 'mointwisted.log'
-
-    # moin log file
-    ## logPath = 'moin.log'
 
     # Memory profile (default commented)
     # Useful only if you are a developer or interested in moin memory usage

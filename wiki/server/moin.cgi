@@ -26,14 +26,14 @@ sys.path.insert(0, '/path/to/wikiconfig')
 ## import os
 ## os.environ['MOIN_DEBUG'] = '1'
 
+from MoinMoin import log
+log.load_config('.../wiki/config/logging/conffile') # XXX fix path
+
 from MoinMoin.server.server_cgi import CgiConfig, run
 
 class Config(CgiConfig):
-    # Server name
-    # Used to create .log and .prof files
+    # Server name - used to create .prof files
     name = 'moin'
-
-    ## logPath = name + '.log'
 
     # Properties
     # Allow overriding any request property by the value defined in

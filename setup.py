@@ -4,7 +4,7 @@
     MoinMoin installer
 
     @copyright: 2001-2005 by Jürgen Hermann <jh@web.de>,
-                2006 by MoinMoin:ThomasWaldmann
+                2006-2007 by MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -204,9 +204,9 @@ setup_args = {
     'name': "moin",
     'version': release,
     'description': "MoinMoin %s.%s is a Python clone of WikiWiki" % (release, revision),
-    'author': "Jürgen Hermann",
-    'author_email': "jh@web.de",
-    'url': "http://moinmoin.wikiwikiweb.de/",
+    'author': "Thomas Waldmann",
+    'author_email': "tw-public@gmx.de",
+    'url': "http://moinmo.in/",
     'license': "GNU GPL",
     'long_description': """
 A WikiWikiWeb is a collaborative hypertext environment, with an
@@ -241,6 +241,7 @@ only requiring a Python installation.
         'MoinMoin.script.old',
         'MoinMoin.script.old.migration',
         'MoinMoin.script.old.xmlrpc-tools',
+        'MoinMoin.script.server',
         'MoinMoin.script.xmlrpc',
         'MoinMoin.search',
         'MoinMoin.security',
@@ -252,13 +253,15 @@ only requiring a Python installation.
         'MoinMoin.storage',
         'MoinMoin.storage.backends',
         'MoinMoin.theme',
+        'MoinMoin.userform',
+        'MoinMoin.userprefs',
         'MoinMoin.util',
         'MoinMoin.widget',
         'MoinMoin.wikixml',
         'MoinMoin.xmlrpc',
 
-        # if we get *massive* amounts of test, this should probably be left out
-        'MoinMoin._tests',
+        # all other _tests are missing here, either we have all or nothing:
+        #'MoinMoin._tests',
     ],
 
     # We can use package_* instead of the smart_install_data hack when we

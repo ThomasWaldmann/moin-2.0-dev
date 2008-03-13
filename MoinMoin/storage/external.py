@@ -253,9 +253,9 @@ class Item(UserDict.DictMixin, object):
             revno = self.current + 1
 
         self._backend.create_revision(self.name, revno)
-        
+
         self.reset()
-        
+
         return self[revno]
 
     def get_metadata(self):
