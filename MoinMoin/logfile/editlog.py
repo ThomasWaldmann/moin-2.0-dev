@@ -162,10 +162,7 @@ class GlobalEditLog(object):
         """
         Returns the next edit-log entry.
         """
-        if self.pos >= len(self.items):
-            raise StopIteration
-
-        mtime, rev, name = self.items[self.pos]
+        mtime, rev, name = self.items.next()
 
         result = EditLogLine()
 
