@@ -435,7 +435,6 @@ class IndexedBackend(object):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.news
         """
-        items = []
 
         mtime_file = open(self._get_news_file(create=True, mtime=True))
         mtime = wikiutil.version2timestamp(float(mtime_file.read()))
@@ -446,11 +445,10 @@ class IndexedBackend(object):
                 assert data['magic'] == "#\r\n"
                 mtime = wikiutil.version2timestamp(float(data['timestamp']))
                 if mtime >= timestamp:
-                    items.append((mtime, int(data['revno']), wikiutil.unquoteWikiname(data['itemname'])))
+                    yield ((mtime, int(data['revno']), wikiutil.unquoteWikiname(data['itemname'])))
                 else:
                     break
             news_file.close()
-        return items
 
     def _create_db(self):
         """
