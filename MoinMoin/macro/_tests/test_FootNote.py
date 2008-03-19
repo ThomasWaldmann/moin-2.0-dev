@@ -6,10 +6,9 @@
 
     @license: GNU GPL, see COPYING for details.
 """
-import os
+
 from MoinMoin import macro
 from MoinMoin.macro import FootNote
-from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 
 
@@ -19,18 +18,9 @@ class TestFootNote:
     def setup_class(self):
         self.pagename = u'AutoCreatedMoinMoinTemporaryTestPageForFootNote'
         self.page = PageEditor(self.request, self.pagename)
-        self.shouldDeleteTestPage = True
 
     def teardown_class(self):
-        if self.shouldDeleteTestPage:
-            import shutil
-            page = Page(self.request, self.pagename)
-            fpath = page.getPagePath(use_underlay=0, check_create=0)
-            shutil.rmtree(fpath, True)
-
-            fpath = self.request.rootpage.getPagePath('event-log', isfile=1)
-            if os.path.exists(fpath):
-                os.remove(fpath)
+        self.request.cfg.page_backend.remove_item(self.pagename)
 
     def _make_macro(self):
         """Test helper"""

@@ -85,19 +85,19 @@ class TestQuoting:
 class TestRealCreation:
 
     def testSearchCreate(self):
-        package = PackagePages(self.request.rootpage.page_name, self.request)
+        package = PackagePages("MoinMoinWiki", self.request)
         temp = tempfile.NamedTemporaryFile(suffix='.zip')
         package.collectpackage(package.searchpackage(self.request, "Category"), temp)
         assert zipfile.is_zipfile(temp.name)
 
     def testListCreate(self):
-        package = PackagePages(self.request.rootpage.page_name, self.request)
+        package = PackagePages("MoinMoinWiki", self.request)
         temp = tempfile.NamedTemporaryFile(suffix='.zip')
         package.collectpackage(['FrontPage'], temp)
         assert zipfile.is_zipfile(temp.name)
 
     def testAllCreate(self):
-        package = PackagePages(self.request.rootpage.page_name, self.request)
+        package = PackagePages("MoinMoinWiki", self.request)
         temp = tempfile.NamedTemporaryFile(suffix='.zip')
         package.collectpackage(self.request.rootpage.getPageList(
                                 include_underlay=False,
@@ -108,9 +108,10 @@ class TestRealCreation:
         assert zipfile.is_zipfile(temp.name)
 
     def testInvalidCreate(self):
-        package = PackagePages(self.request.rootpage.page_name, self.request)
+        package = PackagePages("MoinMoinWiki", self.request)
         temp = tempfile.NamedTemporaryFile(suffix='.zip')
         package.collectpackage(['___//THIS PAGE SHOULD NOT EXIST\\___'], temp)
         assert not zipfile.is_zipfile(temp.name)
+
 coverage_modules = ['MoinMoin.packages']
 

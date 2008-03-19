@@ -7,8 +7,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import py
-import re
 import shutil
 
 from MoinMoin import wikidicts
@@ -139,10 +137,7 @@ class TestGroupDicts:
         members, groups = self.request.dicts.expand_group(u'AnotherGroup')
         page = PageEditor(self.request, u'AnotherGroup', do_editor_backup=0)
 
-        # real delete AnotherGroup page from filesystem
-        page.deletePage()
-        fpath = page.getPagePath(check_create=0)
-        shutil.rmtree(fpath, True)
+        self.request.cfg.page_backend.remove_item(u'AnotherGroup')
 
         assert u'ExampleUser' in members
 
@@ -168,17 +163,8 @@ class TestGroupDicts:
         members, groups = self.request.dicts.expand_group(u'OtherGroup')
         page = PageEditor(self.request, u'OtherGroup', do_editor_backup=0)
 
-        # real delete Group page from filesystem
-        page = PageEditor(self.request, u'OtherGroup', do_editor_backup=0)
-        page.deletePage()
-        fpath = page.getPagePath(check_create=0)
-        shutil.rmtree(fpath, True)
-
-        # real delete Group page from filesystem
-        page = PageEditor(self.request, u'SomeGroup', do_editor_backup=0)
-        page.deletePage()
-        fpath = page.getPagePath(check_create=0)
-        shutil.rmtree(fpath, True)
+        self.request.cfg.page_backend.remove_item(u'OtherGroup')
+        self.request.cfg.page_backend.remove_item(u'SomeGroup')
 
         assert u'ExampleUser' in members
 
