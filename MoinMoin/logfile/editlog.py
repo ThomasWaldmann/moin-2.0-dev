@@ -96,44 +96,6 @@ class LocalEditLog(object):
         result.userid = self.item[self.pos].userid
         result.extra = self.item[self.pos].extra
         result.comment = self.item[self.pos].comment
-# XXX most likely bad merge
-#        if request.cfg.show_hosts:
-#            title = " @ %s[%s]" % (self.hostname, self.addr)
-#        else:
-#            title = ""
-#        kind, info = self.getInterwikiEditorData(request)
-#        if kind == 'interwiki':
-#            name = self._usercache[self.userid].name
-#            aliasname = self._usercache[self.userid].aliasname
-#            if not aliasname:
-#                aliasname = name
-#            title = aliasname + title
-#            text = (request.formatter.interwikilink(1, title=title, generated=True, *info) +
-#                    request.formatter.text(name) +
-#                    request.formatter.interwikilink(0, title=title, *info))
-#        elif kind == 'email':
-#            name = self._usercache[self.userid].name
-#            aliasname = self._usercache[self.userid].aliasname
-#            if not aliasname:
-#                aliasname = name
-#            title = aliasname + title
-#            url = 'mailto:%s' % info
-#            text = (request.formatter.url(1, url, css='mailto', title=title) +
-#                    request.formatter.text(name) +
-#                    request.formatter.url(0))
-#        elif kind == 'ip':
-#            try:
-#                idx = info.index('.')
-#            except ValueError:
-#                idx = len(info)
-#            title = '???' + title
-#            text = request.formatter.text(info[:idx])
-#        else:
-#            raise Exception("unknown EditorData type")
-#        return (request.formatter.span(1, title=title) +
-#                text +
-#                request.formatter.span(0))
-#>>>>>>> /tmp/editlog.py~other.b65oV4
 
         self.pos = self.pos - 1
 
