@@ -43,6 +43,29 @@ class MetaBackend(object):
         """
         raise NotImplementedError
 
+    def _news_helper(self, timestamp, backends):
+        """
+        Used to implement on-the-fly news sorting
+        from multiple backends.
+        """
+        _items = []
+        for backend in backends:
+            try:
+                iterator = backend.news(timestamp)
+                _items.append((iterator.next(), iterator))
+            except StopIteration:
+                pass
+
+        while len(_items):
+            _items.sort(reverse=True)
+            yield _items[0][0]
+            try:
+                iterator = _items[0][1]
+                nval = iterator.next()
+                _items[0] = (nval, iterator)
+            except StopIteration:
+                del _items[0]
+
 
 class NamespaceBackend(MetaBackend):
     """
@@ -81,10 +104,8 @@ class NamespaceBackend(MetaBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.news
         """
-        items = set()
-        for namespace, backend in self.backends.iteritems():
-            items = items | set([(item[0], item[1], namespace + item[2]) for item in backend.news(timestamp)])
-        return sorted(list(items), reverse=True)
+        for item in self._news_helper(timestamp, self.backends.values()):
+            yield item
 
     def _get_backend(self, name):
         """
@@ -133,10 +154,8 @@ class LayerBackend(MetaBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.news
         """
-        items = set()
-        for backend in self.backends:
-            items = items | set(backend.news(timestamp))
-        return sorted(list(items), reverse=True)
+        for item in self._news_helper(timestamp, self.backends):
+            yield item
 
     def _call(self, method, *args, **kwargs):
         """
