@@ -1154,7 +1154,8 @@ class Page(object):
             page.body = alternative_text
             logging.warn('The page "%s" could not be found. Check your'
                          ' underlay directory setting.' % page.page_name)
-        page._page_name_force = missingpage.page_name
+
+        page._page_name_force = page.page_name
         page.page_name = self.page_name
 
         page.send_page(content_only=True, do_cache=not special_exists, send_special=True)
