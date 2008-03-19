@@ -16,8 +16,11 @@ from MoinMoin.widget import html
 
 def execute(pagename, request):
     """ show misc. infos about a page """
-    if not request.user.may.read(pagename):
-        Page(request, pagename).send_page()
+
+    page = Page(request, pagename)
+
+    if not request.user.may.read(pagename) or not page.exists():
+        page.send_page()
         return
 
     def general(page, pagename, request):
@@ -102,10 +105,10 @@ def execute(pagename, request):
             return page.link_to(request, text, querystr=query, **kw)
 
         # read in the complete log of this page
-        log = editlog.EditLog(request, rootpagename=pagename)
+        llog = editlog.LocalEditLog(request, rootpagename=pagename)
         count = 0
-        for line in log.reverse():
-            rev = int(line.rev)
+        for line in llog:
+            rev = line.rev
             actions = []
             if line.action in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
                 size = page.size(rev=rev)
@@ -149,7 +152,7 @@ def execute(pagename, request):
 
             history.addRow((
                 rev,
-                request.user.getFormattedDateTime(wikiutil.version2timestamp(line.ed_time_usecs)),
+                request.user.getFormattedDateTime(line.mtime),
                 str(size),
                 diff,
                 line.getEditor(request) or _("N/A"),
@@ -182,7 +185,7 @@ def execute(pagename, request):
 
     # main function
     _ = request.getText
-    page = Page(request, pagename)
+
     title = page.split_title()
 
     request.emit_http_headers()
