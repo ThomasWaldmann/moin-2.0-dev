@@ -246,10 +246,13 @@ class AbstractBackendTest(AbstractTest):
         metadata["test"] = "test"
         metadata.save()
         news = self.backend.news(starttime)
-        assert len(news) == 1
-        assert len(news[0]) == 3
-        assert news[0][2] == self.newname
-        assert news[0][1] == 1
+        count = 0
+        for n in news:
+            assert len(n) == 3
+            assert n[2] == self.newname
+            assert n[1] == 1
+            count += 1
+        assert count == 1
         self.backend.remove_item(self.newname)
 
 

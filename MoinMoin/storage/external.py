@@ -166,8 +166,9 @@ class ItemCollection(UserDict.DictMixin, object):
             except KeyError:
                 pass
         self.timestamp = timestamp
-        if len(news) > 0:
+        for n in news:
             self._items = None
+            break
 
 
 class Item(UserDict.DictMixin, object):
