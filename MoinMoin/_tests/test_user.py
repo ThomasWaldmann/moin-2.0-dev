@@ -79,7 +79,7 @@ class TestLoginWithPassword(object):
     def testUnicodePassword(self):
         """ user: login with non-ascii password """
         # Create test user
-        name = u'__ש�? משתמש ל�? קיי�?__' # Hebrew
+        name = u'__שם משתמש לא קיים__' # Hebrew
         password = name
         self.createUser(name, password)
 
@@ -242,7 +242,7 @@ class TestIsValidName(object):
             u'Jürgen Hermann', # German
             u'ניר סופר', # Hebrew
             u'CamelCase', # Good old camel case
-            u'가�?간갇갈 갉갊�? 갬갯걀갼' # Hangul (gibberish)
+            u'가각간갇갈 갉갊감 갬갯걀갼' # Hangul (gibberish)
             )
         for test in cases:
             assert user.isValidName(self.request, test)
