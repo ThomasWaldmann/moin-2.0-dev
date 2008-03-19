@@ -185,9 +185,9 @@ class FixedRecordLogFile(object):
 
     def next(self):
         try:
+            self.seek_record(self.current_record, SEEK_SET)
             data = self.read()
             self.current_record += self.increment_record
-            self.seek_record(self.current_record, SEEK_SET)
             return data
         except IOError, err:
             raise StopIteration
