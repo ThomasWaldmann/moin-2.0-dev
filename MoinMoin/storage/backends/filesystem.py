@@ -53,34 +53,6 @@ class BaseFilesystemBackend(object):
         self._quoted = quoted
         self.is_underlay = is_underlay
 
-    def _filter(self, item, filters, filterfn):
-        """
-        Filter the given items with the given filters by searching the metadata.
-        """
-        if self._quoted:
-            item = wikiutil.unquoteWikiname(item)
-
-        if not filters and not filterfn:
-            return True
-
-        metadata = _get_metadata(self, item, [-1, 0])
-
-        if filters:
-            for key, value in filters.iteritems():
-                if key == UNDERLAY:
-                    if value != self.is_underlay:
-                        return False
-                elif key in metadata:
-                    if not unicode(value) in _parse_value(metadata[key]):
-                        return False
-                else:
-                    return False
-
-        if filterfn:
-            return filterfn(item, metadata)
-
-        return True
-
     def _get_item_path(self, name, *args):
         """
         Returns the full path with fs quoted page name.

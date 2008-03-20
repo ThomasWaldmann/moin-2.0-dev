@@ -20,6 +20,7 @@ import shutil
 import tempfile
 
 from MoinMoin import config
+from MoinMoin.storage.backends.common import check_filter
 from MoinMoin.storage.backends.filesystem import BaseFilesystemBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file
 from MoinMoin.storage.backends.moin16 import UserBackend # use this from 1.6 for now
 
@@ -41,7 +42,7 @@ class ItemBackend(BaseFilesystemBackend):
         for f in os.listdir(self._path):
             if not os.path.isfile(os.path.join(self._path, f, "meta")):
                 continue
-            if not BaseFilesystemBackend._filter(self, f, filters, filterfn):
+            if not check_filter(self, f, filters, filterfn):
                 continue
             yield f
 
