@@ -36,7 +36,7 @@ def getUserList(request):
 
 def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
-    identifier = ItemCollection(request.cfg.user_backend, request).iteritems({key: value})
+    identifier = ItemCollection(request.cfg.user_backend, request).iterate({key: value})
     users = []
     for user in identifier:
         users.append(User(request, user))
@@ -73,7 +73,7 @@ def getUserId(request, searchName):
     """
     try:
         coll = ItemCollection(request.cfg.user_backend, request)
-        for user in coll.iteritems({'name': searchName}):
+        for user in coll.iterate({'name': searchName}):
             return user
         return None
     except IndexError:

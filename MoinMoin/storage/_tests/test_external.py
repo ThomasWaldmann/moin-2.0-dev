@@ -29,7 +29,7 @@ class TestItemCollection(AbstractTest):
     def test_keys(self):
         assert self.item_collection.keys() == self.items
         for filter in self.items_filters:
-            assert list(self.item_collection.iteritems({filter[0]: filter[1]})) == [filter[2]]
+            assert list(self.item_collection.iterate({filter[0]: filter[1]})) == [filter[2]]
 
     def test_get_item(self):
         item = self.item_collection[self.items[0]]

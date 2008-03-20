@@ -140,13 +140,16 @@ class ItemCollection(UserDict.DictMixin, object):
 
         newitem.lock = False
 
-    def iteritems(self, filters=None, filterfn=None):
+    def __iter__(self, filters=None, filterfn=None):
         """
         Iterate over this dict mixing, optionally doing filtering.
         """
         # XXX Remove this iterator when it really returns one
         for item in self._backend.list_items(filters, filterfn):
             yield item
+
+    # nicer function name for allowing filtering
+    iterate = __iter__
 
     def refresh(self):
         """

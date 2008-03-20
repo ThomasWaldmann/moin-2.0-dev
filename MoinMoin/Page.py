@@ -1384,7 +1384,7 @@ class RootPage(object):
         else:
             filterfn = None
 
-        items = self._items.iteritems(filters, filterfn)
+        items = self._items.iterate(filters, filterfn)
 
         if user or return_objects:
             # Filter names
@@ -1435,7 +1435,7 @@ class RootPage(object):
 
         notdeleted = lambda pg, meta: not DELETED in meta or meta[DELETED] != 'True'
 
-        items = self._items.iteritems(None, notdeleted)
+        items = self._items.iterate(None, notdeleted)
         count = 0
         for item in items:
             count += 1
