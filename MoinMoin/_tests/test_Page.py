@@ -14,7 +14,7 @@ class TestPage:
     def testMeta(self):
         page = Page(self.request, u'FrontPage')
         meta = page.meta
-        for k, v in meta:
+        for k, v in meta.iteritems():
             if k == u'format':
                 assert v == u'wiki'
             elif k == u'language':
@@ -35,7 +35,7 @@ class TestPage:
 
     def testLastEdit(self):
         page = Page(self.request, u'FrontPage')
-        last_edit = page.last_edit(self.request)
+        last_edit = page.last_edit()
         assert 'editor' in last_edit
         assert 'timestamp' in last_edit
 
