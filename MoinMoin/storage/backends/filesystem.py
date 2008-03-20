@@ -24,7 +24,7 @@ from MoinMoin.support.python_compatibility import sorted, set
 from MoinMoin.util import lock, pickle, records
 
 
-class AbstractBackend(object):
+class BaseFilesystemBackend(object):
     """
     Abstract Storage Implementation for common filesystem methods.
     """

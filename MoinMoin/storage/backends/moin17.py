@@ -20,10 +20,10 @@ import shutil
 import tempfile
 
 from MoinMoin import config
-from MoinMoin.storage.backends.filesystem import AbstractBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file
+from MoinMoin.storage.backends.filesystem import BaseFilesystemBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file
 from MoinMoin.storage.backends.moin16 import UserBackend # use this from 1.6 for now
 
-class ItemBackend(AbstractBackend):
+class ItemBackend(BaseFilesystemBackend):
     """
     This class implements the MoinMoin 1.7 Item Storage Stuff.
     """
@@ -32,7 +32,7 @@ class ItemBackend(AbstractBackend):
         """
         Init the Backend with the correct path.
         """
-        AbstractBackend.__init__(self, name, path, cfg, True, is_underlay=is_underlay)
+        BaseFilesystemBackend.__init__(self, name, path, cfg, True, is_underlay=is_underlay)
 
     def list_items(self, filters, filterfn):
         """
@@ -41,7 +41,7 @@ class ItemBackend(AbstractBackend):
         for f in os.listdir(self._path):
             if not os.path.isfile(os.path.join(self._path, f, "meta")):
                 continue
-            if not AbstractBackend._filter(self, f, filters, filterfn):
+            if not BaseFilesystemBackend._filter(self, f, filters, filterfn):
                 continue
             yield f
 
@@ -147,7 +147,7 @@ class ItemBackend(AbstractBackend):
 
     def _get_rev_path(self, name, revno, kind):
         """
-        @see MoinMoin.storage.backends.filesystem.AbstractBackend._get_rev_path
+        @see MoinMoin.storage.backends.filesystem.BaseFilesystemBackend._get_rev_path
 
         Returns the path to a specified revision of kind 'meta' or 'data'.
         """
