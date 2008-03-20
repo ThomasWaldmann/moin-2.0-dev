@@ -50,7 +50,6 @@ from MoinMoin.storage.backends.filesystem import BaseFilesystemBackend, Abstract
 from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG, EDIT_LOCK
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
-from MoinMoin.storage.external import get_bool
 
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
@@ -490,14 +489,14 @@ class DeletedPageMetadata(AbstractMetadata):
         @see MoinMoin.storage.backends.filesystem.AbstractMetadata._parse_metadata
         """
         metadata = {}
-        metadata[DELETED] = str(True)
+        metadata[DELETED] = True
         return metadata
 
     def _save_metadata(self, name, revno, metadata):
         """
         @see MoinMoin.storage.backends.filesystem.AbstractMetadata._save_metadata
         """
-        if not DELETED in metadata or not get_bool(metadata[DELETED]):
+        if not DELETED in metadata or not metadata[DELETED]:
             self._backend.create_revision(self._name, revno)
 
 

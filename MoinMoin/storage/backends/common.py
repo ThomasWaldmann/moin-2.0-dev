@@ -10,7 +10,7 @@
 
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.interfaces import StorageBackend
-from MoinMoin.storage.external import UNDERLAY
+from MoinMoin.storage.external import UNDERLAY, DELETED
 
 
 class CommonBackend(object):
@@ -170,6 +170,11 @@ def check_filter(backend, item, filters, filterfn):
         for key, value in filters.iteritems():
             if key == UNDERLAY:
                 if value != backend.is_underlay:
+                    return False
+            elif key == DELETED:
+                # items w/o DELETED member are not deleted
+                deleted = metadata.get(DELETED, False)
+                if deleted != value:
                     return False
             elif key in metadata:
                 val = metadata[key]

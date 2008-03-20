@@ -428,7 +428,7 @@ class Revision(object):
         """
         Deleted Property.
         """
-        return get_bool(self.metadata.get(DELETED, False))
+        return self.metadata.get(DELETED, False)
 
     def set_deleted(self, value):
         """
@@ -436,7 +436,7 @@ class Revision(object):
         """
         if not value in [True, False]:
             raise ValueError(_("Invalid value for deleted, must be a boolean, is %r.") % value)
-        self.metadata[DELETED] = str(value)
+        self.metadata[DELETED] = value
 
     deleted = property(get_deleted, set_deleted)
 
@@ -563,14 +563,6 @@ class WriteonlyData(object):
 
     def __init__(self, obj, exception, message):
         _decorate(self, obj, exception, message, self.forbid, self.forward)
-
-
-def get_bool(arg):
-    """
-    Return the boolean value of an argument.
-    Use wikiutil.get_bool if that doesn't need a request anymore.
-    """
-    return str(arg).lower() in [u'1', u'true', u'yes']
 
 
 _ = lambda x: x
