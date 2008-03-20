@@ -34,13 +34,13 @@ class ItemBackend(AbstractBackend):
         """
         AbstractBackend.__init__(self, name, path, cfg, True, is_underlay=is_underlay)
 
-    def list_items(self, filters=None):
+    def list_items(self, filters, filterfn):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
         files = [f for f in os.listdir(self._path) if os.path.isfile(os.path.join(self._path, f, "meta"))]
 
-        return AbstractBackend._filter_items(self, files, filters)
+        return AbstractBackend._filter_items(self, files, filters, filterfn)
 
     def has_item(self, name):
         """

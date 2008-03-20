@@ -92,7 +92,7 @@ class NamespaceBackend(MetaBackend):
             new_backends[namespace] = backend
         MetaBackend.__init__(self, new_backends)
 
-    def list_items(self, filters=None):
+    def list_items(self, filters, filterfn):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
@@ -101,7 +101,7 @@ class NamespaceBackend(MetaBackend):
             # optimise a bit
             if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
                 continue
-            items = items | set([namespace + item for item in backend.list_items(filters)])
+            items = items | set([namespace + item for item in backend.list_items(filters, filterfn)])
         return sorted(list(items))
 
     def news(self, timestamp=0):
@@ -139,7 +139,7 @@ class LayerBackend(MetaBackend):
     be searched in the order the backends appear in the configuration, first fit.
     """
 
-    def list_items(self, filters=None):
+    def list_items(self, filters, filterfn):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
@@ -148,7 +148,7 @@ class LayerBackend(MetaBackend):
             # optimise a bit
             if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
                 continue
-            items = items | set(backend.list_items(filters))
+            items = items | set(backend.list_items(filters, filterfn))
         return sorted(list(items))
 
     def has_item(self, name):

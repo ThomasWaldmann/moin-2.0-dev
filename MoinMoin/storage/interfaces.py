@@ -17,12 +17,15 @@ class StorageBackend(object):
     name = ""
     is_underlay = False
 
-    def list_items(self, filters=None):
+    def list_items(self, filters, filterfn):
         """
         Returns a list of all item names that match the given filters.
         If filters is None all items will be returned. Filters is a
         dictionary. One entry specifies a metadata key and a value
-        that the metadata key must match.
+        that the metadata key must match. If filterfn is not None, it
+        will be invoked with the arguments (item_name, metadata_dict)
+        and must return a boolean value indicating whether the item
+        should be returned or not; both filters must indicate this.
 
         For faster access the backend may use indexes which are defined in the
         the configuration. Indexes specify metadata keys for which the backend
