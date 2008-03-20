@@ -70,9 +70,12 @@ class UserBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        files = [f for f in os.listdir(self._path) if user_re.match(f)]
-
-        return AbstractBackend._filter_items(self, files, filters, filterfn)
+        for f in os.listdir(self._path):
+            if not user_re.match(f):
+                continue
+            if not AbstractBackend._filter(self, f, filters, filterfn):
+                continue
+            yield f
 
     def has_item(self, name):
         """
@@ -207,9 +210,12 @@ class PageBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        files = [f for f in os.listdir(self._path) if os.path.isfile(os.path.join(self._path, f, "current"))]
-
-        return AbstractBackend._filter_items(self, files, filters, filterfn)
+        for f in os.listdir(self._path):
+            if not os.path.isfile(os.path.join(self._path, f, "current")):
+                continue
+            if not AbstractBackend._filter(self, f, filters, filterfn):
+                continue
+            yield f
 
     def has_item(self, name):
         """

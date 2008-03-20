@@ -38,9 +38,12 @@ class ItemBackend(AbstractBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        files = [f for f in os.listdir(self._path) if os.path.isfile(os.path.join(self._path, f, "meta"))]
-
-        return AbstractBackend._filter_items(self, files, filters, filterfn)
+        for f in os.listdir(self._path):
+            if not os.path.isfile(os.path.join(self._path, f, "meta")):
+                continue
+            if not AbstractBackend._filter(self, f, filters, filterfn):
+                continue
+            yield f
 
     def has_item(self, name):
         """
