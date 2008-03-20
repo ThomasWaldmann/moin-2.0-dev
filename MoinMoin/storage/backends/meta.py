@@ -96,13 +96,18 @@ class NamespaceBackend(MetaBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        items = set()
         for namespace, backend in self.backends.iteritems():
             # optimise a bit
             if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
                 continue
-            items = items | set([namespace + item for item in backend.list_items(filters, filterfn)])
-        return sorted(list(items))
+
+            if filterfn:
+                ffn = lambda pgname, meta: filterfn(namespace + pgname, meta)
+            else:
+                ffn = None
+
+            for item in backend.list_items(filters, ffn):
+                yield namespace + item
 
     def news(self, timestamp=0):
         """
@@ -143,13 +148,13 @@ class LayerBackend(MetaBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        items = set()
         for backend in self.backends:
             # optimise a bit
             if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
                 continue
-            items = items | set(backend.list_items(filters, filterfn))
-        return sorted(list(items))
+
+            for item in backend.list_items(filters, filterfn):
+                yield item
 
     def has_item(self, name):
         """
