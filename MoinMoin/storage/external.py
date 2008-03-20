@@ -164,14 +164,12 @@ class ItemCollection(UserDict.DictMixin, object):
         timestamp = time.time()
         news = self._backend.news(self.timestamp)
         for item in news:
+            self._items = None
             try:
                 del self._item_cache[item[2]]
             except KeyError:
                 pass
         self.timestamp = timestamp
-        for n in news:
-            self._items = None
-            break
 
 
 class Item(UserDict.DictMixin, object):
