@@ -46,7 +46,7 @@ from MoinMoin.support.python_compatibility import sorted
 
 from MoinMoin import config, wikiutil
 from MoinMoin.storage.backends.common import get_bool
-from MoinMoin.storage.backends.filesystem import AbstractBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file, _parse_log_line
+from MoinMoin.storage.backends.filesystem import BaseFilesystemBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file, _parse_log_line
 from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG, EDIT_LOCK
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
@@ -55,7 +55,7 @@ from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
 
-class UserBackend(AbstractBackend):
+class UserBackend(BaseFilesystemBackend):
     """
     Class that implements the 1.6 compatible storage backend for users.
     """
@@ -64,7 +64,7 @@ class UserBackend(AbstractBackend):
         """
         Init the Backend with the correct path.
         """
-        AbstractBackend.__init__(self, name, path, cfg, False)
+        BaseFilesystemBackend.__init__(self, name, path, cfg, False)
 
     def list_items(self, filters, filterfn):
         """
@@ -73,7 +73,7 @@ class UserBackend(AbstractBackend):
         for f in os.listdir(self._path):
             if not user_re.match(f):
                 continue
-            if not AbstractBackend._filter(self, f, filters, filterfn):
+            if not BaseFilesystemBackend._filter(self, f, filters, filterfn):
                 continue
             yield f
 
@@ -129,7 +129,7 @@ class UserBackend(AbstractBackend):
 
     def _get_rev_path(self, name, revno, kind):
         """
-        @see MoinMoin.storage.backends.filesystem.AbstractBackend._get_rev_path
+        @see MoinMoin.storage.backends.filesystem.BaseFilesystemBackend._get_rev_path
 
         1.6 has only a single file (single rev) for a user.
         """
@@ -195,7 +195,7 @@ class UserMetadata(AbstractMetadata):
         shutil.move(tmp_name, self._backend._get_item_path(name))
 
 
-class PageBackend(AbstractBackend):
+class PageBackend(BaseFilesystemBackend):
     """
     This class implements the MoinMoin 1.6 compatible Page Storage Stuff.
     """
@@ -204,7 +204,7 @@ class PageBackend(AbstractBackend):
         """
         Init the Backend with the correct path.
         """
-        AbstractBackend.__init__(self, name, path, cfg, True, is_underlay=is_underlay)
+        BaseFilesystemBackend.__init__(self, name, path, cfg, True, is_underlay=is_underlay)
 
     def list_items(self, filters, filterfn):
         """
@@ -213,7 +213,7 @@ class PageBackend(AbstractBackend):
         for f in os.listdir(self._path):
             if not os.path.isfile(os.path.join(self._path, f, "current")):
                 continue
-            if not AbstractBackend._filter(self, f, filters, filterfn):
+            if not BaseFilesystemBackend._filter(self, f, filters, filterfn):
                 continue
             yield f
 
@@ -325,7 +325,7 @@ class PageBackend(AbstractBackend):
 
     def _get_rev_path(self, name, revno, kind):
         """
-        @see MoinMoin.storage.backends.filesystem.AbstractBackend._get_rev_path
+        @see MoinMoin.storage.backends.filesystem.BaseFilesystemBackend._get_rev_path
 
         1.6 uses same file for 'meta' and 'data' kind.
         """
