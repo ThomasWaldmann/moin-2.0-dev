@@ -53,31 +53,46 @@ class AbstractBackend(object):
         self._quoted = quoted
         self.is_underlay = is_underlay
 
-    def _filter_items(self, items, filters=None):
+    def _filter_items(self, items, filters, filterfn):
         """
         Filter the given items with the given filters by searching the metadata.
         """
         if self._quoted:
             items = [wikiutil.unquoteWikiname(f) for f in items]
 
-        if filters:
-            exclude = []
-            for item in items:
-                include = False
-                metadata = _get_metadata(self, item, [-1, 0])
+        if not filters and not filterfn:
+            return items
+
+        found = []
+
+        for item in items:
+            match = True
+
+            metadata = _get_metadata(self, item, [-1, 0])
+
+            if filters:
                 for key, value in filters.iteritems():
                     if key == UNDERLAY:
-                        if value == self.is_underlay:
-                            include = True
-                    elif key in metadata:
-                        if unicode(value) in _parse_value(metadata[key]):
-                            include = True
+                        if value != self.is_underlay:
+                            match = False
                             break
-                if not include:
-                    exclude.append(item)
-            items = set(items) - set(exclude)
+                    elif key in metadata:
+                        if not unicode(value) in _parse_value(metadata[key]):
+                            match = False
+                            break
+                    else:
+                        match = False
+                        break
 
-        return sorted(list(items))
+                if not match:
+                    continue
+
+            if filterfn:
+                if not filterfn(item, metadata):
+                    continue
+
+            found.append(item)
+        return found
 
     def _get_item_path(self, name, *args):
         """
@@ -301,9 +316,13 @@ class IndexedBackend(object):
         """
         return getattr(self._backend, name)
 
-    def list_items(self, filters=None):
+    def list_items(self, filters, filterfn):
         """
         @see MoinMoin.interfaces.StorageBackend.list_items
+
+        This really is a pessimisation, building a complete list first
+        and then filtering it... Should build a list from the index first
+        and then filter it further!
         """
         if filters:
             index_filters = dict([(key, value) for key, value in filters.iteritems() if key in self._indexes])
@@ -311,7 +330,7 @@ class IndexedBackend(object):
         else:
             index_filters, other_filters = {}, {}
 
-        items = set(self._backend.list_items(other_filters))
+        items = set(self._backend.list_items(other_filters, filterfn))
 
         for key, value in index_filters.iteritems():
             items = items & set(self._get_items(key, value))
@@ -360,7 +379,7 @@ class IndexedBackend(object):
         """
         indexes = dict()
 
-        for item in self._backend.list_items():
+        for item in self._backend.list_items(None, None):
             # get metadata
             metadata = _get_metadata(self._backend, item, [-1, 0])
 
@@ -460,7 +479,7 @@ class IndexedBackend(object):
         Creates the news db.
         """
         items = []
-        for item in self.list_items():
+        for item in self.list_items(None, None):
             try:
                 log_file = open(self._backend._get_item_path(item, "edit-log"), "r")
                 for line in log_file:

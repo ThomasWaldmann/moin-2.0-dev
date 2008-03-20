@@ -90,7 +90,7 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         self._backend.remove_item(name)
 
-    def keys(self, filters=None):
+    def keys(self, filters=None, filterfn=None):
         """
         Returns a list of all item names. With filters you can add
         filtering stuff which is described more detailed in
@@ -100,7 +100,7 @@ class ItemCollection(UserDict.DictMixin, object):
         if filters is None:
             return self.items[:]
         else:
-            return self._backend.list_items(filters)[:]
+            return self._backend.list_items(filters, filterfn)[:]
 
     def new_item(self, name):
         """
@@ -152,7 +152,7 @@ class ItemCollection(UserDict.DictMixin, object):
         Lazy load items.
         """
         if self._items is None:
-            self._items = self._backend.list_items()
+            self._items = self._backend.list_items(None, None)
         return self._items
 
     items = property(get_items)
