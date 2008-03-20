@@ -137,7 +137,7 @@ class TestGroupDicts:
         members, groups = self.request.dicts.expand_group(u'AnotherGroup')
         page = PageEditor(self.request, u'AnotherGroup', do_editor_backup=0)
 
-        self.request.cfg.page_backend.remove_item(u'AnotherGroup')
+        self.request.cfg.data_backend.remove_item(u'AnotherGroup')
 
         assert u'ExampleUser' in members
 
@@ -163,8 +163,8 @@ class TestGroupDicts:
         members, groups = self.request.dicts.expand_group(u'OtherGroup')
         page = PageEditor(self.request, u'OtherGroup', do_editor_backup=0)
 
-        self.request.cfg.page_backend.remove_item(u'OtherGroup')
-        self.request.cfg.page_backend.remove_item(u'SomeGroup')
+        self.request.cfg.data_backend.remove_item(u'OtherGroup')
+        self.request.cfg.data_backend.remove_item(u'SomeGroup')
 
         assert u'ExampleUser' in members
 

@@ -25,7 +25,7 @@ class TestHits:
             os.remove(fpath)
 
     def teardown_class(self):
-        self.request.cfg.page_backend.remove_item(self.pagename)
+        self.request.cfg.data_backend.remove_item(self.pagename)
 
     def _make_macro(self):
         """Test helper"""
