@@ -60,7 +60,6 @@ class ItemCollection(UserDict.DictMixin, object):
         self._backend = backend
         self._request = request
 
-        self._items = None
         self.timestamp = time.time()
 
     def __contains__(self, name):
@@ -96,11 +95,7 @@ class ItemCollection(UserDict.DictMixin, object):
         filtering stuff which is described more detailed in
         StorageBackend.list_items(...).
         """
-        self.refresh()
-        if filters is None and filterfn is None:
-            return self.items[:]
-        else:
-            return self._backend.list_items(filters, filterfn)[:]
+        return list(self._backend.list_items(filters, filterfn))
 
     def new_item(self, name):
         """
@@ -147,15 +142,10 @@ class ItemCollection(UserDict.DictMixin, object):
 
         newitem.lock = False
 
-    def get_items(self):
-        """
-        Lazy load items.
-        """
-        if self._items is None:
-            self._items = self._backend.list_items(None, None)
-        return self._items
-
-    items = property(get_items)
+    def iteritems(self, filters=None, filterfn=None):
+        # XXX Remove this iterator when it really returns one
+        for item in self._backend.list_items(filters, filterfn):
+            yield item
 
     def refresh(self):
         """
@@ -164,7 +154,6 @@ class ItemCollection(UserDict.DictMixin, object):
         timestamp = time.time()
         news = self._backend.news(self.timestamp)
         for item in news:
-            self._items = None
             try:
                 del self._item_cache[item[2]]
             except KeyError:
