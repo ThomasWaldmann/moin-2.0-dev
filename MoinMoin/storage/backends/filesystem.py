@@ -53,46 +53,33 @@ class AbstractBackend(object):
         self._quoted = quoted
         self.is_underlay = is_underlay
 
-    def _filter_items(self, items, filters, filterfn):
+    def _filter(self, item, filters, filterfn):
         """
         Filter the given items with the given filters by searching the metadata.
         """
         if self._quoted:
-            items = [wikiutil.unquoteWikiname(f) for f in items]
+            item = wikiutil.unquoteWikiname(item)
 
         if not filters and not filterfn:
-            return items
+            return True
 
-        found = []
+        metadata = _get_metadata(self, item, [-1, 0])
 
-        for item in items:
-            match = True
+        if filters:
+            for key, value in filters.iteritems():
+                if key == UNDERLAY:
+                    if value != self.is_underlay:
+                        return False
+                elif key in metadata:
+                    if not unicode(value) in _parse_value(metadata[key]):
+                        return False
+                else:
+                    return False
 
-            metadata = _get_metadata(self, item, [-1, 0])
+        if filterfn:
+            return filterfn(item, metadata)
 
-            if filters:
-                for key, value in filters.iteritems():
-                    if key == UNDERLAY:
-                        if value != self.is_underlay:
-                            match = False
-                            break
-                    elif key in metadata:
-                        if not unicode(value) in _parse_value(metadata[key]):
-                            match = False
-                            break
-                    else:
-                        match = False
-                        break
-
-                if not match:
-                    continue
-
-            if filterfn:
-                if not filterfn(item, metadata):
-                    continue
-
-            found.append(item)
-        return found
+        return True
 
     def _get_item_path(self, name, *args):
         """
