@@ -28,11 +28,11 @@ class ItemBackend(AbstractBackend):
     This class implements the MoinMoin 1.7 Item Storage Stuff.
     """
 
-    def __init__(self, name, path, cfg):
+    def __init__(self, name, path, cfg, is_underlay=False):
         """
         Init the Backend with the correct path.
         """
-        AbstractBackend.__init__(self, name, path, cfg, True)
+        AbstractBackend.__init__(self, name, path, cfg, True, is_underlay=is_underlay)
 
     def list_items(self, filters=None):
         """
