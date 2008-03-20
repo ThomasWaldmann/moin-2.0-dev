@@ -108,13 +108,15 @@ class AbstractBackendTest(AbstractTest):
         assert self.backend.name == self.name
 
     def test_list_items(self):
-        assert self.backend.list_items(None, None) == self.items
+        items = list(self.backend.list_items(None, None))
+        assert self.items == items
         for filter in self.items_filters:
-            assert self.backend.list_items({filter[0]: filter[1]}, None) == [filter[2]]
+            items = list(self.backend.list_items({filter[0]: filter[1]}, None))
+            assert items == [filter[2]]
         filterfn = lambda pagename, meta: True
-        assert self.backend.list_items(None, filterfn) == self.items
+        assert list(self.backend.list_items(None, filterfn)) == self.items
         filterfn = lambda pagename, meta: False
-        assert self.backend.list_items(None, filterfn) == []
+        assert list(self.backend.list_items(None, filterfn)) == []
 
     def test_has_item(self):
         for item in self.items:
@@ -126,7 +128,7 @@ class AbstractBackendTest(AbstractTest):
         py.test.raises(BackendError, self.backend.create_item, self.items[0])
         self.backend.create_item(self.newname)
         assert self.backend.has_item(self.newname)
-        assert self.backend.list_items(None, None) == sorted([self.newname] + self.items)
+        assert list(self.backend.list_items(None, None)) == sorted([self.newname] + self.items)
 
         if self.items_revisions:
             assert self.backend.list_revisions(self.newname) == []
@@ -138,7 +140,7 @@ class AbstractBackendTest(AbstractTest):
     def test_remove_item(self):
         self.backend.remove_item(self.newname)
         assert not self.backend.has_item(self.newname)
-        assert self.backend.list_items(None, None) == self.items
+        assert list(self.backend.list_items(None, None)) == self.items
         py.test.raises(NoSuchItemError, self.backend.remove_item, self.newname)
 
     def test_rename_item(self):
@@ -153,12 +155,12 @@ class AbstractBackendTest(AbstractTest):
         newitems.remove(self.items[0])
         newitems.append(self.newname)
         newitems.sort()
-        assert self.backend.list_items(None, None) == newitems
+        assert list(self.backend.list_items(None, None)) == newitems
 
         self.backend.rename_item(self.newname, self.items[0])
         assert not self.backend.has_item(self.newname)
         assert self.backend.has_item(self.items[0])
-        assert self.backend.list_items(None, None) == self.items
+        assert list(self.backend.list_items(None, None)) == self.items
 
     def test_list_revisions(self):
         if self.items_revisions:

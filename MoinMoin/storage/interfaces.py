@@ -19,7 +19,7 @@ class StorageBackend(object):
 
     def list_items(self, filters, filterfn):
         """
-        Returns a list of all item names that match the given filters.
+        Returns an iterable of all item names that match the given filters.
         If filters is None all items will be returned. Filters is a
         dictionary. One entry specifies a metadata key and a value
         that the metadata key must match. If filterfn is not None, it
@@ -176,7 +176,7 @@ class MetadataBackend(object):
 
     def keys(self):
         """
-        Return sa list of all metadata keys.
+        Returns a list of all metadata keys.
         """
 
     def save(self):

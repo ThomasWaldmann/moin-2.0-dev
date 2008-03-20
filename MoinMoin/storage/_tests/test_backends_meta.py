@@ -54,7 +54,7 @@ class TestLayerBackend(AbstractBackendTest):
         pass
 
     def test_list_items(self):
-        assert self.backend.list_items(None, None) == self.items
+        assert list(self.backend.list_items(None, None)) == self.items
 
     def test_has_item(self):
         assert self.backend.has_item(self.items[0]).name == "pages"
@@ -85,7 +85,7 @@ class TestNamespaceBackend(AbstractBackendTest):
         pass
 
     def test_list_items(self):
-        assert self.backend.list_items(None, None) == self.items
+        assert list(self.backend.list_items(None, None)) == self.items
 
     def test_has_item(self):
         assert self.backend.has_item(self.items[0]).name == "pages"

@@ -72,7 +72,10 @@ def getUserId(request, searchName):
     @return: the corresponding user ID or None
     """
     try:
-        return ItemCollection(request.cfg.user_backend, request).keys({'name': searchName})[0]
+        coll = ItemCollection(request.cfg.user_backend, request)
+        for user in coll.iteritems({'name': searchName}):
+            return user
+        return None
     except IndexError:
         return None
 
