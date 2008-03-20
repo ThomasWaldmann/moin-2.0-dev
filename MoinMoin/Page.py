@@ -1374,17 +1374,10 @@ class RootPage(object):
         if not include_underlay:
             filters[UNDERLAY] = False
 
-        if exists and filter:
-            # Why does metadata have to be strings?
-            filterfn = lambda pgname, meta: not (DELETED in meta and meta[DELETED] == 'True') and filter(pgname)
-        elif exists:
-            filterfn = lambda pgname, meta: not (DELETED in meta and meta[DELETED] == 'True')
-        elif filter:
-            filterfn = lambda pgname, meta: filter(pgname)
-        else:
-            filterfn = None
+        if exists:
+            filters[DELETED] = False
 
-        items = self._items.iterate(filters, filterfn)
+        items = self._items.iterate(filters, filter)
 
         if user or return_objects:
             # Filter names
@@ -1433,9 +1426,7 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        notdeleted = lambda pg, meta: not DELETED in meta or meta[DELETED] != 'True'
-
-        items = self._items.iterate(None, notdeleted)
+        items = self._items.iterate({DELETED: False}, None)
         count = 0
         for item in items:
             count += 1
