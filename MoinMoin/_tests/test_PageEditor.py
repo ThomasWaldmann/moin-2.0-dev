@@ -123,15 +123,15 @@ class TestExpandPrivateVariables(TestExpandUserName):
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
         """
-        self.request.cfg.page_backend.create_item(self.name)
-        self.request.cfg.page_backend.create_revision(self.name, 1)
-        data = self.request.cfg.page_backend.get_data_backend(self.name, 1)
+        self.request.cfg.data_backend.create_item(self.name)
+        self.request.cfg.data_backend.create_revision(self.name, 1)
+        data = self.request.cfg.data_backend.get_data_backend(self.name, 1)
         data.write(u' ME:: %s\n' % self.name)
         data.close()
 
     def deleteTestPage(self):
         """ Delete temporary page, bypass logs and notifications """
-        self.request.cfg.page_backend.remove_item(self.name)
+        self.request.cfg.data_backend.remove_item(self.name)
 
 
 class TestSave(object):
@@ -163,7 +163,7 @@ class TestSave(object):
         editor = PageEditor(self.request, pagename)
         editor.saveText(testtext, 0)
 
-        print "PageEditor can't save a page if Abort is returned from PreSave event handlers"
+        # PageEditor may not save a page if Abort is returned from PreSave event handlers
         page = Page(self.request, pagename)
         assert not page.exists()
 
@@ -202,16 +202,16 @@ class TestCopyPage(object):
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
         """
-        self.request.cfg.page_backend.create_item(self.pagename)
-        self.request.cfg.page_backend.create_revision(self.pagename, 1)
-        data = self.request.cfg.page_backend.get_data_backend(self.pagename, 1)
+        self.request.cfg.data_backend.create_item(self.pagename)
+        self.request.cfg.data_backend.create_revision(self.pagename, 1)
+        data = self.request.cfg.data_backend.get_data_backend(self.pagename, 1)
         data.write(self.text)
         data.close()
 
     def deleteTestPage(self):
         """ Delete temporary page, bypass logs and notifications """
-        self.request.cfg.page_backend.remove_item(self.pagename)
-        self.request.cfg.page_backend.remove_item(self.copy_pagename)
+        self.request.cfg.data_backend.remove_item(self.pagename)
+        self.request.cfg.data_backend.remove_item(self.copy_pagename)
 
     def test_copy_page(self):
         """
