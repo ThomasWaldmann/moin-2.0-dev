@@ -328,6 +328,10 @@ class ScriptEngine:
         @param pagename: page to be overwritten
         """
 
+        # XXX: figure out how this can work with arbitrary storage...
+        #      do we want to mandate exactly one underlay storage?
+        assert False
+
         if not self.request.cfg.underlay_backend.has_item(pagename):
             self.request.cfg.underlay_backend.create_item(pagename)
 
