@@ -148,12 +148,18 @@ class LayerBackend(MetaBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
+        items = {}
         for backend in self.backends:
             # optimise a bit
             if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
                 continue
 
             for item in backend.list_items(filters, filterfn):
+                # don't list a page more than once if it is
+                # present in multiple layers
+                if item in items:
+                    continue
+                items[item] = True
                 yield item
 
     def has_item(self, name):
