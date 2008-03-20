@@ -27,7 +27,7 @@ class TestItemCollection(AbstractTest):
         assert not "" in self.item_collection
 
     def test_keys(self):
-        assert self.item_collection.keys() == self.items
+        assert sorted(self.item_collection.keys()) == self.items
         for filter in self.items_filters:
             assert list(self.item_collection.iterate({filter[0]: filter[1]})) == [filter[2]]
 
