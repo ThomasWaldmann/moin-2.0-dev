@@ -15,7 +15,7 @@ import time
 import UserDict
 
 from MoinMoin import wikiutil
-from MoinMoin.storage.external import UNDERLAY
+from MoinMoin.storage.external import DELETED
 from MoinMoin.storage.backends.common import CommonBackend, _get_metadata, check_filter
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.external import EDIT_LOG_ACTION, EDIT_LOG_EXTRA
@@ -282,9 +282,13 @@ class IndexedBackend(object):
         if filters:
             index_filters = dict([(key, value) for key, value in filters.iteritems() if key in self._indexes])
             other_filters = dict([(key, value) for key, value in filters.iteritems() if key not in self._indexes])
-            other_filters = other_filters or None
         else:
-            index_filters, other_filters = {}, None
+            index_filters, other_filters = {}, {}
+
+        # our index only has pages that have DELETED set to True!
+        if DELETED in index_filters and not index_filters[DELETED]:
+            del index_filters[DELETED]
+            other_filters[DELETED] = False
 
         if not index_filters:
             for item in self._backend.list_items(other_filters, filterfn):
