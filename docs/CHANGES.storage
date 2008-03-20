@@ -1,0 +1,92 @@
+MoinMoin Storage Version History
+========================
+
+Version 1.7.current:
+
+  Known issues:
+    * In the filesystem storage backends itemnames are limited due to the maximum filename length of filesystems.
+      NTFS, FAT, EXT3, REISER, XFS are limited to a maximum of 255 characters.
+
+  New Features:
+	* Storage engine, see external.py for the interface.
+
+  Other Notes:
+    * If changing an underlay page it will no longer be copied to the standard pages directory, but edited right in the underlay.
+	* Refactored Page.py, PageEditor.py, editlog.py, user.py and some other things to make use of it.
+
+  Admin Notes:
+    * See HelpOnConfiguration/Storage
+
+  Developer notes:
+    * logfile/editlog.py:
+      * removed EditLog
+      * added GlobalEditLog
+      * added LocalEditLog
+      * timestamps in the logfile classes are now seconds as float (former usecs)
+      * entries from the logfile classes are now always given in reverse order
+
+    * Page.py:
+      * RootPage no longer inherits from Page
+      * removed RootPage.getPagePath
+      * removed RootPage._listPages
+      * removed RootPage._listPageInPath
+      * removed ItemCache
+      * removed Page.__txt_filename_force
+      * added Page._page_name_force
+      * added Page._item_items_standard
+      * added Page._item_items_underlay
+      * added Page._item_items_all
+      * added Page._item
+      * added Page._rev
+      * Page.meta is now a dict instead of a list of tuples
+      * removed Page.get_current_from_pagedir
+      * removed Page.get_rev_dir
+      * removed Page.get_rev
+      * removed Page._setRealPagename
+      * removed Page.getPageBasePath
+      * removed Page.getPageStatus
+      * removed Page.olderrevision
+      * removed Page._last_edited
+      * changed Page.last_edit(self, request) to Page.last_edit(self, printable)
+      * removed Page.lastEditInfo
+      * removed Page.isWritable
+      * removed Page.mtime_usecs
+      * removed Page.mtime_printable
+      * added Page.mtime(self, printable)
+      * added Page.last_editor(self, printable)
+      * removed Page.parseACL
+      * changed Page.getACL(self, request) to Page.getACL(self)
+
+    * PageEditor.py:
+      * removed PageEditor.execute
+      * removed PageEditor.copyUnderlayPage
+      * removed PageLock.__filename
+
+    * user.py:
+      * removed _getUserIdByKey (use ItemCollection.keys(...) now)
+      * added get_editor
+      * added get_printable_editor
+      * removed User.__filename
+      * moved encodeList, decodeList, encodeDict, decodeDict to storage.backends.moin16
+
+    * wikiutil.py:
+      * renamed get_processing_instructions to split_body
+      * added add_metadata_to_body
+      * added get_hostnam
+
+    * Other changes:
+      * removed action.AttachFile.getBasePath
+      * removed request.editlog
+      * removed packages.edit_logfile_append
+
+  TODO-Post-SOC:
+    * convert caching to the new storage and separate it out of Page.py
+    * convert attachments to the new storage
+    * remove RootPage.getPagePath, Page.getPagePath, page.__text_filename
+    * automatically check ACLs in the storage layer and raise exception on violation so user.may.read(secretpage) is not needed anymore
+	* remove logfile.editlog.LocalEditLog.add which is only used by attachments anymore
+	* remove data_dir, data_underlay_dir, user_dir from the configuration
+	* add methods like find oldest item rev newer than <timestamp or find newest page from <editor> to LocalEditLog
+    * implement mime/types
+    * implement a new 1.7 storage backend
+    
