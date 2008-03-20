@@ -28,7 +28,7 @@ from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage.external import DELETED
+from MoinMoin.storage.external import DELETED, UNDERLAY
 from MoinMoin.support.python_compatibility import set
 
 
@@ -82,9 +82,7 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        self._items_standard = ItemCollection(request.cfg.page_backend, request)
-        self._items_underlay = ItemCollection(request.cfg.underlay_backend, request)
-        self._items_all = ItemCollection(request.cfg.data_backend, request)
+        self._items = ItemCollection(request.cfg.data_backend, request)
 
         self.reset()
 
@@ -120,7 +118,7 @@ class Page(object):
             return
 
         try:
-            self.__item = self._items_all[self.page_name]
+            self.__item = self._items[self.page_name]
             self.__rev = self._item[self.rev]
             self._body = None
             self._meta = None
@@ -404,7 +402,7 @@ class Page(object):
         """
         if not includeDeleted and self._rev.deleted:
             return False
-        return self._item._backend.name == "underlay"
+        return self._item._backend.is_underlay
 
     def isStandardPage(self, includeDeleted=True):
         """
@@ -416,7 +414,7 @@ class Page(object):
         """
         if not includeDeleted and self._rev.deleted:
             return False
-        return self._item._backend.name != "underlay"
+        return not self._item._backend.is_underlay
 
     def exists(self, rev=0, domain=None, includeDeleted=False):
         """
@@ -429,10 +427,6 @@ class Page(object):
         @rtype: bool
         @return: true if page exists otherwise false
         """
-        # Edge cases
-        if domain == 'underlay' and not self.request.cfg.data_underlay_dir:
-            return False
-
         if self._item is None or self._rev is None:
             return False
 
@@ -442,9 +436,9 @@ class Page(object):
         if domain is None:
             return True
         elif domain == 'underlay':
-            return self._item._backend.name == 'underlay'
+            return self._item._backend.is_underlay
         else:
-            return self._item._backend.name != 'underlay'
+            return not self._item._backend.is_underlay
 
     def size(self, rev=0):
         """
@@ -1339,8 +1333,7 @@ class RootPage(object):
         Init the item collection.
         """
         self.request = request
-        self._items_standard = ItemCollection(request.cfg.page_backend, request)
-        self._items_all = ItemCollection(request.cfg.data_backend, request)
+        self._items = ItemCollection(request.cfg.data_backend, request)
 
     def getPagePath(self, fname, isfile):
         """
@@ -1385,14 +1378,16 @@ class RootPage(object):
         if user is None:
             user = request.user
 
-        if include_underlay:
-            item_collection = self._items_all
-        else:
-            item_collection = self._items_standard
+        filters = {}
+        if not include_underlay:
+            filters[UNDERLAY] = False
 
-        items = set(item_collection.keys())
+        items = set(self._items.keys(filters))
         if exists:
-            items = items - set(item_collection.keys({DELETED: 'True'}))
+            filters = {DELETED: 'True'}
+            if not include_underlay:
+                filters[UNDERLAY] = False
+            items = items - set(self._items.keys(filters))
 
         if user or filter or return_objects:
             # Filter names
@@ -1445,9 +1440,9 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = set(self._items_all.keys())
+        items = set(self._items.keys())
         if exists:
-            items = items - set(self._items_all.keys({DELETED: 'True'}))
+            items = items - set(self._items.keys({DELETED: 'True'}))
 
         count = len(items)
 

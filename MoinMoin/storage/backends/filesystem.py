@@ -15,6 +15,7 @@ import time
 import UserDict
 
 from MoinMoin import wikiutil
+from MoinMoin.storage.external import UNDERLAY
 from MoinMoin.storage.backends.common import CommonBackend, _get_metadata
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.external import EDIT_LOG_ACTION, EDIT_LOG_EXTRA
@@ -40,7 +41,7 @@ class AbstractBackend(object):
         backend.__init__(name, path, cfg, *kw, **kwargs)
         return CommonBackend(name, IndexedBackend(backend, cfg))
 
-    def __init__(self, name, path, cfg, quoted=True):
+    def __init__(self, name, path, cfg, quoted=True, is_underlay=False):
         """
         Init stuff.
         """
@@ -50,6 +51,7 @@ class AbstractBackend(object):
         self._path = path
         self._cfg = cfg
         self._quoted = quoted
+        self.is_underlay = is_underlay
 
     def _filter_items(self, items, filters=None):
         """
@@ -64,7 +66,10 @@ class AbstractBackend(object):
                 include = False
                 metadata = _get_metadata(self, item, [-1, 0])
                 for key, value in filters.iteritems():
-                    if key in metadata:
+                    if key == UNDERLAY:
+                        if value == self.is_underlay:
+                            include = True
+                    elif key in metadata:
                         if unicode(value) in _parse_value(metadata[key]):
                             include = True
                             break

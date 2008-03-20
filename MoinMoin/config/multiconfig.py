@@ -857,10 +857,11 @@ Lists: * bullets; 1., a. numbered items.
         # storage configuration
         self.indexes = ["name", "openids", "jid", "email", DELETED]
         self.user_backend = UserBackend("user", self.user_dir, self)
-        self.page_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
-        #self.page_backend = ItemBackend("pages", os.path.join(self.data_dir, "items"), self)
-        self.underlay_backend = PageBackend("underlay", os.path.join(self.data_underlay_dir, "pages"), self)
-        self.data_backend = LayerBackend([self.page_backend, self.underlay_backend])
+        page_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
+        #page_backend = ItemBackend("pages", os.path.join(self.data_dir, "items"), self)
+        underlay_backend = PageBackend("underlay", os.path.join(self.data_underlay_dir, "pages"),
+                                       self, is_underlay=True)
+        self.data_backend = LayerBackend([page_backend, underlay_backend])
 
 
     def load_meta_dict(self):

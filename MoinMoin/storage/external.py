@@ -17,7 +17,10 @@ from MoinMoin.support.python_compatibility import partial
 
 ACL = "acl"
 
+# special meta-data indicating whether the item is deleted
 DELETED = "deleted"
+# or in an underlay directory
+UNDERLAY = "underlay"
 
 SIZE = "size"
 

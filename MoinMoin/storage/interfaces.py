@@ -8,9 +8,14 @@
 class StorageBackend(object):
     """
     This class describes the main interface a StorageBackend must implement.
+
+    If the is_underlay member is set to True, then data from this backend
+    will be considered to be in "underlay" and not be searched if underlay
+    is excluded, etc.
     """
 
     name = ""
+    is_underlay = False
 
     def list_items(self, filters=None):
         """
