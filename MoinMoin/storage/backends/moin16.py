@@ -72,7 +72,6 @@ class UserBackend(AbstractBackend):
         """
         files = [f for f in os.listdir(self._path) if user_re.match(f)]
 
-        print filterfn
         return AbstractBackend._filter_items(self, files, filters, filterfn)
 
     def has_item(self, name):
