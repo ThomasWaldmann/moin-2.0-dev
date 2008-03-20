@@ -42,6 +42,8 @@ class ItemBackend(BaseFilesystemBackend):
         for f in os.listdir(self._path):
             if not os.path.isfile(os.path.join(self._path, f, "meta")):
                 continue
+            if self._quoted:
+                f = wikiutil.unquoteWikiname(f)
             if not check_filter(self, f, filters, filterfn):
                 continue
             yield f
