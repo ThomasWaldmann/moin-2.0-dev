@@ -16,7 +16,7 @@ import UserDict
 
 from MoinMoin import wikiutil
 from MoinMoin.storage.external import UNDERLAY
-from MoinMoin.storage.backends.common import CommonBackend, _get_metadata
+from MoinMoin.storage.backends.common import CommonBackend, _get_metadata, check_filter
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.external import EDIT_LOG_ACTION, EDIT_LOG_EXTRA
 from MoinMoin.storage.error import BackendError, LockingError
@@ -278,23 +278,29 @@ class IndexedBackend(object):
     def list_items(self, filters, filterfn):
         """
         @see MoinMoin.interfaces.StorageBackend.list_items
-
-        This really is a pessimisation, building a complete list first
-        and then filtering it... Should build a list from the index first
-        and then filter it further!
         """
         if filters:
             index_filters = dict([(key, value) for key, value in filters.iteritems() if key in self._indexes])
             other_filters = dict([(key, value) for key, value in filters.iteritems() if key not in self._indexes])
+            other_filters = other_filters or None
         else:
-            index_filters, other_filters = {}, {}
+            index_filters, other_filters = {}, None
 
-        items = set(self._backend.list_items(other_filters, filterfn))
+        if not index_filters:
+            for item in self._backend.list_items(other_filters, filterfn):
+                yield item
+        else:
+            items = None
 
-        for key, value in index_filters.iteritems():
-            items = items & set(self._get_items(key, value))
+            for key, value in index_filters.iteritems():
+                if items is None:
+                    items = set(self._get_items(key, value))
+                else:
+                    items = items & set(self._get_items(key, value))
 
-        return sorted(list(items))
+            for item in items:
+                if check_filter(self._backend, item, other_filters, filterfn):
+                    yield item
 
     def remove_item(self, item):
         """
