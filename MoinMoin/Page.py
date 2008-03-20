@@ -1377,7 +1377,12 @@ class RootPage(object):
         if exists:
             filters[DELETED] = False
 
-        items = self._items.iterate(filters, filter)
+        if filter:
+            ffn = lambda pgname, metadata: filter(pgname)
+        else:
+            ffn = None
+
+        items = self._items.iterate(filters, ffn)
 
         if user or return_objects:
             # Filter names
