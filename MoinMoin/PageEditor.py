@@ -98,7 +98,7 @@ class PageEditor(Page):
         self.uid_override = keywords.get('uid_override', None)
 
         if self._item is None:
-            self._item = self._items_all.new_item(self.page_name)
+            self._item = self._items.new_item(self.page_name)
 
         self.lock = PageLock(self)
 
@@ -531,7 +531,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             self.send_page()
 
         if self.getRevList() == []:
-            del self._items_all[self.page_name]
+            del self._items[self.page_name]
         self.reset()
 
     def copyPage(self, newpagename, comment=""):
@@ -548,7 +548,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             return False, _('You are not allowed to copy this page!')
 
         try:
-            self._items_all.copy_item(self.page_name, newpagename)
+            self._items.copy_item(self.page_name, newpagename)
         except BackendError, err:
             return False, _(err.message)
 
@@ -592,7 +592,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             raise self.AccessDenied, msg
 
         try:
-            self._items_all.rename_item(self.page_name, newpagename)
+            self._items.rename_item(self.page_name, newpagename)
         except BackendError, err:
             return False, _(err.message)
 
