@@ -247,15 +247,15 @@ class TestAcl(object):
         """
         pagename = u'AutoCreatedMoinMoinACLTestPage'
 
-        self.request.cfg.page_backend.create_item(pagename)
-        self.request.cfg.page_backend.create_revision(pagename, 1)
-        data = self.request.cfg.page_backend.get_data_backend(pagename, 1)
+        self.request.cfg.data_backend.create_item(pagename)
+        self.request.cfg.data_backend.create_revision(pagename, 1)
+        data = self.request.cfg.data_backend.get_data_backend(pagename, 1)
         data.write(u'#acl All: \n')
         data.close()
 
         assert not self.request.user.may.write(pagename)
 
-        self.request.cfg.page_backend.remove_item(pagename)
+        self.request.cfg.data_backend.remove_item(pagename)
 
 coverage_modules = ['MoinMoin.security']
 

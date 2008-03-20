@@ -272,23 +272,18 @@ class Page(object):
 
     def getPagePath(self, *args, **kw):
         """
-        TODO: This is still very hackish.
+        TODO: remove this
 
         Get full path to a page-specific storage area. `args` can
         contain additional path components that are added to the base path.
 
         @param args: additional path components
-        @keyword use_underlay: force using a specific pagedir, default '-1'
-                                -1 = automatically choose page dir
-                                1 = use underlay page dir
-                                0 = use standard page dir
         @keyword check_create: if true, ensures that the path requested really exists
                                (if it doesn't, create all directories automatically).
                                (default true)
         @keyword isfile: is the last component in args a filename? (default is false)
         @rtype: string
-        @return: (int underlay (1 if using underlay, 0 otherwise),
-                  str the full path to the storage area )
+        @return: the full path to the storage area
         """
         check_create = kw.get('check_create', 1)
         isfile = kw.get('isfile', 0)
@@ -299,15 +294,12 @@ class Page(object):
         else:
             name = self.page_name
 
-        if use_underlay == -1:
-            if self._item is None:
-                path = self.request.cfg.page_backend._get_item_path(name)
-            else:
-                path = self._item._backend._get_item_path(name)
-        elif use_underlay == 1:
-            path = self.request.cfg.underlay_backend._get_item_path(name)
+        # XXX not honouring use_underlay setting at this time,
+        #     does not make sense much longer...
+        if self._item is None:
+            path = self.request.cfg.data_backend._get_item_path(name)
         else:
-            path = self.request.cfg.page_backend._get_item_path(name)
+            path = self._item._backend._get_item_path(name)
 
         fullpath = os.path.join(*((path, ) + args))
         if check_create:
