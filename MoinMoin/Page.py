@@ -1374,21 +1374,22 @@ class RootPage(object):
         if not include_underlay:
             filters[UNDERLAY] = False
 
-        items = set(self._items.keys(filters))
-        if exists:
-            filters = {DELETED: 'True'}
-            if not include_underlay:
-                filters[UNDERLAY] = False
-            items = items - set(self._items.keys(filters))
+        if exists and filter:
+            # Why does metadata have to be strings?
+            filterfn = lambda pgname, meta: not (DELETED in meta and meta[DELETED] == 'True') and filter(pgname)
+        elif exists:
+            filterfn = lambda pgname, meta: not (DELETED in meta and meta[DELETED] == 'True')
+        elif filter:
+            filterfn = lambda pgname, meta: filter(pgname)
+        else:
+            filterfn = None
 
-        if user or filter or return_objects:
+        items = set(self._items.keys(filters, filterfn))
+
+        if user or return_objects:
             # Filter names
             pages = []
             for name in items:
-                # First custom filter - acl checks are very expensive!
-                if filter and not filter(name):
-                    continue
-
                 page = Page(request, name)
 
                 # Filter out pages user may not read.
