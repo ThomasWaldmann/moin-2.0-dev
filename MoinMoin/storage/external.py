@@ -97,7 +97,7 @@ class ItemCollection(UserDict.DictMixin, object):
         StorageBackend.list_items(...).
         """
         self.refresh()
-        if filters is None:
+        if filters is None and filterfn is None:
             return self.items[:]
         else:
             return self._backend.list_items(filters, filterfn)[:]
