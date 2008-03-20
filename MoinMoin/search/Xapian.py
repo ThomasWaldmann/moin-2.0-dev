@@ -639,7 +639,7 @@ class Index(BaseIndex):
             writer = xapidx.Index(self.dir, True)
             writer.configure(self.prefixMap, self.indexValueMap)
             pages = request.rootpage.getPageList(user='', exists=1)
-            logging.debug("indexing all (%d) pages..." % len(pages))
+            logging.debug("indexing all pages...")
             for pagename in pages:
                 p = Page(request, pagename)
                 if request.cfg.xapian_index_history:

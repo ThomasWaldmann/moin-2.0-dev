@@ -89,13 +89,11 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         self._backend.remove_item(name)
 
-    def keys(self, filters=None, filterfn=None):
+    def keys(self):
         """
-        Returns a list of all item names. With filters you can add
-        filtering stuff which is described more detailed in
-        StorageBackend.list_items(...).
+        Returns a list of all item names.
         """
-        return list(self._backend.list_items(filters, filterfn))
+        return list(self._backend.list_items(None, None))
 
     def new_item(self, name):
         """
@@ -120,7 +118,7 @@ class ItemCollection(UserDict.DictMixin, object):
         if not newname:
             raise BackendError(_("You cannot copy to an empty item name."))
 
-        if newname in self.items:
+        if newname in self.items():
             raise BackendError(_("Copy failed because an item with name %r already exists.") % newname)
 
         olditem = self[name]
@@ -143,6 +141,9 @@ class ItemCollection(UserDict.DictMixin, object):
         newitem.lock = False
 
     def iteritems(self, filters=None, filterfn=None):
+        """
+        Iterate over this dict mixing, optionally doing filtering.
+        """
         # XXX Remove this iterator when it really returns one
         for item in self._backend.list_items(filters, filterfn):
             yield item

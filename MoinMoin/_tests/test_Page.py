@@ -56,7 +56,12 @@ class TestRootPage:
     def testPageList(self):
         rootpage = self.request.rootpage
         pagelist = rootpage.getPageList()
-        assert len(pagelist) > 100
+        cnt = 0
+        for pg in pagelist:
+            cnt += 1
+            if cnt > 100:
+                break
+        assert cnt > 100
         assert u'FrontPage' in pagelist
         assert u'' not in pagelist
 

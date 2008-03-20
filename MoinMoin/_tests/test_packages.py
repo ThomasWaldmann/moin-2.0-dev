@@ -99,9 +99,9 @@ class TestRealCreation:
     def testAllCreate(self):
         package = PackagePages("MoinMoinWiki", self.request)
         temp = tempfile.NamedTemporaryFile(suffix='.zip')
-        package.collectpackage(self.request.rootpage.getPageList(
+        package.collectpackage(list(self.request.rootpage.getPageList(
                                 include_underlay=False,
-                                filter=lambda name: not wikiutil.isSystemPage(self.request, name)),
+                                filter=lambda name: not wikiutil.isSystemPage(self.request, name))),
                                 temp)
         if package:
             py.test.skip("No user created pages in wiki!")

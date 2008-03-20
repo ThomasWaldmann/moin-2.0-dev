@@ -57,7 +57,7 @@ def execute(pagename, request):
             baseurl += '/'
 
         # Get list of user readable pages
-        pages = request.rootpage.getPageList()
+        pages = list(request.rootpage.getPageList())
         pages.sort()
         for pn in pages:
             p = Page(request, pn)
