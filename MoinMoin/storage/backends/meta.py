@@ -99,7 +99,7 @@ class NamespaceBackend(MetaBackend):
         items = set()
         for namespace, backend in self.backends.iteritems():
             # optimise a bit
-            if UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
+            if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
                 continue
             items = items | set([namespace + item for item in backend.list_items(filters)])
         return sorted(list(items))
@@ -146,7 +146,7 @@ class LayerBackend(MetaBackend):
         items = set()
         for backend in self.backends:
             # optimise a bit
-            if UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
+            if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
                 continue
             items = items | set(backend.list_items(filters))
         return sorted(list(items))
