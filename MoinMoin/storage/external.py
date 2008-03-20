@@ -9,7 +9,6 @@ import UserDict
 import time
 
 from MoinMoin import wikiutil
-from MoinMoin.storage.backends.common import get_bool
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, LockingError
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend
 from MoinMoin.support.python_compatibility import partial
@@ -564,6 +563,14 @@ class WriteonlyData(object):
 
     def __init__(self, obj, exception, message):
         _decorate(self, obj, exception, message, self.forbid, self.forward)
+
+
+def get_bool(arg):
+    """
+    Return the boolean value of an argument.
+    Use wikiutil.get_bool if that doesn't need a request anymore.
+    """
+    return str(arg).lower() in [u'1', u'true', u'yes']
 
 
 _ = lambda x: x

@@ -45,11 +45,12 @@ import tempfile
 from MoinMoin.support.python_compatibility import sorted
 
 from MoinMoin import config, wikiutil
-from MoinMoin.storage.backends.common import get_bool
+from MoinMoin.storage.backends.common import check_filter
 from MoinMoin.storage.backends.filesystem import BaseFilesystemBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file, _parse_log_line
 from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG, EDIT_LOCK
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
+from MoinMoin.storage.external import get_bool
 
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
@@ -73,7 +74,7 @@ class UserBackend(BaseFilesystemBackend):
         for f in os.listdir(self._path):
             if not user_re.match(f):
                 continue
-            if not BaseFilesystemBackend._filter(self, f, filters, filterfn):
+            if not check_filter(self, f, filters, filterfn):
                 continue
             yield f
 
@@ -213,7 +214,7 @@ class PageBackend(BaseFilesystemBackend):
         for f in os.listdir(self._path):
             if not os.path.isfile(os.path.join(self._path, f, "current")):
                 continue
-            if not BaseFilesystemBackend._filter(self, f, filters, filterfn):
+            if not check_filter(self, f, filters, filterfn):
                 continue
             yield f
 

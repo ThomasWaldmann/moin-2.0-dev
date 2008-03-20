@@ -1,13 +1,16 @@
 """
-    Common functionality that all backends can profit from.
+    Common functionality and helper functions that all backends
+    can profit from.
 
-    @copyright: 2007 MoinMoin:HeinrichWendel
+    @copyright: 2007 MoinMoin:HeinrichWendel,
+                2008 MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
 """
 
 
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.interfaces import StorageBackend
+from MoinMoin.storage.external import UNDERLAY
 
 
 class CommonBackend(object):
@@ -153,12 +156,38 @@ def _get_metadata(backend, item, revnos):
     return metadata
 
 
-def get_bool(arg):
+def check_filter(backend, item, filters, filterfn):
     """
-    Return the boolean value of an argument.
-    Use wikiutil.get_bool if that doesn't need a request anymore.
+    Check if a given item matches the given filters.
     """
-    return str(arg).lower() in [u'1', u'true', u'yes']
 
+    if not filters and not filterfn:
+        return True
+
+    metadata = _get_metadata(backend, item, [-1, 0])
+
+    if filters:
+        for key, value in filters.iteritems():
+            if key == UNDERLAY:
+                if value != backend.is_underlay:
+                    return False
+            elif key in metadata:
+                val = metadata[key]
+                if isinstance(val, (tuple, list)):
+                    vals = val
+                elif isinstance(val, dict):
+                    vals = val.keys()
+                else:
+                    assert isinstance(val, unicode)
+                    vals = [val]
+                if not value in vals:
+                    return False
+            else:
+                return False
+
+    if filterfn:
+        return filterfn(item, metadata)
+
+    return True
 
 _ = lambda x: x
