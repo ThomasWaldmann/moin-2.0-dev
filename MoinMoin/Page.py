@@ -1384,7 +1384,7 @@ class RootPage(object):
         else:
             filterfn = None
 
-        items = set(self._items.keys(filters, filterfn))
+        items = self._items.iteritems(filters, filterfn)
 
         if user or return_objects:
             # Filter names
@@ -1397,14 +1397,14 @@ class RootPage(object):
                     continue
 
                 if return_objects:
-                    pages.append(page)
+                    yield page
                 else:
-                    pages.append(name)
+                    yield name
         else:
-            pages = list(items)
+            for name in items:
+                yield name
 
         request.clock.stop('getPageList')
-        return pages
 
     def getPageDict(self, user=None, exists=1, filter=None, include_underlay=True):
         """
@@ -1433,11 +1433,12 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = set(self._items.keys())
-        if exists:
-            items = items - set(self._items.keys({DELETED: 'True'}))
+        notdeleted = lambda pg, meta: not DELETED in meta or meta[DELETED] != 'True'
 
-        count = len(items)
+        items = self._items.iteritems(None, notdeleted)
+        count = 0
+        for item in items:
+            count += 1
 
         self.request.clock.stop('getPageCount')
 

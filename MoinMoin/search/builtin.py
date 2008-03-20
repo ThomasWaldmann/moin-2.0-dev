@@ -611,6 +611,7 @@ class Search:
         if pages is None:
             # if we are not called from _xapianSearch, we make a full pagelist,
             # but don't search attachments (thus attachment name = '')
+            # XXX: Could iterate pages instead of building a list
             pages = [{'pagename': p, 'attachment': '', 'wikiname': 'Self', } for p in self._getPageList()]
         hits = self._getHits(pages, self._moinMatch)
         self.request.clock.stop('_moinSearch')
