@@ -49,20 +49,20 @@ class MetaBackend(object):
         from multiple backends.
         """
         _items = []
-        for backend in backends:
+        for backend, bdata in backends:
             try:
                 iterator = backend.news(timestamp)
-                _items.append((iterator.next(), iterator))
+                _items.append((iterator.next(), iterator, bdata))
             except StopIteration:
                 pass
 
         while len(_items):
             _items.sort(reverse=True)
-            yield _items[0][0]
+            value, iterator, bdata = _items[0]
+            yield value, bdata
             try:
-                iterator = _items[0][1]
                 nval = iterator.next()
-                _items[0] = (nval, iterator)
+                _items[0] = (nval, iterator, bdata)
             except StopIteration:
                 del _items[0]
 
@@ -104,8 +104,11 @@ class NamespaceBackend(MetaBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.news
         """
-        for item in self._news_helper(timestamp, self.backends.values()):
-            yield item
+        _backends = []
+        for namespace, backend in self.backends.iteritems():
+            _backends.append((backend, namespace))
+        for item, namespace in self._news_helper(timestamp, _backends):
+            yield (item[0], item[1], namespace + item[2])
 
     def _get_backend(self, name):
         """
@@ -154,7 +157,8 @@ class LayerBackend(MetaBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.news
         """
-        for item in self._news_helper(timestamp, self.backends):
+        _backends = [(b, None) for b in self.backends]
+        for item, dummy in self._news_helper(timestamp, _backends):
             yield item
 
     def _call(self, method, *args, **kwargs):
