@@ -1,6 +1,25 @@
 """
     MoinMoin - search expression object representation
 
+    This module defines the possible search terms for a query to the
+    storage backend. This is used, for example, to implement searching,
+    page lists etc.
+
+    Note that some backends can optimise some of the search terms, for
+    example a backend that has indexed various metadata keys can optimise
+    easy expressions containing MetaDataMatch terms. This is only allowed
+    for classes documented as being 'final' which hence also means that
+    their _evaluate function may not be overridden by descendent classes.
+
+    For example, that metadata backend could test if the expression is a
+    MetaDataMatch expression, and if so, simply return the appropriate
+    index; or if it is an AND() expression build the page list from the
+    index, remove the MetaDataMatch instance from the AND list and match
+    the resulting expression only for pages in that list. Etc.
+
+    TODO: Should we write some generic code for picking apart expressions
+          like that?
+
     @copyright: 2008 MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
 """
@@ -10,6 +29,9 @@ import re
 # Base classes
 
 class Term(object):
+    """
+    Base class for search terms.
+    """
     def __init__(self):
         pass
 
@@ -47,6 +69,10 @@ class Term(object):
         self._result = None
 
 class UnaryTerm(Term):
+    """
+    Base class for search terms that has a single contained
+    search term, e.g. NOT.
+    """
     def __init__(self, term):
         Term.__init__(self)
         assert isinstance(term, Term)
@@ -60,6 +86,10 @@ class UnaryTerm(Term):
         return u'<%s(%r)>' % (self.__class__.__name__, self.term)
 
 class ListTerm(Term):
+    """
+    Base class for search terms that contain multiple other
+    search terms, e.g. AND.
+    """
     def __init__(self, *terms):
         Term.__init__(self)
         for e in terms:
@@ -71,6 +101,9 @@ class ListTerm(Term):
         for e in self.terms:
             e.reset()
 
+    def remove(self, subterm):
+        self.terms.remove(subterm)
+
     def __repr__(self):
         return u'<%s(%s)>' % (self.__class__.__name__,
                               ', '.join([repr(t) for t in self.terms]))
@@ -78,6 +111,9 @@ class ListTerm(Term):
 # Logical expression classes
 
 class AND(ListTerm):
+    """
+    AND connection between multiple terms. Final.
+    """
     def _evaluate(self, backend, itemname, get_metadata):
         for e in self.terms:
             if not e.evaluate(backend, itemname, get_metadata):
@@ -85,6 +121,9 @@ class AND(ListTerm):
         return True
 
 class OR(ListTerm):
+    """
+    OR connection between multiple terms. Final.
+    """
     def _evaluate(self, backend, itemname, get_metadata):
         for e in self.terms:
             if e.evaluate(backend, itemname, get_metadata):
@@ -92,10 +131,17 @@ class OR(ListTerm):
         return False
 
 class NOT(UnaryTerm):
+    """
+    Inversion of a single term. Final.
+    """
     def _evaluate(self, backend, itemname, get_metadata):
         return not self.term.evaluate(backend, itemname, get_metadata)
 
 class XOR(ListTerm):
+    """
+    XOR connection between multiple terms, i.e. exactly
+    one must be True. Final.
+    """
     def _evaluate(self, backend, itemname, get_metadata):
         count = 0
         for e in self.terms:
@@ -106,6 +152,9 @@ class XOR(ListTerm):
 # Actual Moin search terms
 
 class TextRE(Term):
+    """
+    Regular expression full text match, use as last resort.
+    """
     def __init__(self, needle_re):
         Term.__init__(self)
         assert hasattr(needle_re, 'search')
@@ -120,6 +169,10 @@ class TextRE(Term):
         return u'<term.TextRE(...)>'
 
 class Text(TextRE):
+    """
+    Full text match including middle of words and over word
+    boundaries. Final.
+    """
     def __init__(self, needle, case_sensitive):
         flags = re.UNICODE
         if not case_sensitive:
@@ -133,6 +186,9 @@ class Text(TextRE):
         return u'<term.Text(%s, %s)>' % (self.needle, self.case_sensitive)
 
 class NameRE(Term):
+    """
+    Matches the item's name with a given regular expression.
+    """
     def __init__(self, needle_re):
         Term.__init__(self)
         assert hasattr(needle_re, 'search')
@@ -145,6 +201,9 @@ class NameRE(Term):
         return u'<term.NameRE(...)>'
 
 class Name(NameRE):
+    """
+    Item name match, given needle must occur in item's name. Final.
+    """
     def __init__(self, needle, case_sensitive):
         assert isinstance(needle, unicode)
         flags = re.UNICODE
@@ -159,6 +218,9 @@ class Name(NameRE):
         return u'<term.Name(%s, %s)>' % (self.needle, self.case_sensitive)
 
 class NameFn(Term):
+    """
+    Arbitrary item name matching function.
+    """
     def __init__(self, fn):
         Term.__init__(self)
         assert callable(fn)
@@ -171,6 +233,10 @@ class NameFn(Term):
         return u'<term.Name(%s, %s)>' % (self.needle, self.case_sensitive)
 
 class MetaDataMatch(Term):
+    """
+    Matches a metadata key/value pair of an item, requires
+    existence of the metadata key. Final.
+    """
     def __init__(self, key, val):
         Term.__init__(self)
         self.key = key
@@ -181,6 +247,9 @@ class MetaDataMatch(Term):
         return self.key in metadata and metadata[self.key] == self.val
 
 class HasMetaDataKey(Term):
+    """
+    Requires existence of the metadata key. Final.
+    """
     def __init__(self, key):
         Term.__init__(self)
         self.key = key
