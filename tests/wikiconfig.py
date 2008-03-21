@@ -22,4 +22,3 @@ class Config(DefaultConfig):
     show_hosts = 1
     # used to check if it is really a wiki we may modify
     is_test_wiki = True
-
