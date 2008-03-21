@@ -49,7 +49,7 @@ class TestLayerBackend(AbstractBackendTest):
         self.items_metadata[add] = new_metadata[0]
         self.items_data[add] = new_data[0]
 
-        AbstractBackendTest.init(LayerBackend([first_backend, second_backend]), self.items, self.items_revisions, self.items_data, self.items_metadata, self.items_revisions)
+        AbstractBackendTest.init(LayerBackend([first_backend, second_backend], False), self.items, self.items_revisions, self.items_data, self.items_metadata, self.items_revisions)
 
     def test_name(self):
         pass
