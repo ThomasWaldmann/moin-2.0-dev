@@ -737,6 +737,9 @@ Lists: * bullets; 1., a. numbered items.
 
     SecurityPolicy = None
 
+    # storage index configuration (used by indexed backend only)
+    indexes = ["name", "openids", "jid", "email", DELETED]
+
     def __init__(self, siteid):
         """ Init Config instance """
         self.siteid = siteid
@@ -855,15 +858,24 @@ Lists: * bullets; 1., a. numbered items.
 
 
         # storage configuration
-        self.indexes = ["name", "openids", "jid", "email", DELETED]
-        self.user_backend = UserBackend("user", self.user_dir, self)
-        page_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
-        #page_backend = ItemBackend("pages", os.path.join(self.data_dir, "items"), self)
-        underlay_backend = PageBackend("underlay", os.path.join(self.data_underlay_dir, "pages"),
-                                       self)
-        self.data_backend = LayerBackend([page_backend])
-        self.data_backend.addUnderlay(underlay_backend)
+        if not hasattr(self, 'user_backend'):
+            self.user_backend = UserBackend("user", self.user_dir, self)
 
+        if not hasattr(self, 'data_backend'):
+            self.data_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
+            #self.data_backend = ItemBackend("pages", os.path.join(self.data_dir, "items"), self)
+            if self.data_underlay_dir:
+                # layer the data backend into underlay
+                underlay_backend = PageBackend("underlay",
+                                               os.path.join(self.data_underlay_dir, "pages"),
+                                               self)
+                self.data_backend = LayerBackend([self.data_backend])
+                self.data_backend.addUnderlay(underlay_backend)
+
+        if not hasattr(self, 'underlay_backend'):
+            # make sure the config has an underlay_backend configured
+            # even if it is None
+            self.underlay_backend = None
 
     def load_meta_dict(self):
         """ The meta_dict contains meta data about the wiki instance. """
