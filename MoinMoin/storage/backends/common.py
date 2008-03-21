@@ -156,6 +156,11 @@ def _get_metadata(backend, item, revnos):
 
 
 class _get_item_metadata_cache:
+    """
+    Helps implement filtering: If no search term needs the
+    metadata, it won't be loaded, but if multiple need it
+    then it will still be loaded only once.
+    """
     def __init__(self, backend, item):
         self.backend = backend
         self.item = item
