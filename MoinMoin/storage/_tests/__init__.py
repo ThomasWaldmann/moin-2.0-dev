@@ -13,7 +13,7 @@ from MoinMoin.storage.external import ACL
 from MoinMoin.support.python_compatibility import set, sorted
 
 # must be sorted!!
-default_items = ["New", "Test",]
+default_items = ["New", "Test", ]
 
 default_items_revisions = {}
 default_items_revisions[0] = [2, 1]
