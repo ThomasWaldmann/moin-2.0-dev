@@ -4,15 +4,21 @@ MoinMoin Storage Version History
 Version 1.7.current:
 
   Known issues:
-    * In the filesystem storage backends itemnames are limited due to the maximum filename length of filesystems.
-      NTFS, FAT, EXT3, REISER, XFS are limited to a maximum of 255 characters.
+    * In the filesystem storage backends itemnames are limited due to the
+      maximum filename length of filesystems. NTFS, FAT, EXT3, REISER, XFS are
+      limited to a maximum of 255 characters.
 
   New Features:
-	* Storage engine, see external.py for the interface.
+    * Storage engine, see external.py for the interface.
+    * Search interface implemented throughout, done within storage,
+      so that queries can be optimised
 
   Other Notes:
-    * If changing an underlay page it will no longer be copied to the standard pages directory, but edited right in the underlay.
-	* Refactored Page.py, PageEditor.py, editlog.py, user.py and some other things to make use of it.
+    * If changing an underlay page it will no longer be copied to the standard
+      pages directory, but edited right in the underlay. Copy-on-write support
+      should be reimplemented.
+    * Refactored Page.py, PageEditor.py, editlog.py, user.py and some other
+      things to make use of it.
 
   Admin Notes:
     * See HelpOnConfiguration/Storage
@@ -79,14 +85,18 @@ Version 1.7.current:
       * removed request.editlog
       * removed packages.edit_logfile_append
 
-  TODO-Post-SOC:
+  TODO:
     * convert caching to the new storage and separate it out of Page.py
     * convert attachments to the new storage
+    * remove logfile.editlog.LocalEditLog.add which is only used by
+      attachments now
     * remove RootPage.getPagePath, Page.getPagePath, page.__text_filename
-    * automatically check ACLs in the storage layer and raise exception on violation so user.may.read(secretpage) is not needed anymore
-	* remove logfile.editlog.LocalEditLog.add which is only used by attachments anymore
-	* remove data_dir, data_underlay_dir, user_dir from the configuration
-	* add methods like find oldest item rev newer than <timestamp or find newest page from <editor> to LocalEditLog
-    * implement mime/types
-    * implement a new 1.7 storage backend
-    
+    * automatically check ACLs in the storage layer (ItemCollection level)
+      and raise exception on violation so user.may.read(secretpage) is not
+      needed anymore
+    * add methods like "find oldest item rev newer than <timestamp>" or
+      "find newest page from <editor>" to LocalEditLog
+    * implement mimetypes
+    * implement a new and better storage backend
+    * re-implemented copy-on-write semantics in the layered backend
+    * implement Xapian search as a layered backend
