@@ -706,12 +706,12 @@ class ThemeBase:
         _ = self.request.getText
         html = ''
         if self.shouldShowPageinfo(page):
-            info = page.lastEditInfo()
+            info = page.last_edit(printable=True)
             if info:
                 if info['editor']:
-                    info = _("last edited %(time)s by %(editor)s") % info
+                    info = _("last edited %(timestamp)s by %(editor)s") % info
                 else:
-                    info = _("last modified %(time)s") % info
+                    info = _("last modified %(timestamp)s") % info
                 pagename = page.page_name
                 if self.request.cfg.show_interwiki:
                     pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
@@ -1150,7 +1150,7 @@ actionsMenuInit('%(label)s');
         If the user want to show both editors, it will display "Edit
         (Text)", otherwise as "Edit".
         """
-        if not (page.isWritable() and
+        if not (page.exists() and
                 self.request.user.may.write(page.page_name)):
             return self.disabledEdit()
 
@@ -1188,7 +1188,7 @@ actionsMenuInit('%(label)s');
         the browser is compatible with the editor.
         """
         page = d['page']
-        if not (page.isWritable() and
+        if not (page.exists() and
                 self.request.user.may.write(page.page_name) and
                 self.showBothEditLinks() and
                 self.guiworks(page)):
@@ -1669,7 +1669,7 @@ var gui_editor_link_text = "%(text)s";
                 'page': page,
                 'rev': rev,
                 'pagesize': pagename and page.size() or 0,
-                'last_edit_info': pagename and page.lastEditInfo() or '',
+                'last_edit_info': pagename and page.last_edit(printable=True) or '',
                 'page_name': pagename or '',
                 'page_find_page': page_find_page,
                 'page_front_page': page_front_page,
