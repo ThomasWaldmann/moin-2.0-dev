@@ -10,6 +10,7 @@
 import py
 
 from MoinMoin import search
+from MoinMoin.search.queryparser import QueryParser
 
 
 class TestQuotingBug:
@@ -20,14 +21,14 @@ class TestQuotingBug:
 
     def testIsQuoted(self):
         """ search: quoting bug - quoted terms """
-        parser = search.QueryParser()
+        parser = QueryParser()
         for case in ('"yes"', "'yes'"):
             assert parser.isQuoted(case)
 
     def testIsNotQuoted(self):
         """ search: quoting bug - unquoted terms """
         tests = ('', "'", '"', '""', "''", "'\"", '"no', 'no"', "'no", "no'", '"no\'')
-        parser = search.QueryParser()
+        parser = QueryParser()
         for case in tests:
             assert not parser.isQuoted(case)
 
@@ -37,7 +38,7 @@ class TestQueryParsing:
 
     def testQueryParser(self):
         """ search: test the query parser """
-        parser = search.QueryParser()
+        parser = QueryParser()
         for query, wanted in [
             ("a", '"a"'),
             ("a b", '["a" "b"]'),
