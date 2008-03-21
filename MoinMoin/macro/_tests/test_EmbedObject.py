@@ -40,10 +40,11 @@ class TestEmbedObject:
         self.shouldDeleteTestPage = True
 
     def teardown_class(self):
+        # XXX use storage to clean up
         if self.shouldDeleteTestPage:
             import shutil
             page = Page(self.request, self.pagename)
-            fpath = page.getPagePath(use_underlay=0, check_create=0)
+            fpath = page.getPagePath(check_create=0)
             shutil.rmtree(fpath, True)
 
             fpath = self.request.rootpage.getPagePath('event-log', isfile=1)
