@@ -155,6 +155,11 @@ class XOR(ListTerm):
 TRUE = AND()
 FALSE = OR()
 
+def BOOL(b):
+    if b:
+        return TRUE
+    return FALSE
+
 # Actual Moin search terms
 
 class TextRE(Term):
