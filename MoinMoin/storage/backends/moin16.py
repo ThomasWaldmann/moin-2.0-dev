@@ -481,7 +481,7 @@ class PageMetadata(AbstractMetadata):
 
             # emulate deleted
             exists = os.path.exists(self._backend._get_rev_path(name, revno, 'data'))
-            if DELETED in metadata and metadata[DELETED] and exists:
+            if DELETED in metadata and exists:
                 os.remove(self._backend._get_rev_path(name, revno, 'data'))
 
 
@@ -495,14 +495,14 @@ class DeletedPageMetadata(AbstractMetadata):
         @see MoinMoin.storage.backends.filesystem.AbstractMetadata._parse_metadata
         """
         metadata = {}
-        metadata[DELETED] = True
+        metadata[DELETED] = None
         return metadata
 
     def _save_metadata(self, name, revno, metadata):
         """
         @see MoinMoin.storage.backends.filesystem.AbstractMetadata._save_metadata
         """
-        if not DELETED in metadata or not metadata[DELETED]:
+        if not DELETED in metadata:
             self._backend.create_revision(self._name, revno)
 
 
