@@ -328,9 +328,11 @@ class ScriptEngine:
         @param pagename: page to be overwritten
         """
 
-        # XXX: figure out how this can work with arbitrary storage...
-        #      do we want to mandate exactly one underlay storage?
-        assert False
+        # only overwrite if underlay_backend is configured (it will by
+        # by default if---and only if---the data_underlay_dir config
+        # option is set and backends are not overridden)
+        if not self.request.cfg.underlay_backend:
+            return
 
         if not self.request.cfg.underlay_backend.has_item(pagename):
             self.request.cfg.underlay_backend.create_item(pagename)
