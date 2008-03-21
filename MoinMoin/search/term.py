@@ -185,6 +185,54 @@ class Text(TextRE):
     def __repr__(self):
         return u'<term.Text(%s, %s)>' % (self.needle, self.case_sensitive)
 
+class Word(TextRE):
+    """
+    Full text match finding exact words. Final.
+    """
+    def __init__(self, needle, case_sensitive):
+        flags = re.UNICODE
+        if not case_sensitive:
+            flags = flags | re.IGNORECASE
+        _needle_re = re.compile('\\b' + re.escape(needle) + '\\b', flags)
+        TextRE.__init__(self, _needle_re)
+        self.needle = needle
+        self.case_sensitive = case_sensitive
+
+    def __repr__(self):
+        return u'<term.Word(%s, %s)>' % (self.needle, self.case_sensitive)
+
+class WordStart(TextRE):
+    """
+    Full text match finding the start of a word. Final.
+    """
+    def __init__(self, needle, case_sensitive):
+        flags = re.UNICODE
+        if not case_sensitive:
+            flags = flags | re.IGNORECASE
+        _needle_re = re.compile('\\b' + re.escape(needle), flags)
+        TextRE.__init__(self, _needle_re)
+        self.needle = needle
+        self.case_sensitive = case_sensitive
+
+    def __repr__(self):
+        return u'<term.WordStart(%s, %s)>' % (self.needle, self.case_sensitive)
+
+class WordEnd(TextRE):
+    """
+    Full text match finding the end of a word. Final.
+    """
+    def __init__(self, needle, case_sensitive):
+        flags = re.UNICODE
+        if not case_sensitive:
+            flags = flags | re.IGNORECASE
+        _needle_re = re.compile(re.escape(needle) + '\\b', flags)
+        TextRE.__init__(self, _needle_re)
+        self.needle = needle
+        self.case_sensitive = case_sensitive
+
+    def __repr__(self):
+        return u'<term.WordEnd(%s, %s)>' % (self.needle, self.case_sensitive)
+
 class NameRE(Term):
     """
     Matches the item's name with a given regular expression.
@@ -230,7 +278,7 @@ class NameFn(Term):
         return not (not self._fn(itemname))
 
     def __repr__(self):
-        return u'<term.Name(%s, %s)>' % (self.needle, self.case_sensitive)
+        return u'<term.Name(%r)>' % (self._fn, )
 
 class MetaDataMatch(Term):
     """
