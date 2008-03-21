@@ -11,6 +11,7 @@ import time
 from MoinMoin.storage.error import BackendError, LockingError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.external import ACL
 from MoinMoin.support.python_compatibility import set, sorted
+from MoinMoin.search import term
 
 # must be sorted!!
 default_items = ["New", "Test", ]
@@ -40,7 +41,8 @@ default_items_metadata[1][1] = {}
 default_items_metadata[1][2] = default_items_metadata[1][1]
 default_items_metadata[1][3] = default_items_metadata[1][1]
 
-default_items_filters = [['format', 'wiki', default_items[0]], ['language', 'sv', default_items[0]]]
+default_items_filters = [(term.MetaDataMatch('format', 'wiki'), [default_items[0]]),
+                         (term.MetaDataMatch('language', 'sv'), [default_items[0]])]
 
 
 def create_data(cls):
@@ -109,15 +111,11 @@ class AbstractBackendTest(AbstractTest):
         assert self.backend.name == self.name
 
     def test_list_items(self):
-        items = sorted(list(self.backend.list_items(None, None)))
+        items = sorted(list(self.backend.list_items(term.TRUE)))
         assert self.items == items
-        for filter in self.items_filters:
-            items = list(self.backend.list_items({filter[0]: filter[1]}, None))
-            assert sorted(items) == [filter[2]]
-        filterfn = lambda pagename, meta: True
-        assert sorted(list(self.backend.list_items(None, filterfn))) == self.items
-        filterfn = lambda pagename, meta: False
-        assert list(self.backend.list_items(None, filterfn)) == []
+        for filter, expected in self.items_filters:
+            items = list(self.backend.list_items(filter))
+            assert sorted(items) == expected
 
     def test_has_item(self):
         for item in self.items:
@@ -129,7 +127,7 @@ class AbstractBackendTest(AbstractTest):
         py.test.raises(BackendError, self.backend.create_item, self.items[0])
         self.backend.create_item(self.newname)
         assert self.backend.has_item(self.newname)
-        assert sorted(list(self.backend.list_items(None, None))) == sorted([self.newname] + self.items)
+        assert sorted(list(self.backend.list_items(term.TRUE))) == sorted([self.newname] + self.items)
 
         if self.items_revisions:
             assert self.backend.list_revisions(self.newname) == []
@@ -141,7 +139,7 @@ class AbstractBackendTest(AbstractTest):
     def test_remove_item(self):
         self.backend.remove_item(self.newname)
         assert not self.backend.has_item(self.newname)
-        assert sorted(list(self.backend.list_items(None, None))) == self.items
+        assert sorted(list(self.backend.list_items(term.TRUE))) == self.items
         py.test.raises(NoSuchItemError, self.backend.remove_item, self.newname)
 
     def test_rename_item(self):
@@ -156,12 +154,12 @@ class AbstractBackendTest(AbstractTest):
         newitems.remove(self.items[0])
         newitems.append(self.newname)
         newitems.sort()
-        assert sorted(list(self.backend.list_items(None, None))) == newitems
+        assert sorted(list(self.backend.list_items(term.TRUE))) == newitems
 
         self.backend.rename_item(self.newname, self.items[0])
         assert not self.backend.has_item(self.newname)
         assert self.backend.has_item(self.items[0])
-        assert sorted(list(self.backend.list_items(None, None))) == self.items
+        assert sorted(list(self.backend.list_items(term.TRUE))) == self.items
 
     def test_list_revisions(self):
         if self.items_revisions:

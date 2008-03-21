@@ -860,8 +860,9 @@ Lists: * bullets; 1., a. numbered items.
         page_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
         #page_backend = ItemBackend("pages", os.path.join(self.data_dir, "items"), self)
         underlay_backend = PageBackend("underlay", os.path.join(self.data_underlay_dir, "pages"),
-                                       self, is_underlay=True)
-        self.data_backend = LayerBackend([page_backend, underlay_backend])
+                                       self)
+        self.data_backend = LayerBackend([page_backend])
+        self.data_backend.addUnderlay(underlay_backend)
 
 
     def load_meta_dict(self):

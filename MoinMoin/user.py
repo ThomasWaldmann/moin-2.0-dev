@@ -22,6 +22,7 @@ import time, sha, codecs
 from MoinMoin import events, wikiutil, i18n, caching
 from MoinMoin.util import timefuncs
 from MoinMoin.storage.external import ItemCollection
+from MoinMoin.search import term
 
 
 def getUserList(request):
@@ -36,7 +37,8 @@ def getUserList(request):
 
 def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
-    identifier = ItemCollection(request.cfg.user_backend, request).iterate({key: value})
+    filter = term.MetaDataMatch(key, value)
+    identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
     users = []
     for user in identifier:
         users.append(User(request, user))
@@ -73,7 +75,7 @@ def getUserId(request, searchName):
     """
     try:
         coll = ItemCollection(request.cfg.user_backend, request)
-        for user in coll.iterate({'name': searchName}):
+        for user in coll.iterate(term.MetaDataMatch('name', searchName)):
             return user
         return None
     except IndexError:

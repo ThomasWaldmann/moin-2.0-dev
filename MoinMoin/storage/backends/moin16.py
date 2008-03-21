@@ -45,7 +45,7 @@ import tempfile
 from MoinMoin.support.python_compatibility import sorted
 
 from MoinMoin import config, wikiutil
-from MoinMoin.storage.backends.common import check_filter
+from MoinMoin.storage.backends.common import _get_item_metadata_cache
 from MoinMoin.storage.backends.filesystem import BaseFilesystemBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file, _parse_log_line
 from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG, EDIT_LOCK
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
@@ -66,7 +66,7 @@ class UserBackend(BaseFilesystemBackend):
         """
         BaseFilesystemBackend.__init__(self, name, path, cfg, False)
 
-    def list_items(self, filters, filterfn):
+    def list_items(self, filter):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
@@ -75,7 +75,8 @@ class UserBackend(BaseFilesystemBackend):
                 continue
             if self._quoted:
                 f = wikiutil.unquoteWikiname(f)
-            if not check_filter(self, f, filters, filterfn):
+            filter.reset()
+            if not filter.evaluate(self, f, _get_item_metadata_cache(self, f)):
                 continue
             yield f
 
@@ -202,13 +203,13 @@ class PageBackend(BaseFilesystemBackend):
     This class implements the MoinMoin 1.6 compatible Page Storage Stuff.
     """
 
-    def __init__(self, name, path, cfg, is_underlay=False):
+    def __init__(self, name, path, cfg):
         """
         Init the Backend with the correct path.
         """
-        BaseFilesystemBackend.__init__(self, name, path, cfg, True, is_underlay=is_underlay)
+        BaseFilesystemBackend.__init__(self, name, path, cfg, True)
 
-    def list_items(self, filters, filterfn):
+    def list_items(self, filter):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
@@ -217,7 +218,8 @@ class PageBackend(BaseFilesystemBackend):
                 continue
             if self._quoted:
                 f = wikiutil.unquoteWikiname(f)
-            if not check_filter(self, f, filters, filterfn):
+            filter.reset()
+            if not filter.evaluate(self, f, _get_item_metadata_cache(self, f)):
                 continue
             yield f
 

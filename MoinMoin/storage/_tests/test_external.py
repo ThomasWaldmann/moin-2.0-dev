@@ -28,8 +28,8 @@ class TestItemCollection(AbstractTest):
 
     def test_keys(self):
         assert sorted(self.item_collection.keys()) == self.items
-        for filter in self.items_filters:
-            assert list(self.item_collection.iterate({filter[0]: filter[1]})) == [filter[2]]
+        for filter, expected in self.items_filters:
+            assert list(self.item_collection.iterate(filter)) == expected
 
     def test_get_item(self):
         item = self.item_collection[self.items[0]]

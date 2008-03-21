@@ -19,6 +19,7 @@ from MoinMoin.storage.external import SIZE, DELETED
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_COMMENT, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
 
+from MoinMoin.search import term
 
 test_dir = None
 
@@ -113,7 +114,8 @@ user_metadata[1][1] = {}
 
 user_data = {}
 
-user_filters = [['name', 'HeinrichWendel', user[0]], ['theme_name', 'modern', user[0]]]
+user_filters = [(term.MetaDataMatch('name', 'HeinrichWendel'), [user[0]]),
+                (term.MetaDataMatch('theme_name', 'modern'), [user[0]])]
 
 
 class TestUserBackend(AbstractBackendTest):

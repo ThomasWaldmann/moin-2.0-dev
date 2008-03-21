@@ -28,8 +28,9 @@ from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage.external import DELETED, UNDERLAY
+from MoinMoin.storage.external import DELETED
 from MoinMoin.support.python_compatibility import set
+from MoinMoin.search import term
 
 
 def is_cache_exception(e):
@@ -394,7 +395,7 @@ class Page(object):
         """
         if not includeDeleted and self._rev.deleted:
             return False
-        return self._item._backend.is_underlay
+        return hasattr(self._item._backend, '_layer_marked_underlay')
 
     def isStandardPage(self, includeDeleted=True):
         """
@@ -406,7 +407,7 @@ class Page(object):
         """
         if not includeDeleted and self._rev.deleted:
             return False
-        return not self._item._backend.is_underlay
+        return not hasattr(self._item._backend, '_layer_marked_underlay')
 
     def exists(self, rev=0, domain=None, includeDeleted=False):
         """
@@ -428,9 +429,9 @@ class Page(object):
         if domain is None:
             return True
         elif domain == 'underlay':
-            return self._item._backend.is_underlay
+            return hasattr(self._item._backend, '_layer_marked_underlay')
         else:
-            return not self._item._backend.is_underlay
+            return not hasattr(self._item._backend, '_layer_marked_underlay')
 
     def size(self, rev=0):
         """
@@ -1370,19 +1371,19 @@ class RootPage(object):
         if user is None:
             user = request.user
 
-        filters = {}
+        filterfunction = filter
+
+        filter = term.AND()
         if not include_underlay:
-            filters[UNDERLAY] = False
+            filter.add(term.FromUnderlay())
 
         if exists:
-            filters[DELETED] = False
+            filter.add(term.NOT(term.HasMetaDataKey(DELETED)))
 
-        if filter:
-            ffn = lambda pgname, metadata: filter(pgname)
-        else:
-            ffn = None
+        if filterfunction:
+            filter.add(term.NameFn(filterfunction))
 
-        items = self._items.iterate(filters, ffn)
+        items = self._items.iterate(filter=filter)
 
         if user or return_objects:
             # Filter names
@@ -1431,7 +1432,7 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = self._items.iterate({DELETED: False}, None)
+        items = self._items.iterate(term.HasMetaDataKey(DELETED))
         count = 0
         for item in items:
             count += 1

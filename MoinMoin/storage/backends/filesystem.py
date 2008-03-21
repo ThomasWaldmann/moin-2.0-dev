@@ -16,13 +16,13 @@ import UserDict
 
 from MoinMoin import wikiutil
 from MoinMoin.storage.external import DELETED
-from MoinMoin.storage.backends.common import CommonBackend, _get_metadata, check_filter
+from MoinMoin.storage.backends.common import CommonBackend, _get_metadata, _get_item_metadata_cache
 from MoinMoin.storage.interfaces import StorageBackend, DataBackend, MetadataBackend
 from MoinMoin.storage.external import EDIT_LOG_ACTION, EDIT_LOG_EXTRA
 from MoinMoin.storage.error import BackendError, LockingError
 from MoinMoin.support.python_compatibility import sorted, set
 from MoinMoin.util import lock, pickle, records
-
+from MoinMoin.search import term
 
 class BaseFilesystemBackend(object):
     """
@@ -41,7 +41,7 @@ class BaseFilesystemBackend(object):
         backend.__init__(name, path, cfg, *kw, **kwargs)
         return CommonBackend(name, IndexedBackend(backend, cfg))
 
-    def __init__(self, name, path, cfg, quoted=True, is_underlay=False):
+    def __init__(self, name, path, cfg, quoted=True):
         """
         Init stuff.
         """
@@ -51,7 +51,6 @@ class BaseFilesystemBackend(object):
         self._path = path
         self._cfg = cfg
         self._quoted = quoted
-        self.is_underlay = is_underlay
 
     def _get_item_path(self, name, *args):
         """
@@ -275,23 +274,16 @@ class IndexedBackend(object):
         """
         return getattr(self._backend, name)
 
-    def list_items(self, filters, filterfn):
+    def list_items(self, filter):
         """
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
-        if filters:
-            index_filters = dict([(key, value) for key, value in filters.iteritems() if key in self._indexes])
-            other_filters = dict([(key, value) for key, value in filters.iteritems() if key not in self._indexes])
-        else:
-            index_filters, other_filters = {}, {}
-
-        # our index only has pages that have DELETED set to True!
-        if DELETED in index_filters and not index_filters[DELETED]:
-            del index_filters[DELETED]
-            other_filters[DELETED] = False
+        # XXX optimise again!!!
+        index_filters = {}
+        remaining_filter = filter
 
         if not index_filters:
-            for item in self._backend.list_items(other_filters, filterfn):
+            for item in self._backend.list_items(remaining_filter):
                 yield item
         else:
             items = None
@@ -303,7 +295,9 @@ class IndexedBackend(object):
                     items = items & set(self._get_items(key, value))
 
             for item in items:
-                if check_filter(self._backend, item, other_filters, filterfn):
+                remaining_filter.reset()
+                if remaining_filter.evaluate(self._backend, item,
+                             _get_item_metadata_cache(self._backend, item)):
                     yield item
 
     def remove_item(self, item):
@@ -348,7 +342,7 @@ class IndexedBackend(object):
         """
         indexes = dict()
 
-        for item in self._backend.list_items(None, None):
+        for item in self._backend.list_items(term.TRUE):
             # get metadata
             metadata = _get_metadata(self._backend, item, [-1, 0])
 
@@ -448,7 +442,7 @@ class IndexedBackend(object):
         Creates the news db.
         """
         items = []
-        for item in self.list_items(None, None):
+        for item in self.list_items(term.TRUE):
             try:
                 log_file = open(self._backend._get_item_path(item, "edit-log"), "r")
                 for line in log_file:

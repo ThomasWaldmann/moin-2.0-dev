@@ -8,29 +8,15 @@
 class StorageBackend(object):
     """
     This class describes the main interface a StorageBackend must implement.
-
-    If the is_underlay member is set to True, then data from this backend
-    will be considered to be in "underlay" and not be searched if underlay
-    is excluded, etc.
     """
 
     name = ""
-    is_underlay = False
 
-    def list_items(self, filters, filterfn):
+    def list_items(self, filter):
         """
-        Returns an iterable of all item names that match the given filters.
-        If filters is None all items will be returned. Filters is a
-        dictionary. One entry specifies a metadata key and a value
-        that the metadata key must match. If filterfn is not None, it
-        will be invoked with the arguments (item_name, metadata_dict)
-        and must return a boolean value indicating whether the item
-        should be returned or not; both filters must indicate this.
-
-        For faster access the backend may use indexes which are defined in the
-        the configuration. Indexes specify metadata keys for which the backend
-        will hold special caches for faster access. This can be compared
-        with indexes in SQL or LDAP.
+        Returns an iterable of all item names that match the given filter.
+        The filter argument is always an instance of MoinMoin.search.term.Term
+        which expresses what should be searched for.
         """
 
     def has_item(self, name):

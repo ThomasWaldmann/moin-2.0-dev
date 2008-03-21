@@ -94,7 +94,7 @@ class ListTerm(Term):
         Term.__init__(self)
         for e in terms:
             assert isinstance(e, Term)
-        self.terms = terms
+        self.terms = list(terms)
 
     def reset(self):
         Term.reset(self)
@@ -103,6 +103,9 @@ class ListTerm(Term):
 
     def remove(self, subterm):
         self.terms.remove(subterm)
+
+    def add(self, subterm):
+        self.terms.append(subterm)
 
     def __repr__(self):
         return u'<%s(%s)>' % (self.__class__.__name__,
@@ -307,3 +310,11 @@ class HasMetaDataKey(Term):
 
     def _evaluate(self, backend, itemname, get_metadata):
         return self.key in get_metadata()
+
+class FromUnderlay(Term):
+    """
+    Requires that an item comes from a layered backend
+    marked as 'underlay'.
+    """
+    def _evaluate(self, backend, itemname, get_metadata):
+        return hasattr(backend, '_layer_marked_underlay')
