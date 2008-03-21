@@ -300,6 +300,9 @@ class MetaDataMatch(Term):
         metadata = get_metadata()
         return self.key in metadata and metadata[self.key] == self.val
 
+    def __repr__(self):
+        return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.value)
+
 class HasMetaDataKey(Term):
     """
     Requires existence of the metadata key. Final.
@@ -310,6 +313,9 @@ class HasMetaDataKey(Term):
 
     def _evaluate(self, backend, itemname, get_metadata):
         return self.key in get_metadata()
+
+    def __repr__(self):
+        return u'<%s(%s)>' % (self.__class__.__name__, self.key)
 
 class FromUnderlay(Term):
     """
