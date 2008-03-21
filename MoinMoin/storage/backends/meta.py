@@ -5,7 +5,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.storage.external import UNDERLAY
 from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import BackendError, NoSuchItemError
 from MoinMoin.support.python_compatibility import sorted, partial, set
@@ -92,21 +91,16 @@ class NamespaceBackend(MetaBackend):
             new_backends[namespace] = backend
         MetaBackend.__init__(self, new_backends)
 
-    def list_items(self, filters, filterfn):
+    def list_items(self, filter):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
         for namespace, backend in self.backends.iteritems():
             # optimise a bit
-            if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
-                continue
+#            if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
+#                continue
 
-            if filterfn:
-                ffn = lambda pgname, meta: filterfn(namespace + pgname, meta)
-            else:
-                ffn = None
-
-            for item in backend.list_items(filters, ffn):
+            for item in backend.list_items(filter):
                 yield namespace + item
 
     def news(self, timestamp=0):
@@ -144,17 +138,21 @@ class LayerBackend(MetaBackend):
     be searched in the order the backends appear in the configuration, first fit.
     """
 
-    def list_items(self, filters, filterfn):
+    def addUnderlay(self, backend):
+        backend._layer_marked_underlay = True
+        self.backends.append(backend)
+
+    def list_items(self, filter):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
         items = {}
         for backend in self.backends:
             # optimise a bit
-            if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
-                continue
+#            if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
+#                continue
 
-            for item in backend.list_items(filters, filterfn):
+            for item in backend.list_items(filter):
                 # don't list a page more than once if it is
                 # present in multiple layers
                 if item in items:

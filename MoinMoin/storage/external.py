@@ -12,14 +12,12 @@ from MoinMoin import wikiutil
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, BackendError, LockingError
 from MoinMoin.storage.interfaces import DataBackend, MetadataBackend
 from MoinMoin.support.python_compatibility import partial
-
+from MoinMoin.search import term
 
 ACL = "acl"
 
-# special meta-data indicating whether the item is deleted
+# special meta-data whose presence indicates that the item is deleted
 DELETED = "deleted"
-# or in an underlay directory
-UNDERLAY = "underlay"
 
 SIZE = "size"
 
@@ -92,7 +90,7 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Returns a list of all item names.
         """
-        return list(self._backend.list_items(None, None))
+        return list(self._backend.list_items(term.TRUE))
 
     def new_item(self, name):
         """
@@ -139,12 +137,13 @@ class ItemCollection(UserDict.DictMixin, object):
 
         newitem.lock = False
 
-    def __iter__(self, filters=None, filterfn=None):
+    def __iter__(self, filter=term.TRUE):
         """
-        Iterate over this dict mixing, optionally doing filtering.
+        Iterate over this dict mixing, optionally doing filtering
+        with expressions built from MoinMoin.search.term.
         """
         # XXX Remove this iterator when it really returns one
-        for item in self._backend.list_items(filters, filterfn):
+        for item in self._backend.list_items(filter):
             yield item
 
     # nicer function name for allowing filtering
@@ -436,7 +435,10 @@ class Revision(object):
         """
         if not value in [True, False]:
             raise ValueError(_("Invalid value for deleted, must be a boolean, is %r.") % value)
-        self.metadata[DELETED] = value
+        if value:
+            self.metadata[DELETED] = True
+        elif DELETED in self.metadata:
+            del self.metadata[DELETED]
 
     deleted = property(get_deleted, set_deleted)
 

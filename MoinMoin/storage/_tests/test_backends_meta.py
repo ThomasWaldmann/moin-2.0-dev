@@ -11,6 +11,7 @@ from MoinMoin.storage._tests import AbstractBackendTest, default_items, default_
 from MoinMoin.storage._tests.test_backends_moin16 import get_page_backend, setup_module, teardown_module
 
 from MoinMoin.storage.backends.meta import LayerBackend, NamespaceBackend
+from MoinMoin.search import term
 
 new_items = ["Zet"]
 new_revisions = {}
@@ -54,7 +55,7 @@ class TestLayerBackend(AbstractBackendTest):
         pass
 
     def test_list_items(self):
-        assert list(self.backend.list_items(None, None)) == self.items
+        assert list(self.backend.list_items(term.TRUE)) == self.items
 
     def test_has_item(self):
         assert self.backend.has_item(self.items[0]).name == "pages"
@@ -85,7 +86,7 @@ class TestNamespaceBackend(AbstractBackendTest):
         pass
 
     def test_list_items(self):
-        assert sorted(list(self.backend.list_items(None, None))) == self.items
+        assert sorted(list(self.backend.list_items(term.TRUE))) == self.items
 
     def test_has_item(self):
         assert self.backend.has_item(self.items[0]).name == "pages"

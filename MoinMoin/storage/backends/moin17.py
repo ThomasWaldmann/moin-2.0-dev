@@ -19,8 +19,8 @@ import os
 import shutil
 import tempfile
 
-from MoinMoin import config
-from MoinMoin.storage.backends.common import check_filter
+from MoinMoin import config, wikiutil
+from MoinMoin.storage.backends.common import _get_item_metadata_cache
 from MoinMoin.storage.backends.filesystem import BaseFilesystemBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file
 from MoinMoin.storage.backends.moin16 import UserBackend # use this from 1.6 for now
 
@@ -29,13 +29,13 @@ class ItemBackend(BaseFilesystemBackend):
     This class implements the MoinMoin 1.7 Item Storage Stuff.
     """
 
-    def __init__(self, name, path, cfg, is_underlay=False):
+    def __init__(self, name, path, cfg):
         """
         Init the Backend with the correct path.
         """
-        BaseFilesystemBackend.__init__(self, name, path, cfg, True, is_underlay=is_underlay)
+        BaseFilesystemBackend.__init__(self, name, path, cfg, True)
 
-    def list_items(self, filters, filterfn):
+    def list_items(self, filter):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
@@ -44,7 +44,8 @@ class ItemBackend(BaseFilesystemBackend):
                 continue
             if self._quoted:
                 f = wikiutil.unquoteWikiname(f)
-            if not check_filter(self, f, filters, filterfn):
+            filter.reset()
+            if not filter.evaluate(self, f, _get_item_metadata_cache(self, f)):
                 continue
             yield f
 

@@ -10,7 +10,6 @@
 
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage.interfaces import StorageBackend
-from MoinMoin.storage.external import UNDERLAY, DELETED
 
 
 class CommonBackend(object):
@@ -156,43 +155,15 @@ def _get_metadata(backend, item, revnos):
     return metadata
 
 
-def check_filter(backend, item, filters, filterfn):
-    """
-    Check if a given item matches the given filters.
-    """
+class _get_item_metadata_cache:
+    def __init__(self, backend, item):
+        self.backend = backend
+        self.item = item
+        self._cached = None
 
-    if not filters and not filterfn:
-        return True
-
-    metadata = _get_metadata(backend, item, [-1, 0])
-
-    if filters:
-        for key, value in filters.iteritems():
-            if key == UNDERLAY:
-                if value != backend.is_underlay:
-                    return False
-            elif key == DELETED:
-                # items w/o DELETED member are not deleted
-                deleted = metadata.get(DELETED, False)
-                if deleted != value:
-                    return False
-            elif key in metadata:
-                val = metadata[key]
-                if isinstance(val, (tuple, list)):
-                    vals = val
-                elif isinstance(val, dict):
-                    vals = val.keys()
-                else:
-                    assert isinstance(val, unicode)
-                    vals = [val]
-                if not value in vals:
-                    return False
-            else:
-                return False
-
-    if filterfn:
-        return filterfn(item, metadata)
-
-    return True
+    def __call__(self):
+        if self._cached is None:
+            self._cached = _get_metadata(self.backend, self.item, [-1, 0])
+        return self._cached
 
 _ = lambda x: x
