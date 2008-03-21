@@ -70,7 +70,7 @@ class TestTerms:
         return 107
 
     def _evaluate(self, term, itemname, expected):
-        term.reset()
+        term.prepare()
         if itemname is not None:
             meta = _item_metadata[itemname].copy()
             # ease debugging

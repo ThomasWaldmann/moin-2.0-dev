@@ -61,9 +61,9 @@ class Term(object):
         """
         raise NotImplementedError()
 
-    def reset(self):
+    def prepare(self):
         """
-        Reset this search term to make it ready for testing.
+        Prepare this search term to make it ready for testing.
         Must be called before each outermost-level evaluate.
         """
         self._result = None
@@ -78,9 +78,9 @@ class UnaryTerm(Term):
         assert isinstance(term, Term)
         self.term = term
 
-    def reset(self):
-        Term.reset(self)
-        self.term.reset()
+    def prepare(self):
+        Term.prepare(self)
+        self.term.prepare()
 
     def __repr__(self):
         return u'<%s(%r)>' % (self.__class__.__name__, self.term)
@@ -96,10 +96,10 @@ class ListTerm(Term):
             assert isinstance(e, Term)
         self.terms = list(terms)
 
-    def reset(self):
-        Term.reset(self)
+    def prepare(self):
+        Term.prepare(self)
         for e in self.terms:
-            e.reset()
+            e.prepare()
 
     def remove(self, subterm):
         self.terms.remove(subterm)

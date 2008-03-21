@@ -44,7 +44,7 @@ class ItemBackend(BaseFilesystemBackend):
                 continue
             if self._quoted:
                 f = wikiutil.unquoteWikiname(f)
-            filter.reset()
+            filter.prepare()
             if not filter.evaluate(self, f, _get_item_metadata_cache(self, f)):
                 continue
             yield f

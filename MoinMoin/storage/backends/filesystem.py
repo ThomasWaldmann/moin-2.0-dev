@@ -295,7 +295,7 @@ class IndexedBackend(object):
                     items = items & set(self._get_items(key, value))
 
             for item in items:
-                remaining_filter.reset()
+                remaining_filter.prepare()
                 if remaining_filter.evaluate(self._backend, item,
                              _get_item_metadata_cache(self._backend, item)):
                     yield item
