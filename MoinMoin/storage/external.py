@@ -427,7 +427,7 @@ class Revision(object):
         """
         Deleted Property.
         """
-        return self.metadata.get(DELETED, False)
+        return DELETED in self.metadata
 
     def set_deleted(self, value):
         """
@@ -436,7 +436,9 @@ class Revision(object):
         if not value in [True, False]:
             raise ValueError(_("Invalid value for deleted, must be a boolean, is %r.") % value)
         if value:
-            self.metadata[DELETED] = True
+            # the actual value does not matter, deleted is indicated
+            # solely by the presence of the DELETED metadata key
+            self.metadata[DELETED] = u''
         elif DELETED in self.metadata:
             del self.metadata[DELETED]
 

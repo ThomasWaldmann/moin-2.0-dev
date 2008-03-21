@@ -252,12 +252,12 @@ class TestItemMetadata(AbstractMetadataTest):
 
     def test_deleted(self):
         metadata = self.backend.get_metadata_backend(self.items[0], self.items_revisions[0][0])
-        metadata[DELETED] = True
+        metadata[DELETED] = None
         metadata.save()
         assert self.backend.current_revision(self.items[0]) == self.items_revisions[0][0]
         #assert not os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000002"))
         metadata = self.backend.get_metadata_backend(self.items[0], self.items_revisions[0][0])
-        metadata[DELETED] = False
+        del metadata[DELETED]
         metadata.save()
         #assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000002"))
 
