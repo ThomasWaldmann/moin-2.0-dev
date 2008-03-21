@@ -30,7 +30,7 @@ def sitemap_url(request, base, page):
     """ return a sitemap <url>..</url> fragment for page object <page> """
     url = page.url(request)
     pagename = page.page_name
-    lastmod = page.mtime_printable(request)
+    lastmod = page.mtime(printable=True)
     if lastmod == "0": # can happen in case of errors
         lastmod = now()
 

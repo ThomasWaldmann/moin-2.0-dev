@@ -71,7 +71,7 @@ def findMatches(pagename, request, s_re=None, e_re=None):
     """
     # Get full list of pages, with no filtering - very fast. We will
     # first search for like pages, then filter the results.
-    pages = request.rootpage.getPageList(user='', exists='')
+    pages = list(request.rootpage.getPageList(user='', exists=''))
 
     # Remove current page
     try:
