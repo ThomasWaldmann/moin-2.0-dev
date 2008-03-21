@@ -39,16 +39,6 @@ class TermTestData:
     def read(self, size=None):
         return self.text
 
-class TRUE(term.Term):
-    def _evaluate(self, backend, itemname, metadata):
-        return True
-
-    def __repr__(self):
-        return '<TRUE>'
-
-def FALSE():
-    return term.NOT(TRUE())
-
 class CacheAssertTerm(term.Term):
     def __init__(self):
         term.Term.__init__(self)
@@ -64,8 +54,8 @@ class AssertNotCalledTerm(term.Term):
         assert False
 
 _b2e = {
-    1: TRUE,
-    0: FALSE,
+    1: term.TRUE,
+    0: term.FALSE,
 }
 
 class TestTerms:
@@ -119,11 +109,11 @@ class TestTerms:
             (False, [0, 1, 1, 0]),
         ]
         for expected, l in tests:
-            l = [_b2e[i]() for i in l]
+            l = [_b2e[i] for i in l]
             t = term.AND(*l)
             yield self._evaluate, t, 'a', expected
         for expected, l in tests:
-            l = [_b2e[1 - i]() for i in l]
+            l = [_b2e[1 - i] for i in l]
             t = term.OR(*l)
             yield self._evaluate, t, 'a', not expected
 
@@ -146,7 +136,7 @@ class TestTerms:
             (False, [0, 0, 0]),
         ]
         for expected, l in tests:
-            l = [_b2e[i]() for i in l]
+            l = [_b2e[i] for i in l]
             t = term.XOR(*l)
             yield self._evaluate, t, 'a', expected
 
@@ -177,7 +167,7 @@ class TestTerms:
     def testResultCaching3(self):
         cat = CacheAssertTerm()
         expected = False
-        t = term.AND(cat, cat, cat, FALSE())
+        t = term.AND(cat, cat, cat, term.FALSE)
         yield self._evaluate, t, None, expected
 
     def testResultCaching4(self):
@@ -187,10 +177,10 @@ class TestTerms:
         yield self._evaluate, t, None, expected
 
     def testShortCircuitEval1(self):
-        yield self._evaluate, term.AND(TRUE(), FALSE(), AssertNotCalledTerm()), None, False
+        yield self._evaluate, term.AND(term.TRUE, term.FALSE, AssertNotCalledTerm()), None, False
 
     def testShortCircuitEval2(self):
-        yield self._evaluate, term.OR(TRUE(), FALSE(), AssertNotCalledTerm()), None, True
+        yield self._evaluate, term.OR(term.TRUE, term.FALSE, AssertNotCalledTerm()), None, True
 
     def testSimpleTitleSearch(self):
         for item, expected in [('a', True), ('A', False), ('b', False), ('B', False), ('lorem', False)]:
