@@ -278,25 +278,99 @@ class IndexedBackend(object):
         """
         @see MoinMoin.interfaces.StorageBackend.list_items
         """
-        # XXX optimise again!!!
-        index_filters = {}
-        remaining_filter = filter
+        class IndexFilter:
+            def __init__(self):
+                self.must_match = []    # tuples
+                self.must_have = []     # keys
+                self.may_not_match = [] # tuples
+                self.may_not_have = []  # keys
 
-        if not index_filters:
-            for item in self._backend.list_items(remaining_filter):
+            def __nonzero__(self):
+                return bool(self.must_match or self.must_have or
+                            self.may_not_match or self.may_not_have)
+
+            def add_key(self, key, must):
+                if must:
+                    if not key in self.must_have:
+                        self.must_have.append(key)
+                else:
+                    if not key in self.may_not_have:
+                        self.may_not_have.append(key)
+
+            def add_match(self, key, value, must):
+                t = (key, value)
+                if must:
+                    if not t in self.must_match:
+                        self.must_match.append(t)
+                else:
+                    if not t in self.may_not_match:
+                        self.may_not_match.append(t)
+
+        ifilt = IndexFilter()
+
+        # XXX need a good way to test this!
+        # (though it will fail spectacularly in some cases)
+
+        # currently, we only handle AND conditions
+        def check_term(t, ifilt, must):
+            if isinstance(t, term.HasMetaDataKey):
+                if t.key in self._indexes:
+                    ifilt.add_key(t.key, must)
+                    return term.BOOL(must)
+            elif isinstance(t, term.MetaDataMatch):
+                if t.key in self._indexes:
+                    ifilt.add_match(t.key, t.val, must)
+                    return term.BOOL(must)
+            # not handing NOT(AND(...)) yet!
+            elif isinstance(t, term.AND) and must:
+                terms = []
+                for st in t.terms:
+                    terms.append(check_term(st, ifilt, must))
+                t.terms = terms
+# It's not clear whether this would be an improvement.
+# Consider search for a complex expression that searches
+# the body of items, various other things and also for
+# the fact that some metadata key is unset. Here, we'd
+# have to implement the metadata key match after doing
+# the remaining filter, while it could be a lot cheaper
+# to just load the metadata when needed to implement the
+# "key is unset" condition.
+#            elif isinstance(t, term.NOT):
+#                must = not must
+#                t.term = check_term(t.term, ifilt, must)
+            return t
+
+        filter = check_term(filter, ifilt, True)
+
+        # not implemented yet!
+        assert not ifilt.may_not_match and not ifilt.may_not_have
+
+        if not ifilt:
+            for item in self._backend.list_items(filter):
                 yield item
         else:
             items = None
 
-            for key, value in index_filters.iteritems():
+            for key, value in ifilt.must_match:
+                theseitems = self._get_items(key, value)
                 if items is None:
-                    items = set(self._get_items(key, value))
+                    items = set(theseitems)
                 else:
-                    items = items & set(self._get_items(key, value))
+                    items = items & set(theseitems)
+
+            for key in ifilt.must_have:
+                theseitems = self._get_items_with_key(key)
+                if items is None:
+                    items = set(theseitems)
+                else:
+                    items = items & set(theseitems)
+
+            if items is None:
+                return
 
             for item in items:
-                remaining_filter.prepare()
-                if remaining_filter.evaluate(self._backend, item,
+                filter.prepare()
+                if filter.evaluate(self._backend, item,
                              _get_item_metadata_cache(self._backend, item)):
                     yield item
 
@@ -362,7 +436,7 @@ class IndexedBackend(object):
 
     def _get_items(self, key, value):
         """
-        Returns the items that have a key which maches the value.
+        Returns the items that have a key which matches the value.
         """
         db = bsddb.hashopen(self._get_index_file(key, create=True))
 
@@ -375,6 +449,20 @@ class IndexedBackend(object):
         db.close()
 
         return values
+
+    def _get_items_with_key(self, key):
+        """
+        Returns the items that have the given metadata key.
+        """
+        db = bsddb.hashopen(self._get_index_file(key, create=True))
+
+        items = []
+        for val in db:
+            items.append(pickle.loads(db[val]))
+
+        db.close()
+
+        return items
 
     def _remove_indexes(self, item, metadata):
         """
