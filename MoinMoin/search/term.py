@@ -284,7 +284,7 @@ class NameFn(Term):
         return not (not self._fn(itemname))
 
     def __repr__(self):
-        return u'<term.Name(%r)>' % (self._fn, )
+        return u'<term.NameFn(%r)>' % (self._fn, )
 
 class MetaDataMatch(Term):
     """
@@ -301,7 +301,7 @@ class MetaDataMatch(Term):
         return self.key in metadata and metadata[self.key] == self.val
 
     def __repr__(self):
-        return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.value)
+        return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.val)
 
 class HasMetaDataKey(Term):
     """
