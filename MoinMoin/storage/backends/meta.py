@@ -7,7 +7,8 @@
 
 from MoinMoin.storage.interfaces import StorageBackend
 from MoinMoin.storage.error import BackendError, NoSuchItemError
-from MoinMoin.support.python_compatibility import sorted, partial, set
+from MoinMoin.support.python_compatibility import sorted, partial
+from MoinMoin.search import term
 
 
 class MetaBackend(object):
@@ -96,10 +97,6 @@ class NamespaceBackend(MetaBackend):
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
         for namespace, backend in self.backends.iteritems():
-            # optimise a bit
-#            if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
-#                continue
-
             for item in backend.list_items(filter):
                 yield namespace + item
 
@@ -147,10 +144,27 @@ class LayerBackend(MetaBackend):
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
         items = {}
+        nounderlay = False
+        # optimise a bit
+        def check_not_underlay(t):
+            if isinstance(t, term.NOT):
+                if isinstance(filter.term, term.FromUnderlay):
+                    return True
+            return False
+
+        if check_not_underlay(filter):
+            nounderlay = True
+            filter = term.TRUE
+        elif isinstance(filter, term.AND):
+            for t in filter.terms:
+                if check_not_underlay(filter):
+                    nounderlay = True
+                    filter.remove(t)
+                    break
+
         for backend in self.backends:
-            # optimise a bit
-#            if filters and UNDERLAY in filters and filters[UNDERLAY] != backend.is_underlay:
-#                continue
+            if nounderlay and hasattr(backend, '_layer_marked_underlay'):
+                continue
 
             for item in backend.list_items(filter):
                 # don't list a page more than once if it is
