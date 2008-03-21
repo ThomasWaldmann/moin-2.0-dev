@@ -149,6 +149,9 @@ class XOR(ListTerm):
                 count += 1
         return count == 1
 
+TRUE = AND()
+FALSE = OR()
+
 # Actual Moin search terms
 
 class TextRE(Term):
