@@ -134,6 +134,14 @@ class LayerBackend(MetaBackend):
     This class implements the underlay backend structure. The requested page will
     be searched in the order the backends appear in the configuration, first fit.
     """
+    def __init__(self, backends, copy_on_write):
+        """
+        If copy_on_write is set, all writes will be directed
+        to the top-most backend. (not implemented yet)
+        """
+        assert not copy_on_write
+        self._copy_on_write = copy_on_write
+        MetaBackend.__init__(self, backends)
 
     def addUnderlay(self, backend):
         backend._layer_marked_underlay = True
@@ -167,11 +175,13 @@ class LayerBackend(MetaBackend):
                 continue
 
             for item in backend.list_items(filter):
-                # don't list a page more than once if it is
-                # present in multiple layers
-                if item in items:
-                    continue
-                items[item] = True
+                if self._copy_on_write:
+                    # don't list a page more than once if it is present in
+                    # multiple layers, but optimise it out when copy-on-write
+                    # semantics aren't implemented, it isn't necessary then
+                    if item in items:
+                        continue
+                    items[item] = True
                 yield item
 
     def has_item(self, name):

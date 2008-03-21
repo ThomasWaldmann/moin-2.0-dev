@@ -869,7 +869,8 @@ Lists: * bullets; 1., a. numbered items.
                 underlay_backend = PageBackend("underlay",
                                                os.path.join(self.data_underlay_dir, "pages"),
                                                self)
-                self.data_backend = LayerBackend([self.data_backend])
+                # XXX: To be fully compatible, the copy-on-write argument should be True!!
+                self.data_backend = LayerBackend([self.data_backend], False)
                 self.data_backend.addUnderlay(underlay_backend)
 
         if not hasattr(self, 'underlay_backend'):
