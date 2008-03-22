@@ -49,7 +49,7 @@ def create_data(cls):
     for item in cls.items:
         cls.backend.create_item(item)
     for item in cls.items_revisions:
-        for rev in cls.items_revisions[item]:
+        for rev in sorted(cls.items_revisions[item]):
             cls.backend.create_revision(cls.items[item], rev)
     for item in cls.items_data:
         for rev in cls.items_data[item]:

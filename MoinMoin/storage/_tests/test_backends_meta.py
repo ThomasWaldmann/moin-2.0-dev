@@ -51,6 +51,10 @@ class TestLayerBackend(AbstractBackendTest):
 
         AbstractBackendTest.init(LayerBackend([first_backend, second_backend], False), self.items, self.items_revisions, self.items_data, self.items_metadata, self.items_revisions)
 
+    # skip removal test, not supported by 1.6
+    def test_remove_revision(self):
+        pass
+
     def test_name(self):
         pass
 
@@ -93,3 +97,6 @@ class TestNamespaceBackend(AbstractBackendTest):
         assert self.backend.has_item(self.items[2]).name == "pages2"
         AbstractBackendTest.test_has_item(self)
 
+    # skip removal test, not supported by 1.6
+    def test_remove_revision(self):
+        pass
