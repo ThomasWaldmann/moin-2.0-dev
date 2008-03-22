@@ -13,26 +13,6 @@ from MoinMoin import search
 from MoinMoin.search.queryparser import QueryParser
 
 
-class TestQuotingBug:
-    """search: quoting bug tests
-
-       MoinMoin:MoinMoinBugs/SearchOneCharString
-    """
-
-    def testIsQuoted(self):
-        """ search: quoting bug - quoted terms """
-        parser = QueryParser()
-        for case in ('"yes"', "'yes'"):
-            assert parser.isQuoted(case)
-
-    def testIsNotQuoted(self):
-        """ search: quoting bug - unquoted terms """
-        tests = ('', "'", '"', '""', "''", "'\"", '"no', 'no"', "'no", "no'", '"no\'')
-        parser = QueryParser()
-        for case in tests:
-            assert not parser.isQuoted(case)
-
-
 class TestQueryParsing:
     """ search: query parser tests """
 
@@ -44,14 +24,44 @@ class TestQueryParsing:
             ("a b", '["a" "b"]'),
             ("a -b c", '["a" -"b" "c"]'),
             ("aaa bbb -ccc", '["aaa" "bbb" -"ccc"]'),
-            ("title:aaa title:bbb -title:ccc", '[!"aaa" !"bbb" -!"ccc"]'),
+            ("title:aaa title:bbb -title:ccc", '[title:"aaa" title:"bbb" -title:"ccc"]'),
+            ("title:case:aaa title:re:bbb -title:re:case:ccc", '[title:case:"aaa" title:re:"bbb" -title:re:case:"ccc"]'),
+            ("linkto:aaa", 'linkto:"aaa"'),
+            ("category:aaa", 'category:"aaa"'),
+            ("domain:aaa", 'domain:"aaa"'),
+            ("re:case:title:aaa", 'title:re:case:"aaa"'),
+            ("(aaa or bbb) and (ccc or ddd)", '[["aaa" or "bbb"] ["ccc" or "ddd"]]'),
+            ("(aaa or bbb) (ccc or ddd)", '[["aaa" or "bbb"] ["ccc" or "ddd"]]'),
             ("aaa or bbb", '["aaa" or "bbb"]'),
+            ("aaa or bbb or ccc", '["aaa" or "bbb" or "ccc"]'),
+            ("aaa or bbb and ccc", '["aaa" or ["bbb" "ccc"]]'),
+            ("aaa and bbb or ccc", '[["aaa" "bbb"] or "ccc"]'),
+            ("aaa and bbb and ccc", '["aaa" "bbb" "ccc"]'),
+            ("aaa or bbb or ccc", '["aaa" or "bbb" or "ccc"]'),
+            ("aaa or bbb and ccc or ddd", '["aaa" or ["bbb" "ccc"] or "ddd"]'),
+            ("aaa or bbb ccc or ddd", '["aaa" or ["bbb" "ccc"] or "ddd"]'),
             ("(HelpOn) (Administration)", '["HelpOn" "Administration"]'),
             ("(HelpOn) (-Administration)", '["HelpOn" -"Administration"]'),
+            ("(HelpOn) and (-Administration)", '["HelpOn" -"Administration"]'),
+            ("(HelpOn) and (Administration) or (Configuration)", '[["HelpOn" "Administration"] or "Configuration"]'),
+            ("(a) and (b) or (c) or -d", '[["a" "b"] or "c" or -"d"]'),
+            ("a b c d e or f g h", '[["a" "b" "c" "d" "e"] or ["f" "g" "h"]]'),
+            ('"no', '""no"'),
+            ('no"', '"no""'),
+            ("'no", "\"'no\""),
+            ("no'", "\"no'\""),
+            ('"no\'', '""no\'"')
             ]:
             result = parser.parse_query(query)
             assert str(result) == wanted
 
+    def testQueryParserExceptions(self):
+        """ search: test the query parser """
+        parser = search.QueryParser()
+        def _test(q):
+            py.test.raises(ValueError, parser.parse_query, q)
+        for query in ['""', '(', ')', '(a or b']:
+            yield _test, query
 
 class TestSearch:
     """ search: test search """
