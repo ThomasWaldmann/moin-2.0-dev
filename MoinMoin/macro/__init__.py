@@ -184,6 +184,7 @@ class Macro:
 
         # Get page list readable by current user, filtered by needle
         hits = self.request.rootpage.getPageList(filter=needle_re.search)
+        hits = list(hits)
         hits.sort()
 
         result = []
