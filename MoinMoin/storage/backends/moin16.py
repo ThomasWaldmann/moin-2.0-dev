@@ -47,6 +47,7 @@ from MoinMoin.support.python_compatibility import sorted
 from MoinMoin import config, wikiutil
 from MoinMoin.storage.backends.common import _get_item_metadata_cache
 from MoinMoin.storage.backends.filesystem import BaseFilesystemBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file, _parse_log_line
+from MoinMoin.storage.error import BackendError, UnsupportedOperationError
 from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG, EDIT_LOCK
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
@@ -255,6 +256,8 @@ class PageBackend(BaseFilesystemBackend):
     def list_revisions(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
+
+        XXX fix this, must read edit-log
         """
         revs = os.listdir(self._get_item_path(name, "revisions"))
         revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
@@ -288,10 +291,9 @@ class PageBackend(BaseFilesystemBackend):
 
     def remove_revision(self, name, revno):
         """
-        @see MoinMoin.storage.interfaces.StorageBackend.remove_revisions
+        @see MoinMoin.storage.interfaces.StorageBackend.remove_revision
         """
-        os.remove(self._get_rev_path(name, revno, 'data'))
-        self._update_current(name)
+        raise UnsupportedOperationError("moin16 doesn't support revision removal")
 
     def _update_current(self, name):
         """
