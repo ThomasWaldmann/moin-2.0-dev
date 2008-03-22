@@ -346,7 +346,7 @@ class Index(BaseIndex):
                 if docs:
                     doc = docs[0] # there should be only one
                     uid = doc['uid']
-                    docmtime = long(doc['values']['mtime'])
+                    docmtime = doc['values']['mtime']
                     updated = mtime > docmtime
                     logging.debug("uid %r: mtime %r > docmtime %r == updated %r" % (uid, mtime, docmtime, updated))
                 else:
@@ -460,10 +460,10 @@ class Index(BaseIndex):
         request = page.request
         wikiname = request.cfg.interwikiname or "Self"
         pagename = page.page_name
-        mtime = page.mtime_usecs()
+        mtime = wikiutil.timestamp2version(page.mtime())
         revision = str(page.get_real_rev())
         itemid = "%s:%s:%s" % (wikiname, pagename, revision)
-        author = page.last_edit(request)['editor']
+        author = page.last_edit()['editor']
         # XXX: Hack until we get proper metadata
         language, stem_language = self._get_languages(page)
         categories = self._get_categories(page)
@@ -639,7 +639,7 @@ class Index(BaseIndex):
             writer = xapidx.Index(self.dir, True)
             writer.configure(self.prefixMap, self.indexValueMap)
             pages = request.rootpage.getPageList(user='', exists=1)
-            logging.debug("indexing all (%d) pages..." % len(pages))
+            logging.debug("indexing all pages...")
             for pagename in pages:
                 p = Page(request, pagename)
                 if request.cfg.xapian_index_history:
