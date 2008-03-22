@@ -19,7 +19,7 @@ def execute(pagename, request):
 
     page = Page(request, pagename)
 
-    if not request.user.may.read(pagename) or not page.exists():
+    if not request.user.may.read(pagename) or not page.exists(includeDeleted=True):
         page.send_page()
         return
 
