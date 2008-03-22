@@ -57,7 +57,7 @@ class TestQueryParsing:
 
     def testQueryParserExceptions(self):
         """ search: test the query parser """
-        parser = search.QueryParser()
+        parser = QueryParser()
         def _test(q):
             py.test.raises(ValueError, parser.parse_query, q)
         for query in ['""', '(', ')', '(a or b']:
