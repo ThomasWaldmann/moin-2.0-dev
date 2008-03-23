@@ -256,11 +256,30 @@ class PageBackend(BaseFilesystemBackend):
     def list_revisions(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_revisions
-
-        XXX fix this, must read edit-log
         """
-        revs = os.listdir(self._get_item_path(name, "revisions"))
-        revs = [int(rev) for rev in revs if not rev.endswith(".tmp")]
+        revs = []
+
+        # use edit-log to figure out which revisions this page has
+        try:
+            data_file = file(self._get_item_path(name, "edit-log"), "r") 
+
+            for line in data_file:
+                values = _parse_log_line(line)
+                rev = int(values[1])
+                # used by attachfile... *sigh*
+                if rev != 99999999:
+                    revs.append(rev)
+
+            data_file.close()
+        except IOError:
+            pass
+
+        # make sure it has at least one revision if there is
+        # data, underlay sometimes has no edit-log although
+        # the page has data...
+        cur = self.current_revision(name)
+        if not cur in revs:
+            revs.append(cur)
 
         return sorted(revs, reverse=True)
 
