@@ -189,9 +189,10 @@ class TestPageBackend(AbstractBackendTest):
         assert os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000003"))
         assert open(os.path.join(self.backend._get_item_path(""), self.items[0], "current"), "r").read() == "00000003\n"
 
-    # skip removal test, not supported by 1.6
     def test_remove_revision(self):
-        pass
+        AbstractBackendTest.test_remove_revision(self)
+        assert open(os.path.join(self.backend._get_item_path(""), self.items[0], "current"), "r").read() == "00000002\n"
+        assert not os.path.isfile(os.path.join(self.backend._get_item_path(""), self.items[0], "revisions", "00000003"))
 
 
 class TestPageMetadata(AbstractMetadataTest):

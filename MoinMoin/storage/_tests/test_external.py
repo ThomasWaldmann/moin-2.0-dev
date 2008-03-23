@@ -112,9 +112,16 @@ class TestItem(AbstractTest):
         self.item.lock = False
 
     def test_del_revision(self):
-        # wouldn't it be nice? but 1.6 doesn't support it.
-        # maybe later when we have another usable backend.
-        pass
+        self.item.lock = True
+        del self.item[4]
+        assert self.item.current == 3
+        del self.item[3]
+        assert self.item.current == 2
+        assert not 3 in self.item
+        assert not 4 in self.item
+        py.test.raises(NoSuchRevisionError, lambda: self.item[5])
+        py.test.raises(BackendError, self.item.new_revision, 1)
+        self.item.lock = False
 
     def test_acl(self):
         from MoinMoin.security import AccessControlList

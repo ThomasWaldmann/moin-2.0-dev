@@ -71,7 +71,7 @@ class LocalEditLog(object):
         """
         self.pagename = rootpagename
         self.item = ItemCollection(request.cfg.data_backend, request)[rootpagename]
-        self._iter = self.item.keys().__iter__()
+        self.pos = self.item.current
 
     def __iter__(self):
         """
@@ -83,18 +83,21 @@ class LocalEditLog(object):
         """
         Returns the next edit-log entry.
         """
-        revno = self._iter.next()
+        if self.pos <= 0:
+            raise StopIteration
 
         result = EditLogLine()
-        result.mtime = self.item[revno].mtime
-        result.rev = revno
-        result.action = self.item[revno].action or "SAVE"
+        result.mtime = self.item[self.pos].mtime
+        result.rev = self.pos
+        result.action = self.item[self.pos].action or "SAVE"
         result.pagename = self.pagename
-        result.addr = self.item[revno].addr
-        result.hostname = self.item[revno].hostname
-        result.userid = self.item[revno].userid
-        result.extra = self.item[revno].extra
-        result.comment = self.item[revno].comment
+        result.addr = self.item[self.pos].addr
+        result.hostname = self.item[self.pos].hostname
+        result.userid = self.item[self.pos].userid
+        result.extra = self.item[self.pos].extra
+        result.comment = self.item[self.pos].comment
+
+        self.pos = self.pos - 1
 
         return result
 

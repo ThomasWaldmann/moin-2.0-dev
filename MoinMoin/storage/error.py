@@ -50,10 +50,3 @@ class NoSuchRevisionError(BackendError):
     Raised if the requested revision of an item does not exist.
     """
     pass
-
-class UnsupportedOperationError(BackendError):
-    """
-    Raised if the backend does not support this operation,
-    should only be used by the legacy 1.6 code.
-    """
-    pass
