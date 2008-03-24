@@ -84,12 +84,12 @@ class StorageBackend(object):
 
     def lock(self, identifier, timeout=1, lifetime=60):
         """
-        Removes a lock for the given identifier.
+        Create a lock for the given identifier.
         """
 
     def unlock(self, identifier):
         """
-        Creates a lock for the given identifier.
+        Remove a lock for the given identifier.
         """
 
     def news(self, timestamp=0):
