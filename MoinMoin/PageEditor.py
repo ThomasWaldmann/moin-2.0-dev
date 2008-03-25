@@ -945,6 +945,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
                 saved_page = Page(request, self.page_name, rev=next_line.rev)
                 if newtext == saved_page.get_raw_body():
                     msg = _("You already saved this page!")
+                    return msg
                 else:
                     msg = _("You already edited this page! Please do not use the back button.")
                     raise self.EditConflict, msg
