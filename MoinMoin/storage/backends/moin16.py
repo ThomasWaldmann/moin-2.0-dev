@@ -189,7 +189,8 @@ class UserMetadata(AbstractMetadata):
         @see MoinMoin.storage.backends.filesystem.AbstractMetadata._save_metadata
         """
 
-        tmp_handle, tmp_name = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
+        tmp_handle, tmp_name = tempfile.mkstemp(dir=self._backend._path,
+                                                prefix='tmp-')
 
         data_file = codecs.getwriter(config.charset)(os.fdopen(tmp_handle, "w"))
 
@@ -321,13 +322,19 @@ class PageBackend(BaseFilesystemBackend):
         else:
             revno = 0
 
-        tmp_handle, tmp_name = tempfile.mkstemp(dir=self._cfg.tmp_dir)
+        tmp_handle, tmp_name = tempfile.mkstemp(dir=self._get_item_path(name),
+                                                prefix='current-')
 
         tmp_file = os.fdopen(tmp_handle, "w")
         tmp_file.write(_get_rev_string(revno) + "\n")
         tmp_file.close()
 
-        _rename_function(tmp_name, self._get_item_path(name, "current"))
+        try:
+            _rename_function(tmp_name, self._get_item_path(name, "current"))
+        except:
+            os.close(tmp_handle)
+            os.remove(tmp_name)
+            raise
 
     def get_data_backend(self, name, revno):
         """
@@ -452,8 +459,8 @@ class PageMetadata(AbstractMetadata):
                 data_file.close()
 
         else:
-
-            tmp_handle, tmp_name = tempfile.mkstemp(dir=self._backend._cfg.tmp_dir)
+            tmp_handle, tmp_name = tempfile.mkstemp(dir=self._backend._get_item_path(name),
+                                                    suffix='.tmp')
             read_filename = self._backend._get_rev_path(name, revno, 'data')
 
             data = codecs.open(read_filename, "r", config.charset)
