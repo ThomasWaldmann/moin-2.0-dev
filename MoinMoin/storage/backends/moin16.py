@@ -47,12 +47,17 @@ from MoinMoin.support.python_compatibility import sorted
 from MoinMoin import config, wikiutil
 from MoinMoin.storage.backends.common import _get_item_metadata_cache
 from MoinMoin.storage.backends.filesystem import BaseFilesystemBackend, AbstractData, AbstractMetadata, _get_rev_string, _create_file, _parse_log_line
+from MoinMoin.storage.error import BackendError
 from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG, EDIT_LOCK
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
 
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
+
+_rename_function = os.rename
+if os.name == 'nt':
+    _rename_function = shutil.move
 
 
 class UserBackend(BaseFilesystemBackend):
@@ -102,7 +107,13 @@ class UserBackend(BaseFilesystemBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.rename_item
         """
-        shutil.move(self._get_item_path(name), self._get_item_path(newname))
+        dst = self._get_item_path(name)
+        tgt = self._get_item_path(newname)
+        try:
+            _rename_function(dst, tgt)
+        except OSError:
+            # XXX how else can this fail?
+            raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
 
     def list_revisions(self, name):
         """
@@ -195,7 +206,8 @@ class UserMetadata(AbstractMetadata):
             data_file.write(line)
         data_file.close()
 
-        shutil.move(tmp_name, self._backend._get_item_path(name))
+        # rename over the old file to get atomic update semantics
+        _rename_function(tmp_name, self._backend._get_item_path(name))
 
 
 class PageBackend(BaseFilesystemBackend):
@@ -250,7 +262,13 @@ class PageBackend(BaseFilesystemBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.rename_item
         """
-        shutil.move(self._get_item_path(name), self._get_item_path(newname))
+        dst = self._get_item_path(name)
+        tgt = self._get_item_path(newname)
+        try:
+            _rename_function(dst, tgt)
+        except OSError:
+            # XXX how else can this fail?
+            raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
 
     def list_revisions(self, name):
         """
@@ -309,7 +327,7 @@ class PageBackend(BaseFilesystemBackend):
         tmp_file.write(_get_rev_string(revno) + "\n")
         tmp_file.close()
 
-        shutil.move(tmp_name, self._get_item_path(name, "current"))
+        _rename_function(tmp_name, self._get_item_path(name, "current"))
 
     def get_data_backend(self, name, revno):
         """
@@ -448,7 +466,7 @@ class PageMetadata(AbstractMetadata):
             data_file.writelines(new_data)
             data_file.close()
 
-            shutil.move(tmp_name, read_filename)
+            _rename_function(tmp_name, read_filename)
 
             # save edit-log
             for key in EDIT_LOG:
