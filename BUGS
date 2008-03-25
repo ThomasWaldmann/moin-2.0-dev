@@ -136,6 +136,8 @@ User 1					User 2
 At this point, user 2 gets a big fat ugly exception message from the
 backend that the item he tried to delete doesn't exist. WTF?
 
+Also, this actually triggers BUG 3.
+
 Another race that isn't quite as easy to trigger is this:
 
 User 1/Thread 1				User 2/Thread 2
