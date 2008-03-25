@@ -115,9 +115,6 @@ class ItemCollection(UserDict.DictMixin, object):
         if not newname:
             raise BackendError(_("You cannot copy to an empty item name."))
 
-        if newname in self.items():
-            raise BackendError(_("Copy failed because an item with name %r already exists.") % newname)
-
         olditem = self[name]
 
         newitem = self.new_item(newname)
