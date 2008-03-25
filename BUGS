@@ -1,0 +1,173 @@
+This file documents further bugs in the storage code and design.
+I've gotten tired of fixing them, it seems that way I just get
+blamed for everything instead of the original coder/designer of
+the problems...
+
+ BUG 1: error handling is totally bogus
+========================================
+
+Error handling is wrong by design: backends are currently not required
+to raise proper errors but they simply give an error whenever something
+fails and the common code tries to fix this up. This is _obviously_
+racy, consider an example:
+
+thread 1			thread 2
+ - create_item(n) fails
+				 - rename_item(n, x)
+ - _handle_error
+ - has_item returns False
+ - original OSError is raised,
+   upper layers completely
+   fuck up, OSError shown to
+   user
+
+SOLUTION: require that backends atomically check whether an
+          operation is possible and raise an *appropriate*
+          error code, rather than trying to "fix up" the
+          error code later.
+
+SIDE EFFECT: actual backend bugs can be found rather than
+             leading to, for example, "item exists" errors
+             when the item doesn't actually exist.
+
+
+ BUG 2: create_item is racy
+=============================================
+
+Due to the way create_item works, it is not possible to implement
+a higher-level atomic 'create page with this contents' operation,
+no matter how it is done another thread could reference that item
+before it is completely created. [Before flaming me about how wrong
+I am, please read the solution and realise that it is already half-
+implemented but neither properly documented nor actually properly
+implemented.]
+
+SOLUTION: Abstract locking in from the backend and clearly document
+          that although locks are always named by the items they are
+          supposed to lock this is not a hard requirement and it must,
+          for example, be possible to lock an item that doesn't exist
+          yet.
+
+          To clarify that point, remove locking methods from backends
+          and create a new lock-manager class that is also configured
+          in the wiki configuration but is completely orthogonal to
+          the backend.
+
+          With the newly gained flexibility, add locking around all
+          code using create_item/save/..., this might require Page/
+          PageEditor code refactoring.
+
+SIDE EFFECT: will clarify that all locks live within a shared namespace
+             as it is currently the case with the filesystem backends
+             (cfg.tmp_dir) and thus help improve code quality since it
+             will be apparent to lock users.
+
+[NB: Due to filename quoting and a . being present in the user IDs
+it is currently not actually possible for locking namespaces to
+collide but we'd rather not rely on that for all future, would we?]
+
+
+ BUG 3: storage code assumes it is perfect
+===========================================
+
+In many places, operations look like this:
+
+  item.lock = True
+  [...]
+  item.lock = False
+
+While that should of course be called 'locked' and not 'lock', the
+code sequence itself is rather worrying because any bugs within the
+"[...]" part will lead to locks that are not released. This is in
+particular visible with the test suite where a small problem in one
+test case will cause a lot of follow-up test cases to fail due to
+the unreleased lock, but I'm sure cases can be constructed where
+the current code will fail within such a block.
+
+QUICK-HACK SOLUTION: add try/finally to all the code and try to
+                     enforce that in the future (yeah right)
+
+SOLUTION: Instead of doing lock/unlock like this, require a method
+          call that is done to operate on the locked item, like this:
+
+          item.locked(m)
+
+          which would be implemented like this (using the old, then
+          no longer existing, lock property):
+
+          self.lock = True
+          try:
+            m()
+          finally:
+            self.lock = False
+
+          Note that my example doesn't allow passing any parameters
+          to the function, that can be alleviated by using *args and
+          **kwargs or simply requiring that the function takes no
+          arguments in which case a lambda would be used to pass any
+          (which would even be py3k compatible in that case because
+          IIRC *args/**kwargs can no longer be used then)
+
+SIDE EFFECT: It will no longer be possible to hold locks for a longer
+             period of time, nor to forget unlocking. Also, doing
+             things this way clearly documents which methods are done
+             locked and leads to an overall improvement in code quality.
+
+
+ BUG 4: Despite claims otherwise, remove_item is used
+======================================================
+
+When a user edits a page that doesn't exist, this page is created via
+create_item() as soon as the user invokes the edit action, at which
+point the item starts to exist. Because it has no revisions, the upper
+level code will still assume that it doesn't exist, but this is unclean
+at best.
+
+Also, it has interesting side effects, like this race that is trivial
+to trigger:
+
+User 1					User 2
+ - edit non-existing item 'asdf'
+					 - do same
+ - hit cancel
+ - see that item doesn't exist
+					 - do same
+
+At this point, user 2 gets a big fat ugly exception message from the
+backend that the item he tried to delete doesn't exist. WTF?
+
+Another race that isn't quite as easy to trigger is this:
+
+User 1/Thread 1				User 2/Thread 2
+ - edit non-existing item 'asdf'
+ 					 - do same
+ - invoke save with actual text
+					 - cancel edit
+					 - page editor's cancel function
+					   is invoked, calls
+					    - get_revisions, which returns
+					      an empty list
+**** alternative 1
+ - save code creates revision,
+   saves data, metadata
+					 - because of empty list,
+					   remove_item is invoked
+--> COMPLETE DATA LOSS
+
+**** alternative 2
+ - save code creates revision
+					 - beause of empty list,
+					   remove_item is invoked,
+					   newly created revision is
+					   removed
+ - save code saves data, metadata
+   and FAILS!
+--> User 1 is gets a moin bug in form of an ugly backtrace
+
+SOLUTION: See above, locking on items that do not exist is necessary.
+
+SOLUTION: Alternatively, the whole create_item/remove_item business could
+          be completely reworked so that the item/revision is only created
+          when it is saved. Locking is still required, of course, but can be
+          pushed to a place where it can be implemented more intelligently,
+          namely the backend.
