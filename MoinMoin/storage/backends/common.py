@@ -62,21 +62,6 @@ class CommonBackend(object):
         except Exception, err:
             _handle_error(self, err, name, None)
 
-    def rename_item(self, name, newname):
-        """
-        @see MoinMoin.storage.interfaces.StorageBackend.rename_item
-        """
-        if name == newname:
-            raise BackendError(_("Failed to rename item because name and newname are equal."))
-
-        if not newname:
-            raise BackendError(_("You cannot rename to an empty item name."))
-
-        if self.has_item(newname):
-            raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
-
-        return self._other.rename_item(name, newname)
-
     def current_revision(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
