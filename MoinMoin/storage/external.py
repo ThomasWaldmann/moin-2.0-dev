@@ -103,6 +103,12 @@ class ItemCollection(UserDict.DictMixin, object):
         """
         Renames an Item.
         """
+        if name == newname:
+            raise BackendError(_("Failed to rename item because name and newname are equal."))
+
+        if not newname:
+            raise BackendError(_("You cannot rename to an empty item name."))
+
         self._backend.rename_item(name, newname)
 
     def copy_item(self, name, newname):
