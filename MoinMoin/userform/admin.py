@@ -26,7 +26,7 @@ def do_user_browser(request):
     ]
 
     isgroup = request.cfg.cache.page_group_regex.search
-    grouppages = request.rootpage.getPageList(user='', filter=isgroup)
+    grouppages = list(request.rootpage.getPageList(user='', filter=isgroup))
 
     # Iterate over users
     for uid in user.getUserList(request):

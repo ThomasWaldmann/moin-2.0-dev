@@ -6,11 +6,13 @@
 
     @license: GNU GPL, see COPYING for details.
 """
+
 import os
 
 from MoinMoin import macro
 from MoinMoin.logfile import eventlog
 from MoinMoin.PageEditor import PageEditor
+from MoinMoin.parser.text import Parser
 
 class TestHits:
     """Hits: testing Hits macro """
@@ -18,27 +20,15 @@ class TestHits:
     def setup_class(self):
         self.pagename = u'AutoCreatedMoinMoinTemporaryTestPageForHits'
         self.page = PageEditor(self.request, self.pagename)
-        self.shouldDeleteTestPage = False
-        # for that test eventlog needs to be empty
-        fpath = self.request.rootpage.getPagePath('event-log', isfile=1)
+        fpath = os.path.join(self.request.cfg.data_dir, 'event-log')
         if os.path.exists(fpath):
             os.remove(fpath)
 
     def teardown_class(self):
-        if self.shouldDeleteTestPage:
-            import shutil
-            page = PageEditor(self.request, self.pagename)
-            page.deletePage()
-            fpath = page.getPagePath(use_underlay=0, check_create=0)
-            shutil.rmtree(fpath, True)
-
-            fpath = self.request.rootpage.getPagePath('event-log', isfile=1)
-            if os.path.exists(fpath):
-                os.remove(fpath)
+        self.request.cfg.data_backend.remove_item(self.pagename)
 
     def _make_macro(self):
         """Test helper"""
-        from MoinMoin.parser.text import Parser
         from MoinMoin.formatter.text_html import Formatter
         p = Parser("##\n", self.request)
         p.formatter = Formatter(self.request)
