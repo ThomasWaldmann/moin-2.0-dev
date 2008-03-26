@@ -340,6 +340,9 @@ class IndexedBackend(object):
 #                t.term = check_term(t.term, ifilt, must)
             return t
 
+        # filter might be modified, make copy
+        filter = filter.copy()
+
         filter = check_term(filter, ifilt, True)
 
         # not implemented yet!
