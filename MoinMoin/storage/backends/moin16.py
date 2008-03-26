@@ -51,6 +51,7 @@ from MoinMoin.storage.error import BackendError
 from MoinMoin.storage.external import DELETED, SIZE, EDIT_LOG, EDIT_LOCK
 from MoinMoin.storage.external import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.external import EDIT_LOG_MTIME, EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_COMMENT, EDIT_LOG_EXTRA, EDIT_LOG_ACTION
+from MoinMoin.search import term
 
 
 user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
@@ -226,6 +227,30 @@ class PageBackend(BaseFilesystemBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
+        class HasDeletedMetaDataFilter(term.Term):
+            _cost = 50 # pretty cheap now
+            def _evaluate(self, backend, itemname, get_metadata):
+                revno = backend.current_revision(itemname)
+                return not os.path.exists(backend._get_rev_path(f, revno, 'data'))
+
+        def check_term(t):
+            if isinstance(t, term.HasMetaDataKey):
+                if t.key == DELETED:
+                    return HasDeletedMetaDataFilter()
+            elif isinstance(t, term.ListTerm):
+                terms = []
+                for st in t.terms:
+                    terms.append(check_term(st))
+                t.terms = terms
+            elif isinstance(t, term.UnaryTerm):
+                t.term = check_term(t.term)
+            return t
+
+        # could be modified, make copy
+        filter = filter.copy()
+
+        filter = check_term(filter)
+
         for f in os.listdir(self._path):
             if not os.path.isfile(os.path.join(self._path, f, "current")):
                 continue
