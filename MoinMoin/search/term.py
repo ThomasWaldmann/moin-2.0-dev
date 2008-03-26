@@ -32,6 +32,9 @@ class Term(object):
     """
     Base class for search terms.
     """
+    # relative cost of this search term
+    _cost = 0
+
     def __init__(self):
         pass
 
@@ -71,13 +74,8 @@ class Term(object):
     def copy(self):
         """
         Make a copy of this search term.
-
-        Note that even after making a copy most terms cannot be modified,
-        this is mainly for search optimisation where it may be necessary
-        to remove terms from AND/OR/NOT terms so those are copied but for
-        example a TextRE's search needle expression may not be modified.
         """
-        return self
+        return self.__class__()
 
 class UnaryTerm(Term):
     """
@@ -92,6 +90,7 @@ class UnaryTerm(Term):
     def prepare(self):
         Term.prepare(self)
         self.term.prepare()
+        self._cost = self.term._cost
 
     def __repr__(self):
         return u'<%s(%r)>' % (self.__class__.__name__, self.term)
@@ -112,8 +111,12 @@ class ListTerm(Term):
 
     def prepare(self):
         Term.prepare(self)
+        # the sum of all costs is a bit of a worst-case cost...
+        self._cost = 0
         for e in self.terms:
             e.prepare()
+            self._cost += e._cost
+        self.terms.sort(cmp=lambda x, y: cmp(x._cost, y._cost))
 
     def remove(self, subterm):
         self.terms.remove(subterm)
@@ -184,6 +187,7 @@ class TextRE(Term):
     """
     Regular expression full text match, use as last resort.
     """
+    _cost = 1000 # almost prohibitive
     def __init__(self, needle_re):
         Term.__init__(self)
         assert hasattr(needle_re, 'search')
@@ -196,6 +200,9 @@ class TextRE(Term):
 
     def __repr__(self):
         return u'<term.TextRE(...)>'
+
+    def copy(self):
+        return TextRE(self._needle_re)
 
 class Text(TextRE):
     """
@@ -214,6 +221,9 @@ class Text(TextRE):
     def __repr__(self):
         return u'<term.Text(%s, %s)>' % (self.needle, self.case_sensitive)
 
+    def copy(self):
+        return Text(self.needle, self.case_sensitive)
+
 class Word(TextRE):
     """
     Full text match finding exact words. Final.
@@ -229,6 +239,9 @@ class Word(TextRE):
 
     def __repr__(self):
         return u'<term.Word(%s, %s)>' % (self.needle, self.case_sensitive)
+
+    def copy(self):
+        return Word(self.needle, self.case_sensitive)
 
 class WordStart(TextRE):
     """
@@ -246,6 +259,9 @@ class WordStart(TextRE):
     def __repr__(self):
         return u'<term.WordStart(%s, %s)>' % (self.needle, self.case_sensitive)
 
+    def copy(self):
+        return WordStart(self.needle, self.case_sensitive)
+
 class WordEnd(TextRE):
     """
     Full text match finding the end of a word. Final.
@@ -262,10 +278,14 @@ class WordEnd(TextRE):
     def __repr__(self):
         return u'<term.WordEnd(%s, %s)>' % (self.needle, self.case_sensitive)
 
+    def copy(self):
+        return WordEnd(self.needle, self.case_sensitive)
+
 class NameRE(Term):
     """
     Matches the item's name with a given regular expression.
     """
+    _cost = 10 # one of the cheapest
     def __init__(self, needle_re):
         Term.__init__(self)
         assert hasattr(needle_re, 'search')
@@ -276,6 +296,9 @@ class NameRE(Term):
 
     def __repr__(self):
         return u'<term.NameRE(...)>'
+
+    def copy(self):
+        return NameRE(self._needle_re)
 
 class Name(NameRE):
     """
@@ -294,6 +317,9 @@ class Name(NameRE):
     def __repr__(self):
         return u'<term.Name(%s, %s)>' % (self.needle, self.case_sensitive)
 
+    def copy(self):
+        return Name(self.needle, self.case_sensitive)
+
 class NameFn(Term):
     """
     Arbitrary item name matching function.
@@ -309,11 +335,15 @@ class NameFn(Term):
     def __repr__(self):
         return u'<term.NameFn(%r)>' % (self._fn, )
 
+    def copy(self):
+        return NameFn(self._fn)
+
 class MetaDataMatch(Term):
     """
     Matches a metadata key/value pair of an item, requires
     existence of the metadata key. Final.
     """
+    _cost = 100 # fairly expensive but way cheaper than text
     def __init__(self, key, val):
         Term.__init__(self)
         self.key = key
@@ -326,10 +356,14 @@ class MetaDataMatch(Term):
     def __repr__(self):
         return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.val)
 
+    def copy(self):
+        return MetaDataMatch(self.key, self.val)
+
 class HasMetaDataKey(Term):
     """
     Requires existence of the metadata key. Final.
     """
+    _cost = 90 # possibly cheaper than MetaDataMatch
     def __init__(self, key):
         Term.__init__(self)
         self.key = key
@@ -340,10 +374,14 @@ class HasMetaDataKey(Term):
     def __repr__(self):
         return u'<%s(%s)>' % (self.__class__.__name__, self.key)
 
+    def copy(self):
+        return HasMetaDataKey(self.key)
+
 class FromUnderlay(Term):
     """
     Requires that an item comes from a layered backend
     marked as 'underlay'.
     """
+    _cost = 1 # trivial
     def _evaluate(self, backend, itemname, get_metadata):
         return hasattr(backend, '_layer_marked_underlay')
