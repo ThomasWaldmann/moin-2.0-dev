@@ -68,6 +68,17 @@ class Term(object):
         """
         self._result = None
 
+    def copy(self):
+        """
+        Make a copy of this search term.
+
+        Note that even after making a copy most terms cannot be modified,
+        this is mainly for search optimisation where it may be necessary
+        to remove terms from AND/OR/NOT terms so those are copied but for
+        example a TextRE's search needle expression may not be modified.
+        """
+        return self
+
 class UnaryTerm(Term):
     """
     Base class for search terms that has a single contained
@@ -84,6 +95,9 @@ class UnaryTerm(Term):
 
     def __repr__(self):
         return u'<%s(%r)>' % (self.__class__.__name__, self.term)
+
+    def copy(self):
+        return self.__class__(self.term.copy())
 
 class ListTerm(Term):
     """
@@ -110,6 +124,10 @@ class ListTerm(Term):
     def __repr__(self):
         return u'<%s(%s)>' % (self.__class__.__name__,
                               ', '.join([repr(t) for t in self.terms]))
+
+    def copy(self):
+        terms = [t.copy() for t in self.terms]
+        return self.__class__(*terms)
 
 # Logical expression classes
 
