@@ -100,3 +100,7 @@ Version 1.7.current:
     * implement a new and better storage backend
     * re-implemented copy-on-write semantics in the layered backend
     * implement Xapian search as a layered backend
+    * remove wikiutil.quoteWikinameFS and put it right into backend(s)
+    * remove wikiutil.unquoteWikiname and put it right into backend(s)
+    * rewrite MoinMoin/script/export/dump.py to use backend
+    * rewrite MoinMoin/script/maint/reducewiki.py to use backend
