@@ -53,11 +53,6 @@ class AssertNotCalledTerm(term.Term):
     def _evaluate(self, backend, itemname, metadata):
         assert False
 
-_b2e = {
-    1: term.TRUE,
-    0: term.FALSE,
-}
-
 class TestTerms:
     # euh. we fake being a backend ourselves...
     def get_data_backend(self, itemname, revno):
@@ -109,11 +104,11 @@ class TestTerms:
             (False, [0, 1, 1, 0]),
         ]
         for expected, l in tests:
-            l = [_b2e[i] for i in l]
+            l = [term.BOOL(i) for i in l]
             t = term.AND(*l)
             yield self._evaluate, t, 'a', expected
         for expected, l in tests:
-            l = [_b2e[1 - i] for i in l]
+            l = [term.BOOL(1 - i) for i in l]
             t = term.OR(*l)
             yield self._evaluate, t, 'a', not expected
 
@@ -136,7 +131,7 @@ class TestTerms:
             (False, [0, 0, 0]),
         ]
         for expected, l in tests:
-            l = [_b2e[i] for i in l]
+            l = [term.BOOL(i) for i in l]
             t = term.XOR(*l)
             yield self._evaluate, t, 'a', expected
 
