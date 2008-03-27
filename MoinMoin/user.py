@@ -60,10 +60,13 @@ def get_by_jabber_id(request, jabber_id):
 
 
 def getUserIdByOpenId(request, openid):
-    """ Searches for an user with a perticular openid id and returns it. """
-    users = get_by_filter(request, 'openids', openid)
-    if len(users) > 0:
-        return users[0]
+    """ Searches for an user with a particular openid id and returns it. """
+    filter = term.HasMetaDataValue('openids', openid)
+    identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
+    users = []
+    for user in identifier:
+        users.append(User(request, user))
+    return users
 
 
 def getUserId(request, searchName):
