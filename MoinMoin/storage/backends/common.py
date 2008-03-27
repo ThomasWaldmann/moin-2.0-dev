@@ -62,6 +62,23 @@ class CommonBackend(object):
         except Exception, err:
             _handle_error(self, err, name, None)
 
+    def rename_item(self, name, newname):
+        # XXX These tests do not really belong here, on a backend level
+        #     renaming an item to itself should be a no-op, but this trips
+        #     up the broken test suite.
+        if name == newname:
+            raise BackendError(_("Failed to rename item because name and newname are equal."))
+
+        # Why not? And why check for this here of all places?
+        if not newname:
+            raise BackendError(_("You cannot rename to an empty item name."))
+
+        # XXX This requires locking although that isn't actually necessary for rename_item
+        if self.has_item(newname):
+            raise BackendError(_("Failed to rename item because an item with name %r already exists.") % newname)
+
+        return self._other.rename_item(name, newname)
+
     def current_revision(self, name):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.current_revision
