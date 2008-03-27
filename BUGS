@@ -195,3 +195,60 @@ SIDE EFFECT: The ItemCollection no longer has access to the request
              object. This is good because it forces removing the
              request edit-lock  handling from the storage layer where
              it most definitely does not belong.
+
+NOTE: See bug 6.
+
+
+ BUG 6: rename_item can pull an item underneath another thread
+===============================================================
+
+When an item is renamed, the following race can occur:
+
+Thread 1				Thread 2
+ - item = collection['asdf']
+ - rev = item[0]
+					 - rename_item('asdf', 'zzz')
+ - rev.get_data()
+
+--> Thread 1 crashes because item has been renamed away from it
+    although it had a valid reference.
+
+Yes, this race can happen in Moin 1.6/1.7, but the storage code is
+about improving it, and with a proper design and better backends it
+is trivial to avoid such races.
+
+SOLUTION (CURRENT DESIGN): lock item (in the external locking namespace,
+                           see above) for read accesses as well, can be
+                           an rw-lock.
+
+SOLUTION: Dissolve ItemCollection layer (for ACL checking introduce an
+          ACL-checking backend instead later) and make backends aware
+          of the Item class. Then, an SQL backend that uses a properly
+          normalised database can trivially avoid this race by having a
+          table
+            || ID || pagename ||
+          and storing the ID in the Item object so all further accesses
+          use that primary key rather than the unique key "pagename"
+          which will thus not be affected by any concurrent rename, in
+          effect treating the rename as though it had not happened yet.
+
+          Even in a filesystem backend this can be implemented on actual
+          operating systems by keeping a file descriptor for the item
+          directory around for the lifetime of the Item object and then
+          using openat(2) for accesses into the item, a rename can at
+          the same time proceed as normal. For Windows (sigh) this would
+          fail the rename, but the rename code could retry for a while
+          before giving up with a decent error message instead of the
+          current design penalising all readers.
+
+          That way, any code that managed to get hold of an Item object
+          reference need not be able to handle further problems with
+          accesses to that object. Moin16 backend on windows might not
+          be able to provide this guarantee but that's no worse than
+          it is currently in 1.6/1.7 while still allowing improvements
+          in the future which the current design completely precludes.
+
+NOTE: If ItemCollection was being used as designed, this bug would be
+      trivial to trigger due to caching. Luckily it is re-instantiated
+      for every access so its cache is completely useless (see BUG 5),
+      thereby alleviating the impact of this bug.
