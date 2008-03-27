@@ -738,7 +738,7 @@ Lists: * bullets; 1., a. numbered items.
     SecurityPolicy = None
 
     # storage index configuration (used by indexed backend only)
-    indexes = ["name", "openids", "jid", "email", DELETED]
+    indexes = ["name", "openids", "jid", "email"]
 
     def __init__(self, siteid):
         """ Init Config instance """
