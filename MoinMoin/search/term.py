@@ -359,6 +359,28 @@ class MetaDataMatch(Term):
     def copy(self):
         return MetaDataMatch(self.key, self.val)
 
+class HasMetaDataValue(Term):
+    """
+    Match when the metadata value for a given key contains the given
+    value (when the item's metadata value is a dict or list), requires
+    existence of the metadata key. Final.
+    """
+    _cost = 100 # fairly expensive but way cheaper than text
+    def __init__(self, key, val):
+        Term.__init__(self)
+        self.key = key
+        self.val = val
+
+    def _evaluate(self, backend, itemname, get_metadata):
+        metadata = get_metadata()
+        return self.key in metadata and self.val in metadata[self.key]
+
+    def __repr__(self):
+        return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.val)
+
+    def copy(self):
+        return HasMetaDataValue(self.key, self.val)
+
 class HasMetaDataKey(Term):
     """
     Requires existence of the metadata key. Final.
