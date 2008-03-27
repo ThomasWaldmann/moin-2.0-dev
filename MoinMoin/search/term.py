@@ -173,8 +173,22 @@ class XOR(ListTerm):
                 count += 1
         return count == 1
 
-TRUE = AND()
-FALSE = OR()
+class _BOOL(Term):
+    _cost = 0
+    def __init__(self, val):
+        self._val = val
+
+    def prepare(self):
+        self._result = self._val
+
+    def __repr__(self):
+        return '<%s>' % str(self._val).upper()
+
+    def copy(self):
+        return self
+
+TRUE = _BOOL(True)
+FALSE = _BOOL(False)
 
 def BOOL(b):
     if b:
