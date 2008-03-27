@@ -318,6 +318,17 @@ class IndexedBackend(object):
                     ifilt.add_key(t.key, must)
                     return term.BOOL(must)
             elif isinstance(t, term.MetaDataMatch):
+                # Only accept equal matches for unicode/str
+                # because our index splits apart dicts/lists
+                # so we can't figure out exact matches for
+                # dicts/lists. This could be optimised a bit
+                # should the need arise.
+                if t.key in self._indexes and isinstance(t.val, (str, unicode)):
+                    ifilt.add_match(t.key, t.val, must)
+                    return term.BOOL(must)
+            elif isinstance(t, term.HasMetaDataValue):
+                # We split apart dicts/lists for the index so
+                # we can optimise for this search as well.
                 if t.key in self._indexes:
                     ifilt.add_match(t.key, t.val, must)
                     return term.BOOL(must)
