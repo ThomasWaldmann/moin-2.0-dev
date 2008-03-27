@@ -249,6 +249,16 @@ SOLUTION: Dissolve ItemCollection layer (for ACL checking introduce an
           in the future which the current design completely precludes.
 
 NOTE: If ItemCollection was being used as designed, this bug would be
-      trivial to trigger due to caching. Luckily it is re-instantiated
-      for every access so its cache is completely useless (see BUG 5),
-      thereby alleviating the impact of this bug.
+      trivial to trigger due to caching (because multiple processes are
+      not able to invalidate each other's caches). Luckily it is
+      re-instantiated for every access so its cache is completely
+      useless (see BUG 5), thereby alleviating the impact of this bug.
+
+NOTE: The backend need not be much harder to write. Instead of all methods
+      getting an 'itemname' parameter the methods would all get an 'item'
+      parameter that passes the item as returned by the new get_item()
+      method (that is currently done in the mid-level by ItemCollection's
+      __getitem__() method) and the Item() class could still implement
+      callouts to the backend methods which would not make the backend
+      code much more complex but allow for better error-checking and
+      lookup semantics.
