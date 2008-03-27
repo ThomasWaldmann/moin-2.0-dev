@@ -55,7 +55,7 @@ class TestLayerBackend(AbstractBackendTest):
         pass
 
     def test_list_items(self):
-        assert list(self.backend.list_items(term.TRUE)) == self.items
+        assert sorted(list(self.backend.list_items(term.TRUE))) == self.items
 
     def test_has_item(self):
         assert self.backend.has_item(self.items[0]).name == "pages"
