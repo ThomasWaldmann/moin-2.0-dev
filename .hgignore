@@ -16,3 +16,4 @@ wiki/data/user
 
 syntax: glob
 *.pyc
+wikiconfig_local.*
