@@ -86,6 +86,7 @@ Version 1.7.current:
       * removed packages.edit_logfile_append
 
   TODO:
+    * fix bugs, see BUGS file
     * convert caching to the new storage and separate it out of Page.py
     * convert attachments to the new storage
     * remove logfile.editlog.LocalEditLog.add which is only used by
@@ -104,3 +105,21 @@ Version 1.7.current:
     * remove wikiutil.unquoteWikiname and put it right into backend(s)
     * rewrite MoinMoin/script/export/dump.py to use backend
     * rewrite MoinMoin/script/maint/reducewiki.py to use backend
+    * revisit metadata-in-page handling, for display and editing, Page.py
+      and PageEditor.py should only be adding/accepting metadata that
+      belongs into the page body, i.e. that which was in there in the
+      past, rather than unconditionally adding all keys.
+      That way arbitrary metadata can be stored with each page even in
+      the moin16 backend and will still not be visible to the user and
+      hence the UI can be incrementally improved, e.g. an item's mimetype
+      can be saved within the 'metadata header' of an item even for the
+      moin16 backend and even for arbitrary data without having a
+      #mimetype pragma "pollute" the user-visible representation of
+      existing metadata.
+    * remove caching on user.py level (e.g. name2id cache) since that
+      ought to be done by the backend (if necessary a layered indexing
+      backend)
+    * remove indexing backend from filesystem backends and only add
+      it in the default config, make cfg.indexes a parameter to it
+      rather than a global setting to allow different indexes for
+      the different backends (user vs. page)
