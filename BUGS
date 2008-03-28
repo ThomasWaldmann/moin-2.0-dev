@@ -291,3 +291,56 @@ NOTE: The backend need not be much harder to write. Instead of all methods
       callouts to the backend methods which would not make the backend
       code much more complex but allow for better error-checking and
       lookup semantics.
+
+
+ BUG 7: ACL checking cannot be implemented for delete ACL
+==========================================================
+
+Due to the way create_revision etc. needs to create the revision without
+having any data associated to it, it is not possible to implement 'delete'
+ACL checking the way it was designed because to delete a page a new revision
+is created and only afterwards the DELETE metadata is set on it. Code to
+implement it would look like this or similar:
+
+item.lock()
+try:
+    rev = item.create_revision(cur+1)
+    rev.deleted = True
+    rev.save()
+finally: # note use of try/finally, cf. BUG 3
+    item.unlock()
+
+However, if setting deleted to True or the following save is rejected by ACL
+checks, the revision is still created and left dangling unless upper layer
+code cleans up again, thereby begin completely counter-productive to the
+idea that ACL checking would happen automatically throughout the code
+without special code required.
+
+A correct way to implement it would be:
+
+item.lock()
+try:
+    if not user.may.delete(item):
+        return _("Sorry")
+    rev = ...
+    [... continue as above ...]
+finally:
+    item.unlock()
+
+or alternatively
+
+item.lock()
+try:
+    [... as above ...]
+except:
+    try:
+        item.remove_revision(rev)
+    except:
+        # what do we do here? what failed?
+finally:
+    item.unlock()
+
+
+which adds a bunch of special code for this case. The lock-less design (see
+the LOCKLESS file) avoids all that by having a central .save() that can
+either fail or go through completely.
