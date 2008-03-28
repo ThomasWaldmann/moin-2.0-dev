@@ -116,6 +116,13 @@ Version 1.7.current:
       moin16 backend and even for arbitrary data without having a
       #mimetype pragma "pollute" the user-visible representation of
       existing metadata.
+      Also, it might be worth thinking about introducing, even in the
+      moin16 backend, a second file to store metadata for a revision
+      that isn't put into the page header by the page editor/the moin16
+      backend. Currently, the moin16 backend is unable to store data
+      for a revision that has DELETED metadata although other backends
+      would actually do that as of now; the expectation seems to be that
+      it is possible.
     * remove caching on user.py level (e.g. name2id cache) since that
       ought to be done by the backend (if necessary a layered indexing
       backend)
