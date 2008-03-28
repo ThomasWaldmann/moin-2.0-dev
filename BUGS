@@ -176,6 +176,35 @@ SOLUTION: Alternatively, the whole create_item/remove_item business could
           pushed to a place where it can be implemented more intelligently,
           namely the backend.
 
+NOTE: It seems that this whole create_item/remove_item business is done
+      because of edit-locking. This is how it worked in 1.6/1.7 (i.e. the
+      edit-lock was part of an item), but it might be useful to think
+      about alternatives. Except for the filesystem backend, there doesn't
+      seem to be a need for the item to exist to be able to be edit-locked,
+      and even for the filesystem backend I see no reason why edit-locking
+      must be done backward-compatibly (since edit-locks are not long-lived
+      and you won't run a moin 1.7 + moin 1.7-storage in parallel on the
+      same dataset.)
+      The original code that removes the item if it is still empty is racy
+      (see MoinMoin/action/edit.py:108 in 1.7) too, but that's no reason to
+      not fix it in the storage design. Despite the races, the original
+      code cannot actually lead to data loss.
+      One possible solution would be to add a "remove_if_empty" method,
+      that would be trivial to implement on the filesystem (just try
+      os.rmdir) but rather hard to do properly in SQL.
+      Another alternative would be to assume an item as non-existent that
+      doesn't have any revisions. This is currently the case anyhow. Then
+      remove_item wouldn't have to be called when the edit-lock metadata
+      is deleted and the bug would disappear easily. The filesystem backend
+      could remove empty directories automatically when they give no value.
+      In other backends however, this might not be as easy so the items
+      would stick around at least in the pagelist, and it would be
+      non-trivial to answer "has_item" or "list_items" properly.
+
+      Since edit-lock metadata is the only per-item metadata, it could be
+      useful to do edit-locking differently and remove per-item metadata
+      completely.
+
 
  BUG 5: ItemCollection is instantiated too often
 =================================================
