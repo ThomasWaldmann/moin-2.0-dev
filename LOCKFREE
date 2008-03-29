@@ -168,13 +168,13 @@ def user_pressed_save_button(...):
             # Can fail with NoSuchItemError
             item = request.data_backend.get_item(itemname)
 
-    	# Could fail if revision exists already, but only if
-    	# remove_revision is not a valid operation for regular
-    	# operation, otherwise the same as for create_item()
-    	# [above] applies. create_item() is different though
-    	# because of renames, revisions cannot be renamed and
-    	# thus do not disappear in regular operation unless
-    	# remove_revision() is allowed.
+        # Could fail if revision exists already, but only if
+        # remove_revision is not a valid operation for regular
+        # operation, otherwise the same as for create_item()
+        # [above] applies. create_item() is different though
+        # because of renames, revisions cannot be renamed and
+        # thus do not disappear in regular operation unless
+        # remove_revision() is allowed.
         revision = item.create_revision(new_rev)
 
         # fill in revision data (probably calls another function
