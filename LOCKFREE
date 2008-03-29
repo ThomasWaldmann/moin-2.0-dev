@@ -82,12 +82,7 @@ sql1.py's SQL1.__init__ as well.
 Instead of doing ACL checking at the ItemCollection level, an ACL-checking
 overlay backend should be introduced that is created for each request and
 used throughout (if ACLs are disabled then request.data_backend will simply
-be assigned as request.cfg.data_backend). That also allows converting code
-to the new ACL-checking way incrementally, all code that doesn't do it yet
-will simply directly use request.cfg.data_backend, other code that has been
-converted already will use the ACL-checking request.data_backend overlay,
-and the request.cfg.data_backend can be removed once all code has been
-converted.
+be assigned as request.cfg.data_backend).
 
 
  Unsupported operations, further considerations
