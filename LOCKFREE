@@ -7,8 +7,6 @@ Prerequisites:
     object from the backend that references the item via a unique ID or
     file descriptor. See BUGS file, docs/CHANGES.storage and comments in
     sql1.py
- 2) Make edit-locking not use per-item metadata but something orthogonal
-    so that it is not required to create an item just for edit-locking.
 
 
  Creating a new item
@@ -97,33 +95,12 @@ a bit RCU-like[1]. A cleanup should then probably be run after enough grace
 period for read accesses, but it is impossible to know when such a period
 has elapsed hence not possible to implement automatic cleanup.
 
-Further considerations are necessary, however, since the same backend code
-will be used for session and user storage. The higher level code for that
-does not necessarily want to create a new revision for each change, so that
-atomic revision updates need to be possible. However, this will not prevent
-any update conflicts, e.g. if "requests in this session" counter is stored
-in a session object, it would not be possible to update it atomically
-without implementing lots of code in the frontend and saving for each change
-to such a counter including fallback when saving fails etc. This is not
-desirable so code using the session and user storage simply needs to be
-aware of this limitation. The backend must, however, be able to guarantee
-that the update is atomic to avoid readers getting half-written data. This
-is not necessarily easy to implement, an SQL backend would have to pre-load
-the item's data and implement locking for this, while a filesystem backend
-would of course be able to rename() the revision file over the old one
-(assuming filesystem semantics where that is possible even when the old
-version is still open for reading.)
+Since the same backend code will be used for session and user storage, some
+things need to be mutable since you don't want to create user or session
+revisions. Since per-item metadata is already mutable, the high higher level
+code for twose two should use per-item metadata.
 
-Because an SQL backend (and possibly a filesystem backend on windows) would
-be required to lock the revision even against concurrent read access, the
-backend should be notified about this when it is instantiated so that it can
-take appropriate precautions. We do not want to require this locking on the
-page backend since there revisions may not be modified.
-
-The backend should also reject any attempt to modify an existing revision
-when it is not opened in the locking mode and it should be possible to ask a
-backend which mode it was opened in so that the admin UI can be adjusted
-appropriately.
+The backend should also reject any attempt to modify an existing revision.
 
 [1] For a filesystem backend, this might not be easily implementable, but
     it wouldn't be a regression, right now if this race happens with a
