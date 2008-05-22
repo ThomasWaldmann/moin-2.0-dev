@@ -24,6 +24,10 @@ from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
 from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
+from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
+#from MoinMoin.storage.backends.moin17 import UserBackend, ItemBackend
+from MoinMoin.storage.backends.meta import LayerBackend
+from MoinMoin.storage.external import DELETED
 from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
@@ -733,14 +737,13 @@ Lists: * bullets; 1., a. numbered items.
 
     SecurityPolicy = None
 
+    # storage index configuration (used by indexed backend only)
+    indexes = ["name", "openids", "jid", "email"]
+
     def __init__(self, siteid):
         """ Init Config instance """
         self.siteid = siteid
         self.cache = CacheClass()
-
-        from MoinMoin.Page import ItemCache
-        self.cache.meta = ItemCache('meta')
-        self.cache.pagelists = ItemCache('pagelists')
 
         if self.config_check_enabled:
             self._config_check()
@@ -749,7 +752,7 @@ Lists: * bullets; 1., a. numbered items.
         self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ('user', 'cache', 'plugin'):
+        for dirname in ('user', 'cache', 'plugin', 'tmp', 'indexes'):
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
@@ -853,6 +856,27 @@ Lists: * bullets; 1., a. numbered items.
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
+
+        # storage configuration
+        if not hasattr(self, 'user_backend'):
+            self.user_backend = UserBackend("user", self.user_dir, self)
+
+        if not hasattr(self, 'data_backend'):
+            self.data_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
+            #self.data_backend = ItemBackend("pages", os.path.join(self.data_dir, "items"), self)
+            if self.data_underlay_dir:
+                # layer the data backend into underlay
+                underlay_backend = PageBackend("underlay",
+                                               os.path.join(self.data_underlay_dir, "pages"),
+                                               self)
+                # XXX: To be fully compatible, the copy-on-write argument should be True!!
+                self.data_backend = LayerBackend([self.data_backend], False)
+                self.data_backend.addUnderlay(underlay_backend)
+
+        if not hasattr(self, 'underlay_backend'):
+            # make sure the config has an underlay_backend configured
+            # even if it is None
+            self.underlay_backend = None
 
     def load_meta_dict(self):
         """ The meta_dict contains meta data about the wiki instance. """

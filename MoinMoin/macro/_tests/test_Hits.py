@@ -6,11 +6,13 @@
 
     @license: GNU GPL, see COPYING for details.
 """
+
 import os
 
 from MoinMoin import caching, macro
 from MoinMoin.logfile import eventlog
 from MoinMoin.PageEditor import PageEditor
+from MoinMoin.parser.text import Parser
 from MoinMoin.Page import Page
 
 class TestHits:
@@ -19,9 +21,7 @@ class TestHits:
     def setup_class(self):
         self.pagename = u'AutoCreatedMoinMoinTemporaryTestPageForHits'
         self.page = PageEditor(self.request, self.pagename)
-        self.shouldDeleteTestPage = False
-        # for that test eventlog needs to be empty
-        fpath = self.request.rootpage.getPagePath('event-log', isfile=1)
+        fpath = os.path.join(self.request.cfg.data_dir, 'event-log')
         if os.path.exists(fpath):
             os.remove(fpath)
         # hits is based on hitcounts which reads the cache
@@ -30,6 +30,7 @@ class TestHits:
         caching.CacheEntry(self.request, arena, 'hitcounts', scope='item').remove()
 
     def teardown_class(self):
+        #self.request.cfg.data_backend.remove_item(self.pagename)
         if self.shouldDeleteTestPage:
             import shutil
             page = PageEditor(self.request, self.pagename)
@@ -47,7 +48,6 @@ class TestHits:
 
     def _make_macro(self):
         """Test helper"""
-        from MoinMoin.parser.text import Parser
         from MoinMoin.formatter.text_html import Formatter
         p = Parser("##\n", self.request)
         p.formatter = Formatter(self.request)

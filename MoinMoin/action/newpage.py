@@ -63,7 +63,7 @@ class NewPage:
         """
         _ = self.request.getText
         page = Page(self.request, self.pagename)
-        if not (page.isWritable() and self.request.user.may.read(self.pagename)):
+        if not (page.exists() and self.request.user.may.read(self.pagename)):
             # Same error as the edit page for localization reasons
             return _('You are not allowed to edit this page.')
         return ''
