@@ -59,111 +59,121 @@ class Settings(UserPrefBase):
     def _save_user_prefs(self):
         _ = self._
         form = self.request.form
+        request = self.request
 
-        if self.request.request_method != 'POST':
+        if request.request_method != 'POST':
             return
 
-        theuser = self.request.user
-        if not theuser:
-            return
-
-        if not 'name' in theuser.auth_attribs:
+        if not 'name' in request.user.auth_attribs:
             # Require non-empty name
-            theuser.name = form.get('name', [theuser.name])[0]
+            new_name = form.get('name', [request.user.name])[0]
 
             # Don't allow changing the name to an invalid one
-            if not user.isValidName(self.request, theuser.name):
-                return _("""Invalid user name {{{'%s'}}}.
+            if not user.isValidName(request, new_name):
+                return 'error', _("""Invalid user name {{{'%s'}}}.
 Name may contain any Unicode alpha numeric character, with optional one
-space between words. Group page name is not allowed.""", wiki=True) % wikiutil.escape(theuser.name)
+space between words. Group page name is not allowed.""", wiki=True) % wikiutil.escape(new_name)
 
             # Is this an existing user trying to change information or a new user?
             # Name required to be unique. Check if name belong to another user.
-            if user.getUserId(self.request, theuser.name):
-                if theuser.name != self.request.user.name:
-                    return _("This user name already belongs to somebody else.")
+            existing_id = user.getUserId(request, new_name)
+            if existing_id is not None and existing_id != request.user.id:
+                return 'error', _("This user name already belongs to somebody else.")
 
-            if not theuser.name:
-                return _("Empty user name. Please enter a user name.")
+            if not new_name:
+                return 'error', _("Empty user name. Please enter a user name.")
 
-        if not 'email' in theuser.auth_attribs:
+            # done sanity checking the name, set it
+            request.user.name = new_name
+
+
+        if not 'email' in request.user.auth_attribs:
             # try to get the email
-            email = wikiutil.clean_input(form.get('email', [theuser.email])[0])
-            theuser.email = email.strip()
+            new_email = wikiutil.clean_input(form.get('email', [request.user.email])[0])
+            new_email = new_email.strip()
 
             # Require email
-            if not theuser.email and 'email' not in self.request.cfg.user_form_remove:
-                return _("Please provide your email address. If you lose your"
-                         " login information, you can get it by email.")
+            if not new_email and 'email' not in request.cfg.user_form_remove:
+                return 'error', _("Please provide your email address. If you lose your"
+                                  " login information, you can get it by email.")
 
             # Email should be unique - see also MoinMoin/script/accounts/moin_usercheck.py
-            if theuser.email and self.request.cfg.user_email_unique:
-                other = user.get_by_email_address(self.request, theuser.email)
-                if other is not None and other.id != theuser.id:
-                    return _("This email already belongs to somebody else.")
+            if new_email and request.cfg.user_email_unique:
+                other = user.get_by_email_address(request, new_email)
+                if other is not None and other.id != request.user.id:
+                    return 'error', _("This email already belongs to somebody else.")
 
-        if not 'jid' in theuser.auth_attribs:
+            # done checking the email, set it
+            request.user.email = new_email
+
+
+        if not 'jid' in request.user.auth_attribs:
             # try to get the jid
-            jid = wikiutil.clean_input(form.get('jid', [''])[0]).strip()
+            new_jid = wikiutil.clean_input(form.get('jid', [''])[0]).strip()
 
-            jid_changed = theuser.jid != jid
-            previous_jid = theuser.jid
-            theuser.jid = jid
+            jid_changed = request.user.jid != new_jid
+            previous_jid = request.user.jid
 
-            if theuser.jid and self.request.cfg.user_jid_unique:
-                other = user.get_by_jabber_id(self.request, theuser.jid)
-                if other is not None and other.id != theuser.id:
-                    return _("This jabber id already belongs to somebody else.")
+            if new_jid and request.cfg.user_jid_unique:
+                other = user.get_by_jabber_id(request, new_jid)
+                if other is not None and other.id != request.user.id:
+                    return 'error', _("This jabber id already belongs to somebody else.")
 
             if jid_changed:
-                set_event = events.JabberIDSetEvent(self.request, theuser.jid)
-                unset_event = events.JabberIDUnsetEvent(self.request, previous_jid)
+                set_event = events.JabberIDSetEvent(request, new_jid)
+                unset_event = events.JabberIDUnsetEvent(request, previous_jid)
                 events.send_event(unset_event)
                 events.send_event(set_event)
 
-        if not 'aliasname' in theuser.auth_attribs:
+            # done checking the JID, set it
+            request.user.jid = new_jid
+
+
+        if not 'aliasname' in request.user.auth_attribs:
             # aliasname
-            theuser.aliasname = wikiutil.clean_input(form.get('aliasname', [''])[0])
+            request.user.aliasname = wikiutil.clean_input(form.get('aliasname', [''])[0])
 
         # editor size
-        theuser.edit_rows = util.web.getIntegerInput(self.request, 'edit_rows', theuser.edit_rows, 10, 60)
+        request.user.edit_rows = util.web.getIntegerInput(request, 'edit_rows',
+                                                          request.user.edit_rows, 10, 60)
 
         # try to get the editor
-        theuser.editor_default = form.get('editor_default', [self.cfg.editor_default])[0]
-        theuser.editor_ui = form.get('editor_ui', [self.cfg.editor_ui])[0]
+        request.user.editor_default = form.get('editor_default', [self.cfg.editor_default])[0]
+        request.user.editor_ui = form.get('editor_ui', [self.cfg.editor_ui])[0]
 
         # time zone
-        theuser.tz_offset = util.web.getIntegerInput(self.request, 'tz_offset', theuser.tz_offset, -84600, 84600)
+        request.user.tz_offset = util.web.getIntegerInput(request, 'tz_offset',
+                                                          request.user.tz_offset, -84600, 84600)
 
         # datetime format
         try:
             dt_d_combined = Settings._date_formats.get(form['datetime_fmt'][0], '')
-            theuser.datetime_fmt, theuser.date_fmt = dt_d_combined.split(' & ')
+            request.user.datetime_fmt, request.user.date_fmt = dt_d_combined.split(' & ')
         except (KeyError, ValueError):
-            theuser.datetime_fmt = '' # default
-            theuser.date_fmt = '' # default
+            request.user.datetime_fmt = '' # default
+            request.user.date_fmt = '' # default
 
         # try to get the (optional) theme
         theme_name = form.get('theme_name', [self.cfg.theme_default])[0]
-        if theme_name != theuser.theme_name:
+        if theme_name != request.user.theme_name:
             # if the theme has changed, load the new theme
             # so the user has a direct feedback
             # WARNING: this should be refactored (i.e. theme load
             # after userform handling), cause currently the
             # already loaded theme is just replaced (works cause
             # nothing has been emitted yet)
-            theuser.theme_name = theme_name
-            if self.request.loadTheme(theuser.theme_name) > 0:
+            request.user.theme_name = theme_name
+            if request.loadTheme(theme_name) > 0:
                 theme_name = wikiutil.escape(theme_name)
-                return _("The theme '%(theme_name)s' could not be loaded!") % locals()
+                return 'error', _("The theme '%(theme_name)s' could not be loaded!") % locals()
 
         # try to get the (optional) preferred language
-        theuser.language = form.get('language', [''])[0]
-        if theuser.language == u'': # For language-statistics
+        request.user.language = form.get('language', [''])[0]
+        if request.user.language == u'': # For language-statistics
             from MoinMoin import i18n
-            theuser.real_language = i18n.get_browser_language(self.request)
+            request.user.real_language = i18n.get_browser_language(request)
         else:
-            theuser.real_language = ''
+            request.user.real_language = ''
 
         # I want to handle all inputs from user_form_fields, but
         # don't want to handle the cases that have already been coded
@@ -184,7 +194,7 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
                 continue
             default = self.cfg.user_form_defaults[key]
             value = form.get(key, [default])[0]
-            setattr(theuser, key, value)
+            setattr(request.user, key, value)
 
         # checkbox options
         for key, label in self.cfg.user_checkbox_fields:
@@ -195,18 +205,17 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
                 except ValueError:
                     pass
                 else:
-                    setattr(theuser, key, value)
+                    setattr(request.user, key, value)
 
         # quicklinks for navibar
-        theuser.quicklinks = self._decode_pagelist('quicklinks')
+        request.user.quicklinks = self._decode_pagelist('quicklinks')
 
         # save data
-        theuser.save()
-        if theuser.disabled:
+        request.user.save()
+        if request.user.disabled:
             # set valid to false so the current request won't
             # show the user as logged-in any more
-            theuser.valid = False
-        self.request.user = theuser
+            request.user.valid = False
 
         result = _("User preferences saved!")
         if _debug:
@@ -317,13 +326,14 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
     def create_form(self):
         """ Create the complete HTML form code. """
         _ = self._
+        request = self.request
         self._form = self.make_form()
 
-        if self.request.user.valid:
+        if request.user.valid:
             buttons = [('save', _('Save')), ('cancel', _('Cancel')), ]
             uf_remove = self.cfg.user_form_remove
             uf_disable = self.cfg.user_form_disable
-            for attr in self.request.user.auth_attribs:
+            for attr in request.user.auth_attribs:
                 uf_disable.append(attr)
             for key, label, type, length, textafter in self.cfg.user_form_fields:
                 default = self.cfg.user_form_defaults[key]
@@ -331,10 +341,10 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
                     if key in uf_disable:
                         self.make_row(_(label),
                                   [html.INPUT(type=type, size=length, name=key, disabled="disabled",
-                                   value=getattr(self.request.user, key)), ' ', _(textafter), ])
+                                   value=getattr(request.user, key)), ' ', _(textafter), ])
                     else:
                         self.make_row(_(label),
-                                  [html.INPUT(type=type, size=length, name=key, value=getattr(self.request.user, key)), ' ', _(textafter), ])
+                                  [html.INPUT(type=type, size=length, name=key, value=getattr(request.user, key)), ' ', _(textafter), ])
 
             if not self.cfg.theme_force and not "theme_name" in self.cfg.user_form_remove:
                 self.make_row(_('Preferred theme'), [self._theme_select()])
@@ -364,13 +374,12 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
             # boolean user options
             bool_options = []
             checkbox_fields = self.cfg.user_checkbox_fields
-            _ = self.request.getText
             checkbox_fields.sort(lambda a, b: cmp(a[1](_), b[1](_)))
             for key, label in checkbox_fields:
                 if not key in self.cfg.user_checkbox_remove:
                     bool_options.extend([
                         html.INPUT(type="checkbox", name=key, value="1",
-                            checked=getattr(self.request.user, key, 0),
+                            checked=getattr(request.user, key, 0),
                             disabled=key in self.cfg.user_checkbox_disable and True or None),
                         ' ', label(_), html.BR(),
                     ])
@@ -378,7 +387,7 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
 
             self.make_row(_('Quick links'), [
                 html.TEXTAREA(name="quicklinks", rows="6", cols="50")
-                    .append('\n'.join(self.request.user.getQuickLinks())),
+                    .append('\n'.join(request.user.getQuickLinks())),
             ], valign="top")
 
             self._form.append(html.INPUT(type="hidden", name="action", value="userprefs"))
