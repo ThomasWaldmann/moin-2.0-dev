@@ -13,9 +13,6 @@
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin.search.queryparser import QueryParser
-from MoinMoin.search.builtin import Search
-
 def searchPages(request, query, sort='weight', mtime=None, historysearch=None, **kw):
     """ Search the text of all pages for query.
 
@@ -30,6 +27,9 @@ def searchPages(request, query, sort='weight', mtime=None, historysearch=None, *
     @rtype: SearchResults instance
     @return: search results
     """
+    from MoinMoin.search.queryparser import QueryParser
+    from MoinMoin.search.builtin import Search
+
     if isinstance(query, str) or isinstance(query, unicode):
         query = QueryParser(**kw).parse_query(query)
     return Search(request, query, sort, mtime=mtime,
