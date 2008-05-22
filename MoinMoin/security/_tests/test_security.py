@@ -347,4 +347,5 @@ class TestPageAcls(object):
                         pagename, ['normal', 'hierarchic'][hierarchic], username, right)
                 assert not can_access
 
+
 coverage_modules = ['MoinMoin.security']

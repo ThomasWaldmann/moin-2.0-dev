@@ -100,9 +100,9 @@ General syntax: moin [options] export package [package-options]
         elif self.options.pages:
             packagedata = package.collectpackage(self.options.pages.split(","), packageoutput)
         else:
-            packagedata = package.collectpackage(request.rootpage.getPageList(
+            packagedata = package.collectpackage(list(request.rootpage.getPageList(
                                 include_underlay=False,
-                                filter=lambda name: not wikiutil.isSystemPage(request, name)),
+                                filter=lambda name: not wikiutil.isSystemPage(request, name))),
                                 packageoutput)
         if packagedata:
             script.fatal(packagedata)
