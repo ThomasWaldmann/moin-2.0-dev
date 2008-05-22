@@ -83,6 +83,7 @@ def execute(macro, text, args_re=re.compile(_args_re_pattern), title_re=re.compi
         else:
             # Get user filtered readable page list
             pagelist = request.rootpage.getPageList(filter=inc_match.match)
+            pagelist = list(pagelist)
 
     # sort and limit page list
     pagelist.sort()
