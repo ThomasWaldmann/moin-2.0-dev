@@ -19,6 +19,7 @@ def macro_RandomPage(macro, links=1):
 
     # Get full page unfiltered page list - very fast!
     all_pages = request.rootpage.getPageList(user='', exists=0)
+    all_pages = list(all_pages)
 
     # Now select random page from the full list, and if it exists and we
     # can read it, save.
