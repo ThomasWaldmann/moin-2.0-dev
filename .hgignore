@@ -1,0 +1,19 @@
+syntax: regexp
+\{arch\}
+.*\.arch-ids/.*
+.*\.py[co]
+.coverage
+tests/wiki
+wiki/underlay
+wiki/data/edit-log
+wiki/data/event-log
+wiki/data/cache
+wiki/data/user
+.settings
+.pydevproject
+.project
+.checkstyle
+
+syntax: glob
+*.pyc
+wikiconfig_local.*
