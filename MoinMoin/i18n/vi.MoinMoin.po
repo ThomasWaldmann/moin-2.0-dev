@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2004-11-19 21:03+0800\n"
 "Last-Translator: Nam T. Nguyen <nnt@nntsoft.com>\n"
 "Language-Team: Vietnamese <moin-devel@lists.sourceforge.net>\n"
@@ -32,20 +32,17 @@ msgstr "<không rõ>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
 
 #, python-format
@@ -548,8 +545,9 @@ msgstr "Đăng nhập"
 msgid "Username"
 msgstr "Người dùng"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Tổng số trang"
 
 msgid "Email"
 msgstr "Thư điện tử"
@@ -1633,10 +1631,6 @@ msgstr "[Đã tới bookmark]"
 msgid "Contents"
 msgstr "Trang chỉ dẫn"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Vui lòng dùng từ khoá tìm kiếm khác thay cho {{{\"%s\"}}}"
-
 msgid "Include system pages"
 msgstr "Bao gồm các trang hệ thống"
 
@@ -1816,6 +1810,10 @@ msgstr "Tìm kiếm phân biệt chữ hoa và chữ thường"
 
 msgid "Search Text"
 msgstr "Tìm nội dung"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Vui lòng dùng từ khoá tìm kiếm khác thay cho {{{\"%s\"}}}"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2311,51 +2309,27 @@ msgstr "Bỏ qua các thay đổi về số lượng khoảng trắng"
 msgid "Load"
 msgstr "Tải lên"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Bạn không thể xoá file gửi kèm."
-
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
-msgstr ""
-"File gửi kèm '%(target)s' (tên ở máy chủ '%(filename)s') kích thước %(bytes)"
-"d bytes đã được lưu."
-
 #, fuzzy
-msgid "New Page or New Attachment"
-msgstr "Gửi kèm file mới"
+msgid "Pagename not specified!"
+msgstr "Tên file gửi kèm không được định rõ!"
+
+msgid "Upload page content"
+msgstr ""
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
 
-msgid "New Attachment"
-msgstr "Gửi kèm file mới"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"File gửi kèm sẽ không chép đè lên file cũ. Nếu có sự trùng tên, bạn\n"
-"cần phải đổi tên file bạn sắp tải lên. Mặc khác, nếu ô \"Đổi tên thành\"\n"
-"để trống thì tên file gốc sẽ được dùng."
+
+msgid "Comment"
+msgstr "Chú thích"
 
 #, fuzzy
-msgid "attachment"
-msgstr "Gửi kèm file mới"
-
-msgid "overwrite"
-msgstr ""
-
-msgid "Upload"
-msgstr "Tải lên"
-
-#, fuzzy
-msgid "New Name"
+msgid "Page Name"
 msgstr "Tên mới"
 
 msgid "You are not allowed to subscribe to a page you can't read."
@@ -2411,9 +2385,6 @@ msgstr "diff"
 
 msgid "Editor"
 msgstr "Tác giả"
-
-msgid "Comment"
-msgstr "Chú thích"
 
 msgid "view"
 msgstr "xem"
@@ -2596,6 +2567,9 @@ msgstr ""
 msgid "You are now logged out."
 msgstr "Bạn đã thoát ra khỏi hệ thống."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2603,18 +2577,44 @@ msgstr ""
 "Wiki này không hỗ trợ việc xử lý thư. Mong bạn thông báo cho chủ wiki, người "
 "có thể kích hoạt chức năng này."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Vui lòng cho biết địa chỉ thư điện tử hợp lệ!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "Không tìm thấy account có địa chỉ thư điện tử '%(email)s'!"
 
 msgid "Mail me my account data"
 msgstr "Gửi cho tôi thông tin về account cá nhân"
+
+msgid "Recovery token"
+msgstr ""
+
+#, fuzzy
+msgid "New password"
+msgstr "Mật khẩu"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Lập lại mật khẩu"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Mật khẩu"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Lập lại mật khẩu"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Thiếu mật khẩu. Vui lòng nhập tên người dùng và mật khẩu."
 
 #, fuzzy
 msgid "Lost password"
@@ -2623,14 +2623,18 @@ msgstr "Mật khẩu"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2657,10 +2661,6 @@ msgid ""
 "page."
 msgstr ""
 "Có tổng cộng <a href=\"%(link)s\">%(count)s file gửi kèm</a> trong trang này."
-
-#, fuzzy, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "File gửi kèm '%(filename)s' đã được xoá."
 
 msgid "Filename of attachment not specified!"
 msgstr "Tên file gửi kèm không được định rõ!"
@@ -2696,6 +2696,9 @@ msgstr "Không có file gửi kèm trong trang %(pagename)s"
 msgid "Edit drawing"
 msgstr "Sửa bản vẽ"
 
+msgid "New Attachment"
+msgstr "Gửi kèm file mới"
+
 msgid "File to upload"
 msgstr "File để tải lên"
 
@@ -2706,14 +2709,14 @@ msgstr "Đổi tên"
 msgid "Overwrite existing attachment of same name"
 msgstr ""
 
+msgid "Upload"
+msgstr "Tải lên"
+
 msgid "Attached Files"
 msgstr "File gửi kèm"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Bạn không thể kèm file vào trang này."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Wiki này không cho phép gửi kèm file!"
 
 #, fuzzy, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2723,14 +2726,29 @@ msgstr "Không thể thực hiện việc tải lên: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "File gửi kèm trong trang \"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Bạn không thể xem các file gửi kèm trong trang này."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
 msgstr ""
 "Không có nội dung. Xóa các ký tự không nằm trong bảng mã ASCII và thử lại."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"File gửi kèm '%(target)s' (tên ở máy chủ '%(filename)s') kích thước %(bytes)"
+"d bytes đã được lưu."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Bạn không thể tạo một bản vẽ ở trang này."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Bạn không thể xoá file gửi kèm."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2847,7 +2865,7 @@ msgstr "Bạn không thể xem các file gửi kèm trong trang này."
 
 #, python-format
 msgid "attachment:%(filename)s of %(pagename)s"
-msgstr "<<Verbatim(attachment:)>>%(filename)s trong trang %(pagename)s"
+msgstr "attachment:%(filename)s trong trang %(pagename)s"
 
 #, python-format
 msgid "Full Link List for \"%s\""
@@ -2895,6 +2913,34 @@ msgstr "Bạn không thể tạo một bản vẽ ở trang này."
 #, fuzzy
 msgid "Login and try again."
 msgstr " %s và thử lại."
+
+#, fuzzy
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Gửi kèm file mới"
+
+#, fuzzy
+#~ msgid "attachment"
+#~ msgstr "Gửi kèm file mới"
+
+#, fuzzy
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "File gửi kèm '%(filename)s' đã được xoá."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "File gửi kèm sẽ không chép đè lên file cũ. Nếu có sự trùng tên, bạn\n"
+#~ "cần phải đổi tên file bạn sắp tải lên. Mặc khác, nếu ô \"Đổi tên thành\"\n"
+#~ "để trống thì tên file gốc sẽ được dùng."
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr "Không tìm thấy account có địa chỉ thư điện tử '%(email)s'!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Wiki này không cho phép gửi kèm file!"
 
 #, fuzzy
 #~ msgid "SendMyPassword"

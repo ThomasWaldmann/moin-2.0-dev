@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2005-11-06 17:11+0330\n"
 "Last-Translator: Mehdi Hassanpour <h.mehdi@gmail.com>\n"
 "Language-Team: Persian <h.mehdi@gmail.com>\n"
@@ -32,9 +32,9 @@ msgstr "<نامشخص>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "نام کاربری: %s\n"
 "\n"
@@ -43,21 +43,12 @@ msgstr ""
 "آدرس ورود: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"شخصی درخواست نموده است تا اطلاعات کاربری شما به این آدرس ایمیل ارسال شود.\n"
-"\n"
-"در صورتی که کلمه عبور خود را فراموش نموده اید از اطلاعات زیر استفاده نموده و "
-"کلمه عبور را به صورتی که ذکر شده در قسمت کلمه عبور بنویسید.\n"
-"\n"
-"پس از ورود به سیستم می توانید کلمه عبور خود را تغییر دهید.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -552,8 +543,9 @@ msgstr "ورود"
 msgid "Username"
 msgstr "کاربر"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "تعداد صفحات"
 
 msgid "Email"
 msgstr "آدرس ایمیل"
@@ -1657,10 +1649,6 @@ msgstr "[به نشان bookmark رسید]"
 msgid "Contents"
 msgstr "فهرست"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "لطفا به جای {{{\"%s\"}}} جستجوی گزیده تری انجام دهید"
-
 msgid "Include system pages"
 msgstr "با·در·نظر·گرفتن·صفحات·سیستمی"
 
@@ -1838,6 +1826,10 @@ msgstr "جستجوی حساس به حروف بزرگ و کوچک"
 
 msgid "Search Text"
 msgstr "جستجو در متون"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "لطفا به جای {{{\"%s\"}}} جستجوی گزیده تری انجام دهید"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2375,52 +2367,28 @@ msgstr "صرف نظر از تغییرات در تعداد فاصله های سف
 msgid "Load"
 msgstr "ارسال"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "شما مجاز به حذف ضمیمه های این صفحه نمی باشید."
-
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
-msgstr ""
-"ضمیمه '%(target)s' (به نام·'%(filename)s') به حجم %(bytes)d بایت ذخیره شد."
-
 #, fuzzy
-msgid "New Page or New Attachment"
-msgstr "ضمیمه جدید"
+msgid "Pagename not specified!"
+msgstr "نام فایل ضمیمه مشخص نشده است!"
+
+msgid "Upload page content"
+msgstr ""
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
 
-msgid "New Attachment"
-msgstr "ضمیمه جدید"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"در صورتی که فایل جدید ارسالی تشابه اسمی با ضمایم موجود داشته باشد٬ فایل "
-"ارسالی جدید جایگزین فایل ضمیمه قبلی خواهد شد.\n"
-"شما می توانید از گزینه \"تغییرنام به\" جهت ضمیمه شدن فایل با نامی متفاوت "
-"استفاده نمائید."
+
+msgid "Comment"
+msgstr "توضیحات"
 
 #, fuzzy
-msgid "attachment"
-msgstr "ضمیمه ها"
-
-msgid "overwrite"
-msgstr ""
-
-msgid "Upload"
-msgstr "ارسال"
-
-#, fuzzy
-msgid "New Name"
-msgstr "نام جدید"
+msgid "Page Name"
+msgstr "نام بسته"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "شما مجاز نیستید در صفحه ای عضو شوید که مجوز خواندن آنرا ندارید."
@@ -2476,9 +2444,6 @@ msgstr "تغییرات"
 
 msgid "Editor"
 msgstr "ویرایش توسط"
-
-msgid "Comment"
-msgstr "توضیحات"
 
 msgid "view"
 msgstr "نمایش"
@@ -2661,6 +2626,9 @@ msgstr ""
 msgid "You are now logged out."
 msgstr "شما از سیستم خارج شدید."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2668,18 +2636,47 @@ msgstr ""
 "گزینه جابجایی ایمیل در این ویکی فعال نمی باشد.\n"
 "از مدیر ویکی بخواهید تا این امکان را فراهم نماید."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "لطفا یک آدرس ایمیل معتبر وارد نمایید!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "حساب کاربری با آدرس ایمیل '%(email)s' یافت نشد!"
 
 msgid "Mail me my account data"
 msgstr "اطلاعات حساب من را ایمیل کن"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "کلیه ویرایش ها بازگردانی شود!"
+
+#, fuzzy
+msgid "New password"
+msgstr "کلمه عبور"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "تکرار کلمه عبور"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "کلمه عبور"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "تکرار کلمه عبور"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr ""
+"کلمه رمز وارد نشده است. لطفا نام کاربری و کلمه عبور صحیح خود را مجددا وارد "
+"نمایید."
 
 #, fuzzy
 msgid "Lost password"
@@ -2688,14 +2685,18 @@ msgstr "کلمه عبور"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2720,10 +2721,6 @@ msgid ""
 "There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
 "page."
 msgstr "این صفحه  دارای <a·href=\"%(link)s\">%(count)s·ضمیمه</a> می باشد."
-
-#, fuzzy, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "ضمیمه '%(filename)s' نصب شد."
 
 msgid "Filename of attachment not specified!"
 msgstr "نام فایل ضمیمه مشخص نشده است!"
@@ -2759,6 +2756,9 @@ msgstr "صفحه %(pagename)s ضمیمه ندارد"
 msgid "Edit drawing"
 msgstr "ویرایش ترسیمات"
 
+msgid "New Attachment"
+msgstr "ضمیمه جدید"
+
 msgid "File to upload"
 msgstr "فایل ارسالی"
 
@@ -2768,14 +2768,14 @@ msgstr "تغییر نام به"
 msgid "Overwrite existing attachment of same name"
 msgstr ""
 
+msgid "Upload"
+msgstr "ارسال"
+
 msgid "Attached Files"
 msgstr "فایل های ضمیمه شده"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "شما مجاز نیستید فایلی را به این صفحه ضمیمه نمایید."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "ضمیمه کردن فایل دراین ویکی مجاز نمی باشد!"
 
 #, fuzzy, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2785,6 +2785,10 @@ msgstr "ارسال غیر مجاز: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "ضمیمه های صفحه \"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "شما مجاز به دیدن ضمیمه های این صفحه نمی باشید."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2792,8 +2796,18 @@ msgstr ""
 "محتویات فایل یافت نشد. کاراکترهای غیر ASCII را از نام فایل حذف نموده و مجددا "
 "سعی نمایید."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"ضمیمه '%(target)s' (به نام·'%(filename)s') به حجم %(bytes)d بایت ذخیره شد."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "شما مجاز به ذخیره ترسیمات برای این صفحه نیستید."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "شما مجاز به حذف ضمیمه های این صفحه نمی باشید."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2960,6 +2974,59 @@ msgstr "عملیات %(actionname)s روی این صفحه مجاز نیست!"
 
 msgid "Login and try again."
 msgstr "لطفا وارد سایت شده و مجددا سعی نمایید."
+
+#, fuzzy
+#~ msgid "New Page or New Attachment"
+#~ msgstr "ضمیمه جدید"
+
+#, fuzzy
+#~ msgid "attachment"
+#~ msgstr "ضمیمه ها"
+
+#, fuzzy
+#~ msgid "New Name"
+#~ msgstr "نام جدید"
+
+#, fuzzy
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "ضمیمه '%(filename)s' نصب شد."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "در صورتی که فایل جدید ارسالی تشابه اسمی با ضمایم موجود داشته باشد٬ فایل "
+#~ "ارسالی جدید جایگزین فایل ضمیمه قبلی خواهد شد.\n"
+#~ "شما می توانید از گزینه \"تغییرنام به\" جهت ضمیمه شدن فایل با نامی متفاوت "
+#~ "استفاده نمائید."
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "شخصی درخواست نموده است تا اطلاعات کاربری شما به این آدرس ایمیل ارسال "
+#~ "شود.\n"
+#~ "\n"
+#~ "در صورتی که کلمه عبور خود را فراموش نموده اید از اطلاعات زیر استفاده "
+#~ "نموده و کلمه عبور را به صورتی که ذکر شده در قسمت کلمه عبور بنویسید.\n"
+#~ "\n"
+#~ "پس از ورود به سیستم می توانید کلمه عبور خود را تغییر دهید.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr "حساب کاربری با آدرس ایمیل '%(email)s' یافت نشد!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "ضمیمه کردن فایل دراین ویکی مجاز نمی باشد!"
 
 #, fuzzy
 #~ msgid "SendMyPassword"

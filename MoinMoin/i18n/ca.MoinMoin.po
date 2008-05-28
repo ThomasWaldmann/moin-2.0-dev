@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: moin 0.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2007-10-10 13:40+0200\n"
 "Last-Translator: Jordi Mallach <jordi@sindominio.net>\n"
 "Language-Team: Catalan <ca@dodds.net>\n"
@@ -32,9 +32,9 @@ msgstr "<desconegut>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Nom d'entrada: %s\n"
 "\n"
@@ -43,24 +43,12 @@ msgstr ""
 "URL d'entrada: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Algú ha demanat que s'envien les dades del vostre compte a aquesta adreça de "
-"correu.\n"
-"\n"
-"Si heu perdut la vostra contrasenya, utilitzeu les següents dades i "
-"simplement introduïu la contrasenya TAL I COM ES MOSTRA al camp de "
-"contrasenya del wiki (utilitzeu copia i enganxa per a fer-ho).\n"
-"\n"
-"Quan hagueu entrat, és una bona idea establir una contrasenya nova que "
-"pogueu recordar.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -555,8 +543,9 @@ msgstr "Entrada"
 msgid "Username"
 msgstr "Usuari"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Nombre de pàgines"
 
 msgid "Email"
 msgstr "Correu electrònic"
@@ -903,8 +892,7 @@ msgstr "S'ha produït un error de processament %(errortype)s "
 
 #, python-format
 msgid "Expected \"%(wanted)s\" after \"%(key)s\", got \"%(token)s\""
-msgstr ""
-"S'esperava «%(wanted)s» després de «%(key)s», s'ha obtingut «%(token)s»"
+msgstr "S'esperava «%(wanted)s» després de «%(key)s», s'ha obtingut «%(token)s»"
 
 #, python-format
 msgid "Expected an integer \"%(key)s\" before \"%(token)s\""
@@ -1644,10 +1632,6 @@ msgstr "[S'ha arribat a una adreça d'interès]"
 msgid "Contents"
 msgstr "Continguts"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Utilitzeu un terme més selectiu en comptes de {{{«%s»}}}"
-
 msgid "Include system pages"
 msgstr "Inclou les pàgines del sistema"
 
@@ -1816,6 +1800,10 @@ msgstr "Recerques amb diferència entre majúscules i minúscules"
 
 msgid "Search Text"
 msgstr "Text a cercar"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Utilitzeu un terme més selectiu en comptes de {{{«%s»}}}"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2306,50 +2294,27 @@ msgstr "Descarta els canvis en la quantitat d'espai en blanc"
 msgid "Load"
 msgstr "Carrega"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "No teniu permís per a suprimir adjuncions en aquesta pàgina."
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "El nom del fitxer per a l'adjunció no s'ha especificat."
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
-msgstr ""
-"S'ha desat l'adjunció «%(target)s» (nom remot «%(filename)s») amb %(bytes)d "
-"octets."
-
-msgid "New Page or New Attachment"
-msgstr "Pàgina o adjunció nova"
-
-msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+msgid "Upload page content"
 msgstr ""
 
-msgid "New Attachment"
-msgstr "Adjunció nova"
-
 msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"Una pujada mai sobreescriurà un fitxer existent. Si hi ha un conflicte de "
-"noms,\n"
-"haureu de canviar en nom del fitxer que voleu pujar.\n"
-"Si no, si «Canvia el nom a» es deixa en blanc, s'utilitzarà el nom original\n"
-"del fitxer."
 
-msgid "attachment"
-msgstr "adjunció"
+msgid "File to load page content from"
+msgstr ""
 
-msgid "overwrite"
-msgstr "sobreescriu"
+msgid "Comment"
+msgstr "Comentari"
 
-msgid "Upload"
-msgstr "Apuja"
-
-msgid "New Name"
+#, fuzzy
+msgid "Page Name"
 msgstr "Nom nou"
 
 msgid "You are not allowed to subscribe to a page you can't read."
@@ -2404,9 +2369,6 @@ msgstr "Diferències"
 
 msgid "Editor"
 msgstr "Editor"
-
-msgid "Comment"
-msgstr "Comentari"
 
 msgid "view"
 msgstr "visualitza"
@@ -2585,6 +2547,9 @@ msgstr "No podeu comprovar l'ortografia d'una pàgina que no podeu llegir."
 msgid "You are now logged out."
 msgstr "Heu sortit del vostre compte."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2592,19 +2557,45 @@ msgstr ""
 "Aquest wiki no té habilitat el processament de correu.\n"
 "Contacteu amb el responsable del wiki, que pot habilitar el correu."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Proveïu una adreça de correu vàlida."
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr ""
-"No s'ha trobat cap compte que concorde amb l'adreça de correu «%(email)s»."
 
 msgid "Mail me my account data"
 msgstr "Envia'm les dades del meu compte"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Torna-ho tot enrere!"
+
+#, fuzzy
+msgid "New password"
+msgstr "Contrasenya"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Contrasenya (comprovació)"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Contrasenya"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Contrasenya (comprovació)"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Manca la contrasenya. Introduïu el nom d'usuari i contrasenya."
 
 #, fuzzy
 msgid "Lost password"
@@ -2613,14 +2604,18 @@ msgstr "Contrasenya"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2647,10 +2642,6 @@ msgid ""
 msgstr ""
 "Hi ha <a href=\"%(link)s\">%(count)s adjuncions</a> emmagatzemats per a "
 "aquesta pàgina."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "L'adjunció «%(target)s» ja existeix."
 
 msgid "Filename of attachment not specified!"
 msgstr "El nom del fitxer per a l'adjunció no s'ha especificat."
@@ -2687,6 +2678,9 @@ msgstr "No hi ha cap adjunció emmagatzemada per a %(pagename)s"
 msgid "Edit drawing"
 msgstr "Edita el dibuix"
 
+msgid "New Attachment"
+msgstr "Adjunció nova"
+
 msgid "File to upload"
 msgstr "Fitxer per a apujar"
 
@@ -2696,14 +2690,14 @@ msgstr "Reanomena a"
 msgid "Overwrite existing attachment of same name"
 msgstr ""
 
+msgid "Upload"
+msgstr "Apuja"
+
 msgid "Attached Files"
 msgstr "Fitxers adjunts"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "No teniu permís per a adjuntar un fitxer a aquesta pàgina."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "No es permeten adjuncions de fitxers en aquest wiki,"
 
 #, fuzzy, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2713,6 +2707,10 @@ msgstr "Acció de pujada no implementada: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Adjuncions per a «%(pagename)s»"
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "No teniu permís per a visualitzar adjuncions d'aquesta pàgina."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2720,8 +2718,19 @@ msgstr ""
 "No hi ha contingut del fitxer. Suprimiu els caracters no ASCII del nom del "
 "fitxer i torneu-ho a provar."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"S'ha desat l'adjunció «%(target)s» (nom remot «%(filename)s») amb %(bytes)d "
+"octets."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "No teniu permís per a desar un dibuix en aquesta pàgina."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "No teniu permís per a suprimir adjuncions en aquesta pàgina."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2841,7 +2850,7 @@ msgstr "No teniu permís per a visualitzar adjuncions d'aquesta pàgina."
 
 #, python-format
 msgid "attachment:%(filename)s of %(pagename)s"
-msgstr "<<Verbatim(attachment:)>>%(filename)s de %(pagename)s"
+msgstr "attachment:%(filename)s de %(pagename)s"
 
 #, python-format
 msgid "Full Link List for \"%s\""
@@ -2889,6 +2898,60 @@ msgstr "No teniu permís per a fer %(action_name)s en aquesta pàgina."
 
 msgid "Login and try again."
 msgstr "Entreu i torneu a provar."
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Pàgina o adjunció nova"
+
+#~ msgid "attachment"
+#~ msgstr "adjunció"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "L'adjunció «%(target)s» ja existeix."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "Una pujada mai sobreescriurà un fitxer existent. Si hi ha un conflicte de "
+#~ "noms,\n"
+#~ "haureu de canviar en nom del fitxer que voleu pujar.\n"
+#~ "Si no, si «Canvia el nom a» es deixa en blanc, s'utilitzarà el nom "
+#~ "original\n"
+#~ "del fitxer."
+
+#~ msgid "overwrite"
+#~ msgstr "sobreescriu"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Algú ha demanat que s'envien les dades del vostre compte a aquesta adreça "
+#~ "de correu.\n"
+#~ "\n"
+#~ "Si heu perdut la vostra contrasenya, utilitzeu les següents dades i "
+#~ "simplement introduïu la contrasenya TAL I COM ES MOSTRA al camp de "
+#~ "contrasenya del wiki (utilitzeu copia i enganxa per a fer-ho).\n"
+#~ "\n"
+#~ "Quan hagueu entrat, és una bona idea establir una contrasenya nova que "
+#~ "pogueu recordar.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr ""
+#~ "No s'ha trobat cap compte que concorde amb l'adreça de correu «%(email)s»."
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "No es permeten adjuncions de fitxers en aquest wiki,"
 
 #, fuzzy
 #~ msgid "SendMyPassword"
@@ -2988,8 +3051,7 @@ msgstr "Entreu i torneu a provar."
 #~ msgstr "imprimeix"
 
 #~ msgid "## backup of page \"%(pagename)s\" submitted %(date)s"
-#~ msgstr ""
-#~ "## còpia de seguretat de la pàgina «%(pagename)s enviada el %(date)s"
+#~ msgstr "## còpia de seguretat de la pàgina «%(pagename)s enviada el %(date)s"
 
 #~ msgid "A backup of your changes is [%(backup_url)s here]."
 #~ msgstr ""

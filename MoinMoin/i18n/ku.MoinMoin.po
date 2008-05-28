@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2006-12-08 18:50+0000\n"
 "Last-Translator: Erdal Ronahi <erdal.ronahi@gmail.com>\n"
 "Language-Team: Kurdish <ku@li.org>\n"
@@ -33,9 +33,9 @@ msgstr "<nenas>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Navê Bikarhênerı: %s\n"
 "\n"
@@ -44,14 +44,11 @@ msgstr ""
 "Ji Bo Forma Têketinê URL %s/?action=userform&uid=%s\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
 
 #, python-format
@@ -535,7 +532,7 @@ msgstr "Têketin"
 msgid "Username"
 msgstr "Bikarhêner"
 
-msgid "ACL Groups"
+msgid "Member of Groups"
 msgstr ""
 
 msgid "Email"
@@ -1534,10 +1531,6 @@ msgstr ""
 msgid "Contents"
 msgstr "NaverokaAlîkariyê"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr ""
-
 msgid "Include system pages"
 msgstr "Rûpelên pergalê bihundirîne"
 
@@ -1712,6 +1705,10 @@ msgstr ""
 
 msgid "Search Text"
 msgstr "Lêgerîna Nivîsê"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr ""
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2200,45 +2197,27 @@ msgstr ""
 msgid "Load"
 msgstr ""
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr ""
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "Ji bo pêvekê navê pelgehê nehate diyarkirin!"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
-msgstr ""
-
-msgid "New Page or New Attachment"
+msgid "Upload page content"
 msgstr ""
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
 
-msgid "New Attachment"
+msgid "File to load page content from"
 msgstr ""
 
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
-msgstr ""
+msgid "Comment"
+msgstr "Şirove"
 
 #, fuzzy
-msgid "attachment"
-msgstr "[%d heb pêvek]"
-
-msgid "overwrite"
-msgstr ""
-
-msgid "Upload"
-msgstr ""
-
-#, fuzzy
-msgid "New Name"
+msgid "Page Name"
 msgstr "Rûpela nu:\n"
 
 msgid "You are not allowed to subscribe to a page you can't read."
@@ -2290,9 +2269,6 @@ msgstr "Diff"
 
 msgid "Editor"
 msgstr "Edîtor"
-
-msgid "Comment"
-msgstr "Şirove"
 
 msgid "view"
 msgstr "dîtin"
@@ -2473,22 +2449,49 @@ msgstr ""
 msgid "You are now logged out."
 msgstr "Ji bo nîşandana vî rûpelî têra xwe destûra te tuneye."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
 msgstr ""
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Ji kerema xwe re navnîşaneke e-peyaman ya derbasdar binivîse!"
 
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr ""
-
 msgid "Mail me my account data"
+msgstr ""
+
+msgid "Recovery token"
+msgstr ""
+
+#, fuzzy
+msgid "New password"
+msgstr "Şîfre"
+
+msgid "New password (repeat)"
+msgstr ""
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Şîfre"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Şîfre"
+
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
 msgstr ""
 
 #, fuzzy
@@ -2498,14 +2501,18 @@ msgstr "Şîfre"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2532,10 +2539,6 @@ msgid ""
 "There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
 "page."
 msgstr ""
-
-#, fuzzy, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "Pêveka '%(filename)s' nayê dîtin!"
 
 msgid "Filename of attachment not specified!"
 msgstr "Ji bo pêvekê navê pelgehê nehate diyarkirin!"
@@ -2567,6 +2570,9 @@ msgstr ""
 msgid "Edit drawing"
 msgstr ""
 
+msgid "New Attachment"
+msgstr ""
+
 msgid "File to upload"
 msgstr "Pelgeha ku wê were şandin"
 
@@ -2576,13 +2582,13 @@ msgstr "Ji nû ve binavîne"
 msgid "Overwrite existing attachment of same name"
 msgstr ""
 
+msgid "Upload"
+msgstr ""
+
 msgid "Attached Files"
 msgstr ""
 
 msgid "You are not allowed to attach a file to this page."
-msgstr ""
-
-msgid "File attachments are not allowed in this wiki!"
 msgstr ""
 
 #, python-format
@@ -2593,12 +2599,26 @@ msgstr ""
 msgid "Attachments for \"%(pagename)s\""
 msgstr ""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr ""
+"Ji bo ku tu karibî li ser rûpel karê %s bikî têra xwe destûra te tuneye."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
 msgstr ""
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+
 msgid "You are not allowed to save a drawing on this page."
+msgstr ""
+
+msgid "You are not allowed to delete attachments on this page."
 msgstr ""
 
 #, fuzzy, python-format
@@ -2762,6 +2782,14 @@ msgstr ""
 #, fuzzy
 msgid "Login and try again."
 msgstr " %s û dîsa biceribîne."
+
+#, fuzzy
+#~ msgid "attachment"
+#~ msgstr "[%d heb pêvek]"
+
+#, fuzzy
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "Pêveka '%(filename)s' nayê dîtin!"
 
 #, fuzzy
 #~ msgid "SendMyPassword"

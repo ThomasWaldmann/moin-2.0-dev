@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2006-10-07 23:19+0700\n"
 "Last-Translator: Fajrin Azis <fajrin.azis@gmail.com>\n"
 "Language-Team: Indonesian <id@ll.com>\n"
@@ -32,9 +32,9 @@ msgstr "<tak diketahui>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Nama Login: %s\n"
 "\n"
@@ -43,23 +43,12 @@ msgstr ""
 "URL untuk Login: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Seseorang telah meminta informasi data akun Anda ke alamat email ini.\n"
-"\n"
-"Jika Anda kehilangan kata sandi, silakan gunakan data di bawah dan masukkan\n"
-"kata sandi SEPERTI TERLIHAT ke dalam ruas kolom kata sandi wiki (gunakan "
-"copy dan paste\n"
-"untuk melakukannya).\n"
-"\n"
-"Setelah login, silakan ganti kata sandi ini dengan yang Anda inginkan.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -570,8 +559,9 @@ msgstr "Login"
 msgid "Username"
 msgstr "Pengguna"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Jumlah halaman"
 
 msgid "Email"
 msgstr "Email"
@@ -1660,12 +1650,6 @@ msgstr "[Batas bookmark]"
 msgid "Contents"
 msgstr "Daftar Isi"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr ""
-"Silakan menggunakan istilah pencarian yang lebih selektif daripada {{{\"%s"
-"\"}}}"
-
 msgid "Include system pages"
 msgstr "Menyertakan halaman sistem"
 
@@ -1834,6 +1818,12 @@ msgstr "Pencarian yang peka huruf besar-kecil"
 
 msgid "Search Text"
 msgstr "Cari Teks"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr ""
+"Silakan menggunakan istilah pencarian yang lebih selektif daripada {{{\"%s"
+"\"}}}"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2390,53 +2380,28 @@ msgstr "Abaikan perubahan hanya karena beda di spasi kosong"
 msgid "Load"
 msgstr "Load"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Anda tidak diizinkan menghapus lampiran pada halaman ini."
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "Nama berkas dari lampiran tidak ditetapkan!"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"Lampiran '%(target)s' (nama jauh '%(filename)s') dengan %(bytes)d bita "
-"disimpan."
-
-msgid "New Page or New Attachment"
-msgstr "Halaman Baru atau Lampiran Baru"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"Anda dapat meng-upload sebuah berkas ke halaman baru dengan memilih meng-"
-"upload file sebagai lampiranpada halaman yang sedang berjalan"
 
-msgid "New Attachment"
-msgstr "Lampiran Baru"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"Setiap berkas yang di-upload tidak akan menimpa berkas yang sudah ada. Jika "
-"terjadi\n"
-"konflik nama, Anda harus mengganti nama berkas yang ingin Anda upload.\n"
-"Sebaliknya, jika \"Ganti Nama ke\" dikosongkan, nama berkas semula yang "
-"dipakai."
 
-msgid "attachment"
-msgstr "lampiran"
+msgid "Comment"
+msgstr "Komentar"
 
-msgid "overwrite"
-msgstr "timpa"
-
-msgid "Upload"
-msgstr "Upload"
-
-msgid "New Name"
-msgstr "Nama Baru"
+#, fuzzy
+msgid "Page Name"
+msgstr "Nama paket"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "Anda tidak diizinkan berlangganan ke halaman yang tak dapat Anda baca"
@@ -2488,9 +2453,6 @@ msgstr "Beda"
 
 msgid "Editor"
 msgstr "Editor"
-
-msgid "Comment"
-msgstr "Komentar"
 
 msgid "view"
 msgstr "tilik"
@@ -2678,6 +2640,10 @@ msgstr ""
 msgid "You are now logged out."
 msgstr "Sekarang Anda telah logout."
 
+#, fuzzy
+msgid "If this account exists an email was sent."
+msgstr "Jika ada akun dengan nama pengguna ini, sebuah email akan dikirim."
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2685,18 +2651,45 @@ msgstr ""
 "Wiki ini tidak diaktifkan untuk pengolahan surat.\n"
 "Hubungi pengelola wiki, yang dapat mengaktifkan email."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Silakan menyediakan alamat email yang benar!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr "Jika ada akun dengan nama pengguna ini, sebuah email akan dikirim."
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "Tidak ditemukan akun yang cocok dengan alamat email ini '%(email)s'!"
 
 msgid "Mail me my account data"
 msgstr "Kirim data akun saya"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Putar balik semua!"
+
+#, fuzzy
+msgid "New password"
+msgstr "Kata sandi"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Ulangi kata sandi"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Kata sandi"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Ulangi kata sandi"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Kurang kata sandi. Silakan masukkan nama pengguna dan kata sandi."
 
 #, fuzzy
 msgid "Lost password"
@@ -2705,14 +2698,18 @@ msgstr "Kata sandi"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2738,10 +2735,6 @@ msgid ""
 "page."
 msgstr ""
 "Ada <a href=\"%(link)s\">%(count)s lampiran</a> yang disimpan di halaman ini."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "Lampiran '%(target)s' sudah ada."
 
 msgid "Filename of attachment not specified!"
 msgstr "Nama berkas dari lampiran tidak ditetapkan!"
@@ -2778,6 +2771,9 @@ msgstr "Tak ada lampiran tersimpan di %(pagename)s"
 msgid "Edit drawing"
 msgstr "Sunting penggambaran"
 
+msgid "New Attachment"
+msgstr "Lampiran Baru"
+
 msgid "File to upload"
 msgstr "Berkas untuk di-upload"
 
@@ -2787,14 +2783,14 @@ msgstr "Ganti nama ke"
 msgid "Overwrite existing attachment of same name"
 msgstr "Timpa lampiran yang sudah ada dengan nama yang sama"
 
+msgid "Upload"
+msgstr "Upload"
+
 msgid "Attached Files"
 msgstr "Lampirkan Berkas"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Anda tidak diizinkan untuk melampirkan berkas ke halaman ini."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Tidak diizinkan melampirkan berkas di wiki ini!"
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2804,6 +2800,10 @@ msgstr "Sub-aksi TaruhBerkas yang tidak di-support: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Lampiran untuk \"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Anda tidak diizinkan menilik lampiran dari halaman ini."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2811,8 +2811,19 @@ msgstr ""
 "Tak ada isi berkas. Hapus karakter bukan ASCII dari nama berkas dan coba "
 "lagi."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Lampiran '%(target)s' (nama jauh '%(filename)s') dengan %(bytes)d bita "
+"disimpan."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Anda tidak diizinkan menyimpan penggambaran pada halaman ini"
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Anda tidak diizinkan menghapus lampiran pada halaman ini."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2980,6 +2991,69 @@ msgstr ""
 
 msgid "Login and try again."
 msgstr "Login dan coba lagi."
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Halaman Baru atau Lampiran Baru"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr ""
+#~ "Anda dapat meng-upload sebuah berkas ke halaman baru dengan memilih meng-"
+#~ "upload file sebagai lampiranpada halaman yang sedang berjalan"
+
+#~ msgid "attachment"
+#~ msgstr "lampiran"
+
+#~ msgid "New Name"
+#~ msgstr "Nama Baru"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "Lampiran '%(target)s' sudah ada."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "Setiap berkas yang di-upload tidak akan menimpa berkas yang sudah ada. "
+#~ "Jika terjadi\n"
+#~ "konflik nama, Anda harus mengganti nama berkas yang ingin Anda upload.\n"
+#~ "Sebaliknya, jika \"Ganti Nama ke\" dikosongkan, nama berkas semula yang "
+#~ "dipakai."
+
+#~ msgid "overwrite"
+#~ msgstr "timpa"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Seseorang telah meminta informasi data akun Anda ke alamat email ini.\n"
+#~ "\n"
+#~ "Jika Anda kehilangan kata sandi, silakan gunakan data di bawah dan "
+#~ "masukkan\n"
+#~ "kata sandi SEPERTI TERLIHAT ke dalam ruas kolom kata sandi wiki (gunakan "
+#~ "copy dan paste\n"
+#~ "untuk melakukannya).\n"
+#~ "\n"
+#~ "Setelah login, silakan ganti kata sandi ini dengan yang Anda inginkan.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr ""
+#~ "Tidak ditemukan akun yang cocok dengan alamat email ini '%(email)s'!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Tidak diizinkan melampirkan berkas di wiki ini!"
 
 #~ msgid "SendMyPassword"
 #~ msgstr "KirimKataSandiSaya"

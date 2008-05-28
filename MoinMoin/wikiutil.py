@@ -705,7 +705,7 @@ def isTemplatePage(request, pagename):
     @rtype: bool
     @return: true if page is a template page
     """
-    return request.cfg.cache.page_template_regex.search(pagename) is not None
+    return request.cfg.cache.page_template_regexact.search(pagename) is not None
 
 
 def isGroupPage(request, pagename):
@@ -715,7 +715,7 @@ def isGroupPage(request, pagename):
     @rtype: bool
     @return: true if page is a form page
     """
-    return request.cfg.cache.page_group_regex.search(pagename) is not None
+    return request.cfg.cache.page_group_regexact.search(pagename) is not None
 
 
 def filterCategoryPages(request, pagelist):
@@ -732,7 +732,7 @@ def filterCategoryPages(request, pagelist):
     @rtype: list
     @return: only the category pages of pagelist
     """
-    func = request.cfg.cache.page_category_regex.search
+    func = request.cfg.cache.page_category_regexact.search
     return [pn for pn in pagelist if func(pn)]
 
 
@@ -931,6 +931,8 @@ MIMETYPES_MORE = {
  '.patch': 'text/x-diff',
  '.diff': 'text/x-diff',
  '.py': 'text/x-python',
+ '.cfg': 'text/plain',
+ '.conf': 'text/plain',
 }
 [mimetypes.add_type(mimetype, ext, True) for ext, mimetype in MIMETYPES_MORE.items()]
 

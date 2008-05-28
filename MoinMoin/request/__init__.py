@@ -181,7 +181,11 @@ class RequestBase(object):
                 self.action = 'xmlrpc'
                 self.rev = None
             else:
-                self.args = self.form = self.setup_args()
+                try:
+                    self.args = self.form = self.setup_args()
+                except UnicodeError:
+                    self.makeForbidden(403, "The input you sent could not be understood.")
+                    return
                 self.action = self.form.get('action', ['show'])[0]
                 try:
                     self.rev = int(self.form['rev'][0])
@@ -841,7 +845,9 @@ class RequestBase(object):
             self.write = self.writestack.pop()
 
     def log(self, msg):
-        """ Log msg to logging framework """
+        """ DEPRECATED - Log msg to logging framework
+            Please call logging.info(...) directly!
+        """
         msg = msg.strip()
         # Encode unicode msg
         if isinstance(msg, unicode):
@@ -874,7 +880,22 @@ class RequestBase(object):
 
         pid = os.getpid()
         msg = 'Timing %5d %-6s %4s %-10s %s\n' % (pid, total, indicator, action, self.url)
-        self.log(msg)
+        logging.info(msg)
+
+    def send_file(self, fileobj, bufsize=8192, do_flush=False):
+        """ Send a file to the output stream.
+
+        @param fileobj: a file-like object (supporting read, close)
+        @param bufsize: size of chunks to read/write
+        @param do_flush: call flush after writing?
+        """
+        while True:
+            buf = fileobj.read(bufsize)
+            if not buf:
+                break
+            self.write(buf)
+            if do_flush:
+                self.flush()
 
     def write(self, *data):
         """ Write to output stream. """
@@ -894,7 +915,7 @@ class RequestBase(object):
                     continue
                 wd.append(d)
             except UnicodeError:
-                self.log("Unicode error on: %s" % repr(d))
+                logging.error("Unicode error on: %s" % repr(d))
         return ''.join(wd)
 
     def decodePagename(self, name):
@@ -983,7 +1004,7 @@ class RequestBase(object):
 
     def flush(self):
         """ Flush output stream. """
-        raise NotImplementedError
+        pass
 
     def check_spider(self):
         """ check if the user agent for current request is a spider/bot """
@@ -1013,11 +1034,11 @@ class RequestBase(object):
             for host in self.cfg.hosts_deny:
                 if host[-1] == '.' and ip.startswith(host):
                     forbidden = 1
-                    #self.log("hosts_deny (net): %s" % str(forbidden))
+                    logging.debug("hosts_deny (net): %s" % str(forbidden))
                     break
                 if ip == host:
                     forbidden = 1
-                    #self.log("hosts_deny (ip): %s" % str(forbidden))
+                    logging.debug("hosts_deny (ip): %s" % str(forbidden))
                     break
         return forbidden
 
@@ -1055,10 +1076,12 @@ class RequestBase(object):
                 values = [values]
             fixedResult = []
             for item in values:
-                fixedResult.append(item.value)
                 if isinstance(item, cgi.FieldStorage) and item.filename:
+                    fixedResult.append(item.file) # open data tempfile
                     # Save upload file name in a separate key
                     args[key + '__filename__'] = item.filename
+                else:
+                    fixedResult.append(item.value)
             args[key] = fixedResult
 
         return self.decodeArgs(args)
@@ -1322,9 +1345,9 @@ class RequestBase(object):
 
         if self.sent_headers:
             # Send headers only once
-            self.log("Attempt to send headers twice!\n")
-            self.log("First attempt:\n%s" % self.sent_headers)
-            self.log("Second attempt:\n%s" % tracehere)
+            logging.error("Attempt to send headers twice!")
+            logging.error("First attempt:\n%s" % self.sent_headers)
+            logging.error("Second attempt:\n%s" % tracehere)
             raise HeadersAlreadySentException("emit_http_headers has already been called before!")
         else:
             self.sent_headers = tracehere
@@ -1345,9 +1368,9 @@ class RequestBase(object):
                     headers[lkey] = headers[lkey][0], '%s, %s' % (headers[lkey][1], value)
                     traces[lkey] = trace
                 else:
-                    self.log("Duplicate http header: %r (ignored)" % header)
-                    self.log("Header added first at:\n%s" % traces[lkey])
-                    self.log("Header added again at:\n%s" % trace)
+                    logging.warning("Duplicate http header: %r (ignored)" % header)
+                    logging.warning("Header added first at:\n%s" % traces[lkey])
+                    logging.warning("Header added again at:\n%s" % trace)
             else:
                 headers[lkey] = (key, value)
                 traces[lkey] = trace
@@ -1363,7 +1386,7 @@ class RequestBase(object):
                 status = headers['status'][1]
                 int(status.split(' ', 1)[0])
             except:
-                self.log("emit_http_headers called with invalid header Status: %r" % status)
+                logging.error("emit_http_headers called with invalid header Status: %r" % status)
                 headers['status'] = ('Status', '500 Server Error - invalid status header')
 
         header_format = '%s: %s'
