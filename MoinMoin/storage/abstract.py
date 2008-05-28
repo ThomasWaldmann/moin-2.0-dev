@@ -60,7 +60,7 @@ class Backend(object):
         If that Item already exists, raise an
         Exception.
         """
-        raise NotImplementedError
+        return Item(self, itemname)
 
     def iteritems(self):
         """
@@ -143,3 +143,49 @@ class Backend(object):
 
     # XXX Further internals of this class may follow
 
+
+class Item(object, DictMixin):                      # XXX Improve docstring
+    """
+    An Item object collects the information
+    of an item (e.g. a page) that is stored in
+    persistent storage. It has metadata and
+    Revisions.
+    """
+
+    def __init__(self, backend, itemname):
+        """
+        Initialize an item. Memorize the
+        backend to which it belongs.
+        """
+        self._backend = backend
+        self._name    = name
+                                                    # XXX Still needs metadata-attribute
+
+    def rename(self, newname):
+        """
+        Rename the item. By default
+        this uses the rename method the
+        backend specifies internally.
+        """
+        self._backend._rename_item(self, newname)
+
+    def commit(self):
+        """
+        Rename the item. By default
+        this uses the commit method the
+        backend specifies internally.
+        """
+        self._backend._commit_item(self)
+
+    def create_revision(self, revno):
+        """
+        Create a new revision on
+        the Item. By default this
+        uses the create_revision
+        method the backend specifies
+        internally.
+        """
+        return self._backend._create_revision(self, revno)
+
+
+    # TODO Finishing for today. Next thing: Implement Dict-Semantics with DictMixin
