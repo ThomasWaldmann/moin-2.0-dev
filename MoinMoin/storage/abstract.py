@@ -133,14 +133,10 @@ class Backend(object):
 
     def _rollback_item(self, item):
         """
-        This method is invoked when concurrent
-        changes on the same Revision clash.
-        The Revision that has been saved first
-        is accepted, the others are being rolled
-        back. (That is, delete any temporary files.)
-        This method may also be used when external
-        events occurr that cannot be handled in a
-        sane way.
+        This method is invoked when external
+        events happen that cannot be handled in a
+        sane way and thus the changes that have
+        been made must be rolled back.
         """
         raise NotImplementedError
 
