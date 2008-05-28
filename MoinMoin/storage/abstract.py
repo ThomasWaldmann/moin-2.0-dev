@@ -27,7 +27,8 @@
 
     ---
 
-    @copyright: 2008 MoinMoin:ChristopherDenter
+    @copyright: 2008 MoinMoin:ChristopherDenter,
+                2008 MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -41,29 +42,45 @@ class Backend(object):
 
     def search_item(self, searchterm):
         """
-        Takes a searchterm and returns an iterator over matching objects.
+        Takes a searchterm and returns an iterator
+        (maybe empty) over matching objects.
         """
         raise NotImplementedError
 
     def get_item(self, itemname):
         """
         Returns Item object or raises Exception
+        if that Item does not exist.
         """
         raise NotImplementedError
 
     def create_item(self, itemname):
         """
         Creates an item with a given itemname.
+        If that Item already exists, raise an
+        Exception.
         """
         raise NotImplementedError
 
     def iteritems(self):
         """
         Returns an iterator over all items
-        available in this backend. (Like the dict method)
+        available in this backend. (Like the dict method).
         """
         raise NotImplementedError
 
+    #
+    # The below methods are defined for convenience.
+    # If you need to write a backend it is sufficient
+    # to implement the methods of this class. That
+    # way you don't *have to* implement the other classes
+    # like Item and Revision as well. Though, if you want
+    # to do that you can do it as well.
+    # Assuming my_item is instanceof(Item), when you call
+    # my_item.create_revision(42), internally the
+    # _create_revision() method of the items Backend is
+    # invoked and the item passes itself as paramter.
+    # 
 
     def _get_revision(self, item, revno):
         """
@@ -92,12 +109,16 @@ class Backend(object):
     def _rename_item(self, item, newname):
         """
         Renames a given item.
+        Raises Exception of the Item
+        you are trying to rename does not
+        exist or if the newname is already
+        chosen by another Item.
         """
         raise NotImplementedError
 
     def _commit_item(self, item):
         """
-        Commits changes what changes have been
+        Commits the changes that have been
         done to a given Item. That is,
         after you created a Revision on
         that Item and filled it with data
@@ -117,9 +138,12 @@ class Backend(object):
         The Revision that has been saved first
         is accepted, the others are being rolled
         back. (That is, delete any temporary files.)
+        This method may also be used when external
+        events occurr that cannot be handled in a
+        sane way.
         """
         raise NotImplementedError
 
 
-    # XXX Further internals of this class will follow
+    # XXX Further internals of this class may follow
 
