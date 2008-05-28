@@ -16,14 +16,19 @@
     For instance, you can use that to show a diff between
     two `versions` of a page. Metadata is data that describes
     other data. An Item has Metadata. A single Revision
-    has Metadata as well. E.g. "Which user altered this Page?"
+    has Metadata as well. E.g. "Which user created this Revision?"
     would be something stored in the Metadata of a Revision,
     while "Who created this page in the first place?" would
-    be something stored in the Metadata of the first Revision.
+    be answered by looking at the metadata of the first revision.
     Thus, an Item basically is a collection of Revisions which
     contain the content for the Item. The last Revision represents
-    the most recent contents. An Item can have Metadata as well 
+    the most recent contents. An Item can have Metadata as well
     as Revisions.
+
+    For normal operation, Revision data and metadata is immutable as
+    soon as the revision is committed to the storage. Item metadata,
+    on the other hand, as infrequently used as it may be, is mutable.
+    Hence, it can only be modified under a read lock.
 
     ---
 
