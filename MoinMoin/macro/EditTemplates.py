@@ -14,6 +14,7 @@ def macro_EditTemplates(macro):
         # Get list of template pages readable by current user
         filterfn = macro.request.cfg.cache.page_template_regex.search
         templates = macro.request.rootpage.getPageList(filter=filterfn)
+        templates = list(templates)
         result = []
         if templates:
             templates.sort()
