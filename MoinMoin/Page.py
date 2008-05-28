@@ -350,6 +350,47 @@ class Page(object):
 
         return result
 
+    def editlog_entry(self):
+        """ Return the edit-log entry for this Page object (can be an old revision).
+        """
+        from MoinMoin.logfile import editlog
+        rev = self.get_real_rev()
+        for line in editlog.LocalEditLog(self.request, rootpagename=self.page_name):
+            if int(line.rev) == rev:
+                break
+        else:
+            line = None
+        return line
+
+    def edit_info(self):
+        """ Return timestamp/editor info for this Page object (can be an old revision).
+
+            Note: if you ask about a deleted revision, it will report timestamp and editor
+                  for the delete action (in the edit-log, this is just a SAVE).
+
+        This is used by MoinMoin/xmlrpc/__init__.py.
+
+        @rtype: dict
+        @return: timestamp and editor information
+        """
+        line = self.editlog_entry()
+        if line:
+            editordata = line.getInterwikiEditorData(self.request)
+            if editordata[0] == 'interwiki':
+                editor = "%s:%s" % editordata[1]
+            else:
+                editor = editordata[1] # ip or email
+            result = {
+                'timestamp': line.mtime,
+                'editor': editor,
+            }
+            for a in dir(line):
+                print a, getattr(line, a)
+            del line
+        else:
+            result = None
+        return result
+
     def last_editor(self, printable=False):
         """
         Return the last editor.
