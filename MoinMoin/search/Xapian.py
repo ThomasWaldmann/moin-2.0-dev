@@ -463,7 +463,7 @@ class Index(BaseIndex):
         mtime = wikiutil.timestamp2version(page.mtime())
         revision = str(page.get_real_rev())
         itemid = "%s:%s:%s" % (wikiname, pagename, revision)
-        author = page.last_edit()['editor']
+        author = page.edit_info()['editor']
         # XXX: Hack until we get proper metadata
         language, stem_language = self._get_languages(page)
         categories = self._get_categories(page)
