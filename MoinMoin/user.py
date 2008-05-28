@@ -15,14 +15,16 @@
 """
 
 # add names here to hide them in the cgitb traceback
-unsafe_names = ("id", "key", "val", "user_data", "enc_password")
+unsafe_names = ("id", "key", "val", "user_data", "enc_password", "recoverpass_key")
 
-import time, sha, codecs
+import os, time, sha, codecs, hmac
 
-from MoinMoin import events, wikiutil, i18n, caching
+from MoinMoin import config, caching, wikiutil, i18n, events
+from MoinMoin.util import timefuncs, filesys, random_string
 from MoinMoin.util import timefuncs
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.search import term
+from MoinMoin.wikiutil import url_quote_plus
 
 
 def getUserList(request):
@@ -271,15 +273,14 @@ class User:
         for key, label in self._cfg.user_checkbox_fields:
             setattr(self, key, self._cfg.user_checkbox_defaults.get(key, 0))
 
+        self.recoverpass_key = ""
+
         self.enc_password = ""
         if password:
-            if password.startswith('{SHA}'):
-                self.enc_password = password
-            else:
-                try:
-                    self.enc_password = encodePassword(password)
-                except UnicodeError:
-                    pass # Should never happen
+            try:
+                self.enc_password = encodePassword(password)
+            except UnicodeError:
+                pass # Should never happen
 
         #self.edit_cols = 80
         self.tz_offset = int(float(self._cfg.tz_offset) * 3600)
@@ -937,6 +938,35 @@ class User:
         else:
             return self.host()
 
+    def generate_recovery_token(self):
+        key = random_string(64, "abcdefghijklmnopqrstuvwxyz0123456789")
+        msg = str(int(time.time()))
+        h = hmac.new(key, msg, sha).hexdigest()
+        self.recoverpass_key = key
+        self.save()
+        return msg + '-' + h
+
+    def apply_recovery_token(self, tok, newpass):
+        key = self.recoverpass_key
+        parts = tok.split('-')
+        if len(parts) != 2:
+            return False
+        try:
+            stamp = int(parts[0])
+        except ValueError:
+            return False
+        # only allow it to be valid for twelve hours
+        if stamp + 12*60*60 < time.time():
+            return False
+        # check hmac
+        h = hmac.new(self.recoverpass_key, str(stamp), sha).hexdigest()
+        if h != parts[1]:
+            return False
+        self.recoverpass_key = ""
+        self.enc_password = encodePassword(newpass)
+        self.save()
+        return True
+
     def mailAccountData(self, cleartext_passwd=None):
         """ Mail a user who forgot his password a message enabling
             him to login again.
@@ -945,37 +975,27 @@ class User:
         from MoinMoin.wikiutil import getLocalizedPage
         _ = self._request.getText
 
-        if not self.enc_password: # generate pw if there is none yet
-            from random import randint
-            import base64
-
-            charset = 'utf-8'
-            pwd = "%s%d" % (str(time.time()), randint(0, 65535))
-            pwd = pwd.encode(charset)
-
-            pwd = sha.new(pwd).digest()
-            pwd = '{SHA}%s' % base64.encodestring(pwd).rstrip()
-
-            self.enc_password = pwd
-            self.save()
+        tok = self.generate_recovery_token()
 
         text = '\n' + _("""\
 Login Name: %s
 
-Login Password: %s
+Password recovery token: %s
 
-Login URL: %s/?action=login
+Password reset URL: %s/?action=recoverpass&name=%s&token=%s
 """) % (
-                        self.name, self.enc_password, self._request.getBaseURL(), )
+                        self.name,
+                        tok,
+                        self._request.getBaseURL(),
+                        url_quote_plus(self.name),
+                        tok, )
 
         text = _("""\
-Somebody has requested to submit your account data to this email address.
+Somebody has requested to email you a password recovery token.
 
-If you lost your password, please use the data below and just enter the
-password AS SHOWN into the wiki's password form field (use copy and paste
-for that).
-
-After successfully logging in, it is of course a good idea to set a new and known password.
+If you lost your password, please go to the password reset URL below or
+go to the password recovery page again and enter your username and the
+recovery token.
 """) + text
 
 

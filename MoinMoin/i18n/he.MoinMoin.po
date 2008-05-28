@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.5.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2007-12-05 11:49+0200\n"
 "Last-Translator: Dor Fire <dorfire@gmail.com>\n"
 "Language-Team: Hebrew <moin-devel@lists.sourceforge.net>\n"
@@ -33,9 +33,9 @@ msgstr "<לא ידוע>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "שם |התחברות: %s\n"
 "\n"
@@ -44,20 +44,12 @@ msgstr ""
 "כתובת להתחברות אוטמטית: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"מישהו ביקש לשלוח אליך את פרטי המשתמש.\n"
-"\n"
-"אם אבדת את הסיסמא, אנא השתמש בסיסמא כפי שנשלחה אליך במכתב זה.\n"
-"\n"
-"לאחר התחברות, מומלץ להחליף את הסיסמא.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -539,8 +531,9 @@ msgstr "התחבר"
 msgid "Username"
 msgstr "משתמש"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "מספר דפים"
 
 msgid "Email"
 msgstr "דואר אלקטרוני"
@@ -1608,10 +1601,6 @@ msgstr "[סימניה הושגה]"
 msgid "Contents"
 msgstr "תכנים"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "השתמשו במונח חיפוש בררני יותר מאשר {{{\"%s\"}}}."
-
 msgid "Include system pages"
 msgstr "הצג דפי מערכת"
 
@@ -1780,6 +1769,10 @@ msgstr "הבדל בין אותיות גדולות וקטנות"
 
 msgid "Search Text"
 msgstr "חפש מלל"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "השתמשו במונח חיפוש בררני יותר מאשר {{{\"%s\"}}}."
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2318,50 +2311,28 @@ msgstr "התעלם משינויים בכמות הרווחים"
 msgid "Load"
 msgstr "טען"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "אין לכם הרשאות למחוק קבצים מצורפים לדף."
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "לא בחרתם שם לקובץ מצורף."
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"קובץ מצורף \"%(target)s\" (שם מרוחק \"%(filename)s\") בגודל %(bytes)d בתים "
-"נשמר."
-
-msgid "New Page or New Attachment"
-msgstr "דף חדש או קובץ מצורף חדש"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"באפשרותך להעלות קובץ לדף חדש או לבחור להעלות קובץ כקובץ מצורך לדף הנוכחי"
 
-msgid "New Attachment"
-msgstr "קובץ מצורף חדש"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"קובץ שאתם מעלים לעולם לא ימחק קובץ קיים. אם כבר קיים קובץ באותו שם, אתם "
-"צריכים לשנות את שמו של הקובץ אותו אתם מעלים. אם שדה \"שמור בשם\" נשאר ריק, "
-"הקובץ המקורי לא יוחלף."
 
-msgid "attachment"
-msgstr "קובץ מצורף"
+msgid "Comment"
+msgstr "הערה"
 
-msgid "overwrite"
-msgstr "דריסה"
-
-msgid "Upload"
-msgstr "שלח"
-
-msgid "New Name"
-msgstr "שם חדש"
+#, fuzzy
+msgid "Page Name"
+msgstr "שם חבילה"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "אין לכם הרשאות לעשות מנוי לדף."
@@ -2412,9 +2383,6 @@ msgstr "הבדלים"
 
 msgid "Editor"
 msgstr "עורך"
-
-msgid "Comment"
-msgstr "הערה"
 
 msgid "view"
 msgstr "הצג"
@@ -2592,6 +2560,9 @@ msgstr "אתה לא יכול לבדוק איות בדף שאין לך הרשאו
 msgid "You are now logged out."
 msgstr "נותקת מהמערכת."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2599,18 +2570,45 @@ msgstr ""
 "דואר אלקטרוני לא מאופשר בוויקי הזה\n"
 ".פנה למנהל המערכת."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "אנא רשום כתובת דואר אלקטרוני אמיתית."
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "לא נמצא משתמש עם כתובת הדואר האלקטרוני \"%(email)s\"."
 
 msgid "Mail me my account data"
 msgstr "שלח לי את פרטי המשתמש"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "בטל את כל השינויים!"
+
+#, fuzzy
+msgid "New password"
+msgstr "סיסמא"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "הסיסמא שוב"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "סיסמא"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "הסיסמא שוב"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "סיסמה חסרה. אנא הכנס שם משתמש וסיסמה."
 
 #, fuzzy
 msgid "Lost password"
@@ -2619,14 +2617,18 @@ msgstr "סיסמא"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2651,10 +2653,6 @@ msgid ""
 "There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
 "page."
 msgstr "<a href=\"%(link)s\">%(count)s קבצים מצורפים</a> לדף"
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "קובץ מצורף '%(target)s' כבר קיים."
 
 msgid "Filename of attachment not specified!"
 msgstr "לא בחרתם שם לקובץ מצורף."
@@ -2690,6 +2688,9 @@ msgstr "אין קבצים מצורפים ל–%(pagename)s"
 msgid "Edit drawing"
 msgstr "ערוך איור"
 
+msgid "New Attachment"
+msgstr "קובץ מצורף חדש"
+
 msgid "File to upload"
 msgstr "קובץ לשליחה"
 
@@ -2699,14 +2700,14 @@ msgstr "שנה שם"
 msgid "Overwrite existing attachment of same name"
 msgstr "לדרוס קובץ מצורף קיים בעל אותו שם"
 
+msgid "Upload"
+msgstr "שלח"
+
 msgid "Attached Files"
 msgstr "קבצים מצורפים"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "אין לכם הרשאות לצרף קבצים לדף."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "קבצים מצורפים אינם מורשים בוויקי הזה."
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2716,13 +2717,28 @@ msgstr "תת פעולה של צירוף קובץ לא נתמכת: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "קבצים מצורפים ל–\"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "אין לכם הרשאות לצפות בקבצים מצורפים בדף"
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
 msgstr "קובץ חסר. נסה למחוק תווים שהם לא תווי אסקי מתוך שם הקובץ."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"קובץ מצורף \"%(target)s\" (שם מרוחק \"%(filename)s\") בגודל %(bytes)d בתים "
+"נשמר."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "אין לכם הרשאות לשמור איור בדף."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "אין לכם הרשאות למחוק קבצים מצורפים לדף."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2887,6 +2903,61 @@ msgstr "אינך מורשה לבצע %(action_name)s בדף זה."
 
 msgid "Login and try again."
 msgstr "התחבר ונסה שוב."
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "דף חדש או קובץ מצורף חדש"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr ""
+#~ "באפשרותך להעלות קובץ לדף חדש או לבחור להעלות קובץ כקובץ מצורך לדף הנוכחי"
+
+#~ msgid "attachment"
+#~ msgstr "קובץ מצורף"
+
+#~ msgid "New Name"
+#~ msgstr "שם חדש"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "קובץ מצורף '%(target)s' כבר קיים."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "קובץ שאתם מעלים לעולם לא ימחק קובץ קיים. אם כבר קיים קובץ באותו שם, אתם "
+#~ "צריכים לשנות את שמו של הקובץ אותו אתם מעלים. אם שדה \"שמור בשם\" נשאר "
+#~ "ריק, הקובץ המקורי לא יוחלף."
+
+#~ msgid "overwrite"
+#~ msgstr "דריסה"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "מישהו ביקש לשלוח אליך את פרטי המשתמש.\n"
+#~ "\n"
+#~ "אם אבדת את הסיסמא, אנא השתמש בסיסמא כפי שנשלחה אליך במכתב זה.\n"
+#~ "\n"
+#~ "לאחר התחברות, מומלץ להחליף את הסיסמא.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr "לא נמצא משתמש עם כתובת הדואר האלקטרוני \"%(email)s\"."
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "קבצים מצורפים אינם מורשים בוויקי הזה."
 
 #~ msgid "SendMyPassword"
 #~ msgstr "שלח סיסמתי"

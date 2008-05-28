@@ -16,11 +16,12 @@ from MoinMoin import wikidicts
 
 def handle(event):
     # "changed" includes creation, deletion, renamed and copied
-    if isinstance(event, ev.PageChangedEvent) or isinstance(event, ev.PageRenamedEvent) or isinstance(event, ev.PageCopiedEvent):
+    if (isinstance(event, ev.PageChangedEvent) or isinstance(event, ev.PageRenamedEvent) or
+        isinstance(event, ev.PageCopiedEvent) or isinstance(event, ev.TrivialPageChangedEvent)):
         cfg = event.request.cfg
         pagename = event.page.page_name
-        if cfg.cache.page_dict_regex.search(pagename) or \
-           cfg.cache.page_group_regex.search(pagename):
+        if cfg.cache.page_dict_regexact.search(pagename) or \
+           cfg.cache.page_group_regexact.search(pagename):
             return handle_groupsdicts_changed(event)
 
 

@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2007-02-22 17:39-0300\n"
 "Last-Translator: Iván Méndez <imendez@udc.es>\n"
 "Language-Team: Galician <moin-devel@lists.sourceforge.net>\n"
@@ -32,9 +32,9 @@ msgstr "<descoñecido>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Nome de ingreso: %s\n"
 "\n"
@@ -43,25 +43,12 @@ msgstr ""
 "URL de ingreso: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Alguén solicitou enviar os datos da súa conta a este enderezo de "
-"correoelectrónico.\n"
-"\n"
-"Se esqueceu o seu contrasinal, por favor empregue a seguinte información\n"
-"e introduza o contrasinal COMO APARECE no campo de contrasinal do wiki\n"
-"(use Copiar e Pegar para iso).\n"
-"\n"
-"Logo de comezar a sesión do wiki con éxito, é unha boa idea, por suposto, "
-"cambiar o contrasinal\n"
-"por un mellor e máis doado de lembrar.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -572,8 +559,9 @@ msgstr "Ingresar"
 msgid "Username"
 msgstr "Usuario"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Cantidade de páxinas"
 
 msgid "Email"
 msgstr "Correo electrónico"
@@ -1680,10 +1668,6 @@ msgstr "[ligazón persoal acadada]"
 msgid "Contents"
 msgstr "Táboa de contidos"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Por favor, use un termo de busca máis específico que {{{\"%s\"}}}"
-
 msgid "Include system pages"
 msgstr "Incluír páxinas do sistema"
 
@@ -1861,6 +1845,10 @@ msgstr "A busca é sensíbel a maiúsculas e minúsculas"
 
 msgid "Search Text"
 msgstr "Busca por texto"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Por favor, use un termo de busca máis específico que {{{\"%s\"}}}"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2411,53 +2399,28 @@ msgstr "Ignorar cambios na cantidade de espazos en branco"
 msgid "Load"
 msgstr "Subir"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Non ten permiso para borrar anexos nesta páxina."
-
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
-msgstr ""
-"O anexo '%(target)s' (nome remoto '%(filename)s') con %(bytes)d bytes foi "
-"gardado."
-
 #, fuzzy
-msgid "New Page or New Attachment"
-msgstr "Novo anexo"
+msgid "Pagename not specified!"
+msgstr "Non especificou un nome para o arquivo anexo!"
+
+msgid "Upload page content"
+msgstr ""
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
 
-msgid "New Attachment"
-msgstr "Novo anexo"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"Subir un arquivo nunca sobreescribirá un arquivo xa existente. Se houber un "
-"conflito co nome, terá que renomear o arquivo que quere subir.\n"
-"Pola contra, se o campo \"Cambiar nome a\" quedar baleiro, empregarase o "
-"nome orixinal do arquivo."
+
+msgid "Comment"
+msgstr "Comentario"
 
 #, fuzzy
-msgid "attachment"
-msgstr "Anexos"
-
-msgid "overwrite"
-msgstr ""
-
-msgid "Upload"
-msgstr "Subir"
-
-#, fuzzy
-msgid "New Name"
-msgstr "Nome novo"
+msgid "Page Name"
+msgstr "Nome do paquete"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "Non ten permiso para se subscribir a unha páxina que non pode ver."
@@ -2515,9 +2478,6 @@ msgstr "Diferenzas"
 
 msgid "Editor"
 msgstr "Editor"
-
-msgid "Comment"
-msgstr "Comentario"
 
 msgid "view"
 msgstr "ver"
@@ -2704,6 +2664,9 @@ msgstr ""
 msgid "You are now logged out."
 msgstr "Saiu do sistema."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2712,18 +2675,47 @@ msgstr ""
 "Contacte co administrador do wiki. El é quen pode habilitar os correos "
 "electrónicos"
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Por favor, forneza un enderezo de correo electrónico válido."
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "Non se achou unha conta que coincida co correo electrónico '%(email)s'"
 
 msgid "Mail me my account data"
 msgstr "Envíeme os datos da miña conta "
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Desfacer todos os cambios!"
+
+#, fuzzy
+msgid "New password"
+msgstr "Contrasinal"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Repetir o contrasinal para validalo"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Contrasinal"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Repetir o contrasinal para validalo"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr ""
+"Faltou introducir o contrasinal. Por favor, introduza o nome de usuario e o "
+"contrasinal"
 
 #, fuzzy
 msgid "Lost password"
@@ -2732,14 +2724,18 @@ msgstr "Contrasinal"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2766,10 +2762,6 @@ msgid ""
 msgstr ""
 "Existe(n) <a href=\"%(link)s\">%(count)s anexos(s)</a> gardados con esta "
 "páxina."
-
-#, fuzzy, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "O anexo '%(target)s' (nome remoto '%(filename)s') xa existe."
 
 msgid "Filename of attachment not specified!"
 msgstr "Non especificou un nome para o arquivo anexo!"
@@ -2806,6 +2798,9 @@ msgstr "Non se gardaron os anexos para %(pagename)s"
 msgid "Edit drawing"
 msgstr "Editar debuxo"
 
+msgid "New Attachment"
+msgstr "Novo anexo"
+
 msgid "File to upload"
 msgstr "Arquivo para subir"
 
@@ -2815,14 +2810,14 @@ msgstr "Renomear a"
 msgid "Overwrite existing attachment of same name"
 msgstr ""
 
+msgid "Upload"
+msgstr "Subir"
+
 msgid "Attached Files"
 msgstr "Arquivos anexos"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Non ten permiso para anexar un arquivo a esta páxina."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Non se permiten arquivos anexos neste wiki!"
 
 #, fuzzy, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2832,6 +2827,10 @@ msgstr "A acción para subir arquivos ao servidor non está soportada: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Anexos para \"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Non ten permiso para ver anexos desta páxina."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2839,8 +2838,19 @@ msgstr ""
 "Arquivo sen contidos. Elimina os caracteres que non foren ASCII no nome de "
 "arquivo e intente novamente."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"O anexo '%(target)s' (nome remoto '%(filename)s') con %(bytes)d bytes foi "
+"gardado."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Non ten permiso para gardar debuxos nesta páxina."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Non ten permiso para borrar anexos nesta páxina."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -3012,6 +3022,63 @@ msgstr "Non ten permiso para usar a acción %(actionname)s nesta páxina."
 
 msgid "Login and try again."
 msgstr "Comece a sesión e probe de novo."
+
+#, fuzzy
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Novo anexo"
+
+#, fuzzy
+#~ msgid "attachment"
+#~ msgstr "Anexos"
+
+#, fuzzy
+#~ msgid "New Name"
+#~ msgstr "Nome novo"
+
+#, fuzzy
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "O anexo '%(target)s' (nome remoto '%(filename)s') xa existe."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "Subir un arquivo nunca sobreescribirá un arquivo xa existente. Se houber "
+#~ "un conflito co nome, terá que renomear o arquivo que quere subir.\n"
+#~ "Pola contra, se o campo \"Cambiar nome a\" quedar baleiro, empregarase o "
+#~ "nome orixinal do arquivo."
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Alguén solicitou enviar os datos da súa conta a este enderezo de "
+#~ "correoelectrónico.\n"
+#~ "\n"
+#~ "Se esqueceu o seu contrasinal, por favor empregue a seguinte información\n"
+#~ "e introduza o contrasinal COMO APARECE no campo de contrasinal do wiki\n"
+#~ "(use Copiar e Pegar para iso).\n"
+#~ "\n"
+#~ "Logo de comezar a sesión do wiki con éxito, é unha boa idea, por suposto, "
+#~ "cambiar o contrasinal\n"
+#~ "por un mellor e máis doado de lembrar.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr ""
+#~ "Non se achou unha conta que coincida co correo electrónico '%(email)s'"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Non se permiten arquivos anexos neste wiki!"
 
 #, fuzzy
 #~ msgid "SendMyPassword"

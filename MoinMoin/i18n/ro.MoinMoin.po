@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2005-08-18 14:19+EET\n"
 "Last-Translator: Ovidiu Sabou <ovidiu.sabou@gmail.com>\n"
 "Language-Team: Romanian <ovidiu.sabou@gmail.com>\n"
@@ -32,9 +32,9 @@ msgstr "<necunoscut>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Nume de înregistrare: %s\n"
 "\n"
@@ -43,24 +43,12 @@ msgstr ""
 "URL de înregistrare: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Cineva a cerut trimiterea datelor contului dumneavoastră la această adresă "
-"de email.\n"
-"\n"
-"Dacă aţi pierdut parola, folosiţi datele de mai jos şi introduceţi\n"
-"parola exact cum este ea în formularul wiki-ului de introducere a \n"
-"parolei(folosiţi copiere&lipire pentru aceasta).\n"
-"\n"
-"După înregistrarea cu succes, este recomandată modificarea parolei în una "
-"cunoscută.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -566,8 +554,9 @@ msgstr "Login"
 msgid "Username"
 msgstr "Utilizator"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Număr de pagini"
 
 msgid "Email"
 msgstr "Email"
@@ -1651,10 +1640,6 @@ msgstr "[Semn de carte accesat]"
 msgid "Contents"
 msgstr "Ajutor"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Folosiţi un termen de căutare mai selectiv în loc de {{{\"%s\"}}}"
-
 msgid "Include system pages"
 msgstr "Includere pagini sistem"
 
@@ -1833,6 +1818,10 @@ msgstr "Căutare case-sensitive"
 
 msgid "Search Text"
 msgstr "Căutare Text"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Folosiţi un termen de căutare mai selectiv în loc de {{{\"%s\"}}}"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2336,54 +2325,28 @@ msgstr "Ignorare modificări în cantitatea de caractere spaţiu"
 msgid "Load"
 msgstr "Trimitere date"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Nu aveţi permisiunea de a şterge ataşamentele de pe această pagină."
-
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
-msgstr ""
-"Ataşamentul '%(target)s' (fişier la distanţă '%(filename)s') cu %(bytes)d "
-"octeţi a fost salvat."
-
 #, fuzzy
-msgid "New Page or New Attachment"
-msgstr "Ataşament Nou"
+msgid "Pagename not specified!"
+msgstr "Numele fişierului ataşat nu a fost specificat!"
+
+msgid "Upload page content"
+msgstr ""
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
 
-msgid "New Attachment"
-msgstr "Ataşament Nou"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"Un upload nu va scrie peste un fişier deja existent. Dacă există un "
-"conflict\n"
-"de nume, trebuie să redenumiţi fişierul pe care doriţi să-l încărcaţi.\n"
-"Altfel, dacă \"Redenumeşte în\" este necompletat, va fi folosit numele "
-"original al fişierului."
+
+msgid "Comment"
+msgstr "Comentariu"
 
 #, fuzzy
-msgid "attachment"
-msgstr "Ataşamente"
-
-msgid "overwrite"
-msgstr ""
-
-msgid "Upload"
-msgstr "Trimitere date"
-
-#, fuzzy
-msgid "New Name"
-msgstr "Nume nou"
+msgid "Page Name"
+msgstr "Pagini Asemănătoare"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr ""
@@ -2441,9 +2404,6 @@ msgstr "Modificare"
 
 msgid "Editor"
 msgstr "Editor"
-
-msgid "Comment"
-msgstr "Comentariu"
 
 msgid "view"
 msgstr "vizionare"
@@ -2635,6 +2595,9 @@ msgstr ""
 msgid "You are now logged out."
 msgstr "Prăjitura(cookie) a fost ştearsă. Acum sunteţi neînregistrat(ă)."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2642,20 +2605,44 @@ msgstr ""
 "Acest wiki nu permite procesare poştei electronice.\n"
 "Contactaţi deţinătorul wiki-ului, care poate activa email."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Introduceţi o adresă de email validă!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr ""
-"Nu a fost găsit nici un cont care să se potrivească cu adresa\n"
-"de email '%(email)s'!"
 
 msgid "Mail me my account data"
 msgstr "Trimitere prin email datele contului"
+
+msgid "Recovery token"
+msgstr ""
+
+#, fuzzy
+msgid "New password"
+msgstr "Parolă"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Repetare parolă"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Parolă"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Repetare parolă"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Parola lipseşte. Introduceti nume şi parolă"
 
 #, fuzzy
 msgid "Lost password"
@@ -2664,14 +2651,18 @@ msgstr "Parolă"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2699,10 +2690,6 @@ msgid ""
 msgstr ""
 "Există <a href=\"%(link)s\">%(count)s ataşament(e)</a> stocat(e) pentru "
 "această pagină."
-
-#, fuzzy, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "Ataşamentul '%(filename)s' a fost instalat."
 
 msgid "Filename of attachment not specified!"
 msgstr "Numele fişierului ataşat nu a fost specificat!"
@@ -2739,6 +2726,9 @@ msgstr "Nici un ataşament stocat pentru %(pagename)s"
 msgid "Edit drawing"
 msgstr "Editare desen"
 
+msgid "New Attachment"
+msgstr "Ataşament Nou"
+
 msgid "File to upload"
 msgstr "Fişier de trimis"
 
@@ -2748,14 +2738,14 @@ msgstr "Redenumeşte în"
 msgid "Overwrite existing attachment of same name"
 msgstr ""
 
+msgid "Upload"
+msgstr "Trimitere date"
+
 msgid "Attached Files"
 msgstr "Fişiere Ataşate"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Nu aveţi permisiunea de a ataşa un fişier la această pagină"
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Ataşamentele de tip fişier nu sunt permise în acest wiki!"
 
 #, fuzzy, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2765,6 +2755,10 @@ msgstr "Este nepermisă acţiunea de trimitere date: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Ataşamente pentru \"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Nu aveţi permisiunea de a viziona ataşamentele de pe această pagină."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2772,8 +2766,19 @@ msgstr ""
 "Nu există conţinut. Ştergeţi caracterele non ASCII din numele fişierului şi "
 "încercaţi din nou."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Ataşamentul '%(target)s' (fişier la distanţă '%(filename)s') cu %(bytes)d "
+"octeţi a fost salvat."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Nu aveţi permisiunea de a salva un desen pe această pagină."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Nu aveţi permisiunea de a şterge ataşamentele de pe această pagină."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2948,6 +2953,64 @@ msgstr "Nu aveţi permisiunea de a salva un desen pe această pagină."
 #, fuzzy
 msgid "Login and try again."
 msgstr " %s şi încercaţi din nou."
+
+#, fuzzy
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Ataşament Nou"
+
+#, fuzzy
+#~ msgid "attachment"
+#~ msgstr "Ataşamente"
+
+#, fuzzy
+#~ msgid "New Name"
+#~ msgstr "Nume nou"
+
+#, fuzzy
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "Ataşamentul '%(filename)s' a fost instalat."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "Un upload nu va scrie peste un fişier deja existent. Dacă există un "
+#~ "conflict\n"
+#~ "de nume, trebuie să redenumiţi fişierul pe care doriţi să-l încărcaţi.\n"
+#~ "Altfel, dacă \"Redenumeşte în\" este necompletat, va fi folosit numele "
+#~ "original al fişierului."
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Cineva a cerut trimiterea datelor contului dumneavoastră la această "
+#~ "adresă de email.\n"
+#~ "\n"
+#~ "Dacă aţi pierdut parola, folosiţi datele de mai jos şi introduceţi\n"
+#~ "parola exact cum este ea în formularul wiki-ului de introducere a \n"
+#~ "parolei(folosiţi copiere&lipire pentru aceasta).\n"
+#~ "\n"
+#~ "După înregistrarea cu succes, este recomandată modificarea parolei în una "
+#~ "cunoscută.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr ""
+#~ "Nu a fost găsit nici un cont care să se potrivească cu adresa\n"
+#~ "de email '%(email)s'!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Ataşamentele de tip fişier nu sunt permise în acest wiki!"
 
 #, fuzzy
 #~ msgid "SendMyPassword"

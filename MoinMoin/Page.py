@@ -964,7 +964,7 @@ class Page(object):
         special = None
 
         if not send_special:
-            if not page_exists:
+            if not page_exists and not body:
                 special = 'missing'
             elif not request.user.may.read(self.page_name):
                 special = 'denied'
@@ -1149,7 +1149,6 @@ class Page(object):
                        self.page_name.encode(config.charset), 'exec')
         cache = caching.CacheEntry(request, self, self.getFormatterName(), scope='item')
         cache.update(marshal.dumps(code))
-        self.cache_mtime = cache.mtime()
         return code
 
     def _specialPageText(self, request, special_type):

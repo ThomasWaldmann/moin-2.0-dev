@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2007-11-05 22:11+0100\n"
 "Last-Translator: Václav Haisman <v.haisman@sh.cvut.cz>\n"
 "Language-Team: Czech <moin@lists.sourceforge.net>\n"
@@ -32,9 +32,9 @@ msgstr "<neznámý>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Přihlašovací Jméno: %s\n"
 "\n"
@@ -43,21 +43,12 @@ msgstr ""
 "URL pro přihlášení: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Někdo požádal o zaslání uživatelských dat na tuto e-mailovou adresu.\n"
-"\n"
-"Pokud jste zapomněli heslo, použijte níže uvedené informace a vložte\n"
-"heslo tak, jak je zde uvedeno (přes kopírovat a vložit).\n"
-"\n"
-"Po úspěšném přihlášení není od věci nastavit nové heslo.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -554,8 +545,9 @@ msgstr "Přihlášení"
 msgid "Username"
 msgstr "Uživatel"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Počet stránek"
 
 msgid "Email"
 msgstr "Email"
@@ -1638,10 +1630,6 @@ msgstr "[Záložka dosažena]"
 msgid "Contents"
 msgstr "Obsah"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Použijte prosím selektivnější vyhledávací výraz místo {{{\"%s\"}}}"
-
 msgid "Include system pages"
 msgstr "Včetně systémových stránek"
 
@@ -1810,6 +1798,10 @@ msgstr "Rozlišovat velikost písmen"
 
 msgid "Search Text"
 msgstr "Hledat v textu"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Použijte prosím selektivnější vyhledávací výraz místo {{{\"%s\"}}}"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2362,51 +2354,28 @@ msgstr "Ignorovat změny v počtu mezer (bílých míst)"
 msgid "Load"
 msgstr "Nahrát"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Nemáte dostatečná práva ke smazání přílohy u této stránky!"
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "Není zadáno jméno přílohy!"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"Příloha '%(target)s' (vzdálené jméno '%(filename)s') s %(bytes)d byty "
-"uložena."
-
-msgid "New Page or New Attachment"
-msgstr "Nová Stránka nebo Nová Příloha"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"Můžete nahrát soubor k nové stránce nebo uložit soubor jako přílohu k této "
-"stránce"
 
-msgid "New Attachment"
-msgstr "Nová příloha"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"Upload nikdy nepřepíše existující soubor. Pokud nastane konflikt jmen, \n"
-"budete muset změnit jméno uploadovaného souboru.\n"
-"Pokud  zůstané prázdné \"Uložit jako\", bude použito jméno původního souboru."
 
-msgid "attachment"
-msgstr "příloha"
+msgid "Comment"
+msgstr "Komentář"
 
-msgid "overwrite"
-msgstr "přepsat"
-
-msgid "Upload"
-msgstr "Upload"
-
-msgid "New Name"
-msgstr "Nový Název"
+#, fuzzy
+msgid "Page Name"
+msgstr "Název balíčku"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "Nemůžete odebírat stránky, ke kterým nemáte právo čtení."
@@ -2459,9 +2428,6 @@ msgstr "Rozdíl"
 
 msgid "Editor"
 msgstr "Autor"
-
-msgid "Comment"
-msgstr "Komentář"
 
 msgid "view"
 msgstr "náhled"
@@ -2643,6 +2609,9 @@ msgstr "Nemůžete kontrolovat pravopis na stránce, kterou nemůžete číst."
 msgid "You are now logged out."
 msgstr "Jste nyní odhlášeni."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2650,20 +2619,45 @@ msgstr ""
 "Tato wiki není upravena na posílání emailů.\n"
 "Kontaktujte vlastníka wiki, který to může změnit."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Napište prosím platnou emailovou adresu!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr ""
-"Nebyl nalezen žádný účet, který by odpovídal zadané emailové adrese '%(email)"
-"s'!"
 
 msgid "Mail me my account data"
 msgstr "Zašli mi má data k účtu"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Vrátit vše!"
+
+#, fuzzy
+msgid "New password"
+msgstr "Heslo"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Opakovat heslo"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Heslo"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Opakovat heslo"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Prázdné heslo. Prosím vložte jméno a heslo."
 
 #, fuzzy
 msgid "Lost password"
@@ -2672,14 +2666,18 @@ msgstr "Heslo"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2704,10 +2702,6 @@ msgid ""
 "There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
 "page."
 msgstr "K této stránce je uloženo <a href=\"%(link)s\">%(count)s příloh</a>."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "Příloha '%(target)s' už existuje."
 
 msgid "Filename of attachment not specified!"
 msgstr "Není zadáno jméno přílohy!"
@@ -2743,6 +2737,9 @@ msgstr "Nebyly uloženy žádné přílohy ke stránce %(pagename)s."
 msgid "Edit drawing"
 msgstr "Editace kresby"
 
+msgid "New Attachment"
+msgstr "Nová příloha"
+
 msgid "File to upload"
 msgstr "Soubor k uploadu"
 
@@ -2752,14 +2749,14 @@ msgstr "Přejmenovat na"
 msgid "Overwrite existing attachment of same name"
 msgstr "Přepsat existující přílohy stejného názvu"
 
+msgid "Upload"
+msgstr "Upload"
+
 msgid "Attached Files"
 msgstr "Přiložené soubory"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Nemáte oprávnění přikládat soubory k této stránce."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Přílohy stránek nejsou v této wiki povoleny!"
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2769,13 +2766,28 @@ msgstr "Nepodporovaná akce pro PřipojitSoubor: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Přílohy k  \"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Nemáte dostatečná práva k prohlížení příloh na této stránce."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
 msgstr "Soubor bez obsahu. Smažte ne-ASCII znaky ze souboru a zkuste to znovu."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Příloha '%(target)s' (vzdálené jméno '%(filename)s') s %(bytes)d byty "
+"uložena."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Nemáte dostatečná práva k uložení obrázku k této stránce."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Nemáte dostatečná práva ke smazání přílohy u této stránky!"
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2893,7 +2905,7 @@ msgstr "Nemáte dostatečná práva k prohlížení příloh na této stránce."
 
 #, python-format
 msgid "attachment:%(filename)s of %(pagename)s"
-msgstr "<<Verbatim(attachment:)>>%(filename)s k %(pagename)s"
+msgstr "attachment:%(filename)s k %(pagename)s"
 
 #, python-format
 msgid "Full Link List for \"%s\""
@@ -2940,6 +2952,66 @@ msgstr "Nemáte oprávnění spustit na této stránce akci %(action_name)s."
 
 msgid "Login and try again."
 msgstr "Přihlašte se a zkuste to znovu."
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Nová Stránka nebo Nová Příloha"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr ""
+#~ "Můžete nahrát soubor k nové stránce nebo uložit soubor jako přílohu k "
+#~ "této stránce"
+
+#~ msgid "attachment"
+#~ msgstr "příloha"
+
+#~ msgid "New Name"
+#~ msgstr "Nový Název"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "Příloha '%(target)s' už existuje."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "Upload nikdy nepřepíše existující soubor. Pokud nastane konflikt jmen, \n"
+#~ "budete muset změnit jméno uploadovaného souboru.\n"
+#~ "Pokud  zůstané prázdné \"Uložit jako\", bude použito jméno původního "
+#~ "souboru."
+
+#~ msgid "overwrite"
+#~ msgstr "přepsat"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Někdo požádal o zaslání uživatelských dat na tuto e-mailovou adresu.\n"
+#~ "\n"
+#~ "Pokud jste zapomněli heslo, použijte níže uvedené informace a vložte\n"
+#~ "heslo tak, jak je zde uvedeno (přes kopírovat a vložit).\n"
+#~ "\n"
+#~ "Po úspěšném přihlášení není od věci nastavit nové heslo.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr ""
+#~ "Nebyl nalezen žádný účet, který by odpovídal zadané emailové adrese '%"
+#~ "(email)s'!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Přílohy stránek nejsou v této wiki povoleny!"
 
 #~ msgid "SendMyPassword"
 #~ msgstr "PosliMojeHeslo"

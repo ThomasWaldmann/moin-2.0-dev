@@ -75,13 +75,12 @@ class WikiAnalyzer:
                  }
 
     singleword_re = re.compile(singleword, re.U)
-    wikiword_re = re.compile(WikiParser.word_rule, re.U)
+    wikiword_re = re.compile(WikiParser.word_rule, re.UNICODE|re.VERBOSE)
 
     token_re = re.compile(
         r"(?P<company>\w+[&@]\w+)|" + # company names like AT&T and Excite@Home.
         r"(?P<email>\w+([.-]\w+)*@\w+([.-]\w+)*)|" +    # email addresses
         r"(?P<hostname>\w+(\.\w+)+)|" +                 # hostnames
-        r"(?P<num>(\w+[-/.,])*\w*\d\w*([-/.,]\w+)*)|" + # version numbers
         r"(?P<acronym>(\w\.)+)|" +          # acronyms: U.S.A., I.B.M., etc.
         r"(?P<word>\w+)",                   # words (including WikiWords)
         re.U)
@@ -97,10 +96,13 @@ class WikiAnalyzer:
         @param request: current request
         @param language: if given, the language in which to stem words
         """
-        if request and request.cfg.xapian_stemming and language:
-            self.stemmer = Stemmer(language)
-        else:
-            self.stemmer = None
+        self.stemmer = None
+        if request and request.cfg.xapian_stemming and language and Stemmer:
+            try:
+                self.stemmer = Stemmer(language)
+            except (KeyError, TypeError):
+                # lang is not stemmable or not available
+                pass
 
     def raw_tokenize(self, value):
         """ Yield a stream of lower cased raw and stemmed words from a string.
@@ -133,11 +135,6 @@ class WikiAnalyzer:
                 elif m.group("hostname"):
                     displ = 0
                     for word in self.dot_re.split(m.group("hostname")):
-                        yield (enc(word), m.start() + displ)
-                        displ += len(word) + 1
-                elif m.group("num"):
-                    displ = 0
-                    for word in self.dot_re.split(m.group("num")):
                         yield (enc(word), m.start() + displ)
                         displ += len(word) + 1
                 elif m.group("word"):
@@ -365,10 +362,10 @@ class Index(BaseIndex):
                 xrev = xapdoc.SortKey('revision', '0')
                 title = " ".join(os.path.join(fs_rootpage, filename).split("/"))
                 xtitle = xapdoc.Keyword('title', title)
-                xmimetype = xapdoc.TextField('mimetype', mimetype, True)
+                xmimetype = xapdoc.Keyword('mimetype', mimetype)
                 xcontent = xapdoc.TextField('content', file_content)
-                doc = xapdoc.Document(textFields=(xcontent, xmimetype, ),
-                                      keywords=(xtitle, xitemid, ),
+                doc = xapdoc.Document(textFields=(xcontent, ),
+                                      keywords=(xtitle, xitemid, xmimetype, ),
                                       sortFields=(xpname, xattachment,
                                           xmtime, xwname, xrev, ),
                                      )
@@ -433,9 +430,8 @@ class Index(BaseIndex):
 
         if not prev or prev == 1:
             return []
-
-        return [cat.lower()
-                for cat in re.findall(r'Category([^\s]+)', body[pos:])]
+        # for CategoryFoo, group 'all' matched CategoryFoo, group 'key' matched just Foo
+        return [m.group('all').lower() for m in self.request.cfg.cache.page_category_regex.finditer(body[pos:])]
 
     def _get_domains(self, page):
         """ Returns a generator with all the domains the page belongs to
@@ -501,6 +497,7 @@ class Index(BaseIndex):
                     xapdoc.Keyword('fulltitle', pagename),
                     xapdoc.Keyword('revision', revision),
                     xapdoc.Keyword('author', author),
+                    xapdoc.Keyword('mimetype', 'text/%s' % page.pi['format']), # XXX improve this
                 ]
             for pagelink in page.getPageLinks(request):
                 xkeywords.append(xapdoc.Keyword('linkto', pagelink))
