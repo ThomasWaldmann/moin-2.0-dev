@@ -47,30 +47,28 @@ class Backend(object):
 
     def search_item(self, searchterm):
         """
-        Takes a searchterm and returns an iterator
-        (maybe empty) over matching objects.
+        Takes a searchterm and returns an iterator (maybe empty) over matching
+        objects.
         """
         raise NotImplementedError
 
     def get_item(self, itemname):
         """
-        Returns Item object or raises Exception
-        if that Item does not exist.
+        Returns Item object or raises Exception if that Item does not exist.
         """
         raise NotImplementedError
 
     def create_item(self, itemname):
         """
-        Creates an item with a given itemname.
-        If that Item already exists, raise an
-        Exception.
+        Creates an item with a given itemname. If that Item already exists,
+        raise an Exception.
         """
         return Item(self, itemname)
 
     def iteritems(self):
         """
-        Returns an iterator over all items
-        available in this backend. (Like the dict method).
+        Returns an iterator over all items available in this backend.
+        (Like the dict method).
         """
         raise NotImplementedError
 
@@ -89,59 +87,46 @@ class Backend(object):
 
     def _get_revision(self, item, revno):
         """
-        For a given Item and Revision number,
-        return the corresponding Revision of
-        that Item.
+        For a given Item and Revision number, return the corresponding Revision
+        of that Item.
         """
         raise NotImplementedError
 
     def _list_revisions(self, item):
         """
-        For a given Item, list all Revisions.
-        Returns a list of ints representing
+        For a given Item, list all Revisions. Returns a list of ints representing
         the Revision numbers.
         """
         raise NotImplementedError
 
     def _create_revision(self, item, revno):
         """
-        Takes an Item object and creates a new
-        Revision. Note that you need to pass
+        Takes an Item object and creates a new Revision. Note that you need to pass
         a revision number for concurrency-reasons.
         """
         raise NotImplementedError
 
     def _rename_item(self, item, newname):
         """
-        Renames a given item.
-        Raises Exception of the Item
-        you are trying to rename does not
-        exist or if the newname is already
-        chosen by another Item.
+        Renames a given item. Raises Exception of the Item you are trying to rename
+        does not exist or if the newname is already chosen by another Item.
         """
         raise NotImplementedError
 
     def _commit_item(self, item):
         """
-        Commits the changes that have been
-        done to a given Item. That is,
-        after you created a Revision on
-        that Item and filled it with data
-        you still need to commit() it.
-        You don't need to pass what Revision
-        you are committing because there is only
-        one possible Revision to be committed
-        for your /instance/ of the item and
-        thus the Revision to be saved is memorized.
+        Commits the changes that have been done to a given Item. That is, after you
+        created a Revision on that Item and filled it with data you still need to
+        commit() it. You don't need to pass what Revision you are committing because
+        there is only one possible Revision to be committed for your /instance/ of 
+        the item and thus the Revision to be saved is memorized.
         """
         raise NotImplementedError
 
     def _rollback_item(self, item):
         """
-        This method is invoked when external
-        events happen that cannot be handled in a
-        sane way and thus the changes that have
-        been made must be rolled back.
+        This method is invoked when external events happen that cannot be handled in a
+        sane way and thus the changes that have been made must be rolled back.
         """
         raise NotImplementedError
 
@@ -149,48 +134,52 @@ class Backend(object):
     # XXX Further internals of this class may follow
 
 
-class Item(object, DictMixin):                      # XXX Improve docstring
+class Item(list):                      # XXX Improve docstring -- Shall this only inherit from list? Is it newstyle then?
     """
-    An Item object collects the information
-    of an item (e.g. a page) that is stored in
-    persistent storage. It has metadata and
-    Revisions.
+    An Item object collects the information of an item (e.g. a page) that is
+    stored in persistent storage. It has metadata and Revisions.
     """
 
     def __init__(self, backend, itemname):
         """
-        Initialize an item. Memorize the
-        backend to which it belongs.
+        Initialize an item. Memorize the backend to which it belongs.
         """
         self._backend = backend
         self._name    = name
                                                     # XXX Still needs metadata-attribute
 
+    def get_revision(self, revno):
+        """
+        Fetches a given revision and returns it to the caller.
+        """
+        return self._backend._get_revision(self, revno)
+
+    def list_revisions(self):
+        """
+        Returns a list of ints representing the revisions this item has.
+        """
+        return self._backend._list_revisions(self)
+
     def rename(self, newname):
         """
-        Rename the item. By default
-        this uses the rename method the
-        backend specifies internally.
+        Rename the item. By default this uses the rename method the backend
+        specifies internally.
         """
         self._backend._rename_item(self, newname)
 
     def commit(self):
         """
-        Rename the item. By default
-        this uses the commit method the
-        backend specifies internally.
+        Rename the item. By default this uses the commit method the backend
+        specifies internally.
         """
         self._backend._commit_item(self)
 
     def create_revision(self, revno):
         """
-        Create a new revision on
-        the Item. By default this
-        uses the create_revision
-        method the backend specifies
-        internally.
+        Create a new revision on the Item. By default this uses the
+        create_revision method the backend specifies internally.
         """
         return self._backend._create_revision(self, revno)
 
 
-    # TODO Finishing for today. Next thing: Implement Dict-Semantics with DictMixin
+    # TODO Finishing for today. Next thing: Implement Dict-Semantics with DictMixin for accessing metadata
