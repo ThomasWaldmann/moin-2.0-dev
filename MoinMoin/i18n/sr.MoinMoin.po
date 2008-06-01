@@ -13,8 +13,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
-"PO-Revision-Date: 2007-11-26 23:04-0500\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
+"PO-Revision-Date: 2008-05-12 15:58-0400\n"
 "Last-Translator: Igor Miletic <grejigl-gnomeprevod@yahoo.ca>\n"
 "Language-Team: Serbian <fedora-trans-sr@redhat.com>\n"
 "MIME-Version: 1.0\n"
@@ -31,37 +31,32 @@ msgstr ""
 msgid "<unknown>"
 msgstr "<непознато>"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Корисничко име: %s\n"
 "\n"
-"Лозинка: %s\n"
+"Израз за опоравак лозинке: %s\n"
 "\n"
-"УРЛ за пријаву: %s/%s?action=login\n"
+"УРЛ за постављање лозинке: %s/?action=recoverpass&name=%s&token=%s\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Неко је тражио да се пошаљу ваши подаци на ову ел. адресу.\n"
+"Неко је поднео захтев за слање израза за опоравак лозинке преко ел. поште.\n"
 "\n"
-"Ако сте изгубили лозинку, користите податке испод и само упишите\n"
-"лозинку КАО ШТО ЈЕ НАПИСАНО у пољу за вики лозинке (користи умножи и налепи\n"
-"за то).\n"
-"После успешног пријављивања, била би наравно добра идеја да поставите нову "
-"лозинку коју ћете запамтити.\n"
+"Ако сте заборавили лозинку, идите на доњи УРЛ за постављање лозинке или\n"
+"поново отиђите на страницу за опоравак лозинке и унесите корисничко име и\n"
+"израз за опоравак.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -360,7 +355,7 @@ msgstr ""
 "немате администраторска права за њу!"
 
 msgid "Notifications sent to:"
-msgstr ""
+msgstr "Обавештење послато на:"
 
 #, python-format
 msgid ""
@@ -462,7 +457,7 @@ msgstr "Датотека %s није нађена у пакету."
 
 #, python-format
 msgid "Invalid highlighting regular expression \"%(regex)s\": %(error)s"
-msgstr ""
+msgstr "Неисправни регуларни израз за наглашавање „%(regex)s“: %(error)s"
 
 msgid ""
 "The backed up content of this page is deprecated and will not be included in "
@@ -553,23 +548,22 @@ msgid "Password"
 msgstr "Лозинка"
 
 msgid "OpenID"
-msgstr ""
+msgstr "OpenID"
 
 msgid "Login"
 msgstr "Пријавите се"
 
-#, fuzzy
 msgid "Username"
-msgstr "Корисник"
+msgstr "Корисничко име"
 
-msgid "ACL Groups"
-msgstr ""
+msgid "Member of Groups"
+msgstr "Члан група"
 
 msgid "Email"
 msgstr "Ел. адреса"
 
 msgid "Jabber"
-msgstr ""
+msgstr "Џабер"
 
 msgid "Action"
 msgstr "Радња"
@@ -589,24 +583,28 @@ msgstr "Подаци поштанског налога"
 msgid "Missing password. Please enter user name and password."
 msgstr "Недостаје лозинка. Упишите корисничко име и лозинку."
 
-#, fuzzy
 msgid "You need to log in."
-msgstr "Ви сте сада одјављени."
+msgstr "Морате се пријавити."
 
 #, python-format
 msgid ""
 "If you do not have an account, <a href=\"%(userprefslink)s\">you can create "
 "one now</a>. <a href=\"%(sendmypasswordlink)s\">Forgot your password?</a>"
 msgstr ""
+"Немате налог,  <a href=\"%(userprefslink)s\">можете направити један сада</"
+"a>. <a href=\"%(sendmypasswordlink)s\">Заборавилисте лозинку?</a>"
 
 msgid ""
 "Please choose an account name now.\n"
 "If you choose an existing account name you will be asked for the\n"
 "password and be able to associate the account with your OpenID."
 msgstr ""
+"Изаберите корисничко име сада.\n"
+"Ако изаберете корисничко име које је већ у употреби бићете упитани\n"
+"за лозинку и моћи ћете придружити налог са Вашим OpenID налогом."
 
 msgid "Choose this name"
-msgstr ""
+msgstr "Изабери ово име"
 
 msgid ""
 "The username you have chosen is already\n"
@@ -614,55 +612,61 @@ msgid ""
 "the username with your OpenID. Otherwise, please choose a different\n"
 "username and leave the password field blank."
 msgstr ""
+"Корисничко име које сте изабрали је\n"
+"заузето. Ако је ово Ваше корисничко име, унесите лозинку испод да\n"
+"га придружите са Вашим OpenID налогом. Иначе, изаберите друго\n"
+"корисничко име и оставите поље за лозинку празно."
 
 msgid "Associate this name"
-msgstr ""
+msgstr "Придружите ово име"
 
 #, python-format
 msgid "OpenID error: %s."
-msgstr ""
+msgstr "OpenID грешка: %s."
 
-#, fuzzy
 msgid "Verification canceled."
-msgstr "Радња је отказана."
+msgstr "Провера је отказана."
 
 msgid "OpenID failure."
-msgstr ""
+msgstr "Неуспех OpenID-а."
 
 msgid "This is not a valid username, choose a different one."
-msgstr ""
+msgstr "Ово није исправно корисничко име, изаберите друго."
 
 msgid "Your account is now associated to your OpenID."
-msgstr ""
+msgstr "Ваш налог је сада придружен са Вашим OpenID-ом."
 
 msgid "The password you entered is not valid."
-msgstr ""
+msgstr "Лозинка коју сте унели је неважећа."
 
 msgid "OpenID verification requires that you click this button:"
-msgstr ""
+msgstr "Провера OpenID-а зајтева да кликнете на ово дугме:"
 
 msgid "Anonymous sessions need to be enabled for OpenID login."
 msgstr ""
+"Анонимне сесије морају бити омогућене за пријављивање користећи OpenID."
 
 msgid "Failed to resolve OpenID."
-msgstr ""
+msgstr "Неуспешно разрешивање OpenID-а."
 
 msgid "OpenID discovery failure, not a valid OpenID."
-msgstr ""
+msgstr "Неуспешно проналажење OpenID-а, неисправан OpenID."
 
 msgid "No OpenID."
-msgstr ""
+msgstr "Није OpenID-а."
 
 msgid ""
 "If you do not have an account yet, you can still log in with your OpenID and "
 "create one during login."
 msgstr ""
+"Ако још увек немате налог, можете се пријавити користећи Ваш ОпенИД и "
+"направите један током пријаве."
 
 msgid "Failed to connect to database."
-msgstr ""
+msgstr "Неуспешно повезивање са базом података."
 
 msgid "Could not contact botbouncer.com."
-msgstr ""
+msgstr "Неуспешно контактирање botbouncer.com."
 
 msgid "Wiki"
 msgstr "Вики"
@@ -737,7 +741,7 @@ msgid "Click to do a full-text search for this title"
 msgstr "Притисни за комплетну претрагу за овај наслов"
 
 msgid "Settings"
-msgstr ""
+msgstr "Поставке"
 
 msgid "Logout"
 msgstr "Одјави се"
@@ -886,9 +890,9 @@ msgstr "Тумачење преструктуираног текста није 
 msgid "**Maximum number of allowed includes exceeded**"
 msgstr "**Највећи број дозвољених include-ова је превазиђен**"
 
-#, fuzzy, python-format
+#, python-format
 msgid "**You are not allowed to read the page: %s**"
-msgstr "Није вам дозвољено да преименујете ову страницу!"
+msgstr "**Није вам дозвољено да читате страницу: %s**"
 
 #, python-format
 msgid "**Could not find the referenced page: %s**"
@@ -993,7 +997,7 @@ msgid "SpellCheck"
 msgstr "ПровераПравописа"
 
 msgid "Discussion"
-msgstr ""
+msgstr "Расправа"
 
 #, python-format
 msgid ""
@@ -1003,43 +1007,42 @@ msgstr ""
 "у овом викију."
 
 msgid "Notification"
-msgstr ""
+msgstr "Обавештење"
 
 msgid "Notification settings saved!"
-msgstr ""
+msgstr "Поставке за обавештења сачуване!"
 
-#, fuzzy
 msgid "'''Email'''"
-msgstr "Ел. адреса"
+msgstr "'''Ел. адреса'''"
 
 msgid "'''Jabber'''"
-msgstr ""
+msgstr "'''Џабер'''"
 
 msgid "'''Event type'''"
-msgstr ""
+msgstr "'''Врста догађаја'''"
 
 msgid "Select the events you want to be notified about."
-msgstr ""
+msgstr "Изаберите догађаје за које желите бити обавештени."
 
 msgid ""
 "Before you can be notified, you need to provide a way to contact you in the "
 "general preferences."
 msgstr ""
+"Да би Вас обавестили, морате дати начин на који Вас можемо контактирати у "
+"општим поставкама."
 
-#, fuzzy
 msgid "Subscribed events"
-msgstr "Претплати корисника"
+msgstr "Претплаћени догађаји"
 
-#, fuzzy
 msgid "Subscribed wiki pages<<BR>>(one regex per line)"
-msgstr "Вики странице у које сте учлањени (један регуларни израз по реду)"
+msgstr ""
+"Вики странице на које сте претплађени<<BR>>(један регуларни израз по реду)"
 
 msgid "Save"
 msgstr "Сачувај"
 
-#, fuzzy
 msgid "Change password"
-msgstr "Лозинка"
+msgstr "Промена лозинке"
 
 msgid "Passwords don't match!"
 msgstr "Лозинке се не подударају!"
@@ -1052,49 +1055,51 @@ msgid "Password not acceptable: %s"
 msgstr "Лозинка није прихватљива: %s"
 
 msgid "Your password has been changed."
-msgstr ""
+msgstr "Лозинка је промењена."
 
 msgid "To change your password, enter a new password twice."
-msgstr ""
+msgstr "Унесите нову лозинку два пута ако желите променити лозинку."
 
 msgid "Password repeat"
 msgstr "Понови лозинку"
 
 msgid "Switch user"
-msgstr ""
+msgstr "Промени корисника"
 
 msgid "No user selected"
-msgstr ""
+msgstr "Корисник није изабран"
 
 msgid ""
 "You can now change the settings of the selected user account; log out to get "
 "back to your account."
 msgstr ""
+"Можете сада променити поставке изабраног корисничког налог, одјавите се да \n"
+"би се вратили на Ваш налог."
 
 msgid "You are the only user."
-msgstr ""
+msgstr "Ви сте једини корисник."
 
 msgid ""
 "As a superuser, you can temporarily assume the identity of another user."
-msgstr ""
+msgstr "Супер корисник може привремено преузети идентитет другог корисника."
 
 msgid "Select User"
 msgstr "Изаберите корисника"
 
 msgid "OpenID settings"
-msgstr ""
+msgstr "Поставке за ОпенИД"
 
 msgid "Cannot remove all OpenIDs."
-msgstr ""
+msgstr "Не могу се избацити сви ОпенИД-ови."
 
 msgid "The selected OpenIDs have been removed."
-msgstr ""
+msgstr "Изабрани ОпенИД-ови су избачени."
 
 msgid "No OpenID given."
-msgstr ""
+msgstr "ОпенИД није дат."
 
 msgid "OpenID is already present."
-msgstr ""
+msgstr "ОпнеИД већ постоји."
 
 #, fuzzy
 msgid "This OpenID is already used for another account."
@@ -1651,10 +1656,6 @@ msgstr "[Обележивач досегнут]"
 msgid "Contents"
 msgstr "Садржај"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Користите пробрљивији израз за претрагу уместо {{{„%s“}}}"
-
 msgid "Include system pages"
 msgstr "Укључи системске странице"
 
@@ -1823,6 +1824,10 @@ msgstr "Претрага са разликовањем великих и мал�
 
 msgid "Search Text"
 msgstr "Тражи текст"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Користите пробрљивији израз за претрагу уместо {{{„%s“}}}"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2389,52 +2394,28 @@ msgstr "Занемари измене у броју размака"
 msgid "Load"
 msgstr "Учитај"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Није вам дозвољено да бришете прилоге на овој страници."
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "Име датотеке прилога није одређено!"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"Прилог  '%(target)s' (даљинско име '%(filename)s') од %(bytes)d бајтова је "
-"сачуван."
-
-msgid "New Page or New Attachment"
-msgstr "Нова страница или нови прилог"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"Можете поставити датотеку на нову страницу или изабрати да поставите "
-"датотеку као додатак на тренутној страници"
 
-msgid "New Attachment"
-msgstr "Нови прилог"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"Учитавање никада неће пребрисати постјећу датотеку. Ако постоји \n"
-"противречност у имену, мораћете преименовати датотеку коју желите учитати.\n"
-"Иначе, ако је поље „Преименуј на“ остављено празно, оригинално име датотеке "
-"ће бити коришћено."
 
-msgid "attachment"
-msgstr "прилог"
+msgid "Comment"
+msgstr "Коментар"
 
-msgid "overwrite"
-msgstr "препиши"
-
-msgid "Upload"
-msgstr "Постави"
-
-msgid "New Name"
-msgstr "Ново име"
+#, fuzzy
+msgid "Page Name"
+msgstr "Име пакета"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "Не можете се претплатити на страницу коју не можете читати."
@@ -2487,9 +2468,6 @@ msgstr "Разлика"
 
 msgid "Editor"
 msgstr "Уређивач"
-
-msgid "Comment"
-msgstr "Коментар"
 
 msgid "view"
 msgstr "преглед"
@@ -2671,6 +2649,11 @@ msgstr "Не можете проверити правопис на страни�
 msgid "You are now logged out."
 msgstr "Ви сте сада одјављени."
 
+#, fuzzy
+msgid "If this account exists an email was sent."
+msgstr ""
+"Ел. порука ће бити послата ако налог са овим корисничким именом постоји."
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2678,19 +2661,45 @@ msgstr ""
 "Обрада ел. поште није укључена у овом викију.\n"
 "Ако желите можете контактирати власника викија да укључи ел. пошту."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Упишите исправну ел. адресу!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-"Ел. порука ће бити послата ако налог са овим корисничким именом постоји."
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "Налог који одговара датој ел. адреси, '%(email)s' , не постоји!"
 
 msgid "Mail me my account data"
 msgstr "Пошаљите ми моје податке путем ел. поште"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Повратите све"
+
+#, fuzzy
+msgid "New password"
+msgstr "Лозинка"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Понови лозинку"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Лозинка"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Понови лозинку"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Недостаје лозинка. Упишите корисничко име и лозинку."
 
 #, fuzzy
 msgid "Lost password"
@@ -2699,14 +2708,18 @@ msgstr "Лозинка"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2732,10 +2745,6 @@ msgid ""
 "page."
 msgstr ""
 "<a href=\"%(link)s\">%(count)s прилог/а </a> је ускладиштено на ову страницу."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "Прилог „%(target)s“ већ постоји."
 
 msgid "Filename of attachment not specified!"
 msgstr "Име датотеке прилога није одређено!"
@@ -2771,6 +2780,9 @@ msgstr "Нема прилога закачених за %(pagename)s"
 msgid "Edit drawing"
 msgstr "Уреди цртеж"
 
+msgid "New Attachment"
+msgstr "Нови прилог"
+
 msgid "File to upload"
 msgstr "Датотека за постављање"
 
@@ -2780,14 +2792,14 @@ msgstr "Преименуј на"
 msgid "Overwrite existing attachment of same name"
 msgstr "Препиши постојећи прилог истог имена"
 
+msgid "Upload"
+msgstr "Постави"
+
 msgid "Attached Files"
 msgstr "Приложене датотеке"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Није вам дозвољено да приложите датотеке на ову страницу."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Прилози датотека нису дозвољени на овом викију!"
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2797,6 +2809,10 @@ msgstr "Неподржана ДодајДатотеку радња: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Прилози за „%(pagename)s“"
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Није вам дозвољено да видите прилоге на овој страници."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2804,8 +2820,19 @@ msgstr ""
 "Нема садржаја у датотеци. Избришите ASCII занкове из имена датотеке и "
 "покушајте поново."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Прилог  '%(target)s' (даљинско име '%(filename)s') од %(bytes)d бајтова је "
+"сачуван."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Није вам дозвољено да сачувате цртеж на овој страници."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Није вам дозвољено да бришете прилоге на овој страници."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2971,108 +2998,21 @@ msgstr "Није вам дозвољено да %(action_name)s на овој с
 msgid "Login and try again."
 msgstr "Пријавите се и покушајте поново"
 
-#~ msgid "SendMyPassword"
-#~ msgstr "ПошаљиМојуЛозинку"
-
-#~ msgid "Use UserPreferences to change your settings or create an account."
-#~ msgstr ""
-#~ "Користите КорисничкеПоставке да промените ваша подешавања или да "
-#~ "направите налог."
-
-#~ msgid "Use UserPreferences to change settings of the selected user account"
-#~ msgstr ""
-#~ "Користите КорисничкеПоставке да промените поставке изабраног корисничког "
-#~ "налога"
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Нова страница или нови прилог"
 
 #~ msgid ""
-#~ "This list does not work, unless you have entered a valid email address!"
-#~ msgstr "Ово дописно друштво неће радити ако не унесете важећу ел. адресу!"
-
-#~ msgid ""
-#~ "To create an account, see the %(userprefslink)s page. To recover a lost "
-#~ "password, go to %(sendmypasswordlink)s."
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
 #~ msgstr ""
-#~ "Да направите налог, погледајте %(userprefslink)s страницу. Да повратите "
-#~ "изгубљену лозинку, погледајте %(sendmypasswordlink)s страницу."
+#~ "Можете поставити датотеку на нову страницу или изабрати да поставите "
+#~ "датотеку као додатак на тренутној страници"
 
-#~ msgid ""
-#~ "'''A page with the name {{{'%s'}}} already exists.'''\n"
-#~ "Try a different name."
-#~ msgstr ""
-#~ "'''Страна са именом {{{'%s'}}} већ постоји.'''\n"
-#~ "Пробајте друго име."
+#~ msgid "attachment"
+#~ msgstr "прилог"
 
-#~ msgid ""
-#~ "The comment on the change is:\n"
-#~ "%(comment)s\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Белешка о измени је:\n"
-#~ "%(comment)s\n"
-#~ "\n"
+#~ msgid "New Name"
+#~ msgstr "Ново име"
 
-#~ msgid "Status of sending notification mails:"
-#~ msgstr "Стање слања ел. поште о обавештавању:"
-
-#~ msgid "[%(lang)s] %(recipients)s: %(status)s"
-#~ msgstr "[%(lang)s] %(recipients)s: %(status)s"
-
-#~ msgid "UserPreferences"
-#~ msgstr "КорисничкеПоставке"
-
-#~ msgid "Subscribe to trivial changes"
-#~ msgstr "Претплати се на ситне измене"
-
-#~ msgid "(Only for password change or new account)"
-#~ msgstr "(Само за измену лозинке или нови налог)"
-
-#~ msgid "Check your argument %s"
-#~ msgstr "Проверите аргумент %s"
-
-#~ msgid "ERROR in regex '%s'"
-#~ msgstr "ГРЕШКА у регуларном изразу '%s'"
-
-#~ msgid "Bad timestamp '%s'"
-#~ msgstr "Погрешни временски печат '%s'"
-
-#~ msgid "Not supported mimetype of file: %s"
-#~ msgstr "Неподржана „mime“ врста датотеке: %s"
-
-#~ msgid "Embedding of object by chosen formatter not possible"
-#~ msgstr "Угњеждавање објеката од изабраног обликовача није могуће"
-
-#~ msgid ""
-#~ "Not enough arguments given to EmbedObject macro! Try <<EmbedObject"
-#~ "(attachment [,width=width] [,height=height] [,alt=alternate Text])>>"
-#~ msgstr ""
-#~ "Нема довољно аргумената за дати макро EmbedObject! Покушајте <<EmbedObject"
-#~ "(прилог [,width=ширина] [,height=висина] [,alt=алтернативни текст])>>"
-
-#~ msgid ""
-#~ "Not enough arguments given to EmbedObject macro! Try <<EmbedObject(url, "
-#~ "url_mimetype [,width=width] [,height=height] [,alt=alternate Text])>>"
-#~ msgstr ""
-#~ "Нема довољно аргумената за дати макро EmbedObject! Покушајте <<EmbedObject"
-#~ "(, url_mimetype [,width=ширина] [,height=висина] [,alt=алтернативни "
-#~ "текст])>>"
-
-#~ msgid "Invalid MonthCalendar calparms \"%s\"!"
-#~ msgstr "Неисправни MonthCalendar (месечни календар) параметри „%s“!"
-
-#~ msgid "Invalid MonthCalendar arguments \"%s\"!"
-#~ msgstr "Неисправни MonthCalendar аргументи „%s“!"
-
-#~ msgid "Sorry, login failed."
-#~ msgstr "Извињење, пријављивање је неуспешно."
-
-#~ msgid "Filename"
-#~ msgstr "Име датотеке"
-
-#~ msgid ""
-#~ "The remote version of MoinMoin is too old, version 1.6 is required at "
-#~ "least."
-#~ msgstr ""
-#~ "Удаљено издање MoinMoin-а је престаро, најстарије неопходно издање је 1.6."
-
-#~ msgid "belonging to one of the following categories"
-#~ msgstr "који припадају једној од следећих категорија"
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "Прилог „%(target)s“ већ постоји."

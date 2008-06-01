@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: moin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2008-04-12 20:07+0200\n"
 "Last-Translator: Mohamed Yahya <yahya.mohamed@gmail.com>\n"
 "Language-Team: \n"
@@ -32,20 +32,17 @@ msgstr "<مغمور>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
 
 #, python-format
@@ -522,8 +519,9 @@ msgstr "ولوج"
 msgid "Username"
 msgstr "المستخدم"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "عدد الصفحات"
 
 msgid "Email"
 msgstr "بريد الكتروني"
@@ -1535,10 +1533,6 @@ msgstr ""
 msgid "Contents"
 msgstr "محتويات"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr ""
-
 msgid "Include system pages"
 msgstr ""
 
@@ -1711,6 +1705,10 @@ msgid "Case-sensitive searching"
 msgstr ""
 
 msgid "Search Text"
+msgstr ""
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
 msgstr ""
 
 #, python-format
@@ -2209,48 +2207,27 @@ msgstr ""
 msgid "Load"
 msgstr "حمّل"
 
-msgid "You are not allowed to delete attachments on this page."
+msgid "Pagename not specified!"
 msgstr ""
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-
-#, fuzzy
-msgid "New Page or New Attachment"
-msgstr "المرفقات"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"بإمكانك تحميل ملف مع صفحة جديدة أو اختيار تحميل الملف كملحق للصفحة الحالية"
 
-msgid "New Attachment"
-msgstr "ملف مرفق جديد"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
 
 #, fuzzy
-msgid "attachment"
-msgstr "المرفقات"
+msgid "Comment"
+msgstr "تعليق"
 
 #, fuzzy
-msgid "overwrite"
-msgstr "أكتب فوقه"
-
-msgid "Upload"
-msgstr "رفع"
-
-#, fuzzy
-msgid "New Name"
+msgid "Page Name"
 msgstr "صفحة جديدة\n"
 
 msgid "You are not allowed to subscribe to a page you can't read."
@@ -2302,10 +2279,6 @@ msgstr "فروقات"
 
 msgid "Editor"
 msgstr "المحرر"
-
-#, fuzzy
-msgid "Comment"
-msgstr "تعليق"
 
 msgid "view"
 msgstr ""
@@ -2484,23 +2457,53 @@ msgstr "لا يمكنك تدقيق الإملاء في صفحة لا تستطي�
 msgid "You are now logged out."
 msgstr "لقد قمت بتسجيل الخروج."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
 msgstr ""
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "الرجاء تزويد عنوان بريد إلكتروني صحيح!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "لا يوجد حساب مطابق لعنوان البريد الإلكتروني المدخل '%(email)s'!"
 
 msgid "Mail me my account data"
 msgstr "إبعث لي بيانات حسابي بالبريد الإلكتروني."
+
+msgid "Recovery token"
+msgstr ""
+
+#, fuzzy
+msgid "New password"
+msgstr "كلمةالسرّ"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "اعادة كلمة السر"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "كلمةالسرّ"
+
+#, fuzzy
+msgid "Your password has been changed, you can log in now."
+msgstr "تم تغيير كلمة السر الخاصة بك."
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "اعادة كلمة السر"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "لتغيير كلمة السر الخاصة بك، أدخل كلمة سر جديدة مرتين."
 
 #, fuzzy
 msgid "Lost password"
@@ -2509,14 +2512,18 @@ msgstr "كلمةالسرّ"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2541,10 +2548,6 @@ msgstr ""
 msgid ""
 "There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
 "page."
-msgstr ""
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
 msgstr ""
 
 msgid "Filename of attachment not specified!"
@@ -2577,6 +2580,9 @@ msgstr ""
 msgid "Edit drawing"
 msgstr ""
 
+msgid "New Attachment"
+msgstr "ملف مرفق جديد"
+
 msgid "File to upload"
 msgstr ""
 
@@ -2586,14 +2592,14 @@ msgstr ""
 msgid "Overwrite existing attachment of same name"
 msgstr ""
 
+msgid "Upload"
+msgstr "رفع"
+
 msgid "Attached Files"
 msgstr "الملفات المرفقة"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "لا يسمح لك إرفاق ملف بهذه الصفحة."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "لا يسمح بإرفاق الملفات في هذه الويكي."
 
 #, fuzzy, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2603,12 +2609,25 @@ msgstr "نفذ عملية %(actionname)s?"
 msgid "Attachments for \"%(pagename)s\""
 msgstr ""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "لا يسمح لك بتحرير هذه الصفحة"
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
 msgstr ""
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+
 msgid "You are not allowed to save a drawing on this page."
+msgstr ""
+
+msgid "You are not allowed to delete attachments on this page."
 msgstr ""
 
 #, python-format
@@ -2769,6 +2788,34 @@ msgstr "لا يسمح لك باستخدام عملية %(actionname)s في هذ�
 
 msgid "Login and try again."
 msgstr "سجل الدخول و حاول مرة أخرى"
+
+#, fuzzy
+#~ msgid "New Page or New Attachment"
+#~ msgstr "المرفقات"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr ""
+#~ "بإمكانك تحميل ملف مع صفحة جديدة أو اختيار تحميل الملف كملحق للصفحة الحالية"
+
+#, fuzzy
+#~ msgid "attachment"
+#~ msgstr "المرفقات"
+
+#, fuzzy
+#~ msgid "New Name"
+#~ msgstr "صفحة جديدة\n"
+
+#, fuzzy
+#~ msgid "overwrite"
+#~ msgstr "أكتب فوقه"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr "لا يوجد حساب مطابق لعنوان البريد الإلكتروني المدخل '%(email)s'!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "لا يسمح بإرفاق الملفات في هذه الويكي."
 
 #, fuzzy
 #~ msgid "SendMyPassword"

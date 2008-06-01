@@ -68,8 +68,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
     @rtype: dict
 
     """
-    _ = request.getText
-    page._ = lambda s, wiki=False, r=request, l=lang: r.getText(s, wiki=wiki, lang=l)
+    _ = lambda text: request.getText(text, lang=lang)
     changes = {'page_name': page.page_name, 'revision': str(page.getRevList()[0])}
 
     if msgtype == "page_changed":
@@ -125,14 +124,13 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
 
     return changes
 
-def user_created_message(request, sitename, username, email):
+def user_created_message(request, _, sitename, username, email):
     """Formats a message used to notify about accounts being created
 
     @return: a dict containing message body and subject
     """
-    _ = request.getText
     subject = _("New user account created on %(sitename)s") % {'sitename': sitename or "Wiki"}
-    body = _("""Dear Superuser, a new user has just been created. Details follow:
+    text = _("""Dear Superuser, a new user has just been created. Details follow:
 
     User name: %(username)s
     Email address: %(useremail)s""") % {
@@ -140,7 +138,7 @@ def user_created_message(request, sitename, username, email):
          'useremail': email,
          }
 
-    return {'subject': subject, 'body': body}
+    return {'subject': subject, 'text': text}
 
 def attachment_added(request, _, page_name, attach_name, attach_size):
     """Formats a message used to notify about new attachments

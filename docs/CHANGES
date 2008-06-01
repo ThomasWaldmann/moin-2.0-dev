@@ -21,40 +21,133 @@ Known main issues:
     editor_force = True
     editor_default = 'text'  # internal default, just for completeness
 
-  * TWikiDraw may have some issues - we need some JAVA guy caring for it!
+  * "Backup" and especially "Restore" action have some issues, so please DON'T
+    USE THEM except if you want to help debugging and improving it and after
+    having made a backup with some other, proven method.
+    USE BOTH ON YOUR OWN RISK!
 
-  * "Backup" and especially "Restore" action (both new in 1.5) have some
-    issues, so please DON'T USE THEM except if you want to help debugging
-    and improving it and after having made a backup with some other, proven
-    method. USE BOTH ON YOUR OWN RISK!
 
-  * For the jabber notification bot, you need a development version 
-    of pyxmpp, 1.0 won't work. You can get it directly from svn repository:
+Version 1.7.0current:
 
-    svn checkout http://pyxmpp.jajcus.net/svn/pyxmpp/trunk pyxmpp
+  Bug Fixes:
+    * Fix editor preview not working for new pages.
+    * Add ssh protocol to url_schemas.
+    * Fix PageList macro with search errors.
+    * Center the message icons and fix their spacing. Add a class to the
+      "Clear message" link, make the link text smaller and lower.
+    * Better handling of ImportErrors (farmconfig, macros, wikiserverconfig).
+    * Xapian mimetype search: fixes, use text/<format> as mimetype for pages
+    * Builtin search: support mimetype: search for builtin engine, too
+    * Fix the second hmac use for python 2.4
+    * csv parser: fix delimiter sniffing troubles, fix tests
+    * Event notifications: send notifies in the language of the message
+      recipient (not of the current wiki user), other fixes.
 
-    Add the resulting `pyxmpp` directory to your PYTHONPATH or perform
-    a "full installation" as described on http://pyxmpp.jajcus.net/:
 
-    To build and install the package just invoke:
-    python setup.py build
-    python setup.py install
+Version 1.7.0rc1:
 
-    If you had some older version of PyXMPP it is better to uninstall it 
-    (delete pyxmpp subdirectory of your site-packages directory) before 
-    installing this one or things may not work correctly.
+  Bug Fixes:
+    * Fix hmac for Python 2.4.
+    * AttachFile: fix uploading of < 1K files
+    * fix action=info on page that never existed
+    * deny access on invalid input (happens only with spammers anyway)
+    * fix failure of detection of on-disk cache updates
 
-    You may also try:
-    make
-    make install
 
+Version 1.7.0beta2:
+
+  Bug Fixes:
+    * HINT: page_*_regex processing had to be changed to fix Xapian category
+      search. If you don't use the english defaults, you will have to change
+      your configuration:
+        old (default): page_category_regex = u'^Category[A-Z]'
+        new (default): page_category_regex = ur'(?P<all>Category(?P<key>\S+))'
+      As you see, the old regex did work for detecting whether a pagename is
+      a category, but it could not be used to search for a category tag in the
+      page text. The new regex can be used for both and identifies the complete
+      category tag (match in group 'all', e.g. "CategoryFoo") as well as the
+      category key (match in group 'key', e.g. "Foo") by using named regex
+      groups. \S+ means the category key can be anything non-blank.
+      If you like to simultaneously support multiple languages, use something
+      like this: ur'(?P<all>(Kategorie|Category)(?P<key>\S+))'
+    * Xapian indexing / search / stemming:
+      * fix AttributeError that happened when trying to access an attribute only
+        used with xapian search (but regex search is not done by xapian)
+      * fix IndexErrors happening when pages are renamed/nuked after the index
+        was built
+      * fix crash if default language is un-stemmable
+      * Fixed indexing of WikiWords (index "WikiWords", "Wiki" and "Words")
+      * Fixed category indexing (index CategoryFoo correctly as CategoryFoo, not
+        Foo - for all languages, see page_*_regex change above)
+      * xapian_stemming: removed some strange code (fixes search
+        title:lowercaseword with xapian_stemming enabled)
+    * AttachFile / file upload / download:
+      * WSGI: use wsgi.file_wrapper (or a builtin simple wrapper). Fixes memory
+        consumption for sending of large file attachments.
+      * FastCGI: flush often. Fixes memory consumption for sending of large
+        file attachments
+      * use the open temporary file for file uploads (fixes big memory
+        consumption for large file uploads).
+        !!! Twisted and mod_python is completely untested !!!
+      * AttachFile/Load: remove misleading/outdated text, fix UI cosmetics
+      * Fixed traceback for attachment notifications.
+      * make error msg less confusing when trying to overwrite a file attachment
+        without having acl delete rights
+    * Wiki xmlrpc getPageInfoVersion() fixed:
+      * works correctly now for old page versions (was unsupported)
+      * works correctly now for current page version (reported wrong
+        data when a page had attachment uploads after the last page
+        edit)
+      * returns a Fault if it did not find a edit-log entry
+    * SystemAdmin user browser: handle empty email/jabber addresses correctly
+    * events.wikidictsrescan: handle TrivialPageChangedEvent too (bug fix for
+      MoinMoinBugs/17devWikiDictsDontUpdate)
+    * Fixed detection of WikiWords for the docbook parser.
+
+  New features:
+    * Password recovery (recoverpass action):
+      If you forgot your password, this action sends you an email with a password
+      recovery token (NOT the encrypted password). Token is valid for 12 hours.
+    * Logging: you can use MOINLOGGINGCONF environment variable now to override
+      from where your logging config is read.
+
+  Other changes:
+    * HINT: in the toplevel dir, we have renamed moin.py to wikiserver.py (it
+      was often confused with the moin scripting command).
+      Now you have:
+      * wikiserver.py - to start the standalone server
+      * wikiserverconfig.py - to configure the standalone server
+      * wikiserverlogging.conf - to configure logging for it (default config
+        should be ok for all day use, but can easily be modified for debugging)
+      * wikiconfig.py - to configure the wiki engine
+    * removed old moin daemonizing script (replaced by moin server standalone
+      --start/stop)
+    * provide moin script command for people not using setup.py, see wiki/server/moin
+    * Duplicated file attachment upload code was removed from Load action (just
+      use AttachFile action to deal with attachments).
+    * Load action now just creates a new revision of the target page, the
+      target pagename defaults to the current page name and can be edited. If
+      the target pagename is empty, moin tries to derive the target pagename
+      from the uploaded file's name.
+      Load tries to decode the file contents first using utf-8 coding and, if
+      that fails, it forces decoding using iso-8859-1 coding (and replacing
+      invalid characters).
+
+  Developer notes (these should be moved to the end in the release):
+    * Page.last_edit() is DEPRECATED, please use Page.edit_info().
+    * Page._last_edited() is GONE (was broken anyway), please use
+      Page.editlog_entry().
+    * new request.send_file() call, making it possible to use server-specific
+      optimizations
 
 Version 1.7.0beta1:
 
   New Features:
     * New powerful and flexible logging, please see wiki/config/logging/ -
       HINT: you have to upgrade your server adaptor script (e.g. moin.cgi)
-      and load a logging configuration that fits your needs from there.
+      and load a logging configuration that fits your needs from there, or
+      alternatively you can also set MOINLOGGINGCONF environment variable
+      to point at your logging config file.
       If you use some of our sample logging configs, make sure you have a
       look INTO them to fix e.g. the path of the logfile it will use.
     * Moin now logs the path from where it loaded its configuration(s)
@@ -649,6 +742,11 @@ Version 1.6.0:
       need to use "from MoinMoin.config.multiconfig import DefaultConfig" now.
       You need to change this in your wikiconfig.py or farmconfig.py file.
       See MoinMoin/multiconfig.py for an alternative way if you can't do that.
+    * HINT: you need to change some imports (if you have them in your config):
+      Old: from MoinMoin.util.antispam import SecurityPolicy
+      New: from MoinMoin.security.antispam import SecurityPolicy
+      Old: from MoinMoin.util.autoadmin import SecurityPolicy
+      New: from MoinMoin.security.autoadmin import SecurityPolicy
     * HINT: you need to change your auth stuff, the new way is:
       from MoinMoin.auth import moin_login, moin_session
       from MoinMoin.auth.http import http
@@ -727,8 +825,6 @@ Version 1.6.0:
       Most stuff will be broken, please help fixing it (usually some imports
       will be missing and the adaptor script will need a change maybe):
       Tested successfully: CGI, CLI, STANDALONE, FCGI, TWISTED
-    * Moved util/antispam.py to security/antispam.py.
-    * Moved util/autoadmin.py to security/autoadmin.py.
     * Moved security.py to security/__init__.py.
     * Moved wikiacl.py to security/__init__.py.
     * Moved logfile/logfile.py to logfile/__init__.py.

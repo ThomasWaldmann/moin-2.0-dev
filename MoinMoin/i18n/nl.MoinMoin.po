@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2005-03-13 17:43+0200\n"
 "Last-Translator: Sander Kromwijk <s.kromwijk@gmail.com>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
@@ -32,9 +32,9 @@ msgstr "<onbekend>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Login Naam: %s\n"
 "\n"
@@ -43,24 +43,12 @@ msgstr ""
 "Login link: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Iemand heeft gevraagd je account informatie naar dit e-mail adres te "
-"sturen.\n"
-"\n"
-"Als je je passwoord verloren hebt, gebruik de informatie hieronder en typ "
-"hetpasswoord zoals in the wiki passwoord veld getoond wordt (gebruik "
-"hiervoor copy en paste).\n"
-"\n"
-"Nadat u succesvol ingelogd bent, is het natuurlijk een goed idee om een "
-"nieuwen bekend passwoord te gebruiken.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -566,8 +554,9 @@ msgstr "Inloggen"
 msgid "Username"
 msgstr "Gebruiker"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Aantal pagina's"
 
 msgid "Email"
 msgstr "E-mail"
@@ -1650,10 +1639,6 @@ msgstr "[Bladwijzer bereikt]"
 msgid "Contents"
 msgstr "Inhoud"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Gebruik een specifiekere zoekterm dan {{{\"%s\"}}}!"
-
 msgid "Include system pages"
 msgstr "Inclusief systeempagina's"
 
@@ -1822,6 +1807,10 @@ msgstr "Hoodletter-gevoelig zoeken"
 
 msgid "Search Text"
 msgstr "Tekst doorzoeken"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Gebruik een specifiekere zoekterm dan {{{\"%s\"}}}!"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2386,53 +2375,28 @@ msgstr "Wijzigingen in de hoeveelheid witruimte negeren"
 msgid "Load"
 msgstr "Laad"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "U hebt geen toestemming bijlages van deze pagina te verwijderen."
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "Bestandsnaam van bijlage ontbreekt!"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"Bijlage '%(target)s' opgeslagen (naam op de server '%(filename)s', %(bytes)d "
-"bytes)."
-
-msgid "New Page or New Attachment"
-msgstr "Nieuw pagina of nieuwe bijlage"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"U kunt een bestand naar een nieuwe pagina opsturen of een bestand als "
-"bijlage naar de huidige pagina opsturen"
 
-msgid "New Attachment"
-msgstr "Nieuwe bijlage"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"Het sturen van een bijlage zal nooit een bestaand bestand overschrijven. Als "
-"er een naamsconflict\n"
-"is dan zul u het bestand dat u wilt inzenden een andere naam moeten geven."
-"Anders, als \"Opslaan als\" leeg is zal de oorspronkelijke naam van het "
-"bestand gebruikt worden."
 
-msgid "attachment"
-msgstr "bijlage"
+msgid "Comment"
+msgstr "Commentaar"
 
-msgid "overwrite"
-msgstr "overschrijven"
-
-msgid "Upload"
-msgstr "Opsturen"
-
-msgid "New Name"
-msgstr "Nieuwe naam"
+#, fuzzy
+msgid "Page Name"
+msgstr "Pakket naam"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr ""
@@ -2487,9 +2451,6 @@ msgstr "Verschil"
 
 msgid "Editor"
 msgstr "Bewerker"
-
-msgid "Comment"
-msgstr "Commentaar"
 
 msgid "view"
 msgstr "bekijken"
@@ -2673,6 +2634,9 @@ msgstr "U kunt geen spelling controleren op een pagina die u niet kunt lezen."
 msgid "You are now logged out."
 msgstr "U bent nu uitgelogd."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2680,20 +2644,45 @@ msgstr ""
 "Deze wiki is niet ingesteld op het afhandelen van e-mail.\n"
 "Neem contact op met de eigenaar van de wiki, die e-mail kan aanzetten."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Geef een geldig e-mail adres op!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr ""
-"Er is geen account gevonden dat overeenkomt met het opgegeven e-mail adres '%"
-"(email)s'!"
 
 msgid "Mail me my account data"
 msgstr "Stuur me mijn accountgegevens per e-mail"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Alles terugzetten!"
+
+#, fuzzy
+msgid "New password"
+msgstr "Wachtwoord"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Wachtwoord herhalen"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Wachtwoord"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Wachtwoord herhalen"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Geen wachtwoord. Geef een gebruikersnaam en wachtwoord op."
 
 #, fuzzy
 msgid "Lost password"
@@ -2702,14 +2691,18 @@ msgstr "Wachtwoord"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2736,10 +2729,6 @@ msgid ""
 msgstr ""
 "Er zijn <a href=\"%(link)s\">%(count)s bijlagen</a> opgeslagen voor deze "
 "pagina."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "Bijlage '%(target)s' bestaat al."
 
 msgid "Filename of attachment not specified!"
 msgstr "Bestandsnaam van bijlage ontbreekt!"
@@ -2776,6 +2765,9 @@ msgstr "Geen bijlagen opgeslagen voor %(pagename)s"
 msgid "Edit drawing"
 msgstr "Tekening bewerken"
 
+msgid "New Attachment"
+msgstr "Nieuwe bijlage"
+
 msgid "File to upload"
 msgstr "Bestand om op te sturen"
 
@@ -2785,15 +2777,15 @@ msgstr "Hernoemen naar"
 msgid "Overwrite existing attachment of same name"
 msgstr "Overschrijf bestaande bijlagen met dezelfde naam"
 
+msgid "Upload"
+msgstr "Opsturen"
+
 msgid "Attached Files"
 msgstr "Bijlagen"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr ""
 "U hebt geen toestemming voor het plaatsen van bijlagen bij deze pagina."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Bijlagen zijn in deze wiki niet toegestaan!"
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2803,6 +2795,10 @@ msgstr "Niet ondersteunde BestandHecht sub-aktie: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Bijlages voor \"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "U hebt geen toestemming bijlagen van deze pagina te bekijken."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2810,8 +2806,19 @@ msgstr ""
 "Geen bestandsinhoud. Verwijder de non-ASCII tekens uit het bestand en "
 "probeer opnieuw."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Bijlage '%(target)s' opgeslagen (naam op de server '%(filename)s', %(bytes)d "
+"bytes)."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "U hebt geen toestemming een afbeelding op deze pagina te bewaren."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "U hebt geen toestemming bijlages van deze pagina te verwijderen."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2977,6 +2984,70 @@ msgstr "Het is u niet toegestaan om %(action_name)s op deze pagina te doen."
 
 msgid "Login and try again."
 msgstr "Login en probeer opnieuw"
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Nieuw pagina of nieuwe bijlage"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr ""
+#~ "U kunt een bestand naar een nieuwe pagina opsturen of een bestand als "
+#~ "bijlage naar de huidige pagina opsturen"
+
+#~ msgid "attachment"
+#~ msgstr "bijlage"
+
+#~ msgid "New Name"
+#~ msgstr "Nieuwe naam"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "Bijlage '%(target)s' bestaat al."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "Het sturen van een bijlage zal nooit een bestaand bestand overschrijven. "
+#~ "Als er een naamsconflict\n"
+#~ "is dan zul u het bestand dat u wilt inzenden een andere naam moeten geven."
+#~ "Anders, als \"Opslaan als\" leeg is zal de oorspronkelijke naam van het "
+#~ "bestand gebruikt worden."
+
+#~ msgid "overwrite"
+#~ msgstr "overschrijven"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Iemand heeft gevraagd je account informatie naar dit e-mail adres te "
+#~ "sturen.\n"
+#~ "\n"
+#~ "Als je je passwoord verloren hebt, gebruik de informatie hieronder en typ "
+#~ "hetpasswoord zoals in the wiki passwoord veld getoond wordt (gebruik "
+#~ "hiervoor copy en paste).\n"
+#~ "\n"
+#~ "Nadat u succesvol ingelogd bent, is het natuurlijk een goed idee om een "
+#~ "nieuwen bekend passwoord te gebruiken.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr ""
+#~ "Er is geen account gevonden dat overeenkomt met het opgegeven e-mail "
+#~ "adres '%(email)s'!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Bijlagen zijn in deze wiki niet toegestaan!"
 
 #~ msgid "SendMyPassword"
 #~ msgstr "VerzendMijnWachtwoord"

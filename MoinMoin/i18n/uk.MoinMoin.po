@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2007-11-10 16:50+0300\n"
 "Last-Translator: Maxim V. Dziumanenko <dziumanenko@softprom.kiev.ua>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -32,9 +32,9 @@ msgstr "<невідомо>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Ім'я: %s\n"
 "\n"
@@ -43,22 +43,12 @@ msgstr ""
 "URL входу: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Хтось запитав надіслати свої дані на цю адресу.\n"
-"\n"
-"Якщо ви забули пароль, використовуйте ці дані та введіть пароль ЯК ТУТ "
-"ПОКАЗАНО\n"
-"(для точного переносу скористайтесь операціями Copy/Paste).\n"
-"\n"
-"Після успішного входу у систему бажано змінити пароль на ваш власний.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -562,8 +552,9 @@ msgstr "Вхід"
 msgid "Username"
 msgstr "Користувач"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Кількість сторінок"
 
 msgid "Email"
 msgstr "Ел.пошта"
@@ -1644,10 +1635,6 @@ msgstr "[Тут лежить закладка]"
 msgid "Contents"
 msgstr "Зміст"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Уточніть що шукати замість {{{\"%s\"}}}"
-
 msgid "Include system pages"
 msgstr "Показати службові сторінки"
 
@@ -1816,6 +1803,10 @@ msgstr "Пошук з урахуванням регістру"
 
 msgid "Search Text"
 msgstr "Пошук у тексті"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Уточніть що шукати замість {{{\"%s\"}}}"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2364,53 +2355,28 @@ msgstr "Ігнорувати різницю у кількості пробілі
 msgid "Load"
 msgstr "Завантажити"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Ви не можете стирати вкладення на цій сторінці."
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "Не вказано назву файлу вкладення!"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"Вкладення '%(target)s' (з файлу '%(filename)s') довжиною %(bytes)d байт "
-"записано."
-
-msgid "New Page or New Attachment"
-msgstr "Створити сторінку або вкладення"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"Ви можете відвантажити файл у нову сторінку або відвантажити його у вигляді "
-"вкладення до поточної сторінки"
 
-msgid "New Attachment"
-msgstr "Нове вкладення"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"Нове вкладення не може перезаписати наявні вкладення. Якщо вкладення\n"
-"з такою назвою вже існує, дайте новому вкладенню іншу назву.\n"
-"Для цього використовуйте поле \"Перейменувати на\" - у ньому можна вказати\n"
-"назву, з якою вкладення буде завантажено на сторінку. Якщо поле\n"
-"\"Перейменувати на\" залишити порожнім, буде використана назва вашого файлу."
 
-msgid "attachment"
-msgstr "вкладення"
+msgid "Comment"
+msgstr "Коментар"
 
-msgid "overwrite"
-msgstr "перезаписати"
-
-msgid "Upload"
-msgstr "Відвантажити"
-
-msgid "New Name"
-msgstr "Нова назва"
+#, fuzzy
+msgid "Page Name"
+msgstr "Назва пакету"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "Ви не можете стежити за сторінкою, яку заборонено читати."
@@ -2462,9 +2428,6 @@ msgstr "Порівняти"
 
 msgid "Editor"
 msgstr "Редактор"
-
-msgid "Comment"
-msgstr "Коментар"
 
 msgid "view"
 msgstr "показати"
@@ -2646,6 +2609,9 @@ msgstr "Не можна перевіряти сторінку, яку забор
 msgid "You are now logged out."
 msgstr "Ви вийшли."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2653,18 +2619,45 @@ msgstr ""
 "У цьому вікі заборонено надсилання пошти. Зв'яжіться з власником вікі, який "
 "може увімкнути надсилання пошти."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Введіть коректну адресу електронної пошти!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "Не знайдений користувач з адресою '%(email)s'!"
 
 msgid "Mail me my account data"
 msgstr "Надіслати мені дані мого рахунку"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Повернути все!"
+
+#, fuzzy
+msgid "New password"
+msgstr "Пароль"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Повтор паролю"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Пароль"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Повтор паролю"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Відсутній пароль. Введіть ім'я користувача й пароль."
 
 #, fuzzy
 msgid "Lost password"
@@ -2673,14 +2666,18 @@ msgstr "Пароль"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2706,10 +2703,6 @@ msgid ""
 "page."
 msgstr ""
 "До цієї сторінки є <a href=\"%(link)s\">вкладення</a> (всього %(count)s)."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "Вкладення '%(target)s' вже існує."
 
 msgid "Filename of attachment not specified!"
 msgstr "Не вказано назву файлу вкладення!"
@@ -2746,6 +2739,9 @@ msgstr "Немає вкладень до %(pagename)s"
 msgid "Edit drawing"
 msgstr "Змінити малюнок"
 
+msgid "New Attachment"
+msgstr "Нове вкладення"
+
 msgid "File to upload"
 msgstr "Файл для відвантаження"
 
@@ -2755,14 +2751,14 @@ msgstr "Перейменувати на "
 msgid "Overwrite existing attachment of same name"
 msgstr "Перезаписати існуючі вкладення з тими ж назвами"
 
+msgid "Upload"
+msgstr "Відвантажити"
+
 msgid "Attached Files"
 msgstr "Вкладені файли"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Ви не можете створювати вкладення до цієї сторінки."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "У цьому wiki вкладення заборонені!"
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2772,6 +2768,10 @@ msgstr "Непідтримувана дія ДодатиФайл: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Вкладення для \"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Ви не маєте прав на перегляд цієї сторінки."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2779,8 +2779,19 @@ msgstr ""
 "Неправильна назва файлу. Приберіть всі спец-символи з імені файлу та "
 "спробуйте знову."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Вкладення '%(target)s' (з файлу '%(filename)s') довжиною %(bytes)d байт "
+"записано."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Ви не можете зберігати малюнки на цій сторінці."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Ви не можете стирати вкладення на цій сторінці."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2945,6 +2956,68 @@ msgstr "Ви не можете виконувати %(action_name)s на цій 
 
 msgid "Login and try again."
 msgstr "Увійдіть знову та спробуйте ще раз."
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Створити сторінку або вкладення"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr ""
+#~ "Ви можете відвантажити файл у нову сторінку або відвантажити його у "
+#~ "вигляді вкладення до поточної сторінки"
+
+#~ msgid "attachment"
+#~ msgstr "вкладення"
+
+#~ msgid "New Name"
+#~ msgstr "Нова назва"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "Вкладення '%(target)s' вже існує."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "Нове вкладення не може перезаписати наявні вкладення. Якщо вкладення\n"
+#~ "з такою назвою вже існує, дайте новому вкладенню іншу назву.\n"
+#~ "Для цього використовуйте поле \"Перейменувати на\" - у ньому можна "
+#~ "вказати\n"
+#~ "назву, з якою вкладення буде завантажено на сторінку. Якщо поле\n"
+#~ "\"Перейменувати на\" залишити порожнім, буде використана назва вашого "
+#~ "файлу."
+
+#~ msgid "overwrite"
+#~ msgstr "перезаписати"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Хтось запитав надіслати свої дані на цю адресу.\n"
+#~ "\n"
+#~ "Якщо ви забули пароль, використовуйте ці дані та введіть пароль ЯК ТУТ "
+#~ "ПОКАЗАНО\n"
+#~ "(для точного переносу скористайтесь операціями Copy/Paste).\n"
+#~ "\n"
+#~ "Після успішного входу у систему бажано змінити пароль на ваш власний.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr "Не знайдений користувач з адресою '%(email)s'!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "У цьому wiki вкладення заборонені!"
 
 #~ msgid "SendMyPassword"
 #~ msgstr "НагадуванняПаролю"

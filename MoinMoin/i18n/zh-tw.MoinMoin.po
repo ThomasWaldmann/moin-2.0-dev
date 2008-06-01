@@ -11,15 +11,16 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: MoinMoin 1.6\n"
+"Project-Id-Version: MoinMoin 1.7\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2008-03-24 23:30+0800\n"
 "Last-Translator: Rux Li <rux.li3@gmail.com>\n"
 "Language-Team: Chinese/Taiwan <moin-devel@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Thanks: (Translator 2008-05-02~) Yu-Jie Lin <livibetter@gmail.com>\n"
 "Thanks: (Translator 2005-12-19~) Rux Li <rux.li3@gmail.com>\n"
 "Thanks: (Translator ~2004-11-29) Lin Zhemin <ljm@ljm.idv.tw>\n"
 "X-Direction: ltr\n"
@@ -34,31 +35,23 @@ msgstr "<不明>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "登入名稱：%s\n"
 "\n"
 "登入密碼：%s\n"
 "\n"
-"登入 URL：%s/%s?action=login\n"
+"登入網址：%s/?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"有人要求將你的帳號資料寄到這個信箱來。\n"
-"\n"
-"如果是你忘了密碼，請使用以下的資料登入。\n"
-"\n"
-"成功登入之後，請重新設定一次密碼！\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -540,8 +533,9 @@ msgstr "登入"
 msgid "Username"
 msgstr "使用者"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "總頁面數"
 
 msgid "Email"
 msgstr "Email"
@@ -576,6 +570,8 @@ msgid ""
 "If you do not have an account, <a href=\"%(userprefslink)s\">you can create "
 "one now</a>. <a href=\"%(sendmypasswordlink)s\">Forgot your password?</a>"
 msgstr ""
+"如果您沒有帳號，您可以<a href=\"%(userprefslink)s\">新增帳號</a>。<a href=\"%"
+"(sendmypasswordlink)s\">忘了您的密碼？</a>"
 
 msgid ""
 "Please choose an account name now.\n"
@@ -609,13 +605,13 @@ msgid "OpenID failure."
 msgstr ""
 
 msgid "This is not a valid username, choose a different one."
-msgstr ""
+msgstr "此非合法使用者名稱，請選擇另一個。"
 
 msgid "Your account is now associated to your OpenID."
 msgstr ""
 
 msgid "The password you entered is not valid."
-msgstr ""
+msgstr "密碼不正確。"
 
 msgid "OpenID verification requires that you click this button:"
 msgstr ""
@@ -638,10 +634,10 @@ msgid ""
 msgstr ""
 
 msgid "Failed to connect to database."
-msgstr ""
+msgstr "連結資料庫失敗。"
 
 msgid "Could not contact botbouncer.com."
-msgstr ""
+msgstr "無法連繫 botbouncer.com。"
 
 msgid "Wiki"
 msgstr "Wiki 模式"
@@ -716,7 +712,7 @@ msgid "Click to do a full-text search for this title"
 msgstr "點一下，對本頁標題做全文檢索，以便找出引用本頁的頁面"
 
 msgid "Settings"
-msgstr ""
+msgstr "設定"
 
 msgid "Logout"
 msgstr "登出"
@@ -972,32 +968,30 @@ msgid "SpellCheck"
 msgstr "拼字檢查"
 
 msgid "Discussion"
-msgstr ""
+msgstr "討論"
 
 #, python-format
 msgid ""
 "Sorry, can not save page because \"%(content)s\" is not allowed in this wiki."
 msgstr "抱歉，本站不允許 \"%(content)s\"，頁面無法儲存。"
 
-#, fuzzy
 msgid "Notification"
-msgstr "發送編輯通知"
+msgstr "通知"
 
 msgid "Notification settings saved!"
-msgstr ""
+msgstr "通知設定已儲存"
 
-#, fuzzy
 msgid "'''Email'''"
-msgstr "Email"
+msgstr "'''電子郵件'''"
 
 msgid "'''Jabber'''"
 msgstr ""
 
 msgid "'''Event type'''"
-msgstr ""
+msgstr "事件型態"
 
 msgid "Select the events you want to be notified about."
-msgstr ""
+msgstr "選擇您想要收到的通知。"
 
 msgid ""
 "Before you can be notified, you need to provide a way to contact you in the "
@@ -1015,9 +1009,8 @@ msgstr "訂閱的 wiki 頁面 (每行一個正規表示式)"
 msgid "Save"
 msgstr "存檔"
 
-#, fuzzy
 msgid "Change password"
-msgstr "密碼"
+msgstr "更改密碼"
 
 msgid "Passwords don't match!"
 msgstr "兩次輸入的密碼不符！"
@@ -1030,10 +1023,10 @@ msgid "Password not acceptable: %s"
 msgstr "不接受此密碼：%s"
 
 msgid "Your password has been changed."
-msgstr ""
+msgstr "您的密碼已更改。"
 
 msgid "To change your password, enter a new password twice."
-msgstr ""
+msgstr "為更改您的密碼，請輸入您的新密碼兩次。"
 
 msgid "Password repeat"
 msgstr "密碼(再一次)"
@@ -1050,7 +1043,7 @@ msgid ""
 msgstr ""
 
 msgid "You are the only user."
-msgstr ""
+msgstr "您是唯一的使用者"
 
 msgid ""
 "As a superuser, you can temporarily assume the identity of another user."
@@ -1060,13 +1053,13 @@ msgid "Select User"
 msgstr "選擇使用者"
 
 msgid "OpenID settings"
-msgstr ""
+msgstr "OpenID 設定"
 
 msgid "Cannot remove all OpenIDs."
-msgstr ""
+msgstr "無法移除所有的 OpenID"
 
 msgid "The selected OpenIDs have been removed."
-msgstr ""
+msgstr "選擇的 OpenID 已移除"
 
 msgid "No OpenID given."
 msgstr ""
@@ -1079,16 +1072,16 @@ msgid "This OpenID is already used for another account."
 msgstr "本頁已經刪除或還沒建立！"
 
 msgid "OpenID added successfully."
-msgstr ""
+msgstr "OpenID 已新增。"
 
 msgid "Current OpenIDs"
-msgstr ""
+msgstr "目前的 OpenID"
 
 msgid "Remove selected"
-msgstr ""
+msgstr "移除選擇的"
 
 msgid "Add OpenID"
-msgstr ""
+msgstr "新增 OpenID"
 
 msgid "Preferences"
 msgstr "使用者設定"
@@ -1193,7 +1186,7 @@ msgstr "新的頁面：\n"
 msgid "No differences found!\n"
 msgstr "新舊版完全相同！\n"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Dear wiki user,\n"
 "\n"
@@ -1203,15 +1196,14 @@ msgid ""
 "The page \"%(pagename)s\" has been deleted by %(editor)s:\n"
 "\n"
 msgstr ""
-"Wiki 使用者你好，\n"
+"Wiki 使用者您好，\n"
 "\n"
-"你在 \"%(sitename)s\" 網站訂閱了 wiki 頁面或 wiki 類別的修訂通知服務。\n"
+"您在「%(sitename)s」網站訂閱了頁面通知。\n"
 "\n"
-"在此通知你以下頁面被 %(editor)s 編輯過了：\n"
-"%(pagelink)s\n"
+"「%(pagename)s」頁面已被 %(editor)s 刪除。\n"
 "\n"
 
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Dear wiki user,\n"
 "\n"
@@ -1221,13 +1213,11 @@ msgid ""
 "The page \"%(pagename)s\" has been renamed from \"%(oldname)s\" by %(editor)"
 "s:\n"
 msgstr ""
-"Wiki 使用者你好，\n"
+"Wiki 使用者您好，\n"
 "\n"
-"你在 \"%(sitename)s\" 網站訂閱了 wiki 頁面或 wiki 類別的修訂通知服務。\n"
+"您在「%(sitename)s」網站訂閱了頁面通知。\n"
 "\n"
-"在此通知你以下頁面被 %(editor)s 編輯過了：\n"
-"%(pagelink)s\n"
-"\n"
+"「%(pagename)s」頁面已被 %(editor)s 重新命名為「%(oldname)s」。\n"
 
 #, python-format
 msgid "New user account created on %(sitename)s"
@@ -1258,18 +1248,16 @@ msgid ""
 msgstr ""
 
 msgid "Page has been modified"
-msgstr ""
+msgstr "頁面已編輯"
 
 msgid "Page has been modified in a trivial fashion"
 msgstr ""
 
-#, fuzzy
 msgid "Page has been renamed"
-msgstr "人氣和編輯次數"
+msgstr "頁面已重新命名"
 
-#, fuzzy
 msgid "Page has been deleted"
-msgstr "頁面 \"%s\" 已刪除！"
+msgstr "頁面已刪除"
 
 #, fuzzy
 msgid "Page has been copied"
@@ -1613,10 +1601,6 @@ msgstr "[目前書籤放置在此]"
 msgid "Contents"
 msgstr "目 錄"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "{{{\"%s\"}}} 找到太多資料，請輸入更精確的關鍵字！"
-
 msgid "Include system pages"
 msgstr "包含系統頁面"
 
@@ -1787,6 +1771,10 @@ msgid "Search Text"
 msgstr "全文檢索"
 
 #, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "{{{\"%s\"}}} 找到太多資料，請輸入更精確的關鍵字！"
+
+#, python-format
 msgid "Upload new attachment \"%(filename)s\""
 msgstr "上傳新附件 \"%(filename)s\""
 
@@ -1866,9 +1854,8 @@ msgstr "本頁已經刪除或還沒建立！"
 msgid "Optional reason for reverting this page"
 msgstr "複製頁面的理由："
 
-#, fuzzy
 msgid "Really revert this page?"
-msgstr "確定要重新命名本頁嗎？"
+msgstr "確定要回復本頁嗎？"
 
 #, python-format
 msgid "Rolled back changes to the page %s."
@@ -1908,7 +1895,6 @@ msgstr ""
 msgid "The ''remoteWiki'' is unknown."
 msgstr "''remoteWiki'' 不明。"
 
-#, fuzzy
 msgid "A severe error occurred:"
 msgstr "發生嚴重的錯誤："
 
@@ -2096,7 +2082,7 @@ msgid "No pages like \"%s\"!"
 msgstr "沒有類似 \"%s\" 的頁面！"
 
 msgid "Please choose:"
-msgstr ""
+msgstr "請選擇："
 
 #, fuzzy, python-format
 msgid "You must login to use this action: %(action)s."
@@ -2320,48 +2306,28 @@ msgstr "忽略空白的改變"
 msgid "Load"
 msgstr "載入"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "你無權刪除本頁附件。"
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "附件沒指定檔名！"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"附件 '%(target)s' (遠端名稱 '%(filename)s') 儲存好了，共計 %(bytes)d 位元組。"
-
-msgid "New Page or New Attachment"
-msgstr "新增頁面或附件"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
-msgstr "你可以將檔案上載成一個頁面，也可以上載成本頁面的附件："
-
-msgid "New Attachment"
-msgstr "新增附件"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"上傳絕對不會覆蓋現有的檔案。如果檔名衝突，就一定要在「重新命名為」填上新的檔"
-"名；\n"
-"如果「重新命名為」不填，就會保留原本的檔名。"
 
-msgid "attachment"
-msgstr "附件"
+msgid "File to load page content from"
+msgstr ""
 
-msgid "overwrite"
-msgstr "覆寫"
+msgid "Comment"
+msgstr "說明"
 
-msgid "Upload"
-msgstr "上傳"
-
-msgid "New Name"
-msgstr "新的名稱"
+#, fuzzy
+msgid "Page Name"
+msgstr "包裹名稱"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "你不能訂閱無權瀏覽的頁面。"
@@ -2412,9 +2378,6 @@ msgstr "比較"
 
 msgid "Editor"
 msgstr "編輯者"
-
-msgid "Comment"
-msgstr "說明"
 
 msgid "view"
 msgstr "檢視"
@@ -2544,9 +2507,8 @@ msgstr "TextCha (請務必回答這個問題)"
 msgid "Create Profile"
 msgstr "新使用者註冊"
 
-#, fuzzy
 msgid "Create Account"
-msgstr "帳號"
+msgstr "建立帳號"
 
 msgid "You must login to add a quicklink."
 msgstr "登入之後才能設定頁面捷徑。"
@@ -2590,6 +2552,10 @@ msgstr "不能檢查無權瀏覽的頁面。"
 msgid "You are now logged out."
 msgstr "你已經登出了。"
 
+#, fuzzy
+msgid "If this account exists an email was sent."
+msgstr "如果有此帳號存在，就會寄出 email。"
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2597,18 +2563,46 @@ msgstr ""
 "本 wiki 不支援郵寄工作。\n"
 "請連絡管理員，看他要不要啟動郵寄功能。"
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "請輸入合法的 email 地址！"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr "如果有此帳號存在，就會寄出 email。"
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "找不到登記為 '%(email)s' 的帳號！"
 
 msgid "Mail me my account data"
 msgstr "把帳號資料寄給我"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "全部回復"
+
+#, fuzzy
+msgid "New password"
+msgstr "更改密碼"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "密碼(再一次)"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "密碼"
+
+#, fuzzy
+msgid "Your password has been changed, you can log in now."
+msgstr "您的密碼已更改。"
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "密碼(再一次)"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "為更改您的密碼，請輸入您的新密碼兩次。"
 
 #, fuzzy
 msgid "Lost password"
@@ -2617,14 +2611,18 @@ msgstr "密碼"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2649,10 +2647,6 @@ msgid ""
 "There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
 "page."
 msgstr "本頁包含 <a href=\"%(link)s\">%(count)s 個附件</a>."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "附件 '%(target)s' 已存在。"
 
 msgid "Filename of attachment not specified!"
 msgstr "附件沒指定檔名！"
@@ -2688,6 +2682,9 @@ msgstr "頁面 \"%(pagename)s\" 沒有附件"
 msgid "Edit drawing"
 msgstr "編輯圖片"
 
+msgid "New Attachment"
+msgstr "新增附件"
+
 msgid "File to upload"
 msgstr "要上傳的檔案"
 
@@ -2697,14 +2694,14 @@ msgstr "重新命名為"
 msgid "Overwrite existing attachment of same name"
 msgstr "取代同名的附件"
 
+msgid "Upload"
+msgstr "上傳"
+
 msgid "Attached Files"
 msgstr "現有附件"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "你無權在本頁插入附件。"
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "本 wiki 不開放使用附件！"
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2714,13 +2711,27 @@ msgstr "不支援 AttachFile 的子功能：%s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "\"%(pagename)s\" 的附件"
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "你無權檢視本頁附件。"
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
 msgstr "檔案沒有內容。請刪除檔名中的非 ASCII 字元後，再試試看。"
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"附件 '%(target)s' (遠端名稱 '%(filename)s') 儲存好了，共計 %(bytes)d 位元組。"
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "你無權在本頁儲存圖片。"
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "你無權刪除本頁附件。"
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2834,7 +2845,7 @@ msgstr "你無權檢視本頁附件。"
 
 #, python-format
 msgid "attachment:%(filename)s of %(pagename)s"
-msgstr "%(pagename)s 的附件 <<Verbatim(attachment:)>>%(filename)s"
+msgstr "%(pagename)s 的附件 attachment:%(filename)s"
 
 #, python-format
 msgid "Full Link List for \"%s\""
@@ -2881,6 +2892,60 @@ msgstr "你無權在本頁進行「%(action_name)s」操作。"
 
 msgid "Login and try again."
 msgstr "請先登入後再試一次。"
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "新增頁面或附件"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr "你可以將檔案上載成一個頁面，也可以上載成本頁面的附件："
+
+#~ msgid "attachment"
+#~ msgstr "附件"
+
+#~ msgid "New Name"
+#~ msgstr "新的名稱"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "附件 '%(target)s' 已存在。"
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "上傳絕對不會覆蓋現有的檔案。如果檔名衝突，就一定要在「重新命名為」填上新的"
+#~ "檔名；\n"
+#~ "如果「重新命名為」不填，就會保留原本的檔名。"
+
+#~ msgid "overwrite"
+#~ msgstr "覆寫"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "有人要求將你的帳號資料寄到這個信箱來。\n"
+#~ "\n"
+#~ "如果是你忘了密碼，請使用以下的資料登入。\n"
+#~ "\n"
+#~ "成功登入之後，請重新設定一次密碼！\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr "找不到登記為 '%(email)s' 的帳號！"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "本 wiki 不開放使用附件！"
 
 #~ msgid "SendMyPassword"
 #~ msgstr "寄密碼給我"

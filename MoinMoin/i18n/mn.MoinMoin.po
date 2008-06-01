@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2006-12-05 12:04+0800\n"
 "Last-Translator: Amgalanbaatar Delegdorj <d.amgalanbaatar@gmail.com>\n"
 "Language-Team: Mongolia <d.amgalanbaatar@gmail.com>\n"
@@ -32,9 +32,9 @@ msgstr "<тодорхойгүй>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Логин-Нэр: %s\n"
 "\n"
@@ -43,23 +43,12 @@ msgstr ""
 "Логин-URL: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Хэн нэг нь таны хэрэглэгчийн дансны мэдээллийн энэ мэйл хаяг руу "
-"илгээхийгхүссэн байна.\n"
-"\n"
-"Та нууц үгээ мартсан бол дараах мэдээллийг оруулахба\n"
-"нууц үгээ ЯГ ДООР ҮЗҮҮЛЖ БАЙГААГААР викигийн нууц үгийн хэсэгторуулна (copy/"
-"paste хэрэглэнэ үү).\n"
-"\n"
-"Бүртгүүлж орсныхоо дараа нууц үгээ шинээрсоль.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -561,8 +550,9 @@ msgstr "логин"
 msgid "Username"
 msgstr "Хэрэглэгч"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Хуудасны тоо"
 
 msgid "Email"
 msgstr "Е-Мэйл"
@@ -1657,10 +1647,6 @@ msgstr "[Хавчуурганд хүрсэн]"
 msgid "Contents"
 msgstr "Агуулгын жагсаалт"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "{{{\"%s\"}}} -ийн оронд сонгогдсон хайлтын ухагдахуунаас хэрэглэнэ үү"
-
 msgid "Include system pages"
 msgstr "Системийн хуудсуудыг хамарсан"
 
@@ -1831,6 +1817,10 @@ msgstr "Том, бага үсгийн ялгааг анхаарах"
 
 msgid "Search Text"
 msgstr "Текстээр хайх"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "{{{\"%s\"}}} -ийн оронд сонгогдсон хайлтын ухагдахуунаас хэрэглэнэ үү"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2396,53 +2386,28 @@ msgstr "Хоосон зайнаас бусад өөрчлөлтүүдийг хэ
 msgid "Load"
 msgstr "Файлаа оруулах"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Та энэ хуудаснаас хавсралт устгаж болохгүй!"
-
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
-msgstr ""
-"Хавсралт '%(target)s' (ремоут нэр '%(filename)s')  %(bytes)d "
-"bytesхадгалагдлаа."
-
 #, fuzzy
-msgid "New Page or New Attachment"
-msgstr "Шинэ хавсралт файл"
+msgid "Pagename not specified!"
+msgstr "Хавсралт файлын нэр алга байна!"
+
+msgid "Upload page content"
+msgstr ""
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
 
-msgid "New Attachment"
-msgstr "Шинэ хавсралт файл"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"Шинэ хавсралт нь хэзээ ч адил нэртэй файлаа даржбичдэггүй.\n"
-"Нэрийн зөрчил үүсвэл шинэ хавсралтад өөр нэролгогддог.\n"
-"Бусад тохиолдолд \"нэр өөрчлөх\" нүдийг хоосон орхих ба файлы үндсэн нэр "
-"хэрэглэгдэнэ."
+
+msgid "Comment"
+msgstr "Тайлбар"
 
 #, fuzzy
-msgid "attachment"
-msgstr "Хавсралт"
-
-msgid "overwrite"
-msgstr ""
-
-msgid "Upload"
-msgstr "Файлаа оруулах"
-
-#, fuzzy
-msgid "New Name"
-msgstr "Шинэ нэр"
+msgid "Page Name"
+msgstr "Багцын нэр"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "Та унших эрхгүй хуудсандаа бүртгүүлэх боломжгүй."
@@ -2497,9 +2462,6 @@ msgstr "Ялгаа"
 
 msgid "Editor"
 msgstr "Нийтлэгч"
-
-msgid "Comment"
-msgstr "Тайлбар"
 
 msgid "view"
 msgstr "үзүүлэх"
@@ -2689,6 +2651,9 @@ msgstr "Та унших эрхгүй хуудсан дахь Зөв бичих �
 msgid "You are now logged out."
 msgstr "Та логаут хийсэн байна."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2697,18 +2662,45 @@ msgstr ""
 "Энэхүү Викигийн мэйлийн функцийг идэвхижүүлж чадах эрх бүхийВики эзэмшигчтэй "
 "холбоо барина уу."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Мэйл хаягаа зөв оруулна уу!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "'%(email)s' гэсэн мэйл хаягтай хэрэглэгчийн данс олдсонгүй!"
 
 msgid "Mail me my account data"
 msgstr "Дансны мэдээлэл мэйлээр илгээх"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Бүгдийг сэргээх!"
+
+#, fuzzy
+msgid "New password"
+msgstr "Нууц үг"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Нууц үгээ давт"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Нууц үг"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Нууц үгээ давт"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Нууц үг алга байна. Хэрэглэгчийн нэр болон нууц үг оруулна уу."
 
 #, fuzzy
 msgid "Lost password"
@@ -2717,14 +2709,18 @@ msgstr "Нууц үг"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2750,10 +2746,6 @@ msgid ""
 "page."
 msgstr ""
 "Энэ хуудсанд <a href=\"%(link)s\">%(count)s хавсралт</a> хадгалагдсан байна."
-
-#, fuzzy, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "'%(filename)s'нэртэй хавсралт байна."
 
 msgid "Filename of attachment not specified!"
 msgstr "Хавсралт файлын нэр алга байна!"
@@ -2791,6 +2783,9 @@ msgstr "Энэ %(pagename)s хуудсанд хавсралт хадгалагд
 msgid "Edit drawing"
 msgstr "Зураг өөрчлөх"
 
+msgid "New Attachment"
+msgstr "Шинэ хавсралт файл"
+
 msgid "File to upload"
 msgstr "Шинэ хавсралт файл"
 
@@ -2800,14 +2795,14 @@ msgstr "нэр өөрчлөх"
 msgid "Overwrite existing attachment of same name"
 msgstr ""
 
+msgid "Upload"
+msgstr "Файлаа оруулах"
+
 msgid "Attached Files"
 msgstr "Хавсаргагдсан файлууд"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Та энэ хуудсанд файл хавсаргах боломжгүй!"
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Энэ вики-д файл хавсаргахыг зөвшөөрөхгүй!"
 
 #, fuzzy, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2817,6 +2812,10 @@ msgstr "Буруу үйлдэл: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "\"%(pagename)s\" -ийн хавсралтууд"
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Та энэ хуудасны хавсралтуудыг үзэж болохгүй."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2824,8 +2823,19 @@ msgstr ""
 "Хоосон файл. Файлын нэрнээс ASCII-тэмдэгтүүдийг нь арилгааддахин оролдоод "
 "үзнэ үү."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Хавсралт '%(target)s' (ремоут нэр '%(filename)s')  %(bytes)d "
+"bytesхадгалагдлаа."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Та энэ хуудсандд зураг хадгалж болохгүй."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Та энэ хуудаснаас хавсралт устгаж болохгүй!"
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2947,7 +2957,7 @@ msgstr "Та энэ хуудасны хавсралтуудыг үзэж бол�
 
 #, python-format
 msgid "attachment:%(filename)s of %(pagename)s"
-msgstr "%(pagename)s дахь <<Verbatim(attachment:)>>%(filename)s"
+msgstr "%(pagename)s дахь attachment:%(filename)s"
 
 #, python-format
 msgid "Full Link List for \"%s\""
@@ -2994,6 +3004,60 @@ msgstr "Та %(action_name)s үйлдлийг энэ хуудас дээр аж�
 
 msgid "Login and try again."
 msgstr "Та эхлээд логин хийгээд дараа нь ахиад оролдоод үзнэ үү."
+
+#, fuzzy
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Шинэ хавсралт файл"
+
+#, fuzzy
+#~ msgid "attachment"
+#~ msgstr "Хавсралт"
+
+#, fuzzy
+#~ msgid "New Name"
+#~ msgstr "Шинэ нэр"
+
+#, fuzzy
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "'%(filename)s'нэртэй хавсралт байна."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "Шинэ хавсралт нь хэзээ ч адил нэртэй файлаа даржбичдэггүй.\n"
+#~ "Нэрийн зөрчил үүсвэл шинэ хавсралтад өөр нэролгогддог.\n"
+#~ "Бусад тохиолдолд \"нэр өөрчлөх\" нүдийг хоосон орхих ба файлы үндсэн нэр "
+#~ "хэрэглэгдэнэ."
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Хэн нэг нь таны хэрэглэгчийн дансны мэдээллийн энэ мэйл хаяг руу "
+#~ "илгээхийгхүссэн байна.\n"
+#~ "\n"
+#~ "Та нууц үгээ мартсан бол дараах мэдээллийг оруулахба\n"
+#~ "нууц үгээ ЯГ ДООР ҮЗҮҮЛЖ БАЙГААГААР викигийн нууц үгийн хэсэгторуулна "
+#~ "(copy/paste хэрэглэнэ үү).\n"
+#~ "\n"
+#~ "Бүртгүүлж орсныхоо дараа нууц үгээ шинээрсоль.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr "'%(email)s' гэсэн мэйл хаягтай хэрэглэгчийн данс олдсонгүй!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Энэ вики-д файл хавсаргахыг зөвшөөрөхгүй!"
 
 #, fuzzy
 #~ msgid "SendMyPassword"

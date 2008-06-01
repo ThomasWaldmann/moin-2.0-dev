@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2008-03-12 15:01+0900\n"
 "Last-Translator: Seungik Lee <seungiklee@gmail.com>\n"
 "Language-Team: Korean <moin-devel@lists.sourceforge.net>\n"
@@ -32,9 +32,9 @@ msgstr "<알 수 없음>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "사용자 이름: %s\n"
 "\n"
@@ -43,23 +43,12 @@ msgstr ""
 "로그인 URL: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"누군가 이 메일 주소로 계정 정보를 전송하도록 요청했습니다.\n"
-"\n"
-"만약 암호를 잊었다면 아래 URL로 가서 사용자 이름와 함께 제시된 암호를 \n"
-"써 있는 그대로 입력하고 (복사해서 붙여넣기 하세요) \n"
-"로그인 하세요.\n"
-"\n"
-"성공적으로 로그인하신 후에는 기억하기 쉬운 새로운 암호로 변경할 것을 권장합니"
-"다.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -543,8 +532,9 @@ msgstr "로그인"
 msgid "Username"
 msgstr "사용자"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "문서 개수"
 
 msgid "Email"
 msgstr "Email"
@@ -1628,10 +1618,6 @@ msgstr "[여기까지 책갈피]"
 msgid "Contents"
 msgstr "차례"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "{{{\"%s\"}}} 대신 좀 더 구체적인 단어를 이용해서 검색해주세요!"
-
 msgid "Include system pages"
 msgstr "시스템 문서 포함"
 
@@ -1800,6 +1786,10 @@ msgstr "대소문자 구별"
 
 msgid "Search Text"
 msgstr "내용에서 찾기"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "{{{\"%s\"}}} 대신 좀 더 구체적인 단어를 이용해서 검색해주세요!"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2312,51 +2302,28 @@ msgstr "비교할 때 공백은 무시"
 msgid "Load"
 msgstr "로드"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "이 문서의 첨부 파일을 지울 수 있는 권한이 없습니다."
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "첨부 파일 이름이 지정되지 않았습니다!"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"첨부 파일 '%(target)s' (하드디스크에서의 이름 '%(filename)s', 크기 %(bytes)d "
-"바이트) 가(이) 저장되었습니다."
-
-msgid "New Page or New Attachment"
-msgstr "새 문서 및 첨부 파일"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"새로운 문서에 파일을 업로드하거나 현재 문서에 첨부할 파일을업로드할 수 있습니"
-"다."
 
-msgid "New Attachment"
-msgstr "새 첨부"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"업로드로는 원래 파일을 덮어 쓸 수 없습니다. 파일이름이 충돌하면,\n"
-"업로드하고자 하는 파일의 이름을 바꾸어야 합니다.\n"
-"\"이름 바꿈\"칸을 비워놓으면 원래의 파일 이름이 사용됩니다."
 
-msgid "attachment"
-msgstr "첨부"
+msgid "Comment"
+msgstr "설명"
 
-msgid "overwrite"
-msgstr "덮어쓰기"
-
-msgid "Upload"
-msgstr "업로드"
-
-msgid "New Name"
-msgstr "새 이름"
+#, fuzzy
+msgid "Page Name"
+msgstr "패키지 이름"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "문서의 변경 사항을 구독하기 위해서는 읽기 권한이 필요합니다."
@@ -2409,9 +2376,6 @@ msgstr "차이점 비교"
 
 msgid "Editor"
 msgstr "수정한 사람"
-
-msgid "Comment"
-msgstr "설명"
 
 msgid "view"
 msgstr "보기"
@@ -2585,6 +2549,9 @@ msgstr "읽을 수 없는 문서의 철자를 검사할 수 없습니다."
 msgid "You are now logged out."
 msgstr "로그아웃 되었습니다."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2592,18 +2559,45 @@ msgstr ""
 "이 위키는 메일 처리를 할 수 없도록 되어 있습니다. \n"
 "위키 관리자에게 연락하여 메일을 쓸 수 있도록 요청하세요."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "올바른 메일 주소를 써주세요!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "메일 주소가 '%(email)s'(으)로 되어있는 계정이 없습니다!"
 
 msgid "Mail me my account data"
 msgstr "계정 정보를 메일로 발송"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "모두 되돌리기!"
+
+#, fuzzy
+msgid "New password"
+msgstr "암호"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "암호 (확인)"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "암호"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "암호 (확인)"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "비밀번호가 없습니다. 사용자 이름과 비밀번호를 다시 입력하세요."
 
 #, fuzzy
 msgid "Lost password"
@@ -2612,14 +2606,18 @@ msgstr "암호"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2644,10 +2642,6 @@ msgid ""
 "There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
 "page."
 msgstr "이 문서에 <a href=\"%(link)s\">%(count)s개의 첨부 파일</a>이 있습니다."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "첨부 파일 '%(target)s'이(가) 이미 존재함."
 
 msgid "Filename of attachment not specified!"
 msgstr "첨부 파일 이름이 지정되지 않았습니다!"
@@ -2682,6 +2676,9 @@ msgstr "%(pagename)s 에는 첨부 파일이 없음."
 msgid "Edit drawing"
 msgstr "그림 수정"
 
+msgid "New Attachment"
+msgstr "새 첨부"
+
 msgid "File to upload"
 msgstr "업로드할 파일"
 
@@ -2691,14 +2688,14 @@ msgstr "새 이름:"
 msgid "Overwrite existing attachment of same name"
 msgstr ""
 
+msgid "Upload"
+msgstr "업로드"
+
 msgid "Attached Files"
 msgstr "첨부 파일"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "이 문서에 파일을 첨부할 수 있는 권한이 없습니다."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "이 위키에 파일을 첨부할 수 없습니다.!"
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2708,6 +2705,10 @@ msgstr "지원되지 않는 업로드 액션: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "\"%(pagename)s\"의 첨부파일들"
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "이 문서에 첨부된 파일을 볼 수 있는 권한이 없습니다."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2715,8 +2716,19 @@ msgstr ""
 "파일 내용이 전송되지 않았습니다. ASCII 문자만으로 이루어진 파일 이름을 사용해"
 "보세요."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"첨부 파일 '%(target)s' (하드디스크에서의 이름 '%(filename)s', 크기 %(bytes)d "
+"바이트) 가(이) 저장되었습니다."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "이 문서에 그림을 저장할 수 있는 권한이 없습니다."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "이 문서의 첨부 파일을 지울 수 있는 권한이 없습니다."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2835,7 +2847,7 @@ msgstr "이 문서에 첨부된 파일을 볼 수 있는 권한이 없습니다.
 
 #, python-format
 msgid "attachment:%(filename)s of %(pagename)s"
-msgstr "%(pagename)s의 <<Verbatim(attachment:)>>%(filename)s"
+msgstr "%(pagename)s의 attachment:%(filename)s"
 
 #, python-format
 msgid "Full Link List for \"%s\""
@@ -2885,6 +2897,65 @@ msgstr "이 문서에 %(action_name)s 작업을 수행할 수 있는 권한이 �
 
 msgid "Login and try again."
 msgstr "로그인 후 다시 시도하세요."
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "새 문서 및 첨부 파일"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr ""
+#~ "새로운 문서에 파일을 업로드하거나 현재 문서에 첨부할 파일을업로드할 수 있"
+#~ "습니다."
+
+#~ msgid "attachment"
+#~ msgstr "첨부"
+
+#~ msgid "New Name"
+#~ msgstr "새 이름"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "첨부 파일 '%(target)s'이(가) 이미 존재함."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "업로드로는 원래 파일을 덮어 쓸 수 없습니다. 파일이름이 충돌하면,\n"
+#~ "업로드하고자 하는 파일의 이름을 바꾸어야 합니다.\n"
+#~ "\"이름 바꿈\"칸을 비워놓으면 원래의 파일 이름이 사용됩니다."
+
+#~ msgid "overwrite"
+#~ msgstr "덮어쓰기"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "누군가 이 메일 주소로 계정 정보를 전송하도록 요청했습니다.\n"
+#~ "\n"
+#~ "만약 암호를 잊었다면 아래 URL로 가서 사용자 이름와 함께 제시된 암호를 \n"
+#~ "써 있는 그대로 입력하고 (복사해서 붙여넣기 하세요) \n"
+#~ "로그인 하세요.\n"
+#~ "\n"
+#~ "성공적으로 로그인하신 후에는 기억하기 쉬운 새로운 암호로 변경할 것을 권장"
+#~ "합니다.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr "메일 주소가 '%(email)s'(으)로 되어있는 계정이 없습니다!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "이 위키에 파일을 첨부할 수 없습니다.!"
 
 #~ msgid "SendMyPassword"
 #~ msgstr "암호 전송"
