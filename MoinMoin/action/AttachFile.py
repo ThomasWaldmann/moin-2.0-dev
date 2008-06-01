@@ -29,6 +29,9 @@
 
 import os, time, zipfile, mimetypes, errno
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 from MoinMoin import config, wikiutil, packages
 from MoinMoin.Page import Page
 from MoinMoin.util import filesys, timefuncs
@@ -163,7 +166,22 @@ def info(pagename, request):
     return "\n<p>\n%s\n</p>\n" % attach_info
 
 
+def _write_stream(content, stream, bufsize=8192):
+    if hasattr(content, 'read'): # looks file-like
+        import shutil
+        shutil.copyfileobj(content, stream, bufsize)
+    elif isinstance(content, str):
+        stream.write(content)
+    else:
+        logging.error("unsupported content object: %r" % content)
+        raise
+
 def add_attachment(request, pagename, target, filecontent, overwrite=0):
+    """ save <filecontent> to an attachment <target> of page <pagename>
+
+        filecontent can be either a str (in memory file content),
+        or an open file object (file content in e.g. a tempfile).
+    """
     _ = request.getText
 
     # replace illegal chars
@@ -175,7 +193,7 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     fpath = os.path.join(attach_dir, target).encode(config.charset)
     exists = os.path.exists(fpath)
     if exists and not overwrite:
-        msg = _("Attachment '%(target)s' already exists.") % {'target': target, }
+        raise AttachmentAlreadyExists
     else:
         if exists:
             try:
@@ -184,16 +202,17 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
                 pass
         stream = open(fpath, 'wb')
         try:
-            stream.write(filecontent)
+            _write_stream(filecontent, stream)
         finally:
             stream.close()
 
         _addLogEntry(request, 'ATTNEW', pagename, target)
 
-        event = FileAttachedEvent(request, pagename, target, len(filecontent))
+        filesize = os.path.getsize(fpath)
+        event = FileAttachedEvent(request, pagename, target, filesize)
         send_event(event)
 
-        return target
+    return target, filesize
 
 
 #############################################################################
@@ -441,10 +460,7 @@ def send_uploadform(pagename, request):
     # This avoids usability issues if you have to scroll down a lot to upload
     # a new file when the page already has lots of attachments:
     if writeable:
-        request.write('<h2>' + _("New Attachment") + '</h2><p>' +
-_("""An upload will never overwrite an existing file. If there is a name
-conflict, you have to rename the file that you want to upload.
-Otherwise, if "Rename to" is left blank, the original filename will be used.""") + '</p>')
+        request.write('<h2>' + _("New Attachment") + '</h2>')
         request.write("""
 <form action="%(baseurl)s/%(pagename)s" method="POST" enctype="multipart/form-data">
 <dl>
@@ -522,6 +538,17 @@ def upload_form(pagename, request, msg=''):
     request.theme.send_closing_html()
 
 
+def preprocess_filename(filename):
+    """ preprocess the filename we got from upload form,
+        strip leading drive and path (IE misbehaviour)
+    """
+    if filename and len(filename) > 1 and (filename[1] == ':' or filename[0] == '\\'): # C:.... or \path... or \\server\...
+        bsindex = filename.rfind('\\')
+        if bsindex >= 0:
+            filename = filename[bsindex+1:]
+    return filename
+
+
 def _do_upload(pagename, request):
     _ = request.getText
     # Currently we only check TextCha for upload (this is what spammers ususally do),
@@ -529,53 +556,42 @@ def _do_upload(pagename, request):
     if not TextCha(request).check_answer_from_form():
         return _('TextCha: Wrong answer! Go back and try again...')
 
-    overwrite = request.form.get('overwrite', ['0'])[0]
+    form = request.form
+    overwrite = form.get('overwrite', [u'0'])[0]
     try:
         overwrite = int(overwrite)
     except:
         overwrite = 0
 
-    if (overwrite or not request.user.may.write(pagename)) and \
-       (not overwrite or not request.user.may.write(pagename) or not request.user.may.delete(pagename)):
+    if not request.user.may.write(pagename):
         return _('You are not allowed to attach a file to this page.')
 
-    if 'file' not in request.form:
+    if overwrite and not request.user.may.delete(pagename):
+        return _('You are not allowed to overwrite a file attachment of this page.')
+
+    filename = form.get('file__filename__')
+    rename = form.get('rename', [u''])[0].strip()
+    if rename:
+        target = rename
+    else:
+        target = filename
+
+    target = preprocess_filename(target)
+    target = wikiutil.clean_input(target)
+
+    if not target:
+        return _("Filename of attachment not specified!")
+
+    # get file content
+    filecontent = request.form.get('file', [None])[0]
+    if filecontent is None:
         # This might happen when trying to upload file names
         # with non-ascii characters on Safari.
         return _("No file content. Delete non ASCII characters from the file name and try again.")
 
-    # make filename
-    filename = request.form.get('file__filename__')
-    rename = request.form.get('rename', [None])[0]
-    if rename:
-        rename = rename.strip()
-
-    # if we use twisted, "rename" field is NOT optional, because we
-    # can't access the client filename
-    if rename:
-        target = rename
-        # clear rename its only once wanted
-        request.form['rename'][0] = u''
-    elif filename:
-        target = filename
-    else:
-        return _("Filename of attachment not specified!")
-
-    # get file content
-    filecontent = request.form['file'][0]
-
-    # preprocess the filename
-    # strip leading drive and path (IE misbehaviour)
-    if len(target) > 1 and (target[1] == ':' or target[0] == '\\'): # C:.... or \path... or \\server\...
-        bsindex = target.rfind('\\')
-        if bsindex >= 0:
-            target = target[bsindex+1:]
-
     # add the attachment
     try:
-        add_attachment(request, pagename, target, filecontent, overwrite=overwrite)
-
-        bytes = len(filecontent)
+        target, bytes = add_attachment(request, pagename, target, filecontent, overwrite=overwrite)
         msg = _("Attachment '%(target)s' (remote name '%(filename)s')"
                 " with %(bytes)d bytes saved.") % {
                 'target': target, 'filename': filename, 'bytes': bytes}
@@ -601,29 +617,34 @@ def _do_savedrawing(pagename, request):
 
     # get directory, and possibly create it
     attach_dir = getAttachDir(request, pagename, create=1)
+    savepath = os.path.join(attach_dir, basename + ext)
 
     if ext == '.draw':
         _addLogEntry(request, 'ATTDRW', pagename, basename + ext)
+        filecontent = filecontent.read() # read file completely into memory
         filecontent = filecontent.replace("\r", "")
+    elif ext == '.map':
+        filecontent = filecontent.read() # read file completely into memory
+        filecontent = filecontent.strip()
 
-    savepath = os.path.join(attach_dir, basename + ext)
-    if ext == '.map' and not filecontent.strip():
-        # delete map file if it is empty
+    if filecontent:
+        # filecontent is either a file or a non-empty string
+        stream = open(savepath, 'wb')
+        try:
+            _write_stream(filecontent, stream)
+        finally:
+            stream.close()
+    else:
+        # filecontent is empty string (e.g. empty map file), delete the target file
         try:
             os.unlink(savepath)
         except OSError, err:
             if err.errno != errno.ENOENT: # no such file
                 raise
-    else:
-        stream = open(savepath, 'wb')
-        try:
-            stream.write(filecontent)
-        finally:
-            stream.close()
 
     # touch attachment directory to invalidate cache if new map is saved
     if ext == '.map':
-        os.utime(getAttachDir(request, pagename), None)
+        os.utime(attach_dir, None)
 
     request.emit_http_headers()
     request.write("OK")
@@ -769,8 +790,6 @@ def _do_move(pagename, request):
 
 
 def _do_get(pagename, request):
-    import shutil
-
     _ = request.getText
 
     pagename, filename, fpath = _access_file(pagename, request)
@@ -805,7 +824,7 @@ def _do_get(pagename, request):
         ])
 
         # send data
-        shutil.copyfileobj(open(fpath, 'rb'), request, 8192)
+        request.send_file(open(fpath, 'rb'))
 
 
 def _do_install(pagename, request):

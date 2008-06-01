@@ -11,10 +11,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: MoinMoin 1.6\n"
+"Project-Id-Version: MoinMoin 1.7\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
-"PO-Revision-Date: 2006-09-13 09:30+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
+"PO-Revision-Date: 2008-05-10 22:31+0200\n"
 "Last-Translator: Radomirs Cirskis <nad2000 AT gmail DOT NO SPAM com>\n"
 "Language-Team: Latvian <nad2000 AT gmail DOT NO SPAM com>\n"
 "MIME-Version: 1.0\n"
@@ -32,9 +32,9 @@ msgstr "<nezināms>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Lietotāja vārds: %s\n"
 "\n"
@@ -43,23 +43,19 @@ msgstr ""
 "Lietotāja URL: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Kāds pieprasīja izsūtīt savus konta datus uz šo e-pasta adresi.\n"
+"Kāds ir pieprasījis nosūtīt jums paroles atjaunošanas \"marķieri\".\n"
 "\n"
-"Ja Jūs esat aizmirsis paroli, lūdzu ievadiet šos datus un paroli KĀ NORĀDĪTS "
-"ŠEIT\n"
-" (izmantojiet kopēt/ielīmēt(copy/paste), lai dati būtu precīzi).\n"
-"\n"
-"Pēc veiksmīgas ieiešanas sistēmā vēlams nomainītu veco paroli un izveidot "
-"jaunu.\n"
+"Ja jūs aizmīrsāt savu paroli, lūdzu atveriet paroles atjaunošanas URL zemāk "
+"vai\n"
+"dodieties uz paroles atjaunošanas lapu atkal un ievadiet savu lietotāja "
+"vārdu un\n"
+"atjaunošanas \"marķieri\".\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -356,7 +352,7 @@ msgid ""
 msgstr "Jūs nevarat mainīt pieejas tiesības, Jums nav adminstratora tiesību!"
 
 msgid "Notifications sent to:"
-msgstr ""
+msgstr "Notifikācija nosūtīta uz:"
 
 #, python-format
 msgid ""
@@ -460,7 +456,7 @@ msgstr "Fails %s pakotnē netika atrasts."
 
 #, python-format
 msgid "Invalid highlighting regular expression \"%(regex)s\": %(error)s"
-msgstr ""
+msgstr "Nepareiza izcelšanas regulārā izteiksme \"%(regex)s\": %(error)s"
 
 msgid ""
 "The backed up content of this page is deprecated and will not be included in "
@@ -560,8 +556,9 @@ msgstr "Ieiet"
 msgid "Username"
 msgstr "Lietotājs"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Lapu skaits"
 
 msgid "Email"
 msgstr "E-pasts"
@@ -1000,7 +997,7 @@ msgid "SpellCheck"
 msgstr "Pareizrakstība"
 
 msgid "Discussion"
-msgstr ""
+msgstr "Diskusija"
 
 #, python-format
 msgid ""
@@ -1010,43 +1007,41 @@ msgstr ""
 "atļauts."
 
 msgid "Notification"
-msgstr ""
+msgstr "Notifikācija"
 
 msgid "Notification settings saved!"
-msgstr ""
+msgstr "Notifikāciju iestatījumi saglabāti!"
 
-#, fuzzy
 msgid "'''Email'''"
-msgstr "E-pasts"
+msgstr "'''E-pasts'''"
 
 msgid "'''Jabber'''"
-msgstr ""
+msgstr "'''Jabber'''"
 
 msgid "'''Event type'''"
-msgstr ""
+msgstr "'''Notikuma veids'''"
 
 msgid "Select the events you want to be notified about."
-msgstr ""
+msgstr "Atzīmējiet notikumus, par kuriem vēlaties saņemt notifikācijas."
 
 msgid ""
 "Before you can be notified, you need to provide a way to contact you in the "
 "general preferences."
 msgstr ""
+"Pirms notifikāciju saņemšanas Jums vispārējos iestatījumos jānorāda veidu, "
+"kā Jūs sava kontakt informācija"
 
-#, fuzzy
 msgid "Subscribed events"
-msgstr "Parakstīt lietotāju"
+msgstr "Parakstītie notikumi"
 
-#, fuzzy
 msgid "Subscribed wiki pages<<BR>>(one regex per line)"
-msgstr "Parakstītās Viki lapas (pa vienai lapai rindā)"
+msgstr "Parakstītās Viki lapas<<BR>>(pa vienai regulārai izteiksmei rindā)"
 
 msgid "Save"
 msgstr "Saglabāt"
 
-#, fuzzy
 msgid "Change password"
-msgstr "Parole"
+msgstr "Nomainīt paroli"
 
 msgid "Passwords don't match!"
 msgstr "Paroles nesakrīt!"
@@ -1059,19 +1054,19 @@ msgid "Password not acceptable: %s"
 msgstr "Parole nav akceptējama: %s"
 
 msgid "Your password has been changed."
-msgstr ""
+msgstr "Jūsu parole ir nomainīta."
 
 msgid "To change your password, enter a new password twice."
-msgstr ""
+msgstr "Lai nomainītu paroli, veco paroli ievadiet divas reizes."
 
 msgid "Password repeat"
 msgstr "Atkārtot paroli"
 
 msgid "Switch user"
-msgstr ""
+msgstr "Nomainīt lietotāju"
 
 msgid "No user selected"
-msgstr ""
+msgstr "Lietotājs nav izvēlēts"
 
 msgid ""
 "You can now change the settings of the selected user account; log out to get "
@@ -1079,7 +1074,7 @@ msgid ""
 msgstr ""
 
 msgid "You are the only user."
-msgstr ""
+msgstr "Jūs esat vienīgais lietotājs."
 
 msgid ""
 "As a superuser, you can temporarily assume the identity of another user."
@@ -1089,35 +1084,34 @@ msgid "Select User"
 msgstr "Izvēlēties lietotāju"
 
 msgid "OpenID settings"
-msgstr ""
+msgstr "OpenID iestatījumi"
 
 msgid "Cannot remove all OpenIDs."
-msgstr ""
+msgstr "Nevar izdzēst visus OpenID identifikatorus."
 
 msgid "The selected OpenIDs have been removed."
-msgstr ""
+msgstr "Norādītie OpenID identifikatori ir dzēsti."
 
 msgid "No OpenID given."
-msgstr ""
+msgstr "OpenID identifikators nav norādīts."
 
 msgid "OpenID is already present."
-msgstr ""
+msgstr "Šāds OpenID identifikators jau ir norādīts."
 
-#, fuzzy
 msgid "This OpenID is already used for another account."
-msgstr "Šāda lapa jau ir izdzēsta vai nekad nav eksistējusi!"
+msgstr "Šāds OpenID identifikators jau tiek lietots ar citu kontu."
 
 msgid "OpenID added successfully."
-msgstr ""
+msgstr "OpenID identifikators pievienots veiksmīgi."
 
 msgid "Current OpenIDs"
-msgstr ""
+msgstr "Pašreizējais OpenID identifikators."
 
 msgid "Remove selected"
-msgstr ""
+msgstr "Dzēst atzīmēto"
 
 msgid "Add OpenID"
-msgstr ""
+msgstr "Pievienot OpenID identifikatoru"
 
 msgid "Preferences"
 msgstr "Iestatījumi"
@@ -1650,10 +1644,6 @@ msgstr "[Šeit ielikta grāmatzīme]"
 msgid "Contents"
 msgstr "Satura rādītājs"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Lūdzu, norādiet konkrētāku meklējamo terminu {{{\"%s\"}}} vietā"
-
 msgid "Include system pages"
 msgstr "Iekļaut sistēmas lapas"
 
@@ -1822,6 +1812,10 @@ msgstr "Rakstzīmju jūtīga meklēšana"
 
 msgid "Search Text"
 msgstr "Meklēt tekstā"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Lūdzu, norādiet konkrētāku meklējamo terminu {{{\"%s\"}}} vietā"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2368,50 +2362,28 @@ msgstr "Ignorēt atstarpju(probelu) starpību"
 msgid "Load"
 msgstr "Ielādēt"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Jūs nedrīkstat dzēst šīs lapas piesaistes."
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "Nav norādīts piesaistes faila vārds!"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"Piesaiste '%(target)s' (no faila '%(filename)s') ar izmēru %(bytes)d baiti "
-"pievienota."
-
-msgid "New Page or New Attachment"
-msgstr "Jauna lapa vai jauna piesaiste"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"Jūs varat augšuplādēt datni jaunā lapā vai izvēlēties augšuplādēt datni kā "
-"piesaisti pašreizējai lapai"
 
-msgid "New Attachment"
-msgstr "Jauna Piesaiste"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"Ja lapai jau ir piesaistes fails ar šādu nosaukumu, ievadlaukā \"Pārdēvēt\" "
-"norādiet citu piesaistes faila nosaukumu."
 
-msgid "attachment"
-msgstr "piesaiste"
+msgid "Comment"
+msgstr "Komentārs"
 
-msgid "overwrite"
-msgstr "pārrakstīt"
-
-msgid "Upload"
-msgstr "Ielādēt"
-
-msgid "New Name"
-msgstr "Jauns nosaukums"
+#, fuzzy
+msgid "Page Name"
+msgstr "Saiņa nosaukums"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "Jūs nedrīkstat parakstīties uz lapu, kuru Jums nav tiesību lasīt."
@@ -2464,9 +2436,6 @@ msgstr "Atšķirība"
 
 msgid "Editor"
 msgstr "Redaktors"
-
-msgid "Comment"
-msgstr "Komentārs"
 
 msgid "view"
 msgstr "skats"
@@ -2605,7 +2574,7 @@ msgid "Create Profile"
 msgstr "Izveidot profilu"
 
 msgid "Create Account"
-msgstr ""
+msgstr "Izveidot kontu"
 
 msgid "You must login to add a quicklink."
 msgstr "Lai izveidotu ātrsaiti, Jums jāpieslēdzas."
@@ -2649,6 +2618,11 @@ msgstr "Jūs nevarat pārbaudīt pareizrakstību lapā, kuru nedrīkstat lasīt.
 msgid "You are now logged out."
 msgstr "Jūs esat atslēgts(-a)."
 
+#, fuzzy
+msgid "If this account exists an email was sent."
+msgstr ""
+"Ja konts ar šādu lietotāja vārdu jau eksistē, e-pasta ziņojumums ir nosūtīts."
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2656,19 +2630,46 @@ msgstr ""
 "Šajā viki pasta sūtīšana ir aizliegta.\n"
 "Sazinieties ar viki īpašnieku, lai viņš piešķir jums tiesības lietot e-pastu."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Lūdzu, norādiet pareizu e-pasta adresi!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-"Ja konts ar šādu lietotāja vārdu jau eksistē, e-pasta ziņojumums ir nosūtīts."
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "Lietotājs ar šādu e-pasta adresi '%(email)s' nav atrasts!"
 
 msgid "Mail me my account data"
 msgstr "Atsūtīt mana sistēmas konta datus"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Atgriezt visu!"
+
+#, fuzzy
+msgid "New password"
+msgstr "Nomainīt paroli"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Atkārtot paroli"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Parole"
+
+#, fuzzy
+msgid "Your password has been changed, you can log in now."
+msgstr "Jūsu parole ir nomainīta."
+
+msgid "Your token is invalid!"
+msgstr "Jūsu \"marķieris\" ir nederīgs!"
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Atkārtot paroli"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Lai nomainītu paroli, veco paroli ievadiet divas reizes."
 
 #, fuzzy
 msgid "Lost password"
@@ -2677,14 +2678,18 @@ msgstr "Parole"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2709,10 +2714,6 @@ msgid ""
 "There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
 "page."
 msgstr "Šai lapai ir <a href=\"%(link)s\">%(count)s piesaistes</a>. "
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "Piesaiste '%(target)s' jau eksistē."
 
 msgid "Filename of attachment not specified!"
 msgstr "Nav norādīts piesaistes faila vārds!"
@@ -2749,6 +2750,9 @@ msgstr "Lapai %(pagename)s nav piesaistes"
 msgid "Edit drawing"
 msgstr "Labot attēlu"
 
+msgid "New Attachment"
+msgstr "Jauna Piesaiste"
+
 msgid "File to upload"
 msgstr "Augšupielādējamais fails"
 
@@ -2758,14 +2762,14 @@ msgstr "Pārdēvēt par"
 msgid "Overwrite existing attachment of same name"
 msgstr "Pārrakstīt piesaisti ar šādu nosaukumu"
 
+msgid "Upload"
+msgstr "Ielādēt"
+
 msgid "Attached Files"
 msgstr "Piesaistītie faili"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Jūs nedrīkstat veidot piesaistes šai lapai."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Šajā Viki lapu piesaistes ir aizliegti!"
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2775,14 +2779,29 @@ msgstr "Neatbalstīta AttachFile apakšdarbība: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Lapas \"%(pagename)s\" piesaistes"
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Jums nav tiesību skatīt šīs lapas piesaistes."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
 msgstr ""
 "Tukšs faila saturs. Nodzēsiet visus NE ASCII simbolus un mēģiniet vēlreiz."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Piesaiste '%(target)s' (no faila '%(filename)s') ar izmēru %(bytes)d baiti "
+"pievienota."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Šajā lapā Jūs nedrīkstat veidot attēlus."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Jūs nedrīkstat dzēst šīs lapas piesaistes."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2949,6 +2968,64 @@ msgstr "Jums nav tiesību veikt darbību %(action_name)s šajā lapā."
 
 msgid "Login and try again."
 msgstr "Pieslēdzieties un mēģiniet vēlreiz."
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Jauna lapa vai jauna piesaiste"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr ""
+#~ "Jūs varat augšuplādēt datni jaunā lapā vai izvēlēties augšuplādēt datni "
+#~ "kā piesaisti pašreizējai lapai"
+
+#~ msgid "attachment"
+#~ msgstr "piesaiste"
+
+#~ msgid "New Name"
+#~ msgstr "Jauns nosaukums"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "Piesaiste '%(target)s' jau eksistē."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "Ja lapai jau ir piesaistes fails ar šādu nosaukumu, ievadlaukā \"Pārdēvēt"
+#~ "\" norādiet citu piesaistes faila nosaukumu."
+
+#~ msgid "overwrite"
+#~ msgstr "pārrakstīt"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Kāds pieprasīja izsūtīt savus konta datus uz šo e-pasta adresi.\n"
+#~ "\n"
+#~ "Ja Jūs esat aizmirsis paroli, lūdzu ievadiet šos datus un paroli KĀ "
+#~ "NORĀDĪTS ŠEIT\n"
+#~ " (izmantojiet kopēt/ielīmēt(copy/paste), lai dati būtu precīzi).\n"
+#~ "\n"
+#~ "Pēc veiksmīgas ieiešanas sistēmā vēlams nomainītu veco paroli un izveidot "
+#~ "jaunu.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr "Lietotājs ar šādu e-pasta adresi '%(email)s' nav atrasts!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Šajā Viki lapu piesaistes ir aizliegti!"
 
 #~ msgid "SendMyPassword"
 #~ msgstr "AtsūtītManuParoli"

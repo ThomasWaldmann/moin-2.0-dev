@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2007-04-22 18:50+0100\n"
 "Last-Translator: Jonas Smedegaard <dr@jones.dk>\n"
 "Language-Team: Danish <moin-devel@lists.sourceforge.net>\n"
@@ -33,9 +33,9 @@ msgstr "<ukendt>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Brugernavn: %s\n"
 "\n"
@@ -44,23 +44,12 @@ msgstr ""
 "Adgangs-URL: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Nogen har bedt om at dine adgangsdata bliver tilsendt denne email-adresse.\n"
-"\n"
-"Hvis du har mistet din adgangskode, kan du bruge informationerne nedenfor og "
-"blot angive\n"
-"adgangskoden PRÆCIST SOM VIST i wiki'ens adgangskode-formularfelt.\n"
-"\n"
-"Når du er korrekt logget ind, er det naturligvis en god idé at ændre "
-"adgangskoden.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -560,8 +549,9 @@ msgstr "Log ind"
 msgid "Username"
 msgstr "Bruger"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Antal sider"
 
 msgid "Email"
 msgstr "Email-adresse"
@@ -1648,10 +1638,6 @@ msgstr "[Bogmærke nået]"
 msgid "Contents"
 msgstr "Indhold"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Brug venligst mere præcise søgekriterier end {{{\"%s\"}}}"
-
 msgid "Include system pages"
 msgstr "Medtag systemsider"
 
@@ -1822,6 +1808,10 @@ msgstr "Søgning med skelnen mellem STORE og små bogstaver"
 
 msgid "Search Text"
 msgstr "Søg i tekst"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Brug venligst mere præcise søgekriterier end {{{\"%s\"}}}"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2389,52 +2379,28 @@ msgstr "Ignorér forskelle i antal mellemrum"
 msgid "Load"
 msgstr "Overfør"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Du har ikke lov til at slette vedhæftninger på denne side."
-
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
-msgstr ""
-"Vedhæftning '%(target)s' (eksternt navn '%(filename)s') på %(bytes)d bytes "
-"gemt."
-
 #, fuzzy
-msgid "New Page or New Attachment"
-msgstr "Ny vedhæftning"
+msgid "Pagename not specified!"
+msgstr "Filnavn for vedhæftning ikke angivet!"
+
+msgid "Upload page content"
+msgstr ""
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
 
-msgid "New Attachment"
-msgstr "Ny vedhæftning"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"En overførsel overskriver aldrig en eksisterende fil. Hvis der opstår\n"
-"navnekonflikt, skal du omdøbe den fil du vil lægge op.\n"
-"Alternativt, hvis \"Omdøb\" er blank, anvendes det originale filnavn."
+
+msgid "Comment"
+msgstr "Kommentar"
 
 #, fuzzy
-msgid "attachment"
-msgstr "Vedhæftninger"
-
-msgid "overwrite"
-msgstr ""
-
-msgid "Upload"
-msgstr "Overfør"
-
-#, fuzzy
-msgid "New Name"
-msgstr "Nyt navn"
+msgid "Page Name"
+msgstr "Pakkenavn"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "Du har ikke lov til at abonnere på en side du ikke kan læse!"
@@ -2486,9 +2452,6 @@ msgstr "Find forskelle"
 
 msgid "Editor"
 msgstr "Forfatter"
-
-msgid "Comment"
-msgstr "Kommentar"
 
 msgid "view"
 msgstr "vis"
@@ -2672,6 +2635,9 @@ msgstr "Du kan ikke stavekontrollere en side du ikke kan læse."
 msgid "You are now logged out."
 msgstr "Du er nu logget ud."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2679,19 +2645,45 @@ msgstr ""
 "Denne wiki har ikke aktiveret email-håndtering.\n"
 "Kontakt ejeren af wiki'en, som kan aktivere email."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Angiv venligst en korrekt email-adresse!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr ""
-"Ingen brugerprofil blev fundet med den angivne email-adresse '%(email)s'!"
 
 msgid "Mail me my account data"
 msgstr "Send mig mine adgangsoplysninger pr. email"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Omgør alt!"
+
+#, fuzzy
+msgid "New password"
+msgstr "Adgangskode"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Adgangskode gentaget"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Adgangskode"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Adgangskode gentaget"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Manglende adgangskode. Angiv venligst brugernavn og adgangskode."
 
 #, fuzzy
 msgid "Lost password"
@@ -2700,14 +2692,18 @@ msgstr "Adgangskode"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2734,10 +2730,6 @@ msgid ""
 msgstr ""
 "Der er <a href=\"%(link)s\">%(count)s vedhæftning(er)</a> gemt for denne "
 "side."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "Vedhæftning '%(target)s' eksisterer allerede."
 
 msgid "Filename of attachment not specified!"
 msgstr "Filnavn for vedhæftning ikke angivet!"
@@ -2773,6 +2765,9 @@ msgstr "Ingen vedhæftninger tilknyttet %(pagename)s"
 msgid "Edit drawing"
 msgstr "Redigér tegning"
 
+msgid "New Attachment"
+msgstr "Ny vedhæftning"
+
 msgid "File to upload"
 msgstr "Fil at overføre"
 
@@ -2782,14 +2777,14 @@ msgstr "Omdøb til"
 msgid "Overwrite existing attachment of same name"
 msgstr "Overskriv eksisterende vedhæftning af samme navn"
 
+msgid "Upload"
+msgstr "Overfør"
+
 msgid "Attached Files"
 msgstr "Vedhæftede filer"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Du har ikke lov til at vedhæfte en fil til denne side."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Vedhæftede filer er ikke tilladt i denne wiki!"
 
 #, fuzzy, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2799,6 +2794,10 @@ msgstr "Overførselsrutine ikke understøttet: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Vedhæftninger til \"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Du har ikke lov til at se vedhæftninger til denne side."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2806,8 +2805,19 @@ msgstr ""
 "Intet indhold i fil. Slet ikke-ASCII tegn (specielle bogstaver og tegn) fra "
 "filnavnet og prøv igen."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Vedhæftning '%(target)s' (eksternt navn '%(filename)s') på %(bytes)d bytes "
+"gemt."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Du har ikke lov til at gemme en tegning på denne side!"
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Du har ikke lov til at slette vedhæftninger på denne side."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2975,6 +2985,60 @@ msgstr "Du har ikke lov til at anvende %(action_name)s på denne side!"
 
 msgid "Login and try again."
 msgstr "Log på og prøv igen."
+
+#, fuzzy
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Ny vedhæftning"
+
+#, fuzzy
+#~ msgid "attachment"
+#~ msgstr "Vedhæftninger"
+
+#, fuzzy
+#~ msgid "New Name"
+#~ msgstr "Nyt navn"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "Vedhæftning '%(target)s' eksisterer allerede."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "En overførsel overskriver aldrig en eksisterende fil. Hvis der opstår\n"
+#~ "navnekonflikt, skal du omdøbe den fil du vil lægge op.\n"
+#~ "Alternativt, hvis \"Omdøb\" er blank, anvendes det originale filnavn."
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Nogen har bedt om at dine adgangsdata bliver tilsendt denne email-"
+#~ "adresse.\n"
+#~ "\n"
+#~ "Hvis du har mistet din adgangskode, kan du bruge informationerne nedenfor "
+#~ "og blot angive\n"
+#~ "adgangskoden PRÆCIST SOM VIST i wiki'ens adgangskode-formularfelt.\n"
+#~ "\n"
+#~ "Når du er korrekt logget ind, er det naturligvis en god idé at ændre "
+#~ "adgangskoden.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr ""
+#~ "Ingen brugerprofil blev fundet med den angivne email-adresse '%(email)s'!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Vedhæftede filer er ikke tilladt i denne wiki!"
 
 #, fuzzy
 #~ msgid "SendMyPassword"

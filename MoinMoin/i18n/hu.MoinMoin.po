@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2006-06-15 15:55+0200\n"
 "Last-Translator: jmarton@omikk.bme.hu, arostas@omikk.bme.hu\n"
 "Language-Team: Hungarian <HU@li.org>\n"
@@ -32,31 +32,21 @@ msgstr "<ismeretlen>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Belépési név: %s \n"
 "Belépési jelszó: %s\n"
 "Belépési URL: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Valaki kérte, hogy küldjük el az Ön felhasználói adatait erre a címre.\n"
-"\n"
-"Ha elvesztette a jelszavát kérjük az alábbiakban megadott jelszót írja be "
-"PONTOSAN\n"
-"a jelszó-mezőbe (legcélszerűbb ha bemásolja).\n"
-"\n"
-"Miután sikeresen belépett kérjük írja át a jelszót!\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -551,8 +541,9 @@ msgstr "Belépés"
 msgid "Username"
 msgstr "Felhasználó"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Lapok száma"
 
 msgid "Email"
 msgstr "E-levél"
@@ -1630,10 +1621,6 @@ msgstr "[Könyvjelző]"
 msgid "Contents"
 msgstr "Tartalomjegyzék"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Kérjük a(z) {{{\"%s\"}}} helyett használjon szelektívebb kifejezést!"
-
 msgid "Include system pages"
 msgstr "A rendszerlapok szerepeljenek"
 
@@ -1812,6 +1799,10 @@ msgstr "Keresésnél a kis/nagybetű számít"
 
 msgid "Search Text"
 msgstr "Szövegkeresés"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Kérjük a(z) {{{\"%s\"}}} helyett használjon szelektívebb kifejezést!"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2351,53 +2342,28 @@ msgstr "A szóközmennyiség változásának figyelmen kívül hagyása"
 msgid "Load"
 msgstr "Feltöltés"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "A mellékletek törlése nem engedélyezett ezen a lapon."
-
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
-msgstr ""
-"A(z) '%(target)s' (a távoli neve '%(filename)s') melléklet elmentve, hossza %"
-"(bytes)d byte"
-
 #, fuzzy
-msgid "New Page or New Attachment"
-msgstr "Új melléklet"
+msgid "Pagename not specified!"
+msgstr "A melléklet nevét nem adta meg!"
+
+msgid "Upload page content"
+msgstr ""
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
 
-msgid "New Attachment"
-msgstr "Új melléklet"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"A föltöltés sohasem ír fölül egy létező mellékletet. Amennyiben egy meglévő "
-"melléklet nevét viselő állományt töltenénk föl az új mellékletet csak egy "
-"másik néven menthetjük el. Az új nevet a \"Mentés más néven\" mezőben "
-"adhatjuk meg."
+
+msgid "Comment"
+msgstr "Megjegyzés"
 
 #, fuzzy
-msgid "attachment"
-msgstr "Mellékletek (fájlok)"
-
-msgid "overwrite"
-msgstr ""
-
-msgid "Upload"
-msgstr "Feltöltés"
-
-#, fuzzy
-msgid "New Name"
-msgstr "Új név"
+msgid "Page Name"
+msgstr "Csomag neve"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "Nem fizethet elő olyan lapra, amelyet nem olvashat."
@@ -2455,9 +2421,6 @@ msgstr "Különbségek"
 
 msgid "Editor"
 msgstr "Szerkesztő"
-
-msgid "Comment"
-msgstr "Megjegyzés"
 
 msgid "view"
 msgstr "nézet"
@@ -2638,6 +2601,9 @@ msgstr "Nem ellenőrizheti a helyesírást olyan lapon, amelyet nem olvashat."
 msgid "You are now logged out."
 msgstr "A sütit letöröltük. Ön kilépett."
 
+msgid "If this account exists an email was sent."
+msgstr ""
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2645,18 +2611,45 @@ msgstr ""
 "A levélküldés nincs beállítva ebben a wikiben. Kérjük lépjen kapcsolatba a "
 "wiki rendszergazdájával, aki engedélyezheti a levélküldést!"
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Kérjük, hogy érvényes levélcímet adjon meg!"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "Nem találtunk a megadott '%(email)s' címhez felhasználói azonosítót!"
 
 msgid "Mail me my account data"
 msgstr "Kérem a felhasználói adataim elküldését levélben"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Minden visszaállítása"
+
+#, fuzzy
+msgid "New password"
+msgstr "Jelszó"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Jelszó mégegyszer"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Jelszó"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Jelszó mégegyszer"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Hiányzik a jelszó. Kérjük adja meg a felhasználónevet és a jelszót."
 
 #, fuzzy
 msgid "Lost password"
@@ -2665,14 +2658,18 @@ msgstr "Jelszó"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2698,10 +2695,6 @@ msgid ""
 "There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
 "page."
 msgstr "Ehhez a laphoz <a href=\"%(link)s\">%(count)s melléklet</a> tartozik."
-
-#, fuzzy, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "A(z) '%(filename)s' melléklet telepítve."
 
 msgid "Filename of attachment not specified!"
 msgstr "A melléklet nevét nem adta meg!"
@@ -2738,6 +2731,9 @@ msgstr "A(z) %(pagename)s laphoz nem tartozik melléklet"
 msgid "Edit drawing"
 msgstr "Rajz szerkesztése"
 
+msgid "New Attachment"
+msgstr "Új melléklet"
+
 msgid "File to upload"
 msgstr "A föltöltendő állomány"
 
@@ -2747,14 +2743,14 @@ msgstr "Átnevezés"
 msgid "Overwrite existing attachment of same name"
 msgstr ""
 
+msgid "Upload"
+msgstr "Feltöltés"
+
 msgid "Attached Files"
 msgstr "Mellékletek"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Ehhez a laphoz nem csatolhat mellékletet."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Mellékletek nem engedélyezettek ebben a wikiben!"
 
 #, fuzzy, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2764,6 +2760,10 @@ msgstr "Nem támogatott föltöltési művelet: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "A(z) \"%(pagename)s\" lap mellékletei"
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "A mellékletek megtekintése nem engedélyezett ennél a lapnál."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2771,8 +2771,19 @@ msgstr ""
 "Hibás az állománynév. Kérjük törölje a nem-ASCII karaktereket az "
 "állománynévből, és próbálja újra."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"A(z) '%(target)s' (a távoli neve '%(filename)s') melléklet elmentve, hossza %"
+"(bytes)d byte"
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "A rajz elmentése nem engedélyezett ezen a lapon."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "A mellékletek törlése nem engedélyezett ezen a lapon."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2897,8 +2908,7 @@ msgstr "A mellékletek megtekintése nem engedélyezett ennél a lapnál."
 
 #, python-format
 msgid "attachment:%(filename)s of %(pagename)s"
-msgstr ""
-"A(z) %(pagename)s lap melléklete: <<Verbatim(attachment:)>>%(filename)s"
+msgstr "A(z) %(pagename)s lap melléklete: attachment:%(filename)s"
 
 #, python-format
 msgid "Full Link List for \"%s\""
@@ -2945,6 +2955,60 @@ msgstr "Ezen a lapon nem használhatja a %(actionname)s műveletet!"
 
 msgid "Login and try again."
 msgstr "Lépjen be, majd próbálja újra."
+
+#, fuzzy
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Új melléklet"
+
+#, fuzzy
+#~ msgid "attachment"
+#~ msgstr "Mellékletek (fájlok)"
+
+#, fuzzy
+#~ msgid "New Name"
+#~ msgstr "Új név"
+
+#, fuzzy
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "A(z) '%(filename)s' melléklet telepítve."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "A föltöltés sohasem ír fölül egy létező mellékletet. Amennyiben egy "
+#~ "meglévő melléklet nevét viselő állományt töltenénk föl az új mellékletet "
+#~ "csak egy másik néven menthetjük el. Az új nevet a \"Mentés más néven\" "
+#~ "mezőben adhatjuk meg."
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Valaki kérte, hogy küldjük el az Ön felhasználói adatait erre a címre.\n"
+#~ "\n"
+#~ "Ha elvesztette a jelszavát kérjük az alábbiakban megadott jelszót írja be "
+#~ "PONTOSAN\n"
+#~ "a jelszó-mezőbe (legcélszerűbb ha bemásolja).\n"
+#~ "\n"
+#~ "Miután sikeresen belépett kérjük írja át a jelszót!\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr ""
+#~ "Nem találtunk a megadott '%(email)s' címhez felhasználói azonosítót!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Mellékletek nem engedélyezettek ebben a wikiben!"
 
 #, fuzzy
 #~ msgid "SendMyPassword"

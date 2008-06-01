@@ -7,10 +7,12 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import shutil
+import os, shutil
 
+from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
-
+from MoinMoin.util import random_string
+from MoinMoin import caching, user
 # Promoting the test user -------------------------------------------
 # Usually the tests run as anonymous user, but for some stuff, you
 # need more privs...
@@ -47,6 +49,17 @@ def become_superuser(request):
     if su_name not in request.cfg.superuser:
         request.cfg.superuser.append(su_name)
 
+def nuke_user(request, username):
+    """ completely delete a user """
+    user_dir = request.cfg.user_dir
+    user_id = user.getUserId(request, username)
+    # really get rid of the user
+    fpath = os.path.join(user_dir, user_id)
+    os.remove(fpath)
+    # delete cache
+    arena = 'user'
+    key = 'name2id'
+    caching.CacheEntry(request, arena, key, scope='wiki').remove()
 
 # Creating and destroying test pages --------------------------------
 
@@ -59,6 +72,15 @@ def create_page(request, pagename, content, do_editor_backup=False):
     page.saveText(content, 0)
     return page
 
+def append_page(request, pagename, content, do_editor_backup=False):
+    """ appends some conetent to an existing page """
+    # reads the raw text of the existing page
+    raw = Page(request, pagename).get_raw_body()
+    # adds the new content to the old
+    content = "%s\n%s\n"% (raw, content)
+    page = PageEditor(request, pagename, do_editor_backup=do_editor_backup)
+    page.saveText(content, 0)
+    return page
 
 def nuke_page(request, pagename):
     """ completely delete a page, everything in the pagedir """
@@ -69,3 +91,7 @@ def nuke_page(request, pagename):
     #shutil.rmtree(fpath, True)
     request.cfg.data_backend.remove_item(pagename)
 
+def create_random_string_list(length=14, count=10):
+    """ creates a list of random strings """
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    return [u"%s" % random_string(length, chars) for counter in range(count)]

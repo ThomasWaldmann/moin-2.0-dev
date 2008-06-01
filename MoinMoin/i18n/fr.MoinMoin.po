@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: moin\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2008-03-25 05:16+0100\n"
 "Last-Translator: Jean-Philippe Guérard <fevrier@tigreraye.org>\n"
 "Language-Team: Français\n"
@@ -33,9 +33,9 @@ msgstr "<inconnu>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Nom : %s\n"
 "\n"
@@ -44,26 +44,12 @@ msgstr ""
 "URL de connexion : %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Quelqu'un à demandé l'envoi des données relatives à votre compte à cette\n"
-"adresse électronique.\n"
-"\n"
-"Si vous avez oublié votre mot de passe, utilisez les informations ci-"
-"dessous\n"
-"et entrez simplement le mot de passe TEL QUEL dans le champs mot de passe\n"
-"du formulaire d'identification du wiki (utilisez pour cela un copier-"
-"coller).\n"
-"\n"
-"Après vous être identifié avec succès, il vous est naturellement recommandé\n"
-"d'enregistrer un nouveau mot de passe que vous connaissiez.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -219,8 +205,7 @@ msgstr "L'argument doit être un entier, et non « %s »"
 
 #, python-format
 msgid "Argument \"%s\" must be a floating point value, not \"%s\""
-msgstr ""
-"L'argument « %s » doit être un nombre à virgule flotante, et non « %s »"
+msgstr "L'argument « %s » doit être un nombre à virgule flotante, et non « %s »"
 
 #, python-format
 msgid "Argument must be a floating point value, not \"%s\""
@@ -585,8 +570,9 @@ msgstr "Connexion"
 msgid "Username"
 msgstr "Utilisateur"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Nombre de pages"
 
 msgid "Email"
 msgstr "Adresse électronique"
@@ -941,8 +927,7 @@ msgstr "Erreur d'exécution : %(errortype)s"
 #, python-format
 msgid "Expected \"%(wanted)s\" after \"%(key)s\", got \"%(token)s\""
 msgstr ""
-"« %(wanted)s » était attendu après « %(key)s », mais « %(token)s » a été "
-"obtenu"
+"« %(wanted)s » était attendu après « %(key)s », mais « %(token)s » a été obtenu"
 
 #, python-format
 msgid "Expected an integer \"%(key)s\" before \"%(token)s\""
@@ -1481,9 +1466,9 @@ msgstr ""
 "<<Verbatim(==)>> ; <<Verbatim(===)>> Titre 3 <<Verbatim(===)>> ;   <<Verbatim"
 "(====)>> Titre 4 <<Verbatim(====)>> ; <<Verbatim(=====)>> Titre 5 <<Verbatim"
 "(=====)>>.\n"
-" Listes:: une espace suivi de : « * » puces ; « 1. », « a. », « A. », « i. "
-" », « I. » énumérations ; « 1.#n » énumération commençant à n ; une espace "
-"seule ajoute une indentation.\n"
+" Listes:: une espace suivi de : « * » puces ; « 1. », « a. », « A. », « i.  », "
+"« I. » énumérations ; « 1.#n » énumération commençant à n ; une espace seule "
+"ajoute une indentation.\n"
 " Liens:: <<Verbatim(MotsAccolésDébutantParDesMajuscules)>> ; <<Verbatim"
 "([[cible|intitulé]])>>.\n"
 " Tables:: || texte de la cellule |||| texte s'étendant sur 2 colonnes || ; "
@@ -1557,9 +1542,9 @@ msgstr ""
 "<<Verbatim(==)>> ; <<Verbatim(===)>> Titre 3 <<Verbatim(===)>> ;   <<Verbatim"
 "(====)>> Titre 4 <<Verbatim(====)>> ; <<Verbatim(=====)>> Titre 5 <<Verbatim"
 "(=====)>>.\n"
-" Listes:: une espace suivi de : « * » puces ; « 1. », « a. », « A. », « i. "
-" », « I. » énumérations ; « 1.#n » énumération commençant à n ; une espace "
-"seule ajoute une indentation.\n"
+" Listes:: une espace suivi de : « * » puces ; « 1. », « a. », « A. », « i.  », "
+"« I. » énumérations ; « 1.#n » énumération commençant à n ; une espace seule "
+"ajoute une indentation.\n"
 " Liens:: <<Verbatim(MotsAccolésDébutantParDesMajuscules)>> ; <<Verbatim"
 "([[cible|intitulé]])>>.\n"
 " Tables:: || texte de la cellule |||| texte s'étendant sur 2 colonnes || ; "
@@ -1688,10 +1673,6 @@ msgstr "[Signet atteint]"
 
 msgid "Contents"
 msgstr "Sommaire"
-
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Choisissez un critère de recherche plus sélectif que « {{{%s}}} »"
 
 msgid "Include system pages"
 msgstr "Inclure les pages systèmes"
@@ -1861,6 +1842,10 @@ msgstr "Recherche respectant la casse"
 
 msgid "Search Text"
 msgstr "Recherche de texte"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Choisissez un critère de recherche plus sélectif que « {{{%s}}} »"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2440,52 +2425,28 @@ msgstr "Ignorer les modifications du nombre d'espaces"
 msgid "Load"
 msgstr "Charger"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Vous n'êtes pas autorisé à supprimer les pièces jointes de cette page."
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "Le nom du fichier à ajouter n'est pas spécifié !"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"Pièce jointe « %(target)s » enregistrée (nom distant « %(filename)s » ; %"
-"(bytes)d octets)."
-
-msgid "New Page or New Attachment"
-msgstr "Nouvelle page ou pièce jointe"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"Vous pouvez ajouter un fichier à une nouvelle page ou le joindre à la page "
-"actuelle"
 
-msgid "New Attachment"
-msgstr "Nouvelle pièce jointe"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"L'ajout d'un fichier n'écrasera jamais un fichier existant. S'il y a\n"
-"conflit sur le nom, vous devrez renommer le fichier que vous voulez\n"
-"ajouter. Si ce n'est pas le cas, si « Renommer en » n'est pas rempli,\n"
-"le nom original sera conservé."
 
-msgid "attachment"
-msgstr "pièce jointe"
+msgid "Comment"
+msgstr "Commentaire"
 
-msgid "overwrite"
-msgstr "remplacer"
-
-msgid "Upload"
-msgstr "Ajouter un fichier"
-
-msgid "New Name"
-msgstr "Nouveau nom"
+#, fuzzy
+msgid "Page Name"
+msgstr "Nom du paquet"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr ""
@@ -2540,9 +2501,6 @@ msgstr "Comparer"
 
 msgid "Editor"
 msgstr "Éditeur"
-
-msgid "Comment"
-msgstr "Commentaire"
 
 msgid "view"
 msgstr "voir"
@@ -2730,6 +2688,10 @@ msgstr ""
 msgid "You are now logged out."
 msgstr "Vous êtes maintenant déconnecté."
 
+#, fuzzy
+msgid "If this account exists an email was sent."
+msgstr "Si le compte existe, un courrier va être envoyé."
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2737,18 +2699,47 @@ msgstr ""
 "La gestion du courrier n'est pas activée sur ce wiki.\n"
 "Contactez le propriétaire de ce wiki, qui pourra l'activer."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Veuillez fournir une adresse électronique valide !"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr "Si le compte existe, un courrier va être envoyé."
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "Aucun compte correspondant à l'adresse « %(email)s » n'a été trouvé !"
 
 msgid "Mail me my account data"
 msgstr "Envoyez-moi mes identifiants de connexion"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Tout restaurer !"
+
+#, fuzzy
+msgid "New password"
+msgstr "Mot de passe"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Répétez le mot de passe"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Mot de passe"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Répétez le mot de passe"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr ""
+"Mot de passe manquant. Veuillez indiquer un nom d'utilisateur et un mot de "
+"passe."
 
 #, fuzzy
 msgid "Lost password"
@@ -2757,14 +2748,18 @@ msgstr "Mot de passe"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2789,10 +2784,6 @@ msgid ""
 "There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
 "page."
 msgstr "Il y a <a href=\"%(link)s\">%(count)s pièces jointes</a> à cette page."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "La pièce jointe « %(target)s » existe déjà."
 
 msgid "Filename of attachment not specified!"
 msgstr "Le nom du fichier à ajouter n'est pas spécifié !"
@@ -2829,6 +2820,9 @@ msgstr "Pas de pièce jointe enregistrée sur %(pagename)s"
 msgid "Edit drawing"
 msgstr "Édition du dessin"
 
+msgid "New Attachment"
+msgstr "Nouvelle pièce jointe"
+
 msgid "File to upload"
 msgstr "Fichier à ajouter"
 
@@ -2838,14 +2832,14 @@ msgstr "Renommer en"
 msgid "Overwrite existing attachment of same name"
 msgstr "Écraser les pièces-jointes existantes ayant le même nom"
 
+msgid "Upload"
+msgstr "Ajouter un fichier"
+
 msgid "Attached Files"
 msgstr "Fichiers joints"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Vous n'êtes pas autorisé à joindre un fichier à cette page."
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Les pièces jointes ne sont pas autorisées sur ce wiki !"
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2855,6 +2849,10 @@ msgstr "Sous-action d'ajout non disponible : %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Pièces jointes de « %(pagename)s »"
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Vous n'êtes pas autorisé à voir les pièces jointes de cette page."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2862,8 +2860,19 @@ msgstr ""
 "Aucun contenu trouvé. Supprimez les caractères non ASCII du nom du fichier "
 "et réessayez."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Pièce jointe « %(target)s » enregistrée (nom distant « %(filename)s » ; %"
+"(bytes)d octets)."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Vous n'êtes pas autorisé à enregistrer un dessin dans cette page."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Vous n'êtes pas autorisé à supprimer les pièces jointes de cette page."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2901,8 +2910,8 @@ msgstr "Impossible de renommer sans indiquer un nouveau nom"
 #, python-format
 msgid "Please use a valid filename for attachment '%(filename)s'."
 msgstr ""
-"Veuillez indiquer un nom de fichier valable pour la pièce jointe « %"
-"(filename)s »."
+"Veuillez indiquer un nom de fichier valable pour la pièce jointe « %(filename)"
+"s »."
 
 #, fuzzy
 msgid "Move aborted because new attachment name is empty."
@@ -2989,7 +2998,7 @@ msgstr "Vous n'êtes pas autorisé à voir les pièces jointes de cette page."
 
 #, python-format
 msgid "attachment:%(filename)s of %(pagename)s"
-msgstr "<<Verbatim(attachment:)>> %(filename)s de %(pagename)s"
+msgstr "attachment:%(filename)s de %(pagename)s"
 
 #, python-format
 msgid "Full Link List for \"%s\""
@@ -2997,8 +3006,7 @@ msgstr "Liste de tout les liens pour « %s »"
 
 #, python-format
 msgid "Exactly one page like \"%s\" found, redirecting to page."
-msgstr ""
-"Une seule page similaire à « %s » trouvée, redirection vers cette page."
+msgstr "Une seule page similaire à « %s » trouvée, redirection vers cette page."
 
 #, python-format
 msgid "Pages like \"%s\""
@@ -3038,6 +3046,72 @@ msgstr ""
 
 msgid "Login and try again."
 msgstr "Connectez-vous et essayez à nouveau."
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Nouvelle page ou pièce jointe"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr ""
+#~ "Vous pouvez ajouter un fichier à une nouvelle page ou le joindre à la "
+#~ "page actuelle"
+
+#~ msgid "attachment"
+#~ msgstr "pièce jointe"
+
+#~ msgid "New Name"
+#~ msgstr "Nouveau nom"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "La pièce jointe « %(target)s » existe déjà."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "L'ajout d'un fichier n'écrasera jamais un fichier existant. S'il y a\n"
+#~ "conflit sur le nom, vous devrez renommer le fichier que vous voulez\n"
+#~ "ajouter. Si ce n'est pas le cas, si « Renommer en » n'est pas rempli,\n"
+#~ "le nom original sera conservé."
+
+#~ msgid "overwrite"
+#~ msgstr "remplacer"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Quelqu'un à demandé l'envoi des données relatives à votre compte à cette\n"
+#~ "adresse électronique.\n"
+#~ "\n"
+#~ "Si vous avez oublié votre mot de passe, utilisez les informations ci-"
+#~ "dessous\n"
+#~ "et entrez simplement le mot de passe TEL QUEL dans le champs mot de "
+#~ "passe\n"
+#~ "du formulaire d'identification du wiki (utilisez pour cela un copier-"
+#~ "coller).\n"
+#~ "\n"
+#~ "Après vous être identifié avec succès, il vous est naturellement "
+#~ "recommandé\n"
+#~ "d'enregistrer un nouveau mot de passe que vous connaissiez.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr ""
+#~ "Aucun compte correspondant à l'adresse « %(email)s » n'a été trouvé !"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Les pièces jointes ne sont pas autorisées sur ce wiki !"
 
 #~ msgid "SendMyPassword"
 #~ msgstr "EnvoiDeMonMotDePasse"

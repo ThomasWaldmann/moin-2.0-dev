@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-26 18:49+0200\n"
+"POT-Creation-Date: 2008-05-12 23:52+0200\n"
 "PO-Revision-Date: 2007-12-01 00:00+0200\n"
 "Last-Translator: Aurelijus Sudzius <ruledbyfate@gmail.com>\n"
 "Language-Team: Lithuanian <ruledbyfate@gmail.com>\n"
@@ -32,9 +32,9 @@ msgstr "<nežinomas>"
 msgid ""
 "Login Name: %s\n"
 "\n"
-"Login Password: %s\n"
+"Password recovery token: %s\n"
 "\n"
-"Login URL: %s/?action=login\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
 msgstr ""
 "Prisijungimo vardas: %s\n"
 "\n"
@@ -43,25 +43,12 @@ msgstr ""
 "Prisijungimo URL: %s/%s?action=login\n"
 
 msgid ""
-"Somebody has requested to submit your account data to this email address.\n"
+"Somebody has requested to email you a password recovery token.\n"
 "\n"
-"If you lost your password, please use the data below and just enter the\n"
-"password AS SHOWN into the wiki's password form field (use copy and paste\n"
-"for that).\n"
-"\n"
-"After successfully logging in, it is of course a good idea to set a new and "
-"known password.\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
 msgstr ""
-"Kažkas pareikalavo pateikti jūsų duomenis šiuo el. pašto adresu.\n"
-"\n"
-"Jeigu jūs praradote savo slaptažodį, prašome naudoti duomenis žemiau ir "
-"tiesiog įvesti\n"
-"slaptažodį KAIP PARODYTA į wiki slaptažodžio formos laukelį (naudokite "
-"kopijuoti ir įklijuoti\n"
-"šiam tikslui).\n"
-"\n"
-"Kai sėkmingai prisijungsite, būtų protinga nustatyti naują ir žinomą "
-"slaptažodį.\n"
 
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
@@ -566,8 +553,9 @@ msgstr "Prisijungti"
 msgid "Username"
 msgstr "Vartotojas"
 
-msgid "ACL Groups"
-msgstr ""
+#, fuzzy
+msgid "Member of Groups"
+msgstr "Puslapių kiekis"
 
 msgid "Email"
 msgstr "El. paštas"
@@ -1657,10 +1645,6 @@ msgstr "[Žyma pasiekta]"
 msgid "Contents"
 msgstr "Turinys"
 
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr "Prašome naudoti labiau atrinktą paieškos raktą vietoje {{{\"%s\"}}}"
-
 msgid "Include system pages"
 msgstr "Įtraukti sisteminius puslapius"
 
@@ -1829,6 +1813,10 @@ msgstr "Didžiųjų-mažųjų raidžių jautrumas"
 
 msgid "Search Text"
 msgstr "Paieškos tekstas"
+
+#, python-format
+msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
+msgstr "Prašome naudoti labiau atrinktą paieškos raktą vietoje {{{\"%s\"}}}"
 
 #, python-format
 msgid "Upload new attachment \"%(filename)s\""
@@ -2391,52 +2379,28 @@ msgstr "Ignoruoti tarpų pakeitimus"
 msgid "Load"
 msgstr "Įkrauti"
 
-msgid "You are not allowed to delete attachments on this page."
-msgstr "Jums neleidžiama pašalinti priedo šiame puslapyje."
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "Nenurodytas failo priedo vardas!"
 
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
+msgid "Upload page content"
 msgstr ""
-"Priedas '%(target)s' (nuotolinis pavadinimas '%(filename)s') užimantis %"
-"(bytes)d baitų išsaugotas."
-
-msgid "New Page or New Attachment"
-msgstr "Naujas puslapis arba priedas"
 
 msgid ""
-"You can upload a file to a new page or choose to upload a file as attachment "
-"for the current page"
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
 msgstr ""
-"Jūs galite įkelti failą į naują puslapį arba pasirikti įkelti failą kaip "
-"priedą dabartiniam puslapiui"
 
-msgid "New Attachment"
-msgstr "Naujas priedas"
-
-msgid ""
-"An upload will never overwrite an existing file. If there is a name\n"
-"conflict, you have to rename the file that you want to upload.\n"
-"Otherwise, if \"Rename to\" is left blank, the original filename will be "
-"used."
+msgid "File to load page content from"
 msgstr ""
-"Įkėla niekuomet neperrašys jau egzistuojančio failo. Jeigu atsiranda failų\n"
-"konfliktas, jūs privalote pervadinti failą, kurį norite įkelti.\n"
-"Priešingai, jeigu \"Pervadinti į\" yra paliktas tuščias, originalus failo "
-"vardas bus naudojamas."
 
-msgid "attachment"
-msgstr "priedas"
+msgid "Comment"
+msgstr "Komentaras"
 
-msgid "overwrite"
-msgstr "perrašyti"
-
-msgid "Upload"
-msgstr "Įkelti"
-
-msgid "New Name"
-msgstr "Naujas vardas"
+#, fuzzy
+msgid "Page Name"
+msgstr "Paketo pavadinimas"
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr "Jums neleidžiama užsiprenumeruoti puslapyje, kurio negalite skaityti."
@@ -2489,9 +2453,6 @@ msgstr "Pakeitimai"
 
 msgid "Editor"
 msgstr "Redaktorius"
-
-msgid "Comment"
-msgstr "Komentaras"
 
 msgid "view"
 msgstr "peržiūrėti"
@@ -2676,6 +2637,11 @@ msgstr "Jūs negalite patikrinti rašybos puslapyje, kurio negalite skaityti."
 msgid "You are now logged out."
 msgstr "Jūs dabar atsijungęs."
 
+#, fuzzy
+msgid "If this account exists an email was sent."
+msgstr ""
+"Jeigu paskyra su šiuo naudotojo vardu egzistuoja, išsiųstas el. laiškas"
+
 msgid ""
 "This wiki is not enabled for mail processing.\n"
 "Contact the owner of the wiki, who can enable email."
@@ -2683,19 +2649,45 @@ msgstr ""
 "Šis wiki nėra įgalintas pašto apdorojimui.\n"
 "Susisiekite su wiki savininku, kuris gali įgalinti el. paštą."
 
-msgid "Please provide a valid email address!"
+#, fuzzy
+msgid "Please provide a valid email address or a username!"
 msgstr "Prašome pateikti galiojantį el. pašto adresą"
-
-msgid "If an account with this username exists, an email was sent."
-msgstr ""
-"Jeigu paskyra su šiuo naudotojo vardu egzistuoja, išsiųstas el. laiškas"
-
-#, python-format
-msgid "Found no account matching the given email address '%(email)s'!"
-msgstr "Nerasta paskyra atitinkanti duotą el. pašto adresą '%(email)s'!"
 
 msgid "Mail me my account data"
 msgstr "Atsiųsti paskyros duomenis paštu"
+
+#, fuzzy
+msgid "Recovery token"
+msgstr "Atstatyti viską!"
+
+#, fuzzy
+msgid "New password"
+msgstr "Slaptažodis"
+
+#, fuzzy
+msgid "New password (repeat)"
+msgstr "Pakartoti slaptažodį"
+
+#, fuzzy
+msgid "Reset my password"
+msgstr "Slaptažodis"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+#, fuzzy
+msgid "Password reset"
+msgstr "Pakartoti slaptažodį"
+
+#, fuzzy
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr "Trūkstamas slaptažodis. Prašome įvesti vartotojo vardą ir slaptažodį."
 
 #, fuzzy
 msgid "Lost password"
@@ -2704,14 +2696,18 @@ msgstr "Slaptažodis"
 msgid ""
 "\n"
 "== Recovering a lost password ==\n"
-"<<BR>>\n"
-"If you have forgotten your password, provide your email address and click on "
-"'''Mail me my account data'''.\n"
-"<<BR>>\n"
-"The email you get contains the encrypted password (so even if someone "
-"intercepts the mail, he won't know your REAL password). Just copy and paste "
-"it into the login mask into the password field and log in.\n"
-"After logging in you should change your password."
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
 msgstr ""
 
 #, python-format
@@ -2737,10 +2733,6 @@ msgid ""
 "page."
 msgstr ""
 "Yra <a href=\"%(link)s\">%(count)s priedų</a> patalpintų šiame puslapyje."
-
-#, python-format
-msgid "Attachment '%(target)s' already exists."
-msgstr "Priedas '%(target)s' jau egzistuoja."
 
 msgid "Filename of attachment not specified!"
 msgstr "Nenurodytas failo priedo vardas!"
@@ -2777,6 +2769,9 @@ msgstr "Nėra priedų puslapiui %(pagename)s"
 msgid "Edit drawing"
 msgstr "Redaguoti priešinį"
 
+msgid "New Attachment"
+msgstr "Naujas priedas"
+
 msgid "File to upload"
 msgstr "Failas įkėlimui"
 
@@ -2786,14 +2781,14 @@ msgstr "Pervadinti į"
 msgid "Overwrite existing attachment of same name"
 msgstr "Perrašyti egzistuojantį priedą tuo pačiu vardu"
 
+msgid "Upload"
+msgstr "Įkelti"
+
 msgid "Attached Files"
 msgstr "Pridėti failai"
 
 msgid "You are not allowed to attach a file to this page."
 msgstr "Jums neleidžiama pridėti failą šiame puslapyje"
-
-msgid "File attachments are not allowed in this wiki!"
-msgstr "Failo priedai nėra leidžiami šiame wiki!"
 
 #, python-format
 msgid "Unsupported AttachFile sub-action: %s"
@@ -2803,6 +2798,10 @@ msgstr "Nepalaikomas AttachFile sub-veiksmas: %s"
 msgid "Attachments for \"%(pagename)s\""
 msgstr "Priedai \"%(pagename)s\""
 
+#, fuzzy
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr "Jums neleidžiama peržiūrėti priedų šiame puslapyje."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
@@ -2810,8 +2809,19 @@ msgstr ""
 "Nėra naujo turinio. Pašaliknite ne ASCII simbolius iš failo vardo ir "
 "bandykite dar kartą."
 
+#, python-format
+msgid ""
+"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
+"saved."
+msgstr ""
+"Priedas '%(target)s' (nuotolinis pavadinimas '%(filename)s') užimantis %"
+"(bytes)d baitų išsaugotas."
+
 msgid "You are not allowed to save a drawing on this page."
 msgstr "Jums neleidžiama išsaugoti piešinio šiame puslapyje."
+
+msgid "You are not allowed to delete attachments on this page."
+msgstr "Jums neleidžiama pašalinti priedo šiame puslapyje."
 
 #, fuzzy, python-format
 msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
@@ -2930,7 +2940,7 @@ msgstr "Jums neleidžiama peržiūrėti priedų šiame puslapyje."
 
 #, python-format
 msgid "attachment:%(filename)s of %(pagename)s"
-msgstr "<<Verbatim(attachment:)>>%(filename)s iš %(pagename)s"
+msgstr "attachment:%(filename)s iš %(pagename)s"
 
 #, python-format
 msgid "Full Link List for \"%s\""
@@ -2977,6 +2987,69 @@ msgstr "Jums neleidžiama vykdyti %(action_name)s šiame puslapyje."
 
 msgid "Login and try again."
 msgstr "Prisijunkite ir bandykite dar kartą."
+
+#~ msgid "New Page or New Attachment"
+#~ msgstr "Naujas puslapis arba priedas"
+
+#~ msgid ""
+#~ "You can upload a file to a new page or choose to upload a file as "
+#~ "attachment for the current page"
+#~ msgstr ""
+#~ "Jūs galite įkelti failą į naują puslapį arba pasirikti įkelti failą kaip "
+#~ "priedą dabartiniam puslapiui"
+
+#~ msgid "attachment"
+#~ msgstr "priedas"
+
+#~ msgid "New Name"
+#~ msgstr "Naujas vardas"
+
+#~ msgid "Attachment '%(target)s' already exists."
+#~ msgstr "Priedas '%(target)s' jau egzistuoja."
+
+#~ msgid ""
+#~ "An upload will never overwrite an existing file. If there is a name\n"
+#~ "conflict, you have to rename the file that you want to upload.\n"
+#~ "Otherwise, if \"Rename to\" is left blank, the original filename will be "
+#~ "used."
+#~ msgstr ""
+#~ "Įkėla niekuomet neperrašys jau egzistuojančio failo. Jeigu atsiranda "
+#~ "failų\n"
+#~ "konfliktas, jūs privalote pervadinti failą, kurį norite įkelti.\n"
+#~ "Priešingai, jeigu \"Pervadinti į\" yra paliktas tuščias, originalus failo "
+#~ "vardas bus naudojamas."
+
+#~ msgid "overwrite"
+#~ msgstr "perrašyti"
+
+#~ msgid ""
+#~ "Somebody has requested to submit your account data to this email "
+#~ "address.\n"
+#~ "\n"
+#~ "If you lost your password, please use the data below and just enter the\n"
+#~ "password AS SHOWN into the wiki's password form field (use copy and "
+#~ "paste\n"
+#~ "for that).\n"
+#~ "\n"
+#~ "After successfully logging in, it is of course a good idea to set a new "
+#~ "and known password.\n"
+#~ msgstr ""
+#~ "Kažkas pareikalavo pateikti jūsų duomenis šiuo el. pašto adresu.\n"
+#~ "\n"
+#~ "Jeigu jūs praradote savo slaptažodį, prašome naudoti duomenis žemiau ir "
+#~ "tiesiog įvesti\n"
+#~ "slaptažodį KAIP PARODYTA į wiki slaptažodžio formos laukelį (naudokite "
+#~ "kopijuoti ir įklijuoti\n"
+#~ "šiam tikslui).\n"
+#~ "\n"
+#~ "Kai sėkmingai prisijungsite, būtų protinga nustatyti naują ir žinomą "
+#~ "slaptažodį.\n"
+
+#~ msgid "Found no account matching the given email address '%(email)s'!"
+#~ msgstr "Nerasta paskyra atitinkanti duotą el. pašto adresą '%(email)s'!"
+
+#~ msgid "File attachments are not allowed in this wiki!"
+#~ msgstr "Failo priedai nėra leidžiami šiame wiki!"
 
 #~ msgid "SendMyPassword"
 #~ msgstr "AtsiųstiManoSlaptažodį"

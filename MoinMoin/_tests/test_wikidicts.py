@@ -12,7 +12,8 @@ import shutil
 from MoinMoin import wikidicts
 from MoinMoin import Page
 from MoinMoin.PageEditor import PageEditor
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin.user import User
+from MoinMoin._tests import append_page, become_trusted, create_page, create_random_string_list, nuke_page, nuke_user
 
 class TestGroupPage:
 
@@ -123,16 +124,13 @@ class TestGroupDicts:
         become_trusted(request)
         page = create_page(request, u'SomeGroup', u" * ExampleUser")
         page.renamePage('AnotherGroup')
-
         group = wikidicts.Group(request, '')
-        isgroup = request.cfg.cache.page_group_regex.search
+        isgroup = request.cfg.cache.page_group_regexact.search
         grouppages = request.rootpage.getPageList(user='', filter=isgroup)
-
-        members, groups = request.dicts.expand_group(u'AnotherGroup')
-
+        result = request.dicts.has_member(u'AnotherGroup', u'ExampleUser')
         nuke_page(request, u'AnotherGroup')
 
-        assert u'ExampleUser' in members
+        assert result is True
 
     def testCopyGroupPage(self):
         """
@@ -142,16 +140,90 @@ class TestGroupDicts:
         become_trusted(request)
         page = create_page(request, u'SomeGroup', u" * ExampleUser")
         page.copyPage(u'OtherGroup')
-
         group = wikidicts.Group(request, '')
-        isgroup = request.cfg.cache.page_group_regex.search
+        isgroup = request.cfg.cache.page_group_regexact.search
         grouppages = request.rootpage.getPageList(user='', filter=isgroup)
-
-        members, groups = request.dicts.expand_group(u'OtherGroup')
-
+        result = request.dicts.has_member(u'OtherGroup', u'ExampleUser')
         nuke_page(request, u'OtherGroup')
         nuke_page(request, u'SomeGroup')
 
-        assert u'ExampleUser' in members
+        assert result is True
+
+    def testAppendingGroupPage(self):
+        """
+         tests scalability by appending a name to a large list of group members
+        """
+        # long list of users
+        page_content = [u" * %s" % member for member in create_random_string_list(length=15, count=30000)]
+        request = self.request
+        become_trusted(request)
+        test_user = create_random_string_list(length=15, count=1)[0]
+        page = create_page(request, u'UserGroup', "\n".join(page_content))
+        page = append_page(request, u'UserGroup', u' * %s' % test_user)
+        result = request.dicts.has_member('UserGroup', test_user)
+        nuke_page(request, u'UserGroup')
+
+        assert result is True
+
+    def testUserAppendingGroupPage(self):
+        """
+         tests appending a username to a large list of group members and user creation
+        """
+        # long list of users
+        page_content = [u" * %s" % member for member in create_random_string_list()]
+        request = self.request
+        become_trusted(request)
+        test_user = create_random_string_list(length=15, count=1)[0]
+        page = create_page(request, u'UserGroup', "\n".join(page_content))
+        page = append_page(request, u'UserGroup', u' * %s' % test_user)
+
+        # now shortly later we create a user object
+        user = User(request, name=test_user)
+        if not user.exists():
+            User(request, name=test_user, password=test_user).save()
+
+        result = request.dicts.has_member('UserGroup', test_user)
+        nuke_page(request, u'UserGroup')
+        nuke_user(request, test_user)
+
+        assert result is True
+
+    def testMemberRemovedFromGroupPage(self):
+        """
+         tests appending a member to a large list of group members and recreating the page without the member
+        """
+        # long list of users
+        page_content = [u" * %s" % member for member in create_random_string_list()]
+        page_content = "\n".join(page_content)
+        request = self.request
+        become_trusted(request)
+        test_user = create_random_string_list(length=15, count=1)[0]
+        page = create_page(request, u'UserGroup', page_content)
+        page = append_page(request, u'UserGroup', u' * %s' % test_user)
+        # saves the text without test_user
+        page.saveText(page_content, 0)
+        result = request.dicts.has_member('UserGroup', test_user)
+        nuke_page(request, u'UserGroup')
+
+        assert result is False
+
+    def testGroupPageTrivialChange(self):
+        """
+         tests appending a username to a group page by trivial change
+        """
+        request = self.request
+        become_trusted(request)
+        test_user = create_random_string_list(length=15, count=1)[0]
+        member = u" * %s\n" % test_user
+        page = create_page(request, u'UserGroup', member)
+        # next member saved  as trivial change
+        test_user = create_random_string_list(length=15, count=1)[0]
+        member = u" * %s\n" % test_user
+        page.saveText(member, 0, trivial=1)
+        result = request.dicts.has_member('UserGroup', test_user)
+        nuke_page(request, u'UserGroup')
+
+        assert result is True
 
 coverage_modules = ['MoinMoin.wikidicts']
+
