@@ -37,6 +37,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from UserDict import DictMixin
+
 class Backend(object):
     """
     This class defines the new storage API for moinmoin.
@@ -134,7 +136,7 @@ class Backend(object):
     # XXX Further internals of this class may follow
 
 
-class Item(list):                      # XXX Improve docstring -- Shall this only inherit from list? Is it newstyle then?
+class Item(object, DictMixin):                      # XXX Improve docstring -- Shall this only inherit from list? Is it newstyle then?
     """
     An Item object collects the information of an item (e.g. a page) that is
     stored in persistent storage. It has metadata and Revisions.
@@ -142,11 +144,72 @@ class Item(list):                      # XXX Improve docstring -- Shall this onl
 
     def __init__(self, backend, itemname):
         """
-        Initialize an item. Memorize the backend to which it belongs.
+        Initialize an Item. Memorize the backend to which it belongs.
         """
-        self._backend = backend
-        self._name    = name
-                                                    # XXX Still needs metadata-attribute
+        self._backend       = backend
+        self._name          = name
+        self._locked        = False
+        self._read_accessed = False
+        self._metadata      = {}
+        self._item          = item
+
+    def __setitem__(self, key, value):
+        """
+        In order to acces the Items metadata you can use the well-known dict-like
+        semantics python-dictionaries offer. If you want to set a value,
+        my_item["key"] = "value" will do the trick. Note that keys must be of the
+        type string (or unicode).
+        Values must be of the type str, unicode or tuple, in which case every element
+        of the tuple must be a string (or unicode) object.
+        You must acquire a lock before writing to the Items metadata in order to
+        prevent side-effects.
+        """
+        if not self._locked:
+            raise AttributeError, "Cannot write to unlocked metadata"
+
+        if not isinstance(key, (str, unicode)):
+            raise TypeError, "Key must be string type"
+
+        if not isinstance(value, (str, tuple, unicode)):
+            raise TypeError, "Value must be string or tuple of strings"
+
+        if isinstance(value, tuple):
+            for v in value:
+                if not isinstance(value, (str, unicode)):
+                    raise TypeError, "Value must be string or tuple of strings"
+
+        self._metadata[key] = value
+
+    def __getitem__(self, key):
+        """
+        See __setitem__.__doc__ -- You may use my_item["key"] to get the corresponding
+        metadata-value. Note however, that the key you pass must be of type str or unicode.
+        """
+        self._read_accessed = True
+
+        if not isinstance(key, (unicode, str)):
+            raise TypeError, "key must be string type"
+
+        return self._metadata[key]
+
+    def _lock(self):
+        """
+        Acquire lock for the Items metadata. The actual locking is, by default,
+        implemented on the backend-level.
+        """
+        if self._read_accessed:
+            raise Exception, "Cannot lock after reading metadata"
+
+        self._item._lock()
+        self._locked = True
+
+    def _unlock(self):
+        """
+        Release lock on the Item.
+        """
+        self._item._unlock()
+        self._locked = False
+
 
     def get_revision(self, revno):
         """
@@ -181,5 +244,3 @@ class Item(list):                      # XXX Improve docstring -- Shall this onl
         """
         return self._backend._create_revision(self, revno)
 
-
-    # TODO Finishing for today. Next thing: Implement Dict-Semantics with DictMixin for accessing metadata
