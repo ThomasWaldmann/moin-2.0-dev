@@ -132,11 +132,24 @@ class Backend(object):
         """
         raise NotImplementedError
 
+    def _lock_item(self, item):
+        """
+        This method is used to acquire a lock on an Item. This is necessary to prevent
+        side-effects caused by concurrency.
+        """
+        raise NotImplementedError
+
+    def _unlock_item(self, item):
+        """
+        This method tries to release a lock on the given Item.
+        """
+        raise NotImplementedError
+
 
     # XXX Further internals of this class may follow
 
 
-class Item(object, DictMixin):                      # XXX Improve docstring -- Shall this only inherit from list? Is it newstyle then?
+class Item(object, DictMixin):                      # TODO Improve docstring
     """
     An Item object collects the information of an item (e.g. a page) that is
     stored in persistent storage. It has metadata and Revisions.
@@ -151,7 +164,6 @@ class Item(object, DictMixin):                      # XXX Improve docstring -- S
         self._locked        = False
         self._read_accessed = False
         self._metadata      = {}
-        self._item          = item
 
     def __setitem__(self, key, value):
         """
