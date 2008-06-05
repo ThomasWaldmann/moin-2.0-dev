@@ -132,14 +132,14 @@ class Backend(object):
         """
         raise NotImplementedError
 
-    def _lock_item(self, item):
+    def _lock_item_metadata(self, item):
         """
         This method is used to acquire a lock on an Item. This is necessary to prevent
         side-effects caused by concurrency.
         """
         raise NotImplementedError
 
-    def _unlock_item(self, item):
+    def _unlock_item_metadata(self, item):
         """
         This method tries to release a lock on the given Item.
         """
@@ -163,7 +163,7 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         self._name          = itemname
         self._locked        = False
         self._read_accessed = False
-        self._metadata      = None          # Will be loaded lazily upon first real access.
+        self._metadata      = None          # XXX Will be loaded lazily upon first real access.
 
     def __setitem__(self, key, value):
         """
@@ -212,14 +212,14 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         if self._read_accessed:
             raise Exception, "Cannot lock after reading metadata"
 
-        self._item._lock()
+        self._backend._lock_item_metadata()
         self._locked = True
 
     def _unlock(self):
         """
         Release lock on the Item.
         """
-        self._item._unlock()
+        self._backend._unlock_item_metadata()
         self._locked = False
 
 
