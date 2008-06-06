@@ -159,11 +159,11 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         """
         Initialize an Item. Memorize the backend to which it belongs.
         """
-        self._backend       = backend
-        self._name          = itemname
-        self._locked        = False
+        self._backend = backend
+        self._name = itemname
+        self._locked = False
         self._read_accessed = False
-        self._metadata      = None          # XXX Will be loaded lazily upon first real access.
+        self._metadata = None          # XXX Will be loaded lazily upon first real access.
 
     def __setitem__(self, key, value):
         """
