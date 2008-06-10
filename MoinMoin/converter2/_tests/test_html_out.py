@@ -26,6 +26,10 @@ class TestConverterBase(object):
         pairs = [
             ('<page:page %s><page:p>Test</page:p></page:page>',
                 '<html:div xmlns:html="http://www.w3.org/1999/xhtml"><html:p>Test</html:p></html:div>'),
+            ('<page:page %s><page:h>Test</page:h></page:page>',
+                '<html:div xmlns:html="http://www.w3.org/1999/xhtml"><html:h1>Test</html:h1></html:div>'),
+            ('<page:page %s><page:h page:outline-level="2">Test</page:h></page:page>',
+                '<html:div xmlns:html="http://www.w3.org/1999/xhtml"><html:h2>Test</html:h2></html:div>'),
         ]
         for i in pairs:
             yield (self._do_base,) + i

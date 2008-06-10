@@ -41,7 +41,16 @@ class ConverterBase(object):
         raise ElementException
 
     def visit_moinpage_h(self, elem):
-        new = ElementTree.Element(ElementTree.QName('hx', namespaces.html))
+        level = elem.get(ElementTree.QName('outline-level', namespaces.moin_page), 1)
+        try:
+            level = int(level)
+        except TypeError:
+            raise ElementException
+        if level < 1:
+            level = 1
+        elif level > 6:
+            level = 6
+        new = ElementTree.Element(ElementTree.QName('h%d' % level, namespaces.html))
         return self.recurse(new, elem)
 
     def visit_moinpage_p(self, elem):
