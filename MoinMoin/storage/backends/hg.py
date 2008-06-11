@@ -42,7 +42,7 @@ class MercurialBackend(Backend):
     This class implements Mercurial backend storage.
     """
     
-    def __init__(self, path):
+    def __init__(self, path, existing=False):
         """
         Init repository.
         """
@@ -53,10 +53,16 @@ class MercurialBackend(Backend):
         else:
             self.path = os.path.abspath(path)
 
-        try:
-            self.repo = hg.repository(self.ui, self.path, create=True)
-        except RepoError:
-            raise BackendError("Repository already exists!")
+        if existing:
+            try:
+                self.repo = hg.repository(self.ui, self.path, create=False)
+            except RepoError:
+                raise BackendError("No repository at given path!")
+        else:
+            try:
+                self.repo = hg.repository(self.ui, self.path)
+            except RepoError:
+                self.repo = hg.repository(self.ui, self.path, create=True)
 
         self._lockref = None
 
@@ -72,10 +78,11 @@ class MercurialBackend(Backend):
         if not os.path.exists(self._path(itemname)):
             util.rename(fname, self._path(itemname))
         else:
+            os.unlink(fname)
             raise BackendError("Item with that name already exists!")
 
         try:
-            self.repo.add(self._path(itemname))
+            self.repo.add([itemname])
             self.repo.commit(text="created item %s" % itemname)
 
         finally:
@@ -104,8 +111,8 @@ class MercurialBackend(Backend):
         Returns generator for iterating through items collection in repository.
         """
         ctx = self.repo.changectx()
-        for itemname in ctx.files():
-            yield Item(self, itemname)
+        for itemfctx in ctx.filectxs():
+            yield Item(self, itemfctx.path()) 
 
 
     def _lock(self):
