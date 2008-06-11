@@ -27,11 +27,14 @@
 """
 
 from MoinMoin.storage.abstract import Backend, Item
+from MoinMoin.search import term
 from mercurial import hg, ui, util
 
 from MoinMoin.storage.error import BackendError, NoSuchItemError
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
+
+from 
 
 import weakref
 import tempfile
@@ -115,6 +118,28 @@ class MercurialBackend(Backend):
             yield Item(self, itemfctx.path()) 
 
 
+    def _get_revision(self, item, revno):
+        """
+        Returns given Revision of an Item.
+        """
+        ctx = self.repo.changectx()
+
+        try:
+            ftx = ctx.filectx(item._name).filectx(revno)
+        except LookupError:
+            raise NoSuchRevisionError
+
+        #XXX: fix on Revision class defined
+        return Revision()
+
+
+    def _list_revisions(self, item):
+        """
+        Return a list of Item Revisions.
+        """
+        pass
+        
+
     def _lock(self):
         """
         Acquire internal lock. This method is helper for achieving one item
@@ -136,3 +161,4 @@ class MercurialBackend(Backend):
         return os.path.join(self.path, fname)
 
 
+    
