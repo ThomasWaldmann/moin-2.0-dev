@@ -76,7 +76,7 @@ class MercurialBackend(Backend):
 
         try:
             self.repo.add(self._path(itemname))
-            self.repo.commit(message="created item %s" % itemname)
+            self.repo.commit(text="created item %s" % itemname)
 
         finally:
             del lock
