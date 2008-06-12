@@ -49,7 +49,7 @@ class ConverterBase(object):
                 new.append(child)
         return new
 
-    def new(self, tag, attrib, children):
+    def new(self, tag, attrib={}, children=[]):
         return ElementTree.Element(tag, attrib = attrib, children = children)
 
     def new_copy(self, tag, element, attrib = {}):
@@ -77,6 +77,9 @@ class ConverterBase(object):
             raise ElementException
         return f(elem)
 
+    def visit_moinpage_a(self, elem):
+        raise NotImplementedError
+
     def visit_moinpage_h(self, elem):
         level = elem.get(ElementTree.QName('outline-level', namespaces.moin_page), 1)
         try:
@@ -88,6 +91,9 @@ class ConverterBase(object):
         elif level > 6:
             level = 6
         return self.new_copy(ElementTree.QName('h%d' % level, namespaces.html), elem)
+
+    def visit_moinpage_line_break(self, elem):
+        return self.new(ElementTree.QName('br', namespaces.html))
 
     def visit_moinpage_p(self, elem):
         return self.new_copy(ElementTree.QName('p', namespaces.html), elem)
