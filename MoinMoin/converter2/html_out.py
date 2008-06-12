@@ -27,9 +27,9 @@ class ConverterBase(object):
                 new[key] = value
         return new
 
-    def recurse_element(self, children):
+    def do_children(self, element):
         new = []
-        for child in children:
+        for child in element:
             if isinstance(child, ElementTree.Element):
                 r = self.visit(child)
                 if r is not None:
@@ -47,7 +47,7 @@ class ConverterBase(object):
             if f is not None:
                 return f(elem)
 
-        children = self.recurse_element(elem)
+        children = self.do_children(elem)
         return ElementTree.Element(elem.tag, children = children)
 
     def visit_moinpage(self, elem):
@@ -69,17 +69,17 @@ class ConverterBase(object):
         elif level > 6:
             level = 6
         attrib = self.do_attribs(elem)
-        children = self.recurse_element(elem)
+        children = self.do_children(elem)
         return ElementTree.Element(ElementTree.QName('h%d' % level, namespaces.html), attrib = attrib, children = children)
 
     def visit_moinpage_p(self, elem):
         attrib = self.do_attribs(elem)
-        children = self.recurse_element(elem)
+        children = self.do_children(elem)
         return ElementTree.Element(ElementTree.QName('p', namespaces.html), attrib = attrib, children = children)
 
     def visit_moinpage_page(self, elem):
         attrib = self.do_attribs(elem)
-        children = self.recurse_element(elem)
+        children = self.do_children(elem)
         return ElementTree.Element(ElementTree.QName('div', namespaces.html), attrib = attrib, children = children)
 
 class Converter(ConverterBase):
