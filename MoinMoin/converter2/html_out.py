@@ -70,7 +70,7 @@ class ConverterBase(object):
         return self.new_copy(elem.tag, elem)
 
     def visit_moinpage(self, elem):
-        n = 'visit_moinpage_' + elem.tag.name
+        n = 'visit_moinpage_' + elem.tag.name.replace('-', '_')
         f = getattr(self, n, None)
         if f is None:
             # TODO
