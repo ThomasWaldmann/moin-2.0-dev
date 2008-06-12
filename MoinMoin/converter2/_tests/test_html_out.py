@@ -33,6 +33,10 @@ class TestConverterBase(object):
                 '<div %s><h1>Test</h1></div>' % namespaces_string_html_default),
             ('<page:page %s><page:h page:outline-level="2">Test</page:h></page:page>' % namespaces_string_page,
                 '<div %s><h2>Test</h2></div>' % namespaces_string_html_default),
+            ('<page:page %s><page:h page:outline-level="6">Test</page:h></page:page>' % namespaces_string_page,
+                '<div %s><h6>Test</h6></div>' % namespaces_string_html_default),
+            ('<page:page %s><page:h page:outline-level="7">Test</page:h></page:page>' % namespaces_string_page,
+                '<div %s><h6>Test</h6></div>' % namespaces_string_html_default),
             ('<page:page %s><page:a xlink:href="uri:test">Test</page:a></page:page>' %
                 ' '.join([namespaces_string_page, namespaces_string_xlink]),
                 '<div %s><a href="uri:test">Test</a></div>' % namespaces_string_html_default),
