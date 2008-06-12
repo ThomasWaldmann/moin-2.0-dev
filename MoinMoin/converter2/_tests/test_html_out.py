@@ -12,6 +12,7 @@ from MoinMoin.converter2.html_out import *
 namespaces_string_html = 'xmlns:html="%s"' % namespaces.html
 namespaces_string_html_default = 'xmlns="%s"' % namespaces.html
 namespaces_string_page = 'xmlns:page="%s"' % namespaces.moin_page
+namespaces_string_xlink = 'xmlns:xlink="%s"' % namespaces.xlink
 
 def serialize(elem, **options):
     from cStringIO import StringIO
@@ -32,6 +33,11 @@ class TestConverterBase(object):
                 '<div %s><h1>Test</h1></div>' % namespaces_string_html_default),
             ('<page:page %s><page:h page:outline-level="2">Test</page:h></page:page>' % namespaces_string_page,
                 '<div %s><h2>Test</h2></div>' % namespaces_string_html_default),
+            ('<page:page %s><page:a xlink:href="uri:test">Test</page:a></page:page>' %
+                ' '.join([namespaces_string_page, namespaces_string_xlink]),
+                '<div %s><a href="uri:test">Test</a></div>' % namespaces_string_html_default),
+            ('<page:page %s><page:p>Test<page:line-break/>Test</page:p></page:page>' % namespaces_string_page,
+                '<div %s><p>Test<br />Test</p></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
             yield (self._do,) + i
