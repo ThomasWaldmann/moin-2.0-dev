@@ -24,18 +24,18 @@ class TestConverterBase(object):
 
     def test_base(self):
         pairs = [
-            ('<page:page %s><page:p>Test</page:p></page:page>',
+            ('<page:page %s><page:p>Test</page:p></page:page>' % namespaces_string,
                 '<div xmlns="http://www.w3.org/1999/xhtml"><p>Test</p></div>'),
-            ('<page:page %s><page:h>Test</page:h></page:page>',
+            ('<page:page %s><page:h>Test</page:h></page:page>' % namespaces_string,
                 '<div xmlns="http://www.w3.org/1999/xhtml"><h1>Test</h1></div>'),
-            ('<page:page %s><page:h page:outline-level="2">Test</page:h></page:page>',
+            ('<page:page %s><page:h page:outline-level="2">Test</page:h></page:page>' % namespaces_string,
                 '<div xmlns="http://www.w3.org/1999/xhtml"><h2>Test</h2></div>'),
         ]
         for i in pairs:
-            yield (self._do_base,) + i
+            yield (self._do,) + i
 
-    def _do_base(self, input, output):
-        page = ElementTree.XML(input % namespaces_string)
+    def _do(self, input, output):
+        page = ElementTree.XML(input)
         out = self.conv(page)
         assert serialize(out) == output
 
