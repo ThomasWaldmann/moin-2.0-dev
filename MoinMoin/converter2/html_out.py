@@ -24,11 +24,19 @@ class ConverterBase(object):
         return self.visit(element)
 
     def do_attribs(self, element):
+        default_uri = None
+        if element.tag.uri in self.namespaces_valid_output:
+            default_uri = element.tag.uri
+
         new = {}
+        new_default = {}
         for key, value in element.attrib.iteritems():
             if key.uri in self.namespaces_valid_output:
                 new[key] = value
-        return new
+            if default_uri is not None and key.uri is None:
+                new_default[ElementTree.QName(key.name, default_uri)] = value
+        new_default.update(new)
+        return new_default
 
     def do_children(self, element):
         new = []
