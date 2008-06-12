@@ -16,24 +16,23 @@ class ConverterBase(object):
     def __call__(self, element):
         return self.visit(element)
 
-    def recurse(self, element, old):
+    def recurse_element(self, children):
         new = []
-        for child in old:
+        for child in children:
             if isinstance(child, ElementTree.Element):
                 r = self.visit(child)
             else:
                 r = child
             if r is not None:
                 new.append(r)
-        element[:] = new
-        return element
+        return new
 
     def visit(self, elem):
         if elem.tag.uri in self._namespacelist:
             return self._namespacelist[elem.tag.uri](self, elem)
 
-    def visit_html(self, elem):
-        return self.recurse(elem, elem)
+        children = self.recurse_element(elem)
+        return ElementTree.Element(elem.tag, children = children)
 
     def visit_moinpage(self, elem):
         n = 'visit_moinpage_' + elem.tag.name
@@ -53,16 +52,16 @@ class ConverterBase(object):
             level = 1
         elif level > 6:
             level = 6
-        new = ElementTree.Element(ElementTree.QName('h%d' % level, namespaces.html))
-        return self.recurse(new, elem)
+        children = self.recurse_element(elem)
+        return ElementTree.Element(ElementTree.QName('h%d' % level, namespaces.html), children = children)
 
     def visit_moinpage_p(self, elem):
-        new = ElementTree.Element(ElementTree.QName('p', namespaces.html))
-        return self.recurse(new, elem)
+        children = self.recurse_element(elem)
+        return ElementTree.Element(ElementTree.QName('p', namespaces.html), children = children)
 
     def visit_moinpage_page(self, elem):
-        new = ElementTree.Element(ElementTree.QName('div', namespaces.html))
-        return self.recurse(new, elem)
+        children = self.recurse_element(elem)
+        return ElementTree.Element(ElementTree.QName('div', namespaces.html), children = children)
 
     _namespacelist = {
         namespaces.moin_page: visit_moinpage,
