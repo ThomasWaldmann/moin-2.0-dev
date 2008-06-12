@@ -13,6 +13,10 @@ class ElementException(RuntimeError):
     pass
 
 class ConverterBase(object):
+    namespaces = {
+        namespaces.moin_page: 'moinpage',
+    }
+
     def __call__(self, element):
         return self.visit(element)
 
@@ -35,8 +39,13 @@ class ConverterBase(object):
         return new
 
     def visit(self, elem):
-        if elem.tag.uri in self._namespacelist:
-            return self._namespacelist[elem.tag.uri](self, elem)
+        uri = elem.tag.uri
+        name = self.namespaces.get(uri, None)
+        if name is not None:
+            n = 'visit_' + name
+            f = getattr(self, n, None)
+            if f is not None:
+                return f(elem)
 
         children = self.recurse_element(elem)
         return ElementTree.Element(elem.tag, children = children)
@@ -72,10 +81,6 @@ class ConverterBase(object):
         attrib = self.do_attribs(elem)
         children = self.recurse_element(elem)
         return ElementTree.Element(ElementTree.QName('div', namespaces.html), attrib = attrib, children = children)
-
-    _namespacelist = {
-        namespaces.moin_page: visit_moinpage,
-    }
 
 class Converter(ConverterBase):
     """
