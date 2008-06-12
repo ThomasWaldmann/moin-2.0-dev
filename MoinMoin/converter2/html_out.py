@@ -78,7 +78,8 @@ class ConverterBase(object):
         return f(elem)
 
     def visit_moinpage_a(self, elem):
-        raise NotImplementedError
+        # TODO
+        return self.new_copy(ElementTree.QName('a', namespaces.html), elem)
 
     def visit_moinpage_h(self, elem):
         level = elem.get(ElementTree.QName('outline-level', namespaces.moin_page), 1)
@@ -100,6 +101,10 @@ class ConverterBase(object):
 
     def visit_moinpage_page(self, elem):
         return self.new_copy(ElementTree.QName('div', namespaces.html), elem)
+
+    def visit_moinpage_span(self, elem):
+        # TODO
+        return self.new_copy(ElementTree.QName('span', namespaces.html), elem)
 
 class Converter(ConverterBase):
     """
