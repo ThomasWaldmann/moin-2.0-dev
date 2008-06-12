@@ -16,15 +16,22 @@ class ConverterBase(object):
     def __call__(self, element):
         return self.visit(element)
 
+    def do_attribs(self, element):
+        new = {}
+        for key, value in element.attrib.iteritems():
+            if key.uri != namespaces.moin_page:
+                new[key] = value
+        return new
+
     def recurse_element(self, children):
         new = []
         for child in children:
             if isinstance(child, ElementTree.Element):
                 r = self.visit(child)
+                if r is not None:
+                    new.append(r)
             else:
-                r = child
-            if r is not None:
-                new.append(r)
+                new.append(child)
         return new
 
     def visit(self, elem):
@@ -52,16 +59,19 @@ class ConverterBase(object):
             level = 1
         elif level > 6:
             level = 6
+        attrib = self.do_attribs(elem)
         children = self.recurse_element(elem)
-        return ElementTree.Element(ElementTree.QName('h%d' % level, namespaces.html), children = children)
+        return ElementTree.Element(ElementTree.QName('h%d' % level, namespaces.html), attrib = attrib, children = children)
 
     def visit_moinpage_p(self, elem):
+        attrib = self.do_attribs(elem)
         children = self.recurse_element(elem)
-        return ElementTree.Element(ElementTree.QName('p', namespaces.html), children = children)
+        return ElementTree.Element(ElementTree.QName('p', namespaces.html), attrib = attrib, children = children)
 
     def visit_moinpage_page(self, elem):
+        attrib = self.do_attribs(elem)
         children = self.recurse_element(elem)
-        return ElementTree.Element(ElementTree.QName('div', namespaces.html), children = children)
+        return ElementTree.Element(ElementTree.QName('div', namespaces.html), attrib = attrib, children = children)
 
     _namespacelist = {
         namespaces.moin_page: visit_moinpage,
