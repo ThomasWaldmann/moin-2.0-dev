@@ -13,9 +13,12 @@ class ElementException(RuntimeError):
     pass
 
 class ConverterBase(object):
-    namespaces = {
+    namespaces_visit = {
         namespaces.moin_page: 'moinpage',
     }
+    namespaces_valid_output = frozenset([
+        namespaces.html,
+    ])
 
     def __call__(self, element):
         return self.visit(element)
@@ -23,7 +26,7 @@ class ConverterBase(object):
     def do_attribs(self, element):
         new = {}
         for key, value in element.attrib.iteritems():
-            if key.uri != namespaces.moin_page:
+            if key.uri in self.namespaces_valid_output:
                 new[key] = value
         return new
 
@@ -49,7 +52,7 @@ class ConverterBase(object):
 
     def visit(self, elem):
         uri = elem.tag.uri
-        name = self.namespaces.get(uri, None)
+        name = self.namespaces_visit.get(uri, None)
         if name is not None:
             n = 'visit_' + name
             f = getattr(self, n, None)
