@@ -9,7 +9,9 @@ import py.test
 
 from MoinMoin.converter2.html_out import *
 
-namespaces_string = 'xmlns:page="%s" xmlns:html="%s"' % (namespaces.moin_page, namespaces.html)
+namespaces_string_html = 'xmlns:html="%s"' % namespaces.html
+namespaces_string_html_default = 'xmlns="%s"' % namespaces.html
+namespaces_string_page = 'xmlns:page="%s"' % namespaces.moin_page
 
 def serialize(elem, **options):
     from cStringIO import StringIO
@@ -24,12 +26,20 @@ class TestConverterBase(object):
 
     def test_base(self):
         pairs = [
-            ('<page:page %s><page:p>Test</page:p></page:page>' % namespaces_string,
-                '<div xmlns="http://www.w3.org/1999/xhtml"><p>Test</p></div>'),
-            ('<page:page %s><page:h>Test</page:h></page:page>' % namespaces_string,
-                '<div xmlns="http://www.w3.org/1999/xhtml"><h1>Test</h1></div>'),
-            ('<page:page %s><page:h page:outline-level="2">Test</page:h></page:page>' % namespaces_string,
-                '<div xmlns="http://www.w3.org/1999/xhtml"><h2>Test</h2></div>'),
+            ('<page:page %s><page:p>Test</page:p></page:page>' % namespaces_string_page,
+                '<div %s><p>Test</p></div>' % namespaces_string_html_default),
+            ('<page:page %s><page:h>Test</page:h></page:page>' % namespaces_string_page,
+                '<div %s><h1>Test</h1></div>' % namespaces_string_html_default),
+            ('<page:page %s><page:h page:outline-level="2">Test</page:h></page:page>' % namespaces_string_page,
+                '<div %s><h2>Test</h2></div>' % namespaces_string_html_default),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
+    def test_html(self):
+        pairs = [
+            ('<html:div %s><html:p>Test</html:p></html:div>' % namespaces_string_html,
+                '<div %s><p>Test</p></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
             yield (self._do,) + i
@@ -40,6 +50,6 @@ class TestConverterBase(object):
         assert serialize(out) == output
 
     def test_unknown(self):
-        page = ElementTree.XML("<page:unknown %s/>" % namespaces_string)
+        page = ElementTree.XML("<page:unknown %s/>" % namespaces_string_page)
         py.test.raises(ElementException, self.conv.__call__, page)
 
