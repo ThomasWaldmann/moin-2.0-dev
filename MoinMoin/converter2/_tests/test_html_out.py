@@ -42,6 +42,8 @@ class TestConverterBase(object):
                 '<div %s><a href="uri:test">Test</a></div>' % namespaces_string_html_default),
             ('<page:page %s><page:p>Test<page:line-break/>Test</page:p></page:page>' % namespaces_string_page,
                 '<div %s><p>Test<br />Test</p></div>' % namespaces_string_html_default),
+            ('<page:page %s><page:p>Test<page:span>Test</page:span></page:p></page:page>' % namespaces_string_page,
+                '<div %s><p>Test<span>Test</span></p></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
             yield (self._do,) + i
