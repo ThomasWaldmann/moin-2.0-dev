@@ -15,7 +15,7 @@ def serialize(elem, **options):
     from cStringIO import StringIO
     file = StringIO()
     tree = ElementTree.ElementTree(elem)
-    tree.write(file, **options)
+    tree.write(file, default_namespace = namespaces.html, **options)
     return file.getvalue()
 
 class TestConverterBase(object):
@@ -25,11 +25,11 @@ class TestConverterBase(object):
     def test_base(self):
         pairs = [
             ('<page:page %s><page:p>Test</page:p></page:page>',
-                '<html:div xmlns:html="http://www.w3.org/1999/xhtml"><html:p>Test</html:p></html:div>'),
+                '<div xmlns="http://www.w3.org/1999/xhtml"><p>Test</p></div>'),
             ('<page:page %s><page:h>Test</page:h></page:page>',
-                '<html:div xmlns:html="http://www.w3.org/1999/xhtml"><html:h1>Test</html:h1></html:div>'),
+                '<div xmlns="http://www.w3.org/1999/xhtml"><h1>Test</h1></div>'),
             ('<page:page %s><page:h page:outline-level="2">Test</page:h></page:page>',
-                '<html:div xmlns:html="http://www.w3.org/1999/xhtml"><html:h2>Test</html:h2></html:div>'),
+                '<div xmlns="http://www.w3.org/1999/xhtml"><h2>Test</h2></div>'),
         ]
         for i in pairs:
             yield (self._do_base,) + i
