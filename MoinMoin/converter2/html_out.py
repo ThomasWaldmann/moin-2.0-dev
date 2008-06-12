@@ -36,9 +36,12 @@ class ConverterBase(object):
         return self.recurse(elem, elem)
 
     def visit_moinpage(self, elem):
-        if elem.tag.name in self._taglist_moinpage:
-            return self._taglist_moinpage[elem.tag.name](self, elem)
-        raise ElementException
+        n = 'visit_moinpage_' + elem.tag.name
+        f = getattr(self, n, None)
+        if f is None:
+            # TODO
+            raise ElementException
+        return f(elem)
 
     def visit_moinpage_h(self, elem):
         level = elem.get(ElementTree.QName('outline-level', namespaces.moin_page), 1)
@@ -63,12 +66,6 @@ class ConverterBase(object):
 
     _namespacelist = {
         namespaces.moin_page: visit_moinpage,
-    }
-
-    _taglist_moinpage = {
-        'h': visit_moinpage_h,
-        'p': visit_moinpage_p,
-        'page': visit_moinpage_page,
     }
 
 class Converter(ConverterBase):
