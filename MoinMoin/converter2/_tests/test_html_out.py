@@ -38,8 +38,8 @@ class TestConverterBase(object):
 
     def test_html(self):
         pairs = [
-            ('<html:div %s><html:p>Test</html:p></html:div>' % namespaces_string_html,
-                '<div %s><p>Test</p></div>' % namespaces_string_html_default),
+            ('<html:div html:id="a" id="b" %s><html:p id="c">Test</html:p></html:div>' % namespaces_string_html,
+                '<div id="a" %s><p id="c">Test</p></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
             yield (self._do,) + i
