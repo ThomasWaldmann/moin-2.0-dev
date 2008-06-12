@@ -38,6 +38,15 @@ class ConverterBase(object):
                 new.append(child)
         return new
 
+    def new(self, tag, attrib, children):
+        return ElementTree.Element(tag, attrib = attrib, children = children)
+
+    def new_copy(self, tag, element, attrib = {}):
+        attrib_new = self.do_attribs(element)
+        attrib_new.update(attrib)
+        children = self.do_children(element)
+        return self.new(tag, attrib_new, children)
+
     def visit(self, elem):
         uri = elem.tag.uri
         name = self.namespaces.get(uri, None)
@@ -47,8 +56,7 @@ class ConverterBase(object):
             if f is not None:
                 return f(elem)
 
-        children = self.do_children(elem)
-        return ElementTree.Element(elem.tag, children = children)
+        return self.new_copy(elem.tag, elem)
 
     def visit_moinpage(self, elem):
         n = 'visit_moinpage_' + elem.tag.name
@@ -68,19 +76,13 @@ class ConverterBase(object):
             level = 1
         elif level > 6:
             level = 6
-        attrib = self.do_attribs(elem)
-        children = self.do_children(elem)
-        return ElementTree.Element(ElementTree.QName('h%d' % level, namespaces.html), attrib = attrib, children = children)
+        return self.new_copy(ElementTree.QName('h%d' % level, namespaces.html), elem)
 
     def visit_moinpage_p(self, elem):
-        attrib = self.do_attribs(elem)
-        children = self.do_children(elem)
-        return ElementTree.Element(ElementTree.QName('p', namespaces.html), attrib = attrib, children = children)
+        return self.new_copy(ElementTree.QName('p', namespaces.html), elem)
 
     def visit_moinpage_page(self, elem):
-        attrib = self.do_attribs(elem)
-        children = self.do_children(elem)
-        return ElementTree.Element(ElementTree.QName('div', namespaces.html), attrib = attrib, children = children)
+        return self.new_copy(ElementTree.QName('div', namespaces.html), elem)
 
 class Converter(ConverterBase):
     """
