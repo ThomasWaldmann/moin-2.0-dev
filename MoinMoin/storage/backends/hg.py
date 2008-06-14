@@ -26,7 +26,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.storage.abstract import Backend, Item
+from MoinMoin.storage.abstract import Backend, Item, Revision
 from MoinMoin.search import term
 from mercurial import hg, ui, util
 

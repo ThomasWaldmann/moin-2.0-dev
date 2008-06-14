@@ -256,3 +256,6 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         """
         return self._backend._create_revision(self, revno)
 
+
+class Revision(object):
+    pass
