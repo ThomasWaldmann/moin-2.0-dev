@@ -30,11 +30,9 @@ from MoinMoin.storage.abstract import Backend, Item
 from MoinMoin.search import term
 from mercurial import hg, ui, util
 
-from MoinMoin.storage.error import BackendError, NoSuchItemError
+from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
-
-from 
 
 import weakref
 import tempfile
@@ -98,11 +96,9 @@ class MercurialBackend(Backend):
         """
         Returns an Item with given name. If not found, raises NoSuchItemError
         exception.
-        """
-        ctx = self.repo.changectx()
-        
+        """        
         try:
-            ftx = ctx.filectx(itemname)
+            self.repo.changectx().filectx(itemname)
         except LookupError:
             raise NoSuchItemError
 
@@ -135,9 +131,26 @@ class MercurialBackend(Backend):
 
     def _list_revisions(self, item):
         """
-        Return a list of Item Revisions.
+        Return a list of Item revision numbers. 
+        Retrieves only accessible rev numbers when internal indexfile
+        inconsistency occurs.
         """
-        pass
+        filelog = self.repo.file(item._name)
+        cl_count = self.repo.changelog.count()
+
+        revs = []
+        for i in xrange(filelog.count()):
+            try:
+                assert filelog.linkrev(filelog.node(i)) < cl_count, \
+                    "Revision number out of bounds, repository inconsistency!"
+                revs.append(i)
+
+            except (IndexError, AssertionError):  # malformed index file
+                pass
+                #XXX: should we log inconsistency?
+
+        revs.reverse()
+        return revs
         
 
     def _lock(self):
