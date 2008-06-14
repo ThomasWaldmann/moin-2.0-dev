@@ -29,6 +29,7 @@
 from MoinMoin.storage.abstract import Backend, Item, Revision
 from MoinMoin.search import term
 from mercurial import hg, ui, util
+from mercurial.commands import rename
 
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 from mercurial.repo import RepoError
@@ -47,7 +48,7 @@ class MercurialBackend(Backend):
         """
         Init repository.
         """
-        self.ui = ui.ui(interactive=False)
+        self.ui = ui.ui(interactive=False, quiet=True)
 
         if not os.path.isdir(path):
             raise BackendError("Invalid repository path!")
@@ -80,7 +81,7 @@ class MercurialBackend(Backend):
             util.rename(fname, self._path(itemname))
         else:
             os.unlink(fname)
-            raise BackendError("Item with that name already exists!")
+            raise BackendError, "Item exists: %s" % itemname
 
         try:
             self.repo.add([itemname])
@@ -123,7 +124,7 @@ class MercurialBackend(Backend):
         try:
             ftx = ctx.filectx(item._name).filectx(revno)
         except LookupError:
-            raise NoSuchRevisionError
+            raise NoSuchRevisionError, "Revision does not exist: %s" % revno
 
         #XXX: fix on Revision class defined
         return Revision()
@@ -151,7 +152,32 @@ class MercurialBackend(Backend):
 
         revs.reverse()
         return revs
+
+
+    def _rename_item(self, item, newname):
+        """
+        Renames given Item to newname and commits changes. Raises
+        NoSuchItemError if source item is unreachable or BackendError
+        if destination exists.
+        """
+        try:
+            self.repo.changectx().filectx(item._name)
+        except LookupError:
+            raise NoSuchItemError, 'Source item does not exist: %s' % item._name
         
+        lock = self._lock()
+        
+        try:
+            if os.path.exists(self._path(newname)):
+                raise BackendError, "Destination tem already exists: %s" % newname
+            
+            rename(self.ui, self.repo, self._path(item._name),
+                    self._path(newname))
+            self.repo.commit(text="renamed item %s to: %s" % (item._name, newname))
+            
+        finally:
+            del lock
+                
 
     def _lock(self):
         """
