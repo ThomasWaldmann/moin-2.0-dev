@@ -28,8 +28,7 @@
 
 from MoinMoin.storage.abstract import Backend, Item, Revision
 from MoinMoin.search import term
-from mercurial import hg, ui, util
-from mercurial.commands import rename
+from mercurial import hg, ui, util, commands
 
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
 from mercurial.repo import RepoError
@@ -73,20 +72,16 @@ class MercurialBackend(Backend):
         """
         Create revisioned item in repository. Returns Item object.
         """
-        fd, fname = tempfile.mkstemp(prefix=itemname, dir=self.path)
-        
         lock = self._lock() # one commit per item
 
         if not os.path.exists(self._path(itemname)):
-            util.rename(fname, self._path(itemname))
+            file = open(self._path(itemname), 'w')
         else:
-            os.unlink(fname)
             raise BackendError, "Item exists: %s" % itemname
-
+        
         try:
             self.repo.add([itemname])
-            self.repo.commit(text="created item %s" % itemname)
-
+        
         finally:
             del lock
 
@@ -101,7 +96,8 @@ class MercurialBackend(Backend):
         try:
             self.repo.changectx().filectx(itemname)
         except LookupError:
-            raise NoSuchItemError
+            raise NoSuchItemError, 'Item does not exist: %s' % itemname
+            
 
         return Item(self, itemname)
 
@@ -158,7 +154,7 @@ class MercurialBackend(Backend):
         """
         Renames given Item to newname and commits changes. Raises
         NoSuchItemError if source item is unreachable or BackendError
-        if destination exists.
+        if destination exists. Note that this method commits change itself.
         """
         try:
             self.repo.changectx().filectx(item._name)
@@ -169,15 +165,52 @@ class MercurialBackend(Backend):
         
         try:
             if os.path.exists(self._path(newname)):
-                raise BackendError, "Destination tem already exists: %s" % newname
+                raise BackendError, "Destination item already exists: %s" % newname
             
-            rename(self.ui, self.repo, self._path(item._name),
-                    self._path(newname))
-            self.repo.commit(text="renamed item %s to: %s" % (item._name, newname))
-            
+            commands.rename(self.ui, self.repo, self._path(item._name),
+                    self._path(newname))            
+            self.repo.commit(text="Renamed item %s to: %s" % (item._name, newname))
+
         finally:
             del lock
                 
+
+    def _commit_item(self, item):
+        """
+        Commit Item changes to repository.
+        """
+        lock = self._lock()
+        
+        if self.repo.status(files=[item._name])[1]:
+            msg = "Created item: %s" % item._name
+
+        elif self.repo.status(files=[item._name])[0]:
+            msg = "Modified item %s" % item._name
+
+        try:
+            #XXX: message, user from upper layer
+            self.repo.commit(text=msg, user='wiki', files=[item._name])
+    
+        finally:
+            del lock
+
+
+    def _rollback_item(self, item):
+        """
+        Reverts uncommited Item changes.
+        """
+        lock = self._lock()
+
+        try:
+            commands.revert(self.ui, self.repo, self._path(item._name),
+                    date=None, rev=None, all=None)
+        
+            if self.repo.status(files=[item._name])[5]:
+                os.unlink(self._path(item._name))
+
+        finally:
+            del lock
+
 
     def _lock(self):
         """
