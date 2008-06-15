@@ -169,7 +169,6 @@ class MercurialBackend(Backend):
             
             commands.rename(self.ui, self.repo, self._path(item._name),
                     self._path(newname))            
-            self.repo.commit(text="Renamed item %s to: %s" % (item._name, newname))
 
         finally:
             del lock
@@ -179,17 +178,29 @@ class MercurialBackend(Backend):
         """
         Commit Item changes to repository.
         """
-        lock = self._lock()
+        items = [item._name]
         
-        if self.repo.status(files=[item._name])[1]:
+        lock = self._lock()               
+        status = self.repo.status(files=items)
+
+        if status[2]: # removes
+            items.extend(self._find_copy_destination(item._name))
+            
+            if len(items) == 2:
+                msg = "Renamed item %s to: %s" % (items[0], items[1])
+
+            else:
+                msg = "Removed item: %s" % item._name
+
+        elif status[1]: # adds
             msg = "Created item: %s" % item._name
 
-        elif self.repo.status(files=[item._name])[0]:
+        elif status[0]: # modifications
             msg = "Modified item %s" % item._name
 
         try:
             #XXX: message, user from upper layer
-            self.repo.commit(text=msg, user='wiki', files=[item._name])
+            self.repo.commit(text=msg, user='wiki', files=items)
     
         finally:
             del lock
@@ -199,17 +210,34 @@ class MercurialBackend(Backend):
         """
         Reverts uncommited Item changes.
         """
+        items = [item._name]
+
         lock = self._lock()
 
-        try:
-            commands.revert(self.ui, self.repo, self._path(item._name),
-                    date=None, rev=None, all=None)
+        try:            
+            items = self._find_copy_destination(item._name)
+
+            commands.revert(self.ui, self.repo, self._path( items[0] ),
+                date=None, rev=None, all=None, no_backup=True)
         
-            if self.repo.status(files=[item._name])[5]:
-                os.unlink(self._path(item._name))
+            for itemname in self.repo.status(files=items)[4]:
+                os.unlink(self._path(itemname))
 
         finally:
             del lock
+
+
+    def _find_copy_destination(self, srcname):
+        """
+        Searches repository for copy of source Item and returns list with 
+        destination name if found. Else returns empty list.
+        """
+        status = self.repo.status(files=[srcname])
+
+        for dst, src in self.repo.dirstate.copies().iteritems(): 
+            if src in status[2]:
+                return [dst]
+        return []
 
 
     def _lock(self):
@@ -232,5 +260,3 @@ class MercurialBackend(Backend):
         """
         return os.path.join(self.path, fname)
 
-
-    
