@@ -65,7 +65,7 @@ class Backend(object):
         Creates an item with a given itemname. If that Item already exists,
         raise an Exception.
         """
-        return Item(self, itemname)
+        raise NotImplementedError
 
     def iteritems(self):
         """
@@ -145,6 +145,14 @@ class Backend(object):
         """
         raise NotImplementedError
 
+    def _read_revision_data(self, revision, chunksize):
+        """
+        Called to read a given amount of bytes of a revisions data. By default, all
+        data is read.
+        """
+        raise NotImplementedError
+
+
 
     # XXX Further internals of this class may follow
 
@@ -163,7 +171,7 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         self._name = itemname
         self._locked = False
         self._read_accessed = False
-        self._metadata = None          # XXX Will be loaded lazily upon first real access.
+        self._metadata = None          # Will be loaded lazily upon first real access.
 
     def __setitem__(self, key, value):
         """
@@ -222,7 +230,6 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         self._backend._unlock_item_metadata()
         self._locked = False
 
-
     def get_revision(self, revno):
         """
         Fetches a given revision and returns it to the caller.
@@ -256,3 +263,94 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         """
         return self._backend._create_revision(self, revno)
 
+
+# the classes here are still not finished but will be (and polished) while the memorybackend and the tests
+# are created
+
+
+class Revision(object, DictMixin):
+    """
+    An object of this class represents a Revision of an Item. An Item can have
+    several Revisions at a time, one being the most recent Revision.
+    This is a principle that is similar to the concepts used in Version-Control-
+    Systems.
+    """
+
+    def __init__(self, item, revno):
+        """
+        Initialize the Revision.
+        """
+        self.revno = revno
+
+        self._item = item
+        self._backend = item._backend
+        self._data = None
+        self._metadata = None                       # We will load it lazily
+
+    def __setitem__(self):
+        """
+        Revision metadata cannot be altered, thus, we raise an Exception.
+        """
+        raise AttributeError, "Metadata of already existing Revisions may not be altered."
+
+    def __getitem__(self, key):
+        """
+        Get the corresponding value to the key from the metadata dict.
+        """
+        if not isinstance(key, (unicode, str)):
+            raise TypeError, "key must be string type"
+
+        return self._metadata[key]
+
+    def read_data(self, chunksize = -1):
+        """
+        Allows file-like read-operations. You can pass a chunksize and it will
+        only read as many bytes at a time as you wish. The default, however, is
+        to load the whole Revision data into memory, which may not be what you
+        want.
+        """
+        return self._backend._read_revision_data(self, chunksize)
+
+
+class NewRevision(Revision):
+    """
+    This is basically the same as Revision but with mutable metadata and data properties.
+    """
+    def __init__(self):
+        """
+        Initialize the NewRevision
+        """
+        Revision.__init__(self)
+
+    def __setitem__(self, key, value):
+        """
+        Internal method used for dict-like access to the NewRevisions metadata-dict.
+        """
+        if not isinstance(key, (str, unicode)):
+            raise TypeError, "Key must be string type"
+
+        if not isinstance(value, (str, tuple, unicode)):
+            raise TypeError, "Value must be string or tuple of strings"
+
+        if isinstance(value, tuple):
+            for v in value:
+                if not isinstance(value, (str, unicode)):
+                    raise TypeError, "Value must be string or tuple of strings"
+
+        self._metadata[key] = value
+
+    def __getitem__(self, key):
+        """
+        Get the value to a given key from the NewRevisions metadata-dict.
+        """
+        if not isinstance(key, (unicode, str)):
+            raise TypeError, "key must be string type"
+
+        return self._metadata[key]
+
+    def write_data(self, data):
+        """
+        Write `data` to the NewRevisions data attribute. This is the actual (binary)
+        data, e.g. the binary representation of an image.
+        """
+        pass            # TODO: How do we best implement this?
