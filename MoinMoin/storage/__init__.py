@@ -60,6 +60,19 @@ class Backend(object):
         """
         raise NotImplementedError
 
+    def has_item(self, itemname):
+        """
+        This method is added for convenience. With it you don't need to try get_item
+        and catch an exception that may be thrown if the item doesn't exist yet.
+        """
+        # XXX Is there a more beautiful way to approach this?
+        try:
+            self.get_item(itemname)
+            return True
+
+        except KeyError:
+            return False
+
     def create_item(self, itemname):
         """
         Creates an item with a given itemname. If that Item already exists,
@@ -169,6 +182,7 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         """
         self._backend = backend
         self._name = itemname
+
         self._locked = False
         self._read_accessed = False
         self._metadata = None          # Will be loaded lazily upon first real access.
