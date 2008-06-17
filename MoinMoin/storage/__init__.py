@@ -66,6 +66,8 @@ class Backend(object):
         and catch an exception that may be thrown if the item doesn't exist yet.
         """
         # XXX Is there a more beautiful way to approach this?
+        # XXX This is going to cause nasty lockups if get_item itself tries to use this method. URGH!
+        # XXX Thus, you should aim to override this dummy behaviour!
         try:
             self.get_item(itemname)
             return True
@@ -265,7 +267,7 @@ class Item(object, DictMixin):                      # TODO Improve docstring
 
     def commit(self):
         """
-        Rename the item. By default this uses the commit method the backend
+        Commit the item. By default this uses the commit method the backend
         specifies internally.
         """
         self._backend._commit_item(self)
