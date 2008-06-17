@@ -167,6 +167,11 @@ class Backend(object):
         """
         raise NotImplementedError
 
+    def _get_item_metadata(self, item):
+        """
+        Load metadata for a given item, return dict.
+        """
+        raise NotImplementedError
 
 
     # XXX Further internals of this class may follow
@@ -211,6 +216,9 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         if not value_type_is_valid(value):
             raise TypeError, "Value must be string, int, long, float, bool, complex or a nested tuple of the former"
 
+        if self._metadata is None:
+            self._metadata = self._backend._get_item_metadata(self)
+
         self._metadata[key] = value
 
     def __getitem__(self, key):
@@ -222,6 +230,9 @@ class Item(object, DictMixin):                      # TODO Improve docstring
 
         if not isinstance(key, (unicode, str)):
             raise TypeError, "key must be string type"
+
+        if self._metadata is None:
+            self._metadata = self._backend._get_item_metadata(self)
 
         return self._metadata[key]
 
@@ -383,4 +394,5 @@ def value_type_is_valid(value):
 
         else:
             return True
+
 

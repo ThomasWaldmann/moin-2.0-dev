@@ -45,42 +45,36 @@ class MemoryBackend(Backend):
         if not self.has_item(itemname):
             raise KeyError, "No such item, %r" % (itemname)
 
-        elif self.has_item(itemname):
-            item_id = self._itemmap[itemname]
-            item = Item(self, itemname)
-            item._metadata = self._item_metadata[item_id]               # TODO: This is anything but lazy
+        item = Item(self, itemname)
+        item._item_id = self._itemmap[itemname]
 
-            return item
+        return item
 
     def has_item(self, itemname):
         """
         Overriding the default has_item-method because we can simply look the name
         up in our nice dictionary.
         """
-        if itemname in self._itemmap:
-            return True
-
-        else:
-            return False
+        return itemname in self._itemmap
 
     def create_item(self, itemname):
         """
         Creates an item with a given itemname. If that Item already exists,
         raise an Exception.
         """
-        if not isinstance(itemname, str):
-            raise KeyError, "Itemnames must be of type str, not %s" % (str(type(itemname)))
+        if not isinstance(itemname, (str, unicode)):
+            raise KeyError, "Itemnames must have string type, not %s" % (str(type(itemname)))
 
         elif self.has_item(itemname):
             raise KeyError, "An Item with the name %r already exists!" % (itemname)
 
         else:
             self._itemmap[itemname] = self._last_itemid
-            self._item_metadata[self._last_itemid] = {"item_id" : self._last_itemid}
-            self._item_revisions[self._last_itemid] = {self._last_itemid : (None, {})}                  # The Item has just been created, thus there are no Revisions
+            self._item_metadata[self._last_itemid] = {}
+            self._item_revisions[self._last_itemid] = {} # no revisions yet
 
             item = Item(self, itemname)
-            item._metadata = self._item_metadata[self._last_itemid]
+            item._item_id = self._last_itemid
 
             self._last_itemid += 1
 
@@ -94,12 +88,15 @@ class MemoryBackend(Backend):
         """
         return self._itemmap.iteritems()
 
+    def _get_item_metadata(self, item):
+        return self._item_metadata[item._item_id]
+
     def _get_revision(self, item, revno):
         """
         For a given Item and Revision number, return the corresponding Revision
         of that Item.
         """
-        item_id = item["item_id"]
+        item_id = item._item_id
 
         if revno not in self._item_revisions[item_id]:
             raise KeyError, "No Revision #%d on Item %s" % (revno, item._name)
@@ -116,17 +113,14 @@ class MemoryBackend(Backend):
         For a given Item, list all Revisions. Returns a list of ints representing
         the Revision numbers.
         """
-        item_id = item["item_id"]
-
-        return self._item_revisions[item_id].keys()
+        return self._item_revisions[item._item_id].keys()
 
     def _create_revision(self, item, revno):
         """
         Takes an Item object and creates a new Revision. Note that you need to pass
         a revision number for concurrency-reasons.
         """
-        item_id = item["item_id"]
-        last_rev = max(self._item_revisions[item_id].iterkeys())
+        last_rev = max(self._item_revisions[item._item_id].iterkeys())
 
         if revno in self._item_revisions:
             raise KeyError, "A Revision with the number %d already exists on the item %r" % (revno, item._name)
@@ -149,17 +143,23 @@ class MemoryBackend(Backend):
         if newname in self._itemmap:
             raise KeyError, "Cannot rename Item %s to %s since there already is an Item with that name." % (item._name, newname)
 
-        elif item["item_id"] not in self._itemmap.values():
-            raise KeyError, "The Item you are trying to rename doesn't exist any longer."
-
-        elif not isinstance(newname, str):
-            raise KeyError, "Itemnames must be of type str, not %s" % (str(type(newname)))
+        elif not isinstance(newname, (str, unicode)):
+            raise KeyError, "Itemnames must have string type, not %s" % (str(type(newname)))
 
         else:
-            copy_me = self._itemmap[item._name] # U
-            self._itemmap[newname] = copy_me    # G
-            del self._itemmap[item._name]       # L
-            item._name = newname                # Y?
+            name = None
+
+            for itemname, itemid in self._itemmap.iteritems():
+                if itemid == item._itemid:
+                    name = itemname
+                    break
+
+            assert name is not None
+
+            copy_me = self._itemmap[name]
+            self._itemmap[newname] = copy_me
+            del self._itemmap[name]
+            item._name = newname
 
     def _commit_item(self, item):
         """
@@ -197,5 +197,3 @@ class MemoryBackend(Backend):
         data is read.
         """
         raise NotImplementedError
-
-
