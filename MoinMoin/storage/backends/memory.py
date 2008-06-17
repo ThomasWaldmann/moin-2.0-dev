@@ -50,6 +50,8 @@ class MemoryBackend(Backend):
             item = Item(self, itemname)
             item._metadata = self._item_metadata[item_id]               # TODO: This is anything but lazy
 
+            return item
+
     def has_item(self, itemname):
         """
         Overriding the default has_item-method because we can simply look the name
@@ -75,7 +77,7 @@ class MemoryBackend(Backend):
         else:
             self._itemmap[itemname] = self._last_itemid
             self._item_metadata[self._last_itemid] = {"item_id" : self._last_itemid}
-            self._item_revisions[self._last_itemid] = {self._last_itemid : {}}                  # The Item has just been created, thus there are no Revisions
+            self._item_revisions[self._last_itemid] = {self._last_itemid : (None, {})}                  # The Item has just been created, thus there are no Revisions
 
             item = Item(self, itemname)
             item._metadata = self._item_metadata[self._last_itemid]
@@ -87,9 +89,10 @@ class MemoryBackend(Backend):
     def iteritems(self):
         """
         Returns an iterator over all items available in this backend.
-        (Like the dict method).
+        Returns each item and the corresponding item_id in a tuple of the
+        form: (item, item_id).
         """
-        return self._items.iteritems()
+        return self._itemmap.iteritems()
 
     def _get_revision(self, item, revno):
         """
@@ -123,13 +126,9 @@ class MemoryBackend(Backend):
         a revision number for concurrency-reasons.
         """
         item_id = item["item_id"]
-        try:
-            last_rev = max(self.item_revisions[item_id].iterkeys())
+        last_rev = max(self._item_revisions[item_id].iterkeys())
 
-        except ValueError:                  # Maybe the Item has no Revisions yet
-            last_rev = -1                   # In that case we want to start with -1+1 = 0
-
-        if revno in self.item_revisions:
+        if revno in self._item_revisions:
             raise KeyError, "A Revision with the number %d already exists on the item %r" % (revno, item._name)
 
         elif revno != last_rev + 1:

@@ -189,6 +189,8 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         self._read_accessed = False
         self._metadata = None          # Will be loaded lazily upon first real access.
 
+
+
     def __setitem__(self, key, value):
         """
         In order to acces the Items metadata you can use the well-known dict-like
@@ -206,13 +208,8 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         if not isinstance(key, (str, unicode)):
             raise TypeError, "Key must be string type"
 
-        if not isinstance(value, (str, tuple, unicode)):
-            raise TypeError, "Value must be string or tuple of strings"
-
-        if isinstance(value, tuple):
-            for v in value:
-                if not isinstance(value, (str, unicode)):
-                    raise TypeError, "Value must be string or tuple of strings"
+        if not value_type_is_valid(value):
+            raise TypeError, "Value must be string, int, long, float, bool, complex or a nested tuple of the former"
 
         self._metadata[key] = value
 
@@ -301,7 +298,7 @@ class Revision(object, DictMixin):
         self._item = item
         self._backend = item._backend
         self._data = None
-        self._metadata = None                       # We will load it lazily
+        self._metadata = {}                             # TODO We will load it lazily
 
     def __setitem__(self):
         """
@@ -332,11 +329,11 @@ class NewRevision(Revision):
     """
     This is basically the same as Revision but with mutable metadata and data properties.
     """
-    def __init__(self):
+    def __init__(self, item, revno):
         """
         Initialize the NewRevision
         """
-        Revision.__init__(self)
+        Revision.__init__(self, item, revno)
 
     def __setitem__(self, key, value):
         """
@@ -345,13 +342,8 @@ class NewRevision(Revision):
         if not isinstance(key, (str, unicode)):
             raise TypeError, "Key must be string type"
 
-        if not isinstance(value, (str, tuple, unicode)):
-            raise TypeError, "Value must be string or tuple of strings"
-
-        if isinstance(value, tuple):
-            for v in value:
-                if not isinstance(value, (str, unicode)):
-                    raise TypeError, "Value must be string or tuple of strings"
+        if not value_type_is_valid(value):
+            raise TypeError, "Value must be string, int, long, float, bool, complex or a nested tuple of the former"
 
         self._metadata[key] = value
 
@@ -370,3 +362,25 @@ class NewRevision(Revision):
         data, e.g. the binary representation of an image.
         """
         pass            # TODO: How do we best implement this?
+
+
+
+# Little helper function:
+def value_type_is_valid(value):
+    """
+    For metadata-values, we allow only immutable types, namely:
+    str, unicode, bool, int, long, float, complex and tuple.
+    Since tuples can contain other types, we need to check the
+    types recursively.
+    """
+    if isinstance(value, (str, int, long, float, complex)):
+        return True
+
+    elif isinstance(value, tuple):
+        for element in tuple:
+            if not value_type_is_valid(element):
+                return False
+
+        else:
+            return True
+
