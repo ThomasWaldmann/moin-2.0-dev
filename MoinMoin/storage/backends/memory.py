@@ -9,6 +9,7 @@ for any production site that needs persistant storage.
 """
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision
+from MoinMoin.storage.error import *            # change this after I determined what is needed
 
 class MemoryBackend(Backend):
     """
@@ -43,7 +44,7 @@ class MemoryBackend(Backend):
         Returns Item object or raises Exception if that Item does not exist.
         """
         if not self.has_item(itemname):
-            raise KeyError, "No such item, %r" % (itemname)
+            raise NoSuchItemError, "No such item, %r" % (itemname)
 
         item = Item(self, itemname)
         item._item_id = self._itemmap[itemname]
@@ -63,10 +64,10 @@ class MemoryBackend(Backend):
         raise an Exception.
         """
         if not isinstance(itemname, (str, unicode)):
-            raise KeyError, "Itemnames must have string type, not %s" % (str(type(itemname)))
+            raise WrongTypeError, "Itemnames must have string type, not %s" % (str(type(itemname)))
 
         elif self.has_item(itemname):
-            raise KeyError, "An Item with the name %r already exists!" % (itemname)
+            raise ItemAlreadyExistsError, "An Item with the name %r already exists!" % (itemname)
 
         else:
             self._itemmap[itemname] = self._last_itemid
@@ -99,7 +100,7 @@ class MemoryBackend(Backend):
         item_id = item._item_id
 
         if revno not in self._item_revisions[item_id]:
-            raise KeyError, "No Revision #%d on Item %s" % (revno, item._name)
+            raise NoSuchRevisionError, "No Revision #%d on Item %s" % (revno, item._name)
 
         else:
             revision = Revision(item, revno)
@@ -123,10 +124,10 @@ class MemoryBackend(Backend):
         last_rev = max(self._item_revisions[item._item_id].iterkeys())
 
         if revno in self._item_revisions:
-            raise KeyError, "A Revision with the number %d already exists on the item %r" % (revno, item._name)
+            raise RevisionAlreadyExistsError, "A Revision with the number %d already exists on the item %r" % (revno, item._name)
 
         elif revno != last_rev + 1:
-            raise KeyError, "The latest revision is %d, thus you cannot create revision number %d. \
+            raise RevisionNumberMismatchError, "The latest revision is %d, thus you cannot create revision number %d. \
                              The revision number must be latest_revision + 1." % (last_rev, revno)
 
         else:
@@ -141,10 +142,10 @@ class MemoryBackend(Backend):
         does not exist or if the newname is already chosen by another Item.
         """
         if newname in self._itemmap:
-            raise KeyError, "Cannot rename Item %s to %s since there already is an Item with that name." % (item._name, newname)
+            raise ItemAlreadyExistsError, "Cannot rename Item %s to %s since there already is an Item with that name." % (item._name, newname)
 
         elif not isinstance(newname, (str, unicode)):
-            raise KeyError, "Itemnames must have string type, not %s" % (str(type(newname)))
+            raise WrongTypeError, "Itemnames must have string type, not %s" % (str(type(newname)))
 
         else:
             name = None

@@ -45,8 +45,33 @@ class NoSuchItemError(BackendError):
     """
     pass
 
+class ItemAlreadyExistsError(BackendError):
+    """
+    Raised if the Item you are trying to create already exists.
+    """
+    pass
+
 class NoSuchRevisionError(BackendError):
     """
     Raised if the requested revision of an item does not exist.
+    """
+    pass
+
+class RevisionAlreadyExistsError(BackendError):
+    """
+    Raised if the Revision you are trying to create already exists.
+    """
+    pass
+
+class RevisionNumberMismatchError(BackendError):
+    """
+    Raised if the Revision you are trying to create has a wrong revision number.
+    """
+    pass
+
+class WrongTypeError(BackendError):
+    """
+    Raised if you pass a value of a wrong type to something that
+    expects values of only certain types.
     """
     pass
