@@ -68,10 +68,3 @@ class RevisionNumberMismatchError(BackendError):
     Raised if the Revision you are trying to create has a wrong revision number.
     """
     pass
-
-class WrongTypeError(BackendError):
-    """
-    Raised if you pass a value of a wrong type to something that
-    expects values of only certain types.
-    """
-    pass

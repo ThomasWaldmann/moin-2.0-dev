@@ -12,7 +12,7 @@
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
-                                   WrongTypeError, ItemAlreadyExistsError, \
+                                   ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError
 
 from MoinMoin.storage.backends.memory import MemoryBackend
@@ -35,7 +35,7 @@ class TestMemoryBackend(object):
         assert my_item._name == "my_item"
 
     def test_create_item_wrong_itemname(self):
-        py.test.raises(WrongTypeError, self.memb.create_item, 42)
+        py.test.raises(TypeError, self.memb.create_item, 42)
 
     def test_create_item_again(self):
         item1 = self.memb.create_item("item1")

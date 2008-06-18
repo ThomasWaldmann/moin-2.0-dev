@@ -19,7 +19,7 @@
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
-                                   WrongTypeError, ItemAlreadyExistsError, \
+                                   ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError
 
 
@@ -79,7 +79,7 @@ class MemoryBackend(Backend):
         raise an Exception.
         """
         if not isinstance(itemname, (str, unicode)):
-            raise WrongTypeError, "Itemnames must have string type, not %s" % (str(type(itemname)))
+            raise TypeError, "Itemnames must have string type, not %s" % (str(type(itemname)))
 
         elif self.has_item(itemname):
             raise ItemAlreadyExistsError, "An Item with the name %r already exists!" % (itemname)
@@ -164,7 +164,7 @@ class MemoryBackend(Backend):
             raise ItemAlreadyExistsError, "Cannot rename Item %s to %s since there already is an Item with that name." % (item._name, newname)
 
         elif not isinstance(newname, (str, unicode)):
-            raise WrongTypeError, "Itemnames must have string type, not %s" % (str(type(newname)))
+            raise TypeError, "Itemnames must have string type, not %s" % (str(type(newname)))
 
         else:
             name = None
