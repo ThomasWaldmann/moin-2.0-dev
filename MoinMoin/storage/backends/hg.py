@@ -26,8 +26,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.storage.abstract import Backend, Item, Revision
-from MoinMoin.search import term
+from MoinMoin.storage import Backend, Item, Revision, NewRevision
 from mercurial import hg, ui, util, commands
 
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError
