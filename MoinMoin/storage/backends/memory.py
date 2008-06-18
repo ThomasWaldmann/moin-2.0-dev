@@ -9,7 +9,10 @@ for any production site that needs persistant storage.
 """
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision
-from MoinMoin.storage.error import *            # change this after I determined what is needed
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
+                                   WrongTypeError, ItemAlreadyExistsError, \
+                                   RevisionAlreadyExistsError, RevisionNumberMismatchError
+
 
 class MemoryBackend(Backend):
     """
