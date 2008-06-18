@@ -1,11 +1,20 @@
 """
-This represents a simple Backend that stores all data in memory.
-This is mainly done for testing and documentation / demonstration purposes.
-Thus, this backend IS NOT designed for concurrent use.
+    MoinMoin - MemoryBackend
 
-DO NOT (even for the smallest glimpse of a second) consider to use this backend
-for any production site that needs persistant storage.
-(Assuming you got no infinite stream of power-supply.)
+    This represents a simple Backend that stores all data in memory.
+    This is mainly done for testing and documentation / demonstration purposes.
+    Thus, this backend IS NOT designed for concurrent use.
+
+    DO NOT (even for the smallest glimpse of a second) consider to use this backend
+    for any production site that needs persistant storage.
+    (Assuming you got no infinite stream of power-supply.)
+
+    ---
+
+    @copyright: 2008 MoinMoin:ChristopherDenter,
+                2008 MoinMoin:JohannesBerg
+    @license: GNU GPL, see COPYING for details.
+
 """
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision
@@ -16,7 +25,8 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
 
 class MemoryBackend(Backend):
     """
-    Implementation of the MemoryBackend.
+    Implementation of the MemoryBackend. All data is kept in attributes of this
+    class. As soon as the MemoryBackend-object goes out of scope, your data is LOST.
     """
     def __init__(self):
         """
@@ -34,6 +44,8 @@ class MemoryBackend(Backend):
         objects.
         """
         # This is a very very very stupid search algorithm
+        # FIXME 19:14 < johill> dennda: you misunderstood what a search term is meant to be
+        #       19:14 < johill> dennda: look at MoinMoin/search/term.py (but feel free to put low on your todo list right now)
         matches = []
 
         for itemname in self._itemmap:
@@ -124,9 +136,13 @@ class MemoryBackend(Backend):
         Takes an Item object and creates a new Revision. Note that you need to pass
         a revision number for concurrency-reasons.
         """
-        last_rev = max(self._item_revisions[item._item_id].iterkeys())
+        try:
+            last_rev = max(self._item_revisions[item._item_id].iterkeys())
 
-        if revno in self._item_revisions:
+        except ValueError:
+            last_rev = -1
+
+        if revno in self._item_revisions[item._item_id]:
             raise RevisionAlreadyExistsError, "A Revision with the number %d already exists on the item %r" % (revno, item._name)
 
         elif revno != last_rev + 1:
@@ -154,7 +170,7 @@ class MemoryBackend(Backend):
             name = None
 
             for itemname, itemid in self._itemmap.iteritems():
-                if itemid == item._itemid:
+                if itemid == item._item_id:
                     name = itemname
                     break
 
