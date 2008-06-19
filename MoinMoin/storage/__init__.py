@@ -38,6 +38,7 @@
 """
 
 from UserDict import DictMixin
+from MoinMoin.storage.error import RevisionNumberMismatchError
 
 class Backend(object):
     """
@@ -193,6 +194,8 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         self._read_accessed = False
         self._metadata = None          # Will be loaded lazily upon first real access.
 
+        self._uncommitted_revision = None
+
 
     def get_name(self):
         """
@@ -292,7 +295,16 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         Create a new revision on the Item. By default this uses the
         create_revision method the backend specifies internally.
         """
-        return self._backend._create_revision(self, revno)
+        if self._uncommitted_revision is not None:
+            if self._uncommitted_revision.revno != revno:
+                raise RevisionNumberMismatchError, "There already is an uncommitted Revision #%d on this Item that doesn't match the revno %d you specified." % (self._uncommitted_revision.revno, revno)
+
+            else:
+                return self._uncommitted_revision
+
+        else:
+            self._uncommitted_revision = self._backend._create_revision(self, revno)
+            return self._uncommitted_revision
 
 
 # the classes here are still not finished but will be (and polished) while the memorybackend and the tests
@@ -311,12 +323,20 @@ class Revision(object, DictMixin):
         """
         Initialize the Revision.
         """
-        self.revno = revno
+        self._revno = revno
 
         self._item = item
         self._backend = item._backend
         self._data = None
         self._metadata = {}                             # TODO We will load it lazily
+
+    def get_revno(self):
+        """
+        Getter for the read-only revno-property.
+        """
+        return self._revno
+
+    revno = property(get_revno, doc = "This property stores the revno of the Revision-object. Only read-only access is allowed.")
 
     def __setitem__(self):
         """
