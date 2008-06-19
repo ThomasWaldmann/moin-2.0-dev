@@ -27,7 +27,7 @@ class TestMemoryBackend(object):
     """
     def __init__(self):
         self.memb = MemoryBackend()
-        self.always_there = self.memb.create_item("always_there")  # for conveniance
+        self.always_there = self.memb.create_item("always_there")  # for convenience
 
     def test_create_item(self):
         my_item = self.memb.create_item("my_item")
