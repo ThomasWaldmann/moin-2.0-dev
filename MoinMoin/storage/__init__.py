@@ -182,7 +182,6 @@ class Item(object, DictMixin):                      # TODO Improve docstring
     An Item object collects the information of an item (e.g. a page) that is
     stored in persistent storage. It has metadata and Revisions.
     """
-
     def __init__(self, backend, itemname):
         """
         Initialize an Item. Memorize the backend to which it belongs.
@@ -195,6 +194,14 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         self._metadata = None          # Will be loaded lazily upon first real access.
 
 
+    def get_name(self):
+        """
+        name is a read-only property of this class.
+        This, we need to define this method.
+        """
+        return self._name
+
+    name = property(get_name, doc="This is the name of this Item. This attribute is read-only.")
 
     def __setitem__(self, key, value):
         """
