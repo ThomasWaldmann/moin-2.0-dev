@@ -147,11 +147,11 @@ class MemoryBackend(Backend):
 
         elif revno != last_rev + 1:
             raise RevisionNumberMismatchError, "The latest revision is %d, thus you cannot create revision number %d. \
-                             The revision number must be latest_revision + 1." % (last_rev, revno)
+                                                The revision number must be latest_revision + 1." % (last_rev, revno)
 
         else:
             new_revision = NewRevision(item, revno)
-            new_revision["revision_id"] = revno
+            new_revision._revno = revno
 
             return new_revision
 
@@ -189,7 +189,20 @@ class MemoryBackend(Backend):
         there is only one possible Revision to be committed for your /instance/ of
         the item and thus the Revision to be saved is memorized.
         """
-        raise NotImplementedError
+        if item._uncommitted_revision is None:
+            raise NoSuchRevisionError, "You are trying to commit a Revision on the Item %s but there is no Revision to be committed on that Item." % (item.name)
+
+        else:
+            revision = item._uncommitted_revision
+            revision_id = item._uncommitted_revision.revno
+
+        if revision_id in self._item_revisions[item._item_id]:
+            pass    # TODO: CLASH! Make sure no data is lost and the clash is handled sanely.
+
+        else:
+            self._item_revisions[item._item_id][revision_id] = (revision.read_data(), revision._metadata)
+
+            item._uncommitted_revision = None
 
     def _rollback_item(self, item):
         """
