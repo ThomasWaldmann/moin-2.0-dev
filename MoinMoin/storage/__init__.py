@@ -288,6 +288,8 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         Commit the item. By default this uses the commit method the backend
         specifies internally.
         """
+        assert self._uncommitted_revision is not None
+
         self._backend._commit_item(self)
 
     def create_revision(self, revno):

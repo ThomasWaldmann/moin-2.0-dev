@@ -189,18 +189,14 @@ class MemoryBackend(Backend):
         there is only one possible Revision to be committed for your /instance/ of
         the item and thus the Revision to be saved is memorized.
         """
-        if item._uncommitted_revision is None:
-            raise NoSuchRevisionError, "You are trying to commit a Revision on the Item %s but there is no Revision to be committed on that Item." % (item.name)
+        revision = item._uncommitted_revision
+
+        if revision.revno in self._item_revisions[item._item_id]:
+            item._uncommitted_revision = None                       # Discussion-Log: http://moinmo.in/MoinMoinChat/Logs/moin-dev/2008-06-20 around 17:27
+            raise RevisionAlreadyExistsError, "You tried to commit revision #%d on the Item %s, but that Item already has a Revision with that number!" % (revision.revno, item.name)
 
         else:
-            revision = item._uncommitted_revision
-            revision_id = item._uncommitted_revision.revno
-
-        if revision_id in self._item_revisions[item._item_id]:
-            pass    # TODO: CLASH! Make sure no data is lost and the clash is handled sanely.
-
-        else:
-            self._item_revisions[item._item_id][revision_id] = (revision.read_data(), revision._metadata)
+            self._item_revisions[item._item_id][revision.revno] = (revision.read_data(), revision._metadata)
 
             item._uncommitted_revision = None
 
