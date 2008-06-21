@@ -17,7 +17,7 @@
 
 """
 
-from MoinMoin.storage import Backend, Item, Revision, NewRevision
+from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError
@@ -120,11 +120,10 @@ class MemoryBackend(Backend):
             raise NoSuchRevisionError, "No Revision #%d on Item %s" % (revno, item.name)
 
         else:
-            revision = Revision(item, revno)
-            revision._data = StringIO.StringIO()
-            revision._data.write(self._item_revisions[item_id][revno][0])
+            revision = StoredRevision(item, revno)
+            revision._data = StringIO.StringIO(self._item_revisions[item_id][revno][0])
 
-            revision_metadata = self._item_revisions[item_id][revno][1]
+            revision._metadata = self._item_revisions[item_id][revno][1]
 
 
             return revision
@@ -202,7 +201,8 @@ class MemoryBackend(Backend):
             raise RevisionAlreadyExistsError, "You tried to commit revision #%d on the Item %s, but that Item already has a Revision with that number!" % (revision.revno, item.name)
 
         else:
-            self._item_revisions[item._item_id][revision.revno] = (revision._data, revision._metadata)
+            revision._data.seek(0)
+            self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata)
 
             item._uncommitted_revision = None
 
@@ -231,29 +231,14 @@ class MemoryBackend(Backend):
         Called to read a given amount of bytes of a revisions data. By default, all
         data is read.
         """
-        item = revision._item
+        if chunksize < 0:
+            return revision._data.read()
 
-        try:
-            stored_data = self._item_revisions[item._item_id][revision.revno][0]
-
-        except KeyError:
-            return None             # There is no committed data yet.
-
-        else:
-            revision._data = StringIO.StringIO()
-
-            if chunksize <= 0:
-                revision._data.write(stored_data)
-                return revision._data.getvalue()
-
-            else:
-                print repr(stored_data)
-                partial_data = stored_data.read(chunksize)
-                revision._data.write(partial_data)
-                return partial_data
+        return revision._data.read(chunksize)
 
     def _write_revision_data(self, revision, data):
         """
         Write $data to the revisions data.
         """
         revision._data.write(data)
+

@@ -69,15 +69,13 @@ class TestMemoryBackend(object):
         test = self.memb.create_item("test#10")
         rev = test.create_revision(0)
         rev.write_data("python rocks")
-        assert rev.read_data() is None      # Since we havn't committed it yet.
+        assert rev.read_data() == ""      # Since we havn't committed it yet.
 
     def test_item_commit_revision(self):
         test = self.memb.create_item("test#11")
         rev = test.create_revision(0)
         rev.write_data("python rocks")
         test.commit()
-        print rev.read_data()
-        print type(rev.read_data())
         assert rev.read_data() == "python rocks"
 
     def test_item_writing_data_multiple_times(self):
@@ -95,6 +93,7 @@ class TestMemoryBackend(object):
         rev.write_data("Alle meine Entchen")
         test.commit()
         print rev.read_data(2)
+        assert False
 
     def test_item_get_revision(self):
         test = self.memb.create_item("test#12")
