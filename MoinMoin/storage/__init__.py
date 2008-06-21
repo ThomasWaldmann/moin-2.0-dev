@@ -347,12 +347,6 @@ class Revision(object, DictMixin):
 
     revno = property(get_revno, doc = "This property stores the revno of the Revision-object. Only read-only access is allowed.")
 
-    def __setitem__(self):
-        """
-        Revision metadata cannot be altered, thus, we raise an Exception.
-        """
-        raise AttributeError, "Metadata of already existing Revisions may not be altered."
-
     def __getitem__(self, key):
         """
         Get the corresponding value to the key from the metadata dict.
@@ -361,6 +355,34 @@ class Revision(object, DictMixin):
             raise TypeError, "key must be string type"
 
         return self._metadata[key]
+
+    def read_data(self, chunksize = -1):
+        """
+        Allows file-like read-operations. You can pass a chunksize and it will
+        only read as many bytes at a time as you wish. The default, however, is
+        to load the whole Revision data into memory, which may not be what you
+        want.
+        """
+        return self._backend._read_revision_data(self, chunksize)
+
+class StoredRevision(Revision):
+    """
+    This is the brother of NewRevision. It allows reading data from a Revision
+    that has already been stored in persistant storage. It doesn't allow data-
+    manipulation.
+    """
+
+    def __init__(self, item, revno):
+        """
+        Initialize the NewRevision
+        """
+        Revision.__init__(self, item, revno)
+
+    def __setitem__(self):
+        """
+        Revision metadata cannot be altered, thus, we raise an Exception.
+        """
+        raise AttributeError, "Metadata of already existing Revisions may not be altered."
 
     def read_data(self, chunksize = -1):
         """
@@ -393,15 +415,6 @@ class NewRevision(Revision):
             raise TypeError, "Value must be string, int, long, float, bool, complex or a nested tuple of the former"
 
         self._metadata[key] = value
-
-    def __getitem__(self, key):
-        """
-        Get the value to a given key from the NewRevisions metadata-dict.
-        """
-        if not isinstance(key, (unicode, str)):
-            raise TypeError, "key must be string type"
-
-        return self._metadata[key]
 
     def write_data(self, data):
         """
