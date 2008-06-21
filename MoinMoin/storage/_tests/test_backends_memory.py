@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*- 
 """
     MoinMoin - Test - MemoryBackend
 
@@ -10,6 +11,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+
 from MoinMoin.storage import Backend, Item, Revision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
@@ -18,8 +20,6 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
 from MoinMoin.storage.backends.memory import MemoryBackend
 
 import py
-
-# Set up necessary objects:
 
 class TestMemoryBackend(object):
     """
@@ -33,6 +33,12 @@ class TestMemoryBackend(object):
         my_item = self.memb.create_item("my_item")
         assert isinstance(my_item, Item)
         assert my_item._name == "my_item"
+
+    def test_create_item(self):
+        non_ascii = self.memb.create_item(u"äöüß")
+        assert isinstance(non_ascii, Item)
+        assert non_ascii._name == u"äöüß"
+        assert self.memb.has_item(u"äöüß")
 
     def test_create_item_wrong_itemname(self):
         py.test.raises(TypeError, self.memb.create_item, 42)
@@ -55,10 +61,15 @@ class TestMemoryBackend(object):
     def test_has_item_that_doesnt_exist(self):
         assert not self.memb.has_item("i_do_not_exist")
 
-
     def test_item_create_revision(self):
         rev = self.always_there.create_revision(0)
         assert isinstance(rev, NewRevision)
+
+    def test_revision_write_data(self):
+        test10 = self.memb.create_item("test#10")
+        rev = test10.create_revision(0)
+        rev.write_data("python rocks")
+        assert rev.read_data() is None      # Since we havn't committed it yet.
 
     def test_item_commit_revision(self):
         assert False
@@ -75,6 +86,14 @@ class TestMemoryBackend(object):
         assert ugly_name._name == "Arthur_Schopenhauer"
         assert self.memb.has_item("Arthur_Schopenhauer")
         assert not self.memb.has_item("hans_wurst")
+
+    def test_item_rename_unicode(self):
+        ugly_name = self.memb.create_item(u"hans_würstchen")
+        ugly_name.rename(u"äöüßüöä")
+        assert ugly_name._name == u"äöüßüöä"
+        assert self.memb.has_item(u"äöüßüöä")
+        assert not self.memb.has_item(u"hans_würstchen")
+
 
 
     # completely missing tests for revision and newrevision
