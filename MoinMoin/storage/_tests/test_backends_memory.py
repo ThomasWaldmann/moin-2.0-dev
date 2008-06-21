@@ -76,7 +76,25 @@ class TestMemoryBackend(object):
         rev = test.create_revision(0)
         rev.write_data("python rocks")
         test.commit()
+        print rev.read_data()
+        print type(rev.read_data())
         assert rev.read_data() == "python rocks"
+
+    def test_item_writing_data_multiple_times(self):
+        test = self.memb.create_item("multiple")
+        rev = test.create_revision(0)
+        rev.write_data("Alle ")
+        rev.write_data("meine ")
+        rev.write_data("Entchen")
+        test.commit()
+        assert rev.read_data() == "Alle meine Entchen"
+
+    def test_item_reading_chunks(self):
+        test = self.memb.create_item("slices")
+        rev = test.create_revision(0)
+        rev.write_data("Alle meine Entchen")
+        test.commit()
+        print rev.read_data(2)
 
     def test_item_get_revision(self):
         test = self.memb.create_item("test#12")
