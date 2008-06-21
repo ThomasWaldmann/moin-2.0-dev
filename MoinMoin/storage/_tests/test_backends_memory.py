@@ -32,12 +32,12 @@ class TestMemoryBackend(object):
     def test_create_item(self):
         my_item = self.memb.create_item("my_item")
         assert isinstance(my_item, Item)
-        assert my_item._name == "my_item"
+        assert my_item.name == "my_item"
 
     def test_create_item(self):
         non_ascii = self.memb.create_item(u"äöüß")
         assert isinstance(non_ascii, Item)
-        assert non_ascii._name == u"äöüß"
+        assert non_ascii.name == u"äöüß"
         assert self.memb.has_item(u"äöüß")
 
     def test_create_item_wrong_itemname(self):
@@ -49,7 +49,7 @@ class TestMemoryBackend(object):
 
     def test_get_item(self):
         my_item = self.memb.get_item("always_there")
-        assert my_item._name == self.always_there._name
+        assert my_item.name == self.always_there.name
 
     def test_get_item_that_doesnt_exist(self):
         py.test.raises(NoSuchItemError, self.memb.get_item, "i_do_not_exist")
@@ -98,14 +98,14 @@ class TestMemoryBackend(object):
     def test_item_rename(self):
         ugly_name = self.memb.create_item("hans_wurst")
         ugly_name.rename("Arthur_Schopenhauer")
-        assert ugly_name._name == "Arthur_Schopenhauer"
+        assert ugly_name.name == "Arthur_Schopenhauer"
         assert self.memb.has_item("Arthur_Schopenhauer")
         assert not self.memb.has_item("hans_wurst")
 
     def test_item_rename_unicode(self):
         ugly_name = self.memb.create_item(u"hans_würstchen")
         ugly_name.rename(u"äöüßüöä")
-        assert ugly_name._name == u"äöüßüöä"
+        assert ugly_name.name == u"äöüßüöä"
         assert self.memb.has_item(u"äöüßüöä")
         assert not self.memb.has_item(u"hans_würstchen")
 
