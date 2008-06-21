@@ -256,18 +256,3 @@ class MemoryBackend(Backend):
         Write $data to the revisions data.
         """
         revision._data.write(data)
-
-
-# will be removed as soon as tests are written
-if __name__ == "__main__":
-    mb = MemoryBackend()
-    foo = mb.create_item("foo")
-    rev = foo.create_revision(0)
-    assert foo._uncommitted_revision is not None
-    rev.write_data("asd")
-    assert rev._data.getvalue() == "asd"
-    foo.commit()
-    assert mb._item_revisions[foo._item_id][rev.revno][0] == "asd"
-    assert rev.read_data() == "asd"
-    print mb._item_revisions
-    print "finished"
