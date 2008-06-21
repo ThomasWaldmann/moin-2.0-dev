@@ -202,7 +202,7 @@ class MemoryBackend(Backend):
             raise RevisionAlreadyExistsError, "You tried to commit revision #%d on the Item %s, but that Item already has a Revision with that number!" % (revision.revno, item.name)
 
         else:
-            self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata)
+            self._item_revisions[item._item_id][revision.revno] = (revision._data, revision._metadata)
 
             item._uncommitted_revision = None
 
@@ -247,6 +247,7 @@ class MemoryBackend(Backend):
                 return revision._data.getvalue()
 
             else:
+                print repr(stored_data)
                 partial_data = stored_data.read(chunksize)
                 revision._data.write(partial_data)
                 return partial_data
