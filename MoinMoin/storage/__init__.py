@@ -187,6 +187,12 @@ class Backend(object):
         """
         raise NotImplementedError
 
+    def _seek_revision_data(self, revision, position, mode):
+        """
+        Set the revisions cursor on the revisions data.
+        """
+        raise NotImplementedError
+
 
     # XXX Further internals of this class may follow
 
@@ -400,6 +406,20 @@ class StoredRevision(Revision):
         want.
         """
         return self._backend._read_revision_data(self, chunksize)
+
+    def seek(self, position, mode=0):
+        """
+        Set the current position for reading the revisions data.
+        The mode argument is optional and defaults to 0 (absolute file
+        positioning); other values are 1 (seek relative to the current
+        position) and 2 (seek relative to the file's end).
+        There is no return value.
+        (docstring stolen from StringIO.StringIO().seek.__doc__)
+        """
+        self._backend._seek_revision_data(self, position, mode)
+
+
+
 
 
 class NewRevision(Revision):

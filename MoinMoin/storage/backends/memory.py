@@ -242,3 +242,20 @@ class MemoryBackend(Backend):
         """
         revision._data.write(data)
 
+    def _get_item_metadata(self, item):
+        """
+        Load metadata for a given item, return dict.
+        """
+        raise NotImplementedError
+
+    def _get_revision_metadata(self, revision):
+        """
+        Load metadata for a given Revision, returns dict.
+        """
+        raise NotImplementedError
+
+    def _seek_revision_data(self, revision, position, mode):
+        """
+        Set the revisions cursor on the revisions data.
+        """
+        revision._data.seek(position, mode)
