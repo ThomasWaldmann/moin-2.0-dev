@@ -336,7 +336,6 @@ class Revision(object, DictMixin):
 
         self._item = item
         self._backend = item._backend
-        self._data = None
         self._metadata = {}                             # TODO We will load it lazily
 
     def get_revno(self):
@@ -384,7 +383,7 @@ class StoredRevision(Revision):
         """
         raise AttributeError, "Metadata of already existing Revisions may not be altered."
 
-    def read_data(self, chunksize = -1):
+    def read(self, chunksize = -1):
         """
         Allows file-like read-operations. You can pass a chunksize and it will
         only read as many bytes at a time as you wish. The default, however, is
@@ -416,7 +415,7 @@ class NewRevision(Revision):
 
         self._metadata[key] = value
 
-    def write_data(self, data):
+    def write(self, data):
         """
         Write `data` to the NewRevisions data attribute. This is the actual (binary)
         data, e.g. the binary representation of an image.

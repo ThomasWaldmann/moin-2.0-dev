@@ -65,43 +65,45 @@ class TestMemoryBackend(object):
         rev = self.always_there.create_revision(0)
         assert isinstance(rev, NewRevision)
 
-    def test_revision_write_data_without_committing(self):
-        test = self.memb.create_item("test#10")
-        rev = test.create_revision(0)
-        rev.write_data("python rocks")
-        assert rev.read_data() == ""      # Since we havn't committed it yet.
-
     def test_item_commit_revision(self):
         test = self.memb.create_item("test#11")
         rev = test.create_revision(0)
-        rev.write_data("python rocks")
+        rev.write("python rocks")
         test.commit()
-        assert rev.read_data() == "python rocks"
+        rev = test.get_revision(0)
+        assert rev.read() == "python rocks"
 
     def test_item_writing_data_multiple_times(self):
         test = self.memb.create_item("multiple")
         rev = test.create_revision(0)
-        rev.write_data("Alle ")
-        rev.write_data("meine ")
-        rev.write_data("Entchen")
+        rev.write("Alle ")
+        rev.write("meine ")
+        rev.write("Entchen")
         test.commit()
-        assert rev.read_data() == "Alle meine Entchen"
+        rev = test.get_revision(0)
+
+        chunk = rev.read(1)
+        data = ""
+        while chunk != "":
+            data += chunk
+            chunk = rev.read(1)
+
+        assert data == "Alle meine Entchen"
 
     def test_item_reading_chunks(self):
         test = self.memb.create_item("slices")
         rev = test.create_revision(0)
-        rev.write_data("Alle meine Entchen")
+        rev.write("Alle meine Entchen")
         test.commit()
-        print rev.read_data(2)
-        assert False
+        rev.read_data(2)
 
     def test_item_get_revision(self):
         test = self.memb.create_item("test#12")
         rev = test.create_revision(0)
-        rev.write_data("jefferson airplane rocks")
+        rev.write("jefferson airplane rocks")
         test.commit()
         another_rev = test.get_revision(0)
-        assert another_rev.read_data() == "jefferson airplane rocks"
+        assert another_rev.read() == "jefferson airplane rocks"
 
     def test_item_list_revisions(self):
         test = self.memb.create_item("test#13")
