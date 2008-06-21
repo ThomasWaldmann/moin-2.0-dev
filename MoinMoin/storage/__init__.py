@@ -168,6 +168,13 @@ class Backend(object):
         """
         raise NotImplementedError
 
+    def _write_revision_data(self, revision, data):
+        """
+        Called to read a given amount of bytes of a revisions data. By default, all
+        data is read.
+        """
+        raise NotImplementedError
+
     def _get_item_metadata(self, item):
         """
         Load metadata for a given item, return dict.
@@ -401,7 +408,7 @@ class NewRevision(Revision):
         Write `data` to the NewRevisions data attribute. This is the actual (binary)
         data, e.g. the binary representation of an image.
         """
-        pass            # TODO: How do we best implement this?
+        self._backend._write_revision_data(self, data)
 
 
 

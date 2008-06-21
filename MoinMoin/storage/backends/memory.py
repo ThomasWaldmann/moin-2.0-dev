@@ -22,6 +22,8 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError
 
+import StringIO
+
 
 class MemoryBackend(Backend):
     """
@@ -119,8 +121,11 @@ class MemoryBackend(Backend):
 
         else:
             revision = Revision(item, revno)
-            revision._data = self._item_revisions[item_id][revno][0]
+            revision._data = StringIO.StringIO()
+            revision._data.write(self._item_revisions[item_id][revno][0])
+
             revision_metadata = self._item_revisions[item_id][revno][1]
+
 
             return revision
 
@@ -152,6 +157,7 @@ class MemoryBackend(Backend):
         else:
             new_revision = NewRevision(item, revno)
             new_revision._revno = revno
+            new_revision._data = StringIO.StringIO()
 
             return new_revision
 
@@ -196,7 +202,7 @@ class MemoryBackend(Backend):
             raise RevisionAlreadyExistsError, "You tried to commit revision #%d on the Item %s, but that Item already has a Revision with that number!" % (revision.revno, item.name)
 
         else:
-            self._item_revisions[item._item_id][revision.revno] = (revision.read_data(), revision._metadata)
+            self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata)
 
             item._uncommitted_revision = None
 
@@ -225,4 +231,43 @@ class MemoryBackend(Backend):
         Called to read a given amount of bytes of a revisions data. By default, all
         data is read.
         """
-        raise NotImplementedError
+        item = revision._item
+
+        try:
+            stored_data = self._item_revisions[item._item_id][revision.revno][0]
+
+        except KeyError:
+            return None             # There is no committed data yet.
+
+        else:
+            revision._data = StringIO.StringIO()
+
+            if chunksize <= 0:
+                revision._data.write(stored_data)
+                return revision._data.getvalue()
+
+            else:
+                partial_data = stored_data.read(chunksize)
+                revision._data.write(partial_data)
+                return partial_data
+
+    def _write_revision_data(self, revision, data):
+        """
+        Write $data to the revisions data.
+        """
+        revision._data.write(data)
+
+
+# will be removed as soon as tests are written
+if __name__ == "__main__":
+    mb = MemoryBackend()
+    foo = mb.create_item("foo")
+    rev = foo.create_revision(0)
+    assert foo._uncommitted_revision is not None
+    rev.write_data("asd")
+    assert rev._data.getvalue() == "asd"
+    foo.commit()
+    assert mb._item_revisions[foo._item_id][rev.revno][0] == "asd"
+    assert rev.read_data() == "asd"
+    print mb._item_revisions
+    print "finished"
