@@ -181,6 +181,12 @@ class Backend(object):
         """
         raise NotImplementedError
 
+    def _get_revision_metadata(self, revision):
+        """
+        Load metadata for a given Revision, returns dict.
+        """
+        raise NotImplementedError
+
 
     # XXX Further internals of this class may follow
 
@@ -336,7 +342,7 @@ class Revision(object, DictMixin):
 
         self._item = item
         self._backend = item._backend
-        self._metadata = {}                             # TODO We will load it lazily
+        self._metadata = None                             # TODO We will load it lazily
 
     def get_revno(self):
         """
@@ -352,6 +358,9 @@ class Revision(object, DictMixin):
         """
         if not isinstance(key, (unicode, str)):
             raise TypeError, "key must be string type"
+
+        if self._metadata is None:
+            self._metadata = self._backend._get_revision_metadata(self)
 
         return self._metadata[key]
 
@@ -402,6 +411,7 @@ class NewRevision(Revision):
         Initialize the NewRevision
         """
         Revision.__init__(self, item, revno)
+        Revision._metadata = {}
 
     def __setitem__(self, key, value):
         """
