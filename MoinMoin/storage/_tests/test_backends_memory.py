@@ -65,20 +65,35 @@ class TestMemoryBackend(object):
         rev = self.always_there.create_revision(0)
         assert isinstance(rev, NewRevision)
 
-    def test_revision_write_data(self):
-        test10 = self.memb.create_item("test#10")
-        rev = test10.create_revision(0)
+    def test_revision_write_data_without_committing(self):
+        test = self.memb.create_item("test#10")
+        rev = test.create_revision(0)
         rev.write_data("python rocks")
         assert rev.read_data() is None      # Since we havn't committed it yet.
 
     def test_item_commit_revision(self):
-        assert False
+        test = self.memb.create_item("test#11")
+        rev = test.create_revision(0)
+        rev.write_data("python rocks")
+        test.commit()
+        assert rev.read_data() == "python rocks"
 
     def test_item_get_revision(self):
-        assert False
+        test = self.memb.create_item("test#12")
+        rev = test.create_revision(0)
+        rev.write_data("jefferson airplane rocks")
+        test.commit()
+        another_rev = test.get_revision(0)
+        assert another_rev.read_data() == "jefferson airplane rocks"
 
     def test_item_list_revisions(self):
-        assert False
+        test = self.memb.create_item("test#13")
+
+        for revno in range(0, 10):
+            rev = test.create_revision(revno)
+            test.commit()
+
+        assert test.list_revisions() == range(0,10)
 
     def test_item_rename(self):
         ugly_name = self.memb.create_item("hans_wurst")
