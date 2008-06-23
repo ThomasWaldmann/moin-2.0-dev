@@ -145,20 +145,21 @@ class Converter(object):
         """Parse the text given as self.raw and return DOM tree."""
 
         self.root = ElementTree.Element(ElementTree.QName('page', self.namespace))
-        self.cur = self.root        # The most recent document node
-        self.text = None            # The node to add inline characters to
+        # The most recent document node
+        self._stack = [self.root]
+        # The node to add inline characters to
+        self.text = None
         self.parse_block(text)
         return self.root
 
-    def _upto(self, node, kinds):
+    def _upto(self, tags):
         """
         Look up the tree to the first occurence
         of one of the listed kinds of nodes or root.
         Start at the node node.
         """
-        while node.parent is not None and not node.kind in kinds:
-            node = node.parent
-        return node
+        while len(self._stack) and self._stack[-1].tag.name in tags:
+            self._stack.pop()
 
     # The _*_repl methods called for matches in regexps. Sometimes the
     # same method needs several names, because of group names in regexps.
@@ -222,7 +223,7 @@ class Converter(object):
     _image_text_repl = _image_repl
 
     def _separator_repl(self, groups):
-        self.cur = self._upto(self.cur, ('document', 'section', 'blockquote'))
+        self._upto(('document', 'section', 'blockquote'))
         DocNode('separator', self.cur)
 
     def _item_repl(self, groups):
@@ -244,8 +245,7 @@ class Converter(object):
             self.cur = lst
         else:
             # Create a new level of list
-            self.cur = self._upto(self.cur,
-                ('list_item', 'document', 'section', 'blockquote'))
+            self._upto(('list_item', 'document', 'section', 'blockquote'))
             self.cur = DocNode(kind, self.cur)
             self.cur.level = level
         self.cur = DocNode('list_item', self.cur)
@@ -259,17 +259,21 @@ class Converter(object):
         self.item_re.sub(self._replace, text)
 
     def _head_repl(self, groups):
-        self.cur = self._upto(self.cur, ('document', 'section', 'blockquote'))
-        node = DocNode('header', self.cur, groups.get('head_text', '').strip())
-        node.level = len(groups.get('head_head', ' '))
+        self._upto(('document', 'section', 'blockquote'))
+        level = len(groups.get('head_head', ' '))
+        text = groups.get('head_text', '').strip()
+
+        tag = ElementTree.QName('h', namespaces.moin_page)
+        tag_level = ElementTree.QName('outline-level', namespaces.moin_page)
+        element = ElementTree.Element(tag, attrib = {tag_level: str(level)}, children = [text])
+        self._stack[-1].append(element)
     _head_head_repl = _head_repl
     _head_text_repl = _head_repl
 
     def _text_repl(self, groups):
         if self.cur.kind in ('table', 'table_row', 'bullet_list',
             'number_list'):
-            self.cur = self._upto(self.cur,
-                ('document', 'section', 'blockquote'))
+            self._upto(('document', 'section', 'blockquote'))
         if self.cur.kind in ('document', 'section', 'blockquote'):
             self.cur = DocNode('paragraph', self.cur)
         self.parse_inline(groups.get('text', '')+' ')
@@ -281,8 +285,7 @@ class Converter(object):
 
     def _table_repl(self, groups):
         row = groups.get('table', '|').strip()
-        self.cur = self._upto(self.cur, (
-            'table', 'document', 'section', 'blockquote'))
+        self._upto(('table', 'document', 'section', 'blockquote'))
         if self.cur.kind != 'table':
             self.cur = DocNode('table', self.cur)
         tb = self.cur
@@ -303,7 +306,7 @@ class Converter(object):
         self.text = None
 
     def _pre_repl(self, groups):
-        self.cur = self._upto(self.cur, ('document', 'section', 'blockquote'))
+        self._upto(('document', 'section', 'blockquote'))
         kind = groups.get('pre_kind', None)
         text = groups.get('pre_text', u'')
         def remove_tilde(m):
@@ -317,7 +320,7 @@ class Converter(object):
     _pre_kind_repl = _pre_repl
 
     def _line_repl(self, groups):
-        self.cur = self._upto(self.cur, ('document', 'section', 'blockquote'))
+        self._upto(('document', 'section', 'blockquote'))
         self.text = None
 
     def _code_repl(self, groups):
@@ -330,14 +333,14 @@ class Converter(object):
         if self.cur.kind != 'emphasis':
             self.cur = DocNode('emphasis', self.cur)
         else:
-            self.cur = self._upto(self.cur, ('emphasis', )).parent
+            self._upto(('emphasis', )).parent
         self.text = None
 
     def _strong_repl(self, groups):
         if self.cur.kind != 'strong':
             self.cur = DocNode('strong', self.cur)
         else:
-            self.cur = self._upto(self.cur, ('strong', )).parent
+            self._upto(('strong', )).parent
         self.text = None
 
     def _break_repl(self, groups):
