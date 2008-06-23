@@ -167,9 +167,6 @@ class Converter(object):
         else:
             # this url is escaped, we render it as text
             self._stack_top_append(groups.get('url_target'))
-    _url_target_repl = _url_repl
-    _url_proto_repl = _url_repl
-    _escaped_url = _url_repl
 
     def _link_repl(self, groups):
         """Handle all kinds of links."""
@@ -181,11 +178,8 @@ class Converter(object):
         tag_href = ElementTree.QName('href', namespaces.xlink)
         element = ElementTree.Element(tag, attrib = {tag_href: target})
         self._stack_push(element)
-        for i in self.link_re.finditer(text):
-            self._replace(i)
+        self._apply(self.link_re, text)
         self._stack_pop()
-    _link_target_repl = _link_repl
-    _link_text_repl = _link_repl
 
     def _macro_repl(self, groups):
         """Handles macros using the placeholder syntax."""
@@ -196,9 +190,6 @@ class Converter(object):
         node.args = groups.get('macro_args', '') or ''
         DocNode('text', node, text or name)
         self.text = None
-    _macro_name_repl = _macro_repl
-    _macro_args_repl = _macro_repl
-    _macro_text_repl = _macro_repl
 
     def _image_repl(self, groups):
         """Handles images and attachemnts included in the page."""
@@ -208,8 +199,6 @@ class Converter(object):
         node = DocNode("image", self.cur, target)
         DocNode('text', node, text or node.content)
         self.text = None
-    _image_target_repl = _image_repl
-    _image_text_repl = _image_repl
 
     def _separator_repl(self, groups):
         self._stack_pop_name(('page', 'blockquote'))
@@ -240,8 +229,6 @@ class Converter(object):
         self.cur = DocNode('list_item', self.cur)
         self.parse_inline(text)
         self.text = None
-    _item_text_repl = _item_repl
-    _item_head_repl = _item_repl
 
     def _list_repl(self, groups):
         text = groups.get('list', u'')
@@ -256,8 +243,6 @@ class Converter(object):
         tag_level = ElementTree.QName('outline-level', namespaces.moin_page)
         element = ElementTree.Element(tag, attrib = {tag_level: str(level)}, children = [text])
         self._stack_top_append(element)
-    _head_head_repl = _head_repl
-    _head_text_repl = _head_repl
 
     def _text_repl(self, groups):
         if self._stack[-1].tag.name in ('table', 'table_row', 'bullet_list',
@@ -275,7 +260,6 @@ class Converter(object):
             element = ElementTree.Element(tag)
             self._stack_top_append(element)
         self.text = None
-    _break_repl = _text_repl
 
     def _table_repl(self, groups):
         row = groups.get('table', '|').strip()
@@ -309,9 +293,6 @@ class Converter(object):
         node = DocNode('preformatted', self.cur, text)
         node.sect = kind or ''
         self.text = None
-    _pre_text_repl = _pre_repl
-    _pre_head_repl = _pre_repl
-    _pre_kind_repl = _pre_repl
 
     def _line_repl(self, groups):
         self._stack_pop_name(('page', 'blockquote'))
@@ -320,8 +301,6 @@ class Converter(object):
     def _code_repl(self, groups):
         DocNode('code', self.cur, groups.get('code_text', u'').strip())
         self.text = None
-    _code_text_repl = _code_repl
-    _code_head_repl = _code_repl
 
     def _emph_repl(self, groups):
         if not self._stack_top_check(('emphasis',)):
@@ -377,25 +356,19 @@ class Converter(object):
         tag = self._stack[-1].tag
         return tag.uri == namespaces.moin_page and tag.name in names
 
-    def _replace(self, match):
-        """Invoke appropriate _*_repl method. Called for every matched group."""
+    def _apply(self, re, text):
+        """Invoke appropriate _*_repl method for every match"""
 
-        groups = match.groupdict()
-        for name, text in groups.iteritems():
-            if text is not None:
-                replace = getattr(self, '_%s_repl' % name)
-                replace(groups)
-                return
+        for match in re.finditer(text):
+            getattr(self, '_%s_repl' % match.lastgroup)(match.groupdict())
 
     def parse_inline(self, raw):
         """Recognize inline elements inside blocks."""
 
-        for i in self.inline_re.finditer(raw):
-            self._replace(i)
+        self._apply(self.inline_re, raw)
 
     def parse_block(self, raw):
         """Recognize block elements."""
 
-        for i in self.block_re.finditer(raw):
-            self._replace(i)
+        self._apply(self.block_re, raw)
 
