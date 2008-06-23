@@ -34,6 +34,8 @@ class TestConverter(object):
                 '<page %s><p><emphasis>Emphasis</emphasis></p></page>' % namespaces_string),
             ('**Strong**',
                 '<page %s><p><strong>Strong</strong></p></page>' % namespaces_string),
+            (r'Line\\Break',
+                '<page %s><p>Line<line-break />Break</p></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
