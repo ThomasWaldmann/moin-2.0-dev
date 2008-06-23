@@ -32,14 +32,10 @@ class TestConverter(object):
         pairs = [
             ('Text',
                 '<page %s><p>Text</p></page>' % namespaces_string),
-            ('= Heading 1',
-                '<page %s><h outline-level="1">Heading 1</h></page>' % namespaces_string),
-            ('== Heading 2',
-                '<page %s><h outline-level="2">Heading 2</h></page>' % namespaces_string),
-            ('//Emphasis//',
-                '<page %s><p><emphasis>Emphasis</emphasis></p></page>' % namespaces_string),
-            ('**Strong**',
-                '<page %s><p><strong>Strong</strong></p></page>' % namespaces_string),
+            ('Text\nTest',
+                '<page %s><p>Text\nTest</p></page>' % namespaces_string),
+            ('Text\n\nTest',
+                '<page %s><p>Text</p><p>Test</p></page>' % namespaces_string),
             (r'Line\\Break',
                 '<page %s><p>Line<line-break />Break</p></page>' % namespaces_string),
             ('http://moinmo.in/',
@@ -52,6 +48,58 @@ class TestConverter(object):
                 '<page %s %s><p><a xlink:href="http://moinmo.in/">MoinMoin</a></p></page>' % (namespaces_string, namespaces_string_xlink)),
             ('[[MoinMoin]]',
                 '<page %s %s><p><a xlink:href="wiki:/MoinMoin">MoinMoin</a></p></page>' % (namespaces_string, namespaces_string_xlink)),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
+    def test_emphasis(self):
+        pairs = [
+            ('//Emphasis//',
+                '<page %s><p><emphasis>Emphasis</emphasis></p></page>' % namespaces_string),
+            ('**Strong**',
+                '<page %s><p><strong>Strong</strong></p></page>' % namespaces_string),
+            ('//**Both**//',
+                '<page %s><p><emphasis><strong>Both</strong></emphasis></p></page>' % namespaces_string),
+            ('**//Both//**',
+                '<page %s><p><strong><emphasis>Both</emphasis></strong></p></page>' % namespaces_string),
+            ('Text //Emphasis\n\nText',
+                '<page %s><p>Text <emphasis>Emphasis</emphasis></p><p>Text</p></page>' % namespaces_string),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
+    def test_heading(self):
+        pairs = [
+            ('= Heading 1',
+                '<page %s><h outline-level="1">Heading 1</h></page>' % namespaces_string),
+            ('== Heading 2',
+                '<page %s><h outline-level="2">Heading 2</h></page>' % namespaces_string),
+            ('=== Heading 3',
+                '<page %s><h outline-level="3">Heading 3</h></page>' % namespaces_string),
+            ('==== Heading 4',
+                '<page %s><h outline-level="4">Heading 4</h></page>' % namespaces_string),
+            ('===== Heading 5',
+                '<page %s><h outline-level="5">Heading 5</h></page>' % namespaces_string),
+            ('====== Heading 6',
+                '<page %s><h outline-level="6">Heading 6</h></page>' % namespaces_string),
+            ('= Heading 1 =',
+                '<page %s><h outline-level="1">Heading 1</h></page>' % namespaces_string),
+            ('== Heading 2 ==',
+                '<page %s><h outline-level="2">Heading 2</h></page>' % namespaces_string),
+            ('=== Heading 3 ===',
+                '<page %s><h outline-level="3">Heading 3</h></page>' % namespaces_string),
+            ('==== Heading 4 ====',
+                '<page %s><h outline-level="4">Heading 4</h></page>' % namespaces_string),
+            ('===== Heading 5 =====',
+                '<page %s><h outline-level="5">Heading 5</h></page>' % namespaces_string),
+            ('====== Heading 6 ======',
+                '<page %s><h outline-level="6">Heading 6</h></page>' % namespaces_string),
+            ('=== Heading 3',
+                '<page %s><h outline-level="3">Heading 3</h></page>' % namespaces_string),
+            ('=== Heading 3 =',
+                '<page %s><h outline-level="3">Heading 3</h></page>' % namespaces_string),
+            ('=== Heading 3 ==',
+                '<page %s><h outline-level="3">Heading 3</h></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
