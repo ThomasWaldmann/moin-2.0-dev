@@ -82,6 +82,15 @@ class TestMemoryBackend(object):
         test.commit()
         rev = test.get_revision(0)
 
+        assert rev.read() == "Alle meine Entchen"
+
+    def test_item_reading_chunks(self):
+        test = self.memb.create_item("slices")
+        rev = test.create_revision(0)
+        rev.write("Alle meine Entchen")
+        test.commit()
+        rev = test.get_revision(0)
+
         chunk = rev.read(1)
         data = ""
         while chunk != "":
@@ -90,12 +99,6 @@ class TestMemoryBackend(object):
 
         assert data == "Alle meine Entchen"
 
-    def test_item_reading_chunks(self):
-        test = self.memb.create_item("slices")
-        rev = test.create_revision(0)
-        rev.write("Alle meine Entchen")
-        test.commit()
-        rev.read_data(2)
 
     def test_item_get_revision(self):
         test = self.memb.create_item("test#12")

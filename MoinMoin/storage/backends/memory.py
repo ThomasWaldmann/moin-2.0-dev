@@ -211,7 +211,9 @@ class MemoryBackend(Backend):
         This method is invoked when external events happen that cannot be handled in a
         sane way and thus the changes that have been made must be rolled back.
         """
-        raise NotImplementedError
+        # Since we have no temporary files or other things to deal with in this backend,
+        # we can just set the items uncommitted revision to None and go on with our life.
+        item._uncommitted_revision = None
 
     def _lock_item_metadata(self, item):
         """
@@ -246,13 +248,15 @@ class MemoryBackend(Backend):
         """
         Load metadata for a given item, return dict.
         """
-        raise NotImplementedError
+        return self._item_metadata[item._item_id]
 
     def _get_revision_metadata(self, revision):
         """
         Load metadata for a given Revision, returns dict.
         """
-        raise NotImplementedError
+        item = revision._item
+
+        return self._item_revisions[item._item_id][revision.revno][1]
 
     def _seek_revision_data(self, revision, position, mode):
         """

@@ -348,7 +348,7 @@ class Revision(object, DictMixin):
 
         self._item = item
         self._backend = item._backend
-        self._metadata = None                             # TODO We will load it lazily
+        self._metadata = None
 
     def get_revno(self):
         """
