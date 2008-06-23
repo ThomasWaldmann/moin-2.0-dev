@@ -174,15 +174,15 @@ class Converter(object):
     def _link_repl(self, groups):
         """Handle all kinds of links."""
 
+        # TODO: Convert into URI
         target = groups.get('link_target', '')
         text = (groups.get('link_text', '') or '').strip()
-        parent = self.cur
-        self.cur = DocNode('link', self.cur)
-        self.cur.content = target
-        self.text = None
+        tag = ElementTree.QName('a', namespaces.moin_page)
+        tag_href = ElementTree.QName('href', namespaces.xlink)
+        element = ElementTree.Element(tag, attrib = {tag_href: target})
+        self._stack_push(element)
         re.sub(self.link_re, self._replace, text)
-        self.cur = parent
-        self.text = None
+        self._stack_pop()
     _link_target_repl = _link_repl
     _link_text_repl = _link_repl
 
