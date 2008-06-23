@@ -31,9 +31,9 @@ class TestConverter(object):
             ('== Heading 2',
                 '<page %s><h outline-level="2">Heading 2</h></page>' % namespaces_string),
             ('//Emphasis//',
-                '<page %s><emphasis>Emphasis</emphasis></page>' % namespaces_string),
+                '<page %s><p><emphasis>Emphasis</emphasis></p></page>' % namespaces_string),
             ('**Strong**',
-                '<page %s><strong>Strong</strong></page>' % namespaces_string),
+                '<page %s><p><strong>Strong</strong></p></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
