@@ -269,8 +269,8 @@ class Converter(object):
             tag = ElementTree.QName('p', namespaces.moin_page)
             element = ElementTree.Element(tag)
             self._stack_push(element)
-        # TODO: Why does this add a space to the end?
-        self.parse_inline(groups.get('text', '')+' ')
+        # TODO: This used to add a space after the text.
+        self.parse_inline(groups.get('text', ''))
         if groups.get('break') and self._stack[-1].tag.name in ('paragraph',
             'emphasis', 'strong', 'code'):
             tag = ElementTree.QName('line-break', namespaces.moin_page)
