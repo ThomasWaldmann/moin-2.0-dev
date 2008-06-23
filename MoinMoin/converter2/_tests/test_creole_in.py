@@ -10,12 +10,18 @@ import py.test
 from MoinMoin.converter2.creole_in import *
 
 namespaces_string = 'xmlns="%s"' % namespaces.moin_page
+namespaces_string_xlink = 'xmlns:xlink="%s"' % namespaces.xlink
+
+namespaces_list = {
+    namespaces.moin_page: '',
+    namespaces.xlink: 'xlink',
+}
 
 def serialize(elem, **options):
     from cStringIO import StringIO
     file = StringIO()
     tree = ElementTree.ElementTree(elem)
-    tree.write(file, default_namespace = namespaces.moin_page, **options)
+    tree.write(file, namespaces = namespaces_list, **options)
     return file.getvalue()
 
 class TestConverter(object):
@@ -36,6 +42,10 @@ class TestConverter(object):
                 '<page %s><p><strong>Strong</strong></p></page>' % namespaces_string),
             (r'Line\\Break',
                 '<page %s><p>Line<line-break />Break</p></page>' % namespaces_string),
+            ('http://moinmo.in/',
+                '<page %s %s><p><a xlink:href="http://moinmo.in/">http://moinmo.in/</a></p></page>' % (namespaces_string, namespaces_string_xlink)),
+            ('~http://moinmo.in/',
+                '<page %s><p>http://moinmo.in/</p></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
