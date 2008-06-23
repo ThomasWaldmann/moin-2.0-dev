@@ -18,6 +18,7 @@
 
     @copyright: 2007 MoinMoin:RadomirDopieralski (creole 0.5 implementation),
                 2007 MoinMoin:ThomasWaldmann (updates)
+                2008 MoinMoin:BastianBlank (converter interface)
     @license: GNU GPL, see COPYING for details.
 """
 
