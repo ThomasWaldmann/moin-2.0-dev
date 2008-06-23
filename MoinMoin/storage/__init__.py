@@ -273,14 +273,14 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         if self._read_accessed:
             raise Exception, "Cannot lock after reading metadata"
 
-        self._backend._lock_item_metadata()
+        self._backend._lock_item_metadata(self)
         self._locked = True
 
     def _unlock(self):
         """
         Release lock on the Item.
         """
-        self._backend._unlock_item_metadata()
+        self._backend._unlock_item_metadata(self)
         self._locked = False
 
     def get_revision(self, revno):
