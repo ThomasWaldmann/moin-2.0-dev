@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 """
-    Creole wiki markup parser
+    MoinMoin - Creole input converter
 
     See http://wikicreole.org/ for latest specs.
 
@@ -22,6 +22,9 @@
 """
 
 import re
+from emeraldtree import ElementTree
+
+from MoinMoin.util import namespaces
 
 # Whether the parser should convert \n into <br>.
 bloglike_lines = False
@@ -117,7 +120,7 @@ class Rules:
             ) \s*
         ''' % '|'.join([link, macro, image, code])
 
-class Parser:
+class Converter(object):
     """
     Parse the raw text and create a document object
     that can be converted into output using Emitter.
@@ -136,11 +139,16 @@ class Parser:
         Rules.code, Rules.image, Rules.strong, Rules.emph, Rules.linebreak,
         Rules.escape, Rules.char]), re.X | re.U)
 
-    def __init__(self, raw):
-        self.raw = raw
-        self.root = DocNode('document', None)
+    namespace = namespaces.moin_page
+
+    def __call__(self, text):
+        """Parse the text given as self.raw and return DOM tree."""
+
+        self.root = ElementTree.Element(ElementTree.QName('page', self.namespace))
         self.cur = self.root        # The most recent document node
         self.text = None            # The node to add inline characters to
+        self.parse_block(text)
+        return self.root
 
     def _upto(self, node, kinds):
         """
@@ -365,12 +373,6 @@ class Parser:
         """Recognize block elements."""
 
         re.sub(self.block_re, self._replace, raw)
-
-    def parse(self):
-        """Parse the text given as self.raw and return DOM tree."""
-
-        self.parse_block(self.raw)
-        return self.root
 
 #################### Helper classes
 
