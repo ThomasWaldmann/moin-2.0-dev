@@ -67,7 +67,7 @@ class Rules:
     strong = r'(?P<strong> \*\* )'
     linebreak = r'(?P<break> \\\\ )'
     escape = r'(?P<escape> ~ (?P<escaped_char>\S) )'
-    char =  r'(?P<char> . )'
+    char =  r'(?P<char> (\n|.) )'
 
     # For the block elements:
     separator = r'(?P<separator> ^ \s* ---- \s* $ )' # horizontal line
@@ -82,7 +82,7 @@ class Rules:
     if bloglike_lines:
         text = r'(?P<text> .+ ) (?P<break> (?<!\\)$\n(?!\s*$) )?'
     else:
-        text = r'(?P<text> .+ )'
+        text = r'(?P<text> \n?.+ )'
     list = r'''(?P<list>
             ^ [ \t]* ([*][^*\#]|[\#][^\#*]).* $
             ( \n[ \t]* [*\#]+.* $ )*
