@@ -326,17 +326,21 @@ class Converter(object):
     _code_head_repl = _code_repl
 
     def _emph_repl(self, groups):
-        if self.cur.kind != 'emphasis':
-            self.cur = DocNode('emphasis', self.cur)
+        if not self._stack_top_check(('emphasis',)):
+            tag = ElementTree.QName('emphasis', namespaces.moin_page)
+            self._stack_push(ElementTree.Element(tag))
         else:
-            self._stack_pop_name(('emphasis', )).parent
+            self._stack_pop_name(('emphasis',))
+            self._stack_pop()
         self.text = None
 
     def _strong_repl(self, groups):
-        if self.cur.kind != 'strong':
-            self.cur = DocNode('strong', self.cur)
+        if not self._stack_top_check(('strong',)):
+            tag = ElementTree.QName('strong', namespaces.moin_page)
+            self._stack_push(ElementTree.Element(tag))
         else:
-            self._stack_pop_name(('strong', )).parent
+            self._stack_pop_name(('strong',))
+            self._stack_pop()
         self.text = None
 
     def _break_repl(self, groups):
