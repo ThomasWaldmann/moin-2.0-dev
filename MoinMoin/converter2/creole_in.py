@@ -140,12 +140,10 @@ class Converter(object):
         Rules.code, Rules.image, Rules.strong, Rules.emph, Rules.linebreak,
         Rules.escape, Rules.char]), re.X | re.U)
 
-    namespace = namespaces.moin_page
-
     def __call__(self, text):
         """Parse the text given as self.raw and return DOM tree."""
 
-        self.root = ElementTree.Element(ElementTree.QName('page', self.namespace))
+        self.root = ElementTree.Element(ElementTree.QName('page', namespaces.moin_page))
         # The most recent document node
         self._stack = [self.root]
         # The node to add inline characters to
@@ -162,15 +160,13 @@ class Converter(object):
         if not groups.get('escaped_url'):
             # this url is NOT escaped
             target = groups.get('url_target', '')
-            node = DocNode('link', self.cur)
-            node.content = target
-            DocNode('text', node, node.content)
-            self.text = None
+            tag = ElementTree.QName('a', namespaces.moin_page)
+            tag_href = ElementTree.QName('href', namespaces.xlink)
+            element = ElementTree.Element(tag, attrib = {tag_href: target}, children = [target])
+            self._stack_top_append(element)
         else:
             # this url is escaped, we render it as text
-            if self.text is None:
-                self.text = DocNode('text', self.cur, u'')
-            self.text.content += groups.get('url_target')
+            self._stack_top_append(groups.get('url_target'))
     _url_target_repl = _url_repl
     _url_proto_repl = _url_repl
     _escaped_url = _url_repl
@@ -378,7 +374,7 @@ class Converter(object):
 
     def _stack_top_check(self, names):
         tag = self._stack[-1].tag
-        return tag.uri == self.namespace and tag.name in names
+        return tag.uri == namespaces.moin_page and tag.name in names
 
     def _replace(self, match):
         """Invoke appropriate _*_repl method. Called for every matched group."""
