@@ -357,8 +357,11 @@ class Converter(object):
         of one of the listed kinds of nodes or root.
         Start at the node node.
         """
-        while len(self._stack) and self._stack[-1].tag.name in tags:
+        while len(self._stack) > 1 and self._stack[-1].tag.name not in tags:
             self._stack.pop()
+
+    def _stack_pop(self):
+        self._stack.pop()
 
     def _stack_push(self, elem):
         self._stack_top_append(elem)
@@ -366,6 +369,10 @@ class Converter(object):
 
     def _stack_top_append(self, elem):
         self._stack[-1].append(elem)
+
+    def _stack_top_check(self, names):
+        tag = self._stack[-1].tag
+        return tag.uri == self.namespace and tag.name in names
 
     def _replace(self, match):
         """Invoke appropriate _*_repl method. Called for every matched group."""
