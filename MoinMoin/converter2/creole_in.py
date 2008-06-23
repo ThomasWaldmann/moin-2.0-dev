@@ -214,7 +214,7 @@ class Converter(object):
     _image_text_repl = _image_repl
 
     def _separator_repl(self, groups):
-        self._stack_pop_name(('document', 'section', 'blockquote'))
+        self._stack_pop_name(('page', 'blockquote'))
         DocNode('separator', self.cur)
 
     def _item_repl(self, groups):
@@ -230,13 +230,13 @@ class Converter(object):
         while (lst and
                    not (lst.kind in ('number_list', 'bullet_list') and
                         lst.level == level) and
-                    not lst.kind in ('document', 'section', 'blockquote')):
+                    not lst.kind in ('page', 'blockquote')):
             lst = lst.parent
         if lst and lst.kind == kind:
             self.cur = lst
         else:
             # Create a new level of list
-            self._stack_pop_name(('list_item', 'document', 'section', 'blockquote'))
+            self._stack_pop_name(('list_item', 'page', 'blockquote'))
             self.cur = DocNode(kind, self.cur)
             self.cur.level = level
         self.cur = DocNode('list_item', self.cur)
@@ -250,7 +250,7 @@ class Converter(object):
         self.item_re.sub(self._replace, text)
 
     def _head_repl(self, groups):
-        self._stack_pop_name(('document', 'section', 'blockquote'))
+        self._stack_pop_name(('page', 'blockquote'))
         level = len(groups.get('head_head', ' '))
         text = groups.get('head_text', '').strip()
 
@@ -264,8 +264,8 @@ class Converter(object):
     def _text_repl(self, groups):
         if self._stack[-1].tag.name in ('table', 'table_row', 'bullet_list',
             'number_list'):
-            self._stack_pop_name(('document', 'section', 'blockquote'))
-        if self._stack[-1].tag.name in ('document', 'section', 'blockquote'):
+            self._stack_pop_name(('page', 'blockquote'))
+        if self._stack[-1].tag.name in ('page', 'blockquote'):
             tag = ElementTree.QName('p', namespaces.moin_page)
             element = ElementTree.Element(tag)
             self._stack_push(element)
@@ -281,7 +281,7 @@ class Converter(object):
 
     def _table_repl(self, groups):
         row = groups.get('table', '|').strip()
-        self._stack_pop_name(('table', 'document', 'section', 'blockquote'))
+        self._stack_pop_name(('table', 'page', 'blockquote'))
         if self.cur.kind != 'table':
             self.cur = DocNode('table', self.cur)
         tb = self.cur
@@ -302,7 +302,7 @@ class Converter(object):
         self.text = None
 
     def _pre_repl(self, groups):
-        self._stack_pop_name(('document', 'section', 'blockquote'))
+        self._stack_pop_name(('page', 'blockquote'))
         kind = groups.get('pre_kind', None)
         text = groups.get('pre_text', u'')
         def remove_tilde(m):
@@ -316,7 +316,7 @@ class Converter(object):
     _pre_kind_repl = _pre_repl
 
     def _line_repl(self, groups):
-        self._stack_pop_name(('document', 'section', 'blockquote'))
+        self._stack_pop_name(('page', 'blockquote'))
         self.text = None
 
     def _code_repl(self, groups):
