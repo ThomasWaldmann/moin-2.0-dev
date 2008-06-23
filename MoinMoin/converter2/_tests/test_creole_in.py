@@ -30,6 +30,10 @@ class TestConverter(object):
                 '<page %s><h outline-level="1">Heading 1</h></page>' % namespaces_string),
             ('== Heading 2',
                 '<page %s><h outline-level="2">Heading 2</h></page>' % namespaces_string),
+            ('//Emphasis//',
+                '<page %s><emphasis>Emphasis</emphasis></page>' % namespaces_string),
+            ('**Strong**',
+                '<page %s><strong>Strong</strong></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
