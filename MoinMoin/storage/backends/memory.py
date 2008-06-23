@@ -23,6 +23,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError
 
 import StringIO
+from threading import Lock
 
 
 class MemoryBackend(Backend):
@@ -39,6 +40,8 @@ class MemoryBackend(Backend):
         self._itemmap = {}                  # {itemname : itemid}   // names may change...
         self._item_metadata = {}            # {id : {metadata}}
         self._item_revisions = {}           # {id : {revision_id : (revision_data, {revision_metadata})}} 
+
+        self._item_metadata_lock = {}       # {id : Lockobject}
 
     def search_item(self, searchterm):
         """
@@ -65,6 +68,12 @@ class MemoryBackend(Backend):
 
         item = Item(self, itemname)
         item._item_id = self._itemmap[itemname]
+
+        if item._item_id in self._item_metadata:                # Maybe somebody already got an instance of this Item and thus there already is a Lock for that Item.
+            pass
+
+        else:
+            self._item_metadata_lock[item._item_id] = Lock()
 
         return item
 
@@ -93,6 +102,8 @@ class MemoryBackend(Backend):
 
             item = Item(self, itemname)
             item._item_id = self._last_itemid
+
+            self._item_metadata_lock[item._item_id] = Lock()
 
             self._last_itemid += 1
 
@@ -220,13 +231,13 @@ class MemoryBackend(Backend):
         This method is used to acquire a lock on an Item. This is necessary to prevent
         side-effects caused by concurrency.
         """
-        raise NotImplementedError
+        self._item_metadata_lock[item._item_id].acquire()
 
     def _unlock_item_metadata(self, item):
         """
         This method tries to release a lock on the given Item.
         """
-        raise NotImplementedError
+        self._item_metadata_lock[item._item_id].release()
 
     def _read_revision_data(self, revision, chunksize):
         """
