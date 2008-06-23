@@ -181,7 +181,8 @@ class Converter(object):
         tag_href = ElementTree.QName('href', namespaces.xlink)
         element = ElementTree.Element(tag, attrib = {tag_href: target})
         self._stack_push(element)
-        re.sub(self.link_re, self._replace, text)
+        for i in self.link_re.finditer(text):
+            self._replace(i)
         self._stack_pop()
     _link_target_repl = _link_repl
     _link_text_repl = _link_repl
@@ -389,10 +390,12 @@ class Converter(object):
     def parse_inline(self, raw):
         """Recognize inline elements inside blocks."""
 
-        re.sub(self.inline_re, self._replace, raw)
+        for i in self.inline_re.finditer(raw):
+            self._replace(i)
 
     def parse_block(self, raw):
         """Recognize block elements."""
 
-        re.sub(self.block_re, self._replace, raw)
+        for i in self.block_re.finditer(raw):
+            self._replace(i)
 
