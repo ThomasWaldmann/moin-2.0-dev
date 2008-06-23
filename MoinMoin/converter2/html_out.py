@@ -74,7 +74,7 @@ class ConverterBase(object):
         f = getattr(self, n, None)
         if f is None:
             # TODO
-            raise ElementException
+            raise ElementException(n)
         return f(elem)
 
     def visit_moinpage_a(self, elem):
@@ -93,6 +93,9 @@ class ConverterBase(object):
             level = 6
         return self.new_copy(ElementTree.QName('h%d' % level, namespaces.html), elem)
 
+    def visit_moinpage_emphasis(self, elem):
+        return self.new_copy(ElementTree.QName('em', namespaces.html), elem)
+
     def visit_moinpage_line_break(self, elem):
         return self.new(ElementTree.QName('br', namespaces.html))
 
@@ -105,6 +108,9 @@ class ConverterBase(object):
     def visit_moinpage_span(self, elem):
         # TODO
         return self.new_copy(ElementTree.QName('span', namespaces.html), elem)
+
+    def visit_moinpage_strong(self, elem):
+        return self.new_copy(ElementTree.QName('strong', namespaces.html), elem)
 
 class Converter(ConverterBase):
     """
