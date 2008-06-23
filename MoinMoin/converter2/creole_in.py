@@ -271,15 +271,22 @@ class Converter(object):
     _head_text_repl = _head_repl
 
     def _text_repl(self, groups):
-        if self.cur.kind in ('table', 'table_row', 'bullet_list',
+        if self._stack[-1].tag.name in ('table', 'table_row', 'bullet_list',
             'number_list'):
             self._upto(('document', 'section', 'blockquote'))
-        if self.cur.kind in ('document', 'section', 'blockquote'):
-            self.cur = DocNode('paragraph', self.cur)
+        if self._stack[-1].tag.name in ('document', 'section', 'blockquote'):
+            tag = ElementTree.QName('p', namespaces.moin_page)
+            element = ElementTree.Element(tag)
+            # TODO: Method
+            self._stack[-1].append(element)
+            self._stack.append(element)
+        # TODO: Why does this add a space to the end?
         self.parse_inline(groups.get('text', '')+' ')
-        if groups.get('break') and self.cur.kind in ('paragraph',
+        if groups.get('break') and self._stack[-1].tag.name in ('paragraph',
             'emphasis', 'strong', 'code'):
-            DocNode('break', self.cur, '')
+            tag = ElementTree.QName('line-break', namespaces.moin_page)
+            element = ElementTree.Element(tag)
+            self._stack[-1].append(element)
         self.text = None
     _break_repl = _text_repl
 
@@ -353,9 +360,7 @@ class Converter(object):
         self.text.content += groups.get('escaped_char', u'')
 
     def _char_repl(self, groups):
-        if self.text is None:
-            self.text = DocNode('text', self.cur, u'')
-        self.text.content += groups.get('char', u'')
+        self._stack[-1].append(groups.get('char', u''))
 
     def _replace(self, match):
         """Invoke appropriate _*_repl method. Called for every matched group."""

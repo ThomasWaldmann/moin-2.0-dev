@@ -24,6 +24,8 @@ class TestConverter(object):
 
     def test_base(self):
         pairs = [
+            ('Text',
+                '<page %s><p>Text</p></page>' % namespaces_string),
             ('= Heading 1',
                 '<page %s><h outline-level="1">Heading 1</h></page>' % namespaces_string),
             ('== Heading 2',
