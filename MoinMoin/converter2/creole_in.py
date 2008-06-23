@@ -344,8 +344,9 @@ class Converter(object):
         self.text = None
 
     def _break_repl(self, groups):
-        DocNode('break', self.cur, None)
-        self.text = None
+        tag = ElementTree.QName('line-break', namespaces.moin_page)
+        element = ElementTree.Element(tag)
+        self._stack_top_append(element)
 
     def _escape_repl(self, groups):
         if self.text is None:
