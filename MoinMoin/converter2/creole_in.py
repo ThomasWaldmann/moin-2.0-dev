@@ -399,19 +399,3 @@ class Converter(object):
 
         re.sub(self.block_re, self._replace, raw)
 
-#################### Helper classes
-
-### The document model and emitter follow
-
-class DocNode:
-    """
-    A node in the document.
-    """
-
-    def __init__(self, kind='', parent=None, content=None):
-        self.children = []
-        self.parent = parent
-        self.kind = kind
-        self.content = content
-        if self.parent is not None:
-            self.parent.children.append(self)
