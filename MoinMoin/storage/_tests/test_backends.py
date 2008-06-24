@@ -47,6 +47,12 @@ class BackendTest(object):
         assert isinstance(new_item, Item)
         assert new_item.name == name
 
+    def test_create_get_unicode(self):
+        self.backend.create_item(u"hans_würstchen")
+        assert self.backend.has_item(u"hans_würstchen")
+        item = self.backend.get_item(u"hans_würstchen")
+        assert item.name == u"hans_würstchen"
+    
     def test_create_item_wrong_itemname(self):
         # XXX More invalid names needed
         py.test.raises(TypeError, self.backend.create_item, 42)
@@ -124,6 +130,39 @@ class BackendTest(object):
             rev = item.create_revision(revno)
             item.commit()
         assert item.list_revisions() == range(0, 10)
+
+    def test_item_rename_nonexisting(self):
+        item = self.backend.get_item(self.items.keys()[0])
+        item._name = "certainly_non_existent"
+        py.test.raises(NoSuchItemError, item.rename, "whatever")
+
+    def test_item_rename_to_existing(self):
+        item = self.backend.create_item("XEROX")
+        py.test.raises(ItemAlreadyExistsError, item.rename, self.items.keys()[0])
+
+    def test_item_rename_existing_to_existing(self):
+        item = self.backend.get_item(self.items.keys()[1])
+        py.test.raises(ItemAlreadyExistsError, item.rename, self.items.keys()[0])
+
+    def test_item_rename_wrong_type(self):
+        item = self.backend.get_item(self.items.keys()[0])
+        py.test.raises(TypeError, item.rename, 13)
+
+    def test_item_rename_get(self):
+        ugly_item = self.backend.create_item("hans_wurst")
+        ugly_item.rename("Arthur_Schopenhauer")
+        renamed_item = self.backend.get_item("Arthur_Schopenhauer")
+        assert renamed_item.name == "Arthur_Schopenhauer"
+        assert self.backend.has_item("Arthur_Schopenhauer")
+        assert not self.backend.has_item("hans_wurst")
+
+    def test_item_rename_get_unicode(self):
+        ugly_item = self.backend.create_item("hans_würstchen")
+        ugly_item.rename(u"äöüßüöä")
+        renamed_item = self.backend.get_item(u"äöüßüöä")
+        assert renamed_item.name == u"äöüßüöä"
+        assert self.backend.has_item(u"äöüßüöä")
+        assert not self.backend.has_item("hans_würstchen")
 
     def test_item_rename(self):
         ugly_item = self.backend.create_item("hans_wurst")

@@ -66,14 +66,14 @@ class MercurialBackend(Backend):
 
     def has_item(self, itemname):
         """Checks whether Item with given name exists."""
-        name = self._quote(itemname)
+        quoted_name = self._quote(itemname)
         try:
-            self.repo.changectx().filectx(name)
+            self.repo.changectx().filectx(quoted_name)
             revisioned = True
         except revlog.LookupError:
             revisioned = False
 
-        return revisioned or os.path.exists(self._unrev_path(name))
+        return revisioned or os.path.exists(self._unrev_path(quoted_name))
 
     def create_item(self, itemname):
         """
@@ -84,16 +84,16 @@ class MercurialBackend(Backend):
         if not isinstance(itemname, (str, unicode)):
             raise TypeError, "Wrong Item name type: %s" % (type(itemname))
 
-        name = self._quote(itemname)
+        quoted_name = self._quote(itemname)
 
-        if self.has_item(name):
+        if self.has_item(itemname):
             raise ItemAlreadyExistsError, "Item with that name already exists:  %s" % itemname
         
         fd, fname = tempfile.mkstemp()
 
         lock = self._lock()
         try:
-            util.rename(fname, self._unrev_path(name))
+            util.rename(fname, self._unrev_path(quoted_name))
 
         finally:
             del lock
@@ -105,8 +105,7 @@ class MercurialBackend(Backend):
         Returns an Item with given name. If not found, raises NoSuchItemError
         exception.
         """ 
-        name = self._quote(itemname)
-        if not self.has_item(name):
+        if not self.has_item(itemname):
             raise NoSuchItemError, 'Item does not exist: %s' % itemname
         
         return Item(self, itemname)
@@ -171,7 +170,8 @@ class MercurialBackend(Backend):
         Retrieves only accessible rev numbers when internal indexfile
         inconsistency occurs.
         """
-        filelog = self.repo.file(item.name)
+        quoted_name = self._quote(item.name)
+        filelog = self.repo.file(quoted_name)
         cl_count = self.repo.changelog.count()
 
         revs = []
@@ -190,10 +190,11 @@ class MercurialBackend(Backend):
 
     def _rename_item(self, item, newname):
         """
-        Renames given Item to newname and commits changes. Raises
-        NoSuchItemError if source item is unreachable or BackendError
-        if destination exists. Note that this method commits change itself.
+        Renames given Item name to newname. Raises NoSuchItemError if source 
+        item is unreachable or ItemAlreadyExistsError if destination exists. 
         """
+        if not isinstance(newname, (str, unicode)):
+            raise TypeError, "Wrong Item destination name type: %s" % (type(newname))
 
         if not self.has_item(item.name):
             raise NoSuchItemError, 'Source item does not exist: %s' % item.name
@@ -201,12 +202,22 @@ class MercurialBackend(Backend):
         lock = self._lock()
         
         try:
-            if path.exists(self._path(newname)):
-                raise BackendError, "Destination item already exists: %s" % newname
-            
-            commands.rename(self.ui, self.repo, self._path(item.name),
-                    self._path(newname))            
+            if self.has_item(newname):
+                raise ItemAlreadyExistsError, "Destination item already exists: %s" % newname
+                
+            old_quoted, new_quoted = self._quote(item.name), self._quote(newname)
 
+            if not item.list_revisions():
+                util.rename(self._unrev_path(old_quoted), self._unrev_path(new_quoted))
+            else:
+                commands.rename(self.ui, self.repo, self._path(old_quotes),
+                    self._path(new_quoted))            
+                #XXX: commit rename instantly, see memory backend...
+                self._commit_item(item)
+
+            #XXX: see memory backend...
+            item._name = newname
+            
         finally:
             del lock
                 
