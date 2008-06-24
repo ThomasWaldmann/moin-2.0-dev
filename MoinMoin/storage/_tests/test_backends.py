@@ -69,7 +69,6 @@ class BackendTest(object):
 
     def test_has_item(self):
         item = self.backend.create_item("yep")
-        item.commit()
         assert self.backend.has_item("yep")
 
     def test_has_item_that_doesnt_exist(self):
