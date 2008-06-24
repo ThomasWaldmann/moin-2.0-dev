@@ -26,47 +26,75 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.storage import Backend, Item, Revision, NewRevision
 from mercurial import hg, ui, util, commands, repo, revlog
+import weakref
+import tempfile
+import os
 
+from MoinMoin.wikiutil import quoteWikinameFS, unquoteWikiname
+from MoinMoin.storage import Backend, Item, Revision, NewRevision
 from MoinMoin.storage.error import BackendError, NoSuchItemError,\
         NoSuchRevisionError, RevisionNumberMismatchError, \
         ItemAlreadyExistsError, RevisionAlreadyExistsError
 
-import weakref
-import tempfile
-import os
 
 class MercurialBackend(Backend):
     """This class implements Mercurial backend storage."""
     
     def __init__(self, path, create=True):
-        """Init repository."""
-        self._lockref = None
-        self.ui = ui.ui(interactive=False, quiet=True)
-
+        """
+        Init backend repository. We store here Items with or without 
+        any Revision.
+        """
         if not os.path.isdir(path):
             raise BackendError, "Invalid repository path: %s" % path
-        else:
-            self.path = os.path.abspath(path)
-
+        
+        self.repo_path = os.path.abspath(path)
+        self.unrevisioned_path = os.path.join(self.repo_path, 'unrevisioned')
+        self.ui = ui.ui(interactive=False, quiet=True)
+        self._lockref = None
+            
         try:
-            self.repo = hg.repository(self.ui, self.path, create=create)
+            self.repo = hg.repository(self.ui, self.repo_path, create=create)
+            os.mkdir(self.unrevisioned_path)
+
         except repo.RepoError:
-            raise BackendError, "Repository at given path exists: %s" % path
+            if create:
+                raise BackendError, "Repository at given path exists: %s" % path
+            else:
+                raise BackendError, "Repository at given path does not exist: %s" % path
 
     def has_item(self, itemname):
         """Checks whether Item with given name exists."""
         try:
             self.repo.changectx().filectx(itemname)
+            revisioned = True
         except revlog.LookupError:
-            return False
+            revisioned = False
 
-        return True
+        return revisioned or os.path.exists(self._unrev_path(itemname))
 
     def create_item(self, itemname):
-        """Create revisioned item in repository. Returns Item object."""
-        # XXX: docstring
+        """
+        Create Item in repository. This Item hasn't got any Revisions.
+        From this point, has_item returns True.         
+        This method returns Item object.
+        """
+        if not isinstance(itemname, (str, unicode)):
+            raise TypeError, "Wrong Item name type: %s" % (type(itemname))
+
+        if self.has_item(itemname):
+            raise ItemAlreadyExistsError, "Item with that name already exists:  %s" % itemname
+        
+        fd, fname = tempfile.mkstemp()
+
+        lock = self._lock()
+        try:
+            util.rename(fname, self._unrev_path(itemname))
+
+        finally:
+            del lock
+        
         return Item(self, itemname)
 
     def get_item(self, itemname):
@@ -170,7 +198,7 @@ class MercurialBackend(Backend):
         lock = self._lock()
         
         try:
-            if os.path.exists(self._path(newname)):
+            if path.exists(self._path(newname)):
                 raise BackendError, "Destination item already exists: %s" % newname
             
             commands.rename(self.ui, self.repo, self._path(item.name),
@@ -264,13 +292,26 @@ class MercurialBackend(Backend):
         """
         if self._lockref and self._lockref():
             return self._lockref()
-        lock = self.repo._lock(os.path.join(self.path, 'wikilock'), True, None,
+        lock = self.repo._lock(os.path.join(self.repo_path, 'wikilock'), True, None,
                 None, '')
         self._lockref = weakref.ref(lock)
 
         return lock
 
     def _path(self, fname):
-        """Return absolute path to item in repository."""
-        return os.path.join(self.path, fname)
+        """Return absolute path to revisioned Item in repository."""
+        return os.path.join(self.repo_path, fname)
+
+    def _unrev_path(self, fname):
+        """Return absolute path to unrevisioned Item in repository."""
+        return os.path.join(self.unrevisioned_path, fname)
+
+    def _quote(self, name):
+        """Return safely quoted name."""
+        return 
+
+    def _unquote(self, name):
+        """Return unquoted, real name."""
+        return 
+
 
