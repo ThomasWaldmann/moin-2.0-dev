@@ -10,58 +10,40 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.storage._tests.test_backends import BackendTest, \
-    default_items as di
-from MoinMoin.storage.backends.hg import MercurialBackend
-from MoinMoin.storage.error import BackendError
 from mercurial import hg, ui
 import tempfile
 import shutil
 import os
 import py
 
+from MoinMoin.storage._tests.test_backends import BackendTest, \
+    default_items as di
+from MoinMoin.storage.backends.hg import MercurialBackend
+from MoinMoin.storage.error import BackendError
 
-
-test_dir = None
-
-#def setup_module(module):
-def prepare_repository():
-    """
-    Prepare backend repository.
-    """
-    global test_dir 
-    test_dir = tempfile.mkdtemp()    
-    repo = hg.repository(ui.ui(interactive=False, quiet=True), test_dir, create=True)
-   
-    for name in di.keys():
-        for rev in xrange(len(di[name])):
-            repo.wwrite(name, di[name][rev][2], '')
-            if rev == 0:
-                repo.add([name])
-            repo.commit(text='init')
-
-        #XXX: meta?
-
-
-def teardown_module(module):
-    """
-    Delete created test files.
-    """
-    global test_dir
-    shutil.rmtree(test_dir)
-    test_dir = None
 
 class TestMercurialBackend(BackendTest):
-    """
-    MercurialBackend test class. 
-    """
-    def __init__(cls):
-        pass
-        #XXX: need setup_module before init
-        prepare_repository()
+    """MercurialBackend test class."""    
 
-        cls.backend = MercurialBackend(test_dir, create=False)
-        BackendTest.__init__(cls, cls.backend)
+    def __init__(self):
+        self.backend = None
+        BackendTest.__init__(self, self.backend)
+
+
+    def prepare_repository(self, dir):
+        """Prepare backend repository."""
+        repo = hg.repository(ui.ui(interactive=False, quiet=True), dir, create=True)
+       
+        for name in di.keys():
+            for rev in xrange(len(di[name])):
+                repo.wwrite(name, di[name][rev][2], '')
+                if rev == 0:
+                    repo.add([name])
+                repo.commit(text='init')
+
+            #XXX: meta?
+
+        return MercurialBackend(dir, create=False)
 
 
     def setup_class(cls):
@@ -74,15 +56,24 @@ class TestMercurialBackend(BackendTest):
     def teardown_class(cls):
         shutil.rmtree(cls.real_dir)
         os.unlink(cls.non_dir)
+           
+
+    def setup_method(self, method):
+        self.test_dir = tempfile.mkdtemp()    
+        self.backend = self.prepare_repository(self.test_dir)
 
 
-    def test_backend_init(cls):
-        py.test.raises(BackendError, MercurialBackend, cls.fake_dir)        
-        py.test.raises(BackendError, MercurialBackend, cls.non_dir)        
-        py.test.raises(BackendError, MercurialBackend, cls.real_dir, create=False)
+    def teardown_method(self, method):
+        shutil.rmtree(self.test_dir)
+        self.backend = None
 
-        mb = MercurialBackend(cls.real_dir)   
-        assert isinstance(mb, MercurialBackend)
-        py.test.raises(BackendError, MercurialBackend, cls.real_dir, create=True)
 
+    def test_backend_init(self):
+        py.test.raises(BackendError, MercurialBackend, self.fake_dir)        
+        py.test.raises(BackendError, MercurialBackend, self.non_dir)        
+        py.test.raises(BackendError, MercurialBackend, self.real_dir, create=False)
+
+        hg_backend = MercurialBackend(self.real_dir)   
+        assert isinstance(hg_backend, MercurialBackend)
+        py.test.raises(BackendError, MercurialBackend, self.real_dir, create=True)
 
