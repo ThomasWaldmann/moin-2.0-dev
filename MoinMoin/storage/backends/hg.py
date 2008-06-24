@@ -38,14 +38,10 @@ import tempfile
 import os
 
 class MercurialBackend(Backend):
-    """
-    This class implements Mercurial backend storage.
-    """
+    """This class implements Mercurial backend storage."""
     
     def __init__(self, path, create=True):
-        """
-        Init repository.
-        """
+        """Init repository."""
         self._lockref = None
         self.ui = ui.ui(interactive=False, quiet=True)
 
@@ -59,11 +55,8 @@ class MercurialBackend(Backend):
         except repo.RepoError:
             raise BackendError, "Repository at given path exists: %s" % path
 
-
     def has_item(self, itemname):
-        """
-        Checks whether Item with given name exists.
-        """
+        """Checks whether Item with given name exists."""
         try:
             self.repo.changectx().filectx(itemname)
         except revlog.LookupError:
@@ -71,14 +64,10 @@ class MercurialBackend(Backend):
 
         return True
 
-
     def create_item(self, itemname):
-        """
-        Create revisioned item in repository. Returns Item object.
-        """
+        """Create revisioned item in repository. Returns Item object."""
         # XXX: docstring
         return Item(self, itemname)
-
 
     def get_item(self, itemname):
         """
@@ -91,21 +80,18 @@ class MercurialBackend(Backend):
         
         return Item(self, itemname)
 
-
     def iteritems(self):
         """
-        Returns generator for iterating through items collection in repository.
+        Returns generator for iterating through items collection 
+        in repository.
         """
         ctx = self.repo.changectx()
 
         for itemfctx in ctx.filectxs():
             yield Item(self, itemfctx.path()) 
 
-
     def _create_revision(self, item, revno):
-        """
-        Create new Item Revision.
-        """
+        """Create new Item Revision."""
         if not self.has_item(item.name): 
             if revno != 0:
                 raise RevisionNumberMismatchError, \
@@ -133,11 +119,8 @@ class MercurialBackend(Backend):
 
         return new_rev
 
-
     def _get_revision(self, item, revno):
-        """
-        Returns given Revision of an Item.
-        """
+        """Returns given Revision of an Item."""
         ctx = self.repo.changectx()
 
         try:
@@ -150,7 +133,6 @@ class MercurialBackend(Backend):
         revision_metadata = self._item_revisions[item_id][revno][1]
 
         return revision
-
 
     def _list_revisions(self, item):
         """
@@ -175,7 +157,6 @@ class MercurialBackend(Backend):
         revs.reverse()
         return revs
 
-
     def _rename_item(self, item, newname):
         """
         Renames given Item to newname and commits changes. Raises
@@ -198,11 +179,8 @@ class MercurialBackend(Backend):
         finally:
             del lock
                 
-
     def _commit_item(self, item):
-        """
-        Commit Item changes to repository.
-        """
+        """Commit Item changes to repository."""
 
         lock = self._lock()
         files = [item.name]
@@ -249,11 +227,8 @@ class MercurialBackend(Backend):
         finally:
             del lock
 
-
     def _rollback_item(self, item):
-        """
-        Reverts uncommited Item changes.
-        """
+        """Reverts uncommited Item changes."""
         items = [item.name]
 
         lock = self._lock()
@@ -270,7 +245,6 @@ class MercurialBackend(Backend):
         finally:
             del lock
 
-
     def _find_copy_destination(self, srcname):
         """
         Searches repository for copy of source Item and returns list with 
@@ -282,7 +256,6 @@ class MercurialBackend(Backend):
             if src in status[2]:
                 return [dst]
         return []
-
 
     def _lock(self):
         """
@@ -297,10 +270,7 @@ class MercurialBackend(Backend):
 
         return lock
 
-
     def _path(self, fname):
-        """
-        Return absolute path to item in repository.
-        """
+        """Return absolute path to item in repository."""
         return os.path.join(self.path, fname)
 
