@@ -34,61 +34,62 @@ default_items = {
 class BackendTest(object):
     """ Generic class for backend tests. """
 
-    def __init__(cls, backend, items=None):
-        cls.backend = backend
-        cls.items = items or default_items
+    def __init__(self, backend, items=None):
+        self.backend = backend
+        self.items = items or default_items
 
-    def test_create_item(cls):
+    def test_create_item(self):
         for item_name in ("my_item", u"äöüß", "with space"):
-            yield cls.create_item, item_name
+            yield self.create_item, item_name
 
-    def create_item(cls, name):
-        new_item = cls.backend.create_item(name)
+    def create_item(self, name):
+        new_item = self.backend.create_item(name)
         assert isinstance(new_item, Item)
         assert new_item.name == name
 
-    def test_create_item_wrong_itemname(cls):
+    def test_create_item_wrong_itemname(self):
         # XXX More invalid names needed
-        py.test.raises(TypeError, cls.backend.create_item, 42)
+        py.test.raises(TypeError, self.backend.create_item, 42)
 
-    def test_create_item_again(cls):
-        item1 = cls.backend.create_item("item1")
-        py.test.raises(ItemAlreadyExistsError, cls.backend.create_item, "item1")
+    def test_create_item_again(self):
+        item1 = self.backend.create_item("item1")
+        py.test.raises(ItemAlreadyExistsError, self.backend.create_item, "item1")
 
-    def test_get_item(cls):
-        for item in cls.items.keys():
-            yield cls.get_item, item
+    def test_get_item(self):
+        for item in self.items.keys():
+            yield self.get_item, item
 
-    def get_item(cls, name):
-        my_item = cls.backend.get_item(name)
+    def get_item(self, name):
+        my_item = self.backend.get_item(name)
         assert isinstance(my_item, Item)
-        assert my_item.name == cls.name
+        assert my_item.name == self.name
 
-    def test_get_item_that_doesnt_exist(cls):
-        py.test.raises(NoSuchItemError, cls.backend.get_item, "i_do_not_exist")
+    def test_get_item_that_doesnt_exist(self):
+        py.test.raises(NoSuchItemError, self.backend.get_item, "i_do_not_exist")
 
-    def test_has_item(cls):
-        my_item = cls.backend.create_item("yep")
-        assert cls.backend.has_item("yep")
+    def test_has_item(self):
+        item = self.backend.create_item("yep")
+        item.commit()
+        assert self.backend.has_item("yep")
 
-    def test_has_item_that_doesnt_exist(cls):
-        assert not cls.backend.has_item("i_do_not_exist")
+    def test_has_item_that_doesnt_exist(self):
+        assert not self.backend.has_item("i_do_not_exist")
 
-    def test_item_create_revision(cls):
-        item = cls.backend.create_item('internal')
+    def test_item_create_revision(self):
+        item = self.backend.create_item('internal')
         rev = item.create_revision(0)
         assert isinstance(rev, NewRevision)
 
-    def test_item_commit_revision(cls):
-        item = cls.backend.create_item("item#11")
+    def test_item_commit_revision(self):
+        item = self.backend.create_item("item#11")
         rev = item.create_revision(0)
         rev.write("python rocks")
         item.commit()
         rev = item.get_revision(0)
         assert rev.read() == "python rocks"
 
-    def test_item_writing_data_multiple_times(cls):
-        item = cls.backend.create_item("multiple")
+    def test_item_writing_data_multiple_times(self):
+        item = self.backend.create_item("multiple")
         rev = item.create_revision(0)
         rev.write("Alle ")
         rev.write("meine ")
@@ -98,7 +99,7 @@ class BackendTest(object):
         assert rev.read() == "Alle meine Entchen"
 
     def test_item_reading_chunks(self):
-        item = self.memb.create_item("slices")
+        item = self.backend.create_item("slices")
         rev = item.create_revision(0)
         rev.write("Alle meine Entchen")
         item.commit()
@@ -110,33 +111,33 @@ class BackendTest(object):
             chunk = rev.read(1)
         assert data == "Alle meine Entchen"
 
-    def test_item_get_revision(cls):
-        item = cls.backend.create_item("item#12")
+    def test_item_get_revision(self):
+        item = self.backend.create_item("item#12")
         rev = item.create_revision(0)
         rev.write("jefferson airplane rocks")
         item.commit()
         another_rev = item.get_revision(0)
         assert another_rev.read() == "jefferson airplane rocks"
 
-    def test_item_list_revisions(cls):
-        item = cls.backend.create_item("item#13")
+    def test_item_list_revisions(self):
+        item = self.backend.create_item("item#13")
         for revno in range(0, 10):
             rev = item.create_revision(revno)
             item.commit()
         assert item.list_revisions() == range(0, 10)
 
-    def test_item_rename(cls):
-        ugly_item = cls.backend.create_item("hans_wurst")
+    def test_item_rename(self):
+        ugly_item = self.backend.create_item("hans_wurst")
         ugly_item.rename("Arthur_Schopenhauer")
         assert ugly_item.name == "Arthur_Schopenhauer"
-        assert cls.backend.has_item("Arthur_Schopenhauer")
-        assert not cls.backend.has_item("hans_wurst")
+        assert self.backend.has_item("Arthur_Schopenhauer")
+        assert not self.backend.has_item("hans_wurst")
 
-    def test_item_rename_unicode(cls):
-        ugly_item = cls.backend.create_item(u"hans_würstchen")
+    def test_item_rename_unicode(self):
+        ugly_item = self.backend.create_item(u"hans_würstchen")
         ugly_item.rename(u"äöüßüöä")
         assert ugly_item.name == u"äöüßüöä"
-        assert cls.backend.has_item(u"äöüßüöä")
-        assert not cls.backend.has_item(u"hans_würstchen")
+        assert self.backend.has_item(u"äöüßüöä")
+        assert not self.backend.has_item(u"hans_würstchen")
 
     #XXX: completely missing tests for revision and newrevision
