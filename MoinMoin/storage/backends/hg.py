@@ -66,13 +66,14 @@ class MercurialBackend(Backend):
 
     def has_item(self, itemname):
         """Checks whether Item with given name exists."""
+        name = self._quote(itemname)
         try:
-            self.repo.changectx().filectx(itemname)
+            self.repo.changectx().filectx(name)
             revisioned = True
         except revlog.LookupError:
             revisioned = False
 
-        return revisioned or os.path.exists(self._unrev_path(itemname))
+        return revisioned or os.path.exists(self._unrev_path(name))
 
     def create_item(self, itemname):
         """
@@ -83,14 +84,16 @@ class MercurialBackend(Backend):
         if not isinstance(itemname, (str, unicode)):
             raise TypeError, "Wrong Item name type: %s" % (type(itemname))
 
-        if self.has_item(itemname):
+        name = self._quote(itemname)
+
+        if self.has_item(name):
             raise ItemAlreadyExistsError, "Item with that name already exists:  %s" % itemname
         
         fd, fname = tempfile.mkstemp()
 
         lock = self._lock()
         try:
-            util.rename(fname, self._unrev_path(itemname))
+            util.rename(fname, self._unrev_path(name))
 
         finally:
             del lock
@@ -102,8 +105,8 @@ class MercurialBackend(Backend):
         Returns an Item with given name. If not found, raises NoSuchItemError
         exception.
         """ 
-
-        if not self.has_item(itemname):
+        name = self._quote(itemname)
+        if not self.has_item(name):
             raise NoSuchItemError, 'Item does not exist: %s' % itemname
         
         return Item(self, itemname)
@@ -308,10 +311,12 @@ class MercurialBackend(Backend):
 
     def _quote(self, name):
         """Return safely quoted name."""
-        return 
+        if not isinstance(name, unicode):
+            name = unicode(name, 'utf-8')
+        return quoteWikinameFS(name)
 
-    def _unquote(self, name):
+    def _unquote(self, quoted_name):
         """Return unquoted, real name."""
-        return 
+        return unquoteWikiname(quoted_name)
 
 

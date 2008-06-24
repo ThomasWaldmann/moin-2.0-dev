@@ -62,7 +62,7 @@ class BackendTest(object):
     def get_item(self, name):
         my_item = self.backend.get_item(name)
         assert isinstance(my_item, Item)
-        assert my_item.name == self.name
+        assert my_item.name == name
 
     def test_get_item_that_doesnt_exist(self):
         py.test.raises(NoSuchItemError, self.backend.get_item, "i_do_not_exist")
