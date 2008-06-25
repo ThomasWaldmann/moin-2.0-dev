@@ -6,10 +6,9 @@
 
     @license: GNU GPL, see COPYING for details.
 """
-import os
+
 from MoinMoin import macro
 from MoinMoin.macro import Action
-from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 
 from MoinMoin._tests import become_trusted, create_page, nuke_page
