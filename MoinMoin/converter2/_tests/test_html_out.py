@@ -69,6 +69,14 @@ class TestConverterBase(object):
         for i in pairs:
             yield (self._do,) + i
 
+    def test_table(self):
+        pairs = [
+            ('<page %s><table><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></page>' % namespaces_string_page_default,
+                '<div %s><table><tbody><tr><td>Cell</td></tr></tbody></table></div>' % namespaces_string_html_default),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
     def _do(self, input, output):
         page = ElementTree.XML(input)
         out = self.conv(page)
