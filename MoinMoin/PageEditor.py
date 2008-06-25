@@ -528,7 +528,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             del self._items[self.page_name]
         self.reset()
 
-    def copyPage(self, newpagename, comment=""):
+    def copyPage(self, newpagename, comment=u''):
         """ Copy the current version of the page (keeping the backups, logs and attachments).
 
         @param comment: Comment given by user
@@ -569,7 +569,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         return True, None
 
-    def renamePage(self, newpagename, comment=""):
+    def renamePage(self, newpagename, comment=u''):
         """ Rename the current version of the page (making a backup before deletion
             and keeping the backups, logs and attachments).
 
