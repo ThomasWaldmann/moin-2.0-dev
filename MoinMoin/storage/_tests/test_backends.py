@@ -124,6 +124,14 @@ class BackendTest(object):
         another_rev = item.get_revision(0)
         assert another_rev.read() == "jefferson airplane rocks"
 
+    def test_item_list_existing_revisions(self):
+        for itemname in self.items.keys():
+            yield self.list_revisions, itemname
+
+    def list_revisions(self, itemname):
+        item = self.backend.get_item(itemname)
+        assert range(len(self.items[itemname])) == item.list_revisions() 
+
     def test_item_list_revisions(self):
         item = self.backend.create_item("item#13")
         for revno in range(0, 10):
