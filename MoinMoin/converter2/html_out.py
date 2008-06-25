@@ -99,6 +99,18 @@ class ConverterBase(object):
     def visit_moinpage_line_break(self, elem):
         return self.new(ElementTree.QName('br', namespaces.html))
 
+    def visit_moinpage_list(self, elem):
+        # TODO: List type
+        ret = self.new(ElementTree.QName('ul', namespaces.html))
+        for item in elem:
+            if item.tag.uri == namespaces.moin_page and item.tag.name == 'list-item':
+                for body in item:
+                    if body.tag.uri == namespaces.moin_page and body.tag.name == 'list-item-body':
+                        ret_body = self.new_copy(ElementTree.QName('li', namespaces.html), body)
+                        ret.append(ret_body)
+                        break
+        return ret
+
     def visit_moinpage_p(self, elem):
         return self.new_copy(ElementTree.QName('p', namespaces.html), elem)
 
