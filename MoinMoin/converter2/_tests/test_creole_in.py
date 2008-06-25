@@ -118,6 +118,12 @@ class TestConverter(object):
                 '<page %s><list><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></page>' % namespaces_string),
             ('* Item 1\n** Item 1.2\n* Item 2',
                 '<page %s><list><list-item><list-item-body>Item 1<list><list-item><list-item-body>Item 1.2</list-item-body></list-item></list></list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></page>' % namespaces_string),
+            ('* List 1\n\n* List 2',
+                '<page %s><list><list-item><list-item-body>List 1</list-item-body></list-item></list><list><list-item><list-item-body>List 2</list-item-body></list-item></list></page>' % namespaces_string),
+            ('# Item',
+                '<page %s><list><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string),
+            ('* List 1\n# List 2',
+                '<page %s><list><list-item><list-item-body>List 1</list-item-body></list-item></list><list><list-item><list-item-body>List 2</list-item-body></list-item></list></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
