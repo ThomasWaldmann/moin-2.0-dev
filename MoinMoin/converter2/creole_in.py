@@ -259,27 +259,39 @@ class Converter(object):
         # TODO: This used to add a space after the text.
         self.parse_inline(textblock)
 
-    def _table_repl(self, groups):
-        row = groups.get('table', '|').strip()
-        self._stack_pop_name(('table', 'page', 'blockquote'))
-        if self.cur.kind != 'table':
-            self.cur = DocNode('table', self.cur)
-        tb = self.cur
-        tr = DocNode('table_row', tb)
+    def _table_repl(self, table):
+        self._stack_pop_name(('table-body', 'page', 'blockquote'))
 
-        for m in self.cell_re.finditer(row):
+        if self._stack[-1].tag.name != 'table-body':
+            tag = ElementTree.QName('table', namespaces.moin_page)
+            element = ElementTree.Element(tag)
+            self._stack_push(element)
+            tag = ElementTree.QName('table-body', namespaces.moin_page)
+            element = ElementTree.Element(tag)
+            self._stack_push(element)
+
+        tag = ElementTree.QName('table-row', namespaces.moin_page)
+        element = ElementTree.Element(tag)
+        self._stack_push(element)
+
+        for m in self.cell_re.finditer(table):
             cell = m.group('cell')
             if cell:
-                self.cur = DocNode('table_cell', tr)
-                self.text = None
+                tag = ElementTree.QName('table-cell', namespaces.moin_page)
+                element = ElementTree.Element(tag)
+                self._stack_push(element)
+
                 self.parse_inline(cell)
+
+                self._stack_pop()
             else:
                 cell = m.group('head')
-                self.cur = DocNode('table_head', tr)
-                self.text = DocNode('text', self.cur, u'')
-                self.text.content = cell.strip('=')
-        self.cur = tb
-        self.text = None
+                # TODO
+                tag = ElementTree.QName('table-cell', namespaces.moin_page)
+                element = ElementTree.Element(tag, children=[cell.strip('=')])
+                self._stack_top_append(element)
+
+        self._stack_pop()
 
     def _pre_repl(self, groups):
         self._stack_pop_name(('page', 'blockquote'))
