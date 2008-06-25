@@ -82,7 +82,7 @@ class PackagePages:
             raise ActionError
 
         # get directory, and possibly create it
-        attach_dir = Page(self.request, self.page.page_name).getPagePath("attachments", check_create=1)
+        attach_dir = AttachFile.getAttachDir(self.request, self.page.page_name, 1)
         fpath = os.path.join(attach_dir, target).encode(config.charset)
         if os.path.exists(fpath):
             self.request.theme.add_msg(_("Attachment '%(target)s' (remote name '%(filename)s') already exists.") % {
@@ -168,7 +168,7 @@ class PackagePages:
 
         titles = []
         for title in pagelist.hits:
-            if not wikiutil.isSystemPage(request, title.page_name) or not title.page.getPageStatus()[0]:
+            if not wikiutil.isSystemPage(request, title.page_name) or not title.page.isUnderlayPage():
                 titles.append(title.page_name)
         return titles
 
@@ -207,7 +207,7 @@ class PackagePages:
             files = _get_files(self.request, page.page_name)
             script.append(packLine(["AddRevision", str(cnt), page.page_name, userid, "Created by the PackagePages action."]))
 
-            timestamp = wikiutil.version2timestamp(page.mtime_usecs())
+            timestamp = page.mtime()
             zi = zipfile.ZipInfo(filename=str(cnt), date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
             zi.compress_type = COMPRESSION_LEVEL
             zf.writestr(zi, page.get_raw_body().encode("utf-8"))

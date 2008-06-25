@@ -84,11 +84,12 @@ def append_page(request, pagename, content, do_editor_backup=False):
 
 def nuke_page(request, pagename):
     """ completely delete a page, everything in the pagedir """
-    page = PageEditor(request, pagename, do_editor_backup=False)
-    page.deletePage()
-    # really get rid of everything there:
-    fpath = page.getPagePath(check_create=0)
-    shutil.rmtree(fpath, True)
+    #page = PageEditor(request, pagename, do_editor_backup=False)
+    #page.deletePage()
+    ## really get rid of everything there:
+    #fpath = page.getPagePath(check_create=0)
+    #shutil.rmtree(fpath, True)
+    request.cfg.data_backend.remove_item(pagename)
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """

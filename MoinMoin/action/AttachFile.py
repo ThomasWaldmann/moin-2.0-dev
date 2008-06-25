@@ -48,11 +48,6 @@ class AttachmentAlreadyExists(Exception):
     pass
 
 
-def getBasePath(request):
-    """ Get base path where page dirs for attachments are stored. """
-    return request.rootpage.getPagePath('pages')
-
-
 def getAttachDir(request, pagename, create=0):
     """ Get directory where attachments for page `pagename` are stored. """
     if request.page and pagename == request.page.page_name:
@@ -224,22 +219,17 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
 ### Internal helpers
 #############################################################################
 
-def _addLogEntry(request, action, pagename, filename):
+def _addLogEntry(request, action, pagename, filename, uid_override=None):
     """ Add an entry to the edit log on uploads and deletes.
 
         `action` should be "ATTNEW" or "ATTDEL"
     """
     from MoinMoin.logfile import editlog
-    t = wikiutil.timestamp2version(time.time())
     fname = wikiutil.url_quote(filename, want_unicode=True)
 
-    # Write to global log
-    log = editlog.EditLog(request)
-    log.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
-
     # Write to local log
-    log = editlog.EditLog(request, rootpagename=pagename)
-    log.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
+    llog = editlog.LocalEditLog(request, rootpagename=pagename)
+    llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname, uid_override=uid_override)
 
 
 def _access_file(pagename, request):
