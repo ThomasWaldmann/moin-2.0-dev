@@ -265,7 +265,7 @@ class Item(object, DictMixin):                      # TODO Improve docstring
 
         return self._metadata[key]
 
-    def _lock(self):
+    def change_metadata(self):
         """
         Acquire lock for the Items metadata. The actual locking is, by default,
         implemented on the backend-level.
@@ -276,7 +276,7 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         self._backend._lock_item_metadata(self)
         self._locked = True
 
-    def _unlock(self):
+    def publish_metadata(self):
         """
         Release lock on the Item.
         """
