@@ -117,9 +117,6 @@ class MemoryBackend(Backend):
         """
         return self._itemmap.iteritems()
 
-    def _get_item_metadata(self, item):
-        return self._item_metadata[item._item_id]
-
     def _get_revision(self, item, revno):
         """
         For a given Item and Revision number, return the corresponding Revision
@@ -226,14 +223,14 @@ class MemoryBackend(Backend):
         # we can just set the items uncommitted revision to None and go on with our life.
         item._uncommitted_revision = None
 
-    def _lock_item_metadata(self, item):
+    def _change_item_metadata(self, item):
         """
         This method is used to acquire a lock on an Item. This is necessary to prevent
         side-effects caused by concurrency.
         """
         self._item_metadata_lock[item._item_id].acquire()
 
-    def _unlock_item_metadata(self, item):
+    def _publish_item_metadata(self, item):
         """
         This method tries to release a lock on the given Item.
         """
@@ -259,7 +256,7 @@ class MemoryBackend(Backend):
         """
         Load metadata for a given item, return dict.
         """
-        return self._item_metadata[item._item_id]
+        return dict(self._item_metadata[item._item_id])
 
     def _get_revision_metadata(self, revision):
         """
