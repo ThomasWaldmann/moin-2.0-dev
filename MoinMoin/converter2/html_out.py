@@ -124,6 +124,19 @@ class ConverterBase(object):
     def visit_moinpage_strong(self, elem):
         return self.new_copy(ElementTree.QName('strong', namespaces.html), elem)
 
+    def visit_moinpage_table(self, elem):
+        ret = self.new(ElementTree.QName('table', namespaces.html))
+        for item in elem:
+            if item.tag.uri == namespaces.moin_page and item.tag.name == 'table-body':
+                ret.append(self.new_copy(ElementTree.QName('tbody', namespaces.html), item))
+        return ret
+
+    def visit_moinpage_table_cell(self, elem):
+        return self.new_copy(ElementTree.QName('td', namespaces.html), elem)
+
+    def visit_moinpage_table_row(self, elem):
+        return self.new_copy(ElementTree.QName('tr', namespaces.html), elem)
+
 class Converter(ConverterBase):
     """
     Converter application/x-moin-document -> application/x-moin-document
