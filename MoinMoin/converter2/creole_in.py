@@ -246,8 +246,8 @@ class Converter(object):
         self._stack_top_append(element)
 
     def _textblock_repl(self, textblock, testblock_newline=None):
-        if self._stack[-1].tag.name in ('table', 'table_row', 'bullet_list',
-            'number_list'):
+        if self._stack[-1].tag.name in ('table', 'table-body', 'list',
+            'list-item-body'):
             self._stack_pop_name(('page', 'blockquote'))
         if self._stack[-1].tag.name in ('page', 'blockquote'):
             tag = ElementTree.QName('p', namespaces.moin_page)
