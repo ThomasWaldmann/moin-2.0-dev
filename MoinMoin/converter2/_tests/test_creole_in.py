@@ -128,6 +128,14 @@ class TestConverter(object):
         for i in pairs:
             yield (self._do,) + i
 
+    def test_composite(self):
+        pairs = [
+            ('Text\n* Item',
+                '<page %s><p>Text</p><list><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
     def _do(self, input, output):
         out = self.conv(input)
         assert serialize(out) == output
