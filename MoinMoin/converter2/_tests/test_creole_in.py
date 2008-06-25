@@ -128,6 +128,22 @@ class TestConverter(object):
         for i in pairs:
             yield (self._do,) + i
 
+    def test_table(self):
+        pairs = [
+            ('|Cell',
+                '<page %s><table><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></page>' % namespaces_string),
+            ('|Cell|',
+                '<page %s><table><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></page>' % namespaces_string),
+            ('|Cell 1|Cell 2',
+                '<page %s><table><table-body><table-row><table-cell>Cell 1</table-cell><table-cell>Cell 2</table-cell></table-row></table-body></table></page>' % namespaces_string),
+            ('|Cell 1|Cell 2|',
+                '<page %s><table><table-body><table-row><table-cell>Cell 1</table-cell><table-cell>Cell 2</table-cell></table-row></table-body></table></page>' % namespaces_string),
+            ('|Row 1\n|Row 2',
+                '<page %s><table><table-body><table-row><table-cell>Row 1</table-cell></table-row><table-row><table-cell>Row 2</table-cell></table-row></table-body></table></page>' % namespaces_string),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
     def test_composite(self):
         pairs = [
             ('Text\n* Item',
