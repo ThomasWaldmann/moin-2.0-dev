@@ -199,8 +199,10 @@ class Converter(object):
         DocNode('separator', self.cur)
 
     def _item_repl(self, item, item_head, item_text):
-        # TODO: Handle type of list from item_head
+        # TODO: Mention type in the tree
+
         level = len(item_head)
+        type = item_head[-1]
 
         while True:
             cur = self._stack[-1]
@@ -210,21 +212,21 @@ class Converter(object):
                 if level > cur.level:
                     break
             if cur.tag.name == 'list':
-                if level >= cur.level:
+                if level >= cur.level and type == cur.type:
                     break
             self._stack.pop()
 
         if cur.tag.name != 'list':
             tag = ElementTree.QName('list', namespaces.moin_page)
             element = ElementTree.Element(tag)
-            element.level = level
+            element.level, element.type = level, type
             self._stack_push(element)
 
         tag = ElementTree.QName('list-item', namespaces.moin_page)
         tag_body = ElementTree.QName('list-item-body', namespaces.moin_page)
         element = ElementTree.Element(tag)
         element_body = ElementTree.Element(tag_body)
-        element_body.level = level
+        element_body.level, element_body.type = level, type
 
         self._stack_push(element)
         self._stack_push(element_body)
