@@ -198,34 +198,41 @@ class Converter(object):
         self._stack_pop_name(('page', 'blockquote'))
         DocNode('separator', self.cur)
 
-    def _item_repl(self, groups):
-        bullet = groups.get('item_head', u'')
-        text = groups.get('item_text', u'')
-        if bullet[-1] == '#':
-            kind = 'number_list'
-        else:
-            kind = 'bullet_list'
-        level = len(bullet)
-        lst = self.cur
-        # Find a list of the same kind and level up the tree
-        while (lst and
-                   not (lst.kind in ('number_list', 'bullet_list') and
-                        lst.level == level) and
-                    not lst.kind in ('page', 'blockquote')):
-            lst = lst.parent
-        if lst and lst.kind == kind:
-            self.cur = lst
-        else:
-            # Create a new level of list
-            self._stack_pop_name(('list_item', 'page', 'blockquote'))
-            self.cur = DocNode(kind, self.cur)
-            self.cur.level = level
-        self.cur = DocNode('list_item', self.cur)
-        self.parse_inline(text)
-        self.text = None
+    def _item_repl(self, item, item_head, item_text):
+        # TODO: Handle type of list from item_head
+        level = len(item_head)
+
+        while True:
+            cur = self._stack[-1]
+            if cur.tag.name in ('page', 'blockquote'):
+                break
+            if cur.tag.name == 'list-item-body':
+                if level > cur.level:
+                    break
+            if cur.tag.name == 'list':
+                if level >= cur.level:
+                    break
+            self._stack.pop()
+
+        if cur.tag.name != 'list':
+            tag = ElementTree.QName('list', namespaces.moin_page)
+            element = ElementTree.Element(tag)
+            element.level = level
+            self._stack_push(element)
+
+        tag = ElementTree.QName('list-item', namespaces.moin_page)
+        tag_body = ElementTree.QName('list-item-body', namespaces.moin_page)
+        element = ElementTree.Element(tag)
+        element_body = ElementTree.Element(tag_body)
+        element_body.level = level
+
+        self._stack_push(element)
+        self._stack_push(element_body)
+
+        self.parse_inline(item_text)
 
     def _list_repl(self, list):
-        self.item_re.sub(self._replace, list)
+        self._apply(self.item_re, list)
 
     def _head_repl(self, head, head_head, head_text):
         self._stack_pop_name(('page', 'blockquote'))
