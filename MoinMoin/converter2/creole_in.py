@@ -62,7 +62,7 @@ class Rules:
                                    # avoids italic rendering in urls with
                                    # unknown protocols
     strong = r'(?P<strong> \*\* )'
-    linebreak = r'(?P<break> \\\\ )'
+    linebreak = r'(?P<linebreak> \\\\ )'
     escape = r'(?P<escape> ~ (?P<escaped_char>\S) )'
 
     # For the block elements:
@@ -72,7 +72,7 @@ class Rules:
             ^ \s*
             (?P<head_head>=+) \s*
             (?P<head_text> .*? ) \s*
-            (?P<head_tail>=*) \s*
+            =* \s*
             $
         )'''
     text_block = r'(?P<textblock> \n?.+ )'
@@ -150,29 +150,27 @@ class Converter(object):
     # The _*_repl methods called for matches in regexps. Sometimes the
     # same method needs several names, because of group names in regexps.
 
-    def _url_repl(self, groups):
+    def _url_repl(self, url, url_proto, url_target, escaped_url=None):
         """Handle raw urls in text."""
 
-        if not groups.get('escaped_url'):
+        if not escaped_url:
             # this url is NOT escaped
-            target = groups.get('url_target', '')
             tag = ElementTree.QName('a', namespaces.moin_page)
             tag_href = ElementTree.QName('href', namespaces.xlink)
-            element = ElementTree.Element(tag, attrib = {tag_href: target}, children = [target])
+            element = ElementTree.Element(tag, attrib = {tag_href: url_target}, children = [url_target])
             self._stack_top_append(element)
         else:
             # this url is escaped, we render it as text
-            self._stack_top_append(groups.get('url_target'))
+            self._stack_top_append(url_target)
 
-    def _link_repl(self, groups):
+    def _link_repl(self, link, link_target, link_text=''):
         """Handle all kinds of links."""
 
         # TODO: Convert into URI
-        target = groups.get('link_target', '')
-        text = (groups.get('link_text', '') or '').strip()
+        text = link_text.strip()
         tag = ElementTree.QName('a', namespaces.moin_page)
         tag_href = ElementTree.QName('href', namespaces.xlink)
-        element = ElementTree.Element(tag, attrib = {tag_href: target})
+        element = ElementTree.Element(tag, attrib = {tag_href: link_target})
         self._stack_push(element)
         self._apply(self.link_re, text)
         self._stack_pop()
@@ -226,21 +224,19 @@ class Converter(object):
         self.parse_inline(text)
         self.text = None
 
-    def _list_repl(self, groups):
-        text = groups.get('list', u'')
-        self.item_re.sub(self._replace, text)
+    def _list_repl(self, list):
+        self.item_re.sub(self._replace, list)
 
-    def _head_repl(self, groups):
+    def _head_repl(self, head, head_head, head_text):
         self._stack_pop_name(('page', 'blockquote'))
-        level = len(groups.get('head_head', ' '))
-        text = groups.get('head_text', '').strip()
+        level = len(head_head)
 
         tag = ElementTree.QName('h', namespaces.moin_page)
         tag_level = ElementTree.QName('outline-level', namespaces.moin_page)
-        element = ElementTree.Element(tag, attrib = {tag_level: str(level)}, children = [text])
+        element = ElementTree.Element(tag, attrib = {tag_level: str(level)}, children = [head_text])
         self._stack_top_append(element)
 
-    def _textblock_repl(self, groups):
+    def _textblock_repl(self, textblock):
         if self._stack[-1].tag.name in ('table', 'table_row', 'bullet_list',
             'number_list'):
             self._stack_pop_name(('page', 'blockquote'))
@@ -249,13 +245,7 @@ class Converter(object):
             element = ElementTree.Element(tag)
             self._stack_push(element)
         # TODO: This used to add a space after the text.
-        self.parse_inline(groups.get('textblock', ''))
-        if groups.get('break') and self._stack[-1].tag.name in ('paragraph',
-            'emphasis', 'strong', 'code'):
-            tag = ElementTree.QName('line-break', namespaces.moin_page)
-            element = ElementTree.Element(tag)
-            self._stack_top_append(element)
-        self.text = None
+        self.parse_inline(textblock)
 
     def _table_repl(self, groups):
         row = groups.get('table', '|').strip()
@@ -290,7 +280,7 @@ class Converter(object):
         node.sect = kind or ''
         self.text = None
 
-    def _line_repl(self, groups):
+    def _line_repl(self, line):
         self._stack_pop_name(('page', 'blockquote'))
         self.text = None
 
@@ -298,7 +288,7 @@ class Converter(object):
         DocNode('code', self.cur, groups.get('code_text', u'').strip())
         self.text = None
 
-    def _emph_repl(self, groups):
+    def _emph_repl(self, emph):
         if not self._stack_top_check(('emphasis',)):
             tag = ElementTree.QName('emphasis', namespaces.moin_page)
             self._stack_push(ElementTree.Element(tag))
@@ -307,7 +297,7 @@ class Converter(object):
             self._stack_pop()
         self.text = None
 
-    def _strong_repl(self, groups):
+    def _strong_repl(self, strong):
         if not self._stack_top_check(('strong',)):
             tag = ElementTree.QName('strong', namespaces.moin_page)
             self._stack_push(ElementTree.Element(tag))
@@ -316,7 +306,7 @@ class Converter(object):
             self._stack_pop()
         self.text = None
 
-    def _break_repl(self, groups):
+    def _linebreak_repl(self, linebreak):
         tag = ElementTree.QName('line-break', namespaces.moin_page)
         element = ElementTree.Element(tag)
         self._stack_top_append(element)
@@ -326,8 +316,8 @@ class Converter(object):
             self.text = DocNode('text', self.cur, u'')
         self.text.content += groups.get('escaped_char', u'')
 
-    def _textinline_repl(self, groups):
-        self._stack_top_append(groups.get('textinline', u''))
+    def _textinline_repl(self, textinline):
+        self._stack_top_append(textinline)
 
     def _stack_pop_name(self, tags):
         """
@@ -356,7 +346,8 @@ class Converter(object):
         """Invoke appropriate _*_repl method for every match"""
 
         for match in re.finditer(text):
-            getattr(self, '_%s_repl' % match.lastgroup)(match.groupdict())
+            data = dict(((k, v) for k, v in match.groupdict().iteritems() if v is not None))
+            getattr(self, '_%s_repl' % match.lastgroup)(**data)
 
     def parse_inline(self, raw):
         """Recognize inline elements inside blocks."""
