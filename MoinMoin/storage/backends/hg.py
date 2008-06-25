@@ -122,31 +122,27 @@ class MercurialBackend(Backend):
 
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
-        if not self.has_item(item.name): 
+        revs = item.list_revisions()
+
+        if not revs:
             if revno != 0:
-                raise RevisionNumberMismatchError, \
-                    """Unable to create revision number: %d. 
-                    First Revision number must be 0.""" % revno
+                raise RevisionNumberMismatchError, "Unable to create revision \
+                        number: %d. First Revision number must be 0." % revno
 
             item._tmpfd, item._tmpfname = tempfile.mkstemp(prefix=item.name,
-                    dir=self.path)
+                    dir=self.repo_path)
             
         else:
-            revs = self._list_revisions(item)
-
             if revno in revs:
-                raise RevisionAlreadyExistsError, \
-                    "Item Revision already exists: %s" % revno
+                raise RevisionAlreadyExistsError, "Item Revision already exists: %s" % revno
             
-            if revno != revs[0] + 1:
-                raise RevisionNumberMismatchError, \
-                    """Unable to create revision number %d. Revision number must 
-                    be latest_revision + 1.""" % revno
-
+            if revno != revs[-1] + 1:
+                raise RevisionNumberMismatchError, "Unable to create revision\
+                        number %d. Revision number must be latest_revision + 1." % revno
         
         new_rev = NewRevision(item, revno)
-        new_rev["revision_id"] = revno
-
+        new_rev._revno = revno
+ 
         return new_rev
 
     def _get_revision(self, item, revno):
@@ -185,7 +181,7 @@ class MercurialBackend(Backend):
                 pass
                 #XXX: should we log inconsistency?
 
-        revs.reverse()
+        #revs.reverse()
         return revs
 
     def _rename_item(self, item, newname):
