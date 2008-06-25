@@ -75,7 +75,7 @@ class Rules:
             =* \s*
             $
         )'''
-    text_block = r'(?P<textblock> \n?.+ )'
+    text_block = r'(?P<textblock> (?P<testblock_newline>(?<=\n))? .+ )'
     text_inline =  r'(?P<textinline> .+? )'
     list = r'''(?P<list>
             ^ [ \t]* ([*][^*\#]|[\#][^\#*]).* $
@@ -245,7 +245,7 @@ class Converter(object):
         element = ElementTree.Element(tag, attrib = {tag_level: str(level)}, children = [head_text])
         self._stack_top_append(element)
 
-    def _textblock_repl(self, textblock):
+    def _textblock_repl(self, textblock, testblock_newline=None):
         if self._stack[-1].tag.name in ('table', 'table_row', 'bullet_list',
             'number_list'):
             self._stack_pop_name(('page', 'blockquote'))
@@ -253,6 +253,9 @@ class Converter(object):
             tag = ElementTree.QName('p', namespaces.moin_page)
             element = ElementTree.Element(tag)
             self._stack_push(element)
+        # If we are in a paragraph already, don't loose the whitespace
+        elif testblock_newline is not None:
+            self._stack_top_append('\n')
         # TODO: This used to add a space after the text.
         self.parse_inline(textblock)
 
