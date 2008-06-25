@@ -884,8 +884,7 @@ var search_hint = "%(search_hint)s";
         page = d['page']
         if 'edit' in self.request.cfg.actions_excluded:
             return ""
-        if not (page.isWritable() and
-                self.request.user.may.write(page.page_name)):
+        if not (page.exists() and self.request.user.may.write(page.page_name)):
             return ""
         _ = self.request.getText
         querystr = {'action': 'edit'}
