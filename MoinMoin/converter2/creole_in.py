@@ -64,7 +64,6 @@ class Rules:
     strong = r'(?P<strong> \*\* )'
     linebreak = r'(?P<break> \\\\ )'
     escape = r'(?P<escape> ~ (?P<escaped_char>\S) )'
-    char =  r'(?P<char> (\n|.) )'
 
     # For the block elements:
     separator = r'(?P<separator> ^ \s* ---- \s* $ )' # horizontal line
@@ -76,7 +75,8 @@ class Rules:
             (?P<head_tail>=*) \s*
             $
         )'''
-    text = r'(?P<text> \n?.+ )'
+    text_block = r'(?P<textblock> \n?.+ )'
+    text_inline =  r'(?P<textinline> .+? )'
     list = r'''(?P<list>
             ^ [ \t]* ([*][^*\#]|[\#][^\#*]).* $
             ( \n[ \t]* [*\#]+.* $ )*
@@ -123,16 +123,18 @@ class Converter(object):
 
     # For pre escaping, in creole 1.0 done with ~:
     pre_escape_re = re.compile(Rules.pre_escape, re.M | re.X)
-    link_re = re.compile('|'.join([Rules.image, Rules.linebreak, Rules.char]), re.X | re.U) # for link descriptions
+    # for link descriptions
+    link_re = re.compile('|'.join([Rules.image, Rules.linebreak, Rules.text_inline]),
+        re.X | re.U | re.DOTALL)
     item_re = re.compile(Rules.item, re.X | re.U | re.M) # for list items
     cell_re = re.compile(Rules.cell, re.X | re.U) # for table cells
     # For block elements:
     block_re = re.compile('|'.join([Rules.line, Rules.head, Rules.separator,
-        Rules.pre, Rules.list, Rules.table, Rules.text]), re.X | re.U | re.M)
+        Rules.pre, Rules.list, Rules.table, Rules.text_block]), re.X | re.U | re.M)
     # For inline elements:
     inline_re = re.compile('|'.join([Rules.link, Rules.url, Rules.macro,
         Rules.code, Rules.image, Rules.strong, Rules.emph, Rules.linebreak,
-        Rules.escape, Rules.char]), re.X | re.U)
+        Rules.escape, Rules.text_inline]), re.X | re.U | re.DOTALL)
 
     def __call__(self, text):
         """Parse the text given as self.raw and return DOM tree."""
@@ -238,7 +240,7 @@ class Converter(object):
         element = ElementTree.Element(tag, attrib = {tag_level: str(level)}, children = [text])
         self._stack_top_append(element)
 
-    def _text_repl(self, groups):
+    def _textblock_repl(self, groups):
         if self._stack[-1].tag.name in ('table', 'table_row', 'bullet_list',
             'number_list'):
             self._stack_pop_name(('page', 'blockquote'))
@@ -247,7 +249,7 @@ class Converter(object):
             element = ElementTree.Element(tag)
             self._stack_push(element)
         # TODO: This used to add a space after the text.
-        self.parse_inline(groups.get('text', ''))
+        self.parse_inline(groups.get('textblock', ''))
         if groups.get('break') and self._stack[-1].tag.name in ('paragraph',
             'emphasis', 'strong', 'code'):
             tag = ElementTree.QName('line-break', namespaces.moin_page)
@@ -324,8 +326,8 @@ class Converter(object):
             self.text = DocNode('text', self.cur, u'')
         self.text.content += groups.get('escaped_char', u'')
 
-    def _char_repl(self, groups):
-        self._stack_top_append(groups.get('char', u''))
+    def _textinline_repl(self, groups):
+        self._stack_top_append(groups.get('textinline', u''))
 
     def _stack_pop_name(self, tags):
         """
