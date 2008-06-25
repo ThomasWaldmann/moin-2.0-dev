@@ -27,9 +27,6 @@ from emeraldtree import ElementTree
 
 from MoinMoin.util import namespaces
 
-# Whether the parser should convert \n into <br>.
-bloglike_lines = False
-
 class Rules:
     """Hold all the rules for generating regular expressions."""
 
@@ -79,10 +76,7 @@ class Rules:
             (?P<head_tail>=*) \s*
             $
         )'''
-    if bloglike_lines:
-        text = r'(?P<text> .+ ) (?P<break> (?<!\\)$\n(?!\s*$) )?'
-    else:
-        text = r'(?P<text> \n?.+ )'
+    text = r'(?P<text> \n?.+ )'
     list = r'''(?P<list>
             ^ [ \t]* ([*][^*\#]|[\#][^\#*]).* $
             ( \n[ \t]* [*\#]+.* $ )*
