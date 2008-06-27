@@ -17,13 +17,13 @@
 
 """
 
+import StringIO
+from threading import Lock
+
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError
-
-import StringIO
-from threading import Lock
 
 
 class MemoryBackend(Backend):
@@ -64,15 +64,12 @@ class MemoryBackend(Backend):
         Returns Item object or raises Exception if that Item does not exist.
         """
         if not self.has_item(itemname):
-            raise NoSuchItemError, "No such item, %r" % (itemname)
+            raise NoSuchItemError("No such item, %r" % (itemname))
 
         item = Item(self, itemname)
         item._item_id = self._itemmap[itemname]
 
-        if item._item_id in self._item_metadata:                # Maybe somebody already got an instance of this Item and thus there already is a Lock for that Item.
-            pass
-
-        else:
+        if not item._item_id in self._item_metadata:  # Maybe somebody already got an instance of this Item and thus there already is a Lock for that Item.
             self._item_metadata_lock[item._item_id] = Lock()
 
         return item
@@ -90,24 +87,23 @@ class MemoryBackend(Backend):
         raise an Exception.
         """
         if not isinstance(itemname, (str, unicode)):
-            raise TypeError, "Itemnames must have string type, not %s" % (str(type(itemname)))
+            raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
 
         elif self.has_item(itemname):
-            raise ItemAlreadyExistsError, "An Item with the name %r already exists!" % (itemname)
+            raise ItemAlreadyExistsError("An Item with the name %r already exists!" % (itemname))
 
-        else:
-            self._itemmap[itemname] = self._last_itemid
-            self._item_metadata[self._last_itemid] = {}
-            self._item_revisions[self._last_itemid] = {} # no revisions yet
+        self._itemmap[itemname] = self._last_itemid
+        self._item_metadata[self._last_itemid] = {}
+        self._item_revisions[self._last_itemid] = {}  # no revisions yet
 
-            item = Item(self, itemname)
-            item._item_id = self._last_itemid
+        item = Item(self, itemname)
+        item._item_id = self._last_itemid
 
-            self._item_metadata_lock[item._item_id] = Lock()
+        self._item_metadata_lock[item._item_id] = Lock()
 
-            self._last_itemid += 1
+        self._last_itemid += 1
 
-            return item
+        return item
 
     def iteritems(self):
         """
@@ -125,16 +121,14 @@ class MemoryBackend(Backend):
         item_id = item._item_id
 
         if revno not in self._item_revisions[item_id]:
-            raise NoSuchRevisionError, "No Revision #%d on Item %s" % (revno, item.name)
+            raise NoSuchRevisionError("No Revision #%d on Item %s" % (revno, item.name))
 
-        else:
-            revision = StoredRevision(item, revno)
-            revision._data = StringIO.StringIO(self._item_revisions[item_id][revno][0])
+        revision = StoredRevision(item, revno)
+        revision._data = StringIO.StringIO(self._item_revisions[item_id][revno][0])
 
-            revision._metadata = self._item_revisions[item_id][revno][1]
+        revision._metadata = self._item_revisions[item_id][revno][1]
 
-
-            return revision
+        return revision
 
     def _list_revisions(self, item):
         """
@@ -155,18 +149,17 @@ class MemoryBackend(Backend):
             last_rev = -1
 
         if revno in self._item_revisions[item._item_id]:
-            raise RevisionAlreadyExistsError, "A Revision with the number %d already exists on the item %r" % (revno, item.name)
+            raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the item %r" % (revno, item.name))
 
         elif revno != last_rev + 1:
-            raise RevisionNumberMismatchError, "The latest revision is %d, thus you cannot create revision number %d. \
-                                                The revision number must be latest_revision + 1." % (last_rev, revno)
+            raise RevisionNumberMismatchError("The latest revision is %d, thus you cannot create revision number %d. \
+                                               The revision number must be latest_revision + 1." % (last_rev, revno))
 
-        else:
-            new_revision = NewRevision(item, revno)
-            new_revision._revno = revno
-            new_revision._data = StringIO.StringIO()
+        new_revision = NewRevision(item, revno)
+        new_revision._revno = revno
+        new_revision._data = StringIO.StringIO()
 
-            return new_revision
+        return new_revision
 
     def _rename_item(self, item, newname):
         """
@@ -174,25 +167,24 @@ class MemoryBackend(Backend):
         does not exist or if the newname is already chosen by another Item.
         """
         if newname in self._itemmap:
-            raise ItemAlreadyExistsError, "Cannot rename Item %s to %s since there already is an Item with that name." % (item.name, newname)
+            raise ItemAlreadyExistsError("Cannot rename Item %s to %s since there already is an Item with that name." % (item.name, newname))
 
         elif not isinstance(newname, (str, unicode)):
-            raise TypeError, "Itemnames must have string type, not %s" % (str(type(newname)))
+            raise TypeError("Itemnames must have string type, not %s" % (type(newname)))
 
-        else:
-            name = None
+        name = None
 
-            for itemname, itemid in self._itemmap.iteritems():
-                if itemid == item._item_id:
-                    name = itemname
-                    break
+        for itemname, itemid in self._itemmap.iteritems():
+            if itemid == item._item_id:
+                name = itemname
+                break
 
-            assert name is not None
+        assert name is not None
 
-            copy_me = self._itemmap[name]
-            self._itemmap[newname] = copy_me
-            del self._itemmap[name]
-            item._name = newname
+        copy_me = self._itemmap[name]
+        self._itemmap[newname] = copy_me
+        del self._itemmap[name]
+        item._name = newname
 
     def _commit_item(self, item):
         """
@@ -205,14 +197,13 @@ class MemoryBackend(Backend):
         revision = item._uncommitted_revision
 
         if revision.revno in self._item_revisions[item._item_id]:
-            item._uncommitted_revision = None                       # Discussion-Log: http://moinmo.in/MoinMoinChat/Logs/moin-dev/2008-06-20 around 17:27
-            raise RevisionAlreadyExistsError, "You tried to commit revision #%d on the Item %s, but that Item already has a Revision with that number!" % (revision.revno, item.name)
+            item._uncommitted_revision = None  # Discussion-Log: http://moinmo.in/MoinMoinChat/Logs/moin-dev/2008-06-20 around 17:27
+            raise RevisionAlreadyExistsError("You tried to commit revision #%d on the Item %s, but that Item already has a Revision with that number!" % (revision.revno, item.name))
 
-        else:
-            revision._data.seek(0)
-            self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata)
+        revision._data.seek(0)
+        self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata)
 
-            item._uncommitted_revision = None
+        item._uncommitted_revision = None
 
     def _rollback_item(self, item):
         """
