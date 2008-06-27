@@ -1,7 +1,8 @@
 """
     MoinMoin storage errors
 
-    @copyright: 2007 MoinMoin:HeinrichWendel
+    @copyright: 2007 MoinMoin:HeinrichWendel,
+                2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 

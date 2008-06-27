@@ -38,7 +38,8 @@
 """
 
 from UserDict import DictMixin
-from MoinMoin.storage.error import RevisionNumberMismatchError
+
+from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError
 
 class Backend(object):
     """
@@ -53,13 +54,13 @@ class Backend(object):
         Takes a searchterm and returns an iterator (maybe empty) over matching
         objects.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def get_item(self, itemname):
         """
         Returns Item object or raises Exception if that Item does not exist.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def has_item(self, itemname):
         """
@@ -81,14 +82,14 @@ class Backend(object):
         Creates an item with a given itemname. If that Item already exists,
         raise an Exception.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def iteritems(self):
         """
         Returns an iterator over all items available in this backend.
         (Like the dict method).
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     #
     # The below methods are defined for convenience.
@@ -108,28 +109,28 @@ class Backend(object):
         For a given Item and Revision number, return the corresponding Revision
         of that Item.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _list_revisions(self, item):
         """
         For a given Item, list all Revisions. Returns a list of ints representing
         the Revision numbers.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _create_revision(self, item, revno):
         """
         Takes an Item object and creates a new Revision. Note that you need to pass
         a revision number for concurrency-reasons.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _rename_item(self, item, newname):
         """
         Renames a given item. Raises Exception of the Item you are trying to rename
         does not exist or if the newname is already chosen by another Item.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _commit_item(self, item):
         """
@@ -139,68 +140,70 @@ class Backend(object):
         there is only one possible Revision to be committed for your /instance/ of 
         the item and thus the Revision to be saved is memorized.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _rollback_item(self, item):
         """
         This method is invoked when external events happen that cannot be handled in a
         sane way and thus the changes that have been made must be rolled back.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _lock_item_metadata(self, item):
         """
         This method is used to acquire a lock on an Item. This is necessary to prevent
         side-effects caused by concurrency.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _unlock_item_metadata(self, item):
         """
         This method tries to release a lock on the given Item.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _read_revision_data(self, revision, chunksize):
         """
         Called to read a given amount of bytes of a revisions data. By default, all
         data is read.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _write_revision_data(self, revision, data):
         """
         Called to read a given amount of bytes of a revisions data. By default, all
         data is read.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _get_item_metadata(self, item):
         """
         Load metadata for a given item, return dict.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _get_revision_metadata(self, revision):
         """
         Load metadata for a given Revision, returns dict.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _seek_revision_data(self, revision, position, mode):
         """
         Set the revisions cursor on the revisions data.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
     # XXX Further internals of this class may follow
 
 
-class Item(object, DictMixin):                      # TODO Improve docstring
+class Item(object, DictMixin):  # TODO Improve docstring
     """
     An Item object collects the information of an item (e.g. a page) that is
     stored in persistent storage. It has metadata and Revisions.
+    An Item object is just a proxy to the information stored in the backend.
+    It doesn't necessarily live very long.
     """
     def __init__(self, backend, itemname):
         """
@@ -211,7 +214,7 @@ class Item(object, DictMixin):                      # TODO Improve docstring
 
         self._locked = False
         self._read_accessed = False
-        self._metadata = None          # Will be loaded lazily upon first real access.
+        self._metadata = None  # Will be loaded lazily upon first real access.
 
         self._uncommitted_revision = None
 
@@ -237,13 +240,13 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         prevent side-effects.
         """
         if not self._locked:
-            raise AttributeError, "Cannot write to unlocked metadata"
+            raise AttributeError("Cannot write to unlocked metadata")
 
         if not isinstance(key, (str, unicode)):
-            raise TypeError, "Key must be string type"
+            raise TypeError("Key must be string type")
 
         if not value_type_is_valid(value):
-            raise TypeError, "Value must be string, int, long, float, bool, complex or a nested tuple of the former"
+            raise TypeError("Value must be string, int, long, float, bool, complex or a nested tuple of the former")
 
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
@@ -258,7 +261,7 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         self._read_accessed = True
 
         if not isinstance(key, (unicode, str)):
-            raise TypeError, "key must be string type"
+            raise TypeError("key must be string type")
 
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
@@ -271,7 +274,7 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         implemented on the backend-level.
         """
         if self._read_accessed:
-            raise Exception, "Cannot lock after reading metadata"
+            raise AccessError("Cannot lock after reading metadata")
 
         self._backend._lock_item_metadata(self)
         self._locked = True
@@ -318,7 +321,7 @@ class Item(object, DictMixin):                      # TODO Improve docstring
         """
         if self._uncommitted_revision is not None:
             if self._uncommitted_revision.revno != revno:
-                raise RevisionNumberMismatchError, "There already is an uncommitted Revision #%d on this Item that doesn't match the revno %d you specified." % (self._uncommitted_revision.revno, revno)
+                raise RevisionNumberMismatchError("There already is an uncommitted Revision #%d on this Item that doesn't match the revno %d you specified." % (self._uncommitted_revision.revno, revno))
 
             else:
                 return self._uncommitted_revision
@@ -363,7 +366,7 @@ class Revision(object, DictMixin):
         Get the corresponding value to the key from the metadata dict.
         """
         if not isinstance(key, (unicode, str)):
-            raise TypeError, "key must be string type"
+            raise TypeError("key must be string type")
 
         if self._metadata is None:
             self._metadata = self._backend._get_revision_metadata(self)
@@ -396,7 +399,7 @@ class StoredRevision(Revision):
         """
         Revision metadata cannot be altered, thus, we raise an Exception.
         """
-        raise AttributeError, "Metadata of already existing Revisions may not be altered."
+        raise AttributeError("Metadata of already existing Revisions may not be altered.")
 
     def read(self, chunksize = -1):
         """
@@ -419,9 +422,6 @@ class StoredRevision(Revision):
         self._backend._seek_revision_data(self, position, mode)
 
 
-
-
-
 class NewRevision(Revision):
     """
     This is basically the same as Revision but with mutable metadata and data properties.
@@ -438,10 +438,10 @@ class NewRevision(Revision):
         Internal method used for dict-like access to the NewRevisions metadata-dict.
         """
         if not isinstance(key, (str, unicode)):
-            raise TypeError, "Key must be string type"
+            raise TypeError("Key must be string type")
 
         if not value_type_is_valid(value):
-            raise TypeError, "Value must be string, int, long, float, bool, complex or a nested tuple of the former"
+            raise TypeError("Value must be string, int, long, float, bool, complex or a nested tuple of the former")
 
         self._metadata[key] = value
 
