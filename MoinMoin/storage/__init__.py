@@ -1,34 +1,37 @@
 """
-    MoinMoin - Backends
+    MoinMoin - Backends - Storage API Definition.
 
-    This package contains code for the backends of the new storage layer.
-    During GSoC 2007 Heinrich Wendel designed an API for the new storage layer.
-    As of GSoC 2008, this will become an improved API for the storage layer.
+    During GSoC 2007 Heinrich Wendel designed an API for the storage layer.
+    As of GSoC 2008, this API is greatly improved, changed and integrated
+    into the MoinMoin system.
 
     ---
 
-    A Backend is a collection of Items.
-    Examples for backends would be SQL-, Mercurial- or
-    a Filesystem backend. All of those are means to
-    store data. Items are, well, the units you store
-    within those Backends, e.g. (in our context), Pages.
-    An Item itself has Revisions and Metadata.
-    For instance, you can use that to show a diff between
-    two `versions` of a page. Metadata is data that describes
-    other data. An Item has Metadata. A single Revision
-    has Metadata as well. E.g. "Which user created this Revision?"
-    would be something stored in the Metadata of a Revision,
-    while "Who created this page in the first place?" would
-    be answered by looking at the metadata of the first revision.
-    Thus, an Item basically is a collection of Revisions which
-    contain the content for the Item. The last Revision represents
-    the most recent contents. An Item can have Metadata as well
-    as Revisions.
+    The storage API consists of the classes defined in this module. That is:
+    Backend-, Item-, Revision-, NewRevision- and StoredRevision-classes.
 
-    For normal operation, Revision data and metadata is immutable as
-    soon as the revision is committed to the storage. Item metadata,
-    on the other hand, as infrequently used as it may be, is mutable.
-    Hence, it can only be modified under a read lock.
+    A concrete backend implements the abstract methods defined by the API,
+    but also uses concrete methods that have already been defined in this module
+
+    A Backend is a collection of Items. (Examples for backends would be SQL-,
+    Mercurial- or a Filesystem backend. All of those are means to store data.)
+
+    Items are, well, the units you store within those Backends, e.g. (in our
+    context), Pages. An Item itself has Revisions and Metadata. For instance,
+    you can use that to show a diff between two `versions` of a page.
+
+    Metadata is data that describes other data. An Item has Metadata. A single
+    Revision has Metadata as well. E.g. "Which user created this Revision?"
+    would be something stored in the Metadata of a Revision, while "Who created
+    this page in the first place?" would be answered by looking at the metadata
+    of the first revision. Thus, an Item basically is a collection of Revisions
+    which contain the content for the Item. The last Revision represents the most
+    recent contents. An Item can have Metadata as well as Revisions.
+
+    For normal operation, Revision data and metadata is immutable as soon as the
+    revision is committed to the storage. Item metadata, on the other hand, as
+    infrequently used as it may be, is mutable. Hence, it can only be modified
+    under a read lock.
 
     ---
 
