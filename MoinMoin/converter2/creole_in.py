@@ -57,7 +57,7 @@ class Rules:
             ([|] \s* (?P<macro_text> .+?) \s* )?
             >>
         )'''
-    code = r'(?P<code> {{{ (?P<code_text>.*?) }}} )'
+    nowiki_inline = r'(?P<nowikiinline> {{{ (?P<text>.*?) }}} )'
     emph = r'(?P<emph> (?<!:)// )' # there must be no : in front of the //
                                    # avoids italic rendering in urls with
                                    # unknown protocols
@@ -88,11 +88,11 @@ class Rules:
             (?P<item_text> .*?)
             $
         )''' # Matches single list items
-    pre = r'''(?P<pre>
+    nowiki_block = r'''(?P<nowikiblock>
             ^{{{ \s* $
             (\n)?
-            (?P<pre_text>
-                ([\#]!(?P<pre_kind>\w*?)(\s+.*)?$)?
+            (?P<text>
+                ([\#]!(?P<kind>\w*?)(\s+.*)?$)?
                 (.|\n)+?
             )
             (\n)?
@@ -113,7 +113,7 @@ class Rules:
                 (?P<head> [=][^|]+ ) |
                 (?P<cell> (  %s | [^|])+ )
             ) \s*
-        ''' % '|'.join([link, macro, image, code])
+        ''' % '|'.join([link, macro, image, nowiki_inline])
 
 class Converter(object):
     """
@@ -130,10 +130,10 @@ class Converter(object):
     cell_re = re.compile(Rules.cell, re.X | re.U) # for table cells
     # For block elements:
     block_re = re.compile('|'.join([Rules.line, Rules.head, Rules.separator,
-        Rules.pre, Rules.list, Rules.table, Rules.text_block]), re.X | re.U | re.M)
+        Rules.nowiki_block, Rules.list, Rules.table, Rules.text_block]), re.X | re.U | re.M)
     # For inline elements:
     inline_re = re.compile('|'.join([Rules.link, Rules.url, Rules.macro,
-        Rules.code, Rules.image, Rules.strong, Rules.emph, Rules.linebreak,
+        Rules.nowiki_inline, Rules.image, Rules.strong, Rules.emph, Rules.linebreak,
         Rules.escape, Rules.text_inline]), re.X | re.U | re.DOTALL)
 
     def __call__(self, text):
@@ -292,24 +292,23 @@ class Converter(object):
 
         self._stack_pop()
 
-    def _pre_repl(self, groups):
+    def _nowikiblock_repl(self, nowikiblock, text, kind=None):
         self._stack_pop_name(('page', 'blockquote'))
-        kind = groups.get('pre_kind', None)
-        text = groups.get('pre_text', u'')
         def remove_tilde(m):
             return m.group('indent') + m.group('rest')
         text = self.pre_escape_re.sub(remove_tilde, text)
-        node = DocNode('preformatted', self.cur, text)
-        node.sect = kind or ''
-        self.text = None
+        # TODO
+        tag = ElementTree.QName('blockcode', namespaces.moin_page)
+        self._stack_top_append(ElementTree.Element(tag, children=[text]))
 
     def _line_repl(self, line):
         self._stack_pop_name(('page', 'blockquote'))
         self.text = None
 
-    def _code_repl(self, groups):
-        DocNode('code', self.cur, groups.get('code_text', u'').strip())
-        self.text = None
+    def _nowikiinline_repl(self, nowikiinline, text):
+        # TODO
+        tag = ElementTree.QName('code', namespaces.moin_page)
+        self._stack_top_append(ElementTree.Element(tag, children=[text]))
 
     def _emph_repl(self, emph):
         if not self._stack_top_check(('emphasis',)):
