@@ -50,6 +50,8 @@ class TestConverter(object):
                 '<page %s %s><p><a xlink:href="http://moinmo.in/">MoinMoin</a></p></page>' % (namespaces_string, namespaces_string_xlink)),
             ('[[MoinMoin]]',
                 '<page %s %s><p><a xlink:href="wiki:/MoinMoin">MoinMoin</a></p></page>' % (namespaces_string, namespaces_string_xlink)),
+            ('----',
+                '<page %s %s>...</page>' % (namespaces_string, namespaces_string_xlink)),
         ]
         for i in pairs:
             yield (self._do,) + i

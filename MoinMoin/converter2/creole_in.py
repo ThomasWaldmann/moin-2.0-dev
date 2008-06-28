@@ -193,9 +193,10 @@ class Converter(object):
         DocNode('text', node, text or node.content)
         self.text = None
 
-    def _separator_repl(self, groups):
+    def _separator_repl(self, separator):
         self._stack_pop_name(('page', 'blockquote'))
-        DocNode('separator', self.cur)
+        raise NotImplementedError
+        # TODO
 
     def _item_repl(self, item, item_head, item_text):
         # TODO: Mention type in the tree
