@@ -42,8 +42,6 @@ class TestConverter(object):
                 '<page %s><p>Line<line-break />\nBreak</p></page>' % namespaces_string),
             ('http://moinmo.in/',
                 '<page %s %s><p><a xlink:href="http://moinmo.in/">http://moinmo.in/</a></p></page>' % (namespaces_string, namespaces_string_xlink)),
-            ('~http://moinmo.in/',
-                '<page %s><p>http://moinmo.in/</p></page>' % namespaces_string),
             ('[[http://moinmo.in/]]',
                 '<page %s %s><p><a xlink:href="http://moinmo.in/">http://moinmo.in/</a></p></page>' % (namespaces_string, namespaces_string_xlink)),
             ('[[http://moinmo.in/|MoinMoin]]',
@@ -76,6 +74,20 @@ class TestConverter(object):
                 '<page %s><p>Text <emphasis>Emphasis\n</emphasis>Text</p></page>' % namespaces_string),
             ('Text //Emphasis\n\nText',
                 '<page %s><p>Text <emphasis>Emphasis</emphasis></p><p>Text</p></page>' % namespaces_string),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
+    def test_escape(self):
+        pairs = [
+            ('~http://moinmo.in/',
+                '<page %s><p>http://moinmo.in/</p></page>' % namespaces_string),
+            ('~[[escape]]',
+                '<page %s><p>[[escape]]</p></page>' % namespaces_string),
+            ('~<<escape>>',
+                '<page %s><p>&lt;&lt;escape&gt;&gt;</p></page>' % namespaces_string),
+            ('~{~{{escape}}}',
+                '<page %s><p>{{{escape}}}</p></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
