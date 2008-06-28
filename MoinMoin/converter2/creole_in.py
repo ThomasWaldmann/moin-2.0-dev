@@ -337,10 +337,8 @@ class Converter(object):
         element = ElementTree.Element(tag)
         self._stack_top_append(element)
 
-    def _escape_repl(self, groups):
-        if self.text is None:
-            self.text = DocNode('text', self.cur, u'')
-        self.text.content += groups.get('escaped_char', u'')
+    def _escape_repl(self, escape, escaped_char):
+        self._stack_top_append(escaped_char)
 
     def _textinline_repl(self, textinline):
         self._stack_top_append(textinline)
