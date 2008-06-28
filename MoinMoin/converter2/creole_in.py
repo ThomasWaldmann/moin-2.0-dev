@@ -186,14 +186,15 @@ class Converter(object):
             attrib[tag_args] = macro_args
         self._stack_top_append(ElementTree.Element(tag, attrib))
 
-    def _image_repl(self, groups):
+    def _image_repl(self, image, image_target, image_text=''):
         """Handles images and attachemnts included in the page."""
 
-        target = groups.get('image_target', '').strip()
-        text = (groups.get('image_text', '') or '').strip()
-        node = DocNode("image", self.cur, target)
-        DocNode('text', node, text or node.content)
-        self.text = None
+        tag = ElementTree.QName('image', namespaces.moin_page)
+        tag_alt = ElementTree.QName('alt', namespaces.moin_page)
+        tag_href = ElementTree.QName('href', namespaces.xlink)
+        attrib = {tag_alt: image_text, tag_href: image_target}
+        element = ElementTree.Element(tag, attrib)
+        self._stack_top_append(element)
 
     def _separator_repl(self, separator):
         self._stack_pop_name(('page', 'blockquote'))
