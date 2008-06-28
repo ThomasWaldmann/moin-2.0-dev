@@ -144,6 +144,22 @@ class TestConverter(object):
         for i in pairs:
             yield (self._do,) + i
 
+    def test_nowiki(self):
+        pairs = [
+            ('{{{nowiki}}}',
+                '<page %s><p><code>nowiki</code></p></page>' % namespaces_string),
+            ('{{{{nowiki}}}}',
+                '<page %s><p><code>{nowiki}</code></p></page>' % namespaces_string),
+            ('text: {{{nowiki}}}, text',
+                '<page %s><p>text: <code>nowiki</code>, text</p></page>' % namespaces_string),
+            ('{{{\nnowiki\n}}}',
+                '<page %s><blockcode>nowiki</blockcode></page>' % namespaces_string),
+            ('{{{\nnowiki\nno\nwiki\n}}}',
+                '<page %s><blockcode>nowiki\nno\nwiki</blockcode></page>' % namespaces_string),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
     def test_composite(self):
         pairs = [
             ('Text\n* Item\nText',
