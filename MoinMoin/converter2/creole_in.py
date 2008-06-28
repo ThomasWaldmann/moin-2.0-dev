@@ -174,15 +174,17 @@ class Converter(object):
         self._apply(self.link_re, link_text or link_target)
         self._stack_pop()
 
-    def _macro_repl(self, groups):
+    def _macro_repl(self, macro, macro_name, macro_args=None):
         """Handles macros using the placeholder syntax."""
 
-        name = groups.get('macro_name', '')
-        text = (groups.get('macro_text', '') or '').strip()
-        node = DocNode('macro', self.cur, name)
-        node.args = groups.get('macro_args', '') or ''
-        DocNode('text', node, text or name)
-        self.text = None
+        # TODO: other namespace?
+        tag = ElementTree.QName('macro', namespaces.moin_page)
+        tag_name = ElementTree.QName('macro-name', namespaces.moin_page)
+        tag_args = ElementTree.QName('macro-args', namespaces.moin_page)
+        attrib = {tag_name: macro_name}
+        if macro_args is not None:
+            attrib[tag_args] = macro_args
+        self._stack_top_append(ElementTree.Element(tag, attrib))
 
     def _image_repl(self, groups):
         """Handles images and attachemnts included in the page."""
