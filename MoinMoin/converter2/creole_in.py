@@ -57,7 +57,7 @@ class Rules:
             ([|] \s* (?P<macro_text> .+?) \s* )?
             >>
         )'''
-    nowiki_inline = r'(?P<nowikiinline> {{{ (?P<text>.*?) }}} )'
+    nowiki_inline = r'(?P<nowikiinline> {{{ (?P<nowikiinline_text>.*?) }}} )'
     emph = r'(?P<emph> (?<!:)// )' # there must be no : in front of the //
                                    # avoids italic rendering in urls with
                                    # unknown protocols
@@ -91,8 +91,8 @@ class Rules:
     nowiki_block = r'''(?P<nowikiblock>
             ^{{{ \s* $
             (\n)?
-            (?P<text>
-                ([\#]!(?P<kind>\w*?)(\s+.*)?$)?
+            (?P<nowikiblock_text>
+                ([\#]!(?P<nowikiblock_kind>\w*?)(\s+.*)?$)?
                 (.|\n)+?
             )
             (\n)?
@@ -293,11 +293,11 @@ class Converter(object):
 
         self._stack_pop()
 
-    def _nowikiblock_repl(self, nowikiblock, text, kind=None):
+    def _nowikiblock_repl(self, nowikiblock, nowikiblock_text, nowikiblock_kind=None):
         self._stack_pop_name(('page', 'blockquote'))
         def remove_tilde(m):
             return m.group('indent') + m.group('rest')
-        text = self.pre_escape_re.sub(remove_tilde, text)
+        text = self.pre_escape_re.sub(remove_tilde, nowikiblock_text)
         # TODO
         tag = ElementTree.QName('blockcode', namespaces.moin_page)
         self._stack_top_append(ElementTree.Element(tag, children=[text]))
@@ -306,10 +306,10 @@ class Converter(object):
         self._stack_pop_name(('page', 'blockquote'))
         self.text = None
 
-    def _nowikiinline_repl(self, nowikiinline, text):
+    def _nowikiinline_repl(self, nowikiinline, nowikiinline_text):
         # TODO
         tag = ElementTree.QName('code', namespaces.moin_page)
-        self._stack_top_append(ElementTree.Element(tag, children=[text]))
+        self._stack_top_append(ElementTree.Element(tag, children=[nowikiinline_text]))
 
     def _emph_repl(self, emph):
         if not self._stack_top_check(('emphasis',)):
