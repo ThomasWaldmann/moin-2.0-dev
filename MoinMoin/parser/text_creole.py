@@ -8,9 +8,11 @@
 
 from emeraldtree.ElementTree import ElementTree
 
-from MoinMoin.converter2.creole_in import Converter as CreoleConverter
-from MoinMoin.converter2.html_out import ConverterPage as HtmlConverter
+from MoinMoin.converter2 import default_registry
 from MoinMoin.util import namespaces
+
+CreoleConverter = default_registry.get('text/creole', 'application/x-moin-document')
+HtmlConverter = default_registry.get('application/x-moin-document', 'application/x-xhtml-moin-page')
 
 class Parser:
     def __init__(self, raw, request, **kw):
@@ -18,8 +20,8 @@ class Parser:
         self.request = request
 
     def format(self, formatter):
-        document = CreoleConverter()(self.raw)
-        result = HtmlConverter()(document)
+        document = CreoleConverter(self.raw)
+        result = HtmlConverter(document)
         tree = ElementTree(result)
         tree.write(self.request, default_namespace = namespaces.html)
 
