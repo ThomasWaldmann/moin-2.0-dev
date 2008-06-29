@@ -19,7 +19,7 @@ class Registry(object):
             conv = factory(input, output)
             if conv is not None:
                 return conv
-        raise TypeError
+        raise TypeError("Couldn't find converter for %s to %s" % (input, output))
 
     def register(self, factory):
         if factory not in self._converters:
@@ -27,3 +27,5 @@ class Registry(object):
 
     def unregister(self, factory):
         self._converters.remove(factory)
+
+default_registry = Registry()
