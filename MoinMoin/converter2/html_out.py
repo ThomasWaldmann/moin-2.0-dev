@@ -79,7 +79,15 @@ class ConverterBase(object):
 
     def visit_moinpage_a(self, elem):
         # TODO
-        return self.new_copy(ElementTree.QName('a', namespaces.html), elem)
+        attrib = {}
+
+        tag_href_xlink = ElementTree.QName('href', namespaces.xlink)
+        tag_href = ElementTree.QName('href', namespaces.html)
+        href = elem.get(tag_href_xlink, None)
+        if href is not None:
+            attrib[tag_href] = href
+
+        return self.new_copy(ElementTree.QName('a', namespaces.html), elem, attrib)
 
     def visit_moinpage_h(self, elem):
         level = elem.get(ElementTree.QName('outline-level', namespaces.moin_page), 1)
