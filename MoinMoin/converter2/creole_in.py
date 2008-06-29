@@ -136,6 +136,11 @@ class Converter(object):
         Rules.nowiki_inline, Rules.image, Rules.strong, Rules.emph, Rules.linebreak,
         Rules.escape, Rules.text_inline]), re.X | re.U | re.DOTALL)
 
+    @classmethod
+    def _factory(cls, input, output):
+        if input == 'text/creole' and output == 'application/x-moin-document':
+            return cls()
+
     def __call__(self, text):
         """Parse the text given as self.raw and return DOM tree."""
 
@@ -383,3 +388,5 @@ class Converter(object):
 
         self._apply(self.block_re, raw)
 
+from _registry import default_registry
+default_registry.register(Converter._factory)

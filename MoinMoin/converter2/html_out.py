@@ -147,8 +147,16 @@ class ConverterPage(ConverterBase):
     Converter application/x-moin-document -> application/x-xhtml-moin-page
     """
 
+    @classmethod
+    def _factory(cls, input, output):
+        if input == 'application/x-moin-document' and \
+           output == 'application/x-xhtml-moin-page':
+            return cls()
+
 class ConverterDocument(ConverterPage):
     """
     Converter application/x-moin-document -> application/xhtml+xml
     """
 
+from _registry import default_registry
+default_registry.register(ConverterPage._factory)
