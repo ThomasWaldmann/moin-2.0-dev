@@ -158,8 +158,12 @@ class TestConverter(object):
                 '<page %s><table><table-body><table-row><table-cell>Cell 1</table-cell><table-cell>Cell 2</table-cell></table-row></table-body></table></page>' % namespaces_string),
             ('|Cell 1|Cell 2|',
                 '<page %s><table><table-body><table-row><table-cell>Cell 1</table-cell><table-cell>Cell 2</table-cell></table-row></table-body></table></page>' % namespaces_string),
-            ('|Row 1\n|Row 2',
+            ('|Row 1\n|Row 2\n',
                 '<page %s><table><table-body><table-row><table-cell>Row 1</table-cell></table-row><table-row><table-cell>Row 2</table-cell></table-row></table-body></table></page>' % namespaces_string),
+            ('|Row 1|\n|Row 2|\n',
+                '<page %s><table><table-body><table-row><table-cell>Row 1</table-cell></table-row><table-row><table-cell>Row 2</table-cell></table-row></table-body></table></page>' % namespaces_string),
+            ('|Cell 1.1|Cell 1.2|\n|Cell 2.1|Cell 2.2|\n',
+                '<page %s><table><table-body><table-row><table-cell>Cell 1.1</table-cell><table-cell>Cell 1.2</table-cell></table-row><table-row><table-cell>Cell 2.1</table-cell><table-cell>Cell 2.2</table-cell></table-row></table-body></table></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
