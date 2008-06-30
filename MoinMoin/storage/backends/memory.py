@@ -92,16 +92,8 @@ class MemoryBackend(Backend):
         elif self.has_item(itemname):
             raise ItemAlreadyExistsError("An Item with the name %r already exists!" % (itemname))
 
-        self._itemmap[itemname] = self._last_itemid
-        self._item_metadata[self._last_itemid] = {}
-        self._item_revisions[self._last_itemid] = {}  # no revisions yet
-
         item = Item(self, itemname)
         item._item_id = self._last_itemid
-
-        self._item_metadata_lock[item._item_id] = Lock()
-
-        self._last_itemid += 1
 
         return item
 
@@ -145,15 +137,20 @@ class MemoryBackend(Backend):
         try:
             last_rev = max(self._item_revisions[item._item_id].iterkeys())
 
-        except ValueError:
+        except (ValueError, KeyError):
             last_rev = -1
 
-        if revno in self._item_revisions[item._item_id]:
-            raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the item %r" % (revno, item.name))
+        try:
+            if revno in self._item_revisions[item._item_id]:
+                raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the item %r" % (revno, item.name))
 
-        elif revno != last_rev + 1:
-            raise RevisionNumberMismatchError("The latest revision is %d, thus you cannot create revision number %d. \
-                                               The revision number must be latest_revision + 1." % (last_rev, revno))
+            elif revno != last_rev + 1:
+                raise RevisionNumberMismatchError("The latest revision is %d, thus you cannot create revision number %d. \
+                                                   The revision number must be latest_revision + 1." % (last_rev, revno))
+
+        except KeyError:
+            pass  # First if-clause will raise an Exception if the Item has just
+                  # been created (and not committed), because there is no entry in self._item_revisions yet. Thus, silenced.
 
         new_revision = NewRevision(item, revno)
         new_revision._revno = revno
@@ -196,9 +193,18 @@ class MemoryBackend(Backend):
         """
         revision = item._uncommitted_revision
 
-        if revision.revno in self._item_revisions[item._item_id]:
+        if not self.has_item(item.name):  # Initialization of the Item in the storage takes place here.
+            self._itemmap[item.name] = self._last_itemid
+            self._item_metadata[self._last_itemid] = {}
+            self._item_revisions[self._last_itemid] = {}  # no revisions yet
+
+            self._item_metadata_lock[item._item_id] = Lock()
+
+            self._last_itemid += 1
+
+        elif self.has_item(item.name) and (revision.revno in self._item_revisions[item._item_id]):
             item._uncommitted_revision = None  # Discussion-Log: http://moinmo.in/MoinMoinChat/Logs/moin-dev/2008-06-20 around 17:27
-            raise RevisionAlreadyExistsError("You tried to commit revision #%d on the Item %s, but that Item already has a Revision with that number!" % (revision.revno, item.name))
+            raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the Item %r!" % (revision.revno, item.name))
 
         revision._data.seek(0)
         self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata)
