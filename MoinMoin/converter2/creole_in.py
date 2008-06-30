@@ -100,9 +100,9 @@ class Rules:
         )'''
     pre_escape = r' ^(?P<indent>\s*) ~ (?P<rest> \}\}\} \s*) $'
     table = r'''(?P<table>
-            ^ \s*
-            [|].*? \s*
-            [|]? \s*
+            ^ \s*?
+            [|].*? \s*?
+            [|]? \s*?
             $
         )'''
 
