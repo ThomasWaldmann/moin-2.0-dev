@@ -191,13 +191,17 @@ class Converter(object):
             attrib[tag_args] = macro_args
         self._stack_top_append(ElementTree.Element(tag, attrib))
 
-    def _image_repl(self, image, image_target, image_text=''):
+    def _image_repl(self, image, image_target, image_text=None):
         """Handles images and attachemnts included in the page."""
 
         tag = ElementTree.QName('image', namespaces.moin_page)
         tag_alt = ElementTree.QName('alt', namespaces.moin_page)
         tag_href = ElementTree.QName('href', namespaces.xlink)
-        attrib = {tag_alt: image_text, tag_href: image_target}
+
+        attrib = {tag_href: image_target}
+        if image_text is not None:
+            attrib[tag_alt] = image_text
+
         element = ElementTree.Element(tag, attrib)
         self._stack_top_append(element)
 
