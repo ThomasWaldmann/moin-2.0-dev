@@ -46,7 +46,7 @@ from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError
 
 class Backend(object):
     """
-    This class defines the new storage API for moinmoin.
+    This class defines the storage API for moinmoin.
     It abstracts access to backends. If you want to write
     a specific backend, say a mercurial backend, you have
     to implement the methods below.
