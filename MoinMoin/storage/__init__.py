@@ -152,14 +152,14 @@ class Backend(object):
         """
         raise NotImplementedError()
 
-    def _lock_item_metadata(self, item):
+    def _change_item_metadata(self, item):
         """
         This method is used to acquire a lock on an Item. This is necessary to prevent
         side-effects caused by concurrency.
         """
         raise NotImplementedError()
 
-    def _unlock_item_metadata(self, item):
+    def _publish_item_metadata(self, item):
         """
         This method tries to release a lock on the given Item.
         """
@@ -279,14 +279,14 @@ class Item(object, DictMixin):  # TODO Improve docstring
         if self._read_accessed:
             raise AccessError("Cannot lock after reading metadata")
 
-        self._backend._lock_item_metadata(self)
+        self._backend._change_item_metadata(self)
         self._locked = True
 
     def publish_metadata(self):
         """
         Release lock on the Item.
         """
-        self._backend._unlock_item_metadata(self)
+        self._backend._publish_item_metadata(self)
         self._locked = False
 
     def get_revision(self, revno):
