@@ -225,13 +225,28 @@ class MemoryBackend(Backend):
         This method is used to acquire a lock on an Item. This is necessary to prevent
         side-effects caused by concurrency.
         """
-        self._item_metadata_lock[item._item_id].acquire()
+        if item._item_id not in self._item_metadata_lock:
+            # If this is the case it means that we operate on an Item that has not been
+            # committed yet and thus we should not store a Lock in persistant storage.
+            pass
+
+        else:
+            self._item_metadata_lock[item._item_id].acquire()
 
     def _publish_item_metadata(self, item):
         """
         This method tries to release a lock on the given Item.
         """
-        self._item_metadata_lock[item._item_id].release()
+        try:
+            self._item_metadata_lock[item._item_id].release()
+
+        except KeyError:  # The Item we are operating on has not been committed yet. Store it.
+            assert item.name not in self._itemmap
+            assert item._item_id not in self._item_metadata
+
+            self._itemmap[item.name] = item._item_id
+            self._item_metadata[item._item_id] = item._metadata
+            self._item_metadata_lock[item._item_id] = Lock()
 
     def _read_revision_data(self, revision, chunksize):
         """
@@ -253,7 +268,11 @@ class MemoryBackend(Backend):
         """
         Load metadata for a given item, return dict.
         """
-        return dict(self._item_metadata[item._item_id])
+        try:
+            return dict(self._item_metadata[item._item_id])
+
+        except KeyError:  # The Item we are operating on has not been committed yet.
+            return dict()
 
     def _get_revision_metadata(self, revision):
         """

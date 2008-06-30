@@ -11,15 +11,14 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import py
 
+from MoinMoin.storage.backends.memory import MemoryBackend
 from MoinMoin.storage import Backend, Item, Revision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError
 
-from MoinMoin.storage.backends.memory import MemoryBackend
-
-import py
 
 class TestMemoryBackend(object):
     """
@@ -30,6 +29,8 @@ class TestMemoryBackend(object):
         self.always_there = self.memb.create_item("always_there")  # for convenience
         self.always_there.create_revision(0)
         self.always_there.commit()
+
+    # Test instance of MemoryBackend
 
     def test_create_item(self):
         my_item = self.memb.create_item("my_item")
@@ -44,7 +45,7 @@ class TestMemoryBackend(object):
         assert non_ascii.name == u"äöüß"
         assert self.memb.has_item(u"äöüß")
 
-    def test_create_item_wrong_itemname(self):
+    def test_create_item_invalid_itemname(self):
         py.test.raises(TypeError, self.memb.create_item, 42)
 
     def test_create_item_again(self):
@@ -68,6 +69,17 @@ class TestMemoryBackend(object):
 
     def test_has_item_that_doesnt_exist(self):
         assert not self.memb.has_item("i_do_not_exist")
+
+
+    # Test instance of Item
+
+    def test_item_metadata_change(self):
+        i = self.memb.create_item("test item metadata change")
+        i.change_metadata()
+        i["creator"] = "Vincent van Gogh"
+        i.publish_metadata()
+        assert i["creator"] == "Vincent van Gogh"
+
 
     def test_item_create_revision(self):
         rev = self.always_there.create_revision(1)
