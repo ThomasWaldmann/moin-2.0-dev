@@ -93,8 +93,7 @@ class ConverterBase(object):
         return self.new_copy(ElementTree.QName('pre', namespaces.html), elem)
 
     def visit_moinpage_code(self, elem):
-        # TODO
-        pass
+        return self.new_copy(ElementTree.QName('tt', namespaces.html), elem)
 
     def visit_moinpage_emphasis(self, elem):
         return self.new_copy(ElementTree.QName('em', namespaces.html), elem)
