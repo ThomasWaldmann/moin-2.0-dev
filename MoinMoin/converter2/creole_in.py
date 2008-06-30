@@ -57,7 +57,7 @@ class Rules:
             ([|] \s* (?P<macro_text> .+?) \s* )?
             >>
         )'''
-    nowiki_inline = r'(?P<nowikiinline> {{{ (?P<nowikiinline_text>.*?) }}} )'
+    nowiki_inline = r'(?P<nowikiinline> {{{ (?P<nowikiinline_text>.*?}*) }}} )'
     emph = r'(?P<emph> (?<!:)// )' # there must be no : in front of the //
                                    # avoids italic rendering in urls with
                                    # unknown protocols
