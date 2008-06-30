@@ -53,7 +53,7 @@ class TestConverter(object):
             ('{{http://moinmo.in/|MoinMoin}}',
                 '<page %s %s><p><image alt="MoinMoin" xlink:href="http://moinmo.in/" /></p></page>' % (namespaces_string, namespaces_string_xlink)),
             ('----',
-                '<page %s %s>...</page>' % (namespaces_string, namespaces_string_xlink)),
+                '<page %s><separator /></page>' % namespaces_string),
             ('<<Macro>>',
                 '<page %s><p><macro macro-name="Macro" /></p></page>' % namespaces_string),
         ]
@@ -176,6 +176,8 @@ class TestConverter(object):
                 '<page %s><blockcode>nowiki</blockcode></page>' % namespaces_string),
             ('{{{\nnowiki\nno\nwiki\n}}}',
                 '<page %s><blockcode>nowiki\nno\nwiki</blockcode></page>' % namespaces_string),
+            ('{{{nowiki}}} {{{nowiki}}}',
+                '<page %s><p><code>nowiki</code> <code>nowiki</code></p></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i

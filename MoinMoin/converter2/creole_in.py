@@ -207,8 +207,9 @@ class Converter(object):
 
     def _separator_repl(self, separator):
         self._stack_pop_name(('page', 'blockquote'))
-        raise NotImplementedError
-        # TODO
+        # TODO: questionable
+        tag = ElementTree.QName('separator', namespaces.moin_page)
+        self._stack_top_append(ElementTree.Element(tag))
 
     def _item_repl(self, item, item_head, item_text):
         # TODO: Mention type in the tree
