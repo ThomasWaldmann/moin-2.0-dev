@@ -182,7 +182,7 @@ class TestConverter(object):
 
     def test_composite(self):
         pairs = [
-            ('Text\n* Item\nText',
+            ('Text\n* Item\n\nText',
                 '<page %s><p>Text</p><list><list-item><list-item-body>Item</list-item-body></list-item></list><p>Text</p></page>' % namespaces_string),
             ('Text\n|Item\nText',
                 '<page %s><p>Text</p><table><table-body><table-row><table-cell>Item</table-cell></table-row></table-body></table><p>Text</p></page>' % namespaces_string),
