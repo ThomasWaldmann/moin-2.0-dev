@@ -89,6 +89,17 @@ class ConverterBase(object):
 
         return self.new_copy(ElementTree.QName('a', namespaces.html), elem, attrib)
 
+    def visit_moinpage_blockcode(self, elem):
+        # TODO
+        pass
+
+    def visit_moinpage_code(self, elem):
+        # TODO
+        pass
+
+    def visit_moinpage_emphasis(self, elem):
+        return self.new_copy(ElementTree.QName('em', namespaces.html), elem)
+
     def visit_moinpage_h(self, elem):
         level = elem.get(ElementTree.QName('outline-level', namespaces.moin_page), 1)
         try:
@@ -101,8 +112,16 @@ class ConverterBase(object):
             level = 6
         return self.new_copy(ElementTree.QName('h%d' % level, namespaces.html), elem)
 
-    def visit_moinpage_emphasis(self, elem):
-        return self.new_copy(ElementTree.QName('em', namespaces.html), elem)
+    def visit_moinpage_image(self, elem):
+        attrib = {}
+
+        tag_href_xlink = ElementTree.QName('href', namespaces.xlink)
+        tag_src = ElementTree.QName('src', namespaces.html)
+        src = elem.get(tag_href_xlink, None)
+        if src is not None:
+            attrib[tag_src] = src
+
+        return self.new(ElementTree.QName('img', namespaces.html), attrib)
 
     def visit_moinpage_line_break(self, elem):
         return self.new(ElementTree.QName('br', namespaces.html))
@@ -119,11 +138,19 @@ class ConverterBase(object):
                         break
         return ret
 
+    def visit_moinpage_macro(self, elem):
+        # TODO
+        pass
+
     def visit_moinpage_p(self, elem):
         return self.new_copy(ElementTree.QName('p', namespaces.html), elem)
 
     def visit_moinpage_page(self, elem):
         return self.new_copy(ElementTree.QName('div', namespaces.html), elem)
+
+    def visit_moinpage_separator(self, elem):
+        # TODO
+        pass
 
     def visit_moinpage_span(self, elem):
         # TODO
