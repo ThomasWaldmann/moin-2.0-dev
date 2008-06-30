@@ -49,6 +49,8 @@ class TestConverterBase(object):
                 '<div %s><p><em>Test</em></p></div>' % namespaces_string_html_default),
             ('<page:page %s><page:p><page:strong>Test</page:strong></page:p></page:page>' % namespaces_string_page,
                 '<div %s><p><strong>Test</strong></p></div>' % namespaces_string_html_default),
+            ('<page:page %s><page:blockcode>Code</page:blockcode></page:page>' % namespaces_string_page,
+                '<div %s><pre>Code</pre></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
             yield (self._do,) + i
