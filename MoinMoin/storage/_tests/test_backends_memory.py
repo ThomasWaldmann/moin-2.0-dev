@@ -113,12 +113,9 @@ class TestMemoryBackend(object):
 
     def test_item_metadata_change_after_read(self):
         i = self.memb.create_item("fooafoeofo")
-        print repr(self.memb._item_metadata_lock)
-        print repr(self.memb._itemmap)
-        #assert False
         i.change_metadata()
-        #i["asd"] = "asd"
-        #i.publish_metadata()
+        i["asd"] = "asd"
+        i.publish_metadata()
 
 
     def test_item_create_revision(self):

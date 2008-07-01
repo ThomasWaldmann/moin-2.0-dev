@@ -93,7 +93,7 @@ class MemoryBackend(Backend):
             raise ItemAlreadyExistsError("An Item with the name %r already exists!" % (itemname))
 
         item = Item(self, itemname)
-        item._item_id = self._last_itemid
+        item._item_id = None
 
         return item
 
@@ -183,6 +183,16 @@ class MemoryBackend(Backend):
         del self._itemmap[name]
         item._name = newname
 
+    def _add_item_internally(self, item):
+        item._item_id = self._last_itemid
+        self._itemmap[item.name] = item._item_id
+        self._item_metadata[item._item_id] = {}
+        self._item_revisions[item._item_id] = {}  # no revisions yet
+
+        self._item_metadata_lock[item._item_id] = Lock()
+
+        self._last_itemid += 1
+
     def _commit_item(self, item):
         """
         Commits the changes that have been done to a given Item. That is, after you
@@ -193,15 +203,10 @@ class MemoryBackend(Backend):
         """
         revision = item._uncommitted_revision
 
-        if not self.has_item(item.name):  # Initialization of the Item in the storage takes place here.
-            self._itemmap[item.name] = self._last_itemid
-            self._item_metadata[self._last_itemid] = {}
-            self._item_revisions[self._last_itemid] = {}  # no revisions yet
-
-            self._item_metadata_lock[item._item_id] = Lock()
-
-            self._last_itemid += 1
-
+        if item._item_id is None:
+            if self.has_item(item.name):
+                raise ItemAlreadyExistsError()
+            self._add_item_internally(item)
         elif self.has_item(item.name) and (revision.revno in self._item_revisions[item._item_id]):
             item._uncommitted_revision = None  # Discussion-Log: http://moinmo.in/MoinMoinChat/Logs/moin-dev/2008-06-20 around 17:27
             raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the Item %r!" % (revision.revno, item.name))
@@ -225,11 +230,10 @@ class MemoryBackend(Backend):
         This method is used to acquire a lock on an Item. This is necessary to prevent
         side-effects caused by concurrency.
         """
-        if item._item_id not in self._item_metadata_lock:
+        if item._item_id is None:
             # If this is the case it means that we operate on an Item that has not been
             # committed yet and thus we should not use a Lock in persistant storage.
             pass
-
         else:
             self._item_metadata_lock[item._item_id].acquire()
 
@@ -237,16 +241,15 @@ class MemoryBackend(Backend):
         """
         This method tries to release a lock on the given Item.
         """
-        try:
+        if item._item_id is None:
+            # not committed yet, no locking, store item
+            self._add_item_internally(item)
+        else:
             self._item_metadata_lock[item._item_id].release()
-
-        except KeyError:  # The Item we are operating on has not been committed yet. Store it.
-            assert item.name not in self._itemmap
-            assert item._item_id not in self._item_metadata
-
-            self._itemmap[item.name] = item._item_id
-            self._item_metadata[item._item_id] = item._metadata
-            self._item_metadata_lock[item._item_id] = Lock()
+        if item._metadata is not None:
+            self._item_metadata[item._item_id] = item._metadata.copy()
+        else:
+            self._item_metadata[item._item_id] = {}
 
     def _read_revision_data(self, revision, chunksize):
         """
