@@ -271,6 +271,16 @@ class Item(object, DictMixin):  # TODO Improve docstring
 
         return self._metadata[key]
 
+    def keys(self):
+        """
+        This method returns a list of all metadata-keys of this Item (i.e., a list of Strings.)
+        That allows using pythons `for mdkey in itemobj: do_something`-syntax.
+        """
+        if self._metadata is None:
+            self._metadata = self._backend._get_item_metadata(self)
+
+        return self._metadata.keys()
+
     def change_metadata(self):
         """
         Acquire lock for the Items metadata. The actual locking is, by default,
@@ -376,6 +386,16 @@ class Revision(object, DictMixin):
 
         return self._metadata[key]
 
+    def keys(self):
+        """
+        This method returns a list of all metadata-keys of this Revision (i.e., a list of Strings.)
+        That allows using pythons `for mdkey in revopbj: do_something`-syntax.
+        """
+        if self._metadata is None:
+            self._metadata = self._backend._get_revision_metadata(self)
+
+        return self._metadata.keys()
+
     def read_data(self, chunksize = -1):
         """
         Allows file-like read-operations. You can pass a chunksize and it will
@@ -434,7 +454,7 @@ class NewRevision(Revision):
         Initialize the NewRevision
         """
         Revision.__init__(self, item, revno)
-        Revision._metadata = {}
+        self._metadata = {}
 
     def __setitem__(self, key, value):
         """
