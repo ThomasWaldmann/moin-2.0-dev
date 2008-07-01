@@ -184,6 +184,11 @@ class MemoryBackend(Backend):
         item._name = newname
 
     def _add_item_internally(self, item):
+        """
+        Given an item, store it in persistently and initialize it. Please note
+        that this method takes care of the internal counter we use to give each
+        Item a unique ID.
+        """
         item._item_id = self._last_itemid
         self._itemmap[item.name] = item._item_id
         self._item_metadata[item._item_id] = {}
@@ -199,20 +204,28 @@ class MemoryBackend(Backend):
         created a Revision on that Item and filled it with data you still need to
         commit() it. You don't need to pass what Revision you are committing because
         there is only one possible Revision to be committed for your /instance/ of
-        the item and thus the Revision to be saved is memorized.
+        the item and thus the Revision to be saved is memorized in the items
+        _uncommitted_revision attribute.
         """
         revision = item._uncommitted_revision
 
         if item._item_id is None:
             if self.has_item(item.name):
-                raise ItemAlreadyExistsError()
+                raise ItemAlreadyExistsError("You tried to commit an Item with the name %r, but there already is an Item with that name." % item.name)
             self._add_item_internally(item)
+
         elif self.has_item(item.name) and (revision.revno in self._item_revisions[item._item_id]):
             item._uncommitted_revision = None  # Discussion-Log: http://moinmo.in/MoinMoinChat/Logs/moin-dev/2008-06-20 around 17:27
             raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the Item %r!" % (revision.revno, item.name))
 
         revision._data.seek(0)
-        self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata)
+
+        if revision._metadata is not None:
+            self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata.copy())
+        else:
+            self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), {})
+
+
 
         item._uncommitted_revision = None
 
@@ -246,6 +259,7 @@ class MemoryBackend(Backend):
             self._add_item_internally(item)
         else:
             self._item_metadata_lock[item._item_id].release()
+
         if item._metadata is not None:
             self._item_metadata[item._item_id] = item._metadata.copy()
         else:
