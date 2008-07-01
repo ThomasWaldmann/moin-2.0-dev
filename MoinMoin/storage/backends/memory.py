@@ -227,7 +227,7 @@ class MemoryBackend(Backend):
         """
         if item._item_id not in self._item_metadata_lock:
             # If this is the case it means that we operate on an Item that has not been
-            # committed yet and thus we should not store a Lock in persistant storage.
+            # committed yet and thus we should not use a Lock in persistant storage.
             pass
 
         else:

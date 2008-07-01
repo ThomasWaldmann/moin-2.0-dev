@@ -73,12 +73,37 @@ class TestMemoryBackend(object):
 
     # Test instance of Item
 
-    def test_item_metadata_change(self):
+    def test_item_metadata_change_and_publish(self):
         i = self.memb.create_item("test item metadata change")
         i.change_metadata()
         i["creator"] = "Vincent van Gogh"
         i.publish_metadata()
-        assert i["creator"] == "Vincent van Gogh"
+        i2 = self.memb.get_item("test item metadata change")
+        assert i2["creator"] == "Vincent van Gogh"
+
+    def test_item_metadata_invalid_change(self):
+        i = self.memb.create_item("test item metadata invalid change")
+        try:
+            i["this should"] = "FAIL!"
+            assert False  # There should have been an Exception due to i.change() missing.
+
+        except AttributeError:
+            pass  # We expected that Exception to be thrown. Everything fine.
+
+    def test_item_metadata_without_publish(self):
+        i = self.memb.create_item("test item metadata invalid change")
+        i.change_metadata()
+        i["change but"] = "don't publish"
+        py.test.raises(NoSuchItemError, self.memb.get_item, "test item metadata invalid change")
+
+    def test_item_metadata_change_after_read(self):
+        i = self.memb.create_item("fooafoeofo")
+        print repr(self.memb._item_metadata_lock)
+        print repr(self.memb._itemmap)
+        #assert False
+        i.change_metadata()
+        #i["asd"] = "asd"
+        #i.publish_metadata()
 
 
     def test_item_create_revision(self):
