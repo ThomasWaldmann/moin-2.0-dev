@@ -23,6 +23,15 @@ _item_metadata = {
     u'Lorem': {'m1': 7, 'm2': 444},
 }
 
+_lastrevision_metadata = {
+    u'a': {'a': 1},
+    u'A': {'a': None},
+    u'b': {'a': 0},
+    u'c': {'a': False},
+    u'B': {'a': u''},
+    u'Lorem': {'a': 42},
+}
+
 for n in _item_contents.keys():
     nl = n.lower()
     nu = n.upper()
@@ -32,6 +41,10 @@ for n in _item_contents.keys():
         _item_metadata[nl] = _item_metadata[n]
     if not nu in _item_metadata:
         _item_metadata[nu] = _item_metadata[n]
+    if not nl in _lastrevision_metadata:
+        _lastrevision_metadata[nl] = _lastrevision_metadata[n]
+    if not nu in _lastrevision_metadata:
+        _lastrevision_metadata[nu] = _lastrevision_metadata[n]
 
 class TermTestData:
     def __init__(self, text):
@@ -68,15 +81,19 @@ class TestTerms:
         term.prepare()
         if itemname is not None:
             meta = _item_metadata[itemname].copy()
+            revmeta = _lastrevision_metadata[itemname].copy()
             # ease debugging
             meta['__value'] = _item_contents[itemname]
         else:
             meta = {}
-        m = lambda: meta
+            revmeta = {}
+        m = lambda: (meta, revmeta)
         meta2 = meta.copy()
+        revmeta2 = revmeta.copy()
         assert expected == term.evaluate(self, itemname, m)
         # make sure they don't modify the metadata dict
         assert meta == meta2
+        assert revmeta == revmeta2
 
     def testSimpleTextSearch(self):
         terms = [term.Text(u'abcdefg', True), term.Text(u'ijklmn', True)]
@@ -190,28 +207,38 @@ class TestTerms:
             yield self._evaluate, term.NameRE(re.compile('(a|e)')), item, expected
 
     def testMetaMatch1(self):
-        t = term.MetaDataMatch('m1', True)
+        t = term.ItemMetaDataMatch('m1', True)
         for item, expected in [('a', True), ('A', True), ('b', False), ('B', False), ('lorem', False)]:
             yield self._evaluate, t, item, expected
 
     def testMetaMatch2(self):
-        t = term.MetaDataMatch('m2', '333')
+        t = term.ItemMetaDataMatch('m2', '333')
         for item, expected in [('a', False), ('A', True), ('b', False), ('B', True), ('lorem', False)]:
             yield self._evaluate, t, item, expected
 
     def testMetaMatch3(self):
-        t = term.MetaDataMatch('m2', 444)
+        t = term.ItemMetaDataMatch('m2', 444)
         for item, expected in [('a', False), ('A', False), ('b', False), ('B', False), ('lorem', True)]:
             yield self._evaluate, t, item, expected
 
     def testHasMeta1(self):
-        t = term.HasMetaDataKey('m3')
+        t = term.ItemHasMetaDataKey('m3')
         for item, expected in [('a', False), ('A', False), ('b', False), ('B', False), ('lorem', False)]:
             yield self._evaluate, t, item, expected
 
     def testHasMeta2(self):
-        t = term.HasMetaDataKey('m1')
+        t = term.ItemHasMetaDataKey('m1')
         for item, expected in [('a', True), ('A', True), ('b', True), ('B', True), ('lorem', True)]:
+            yield self._evaluate, t, item, expected
+
+    def testHasMeta3(self):
+        t = term.LastRevisionHasMetaDataKey('a')
+        for item, expected in [('a', True), ('A', True), ('b', True), ('B', True), ('lorem', True)]:
+            yield self._evaluate, t, item, expected
+
+    def testHasMeta4(self):
+        t = term.LastRevisionMetaDataMatch('a', None)
+        for item, expected in [('a', False), ('A', True), ('b', False), ('B', False), ('lorem', False)]:
             yield self._evaluate, t, item, expected
 
     def testNameFn(self):

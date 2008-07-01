@@ -1417,7 +1417,7 @@ class RootPage(object):
             filter.add(term.FromUnderlay())
 
         if exists:
-            filter.add(term.NOT(term.HasMetaDataKey(DELETED)))
+            filter.add(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
 
         if filterfunction:
             filter.add(term.NameFn(filterfunction))
@@ -1471,7 +1471,7 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = self._items.iterate(term.NOT(term.HasMetaDataKey(DELETED)))
+        items = self._items.iterate(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
         count = 0
         for item in items:
             count += 1

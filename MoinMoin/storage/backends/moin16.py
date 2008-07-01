@@ -227,16 +227,16 @@ class PageBackend(BaseFilesystemBackend):
         """
         @see MoinMoin.storage.interfaces.StorageBackend.list_items
         """
-        class HasDeletedMetaDataFilter(term.Term):
+        class LastRevisionHasDeletedMetaDataFilter(term.Term):
             _cost = 50 # pretty cheap now
             def _evaluate(self, backend, itemname, get_metadata):
                 revno = backend.current_revision(itemname)
                 return not os.path.exists(backend._get_rev_path(f, revno, 'data'))
 
         def check_term(t):
-            if isinstance(t, term.HasMetaDataKey):
+            if isinstance(t, term.LastRevisionHasMetaDataKey):
                 if t.key == DELETED:
-                    return HasDeletedMetaDataFilter()
+                    return LastRevisionHasDeletedMetaDataFilter()
             elif isinstance(t, term.ListTerm):
                 terms = []
                 for st in t.terms:
