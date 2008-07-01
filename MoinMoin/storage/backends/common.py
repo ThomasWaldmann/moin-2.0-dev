@@ -170,7 +170,8 @@ class _get_item_metadata_cache:
 
     def __call__(self):
         if self._cached is None:
-            self._cached = _get_metadata(self.backend, self.item, [-1, 0])
+            self._cached = (_get_metadata(self.backend, self.item, [-1]),
+                            _get_metadata(self.backend, self.item, [0]))
         return self._cached
 
 _ = lambda x: x

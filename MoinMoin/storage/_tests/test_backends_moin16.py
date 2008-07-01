@@ -112,8 +112,8 @@ user_metadata[1][1] = {}
 
 user_data = {}
 
-user_filters = [(term.MetaDataMatch('name', 'HeinrichWendel'), [user[0]]),
-                (term.MetaDataMatch('theme_name', 'modern'), [user[0]])]
+user_filters = [(term.ItemMetaDataMatch('name', 'HeinrichWendel'), [user[0]]),
+                (term.ItemMetaDataMatch('theme_name', 'modern'), [user[0]])]
 
 
 class TestUserBackend(AbstractBackendTest):

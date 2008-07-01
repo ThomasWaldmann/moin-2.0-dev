@@ -7,14 +7,14 @@
 
     Note that some backends can optimise some of the search terms, for
     example a backend that has indexed various metadata keys can optimise
-    easy expressions containing MetaDataMatch terms. This is only allowed
+    easy expressions containing ItemMetaDataMatch terms. This is only allowed
     for classes documented as being 'final' which hence also means that
     their _evaluate function may not be overridden by descendent classes.
 
-    For example, that metadata backend could test if the expression is a
-    MetaDataMatch expression, and if so, simply return the appropriate
+    For example, that metadata backend could test if the expression is an
+    ItemMetaDataMatch expression, and if so, simply return the appropriate
     index; or if it is an AND() expression build the page list from the
-    index, remove the MetaDataMatch instance from the AND list and match
+    index, remove the ItemMetaDataMatch instance from the AND list and match
     the resulting expression only for pages in that list. Etc.
 
     TODO: Should we write some generic code for picking apart expressions
@@ -46,8 +46,8 @@ class Term(object):
         @param backend: the storage backend
         @param itemname: the item name
         @param get_metadata: function (without parameters) that
-                  returns a metadata dict (-like) for the item, the
-                  return value may not be modified.
+                  returns a tuple of metadata dict-likes for the item and its
+                  last revision; the return value may not be modified.
         """
         assert hasattr(self, '_result')
 
@@ -352,7 +352,7 @@ class NameFn(Term):
     def copy(self):
         return NameFn(self._fn)
 
-class MetaDataMatch(Term):
+class ItemMetaDataMatch(Term):
     """
     Matches a metadata key/value pair of an item, requires
     existence of the metadata key. Final.
@@ -364,16 +364,16 @@ class MetaDataMatch(Term):
         self.val = val
 
     def _evaluate(self, backend, itemname, get_metadata):
-        metadata = get_metadata()
+        metadata = get_metadata()[0]
         return self.key in metadata and metadata[self.key] == self.val
 
     def __repr__(self):
         return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.val)
 
     def copy(self):
-        return MetaDataMatch(self.key, self.val)
+        return ItemMetaDataMatch(self.key, self.val)
 
-class HasMetaDataValue(Term):
+class ItemHasMetaDataValue(Term):
     """
     Match when the metadata value for a given key contains the given
     value (when the item's metadata value is a dict or list), requires
@@ -386,32 +386,71 @@ class HasMetaDataValue(Term):
         self.val = val
 
     def _evaluate(self, backend, itemname, get_metadata):
-        metadata = get_metadata()
+        metadata = get_metadata()[0]
         return self.key in metadata and self.val in metadata[self.key]
 
     def __repr__(self):
         return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.val)
 
     def copy(self):
-        return HasMetaDataValue(self.key, self.val)
+        return ItemHasMetaDataValue(self.key, self.val)
 
-class HasMetaDataKey(Term):
+class ItemHasMetaDataKey(Term):
     """
     Requires existence of the metadata key. Final.
     """
-    _cost = 90 # possibly cheaper than MetaDataMatch
+    _cost = 90 # possibly cheaper than ItemMetaDataMatch
     def __init__(self, key):
         Term.__init__(self)
         self.key = key
 
     def _evaluate(self, backend, itemname, get_metadata):
-        return self.key in get_metadata()
+        return self.key in get_metadata()[0]
 
     def __repr__(self):
         return u'<%s(%s)>' % (self.__class__.__name__, self.key)
 
     def copy(self):
-        return HasMetaDataKey(self.key)
+        return ItemHasMetaDataKey(self.key)
+
+class LastRevisionMetaDataMatch(Term):
+    """
+    Matches a metadata key/value pair of an item, requires
+    existence of the metadata key. Final.
+    """
+    _cost = 100 # fairly expensive but way cheaper than text
+    def __init__(self, key, val):
+        Term.__init__(self)
+        self.key = key
+        self.val = val
+
+    def _evaluate(self, backend, itemname, get_metadata):
+        metadata = get_metadata()[1]
+        return self.key in metadata and metadata[self.key] == self.val
+
+    def __repr__(self):
+        return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.val)
+
+    def copy(self):
+        return LastRevisionMetaDataMatch(self.key, self.val)
+
+class LastRevisionHasMetaDataKey(Term):
+    """
+    Requires existence of the metadata key. Final.
+    """
+    _cost = 90 # possibly cheaper than LastRevisionMetaDataMatch
+    def __init__(self, key):
+        Term.__init__(self)
+        self.key = key
+
+    def _evaluate(self, backend, itemname, get_metadata):
+        return self.key in get_metadata()[1]
+
+    def __repr__(self):
+        return u'<%s(%s)>' % (self.__class__.__name__, self.key)
+
+    def copy(self):
+        return LastRevisionHasMetaDataKey(self.key)
 
 class FromUnderlay(Term):
     """

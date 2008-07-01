@@ -39,7 +39,7 @@ def getUserList(request):
 
 def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
-    filter = term.MetaDataMatch(key, value)
+    filter = term.ItemMetaDataMatch(key, value)
     identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
     users = []
     for user in identifier:
@@ -63,7 +63,7 @@ def get_by_jabber_id(request, jabber_id):
 
 def getUserIdByOpenId(request, openid):
     """ Searches for an user with a particular openid id and returns it. """
-    filter = term.HasMetaDataValue('openids', openid)
+    filter = term.ItemHasMetaDataValue('openids', openid)
     identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
     users = []
     for user in identifier:
@@ -80,7 +80,7 @@ def getUserId(request, searchName):
     """
     try:
         coll = ItemCollection(request.cfg.user_backend, request)
-        for user in coll.iterate(term.MetaDataMatch('name', searchName)):
+        for user in coll.iterate(term.ItemMetaDataMatch('name', searchName)):
             return user
         return None
     except IndexError:

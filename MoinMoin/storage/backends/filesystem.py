@@ -313,11 +313,11 @@ class IndexedBackend(object):
 
         # currently, we only handle AND conditions
         def check_term(t, ifilt, must):
-            if isinstance(t, term.HasMetaDataKey):
+            if isinstance(t, term.ItemHasMetaDataKey):
                 if t.key in self._indexes:
                     ifilt.add_key(t.key, must)
                     return term.BOOL(must)
-            elif isinstance(t, term.MetaDataMatch):
+            elif isinstance(t, term.ItemMetaDataMatch):
                 # Only accept equal matches for unicode/str
                 # because our index splits apart dicts/lists
                 # so we can't figure out exact matches for
@@ -326,7 +326,7 @@ class IndexedBackend(object):
                 if t.key in self._indexes and isinstance(t.val, (str, unicode)):
                     ifilt.add_match(t.key, t.val, must)
                     return term.BOOL(must)
-            elif isinstance(t, term.HasMetaDataValue):
+            elif isinstance(t, term.ItemHasMetaDataValue):
                 # We split apart dicts/lists for the index so
                 # we can optimise for this search as well.
                 if t.key in self._indexes:

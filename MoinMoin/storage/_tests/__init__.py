@@ -41,8 +41,8 @@ default_items_metadata[1][1] = {}
 default_items_metadata[1][2] = default_items_metadata[1][1]
 default_items_metadata[1][3] = default_items_metadata[1][1]
 
-default_items_filters = [(term.MetaDataMatch('format', 'wiki'), [default_items[0]]),
-                         (term.MetaDataMatch('language', 'sv'), [default_items[0]])]
+default_items_filters = [(term.LastRevisionMetaDataMatch('format', 'wiki'), [default_items[0]]),
+                         (term.LastRevisionMetaDataMatch('language', 'sv'), [default_items[0]])]
 
 
 def create_data(cls):
