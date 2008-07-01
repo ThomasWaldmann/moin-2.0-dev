@@ -70,6 +70,21 @@ class TestMemoryBackend(object):
     def test_has_item_that_doesnt_exist(self):
         assert not self.memb.has_item("i_do_not_exist")
 
+    def test_create_order(self):
+        i1 = self.memb.create_item('1')
+        i2 = self.memb.create_item('2')
+        r1 = i1.create_revision(0)
+        r2 = i2.create_revision(0)
+        r1.write('1')
+        r2.write('2')
+        i2.commit()
+        i1.commit()
+        i1 = self.memb.get_item('1')
+        i2 = self.memb.get_item('2')
+        r1 = i1.get_revision(0)
+        r2 = i2.get_revision(0)
+        assert r1.read() == '1'
+        assert r2.read() == '2'
 
     # Test instance of Item
 
