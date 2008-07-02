@@ -111,12 +111,13 @@ class MemoryBackend(Backend):
         of that Item.
         """
         item_id = item._item_id
+        revisions = item.list_revisions()
 
-        if revno == -1:
+        if revno == -1 and revisions:
             revno = max(item.list_revisions())
 
         if revno not in self._item_revisions[item_id]:
-            raise NoSuchRevisionError("No Revision #%d on Item %s" % (revno, item.name))
+            raise NoSuchRevisionError("No Revision #%d on Item %s - Available revisions: %r" % (revno, item.name, revisions))
 
         revision = StoredRevision(item, revno)
         revision._data = StringIO.StringIO(self._item_revisions[item_id][revno][0])
