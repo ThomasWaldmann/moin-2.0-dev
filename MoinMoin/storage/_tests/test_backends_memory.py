@@ -86,6 +86,17 @@ class TestMemoryBackend(object):
         assert r1.read() == '1'
         assert r2.read() == '2'
 
+    def test_mixed_commit_metadata1(self):
+        i = self.memb.create_item('mixed1')
+        i.create_revision(0)
+        py.test.raises(RuntimeError, i.change_metadata)
+
+    def test_mixed_commit_metadata2(self):
+        i = self.memb.create_item('mixed2')
+        i.change_metadata()
+        py.test.raises(RuntimeError, i.create_revision, 0)
+
+
     # Test instance of Item
 
     def test_item_metadata_change_and_publish(self):

@@ -286,6 +286,9 @@ class Item(object, DictMixin):  # TODO Improve docstring
         Acquire lock for the Items metadata. The actual locking is, by default,
         implemented on the backend-level.
         """
+        if self._uncommitted_revision is not None:
+            raise RuntimeError("You tried to change the metadata of the item %r but there are uncommitted Revisions on that Item. Commit first." % (self.name))
+
         if self._read_accessed:
             raise AccessError("Cannot lock after reading metadata")
 
@@ -327,11 +330,22 @@ class Item(object, DictMixin):  # TODO Improve docstring
 
         self._backend._commit_item(self)
 
+    def rollback(self):
+        """
+        Invoke this method when external events happen that cannot be handled in a
+        sane way and thus the changes that have been made must be rolled back.
+        """
+        self._backend._rollback_item(self)
+
     def create_revision(self, revno):
         """
         Create a new revision on the Item. By default this uses the
         create_revision method the backend specifies internally.
         """
+        if self._locked:
+            raise RuntimeError("You tried to create revision #%d on the item %r, but there is unpublished metadata on that Item. Publish first." % (revno, self.name))
+
+
         if self._uncommitted_revision is not None:
             if self._uncommitted_revision.revno != revno:
                 raise RevisionNumberMismatchError("There already is an uncommitted Revision #%d on this Item that doesn't match the revno %d you specified." % (self._uncommitted_revision.revno, revno))
