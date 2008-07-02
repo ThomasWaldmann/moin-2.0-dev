@@ -111,6 +111,7 @@ class Backend(object):
         """
         For a given Item and Revision number, return the corresponding Revision
         of that Item.
+        Note: If you pass -1 as revno, this shall return the latest Revision of the Item.
         """
         raise NotImplementedError()
 
@@ -305,6 +306,7 @@ class Item(object, DictMixin):  # TODO Improve docstring
     def get_revision(self, revno):
         """
         Fetches a given revision and returns it to the caller.
+        Note: If you pass -1 as revno, this shall return the latest Revision of the Item.
         """
         return self._backend._get_revision(self, revno)
 
