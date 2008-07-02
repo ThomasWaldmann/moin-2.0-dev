@@ -112,6 +112,9 @@ class MemoryBackend(Backend):
         """
         item_id = item._item_id
 
+        if revno == -1:
+            revno = max(item.list_revisions())
+
         if revno not in self._item_revisions[item_id]:
             raise NoSuchRevisionError("No Revision #%d on Item %s" % (revno, item.name))
 
