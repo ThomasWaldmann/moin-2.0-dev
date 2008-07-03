@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 """
     MoinMoin - Test - MemoryBackend
 
@@ -186,7 +186,7 @@ class TestMemoryBackend(object):
             rev = test.create_revision(revno)
             test.commit()
 
-        assert test.list_revisions() == range(0,10)
+        assert test.list_revisions() == range(0, 10)
 
     def test_item_rename(self):
         ugly_name = self.memb.create_item("hans_wurst")

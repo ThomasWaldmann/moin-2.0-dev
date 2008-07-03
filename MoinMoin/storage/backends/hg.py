@@ -2,19 +2,19 @@
 """
     MoinMoin - Mercurial backend for new storage layer
 
-    This package contains code for backend based on Mercurial distributed 
+    This package contains code for backend based on Mercurial distributed
     version control system. This backend provides several advantages for
     normal filesystem backend like internal atomicity handling, multiple
     concurrent editors without page edit locking or data cloning.
 
     As this code is based on new API design, it should prove consistency of this
-    design and show how to use it in proper way. 
+    design and show how to use it in proper way.
 
     ---
 
-    Initial implementation will use repository working copy on filesystem. 
-    Concurrent edits will be always merged and any conflict handling is left to 
-    higher levels (human intervention). All history will be presented as linear 
+    Initial implementation will use repository working copy on filesystem.
+    Concurrent edits will be always merged and any conflict handling is left to
+    higher levels (human intervention). All history will be presented as linear
     using standard page info action (and this is possible while making above
     merge assumption).
     In this iteration attachments access will be supported using  legacy method
@@ -40,20 +40,20 @@ from MoinMoin.storage.error import BackendError, NoSuchItemError,\
 
 class MercurialBackend(Backend):
     """This class implements Mercurial backend storage."""
-    
+
     def __init__(self, path, create=True):
         """
-        Init backend repository. We store here Items with or without 
+        Init backend repository. We store here Items with or without
         any Revision.
         """
         if not os.path.isdir(path):
             raise BackendError, "Invalid repository path: %s" % path
-        
+
         self.repo_path = os.path.abspath(path)
         self.unrevisioned_path = os.path.join(self.repo_path, 'unrevisioned')
         self.ui = ui.ui(interactive=False, quiet=True)
         self._lockref = None
-            
+
         try:
             self.repo = hg.repository(self.ui, self.repo_path, create=create)
             os.mkdir(self.unrevisioned_path)
@@ -78,7 +78,7 @@ class MercurialBackend(Backend):
     def create_item(self, itemname):
         """
         Create Item in repository. This Item hasn't got any Revisions.
-        From this point, has_item returns True.         
+        From this point, has_item returns True.
         This method returns Item object.
         """
         if not isinstance(itemname, (str, unicode)):
@@ -88,7 +88,7 @@ class MercurialBackend(Backend):
 
         if self.has_item(itemname):
             raise ItemAlreadyExistsError, "Item with that name already exists:  %s" % itemname
-        
+
         fd, fname = tempfile.mkstemp()
 
         lock = self._lock()
@@ -97,28 +97,28 @@ class MercurialBackend(Backend):
 
         finally:
             del lock
-        
+
         return Item(self, itemname)
 
     def get_item(self, itemname):
         """
         Returns an Item with given name. If not found, raises NoSuchItemError
         exception.
-        """ 
+        """
         if not self.has_item(itemname):
             raise NoSuchItemError, 'Item does not exist: %s' % itemname
-        
+
         return Item(self, itemname)
 
     def iteritems(self):
         """
-        Returns generator for iterating through items collection 
+        Returns generator for iterating through items collection
         in repository.
         """
         ctx = self.repo.changectx()
 
         for itemfctx in ctx.filectxs():
-            yield Item(self, itemfctx.path()) 
+            yield Item(self, itemfctx.path())
 
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
@@ -131,18 +131,18 @@ class MercurialBackend(Backend):
 
             item._tmpfd, item._tmpfname = tempfile.mkstemp(prefix=item.name,
                     dir=self.repo_path)
-            
+
         else:
             if revno in revs:
                 raise RevisionAlreadyExistsError, "Item Revision already exists: %s" % revno
-            
+
             if revno != revs[-1] + 1:
                 raise RevisionNumberMismatchError, "Unable to create revision\
                         number %d. Revision number must be latest_revision + 1." % revno
-        
+
         new_rev = NewRevision(item, revno)
         new_rev._revno = revno
- 
+
         return new_rev
 
     def _get_revision(self, item, revno):
@@ -162,7 +162,7 @@ class MercurialBackend(Backend):
 
     def _list_revisions(self, item):
         """
-        Return a list of Item revision numbers. 
+        Return a list of Item revision numbers.
         Retrieves only accessible rev numbers when internal indexfile
         inconsistency occurs.
         """
@@ -186,37 +186,37 @@ class MercurialBackend(Backend):
 
     def _rename_item(self, item, newname):
         """
-        Renames given Item name to newname. Raises NoSuchItemError if source 
-        item is unreachable or ItemAlreadyExistsError if destination exists. 
+        Renames given Item name to newname. Raises NoSuchItemError if source
+        item is unreachable or ItemAlreadyExistsError if destination exists.
         """
         if not isinstance(newname, (str, unicode)):
             raise TypeError, "Wrong Item destination name type: %s" % (type(newname))
 
         if not self.has_item(item.name):
             raise NoSuchItemError, 'Source item does not exist: %s' % item.name
-        
+
         lock = self._lock()
-        
+
         try:
             if self.has_item(newname):
                 raise ItemAlreadyExistsError, "Destination item already exists: %s" % newname
-                
+
             old_quoted, new_quoted = self._quote(item.name), self._quote(newname)
 
             if not item.list_revisions():
                 util.rename(self._unrev_path(old_quoted), self._unrev_path(new_quoted))
             else:
                 commands.rename(self.ui, self.repo, self._path(old_quotes),
-                    self._path(new_quoted))            
+                    self._path(new_quoted))
                 #XXX: commit rename instantly, see memory backend...
                 self._commit_item(item)
 
             #XXX: see memory backend...
             item._name = newname
-            
+
         finally:
             del lock
-                
+
     def _commit_item(self, item):
         """Commit Item changes to repository."""
 
@@ -225,9 +225,9 @@ class MercurialBackend(Backend):
 
         try:
             if not self.has_item(item.name):
-                try: 
+                try:
                     util.rename(item._tmpfname, self._path(item.name))
-                    self.repo.add([item.name])                    
+                    self.repo.add([item.name])
                     msg = "Created item: %s" % item.name
 
                 except AttributeError:
@@ -258,7 +258,7 @@ class MercurialBackend(Backend):
                         pass
                         #XXX: nothing changed
                         #XXX: this is broken, does not omit commit
-                    
+
 
             self.repo.commit(text=msg, user='wiki', files=files)
 
@@ -271,12 +271,12 @@ class MercurialBackend(Backend):
 
         lock = self._lock()
 
-        try:            
+        try:
             items = self._find_copy_destination(item.name)
 
-            commands.revert(self.ui, self.repo, self._path( items[0] ),
+            commands.revert(self.ui, self.repo, self._path(items[0]),
                 date=None, rev=None, all=None, no_backup=True)
-        
+
             for itemname in self.repo.status(files=items)[4]:
                 os.unlink(self._path(itemname))
 
@@ -285,12 +285,12 @@ class MercurialBackend(Backend):
 
     def _find_copy_destination(self, srcname):
         """
-        Searches repository for copy of source Item and returns list with 
+        Searches repository for copy of source Item and returns list with
         destination name if found. Else returns empty list.
         """
         status = self.repo.status(files=[srcname])
 
-        for dst, src in self.repo.dirstate.copies().iteritems(): 
+        for dst, src in self.repo.dirstate.copies().iteritems():
             if src in status[2]:
                 return [dst]
         return []
