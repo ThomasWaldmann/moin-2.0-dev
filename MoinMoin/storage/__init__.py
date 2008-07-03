@@ -42,7 +42,8 @@
 
 from UserDict import DictMixin
 
-from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError
+from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
+                                   NoSuchItemError
 
 class Backend(object):
     """
@@ -77,7 +78,7 @@ class Backend(object):
             self.get_item(itemname)
             return True
 
-        except KeyError:
+        except NoSuchItemError:
             return False
 
     def create_item(self, itemname):
