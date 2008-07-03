@@ -124,12 +124,12 @@ class BackendTest(object):
     def test_mixed_commit_metadata1(self):
         item = self.backend.create_item('mixed1')
         item.create_revision(0)
-        py.test.raitemses(RuntimeError, item.change_metadata)
+        py.test.raises(RuntimeError, item.change_metadata)
 
     def test_mixed_commit_metadata2(self):
         item = self.backend.create_item('mixed2')
         item.change_metadata()
-        py.test.raitemses(RuntimeError, item.create_revision, 0)
+        py.test.raises(RuntimeError, item.create_revision, 0)
 
     def test_item_metadata_change_and_publish(self):
         item = self.backend.create_item("test item metadata change")
