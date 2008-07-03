@@ -224,11 +224,6 @@ class BackendTest(object):
             item.commit()
         assert item.list_revisions() == range(0, 10)
 
-    def test_item_rename_nonexisting(self):
-        item = self.backend.get_item(self.items.keys()[0])
-        item._name = "certainly_non_existent"
-        py.test.raises(NoSuchItemError, item.rename, "whatever")
-
     def test_item_rename_to_existing(self):
         item = self.create_item_helper("XEROX")
         py.test.raises(ItemAlreadyExistsError, item.rename, self.items.keys()[0])
