@@ -22,7 +22,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError,\
 
 default_items = {
     'NewPage': [
-        ('0', {}, "This is NewPage content. A to jest też zawartość."),
+        ('0', {}, u"This is NewPage content. A to jest też zawartość."),
         ('1', {}, "Dummy message"),
     ],
     'Test': [
@@ -32,7 +32,7 @@ default_items = {
 }
 
 default_names = ("my_item", u"äöüß", u"hans_würstchen", "with space", "name#with#hash",
-                 "very_long_name_quite_safe_although_exceedind_255_chars_length_limit_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",)
+                 "very_long_name_quite_safe_although_exceedind_255_chars_length_limit_due_to_multiplying_it" * 50,)
 
 default_invalid = (42,)
 
@@ -53,17 +53,17 @@ class BackendTest(object):
         return item
 
     def create_item(self, name):
-        new_item = self.backend.create_item(name)
-        assert isinstance(new_item, Item)
-        assert new_item.name == name
-        new_item.create_revision(0)
-        new_item.commit()
+        item = self.backend.create_item(name)
+        assert isinstance(item, Item)
+        assert item.name == name
+        item.create_revision(0)
+        item.commit()
         assert self.backend.has_item(name)
 
     def get_item(self, name):
-        my_item = self.backend.get_item(name)
-        assert isinstance(my_item, Item)
-        assert my_item.name == name
+        item = self.backend.get_item(name)
+        assert isinstance(item, Item)
+        assert item.name == name
 
     def get_rename_item(self, old_name, new_name):
         item = self.backend.get_item(old_name)
@@ -79,7 +79,7 @@ class BackendTest(object):
             new_name = "renamed_item_%d" % num
             yield self.get_rename_item, item_name, new_name
             yield self.get_item, new_name
-    
+
     def create_item_invalid_name(self, name):
         py.test.raises(TypeError, self.backend.create_item, name)
 
@@ -106,59 +106,59 @@ class BackendTest(object):
         assert not self.backend.has_item("i_do_not_exist")
 
     def test_create_order(self):
-        i1 = self.backend.create_item('1')
-        i2 = self.backend.create_item('2')
-        r1 = i1.create_revision(0)
-        r2 = i2.create_revision(0)
-        r1.write('1')
-        r2.write('2')
-        i2.commit()
-        i1.commit()
-        i1 = self.backend.get_item('1')
-        i2 = self.backend.get_item('2')
-        r1 = i1.get_revision(0)
-        r2 = i2.get_revision(0)
-        assert r1.read() == '1'
-        assert r2.read() == '2'
+        item1 = self.backend.create_item('1')
+        item2 = self.backend.create_item('2')
+        revision1 = item1.create_revision(0)
+        revision2 = item2.create_revision(0)
+        revision1.write('1')
+        revision2.write('2')
+        item2.commit()
+        item1.commit()
+        item1 = self.backend.get_item('1')
+        item2 = self.backend.get_item('2')
+        revision1 = item1.get_revision(0)
+        revision2 = item2.get_revision(0)
+        assert revision1.read() == '1'
+        assert revision2.read() == '2'
 
     def test_mixed_commit_metadata1(self):
-        i = self.backend.create_item('mixed1')
-        i.create_revision(0)
-        py.test.raises(RuntimeError, i.change_metadata)
+        item = self.backend.create_item('mixed1')
+        item.create_revision(0)
+        py.test.raitemses(RuntimeError, item.change_metadata)
 
     def test_mixed_commit_metadata2(self):
-        i = self.backend.create_item('mixed2')
-        i.change_metadata()
-        py.test.raises(RuntimeError, i.create_revision, 0)
+        item = self.backend.create_item('mixed2')
+        item.change_metadata()
+        py.test.raitemses(RuntimeError, item.create_revision, 0)
 
     def test_item_metadata_change_and_publish(self):
-        i = self.backend.create_item("test item metadata change")
-        i.change_metadata()
-        i["creator"] = "Vincent van Gogh"
-        i.publish_metadata()
-        i2 = self.backend.get_item("test item metadata change")
-        assert i2["creator"] == "Vincent van Gogh"
+        item = self.backend.create_item("test item metadata change")
+        item.change_metadata()
+        item["creator"] = "Vincent van Gogh"
+        item.publish_metadata()
+        item2 = self.backend.get_item("test item metadata change")
+        assert item2["creator"] == "Vincent van Gogh"
 
     def test_item_metadata_invalid_change(self):
-        i = self.backend.create_item("test item metadata invalid change")
+        item = self.backend.create_item("test item metadata invalid change")
         try:
-            i["this should"] = "FAIL!"
+            item["this should"] = "FAIL!"
             assert False  # There should have been an Exception due to i.change() missing.
 
         except AttributeError:
             pass  # We expected that Exception to be thrown. Everything fine.
 
     def test_item_metadata_without_publish(self):
-        i = self.backend.create_item("test item metadata invalid change")
-        i.change_metadata()
-        i["change but"] = "don't publish"
+        item = self.backend.create_item("test item metadata invalid change")
+        item.change_metadata()
+        item["change but"] = "don't publish"
         py.test.raises(NoSuchItemError, self.backend.get_item, "test item metadata invalid change")
 
     def test_item_metadata_change_after_read(self):
-        i = self.backend.create_item("fooafoeofo")
-        i.change_metadata()
-        i["asd"] = "asd"
-        i.publish_metadata()
+        item = self.backend.create_item("fooafoeofo")
+        item.change_metadata()
+        item["asd"] = "asd"
+        item.publish_metadata()
 
     def test_existing_item_create_revision(self):
         item = self.backend.get_item(self.items.keys()[0])
