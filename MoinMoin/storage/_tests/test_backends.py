@@ -3,7 +3,7 @@
     MoinMoin - TestBackend
 
     Simple test class for subclassing in specific backend tests.
-    Rebackender to set up your backend environment with items: either
+    Remember to set up your backend environment with items: either
     default provided here or yours.
 
     ---
