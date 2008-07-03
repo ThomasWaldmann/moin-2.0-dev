@@ -13,7 +13,7 @@ class MercurialStorage(object):
         self.path = os.path.abspath(path)
         self._lockref = None
         self.ui = ui.ui(report_untrusted=False, interactive=False)
-    
+
         if not os.path.exists(self.path):
             os.makedirs(self.path)
 
@@ -43,24 +43,24 @@ class MercurialStorage(object):
         return lock
 
 
-    def _load_page(self, page, rev=None):        
+    def _load_page(self, page, rev=None):
         ctx = self.repo.changectx()
-        
+
         if rev is None:
             ftx = ctx.filectx(page)
         else:
             ftx = ctx.filectx(page).filectx(rev)
-        
+
         return ftx.data(), ftx.rev()
 
 
     def edit_page(self, page, message, editor, parent=None):
-        
+
         if not parent:
             data, rev = self._load_page(page)
         else:
             data, rev = self._load_page(page, parent)
-        
+
         data = "%s>> %s" % (data, message)
 
         fd, fname = tempfile.mkstemp(prefix=page, dir=self.path)
@@ -68,17 +68,17 @@ class MercurialStorage(object):
         file.write(data)
         file.close()
 
-    
+
         lock = self._lock()
-        
+
         util.rename(fname, self._path(page))
 
-        try: 
+        try:
             print '\tparent:', rev
-            
+
             wlock = self.repo.wlock()
             try:
-                self.repo.dirstate.setparents(self.repo.lookup(rev))    
+                self.repo.dirstate.setparents(self.repo.lookup(rev))
             finally:
                 del wlock
 
@@ -89,7 +89,7 @@ class MercurialStorage(object):
 
 
 if __name__ == '__main__':
-    
+
     ms = MercurialStorage('dsp_test', 'TestPage')
 
     ms.edit_page('TestPage', 'test write linear 1\n', 'test user')

@@ -32,9 +32,9 @@ default_items = {
 }
 
 default_names = ("my_item", u"äöüß", u"hans_würstchen", "with space", "name#with#hash",
-                 "very_long_name_quite_safe_although_exceedind_255_chars_length_limit_due_to_multiplying_it" * 50,)
+                 "very_long_name_quite_safe_although_exceedind_255_chars_length_limit_due_to_multiplying_it" * 50, )
 
-default_invalid = (42,)
+default_invalid = (42, )
 
 
 class BackendTest(object):
