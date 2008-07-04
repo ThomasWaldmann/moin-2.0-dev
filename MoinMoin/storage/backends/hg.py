@@ -283,7 +283,6 @@ class MercurialBackend(Backend):
         lock = self.repo._lock(os.path.join(self.repo_path, 'wikilock'), True, None,
                 None, '')
         self._lockref = weakref.ref(lock)
-
         return lock
 
     def _path(self, fname):
