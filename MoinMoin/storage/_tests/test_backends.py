@@ -162,7 +162,8 @@ class BackendTest(object):
 
     def test_existing_item_create_revision(self):
         item = self.backend.get_item(self.items.keys()[0])
-        rev = item.create_revision(0)
+        rev = item.get_revision(-1)
+        rev = item.create_revision(rev.revno + 1)
         assert isinstance(rev, NewRevision)
 
     def test_new_item_create_revision(self):
