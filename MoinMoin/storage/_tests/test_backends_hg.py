@@ -30,22 +30,6 @@ class TestMercurialBackend(BackendTest):
         BackendTest.__init__(self, self.backend)
 
 
-    def prepare_repository(self, dir):
-        """Prepare backend repository."""
-        repo = hg.repository(ui.ui(interactive=False, quiet=True), dir, create=True)
-
-        for name in di.keys():
-            for rev in xrange(len(di[name])):
-                repo.wwrite(name, di[name][rev][2], '')
-                if rev == 0:
-                    repo.add([name])
-                repo.commit(text='init')
-
-            #XXX: meta?
-
-        return MercurialBackend(dir, create=False)
-
-
     def setup_class(cls):
         cls.fake_dir = os.path.join(tempfile.gettempdir(),
                 tempfile._RandomNameSequence().next())
@@ -58,14 +42,13 @@ class TestMercurialBackend(BackendTest):
         os.unlink(cls.non_dir)
 
 
-    def setup_method(self, method):
+    def create_backend(self):
         self.test_dir = tempfile.mkdtemp()
-        self.backend = self.prepare_repository(self.test_dir)
+        return MercurialBackend(self.test_dir)
 
 
-    def teardown_method(self, method):
+    def kill_backend(self):
         shutil.rmtree(self.test_dir)
-        self.backend = None
 
 
     def test_backend_init(self):

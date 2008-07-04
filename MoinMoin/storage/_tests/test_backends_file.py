@@ -14,19 +14,11 @@ from MoinMoin.storage._tests.test_backends import BackendTest, default_items
 from MoinMoin.storage.backends.fs import FSBackend
 
 class TestFSBackend(BackendTest):
-    def setup_method(self, method):
+    def create_backend(self):
         self.tempdir = tempfile.mkdtemp('', 'moin-')
-        self.backend = FSBackend(self.tempdir, nfs=True)
-        for iname in self.items:
-            item = self.backend.create_item(iname)
-            for revnostr, meta, revdata in self.items[iname]:
-                rev = item.create_revision(int(revnostr))
-                for k, v in meta.iteritems():
-                    rev[k] = v
-                rev.write(revdata.encode('utf-8'))
-                item.commit()
+        return FSBackend(self.tempdir, nfs=True)
 
-    def teardown_method(self, method):
+    def kill_backend(self):
         shutil.rmtree(self.tempdir)
 
     def __init__(self):
