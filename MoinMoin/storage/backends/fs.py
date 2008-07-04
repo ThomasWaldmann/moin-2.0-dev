@@ -135,7 +135,7 @@ class FSBackend(Backend):
 
     def _get_item_id(self, itemname):
         """
-        Get ID of item (or None)
+        Get ID of item (or None if no such item exists)
 
         @param itemname: name of item (unicode)
         """
@@ -149,6 +149,7 @@ class FSBackend(Backend):
 
         item = Item(self, itemname)
         item._fs_item_id = item_id
+        item._fs_metadata = None
 
         return item
 
@@ -268,8 +269,10 @@ class FSBackend(Backend):
         item._name = newname
 
     def _add_item_internally_locked(self, arg):
+        """
+        See _add_item_internally, this is just internal for locked operation.
+        """
         item, newrev, metadata = arg
-        assert newrev is None or metadata is None
         cntr = 0
         done = False
         while not done:
@@ -291,49 +294,63 @@ class FSBackend(Backend):
 
         nn = item.name.encode('utf-8')
 
-        try:
-            c = cdb.init(self._name_db)
-            maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
+        c = cdb.init(self._name_db)
+        maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
+        r = c.each()
+        while r:
+            i, v = r
+            if i == nn:
+                # Oops. This item already exists! Clean up and error out.
+                maker.finish()
+                os.unlink(self._name_db + '.ndb')
+                os.rmdir(ipath)
+                if newrev is not None:
+                    os.unlink(newrev)
+                raise ItemAlreadyExistsError("new name already exists!")
+            else:
+                maker.add(i, v)
             r = c.each()
-            while r:
-                i, v = r
-                if i == nn:
-                    raise ItemAlreadyExistsError("new name already exists!")
-                else:
-                    maker.add(i, v)
-                r = c.each()
-            maker.add(nn, itemid)
-            maker.finish()
+        maker.add(nn, itemid)
+        maker.finish()
 
-            if newrev is not None:
-                rp = os.path.join(self._path, itemid, 'rev.0')
-                os.rename(newrev, rp)
+        if newrev is not None:
+            rp = os.path.join(self._path, itemid, 'rev.0')
+            os.rename(newrev, rp)
 
-            if metadata:
-                # only write metadata file if we have any
-                meta = os.path.join(self._path, itemid, 'meta')
-                f = open(meta, 'wb')
-                pickle.dump(metadata, f, protocol=PICKLEPROTOCOL)
-                f.close()
+        if metadata:
+            # only write metadata file if we have any
+            meta = os.path.join(self._path, itemid, 'meta')
+            f = open(meta, 'wb')
+            pickle.dump(metadata, f, protocol=PICKLEPROTOCOL)
+            f.close()
 
-            # write 'name' file of item
-            npath = os.path.join(ipath, 'name')
-            nf = open(npath, mode='wb')
-            nf.write(nn)
-            nf.close()
+        # write 'name' file of item
+        npath = os.path.join(ipath, 'name')
+        nf = open(npath, mode='wb')
+        nf.write(nn)
+        nf.close()
 
-            # make item retrievable (by putting the name-mapping in place)
-            # XXXX: doesn't work on windows
-            os.rename(self._name_db + '.ndb', self._name_db)
-        except ItemAlreadyExistsError:
-            maker.finish()
-            os.unlink(self._name_db + '.ndb')
-            os.rmdir(ipath)
-            raise
+        # make item retrievable (by putting the name-mapping in place)
+        # XXXX: doesn't work on windows
+        os.rename(self._name_db + '.ndb', self._name_db)
 
         item._fs_item_id = itemid
 
     def _add_item_internally(self, item, newrev=None, metadata=None):
+        """
+        This method adds a new item. It locks the name-mapping database to
+        ensure putting the item into place and adding it to the name-mapping
+        db is atomic.
+
+        If the newrev or metadata arguments are given, then it also adds the
+        revision or metadata to the item before making it discoverable.
+
+        If the item's name already exists, it doesn't do anything but raise
+        a ItemAlreadyExistsError; if the newrev was given the file is unlinked.
+
+        @param newrev: new revision's temporary file path
+        @param metadata: item metadata dict
+        """
         self._do_locked(os.path.join(self._path, 'name-mapping.lock'),
                         self._add_item_internally_locked, (item, newrev, metadata))
 
@@ -404,15 +421,23 @@ class FSBackend(Backend):
             item._fs_metadata_lock.acquire(30)
 
     def _publish_item_metadata(self, item):
-        md = item._fs_metadata
         if item._fs_item_id is None:
-            self._add_item_internally(item, metadata=md)
+            self._add_item_internally(item, metadata=item._fs_metadata)
         else:
             assert item._fs_metadata_lock.isLocked()
-            if not md:
-                # just rm the metadata file
+            md = item._fs_metadata
+            if md is None:
+                # metadata unchanged
+                pass
+            elif not md:
+                # metadata now empty, just rm the metadata file
                 # XXXX: might not work on windows
-                os.unlink(os.path.join(self._path, item._fs_item_id, 'meta'))
+                try:
+                    os.unlink(os.path.join(self._path, item._fs_item_id, 'meta'))
+                except IOError, err:
+                    if err.errno != errno.ENOENT:
+                        raise
+                    # ignore, there might not have been metadata
             else:
                 tmp = os.path.join(self._path, item._fs_item_id, 'meta.tmp')
                 f = open(tmp, 'wb')
