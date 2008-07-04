@@ -14,15 +14,23 @@ from MoinMoin.storage._tests.test_backends import BackendTest, default_items
 from MoinMoin.storage.backends.fs import FSBackend
 
 class TestFSBackend(BackendTest):
+    def __init__(self):
+        BackendTest.__init__(self, None)
+
     def create_backend(self):
         self.tempdir = tempfile.mkdtemp('', 'moin-')
         return FSBackend(self.tempdir, nfs=True)
 
     def kill_backend(self):
-        shutil.rmtree(self.tempdir)
-
-    def __init__(self):
-        BackendTest.__init__(self, None)
+        try:
+            for root, dirs, files in os.walk(self.tempdir):
+                for d in dirs:
+                    assert not d.endswith('.lock')
+                for f in files:
+                    assert not f.endswith('.lock')
+                    assert not f.startswith('tmp-')
+        finally:
+            shutil.rmtree(self.tempdir)
 
     def test_large(self):
         i = self.backend.create_item('large')
@@ -57,9 +65,30 @@ class TestFSBackend(BackendTest):
         py.test.raises(ItemAlreadyExistsError, self.backend.create_item, 'existing now')
 
     def test_create_existing_2(self):
-        i1 = self.backend.create_item('existing now')
+        i1 = self.backend.create_item('existing now 0')
         i1.change_metadata()
-        i2 = self.backend.create_item('existing now')
+        i2 = self.backend.create_item('existing now 0')
         i1.publish_metadata()
         i2.create_revision(0)
         py.test.raises(ItemAlreadyExistsError, i2.commit)
+
+    def test_all_unlocked(self):
+        i1 = self.backend.create_item('existing now 1')
+        i1.create_revision(0)
+        i1.commit()
+        i2 = self.backend.get_item('existing now 1')
+        i2.change_metadata()
+        # if we leave out the latter line, it fails
+        i2.publish_metadata()
+
+    def test_change_meta(self):
+        item = self.backend.create_item('existing now 2')
+        item.change_metadata()
+        item.publish_metadata()
+        item = self.backend.get_item('existing now 2')
+        item.change_metadata()
+        item['asdf'] = 'b'
+        # if we leave out the latter line, it fails
+        item.publish_metadata()
+        item = self.backend.get_item('existing now 2')
+        assert item['asdf'] == 'b'
