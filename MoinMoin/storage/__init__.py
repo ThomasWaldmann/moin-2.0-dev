@@ -42,7 +42,8 @@
 
 from UserDict import DictMixin
 
-from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError
+from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
+                                   NoSuchItemError
 
 class Backend(object):
     """
@@ -77,7 +78,7 @@ class Backend(object):
             self.get_item(itemname)
             return True
 
-        except KeyError:
+        except NoSuchItemError:
             return False
 
     def create_item(self, itemname):
@@ -105,7 +106,7 @@ class Backend(object):
     # my_item.create_revision(42), internally the
     # _create_revision() method of the items Backend is
     # invoked and the item passes itself as paramter.
-    # 
+    #
 
     def _get_revision(self, item, revno):
         """
@@ -141,7 +142,7 @@ class Backend(object):
         Commits the changes that have been done to a given Item. That is, after you
         created a Revision on that Item and filled it with data you still need to
         commit() it. You don't need to pass what Revision you are committing because
-        there is only one possible Revision to be committed for your /instance/ of 
+        there is only one possible Revision to be committed for your /instance/ of
         the item and thus the Revision to be saved is memorized.
         """
         raise NotImplementedError()

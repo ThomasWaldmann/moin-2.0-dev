@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 """
     MoinMoin - Test - MercurialBackend
 
@@ -23,7 +23,7 @@ from MoinMoin.storage.error import BackendError
 
 
 class TestMercurialBackend(BackendTest):
-    """MercurialBackend test class."""    
+    """MercurialBackend test class."""
 
     def __init__(self):
         self.backend = None
@@ -33,7 +33,7 @@ class TestMercurialBackend(BackendTest):
     def prepare_repository(self, dir):
         """Prepare backend repository."""
         repo = hg.repository(ui.ui(interactive=False, quiet=True), dir, create=True)
-       
+
         for name in di.keys():
             for rev in xrange(len(di[name])):
                 repo.wwrite(name, di[name][rev][2], '')
@@ -56,10 +56,10 @@ class TestMercurialBackend(BackendTest):
     def teardown_class(cls):
         shutil.rmtree(cls.real_dir)
         os.unlink(cls.non_dir)
-           
+
 
     def setup_method(self, method):
-        self.test_dir = tempfile.mkdtemp()    
+        self.test_dir = tempfile.mkdtemp()
         self.backend = self.prepare_repository(self.test_dir)
 
 
@@ -69,11 +69,11 @@ class TestMercurialBackend(BackendTest):
 
 
     def test_backend_init(self):
-        py.test.raises(BackendError, MercurialBackend, self.fake_dir)        
-        py.test.raises(BackendError, MercurialBackend, self.non_dir)        
+        py.test.raises(BackendError, MercurialBackend, self.fake_dir)
+        py.test.raises(BackendError, MercurialBackend, self.non_dir)
         py.test.raises(BackendError, MercurialBackend, self.real_dir, create=False)
 
-        hg_backend = MercurialBackend(self.real_dir)   
+        hg_backend = MercurialBackend(self.real_dir)
         assert isinstance(hg_backend, MercurialBackend)
         py.test.raises(BackendError, MercurialBackend, self.real_dir, create=True)
 

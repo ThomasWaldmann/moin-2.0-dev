@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 """
     MoinMoin - Test - MemoryBackend
 
@@ -90,11 +90,13 @@ class TestMemoryBackend(object):
         i = self.memb.create_item('mixed1')
         i.create_revision(0)
         py.test.raises(RuntimeError, i.change_metadata)
+        i.rollback()
 
     def test_mixed_commit_metadata2(self):
         i = self.memb.create_item('mixed2')
         i.change_metadata()
         py.test.raises(RuntimeError, i.create_revision, 0)
+        i.publish_metadata()
 
 
     # Test instance of Item
@@ -132,6 +134,7 @@ class TestMemoryBackend(object):
     def test_item_create_revision(self):
         rev = self.always_there.create_revision(1)
         assert isinstance(rev, NewRevision)
+        self.always_there.rollback()
 
     def test_item_commit_revision(self):
         test = self.memb.create_item("test#11")
@@ -183,7 +186,7 @@ class TestMemoryBackend(object):
             rev = test.create_revision(revno)
             test.commit()
 
-        assert test.list_revisions() == range(0,10)
+        assert test.list_revisions() == range(0, 10)
 
     def test_item_rename(self):
         ugly_name = self.memb.create_item("hans_wurst")

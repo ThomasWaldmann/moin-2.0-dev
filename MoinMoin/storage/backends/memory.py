@@ -39,7 +39,7 @@ class MemoryBackend(Backend):
 
         self._itemmap = {}                  # {itemname : itemid}   // names may change...
         self._item_metadata = {}            # {id : {metadata}}
-        self._item_revisions = {}           # {id : {revision_id : (revision_data, {revision_metadata})}} 
+        self._item_revisions = {}           # {id : {revision_id : (revision_data, {revision_metadata})}}
 
         self._item_metadata_lock = {}       # {id : Lockobject}
 
@@ -228,8 +228,6 @@ class MemoryBackend(Backend):
             self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata.copy())
         else:
             self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), {})
-
-
 
         item._uncommitted_revision = None
 
