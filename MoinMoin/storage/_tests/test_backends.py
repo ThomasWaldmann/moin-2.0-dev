@@ -13,12 +13,13 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import py
+import py, re
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError,\
                                    ItemAlreadyExistsError, RevisionAlreadyExistsError,\
                                    RevisionNumberMismatchError
+from MoinMoin.search import term
 
 default_items = {
     'NewPage': [
@@ -236,3 +237,28 @@ class BackendTest(object):
     def test_item_rename_wrong_type(self):
         item = self.backend.get_item(self.items.keys()[0])
         py.test.raises(TypeError, item.rename, 13)
+
+    def test_iteritems(self):
+        self.create_item_helper('abcdefghijklmn')
+        count = 0
+        for item in self.backend.iteritems():
+            assert isinstance(item, Item)
+            count += 1
+        assert count > 0
+
+    def test_search(self):
+        self.create_item_helper('abcde')
+        self.create_item_helper('abcdef')
+        self.create_item_helper('abcdefg')
+        self.create_item_helper('abcdefgh')
+
+        def _test_search(term, expected):
+            found = list(self.backend.search_item(term))
+            assert len(found) == expected
+
+        # must be /part/ of the name
+        yield _test_search, term.Name(u'AbCdEf', False), 3
+        yield _test_search, term.Name(u'AbCdEf', True), 0
+        yield _test_search, term.Name(u'abcdef', True), 3
+        yield _test_search, term.NameRE(re.compile(u'abcde.*')), 4
+        yield _test_search, term.NameFn(lambda n: n == 'abcdef'), 1
