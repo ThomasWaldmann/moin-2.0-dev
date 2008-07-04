@@ -26,7 +26,7 @@ _item_metadata = {
 
 _lastrevision_metadata = {
     u'a': {'a': '1'},
-    u'A': {'a': 'None'},
+    u'A': {'a': ''},
     u'b': {'a': '0'},
     u'c': {'a': 'False'},
     u'B': {'a': ''},
@@ -73,43 +73,23 @@ class CacheAssertTerm(term.Term):
         term.Term.__init__(self)
         self.evalonce = False
 
-    def _evaluate(self, backend, itemname, metadata):
+    def _evaluate(self, item):
         assert not self.evalonce
         self.evalonce = True
         return True
 
 class AssertNotCalledTerm(term.Term):
-    def _evaluate(self, backend, itemname, metadata):
+    def _evaluate(self, item):
         assert False
 
 class TestTerms:
-    # euh. we fake being a backend ourselves...
-    def get_data_backend(self, itemname, revno):
-        assert revno == 107
-        # make sure that text isn't requested for Terms that shouldn't
-        assert itemname is not None
-        return TermTestData(_item_contents[itemname])
-
-    def current_revision(self, item):
-        return 107
-
     def _evaluate(self, term, itemname, expected):
-        term.prepare()
         if itemname is not None:
-            meta = _item_metadata[itemname].copy()
-            revmeta = _lastrevision_metadata[itemname].copy()
-            # ease debugging
-            meta['__value'] = _item_contents[itemname]
+            item = memb.get_item(itemname)
         else:
-            meta = {}
-            revmeta = {}
-        m = lambda: (meta, revmeta)
-        meta2 = meta.copy()
-        revmeta2 = revmeta.copy()
-        assert expected == term.evaluate(self, itemname, m)
-        # make sure they don't modify the metadata dict
-        assert meta == meta2
-        assert revmeta == revmeta2
+            item = None
+        term.prepare()
+        assert expected == term.evaluate(item)
 
     def testSimpleTextSearch(self):
         terms = [term.Text(u'abcdefg', True), term.Text(u'ijklmn', True)]
@@ -223,7 +203,7 @@ class TestTerms:
             yield self._evaluate, term.NameRE(re.compile('(a|e)')), item, expected
 
     def testMetaMatch1(self):
-        t = term.ItemMetaDataMatch('m1', True)
+        t = term.ItemMetaDataMatch('m1', 'True')
         for item, expected in [('a', True), ('A', True), ('b', False), ('B', False), ('lorem', False)]:
             yield self._evaluate, t, item, expected
 
@@ -233,7 +213,7 @@ class TestTerms:
             yield self._evaluate, t, item, expected
 
     def testMetaMatch3(self):
-        t = term.ItemMetaDataMatch('m2', 444)
+        t = term.ItemMetaDataMatch('m2', '444')
         for item, expected in [('a', False), ('A', False), ('b', False), ('B', False), ('lorem', True)]:
             yield self._evaluate, t, item, expected
 
@@ -253,8 +233,8 @@ class TestTerms:
             yield self._evaluate, t, item, expected
 
     def testHasMeta4(self):
-        t = term.LastRevisionMetaDataMatch('a', None)
-        for item, expected in [('a', False), ('A', True), ('b', False), ('B', False), ('lorem', False)]:
+        t = term.LastRevisionMetaDataMatch('a', '')
+        for item, expected in [('a', False), ('A', True), ('b', False), ('B', True), ('lorem', False)]:
             yield self._evaluate, t, item, expected
 
     def testNameFn(self):
