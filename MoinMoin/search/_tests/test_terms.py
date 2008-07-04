@@ -51,14 +51,12 @@ memb = MemoryBackend()
 for iname, md in _item_metadata.iteritems():
     item = memb.create_item(iname)
     item.change_metadata()
-    for k, v in md.iteritems():
-        item[k] = v
+    item.update(md)
     item.publish_metadata()
 
     rev = item.create_revision(0)
     md = _lastrevision_metadata[iname]
-    for k, v in md.iteritems():
-        rev[k] = v
+    rev.update(md)
     rev.write(_item_contents[iname])
     item.commit()
 

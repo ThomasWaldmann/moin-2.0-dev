@@ -58,8 +58,7 @@ class BackendTest(object):
             item = self.backend.create_item(iname)
             for revnostr, meta, revdata in self.items[iname]:
                 rev = item.create_revision(int(revnostr))
-                for k, v in meta.iteritems():
-                    rev[k] = v
+                rev.update(meta)
                 rev.write(revdata.encode('utf-8'))
                 item.commit()
 
