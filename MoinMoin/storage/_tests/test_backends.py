@@ -145,6 +145,7 @@ class BackendTest(object):
         item = self.backend.create_item('mixed1')
         item.create_revision(0)
         py.test.raises(RuntimeError, item.change_metadata)
+        item.rollback()
 
     def test_mixed_commit_metadata2(self):
         item = self.backend.create_item('mixed2')
@@ -185,11 +186,13 @@ class BackendTest(object):
         rev = item.get_revision(-1)
         rev = item.create_revision(rev.revno + 1)
         assert isinstance(rev, NewRevision)
+        item.rollback()
 
     def test_new_item_create_revision(self):
         item = self.backend.create_item('internal')
         rev = item.create_revision(0)
         assert isinstance(rev, NewRevision)
+        item.rollback()
 
     def test_item_commit_revision(self):
         item = self.backend.create_item("item#11")
