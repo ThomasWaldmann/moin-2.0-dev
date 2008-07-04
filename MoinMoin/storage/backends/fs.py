@@ -125,8 +125,13 @@ class FSBackend(Backend):
         newsfile.close()
 
     def search_item(self, searchterm):
-        # TODO
-        return iter([])
+        # Very simple implementation because we have no indexing
+        # or anything like that, and the name matches are already
+        # quite optimised by default.
+        for item in self.iteritems():
+            searchterm.prepare()
+            if searchterm.evaluate(item):
+                yield item
 
     def _get_item_id(self, itemname):
         """
@@ -167,7 +172,9 @@ class FSBackend(Backend):
         c = cdb.init(self._name_db)
         r = c.each()
         while r:
-            yield r
+            item = Item(self, r[0])
+            item._fs_item_id = r[1]
+            yield item
             r = c.each()
 
     def _get_revision(self, item, revno):
