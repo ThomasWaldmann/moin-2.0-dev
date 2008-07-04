@@ -31,7 +31,7 @@ default_items = {
     ],
 }
 
-default_names = ("my_item", u"äöüß", u"hans_würstchen", "with space", "name#with#hash",
+default_names = ("my_item", "with space", "name#with#hash", u"äöüß", u"hans_würstchen",
                  "very_long_name_quite_safe_although_exceedind_255_chars_length_limit_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",)
 
 default_invalid = (42,)
@@ -161,8 +161,9 @@ class BackendTest(object):
         i.publish_metadata()
 
     def test_existing_item_create_revision(self):
-        item = self.backend.get_item(self.items.keys()[0])
-        rev = item.create_revision(0)
+        item_name = self.items.keys()[0]
+        item = self.backend.get_item(item_name)
+        rev = item.create_revision(len(self.items[item_name]))
         assert isinstance(rev, NewRevision)
 
     def test_new_item_create_revision(self):
