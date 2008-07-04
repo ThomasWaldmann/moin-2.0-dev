@@ -5,6 +5,7 @@
 import re
 
 from MoinMoin.search import term
+from MoinMoin.storage.backends.memory import MemoryBackend
 
 
 _item_contents = {
@@ -15,21 +16,21 @@ _item_contents = {
 }
 
 _item_metadata = {
-    u'a': {'m1': True, 'm2': '222'},
-    u'A': {'m1': True, 'm2': '333'},
-    u'b': {'m1': False, 'm2': '222'},
-    u'c': {'m1': True, 'm2': '222'},
-    u'B': {'m1': False, 'm2': '333'},
-    u'Lorem': {'m1': 7, 'm2': 444},
+    u'a': {'m1': 'True', 'm2': '222'},
+    u'A': {'m1': 'True', 'm2': '333'},
+    u'b': {'m1': 'False', 'm2': '222'},
+    u'c': {'m1': 'True', 'm2': '222'},
+    u'B': {'m1': 'False', 'm2': '333'},
+    u'Lorem': {'m1': '7', 'm2': '444'},
 }
 
 _lastrevision_metadata = {
-    u'a': {'a': 1},
-    u'A': {'a': None},
-    u'b': {'a': 0},
-    u'c': {'a': False},
-    u'B': {'a': u''},
-    u'Lorem': {'a': 42},
+    u'a': {'a': '1'},
+    u'A': {'a': 'None'},
+    u'b': {'a': '0'},
+    u'c': {'a': 'False'},
+    u'B': {'a': ''},
+    u'Lorem': {'a': '42'},
 }
 
 for n in _item_contents.keys():
@@ -45,6 +46,21 @@ for n in _item_contents.keys():
         _lastrevision_metadata[nl] = _lastrevision_metadata[n]
     if not nu in _lastrevision_metadata:
         _lastrevision_metadata[nu] = _lastrevision_metadata[n]
+
+memb = MemoryBackend()
+for iname, md in _item_metadata.iteritems():
+    item = memb.create_item(iname)
+    item.change_metadata()
+    for k, v in md.iteritems():
+        item[k] = v
+    item.publish_metadata()
+
+    rev = item.create_revision(0)
+    md = _lastrevision_metadata[iname]
+    for k, v in md.iteritems():
+        rev[k] = v
+    rev.write(_item_contents[iname])
+    item.commit()
 
 class TermTestData:
     def __init__(self, text):
