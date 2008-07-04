@@ -39,13 +39,33 @@ default_invalid = (42, )
 
 
 class BackendTest(object):
-    """Generic class for backend tests."""
+    """
+    Generic class for backend tests.
+
+    Creates a new backend for each test so they can assume to be
+    sandboxed, in each test the default items are present.
+    """
 
     def __init__(self, backend, items=None, item_names=None, invalid_names=None):
         self.backend = backend
         self.items = items or default_items
         self.item_names = item_names or default_names
         self.invalid_names = invalid_names or default_invalid
+
+    def setup_method(self, method):
+        self.backend = self.create_backend()
+        for iname in self.items:
+            item = self.backend.create_item(iname)
+            for revnostr, meta, revdata in self.items[iname]:
+                rev = item.create_revision(int(revnostr))
+                for k, v in meta.iteritems():
+                    rev[k] = v
+                rev.write(revdata.encode('utf-8'))
+                item.commit()
+
+    def teardown_method(self, method):
+        self.kill_backend()
+        self.backend = None
 
     def create_item_helper(self, name):
         item = self.backend.create_item(name)
