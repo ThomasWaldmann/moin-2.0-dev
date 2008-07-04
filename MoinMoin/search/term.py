@@ -38,27 +38,23 @@ class Term(object):
     def __init__(self):
         pass
 
-    def evaluate(self, backend, itemname, get_metadata):
+    def evaluate(self, item):
         """
         Evaluate this term and return True or False if the
         item identified by the parameters matches.
 
-        @param backend: the storage backend
-        @param itemname: the item name
-        @param get_metadata: function (without parameters) that
-                  returns a tuple of metadata dict-likes for the item and its
-                  last revision; the return value may not be modified.
+        @param item: the item
         """
         assert hasattr(self, '_result')
 
         if not self._result is None:
             return self._result
 
-        self._result = self._evaluate(backend, itemname, get_metadata)
+        self._result = self._evaluate(item)
 
         return self._result
 
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         """
         Implements the actual evaluation
         """
@@ -138,9 +134,9 @@ class AND(ListTerm):
     """
     AND connection between multiple terms. Final.
     """
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         for e in self.terms:
-            if not e.evaluate(backend, itemname, get_metadata):
+            if not e.evaluate(item):
                 return False
         return True
 
@@ -148,9 +144,9 @@ class OR(ListTerm):
     """
     OR connection between multiple terms. Final.
     """
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         for e in self.terms:
-            if e.evaluate(backend, itemname, get_metadata):
+            if e.evaluate(item):
                 return True
         return False
 
@@ -158,18 +154,18 @@ class NOT(UnaryTerm):
     """
     Inversion of a single term. Final.
     """
-    def _evaluate(self, backend, itemname, get_metadata):
-        return not self.term.evaluate(backend, itemname, get_metadata)
+    def _evaluate(self, item):
+        return not self.term.evaluate(item)
 
 class XOR(ListTerm):
     """
     XOR connection between multiple terms, i.e. exactly
     one must be True. Final.
     """
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         count = 0
         for e in self.terms:
-            if e.evaluate(backend, itemname, get_metadata):
+            if e.evaluate(item):
                 count += 1
         return count == 1
 
@@ -207,7 +203,7 @@ class TextRE(Term):
         assert hasattr(needle_re, 'search')
         self._needle_re = needle_re
 
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         revno = backend.current_revision(itemname)
         data = backend.get_data_backend(itemname, revno).read()
         return not (not self._needle_re.search(data))
@@ -305,7 +301,7 @@ class NameRE(Term):
         assert hasattr(needle_re, 'search')
         self._needle_re = needle_re
 
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         return not (not self._needle_re.search(itemname))
 
     def __repr__(self):
@@ -343,7 +339,7 @@ class NameFn(Term):
         assert callable(fn)
         self._fn = fn
 
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         return not (not self._fn(itemname))
 
     def __repr__(self):
@@ -363,7 +359,7 @@ class ItemMetaDataMatch(Term):
         self.key = key
         self.val = val
 
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         metadata = get_metadata()[0]
         return self.key in metadata and metadata[self.key] == self.val
 
@@ -385,7 +381,7 @@ class ItemHasMetaDataValue(Term):
         self.key = key
         self.val = val
 
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         metadata = get_metadata()[0]
         return self.key in metadata and self.val in metadata[self.key]
 
@@ -404,7 +400,7 @@ class ItemHasMetaDataKey(Term):
         Term.__init__(self)
         self.key = key
 
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         return self.key in get_metadata()[0]
 
     def __repr__(self):
@@ -424,7 +420,7 @@ class LastRevisionMetaDataMatch(Term):
         self.key = key
         self.val = val
 
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         metadata = get_metadata()[1]
         return self.key in metadata and metadata[self.key] == self.val
 
@@ -443,7 +439,7 @@ class LastRevisionHasMetaDataKey(Term):
         Term.__init__(self)
         self.key = key
 
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         return self.key in get_metadata()[1]
 
     def __repr__(self):
@@ -458,5 +454,5 @@ class FromUnderlay(Term):
     marked as 'underlay'.
     """
     _cost = 1 # trivial
-    def _evaluate(self, backend, itemname, get_metadata):
+    def _evaluate(self, item):
         return hasattr(backend, '_layer_marked_underlay')
