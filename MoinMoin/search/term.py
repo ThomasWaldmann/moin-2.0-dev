@@ -47,10 +47,8 @@ class Term(object):
         """
         assert hasattr(self, '_result')
 
-        if not self._result is None:
-            return self._result
-
-        self._result = self._evaluate(item)
+        if self._result is None:
+            self._result = self._evaluate(item)
 
         return self._result
 
