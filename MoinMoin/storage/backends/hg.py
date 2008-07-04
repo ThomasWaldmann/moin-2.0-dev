@@ -27,15 +27,17 @@
 """
 
 from mercurial import hg, ui, util, commands, repo, revlog
-import weakref
+import StringIO
 import tempfile
+import weakref
 import os
 
 from MoinMoin.wikiutil import quoteWikinameFS, unquoteWikiname
-from MoinMoin.storage import Backend, Item, Revision, NewRevision
+from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import BackendError, NoSuchItemError,\
-        NoSuchRevisionError, RevisionNumberMismatchError, \
-        ItemAlreadyExistsError, RevisionAlreadyExistsError
+                                   NoSuchRevisionError,\
+                                   RevisionNumberMismatchError,\
+                                   ItemAlreadyExistsError, RevisionAlreadyExistsError
 
 
 class MercurialBackend(Backend):
@@ -47,7 +49,7 @@ class MercurialBackend(Backend):
         any Revision.
         """
         if not os.path.isdir(path):
-            raise BackendError, "Invalid repository path: %s" % path
+            raise BackendError("Invalid repository path: %s" % path)
         
         self.repo_path = os.path.abspath(path)
         self.unrevisioned_path = os.path.join(self.repo_path, 'unrevisioned')
@@ -55,48 +57,45 @@ class MercurialBackend(Backend):
         self._lockref = None
             
         try:
-            self.repo = hg.repository(self.ui, self.repo_path, create=create)
-            os.mkdir(self.unrevisioned_path)
+            try:
+                self.repo = hg.repository(self.ui, self.repo_path, create=create)
+                os.mkdir(self.unrevisioned_path)
+            except OSError:
+                if create:
+                    raise repo.RepoError()
 
         except repo.RepoError:
             if create:
-                raise BackendError, "Repository at given path exists: %s" % path
+                raise BackendError("Repository at given path exists: %s" % path)
             else:
-                raise BackendError, "Repository at given path does not exist: %s" % path
+                raise BackendError("Repository at given path does not exist: %s"
+                        % path)
 
-    def has_item(self, itemname):
+    def has_item(self, itemname, revisioned=None):
         """Checks whether Item with given name exists."""
         quoted_name = self._quote(itemname)
         try:
             self.repo.changectx().filectx(quoted_name)
-            revisioned = True
+            in_repo = True
         except revlog.LookupError:
-            revisioned = False
-
-        return revisioned or os.path.exists(self._unrev_path(quoted_name))
+            in_repo = False
+    
+        if revisioned:  # search only versioned Items
+            return in_repo
+        else:
+            return in_repo or os.path.exists(self._unrev_path(quoted_name))
 
     def create_item(self, itemname):
         """
-        Create Item in repository. This Item hasn't got any Revisions.
-        From this point, has_item returns True.         
-        This method returns Item object.
+        Create Item in repository. This Item hasn't got any Revisions yet. Unless
+        you create_revision+commit or change_metadata+publish_metdata, Item acts 
+        like a proxy for storing filled data. This method returns Item object.
         """
         if not isinstance(itemname, (str, unicode)):
-            raise TypeError, "Wrong Item name type: %s" % (type(itemname))
-
-        quoted_name = self._quote(itemname)
+            raise TypeError("Wrong Item name type: %s" % (type(itemname)))
 
         if self.has_item(itemname):
-            raise ItemAlreadyExistsError, "Item with that name already exists:  %s" % itemname
-        
-        fd, fname = tempfile.mkstemp()
-
-        lock = self._lock()
-        try:
-            util.rename(fname, self._unrev_path(quoted_name))
-
-        finally:
-            del lock
+            raise ItemAlreadyExistsError("Item with that name already exists: %s" % itemname)
         
         return Item(self, itemname)
 
@@ -104,9 +103,9 @@ class MercurialBackend(Backend):
         """
         Returns an Item with given name. If not found, raises NoSuchItemError
         exception.
-        """ 
+        """
         if not self.has_item(itemname):
-            raise NoSuchItemError, 'Item does not exist: %s' % itemname
+            raise NoSuchItemError('Item does not exist: %s' % itemname)
         
         return Item(self, itemname)
 
@@ -118,7 +117,7 @@ class MercurialBackend(Backend):
         ctx = self.repo.changectx()
 
         for itemfctx in ctx.filectxs():
-            yield Item(self, itemfctx.path()) 
+            yield Item(self, itemfctx.path())
 
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
@@ -126,37 +125,35 @@ class MercurialBackend(Backend):
 
         if not revs:
             if revno != 0:
-                raise RevisionNumberMismatchError, "Unable to create revision \
-                        number: %d. First Revision number must be 0." % revno
+                raise RevisionNumberMismatchError("Unable to create revision \
+                      number: %d. First Revision number must be 0." % revno)
 
             item._tmpfd, item._tmpfname = tempfile.mkstemp(prefix=item.name,
                     dir=self.repo_path)
-            
         else:
             if revno in revs:
-                raise RevisionAlreadyExistsError, "Item Revision already exists: %s" % revno
-            
+                raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
             if revno != revs[-1] + 1:
-                raise RevisionNumberMismatchError, "Unable to create revision\
-                        number %d. Revision number must be latest_revision + 1." % revno
+                raise RevisionNumberMismatchError("Unable to create revision\
+                      number %d. New Revision number must be next to latest Revision number." % revno)
         
         new_rev = NewRevision(item, revno)
         new_rev._revno = revno
- 
+        new_rev._data = StringIO.StringIO()
         return new_rev
 
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
         ctx = self.repo.changectx()
-
         try:
-            ftx = ctx.filectx(item.name).filectx(revno)
+            ftx = ctx.filectx(self._quote(item.name)).filectx(revno)
         except LookupError:
-            raise NoSuchRevisionError, "Item Revision does not exist: %s" % revno
+            raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
 
-        revision = Revision(item, revno)
-        revision._data = self._item_revisions[item_id][revno][0]
-        revision_metadata = self._item_revisions[item_id][revno][1]
+        revision = StoredRevision(item, revno)
+        revision._data = StringIO.StringIO(ftx.data())
+        # XXX: Rev meta stuff
+        # revision_metadata = 
 
         return revision
 
@@ -166,8 +163,7 @@ class MercurialBackend(Backend):
         Retrieves only accessible rev numbers when internal indexfile
         inconsistency occurs.
         """
-        quoted_name = self._quote(item.name)
-        filelog = self.repo.file(quoted_name)
+        filelog = self.repo.file(self._quote(item.name))
         cl_count = self.repo.changelog.count()
 
         revs = []
@@ -176,13 +172,33 @@ class MercurialBackend(Backend):
                 assert filelog.linkrev(filelog.node(i)) < cl_count, \
                     "Revision number out of bounds, repository inconsistency!"
                 revs.append(i)
-
             except (IndexError, AssertionError):  # malformed index file
-                pass
-                #XXX: should we log inconsistency?
+                pass  # XXX: should we log inconsistency?
 
-        #revs.reverse()
         return revs
+
+    def _has_revisions(self, item):
+        """Checks wheter given Item has any revisions."""
+        filelog = self.repo.file(self._quote(item.name))
+        return filelog.count()
+
+    def _write_revision_data(self, revision, data):
+        """Write data to the Revision."""
+        revision._data.write(data)
+
+    def _read_revision_data(self, revision, chunksize):
+        """
+        Called to read a given amount of bytes of a revisions data. By default, all
+        data is read.
+        """
+        if chunksize < 0:
+            return revision._data.read()
+
+        return revision._data.read(chunksize)
+
+    def _seek_revision_data(self, revision, position, mode):
+        """Set the revisions cursor on the revisions data."""
+        revision._data.seek(position, mode)
 
     def _rename_item(self, item, newname):
         """
@@ -190,110 +206,72 @@ class MercurialBackend(Backend):
         item is unreachable or ItemAlreadyExistsError if destination exists. 
         """
         if not isinstance(newname, (str, unicode)):
-            raise TypeError, "Wrong Item destination name type: %s" % (type(newname))
-
+            raise TypeError("Wrong Item destination name type: %s" % (type(newname)))
         if not self.has_item(item.name):
-            raise NoSuchItemError, 'Source item does not exist: %s' % item.name
+            raise NoSuchItemError('Source item does not exist: %s' % item.name)
         
         lock = self._lock()
-        
         try:
             if self.has_item(newname):
-                raise ItemAlreadyExistsError, "Destination item already exists: %s" % newname
+                raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
                 
             old_quoted, new_quoted = self._quote(item.name), self._quote(newname)
 
-            if not item.list_revisions():
+            if not self._has_revisions(item):
                 util.rename(self._unrev_path(old_quoted), self._unrev_path(new_quoted))
             else:
-                commands.rename(self.ui, self.repo, self._path(old_quotes),
-                    self._path(new_quoted))            
-                #XXX: commit rename instantly, see memory backend...
-                self._commit_item(item)
-
-            #XXX: see memory backend...
+                commands.rename(self.ui, self.repo, self._path(old_quoted), self._path(new_quoted))
+                msg = "Renamed %s to: %s" % (item.name.encode('utf-8'), newname.encode('utf-8'))
+                self.repo.commit(text=msg, user="wiki", files=[old_quoted, new_quoted])
+        
             item._name = newname
-            
         finally:
             del lock
                 
     def _commit_item(self, item):
-        """Commit Item changes to repository."""
+        """Commit Item changes within transaction (Revision) to repository."""
+        revision = item._uncommitted_revision
+        quoted_name = self._quote(item.name)
 
         lock = self._lock()
-        files = [item.name]
-
         try:
-            if not self.has_item(item.name):
-                try: 
-                    util.rename(item._tmpfname, self._path(item.name))
-                    self.repo.add([item.name])                    
-                    msg = "Created item: %s" % item.name
-
-                except AttributeError:
-                    raise BackendError, "Create item Revision first!"
-
+            if not self.has_item(item.name, revisioned=True):
+                os.write(item._tmpfd, revision._data.getvalue())
+                os.close(item._tmpfd)
+                util.rename(item._tmpfname, self._path(quoted_name))
+                self.repo.add([quoted_name])
+                msg = "Created item: %s" % item.name.encode('utf-8')
             else:
-                try:
-                    if item._tmpfname:
-                        raise ItemAlreadyExistsError, \
-                            "Item already exists: %s" % item.name
-
-                except AttributeError:
-                    stat = self.repo.status(files=[item.name])
-
-                    if stat[2]:
-                        files.extend(self._find_copy_destination(item.name))
-
-                        if len(files) == 2:
-                            msg = "Renamed item %s to: %s" % (files[0], files[1])
-
-                        else:
-                            msg = "Removed item: %s" % item.name
-
-                    elif stat[0]:
-                        msg = "Modified item %s" % item.name
-
-                    else:
-                        pass
-                        #XXX: nothing changed
-                        #XXX: this is broken, does not omit commit
+                if revision.revno == 0:
+                    raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
+                elif revision.revno in item.list_revisions():
+                    raise RevisionAlreadyExistsError("Revision already exists: %d" % revno)
+                else:
+                    revision._data.seek(0)
                     
+                    fd, fname = tempfile.mkstemp(prefix=item.name, dir=self.repo_path)
+                    os.write(fd, revision._data.getvalue())
+                    os.close(fd)
+                    util.rename(self._path(fname), self._path(quoted_name))
+                    msg = "Revision commited: %d" % revision.revno
 
-            self.repo.commit(text=msg, user='wiki', files=files)
+                    # XXX: Rev meta stuff?
+                    # if revision._metadata:
+                    #   revision._metadata.copy()   
 
+            self.repo.commit(text=msg, user='wiki', files=[quoted_name])
         finally:
             del lock
+            item._uncommitted_revision = None
 
     def _rollback_item(self, item):
         """Reverts uncommited Item changes."""
-        items = [item.name]
+        try:
+            os.unlink(self._path(item._tmpfname))
+        except (AttributeError, OSError):
+            pass
 
-        lock = self._lock()
-
-        try:            
-            items = self._find_copy_destination(item.name)
-
-            commands.revert(self.ui, self.repo, self._path( items[0] ),
-                date=None, rev=None, all=None, no_backup=True)
-        
-            for itemname in self.repo.status(files=items)[4]:
-                os.unlink(self._path(itemname))
-
-        finally:
-            del lock
-
-    def _find_copy_destination(self, srcname):
-        """
-        Searches repository for copy of source Item and returns list with 
-        destination name if found. Else returns empty list.
-        """
-        status = self.repo.status(files=[srcname])
-
-        for dst, src in self.repo.dirstate.copies().iteritems(): 
-            if src in status[2]:
-                return [dst]
-        return []
+        item._uncommitted_revision = None
 
     def _lock(self):
         """
@@ -325,5 +303,4 @@ class MercurialBackend(Backend):
     def _unquote(self, quoted_name):
         """Return unquoted, real name."""
         return unquoteWikiname(quoted_name)
-
 
