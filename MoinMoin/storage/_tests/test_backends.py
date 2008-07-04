@@ -22,7 +22,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError,\
 
 default_items = {
     'NewPage': [
-        ('0', {}, u"This is NewPage content. A to jest też zawartość."),
+        ('0', {}, "This is NewPage content. A to jest tez zawartosc."),
         ('1', {}, "Dummy message"),
     ],
     'Test': [
