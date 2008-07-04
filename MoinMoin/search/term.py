@@ -26,6 +26,8 @@
 
 import re
 
+from MoinMoin.storage.error import NoSuchRevisionError
+
 # Base classes
 
 class Term(object):
@@ -202,7 +204,10 @@ class TextRE(Term):
         self._needle_re = needle_re
 
     def _evaluate(self, item):
-        rev = item.get_revision(-1)
+        try:
+            rev = item.get_revision(-1)
+        except NoSuchRevisionError:
+            return False
         data = rev.read()
         return not (not self._needle_re.search(data))
 
@@ -417,7 +422,10 @@ class LastRevisionMetaDataMatch(Term):
         self.val = val
 
     def _evaluate(self, item):
-        rev = item.get_revision(-1)
+        try:
+            rev = item.get_revision(-1)
+        except NoSuchRevisionError:
+            return False
         return self.key in rev and rev[self.key] == self.val
 
     def __repr__(self):
@@ -436,7 +444,10 @@ class LastRevisionHasMetaDataKey(Term):
         self.key = key
 
     def _evaluate(self, item):
-        rev = item.get_revision(-1)
+        try:
+            rev = item.get_revision(-1)
+        except NoSuchRevisionError:
+            return False
         return self.key in rev
 
     def __repr__(self):

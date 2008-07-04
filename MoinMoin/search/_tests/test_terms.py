@@ -60,6 +60,12 @@ for iname, md in _item_metadata.iteritems():
     rev.write(_item_contents[iname])
     item.commit()
 
+item = memb.create_item('NR')
+item.change_metadata()
+item.update({'m1': 'True'})
+item.publish_metadata()
+del item
+
 class TermTestData:
     def __init__(self, text):
         self.text = text
@@ -91,7 +97,7 @@ class TestTerms:
 
     def testSimpleTextSearch(self):
         terms = [term.Text(u'abcdefg', True), term.Text(u'ijklmn', True)]
-        for item, expected in [('a', True), ('A', False), ('b', False), ('B', False), ('lorem', False)]:
+        for item, expected in [('a', True), ('A', False), ('b', False), ('B', False), ('lorem', False), ('NR', False)]:
             for t in terms:
                 yield self._evaluate, t, item, expected
 
@@ -148,13 +154,13 @@ class TestTerms:
 
     def testTextSearchRE(self):
         terms = [term.TextRE(re.compile('^abc')), term.TextRE(re.compile('\shij'))]
-        for item, expected in [('a', True), ('A', False), ('b', False), ('B', False), ('lorem', False)]:
+        for item, expected in [('a', True), ('A', False), ('b', False), ('B', False), ('lorem', False), ('NR', False)]:
             for t in terms:
                 yield self._evaluate, t, item, expected
 
     def testTextSearchRE2(self):
         terms = [term.TextRE(re.compile('sollici')), term.TextRE(re.compile('susci'))]
-        for item, expected in [('a', False), ('A', False), ('b', False), ('B', False), ('lorem', True)]:
+        for item, expected in [('a', False), ('A', False), ('b', False), ('B', False), ('lorem', True), ('NR', False)]:
             for t in terms:
                 yield self._evaluate, t, item, expected
 
@@ -189,90 +195,90 @@ class TestTerms:
         yield self._evaluate, term.OR(term.TRUE, term.FALSE, AssertNotCalledTerm()), None, True
 
     def testSimpleTitleSearch(self):
-        for item, expected in [('a', True), ('A', False), ('b', False), ('B', False), ('lorem', False)]:
+        for item, expected in [('a', True), ('A', False), ('b', False), ('B', False), ('lorem', False), ('NR', False)]:
             yield self._evaluate, term.Name(u'a', True), item, expected
 
     def testSimpleTitleSearchCI(self):
-        for item, expected in [('a', True), ('A', True), ('b', False), ('B', False), ('lorem', False)]:
+        for item, expected in [('a', True), ('A', True), ('b', False), ('B', False), ('lorem', False), ('NR', False)]:
             yield self._evaluate, term.Name(u'a', False), item, expected
 
     def testTitleRESearch(self):
-        for item, expected in [('a', True), ('A', False), ('b', False), ('B', False), ('lorem', True)]:
+        for item, expected in [('a', True), ('A', False), ('b', False), ('B', False), ('lorem', True), ('NR', False)]:
             yield self._evaluate, term.NameRE(re.compile('(a|e)')), item, expected
 
     def testMetaMatch1(self):
         t = term.ItemMetaDataMatch('m1', 'True')
-        for item, expected in [('a', True), ('A', True), ('b', False), ('B', False), ('lorem', False)]:
+        for item, expected in [('a', True), ('A', True), ('b', False), ('B', False), ('lorem', False), ('NR', True)]:
             yield self._evaluate, t, item, expected
 
     def testMetaMatch2(self):
         t = term.ItemMetaDataMatch('m2', '333')
-        for item, expected in [('a', False), ('A', True), ('b', False), ('B', True), ('lorem', False)]:
+        for item, expected in [('a', False), ('A', True), ('b', False), ('B', True), ('lorem', False), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testMetaMatch3(self):
         t = term.ItemMetaDataMatch('m2', '444')
-        for item, expected in [('a', False), ('A', False), ('b', False), ('B', False), ('lorem', True)]:
+        for item, expected in [('a', False), ('A', False), ('b', False), ('B', False), ('lorem', True), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testHasMeta1(self):
         t = term.ItemHasMetaDataKey('m3')
-        for item, expected in [('a', False), ('A', False), ('b', False), ('B', False), ('lorem', False)]:
+        for item, expected in [('a', False), ('A', False), ('b', False), ('B', False), ('lorem', False), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testHasMeta2(self):
         t = term.ItemHasMetaDataKey('m1')
-        for item, expected in [('a', True), ('A', True), ('b', True), ('B', True), ('lorem', True)]:
+        for item, expected in [('a', True), ('A', True), ('b', True), ('B', True), ('lorem', True), ('NR', True)]:
             yield self._evaluate, t, item, expected
 
     def testHasMeta3(self):
         t = term.LastRevisionHasMetaDataKey('a')
-        for item, expected in [('a', True), ('A', True), ('b', True), ('B', True), ('lorem', True)]:
+        for item, expected in [('a', True), ('A', True), ('b', True), ('B', True), ('lorem', True), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testHasMeta4(self):
         t = term.LastRevisionMetaDataMatch('a', '')
-        for item, expected in [('a', False), ('A', True), ('b', False), ('B', True), ('lorem', False)]:
+        for item, expected in [('a', False), ('A', True), ('b', False), ('B', True), ('lorem', False), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testNameFn(self):
         t = term.NameFn(lambda x: x in ['a', 'b', 'lorem'])
-        for item, expected in [('a', True), ('A', False), ('b', True), ('B', False), ('lorem', True)]:
+        for item, expected in [('a', True), ('A', False), ('b', True), ('B', False), ('lorem', True), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testWordCI(self):
         t = term.Word('Curabitur', False)
-        for item, expected in [('B', False), ('Lorem', True), ('lorem', True), ('LOREM', True)]:
+        for item, expected in [('B', False), ('Lorem', True), ('lorem', True), ('LOREM', True), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testWord(self):
         t = term.Word('Curabitur', True)
-        for item, expected in [('B', False), ('Lorem', True), ('lorem', False), ('LOREM', False)]:
+        for item, expected in [('B', False), ('Lorem', True), ('lorem', False), ('LOREM', False), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testWordStartCI(self):
         t = term.WordStart('Curabi', False)
-        for item, expected in [('B', False), ('Lorem', True), ('lorem', True), ('LOREM', True)]:
+        for item, expected in [('B', False), ('Lorem', True), ('lorem', True), ('LOREM', True), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testWordStart(self):
         t = term.WordStart('Curabi', True)
-        for item, expected in [('c', False), ('Lorem', True), ('lorem', False), ('LOREM', False)]:
+        for item, expected in [('c', False), ('Lorem', True), ('lorem', False), ('LOREM', False), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testWordStart2(self):
         t = term.WordStart('abitur', True)
-        for item, expected in [('c', True), ('C', False), ('Lorem', False), ]:
+        for item, expected in [('c', True), ('C', False), ('Lorem', False), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testWordStart2CI(self):
         t = term.WordStart('abitur', False)
-        for item, expected in [('c', True), ('C', True), ('Lorem', False), ]:
+        for item, expected in [('c', True), ('C', True), ('Lorem', False), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
     def testWordEndCI(self):
         t = term.WordEnd('abitur', False)
-        for item, expected in [('c', False), ('Lorem', True), ('lorem', True), ('LOREM', True)]:
+        for item, expected in [('c', False), ('Lorem', True), ('lorem', True), ('LOREM', True), ('NR', False)]:
             yield self._evaluate, t, item, expected
 
 coverage_modules = ['MoinMoin.search.terms']
