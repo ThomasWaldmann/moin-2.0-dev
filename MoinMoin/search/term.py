@@ -204,8 +204,8 @@ class TextRE(Term):
         self._needle_re = needle_re
 
     def _evaluate(self, item):
-        revno = backend.current_revision(itemname)
-        data = backend.get_data_backend(itemname, revno).read()
+        rev = item.get_revision(-1)
+        data = rev.read()
         return not (not self._needle_re.search(data))
 
     def __repr__(self):
@@ -302,7 +302,7 @@ class NameRE(Term):
         self._needle_re = needle_re
 
     def _evaluate(self, item):
-        return not (not self._needle_re.search(itemname))
+        return not (not self._needle_re.search(item.name))
 
     def __repr__(self):
         return u'<term.NameRE(...)>'
@@ -340,7 +340,7 @@ class NameFn(Term):
         self._fn = fn
 
     def _evaluate(self, item):
-        return not (not self._fn(itemname))
+        return not (not self._fn(item.name))
 
     def __repr__(self):
         return u'<term.NameFn(%r)>' % (self._fn, )
@@ -360,8 +360,7 @@ class ItemMetaDataMatch(Term):
         self.val = val
 
     def _evaluate(self, item):
-        metadata = get_metadata()[0]
-        return self.key in metadata and metadata[self.key] == self.val
+        return self.key in item and item[self.key] == self.val
 
     def __repr__(self):
         return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.val)
@@ -382,8 +381,7 @@ class ItemHasMetaDataValue(Term):
         self.val = val
 
     def _evaluate(self, item):
-        metadata = get_metadata()[0]
-        return self.key in metadata and self.val in metadata[self.key]
+        return self.key in item and self.val in item[self.key]
 
     def __repr__(self):
         return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.val)
@@ -401,7 +399,7 @@ class ItemHasMetaDataKey(Term):
         self.key = key
 
     def _evaluate(self, item):
-        return self.key in get_metadata()[0]
+        return self.key in item
 
     def __repr__(self):
         return u'<%s(%s)>' % (self.__class__.__name__, self.key)
@@ -421,8 +419,8 @@ class LastRevisionMetaDataMatch(Term):
         self.val = val
 
     def _evaluate(self, item):
-        metadata = get_metadata()[1]
-        return self.key in metadata and metadata[self.key] == self.val
+        rev = item.get_revision(-1)
+        return self.key in rev and rev[self.key] == self.val
 
     def __repr__(self):
         return u'<%s(%s: %s)>' % (self.__class__.__name__, self.key, self.val)
@@ -440,7 +438,8 @@ class LastRevisionHasMetaDataKey(Term):
         self.key = key
 
     def _evaluate(self, item):
-        return self.key in get_metadata()[1]
+        rev = item.get_revision(-1)
+        return self.key in rev
 
     def __repr__(self):
         return u'<%s(%s)>' % (self.__class__.__name__, self.key)
