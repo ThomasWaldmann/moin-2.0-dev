@@ -1,0 +1,346 @@
+This file documents further bugs in the storage code and design.
+I've gotten tired of fixing them, it seems that way I just get
+blamed for everything instead of the original coder/designer of
+the problems...
+
+ BUG 1: error handling is totally bogus
+========================================
+
+Error handling is wrong by design: backends are currently not required
+to raise proper errors but they simply give an error whenever something
+fails and the common code tries to fix this up. This is _obviously_
+racy, consider an example:
+
+thread 1			thread 2
+ - create_item(n) fails
+				 - rename_item(n, x)
+ - _handle_error
+ - has_item returns False
+ - original OSError is raised,
+   upper layers completely
+   fuck up, OSError shown to
+   user
+
+SOLUTION: require that backends atomically check whether an
+          operation is possible and raise an *appropriate*
+          error code, rather than trying to "fix up" the
+          error code later.
+
+SIDE EFFECT: actual backend bugs can be found rather than
+             leading to, for example, "item exists" errors
+             when the item doesn't actually exist.
+
+
+ BUG 2: create_item is racy
+=============================================
+
+Due to the way create_item works, it is not possible to implement
+a higher-level atomic 'create page with this contents' operation,
+no matter how it is done another thread could reference that item
+before it is completely created. [Before flaming me about how wrong
+I am, please read the solution and realise that it is already half-
+implemented but neither properly documented nor actually properly
+implemented.]
+
+SOLUTION: Abstract locking in from the backend and clearly document
+          that although locks are always named by the items they are
+          supposed to lock this is not a hard requirement and it must,
+          for example, be possible to lock an item that doesn't exist
+          yet.
+
+          To clarify that point, remove locking methods from backends
+          and create a new lock-manager class that is also configured
+          in the wiki configuration but is completely orthogonal to
+          the backend.
+
+          With the newly gained flexibility, add locking around all
+          code using create_item/save/..., this might require Page/
+          PageEditor code refactoring.
+
+SIDE EFFECT: will clarify that all locks live within a shared namespace
+             as it is currently the case with the filesystem backends
+             (cfg.tmp_dir) and thus help improve code quality since it
+             will be apparent to lock users.
+
+[NB: Due to filename quoting and a . being present in the user IDs
+it is currently not actually possible for locking namespaces to
+collide but we'd rather not rely on that for all future, would we?]
+
+
+ BUG 3: storage code assumes it is perfect
+===========================================
+
+In many places, operations look like this:
+
+  item.lock = True
+  [...]
+  item.lock = False
+
+While that should of course be called 'locked' and not 'lock', the
+code sequence itself is rather worrying because any bugs within the
+"[...]" part will lead to locks that are not released. This is in
+particular visible with the test suite where a small problem in one
+test case will cause a lot of follow-up test cases to fail due to
+the unreleased lock, but I'm sure cases can be constructed where
+the current code will fail within such a block.
+
+QUICK-HACK SOLUTION: add try/finally to all the code and try to
+                     enforce that in the future (yeah right)
+
+SOLUTION: Instead of doing lock/unlock like this, require a method
+          call that is done to operate on the locked item, like this:
+
+          item.locked(m)
+
+          which would be implemented like this (using the old, then
+          no longer existing, lock property):
+
+          self.lock = True
+          try:
+            m()
+          finally:
+            self.lock = False
+
+          Note that my example doesn't allow passing any parameters
+          to the function, that can be alleviated by using *args and
+          **kwargs or simply requiring that the function takes no
+          arguments in which case a lambda would be used to pass any
+          (which would even be py3k compatible in that case because
+          IIRC *args/**kwargs can no longer be used then)
+
+SIDE EFFECT: It will no longer be possible to hold locks for a longer
+             period of time, nor to forget unlocking. Also, doing
+             things this way clearly documents which methods are done
+             locked and leads to an overall improvement in code quality.
+
+
+ BUG 4: Despite claims otherwise, remove_item is used
+======================================================
+
+When a user edits a page that doesn't exist, this page is created via
+create_item() as soon as the user invokes the edit action, at which
+point the item starts to exist. Because it has no revisions, the upper
+level code will still assume that it doesn't exist, but this is unclean
+at best.
+
+Also, it has interesting side effects, like this race that is trivial
+to trigger:
+
+User 1					User 2
+ - edit non-existing item 'asdf'
+					 - do same
+ - hit cancel
+ - see that item doesn't exist
+					 - do same
+
+At this point, user 2 gets a big fat ugly exception message from the
+backend that the item he tried to delete doesn't exist. WTF?
+
+Also, when trying to edit the item 'asdf' again some other bug happens
+which in turn invalidates the 'code is perfect' assumption above and
+triggers the missing unlock bug.
+
+Another race that isn't quite as easy to trigger is this:
+
+User 1/Thread 1				User 2/Thread 2
+ - edit non-existing item 'asdf'
+ 					 - do same
+ - invoke save with actual text
+					 - cancel edit
+					 - page editor's cancel function
+					   is invoked, calls
+					    - get_revisions, which returns
+					      an empty list
+**** alternative 1
+ - save code creates revision,
+   saves data, metadata
+					 - because of empty list,
+					   remove_item is invoked
+--> COMPLETE DATA LOSS
+
+**** alternative 2
+ - save code creates revision
+					 - beause of empty list,
+					   remove_item is invoked,
+					   newly created revision is
+					   removed
+ - save code saves data, metadata
+   and FAILS!
+--> User 1 is gets a moin bug in form of an ugly backtrace
+
+SOLUTION: See above, locking on items that do not exist is necessary.
+
+SOLUTION: Alternatively, the whole create_item/remove_item business could
+          be completely reworked so that the item/revision is only created
+          when it is saved. Locking is still required, of course, but can be
+          pushed to a place where it can be implemented more intelligently,
+          namely the backend.
+
+NOTE: It seems that this whole create_item/remove_item business is done
+      because of edit-locking. This is how it worked in 1.6/1.7 (i.e. the
+      edit-lock was part of an item), but it might be useful to think
+      about alternatives. Except for the filesystem backend, there doesn't
+      seem to be a need for the item to exist to be able to be edit-locked,
+      and even for the filesystem backend I see no reason why edit-locking
+      must be done backward-compatibly (since edit-locks are not long-lived
+      and you won't run a moin 1.7 + moin 1.7-storage in parallel on the
+      same dataset.)
+      The original code that removes the item if it is still empty is racy
+      (see MoinMoin/action/edit.py:108 in 1.7) too, but that's no reason to
+      not fix it in the storage design. Despite the races, the original
+      code cannot actually lead to data loss.
+      One possible solution would be to add a "remove_if_empty" method,
+      that would be trivial to implement on the filesystem (just try
+      os.rmdir) but rather hard to do properly in SQL.
+      Another alternative would be to assume an item as non-existent that
+      doesn't have any revisions. This is currently the case anyhow. Then
+      remove_item wouldn't have to be called when the edit-lock metadata
+      is deleted and the bug would disappear easily. The filesystem backend
+      could remove empty directories automatically when they give no value.
+      In other backends however, this might not be as easy so the items
+      would stick around at least in the pagelist, and it would be
+      non-trivial to answer "has_item" or "list_items" properly.
+
+      Since edit-lock metadata is the only per-item metadata, it could be
+      useful to do edit-locking differently and remove per-item metadata
+      completely.
+
+
+ BUG 5: ItemCollection is instantiated too often
+=================================================
+
+ItemCollection attempts to implement caching but all the code it has
+for that purpose (which has quite some overhead due to the way the
+cache is refreshed!) is completely useless since it is instantiated
+every time a page object is instantiated. Then on each access it will
+read the global edit log to make sure the cache is fresh, when in fact
+the cache cannot really ever not be fresh.
+
+SOLUTION: Make ItemCollection a singleton, preferably by making all item
+          accesses in all code go through request.cfg.pages_collection
+          and request.cfg.user_collection.
+
+SIDE EFFECT: The ItemCollection no longer has access to the request
+             object. This is good because it forces removing the
+             request edit-lock  handling from the storage layer where
+             it most definitely does not belong.
+
+NOTE: See bug 6.
+
+
+ BUG 6: rename_item can pull an item underneath another thread
+===============================================================
+
+When an item is renamed, the following race can occur:
+
+Thread 1				Thread 2
+ - item = collection['asdf']
+ - rev = item[0]
+					 - rename_item('asdf', 'zzz')
+ - rev.get_data()
+
+--> Thread 1 crashes because item has been renamed away from it
+    although it had a valid reference.
+
+Yes, this race can happen in Moin 1.6/1.7, but the storage code is
+about improving it, and with a proper design and better backends it
+is trivial to avoid such races.
+
+SOLUTION (CURRENT DESIGN): lock item (in the external locking namespace,
+                           see above) for read accesses as well, can be
+                           an rw-lock.
+
+SOLUTION: Dissolve ItemCollection layer (for ACL checking introduce an
+          ACL-checking backend instead later) and make backends aware
+          of the Item class. Then, an SQL backend that uses a properly
+          normalised database can trivially avoid this race by having a
+          table
+            || ID || pagename ||
+          and storing the ID in the Item object so all further accesses
+          use that primary key rather than the unique key "pagename"
+          which will thus not be affected by any concurrent rename, in
+          effect treating the rename as though it had not happened yet.
+
+          Even in a filesystem backend this can be implemented on actual
+          operating systems by keeping a file descriptor for the item
+          directory around for the lifetime of the Item object and then
+          using openat(2) for accesses into the item, a rename can at
+          the same time proceed as normal. For Windows (sigh) this would
+          fail the rename, but the rename code could retry for a while
+          before giving up with a decent error message instead of the
+          current design penalising all readers.
+
+          That way, any code that managed to get hold of an Item object
+          reference need not be able to handle further problems with
+          accesses to that object. Moin16 backend on windows might not
+          be able to provide this guarantee but that's no worse than
+          it is currently in 1.6/1.7 while still allowing improvements
+          in the future which the current design completely precludes.
+
+NOTE: If ItemCollection was being used as designed, this bug would be
+      trivial to trigger due to caching (because multiple processes are
+      not able to invalidate each other's caches). Luckily it is
+      re-instantiated for every access so its cache is completely
+      useless (see BUG 5), thereby alleviating the impact of this bug.
+
+NOTE: The backend need not be much harder to write. Instead of all methods
+      getting an 'itemname' parameter the methods would all get an 'item'
+      parameter that passes the item as returned by the new get_item()
+      method (that is currently done in the mid-level by ItemCollection's
+      __getitem__() method) and the Item() class could still implement
+      callouts to the backend methods which would not make the backend
+      code much more complex but allow for better error-checking and
+      lookup semantics.
+
+
+ BUG 7: ACL checking cannot be implemented for delete ACL
+==========================================================
+
+Due to the way create_revision etc. needs to create the revision without
+having any data associated to it, it is not possible to implement 'delete'
+ACL checking the way it was designed because to delete a page a new revision
+is created and only afterwards the DELETE metadata is set on it. Code to
+implement it would look like this or similar:
+
+item.lock()
+try:
+    rev = item.create_revision(cur+1)
+    rev.deleted = True
+    rev.save()
+finally: # note use of try/finally, cf. BUG 3
+    item.unlock()
+
+However, if setting deleted to True or the following save is rejected by ACL
+checks, the revision is still created and left dangling unless upper layer
+code cleans up again, thereby begin completely counter-productive to the
+idea that ACL checking would happen automatically throughout the code
+without special code required.
+
+A correct way to implement it would be:
+
+item.lock()
+try:
+    if not user.may.delete(item):
+        return _("Sorry")
+    rev = ...
+    [... continue as above ...]
+finally:
+    item.unlock()
+
+or alternatively
+
+item.lock()
+try:
+    [... as above ...]
+except:
+    try:
+        item.remove_revision(rev)
+    except:
+        # what do we do here? what failed?
+finally:
+    item.unlock()
+
+
+which adds a bunch of special code for this case. The lock-less design (see
+the LOCKLESS file) avoids all that by having a central .save() that can
+either fail or go through completely.

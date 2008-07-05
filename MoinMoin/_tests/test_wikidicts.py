@@ -7,8 +7,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import py
-import re
 import shutil
 
 from MoinMoin import wikidicts

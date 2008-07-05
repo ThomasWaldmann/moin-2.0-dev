@@ -25,6 +25,10 @@ from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
 from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
+from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
+#from MoinMoin.storage.backends.moin17 import UserBackend, ItemBackend
+from MoinMoin.storage.backends.meta import LayerBackend
+from MoinMoin.storage.external import DELETED
 from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
@@ -229,14 +233,13 @@ class ConfigFunctionality(object):
     # will be lazily loaded by interwiki code when needed (?)
     shared_intermap_files = None
 
+    # storage index configuration (used by indexed backend only)
+    indexes = ["name", "openids", "jid", "email"]
+
     def __init__(self, siteid):
         """ Init Config instance """
         self.siteid = siteid
         self.cache = CacheClass()
-
-        from MoinMoin.Page import ItemCache
-        self.cache.meta = ItemCache('meta')
-        self.cache.pagelists = ItemCache('pagelists')
 
         if self.config_check_enabled:
             self._config_check()
@@ -245,7 +248,7 @@ class ConfigFunctionality(object):
         self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ('user', 'cache', 'plugin'):
+        for dirname in ('user', 'cache', 'plugin', 'tmp', 'indexes'):
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
@@ -369,6 +372,22 @@ class ConfigFunctionality(object):
 
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
+
+        # storage configuration
+        if self.user_backend is None:
+            self.user_backend = UserBackend("user", self.user_dir, self)
+
+        if self.data_backend is None:
+            self.data_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
+            #self.data_backend = ItemBackend("pages", os.path.join(self.data_dir, "items"), self)
+            if self.data_underlay_dir:
+                # layer the data backend into underlay
+                underlay_backend = PageBackend("underlay",
+                                               os.path.join(self.data_underlay_dir, "pages"),
+                                               self)
+                # XXX: To be fully compatible, the copy-on-write argument should be True!!
+                self.data_backend = LayerBackend([self.data_backend], False)
+                self.data_backend.addUnderlay(underlay_backend)
 
     _meta_dict = None
     def load_meta_dict(self):
@@ -839,7 +858,7 @@ options_no_group_name = {
 
   )),
   # ==========================================================================
-  'paths': ('Paths', None, (
+  'data': ('Data storage', None, (
     ('data_dir', './data/', "Path to the data directory containing your (locally made) wiki pages."),
     ('data_underlay_dir', './underlay/', "Path to the underlay directory containing distribution system and help pages."),
     ('cache_dir', None, "Directory for caching, by default computed from `data_dir`/cache."),
@@ -850,6 +869,12 @@ options_no_group_name = {
      'Path to the directory with the Docbook to HTML XSLT files (optional, used by the docbook parser). The default value is correct for Debian Etch.'),
     ('shared_intermap', None,
      "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
+    ('data_backend', None,
+     'Page storage backend; the None default will make Moin construct a backend based on the `data_dir` setting.'),
+    ('user_backend', None,
+     'User storage backend; the None default will make Moin construct a backend based on the `user_dir` setting.'),
+    ('underlay_backend', None,
+     'Underlay storage backend; if None and `data_backend` is also None Moin will construct a backend based on the `underlay_data_dir` setting'),
   )),
   # ==========================================================================
   'urls': ('URLs', None, (
