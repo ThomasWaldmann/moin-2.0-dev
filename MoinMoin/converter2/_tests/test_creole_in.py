@@ -47,7 +47,7 @@ class TestConverter(object):
             ('[[http://moinmo.in/|MoinMoin]]',
                 '<page %s %s><p><a xlink:href="http://moinmo.in/">MoinMoin</a></p></page>' % (namespaces_string, namespaces_string_xlink)),
             ('[[MoinMoin]]',
-                '<page %s %s><p><a xlink:href="wiki:/MoinMoin">MoinMoin</a></p></page>' % (namespaces_string, namespaces_string_xlink)),
+                '<page %s %s><p><a xlink:href="wiki.local:MoinMoin">MoinMoin</a></p></page>' % (namespaces_string, namespaces_string_xlink)),
             ('{{http://moinmo.in/}}',
                 '<page %s %s><p><image xlink:href="http://moinmo.in/" /></p></page>' % (namespaces_string, namespaces_string_xlink)),
             ('{{http://moinmo.in/|MoinMoin}}',
