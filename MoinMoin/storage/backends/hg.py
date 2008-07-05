@@ -144,8 +144,16 @@ class MercurialBackend(Backend):
 
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
+
+        if not isinstance(revno, int):
+            raise TypeError("Wrong Revision number type: %s" % (type(revno)))
+
         ctx = self.repo.changectx()
         try:
+            revs = item.list_revisions()
+            if revno == -1 and revs:
+                revno = max(revs)
+
             ftx = ctx.filectx(self._quote(item.name)).filectx(revno)
         except LookupError:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
