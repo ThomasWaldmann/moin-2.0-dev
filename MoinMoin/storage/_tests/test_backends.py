@@ -19,10 +19,11 @@ from MoinMoin.storage import Backend, Item, Revision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError,\
                                    ItemAlreadyExistsError, RevisionAlreadyExistsError,\
                                    RevisionNumberMismatchError
+from MoinMoin.search import term
 
 default_items = {
     'NewPage': [
-        ('0', {}, "This is NewPage content. A to jest tez zawartosc."),
+        ('0', {}, u"This is NewPage content. A to jest też zawartość."),
         ('1', {}, "Dummy message"),
     ],
     'Test': [
@@ -38,13 +39,32 @@ default_invalid = (42, )
 
 
 class BackendTest(object):
-    """Generic class for backend tests."""
+    """
+    Generic class for backend tests.
+
+    Creates a new backend for each test so they can assume to be
+    sandboxed, in each test the default items are present.
+    """
 
     def __init__(self, backend, items=None, item_names=None, invalid_names=None):
         self.backend = backend
         self.items = items or default_items
         self.item_names = item_names or default_names
         self.invalid_names = invalid_names or default_invalid
+
+    def setup_method(self, method):
+        self.backend = self.create_backend()
+        for iname in self.items:
+            item = self.backend.create_item(iname)
+            for revnostr, meta, revdata in self.items[iname]:
+                rev = item.create_revision(int(revnostr))
+                rev.update(meta)
+                rev.write(revdata.encode('utf-8'))
+                item.commit()
+
+    def teardown_method(self, method):
+        self.kill_backend()
+        self.backend = None
 
     def create_item_helper(self, name):
         item = self.backend.create_item(name)
@@ -161,15 +181,17 @@ class BackendTest(object):
         item.publish_metadata()
 
     def test_existing_item_create_revision(self):
-        item_name = self.items.keys()[0]
-        item = self.backend.get_item(item_name)
-        rev = item.create_revision(len(self.items[item_name]))
+        item = self.backend.get_item(self.items.keys()[0])
+        rev = item.get_revision(-1)
+        rev = item.create_revision(rev.revno + 1)
         assert isinstance(rev, NewRevision)
+        item.rollback()
 
     def test_new_item_create_revision(self):
         item = self.backend.create_item('internal')
         rev = item.create_revision(0)
         assert isinstance(rev, NewRevision)
+        item.rollback()
 
     def test_item_commit_revision(self):
         item = self.backend.create_item("item#11")
