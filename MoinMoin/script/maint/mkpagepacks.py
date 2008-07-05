@@ -9,7 +9,6 @@ MoinMoin - Package Generator
 
 import os
 import zipfile
-from sets import Set
 from datetime import datetime
 
 from MoinMoin import wikidicts, wikiutil
@@ -49,7 +48,7 @@ General syntax: moin [options] maint mkpagepacks [mkpagepacks-options]
         request = self.request
         pageSets = {}
 
-        allPages = Set(request.rootpage.getPageList())
+        allPages = set(request.rootpage.getPageList())
 
         systemPages = wikidicts.Group(request, "SystemPagesGroup").members()
 
@@ -58,20 +57,20 @@ General syntax: moin [options] maint mkpagepacks [mkpagepacks-options]
                 #print x + " -> " + repr(wikidicts.Group(request, x).members())
                 self.gd.addgroup(request, pagename)
 
-        langPages = Set()
+        langPages = set()
         for name, group in self.gd.dictdict.items():
-            groupPages = Set(group.members() + [name])
+            groupPages = set(group.members() + [name])
             name = name.replace("SystemPagesIn", "").replace("Group", "")
             pageSets[name] = groupPages
             langPages |= groupPages
 
-        specialPages = Set(["SystemPagesGroup"])
+        specialPages = set(["SystemPagesGroup"])
 
         masterNonSystemPages = allPages - langPages - specialPages
 
-        moinI18nPages = Set([x for x in masterNonSystemPages if x.startswith("MoinI18n")])
+        moinI18nPages = set([x for x in masterNonSystemPages if x.startswith("MoinI18n")])
 
-        nodistPages = moinI18nPages | Set(["InterWikiMap", ])
+        nodistPages = moinI18nPages | set(["InterWikiMap", ])
 
         extraPages = masterNonSystemPages - nodistPages
 
@@ -104,7 +103,7 @@ General syntax: moin [options] maint mkpagepacks [mkpagepacks-options]
             if page.exists():
                 cnt += 1
                 script.append(packLine([function, str(cnt), pagename]))
-                timestamp = wikiutil.version2timestamp(page.mtime_usecs())
+                timestamp = page.mtime()
                 zi = zipfile.ZipInfo(filename=str(cnt), date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
                 zi.compress_type = COMPRESSION_LEVEL
                 zf.writestr(zi, page.get_raw_body().encode("utf-8"))

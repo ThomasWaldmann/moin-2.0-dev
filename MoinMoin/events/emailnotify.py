@@ -48,7 +48,7 @@ def prep_page_changed_mail(request, page, comment, email_lang, revisions, trivia
             'trivial': (trivial and _("Trivial ")) or "",
             'sitename': page.cfg.sitename or "Wiki",
             'pagename': page.page_name,
-            'username': page.uid_override or user.getUserIdentification(request),
+            'username': page.last_editor(),
         }
 
     return {'subject': subject, 'text': change['text'] + pagelink + change['diff']}
