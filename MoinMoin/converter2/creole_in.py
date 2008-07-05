@@ -31,13 +31,15 @@ class Rules:
     """Hold all the rules for generating regular expressions."""
 
     # For the inline elements:
-    proto = r'http|https|ftp|nntp|news|mailto|telnet|file|irc'
     url =  r'''(?P<url>
             (^ | (?<=\s | [.,:;!?()/=]))
             (?P<escaped_url>~)?
-            (?P<url_target> (?P<url_proto> %s ):\S+? )
+            (?P<url_target>
+                (http|https|ftp|nntp|news|mailto|telnet|file|irc):
+                \S+?
+            )
             ($ | (?=\s | [,.:;!?()] (\s | $)))
-        )''' % proto
+        )'''
     link = r'''(?P<link>
             \[\[
             (?P<link_target>.+?) \s*
@@ -155,7 +157,7 @@ class Converter(object):
     # The _*_repl methods called for matches in regexps. Sometimes the
     # same method needs several names, because of group names in regexps.
 
-    def _url_repl(self, url, url_proto, url_target, escaped_url=None):
+    def _url_repl(self, url, url_target, escaped_url=None):
         """Handle raw urls in text."""
 
         if not escaped_url:
