@@ -34,9 +34,9 @@ def getUserList(request):
     @rtype: list
     @return: all user IDs
     """
-    return request.cfg.user_backend.iteritems()
     ###return ItemCollection(request.cfg.user_backend, request).keys()
-
+    all_users = request.cfg.user_backend.iteritems()
+    return [item.name for item in all_items]
 
 def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """

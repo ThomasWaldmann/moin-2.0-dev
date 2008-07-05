@@ -100,10 +100,9 @@ class MemoryBackend(Backend):
     def iteritems(self):
         """
         Returns an iterator over all items available in this backend.
-        Returns each item and the corresponding item_id in a tuple of the
-        form: (item, item_id).
         """
-        return self._itemmap.iteritems()
+        for itemname in self._itemmap.keys():
+            yield self.get_item(itemname)
 
     def _get_revision(self, item, revno):
         """
