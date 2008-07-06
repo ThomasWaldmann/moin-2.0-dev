@@ -298,34 +298,37 @@ class Page(object):
         @rtype: string
         @return: the full path to the storage area
         """
-        check_create = kw.get('check_create', 1)
-        isfile = kw.get('isfile', 0)
-        use_underlay = kw.get('use_underlay', -1)
+       # check_create = kw.get('check_create', 1)
+       # isfile = kw.get('isfile', 0)
+       # use_underlay = kw.get('use_underlay', -1)
 
-        if self._page_name_force is not None:
-            name = self._page_name_force
-        else:
-            name = self.page_name
+       # if self._page_name_force is not None:
+       #     name = self._page_name_force
+       # else:
+       #     name = self.page_name
 
-        # XXX not honouring use_underlay setting at this time,
-        #     does not make sense much longer...
-        if self._item is None:
-            path = self.request.cfg.data_backend._get_item_path(name)
-        else:
-            path = self._item._backend._get_item_path(name)
+       # # XXX not honouring use_underlay setting at this time,
+       # #     does not make sense much longer...
+       # if self._item is None:
+       #     path = self.request.cfg.data_backend._get_item_path(name)
+       # else:
+       #     path = self._item._backend._get_item_path(name)
 
-        fullpath = os.path.join(*((path, ) + args))
-        if check_create:
-            if isfile:
-                dirname, filename = os.path.split(fullpath)
-            else:
-                dirname = fullpath
-            try:
-                os.makedirs(dirname)
-            except OSError, err:
-                if not os.path.exists(dirname):
-                    raise err
-        return fullpath
+       # fullpath = os.path.join(*((path, ) + args))
+       # if check_create:
+       #     if isfile:
+       #         dirname, filename = os.path.split(fullpath)
+       #     else:
+       #         dirname = fullpath
+       #     try:
+       #         os.makedirs(dirname)
+       #     except OSError, err:
+       #         if not os.path.exists(dirname):
+       #             raise err
+       # return fullpath
+        print "WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!"
+        return "/tmp/"
+
 
     def _text_filename(self, **kw):
         """
@@ -1386,7 +1389,9 @@ class RootPage(object):
 
         Just a hack for event and edit log currently.
         """
-        return os.path.join(self.request.cfg.data_dir, fname)
+        ###return os.path.join(self.request.cfg.data_dir, fname)
+        print "WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!"
+        return "/tmp/"
 
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
         """
