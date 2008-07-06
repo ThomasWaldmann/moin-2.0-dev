@@ -50,9 +50,6 @@ class Rules:
                     [^|\]]+?
                 )
                 |
-                (
-                    (?P<link_special_scheme> [A-Z][a-zA-Z]+ ):
-                )?
                 (?P<link_page> [^|\]]+? )
             )
             \s*
@@ -183,23 +180,15 @@ class Converter(object):
             # this url is escaped, we render it as text
             self._stack_top_append(url_target)
 
-    def _link_repl(self, link, link_url=None, link_special=None, link_page=None, link_text=None):
+    def _link_repl(self, link, link_url=None, link_page=None, link_text=None):
         """Handle all kinds of links."""
 
         if link_page is not None:
-            if link_special is None:
-                target = 'wiki.local:' + link_page
-                text = link_page
-            else:
-                if link_special in ('attachment', 'drawing', 'image'):
-                    target = ''
-                else:
-                    target = 'wiki://' + link_special + '/' + link_page
-                text = link_special_scheme + ':' + link_page
+            target = 'wiki.local:' + link_page
+            text = link_page
         else:
             target = link_url
             text = link_url
-        # TODO: Convert into URI
         tag = ElementTree.QName('a', namespaces.moin_page)
         tag_href = ElementTree.QName('href', namespaces.xlink)
         element = ElementTree.Element(tag, attrib = {tag_href: target})
