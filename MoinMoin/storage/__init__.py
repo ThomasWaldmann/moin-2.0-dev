@@ -269,7 +269,7 @@ class Item(object, DictMixin):  # TODO Improve docstring
             raise TypeError("Key must be string type")
 
         if not value_type_is_valid(value):
-            raise TypeError("Value must be string, int, long, float, bool, complex or a nested tuple of the former")
+            raise TypeError("Value must be string, unicode, int, long, float, bool, complex or a nested tuple thereof.")
 
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
@@ -520,11 +520,11 @@ def value_type_is_valid(value):
     Since tuples can contain other types, we need to check the
     types recursively.
     """
-    if isinstance(value, (str, int, long, float, complex)):
+    if isinstance(value, (str, unicode, int, long, float, complex)):
         return True
 
     elif isinstance(value, tuple):
-        for element in tuple:
+        for element in value:
             if not value_type_is_valid(element):
                 return False
 
