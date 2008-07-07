@@ -34,13 +34,15 @@ def getUserList(request):
     @rtype: list
     @return: all user IDs
     """
-    return ItemCollection(request.cfg.user_backend, request).keys()
-
+    ###return ItemCollection(request.cfg.user_backend, request).keys()
+    all_users = request.cfg.user_backend.iteritems()
+    return [item.name for item in all_items]
 
 def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
     filter = term.ItemMetaDataMatch(key, value)
-    identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
+    ###identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
+    identifier = request.cfg.user_backend.search_item(filter)
     users = []
     for user in identifier:
         users.append(User(request, user))
@@ -64,7 +66,9 @@ def get_by_jabber_id(request, jabber_id):
 def getUserIdByOpenId(request, openid):
     """ Searches for an user with a particular openid id and returns it. """
     filter = term.ItemHasMetaDataValue('openids', openid)
-    identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
+    ###identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
+    identifier = request.cfg.user_backend.search_item(filter)
+
     users = []
     for user in identifier:
         users.append(User(request, user))
@@ -79,8 +83,10 @@ def getUserId(request, searchName):
     @return: the corresponding user ID or None
     """
     try:
-        coll = ItemCollection(request.cfg.user_backend, request)
-        for user in coll.iterate(term.ItemMetaDataMatch('name', searchName)):
+        ###coll = ItemCollection(request.cfg.user_backend, request)
+        backend = request.cfg.user_backend
+
+        for user in backend.search_item(term.ItemMetaDataMatch('name', searchName)):
             return user
         return None
     except IndexError:
@@ -164,19 +170,20 @@ def get_printable_editor(request, userid, addr, hostname):
             request.formatter.span(0))
 
 
-def encodePassword(pwd):
+def encodePassword(pwd, salt=None):
     """ Encode a cleartext password
 
     @param pwd: the cleartext password, (unicode)
-    @param charset: charset used to encode password, used only for
-        compatibility with old passwords generated on moin-1.2.
+    @param salt: the salt for the password (string)
     @rtype: string
     @return: the password in apache htpasswd compatible SHA-encoding,
         or None
     """
     pwd = pwd.encode('utf-8')
 
-    salt = random_string(20)
+    if salt is None:
+        salt = random_string(20)
+    assert isinstance(salt, str)
     hash = sha.new(pwd)
     hash.update(salt)
 
@@ -243,7 +250,8 @@ class User:
                                First tuple element was used for authentication.
         """
 
-        self._item_collection = ItemCollection(request.cfg.user_backend, None)
+        ###self._item_collection = ItemCollection(request.cfg.user_backend, None)
+        self._user_backend = request.cfg.user_backend
         self._user = None
 
         self._cfg = request.cfg
@@ -303,10 +311,11 @@ class User:
             if self.id:
                 # no password given should fail
                 self.load_from_id(password or u'')
-            else:
-                self.id = self.make_id()
-        else:
+        # Still no ID - make new user
+        if not self.id:
             self.id = self.make_id()
+            if password is not None:
+                self.enc_password = encodePassword(password)
 
         # "may" so we can say "if user.may.read(pagename):"
         if self._cfg.SecurityPolicy:
@@ -347,6 +356,7 @@ class User:
         @return: true, if we have a user account
         """
         return self.id in self._item_collection
+        return self._user_backend.has_item(self.id)  # XXX What is self.id? Is it really a name?
 
     def load_from_id(self, password=None):
         """ Load user account data from disk.
@@ -362,7 +372,8 @@ class User:
         if not self.exists():
             return
 
-        self._user = self._item_collection[self.id]
+        ### self._user = self._item_collection[self.id]
+        self._user = self._user_backend.get_item(self.id)
 
         user_data = dict()
         user_data.update(self._user.metadata)
@@ -373,7 +384,7 @@ class User:
 
         if password is not None:
             # Check for a valid password, possibly changing storage
-            valid, changed = self._validatePassword(user_data)
+            valid, changed = self._validatePassword(user_data, password)
             if not valid:
                 return
 
@@ -419,13 +430,14 @@ class User:
         if changed:
             self.save()
 
-    def _validatePassword(self, data):
+    def _validatePassword(self, data, password):
         """
         Check user password.
 
         This is a private method and should not be used by clients.
 
         @param data: dict with user data (from storage)
+        @param password: password to verify
         @rtype: 2 tuple (bool, bool)
         @return: password is valid, enc_password changed
         """
@@ -435,11 +447,11 @@ class User:
         if not epwd:
             return False, False
 
-        # Get the clear text password from the form (require non empty
-        # password)
-        password = self._request.form.get('password', [None])[0]
+        # require non empty password
         if not password:
             return False, False
+
+        password = password.encode('utf-8')
 
         if epwd[:5] == '{SHA}':
             enc = '{SHA}' + base64.encodestring(sha.new(password).digest()).rstrip()
@@ -471,21 +483,27 @@ class User:
         those starting with an underscore.
         """
         if not self.exists():
-            self._user = self._item_collection.new_item(self.id)
+           ### self._user = self._item_collection.new_item(self.id)
+           self._user = self._user_backend.create_item(self.id)
 
-        self._user.lock = True
-        for key in self._user.metadata:
-            del self._user.metadata[key]
+        ### self._user.lock = True
+        self._user.change_metadata()
+
+        ###for key in self._user.metadata:
+        ###   del self._user.metadata[key]
+        for key in self._user:
+            del self.user[key]
 
         self.last_saved = str(time.time())
 
         attrs = self.persistent_items()
         attrs.sort()
         for key, value in attrs:
-            self._user.metadata[key] = value
+            ###self._user.metadata[key] = value
+            self._user[key] = value
 
-        self._user.metadata.save()
-        self._user.lock = False
+        ###self._user.metadata.save()
+        self._user.publish_metadata()
 
         arena = 'user'
         key = 'name2id'

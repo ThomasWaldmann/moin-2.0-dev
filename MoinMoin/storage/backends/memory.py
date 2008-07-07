@@ -48,16 +48,12 @@ class MemoryBackend(Backend):
         Takes a searchterm and returns an iterator (maybe empty) over matching
         objects.
         """
-        # This is a very very very stupid search algorithm
-        # FIXME 19:14 < johill> dennda: you misunderstood what a search term is meant to be
-        #       19:14 < johill> dennda: look at MoinMoin/search/term.py (but feel free to put low on your todo list right now)
-        matches = []
+        # This is a very very very stupid algorithm
+        for item in self.iteritems():
+            searchterm.prepare()
+            if searchterm.evaluate(item):
+                yield item
 
-        for itemname in self._itemmap:
-            if searchterm.lower() in itemname.lower():
-                matches.append(itemname)
-
-        return iter(matches)
 
     def get_item(self, itemname):
         """
@@ -100,10 +96,9 @@ class MemoryBackend(Backend):
     def iteritems(self):
         """
         Returns an iterator over all items available in this backend.
-        Returns each item and the corresponding item_id in a tuple of the
-        form: (item, item_id).
         """
-        return self._itemmap.iteritems()
+        for itemname in self._itemmap.keys():
+            yield self.get_item(itemname)
 
     def _get_revision(self, item, revno):
         """

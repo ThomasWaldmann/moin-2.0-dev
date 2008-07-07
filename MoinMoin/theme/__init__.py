@@ -1718,6 +1718,7 @@ var gui_editor_link_text = "%(text)s";
 
         # In standard mode, emit theme.header
         else:
+            exists = pagename and page.exists(includeDeleted=True)
             # prepare dict for theme code:
             d = {
                 'theme': self.name,
@@ -1728,7 +1729,8 @@ var gui_editor_link_text = "%(text)s";
                 'page': page,
                 'rev': rev,
                 'pagesize': pagename and page.size() or 0,
-                'last_edit_info': pagename and page.last_edit(printable=True) or '',
+                # exists checked to avoid creation of empty edit-log for non-existing pages
+                'last_edit_info': exists and page.lastEditInfo() or '',
                 'page_name': pagename or '',
                 'page_find_page': page_find_page,
                 'page_front_page': page_front_page,
