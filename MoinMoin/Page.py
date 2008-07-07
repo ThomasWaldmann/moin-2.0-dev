@@ -24,11 +24,12 @@ import os, re, codecs
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import config, caching, user, util, wikiutil
+from MoinMoin import config, caching, util, wikiutil, user
 from MoinMoin.logfile import eventlog
-from MoinMoin.storage.external import ItemCollection
+from MoinMoin.storage import Backend
+#from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage.external import DELETED
+from MoinMoin.storage import DELETED
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
@@ -83,7 +84,8 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        self._items = ItemCollection(request.cfg.data_backend, request)
+        ###self._items = ItemCollection(request.cfg.data_backend, request)
+        self._backend = request.cfg.data_backend
 
         self.reset()
 
@@ -119,8 +121,9 @@ class Page(object):
             return
 
         try:
-            self.__item = self._items[self.page_name]
-            self.__rev = self._item[self.rev]
+            ###self.__item = self._items[self.page_name]
+            self.__item = self._backend.get_item(self.page_name)
+            self.__rev = self.__item.get_revision(self.rev)
             self._body = None
             self._meta = None
             self._data = None
@@ -177,15 +180,16 @@ class Page(object):
     def get_meta(self):
         if self._meta is None:
             if self._rev is not None:
-                self._meta = self._rev.metadata
+                self._meta = self._rev
         return self._meta
     meta = property(fget=get_meta) # processing instructions, ACLs (upper part of page text)
 
     def get_data(self):
         if self._data is None:
             if self._rev is not None:
-                data = self._rev.data.read()
-                self._rev.data.close()
+                ###data = self._rev.data.read()
+                ###self._rev.data.close()
+                data = self._rev.read_data()
                 data = data.decode(config.charset)
                 self._data = self.decodeTextMimeType(data)
         return self._data
@@ -244,9 +248,16 @@ class Page(object):
         @rtype: list of ints
         @return: page revisions
         """
+     ###   revisions = []
+     ###   if self._item:
+     ###       revisions = self._item.keys()
+     ###   return revisions
+
         revisions = []
         if self._item:
-            revisions = self._item.keys()
+            revisions = self._item.list_revisions()
+            revisions.reverse()
+
         return revisions
 
     def current_rev(self):
@@ -256,7 +267,8 @@ class Page(object):
         @return: int revision
         """
         if self._item:
-            return self._item.current
+            return max(self._item.list_revisions())
+
         return -1
 
     def get_real_rev(self):
@@ -286,34 +298,37 @@ class Page(object):
         @rtype: string
         @return: the full path to the storage area
         """
-        check_create = kw.get('check_create', 1)
-        isfile = kw.get('isfile', 0)
-        use_underlay = kw.get('use_underlay', -1)
+       # check_create = kw.get('check_create', 1)
+       # isfile = kw.get('isfile', 0)
+       # use_underlay = kw.get('use_underlay', -1)
 
-        if self._page_name_force is not None:
-            name = self._page_name_force
-        else:
-            name = self.page_name
+       # if self._page_name_force is not None:
+       #     name = self._page_name_force
+       # else:
+       #     name = self.page_name
 
-        # XXX not honouring use_underlay setting at this time,
-        #     does not make sense much longer...
-        if self._item is None:
-            path = self.request.cfg.data_backend._get_item_path(name)
-        else:
-            path = self._item._backend._get_item_path(name)
+       # # XXX not honouring use_underlay setting at this time,
+       # #     does not make sense much longer...
+       # if self._item is None:
+       #     path = self.request.cfg.data_backend._get_item_path(name)
+       # else:
+       #     path = self._item._backend._get_item_path(name)
 
-        fullpath = os.path.join(*((path, ) + args))
-        if check_create:
-            if isfile:
-                dirname, filename = os.path.split(fullpath)
-            else:
-                dirname = fullpath
-            try:
-                os.makedirs(dirname)
-            except OSError, err:
-                if not os.path.exists(dirname):
-                    raise err
-        return fullpath
+       # fullpath = os.path.join(*((path, ) + args))
+       # if check_create:
+       #     if isfile:
+       #         dirname, filename = os.path.split(fullpath)
+       #     else:
+       #         dirname = fullpath
+       #     try:
+       #         os.makedirs(dirname)
+       #     except OSError, err:
+       #         if not os.path.exists(dirname):
+       #             raise err
+       # return fullpath
+        print "WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!"
+        return "/tmp/"
+
 
     def _text_filename(self, **kw):
         """
@@ -464,7 +479,7 @@ class Page(object):
         if self._item is None or self._rev is None:
             return False
 
-        if not includeDeleted and self._rev.deleted:
+        if not includeDeleted and self._rev["DELETED"]:  # XXX Error handling missing
             return False
 
         if domain is None:
@@ -1365,7 +1380,8 @@ class RootPage(object):
         Init the item collection.
         """
         self.request = request
-        self._items = ItemCollection(request.cfg.data_backend, request)
+        ###self._items = ItemCollection(request.cfg.data_backend, request)
+        self._backend = request.cfg.data_backend
 
     def getPagePath(self, fname, isfile):
         """
@@ -1373,7 +1389,9 @@ class RootPage(object):
 
         Just a hack for event and edit log currently.
         """
-        return os.path.join(self.request.cfg.data_dir, fname)
+        ###return os.path.join(self.request.cfg.data_dir, fname)
+        print "WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!"
+        return "/tmp/"
 
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
         """
@@ -1422,7 +1440,7 @@ class RootPage(object):
         if filterfunction:
             filter.add(term.NameFn(filterfunction))
 
-        items = self._items.iterate(filter=filter)
+        items = self._backend.search_item(filter)
 
         if user or return_objects:
             # Filter names
@@ -1471,7 +1489,9 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = self._items.iterate(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
+        ###items = self._items.iterate(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
+        items = self._backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
+
         count = 0
         for item in items:
             count += 1
