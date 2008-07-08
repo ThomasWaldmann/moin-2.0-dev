@@ -11,10 +11,13 @@ from emeraldtree import ElementTree
 from MoinMoin.util import namespaces
 
 class ConverterMacro(object):
+    def _BR_repl(self, args, text, type):
+        return ElementTree.Element(ElementTree.QName('line-break', namespaces.moin_page))
+
     def macro(self, name, args, text, type):
         func = getattr(self, '_%s_repl' % name, None)
         if func is not None:
-            return func(name, args, text, type)
+            return func(args, text, type)
 
         # TODO: other namespace?
         tag = ElementTree.QName('macro', namespaces.moin_page)
