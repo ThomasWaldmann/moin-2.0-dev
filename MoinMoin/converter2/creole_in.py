@@ -63,7 +63,19 @@ class Rules:
             ([|] \s* (?P<image_text>.+?) \s*)?
             }}
         )'''
-    macro = r'''(?P<macro>
+    macro_block = r'''
+        ^
+        \s*?
+        (?P<macroblock>
+            <<
+            (?P<macro_name> \w+)
+            (\( (?P<macro_args> .*?) \))? \s*
+            ([|] \s* (?P<macro_text> .+?) \s* )?
+            >>
+        )
+        \s*?
+        $'''
+    macro_inline = r'''(?P<macroinline>
             <<
             (?P<macro_name> \w+)
             (\( (?P<macro_args> .*?) \))? \s*
@@ -126,7 +138,7 @@ class Rules:
                 (?P<head> [=][^|]+ ) |
                 (?P<cell> (  %s | [^|])+ )
             ) \s*
-        ''' % '|'.join([link, macro, image, nowiki_inline])
+        ''' % '|'.join([link, macro_inline, image, nowiki_inline])
 
 class Converter(ConverterMacro):
     """
@@ -143,9 +155,10 @@ class Converter(ConverterMacro):
     cell_re = re.compile(Rules.cell, re.X | re.U) # for table cells
     # For block elements:
     block_re = re.compile('|'.join([Rules.line, Rules.head, Rules.separator,
-        Rules.nowiki_block, Rules.list, Rules.table, Rules.text_block]), re.X | re.U | re.M)
+        Rules.macro_block, Rules.nowiki_block, Rules.list, Rules.table,
+        Rules.text_block]), re.X | re.U | re.M)
     # For inline elements:
-    inline_re = re.compile('|'.join([Rules.link, Rules.url, Rules.macro,
+    inline_re = re.compile('|'.join([Rules.link, Rules.url, Rules.macro_inline,
         Rules.nowiki_inline, Rules.image, Rules.strong, Rules.emph, Rules.linebreak,
         Rules.escape, Rules.text_inline]), re.X | re.U | re.DOTALL)
 
@@ -197,11 +210,17 @@ class Converter(ConverterMacro):
         self._apply(self.link_re, link_text or text)
         self._stack_pop()
 
-    def _macro_repl(self, macro, macro_name, macro_args=''):
+    def _macroblock_repl(self, macroblock, macro_name, macro_args=''):
         """Handles macros using the placeholder syntax."""
 
-        # TODO: real type
-        self._stack_top_append(self.macro(macro_name, macro_args, macro, 'block'))
+        elem = self.macro(macro_name, macro_args, macroblock, 'block')
+        self._stack_top_append(elem)
+
+    def _macroinline_repl(self, macroinline, macro_name, macro_args=''):
+        """Handles macros using the placeholder syntax."""
+
+        elem = self.macro(macro_name, macro_args, macroinline, 'inline')
+        self._stack_top_append(elem)
 
     def _image_repl(self, image, image_target, image_text=None):
         """Handles images and attachemnts included in the page."""
