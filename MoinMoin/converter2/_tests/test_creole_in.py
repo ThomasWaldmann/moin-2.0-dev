@@ -55,7 +55,7 @@ class TestConverter(object):
             ('----',
                 '<page %s><separator /></page>' % namespaces_string),
             ('<<Macro>>',
-                '<page %s><p><macro macro-name="Macro" /></p></page>' % namespaces_string),
+                '<page %s><p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></p></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i

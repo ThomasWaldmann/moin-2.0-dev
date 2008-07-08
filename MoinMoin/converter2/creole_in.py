@@ -26,6 +26,7 @@ import re
 from emeraldtree import ElementTree
 
 from MoinMoin.util import namespaces
+from MoinMoin.converter2._wiki_macro import ConverterMacro
 
 class Rules:
     """Hold all the rules for generating regular expressions."""
@@ -127,7 +128,7 @@ class Rules:
             ) \s*
         ''' % '|'.join([link, macro, image, nowiki_inline])
 
-class Converter(object):
+class Converter(ConverterMacro):
     """
     Parse the raw text and create a document object
     that can be converted into output using Emitter.
@@ -196,17 +197,11 @@ class Converter(object):
         self._apply(self.link_re, link_text or text)
         self._stack_pop()
 
-    def _macro_repl(self, macro, macro_name, macro_args=None):
+    def _macro_repl(self, macro, macro_name, macro_args=''):
         """Handles macros using the placeholder syntax."""
 
-        # TODO: other namespace?
-        tag = ElementTree.QName('macro', namespaces.moin_page)
-        tag_name = ElementTree.QName('macro-name', namespaces.moin_page)
-        tag_args = ElementTree.QName('macro-args', namespaces.moin_page)
-        attrib = {tag_name: macro_name}
-        if macro_args is not None:
-            attrib[tag_args] = macro_args
-        self._stack_top_append(ElementTree.Element(tag, attrib))
+        # TODO: real type
+        self._stack_top_append(self.macro(macro_name, macro_args, macro, 'block'))
 
     def _image_repl(self, image, image_target, image_text=None):
         """Handles images and attachemnts included in the page."""
