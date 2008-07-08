@@ -14,6 +14,12 @@ class ConverterMacro(object):
     def _BR_repl(self, args, text, type):
         return ElementTree.Element(ElementTree.QName('line-break', namespaces.moin_page))
 
+    def _FootNote_repl(self, args, text, type):
+        tag = ElementTree.QName('note', namespaces.moin_page)
+        tag_body = ElementTree.QName('note-body', namespaces.moin_page)
+        tag_class = ElementTree.QName('note-class', namespaces.moin_page)
+        return ElementTree.Element(tag, attrib={tag_class: 'footnote'}, children=[text])
+
     def macro(self, name, args, text, type):
         func = getattr(self, '_%s_repl' % name, None)
         if func is not None:
