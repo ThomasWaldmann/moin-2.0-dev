@@ -140,6 +140,10 @@ class ConverterBase(object):
         # TODO
         pass
 
+    def visit_moinpage_note(self, elem):
+        # TODO
+        pass
+
     def visit_moinpage_p(self, elem):
         return self.new_copy(ElementTree.QName('p', namespaces.html), elem)
 
