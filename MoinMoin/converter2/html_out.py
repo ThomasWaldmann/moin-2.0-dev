@@ -164,8 +164,19 @@ class ConverterBase(object):
     def visit_moinpage_table(self, elem):
         ret = self.new(ElementTree.QName('table', namespaces.html))
         for item in elem:
-            if item.tag.uri == namespaces.moin_page and item.tag.name == 'table-body':
-                ret.append(self.new_copy(ElementTree.QName('tbody', namespaces.html), item))
+            tag = None
+            if item.tag.uri == namespaces.moin_page:
+                if item.tag.name == 'table-body':
+                    tag = ElementTree.QName('tbody', namespaces.html)
+                elif item.tag.name == 'table-header':
+                    tag = ElementTree.QName('thead', namespaces.html)
+                elif item.tag.name == 'table-footer':
+                    tag = ElementTree.QName('tfoot', namespaces.html)
+            elif item.tag.uri == namespaces.html and \
+                    item.tag.name in ('tbody', 'thead', 'tfoot'):
+                tag = item.tag
+            if tag is not None:
+                ret.append(self.new_copy(tag, item))
         return ret
 
     def visit_moinpage_table_cell(self, elem):

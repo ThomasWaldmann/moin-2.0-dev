@@ -83,8 +83,8 @@ class TestConverterBase(object):
 
     def test_table(self):
         pairs = [
-            ('<page %s><table><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></page>' % namespaces_string_page_default,
-                '<div %s><table><tbody><tr><td>Cell</td></tr></tbody></table></div>' % namespaces_string_html_default),
+            ('<page %s><table><table-header><table-row><table-cell>Header</table-cell></table-row></table-header><table-footer><table-row><table-cell>Footer</table-cell></table-row></table-footer><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></page>' % namespaces_string_page_default,
+                '<div %s><table><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
             yield (self._do,) + i
