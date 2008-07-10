@@ -30,6 +30,8 @@ from mercurial import hg, ui, util, commands, repo, revlog
 import StringIO
 import tempfile
 import weakref
+import statvfs
+import md5
 import os
 
 from MoinMoin.wikiutil import quoteWikinameFS, unquoteWikiname
@@ -54,6 +56,7 @@ class MercurialBackend(Backend):
         self.repo_path = os.path.abspath(path)
         self.unrevisioned_path = os.path.join(self.repo_path, 'unrevisioned')
         self.ui = ui.ui(interactive=False, quiet=True)
+        self.max_fname_length = os.statvfs(self.repo_path)[statvfs.F_NAMEMAX]
         self._lockref = None
             
         try:
@@ -128,8 +131,8 @@ class MercurialBackend(Backend):
                 raise RevisionNumberMismatchError("Unable to create revision \
                       number: %d. First Revision number must be 0." % revno)
 
-            item._tmpfd, item._tmpfname = tempfile.mkstemp(prefix=item.name,
-                    dir=self.repo_path)
+            item._tmpfd, item._tmpfname = tempfile.mkstemp(prefix='tmp',
+                    dir=self.repo_path, suffix='rev')
         else:
             if revno in revs:
                 raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
@@ -239,6 +242,7 @@ class MercurialBackend(Backend):
     def _commit_item(self, item):
         """Commit Item changes within transaction (Revision) to repository."""
         revision = item._uncommitted_revision
+            
         quoted_name = self._quote(item.name)
 
         lock = self._lock()
@@ -267,7 +271,7 @@ class MercurialBackend(Backend):
                     # if revision._metadata:
                     #   revision._metadata.copy()   
 
-            self.repo.commit(text=msg, user='wiki', files=[quoted_name])
+            self.repo.commit(text=msg, user='wiki', files=[quoted_name], force=True)
         finally:
             del lock
             item._uncommitted_revision = None
@@ -280,6 +284,16 @@ class MercurialBackend(Backend):
             pass
 
         item._uncommitted_revision = None
+
+    def _trim(self, name):
+        # see http://www.moinmo.in/PawelPacana/MercurialBackend#Mercurialbehaviour
+        if len(name) > ((self.max_fname_length - 2) // 2):
+            m = md5.new()
+            hashed = m.hexdigest()
+            m.update(name)
+            return "%s-%s" % (name[:(self.max_fname_length - len(hashed) - 3) // 2], hashed)
+        else:
+            return name
 
     def _lock(self):
         """
@@ -305,7 +319,7 @@ class MercurialBackend(Backend):
         """Return safely quoted name."""
         if not isinstance(name, unicode):
             name = unicode(name, 'utf-8')
-        return quoteWikinameFS(name)
+        return self._trim(quoteWikinameFS(name))
 
     def _unquote(self, quoted_name):
         """Return unquoted, real name."""
