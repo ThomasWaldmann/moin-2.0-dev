@@ -116,6 +116,13 @@ class MercurialBackend(Backend):
         
         return Item(self, itemname)
 
+    def search_item(self, searchterm):
+        """Returns generator for iterating over matched items by searchterm."""
+        for item in self.iteritems():
+            searchterm.prepare()
+            if searchterm.evaluate(item):
+                yield item
+
     def iteritems(self):
         """
         Returns generator for iterating through items collection 
