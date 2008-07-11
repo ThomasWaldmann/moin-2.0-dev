@@ -33,7 +33,8 @@ default_items = {
 }
 
 default_names = ("my_item", u"äöüß", u"hans_würstchen", "with space", "name#with#hash",
-                 "very_long_name_quite_safe_although_exceedind_255_chars_length_limit_due_to_multiplying_it" * 50,
+                 "very_long_name_quite_safe_although_exceeding_filename_length_limit" * 50 + "ending_1",
+                 "very_long_name_quite_safe_although_exceeding_filename_length_limit" * 50 + "ending_2",
                  u"_AółóĄ_" * 100,)
 
 default_invalid = (42, )
@@ -180,6 +181,19 @@ class BackendTest(object):
         item.change_metadata()
         item["asd"] = "asd"
         item.publish_metadata()
+
+    def test_item_metadata_multiple_change_after_create(self):
+        name = "fooafoefoe"
+        item1 = self.backend.create_item(name)
+        item2 = self.backend.create_item(name)
+        item1.change_metadata()
+        item2.change_metadata()
+        item1["a"] = "a"
+        item2["a"] = "b"
+        item1.publish_metadata()
+        py.test.raises(ItemAlreadyExistsError, item2.publish_metadata)
+        item = self.backend.get_item(name)
+        assert item["a"] == "a"
 
     def test_existing_item_create_revision(self):
         item = self.backend.get_item(self.items.keys()[0])

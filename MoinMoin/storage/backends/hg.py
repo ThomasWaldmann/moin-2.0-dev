@@ -254,19 +254,14 @@ class MercurialBackend(Backend):
         """Start item metadata transaction."""
         if os.path.exists(self._unrev_path(item.name)):
             self._item_lock(item)
+            item._create = False
+        else:
+            item._create = True
 
     def _publish_item_metadata(self, item):
         """Dump Item metadata to file and finish transaction."""
         quoted_name = self._quote(item.name)
-        if not os.path.exists(self._unrev_path(item.name)):
-            tmpfd, tmpfname = tempfile.mkstemp(prefix='tmp', suffix='meta', dir=self.unrevisioned_path)
-            f = os.fdopen(tmpfd, 'wb')
-            if item._metadata is None:
-                item._metadata = {}
-            pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
-            f.close()
-            util.rename(tmpfname, self._unrev_path(quoted_name))
-        else:
+        if not item._create:
             if item._metadata is None:
                 pass
             else:
@@ -276,7 +271,18 @@ class MercurialBackend(Backend):
                 f.close()
                 util.rename(tmpfname, self._unrev_path(quoted_name))
             del self._item_metadata_lock[item.name]
-        
+        else:
+            if self.has_item(item.name):
+                raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
+            else:
+                tmpfd, tmpfname = tempfile.mkstemp(prefix='tmp', suffix='meta', dir=self.unrevisioned_path)
+                f = os.fdopen(tmpfd, 'wb')
+                if item._metadata is None:
+                    item._metadata = {}
+                pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
+                f.close()
+                util.rename(tmpfname, self._unrev_path(quoted_name))
+                    
     def _get_item_metadata(self, item):
         """Loads Item metadata from file. Always returns dictionary."""
         quoted_name = self._quote(item.name)
