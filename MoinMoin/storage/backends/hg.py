@@ -142,8 +142,7 @@ class MercurialBackend(Backend):
                 raise RevisionNumberMismatchError("Unable to create revision \
                       number: %d. First Revision number must be 0." % revno)
 
-            item._tmpfd, item._tmpfname = tempfile.mkstemp(prefix='tmp',
-                    dir=self.repo_path, suffix='rev')
+            item._tmpfd, item._tmpfname = tempfile.mkstemp("-rev", "tmp-", self.repo_path)
         else:
             if revno in revs:
                 raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
@@ -265,7 +264,7 @@ class MercurialBackend(Backend):
             if item._metadata is None:
                 pass
             else:
-                tmpfd, tmpfname = tempfile.mkstemp(prefix='tmp', suffix='meta', dir=self.unrevisioned_path)
+                tmpfd, tmpfname = tempfile.mkstemp("-meta", "tmp-", self.unrevisioned_path)
                 f = os.fdopen(tmpfd, 'wb')
                 pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
                 f.close()
@@ -275,7 +274,7 @@ class MercurialBackend(Backend):
             if self.has_item(item.name):
                 raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
             else:
-                tmpfd, tmpfname = tempfile.mkstemp(prefix='tmp', suffix='meta', dir=self.unrevisioned_path)
+                tmpfd, tmpfname = tempfile.mkstemp("-meta", "tmp-", self.unrevisioned_path)
                 f = os.fdopen(tmpfd, 'wb')
                 if item._metadata is None:
                     item._metadata = {}
@@ -316,7 +315,7 @@ class MercurialBackend(Backend):
                 else:
                     revision._data.seek(0)
                     
-                    fd, fname = tempfile.mkstemp(prefix=item.name, dir=self.repo_path)
+                    fd, fname = tempfile.mkstemp("-commit", "tmp-", self.repo_path)
                     os.write(fd, revision._data.getvalue())
                     os.close(fd)
                     util.rename(self._path(fname), self._path(quoted_name))
