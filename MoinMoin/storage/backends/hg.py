@@ -328,11 +328,12 @@ class MercurialBackend(Backend):
         item._uncommitted_revision = None
 
     def _trim(self, name):
+        """Trim given name to fit in maximum supported length on filesystem."""
         # see http://www.moinmo.in/PawelPacana/MercurialBackend#Mercurialbehaviour
         if len(name) > ((self.max_fname_length - 2) // 2):
             m = md5.new()
-            hashed = m.hexdigest()
             m.update(name)
+            hashed = m.hexdigest()
             return "%s-%s" % (name[:(self.max_fname_length - len(hashed) - 3) // 2], hashed)
         else:
             return name
