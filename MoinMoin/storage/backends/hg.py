@@ -27,6 +27,7 @@
 """
 
 from mercurial import hg, ui, util, commands, repo, revlog
+import cPickle as pickle
 import StringIO
 import tempfile
 import weakref
@@ -41,6 +42,8 @@ from MoinMoin.storage.error import BackendError, NoSuchItemError,\
                                    RevisionNumberMismatchError,\
                                    ItemAlreadyExistsError, RevisionAlreadyExistsError
 
+
+PICKLEPROTOCOL = 1
 
 class MercurialBackend(Backend):
     """This class implements Mercurial backend storage."""
@@ -57,6 +60,7 @@ class MercurialBackend(Backend):
         self.unrevisioned_path = os.path.join(self.repo_path, 'unrevisioned')
         self.ui = ui.ui(interactive=False, quiet=True)
         self.max_fname_length = os.statvfs(self.repo_path)[statvfs.F_NAMEMAX]
+        self._item_metadata_lock = {}
         self._lockref = None
             
         try:
@@ -238,7 +242,45 @@ class MercurialBackend(Backend):
             item._name = newname
         finally:
             del lock
-                
+    
+    def _change_item_metadata(self, item):
+        """Start item metadata transaction."""
+        if os.path.exists(self._unrev_path(item.name)):
+            self._item_lock(item)
+
+    def _publish_item_metadata(self, item):
+        """Dump Item metadata to file and finish transaction."""
+        quoted_name = self._quote(item.name)
+        if not os.path.exists(self._unrev_path(item.name)):
+            tmpfd, tmpfname = tempfile.mkstemp(prefix='tmp', suffix='meta', dir=self.unrevisioned_path)
+            f = os.fdopen(tmpfd, 'wb')
+            if item._metadata is None:
+                item._metadata = {}
+            pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
+            f.close()
+            util.rename(tmpfname, self._unrev_path(quoted_name))
+        else:
+            if item._metadata is None:
+                pass
+            else:
+                tmpfd, tmpfname = tempfile.mkstemp(prefix='tmp', suffix='meta', dir=self.unrevisioned_path)
+                f = os.fdopen(tmpfd, 'wb')
+                pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
+                f.close()
+                util.rename(tmpfname, self._unrev_path(quoted_name))
+            del self._item_metadata_lock[item.name]
+        
+    def _get_item_metadata(self, item):
+        """Loads Item metadata from file. Always returns dictionary."""
+        quoted_name = self._quote(item.name)
+        if os.path.exists(self._unrev_path(quoted_name)):
+            f = open(self._unrev_path(quoted_name), "rb")
+            item._metadata = pickle.load(f)
+            f.close()
+        else:
+            item._metadata = {}
+        return item._metadata
+    
     def _commit_item(self, item):
         """Commit Item changes within transaction (Revision) to repository."""
         revision = item._uncommitted_revision
@@ -305,6 +347,14 @@ class MercurialBackend(Backend):
         lock = self.repo._lock(os.path.join(self.repo_path, 'wikilock'), True, None,
                 None, '')
         self._lockref = weakref.ref(lock)
+        return lock
+
+    def _item_lock(self, item):
+        """Acquire unrevisioned Item lock."""
+        if self._item_metadata_lock.has_key(item.name) and self._item_metadata_lock[item.name]():
+            return self._item_metadata_lock[item.name]()
+        lock = self.repo._lock(os.path.join(self.repo_path, item.name), True, None, None, '')
+        self._item_metadata_lock[item.name] = weakref.ref(lock)
         return lock
 
     def _path(self, fname):
