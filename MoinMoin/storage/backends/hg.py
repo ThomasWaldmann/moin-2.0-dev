@@ -311,7 +311,7 @@ class MercurialBackend(Backend):
                 if revision.revno == 0:
                     raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
                 elif revision.revno in item.list_revisions():
-                    raise RevisionAlreadyExistsError("Revision already exists: %d" % revno)
+                    raise RevisionAlreadyExistsError("Revision already exists: %d" % revision.revno)
                 else:
                     revision._data.seek(0)
                     
