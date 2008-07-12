@@ -13,12 +13,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import py
+import py.test
 
-from MoinMoin.storage import Backend, Item, Revision, NewRevision
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError,\
-                                   ItemAlreadyExistsError, RevisionAlreadyExistsError,\
-                                   RevisionNumberMismatchError
+from MoinMoin.storage import Item, NewRevision
+from MoinMoin.storage.error import NoSuchItemError, ItemAlreadyExistsError
 from MoinMoin.search import term
 
 default_items = {
@@ -259,6 +257,7 @@ class BackendTest(object):
         item = self.backend.create_item("item_13")
         for revno in range(0, 10):
             rev = item.create_revision(revno)
+            rev["revno"] = "%s" % revno
             item.commit()
         assert item.list_revisions() == range(0, 10)
 
