@@ -3,6 +3,7 @@ MoinMoin - Compatibility formatter
 
 @copyright: 2000-2004 by Juergen Hermann <jh@web.de>
 @copyright: 2008 MoinMoin:BastianBlank
+@copyright: 1999-2007 by Fredrik Lundh (html parser)
 @license: GNU GPL, see COPYING for details.
 """
 
