@@ -12,8 +12,9 @@ from MoinMoin.util import namespaces
 
 class ConverterMacro(object):
     def _BR_repl(self, args, text, type):
-        elem = ET.Element(ET.QName('line-break', namespaces.moin_page))
-        return self.wrap_block(type, elem)
+        if type == 'block':
+            return
+        return ET.Element(ET.QName('line-break', namespaces.moin_page))
 
     def _FootNote_repl(self, args, text, type):
         tag = ET.QName('note', namespaces.moin_page)
