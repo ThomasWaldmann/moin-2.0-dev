@@ -1,6 +1,8 @@
 """
 MoinMoin - HTML output converter
 
+Converts an internal document into HTML.
+
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
@@ -139,11 +141,6 @@ class ConverterBase(object):
                         break
         return ret
 
-    def visit_moinpage_macro(self, elem):
-        for body in elem:
-            if body.tag.uri == namespaces.moin_page and body.tag.name == 'macro-body':
-                return self.do_children(body)
-
     def visit_moinpage_note(self, elem):
         # TODO
         pass
@@ -194,6 +191,12 @@ class Converter(ConverterBase):
     Converter application/x-moin-document -> application/x-moin-document
     """
 
+    def visit_moinpage_macro(self, elem):
+        return self.new_copy(elem.tag, elem)
+
+    def visit_moinpage_macro_body(self, elem):
+        return self.new_copy(elem.tag, elem)
+
 class ConverterPage(ConverterBase):
     """
     Converter application/x-moin-document -> application/x-xhtml-moin-page
@@ -204,6 +207,11 @@ class ConverterPage(ConverterBase):
         if input == 'application/x-moin-document' and \
            output == 'application/x-xhtml-moin-page':
             return cls()
+
+    def visit_moinpage_macro(self, elem):
+        for body in elem:
+            if body.tag.uri == namespaces.moin_page and body.tag.name == 'macro-body':
+                return self.do_children(body)
 
 class ConverterDocument(ConverterPage):
     """
