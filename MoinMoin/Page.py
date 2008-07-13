@@ -31,6 +31,7 @@
                 2005-2008 by MoinMoin:ThomasWaldmann,
                 2006 by MoinMoin:FlorianFesti,
                 2007 by MoinMoin:ReimarBauer
+                2008 MoinMoin:BastianBlank
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -1273,33 +1274,41 @@ class Page(object):
         @param do_cache: if True, use cached content
         """
         request.clock.start('send_page_content')
-        # Load the parser
-        Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
-        parser = Parser(body, request, format_args=format_args, **kw)
 
-        if not (do_cache and self.canUseCache(Parser)):
-            self.format(parser)
+        mime_type = wikiutil.MimeType(format).mime_type()
+
+        from emeraldtree import ElementTree
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util import namespaces
+
+        converter = reg.get(mime_type, 'application/x-moin-document', None)
+
+        if converter is not None:
+            macro_converter = reg.get('application/x-moin-document',
+                    'application/x-moin-document;macros=expandall')
+            link_converter = reg.get('application/x-moin-document',
+                    'application/x-moin-document;links=extern')
+            # TODO: Real output format
+            html_converter = reg.get('application/x-moin-document',
+                    'application/x-xhtml-moin-page')
+
+            # TODO: Use cache
+            doc = converter(body, request, self)
+            doc = macro_converter(doc, request)
+            doc = link_converter(doc, request)
+            doc = html_converter(doc, request)
+
+            tree = ElementTree.ElementTree(doc)
+            tree.write(self.request, default_namespace=namespaces.html)
+
         else:
-            try:
-                code = self.loadCache(request)
-                self.execute(request, parser, code)
-            except Exception, e:
-                if not is_cache_exception(e):
-                    raise
-                try:
-                    code = self.makeCache(request, parser)
-                    self.execute(request, parser, code)
-                except Exception, e:
-                    if not is_cache_exception(e):
-                        raise
-                    logging.error('page cache failed after creation')
-                    self.format(parser)
+            # Load the parser
+            Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
+            parser = Parser(body, request, format_args=format_args, **kw)
+
+            parser.format(self.formatter)
 
         request.clock.stop('send_page_content')
-
-    def format(self, parser):
-        """ Format and write page content without caching """
-        parser.format(self.formatter)
 
     def execute(self, request, parser, code):
         """ Write page content by executing cache code """
