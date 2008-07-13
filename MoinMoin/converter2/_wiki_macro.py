@@ -20,8 +20,13 @@ class ConverterMacro(object):
         tag = ET.QName('note', namespaces.moin_page)
         tag_body = ET.QName('note-body', namespaces.moin_page)
         tag_class = ET.QName('note-class', namespaces.moin_page)
-        elem = ET.Element(tag, attrib={tag_class: 'footnote'}, children=[text])
-        return self.wrap_block(type, elem)
+        elem_body = ET.Element(tag_body, children=[args])
+        elem = ET.Element(tag, attrib={tag_class: 'footnote'}, children=[elem_body])
+
+        if type == 'block':
+            tag = ET.QName('p', namespaces.moin_page)
+            return ET.Element(tag, children=[elem])
+        return elem
 
     def macro(self, name, args, text, type):
         func = getattr(self, '_%s_repl' % name, None)
@@ -37,8 +42,3 @@ class ConverterMacro(object):
         attrib = {tag_name: name, tag_args: args, tag_type: type, tag_alt: text}
         return ET.Element(tag, attrib)
 
-    def wrap_block(self, type, elem):
-        if type == 'block':
-            tag = ET.QName('p', namespaces.moin_page)
-            return ET.Element(tag, children=[elem])
-        return elem
