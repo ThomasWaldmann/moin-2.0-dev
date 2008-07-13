@@ -22,7 +22,7 @@ class ConverterBase(object):
         namespaces.html,
     ])
 
-    def __call__(self, element):
+    def __call__(self, element, request):
         return self.visit(element)
 
     def do_attribs(self, element):
