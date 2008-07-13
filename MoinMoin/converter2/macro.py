@@ -60,6 +60,14 @@ class Converter(object):
                 elem_body.append(errmsg)
             elem.append(elem_body)
             return
+        except NotImplementedError, e:
+            # Force usage of fallback
+            from warnings import warn
+            message = 'Macro ' + name + ' calls methods in the compatibility formatter which are not implemented'
+            if e.message:
+                message += ': ' + e.message
+            warn(message, DeprecationWarning)
+            ret = True
 
         if ret:
             # Fallback to included parser
