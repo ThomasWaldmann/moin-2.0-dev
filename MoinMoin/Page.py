@@ -127,7 +127,7 @@ class Page(object):
     """ Page - Manage an (immutable) page associated with a WikiName.
         To change a page's content, use the PageEditor class.
     """
-    def __init__(self, request, page_name, **kw):
+    def __init__(self, request, page_name, formatter=None, **kw):
         """ Create page object.
 
         Note that this is a 'lean' operation, since the text for the page
@@ -136,8 +136,8 @@ class Page(object):
 
         @param page_name: WikiName of the page
         @keyword rev: number of older revision
-        @keyword formatter: formatter instance or mimetype str,
-                            None or no kw arg will use default formatter
+        @keyword formatter: mimetype str,
+                            None or no kw arg will use default mimetype
         @keyword include_self: if 1, include current user (default: 0)
         """
         self.request = request
@@ -146,20 +146,15 @@ class Page(object):
         self.rev = kw.get('rev', 0) # revision of this page
         self.include_self = kw.get('include_self', 0)
 
-        formatter = kw.get('formatter', None)
-        if isinstance(formatter, (str, unicode)): # mimetype given
+        if isinstance(formatter, basestring): # mimetype given
             mimetype = str(formatter)
-            self.formatter = None
-            self.output_mimetype = mimetype
-            self.default_formatter = mimetype == "text/html"
         elif formatter is not None: # formatter instance given
-            self.formatter = formatter
-            self.default_formatter = 0
-            self.output_mimetype = "text/todo" # TODO where do we get this value from?
+            raise NotImplementedError
         else:
-            self.formatter = None
-            self.default_formatter = 1
-            self.output_mimetype = "text/html"
+            mimetype = 'text/html'
+
+        self.output_mimetype = mimetype
+        self.default_formatter = mimetype == "text/html"
 
         self.output_charset = config.charset # correct for wiki pages
 
@@ -999,7 +994,7 @@ class Page(object):
         content_only = keywords.get('content_only', 0)
         omit_footnotes = keywords.get('omit_footnotes', 0)
         content_id = keywords.get('content_id', 'content')
-        do_cache = keywords.get('do_cache', 1)
+        do_cache = keywords.get('do_cache', 0)
         send_special = keywords.get('send_special', False)
         print_mode = keywords.get('print_mode', 0)
         if print_mode:
@@ -1028,24 +1023,10 @@ class Page(object):
                 wikiutil.url_quote_plus(self.page_name, ''), ))
             return
 
-        # if necessary, load the formatter
-        if self.default_formatter:
-            from MoinMoin.formatter.text_html import Formatter
-            self.formatter = Formatter(request, store_pagelinks=1)
-        elif not self.formatter:
-            Formatter = wikiutil.searchAndImportPlugin(request.cfg, "formatter", self.output_mimetype)
-            self.formatter = Formatter(request)
-
-        # save formatter
-        no_formatter = object()
-        old_formatter = getattr(request, "formatter", no_formatter)
-        request.formatter = self.formatter
-
-        self.formatter.setPage(self)
         if self.hilite_re:
-            try:
-                self.formatter.set_highlight_re(self.hilite_re)
-            except re.error, err:
+            # TODO
+            #try:
+            #except re.error, err:
                 if 'highlight' in request.form:
                     del request.form['highlight']
                 request.theme.add_msg(_('Invalid highlighting regular expression "%(regex)s": %(error)s') % {
@@ -1099,7 +1080,7 @@ class Page(object):
                 # don't send any 404 content to bots
                 return
 
-            request.write(self.formatter.startDocument(self.page_name))
+            # TODO: request.write(self.formatter.startDocument(self.page_name))
 
             # send the page header
             if self.default_formatter:
@@ -1116,7 +1097,7 @@ class Page(object):
                     redir = request.form['redirect'][0]
                     request.theme.add_msg('<strong>%s</strong><br>' % (
                         _('Redirected from page "%(page)s"') % {'page':
-                            wikiutil.link_tag(request, wikiutil.quoteWikinameURL(redir) + "?action=show", self.formatter.text(redir))}), "info")
+                            wikiutil.link_tag(request, wikiutil.quoteWikinameURL(redir) + "?action=show", redir)}), "info")
                 if 'redirect' in pi:
                     request.theme.add_msg('<strong>%s</strong><br>' % (
                         _('This page redirects to page "%(page)s"') % {'page': wikiutil.escape(pi['redirect'])}), "info")
@@ -1182,9 +1163,6 @@ class Page(object):
 
         # if we didn't short-cut to a special page, output this page
         if not special:
-            # start wiki content div
-            request.write(self.formatter.startContent(content_id))
-
             # parse the text and send the page content
             self.send_page_content(request, body,
                                    format=pi['format'],
@@ -1192,21 +1170,13 @@ class Page(object):
                                    do_cache=do_cache,
                                    start_line=pi['lines'])
 
-            # check for pending footnotes
-            if getattr(request, 'footnotes', None) and not omit_footnotes:
-                from MoinMoin.macro.FootNote import emit_footnotes
-                request.write(emit_footnotes(request, self.formatter))
-
-            # end wiki content div
-            request.write(self.formatter.endContent())
-
         # end document output
         if not content_only:
             # send the page footer
             if self.default_formatter:
                 request.theme.send_footer(self.page_name, print_mode=print_mode)
 
-            request.write(self.formatter.endDocument())
+            # TODO: request.write(self.formatter.endDocument())
 
         request.clock.stop('send_page')
         if not content_only and self.default_formatter:
@@ -1216,15 +1186,8 @@ class Page(object):
         if do_cache and self.default_formatter and page_exists:
             cache = caching.CacheEntry(request, self, 'pagelinks', scope='item', use_pickle=True)
             if cache.needsUpdate(self._text_filename()):
-                links = self.formatter.pagelinks
-                cache.update(links)
-
-        # restore old formatter (hopefully we dont throw any exception that is catched again)
-        if old_formatter is no_formatter:
-            del request.formatter
-        else:
-            request.formatter = old_formatter
-
+                # TODO
+                cache.update([])
 
     def getFormatterName(self):
         """ Return a formatter name as used in the caching system
