@@ -61,7 +61,7 @@ class _HTMLParser(_HTMLParserBase):
 
     def handle_endtag(self, tag):
         if not isinstance(tag, ET.QName):
-            tag = ET.QName(tag, namespaces.html)
+            tag = ET.QName(tag.lower(), namespaces.html)
         if tag.name in self.IGNOREEND:
             return
         lasttag = self.__stack.pop()
@@ -134,6 +134,10 @@ class Formatter(object):
     tag_p = ET.QName('p', namespaces.moin_page)
     tag_span = ET.QName('span', namespaces.moin_page)
     tag_strong = ET.QName('strong', namespaces.moin_page)
+    tag_table = ET.QName('table', namespaces.moin_page)
+    tag_table_body = ET.QName('table-body', namespaces.moin_page)
+    tag_table_cell = ET.QName('table-cell', namespaces.moin_page)
+    tag_table_row = ET.QName('table-row', namespaces.moin_page)
 
     def __init__(self, request, page, **kw):
         self.request, self.page = request, page
@@ -373,13 +377,19 @@ class Formatter(object):
     # Tables #############################################################
 
     def table(self, on, attrs={}, **kw):
-        raise NotImplementedError
+        if on:
+            self._stack_push(ET.Element(self.tag_table))
+            self._stack_push(ET.Element(self.tag_table_body))
+        else:
+            self._stack_pop()
+            self._stack_pop()
+        return ''
 
     def table_row(self, on, attrs={}, **kw):
-        raise NotImplementedError
+        return self.handle_on(on, self.tag_table_row)
 
     def table_cell(self, on, attrs={}, **kw):
-        raise NotImplementedError
+        return self.handle_on(on, self.tag_table_cell)
 
     # Dynamic stuff / Plugins ############################################
 
@@ -444,6 +454,9 @@ class Formatter(object):
             effects, like loss of markup or insertion of CDATA sections
             when output goes to XML formats.
         """
+        if not markup:
+            return ''
+
         parser = _HTMLParser()
         parser.feed(markup)
         doc = parser.close()
