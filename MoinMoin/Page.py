@@ -44,11 +44,6 @@ from MoinMoin import config, caching, user, util, wikiutil
 from MoinMoin.logfile import eventlog
 from MoinMoin.util import filesys
 
-def is_cache_exception(e):
-    args = e.args
-    return not (len(args) != 1 or args[0] != 'CacheNeedsUpdate')
-
-
 class ItemCache:
     """ Cache some page item related data, as meta data or pagelist
 
@@ -1242,28 +1237,6 @@ class Page(object):
         module = self.formatter.__module__
         return module[module.rfind('.') + 1:]
 
-    def canUseCache(self, parser=None):
-        """ Is caching available for this request?
-
-        This make sure we can try to use the caching system for this
-        request, but it does not make sure that this will
-        succeed. Themes can use this to decide if a Refresh action
-        should be displayed.
-
-        @param parser: the parser used to render the page
-        @rtype: bool
-        @return: if this page can use caching
-        """
-        if (not self.rev and
-            not self.hilite_re and
-            not self.__body_modified and
-            self.getFormatterName() in self.cfg.caching_formats):
-            # Everything is fine, now check the parser:
-            if parser is None:
-                parser = wikiutil.searchAndImportPlugin(self.request.cfg, "parser", self.pi['format'])
-            return getattr(parser, 'caching', False)
-        return False
-
     def send_page_content(self, request, body, format='wiki', format_args='', do_cache=1, **kw):
         """ Output the formatted wiki page, using caching if possible
 
@@ -1292,8 +1265,15 @@ class Page(object):
             html_converter = reg.get('application/x-moin-document',
                     'application/x-xhtml-moin-page')
 
-            # TODO: Use cache
-            doc = converter(body, request, self)
+            doc = None
+            if (do_cache and
+                    not self.rev and
+                    not self.__body_modified):
+                doc = self.load_from_cache(request)
+            if doc is None:
+                doc = converter(body, request, self)
+                self.add_to_cache(request, doc)
+
             doc = macro_converter(doc, request)
             doc = link_converter(doc, request)
             doc = html_converter(doc, request)
@@ -1310,62 +1290,25 @@ class Page(object):
 
         request.clock.stop('send_page_content')
 
-    def execute(self, request, parser, code):
-        """ Write page content by executing cache code """
-        formatter = self.formatter
-        request.clock.start("Page.execute")
-        try:
-            from MoinMoin.macro import Macro
-            macro_obj = Macro(parser)
-            # Fix __file__ when running from a zip package
-            import MoinMoin
-            if hasattr(MoinMoin, '__loader__'):
-                __file__ = os.path.join(MoinMoin.__loader__.archive, 'dummy')
-            try:
-                exec code
-            except "CacheNeedsUpdate": # convert the exception
-                raise Exception("CacheNeedsUpdate")
-        finally:
-            request.clock.stop("Page.execute")
-
-    def loadCache(self, request):
-        """ Return page content cache or raises 'CacheNeedsUpdate' """
-        cache = caching.CacheEntry(request, self, self.getFormatterName(), scope='item')
+    def load_from_cache(self, request):
+        """ Return page content cache or None """
+        cache = caching.CacheEntry(request, self, 'tree', scope='item', use_pickle=True)
         attachmentsPath = self.getPagePath('attachments', check_create=0)
         if cache.needsUpdate(self._text_filename(), attachmentsPath):
-            raise Exception('CacheNeedsUpdate')
+            return
 
-        import marshal
         try:
-            return marshal.loads(cache.content())
+            return cache.content()
         except (EOFError, ValueError, TypeError):
-            # Bad marshal data, must update the cache.
-            # See http://docs.python.org/lib/module-marshal.html
-            raise Exception('CacheNeedsUpdate')
+            return
         except Exception, err:
             logging.info('failed to load "%s" cache: %s' %
                         (self.page_name, str(err)))
-            raise Exception('CacheNeedsUpdate')
+            return
 
-    def makeCache(self, request, parser):
-        """ Format content into code, update cache and return code """
-        import marshal
-        from MoinMoin.formatter.text_python import Formatter
-        formatter = Formatter(request, ["page"], self.formatter)
-
-        # Save request state while formatting page
-        saved_current_lang = request.current_lang
-        try:
-            text = request.redirectedOutput(parser.format, formatter)
-        finally:
-            request.current_lang = saved_current_lang
-
-        src = formatter.assemble_code(text)
-        code = compile(src.encode(config.charset),
-                       self.page_name.encode(config.charset), 'exec')
-        cache = caching.CacheEntry(request, self, self.getFormatterName(), scope='item')
-        cache.update(marshal.dumps(code))
-        return code
+    def add_to_cache(self, request, data):
+        cache = caching.CacheEntry(request, self, 'tree', scope='item', use_pickle=True)
+        cache.update(data)
 
     def _specialPageText(self, request, special_type):
         """ Output the default page content for new pages.
