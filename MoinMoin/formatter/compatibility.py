@@ -103,9 +103,8 @@ class _HTMLParser(_HTMLParserBase):
     # (Internal) Handles character data.
 
     def handle_data(self, data):
-        if isinstance(data, type('')) and is_not_ascii(data):
-            # convert to unicode, but only if necessary
-            data = unicode(data, self.encoding, "ignore")
+        # convert to unicode
+        data = data.decode(self.encoding, "ignore")
         self.__builder.data(data)
 
     ##
