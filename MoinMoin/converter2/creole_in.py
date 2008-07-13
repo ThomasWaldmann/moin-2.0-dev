@@ -58,10 +58,10 @@ class Rules:
             ([|] \s* (?P<link_text>.+?) \s*)?
             ]]
         )'''
-    image = r'''(?P<image>
+    object = r'''(?P<object>
             {{
-            (?P<image_target>.+?) \s*
-            ([|] \s* (?P<image_text>.+?) \s*)?
+            (?P<object_target>.+?) \s*
+            ([|] \s* (?P<object_text>.+?) \s*)?
             }}
         )'''
     macro_block = r'''
@@ -140,7 +140,7 @@ class Rules:
                 (?P<head> [=][^|]+ ) |
                 (?P<cell> (  %s | [^|])+ )
             ) \s*
-        ''' % '|'.join([link, macro_inline, image, nowiki_inline])
+        ''' % '|'.join([link, macro_inline, object, nowiki_inline])
 
 class Converter(ConverterMacro):
     """
@@ -151,7 +151,7 @@ class Converter(ConverterMacro):
     # For pre escaping, in creole 1.0 done with ~:
     pre_escape_re = re.compile(Rules.pre_escape, re.M | re.X)
     # for link descriptions
-    link_re = re.compile('|'.join([Rules.image, Rules.linebreak, Rules.text_inline]),
+    link_re = re.compile('|'.join([Rules.object, Rules.linebreak, Rules.text_inline]),
         re.X | re.U | re.DOTALL)
     item_re = re.compile(Rules.item, re.X | re.U | re.M) # for list items
     cell_re = re.compile(Rules.cell, re.X | re.U) # for table cells
@@ -161,7 +161,7 @@ class Converter(ConverterMacro):
         Rules.text_block]), re.X | re.U | re.M)
     # For inline elements:
     inline_re = re.compile('|'.join([Rules.link, Rules.url, Rules.macro_inline,
-        Rules.nowiki_inline, Rules.image, Rules.strong, Rules.emph, Rules.linebreak,
+        Rules.nowiki_inline, Rules.object, Rules.strong, Rules.emph, Rules.linebreak,
         Rules.escape, Rules.text_inline]), re.X | re.U | re.DOTALL)
 
     @classmethod
@@ -233,16 +233,16 @@ class Converter(ConverterMacro):
         elem = self.macro(macro_name, macro_args, macroinline, 'inline')
         self._stack_top_append(elem)
 
-    def _image_repl(self, image, image_target, image_text=None):
-        """Handles images and attachemnts included in the page."""
+    def _object_repl(self, object, object_target, object_text=None):
+        """Handles objects included in the page."""
 
-        tag = ElementTree.QName('image', namespaces.moin_page)
+        tag = ElementTree.QName('object', namespaces.moin_page)
         tag_alt = ElementTree.QName('alt', namespaces.moin_page)
         tag_href = ElementTree.QName('href', namespaces.xlink)
 
-        attrib = {tag_href: image_target}
-        if image_text is not None:
-            attrib[tag_alt] = image_text
+        attrib = {tag_href: object_target}
+        if object_text is not None:
+            attrib[tag_alt] = object_text
 
         element = ElementTree.Element(tag, attrib)
         self._stack_top_append(element)
