@@ -105,7 +105,8 @@ class _HTMLParser(_HTMLParserBase):
 
     def handle_data(self, data):
         # convert to unicode
-        data = data.decode(self.encoding, "ignore")
+        if isinstance(data, str):
+            data = data.decode(self.encoding, "ignore")
         self.__builder.data(data)
 
     ##
