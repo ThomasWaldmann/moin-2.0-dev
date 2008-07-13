@@ -1278,26 +1278,28 @@ class Page(object):
         html_converter = reg.get('application/x-moin-document',
                 'application/x-xhtml-moin-page')
 
-        if input_converter is not None:
-            doc = None
-            if do_cache and self.canUseCache():
-                doc = self.load_from_cache(request)
-            if doc is None:
+        doc = None
+        if do_cache and self.canUseCache():
+            doc = self.load_from_cache(request)
+
+        if doc is None:
+            if input_converter is not None:
                 doc = input_converter(body, request, self)
-                self.add_to_cache(request, doc)
 
-        else:
-            # Use oldstyle parser
-            Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
-            Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
-            parser = Parser(body, request, format_args=format_args, **kw)
-            formatter = Formatter(request, self)
+            else:
+                # Use oldstyle parser
+                Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
+                Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
+                parser = Parser(body, request, format_args=format_args, **kw)
+                formatter = Formatter(request, self)
 
-            parser.format(formatter)
+                parser.format(formatter)
 
-            attrib = {ET.QName('page-href', namespaces.moin_page): 'wiki:///' + self.page_name}
-            doc = ET.Element(ET.QName('page', namespaces.moin_page), attrib,
-                    children=formatter.root[:])
+                attrib = {ET.QName('page-href', namespaces.moin_page): 'wiki:///' + self.page_name}
+                doc = ET.Element(ET.QName('page', namespaces.moin_page), attrib,
+                        children=formatter.root[:])
+
+        self.add_to_cache(request, doc)
 
         doc = macro_converter(doc, request)
         doc = link_converter(doc, request)
