@@ -15,7 +15,8 @@ class Registry(object):
         """
         @param input Input MIME-Type
         @param output Input MIME-Type
-        @return A converter
+        @param default Default value
+        @return A converter or default value
         """
         for factory in self._converters:
             conv = factory(input, output)
