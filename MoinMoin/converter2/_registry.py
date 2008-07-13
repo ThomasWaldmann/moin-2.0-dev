@@ -5,11 +5,13 @@ MoinMoin - Converter registry
 @license: GNU GPL, see COPYING for details.
 """
 
+_marker = object()
+
 class Registry(object):
     def __init__(self):
         self._converters = []
 
-    def get(self, input, output):
+    def get(self, input, output, default=_marker):
         """
         @param input Input MIME-Type
         @param output Input MIME-Type
@@ -19,7 +21,9 @@ class Registry(object):
             conv = factory(input, output)
             if conv is not None:
                 return conv
-        raise TypeError("Couldn't find converter for %s to %s" % (input, output))
+        if default is _marker:
+            raise TypeError("Couldn't find converter for %s to %s" % (input, output))
+        return default
 
     def register(self, factory):
         if factory not in self._converters:
