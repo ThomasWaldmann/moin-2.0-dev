@@ -19,7 +19,8 @@ def serialize(elem, **options):
     from cStringIO import StringIO
     file = StringIO()
     tree = ElementTree.ElementTree(elem)
-    tree.write(file, default_namespace = namespaces.html, **options)
+    n = {namespaces.html: '', namespaces.moin_page: 'page'}
+    tree.write(file, namespaces=n, **options)
     return file.getvalue()
 
 class TestConverterBase(object):
@@ -97,4 +98,39 @@ class TestConverterBase(object):
     def test_unknown(self):
         page = ElementTree.XML("<page:unknown %s/>" % namespaces_string_page)
         py.test.raises(ElementException, self.conv.__call__, page)
+
+class TestConverter(object):
+    def setup_class(self):
+        self.conv = Converter()
+
+    def test_macro(self):
+        pairs = [
+            ('<page:page %s><page:macro><page:macro-body><page:p>Test</page:p></page:macro-body></page:macro></page:page>' % namespaces_string_page,
+                '<div %s %s><page:macro><page:macro-body><p>Test</p></page:macro-body></page:macro></div>' % (namespaces_string_html_default, namespaces_string_page)),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
+    def _do(self, input, output):
+        page = ElementTree.XML(input)
+        out = self.conv(page)
+        assert serialize(out) == output
+
+class TestConverterPage(object):
+    def setup_class(self):
+        self.conv = ConverterPage()
+
+    def test_macro(self):
+        pairs = [
+            ('<page:page %s><page:macro><page:macro-body><page:p>Test</page:p></page:macro-body></page:macro></page:page>' % namespaces_string_page,
+                '<div %s><p>Test</p></div>' % namespaces_string_html_default),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
+    def _do(self, input, output):
+        page = ElementTree.XML(input)
+        out = self.conv(page)
+        assert serialize(out) == output
+
 
