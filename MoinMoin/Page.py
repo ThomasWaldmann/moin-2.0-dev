@@ -148,8 +148,6 @@ class Page(object):
 
         if isinstance(formatter, basestring): # mimetype given
             mimetype = str(formatter)
-        elif formatter is not None: # formatter instance given
-            raise NotImplementedError
         else:
             mimetype = 'text/html'
 
