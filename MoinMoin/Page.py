@@ -1264,41 +1264,47 @@ class Page(object):
 
         mime_type = wikiutil.MimeType(format).mime_type()
 
-        from emeraldtree import ElementTree
+        from emeraldtree import ElementTree as ET
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util import namespaces
 
-        converter = reg.get(mime_type, 'application/x-moin-document', None)
+        input_converter = reg.get(mime_type, 'application/x-moin-document', None)
 
-        if converter is not None:
-            macro_converter = reg.get('application/x-moin-document',
-                    'application/x-moin-document;macros=expandall')
-            link_converter = reg.get('application/x-moin-document',
-                    'application/x-moin-document;links=extern')
-            # TODO: Real output format
-            html_converter = reg.get('application/x-moin-document',
-                    'application/x-xhtml-moin-page')
+        macro_converter = reg.get('application/x-moin-document',
+                'application/x-moin-document;macros=expandall')
+        link_converter = reg.get('application/x-moin-document',
+                'application/x-moin-document;links=extern')
+        # TODO: Real output format
+        html_converter = reg.get('application/x-moin-document',
+                'application/x-xhtml-moin-page')
 
+        if input_converter is not None:
             doc = None
             if do_cache and self.canUseCache():
                 doc = self.load_from_cache(request)
             if doc is None:
-                doc = converter(body, request, self)
+                doc = input_converter(body, request, self)
                 self.add_to_cache(request, doc)
 
-            doc = macro_converter(doc, request)
-            doc = link_converter(doc, request)
-            doc = html_converter(doc, request)
-
-            tree = ElementTree.ElementTree(doc)
-            tree.write(self.request, default_namespace=namespaces.html)
-
         else:
-            # Load the parser
+            # Use oldstyle parser
             Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
+            Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
             parser = Parser(body, request, format_args=format_args, **kw)
+            formatter = Formatter(request, self)
 
-            parser.format(self.formatter)
+            parser.format(formatter)
+
+            attrib = {ET.QName('page-href', namespaces.moin_page): 'wiki:///' + self.page_name}
+            doc = ET.Element(ET.QName('page', namespaces.moin_page), attrib,
+                    children=formatter.root[:])
+
+        doc = macro_converter(doc, request)
+        doc = link_converter(doc, request)
+        doc = html_converter(doc, request)
+
+        tree = ET.ElementTree(doc)
+        tree.write(self.request, default_namespace=namespaces.html)
 
         request.clock.stop('send_page_content')
 
