@@ -43,8 +43,11 @@ class ConverterBase(object):
         for child in element:
             if isinstance(child, ElementTree.Element):
                 r = self.visit(child)
-                if r is not None:
-                    new.append(r)
+                if r is None:
+                    r = ()
+                elif not isinstance(r, (list, tuple)):
+                    r = (r,)
+                new.extend(r)
             else:
                 new.append(child)
         return new
@@ -137,8 +140,10 @@ class ConverterBase(object):
         return ret
 
     def visit_moinpage_macro(self, elem):
-        # TODO
-        pass
+        print elem
+        for body in elem:
+            if body.tag.uri == namespaces.moin_page and body.tag.name == 'macro-body':
+                return self.do_children(body)
 
     def visit_moinpage_note(self, elem):
         # TODO
