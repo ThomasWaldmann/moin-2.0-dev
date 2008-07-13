@@ -25,7 +25,7 @@ class ConverterExternOutput(object):
             wiki_name, link = link.split(':', 1)
 
             # TODO
-            if wiki_name in ('attachment', 'drawing', 'image'):
+            if wiki_name in ('attachment', 'drawing'):
                 return None
 
             wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, wiki_name, link)
