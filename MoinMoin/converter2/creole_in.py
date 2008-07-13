@@ -167,10 +167,17 @@ class Converter(ConverterMacro):
         if input == 'text/creole' and output == 'application/x-moin-document':
             return cls()
 
-    def __call__(self, text):
+    def __call__(self, text, request, page=None):
         """Parse the text given as self.raw and return DOM tree."""
 
-        self.root = ElementTree.Element(ElementTree.QName('page', namespaces.moin_page))
+        tag = ElementTree.QName('page', namespaces.moin_page)
+        tag_page_href = ElementTree.QName('page-href', namespaces.moin_page)
+
+        attrib = {}
+        if page is not None:
+            attrib[tag_page_href] = 'wiki:///' + page.page_name
+
+        self.root = ElementTree.Element(tag, attrib=attrib)
         self._stack = [self.root]
         self.parse_block(text)
         return self.root
