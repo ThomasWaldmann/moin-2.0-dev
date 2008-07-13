@@ -49,7 +49,7 @@ class _HTMLParser(_HTMLParserBase):
                 key = ET.QName(key.lower(), namespaces.html)
                 attrib[key] = value
         self.__builder.start(tag, attrib)
-        if tag in self.IGNOREEND:
+        if tag.name in self.IGNOREEND:
             self.__stack.pop()
             self.__builder.end(tag)
 
