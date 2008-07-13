@@ -140,7 +140,6 @@ class ConverterBase(object):
         return ret
 
     def visit_moinpage_macro(self, elem):
-        print elem
         for body in elem:
             if body.tag.uri == namespaces.moin_page and body.tag.name == 'macro-body':
                 return self.do_children(body)
