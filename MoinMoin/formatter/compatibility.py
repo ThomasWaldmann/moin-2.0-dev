@@ -1,6 +1,9 @@
 """
 MoinMoin - Compatibility formatter
 
+Implements the oldstyle formatter interface and produces a internal tree
+representation.
+
 @copyright: 2000-2004 by Juergen Hermann <jh@web.de>
 @copyright: 2008 MoinMoin:BastianBlank
 @copyright: 1999-2007 by Fredrik Lundh (html parser)
@@ -116,6 +119,11 @@ class _HTMLParser(_HTMLParserBase):
 class Formatter(object):
     hardspace = ' '
 
+    tag_h = ET.QName('h', namespaces.moin_page)
+    tag_p = ET.QName('p', namespaces.moin_page)
+    tag_span = ET.QName('span', namespaces.moin_page)
+    tag_outline_level = ET.QName('outline-level', namespaces.moin_page)
+
     def __init__(self, request, page, **kw):
         self.request, self.page = request, page
         self._ = request.getText
@@ -190,7 +198,8 @@ class Formatter(object):
         return ""
 
     def line_anchordef(self, lineno):
-        raise NotImplementedError
+        id = 'line-%d' % lineno
+        self._stack_top_append(ET.Element(self.tag_span, attrib={'id': id}))
         return ""
 
     def anchorlink(self, on, name='', **kw):
@@ -296,8 +305,12 @@ class Formatter(object):
         raise NotImplementedError
 
     def paragraph(self, on, **kw):
-        raise NotImplementedError
+        if on:
+            self._stack_push(ET.Element(self.tag_p))
+        else:
+            self._stack_pop()
         self.in_p = on != 0
+        return ''
 
     def rule(self, size=0, **kw):
         raise NotImplementedError
@@ -327,7 +340,12 @@ class Formatter(object):
         raise NotImplementedError
 
     def heading(self, on, depth, **kw):
-        raise NotImplementedError
+        if on:
+            attrib = {self.tag_outline_level: str(depth)}
+            self._stack_push(ET.Element(self.tag_h, attrib))
+        else:
+            self._stack_pop()
+        return ''
 
     # Tables #############################################################
 
