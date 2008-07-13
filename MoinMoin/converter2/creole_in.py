@@ -171,10 +171,7 @@ class Converter(ConverterMacro):
         """Parse the text given as self.raw and return DOM tree."""
 
         self.root = ElementTree.Element(ElementTree.QName('page', namespaces.moin_page))
-        # The most recent document node
         self._stack = [self.root]
-        # The node to add inline characters to
-        self.text = None
         self.parse_block(text)
         return self.root
 
@@ -347,7 +344,6 @@ class Converter(ConverterMacro):
 
     def _line_repl(self, line):
         self._stack_pop_name(('page', 'blockquote'))
-        self.text = None
 
     def _nowikiinline_repl(self, nowikiinline, nowikiinline_text):
         # TODO
@@ -361,7 +357,6 @@ class Converter(ConverterMacro):
         else:
             self._stack_pop_name(('emphasis',))
             self._stack_pop()
-        self.text = None
 
     def _strong_repl(self, strong):
         if not self._stack_top_check(('strong',)):
@@ -370,7 +365,6 @@ class Converter(ConverterMacro):
         else:
             self._stack_pop_name(('strong',))
             self._stack_pop()
-        self.text = None
 
     def _linebreak_repl(self, linebreak):
         tag = ElementTree.QName('line-break', namespaces.moin_page)
