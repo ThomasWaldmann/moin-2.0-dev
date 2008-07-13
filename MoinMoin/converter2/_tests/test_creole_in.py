@@ -60,6 +60,8 @@ class TestConverter(object):
                 '<page %s><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
             ('Text <<Macro>>',
                 '<page %s><p>Text <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
+            ('Text\n<<Macro>>',
+                '<page %s><p>Text\n<macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
