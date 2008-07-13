@@ -36,6 +36,7 @@ class Rules:
             (^ | (?<=\s | [.,:;!?()/=]))
             (?P<escaped_url>~)?
             (?P<url_target>
+                # TODO: config.url_schemas
                 (http|https|ftp|nntp|news|mailto|telnet|file|irc):
                 \S+?
             )
