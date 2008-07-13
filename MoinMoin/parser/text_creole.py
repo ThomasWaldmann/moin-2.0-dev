@@ -12,6 +12,7 @@ from MoinMoin.converter2 import default_registry
 from MoinMoin.util import namespaces
 
 CreoleConverter = default_registry.get('text/creole', 'application/x-moin-document')
+MacroConverter = default_registry.get('application/x-moin-document', 'application/x-moin-document;macros=expandall')
 LinkConverter = default_registry.get('application/x-moin-document', 'application/x-moin-document;links=extern')
 HtmlConverter = default_registry.get('application/x-moin-document', 'application/x-xhtml-moin-page')
 
@@ -21,8 +22,9 @@ class Parser:
         self.request = request
 
     def format(self, formatter):
-        document = CreoleConverter(self.raw)
-        document = LinkConverter(document, self.request, formatter.page)
+        document = CreoleConverter(self.raw, self.request, formatter.page)
+        document = MacroConverter(document, self.request)
+        document = LinkConverter(document, self.request)
         result = HtmlConverter(document)
         tree = ElementTree(result)
         tree.write(self.request, default_namespace = namespaces.html)
