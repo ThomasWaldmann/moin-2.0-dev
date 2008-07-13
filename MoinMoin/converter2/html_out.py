@@ -101,8 +101,6 @@ class ConverterBase(object):
         return self.new_copy(ElementTree.QName('tt', namespaces.html), elem)
 
     def visit_moinpage_emphasis(self, elem):
-        if not len(elem):
-            return []
         return self.new_copy(ElementTree.QName('em', namespaces.html), elem)
 
     def visit_moinpage_h(self, elem):
@@ -162,8 +160,6 @@ class ConverterBase(object):
         return self.new_copy(ElementTree.QName('span', namespaces.html), elem)
 
     def visit_moinpage_strong(self, elem):
-        if not len(elem):
-            return []
         return self.new_copy(ElementTree.QName('strong', namespaces.html), elem)
 
     def visit_moinpage_table(self, elem):
