@@ -14,6 +14,7 @@ from emeraldtree import ElementTree as ET
 import htmlentitydefs
 from HTMLParser import HTMLParser as _HTMLParserBase
 
+from MoinMoin import wikiutil
 from MoinMoin.util import namespaces
 
 class _HTMLParser(_HTMLParserBase):
@@ -119,6 +120,7 @@ class Formatter(object):
     hardspace = ' '
 
     tag_a = ET.QName('a', namespaces.moin_page)
+    tag_emphasis = ET.QName('emphasis', namespaces.moin_page)
     tag_h = ET.QName('h', namespaces.moin_page)
     tag_href = ET.QName('href', namespaces.xlink)
     tag_id = ET.QName('id', namespaces.moin_page)
@@ -151,11 +153,13 @@ class Formatter(object):
         self.root = ET.Element(None)
         self._stack = [self.root]
 
-    def handle_on(self, on, tag, attrib={}):
+    def handle_on(self, on, tag, attrib={}, nonempty=False):
         if on:
             self._stack_push(ET.Element(tag, attrib))
         else:
-            self._stack_pop()
+            elem = self._stack_pop()
+            if nonempty and not len(elem):
+                self._stack[-1].remove(elem)
         return ''
 
     def lang(self, on, lang_name):
@@ -275,10 +279,10 @@ class Formatter(object):
         raise NotImplementedError
 
     def strong(self, on, **kw):
-        return self.handle_on(on, self.tag_strong)
+        return self.handle_on(on, self.tag_strong, nonempty=True)
 
     def emphasis(self, on, **kw):
-        return self.handle_on(on, self.tag_emphasis)
+        return self.handle_on(on, self.tag_emphasis, nonempty=True)
 
     def underline(self, on, **kw):
         raise NotImplementedError
@@ -416,6 +420,7 @@ class Formatter(object):
         """ parser_name MUST be valid!
             writes out the result instead of returning it!
         """
+        raise NotImplementedError
         # attention: this is copied into text_python!
         parser = wikiutil.searchAndImportPlugin(self.request.cfg, "parser", parser_name)
         args = None
@@ -475,7 +480,7 @@ class Formatter(object):
         return ""
 
     def _stack_pop(self):
-        self._stack.pop()
+        return self._stack.pop()
 
     def _stack_push(self, elem):
         self._stack_top_append(elem)
