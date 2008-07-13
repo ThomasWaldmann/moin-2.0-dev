@@ -1237,6 +1237,20 @@ class Page(object):
         module = self.formatter.__module__
         return module[module.rfind('.') + 1:]
 
+    def canUseCache(self, parser=None):
+        """ Is caching available for this request?
+
+        This make sure we can try to use the caching system for this
+        request, but it does not make sure that this will
+        succeed. Themes can use this to decide if a Refresh action
+        should be displayed.
+
+        @param parser: the parser used to render the page
+        @rtype: bool
+        @return: if this page can use caching
+        """
+        return not self.rev and not self.__body_modified
+
     def send_page_content(self, request, body, format='wiki', format_args='', do_cache=1, **kw):
         """ Output the formatted wiki page, using caching if possible
 
@@ -1266,9 +1280,7 @@ class Page(object):
                     'application/x-xhtml-moin-page')
 
             doc = None
-            if (do_cache and
-                    not self.rev and
-                    not self.__body_modified):
+            if do_cache and self.canUseCache():
                 doc = self.load_from_cache(request)
             if doc is None:
                 doc = converter(body, request, self)
