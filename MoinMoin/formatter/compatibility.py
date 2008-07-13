@@ -119,10 +119,21 @@ class _HTMLParser(_HTMLParserBase):
 class Formatter(object):
     hardspace = ' '
 
+    tag_a = ET.QName('a', namespaces.moin_page)
     tag_h = ET.QName('h', namespaces.moin_page)
+    tag_href = ET.QName('href', namespaces.xlink)
+    tag_id = ET.QName('id', namespaces.moin_page)
+    tag_list = ET.QName('list', namespaces.moin_page)
+    tag_list_item = ET.QName('list-item', namespaces.moin_page)
+    tag_list_item_body = ET.QName('list-item-body', namespaces.moin_page)
+    tag_macro = ET.QName('macro', namespaces.moin_page)
+    tag_macro_args = ET.QName('macro-args', namespaces.moin_page)
+    tag_macro_name = ET.QName('macro-name', namespaces.moin_page)
+    tag_macro_type = ET.QName('macro-type', namespaces.moin_page)
+    tag_outline_level = ET.QName('outline-level', namespaces.moin_page)
     tag_p = ET.QName('p', namespaces.moin_page)
     tag_span = ET.QName('span', namespaces.moin_page)
-    tag_outline_level = ET.QName('outline-level', namespaces.moin_page)
+    tag_strong = ET.QName('strong', namespaces.moin_page)
 
     def __init__(self, request, page, **kw):
         self.request, self.page = request, page
@@ -136,6 +147,13 @@ class Formatter(object):
 
         self.root = ET.Element(None)
         self._stack = [self.root]
+
+    def handle_on(self, on, tag, attrib={}):
+        if on:
+            self._stack_push(ET.Element(tag, attrib))
+        else:
+            self._stack_pop()
+        return ''
 
     def lang(self, on, lang_name):
         return ""
@@ -179,7 +197,10 @@ class Formatter(object):
         return ''
 
     def url(self, on, url=None, css=None, **kw):
-        raise NotImplementedError
+        attrib = {}
+        if url:
+            attrib[self.tag_href] = url
+        return self.handle_on(on, self.tag_a, attrib)
 
     # Attachments ######################################################
 
@@ -199,7 +220,7 @@ class Formatter(object):
 
     def line_anchordef(self, lineno):
         id = 'line-%d' % lineno
-        self._stack_top_append(ET.Element(self.tag_span, attrib={'id': id}))
+        self._stack_top_append(ET.Element(self.tag_span, attrib={self.tag_id: id}))
         return ""
 
     def anchorlink(self, on, name='', **kw):
@@ -251,10 +272,10 @@ class Formatter(object):
         raise NotImplementedError
 
     def strong(self, on, **kw):
-        raise NotImplementedError
+        return self.handle_on(on, self.tag_strong)
 
     def emphasis(self, on, **kw):
-        raise NotImplementedError
+        return self.handle_on(on, self.tag_emphasis)
 
     def underline(self, on, **kw):
         raise NotImplementedError
@@ -305,12 +326,8 @@ class Formatter(object):
         raise NotImplementedError
 
     def paragraph(self, on, **kw):
-        if on:
-            self._stack_push(ET.Element(self.tag_p))
-        else:
-            self._stack_pop()
         self.in_p = on != 0
-        return ''
+        return self.handle_on(on, self.tag_p)
 
     def rule(self, size=0, **kw):
         raise NotImplementedError
@@ -322,13 +339,23 @@ class Formatter(object):
     # Lists ##############################################################
 
     def number_list(self, on, type=None, start=None, **kw):
-        raise NotImplementedError
+        # TODO list type
+        attrib = {}
+        return self.handle_on(on, self.tag_list, attrib)
 
     def bullet_list(self, on, **kw):
-        raise NotImplementedError
+        # TODO list type
+        attrib = {}
+        return self.handle_on(on, self.tag_list, attrib)
 
     def listitem(self, on, **kw):
-        raise NotImplementedError
+        if on:
+            self._stack_push(ET.Element(self.tag_list_item))
+            self._stack_push(ET.Element(self.tag_list_item_body))
+        else:
+            self._stack_pop()
+            self._stack_pop()
+        return ''
 
     def definition_list(self, on, **kw):
         raise NotImplementedError
@@ -340,12 +367,8 @@ class Formatter(object):
         raise NotImplementedError
 
     def heading(self, on, depth, **kw):
-        if on:
-            attrib = {self.tag_outline_level: str(depth)}
-            self._stack_push(ET.Element(self.tag_h, attrib))
-        else:
-            self._stack_pop()
-        return ''
+        attrib = {self.tag_outline_level: str(depth)}
+        return self.handle_on(on, self.tag_h, attrib)
 
     # Tables #############################################################
 
@@ -361,20 +384,15 @@ class Formatter(object):
     # Dynamic stuff / Plugins ############################################
 
     def macro(self, macro_obj, name, args, markup=None):
-        raise NotImplementedError
-        # call the macro
-        try:
-            return macro_obj.execute(name, args)
-        except ImportError, err:
-            errmsg = unicode(err)
-            if not name in errmsg:
-                raise
-            if markup:
-                return (self.span(1, title=errmsg) +
-                        self.text(markup) +
-                        self.span(0))
-            else:
-                return self.text(errmsg)
+        attrib = {self.tag_macro_name: name, self.tag_macro_args: args}
+        if self.in_p:
+            attrib[self.tag_macro_type] = 'inline'
+        else:
+            attrib[self.tag_macro_type] = 'block'
+        elem = ET.Element(self.tag_macro, attrib)
+        self._stack_top_append(elem)
+        return ''
+
     def _get_bang_args(self, line):
         if line.startswith('#!'):
             try:
