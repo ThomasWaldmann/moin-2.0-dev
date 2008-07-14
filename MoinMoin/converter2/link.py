@@ -60,9 +60,8 @@ class ConverterExternOutput(object):
             yield elem, href, page_href
 
         for child in elem:
-            if isinstance(child, ET.Node):
-                for i in self.recurse(child, page_href):
-                    yield i
+            for i in self.recurse(child, page_href):
+                yield i
 
     def __call__(self, tree, request):
         self.request = request
