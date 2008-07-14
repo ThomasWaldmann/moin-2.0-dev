@@ -82,6 +82,16 @@ class TestConverterBase(object):
         for i in pairs:
             yield (self._do,) + i
 
+    def test_style(self):
+        pairs = [
+            ('<page %s><p font-size="1em">Text</p></page>' % namespaces_string_page_default,
+                '<div %s><p style="font-size: 1em">Text</p></div>' % namespaces_string_html_default),
+            ('<page %s %s><p html:style="color: black" font-size="1em">Text</p></page>' % (namespaces_string_page_default, namespaces_string_html),
+                '<div %s><p style="font-size: 1em; color: black">Text</p></div>' % namespaces_string_html_default),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
     def test_table(self):
         pairs = [
             ('<page %s><table><table-header><table-row><table-cell>Header</table-cell></table-row></table-header><table-footer><table-row><table-cell>Footer</table-cell></table-row></table-footer><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></page>' % namespaces_string_page_default,
