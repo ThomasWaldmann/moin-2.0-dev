@@ -14,6 +14,61 @@ from MoinMoin.util import namespaces
 class ElementException(RuntimeError):
     pass
 
+class Attrib(object):
+    tag_style = ElementTree.QName('style', namespaces.html)
+
+    def simple_css(self, key, value, out, out_style):
+        out_style[key.name] = value
+
+    visit_background_color = simple_css
+    visit_font_size = simple_css
+
+    def __call__(self, element):
+        new = {}
+        new_css = {}
+        new_default = {}
+        new_default_css = {}
+
+        default_uri_input = default_uri_output = None
+        if element.tag.uri == namespaces.moin_page:
+            default_uri_input = element.tag.uri
+        if element.tag.uri in ConverterBase.namespaces_valid_output:
+            default_uri_output = element.tag.uri
+
+        for key, value in element.attrib.iteritems():
+            if key.uri == namespaces.moin_page:
+                if not '_' in key.name:
+                    n = 'visit_' + key.name.replace('-', '_')
+                    f = getattr(self, n, None)
+                    if f is not None:
+                        f(key, value, new, new_css)
+            elif key.uri in ConverterBase.namespaces_valid_output:
+                new[key] = value
+            elif key.uri is None:
+                if default_uri_input and not '_' in key.name:
+                    n = 'visit_' + key.name.replace('-', '_')
+                    f = getattr(self, n, None)
+                    if f is not None:
+                        f(key, value, new_default, new_default_css)
+                elif default_uri_output:
+                    new_default[ElementTree.QName(key.name, default_uri_output)] = value
+
+        new_default.update(new)
+        new_default_css.update(new_css)
+
+        if new_default_css:
+            style = new_default_css.items()
+            style.sort(key=lambda i: i[0])
+            style = '; '.join((key + ': ' + value for key, value in style))
+
+            style_old = element.get(self.tag_style)
+            if style_old:
+                style += '; ' + style_old
+
+            new_default[self.tag_style] = style
+
+        return new_default
+
 class ConverterBase(object):
     namespaces_visit = {
         namespaces.moin_page: 'moinpage',
@@ -24,21 +79,6 @@ class ConverterBase(object):
 
     def __call__(self, element, request):
         return self.visit(element)
-
-    def do_attribs(self, element):
-        default_uri = None
-        if element.tag.uri in self.namespaces_valid_output:
-            default_uri = element.tag.uri
-
-        new = {}
-        new_default = {}
-        for key, value in element.attrib.iteritems():
-            if key.uri in self.namespaces_valid_output:
-                new[key] = value
-            if default_uri is not None and key.uri is None:
-                new_default[ElementTree.QName(key.name, default_uri)] = value
-        new_default.update(new)
-        return new_default
 
     def do_children(self, element):
         new = []
@@ -57,8 +97,8 @@ class ConverterBase(object):
     def new(self, tag, attrib={}, children=[]):
         return ElementTree.Element(tag, attrib = attrib, children = children)
 
-    def new_copy(self, tag, element, attrib = {}):
-        attrib_new = self.do_attribs(element)
+    def new_copy(self, tag, element, attrib={}):
+        attrib_new = Attrib()(element)
         attrib_new.update(attrib)
         children = self.do_children(element)
         return self.new(tag, attrib_new, children)
@@ -99,6 +139,10 @@ class ConverterBase(object):
 
     def visit_moinpage_code(self, elem):
         return self.new_copy(ElementTree.QName('tt', namespaces.html), elem)
+
+    def visit_moinpage_div(self, elem):
+        # TODO
+        return self.new_copy(ElementTree.QName('div', namespaces.html), elem)
 
     def visit_moinpage_emphasis(self, elem):
         return self.new_copy(ElementTree.QName('em', namespaces.html), elem)
