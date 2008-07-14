@@ -246,6 +246,53 @@ class ConverterPage(ConverterBase):
            output == 'application/x-xhtml-moin-page':
             return cls()
 
+    def __call__(self, element, request):
+        self._table_of_content_element = None
+        self._table_of_content_id = 0
+        self._table_of_content_maxlevel = -1
+        self._table_of_content_list = []
+
+        ret = super(ConverterPage, self).__call__(element, request)
+
+        elem = self._table_of_content_element
+        if elem:
+            # TODO: gettext
+            attrib_h = {ET.QName('class', namespaces.html): 'table-of-contents-heading'}
+            elem_h = ET.Element(ET.QName('p', namespaces.html),
+                    attrib=attrib_h, children=['Contents'])
+            elem.append(elem_h)
+
+            stack = [elem]
+            def stack_push(elem):
+                stack[-1].append(elem)
+                stack.append(elem)
+            def stack_top_append(elem):
+                stack[-1].append(elem)
+
+            last_level = 0
+            for level, id, text in self._table_of_content_list:
+                if level > self._table_of_content_maxlevel:
+                    continue
+
+                need_item = last_level >= level
+                while last_level > level:
+                    stack.pop()
+                    stack.pop()
+                    last_level -= 1
+                while last_level < level:
+                    stack_push(ET.Element(ET.QName('ol', namespaces.html)))
+                    stack_push(ET.Element(ET.QName('li', namespaces.html)))
+                    last_level += 1
+                if need_item:
+                    stack.pop()
+                    stack_push(ET.Element(ET.QName('li', namespaces.html)))
+
+                attrib = {ET.QName('href', namespaces.html): '#' + id}
+                elem = ET.Element(ET.QName('a', namespaces.html), attrib, children=[text])
+                stack_top_append(elem)
+
+        return ret
+
     def visit_moinpage(self, elem):
         n = 'visit_moinpage_' + elem.tag.name.replace('-', '_')
         f = getattr(self, n, None)
@@ -254,10 +301,42 @@ class ConverterPage(ConverterBase):
 
         raise ElementException(n)
 
+    def visit_moinpage_h(self, elem):
+        level = elem.get(ET.QName('outline-level', namespaces.moin_page), 1)
+        try:
+            level = int(level)
+        except TypeError:
+            raise ElementException
+        if level < 1:
+            level = 1
+        elif level > 6:
+            level = 6
+        elem = self.new_copy(ET.QName('h%d' % level, namespaces.html), elem)
+
+        id = elem.get(ET.QName('id', namespaces.html))
+        if not id:
+            id = 'toc-%d' % self._table_of_content_id
+            elem.set(ET.QName('id', namespaces.html), id)
+            self._table_of_content_id += 1
+
+        text = u''.join(elem.itertext())
+        self._table_of_content_list.append((level, id, text))
+        return elem
+
     def visit_moinpage_macro(self, elem):
         for body in elem:
             if body.tag.uri == namespaces.moin_page and body.tag.name == 'macro-body':
                 return self.do_children(body)
+
+    def visit_moinpage_table_of_content(self, elem):
+        level = int(elem.get(ET.QName('outline-level', namespaces.moin_page), 6))
+
+        attrib = {ET.QName('class', namespaces.html): 'table-of-contents'}
+        elem = self.new(ET.QName('div', namespaces.html), attrib)
+
+        self._table_of_content_element = elem
+        self._table_of_content_maxlevel = level
+        return elem
 
 class ConverterDocument(ConverterPage):
     """
