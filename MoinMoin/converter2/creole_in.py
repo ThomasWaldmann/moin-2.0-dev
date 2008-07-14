@@ -23,7 +23,7 @@
 """
 
 import re
-from emeraldtree import ElementTree
+from emeraldtree import ElementTree as ET
 
 from MoinMoin.util import namespaces
 from MoinMoin.converter2._wiki_macro import ConverterMacro
@@ -172,14 +172,14 @@ class Converter(ConverterMacro):
     def __call__(self, text, request, page=None):
         """Parse the text given as self.raw and return DOM tree."""
 
-        tag = ElementTree.QName('page', namespaces.moin_page)
-        tag_page_href = ElementTree.QName('page-href', namespaces.moin_page)
+        tag = ET.QName('page', namespaces.moin_page)
+        tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
         attrib = {}
         if page is not None:
             attrib[tag_page_href] = 'wiki:///' + page.page_name
 
-        self.root = ElementTree.Element(tag, attrib=attrib)
+        self.root = ET.Element(tag, attrib=attrib)
         self._stack = [self.root]
         self.parse_block(text)
         return self.root
@@ -192,9 +192,9 @@ class Converter(ConverterMacro):
 
         if not escaped_url:
             # this url is NOT escaped
-            tag = ElementTree.QName('a', namespaces.moin_page)
-            tag_href = ElementTree.QName('href', namespaces.xlink)
-            element = ElementTree.Element(tag, attrib = {tag_href: url_target}, children = [url_target])
+            tag = ET.QName('a', namespaces.moin_page)
+            tag_href = ET.QName('href', namespaces.xlink)
+            element = ET.Element(tag, attrib = {tag_href: url_target}, children = [url_target])
             self._stack_top_append(element)
         else:
             # this url is escaped, we render it as text
@@ -209,9 +209,9 @@ class Converter(ConverterMacro):
         else:
             target = link_url
             text = link_url
-        tag = ElementTree.QName('a', namespaces.moin_page)
-        tag_href = ElementTree.QName('href', namespaces.xlink)
-        element = ElementTree.Element(tag, attrib = {tag_href: target})
+        tag = ET.QName('a', namespaces.moin_page)
+        tag_href = ET.QName('href', namespaces.xlink)
+        element = ET.Element(tag, attrib = {tag_href: target})
         self._stack_push(element)
         self._apply(self.link_re, link_text or text)
         self._stack_pop()
@@ -236,22 +236,22 @@ class Converter(ConverterMacro):
     def _object_repl(self, object, object_target, object_text=None):
         """Handles objects included in the page."""
 
-        tag = ElementTree.QName('object', namespaces.moin_page)
-        tag_alt = ElementTree.QName('alt', namespaces.moin_page)
-        tag_href = ElementTree.QName('href', namespaces.xlink)
+        tag = ET.QName('object', namespaces.moin_page)
+        tag_alt = ET.QName('alt', namespaces.moin_page)
+        tag_href = ET.QName('href', namespaces.xlink)
 
         attrib = {tag_href: object_target}
         if object_text is not None:
             attrib[tag_alt] = object_text
 
-        element = ElementTree.Element(tag, attrib)
+        element = ET.Element(tag, attrib)
         self._stack_top_append(element)
 
     def _separator_repl(self, separator):
         self._stack_pop_name(('page', 'blockquote'))
         # TODO: questionable
-        tag = ElementTree.QName('separator', namespaces.moin_page)
-        self._stack_top_append(ElementTree.Element(tag))
+        tag = ET.QName('separator', namespaces.moin_page)
+        self._stack_top_append(ET.Element(tag))
 
     def _item_repl(self, item, item_head, item_text):
         # TODO: Mention type in the tree
@@ -272,15 +272,15 @@ class Converter(ConverterMacro):
             self._stack.pop()
 
         if cur.tag.name != 'list':
-            tag = ElementTree.QName('list', namespaces.moin_page)
-            element = ElementTree.Element(tag)
+            tag = ET.QName('list', namespaces.moin_page)
+            element = ET.Element(tag)
             element.level, element.type = level, type
             self._stack_push(element)
 
-        tag = ElementTree.QName('list-item', namespaces.moin_page)
-        tag_body = ElementTree.QName('list-item-body', namespaces.moin_page)
-        element = ElementTree.Element(tag)
-        element_body = ElementTree.Element(tag_body)
+        tag = ET.QName('list-item', namespaces.moin_page)
+        tag_body = ET.QName('list-item-body', namespaces.moin_page)
+        element = ET.Element(tag)
+        element_body = ET.Element(tag_body)
         element_body.level, element_body.type = level, type
 
         self._stack_push(element)
@@ -295,17 +295,17 @@ class Converter(ConverterMacro):
         self._stack_pop_name(('page', 'blockquote'))
         level = len(head_head)
 
-        tag = ElementTree.QName('h', namespaces.moin_page)
-        tag_level = ElementTree.QName('outline-level', namespaces.moin_page)
-        element = ElementTree.Element(tag, attrib = {tag_level: str(level)}, children = [head_text])
+        tag = ET.QName('h', namespaces.moin_page)
+        tag_level = ET.QName('outline-level', namespaces.moin_page)
+        element = ET.Element(tag, attrib = {tag_level: str(level)}, children = [head_text])
         self._stack_top_append(element)
 
     def _textblock_repl(self, textblock, testblock_newline=None):
         if self._stack[-1].tag.name in ('table', 'table-body', 'list'):
             self._stack_pop_name(('page', 'blockquote'))
         if self._stack[-1].tag.name in ('page', 'blockquote'):
-            tag = ElementTree.QName('p', namespaces.moin_page)
-            element = ElementTree.Element(tag)
+            tag = ET.QName('p', namespaces.moin_page)
+            element = ET.Element(tag)
             self._stack_push(element)
         # If we are in a paragraph already, don't loose the whitespace
         elif testblock_newline is not None:
@@ -317,22 +317,22 @@ class Converter(ConverterMacro):
         self._stack_pop_name(('table-body', 'page', 'blockquote'))
 
         if self._stack[-1].tag.name != 'table-body':
-            tag = ElementTree.QName('table', namespaces.moin_page)
-            element = ElementTree.Element(tag)
+            tag = ET.QName('table', namespaces.moin_page)
+            element = ET.Element(tag)
             self._stack_push(element)
-            tag = ElementTree.QName('table-body', namespaces.moin_page)
-            element = ElementTree.Element(tag)
+            tag = ET.QName('table-body', namespaces.moin_page)
+            element = ET.Element(tag)
             self._stack_push(element)
 
-        tag = ElementTree.QName('table-row', namespaces.moin_page)
-        element = ElementTree.Element(tag)
+        tag = ET.QName('table-row', namespaces.moin_page)
+        element = ET.Element(tag)
         self._stack_push(element)
 
         for m in self.cell_re.finditer(table):
             cell = m.group('cell')
             if cell:
-                tag = ElementTree.QName('table-cell', namespaces.moin_page)
-                element = ElementTree.Element(tag)
+                tag = ET.QName('table-cell', namespaces.moin_page)
+                element = ET.Element(tag)
                 self._stack_push(element)
 
                 self.parse_inline(cell)
@@ -341,8 +341,8 @@ class Converter(ConverterMacro):
             else:
                 cell = m.group('head')
                 # TODO
-                tag = ElementTree.QName('table-cell', namespaces.moin_page)
-                element = ElementTree.Element(tag, children=[cell.strip('=')])
+                tag = ET.QName('table-cell', namespaces.moin_page)
+                element = ET.Element(tag, children=[cell.strip('=')])
                 self._stack_top_append(element)
 
         self._stack_pop()
@@ -353,36 +353,36 @@ class Converter(ConverterMacro):
             return m.group('indent') + m.group('rest')
         text = self.pre_escape_re.sub(remove_tilde, nowikiblock_text)
         # TODO
-        tag = ElementTree.QName('blockcode', namespaces.moin_page)
-        self._stack_top_append(ElementTree.Element(tag, children=[text]))
+        tag = ET.QName('blockcode', namespaces.moin_page)
+        self._stack_top_append(ET.Element(tag, children=[text]))
 
     def _line_repl(self, line):
         self._stack_pop_name(('page', 'blockquote'))
 
     def _nowikiinline_repl(self, nowikiinline, nowikiinline_text):
         # TODO
-        tag = ElementTree.QName('code', namespaces.moin_page)
-        self._stack_top_append(ElementTree.Element(tag, children=[nowikiinline_text]))
+        tag = ET.QName('code', namespaces.moin_page)
+        self._stack_top_append(ET.Element(tag, children=[nowikiinline_text]))
 
     def _emph_repl(self, emph):
         if not self._stack_top_check(('emphasis',)):
-            tag = ElementTree.QName('emphasis', namespaces.moin_page)
-            self._stack_push(ElementTree.Element(tag))
+            tag = ET.QName('emphasis', namespaces.moin_page)
+            self._stack_push(ET.Element(tag))
         else:
             self._stack_pop_name(('emphasis',))
             self._stack_pop()
 
     def _strong_repl(self, strong):
         if not self._stack_top_check(('strong',)):
-            tag = ElementTree.QName('strong', namespaces.moin_page)
-            self._stack_push(ElementTree.Element(tag))
+            tag = ET.QName('strong', namespaces.moin_page)
+            self._stack_push(ET.Element(tag))
         else:
             self._stack_pop_name(('strong',))
             self._stack_pop()
 
     def _linebreak_repl(self, linebreak):
-        tag = ElementTree.QName('line-break', namespaces.moin_page)
-        element = ElementTree.Element(tag)
+        tag = ET.QName('line-break', namespaces.moin_page)
+        element = ET.Element(tag)
         self._stack_top_append(element)
 
     def _escape_repl(self, escape, escaped_char):
