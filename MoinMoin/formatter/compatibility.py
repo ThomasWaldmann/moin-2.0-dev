@@ -124,6 +124,7 @@ class Formatter(ConverterMacro):
     tag_a = ET.QName('a', namespaces.moin_page)
     tag_blockcode = ET.QName('blockcode', namespaces.moin_page)
     tag_emphasis = ET.QName('emphasis', namespaces.moin_page)
+    tag_font_size = ET.QName('font-size', namespaces.moin_page)
     tag_h = ET.QName('h', namespaces.moin_page)
     tag_href = ET.QName('href', namespaces.xlink)
     tag_id = ET.QName('id', namespaces.moin_page)
@@ -326,12 +327,12 @@ class Formatter(ConverterMacro):
         return self.handle_on(on, self.tag_blockcode)
 
     def small(self, on, **kw):
-        # TODO
-        return ''
+        attrib = {self.tag_font_size: '85%'}
+        return self.handle_on(on, self.tag_span, attrib)
 
     def big(self, on, **kw):
-        # TODO
-        return ''
+        attrib = {self.tag_font_size: '120%'}
+        return self.handle_on(on, self.tag_span, attrib)
 
     # special markup for syntax highlighting #############################
 
