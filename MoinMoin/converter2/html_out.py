@@ -117,10 +117,10 @@ class ConverterBase(object):
     def visit_moinpage(self, elem):
         n = 'visit_moinpage_' + elem.tag.name.replace('-', '_')
         f = getattr(self, n, None)
-        if f is None:
-            # TODO
-            raise ElementException(n)
-        return f(elem)
+        if f:
+            return f(elem)
+
+        return self.new_copy(elem.tag, elem)
 
     def visit_moinpage_a(self, elem):
         # TODO
@@ -235,12 +235,6 @@ class Converter(ConverterBase):
     Converter application/x-moin-document -> application/x-moin-document
     """
 
-    def visit_moinpage_macro(self, elem):
-        return self.new_copy(elem.tag, elem)
-
-    def visit_moinpage_macro_body(self, elem):
-        return self.new_copy(elem.tag, elem)
-
 class ConverterPage(ConverterBase):
     """
     Converter application/x-moin-document -> application/x-xhtml-moin-page
@@ -251,6 +245,14 @@ class ConverterPage(ConverterBase):
         if input == 'application/x-moin-document' and \
            output == 'application/x-xhtml-moin-page':
             return cls()
+
+    def visit_moinpage(self, elem):
+        n = 'visit_moinpage_' + elem.tag.name.replace('-', '_')
+        f = getattr(self, n, None)
+        if f:
+            return f(elem)
+
+        raise ElementException(n)
 
     def visit_moinpage_macro(self, elem):
         for body in elem:
