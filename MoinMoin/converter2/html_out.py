@@ -7,7 +7,7 @@ Converts an internal document into HTML.
 @license: GNU GPL, see COPYING for details.
 """
 
-from emeraldtree import ElementTree
+from emeraldtree import ElementTree as ET
 
 from MoinMoin.util import namespaces
 
@@ -15,7 +15,7 @@ class ElementException(RuntimeError):
     pass
 
 class Attrib(object):
-    tag_style = ElementTree.QName('style', namespaces.html)
+    tag_style = ET.QName('style', namespaces.html)
 
     def simple_css(self, key, value, out, out_style):
         out_style[key.name] = value
@@ -51,7 +51,7 @@ class Attrib(object):
                     if f is not None:
                         f(key, value, new_default, new_default_css)
                 elif default_uri_output:
-                    new_default[ElementTree.QName(key.name, default_uri_output)] = value
+                    new_default[ET.QName(key.name, default_uri_output)] = value
 
         new_default.update(new)
         new_default_css.update(new_css)
@@ -83,7 +83,7 @@ class ConverterBase(object):
     def do_children(self, element):
         new = []
         for child in element:
-            if isinstance(child, ElementTree.Element):
+            if isinstance(child, ET.Element):
                 r = self.visit(child)
                 if r is None:
                     r = ()
@@ -95,7 +95,7 @@ class ConverterBase(object):
         return new
 
     def new(self, tag, attrib={}, children=[]):
-        return ElementTree.Element(tag, attrib = attrib, children = children)
+        return ET.Element(tag, attrib = attrib, children = children)
 
     def new_copy(self, tag, element, attrib={}):
         attrib_new = Attrib()(element)
@@ -126,29 +126,29 @@ class ConverterBase(object):
         # TODO
         attrib = {}
 
-        tag_href_xlink = ElementTree.QName('href', namespaces.xlink)
-        tag_href = ElementTree.QName('href', namespaces.html)
+        tag_href_xlink = ET.QName('href', namespaces.xlink)
+        tag_href = ET.QName('href', namespaces.html)
         href = elem.get(tag_href_xlink, None)
         if href is not None:
             attrib[tag_href] = href
 
-        return self.new_copy(ElementTree.QName('a', namespaces.html), elem, attrib)
+        return self.new_copy(ET.QName('a', namespaces.html), elem, attrib)
 
     def visit_moinpage_blockcode(self, elem):
-        return self.new_copy(ElementTree.QName('pre', namespaces.html), elem)
+        return self.new_copy(ET.QName('pre', namespaces.html), elem)
 
     def visit_moinpage_code(self, elem):
-        return self.new_copy(ElementTree.QName('tt', namespaces.html), elem)
+        return self.new_copy(ET.QName('tt', namespaces.html), elem)
 
     def visit_moinpage_div(self, elem):
         # TODO
-        return self.new_copy(ElementTree.QName('div', namespaces.html), elem)
+        return self.new_copy(ET.QName('div', namespaces.html), elem)
 
     def visit_moinpage_emphasis(self, elem):
-        return self.new_copy(ElementTree.QName('em', namespaces.html), elem)
+        return self.new_copy(ET.QName('em', namespaces.html), elem)
 
     def visit_moinpage_h(self, elem):
-        level = elem.get(ElementTree.QName('outline-level', namespaces.moin_page), 1)
+        level = elem.get(ET.QName('outline-level', namespaces.moin_page), 1)
         try:
             level = int(level)
         except TypeError:
@@ -157,30 +157,30 @@ class ConverterBase(object):
             level = 1
         elif level > 6:
             level = 6
-        return self.new_copy(ElementTree.QName('h%d' % level, namespaces.html), elem)
+        return self.new_copy(ET.QName('h%d' % level, namespaces.html), elem)
 
     def visit_moinpage_image(self, elem):
         attrib = {}
 
-        tag_href_xlink = ElementTree.QName('href', namespaces.xlink)
-        tag_src = ElementTree.QName('src', namespaces.html)
+        tag_href_xlink = ET.QName('href', namespaces.xlink)
+        tag_src = ET.QName('src', namespaces.html)
         src = elem.get(tag_href_xlink, None)
         if src is not None:
             attrib[tag_src] = src
 
-        return self.new(ElementTree.QName('img', namespaces.html), attrib)
+        return self.new(ET.QName('img', namespaces.html), attrib)
 
     def visit_moinpage_line_break(self, elem):
-        return self.new(ElementTree.QName('br', namespaces.html))
+        return self.new(ET.QName('br', namespaces.html))
 
     def visit_moinpage_list(self, elem):
         # TODO: List type
-        ret = self.new(ElementTree.QName('ul', namespaces.html))
+        ret = self.new(ET.QName('ul', namespaces.html))
         for item in elem:
             if item.tag.uri == namespaces.moin_page and item.tag.name == 'list-item':
                 for body in item:
                     if body.tag.uri == namespaces.moin_page and body.tag.name == 'list-item-body':
-                        ret_body = self.new_copy(ElementTree.QName('li', namespaces.html), body)
+                        ret_body = self.new_copy(ET.QName('li', namespaces.html), body)
                         ret.append(ret_body)
                         break
         return ret
@@ -190,10 +190,10 @@ class ConverterBase(object):
         pass
 
     def visit_moinpage_p(self, elem):
-        return self.new_copy(ElementTree.QName('p', namespaces.html), elem)
+        return self.new_copy(ET.QName('p', namespaces.html), elem)
 
     def visit_moinpage_page(self, elem):
-        return self.new_copy(ElementTree.QName('div', namespaces.html), elem)
+        return self.new_copy(ET.QName('div', namespaces.html), elem)
 
     def visit_moinpage_separator(self, elem):
         # TODO
@@ -201,22 +201,22 @@ class ConverterBase(object):
 
     def visit_moinpage_span(self, elem):
         # TODO
-        return self.new_copy(ElementTree.QName('span', namespaces.html), elem)
+        return self.new_copy(ET.QName('span', namespaces.html), elem)
 
     def visit_moinpage_strong(self, elem):
-        return self.new_copy(ElementTree.QName('strong', namespaces.html), elem)
+        return self.new_copy(ET.QName('strong', namespaces.html), elem)
 
     def visit_moinpage_table(self, elem):
-        ret = self.new(ElementTree.QName('table', namespaces.html))
+        ret = self.new(ET.QName('table', namespaces.html))
         for item in elem:
             tag = None
             if item.tag.uri == namespaces.moin_page:
                 if item.tag.name == 'table-body':
-                    tag = ElementTree.QName('tbody', namespaces.html)
+                    tag = ET.QName('tbody', namespaces.html)
                 elif item.tag.name == 'table-header':
-                    tag = ElementTree.QName('thead', namespaces.html)
+                    tag = ET.QName('thead', namespaces.html)
                 elif item.tag.name == 'table-footer':
-                    tag = ElementTree.QName('tfoot', namespaces.html)
+                    tag = ET.QName('tfoot', namespaces.html)
             elif item.tag.uri == namespaces.html and \
                     item.tag.name in ('tbody', 'thead', 'tfoot'):
                 tag = item.tag
@@ -225,10 +225,10 @@ class ConverterBase(object):
         return ret
 
     def visit_moinpage_table_cell(self, elem):
-        return self.new_copy(ElementTree.QName('td', namespaces.html), elem)
+        return self.new_copy(ET.QName('td', namespaces.html), elem)
 
     def visit_moinpage_table_row(self, elem):
-        return self.new_copy(ElementTree.QName('tr', namespaces.html), elem)
+        return self.new_copy(ET.QName('tr', namespaces.html), elem)
 
 class Converter(ConverterBase):
     """

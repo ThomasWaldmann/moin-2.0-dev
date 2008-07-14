@@ -18,7 +18,7 @@ namespaces_string_xlink = 'xmlns:xlink="%s"' % namespaces.xlink
 def serialize(elem, **options):
     from cStringIO import StringIO
     file = StringIO()
-    tree = ElementTree.ElementTree(elem)
+    tree = ET.ElementTree(elem)
     n = {namespaces.html: '', namespaces.moin_page: 'page'}
     tree.write(file, namespaces=n, **options)
     return file.getvalue()
@@ -101,7 +101,7 @@ class TestConverterBase(object):
             yield (self._do,) + i
 
     def _do(self, input, output):
-        page = ElementTree.XML(input)
+        page = ET.XML(input)
         out = self.conv(page, object())
         assert serialize(out) == output
 
@@ -118,7 +118,7 @@ class TestConverter(object):
             yield (self._do,) + i
 
     def _do(self, input, output):
-        page = ElementTree.XML(input)
+        page = ET.XML(input)
         out = self.conv(page, object())
         assert serialize(out) == output
 
@@ -135,11 +135,11 @@ class TestConverterPage(object):
             yield (self._do,) + i
 
     def test_unknown(self):
-        page = ElementTree.XML("<page:unknown %s/>" % namespaces_string_page)
+        page = ET.XML("<page:unknown %s/>" % namespaces_string_page)
         py.test.raises(ElementException, self.conv.__call__, page, object())
 
     def _do(self, input, output):
-        page = ElementTree.XML(input)
+        page = ET.XML(input)
         out = self.conv(page, object())
         assert serialize(out) == output
 
