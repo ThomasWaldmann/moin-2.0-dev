@@ -105,10 +105,6 @@ class TestConverterBase(object):
         out = self.conv(page, object())
         assert serialize(out) == output
 
-    def test_unknown(self):
-        page = ElementTree.XML("<page:unknown %s/>" % namespaces_string_page)
-        py.test.raises(ElementException, self.conv.__call__, page, object())
-
 class TestConverter(object):
     def setup_class(self):
         self.conv = Converter()
@@ -137,6 +133,10 @@ class TestConverterPage(object):
         ]
         for i in pairs:
             yield (self._do,) + i
+
+    def test_unknown(self):
+        page = ElementTree.XML("<page:unknown %s/>" % namespaces_string_page)
+        py.test.raises(ElementException, self.conv.__call__, page, object())
 
     def _do(self, input, output):
         page = ElementTree.XML(input)
