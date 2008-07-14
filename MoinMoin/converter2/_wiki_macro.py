@@ -38,7 +38,9 @@ class ConverterMacro(object):
         if type == 'inline':
             return text
         # TODO
-        return ''
+        tag = ET.QName('table-of-content', namespaces.moin_page)
+        attrib = {}
+        return ET.Element(tag, attrib=attrib)
 
     def macro(self, name, args, text, type):
         func = getattr(self, '_%s_repl' % name, None)
