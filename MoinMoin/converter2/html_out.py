@@ -159,17 +159,6 @@ class ConverterBase(object):
             level = 6
         return self.new_copy(ET.QName('h%d' % level, namespaces.html), elem)
 
-    def visit_moinpage_image(self, elem):
-        attrib = {}
-
-        tag_href_xlink = ET.QName('href', namespaces.xlink)
-        tag_src = ET.QName('src', namespaces.html)
-        src = elem.get(tag_href_xlink, None)
-        if src is not None:
-            attrib[tag_src] = src
-
-        return self.new(ET.QName('img', namespaces.html), attrib)
-
     def visit_moinpage_line_break(self, elem):
         return self.new(ET.QName('br', namespaces.html))
 
@@ -188,6 +177,17 @@ class ConverterBase(object):
     def visit_moinpage_note(self, elem):
         # TODO
         pass
+
+    def visit_moinpage_object(self, elem):
+        attrib = {}
+
+        tag_href_xlink = ET.QName('href', namespaces.xlink)
+        tag_data = ET.QName('data', namespaces.html)
+        href = elem.get(tag_href_xlink, None)
+        if href is not None:
+            attrib[tag_data] = href
+
+        return self.new(ET.QName('object', namespaces.html), attrib)
 
     def visit_moinpage_p(self, elem):
         return self.new_copy(ET.QName('p', namespaces.html), elem)
