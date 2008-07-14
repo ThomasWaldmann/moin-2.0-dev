@@ -54,14 +54,6 @@ class TestConverter(object):
                 '<page %s %s><p><object alt="MoinMoin" xlink:href="http://moinmo.in/" /></p></page>' % (namespaces_string, namespaces_string_xlink)),
             ('----',
                 '<page %s><separator /></page>' % namespaces_string),
-            ('<<Macro>>',
-                '<page %s><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
-            (' <<Macro>> ',
-                '<page %s><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
-            ('Text <<Macro>>',
-                '<page %s><p>Text <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
-            ('Text\n<<Macro>>',
-                '<page %s><p>Text\n<macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
@@ -150,6 +142,22 @@ class TestConverter(object):
                 '<page %s><list><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string),
             ('* List 1\n# List 2',
                 '<page %s><list><list-item><list-item-body>List 1</list-item-body></list-item></list><list><list-item><list-item-body>List 2</list-item-body></list-item></list></page>' % namespaces_string),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
+    def test_macro(self):
+        pairs = [
+            ('<<Macro>>',
+                '<page %s><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
+            (' <<Macro>> ',
+                '<page %s><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
+            ('Text <<Macro>>',
+                '<page %s><p>Text <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
+            ('Text\n<<Macro>>',
+                '<page %s><p>Text\n<macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
+            ('Text\n\n<<Macro>>',
+                '<page %s><p>Text</p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
