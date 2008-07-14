@@ -123,6 +123,7 @@ class Formatter(ConverterMacro):
 
     tag_a = ET.QName('a', namespaces.moin_page)
     tag_blockcode = ET.QName('blockcode', namespaces.moin_page)
+    tag_div = ET.QName('div', namespaces.moin_page)
     tag_emphasis = ET.QName('emphasis', namespaces.moin_page)
     tag_font_size = ET.QName('font-size', namespaces.moin_page)
     tag_h = ET.QName('h', namespaces.moin_page)
@@ -158,12 +159,12 @@ class Formatter(ConverterMacro):
         self.root = ET.Element(None)
         self._stack = [self.root]
 
-    def handle_on(self, on, tag, attrib={}, nonempty=False):
+    def handle_on(self, on, tag, attrib={}):
         if on:
             self._stack_push(ET.Element(tag, attrib))
         else:
             elem = self._stack_pop()
-            if nonempty and not len(elem):
+            if not len(elem):
                 self._stack[-1].remove(elem)
         return ''
 
@@ -292,10 +293,10 @@ class Formatter(ConverterMacro):
         raise NotImplementedError
 
     def strong(self, on, **kw):
-        return self.handle_on(on, self.tag_strong, nonempty=True)
+        return self.handle_on(on, self.tag_strong)
 
     def emphasis(self, on, **kw):
-        return self.handle_on(on, self.tag_emphasis, nonempty=True)
+        return self.handle_on(on, self.tag_emphasis)
 
     def underline(self, on, **kw):
         # TODO
@@ -483,7 +484,7 @@ class Formatter(ConverterMacro):
 
     def div(self, on, **kw):
         """ open/close a blocklevel division """
-        return self.handle_on(on, ET.QName('div', namespaces.moin_page))
+        return self.handle_on(on, self.tag_div)
 
     def span(self, on, **kw):
         """ open/close a inline span """
