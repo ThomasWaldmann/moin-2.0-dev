@@ -15,6 +15,7 @@ import htmlentitydefs
 from HTMLParser import HTMLParser as _HTMLParserBase
 
 from MoinMoin import wikiutil
+from MoinMoin.converter2._wiki_macro import ConverterMacro
 from MoinMoin.util import namespaces
 
 class _HTMLParser(_HTMLParserBase):
@@ -117,7 +118,7 @@ class _HTMLParser(_HTMLParserBase):
         pass # ignore by default; override if necessary
 
 
-class Formatter(object):
+class Formatter(ConverterMacro):
     hardspace = ' '
 
     tag_a = ET.QName('a', namespaces.moin_page)
@@ -420,12 +421,11 @@ class Formatter(object):
     # Dynamic stuff / Plugins ############################################
 
     def macro(self, macro_obj, name, args, markup=None):
-        attrib = {self.tag_macro_name: name, self.tag_macro_args: args}
         if self.in_p:
-            attrib[self.tag_macro_type] = 'inline'
+            macro_type = 'inline'
         else:
-            attrib[self.tag_macro_type] = 'block'
-        elem = ET.Element(self.tag_macro, attrib)
+            macro_type = 'block'
+        elem = super(Formatter, self).macro(name, args, markup, macro_type)
         self._stack_top_append(elem)
         return ''
 
