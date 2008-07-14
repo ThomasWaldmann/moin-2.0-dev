@@ -37,9 +37,17 @@ class ConverterMacro(object):
     def _TableOfContents_repl(self, args, text, type):
         if type == 'inline':
             return text
+
         # TODO
         tag = ET.QName('table-of-content', namespaces.moin_page)
         attrib = {}
+        try:
+            level = int(args)
+        except TypeError:
+            pass
+        else:
+            attrib[ET.QName('outline-level', namespaces.moin_page)] = str(level)
+
         return ET.Element(tag, attrib=attrib)
 
     def macro(self, name, args, text, type):
