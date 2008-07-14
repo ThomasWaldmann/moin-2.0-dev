@@ -121,6 +121,7 @@ class Formatter(object):
     hardspace = ' '
 
     tag_a = ET.QName('a', namespaces.moin_page)
+    tag_blockcode = ET.QName('blockcode', namespaces.moin_page)
     tag_emphasis = ET.QName('emphasis', namespaces.moin_page)
     tag_h = ET.QName('h', namespaces.moin_page)
     tag_href = ET.QName('href', namespaces.xlink)
@@ -214,14 +215,20 @@ class Formatter(object):
     # Attachments ######################################################
 
     def attachment_link(self, on, url=None, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
+
     def attachment_image(self, url, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
+
     def attachment_drawing(self, url, text, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def attachment_inlined(self, url, text, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def anchordef(self, name):
         raise NotImplementedError
@@ -247,7 +254,8 @@ class Formatter(object):
         In particular an 'alt' or 'title' argument should give a description
         of the image.
         """
-        raise NotImplementedError
+        # TODO
+        return ''
         title = src
         for titleattr in ('title', 'html__title', 'alt', 'html__alt'):
             if titleattr in kw:
@@ -287,19 +295,23 @@ class Formatter(object):
         return self.handle_on(on, self.tag_emphasis, nonempty=True)
 
     def underline(self, on, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def highlight(self, on, **kw):
         raise NotImplementedError
 
     def sup(self, on, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def sub(self, on, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def strike(self, on, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def code(self, on, **kw):
         if on:
@@ -309,25 +321,30 @@ class Formatter(object):
         return ''
 
     def preformatted(self, on, **kw):
-        raise NotImplementedError
         self.in_pre = on != 0
+        return self.handle_on(on, self.tag_blockcode)
 
     def small(self, on, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def big(self, on, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     # special markup for syntax highlighting #############################
 
-    def code_area(self, on, code_id, **kw):
-        raise NotImplementedError
+    def code_area(self, on, code_id, code_type='code', show=0, start=-1, step=-1):
+        # TODO
+        return ''
 
     def code_line(self, on):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def code_token(self, tok_text, tok_type):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     # Paragraphs, Lines, Rules ###########################################
 
@@ -368,13 +385,16 @@ class Formatter(object):
         return ''
 
     def definition_list(self, on, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def definition_term(self, on, compact=0, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def definition_desc(self, on, **kw):
-        raise NotImplementedError
+        # TODO
+        return ''
 
     def heading(self, on, depth, **kw):
         attrib = {self.tag_outline_level: str(depth)}
@@ -420,38 +440,52 @@ class Formatter(object):
         return None
 
     def parser(self, parser_name, lines):
-        """ parser_name MUST be valid!
-            writes out the result instead of returning it!
-        """
-        raise NotImplementedError
-        # attention: this is copied into text_python!
-        parser = wikiutil.searchAndImportPlugin(self.request.cfg, "parser", parser_name)
+        if not lines:
+            return ''
+
         args = None
-        if lines:
-            args = self._get_bang_args(lines[0])
-            logging.debug("formatter.parser: parser args %r" % args)
-            if args is not None:
-                lines = lines[1:]
-        if lines and not lines[0]:
-            lines = lines[1:]
-        if lines and not lines[-1].strip():
-            lines = lines[:-1]
-        p = parser('\n'.join(lines), self.request, format_args=args)
-        p.format(self)
-        del p
+        if lines[0].startswith('#!'):
+            data = lines[0][2:].split(None, 1)
+            if len(data) > 1:
+                args = data[1]
+            lines.pop(0)
+
+        if not lines[0]:
+            lines.pop(0)
+        if not lines[-1]:
+            lines.pop(-1)
+
+        text = '\n'.join(lines)
+
+        from MoinMoin.converter2 import default_registry as reg
+
+        mimetype = wikiutil.MimeType(parser_name).mime_type()
+        converter = reg.get(mimetype, 'application/x-moin-document', None)
+
+        self._stack_push(ET.Element(ET.QName('div', namespaces.moin_page)))
+
+        if converter:
+            doc = input_converter(text, self.request, self.page)
+            self._stack_top_append(doc)
+
+        else:
+            Parser = wikiutil.searchAndImportPlugin(self.request.cfg, "parser", parser_name)
+            parser = Parser(text, self.request, format_args=args)
+
+            parser.format(self)
+
+        self._stack_pop()
         return ''
 
     # Other ##############################################################
 
     def div(self, on, **kw):
         """ open/close a blocklevel division """
-        raise NotImplementedError
-        return ""
+        return self.handle_on(on, ET.QName('div', namespaces.moin_page))
 
     def span(self, on, **kw):
         """ open/close a inline span """
-        raise NotImplementedError
-        return ""
+        return self.handle_on(on, self.tag_span)
 
     def rawHTML(self, markup):
         """ This allows emitting pre-formatted HTML markup, and should be
