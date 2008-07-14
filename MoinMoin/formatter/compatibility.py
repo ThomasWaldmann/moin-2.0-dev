@@ -237,8 +237,9 @@ class Formatter(ConverterMacro):
         return ""
 
     def line_anchordef(self, lineno):
-        id = 'line-%d' % lineno
-        self._stack_top_append(ET.Element(self.tag_span, attrib={self.tag_id: id}))
+        # TODO
+        #id = 'line-%d' % lineno
+        #self._stack_top_append(ET.Element(self.tag_span, attrib={self.tag_id: id}))
         return ""
 
     def anchorlink(self, on, name='', **kw):
