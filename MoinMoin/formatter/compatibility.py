@@ -134,6 +134,7 @@ class Formatter(object):
     tag_macro_type = ET.QName('macro-type', namespaces.moin_page)
     tag_outline_level = ET.QName('outline-level', namespaces.moin_page)
     tag_p = ET.QName('p', namespaces.moin_page)
+    tag_separator = ET.QName('separator', namespaces.moin_page)
     tag_span = ET.QName('span', namespaces.moin_page)
     tag_strong = ET.QName('strong', namespaces.moin_page)
     tag_table = ET.QName('table', namespaces.moin_page)
@@ -263,8 +264,8 @@ class Formatter(object):
         raise NotImplementedError
 
     def smiley(self, text):
-        raise NotImplementedError
-        return text
+        # TODO
+        return ''
 
     def nowikiword(self, text):
         self._stack_top_append(text)
@@ -338,7 +339,8 @@ class Formatter(object):
         return self.handle_on(on, self.tag_p)
 
     def rule(self, size=0, **kw):
-        raise NotImplementedError
+        self._stack_top_append(ET.Element(self.tag_separator))
+        return ''
 
     def icon(self, type):
         raise NotImplementedError
