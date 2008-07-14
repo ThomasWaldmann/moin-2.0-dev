@@ -20,7 +20,7 @@ namespaces_list = {
 def serialize(elem, **options):
     from cStringIO import StringIO
     file = StringIO()
-    tree = ElementTree.ElementTree(elem)
+    tree = ET.ElementTree(elem)
     tree.write(file, namespaces = namespaces_list, **options)
     return file.getvalue()
 
