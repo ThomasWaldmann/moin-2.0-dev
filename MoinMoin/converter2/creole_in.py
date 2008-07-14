@@ -65,7 +65,6 @@ class Rules:
             }}
         )'''
     macro_block = r'''
-        (?P<macroblock_newline>(?<=\n))?
         ^
         \s*?
         (?P<macroblock>
@@ -216,16 +215,12 @@ class Converter(ConverterMacro):
         self._apply(self.link_re, link_text or text)
         self._stack_pop()
 
-    def _macroblock_repl(self, macroblock, macro_name, macro_args='', macroblock_newline=None):
+    def _macroblock_repl(self, macroblock, macro_name, macro_args=''):
         """Handles macros using the placeholder syntax."""
 
-        if self._stack[-1].tag.name in ('page', 'blockquote'):
-            elem = self.macro(macro_name, macro_args, macroblock, 'block')
-            self._stack_top_append(elem)
-        else:
-            if macroblock_newline is not None:
-                self._stack_top_append('\n')
-            self._macroinline_repl(macroblock, macro_name, macro_args)
+        self._stack_pop_name(('page', 'blockquote'))
+        elem = self.macro(macro_name, macro_args, macroblock, 'block')
+        self._stack_top_append(elem)
 
     def _macroinline_repl(self, macroinline, macro_name, macro_args=''):
         """Handles macros using the placeholder syntax."""

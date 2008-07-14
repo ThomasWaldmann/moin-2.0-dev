@@ -155,7 +155,9 @@ class TestConverter(object):
             ('Text <<Macro>>',
                 '<page %s><p>Text <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
             ('Text\n<<Macro>>',
-                '<page %s><p>Text\n<macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
+                '<page %s><p>Text</p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
+            ('Text\nText <<Macro>>',
+                '<page %s><p>Text\nText <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
             ('Text\n\n<<Macro>>',
                 '<page %s><p>Text</p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
         ]
