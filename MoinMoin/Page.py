@@ -1260,7 +1260,7 @@ class Page(object):
                 doc = ET.Element(ET.QName('page', namespaces.moin_page), attrib,
                         children=formatter.root[:])
 
-        self.add_to_cache(request, doc)
+            self.add_to_cache(request, doc)
 
         doc = macro_converter(doc, request)
         doc = link_converter(doc, request)
