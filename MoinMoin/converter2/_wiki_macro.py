@@ -28,6 +28,18 @@ class ConverterMacro(object):
             return ET.Element(tag, children=[elem])
         return elem
 
+    def _Include_repl(self, args, text, type):
+        if type == 'inline':
+            return text
+        # TODO
+        return ''
+
+    def _TableOfContents_repl(self, args, text, type):
+        if type == 'inline':
+            return text
+        # TODO
+        return ''
+
     def macro(self, name, args, text, type):
         func = getattr(self, '_%s_repl' % name, None)
         if func is not None:
