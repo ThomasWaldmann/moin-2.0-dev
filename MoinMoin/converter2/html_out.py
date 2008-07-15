@@ -151,7 +151,7 @@ class ConverterBase(object):
         level = elem.get(ET.QName('outline-level', namespaces.moin_page), 1)
         try:
             level = int(level)
-        except TypeError:
+        except ValueError:
             raise ElementException
         if level < 1:
             level = 1
@@ -305,7 +305,7 @@ class ConverterPage(ConverterBase):
         level = elem.get(ET.QName('outline-level', namespaces.moin_page), 1)
         try:
             level = int(level)
-        except TypeError:
+        except ValueError:
             raise ElementException
         if level < 1:
             level = 1
