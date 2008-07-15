@@ -44,6 +44,9 @@ class Converter(object):
         page = Page.Page(self.request, page_href[8:])
         m.formatter = formatter = formatter(self.request, page)
 
+        # XXX: Some macros uses macro.request.formatter instead of macro.formatter
+        self.request.formatter.setPage(page)
+
         try:
             ret = m.execute(name, args)
         except ImportError, err:
