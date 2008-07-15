@@ -43,7 +43,7 @@ class ConverterMacro(object):
         attrib = {}
         try:
             level = int(args)
-        except TypeError:
+        except ValueError:
             pass
         else:
             attrib[ET.QName('outline-level', namespaces.moin_page)] = str(level)
