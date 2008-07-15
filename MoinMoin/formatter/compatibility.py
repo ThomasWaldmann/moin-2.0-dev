@@ -502,9 +502,11 @@ class Formatter(ConverterMacro):
             return ''
 
         parser = _HTMLParser()
+        parser.feed('<div>')
         parser.feed(markup)
+        parser.feed('</div>')
         doc = parser.close()
-        self._stack_top_append(doc)
+        self._stack_top_extend(doc[:])
 
         return ''
 
@@ -528,4 +530,7 @@ class Formatter(ConverterMacro):
 
     def _stack_top_append(self, elem):
         self._stack[-1].append(elem)
+
+    def _stack_top_extend(self, elems):
+        self._stack[-1].extend(elems)
 
