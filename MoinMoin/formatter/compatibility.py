@@ -20,7 +20,7 @@ from MoinMoin.util import namespaces
 
 class _HTMLParser(_HTMLParserBase):
     AUTOCLOSE = "p", "li", "tr", "th", "td", "head", "body"
-    IGNOREEND = "img", "hr", "meta", "link", "br"
+    IGNOREEND = "img", "hr", "meta", "link", "br", "input"
 
     def __init__(self, encoding=None):
         self.__stack = []
