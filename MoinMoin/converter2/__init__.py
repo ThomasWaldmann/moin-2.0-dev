@@ -22,7 +22,12 @@ def _load():
                     continue
                 info = imp.find_module(module, [root])
                 try:
-                    imp.load_module(module_complete, *info)
+                    try:
+                        imp.load_module(module_complete, *info)
+                    except Exception, e:
+                        import MoinMoin.log as logging
+                        logger = logging.getLogger(__name__)
+                        logger.warn("Failed to import converter package %s: %s" % (module, e))
                 finally:
                     info[0].close()
 
