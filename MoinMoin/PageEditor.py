@@ -30,6 +30,7 @@ from MoinMoin.util import timefuncs, web
 from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
+from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 import MoinMoin.events.notification as notification
 
 # used for merging
@@ -98,7 +99,7 @@ class PageEditor(Page):
         self.uid_override = keywords.get('uid_override', None)
 
         if self._item is None:
-            self._item = self._items.new_item(self.page_name)
+            self._item = self._backend.create_item(self.page_name)
 
         self.lock = PageLock(self)
 
@@ -1130,17 +1131,27 @@ To leave the editor, press the Cancel button.""", wiki=True) % {
                 self._deleteLockFile()
 
     def _readLockFile(self):
-        """ Load lock info if not yet loaded. """
+   ###    """ Load lock info if not yet loaded. """
+   ###    _ = self._
+   ###    self.owner = None
+   ###    self.owner_html = wikiutil.escape(_("<unknown>"))
+   ###    self.timestamp = 0
+   ###    if self.locktype:
+   ###        (lock, self.timestamp, addr, hostname, userid) = self.pageobj._item.edit_lock
+   ###        if lock:
+   ###            self.owner = userid or addr
+   ###            self.owner_html = user.get_printable_editor(self.request, userid, addr, hostname)
+
         _ = self._
         self.owner = None
         self.owner_html = wikiutil.escape(_("<unknown>"))
         self.timestamp = 0
-
         if self.locktype:
-            (lock, self.timestamp, addr, hostname, userid) = self.pageobj._item.edit_lock
+            (lock, self.timestamp, addr, hostname, userid) = wikiutil.get_edit_lock(self.pageobj._item)
             if lock:
                 self.owner = userid or addr
                 self.owner_html = user.get_printable_editor(self.request, userid, addr, hostname)
+
 
     def _writeLockFile(self):
         """ Write new lock file. """
