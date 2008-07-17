@@ -125,6 +125,21 @@ class BackendTest(object):
     def test_has_item_that_doesnt_exist(self):
         assert not self.backend.has_item("i_do_not_exist")
 
+    def test_iteritems(self):
+        for num in range(10):
+            item = self.backend.create_item("item_" + str(num).zfill(2))
+            item.create_revision(0)
+            item.commit()        
+        for num in range(10, 20):
+            item = self.backend.create_item("item_" + str(num).zfill(2))
+            item.change_metadata()
+            item.publish_metadata()            
+        itemlist = [item.name for item in self.backend.iteritems()]
+        itemlist.sort()
+        for num, itemname in enumerate(itemlist):
+            assert itemname == "item_" + str(num).zfill(2)
+        assert len(itemlist) == 20       
+        
     def test_create_order(self):
         item1 = self.backend.create_item('1')
         item2 = self.backend.create_item('2')
