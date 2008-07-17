@@ -27,8 +27,8 @@ class TestMercurialBackend(BackendTest):
         BackendTest.__init__(self, self.backend)
         
     def setup_class(cls):
-        cls.non_dir = tempfile.mkstemp()[1]
-        cls.real_dir = tempfile.mkdtemp()        
+        cls.not_dir = tempfile.mkstemp()[1]
+        cls.empty_dir = tempfile.mkdtemp()        
         cls.empty_struct = tempfile.mkdtemp()         
         os.mkdir(os.path.join(cls.empty_struct, "unversioned"))        
         cls.data_struct = tempfile.mkdtemp()
@@ -38,7 +38,7 @@ class TestMercurialBackend(BackendTest):
         f.close()
                 
     def teardown_class(cls):
-        shutil.rmtree(cls.real_dir)
+        shutil.rmtree(cls.empty_dir)
         shutil.rmtree(cls.empty_struct)
         shutil.rmtree(cls.data_struct)
         os.unlink(cls.non_dir)
@@ -51,10 +51,11 @@ class TestMercurialBackend(BackendTest):
         shutil.rmtree(self.test_dir)
 
     def test_backend_init(self):
-        py.test.raises(BackendError, MercurialBackend, self.non_dir)
-        py.test.raises(BackendError, MercurialBackend, self.real_dir, create=False) 
-        assert isinstance(MercurialBackend(self.real_dir), MercurialBackend)
-        py.test.raises(BackendError, MercurialBackend, self.real_dir, create=True)        
-        py.test.raises(BackendError, MercurialBackend, self.data_struct, create=True)
+        py.test.raises(BackendError, MercurialBackend, self.empty_dir, create=False)
+        py.test.raises(BackendError, MercurialBackend, self.not_dir)
+        py.test.raises(BackendError, MercurialBackend, "non-existing-dir")        
+        assert isinstance(MercurialBackend(self.empty_dir), MercurialBackend)
+        py.test.raises(BackendError, MercurialBackend, self.empty_dir)        
+        py.test.raises(BackendError, MercurialBackend, self.data_struct)
         assert isinstance(MercurialBackend(self.empty_struct), MercurialBackend)
 
