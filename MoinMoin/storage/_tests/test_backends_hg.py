@@ -11,51 +11,63 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from tempfile import mkdtemp, mkstemp
+from os.path import join
 import py.test
-import tempfile
 import shutil
 import os
 
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.hg import MercurialBackend
-from MoinMoin.storage.error import BackendError
+from MoinMoin.storage.error import BackendError #, ItemAlreadyExistsError
+from MoinMoin.storage._tests.test_backends import item_names
 
 class TestMercurialBackend(BackendTest):
     """MercurialBackend test class."""
     def __init__(self):
         self.backend = None
-        BackendTest.__init__(self, self.backend)
-        
-    def setup_class(cls):
-        cls.not_dir = tempfile.mkstemp()[1]
-        cls.empty_dir = tempfile.mkdtemp()        
-        cls.empty_struct = tempfile.mkdtemp()         
-        os.mkdir(os.path.join(cls.empty_struct, "unversioned"))        
-        cls.data_struct = tempfile.mkdtemp()
-        path = os.path.join(cls.data_struct, "unversioned")
-        os.mkdir(path)
-        f = open(os.path.join(path, "dataitem"), "w")
-        f.close()
-                
-    def teardown_class(cls):
-        shutil.rmtree(cls.empty_dir)
-        shutil.rmtree(cls.empty_struct)
-        shutil.rmtree(cls.data_struct)
-        os.unlink(cls.non_dir)
+        names = item_names + (u'_ĄółóĄ_',) # tricky for internal hg quoting
+        BackendTest.__init__(self, self.backend, valid_names=names)
 
     def create_backend(self):
-        self.test_dir = tempfile.mkdtemp()
+        self.file = mkstemp()[1]        
+        self.empty_dir = mkdtemp()        
+        self.empty_struct = mkdtemp()         
+        os.mkdir(join(self.empty_struct, "unversioned"))        
+        self.data_struct = mkdtemp()
+        path = join(self.data_struct, "unversioned")
+        os.mkdir(path)
+        f = open(join(path, "dataitem"), "w")
+        f.close()    
+        self.test_dir = mkdtemp()
         return MercurialBackend(self.test_dir)
 
     def kill_backend(self):
+        shutil.rmtree(self.empty_dir)
+        shutil.rmtree(self.empty_struct)
+        shutil.rmtree(self.data_struct)
         shutil.rmtree(self.test_dir)
+        os.unlink(self.file)
 
     def test_backend_init(self):
         py.test.raises(BackendError, MercurialBackend, self.empty_dir, create=False)
-        py.test.raises(BackendError, MercurialBackend, self.not_dir)
+        py.test.raises(BackendError, MercurialBackend, self.file)
         py.test.raises(BackendError, MercurialBackend, "non-existing-dir")        
         assert isinstance(MercurialBackend(self.empty_dir), MercurialBackend)
         py.test.raises(BackendError, MercurialBackend, self.empty_dir)        
         py.test.raises(BackendError, MercurialBackend, self.data_struct)
         assert isinstance(MercurialBackend(self.empty_struct), MercurialBackend)
+        
+    # XXX: to be removed when finally hanging    
+    def test_item_metadata_multiple_change_existing(self):
+        name = "foo"
+        self.create_meta_item_helper(name)        
+        item1 = self.backend.get_item(name)
+        item2 = self.backend.get_item(name)
+        item1.change_metadata()
+        item2.change_metadata() # should hang on lock, does it?
+        assert False
+ 
+ 
 
+        
