@@ -324,7 +324,7 @@ class MercurialBackend(Backend):
         if has_data and len(md) > self._rev_meta_reserved_space:            
             old_fp = rev._tmp_fpath
             old_f = rev._tmp_file
-            fd, rev._tmp_name = tempfile.mkstemp('-rev', 'tmp-', self._rpath)
+            fd, rev._tmp_name = tempfile.mkstemp('-rev', 'tmp-', self._r_path)
             rev._tmp_file = os.fdopen(fd, 'wb')
             rev._tmp_file.write(struct.pack('!I', len(md) + 4))
             rev._tmp_file.write(md)  # write meta
