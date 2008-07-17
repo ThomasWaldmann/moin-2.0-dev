@@ -26,9 +26,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from mercurial import hg, ui, util, commands, repo, revlog
+from mercurial import hg, ui, util, commands
+from mercurial.repo import RepoError
+from mercurial.revlog import LookupError
 import cPickle as pickle
-import StringIO
 import tempfile
 import weakref
 import statvfs
@@ -49,50 +50,45 @@ PICKLEPROTOCOL = 1
 class MercurialBackend(Backend):
     """This class implements Mercurial backend storage."""
     
-    def __init__(self, path, create=True, reserved_metadata_space=508):
+    def __init__(self, path, reserved_metadata_space=508, create=True):
         """
         Init backend repository. We store here Items with or without 
         any Revision.
         """
-        if not os.path.isdir(path):
-            raise BackendError("Invalid repository path: %s" % path)
-        
-        self._repository_path = os.path.abspath(path)
-        self._unrevisioned_path = os.path.join(self._repository_path, 'unrevisioned')
+        self._r_path = os.path.abspath(path)
+        self._u_path = os.path.join(self._r_path, 'unversioned')
         self._ui = ui.ui(interactive=False, quiet=True)
-        self._max_fname_length = os.statvfs(self._repository_path)[statvfs.F_NAMEMAX]
         self._rev_meta_reserved_space = reserved_metadata_space
         self._item_metadata_lock = {}
-        self._lockref = None            
-        # TODO: errors
+        self._lockref = None  
+        if not os.path.isdir(self._r_path):
+            raise BackendError("Invalid path: %s" % self._r_path)        
         try:
-            try:
-                self.repo = hg.repository(self._ui, self._repository_path, create=create)
-                os.mkdir(self._unrevisioned_path)
-            except OSError:
-                if create:
-                    raise repo.RepoError()
-
-        except repo.RepoError:
+            self._repo = hg.repository(self._ui, self._r_path, create)        
+        except RepoError:            
             if create:
-                raise BackendError("Repository at given path exists: %s" % path)
+                raise BackendError("Repository exists at path: %s" % self._r_path)
             else:
-                raise BackendError("Repository at given path does not exist: %s"
-                        % path)
-
-    def has_item(self, itemname, revisioned=None):
+                raise BackendError("Repository does not exist at path: %s" % self._r_path)
+        try:
+            os.mkdir(self._u_path)
+        except OSError:
+            if not os.path.isdir(self._u_path):
+                raise BackendError("Unable to create repository structure at path: %s" %                                                                             self._r_path)        
+            if create and os.listdir(self._u_path):
+                raise BackendError("Directory not empty: %s" % self._u_path)
+        # XXX: does it work on windows?
+        self._max_fname_length = os.statvfs(self._r_path)[statvfs.F_NAMEMAX]          
+  
+          
+    def has_item(self, itemname):
         """Checks whether Item with given name exists."""
         quoted_name = self._quote(itemname)
         try:
-            self.repo.changectx().filectx(quoted_name)
-            in_repo = True
-        except revlog.LookupError:
-            in_repo = False
-    
-        if revisioned:  # search only versioned Items
-            return in_repo
-        else:
-            return in_repo or os.path.exists(self._upath(quoted_name))
+            self._repo.changectx().filectx(quoted_name)
+            return True
+        except LookupError:
+            return os.path.exists(self._upath(quoted_name))
 
     def create_item(self, itemname):
         """
@@ -130,7 +126,7 @@ class MercurialBackend(Backend):
         Returns generator for iterating through items collection 
         in repository.
         """
-        ctx = self.repo.changectx()
+        ctx = self._repo.changectx()
 
         for itemfctx in ctx.filectxs():
             yield Item(self, itemfctx.path())
@@ -146,17 +142,16 @@ class MercurialBackend(Backend):
                     New Revision number must be next to latest Revision number." % revno)
                     
         rev = NewRevision(item, revno)
-        fd, rev._tmp_fpath = tempfile.mkstemp("-rev", "tmp-", self._repository_path)        
-        rev._tmp_file = os.fdopen(fd, 'wb')
+        fd, rev._tmp_fpath = tempfile.mkstemp("-rev", "tmp-", self._r_path)        
+        rev._tmp_file = os.fdopen(fd, 'wb')        
         rev._tmp_file.write(struct.pack('!I', self._rev_meta_reserved_space + 4))
         rev._tmp_file.seek(self._rev_meta_reserved_space + 4)        
         rev._revno = revno
-        rev._data = StringIO.StringIO()
         return rev
 
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
-        ctx = self.repo.changectx()
+        ctx = self._repo.changectx()
         try:
             revs = item.list_revisions()
             if revno == -1 and revs:
@@ -193,8 +188,8 @@ class MercurialBackend(Backend):
         Retrieves only accessible rev numbers when internal indexfile
         inconsistency occurs.
         """
-        filelog = self.repo.file(self._quote(item.name))
-        cl_count = self.repo.changelog.count()
+        filelog = self._repo.file(self._quote(item.name))
+        cl_count = self._repo.changelog.count()
         revs = []
         for i in xrange(filelog.count()):
             try:
@@ -207,7 +202,7 @@ class MercurialBackend(Backend):
 
     def _has_revisions(self, item):
         """Checks wheter given Item has any revisions."""
-        filelog = self.repo.file(self._quote(item.name))
+        filelog = self._repo.file(self._quote(item.name))
         return filelog.count()
 
     def _write_revision_data(self, revision, data):
@@ -258,9 +253,9 @@ class MercurialBackend(Backend):
             if not self._has_revisions(item):
                 util.rename(self._upath(old_name), self._upath(new_name))
             else:
-                commands.rename(self._ui, self.repo, self._path(old_name), self._path(new_name))
+                commands.rename(self._ui, self._repo, self._path(old_name), self._path(new_name))
                 msg = "Renamed %s to: %s" % (item.name.encode('utf-8'), newname.encode('utf-8'))
-                self.repo.commit(text=msg, user="wiki", files=[old_name, new_name])        
+                self._repo.commit(text=msg, user="wiki", files=[old_name, new_name])        
             item._name = newname
         finally:
             del lock
@@ -280,7 +275,7 @@ class MercurialBackend(Backend):
             if item._metadata is None:
                 pass
             else:
-                tmpfd, tmpfname = tempfile.mkstemp("-meta", "tmp-", self._unrevisioned_path)
+                tmpfd, tmpfname = tempfile.mkstemp("-meta", "tmp-", self._r_path)
                 f = os.fdopen(tmpfd, 'wb')
                 pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
                 f.close()
@@ -290,7 +285,7 @@ class MercurialBackend(Backend):
             if self.has_item(item.name):
                 raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
             else:
-                tmpfd, tmpfname = tempfile.mkstemp("-meta", "tmp-", self._unrevisioned_path)
+                tmpfd, tmpfname = tempfile.mkstemp("-meta", "tmp-", self._r_path)
                 f = os.fdopen(tmpfd, 'wb')
                 if item._metadata is None:
                     item._metadata = {}
@@ -348,11 +343,11 @@ class MercurialBackend(Backend):
             # TODO: simpler? 
             util.rename(self._path(rev._tmp_fpath), self._path(name)) 
             if not has_item:
-                self.repo.add([name])                         
+                self._repo.add([name])                         
             # TODO: commit comment and user from upper layer
             msg = "\nFirst line for comments."  # hg wont pass empty commit message
             user = "wiki"
-            self.repo.commit(text=msg, user=user, files=[name], empty_ok=True, force=True)
+            self._repo.commit(text=msg, user=user, files=[name], empty_ok=True, force=True)
         finally:
             del lock
             item._uncommitted_revision = None
@@ -385,7 +380,7 @@ class MercurialBackend(Backend):
         """
         if self._lockref and self._lockref():
             return self._lockref()
-        lock = self.repo._lock(os.path.join(self._repository_path, 'wikilock'), True, None,
+        lock = self._repo._lock(os.path.join(self._r_path, 'wikilock'), True, None,
                 None, '')
         self._lockref = weakref.ref(lock)
         return lock
@@ -394,17 +389,17 @@ class MercurialBackend(Backend):
         """Acquire unrevisioned Item lock."""
         if self._item_metadata_lock.has_key(item.name) and self._item_metadata_lock[item.name]():
             return self._item_metadata_lock[item.name]()
-        lock = self.repo._lock(os.path.join(self._repository_path, item.name), True, None, None, '')
+        lock = self._repo._lock(os.path.join(self._r_path, item.name), True, None, None, '')
         self._item_metadata_lock[item.name] = weakref.ref(lock)
         return lock
 
     def _path(self, filename):
         """Return absolute path to revisioned Item in repository."""
-        return os.path.join(self._repository_path, filename)
+        return os.path.join(self._r_path, filename)
 
     def _upath(self, filename):
         """Return absolute path to unrevisioned Item in repository."""
-        return os.path.join(self._unrevisioned_path, filename)
+        return os.path.join(self._u_path, filename)
 
     def _quote(self, name):
         """Return safely quoted name."""
