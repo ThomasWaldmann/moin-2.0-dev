@@ -5,7 +5,6 @@ Sample code showing possibilities of current devel mercurial version:
 
 from mercurial import hg, ui, context, node
 import tempfile
-import py.test
 import shutil
 import os
 
@@ -52,7 +51,7 @@ class TestSimpleRepository(object):
             
     def test_of_life_universe_and_everything(self):
         self.check_working_copy()
-        for revno, ci in enumerate(self.commits.keys()):
+        for revno in self.commits.keys():
             cset = self.commits[revno]
             self.commit(self.file, cset[0], cset[1])            
             self.check_commit(revno, cset[0], cset[1])  # check correctness of data
