@@ -284,3 +284,9 @@ class BackendTest(object):
         yield _test_search, term.Name(u'abcdef', True), 3
         yield _test_search, term.NameRE(re.compile(u'abcde.*')), 4
         yield _test_search, term.NameFn(lambda n: n == 'abcdef'), 1
+
+    def test_no_last_revision(self):
+        i = self.backend.create_item('no metadata')
+        i.change_metadata()
+        i.publish_metadata()
+        py.test.raises(NoSuchRevisionError, i.get_revision, -1)
