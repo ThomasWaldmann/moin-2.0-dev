@@ -135,11 +135,11 @@ class MercurialBackend(Backend):
         """
         Return generator for iterating through items collection 
         in repository.
-        """
-        ctx = self._repo.changectx()
-
-        for itemfctx in ctx.filectxs():
-            yield Item(self, itemfctx.path())
+        """        
+        items = [itemfctx.path() for itemfctx in self._repo.changectx().filectxs()]
+        items.extend(os.listdir(self._u_path))
+        for itemname in items:
+            yield Item(self, itemname)
 
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
