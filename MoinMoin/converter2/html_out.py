@@ -196,8 +196,7 @@ class ConverterBase(object):
         return self.new_copy(ET.QName('div', namespaces.html), elem)
 
     def visit_moinpage_separator(self, elem):
-        # TODO
-        pass
+        return self.new(ET.QName('hr', namespaces.html))
 
     def visit_moinpage_span(self, elem):
         # TODO
