@@ -244,7 +244,6 @@ class Converter(ConverterMacro):
 
     def _separator_repl(self, separator):
         self._stack_pop_name(('page', 'blockquote'))
-        # TODO: questionable
         tag = ET.QName('separator', namespaces.moin_page)
         self._stack_top_append(ET.Element(tag))
 
@@ -305,7 +304,6 @@ class Converter(ConverterMacro):
         # If we are in a paragraph already, don't loose the whitespace
         elif testblock_newline is not None:
             self._stack_top_append('\n')
-        # TODO: This used to add a space after the text.
         self.parse_inline(textblock)
 
     def _table_repl(self, table):
