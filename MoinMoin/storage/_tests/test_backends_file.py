@@ -9,8 +9,7 @@
 
 import py, os, tempfile, shutil
 
-from MoinMoin.storage.error import ItemAlreadyExistsError
-from MoinMoin.storage._tests.test_backends import BackendTest, default_items
+from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.fs import FSBackend
 
 class TestFSBackend(BackendTest):
@@ -50,27 +49,6 @@ class TestFSBackend(BackendTest):
         for x in xrange(1000):
             assert r.read(8 * 10) == 'lalala! ' * 10
         assert r.read() == ''
-
-    def test_metadata(self):
-        i = self.backend.create_item('no metadata')
-        i.create_revision(0)
-        i.commit()
-        i = self.backend.get_item('no metadata')
-        py.test.raises(KeyError, i.__getitem__, 'asdf')
-
-    def test_create_existing_1(self):
-        i = self.backend.create_item('existing now')
-        i.change_metadata()
-        i.publish_metadata()
-        py.test.raises(ItemAlreadyExistsError, self.backend.create_item, 'existing now')
-
-    def test_create_existing_2(self):
-        i1 = self.backend.create_item('existing now 0')
-        i1.change_metadata()
-        i2 = self.backend.create_item('existing now 0')
-        i1.publish_metadata()
-        i2.create_revision(0)
-        py.test.raises(ItemAlreadyExistsError, i2.commit)
 
     def test_all_unlocked(self):
         i1 = self.backend.create_item('existing now 1')
