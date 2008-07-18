@@ -35,6 +35,14 @@ from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 import MoinMoin.events.notification as notification
 
+EDIT_LOG_MTIME = "edit_log_mtime"
+EDIT_LOG_ACTION = "edit_log_action"
+EDIT_LOG_ADDR = "edit_log_addr"
+EDIT_LOG_HOSTNAME = "edit_log_hostname"
+EDIT_LOG_USERID = "edit_log_userid"
+EDIT_LOG_EXTRA = "edit_log_extra"
+EDIT_LOG_COMMENT = "edit_log_comment"
+
 # used for merging
 conflict_markers = ("\n---- /!\\ '''Edit conflict - other version:''' ----\n",
                     "\n---- /!\\ '''Edit conflict - your version:''' ----\n",
@@ -868,7 +876,10 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             newrev = self._item.get_revision(-1)
         else:
             if self.do_revision_backup:
-                current_revno = max(self._item.list_revisions())
+                try:
+                    current_revno = max(self._item.list_revisions())
+                except ValueError:
+                    current_revno = -1
                 newrev = self._item.create_revision(current_revno + 1)
             else:
                 newrev = self._rev
@@ -877,10 +888,8 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             metadata, data = wikiutil.split_body(text)
             newrev.write(data.encode(config.charset))
 
-            newrev.change_metadata()
             for key, value in metadata.iteritems():
                 newrev[key] = value
-            newrev.publish_metadata()
 
         else:
             newrev.write("")
@@ -905,7 +914,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         timestamp = time.time()
 
-        newrev.change_metadata()
         newrev[EDIT_LOG_MTIME] = str(timestamp)
         newrev[EDIT_LOG_ACTION] = action
         newrev[EDIT_LOG_ADDR] = addr
@@ -913,7 +921,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         newrev[EDIT_LOG_USERID] = userid
         newrev[EDIT_LOG_EXTRA] = extra
         newrev[EDIT_LOG_COMMENT] = wikiutil.clean_input(comment)
-        newrev.publish_metadata()
 
         self._item.commit()
 
