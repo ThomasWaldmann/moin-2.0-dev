@@ -38,7 +38,7 @@ class BackendTest(object):
     Creates a new backend for each test so they can assume to be
     sandboxed.
     """
-    
+
     def __init__(self, backend, valid_names=item_names, invalid_names=invalid_names):
         self.backend = backend
         self.valid_names = valid_names
@@ -56,7 +56,7 @@ class BackendTest(object):
         item.create_revision(0)
         item.commit()
         return item
-    
+
     def create_meta_item_helper(self, name):
         item = self.backend.create_item(name)
         item.change_metadata()
@@ -272,7 +272,11 @@ class BackendTest(object):
             item.create_revision(revno)
             item.commit()
         assert item.list_revisions() == range(0, 10)
-        
+
+    def test_item_list_revisions_without_committing(self):
+        item = self.backend.create_item("new_item_14")
+        assert item.list_revisions() == []
+
     def test_mixed_commit_metadata1(self):
         item = self.backend.create_item('mixed1')
         item.create_revision(0)
