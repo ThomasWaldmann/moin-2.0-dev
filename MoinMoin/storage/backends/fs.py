@@ -198,6 +198,8 @@ class FSBackend(Backend):
         return rev
 
     def _list_revisions(self, item):
+        if item._fs_item_id is None:
+            return []
         p = os.path.join(self._path, item._fs_item_id)
         l = os.listdir(p)
         ret = [int(i[4:]) for i in l if i.startswith('rev.')]
