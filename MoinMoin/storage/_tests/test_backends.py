@@ -273,6 +273,21 @@ class BackendTest(object):
             item.commit()
         assert item.list_revisions() == range(0, 10)
 
+    def test_item_list_revisions_equality(self):
+        item = self.backend.create_item("new_item_15")
+        revs_before = item.list_revisions()
+        rev = item.create_revision(0)
+        assert item.list_revisions() == revs_before
+
+    def test_item_list_revisions_equality_nonempty_revlist(self):
+        item = self.backend.create_item("new_item_16")
+        rev = item.create_revision(0)
+        rev.write("something interesting")
+        item.commit()
+        revs_before = item.list_revisions()
+        rev2 = item.create_revision(1)
+        assert item.list_revisions() == revs_before
+
     def test_item_list_revisions_without_committing(self):
         item = self.backend.create_item("new_item_14")
         assert item.list_revisions() == []
@@ -281,7 +296,6 @@ class BackendTest(object):
         item = self.backend.create_item('mixed1')
         item.create_revision(0)
         py.test.raises(RuntimeError, item.change_metadata)
-        item.rollback()
 
     def test_mixed_commit_metadata2(self):
         item = self.backend.create_item('mixed2')
