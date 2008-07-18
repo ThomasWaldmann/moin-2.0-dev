@@ -1,6 +1,9 @@
 """
 MoinMoin - Link converter
 
+Expands all links in a internal Moin document. This includes interwiki and
+special wiki links.
+
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
