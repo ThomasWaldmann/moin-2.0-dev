@@ -67,6 +67,46 @@ class TestMercurialBackend(BackendTest):
         item1.change_metadata()
         item2.change_metadata() # should hang on lock, does it?
         assert False
+        
+    def test_large(self):
+        i = self.backend.create_item('large')
+        r = i.create_revision(0)
+        r['0'] = 'x' * 100
+        r['1'] = 'y' * 200
+        r['2'] = 'z' * 300
+        for x in xrange(1000):
+            r.write('lalala! ' * 10)
+        i.commit()
+
+        i = self.backend.get_item('large')
+        r = i.get_revision(0)
+        assert r['0'] == 'x' * 100
+        assert r['1'] == 'y' * 200
+        assert r['2'] == 'z' * 300
+        for x in xrange(1000):
+            assert r.read(8 * 10) == 'lalala! ' * 10
+        assert r.read() == ''
+
+    def test_all_unlocked(self):
+        i1 = self.backend.create_item('existing now 1')
+        i1.create_revision(0)
+        i1.commit()
+        i2 = self.backend.get_item('existing now 1')
+        i2.change_metadata()
+        # if we leave out the latter line, it fails
+        i2.publish_metadata()
+
+    def test_change_meta(self):
+        item = self.backend.create_item('existing now 2')
+        item.change_metadata()
+        item.publish_metadata()
+        item = self.backend.get_item('existing now 2')
+        item.change_metadata()
+        item['asdf'] = 'b'
+        # if we leave out the latter line, it fails
+        item.publish_metadata()
+        item = self.backend.get_item('existing now 2')
+        assert item['asdf'] == 'b'
  
  
 
