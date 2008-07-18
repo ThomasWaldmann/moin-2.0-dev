@@ -87,7 +87,7 @@ def getUserId(request, searchName):
         backend = request.cfg.user_backend
 
         for user in backend.search_item(term.ItemMetaDataMatch('name', searchName)):
-            return user
+            return user.name
         return None
     except IndexError:
         return None
@@ -356,7 +356,7 @@ class User:
         @return: true, if we have a user account
         """
         ###return self.id in self._item_collection
-        return self._user_backend.has_item(self.id.name)  # XXX This may cause some breakage (added .name)
+        return self._user_backend.has_item(self.id)
 
     def load_from_id(self, password=None):
         """ Load user account data from disk.
@@ -373,7 +373,7 @@ class User:
             return
 
         ### self._user = self._item_collection[self.id]
-        self._user = self._user_backend.get_item(self.id.name)  # XXX This may cause some breakage (added .name)
+        self._user = self._user_backend.get_item(self.id)
 
         user_data = dict()
         ###user_data.update(self._user.metadata)
