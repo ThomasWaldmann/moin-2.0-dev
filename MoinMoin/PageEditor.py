@@ -846,7 +846,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             return None
 
     def _write_file(self, text, action='SAVE', comment=u'', extra=u'', deleted=False):
-        """ Write the text to the page file (and make a backup of old page).
+        """ Write the text to the page item (and make a backup of old page).
 
         @param text: text to save for this page
         @param deleted: if True, then don't write page content (used by deletePage)
@@ -859,28 +859,63 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         # remember conflict state
         self.setConflict(wikiutil.containsConflictMarker(text))
 
-        self._item.lock = True
+        ###self._item.lock = True
 
         if was_deprecated:
-            newrev = self._item[0]
+            ###newrev = self._item[0]
+            newrev = self._item.get_revision(-1)
         else:
             if self.do_revision_backup:
-                newrev = self._item.new_revision()
+                current_revno = max(self._item.list_revisions())
+                newrev = self._item.create_revision(current_revno + 1)
             else:
                 newrev = self._rev
 
         if not deleted:
             metadata, data = wikiutil.split_body(text)
-            newrev.data.write(data.encode(config.charset))
+            newrev.write(data.encode(config.charset))
+
+            newrev.change_metadata()
             for key, value in metadata.iteritems():
-                newrev.metadata[key] = value
+                newrev[key] = value
+            newrev.publish_metadata()
+
         else:
-            newrev.data.write("")
-            newrev.deleted = True
+            newrev.write("")
+            ### newrev.deleted = True   # XXX Does it still work when this is commented out completely? Maybe store the info in metadata
 
-        newrev.save(action, extra, comment, self.uid_override)
+        ###newrev.save(action, extra, comment, self.uid_override)
 
-        self._item.lock = False
+        if self.uid_override is not None:
+            addr, userid = "", ""
+            hostname = self.uid_override
+
+        else:
+            # XXX Is this the correct request we are using below?
+            addr = request.remote_addr
+
+            if hasattr(request, "user"):
+                userid = request.user.valid and request.user.id or ''
+            else:
+                userid = ""
+
+            hostname = wikiutil.get_hostname(request, addr)
+
+        timestamp = time.time()
+
+        newrev.change_metadata()
+        newrev[EDIT_LOG_MTIME] = str(timestamp)
+        newrev[EDIT_LOG_ACTION] = action
+        newrev[EDIT_LOG_ADDR] = addr
+        newrev[EDIT_LOG_HOSTNAME] = hostname
+        newrev[EDIT_LOG_USERID] = userid
+        newrev[EDIT_LOG_EXTRA] = extra
+        newrev[EDIT_LOG_COMMENT] = wikiutil.clean_input(comment)
+        newrev.publish_metadata()
+
+        self._item.commit()
+
+        ###self._item.lock = False
 
         # reset page object
         self.reset()
