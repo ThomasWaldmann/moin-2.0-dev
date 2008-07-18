@@ -16,15 +16,15 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import py.test
+import py.test, re
 
 from MoinMoin.storage import Item, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, ItemAlreadyExistsError, NoSuchRevisionError
 from MoinMoin.search import term
 
-item_names = ("quite_normal", 
-              u"äöüßłóąćółąńśćżź", 
-              "with space", 
+item_names = ("quite_normal",
+              u"äöüßłóąćółąńśćżź",
+              "with space",
               "name#special(characters?.\,",
               "very_long_name_" * 100 + "ending_1",
               "very_long_name_" * 100 + "ending_2",)
@@ -79,7 +79,7 @@ class BackendTest(object):
     def has_rename_item(self, old_name, new_name):
         item = self.backend.get_item(old_name)
         item.rename(new_name)
-        assert item.name == new_name        
+        assert item.name == new_name
         assert self.backend.has_item(new_name)
         assert not self.backend.has_item(old_name)
 
@@ -125,7 +125,7 @@ class BackendTest(object):
         revision1 = item1.get_revision(0)
         revision2 = item2.get_revision(0)
         assert revision1.read() == '1'
-        assert revision2.read() == '2'            
+        assert revision2.read() == '2'
 
     def test_create_rev_item_again(self):
         self.create_rev_item_helper("item1")
@@ -147,34 +147,55 @@ class BackendTest(object):
     def test_has_item_that_doesnt_exist(self):
         assert not self.backend.has_item("i_do_not_exist")
 
-    def test_search_item(self):
+    def test_search_simple(self):
         for name in ["songlist", "song lyric", "odd_SONG_item"]:
             self.create_rev_item_helper(name)
         self.create_meta_item_helper("new_song_player")
-        query_string = u"song"        
+        query_string = u"song"
         query = term.Name(query_string, True)
-        for num, item in enumerate(self.backend.search_item(query)):         
-            assert isinstance(item, Item)            
-            assert item.name.find(query_string) != -1        
+        for num, item in enumerate(self.backend.search_item(query)):
+            assert isinstance(item, Item)
+            assert item.name.find(query_string) != -1
         assert num == 2
 
-    def test_iteritems(self):
+    def test_search_better(self):
+        self.create_rev_item_helper('abcde')
+        self.create_rev_item_helper('abcdef')
+        self.create_rev_item_helper('abcdefg')
+        self.create_rev_item_helper('abcdefgh')
+
+        def _test_search(term, expected):
+            found = list(self.backend.search_item(term))
+            assert len(found) == expected
+
+        # must be /part/ of the name
+        yield _test_search, term.Name(u'AbCdEf', False), 3
+        yield _test_search, term.Name(u'AbCdEf', True), 0
+        yield _test_search, term.Name(u'abcdef', True), 3
+        yield _test_search, term.NameRE(re.compile(u'abcde.*')), 4
+        yield _test_search, term.NameFn(lambda n: n == 'abcdef'), 1
+
+    def test_iteritems_1(self):
         for num in range(10, 20):
-            item = self.backend.create_item("item_" + str(num).zfill(2))
-            item.create_revision(0)
-            item.commit()        
+            self.create_rev_item_helper("item_" + str(num).zfill(2))
         for num in range(10):
-            item = self.backend.create_item("item_" + str(num).zfill(2))
-            item.change_metadata()
-            item.publish_metadata()            
+            self.create_meta_item_helper("item_" + str(num).zfill(2))
         itemlist = [item.name for item in self.backend.iteritems()]
         itemlist.sort()
         for num, itemname in enumerate(itemlist):
             assert itemname == "item_" + str(num).zfill(2)
-        assert len(itemlist) == 20       
+        assert len(itemlist) == 20
         
+    def test_iteritems_2(self):
+        self.create_rev_item_helper('abcdefghijklmn')
+        count = 0
+        for item in self.backend.iteritems():
+            assert isinstance(item, Item)
+            count += 1
+        assert count > 0
+
     def test_existing_item_create_revision(self):
-        self.create_rev_item_helper("existing")        
+        self.create_rev_item_helper("existing")
         item = self.backend.get_item("existing")
         old_rev = item.get_revision(-1)
         rev = item.create_revision(old_rev.revno + 1)
@@ -274,15 +295,15 @@ class BackendTest(object):
         item = self.backend.create_item("test item metadata invalid change")
         try:
             item["this should"] = "FAIL!"
-            assert False 
+            assert False
         except AttributeError:
-            pass 
+            pass
         
     def test_item_metadata_without_publish(self):
         item = self.backend.create_item("test item metadata invalid change")
         item.change_metadata()
         item["change but"] = "don't publish"
-        py.test.raises(NoSuchItemError, self.backend.get_item, "test item metadata invalid change")  
+        py.test.raises(NoSuchItemError, self.backend.get_item, "test item metadata invalid change")
 
     def test_item_create_existing_mixed_1(self):
         item1 = self.backend.create_item('existing now 0')

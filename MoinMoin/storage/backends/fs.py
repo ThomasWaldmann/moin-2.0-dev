@@ -182,7 +182,10 @@ class FSBackend(Backend):
         item_id = item._fs_item_id
 
         if revno == -1:
-            revno = max(item.list_revisions())
+            revs = item.list_revisions()
+            if not revs:
+                raise NoSuchRevisionError("Item has no revisions")
+            revno = max(revs)
 
         revpath = os.path.join(self._path, item_id, 'rev.%d' % revno)
         if not os.path.exists(revpath):
