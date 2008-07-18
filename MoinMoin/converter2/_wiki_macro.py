@@ -1,6 +1,7 @@
-# -*- coding: iso-8859-1 -*-
 """
 MoinMoin - Macro and pseudo-macro handling
+
+Base class for wiki parser with macro support.
 
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
