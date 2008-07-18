@@ -37,12 +37,11 @@
 from mercurial import hg, ui, util, commands
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
+import StringIO
 import cPickle as pickle
 import tempfile
 import weakref
 import statvfs
-import shutil
-import struct
 import md5
 import os
 
@@ -51,8 +50,7 @@ from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import BackendError, NoSuchItemError,\
                                    NoSuchRevisionError,\
                                    RevisionNumberMismatchError,\
-                                   ItemAlreadyExistsError, RevisionAlreadyExistsError
-
+                                   ItemAlreadyExistsError, RevisionAlreadyExistsError                                   
 PICKLEPROTOCOL = 1
 
 class MercurialBackend(Backend):
@@ -152,10 +150,7 @@ class MercurialBackend(Backend):
                     New Revision number must be next to latest Revision number." % revno)
                     
         rev = NewRevision(item, revno)
-        fd, rev._tmp_fpath = tempfile.mkstemp("-rev", "tmp-", self._r_path)        
-        rev._tmp_file = os.fdopen(fd, 'wb')        
-        rev._tmp_file.write(struct.pack('!I', self._rev_meta_reserved_space + 4))
-        rev._tmp_file.seek(self._rev_meta_reserved_space + 4)        
+        rev._data = StringIO.StringIO()        
         rev._revno = revno
         return rev
 
@@ -166,32 +161,15 @@ class MercurialBackend(Backend):
             revs = item.list_revisions()
             if revno == -1 and revs:
                 revno = max(revs)
-            ctx.filectx(self._quote(item.name)).filectx(revno) 
+            fctx = ctx.filectx(self._quote(item.name)).filectx(revno) 
         except LookupError:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
         
         revision = StoredRevision(item, revno)
-        revision._tmp_fpath = self._rpath(self._quote(item.name))
-        revision._tmp_file = None 
+        revision._data = StringIO.StringIO(fctx.data())
+        revision._metadata = ctx.extra()
         return revision
     
-    def _get_revision_metadata(self, revision):
-        """"Helper for getting revision metadata. Returns a dictionary."""
-        if revision._tmp_file is None:
-            f = open(revision._tmp_fpath, 'rb')
-            datastart = f.read(4)
-            datastart = struct.unpack('!L', datastart)[0]
-            pos = datastart
-            revision._tmp_file = f
-            revision._datastart = datastart
-        else:
-            f = revision._tmp_file
-            pos = f.tell()
-            f.seek(4)
-        ret = pickle.load(f)
-        f.seek(pos)
-        return ret
-
     def _list_revisions(self, item):
         """
         Return a list of Item revision numbers. 
@@ -217,31 +195,20 @@ class MercurialBackend(Backend):
 
     def _write_revision_data(self, revision, data):
         """Write data to the Revision."""
-        revision._tmp_file.write(data)
-
+        revision._data.write(data)
+        
     def _read_revision_data(self, revision, chunksize):
         """
         Called to read a given amount of bytes of a revisions data. By default, all
         data is read.
         """
-        if revision._tmp_file is None:
-            f = open(revision._tmp_fpath, 'rb')
-            datastart = f.read(4)
-            datastart = struct.unpack('!L', datastart)[0]
-            f.seek(datastart)
-            revision._tmp_file = f
-            revision._datastart = datastart
-            
         if chunksize < 0:
-            return revision._tmp_file.read()
-        return revision._tmp_file.read(chunksize)
+            return revision._data.read()
+        return revision._data.read(chunksize)
 
     def _seek_revision_data(self, revision, position, mode):
         """Set the revisions cursor on the revisions data."""
-        if mode == 2:
-            revision._tmp_file.seek(position, mode)
-        else:
-            revision._tmp_file.seek(position + revision._datastart, mode)
+        revision._data.seek(position, mode)
 
     def _rename_item(self, item, newname):
         """
@@ -317,30 +284,7 @@ class MercurialBackend(Backend):
     def _commit_item(self, item):
         """Commit Item changes within transaction (Revision) to repository."""
         rev = item._uncommitted_revision  
-        meta = dict(rev)
-        md = pickle.dumps(meta, protocol=PICKLEPROTOCOL)                  
-        has_data = rev._tmp_file.tell() > self._rev_meta_reserved_space + 4                  
-      
-        if has_data and len(md) > self._rev_meta_reserved_space:            
-            old_fp = rev._tmp_fpath
-            old_f = rev._tmp_file
-            fd, rev._tmp_name = tempfile.mkstemp('-rev', 'tmp-', self._r_path)
-            rev._tmp_file = os.fdopen(fd, 'wb')
-            rev._tmp_file.write(struct.pack('!I', len(md) + 4))
-            rev._tmp_file.write(md)  # write meta
-            old_f.seek(self._rev_meta_reserved_space + 4)  # copy written data
-            shutil.copyfileobj(old_f, rev._tmp_file)
-            old_f.close()
-            os.unlink(old_fp)
-        else:
-            if not has_data:
-                rev._tmp_file.seek(0)
-                rev._tmp_file.write(struct.pack('!L', len(md) + 4))
-            else:
-                rev._tmp_file.seek(4)
-            rev._tmp_file.write(md)
-            rev._tmp_file.close()
-                
+        meta = dict(rev)                
         name = self._quote(item.name)        
         lock = self._lock()
         try:            
@@ -350,14 +294,19 @@ class MercurialBackend(Backend):
                     raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
                 elif rev.revno in item.list_revisions():            
                     raise RevisionAlreadyExistsError("Revision already exists: %d" % rev.revno)                                            
-            # TODO: simpler? 
-            util.rename(self._rpath(rev._tmp_fpath), self._rpath(name)) 
+            # TODO: simpler?
+            rev._data.seek(0)
+            fd, fname = tempfile.mkstemp("-rev", "tmp-", self._r_path)
+            os.write(fd, rev._data.getvalue())
+            os.close(fd)
+            util.rename(fname, self._rpath(name))
+           
             if not has_item:
                 self._repo.add([name])                         
             # TODO: commit comment and user from upper layer
             msg = "\nFirst line for comments."  # hg wont pass empty commit message
             user = "wiki"
-            self._repo.commit(text=msg, user=user, files=[name], empty_ok=True, force=True)
+            self._repo.commit(text=msg, user=user, files=[name], empty_ok=True, force=True, extra=meta)
         finally:
             del lock
             item._uncommitted_revision = None
