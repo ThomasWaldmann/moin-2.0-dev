@@ -75,6 +75,8 @@ class CacheEntry:
             self.wlock = lock.LazyWriteLock(self.lock_dir, 60.0)
 
     def _filename(self):
+        print "self.arena_dir: ", type(self.arena_dir)
+        print "self.key: ", type(self.key)
         return os.path.join(self.arena_dir, self.key)
 
     def exists(self):

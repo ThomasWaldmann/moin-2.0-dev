@@ -355,8 +355,8 @@ class User:
         @rtype: bool
         @return: true, if we have a user account
         """
-        return self.id in self._item_collection
-        return self._user_backend.has_item(self.id)  # XXX What is self.id? Is it really a name?
+        ###return self.id in self._item_collection
+        return self._user_backend.has_item(self.id.name)  # XXX This may cause some breakage (added .name)
 
     def load_from_id(self, password=None):
         """ Load user account data from disk.
@@ -373,10 +373,12 @@ class User:
             return
 
         ### self._user = self._item_collection[self.id]
-        self._user = self._user_backend.get_item(self.id)
+        self._user = self._user_backend.get_item(self.id.name)  # XXX This may cause some breakage (added .name)
 
         user_data = dict()
-        user_data.update(self._user.metadata)
+        ###user_data.update(self._user.metadata)
+        for metadata_key in self._user:
+            user_data[metadata_key] = self._user[metadata_key]
 
         # Validate data from user file. In case we need to change some
         # values, we set 'changed' flag, and later save the user data.
@@ -473,7 +475,7 @@ class User:
     def persistent_items(self):
         """ items we want to store into the user profile """
         return [(key, value) for key, value in vars(self).items()
-                    if key not in self._cfg.user_transient_fields and key[0] != '_']
+                    if key not in self._cfg.user_transient_fields and key[0] != '_' and value]
 
     def save(self):
         """
@@ -500,6 +502,8 @@ class User:
         attrs.sort()
         for key, value in attrs:
             ###self._user.metadata[key] = value
+            if isinstance(value, list):
+                value = tuple(value)
             self._user[key] = value
 
         ###self._user.metadata.save()
