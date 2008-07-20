@@ -63,7 +63,7 @@
 """
 # XXX: update wiki and describe design/problems
 
-from mercurial import hg, ui, util, commands
+from mercurial import hg, ui, context, node, util, commands
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
 import StringIO
@@ -85,16 +85,15 @@ PICKLEPROTOCOL = 1
 class MercurialBackend(Backend):
     """Implements backend storage using mercurial version control system."""
         
-    def __init__(self, path, reserved_metadata_space=508, create=True):
+    def __init__(self, path, create=True):
         """
         Create backend data layout and initialize mercurial repository.
         Optionally can use already existing structure and repository.
         """
         self._path = os.path.abspath(path)
-        self._r_path = os.path.join(self._path, 'versioned')
-        self._u_path = os.path.join(self._path, 'unversioned')
+        self._r_path = os.path.join(self._path, 'rev')
+        self._u_path = os.path.join(self._path, 'meta')
         self._ui = ui.ui(interactive=False, quiet=True)
-        self._rev_meta_reserved_space = reserved_metadata_space
         self._item_metadata_lock = {}
         self._lockref = None  
         if not os.path.isdir(self._path):
@@ -115,13 +114,15 @@ class MercurialBackend(Backend):
             if create and os.listdir(self._u_path):
                 raise BackendError("Directory not empty: %s" % self._u_path)
         # XXX: does it work on windows?
-        self._max_fname_length = os.statvfs(self._path)[statvfs.F_NAMEMAX]      
+        self._max_fname_length = os.statvfs(self._path)[statvfs.F_NAMEMAX]  
+        self._repo._force_changes = True  # this comes from patch    
           
     def has_item(self, itemname):
         """Check whether Item with given name exists."""
         quoted_name = self._quote(itemname)
+        ctx = self._repo['']
         try:
-            self._repo.changectx().filectx(quoted_name)
+            ctx[quoted_name]
             return True
         except LookupError:
             return os.path.exists(self._upath(quoted_name))
@@ -161,8 +162,9 @@ class MercurialBackend(Backend):
         """
         Return generator for iterating through items collection 
         in repository.
-        """        
-        items = [itemfctx.path() for itemfctx in self._repo.changectx().filectxs()]
+        """    
+        ctx = self._repo['']    
+        items = [ctx[itemname].path() for itemname in iter(ctx)]
         items.extend(os.listdir(self._u_path))
         for itemname in items:
             yield Item(self, itemname)
@@ -184,7 +186,7 @@ class MercurialBackend(Backend):
 
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
-        ctx = self._repo.changectx()
+        ctx = self._repo['']
         try:
             revs = item.list_revisions()
             if revno == -1 and revs:
@@ -205,9 +207,9 @@ class MercurialBackend(Backend):
         inconsistency occurs.
         """
         filelog = self._repo.file(self._quote(item.name))
-        cl_count = self._repo.changelog.count()
+        cl_count = len(self._repo)
         revs = []
-        for i in xrange(filelog.count()):
+        for i in xrange(len(filelog)):
             try:
                 assert filelog.linkrev(filelog.node(i)) < cl_count, \
                     "Revision number out of bounds, repository inconsistency!"
@@ -219,7 +221,7 @@ class MercurialBackend(Backend):
     def _has_revisions(self, item):
         """Checks wheter given Item has any revisions."""
         filelog = self._repo.file(self._quote(item.name))
-        return filelog.count()
+        return len(filelog) 
 
     def _write_revision_data(self, revision, data):
         """Write data to the Revision."""
