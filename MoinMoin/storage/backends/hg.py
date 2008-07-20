@@ -63,7 +63,7 @@
 """
 # XXX: update wiki and describe design/problems
 
-from mercurial import hg, ui, context, node, util, commands
+from mercurial import hg, ui, context, node, util
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
 import StringIO
@@ -115,17 +115,13 @@ class MercurialBackend(Backend):
                 raise BackendError("Directory not empty: %s" % self._u_path)
         # XXX: does it work on windows?
         self._max_fname_length = os.statvfs(self._path)[statvfs.F_NAMEMAX]  
-        self._repo._forcedchanges = True  # this comes from patch    
+        self._repo._forcedchanges = True  # XXX: this comes from patch    
           
     def has_item(self, itemname):
         """Check whether Item with given name exists."""
-        quoted_name = self._quote(itemname)
-        ctx = self._repo['']
-        try:
-            ctx[quoted_name]
-            return True
-        except LookupError:
-            return os.path.exists(self._upath(quoted_name))
+        name = self._quote(itemname)
+        ctx = self._repo[self._repo.changelog.tip()]                
+        return name in ctx or os.path.exists(self._upath(name))
 
     def create_item(self, itemname):
         """
@@ -135,10 +131,9 @@ class MercurialBackend(Backend):
         """
         if not isinstance(itemname, (str, unicode)):
             raise TypeError("Wrong Item name type: %s" % (type(itemname)))
-
+        # XXX: should go to abstract
         if self.has_item(itemname):
-            raise ItemAlreadyExistsError("Item with that name already exists: %s" % itemname)
-        
+            raise ItemAlreadyExistsError("Item with that name already exists: %s" % itemname)        
         return Item(self, itemname)
 
     def get_item(self, itemname):
@@ -147,8 +142,7 @@ class MercurialBackend(Backend):
         exception.
         """
         if not self.has_item(itemname):
-            raise NoSuchItemError('Item does not exist: %s' % itemname)
-        
+            raise NoSuchItemError('Item does not exist: %s' % itemname)        
         return Item(self, itemname)
 
     def search_item(self, searchterm):
@@ -163,11 +157,12 @@ class MercurialBackend(Backend):
         Return generator for iterating through items collection 
         in repository.
         """    
-        ctx = self._repo['']    
-        items = [ctx[itemname].path() for itemname in iter(ctx)]
-        items.extend(os.listdir(self._u_path))
-        for itemname in items:
-            yield Item(self, itemname)
+        ctx = self._repo[self._repo.changelog.tip()]
+        itemlist = [name for name in iter(ctx)] + os.listdir(self._u_path)
+        
+        
+        for itemname in itemlist:
+            yield Item(self, itemname)   
 
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
@@ -177,8 +172,7 @@ class MercurialBackend(Backend):
                 raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
             if revno != revs[-1] + 1:
                 raise RevisionNumberMismatchError("Unable to create revision number %d. \
-                    New Revision number must be next to latest Revision number." % revno)
-                    
+                    New Revision number must be next to latest Revision number." % revno)                    
         rev = NewRevision(item, revno)
         rev._data = StringIO.StringIO()        
         rev._revno = revno
@@ -186,12 +180,13 @@ class MercurialBackend(Backend):
 
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
-        ctx = self._repo['']
+        ctx = self._repo[self._repo.changelog.tip()]
+        name = self._quote(item.name)
         try:
             revs = item.list_revisions()
             if revno == -1 and revs:
                 revno = max(revs)
-            fctx = ctx.filectx(self._quote(item.name)).filectx(revno) 
+            fctx = ctx[name].filectx(revno)            
         except LookupError:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
         
@@ -209,17 +204,18 @@ class MercurialBackend(Backend):
         filelog = self._repo.file(self._quote(item.name))
         cl_count = len(self._repo)
         revs = []
-        for i in xrange(len(filelog)):
+        for revno in xrange(len(filelog)):
             try:
-                assert filelog.linkrev(filelog.node(i)) < cl_count, \
+                assert filelog.linkrev(filelog.node(revno)) < cl_count, \
                     "Revision number out of bounds, repository inconsistency!"
-                revs.append(i)
+                revs.append(revno)
             except (IndexError, AssertionError):  # malformed index file
                 pass  # XXX: should we log inconsistency?
         return revs
 
     def _has_revisions(self, item):
         """Checks wheter given Item has any revisions."""
+        # XXX: needed?
         filelog = self._repo.file(self._quote(item.name))
         return len(filelog) 
 
@@ -247,6 +243,7 @@ class MercurialBackend(Backend):
         """
         if not isinstance(newname, (str, unicode)):
             raise TypeError("Wrong Item destination name type: %s" % (type(newname)))
+        # XXX: again, to the abstract
         if not self.has_item(item.name):
             raise NoSuchItemError('Source item does not exist: %s' % item.name)
         
@@ -255,14 +252,26 @@ class MercurialBackend(Backend):
             if self.has_item(newname):
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
                 
-            old_name, new_name = self._quote(item.name), self._quote(newname)
+            files = [self._quote(item.name), self._quote(newname)]
 
-            if not self._has_revisions(item):
-                util.rename(self._upath(old_name), self._upath(new_name))
+            if not self._has_revisions(item):                
+                util.rename(self._upath(files[0]), self._upath(files[1]))
             else:
-                commands.rename(self._ui, self._repo, self._rpath(old_name), self._rpath(new_name))
-                msg = "Renamed %s to: %s" % (item.name.encode('utf-8'), newname.encode('utf-8'))
-                self._repo.commit(text=msg, user="wiki", files=[old_name, new_name])        
+                def getfilectx(repo, memctx, path):  
+                    if path == files[1]:
+                        copies = files[0]
+                    else:
+                        copies = None
+                    return context.memfilectx(path, '', False, False, copies)
+                
+                msg = "Renamed %s to: %s" % (item.name.encode('utf-8'), newname.encode('utf-8'))                                                                                              
+                p1, p2 = self._repo.changelog.tip(), node.nullid
+                ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx)
+                ctx._status[2] = [files[0]]
+                ctx._status[1] = [files[1]]                                                              
+                self._repo.commitctx(ctx)   
+                # XXX: _gettip        
+                # XXX: how to get user here?                                     
             item._name = newname
         finally:
             del lock
@@ -316,7 +325,7 @@ class MercurialBackend(Backend):
         rev = item._uncommitted_revision  
         meta = dict(rev)                
         name = self._quote(item.name)        
-        lock = self._lock()
+        lock = self._lock()  # XXX: needed now?
         try:            
             has_item = self.has_item(item.name)         
             if has_item:
@@ -324,31 +333,35 @@ class MercurialBackend(Backend):
                     raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
                 elif rev.revno in item.list_revisions():            
                     raise RevisionAlreadyExistsError("Revision already exists: %d" % rev.revno)                                            
-            # TODO: simpler?
-            rev._data.seek(0)
-            fd, fname = tempfile.mkstemp("-rev", "tmp-", self._r_path)
-            os.write(fd, rev._data.getvalue())
-            os.close(fd)
-            util.rename(fname, self._rpath(name))
-           
+            msg = meta.get("comment", "dummy")  # XXX: try empty
+            user = meta.get("editor", "anonymous")  # XXX: meta keys review
+            data = rev._data.getvalue()
+            file = [name]
+                        
+            def getfilectx(repo, memctx, path):                            
+                return context.memfilectx(path, data, False, False, False)
+                                        
+            p1, p2 = self._repo.changelog.tip(), node.nullid        
+            ctx = context.memctx(self._repo, (p1, p2), msg, file, getfilectx, user, extra=meta)                        
             if not has_item:
-                self._repo.add([name])                         
-            # TODO: commit comment and user from upper layer
-            msg = "\nFirst line for comments."  # hg wont pass empty commit message
-            user = "wiki"
-            self._repo.commit(text=msg, user=user, files=[name], empty_ok=True, force=True, extra=meta)
+                ctx._status[1], ctx._status[0] = ctx._status[0], ctx._status[1]                
+            self._repo.commitctx(ctx)
+            
+            # XXX: should be possible without!
+                               
         finally:
             del lock
             item._uncommitted_revision = None
+            # XXX: go to abstract
 
     def _rollback_item(self, item):
         """Reverts uncommited Item changes."""
-        rev = item._uncommitted_revision
-        try:
-            rev._tmp_file.close()
-            os.unlink(rev._tmp_fpath)
-        except (AttributeError, OSError):
-            pass
+        #rev = item._uncommitted_revision
+        #try:
+        #    rev._tmp_file.close()
+        #    os.unlink(rev._tmp_fpath)
+        #except (AttributeError, OSError):
+        #    pass
         item._uncommitted_revision = None
 
     def _trim(self, name):
