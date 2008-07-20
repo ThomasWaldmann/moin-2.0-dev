@@ -25,9 +25,8 @@ from MoinMoin.storage._tests.test_backends import item_names
 class TestMercurialBackend(BackendTest):
     """MercurialBackend test class."""
     def __init__(self):
-        self.backend = None
         names = item_names + (u'_ĄółóĄ_',) # tricky for internal hg quoting
-        BackendTest.__init__(self, self.backend, valid_names=names)
+        BackendTest.__init__(self, None, valid_names=names)
 
     def create_backend(self):
         self.file = mkstemp()[1]        
