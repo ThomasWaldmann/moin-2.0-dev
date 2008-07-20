@@ -12,27 +12,56 @@
 
     ---
 
-    Initial implementation of backend. 
+    Second iteration of backend. 
     
-    Items with Revisions are stored in hg internal directory. Newest version of
-    such Item is always in working copy. In this implementation all write and rename
-    operations must go through working copy before commiting to repository.
-     
+    Items with Revisions are stored in hg internal directory. 
+    Operations on Items are done in memory utilizing new mercurial features:
+    memchangectx and memfilectx, which allow easy manipulation of changesets
+    without the need of working copy.
+    
     Items with Metadata are not versioned and stored in separate directory.
     
-    Repository layout:
-    data_dir        
-    +-- versioned/
-        +-- .hg 
-        +-- items_with_revs      
-    +-- unversioned/
+    Revision metadata is stored in mercurial internally, using dictionary binded
+    with each changeset: 'extra'. This gives cleaner code, and mercurial stores
+    this in optimal way itself.
+    
+    Still, development version of mercurial has some limitations to overcome:
+    - file revision number is not increased when doing empty file commits
+    - on empty commit file flags have to be manipulated to get file linked with 
+      changeset 
+    This affects:
+    - we cannot support so called 'multiple empty revisions in a row', 
+      there is no possibility to commit revision which hasnt changed since last time
+    - as 'extra' dict is property of changeset, without increasing filerevs we're not 
+      able to link rev meta and rev data
+    - revision metadata ('extra' dict) change is not stored in/as revision data, 
+      thus committing revision metadata changes is like commiting empty changesets
+
+    To address this blockers, patch was applied on mercurial development version 
+    (see below).
+
+    Repository layout hasnt changed much. Even though versioned items are stored now 
+    internally in .hg/, one can get rev/ directory populated on hg update as this
+    is simply working copy directory. 
+    
+    data/        
+    +-- rev/
+        +-- .hg/ 
+      ( +-- items_with_revs )  # this only if someone runs 'hg update'     
+    +-- meta/
         +-- items_without_revs 
+        
+        
+    IMPORTANT: This version of backend runs on newest development version of mercurial
+    and small, additional patch for allowing multiple empty commits in a row
+    patch: http://mc.kwadr.at/repo_force_changes.diff
 
     ---
 
     @copyright: 2007 MoinMoin:PawelPacana
     @license: GNU GPL, see COPYING for details.
 """
+# XXX: update wiki and describe design/problems
 
 from mercurial import hg, ui, util, commands
 from mercurial.repo import RepoError
@@ -86,8 +115,7 @@ class MercurialBackend(Backend):
             if create and os.listdir(self._u_path):
                 raise BackendError("Directory not empty: %s" % self._u_path)
         # XXX: does it work on windows?
-        self._max_fname_length = os.statvfs(self._path)[statvfs.F_NAMEMAX]          
-  
+        self._max_fname_length = os.statvfs(self._path)[statvfs.F_NAMEMAX]      
           
     def has_item(self, itemname):
         """Check whether Item with given name exists."""
