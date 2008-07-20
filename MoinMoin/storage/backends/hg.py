@@ -115,7 +115,7 @@ class MercurialBackend(Backend):
                 raise BackendError("Directory not empty: %s" % self._u_path)
         # XXX: does it work on windows?
         self._max_fname_length = os.statvfs(self._path)[statvfs.F_NAMEMAX]  
-        self._repo._force_changes = True  # this comes from patch    
+        self._repo._forcedchanges = True  # this comes from patch    
           
     def has_item(self, itemname):
         """Check whether Item with given name exists."""
