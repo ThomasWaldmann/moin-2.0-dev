@@ -1730,7 +1730,7 @@ var gui_editor_link_text = "%(text)s";
                 'rev': rev,
                 'pagesize': pagename and page.size() or 0,
                 # exists checked to avoid creation of empty edit-log for non-existing pages
-                'last_edit_info': exists and page.lastEditInfo() or '',
+                'last_edit_info': exists and page.last_edit_info() or '',
                 'page_name': pagename or '',
                 'page_find_page': page_find_page,
                 'page_front_page': page_front_page,
