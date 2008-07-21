@@ -481,8 +481,11 @@ class Page(object):
         if self._item is None or self._rev is None:
             return False
 
-        if not includeDeleted and self._rev["DELETED"]:  # XXX Error handling missing
-            return False
+        try:
+            if not includeDeleted and self._rev["DELETED"]:
+                return False
+        except KeyError:
+            pass
 
         if domain is None:
             return True
