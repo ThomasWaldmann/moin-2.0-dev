@@ -367,6 +367,22 @@ class Page(object):
 
         return result
 
+    def last_edit_info(self):
+        """
+        Return the last edit info.
+
+        @rtype: dict
+        @return: timestamp and editor information
+        """
+        rev = self._item.get_revision(-1)
+        try:
+            time = rev['ed_time_usecs']
+            time = wikiutil.version2timestamp(time)
+            time = request.user.getFormattedDateTime(time) # Use user time format
+            return {'editor': rev['editor'], 'time': time}
+        except KeyError:
+            return {}
+
     def editlog_entry(self):
         """ Return the edit-log entry for this Page object (can be an old revision).
         """
