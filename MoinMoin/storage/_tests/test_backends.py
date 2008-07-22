@@ -354,6 +354,15 @@ class BackendTest(object):
         item = self.backend.get_item(name)
         assert item["a"] == "a"
 
+    def test_existing_item_change_metadata(self):
+        self.create_meta_item_helper("existing now 2")
+        item = self.backend.get_item('existing now 2')
+        item.change_metadata()
+        item['asdf'] = 'b'
+        item.publish_metadata()
+        item = self.backend.get_item('existing now 2')
+        assert item['asdf'] == 'b' 
+        
     def test_metadata(self):
         self.create_rev_item_helper('no metadata')
         item = self.backend.get_item('no metadata')
@@ -363,3 +372,4 @@ class BackendTest(object):
         self.create_meta_item_helper('no revision')
         item = self.backend.get_item('no revision')
         py.test.raises(NoSuchRevisionError, item.get_revision, -1)
+        
