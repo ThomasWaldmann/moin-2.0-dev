@@ -133,7 +133,9 @@ class MercurialBackend(Backend):
         # XXX: should go to abstract
         if self.has_item(itemname):
             raise ItemAlreadyExistsError("Item with that name already exists: %s" % itemname)
-        return Item(self, itemname)
+        item = Item(self, itemname)
+        item._exists = False   
+        return item
 
     def get_item(self, itemname):
         """
@@ -142,7 +144,9 @@ class MercurialBackend(Backend):
         """
         if not self.has_item(itemname):
             raise NoSuchItemError('Item does not exist: %s' % itemname)
-        return Item(self, itemname)
+        item = Item(self, itemname)
+        item._exists = True   
+        return item
 
     def search_item(self, searchterm):
         """Returns generator for iterating over matched items by searchterm."""
@@ -241,7 +245,6 @@ class MercurialBackend(Backend):
         try:
             if self.has_item(newname):
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
-
             files = [self._quote(item.name), self._quote(newname)]
             if self._has_meta(item.name):                
                 util.rename(self._upath(files[0]), self._upath(files[1]))
@@ -266,40 +269,38 @@ class MercurialBackend(Backend):
             del lock
 
     def _change_item_metadata(self, item):
-        """Start item metadata transaction."""
-        if os.path.exists(self._upath(item.name)):
-            self._item_lock(item)
-            item._create = False
-        else:
-            item._create = True
+        """Start Item metadata transaction."""
+        if item._exists: 
+            item._lock = self._itemlock(item)
 
     def _publish_item_metadata(self, item):
         """Dump Item metadata to file and finish transaction."""
-        quoted_name = self._quote(item.name)
-        if not item._create:
+        meta_item_path = self._upath(self._quote(item.name))
+        
+        def write_meta_item(itempath, metadata):
+            tmpfd, tmpfpath = tempfile.mkstemp("-meta", "tmp-", self._u_path)
+            f = os.fdopen(tmpfd, 'wb')
+            pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
+            f.close()
+            util.rename(tmpfpath, itempath)   
+                 
+        if item._exists:
             if item._metadata is None:
-                pass
+                pass               
             else:
-                tmpfd, tmpfname = tempfile.mkstemp("-meta", "tmp-", self._r_path)
-                f = os.fdopen(tmpfd, 'wb')
-                pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
-                f.close()
-                util.rename(tmpfname, self._upath(quoted_name))
-            del self._item_metadata_lock[item.name]
+                write_meta_item(meta_item_path, item._metadata)
+            print "delete lock"                
+            del item._lock
         else:
             if self.has_item(item.name):
                 raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
-            else:
-                tmpfd, tmpfname = tempfile.mkstemp("-meta", "tmp-", self._r_path)
-                f = os.fdopen(tmpfd, 'wb')
-                if item._metadata is None:
-                    item._metadata = {}
-                pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
-                f.close()
-                util.rename(tmpfname, self._upath(quoted_name))
+            if item._metadata is None:
+                item._metadata = {}
+            write_meta_item(meta_item_path, item._metadata) 
+            item._exists = True      
 
     def _get_item_metadata(self, item):
-        """Loads Item metadata from file. Always returns dictionary."""
+        """Load Item metadata from file. Return dictionary."""
         quoted_name = self._quote(item.name)
         if os.path.exists(self._upath(quoted_name)):
             f = open(self._upath(quoted_name), "rb")
@@ -335,6 +336,7 @@ class MercurialBackend(Backend):
             if not has_item:
                 ctx._status[1], ctx._status[0] = ctx._status[0], ctx._status[1]
             self._repo.commitctx(ctx)
+            item._exists = True
         finally:
             del lock
             item._uncommitted_revision = None  # XXX: move to abstract
