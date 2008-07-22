@@ -237,7 +237,7 @@ class MercurialBackend(Backend):
         if not self.has_item(item.name):
             raise NoSuchItemError('Source item does not exist: %s' % item.name)
 
-        lock = self._lock()
+        lock = self._repolock()
         try:
             if self.has_item(newname):
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
@@ -314,7 +314,7 @@ class MercurialBackend(Backend):
         rev = item._uncommitted_revision
         meta = dict(rev)
         name = self._quote(item.name)
-        lock = self._lock()  # XXX: needed now?
+        lock = self._repolock()
         try:
             has_item = self.has_item(item.name)
             if has_item:
@@ -354,26 +354,25 @@ class MercurialBackend(Backend):
         else:
             return name
 
-    def _lock(self):
-        """
-        Acquire internal lock. This method is helper for achieving one item
-        commits.
-        """
-        if self._lockref and self._lockref():
-            return self._lockref()
-        lock = self._repo._lock(os.path.join(self._r_path, 'wikilock'), True, None,
-                None, '')
-        self._lockref = weakref.ref(lock)
+    def _lock(self, lockpath, lockref):        
+        if lockref and lockref():            
+            return lockref()
+        lock = self._repo._lock(lockpath, True, None, None, '')
+        lockref = weakref.ref(lock)
         return lock
-
-    def _item_lock(self, item):
+    
+    def _repolock(self):
+        """Acquire global repository lock"""        
+        return self._lock(self._rpath("repo.lock"), self._lockref)
+        
+    def _itemlock(self, item):
         """Acquire unrevisioned Item lock."""
-        if self._item_metadata_lock.has_key(item.name) and self._item_metadata_lock[item.name]():
-            return self._item_metadata_lock[item.name]()
-        lock = self._repo._lock(os.path.join(self._r_path, item.name), True, None, None, '')
-        self._item_metadata_lock[item.name] = weakref.ref(lock)
-        return lock
-
+        # XXX: long item name
+        if not self._item_metadata_lock.has_key(item.name):
+            self._item_metadata_lock[item.name] = None    
+        lpath = self._upath(self._quote(item.name + ".lock"))
+        return self._lock(lpath, self._item_metadata_lock[item.name]) 
+        
     def _tipctx(self):
         """Return newest changeset in repository."""
         return self._repo[self._repo.changelog.tip()]
