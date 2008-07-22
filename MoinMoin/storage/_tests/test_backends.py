@@ -64,33 +64,49 @@ class BackendTest(object):
         item.publish_metadata()
         return item
 
-    def create_item(self, name):
-        item = self.backend.create_item(name)
-        assert isinstance(item, Item)
-        assert item.name == name
-        item.create_revision(0)
-        item.commit()
-        assert self.backend.has_item(name)
-
-    def get_item(self, name):
+    def get_item_check(self, name):
         item = self.backend.get_item(name)
         assert isinstance(item, Item)
         assert item.name == name
 
-    def has_rename_item(self, old_name, new_name):
+    def rename_item_check(self, old_name, new_name):
         item = self.backend.get_item(old_name)
         item.rename(new_name)
         assert item.name == new_name
         assert self.backend.has_item(new_name)
-        assert not self.backend.has_item(old_name)
+        assert not self.backend.has_item(old_name)  
 
-    def test_create_get_rename_get_item(self):
+    def test_create_get_rename_get_rev_item(self):
+        def create_rev_item(name):
+            item = self.backend.create_item(name)
+            assert isinstance(item, Item)
+            assert item.name == name
+            item.create_revision(0)
+            item.commit()
+            assert self.backend.has_item(name)
+        
         for num, item_name in enumerate(self.valid_names):
-            yield self.create_item, item_name
-            yield self.get_item, item_name
-            new_name = "renamed_item_%d" % num
-            yield self.has_rename_item, item_name, new_name
-            yield self.get_item, new_name
+            yield create_rev_item, item_name
+            yield self.get_item_check, item_name
+            new_name = "renamed_revitem_%d" % num
+            yield self.rename_item_check, item_name, new_name
+            yield self.get_item_check, new_name
+            
+    def test_create_get_rename_get_meta_item(self):      
+        def create_meta_item(name):
+            item = self.backend.create_item(name)
+            assert isinstance(item, Item)
+            assert item.name == name
+            item.change_metadata()
+            item.publish_metadata()
+            assert self.backend.has_item(name)
+            
+        for num, item_name in enumerate(self.valid_names):
+            yield create_meta_item, item_name
+            yield self.get_item_check, item_name
+            new_name = "renamed_revitem_%d" % num
+            yield self.rename_item_check, item_name, new_name
+            yield self.get_item_check, new_name    
             
     def test_item_rename_to_existing(self):
         item1 = self.create_rev_item_helper("fresh_item")
@@ -211,7 +227,7 @@ class BackendTest(object):
         assert isinstance(rev, NewRevision)
         item.rollback()
         assert not self.backend.has_item(item.name)
-
+        
     def test_item_commit_revision(self):
         item = self.backend.create_item("item#11")
         rev = item.create_revision(0)
