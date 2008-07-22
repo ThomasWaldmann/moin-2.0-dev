@@ -120,7 +120,7 @@ class MercurialBackend(Backend):
     def has_item(self, itemname):
         """Check whether Item with given name exists."""
         name = self._quote(itemname)
-        return name in self._tipctx() or os.path.exists(self._upath(name))
+        return name in self._tipctx() or self._has_meta(itemname)
 
     def create_item(self, itemname):
         """
@@ -243,7 +243,7 @@ class MercurialBackend(Backend):
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
 
             files = [self._quote(item.name), self._quote(newname)]
-            if os.path.exists(self._upath(item.name)):
+            if self._has_meta(item.name):                
                 util.rename(self._upath(files[0]), self._upath(files[1]))
             else:
                 def getfilectx(repo, memctx, path):
@@ -376,6 +376,10 @@ class MercurialBackend(Backend):
     def _tipctx(self):
         """Return newest changeset in repository."""
         return self._repo[self._repo.changelog.tip()]
+    
+    def _has_meta(self, itemname):
+        """Check if unversioned item with supplied name exists."""
+        return os.path.exists(self._upath(self._quote(itemname)))
 
     def _rpath(self, filename):
         """Return absolute path to revisioned Item in repository."""
