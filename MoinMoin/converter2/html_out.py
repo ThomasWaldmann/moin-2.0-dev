@@ -179,10 +179,13 @@ class ConverterBase(object):
         attrib = Attrib(elem)
         generate = attrib.get('item-label-generate')
         
-        if generate == 'ordered':
-            ret = self.new(ET.QName('ol', namespaces.html))
-        elif generate:
-            ret = self.new(ET.QName('ul', namespaces.html))
+        if generate:
+            if generate == 'ordered':
+                ret = self.new(ET.QName('ol', namespaces.html))
+            elif generate == 'unordered':
+                ret = self.new(ET.QName('ul', namespaces.html))
+            else:
+                raise ValueError('List label generation not supported: ' + generate)
         else:
             ret = self.new(ET.QName('dl', namespaces.html))
 
