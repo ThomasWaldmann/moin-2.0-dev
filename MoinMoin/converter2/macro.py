@@ -26,6 +26,7 @@ class Converter(object):
     tag_macro_args = ET.QName('macro-args', namespaces.moin_page)
     tag_macro_body = ET.QName('macro-body', namespaces.moin_page)
     tag_macro_name = ET.QName('macro-name', namespaces.moin_page)
+    tag_macro_type = ET.QName('macro-type', namespaces.moin_page)
     tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
     @classmethod
@@ -37,9 +38,30 @@ class Converter(object):
     def handle_macro(self, elem, page_href):
         name = elem.get(self.tag_macro_name)
         args = elem.get(self.tag_macro_args)
+        context = elem.get(self.tag_macro_type)
+        alt = elem.get(self.tag_alt, None)
 
         elem_body = ET.Element(self.tag_macro_body)
 
+        if not self._handle_macro_new(elem_body, page_href, name, args, context, alt):
+            self._handle_macro_old(elem_body, page_href, name, args, alt)
+
+        elem.append(elem_body)
+
+    def _handle_macro_new(self, elem_body, page_href, name, args, context, alt):
+        try:
+            cls = wikiutil.importPlugin(self.request.cfg, 'macro2', name, function='Macro')
+        except wikiutil.PluginMissingError:
+            return False
+
+        macro = cls(self.request, alt, context, args)
+        ret = macro()
+
+        elem_body.append(ret)
+
+        return True
+
+    def _handle_macro_old(self, elem_body, page_href, name, args, alt):
         m = macro.Macro(_PseudoParser(self.request))
 
         formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
@@ -55,7 +77,6 @@ class Converter(object):
             errmsg = unicode(err)
             if not name in errmsg:
                 raise
-            alt = elem.get(self.tag_alt, None)
             if alt:
                 attrib_error = {ET.QName('title', namespaces.moin_page): errmsg}
                 elem_error = ET.Element(ET.QName('span', namespaces.moin_page), attrib=attrib_error)
@@ -87,8 +108,6 @@ class Converter(object):
             formatter.rawHTML(ret)
 
         elem_body.extend(formatter.root[:])
-
-        elem.append(elem_body)
 
     def recurse(self, elem, page_href):
         page_href = elem.get(self.tag_page_href, page_href)
