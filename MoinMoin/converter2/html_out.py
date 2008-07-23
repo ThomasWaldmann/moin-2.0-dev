@@ -268,6 +268,30 @@ class Converter(ConverterBase):
     Converter application/x-moin-document -> application/x-moin-document
     """
 
+class Toc(object):
+    def __init__(self):
+        self._elements = []
+        self._headings = []
+        self._headings_minlevel = None
+
+    def add_element(self, element, level):
+        self._elements.append((element, level))
+
+    def add_heading(self, title, level, id):
+        if self._headings_minlevel is None or self._headings_minlevel < level:
+            self._headings_minlevel = level
+
+        self._headings.append((title, level, id))
+
+    def headings(self, maxlevel):
+        if not self._headings_minlevel:
+            return
+
+        for title, level, id in self._headings:
+            # We crop all overline levels above the first used.
+            level = level - self._headings_minlevel + 2
+            yield title, level, id
+
 class ConverterPage(ConverterBase):
     """
     Converter application/x-moin-document -> application/x-xhtml-moin-page
@@ -280,15 +304,13 @@ class ConverterPage(ConverterBase):
             return cls
 
     def __call__(self, element):
-        self._table_of_content_element = None
-        self._table_of_content_id = 0
-        self._table_of_content_maxlevel = -1
-        self._table_of_content_list = []
+        self._toc_elements = []
+        self._toc_stack = [Toc()]
+        self._toc_id = 0
 
         ret = super(ConverterPage, self).__call__(element)
 
-        elem = self._table_of_content_element
-        if elem:
+        for elem, toc, maxlevel in self._toc_elements:
             # TODO: gettext
             attrib_h = {ET.QName('class', namespaces.html): 'table-of-contents-heading'}
             elem_h = ET.Element(ET.QName('p', namespaces.html),
@@ -303,10 +325,7 @@ class ConverterPage(ConverterBase):
                 stack[-1].append(elem)
 
             last_level = 0
-            for level, id, text in self._table_of_content_list:
-                if level > self._table_of_content_maxlevel:
-                    continue
-
+            for text, level, id in toc.headings(maxlevel):
                 need_item = last_level >= level
                 while last_level > level:
                     stack.pop()
@@ -348,12 +367,12 @@ class ConverterPage(ConverterBase):
 
         id = elem.get(ET.QName('id', namespaces.html))
         if not id:
-            id = 'toc-%d' % self._table_of_content_id
+            id = 'toc-%d' % self._toc_id
             elem.set(ET.QName('id', namespaces.html), id)
-            self._table_of_content_id += 1
+            self._toc_id += 1
 
         text = u''.join(elem.itertext())
-        self._table_of_content_list.append((level, id, text))
+        self._toc_stack[-1].add_heading(text, level, id)
         return elem
 
     def visit_moinpage_macro(self, elem):
@@ -367,8 +386,8 @@ class ConverterPage(ConverterBase):
         attrib = {ET.QName('class', namespaces.html): 'table-of-contents'}
         elem = self.new(ET.QName('div', namespaces.html), attrib)
 
-        self._table_of_content_element = elem
-        self._table_of_content_maxlevel = level
+        self._toc_stack[-1].add_element(elem, level)
+        self._toc_elements.append((elem, self._toc_stack[-1], level))
         return elem
 
 class ConverterDocument(ConverterPage):
