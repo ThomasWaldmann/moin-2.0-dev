@@ -9,6 +9,7 @@ Base class for wiki parser with macro support.
 
 from emeraldtree import ElementTree as ET
 
+from MoinMoin import wikiutil
 from MoinMoin.util import namespaces
 
 class ConverterMacro(object):
@@ -29,17 +30,60 @@ class ConverterMacro(object):
             return ET.Element(tag, children=[elem])
         return elem
 
+    def _Include_macro(self,
+            pagename=wikiutil.required_arg(unicode),
+            heading=unicode,
+            level=int,
+            sort=wikiutil.UnitArgument(None, str, ('ascending', 'descending')),
+            items=int,
+            skipitems=int,
+            titlesonly=bool,
+            editlink=bool):
+
+        if titlesonly:
+            raise NotImplementedError('macro: Include, argument: titlesonly')
+        if editlink:
+            raise NotImplementedError('macro: Include, argument: editlink')
+
+        tag = ET.QName('include', namespaces.xinclude)
+        tag_href = ET.QName('href', namespaces.xinclude)
+        tag_xpointer = ET.QName('xpointer', namespaces.xinclude)
+
+        attrib = {}
+        xpointer = []
+
+        def add_xpointer(function, *args):
+            args = ','.join(args)
+            args = args.replace('^', '^^').replace('(', '^(').replace(')', '^)')
+            xpointer.append(function + '(' + args + ')')
+
+        if pagename.startswith('^'):
+            args = [pagename]
+            if sort:
+                args.append('sort=%s' % sort[1])
+            if items:
+                args.append('items=%d' % items)
+            if skipitems:
+                args.append('skipitems=%d' % skipitems)
+            add_xpointer('moin-pages', *args)
+        else:
+            attrib[tag_href] = 'wiki.local:' + pagename
+
+        if xpointer:
+            attrib[tag_xpointer] = ''.join(xpointer)
+
+        return ET.Element(tag, attrib=attrib)
+
     def _Include_repl(self, args, text, context):
         if context == 'inline':
             return text
-        # TODO
-        return ''
+
+        return wikiutil.invoke_extension_function(self.request, self._Include_macro, args)
 
     def _TableOfContents_repl(self, args, text, context):
         if context == 'inline':
             return text
 
-        # TODO
         tag = ET.QName('table-of-content', namespaces.moin_page)
         attrib = {}
         try:
