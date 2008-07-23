@@ -70,8 +70,12 @@ class TestConverterBase(object):
 
     def test_list(self):
         pairs = [
-            ('<page %s><list><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string_page_default,
+            ('<page %s><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string_page_default,
                 '<div %s><ul><li>Item</li></ul></div>' % namespaces_string_html_default),
+            ('<page %s><list item-label-generate="ordered"><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string_page_default,
+                '<div %s><ol><li>Item</li></ol></div>' % namespaces_string_html_default),
+            ('<page %s><list><list-item><list-item-label>Label</list-item-label><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string_page_default,
+                '<div %s><dl><dt>Label</dt><dd>Item</dd></dl></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
             yield (self._do,) + i
