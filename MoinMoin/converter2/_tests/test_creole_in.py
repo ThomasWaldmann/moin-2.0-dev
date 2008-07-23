@@ -129,19 +129,19 @@ class TestConverter(object):
     def test_list(self):
         pairs = [
             ('* Item',
-                '<page %s><list><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string),
+                '<page %s><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string),
             ('* Item\nItem',
-                '<page %s><list><list-item><list-item-body>Item\nItem</list-item-body></list-item></list></page>' % namespaces_string),
+                '<page %s><list item-label-generate="unordered"><list-item><list-item-body>Item\nItem</list-item-body></list-item></list></page>' % namespaces_string),
             ('* Item 1\n*Item 2',
-                '<page %s><list><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></page>' % namespaces_string),
+                '<page %s><list item-label-generate="unordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></page>' % namespaces_string),
             ('* Item 1\n** Item 1.2\n* Item 2',
-                '<page %s><list><list-item><list-item-body>Item 1<list><list-item><list-item-body>Item 1.2</list-item-body></list-item></list></list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></page>' % namespaces_string),
+                '<page %s><list item-label-generate="unordered"><list-item><list-item-body>Item 1<list item-label-generate="unordered"><list-item><list-item-body>Item 1.2</list-item-body></list-item></list></list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></page>' % namespaces_string),
             ('* List 1\n\n* List 2',
-                '<page %s><list><list-item><list-item-body>List 1</list-item-body></list-item></list><list><list-item><list-item-body>List 2</list-item-body></list-item></list></page>' % namespaces_string),
+                '<page %s><list item-label-generate="unordered"><list-item><list-item-body>List 1</list-item-body></list-item></list><list item-label-generate="unordered"><list-item><list-item-body>List 2</list-item-body></list-item></list></page>' % namespaces_string),
             ('# Item',
-                '<page %s><list><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string),
+                '<page %s><list item-label-generate="ordered"><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string),
             ('* List 1\n# List 2',
-                '<page %s><list><list-item><list-item-body>List 1</list-item-body></list-item></list><list><list-item><list-item-body>List 2</list-item-body></list-item></list></page>' % namespaces_string),
+                '<page %s><list item-label-generate="unordered"><list-item><list-item-body>List 1</list-item-body></list-item></list><list item-label-generate="ordered"><list-item><list-item-body>List 2</list-item-body></list-item></list></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i
@@ -205,7 +205,7 @@ class TestConverter(object):
     def test_composite(self):
         pairs = [
             ('Text\n* Item\n\nText',
-                '<page %s><p>Text</p><list><list-item><list-item-body>Item</list-item-body></list-item></list><p>Text</p></page>' % namespaces_string),
+                '<page %s><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><p>Text</p></page>' % namespaces_string),
             ('Text\n|Item\nText',
                 '<page %s><p>Text</p><table><table-body><table-row><table-cell>Item</table-cell></table-row></table-body></table><p>Text</p></page>' % namespaces_string),
         ]
