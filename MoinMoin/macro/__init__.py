@@ -26,7 +26,7 @@ from MoinMoin import wikiutil, i18n
 from MoinMoin.Page import Page
 
 
-names = ["TitleSearch", "WordIndex", "TitleIndex", "GoTo",
+names = ["TitleSearch", "WordIndex", "TitleIndex",
          # Macros with arguments
          "Icon", "Date", "DateTime", "Anchor", "MailTo", "GetVal", "TemplateList",
 ]
@@ -271,25 +271,6 @@ class Macro:
             return ''
         word_re = u'[%s][%s]+' % (config.chars_upper, config.chars_lower)
         return self._make_index(word_re=word_re)
-
-    def macro_GoTo(self):
-        """ Make a goto box
-
-        @rtype: unicode
-        @return: goto box html fragment
-        """
-        _ = self._
-        html = [
-            u'<form method="get" action="%s/%s"><div>' % (self.request.getScriptname(), wikiutil.quoteWikinameURL(self.formatter.page.page_name)),
-            u'<div>',
-            u'<input type="hidden" name="action" value="goto">',
-            u'<input type="text" name="target" size="30">',
-            u'<input type="submit" value="%s">' % _("Go To Page"),
-            u'</div>',
-            u'</form>',
-            ]
-        html = u'\n'.join(html)
-        return self.formatter.rawHTML(html)
 
     def macro_Icon(self, icon=u''):
         # empty icon name isn't valid either
