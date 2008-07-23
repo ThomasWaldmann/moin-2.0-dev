@@ -1223,13 +1223,9 @@ class Page(object):
         """
         request.clock.start('send_page_content')
 
-        mime_type = wikiutil.MimeType(format).mime_type()
-
         from emeraldtree import ElementTree as ET
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util import namespaces
-
-        InputConverter = reg.get(mime_type, 'application/x-moin-document', None)
 
         MacroConverter = reg.get('application/x-moin-document',
                 'application/x-moin-document;macros=expandall')
@@ -1241,26 +1237,9 @@ class Page(object):
 
         doc = None
         if do_cache and self.canUseCache():
-            doc = self.load_from_cache(request)
-
-        if doc is None:
-            if InputConverter:
-                doc = InputConverter(request, self.page_name)(body)
-
-            else:
-                # Use oldstyle parser
-                Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
-                Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
-                parser = Parser(body, request, format_args=format_args, **kw)
-                formatter = Formatter(request, self)
-
-                parser.format(formatter)
-
-                attrib = {ET.QName('page-href', namespaces.moin_page): 'wiki:///' + self.page_name}
-                doc = ET.Element(ET.QName('page', namespaces.moin_page), attrib,
-                        children=formatter.root[:])
-
-            self.add_to_cache(request, doc)
+            doc = self.convert_input_cache(request, body, format, format_args)
+        else:
+            doc = self.convert_input(request, body, format, format_args)
 
         doc = MacroConverter(request)(doc)
         doc = LinkConverter(request)(doc)
@@ -1270,6 +1249,42 @@ class Page(object):
         tree.write(self.request, default_namespace=namespaces.html)
 
         request.clock.stop('send_page_content')
+
+    def convert_input(self, request, body, format, format_args):
+        mime_type = wikiutil.MimeType(format).mime_type()
+
+        from emeraldtree import ElementTree as ET
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util import namespaces
+
+        InputConverter = reg.get(mime_type, 'application/x-moin-document', None)
+
+        if InputConverter:
+            return InputConverter(request, self.page_name)(body)
+
+        # Use oldstyle parser
+        Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
+        Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
+        parser = Parser(body, request, format_args=format_args)
+        formatter = Formatter(request, self)
+
+        parser.format(formatter)
+
+        attrib = {ET.QName('page-href', namespaces.moin_page): 'wiki:///' + self.page_name}
+        return ET.Element(ET.QName('page', namespaces.moin_page), attrib,
+                children=formatter.root[:])
+
+    def convert_input_cache(self, request, *args):
+        """
+        Loads document from cache if possible, otherwise create it.
+        """
+        doc = self.load_from_cache(request)
+
+        if not doc:
+            doc = self.convert_input(request, *args)
+            self.add_to_cache(request, doc)
+
+        return doc
 
     def load_from_cache(self, request):
         """ Return page content cache or None """
