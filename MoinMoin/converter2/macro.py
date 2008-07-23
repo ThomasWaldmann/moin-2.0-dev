@@ -43,18 +43,21 @@ class Converter(object):
 
         elem_body = ET.Element(self.tag_macro_body)
 
+        print page_href, name, args, context, alt
         if not self._handle_macro_new(elem_body, page_href, name, args, context, alt):
             self._handle_macro_old(elem_body, page_href, name, args, alt)
 
         elem.append(elem_body)
 
     def _handle_macro_new(self, elem_body, page_href, name, args, context, alt):
+        page_name = page_href[8:]
+
         try:
             cls = wikiutil.importPlugin(self.request.cfg, 'macro2', name, function='Macro')
         except wikiutil.PluginMissingError:
             return False
 
-        macro = cls(self.request, alt, context, args)
+        macro = cls(self.request, page_name, alt, context, args)
         ret = macro()
 
         elem_body.append(ret)

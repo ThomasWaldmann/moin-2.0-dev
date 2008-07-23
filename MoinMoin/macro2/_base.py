@@ -20,8 +20,9 @@ class MacroBase(object):
     # The output of a immutable macro only depends on the arguments and the content
     immutable = False
 
-    def __init__(self, request, alt, context, args=None):
-        self.request, self.alt, self.context, self._args = request, alt, context, args
+    def __init__(self, request, page_name, alt, context, args=None):
+        self.request, self.page_name = request, page_name
+        self.alt, self.context, self._args = alt, context, args
 
     def call_macro(self, content):
         return wikiutil.invoke_extension_function(self.request, self.macro, self._args)
