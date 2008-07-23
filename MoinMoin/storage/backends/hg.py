@@ -31,7 +31,8 @@
       changeset
     This affects:
     - we cannot support so called 'multiple empty revisions in a row',
-      there is no possibility to commit revision which hasnt changed since last time
+      there is no possibility to commit (file) revision which hasnt changed since 
+      last time
     - as 'extra' dict is property of changeset, without increasing filerevs we're not
       able to link rev meta and rev data
     - revision metadata ('extra' dict) change is not stored in/as revision data,
@@ -58,7 +59,7 @@
 
     ---
 
-    @copyright: 2007 MoinMoin:PawelPacana
+    @copyright: 2008 MoinMoin:PawelPacana
     @license: GNU GPL, see COPYING for details.
 """
 # XXX: update wiki and describe design/problems
