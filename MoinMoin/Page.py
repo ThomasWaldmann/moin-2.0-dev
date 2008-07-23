@@ -1227,6 +1227,8 @@ class Page(object):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util import namespaces
 
+        IncludeConverter = reg.get('application/x-moin-document',
+                'application/x-moin-document;includes=expandall')
         MacroConverter = reg.get('application/x-moin-document',
                 'application/x-moin-document;macros=expandall')
         LinkConverter = reg.get('application/x-moin-document',
@@ -1241,6 +1243,7 @@ class Page(object):
         else:
             doc = self.convert_input(request, body, format, format_args)
 
+        doc = IncludeConverter(request)(doc)
         doc = MacroConverter(request)(doc)
         doc = LinkConverter(request)(doc)
         doc = HtmlConverter(request)(doc)
