@@ -1223,6 +1223,7 @@ class Page(object):
         """
         request.clock.start('send_page_content')
 
+        from cStringIO import StringIO
         from emeraldtree import ElementTree as ET
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util import namespaces
@@ -1248,8 +1249,10 @@ class Page(object):
         doc = LinkConverter(request)(doc)
         doc = HtmlConverter(request)(doc)
 
+        out = StringIO()
         tree = ET.ElementTree(doc)
-        tree.write(self.request, default_namespace=namespaces.html)
+        tree.write(out, default_namespace=namespaces.html)
+        self.request.write(out.getvalue())
 
         request.clock.stop('send_page_content')
 
