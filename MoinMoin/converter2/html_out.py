@@ -283,6 +283,10 @@ class Toc(object):
 
         self._headings.append((title, level, id))
 
+    def extend_headings(self, toc):
+        for title, level, id in toc._headings:
+            self.add_heading(title, level, id)
+
     def headings(self, maxlevel):
         if not self._headings_minlevel:
             return
@@ -344,6 +348,16 @@ class ConverterPage(ConverterBase):
                 stack_top_append(elem)
 
         return ret
+
+    def visit(self, elem):
+        if elem.get(ET.QName('page-href', namespaces.moin_page)):
+            self._toc_stack.append(Toc())
+            ret = super(ConverterPage, self).visit(elem)
+            toc = self._toc_stack.pop()
+            self._toc_stack[-1].extend_headings(toc)
+            return ret
+        else:
+            return super(ConverterPage, self).visit(elem)
 
     def visit_moinpage(self, elem):
         n = 'visit_moinpage_' + elem.tag.name.replace('-', '_')
