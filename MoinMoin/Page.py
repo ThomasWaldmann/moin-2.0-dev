@@ -1250,7 +1250,12 @@ class Page(object):
 
         request.clock.stop('send_page_content')
 
-    def convert_input(self, request, body, format, format_args):
+    def convert_input(self, request, body=None, format=None, format_args=''):
+        if body is None:
+            body = self.data
+        if not format:
+            format = self.pi.get('format', 'wiki')
+
         mime_type = wikiutil.MimeType(format).mime_type()
 
         from emeraldtree import ElementTree as ET
