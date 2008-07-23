@@ -33,7 +33,7 @@ class Converter(object):
     def _factory(cls, input, output):
         if input == 'application/x-moin-document' and \
                 output == 'application/x-moin-document;macros=expandall':
-            return cls()
+            return cls
 
     def handle_macro(self, elem, page_href):
         name = elem.get(self.tag_macro_name)
@@ -122,9 +122,10 @@ class Converter(object):
                 for i in self.recurse(child, page_href):
                     yield i
 
-    def __call__(self, tree, request):
+    def __init__(self, request):
         self.request = request
 
+    def __call__(self, tree):
         for elem, page_href in self.recurse(tree, None):
             self.handle_macro(elem, page_href)
 

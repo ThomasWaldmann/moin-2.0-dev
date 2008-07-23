@@ -25,7 +25,7 @@ def serialize(elem, **options):
 
 class TestConverterBase(object):
     def setup_class(self):
-        self.conv = ConverterBase()
+        self.conv = ConverterBase(object())
 
     def test_base(self):
         pairs = [
@@ -108,12 +108,12 @@ class TestConverterBase(object):
 
     def _do(self, input, output):
         page = ET.XML(input)
-        out = self.conv(page, object())
+        out = self.conv(page)
         assert serialize(out) == output
 
 class TestConverter(object):
     def setup_class(self):
-        self.conv = Converter()
+        self.conv = Converter(object())
 
     def test_macro(self):
         pairs = [
@@ -125,12 +125,12 @@ class TestConverter(object):
 
     def _do(self, input, output):
         page = ET.XML(input)
-        out = self.conv(page, object())
+        out = self.conv(page)
         assert serialize(out) == output
 
 class TestConverterPage(object):
     def setup_class(self):
-        self.conv = ConverterPage()
+        self.conv = ConverterPage(object())
 
     def test_macro(self):
         pairs = [
@@ -142,11 +142,11 @@ class TestConverterPage(object):
 
     def test_unknown(self):
         page = ET.XML("<page:unknown %s/>" % namespaces_string_page)
-        py.test.raises(ElementException, self.conv.__call__, page, object())
+        py.test.raises(ElementException, self.conv.__call__, page)
 
     def _do(self, input, output):
         page = ET.XML(input)
-        out = self.conv(page, object())
+        out = self.conv(page)
         assert serialize(out) == output
 
 

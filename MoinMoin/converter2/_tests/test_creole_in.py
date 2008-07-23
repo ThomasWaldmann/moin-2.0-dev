@@ -26,7 +26,7 @@ def serialize(elem, **options):
 
 class TestConverter(object):
     def setup_class(self):
-        self.conv = Converter()
+        self.conv = Converter(object())
 
     def test_base(self):
         pairs = [
@@ -213,6 +213,6 @@ class TestConverter(object):
             yield (self._do,) + i
 
     def _do(self, input, output):
-        out = self.conv(input, object())
+        out = self.conv(input)
         assert serialize(out) == output
 

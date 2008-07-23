@@ -446,7 +446,7 @@ class Formatter(ConverterMacro):
         if not lines:
             return ''
 
-        args = None
+        args = ''
         if lines[0].startswith('#!'):
             data = lines[0][2:].split(None, 1)
             if len(data) > 1:
@@ -463,12 +463,12 @@ class Formatter(ConverterMacro):
         from MoinMoin.converter2 import default_registry as reg
 
         mimetype = wikiutil.MimeType(parser_name).mime_type()
-        converter = reg.get(mimetype, 'application/x-moin-document', None)
+        Converter = reg.get(mimetype, 'application/x-moin-document', None)
 
         self._stack_push(ET.Element(ET.QName('div', namespaces.moin_page)))
 
-        if converter:
-            doc = input_converter(text, self.request, self.page)
+        if Converter:
+            doc = Converter(self.request, self.page.page_name)(text)
             self._stack_top_append(doc)
 
         else:

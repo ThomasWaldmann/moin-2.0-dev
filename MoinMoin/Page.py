@@ -1229,14 +1229,14 @@ class Page(object):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util import namespaces
 
-        input_converter = reg.get(mime_type, 'application/x-moin-document', None)
+        InputConverter = reg.get(mime_type, 'application/x-moin-document', None)
 
-        macro_converter = reg.get('application/x-moin-document',
+        MacroConverter = reg.get('application/x-moin-document',
                 'application/x-moin-document;macros=expandall')
-        link_converter = reg.get('application/x-moin-document',
+        LinkConverter = reg.get('application/x-moin-document',
                 'application/x-moin-document;links=extern')
         # TODO: Real output format
-        html_converter = reg.get('application/x-moin-document',
+        HtmlConverter = reg.get('application/x-moin-document',
                 'application/x-xhtml-moin-page')
 
         doc = None
@@ -1244,8 +1244,8 @@ class Page(object):
             doc = self.load_from_cache(request)
 
         if doc is None:
-            if input_converter is not None:
-                doc = input_converter(body, request, self)
+            if InputConverter:
+                doc = InputConverter(request, self.page_name)(body)
 
             else:
                 # Use oldstyle parser
@@ -1262,9 +1262,9 @@ class Page(object):
 
             self.add_to_cache(request, doc)
 
-        doc = macro_converter(doc, request)
-        doc = link_converter(doc, request)
-        doc = html_converter(doc, request)
+        doc = MacroConverter(request)(doc)
+        doc = LinkConverter(request)(doc)
+        doc = HtmlConverter(request)(doc)
 
         tree = ET.ElementTree(doc)
         tree.write(self.request, default_namespace=namespaces.html)

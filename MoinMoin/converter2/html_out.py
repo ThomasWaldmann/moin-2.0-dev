@@ -87,7 +87,10 @@ class ConverterBase(object):
         namespaces.html,
     ])
 
-    def __call__(self, element, request):
+    def __init__(self, request):
+        pass
+
+    def __call__(self, element):
         return self.visit(element)
 
     def do_children(self, element):
@@ -271,15 +274,15 @@ class ConverterPage(ConverterBase):
     def _factory(cls, input, output):
         if input == 'application/x-moin-document' and \
            output == 'application/x-xhtml-moin-page':
-            return cls()
+            return cls
 
-    def __call__(self, element, request):
+    def __call__(self, element):
         self._table_of_content_element = None
         self._table_of_content_id = 0
         self._table_of_content_maxlevel = -1
         self._table_of_content_list = []
 
-        ret = super(ConverterPage, self).__call__(element, request)
+        ret = super(ConverterPage, self).__call__(element)
 
         elem = self._table_of_content_element
         if elem:

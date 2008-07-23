@@ -23,17 +23,20 @@ class Converter(object):
         # TODO: currently we register for text/plain, but as soon as priorities
         # are implemented, it could check input.startswith('text/').
         if input == 'text/plain' and output == 'application/x-moin-document':
-            return cls()
+            return cls
 
-    def __call__(self, text, request, page=None):
+    def __init__(self, request, page_name=None, args=None):
+        self.page_name = page_name
+
+    def __call__(self, text):
         """Parse the text and return DOM tree."""
 
         tag = ET.QName('page', namespaces.moin_page)
         tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
         attrib = {}
-        if page is not None:
-            attrib[tag_page_href] = 'wiki:///' + page.page_name
+        if self.page_name is not None:
+            attrib[tag_page_href] = 'wiki:///' + self.page_name
 
         root = ET.Element(tag, attrib=attrib)
         
