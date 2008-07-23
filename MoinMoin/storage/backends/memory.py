@@ -126,7 +126,10 @@ class MemoryBackend(Backend):
         For a given Item, list all Revisions. Returns a list of ints representing
         the Revision numbers.
         """
-        return self._item_revisions[item._item_id].keys()
+        try:
+            return self._item_revisions[item._item_id].keys()
+        except KeyError:
+            return []
 
     def _create_revision(self, item, revno):
         """
