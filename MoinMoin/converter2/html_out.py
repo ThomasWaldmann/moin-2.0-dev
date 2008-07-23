@@ -163,7 +163,7 @@ class ConverterBase(object):
         return self.new(ET.QName('br', namespaces.html))
 
     def visit_moinpage_list(self, elem):
-        generate = elem.get(ET.QName('item-label-generate'))
+        generate = elem.get(ET.QName('item-label-generate', namespaces.moin_page))
         
         if generate == 'ordered':
             ret = self.new(ET.QName('ol', namespaces.html))
