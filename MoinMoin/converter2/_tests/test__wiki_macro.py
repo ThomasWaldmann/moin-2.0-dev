@@ -27,8 +27,7 @@ def serialize(elem, **options):
 
 class TestConverter(object):
     def setup_class(self):
-        self.conv = ConverterMacro()
-        self.conv.request = self.request
+        self.conv = ConverterMacro(self.request)
 
     def test(self):
         pairs = [

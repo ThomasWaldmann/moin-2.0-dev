@@ -169,7 +169,8 @@ class Converter(ConverterMacro):
             return cls
 
     def __init__(self, request, page_name=None, args=None):
-        self.request, self.page_name = request, page_name
+        super(Converter, self).__init__(request)
+        self.page_name = page_name
 
     def __call__(self, text):
         tag = ET.QName('page', namespaces.moin_page)
