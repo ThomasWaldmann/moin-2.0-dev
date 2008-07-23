@@ -13,6 +13,9 @@ from MoinMoin import wikiutil
 from MoinMoin.util import namespaces
 
 class ConverterMacro(object):
+    def __init__(self, request):
+        self.request = request
+
     def _BR_repl(self, args, text, context):
         if context == 'block':
             return
