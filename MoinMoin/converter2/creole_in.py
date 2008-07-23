@@ -334,7 +334,7 @@ class Converter(ConverterMacro):
                 self._stack_pop()
             else:
                 cell = m.group('head')
-                # TODO
+                # TODO: How to handle table headings
                 tag = ET.QName('table-cell', namespaces.moin_page)
                 element = ET.Element(tag, children=[cell.strip('=')])
                 self._stack_top_append(element)
@@ -373,7 +373,6 @@ class Converter(ConverterMacro):
         self._stack_pop_name(('page', 'blockquote'))
 
     def _nowikiinline_repl(self, nowikiinline, nowikiinline_text):
-        # TODO
         tag = ET.QName('code', namespaces.moin_page)
         self._stack_top_append(ET.Element(tag, children=[nowikiinline_text]))
 
