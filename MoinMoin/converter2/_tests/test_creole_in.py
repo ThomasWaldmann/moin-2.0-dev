@@ -149,17 +149,17 @@ class TestConverter(object):
     def test_macro(self):
         pairs = [
             ('<<Macro>>',
-                '<page %s><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
+                '<page %s><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="block" macro-name="Macro" /></page>' % namespaces_string),
             (' <<Macro>> ',
-                '<page %s><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
+                '<page %s><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="block" macro-name="Macro" /></page>' % namespaces_string),
             ('Text <<Macro>>',
-                '<page %s><p>Text <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
+                '<page %s><p>Text <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="inline" macro-name="Macro" /></p></page>' % namespaces_string),
             ('Text\n<<Macro>>',
-                '<page %s><p>Text</p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
+                '<page %s><p>Text</p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="block" macro-name="Macro" /></page>' % namespaces_string),
             ('Text\nText <<Macro>>',
-                '<page %s><p>Text\nText <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="inline" /></p></page>' % namespaces_string),
+                '<page %s><p>Text\nText <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="inline" macro-name="Macro" /></p></page>' % namespaces_string),
             ('Text\n\n<<Macro>>',
-                '<page %s><p>Text</p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-name="Macro" macro-type="block" /></page>' % namespaces_string),
+                '<page %s><p>Text</p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="block" macro-name="Macro" /></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do,) + i

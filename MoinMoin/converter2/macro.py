@@ -26,7 +26,7 @@ class Converter(object):
     tag_macro_args = ET.QName('macro-args', namespaces.moin_page)
     tag_macro_body = ET.QName('macro-body', namespaces.moin_page)
     tag_macro_name = ET.QName('macro-name', namespaces.moin_page)
-    tag_macro_type = ET.QName('macro-type', namespaces.moin_page)
+    tag_macro_context = ET.QName('macro-context', namespaces.moin_page)
     tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
     @classmethod
@@ -38,7 +38,7 @@ class Converter(object):
     def handle_macro(self, elem, page_href):
         name = elem.get(self.tag_macro_name)
         args = elem.get(self.tag_macro_args)
-        context = elem.get(self.tag_macro_type)
+        context = elem.get(self.tag_macro_context)
         alt = elem.get(self.tag_alt, None)
 
         elem_body = ET.Element(self.tag_macro_body)
