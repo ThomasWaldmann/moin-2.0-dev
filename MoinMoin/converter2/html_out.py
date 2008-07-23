@@ -163,15 +163,32 @@ class ConverterBase(object):
         return self.new(ET.QName('br', namespaces.html))
 
     def visit_moinpage_list(self, elem):
-        # TODO: List type
-        ret = self.new(ET.QName('ul', namespaces.html))
+        generate = elem.get(ET.QName('item-label-generate'))
+        
+        if generate == 'ordered':
+            ret = self.new(ET.QName('ol', namespaces.html))
+        elif generate:
+            ret = self.new(ET.QName('ul', namespaces.html))
+        else:
+            ret = self.new(ET.QName('dl', namespaces.html))
+
         for item in elem:
             if item.tag.uri == namespaces.moin_page and item.tag.name == 'list-item':
+                if not generate:
+                    for label in item:
+                        if label.tag.uri == namespaces.moin_page and label.tag.name == 'list-item-label':
+                            ret_label = self.new_copy(ET.QName('dt', namespaces.html), label)
+                            ret.append(ret_label)
+
                 for body in item:
                     if body.tag.uri == namespaces.moin_page and body.tag.name == 'list-item-body':
-                        ret_body = self.new_copy(ET.QName('li', namespaces.html), body)
+                        if generate:
+                            ret_body = self.new_copy(ET.QName('li', namespaces.html), body)
+                        else:
+                            ret_body = self.new_copy(ET.QName('dd', namespaces.html), body)
                         ret.append(ret_body)
                         break
+
         return ret
 
     def visit_moinpage_note(self, elem):
