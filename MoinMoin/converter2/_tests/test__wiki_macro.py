@@ -33,15 +33,21 @@ class TestConverter(object):
                 None,
                 '<line-break %s />' % namespaces_string),
             ('FootNote', 'note', 'text',
-                None,
+                '<p %s><note note-class="footnote"><note-body>note</note-body></note></p>' % namespaces_string,
                 '<note note-class="footnote" %s><note-body>note</note-body></note>' % namespaces_string),
+            ('TableOfContents', '', 'text',
+                '<table-of-content %s />' % namespaces_string,
+                'text'),
         ]
         for name, args, text, output_block, output_inline in pairs:
             yield (self._do, name, args, text, 'block', output_block)
             yield (self._do, name, args, text, 'inline', output_inline)
 
-    def _do(self, name, args, text, type, output):
-        out = self.conv.macro(name, args, text, type)
-        if output is not None or out is not None:
-            assert serialize(out) == output
+    def _do(self, name, args, text, context, output):
+        result = self.conv.macro(name, args, text, context)
+        if output is not None or result is not None:
+            if isinstance(result, basestring):
+                assert result == output
+            else:
+                assert serialize(result) == output
 
