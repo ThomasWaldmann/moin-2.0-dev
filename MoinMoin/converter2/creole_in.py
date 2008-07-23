@@ -169,7 +169,7 @@ class Converter(ConverterMacro):
             return cls()
 
     def __call__(self, text, request, page=None):
-        """Parse the text given as self.raw and return DOM tree."""
+        self.request, self.page = request, page
 
         tag = ET.QName('page', namespaces.moin_page)
         tag_page_href = ET.QName('page-href', namespaces.moin_page)
@@ -345,10 +345,29 @@ class Converter(ConverterMacro):
         self._stack_pop_name(('page', 'blockquote'))
         def remove_tilde(m):
             return m.group('indent') + m.group('rest')
-        text = self.pre_escape_re.sub(remove_tilde, nowikiblock_text)
-        # TODO
-        tag = ET.QName('blockcode', namespaces.moin_page)
-        self._stack_top_append(ET.Element(tag, children=[text]))
+
+        if nowikiblock_kind:
+            # TODO: move somewhere else
+            from MoinMoin import wikiutil
+            from MoinMoin.converter2 import default_registry as reg
+
+            mimetype = wikiutil.MimeType(nowikiblock_kind).mime_type()
+            converter = reg.get(mimetype, 'application/x-moin-document', None)
+
+            if converter:
+                self._stack_push(ET.Element(ET.QName('div', namespaces.moin_page)))
+
+                doc = input_converter(nowikiblock_text.split('\n'), self.request, self.page)
+                self._stack_top_append(doc)
+
+            else:
+                # TODO: warning
+                pass
+
+        else:
+            text = self.pre_escape_re.sub(remove_tilde, nowikiblock_text)
+            tag = ET.QName('blockcode', namespaces.moin_page)
+            self._stack_top_append(ET.Element(tag, children=[text]))
 
     def _line_repl(self, line):
         self._stack_pop_name(('page', 'blockquote'))
