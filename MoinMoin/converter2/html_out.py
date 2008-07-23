@@ -23,19 +23,29 @@ class Attrib(object):
     visit_background_color = simple_css
     visit_font_size = simple_css
 
-    def __call__(self, element):
+    def __init__(self, element):
+        self.element = element
+
+        self.default_uri_input = self.default_uri_output = None
+        if element.tag.uri == namespaces.moin_page:
+            self.default_uri_input = element.tag.uri
+        if element.tag.uri in ConverterBase.namespaces_valid_output:
+            self.default_uri_output = element.tag.uri
+
+    def get(self, name):
+        ret = self.element.get(ET.QName(name, namespaces.moin_page))
+        if ret:
+            return ret
+        if self.default_uri_input:
+            return self.element.get(name)
+
+    def new(self):
         new = {}
         new_css = {}
         new_default = {}
         new_default_css = {}
 
-        default_uri_input = default_uri_output = None
-        if element.tag.uri == namespaces.moin_page:
-            default_uri_input = element.tag.uri
-        if element.tag.uri in ConverterBase.namespaces_valid_output:
-            default_uri_output = element.tag.uri
-
-        for key, value in element.attrib.iteritems():
+        for key, value in self.element.attrib.iteritems():
             if key.uri == namespaces.moin_page:
                 if not '_' in key.name:
                     n = 'visit_' + key.name.replace('-', '_')
@@ -45,13 +55,13 @@ class Attrib(object):
             elif key.uri in ConverterBase.namespaces_valid_output:
                 new[key] = value
             elif key.uri is None:
-                if default_uri_input and not '_' in key.name:
+                if self.default_uri_input and not '_' in key.name:
                     n = 'visit_' + key.name.replace('-', '_')
                     f = getattr(self, n, None)
                     if f is not None:
                         f(key, value, new_default, new_default_css)
-                elif default_uri_output:
-                    new_default[ET.QName(key.name, default_uri_output)] = value
+                elif self.default_uri_output:
+                    new_default[ET.QName(key.name, self.default_uri_output)] = value
 
         new_default.update(new)
         new_default_css.update(new_css)
@@ -61,7 +71,7 @@ class Attrib(object):
             style.sort(key=lambda i: i[0])
             style = '; '.join((key + ': ' + value for key, value in style))
 
-            style_old = element.get(self.tag_style)
+            style_old = self.element.get(self.tag_style)
             if style_old:
                 style += '; ' + style_old
 
@@ -98,7 +108,7 @@ class ConverterBase(object):
         return ET.Element(tag, attrib = attrib, children = children)
 
     def new_copy(self, tag, element, attrib={}):
-        attrib_new = Attrib()(element)
+        attrib_new = Attrib(element).new()
         attrib_new.update(attrib)
         children = self.do_children(element)
         return self.new(tag, attrib_new, children)
@@ -163,7 +173,8 @@ class ConverterBase(object):
         return self.new(ET.QName('br', namespaces.html))
 
     def visit_moinpage_list(self, elem):
-        generate = elem.get(ET.QName('item-label-generate', namespaces.moin_page))
+        attrib = Attrib(elem)
+        generate = attrib.get('item-label-generate')
         
         if generate == 'ordered':
             ret = self.new(ET.QName('ol', namespaces.html))
