@@ -166,17 +166,18 @@ class Converter(ConverterMacro):
     @classmethod
     def _factory(cls, input, output):
         if input == 'text/creole' and output == 'application/x-moin-document':
-            return cls()
+            return cls
 
-    def __call__(self, text, request, page=None):
-        self.request, self.page = request, page
+    def __init__(self, request, page_name=None, args=None):
+        self.request, self.page_name = request, page_name
 
+    def __call__(self, text):
         tag = ET.QName('page', namespaces.moin_page)
         tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
         attrib = {}
-        if page is not None:
-            attrib[tag_page_href] = 'wiki:///' + page.page_name
+        if self.page_name is not None:
+            attrib[tag_page_href] = 'wiki:///' + self.page_name
 
         self.root = ET.Element(tag, attrib=attrib)
         self._stack = [self.root]
@@ -352,12 +353,12 @@ class Converter(ConverterMacro):
             from MoinMoin.converter2 import default_registry as reg
 
             mimetype = wikiutil.MimeType(nowikiblock_kind).mime_type()
-            converter = reg.get(mimetype, 'application/x-moin-document', None)
+            Converter = reg.get(mimetype, 'application/x-moin-document', None)
 
-            if converter:
+            if Converter:
                 self._stack_push(ET.Element(ET.QName('div', namespaces.moin_page)))
 
-                doc = input_converter(nowikiblock_text.split('\n'), self.request, self.page)
+                doc = Converter(self.request, self.page_name)(nowikiblock_text.split('\n'))
                 self._stack_top_append(doc)
 
             else:

@@ -21,7 +21,7 @@ class ConverterExternOutput(object):
     def _factory(cls, input, output):
         if input == 'application/x-moin-document' and \
                 output == 'application/x-moin-document;links=extern':
-            return cls()
+            return cls
 
     def handle_wikilocal(self, link, page_name):
         if ':' in link:
@@ -67,9 +67,10 @@ class ConverterExternOutput(object):
                 for i in self.recurse(child, page_href):
                     yield i
 
-    def __call__(self, tree, request):
+    def __init__(self, request):
         self.request = request
 
+    def __call__(self, tree):
         for elem, href, page_href in self.recurse(tree, None):
             if href.startswith('wiki.local:'):
                 if page_href.startswith('wiki:///'):
