@@ -47,7 +47,7 @@ class TestMercurialBackend(BackendTest):
             py.test.raises(BackendError, MercurialBackend, emptydir)
             assert isinstance(MercurialBackend(emptydir, create=False), MercurialBackend)
             py.test.raises(BackendError, MercurialBackend, file)
-            assert isinstance(MercurialBackend(self.dirstruct), MercurialBackend)         
+            assert isinstance(MercurialBackend(dirstruct), MercurialBackend)         
         finally:
             shutil.rmtree(emptydir)
             shutil.rmtree(dirstruct)
