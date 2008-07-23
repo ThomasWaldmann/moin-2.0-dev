@@ -278,7 +278,7 @@ class Toc(object):
         self._elements.append((element, level))
 
     def add_heading(self, title, level, id):
-        if self._headings_minlevel is None or self._headings_minlevel < level:
+        if self._headings_minlevel is None or level < self._headings_minlevel:
             self._headings_minlevel = level
 
         self._headings.append((title, level, id))
@@ -293,7 +293,7 @@ class Toc(object):
 
         for title, level, id in self._headings:
             # We crop all overline levels above the first used.
-            level = level - self._headings_minlevel + 2
+            level = level - self._headings_minlevel + 1
             yield title, level, id
 
 class ConverterPage(ConverterBase):
