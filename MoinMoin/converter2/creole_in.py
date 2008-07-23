@@ -248,8 +248,6 @@ class Converter(ConverterMacro):
         self._stack_top_append(ET.Element(tag))
 
     def _item_repl(self, item, item_head, item_text):
-        # TODO: Mention type in the tree
-
         level = len(item_head)
         type = item_head[-1]
 
@@ -267,7 +265,10 @@ class Converter(ConverterMacro):
 
         if cur.tag.name != 'list':
             tag = ET.QName('list', namespaces.moin_page)
-            element = ET.Element(tag)
+            tag_generate = ET.QName('item-label-generate', namespaces.moin_page)
+            generate = type == '#' and 'ordered' or 'unordered'
+            attrib = {tag_generate: generate}
+            element = ET.Element(tag, attrib=attrib)
             element.level, element.type = level, type
             self._stack_push(element)
 
