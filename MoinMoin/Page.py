@@ -31,7 +31,8 @@ from MoinMoin.logfile import eventlog
 from MoinMoin.storage import Backend
 #from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage import DELETED
+from MoinMoin.storage import DELETED, EDIT_LOG_MTIME, EDIT_LOG_ADDR, \
+                                      EDIT_LOG_HOSTNAME, EDIT_LOG_USERID
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
@@ -328,7 +329,7 @@ class Page(object):
        #         if not os.path.exists(dirname):
        #             raise err
        # return fullpath
-        print "WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!"
+        logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
         return "/tmp/"
 
 
@@ -439,7 +440,10 @@ class Page(object):
             else:
                 return editordata[1]
         else:
-            return user.get_printable_editor(self.request, self._rev.userid, self._rev.addr, self._rev.hostname)
+            try:
+                return user.get_printable_editor(self.request, self._rev[EDIT_LOG_USERID], self._rev[EDIT_LOG_ADDR], self._rev[EDIT_LOG_HOSTNAME])
+            except KeyError:
+                logging.debug("Fix ErrorHandling in Page.py, Page.last_editor")
 
     def mtime(self, printable=False):
         """
@@ -450,13 +454,16 @@ class Page(object):
         @return: mtime of page (or 0 if page does not exist)
         """
         if self._rev is not None:
-            timestamp = self._rev.mtime
+            try:
+                timestamp = self._rev[EDIT_LOG_MTIME]
+            except KeyError:
+                timestamp = 0
+
             if printable:
-                if not timestamp:
-                    timestamp = "0"
-                else:
-                    timestamp = self.request.user.getFormattedDateTime(timestamp)
+                timestamp = self.request.user.getFormattedDateTime(timestamp)
+
             return timestamp
+
         return 0
 
     def isUnderlayPage(self, includeDeleted=True):
@@ -1056,7 +1063,6 @@ class Page(object):
         else:
             request.formatter = old_formatter
 
-
     def getFormatterName(self):
         """ Return a formatter name as used in the caching system
 
@@ -1411,7 +1417,7 @@ class RootPage(object):
         Just a hack for event and edit log currently.
         """
         ###return os.path.join(self.request.cfg.data_dir, fname)
-        print "WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!"
+        logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
         return "/tmp/"
 
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):

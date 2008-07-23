@@ -538,7 +538,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         if self.getRevList() == []:
             del self._items[self.page_name]
-        self.reset()
 
     def copyPage(self, newpagename, comment=u''):
         """ Copy the current version of the page (keeping the backups, logs and attachments).
@@ -1040,6 +1039,7 @@ Please review the page and save then. Do not save this page as it is!""")
             rev = self._item.create_revision(current_revno + 1)
             rev.write(newtext)
             self._item.commit()
+            self.reset()
 
             self._save_draft(None, None) # everything fine, kill the draft for this page
             if notify:
