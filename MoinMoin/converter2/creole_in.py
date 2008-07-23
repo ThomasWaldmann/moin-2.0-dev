@@ -117,8 +117,8 @@ class Rules:
     nowiki_block = r'''(?P<nowikiblock>
             ^{{{ \s* $
             (\n)?
+            ([\#]!\ *(?P<nowikiblock_kind>\w*)(\ +[^\n]*)?\n)?
             (?P<nowikiblock_text>
-                ([\#]!(?P<nowikiblock_kind>\w*?)(\s+.*)?$)?
                 (.|\n)+?
             )
             (\n)?
@@ -358,7 +358,7 @@ class Converter(ConverterMacro):
             if Converter:
                 self._stack_push(ET.Element(ET.QName('div', namespaces.moin_page)))
 
-                doc = Converter(self.request, self.page_name)(nowikiblock_text.split('\n'))
+                doc = Converter(self.request, self.page_name)(nowikiblock_text)
                 self._stack_top_append(doc)
 
             else:
