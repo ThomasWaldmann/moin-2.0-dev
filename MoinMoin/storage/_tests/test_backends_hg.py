@@ -12,102 +12,108 @@
 """
 
 from tempfile import mkdtemp, mkstemp
-from os.path import join
 import py.test
 import shutil
 import os
 
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.hg import MercurialBackend
-from MoinMoin.storage.error import BackendError #, ItemAlreadyExistsError
+from MoinMoin.storage.error import BackendError
 from MoinMoin.storage._tests.test_backends import item_names
 
 class TestMercurialBackend(BackendTest):
     """MercurialBackend test class."""
     def __init__(self):
-        self.backend = None
         names = item_names + (u'_ĄółóĄ_',) # tricky for internal hg quoting
-        BackendTest.__init__(self, self.backend, valid_names=names)
+        BackendTest.__init__(self, None, valid_names=names)
 
     def create_backend(self):
-        self.file = mkstemp()[1]        
-        self.empty_dir = mkdtemp()        
-        self.empty_struct = mkdtemp()         
-        os.mkdir(join(self.empty_struct, "unversioned"))        
-        self.data_struct = mkdtemp()
-        path = join(self.data_struct, "unversioned")
-        os.mkdir(path)
-        f = open(join(path, "dataitem"), "w")
-        f.close()    
         self.test_dir = mkdtemp()
-        return MercurialBackend(self.test_dir)
-
+        return MercurialBackend(self.test_dir)      
+                    
     def kill_backend(self):
-        shutil.rmtree(self.empty_dir)
-        shutil.rmtree(self.empty_struct)
-        shutil.rmtree(self.data_struct)
-        shutil.rmtree(self.test_dir)
-        os.unlink(self.file)
+        shutil.rmtree(self.test_dir)        
 
     def test_backend_init(self):
-        py.test.raises(BackendError, MercurialBackend, self.empty_dir, create=False)
-        py.test.raises(BackendError, MercurialBackend, self.file)
-        py.test.raises(BackendError, MercurialBackend, "non-existing-dir")        
-        assert isinstance(MercurialBackend(self.empty_dir), MercurialBackend)
-        py.test.raises(BackendError, MercurialBackend, self.empty_dir)        
-        py.test.raises(BackendError, MercurialBackend, self.data_struct)
-        assert isinstance(MercurialBackend(self.empty_struct), MercurialBackend)
-        
-    # XXX: to be removed when finally hanging    
-    def test_item_metadata_multiple_change_existing(self):
-        name = "foo"
-        self.create_meta_item_helper(name)        
-        item1 = self.backend.get_item(name)
-        item2 = self.backend.get_item(name)
-        item1.change_metadata()
-        item2.change_metadata() # should hang on lock, does it?
-        assert False
-        
-    def test_large(self):
-        i = self.backend.create_item('large')
-        r = i.create_revision(0)
-        r['0'] = 'x' * 100
-        r['1'] = 'y' * 200
-        r['2'] = 'z' * 300
-        for x in xrange(1000):
-            r.write('lalala! ' * 10)
-        i.commit()
-
-        i = self.backend.get_item('large')
-        r = i.get_revision(0)
-        assert r['0'] == 'x' * 100
-        assert r['1'] == 'y' * 200
-        assert r['2'] == 'z' * 300
-        for x in xrange(1000):
-            assert r.read(8 * 10) == 'lalala! ' * 10
-        assert r.read() == ''
-
-    def test_all_unlocked(self):
-        i1 = self.backend.create_item('existing now 1')
+        nonexisting = os.path.join("/", "non-existing-dir")
+        py.test.raises(BackendError, MercurialBackend, nonexisting)        
+        emptydir, file = mkdtemp(), mkstemp()[1]
+        dirstruct = mkdtemp()         
+        os.mkdir(os.path.join(dirstruct, "meta"))
+        os.mkdir(os.path.join(dirstruct, "rev"))  
+        try:
+            py.test.raises(BackendError, MercurialBackend, emptydir, create=False)
+            assert isinstance(MercurialBackend(emptydir), MercurialBackend)
+            py.test.raises(BackendError, MercurialBackend, emptydir)
+            assert isinstance(MercurialBackend(emptydir, create=False), MercurialBackend)
+            py.test.raises(BackendError, MercurialBackend, file)
+            assert isinstance(MercurialBackend(dirstruct), MercurialBackend)         
+        finally:
+            shutil.rmtree(emptydir)
+            shutil.rmtree(dirstruct)
+            os.unlink(file)             
+            
+    def test_backend_init_non_empty_datadir(self):
+        datadir = mkdtemp()         
+        os.mkdir(os.path.join(datadir, "meta"))
+        os.mkdir(os.path.join(datadir, "rev"))
+        try:
+            revitem = mkstemp(dir=os.path.join(datadir, "rev"))[1]
+            py.test.raises(BackendError, MercurialBackend, datadir)
+            os.unlink(revitem)
+            mkstemp(dir=os.path.join(datadir, "meta"))[1]
+            py.test.raises(BackendError, MercurialBackend, datadir)
+        finally:
+            shutil.rmtree(datadir) 
+               
+    def test_large_revision_meta(self):
+        item = self.backend.create_item('existing')
+        rev = item.create_revision(0)
+        for num in xrange(10000):
+            revval = "revision metatdata value for key %d" % num
+            rev["%s" % num] = revval * 100
+        item.commit()
+        item = self.backend.get_item('existing')
+        rev = item.get_revision(-1)
+        assert len(dict(rev)) == 10000
+        for num in xrange(10000):
+            revval = "revision metatdata value for key %d" % num
+            assert rev["%s" % num] == revval * 100
+   
+    def test_create_renamed_rev(self):
+        # nasty since renames are tracked copies
+        oldname, newname = "nasty", "one"
+        self.create_rev_item_helper(oldname)
+        item = self.backend.get_item(oldname)
+        item.rename(newname)
+        assert self.backend.has_item(newname)
+        assert not self.backend.has_item(oldname)
+        item = self.backend.create_item(oldname)
+        item.create_revision(0)
+   
+    # XXX: below backend behaviour to discuss with johill/dennda    
+    def test_confusing_1(self):
+        i1 = self.backend.create_item('existing')
         i1.create_revision(0)
         i1.commit()
-        i2 = self.backend.get_item('existing now 1')
+        i2 = self.backend.get_item('existing')
         i2.change_metadata()
-        # if we leave out the latter line, it fails
+        i2["meta"] = "has_rev"
         i2.publish_metadata()
-
-    def test_change_meta(self):
-        item = self.backend.create_item('existing now 2')
-        item.change_metadata()
-        item.publish_metadata()
-        item = self.backend.get_item('existing now 2')
-        item.change_metadata()
-        item['asdf'] = 'b'
-        # if we leave out the latter line, it fails
-        item.publish_metadata()
-        item = self.backend.get_item('existing now 2')
-        assert item['asdf'] == 'b'
  
- 
-
+    def test_confusing_1_wtih_no_metadata(self):
+        i1 = self.backend.create_item('existing')
+        i1.create_revision(0)
+        i1.commit()
+        i2 = self.backend.get_item('existing')
+        i2.change_metadata()
+        i2.publish_metadata()
         
+    def test_confusing_2(self):
+        i1 = self.backend.create_item('existing')
+        i1.change_metadata()
+        i1.publish_metadata()
+        i2 = self.backend.get_item('existing')
+        i2.create_revision(0)
+        i2.commit()     
+
