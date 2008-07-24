@@ -27,45 +27,60 @@ class Converter(object):
             return cls
 
     def recurse(self, elem, page_href):
-        # TODO: Check for cycles
-        page_href = elem.get(self.tag_page_href, page_href)
+        # Check if you reached a new page
+        page_href_new = elem.get(self.tag_page_href)
+        if page_href_new and page_href_new != page_href:
+            page_href = page_href_new
+            self.stack.append(page_href)
+        else:
+            self.stack.append(None)
 
-        if elem.tag == self.tag_xi_include:
-            href = elem.get(self.tag_xi_href)
-            xpointer = elem.get(self.tag_xi_xpointer)
+        try:
+            if elem.tag == self.tag_xi_include:
+                href = elem.get(self.tag_xi_href)
+                xpointer = elem.get(self.tag_xi_xpointer)
 
-            if href:
-                if href.startswith('wiki:///'):
-                    include = href[8:]
-                elif href.startswith('wiki.local:'):
-                    include = wikiutil.AbsPageName(page_href[8:], href[11:])
+                if href:
+                    if href.startswith('wiki:///'):
+                        include = href[8:]
+                    elif href.startswith('wiki.local:'):
+                        include = wikiutil.AbsPageName(page_href[8:], href[11:])
 
-                doc = Page(self.request, include).convert_input_cache(self.request)
-                pages = ((doc, 'wiki:///' + include),)
-            else:
-                raise NotImplementedError
+                    doc = Page(self.request, include).convert_input_cache(self.request)
+                    pages = ((doc, 'wiki:///' + include),)
+                else:
+                    raise NotImplementedError
 
-            div = ET.Element(self.tag_div)
+                div = ET.Element(self.tag_div)
 
-            for page_doc, page_href in pages:
-                page_doc.tag = self.tag_div
-                self.recurse(page_doc, page_href)
-                div.append(page_doc)
+                for page_doc, page_href in pages:
+                    if page_href in self.stack:
+                        # TODO: Found cycle, warn
+                        continue
 
-            return div
+                    page_doc.tag = self.tag_div
+                    self.recurse(page_doc, page_href)
+                    div.append(page_doc)
 
-        for i in xrange(len(elem)):
-            child = elem[i]
-            if isinstance(child, ET.Node):
-                ret = self.recurse(child, page_href)
-                if ret:
-                    elem[i] = ret
+                return div
+
+            for i in xrange(len(elem)):
+                child = elem[i]
+                if isinstance(child, ET.Node):
+                    ret = self.recurse(child, page_href)
+                    if ret:
+                        elem[i] = ret
+        finally:
+            self.stack.pop()
 
     def __init__(self, request):
         self.request = request
 
     def __call__(self, tree):
+        self.stack = []
+
         self.recurse(tree, None)
+
         return tree
 
 from _registry import default_registry
