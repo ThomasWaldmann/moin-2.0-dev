@@ -55,7 +55,7 @@
 
     IMPORTANT: This version of backend runs on newest development version of mercurial
     and small, additional patch for allowing multiple empty commits in a row
-    patch: http://mc.kwadr.at/repo_force_changes.diff
+    patch: MoinMoin/storage/backends/research/repo_force_changes.diff
 
     ---
 
