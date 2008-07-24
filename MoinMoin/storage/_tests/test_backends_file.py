@@ -59,14 +59,3 @@ class TestFSBackend(BackendTest):
         # if we leave out the latter line, it fails
         i2.publish_metadata()
 
-    def test_change_meta(self):
-        item = self.backend.create_item('existing now 2')
-        item.change_metadata()
-        item.publish_metadata()
-        item = self.backend.get_item('existing now 2')
-        item.change_metadata()
-        item['asdf'] = 'b'
-        # if we leave out the latter line, it fails
-        item.publish_metadata()
-        item = self.backend.get_item('existing now 2')
-        assert item['asdf'] == 'b'
