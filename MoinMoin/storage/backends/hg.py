@@ -72,6 +72,7 @@ import cPickle as pickle
 import tempfile
 import weakref
 import statvfs
+import shutil
 import md5
 import os
 
@@ -98,7 +99,14 @@ class MercurialBackend(Backend):
         self._item_metadata_lock = {}
         self._lockref = None
         if not os.path.isdir(self._path):
-            raise BackendError("Invalid path: %s" % self._path)
+            raise BackendError("Invalid path: %s" % self._path)        
+        if create:
+            for path in (self._u_path, self._r_path):
+                try:
+                    if os.listdir(path):
+                        raise BackendError("Directory not empty: %s" % path)                                
+                except OSError:
+                    pass  # directory not existing                                                    
         try:
             self._repo = hg.repository(self._ui, self._r_path, create)
         except RepoError:
@@ -110,10 +118,9 @@ class MercurialBackend(Backend):
             os.mkdir(self._u_path)
         except OSError:
             if not os.path.isdir(self._u_path):
-                raise BackendError("Unable to create repository structure at path: %s" %
-                                                                                self._path)
-            if create and os.listdir(self._u_path):
-                raise BackendError("Directory not empty: %s" % self._u_path)
+                if create:
+                    shutil.rmtree(self._r_path)  # rollback
+                raise BackendError("Unable to create directory: %s" % self._path)                                                                 
         # XXX: does it work on windows?
         self._max_fname_length = os.statvfs(self._path)[statvfs.F_NAMEMAX]
         self._repo._forcedchanges = True  # XXX: this comes from patch
