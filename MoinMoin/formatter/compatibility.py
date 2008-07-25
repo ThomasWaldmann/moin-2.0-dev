@@ -127,6 +127,7 @@ class Formatter(ConverterMacro):
 
     tag_a = ET.QName('a', namespaces.moin_page)
     tag_blockcode = ET.QName('blockcode', namespaces.moin_page)
+    tag_data = ET.QName('data', namespaces.moin_page)
     tag_div = ET.QName('div', namespaces.moin_page)
     tag_emphasis = ET.QName('emphasis', namespaces.moin_page)
     tag_font_size = ET.QName('font-size', namespaces.moin_page)
@@ -288,7 +289,7 @@ class Formatter(ConverterMacro):
     def transclusion(self, on, data=None, **kw):
         attrib = {}
         if data:
-            attrib[self.tag_data] = date
+            attrib[self.tag_data] = data
         return self.handle_on(on, self.tag_object, attrib)
     def transclusion_param(self, **kw):
         raise NotImplementedError
@@ -504,10 +505,12 @@ class Formatter(ConverterMacro):
                 args = data[1]
             lines.pop(0)
 
-        if not lines[0]:
+        if lines and not lines[0]:
             lines.pop(0)
-        if not lines[-1]:
+        if lines and not lines[-1]:
             lines.pop(-1)
+        if not lines:
+            return ''
 
         text = '\n'.join(lines)
 
@@ -573,6 +576,9 @@ class Formatter(ConverterMacro):
         return ""
 
     def _stack_pop(self):
+        # Don't remve the last object
+        if len(self._stack) == 1:
+            return self._stack[0]
         elem = self._stack.pop()
         if not len(elem):
             self._stack[-1].remove(elem)
