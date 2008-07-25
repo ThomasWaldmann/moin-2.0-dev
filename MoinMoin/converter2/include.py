@@ -49,7 +49,9 @@ class XPointer(list):
             elif match.group('braket_close'):
                 top = stack.pop()
                 if stack:
+                    stack[-1].append('(')
                     stack[-1].extend(top)
+                    stack[-1].append(')')
                 else:
                     self.append(self.Entry(''.join(name), ''.join(top)))
                     name = []
@@ -97,6 +99,42 @@ class Converter(object):
                 href = elem.get(self.tag_xi_href)
                 xpointer = elem.get(self.tag_xi_xpointer)
 
+                xp_include_pages = None
+                xp_include_sort = None
+                xp_include_items = None
+                xp_include_skipitems = None
+
+                if xpointer:
+                    xp = XPointer(xpointer)
+                    xp_include = None
+                    xp_namespaces = {}
+                    for entry in xp:
+                        uri = None
+                        name = entry.name.split(':', 1)
+                        if len(name) > 1:
+                            prefix, name = name
+                            uri = xp_namespaces.get(prefix, False)
+                        else:
+                            name = name[0]
+
+                        if uri is None and name == 'xmlns':
+                            d_prefix, d_uri = entry.data.split('=', 1)
+                            xp_namespaces[d_prefix] = d_uri
+                        elif uri == namespaces.moin_page and name == 'include':
+                            xp_include = XPointer(entry.data)
+
+                    if xp_include:
+                        for entry in xp_include:
+                            name, data = entry.name, entry.data
+                            if name == 'pages':
+                                xp_include_pages = data
+                            elif name == 'sort':
+                                xp_include_sort = data
+                            elif name == 'items':
+                                xp_include_items = int(data)
+                            elif name == 'skipitems':
+                                xp_include_skipitems = int(data)
+
                 if href:
                     if href.startswith('wiki:///'):
                         include = href[8:]
@@ -105,8 +143,19 @@ class Converter(object):
 
                     page = Page(self.request, include)
                     pages = ((page, 'wiki:///' + include), )
-                else:
-                    raise NotImplementedError
+
+                elif xp_include_pages:
+                    inc_match = re.compile(xp_include_pages)
+                    pagelist = self.request.rootpage.getPageList(filter=inc_match.match)
+                    pagelist.sort()
+                    if xp_include_sort == 'descending':
+                        pagelist.reverse()
+                    if xp_include_skipitems is not None:
+                        pagelist = pagelist[xp_include_skipitems:]
+                    if xp_include_items is not None:
+                        pagelist = pagelist[xp_include_items + 1:]
+
+                    pages = ((Page(self.request, p), 'wiki:///' + p) for p in pagelist)
 
                 div = ET.Element(self.tag_div)
 
