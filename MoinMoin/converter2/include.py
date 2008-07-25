@@ -73,8 +73,12 @@ class XPointer(list):
             self.append(self.Entry(''.join(name), None))
 
 class Converter(object):
+    tag_a = ET.QName('a', namespaces.moin_page)
     tag_div = ET.QName('div', namespaces.moin_page)
+    tag_h = ET.QName('h', namespaces.moin_page)
+    tag_href = ET.QName('href', namespaces.xlink)
     tag_page_href = ET.QName('page-href', namespaces.moin_page)
+    tag_outline_level = ET.QName('outline-level', namespaces.moin_page)
     tag_xi_href = ET.QName('href', namespaces.xinclude)
     tag_xi_include = ET.QName('include', namespaces.xinclude)
     tag_xi_xpointer = ET.QName('xpointer', namespaces.xinclude)
@@ -103,6 +107,8 @@ class Converter(object):
                 xp_include_sort = None
                 xp_include_items = None
                 xp_include_skipitems = None
+                xp_include_heading = None
+                xp_include_level = None
 
                 if xpointer:
                     xp = XPointer(xpointer)
@@ -134,6 +140,10 @@ class Converter(object):
                                 xp_include_items = int(data)
                             elif name == 'skipitems':
                                 xp_include_skipitems = int(data)
+                            elif name == 'heading':
+                                xp_include_heading = data
+                            elif name == 'level':
+                                xp_include_level = data
 
                 if href:
                     if href.startswith('wiki:///'):
@@ -164,6 +174,14 @@ class Converter(object):
                         # TODO: Found cycle, warn
                         continue
                     # TODO: Check permissions
+
+                    if xp_include_heading is not None:
+                        attrib = {self.tag_href: page_href}
+                        children = (xp_include_heading or page.split_title(), )
+                        elem_a = ET.Element(self.tag_a, attrib, children=children)
+                        attrib = {self.tag_outline_level: xp_include_level or '1'}
+                        elem_h = ET.Element(self.tag_h, attrib, children=(elem_a, ))
+                        div.append(elem_h)
 
                     page_doc = page.convert_input_cache(self.request)
                     page_doc.tag = self.tag_div
