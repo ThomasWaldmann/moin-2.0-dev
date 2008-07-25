@@ -20,6 +20,21 @@ class _PseudoParser(object):
         self.request = request
         self.form = request.form
 
+class _PseudoRequest(object):
+    def __init__(self, request):
+        self.__request = request
+        self.__written = False
+
+    def __getattr__(self, name):
+        return getattr(self.__request, name)
+
+    def write(self, *args, **kw):
+        self.__written = True
+
+    @property
+    def written(self):
+        return self.__written
+
 class Converter(object):
     tag_alt = ET.QName('alt', namespaces.moin_page)
     tag_macro = ET.QName('macro', namespaces.moin_page)
@@ -64,14 +79,13 @@ class Converter(object):
         return True
 
     def _handle_macro_old(self, elem_body, page_href, name, args, alt):
-        m = macro.Macro(_PseudoParser(self.request))
+        Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
 
-        formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
-        page = Page.Page(self.request, page_href[8:])
-        m.formatter = formatter = formatter(self.request, page)
+        request = _PseudoRequest(self.request)
+        page = Page.Page(request, page_href[8:])
+        request.formatter = formatter = Formatter(request, page)
 
-        # XXX: Some macros uses macro.request.formatter instead of macro.formatter
-        self.request.formatter.setPage(page)
+        m = macro.Macro(_PseudoParser(request))
 
         try:
             ret = m.execute(name, args)
@@ -88,7 +102,7 @@ class Converter(object):
                 elem_body.append(errmsg)
             return
         except NotImplementedError, e:
-            # Force usage of fallback
+            # Force usage of fallback on not implemented methods
             from warnings import warn
             message = 'Macro ' + name + ' calls methods in the compatibility formatter which are not implemented'
             if e.message:
@@ -97,15 +111,15 @@ class Converter(object):
             ret = True
 
         if ret:
-            # Fallback to included parser
-            formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'text/html')
-            m.formatter = formatter(self.request)
+            # Fallback to HTML formatter
+            HtmlFormatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'text/html')
+            request.formatter = m.formatter = HtmlFormatter(request)
             m.formatter.setPage(page)
 
             ret = m.execute(name, args)
 
-            formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
-            formatter = formatter(self.request, page)
+            # Pipe the result through the HTML parser
+            formatter = Formatter(request, page)
             formatter.rawHTML(ret)
 
         elem_body.extend(formatter.root[:])
