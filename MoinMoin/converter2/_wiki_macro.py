@@ -68,6 +68,12 @@ class ConverterMacro(object):
         else:
             attrib[tag_href] = 'wiki.local:' + pagename
 
+        if heading == 'heading':
+            heading = ''
+        if heading is not None:
+            add_moin_xpointer('heading', heading)
+        if level:
+            add_moin_xpointer('level', str(level))
         if titlesonly:
             add_moin_xpointer('titlesonly')
         if editlink:
