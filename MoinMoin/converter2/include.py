@@ -171,9 +171,13 @@ class Converter(object):
 
                 for page, page_href in pages:
                     if page_href in self.stack:
-                        # TODO: Found cycle, warn
+                        w = ('<p xmlns="%s"><strong class="error">Recursive include of "%s" forbidden</strong></p>'
+                                % (namespaces.html, page.page_name))
+                        div.append(ET.XML(w))
                         continue
-                    # TODO: Check permissions
+                    # TODO: Is this correct?
+                    if not self.request.user.may.read(page.page_name):
+                        continue
 
                     if xp_include_heading is not None:
                         attrib = {self.tag_href: page_href}
