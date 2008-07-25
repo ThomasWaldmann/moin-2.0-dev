@@ -12,7 +12,7 @@ from MoinMoin.macro2._base import *
 def test_MacroBase___init__():
     request = object()
 
-    m = MacroBase(request, 'alt', 'context')
+    m = MacroBase(request, None, 'alt', 'context')
 
     assert m.immutable == False
     assert m.request is request
@@ -26,10 +26,10 @@ def test_MacroBlockBase___call__():
         def call_macro(self, content):
             return item
 
-    r = Test(None, 'alt', 'block')()
+    r = Test(None, None, 'alt', 'block')()
     assert r is item
 
-    r = Test(None, 'alt', 'inline')()
+    r = Test(None, None, 'alt', 'inline')()
     assert r == 'alt'
 
 def test_MacroInlineBase___call__():
@@ -39,10 +39,10 @@ def test_MacroInlineBase___call__():
         def call_macro(self, content):
             return item
 
-    r = Test(None, 'alt', 'block')()
+    r = Test(None, None, 'alt', 'block')()
     assert r[0] is item
 
-    r = Test(None, 'alt', 'inline')()
+    r = Test(None, None, 'alt', 'inline')()
     assert r is item
 
 def test_MacroInlineOnlyBase___call__():
@@ -52,9 +52,9 @@ def test_MacroInlineOnlyBase___call__():
         def call_macro(self, content):
             return item
 
-    r = Test(None, 'alt', 'block')()
+    r = Test(None, None, 'alt', 'block')()
     assert r is None
 
-    r = Test(None, 'alt', 'inline')()
+    r = Test(None, None, 'alt', 'inline')()
     assert r is item
 
