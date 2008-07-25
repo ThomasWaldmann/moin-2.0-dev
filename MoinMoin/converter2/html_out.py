@@ -17,11 +17,16 @@ class ElementException(RuntimeError):
 class Attrib(object):
     tag_style = ET.QName('style', namespaces.html)
 
-    def simple_css(self, key, value, out, out_style):
+    def simple_attrib(self, key, value, out, out_style):
+        out[ET.QName(key.name, namespaces.html)] = value
+
+    visit_title = simple_attrib
+
+    def simple_style(self, key, value, out, out_style):
         out_style[key.name] = value
 
-    visit_background_color = simple_css
-    visit_font_size = simple_css
+    visit_background_color = simple_style
+    visit_font_size = simple_style
 
     def __init__(self, element):
         self.element = element
