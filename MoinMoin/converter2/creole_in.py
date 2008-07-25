@@ -222,7 +222,8 @@ class Converter(ConverterMacro):
 
         self._stack_pop_name(('page', 'blockquote'))
         elem = self.macro(macro_name, macro_args, macroblock, 'block')
-        self._stack_top_append(elem)
+        if elem:
+            self._stack_top_append(elem)
 
     def _macroinline_repl(self, macroinline, macro_name, macro_args=''):
         """Handles macros using the placeholder syntax."""
