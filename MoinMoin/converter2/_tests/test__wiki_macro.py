@@ -12,6 +12,7 @@ from MoinMoin.converter2._wiki_macro import *
 
 namespaces_string = 'xmlns="%s"' % namespaces.moin_page
 namespaces_string_xinclude = 'xmlns:xi="%s"' % namespaces.xinclude
+namespaces_xpstring = 'xmlns(page=%s)' % namespaces.moin_page
 
 namespaces_list = {
     namespaces.moin_page: '',
@@ -44,19 +45,19 @@ class TestConverter(object):
                 '<xi:include xi:href="wiki.local:page" %s />' % namespaces_string_xinclude,
                 'text'),
             ('Include', u'^page', 'text',
-                '<xi:include xi:xpointer="moin-pages(^^page)" %s />' % namespaces_string_xinclude,
+                '<xi:include xi:xpointer="%s page:include(pages(^^page))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
             ('Include', u'^page, sort=ascending', 'text',
-                '<xi:include xi:xpointer="moin-pages(^^page,sort=ascending)" %s />' % namespaces_string_xinclude,
+                '<xi:include xi:xpointer="%s page:include(pages(^^page) sort(ascending))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
             ('Include', u'^page, sort=descending', 'text',
-                '<xi:include xi:xpointer="moin-pages(^^page,sort=descending)" %s />' % namespaces_string_xinclude,
+                '<xi:include xi:xpointer="%s page:include(pages(^^page) sort(descending))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
             ('Include', u'^page, items=5', 'text',
-                '<xi:include xi:xpointer="moin-pages(^^page,items=5)" %s />' % namespaces_string_xinclude,
+                '<xi:include xi:xpointer="%s page:include(pages(^^page) items(5))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
             ('Include', u'^page, skipitems=5', 'text',
-                '<xi:include xi:xpointer="moin-pages(^^page,skipitems=5)" %s />' % namespaces_string_xinclude,
+                '<xi:include xi:xpointer="%s page:include(pages(^^page) skipitems(5))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
         ]
         for name, args, text, output_block, output_inline in pairs:

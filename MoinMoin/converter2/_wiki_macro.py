@@ -43,37 +43,44 @@ class ConverterMacro(object):
             titlesonly=bool,
             editlink=bool):
 
-        if titlesonly:
-            raise NotImplementedError('macro: Include, argument: titlesonly')
-        if editlink:
-            raise NotImplementedError('macro: Include, argument: editlink')
-
         tag = ET.QName('include', namespaces.xinclude)
         tag_href = ET.QName('href', namespaces.xinclude)
         tag_xpointer = ET.QName('xpointer', namespaces.xinclude)
 
         attrib = {}
         xpointer = []
+        xpointer_moin = []
 
-        def add_xpointer(function, *args):
-            args = ','.join(args)
-            args = args.replace('^', '^^').replace('(', '^(').replace(')', '^)')
-            xpointer.append(function + '(' + args + ')')
+        def add_moin_xpointer(function, args):
+            args = unicode(args).replace('^', '^^').replace('(', '^(').replace(')', '^)')
+            xpointer_moin.append(function + '(' + args + ')')
+
+        moin_args = []
 
         if pagename.startswith('^'):
-            args = [pagename]
+            add_moin_xpointer('pages', pagename)
             if sort:
-                args.append('sort=%s' % sort[1])
+                add_moin_xpointer('sort', sort[1])
             if items:
-                args.append('items=%d' % items)
+                add_moin_xpointer('items', items)
             if skipitems:
-                args.append('skipitems=%d' % skipitems)
-            add_xpointer('moin-pages', *args)
+                add_moin_xpointer('skipitems', skipitems)
         else:
             attrib[tag_href] = 'wiki.local:' + pagename
 
+        if titlesonly:
+            add_moin_xpointer('titlesonly')
+        if editlink:
+            add_moin_xpointer('editlink')
+
+        if xpointer_moin:
+            xpointer.append('page:include(%s)' % ' '.join(xpointer_moin))
+
         if xpointer:
-            attrib[tag_xpointer] = ''.join(xpointer)
+            # TODO: Namespace?
+            ns = 'xmlns(page=%s) ' % namespaces.moin_page
+
+            attrib[tag_xpointer] = ns + ' '.join(xpointer)
 
         return ET.Element(tag, attrib=attrib)
 
