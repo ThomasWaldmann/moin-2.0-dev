@@ -148,6 +148,10 @@ class TestConverter(object):
 
     def test_macro(self):
         pairs = [
+            ('<<BR>>',
+                '<page %s />' % namespaces_string),
+            ('Text<<BR>>Text',
+                '<page %s><p>Text<line-break />Text</p></page>' % namespaces_string),
             ('<<Macro>>',
                 '<page %s><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="block" macro-name="Macro" /></page>' % namespaces_string),
             (' <<Macro>> ',
