@@ -174,6 +174,16 @@ class Formatter(ConverterMacro):
     def lang(self, on, lang_name):
         return ""
 
+    def sysmsg(self, on, **kw):
+        if on:
+            self.paragraph(on)
+            # TODO: class="error"?
+            self.strong(on)
+        else:
+            self._stack_pop()
+            self._stack_pop()
+        return ''
+
     # Document Level #####################################################
 
     def startDocument(self, pagename):
