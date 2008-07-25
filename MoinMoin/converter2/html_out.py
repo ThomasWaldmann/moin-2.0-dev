@@ -275,12 +275,8 @@ class Converter(ConverterBase):
 
 class Toc(object):
     def __init__(self):
-        self._elements = []
         self._headings = []
         self._headings_minlevel = None
-
-    def add_element(self, element, level):
-        self._elements.append((element, level))
 
     def add_heading(self, title, level, id):
         if self._headings_minlevel is None or level < self._headings_minlevel:
@@ -297,6 +293,8 @@ class Toc(object):
             return
 
         for title, level, id in self._headings:
+            if level > maxlevel:
+                continue
             # We crop all overline levels above the first used.
             level = level - self._headings_minlevel + 1
             yield title, level, id
@@ -405,7 +403,6 @@ class ConverterPage(ConverterBase):
         attrib = {ET.QName('class', namespaces.html): 'table-of-contents'}
         elem = self.new(ET.QName('div', namespaces.html), attrib)
 
-        self._toc_stack[-1].add_element(elem, level)
         self._toc_elements.append((elem, self._toc_stack[-1], level))
         return elem
 
