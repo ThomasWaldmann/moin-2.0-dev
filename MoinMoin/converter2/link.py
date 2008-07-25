@@ -23,6 +23,28 @@ class ConverterExternOutput(object):
                 output == 'application/x-moin-document;links=extern':
             return cls
 
+    # TODO: Deduplicate code
+    def handle_wiki(self, link):
+        wikitag, link = link.split('/', 1)
+
+        if wikitag and wikitag != 'Self':
+            wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, wikitag, link)
+
+            if not err and wikitag != 'Self':
+                # TODO query string
+                return wikiutil.join_wiki(wikiurl, wikitail)
+
+        try:
+            link, anchor = link.rsplit("#", 1)
+        except ValueError:
+            anchor = None
+
+        if anchor:
+            link = link + '#' + wikiutil.url_quote_plus(anchor)
+
+        # TODO query string
+        return self.request.getScriptname() + '/' + link
+
     def handle_wikilocal(self, link, page_name):
         if ':' in link:
             wiki_name, link = link.split(':', 1)
@@ -72,14 +94,17 @@ class ConverterExternOutput(object):
 
     def __call__(self, tree):
         for elem, href, page_href in self.recurse(tree, None):
+            new_href = None
             if href.startswith('wiki.local:'):
                 if page_href.startswith('wiki:///'):
                     page_name = page_href[8:]
                 else:
                     page_name = ''
-                href = self.handle_wikilocal(href[11:], page_name)
-                if href is not None:
-                    elem.set(self.tag_href, href)
+                new_href = self.handle_wikilocal(href[11:], page_name)
+            elif href.startswith('wiki://'):
+                new_href = self.handle_wiki(href[7:])
+            if new_href is not None:
+                elem.set(self.tag_href, new_href)
         return tree
 
 from _registry import default_registry
