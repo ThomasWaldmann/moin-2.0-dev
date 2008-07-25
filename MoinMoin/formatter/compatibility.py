@@ -136,6 +136,7 @@ class Formatter(ConverterMacro):
     tag_list = ET.QName('list', namespaces.moin_page)
     tag_list_item = ET.QName('list-item', namespaces.moin_page)
     tag_list_item_body = ET.QName('list-item-body', namespaces.moin_page)
+    tag_list_item_label = ET.QName('list-item-label', namespaces.moin_page)
     tag_macro = ET.QName('macro', namespaces.moin_page)
     tag_macro_args = ET.QName('macro-args', namespaces.moin_page)
     tag_macro_name = ET.QName('macro-name', namespaces.moin_page)
@@ -167,9 +168,7 @@ class Formatter(ConverterMacro):
         if on:
             self._stack_push(ET.Element(tag, attrib))
         else:
-            elem = self._stack_pop()
-            if not len(elem):
-                self._stack[-1].remove(elem)
+            self._stack_pop()
         return ''
 
     def lang(self, on, lang_name):
@@ -393,16 +392,49 @@ class Formatter(ConverterMacro):
         return ''
 
     def definition_list(self, on, **kw):
-        # TODO
+        if on:
+            self._stack_push(ET.Element(None))
+        else:
+            elem = self._stack_pop()
+            self._stack[-1].remove(elem)
+
+            new_list = ET.Element(self.tag_list)
+            new_item = None
+
+            for child in elem:
+                if not isinstance(child, ET.Element):
+                    continue
+
+                if child.tag not in (self.tag_list_item_label,
+                        self.tag_list_item_body):
+                    continue
+
+                # If we already have an item and we want to add a label
+                if (new_item is not None and
+                        child.tag == self.tag_list_item_label):
+                    # clear it
+                    new_item = None
+
+                if not new_item:
+                    new_item = ET.Element(self.tag_list_item)
+                    new_list.append(new_item)
+
+                new_item.append(child)
+
+                # If this was a body
+                if child.tag == self.tag_list_item_body:
+                    # clear it
+                    new_item = None
+
+            self._stack[-1].append(new_list)
+
         return ''
 
     def definition_term(self, on, compact=0, **kw):
-        # TODO
-        return ''
+        return self.handle_on(on, self.tag_list_item_label)
 
     def definition_desc(self, on, **kw):
-        # TODO
-        return ''
+        return self.handle_on(on, self.tag_list_item_body)
 
     def heading(self, on, depth, **kw):
         attrib = {self.tag_outline_level: str(depth)}
@@ -526,7 +558,10 @@ class Formatter(ConverterMacro):
         return ""
 
     def _stack_pop(self):
-        return self._stack.pop()
+        elem = self._stack.pop()
+        if not len(elem):
+            self._stack[-1].remove(elem)
+        return elem
 
     def _stack_push(self, elem):
         self._stack_top_append(elem)
