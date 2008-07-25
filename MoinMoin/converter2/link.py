@@ -53,6 +53,9 @@ class ConverterExternOutput(object):
             if wiki_name in ('attachment', 'drawing'):
                 return None
 
+            if wiki_name == 'mailto':
+                return 'mailto:' + link
+
             wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, wiki_name, link)
 
             if not err and wikitag != 'Self':
