@@ -9,6 +9,7 @@ Converts an internal document into HTML.
 
 from emeraldtree import ElementTree as ET
 
+from MoinMoin import wikiutil
 from MoinMoin.util import namespaces
 
 class ElementException(RuntimeError):
@@ -218,15 +219,25 @@ class ConverterBase(object):
         pass
 
     def visit_moinpage_object(self, elem):
-        attrib = {}
-
-        tag_href_xlink = ET.QName('href', namespaces.xlink)
         tag_data = ET.QName('data', namespaces.html)
-        href = elem.get(tag_href_xlink, None)
-        if href is not None:
-            attrib[tag_data] = href
+        tag_img = ET.QName('img', namespaces.html)
+        tag_object = ET.QName('object', namespaces.html)
+        tag_src = ET.QName('src', namespaces.html)
+        tag_href_xlink = ET.QName('href', namespaces.xlink)
 
-        return self.new(ET.QName('object', namespaces.html), attrib)
+        href = elem.get(tag_href_xlink, None)
+
+        if wikiutil.isPicture(href):
+            out_tag = tag_img
+            out_tag_href = tag_src
+        else:
+            out_tag = tag_object
+            out_tag_href = tag_data
+
+        attrib = {}
+        if href is not None:
+            attrib[out_tag_href] = href
+        return self.new(out_tag, attrib)
 
     def visit_moinpage_p(self, elem):
         return self.new_copy(ET.QName('p', namespaces.html), elem)
