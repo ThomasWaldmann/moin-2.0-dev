@@ -37,9 +37,6 @@ _blocks = set(['dd', 'div', 'dl', 'dt', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h
 _self_closing_tags = set(['area', 'base', 'br', 'col', 'frame', 'hr', 'img',
                           'input', 'isindex', 'link', 'meta', 'param'])
 
-# We only open those tags and let the browser auto-close them:
-_auto_closing_tags = set(['p'])
-
 # These are the elements which generally should cause an increase in the
 # indention level in the html souce code.
 _indenting_tags = set(['ol', 'ul', 'dl', 'li', 'dt', 'dd', 'tr', 'td'])
@@ -194,7 +191,6 @@ class Formatter(FormatterBase):
         self._is_included = kw.get('is_included', False)
         self.request = request
         self.cfg = request.cfg
-        self.no_magic = kw.get('no_magic', False) # disabled tag auto closing
 
         if not hasattr(request, '_fmt_hd_counters'):
             request._fmt_hd_counters = []
@@ -382,7 +378,7 @@ class Formatter(FormatterBase):
         @rtype: string
         @return: closing tag as a string
         """
-        if tag in _self_closing_tags or (tag in _auto_closing_tags and not self.no_magic):
+        if tag in _self_closing_tags:
             # This tag was already closed
             tagstr = ''
         elif tag in _blocks:
