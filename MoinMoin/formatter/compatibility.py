@@ -51,6 +51,10 @@ class _HTMLParser(_HTMLParserBase):
         attrib = {}
         if attrs:
             for key, value in attrs:
+                key = key.lower()
+                # Handle short attributes
+                if value is None:
+                    value = key
                 key = ET.QName(key.lower(), namespaces.html)
                 attrib[key] = value
         self.__builder.start(tag, attrib)
