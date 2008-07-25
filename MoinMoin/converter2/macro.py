@@ -86,7 +86,6 @@ class Converter(object):
                 elem_body.append(elem_error)
             else:
                 elem_body.append(errmsg)
-            elem.append(elem_body)
             return
         except NotImplementedError, e:
             # Force usage of fallback
