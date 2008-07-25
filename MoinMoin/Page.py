@@ -1474,8 +1474,6 @@ class Page(object):
             request.mode_getpagelinks -= 1
             #logging.debug("mode_getpagelinks == %r" % request.mode_getpagelinks)
             request.redirect()
-            if hasattr(request, '_fmt_hd_counters'):
-                del request._fmt_hd_counters
             request.clock.stop('parsePageLinks')
         return formatter.pagelinks
 
