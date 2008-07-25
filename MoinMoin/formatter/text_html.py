@@ -186,14 +186,10 @@ class Formatter(FormatterBase):
         self._in_code_line = 0
         self._code_area_js = 0
         self._code_area_state = ['', 0, -1, -1, 0]
-        self._show_section_numbers = None
         self.pagelink_preclosed = False
         self._is_included = kw.get('is_included', False)
         self.request = request
         self.cfg = request.cfg
-
-        if not hasattr(request, '_fmt_hd_counters'):
-            request._fmt_hd_counters = []
 
     # Primitive formatter functions #####################################
 
@@ -1167,34 +1163,11 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
 
         count_depth = max(depth - (self._base_depth - 1), 1)
 
-        # check numbering, possibly changing the default
-        if self._show_section_numbers is None:
-            self._show_section_numbers = self.cfg.show_section_numbers
-            numbering = self.request.getPragma('section-numbers', '').lower()
-            if numbering in ['0', 'off']:
-                self._show_section_numbers = 0
-            elif numbering in ['1', 'on']:
-                self._show_section_numbers = 1
-            elif numbering in ['2', '3', '4', '5', '6']:
-                # explicit base level for section number display
-                self._show_section_numbers = int(numbering)
-
         heading_depth = depth
 
         # closing tag, with empty line after, to make source more readable
         if not on:
             return self._close('h%d' % heading_depth) + '\n'
-
-        # create section number
-        number = ''
-        if self._show_section_numbers:
-            # count headings on all levels
-            self.request._fmt_hd_counters = self.request._fmt_hd_counters[:count_depth]
-            while len(self.request._fmt_hd_counters) < count_depth:
-                self.request._fmt_hd_counters.append(0)
-            self.request._fmt_hd_counters[-1] = self.request._fmt_hd_counters[-1] + 1
-            number = '.'.join([str(x) for x in self.request._fmt_hd_counters[self._show_section_numbers-1:]])
-            if number: number += ". "
 
         # Add space before heading, easier to check source code
         result = '\n' + self._open('h%d' % heading_depth, **kw)
@@ -1204,7 +1177,7 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
                        self.anchorlink(1, "bottom"), self.icon('bottom'), self.anchorlink(0),
                        self.anchorlink(1, "top"), self.icon('top'), self.anchorlink(0))
 
-        return "%s%s" % (result, number)
+        return "%s" % result
 
 
     # Tables #############################################################
