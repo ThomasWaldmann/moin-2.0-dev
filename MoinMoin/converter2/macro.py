@@ -101,6 +101,13 @@ class Converter(object):
             else:
                 elem_body.append(errmsg)
             return
+        except AssertionError, e:
+            from warnings import warn
+            message = 'Macro ' + name + ' get an assertion in the compatibility formatter'
+            if e.message:
+                message += ': ' + e.message
+            warn(message, DeprecationWarning)
+            ret = True
         except NotImplementedError, e:
             # Force usage of fallback on not implemented methods
             from warnings import warn
