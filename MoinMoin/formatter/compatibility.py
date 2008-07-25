@@ -141,8 +141,10 @@ class Formatter(ConverterMacro):
     tag_macro_args = ET.QName('macro-args', namespaces.moin_page)
     tag_macro_name = ET.QName('macro-name', namespaces.moin_page)
     tag_macro_type = ET.QName('macro-type', namespaces.moin_page)
+    tag_object = ET.QName('object', namespaces.moin_page)
     tag_outline_level = ET.QName('outline-level', namespaces.moin_page)
     tag_p = ET.QName('p', namespaces.moin_page)
+    tag_src = ET.QName('src', namespaces.moin_page)
     tag_separator = ET.QName('separator', namespaces.moin_page)
     tag_span = ET.QName('span', namespaces.moin_page)
     tag_strong = ET.QName('strong', namespaces.moin_page)
@@ -283,8 +285,11 @@ class Formatter(ConverterMacro):
         return '[Image]'
 
     # generic transclude/include:
-    def transclusion(self, on, **kw):
-        raise NotImplementedError
+    def transclusion(self, on, data=None, **kw):
+        attrib = {}
+        if data:
+            attrib[self.tag_data] = date
+        return self.handle_on(on, self.tag_object, attrib)
     def transclusion_param(self, **kw):
         raise NotImplementedError
 
