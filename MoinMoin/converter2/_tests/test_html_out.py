@@ -25,7 +25,7 @@ def serialize(elem, **options):
 
 class TestConverterBase(object):
     def setup_class(self):
-        self.conv = ConverterBase(object())
+        self.conv = ConverterBase(self.request)
 
     def test_base(self):
         pairs = [
@@ -113,7 +113,7 @@ class TestConverterBase(object):
 
 class TestConverter(object):
     def setup_class(self):
-        self.conv = Converter(object())
+        self.conv = Converter(self.request)
 
     def test_macro(self):
         pairs = [
@@ -130,7 +130,7 @@ class TestConverter(object):
 
 class TestConverterPage(object):
     def setup_class(self):
-        self.conv = ConverterPage(object())
+        self.conv = ConverterPage(self.request)
 
     def test_macro(self):
         pairs = [
