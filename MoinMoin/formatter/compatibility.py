@@ -134,6 +134,7 @@ class Formatter(ConverterMacro):
     tag_h = ET.QName('h', namespaces.moin_page)
     tag_href = ET.QName('href', namespaces.xlink)
     tag_id = ET.QName('id', namespaces.moin_page)
+    tag_item_label_generate = ET.QName('item-label-generate', namespaces.moin_page)
     tag_list = ET.QName('list', namespaces.moin_page)
     tag_list_item = ET.QName('list-item', namespaces.moin_page)
     tag_list_item_body = ET.QName('list-item-body', namespaces.moin_page)
@@ -389,13 +390,11 @@ class Formatter(ConverterMacro):
     # Lists ##############################################################
 
     def number_list(self, on, type=None, start=None, **kw):
-        # TODO list type
-        attrib = {}
+        attrib = {self.tag_item_label_generate: 'ordered'}
         return self.handle_on(on, self.tag_list, attrib)
 
     def bullet_list(self, on, **kw):
-        # TODO list type
-        attrib = {}
+        attrib = {self.tag_item_label_generate: 'unordered'}
         return self.handle_on(on, self.tag_list, attrib)
 
     def listitem(self, on, **kw):
@@ -564,11 +563,7 @@ class Formatter(ConverterMacro):
 
         return ''
 
-    def escapedText(self, on, **kw):
-        """ This allows emitting text as-is, anything special will
-            be escaped (at least in HTML, some text output format
-            would possibly do nothing here)
-        """
+    def escapedText(self, text, **kw):
         self._stack_top_append(text)
         return ''
 
