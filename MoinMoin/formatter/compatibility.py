@@ -411,6 +411,9 @@ class Formatter(ConverterMacro):
             self._stack_push(ET.Element(None))
         else:
             elem = self._stack_pop()
+            if elem.tag is not None:
+                raise ValueError
+
             self._stack[-1].remove(elem)
 
             new_list = ET.Element(self.tag_list)
