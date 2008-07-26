@@ -28,6 +28,8 @@ class Attrib(object):
 
     visit_background_color = simple_style
     visit_font_size = simple_style
+    visit_text_align = simple_style
+    visit_vertical_align = simple_style
 
     def __init__(self, element):
         self.element = element
@@ -227,7 +229,7 @@ class ConverterBase(object):
 
         href = elem.get(tag_href_xlink, None)
 
-        if wikiutil.isPicture(href):
+        if href and wikiutil.isPicture(href):
             out_tag = tag_img
             out_tag_href = tag_src
         else:
@@ -256,7 +258,8 @@ class ConverterBase(object):
         return self.new_copy(ET.QName('strong', namespaces.html), elem)
 
     def visit_moinpage_table(self, elem):
-        ret = self.new(ET.QName('table', namespaces.html))
+        attrib = Attrib(elem).new()
+        ret = self.new(ET.QName('table', namespaces.html), attrib)
         for item in elem:
             tag = None
             if item.tag.uri == namespaces.moin_page:
