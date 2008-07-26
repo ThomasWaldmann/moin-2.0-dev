@@ -80,14 +80,6 @@ class TestConverterBase(object):
         for i in pairs:
             yield (self._do,) + i
 
-    def test_note(self):
-        pairs = [
-            ('<page %s><p>Text<note note-class="footnote"><note-body>Note</note-body></note></p></page>' % namespaces_string_page_default,
-                '<div %s><p>Text<sup><a href="#note.1">1</a></sup></p><p id="note.1"><sup>[1]</sup> Note</p></div>' % namespaces_string_html_default),
-        ]
-        for i in pairs:
-            yield (self._do,) + i
-
     def test_style(self):
         pairs = [
             ('<page %s><p font-size="1em">Text</p></page>' % namespaces_string_page_default,
@@ -136,6 +128,14 @@ class TestConverterPage(object):
         pairs = [
             ('<page:page %s><page:macro><page:macro-body><page:p>Test</page:p></page:macro-body></page:macro></page:page>' % namespaces_string_page,
                 '<div %s><p>Test</p></div>' % namespaces_string_html_default),
+        ]
+        for i in pairs:
+            yield (self._do,) + i
+
+    def test_note(self):
+        pairs = [
+            ('<page %s><p>Text<note note-class="footnote"><note-body>Note</note-body></note></p></page>' % namespaces_string_page_default,
+                '<div %s><p>Text<sup id="note-1-ref"><a href="#note-1">1</a></sup></p><p id="note-1"><sup><a href="#note-1-ref">1</a></sup>Note</p></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
             yield (self._do,) + i
