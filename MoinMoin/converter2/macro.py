@@ -21,15 +21,23 @@ class _PseudoParser(object):
         self.form = request.form
 
 class _PseudoRequest(object):
-    def __init__(self, request):
-        self.__request = request
+    def __init__(self, request, name):
+        self.__request, self.__name = request, name
         self.__written = False
 
     def __getattr__(self, name):
         return getattr(self.__request, name)
 
-    def write(self, *args, **kw):
-        self.__written = True
+    def write(self, *text):
+        text = ''.join((i.encode('ascii', 'replace') for i in text))
+        if text:
+            text.replace('\n', ' ')
+            if len(text) > 100:
+                text = text[:100] + '...'
+            from warnings import warn
+            message = 'Macro ' + self.__name + ' used request.write: ' + text
+            warn(message, DeprecationWarning)
+            self.__written = True
 
     @property
     def written(self):
@@ -99,7 +107,7 @@ class Converter(object):
     def _handle_macro_old(self, elem_body, page_href, name, args, context, alt):
         Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
 
-        request = _PseudoRequest(self.request)
+        request = _PseudoRequest(self.request, name)
         page = Page.Page(request, page_href[8:])
         request.formatter = formatter = Formatter(request, page)
 
