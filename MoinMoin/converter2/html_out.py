@@ -96,7 +96,7 @@ class ConverterBase(object):
     ])
 
     def __init__(self, request):
-        pass
+        self.request = request
 
     def __call__(self, element):
         return self.visit(element)
@@ -287,31 +287,38 @@ class Converter(ConverterBase):
     Converter application/x-moin-document -> application/x-moin-document
     """
 
-class Toc(object):
-    def __init__(self):
+class SpecialPage(object):
+    def __init__(self, root):
+        self.root = root
+
         self._headings = []
-        self._headings_minlevel = None
+        self._tocs = []
 
-    def add_heading(self, title, level, id):
-        if self._headings_minlevel is None or level < self._headings_minlevel:
-            self._headings_minlevel = level
+    def add_heading(self, elem, level, id=None):
+        self._headings.append((elem, level, id))
 
-        self._headings.append((title, level, id))
+    def add_toc(self, elem, maxlevel):
+        self._tocs.append((elem, maxlevel))
 
-    def extend_headings(self, toc):
-        for title, level, id in toc._headings:
-            self.add_heading(title, level, id)
+    def extend(self, page):
+        self._headings.extend(page._headings)
 
     def headings(self, maxlevel):
-        if not self._headings_minlevel:
-            return
-
+        minlevel = None
         for title, level, id in self._headings:
+            if minlevel is None or level < minlevel:
+                minlevel = level
+
+        for elem, level, id in self._headings:
             if level > maxlevel:
                 continue
             # We crop all overline levels above the first used.
-            level = level - self._headings_minlevel + 1
-            yield title, level, id
+            level = level - minlevel + 1
+            yield elem, level, id
+
+    def tocs(self):
+        for elem, maxlevel in self._tocs:
+            yield elem, self.headings(maxlevel)
 
 class ConverterPage(ConverterBase):
     """
@@ -325,53 +332,57 @@ class ConverterPage(ConverterBase):
             return cls
 
     def __call__(self, element):
-        self._toc_elements = []
-        self._toc_stack = [Toc()]
+        _ = self.request.getText
+
+        self._special = []
+        self._special_stack = [SpecialPage(element)]
         self._toc_id = 0
 
         ret = super(ConverterPage, self).__call__(element)
 
-        for elem, toc, maxlevel in self._toc_elements:
-            # TODO: gettext
-            attrib_h = {ET.QName('class', namespaces.html): 'table-of-contents-heading'}
-            elem_h = ET.Element(ET.QName('p', namespaces.html),
-                    attrib=attrib_h, children=['Contents'])
-            elem.append(elem_h)
+        for special in self._special:
+            for elem, headings in special.tocs():
+                attrib_h = {ET.QName('class', namespaces.html): 'table-of-contents-heading'}
+                elem_h = ET.Element(ET.QName('p', namespaces.html),
+                        attrib=attrib_h, children=[_('Contents')])
+                elem.append(elem_h)
 
-            stack = [elem]
-            def stack_push(elem):
-                stack[-1].append(elem)
-                stack.append(elem)
-            def stack_top_append(elem):
-                stack[-1].append(elem)
+                stack = [elem]
+                def stack_push(elem):
+                    stack[-1].append(elem)
+                    stack.append(elem)
+                def stack_top_append(elem):
+                    stack[-1].append(elem)
 
-            last_level = 0
-            for text, level, id in toc.headings(maxlevel):
-                need_item = last_level >= level
-                while last_level > level:
-                    stack.pop()
-                    stack.pop()
-                    last_level -= 1
-                while last_level < level:
-                    stack_push(ET.Element(ET.QName('ol', namespaces.html)))
-                    stack_push(ET.Element(ET.QName('li', namespaces.html)))
-                    last_level += 1
-                if need_item:
-                    stack.pop()
-                    stack_push(ET.Element(ET.QName('li', namespaces.html)))
+                last_level = 0
+                for elem, level, id in headings:
+                    need_item = last_level >= level
+                    while last_level > level:
+                        stack.pop()
+                        stack.pop()
+                        last_level -= 1
+                    while last_level < level:
+                        stack_push(ET.Element(ET.QName('ol', namespaces.html)))
+                        stack_push(ET.Element(ET.QName('li', namespaces.html)))
+                        last_level += 1
+                    if need_item:
+                        stack.pop()
+                        stack_push(ET.Element(ET.QName('li', namespaces.html)))
 
-                attrib = {ET.QName('href', namespaces.html): '#' + id}
-                elem = ET.Element(ET.QName('a', namespaces.html), attrib, children=[text])
-                stack_top_append(elem)
+                    attrib = {ET.QName('href', namespaces.html): '#' + id}
+                    text = ''.join(elem.itertext())
+                    elem_a = ET.Element(ET.QName('a', namespaces.html), attrib, children=[text])
+                    stack_top_append(elem_a)
 
         return ret
 
     def visit(self, elem):
         if elem.get(ET.QName('page-href', namespaces.moin_page)):
-            self._toc_stack.append(Toc())
+            self._special_stack.append(SpecialPage(elem))
             ret = super(ConverterPage, self).visit(elem)
-            toc = self._toc_stack.pop()
-            self._toc_stack[-1].extend_headings(toc)
+            sp = self._special_stack.pop()
+            self._special.append(sp)
+            self._special_stack[-1].extend(sp)
             return ret
         else:
             return super(ConverterPage, self).visit(elem)
@@ -402,8 +413,7 @@ class ConverterPage(ConverterBase):
             elem.set(ET.QName('id', namespaces.html), id)
             self._toc_id += 1
 
-        text = u''.join(elem.itertext())
-        self._toc_stack[-1].add_heading(text, level, id)
+        self._special_stack[-1].add_heading(elem, level, id)
         return elem
 
     def visit_moinpage_macro(self, elem):
@@ -417,7 +427,7 @@ class ConverterPage(ConverterBase):
         attrib = {ET.QName('class', namespaces.html): 'table-of-contents'}
         elem = self.new(ET.QName('div', namespaces.html), attrib)
 
-        self._toc_elements.append((elem, self._toc_stack[-1], level))
+        self._special_stack[-1].add_toc(elem, level)
         return elem
 
 class ConverterDocument(ConverterPage):
