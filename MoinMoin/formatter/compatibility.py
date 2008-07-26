@@ -460,20 +460,67 @@ class Formatter(ConverterMacro):
 
     # Tables #############################################################
 
-    def table(self, on, attrs={}, **kw):
+    _allowed_table_attrs = {
+        '': ['colspan', 'rowspan', 'abbr'],
+    }
+
+    def _checkTableAttr(self, attrs, prefix):
+        """ Check table attributes
+
+        Convert from wikitable attributes to Moine page attributes.
+
+        @param attrs: attribute dict
+        @param prefix: used in wiki table attributes
+        @rtype: dict
+        @return: valid table attributes
+        """
+        if not attrs:
+            return {}
+
+        ret = {}
+        for key, val in attrs.items():
+            # Ignore keys that don't start with prefix
+            if prefix and key[:len(prefix)] != prefix:
+                continue
+            key = key[len(prefix):]
+            val = val.strip('"')
+            real_key = None
+            if key == 'bgcolor':
+                key = ET.Qname('background-color', None)
+            elif key == 'align':
+                key = ET.QName('text-align', None)
+            elif key == 'valign':
+                key = ET.QName('vertical-align', None)
+            elif key == 'class':
+                key = ET.QName('class', namespaces.html)
+            elif key == 'style':
+                key = ET.QName('style', namespaces.html)
+            elif prefix == '' and key in ('colspan', 'rowspan', 'abbr'):
+                key = ET.QName(key, namespaces.html)
+            else:
+                continue
+            ret[key] = val
+        return ret
+
+    def table(self, on, attrib={}, **kw):
         if on:
-            self._stack_push(ET.Element(self.tag_table))
+            print attrib, kw
+            attrib = self._checkTableAttr(attrib, 'table')
+            print attrib
+            self._stack_push(ET.Element(self.tag_table, attrib))
             self._stack_push(ET.Element(self.tag_table_body))
         else:
             self._stack_pop()
             self._stack_pop()
         return ''
 
-    def table_row(self, on, attrs={}, **kw):
-        return self.handle_on(on, self.tag_table_row)
+    def table_row(self, on, attrib={}, **kw):
+        attrib = self._checkTableAttr(attrib, 'row')
+        return self.handle_on(on, self.tag_table_row, attrib)
 
-    def table_cell(self, on, attrs={}, **kw):
-        return self.handle_on(on, self.tag_table_cell)
+    def table_cell(self, on, attrib={}, **kw):
+        attrib = self._checkTableAttr(attrib, '')
+        return self.handle_on(on, self.tag_table_cell, attrib)
 
     # Dynamic stuff / Plugins ############################################
 
