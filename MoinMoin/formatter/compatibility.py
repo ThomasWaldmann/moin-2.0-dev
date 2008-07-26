@@ -504,9 +504,7 @@ class Formatter(ConverterMacro):
 
     def table(self, on, attrib={}, **kw):
         if on:
-            print attrib, kw
             attrib = self._checkTableAttr(attrib, 'table')
-            print attrib
             self._stack_push(ET.Element(self.tag_table, attrib))
             self._stack_push(ET.Element(self.tag_table_body))
         else:
