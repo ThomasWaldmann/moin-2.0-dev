@@ -95,6 +95,12 @@ class ConverterBase(object):
         namespaces.html,
     ])
 
+    tag_html_a = ET.QName('a', namespaces.html)
+    tag_html_href = ET.QName('href', namespaces.html)
+    tag_html_id = ET.QName('id', namespaces.html)
+    tag_html_p = ET.QName('p', namespaces.html)
+    tag_html_sup = ET.QName('sup', namespaces.html)
+
     def __init__(self, request):
         self.request = request
 
@@ -216,10 +222,6 @@ class ConverterBase(object):
 
         return ret
 
-    def visit_moinpage_note(self, elem):
-        # TODO
-        pass
-
     def visit_moinpage_object(self, elem):
         tag_data = ET.QName('data', namespaces.html)
         tag_img = ET.QName('img', namespaces.html)
@@ -288,11 +290,13 @@ class Converter(ConverterBase):
     """
 
 class SpecialPage(object):
-    def __init__(self, root):
-        self.root = root
-
+    def __init__(self):
+        self._footnotes = []
         self._headings = []
         self._tocs = []
+
+    def add_footnote(self, elem):
+        self._footnotes.append(elem)
 
     def add_heading(self, elem, level, id=None):
         self._headings.append((elem, level, id))
@@ -302,6 +306,9 @@ class SpecialPage(object):
 
     def extend(self, page):
         self._headings.extend(page._headings)
+
+    def footnotes(self):
+        return iter(self._footnotes)
 
     def headings(self, maxlevel):
         minlevel = None
@@ -334,13 +341,22 @@ class ConverterPage(ConverterBase):
     def __call__(self, element):
         _ = self.request.getText
 
-        self._special = []
-        self._special_stack = [SpecialPage(element)]
+        special_root = SpecialPage()
+        self._special = [special_root]
+        self._special_stack = [special_root]
+        self._note_id = 1
         self._toc_id = 0
 
         ret = super(ConverterPage, self).__call__(element)
 
+        special_root.root = ret
+
         for special in self._special:
+            print special, list(special.footnotes())
+            for elem in special.footnotes():
+                print elem, special.root
+                special.root.append(elem)
+
             for elem, headings in special.tocs():
                 attrib_h = {ET.QName('class', namespaces.html): 'table-of-contents-heading'}
                 elem_h = ET.Element(ET.QName('p', namespaces.html),
@@ -378,9 +394,12 @@ class ConverterPage(ConverterBase):
 
     def visit(self, elem):
         if elem.get(ET.QName('page-href', namespaces.moin_page)):
-            self._special_stack.append(SpecialPage(elem))
+            self._special_stack.append(SpecialPage())
+
             ret = super(ConverterPage, self).visit(elem)
+
             sp = self._special_stack.pop()
+            sp.root = ret
             self._special.append(sp)
             self._special_stack[-1].extend(sp)
             return ret
@@ -415,6 +434,34 @@ class ConverterPage(ConverterBase):
 
         self._special_stack[-1].add_heading(elem, level, id)
         return elem
+
+    def visit_moinpage_note(self, elem):
+        # TODO: Check note-class
+
+        body = None
+        for child in elem:
+            if child.tag.uri == namespaces.moin_page:
+                if child.tag.name == 'note-body':
+                    body = self.do_children(child)
+
+        id = self._note_id
+        self._note_id += 1
+        id_note = 'note-%d' % id
+        id_ref = 'note-%d-ref' % id
+
+        elem_ref = ET.XML("""
+<html:sup xmlns:html="%s" html:id="%s"><html:a html:href="#%s">%s</html:a></html:sup>
+""" % (namespaces.html, id_ref, id_note, id))
+
+        elem_note = ET.XML("""
+<html:p xmlns:html="%s" html:id="%s"><html:sup><html:a html:href="#%s">%s</html:a></html:sup></html:p>
+""" % (namespaces.html, id_note, id_ref, id))
+
+        elem_note.extend(body)
+
+        self._special_stack[-1].add_footnote(elem_note)
+
+        return elem_ref
 
     def visit_moinpage_macro(self, elem):
         for body in elem:
