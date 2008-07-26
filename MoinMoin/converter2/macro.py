@@ -37,12 +37,16 @@ class _PseudoRequest(object):
 
 class Converter(object):
     tag_alt = ET.QName('alt', namespaces.moin_page)
+    tag_class = ET.QName('class', namespaces.html)
     tag_macro = ET.QName('macro', namespaces.moin_page)
     tag_macro_args = ET.QName('macro-args', namespaces.moin_page)
     tag_macro_body = ET.QName('macro-body', namespaces.moin_page)
     tag_macro_name = ET.QName('macro-name', namespaces.moin_page)
     tag_macro_context = ET.QName('macro-context', namespaces.moin_page)
+    tag_p = ET.QName('p', namespaces.moin_page)
     tag_page_href = ET.QName('page-href', namespaces.moin_page)
+    tag_strong = ET.QName('strong', namespaces.moin_page)
+    tag_title = ET.QName('title', namespaces.moin_page)
 
     @classmethod
     def _factory(cls, input, output):
@@ -59,9 +63,23 @@ class Converter(object):
         elem_body = ET.Element(self.tag_macro_body)
 
         if not self._handle_macro_new(elem_body, page_href, name, args, context, alt):
-            self._handle_macro_old(elem_body, page_href, name, args, alt)
+            self._handle_macro_old(elem_body, page_href, name, args, context, alt)
 
         elem.append(elem_body)
+
+    def _error(self, message, context, alt):
+        if alt:
+            attrib = {self.tag_class: 'error', self.tag_title: message}
+            children = alt
+        else:
+            attrib = {}
+            children = message
+
+        elem = ET.Element(self.tag_strong, attrib=attrib, children=[children])
+
+        if context == 'block':
+            return ET.Element(self.tag_p, children=[elem])
+        return elem
 
     def _handle_macro_new(self, elem_body, page_href, name, args, context, alt):
         page_name = page_href[8:]
@@ -78,7 +96,7 @@ class Converter(object):
 
         return True
 
-    def _handle_macro_old(self, elem_body, page_href, name, args, alt):
+    def _handle_macro_old(self, elem_body, page_href, name, args, context, alt):
         Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
 
         request = _PseudoRequest(self.request)
@@ -90,16 +108,10 @@ class Converter(object):
         try:
             ret = m.execute(name, args)
         except ImportError, err:
-            errmsg = unicode(err)
-            if not name in errmsg:
+            message = unicode(err)
+            if not name in message:
                 raise
-            if alt:
-                attrib_error = {ET.QName('title', namespaces.moin_page): errmsg}
-                elem_error = ET.Element(ET.QName('span', namespaces.moin_page), attrib=attrib_error)
-                elem_error.append(alt)
-                elem_body.append(elem_error)
-            else:
-                elem_body.append(errmsg)
+            elem_body.append(self._error(message, context, alt))
             return
         except AssertionError, e:
             from warnings import warn
@@ -116,6 +128,11 @@ class Converter(object):
                 message += ': ' + e.message
             warn(message, DeprecationWarning)
             ret = True
+
+        if request.written:
+            message = 'Macro ' + name + ' used request.write'
+            elem_body.append(self._error(message, context, alt))
+            return
 
         if ret:
             # Fallback to HTML formatter
