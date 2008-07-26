@@ -34,7 +34,7 @@ def macro_InterWiki(macro):
         else:
             output.append(fmt.text(url))
         output.append(fmt.code(0))
-        output.append(fmt.definition_desc(1))
+        output.append(fmt.definition_desc(0))
     output.append(fmt.definition_list(0))
     return u''.join(output)
 
