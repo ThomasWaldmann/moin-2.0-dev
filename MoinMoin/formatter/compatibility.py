@@ -399,10 +399,17 @@ class Formatter(ConverterMacro):
 
     def listitem(self, on, **kw):
         if on:
-            self._stack_push(ET.Element(self.tag_list_item))
-            self._stack_push(ET.Element(self.tag_list_item_body))
+            elem_item_body = ET.Element(self.tag_list_item_body)
+            elem_item = ET.Element(self.tag_list_item,
+                    children=[elem_item_body])
+            # The old moin wiki parser seems to forget the list sometimes
+            if self._stack[-1].tag.name != 'list':
+                elem = ET.Element(self.tag_list, children=[elem_item])
+            else:
+                elem = elem_item
+            self._stack_top_append(elem)
+            self._stack.append(elem_item_body)
         else:
-            self._stack_pop()
             self._stack_pop()
         return ''
 
@@ -504,11 +511,12 @@ class Formatter(ConverterMacro):
 
     def table(self, on, attrib={}, **kw):
         if on:
+            elem_body = ET.Element(self.tag_table_body)
             attrib = self._checkTableAttr(attrib, 'table')
-            self._stack_push(ET.Element(self.tag_table, attrib))
-            self._stack_push(ET.Element(self.tag_table_body))
+            elem = ET.Element(self.tag_table, attrib, children=[elem_body])
+            self._stack_top_append(elem)
+            self._stack.append(elem_body)
         else:
-            self._stack_pop()
             self._stack_pop()
         return ''
 
@@ -665,7 +673,11 @@ class Formatter(ConverterMacro):
             return self._stack[0]
         elem = self._stack.pop()
         if not len(elem):
-            self._stack[-1].remove(elem)
+            try:
+                self._stack[-1].remove(elem)
+            except ValueError:
+                # This is an optiomization, ignore errors
+                pass
         return elem
 
     def _stack_push(self, elem):
