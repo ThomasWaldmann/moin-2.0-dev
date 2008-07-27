@@ -67,8 +67,6 @@ class Macro:
         "TitleIndex": ["namespace"],
         "Goto": [],
         "Icon": ["user"], # users have different themes and user prefs
-        "Date": ["time"],
-        "DateTime": ["time"],
         "Anchor": [],
         "Mailto": ["user"],
         "GetVal": ["pages"],
