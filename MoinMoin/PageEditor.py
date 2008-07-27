@@ -26,7 +26,7 @@ from MoinMoin import config, caching, wikiutil, error, user
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
-from MoinMoin.logfile import eventlog, editlog
+from MoinMoin.logfile import eventlog
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.util import timefuncs, web
 from MoinMoin.storage.error import BackendError
