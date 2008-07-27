@@ -64,7 +64,6 @@ class Macro:
         "TitleSearch": ["namespace"],
         "WordIndex": ["namespace"],
         "TitleIndex": ["namespace"],
-        "Goto": [],
         "Icon": ["user"], # users have different themes and user prefs
         }
 
