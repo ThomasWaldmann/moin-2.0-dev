@@ -28,7 +28,7 @@ from MoinMoin.Page import Page
 
 names = ["TitleSearch", "WordIndex", "TitleIndex",
          # Macros with arguments
-         "Icon", "Anchor", "GetVal", "TemplateList",
+         "Icon", "Anchor", "TemplateList",
 ]
 
 #############################################################################
@@ -68,7 +68,6 @@ class Macro:
         "Goto": [],
         "Icon": ["user"], # users have different themes and user prefs
         "Anchor": [],
-        "GetVal": ["pages"],
         }
 
     # we need the lang macros to execute when html is generated,
@@ -278,15 +277,4 @@ class Macro:
     def macro_Anchor(self, anchor=None):
         anchor = wikiutil.get_unicode(self.request, anchor, 'anchor', u'anchor')
         return self.formatter.anchordef(anchor)
-
-    def macro_GetVal(self, page=None, key=None):
-        page = wikiutil.get_unicode(self.request, page, 'page')
-        if not self.request.user.may.read(page):
-            raise ValueError("You don't have enough rights on this page")
-        key = wikiutil.get_unicode(self.request, key, 'key')
-        if page is None or key is None:
-            raise ValueError("You need to give: pagename, key")
-        d = self.request.dicts.dict(page)
-        result = d.get(key, '')
-        return self.formatter.text(result)
 
