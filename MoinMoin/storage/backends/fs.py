@@ -110,7 +110,7 @@ class FSBackend(Backend):
                 continue
             item = Item(self, iname)
             item._fs_item_id = itemid
-            yield (Revision(item, revno), tstamp)
+            yield (StoredRevision(item, revno), tstamp)
 
     def _addnews(self, itemid, revid):
         """
