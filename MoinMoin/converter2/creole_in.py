@@ -436,6 +436,12 @@ class Converter(ConverterMacro):
             data = dict(((k, v) for k, v in match.groupdict().iteritems() if v is not None))
             getattr(self, '_%s_repl' % match.lastgroup)(**data)
 
+    def macro_text(self, text):
+        conv = self.__class__(self.request, None)
+        conv._stack = [ET.Element(ET.QName(None))]
+        conv.parse_inline(text)
+        return conv._stack[0][:]
+
     def parse_inline(self, raw):
         """Recognize inline elements inside blocks."""
 
