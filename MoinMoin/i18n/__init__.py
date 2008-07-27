@@ -171,30 +171,13 @@ class Translation(object):
         logging.debug("formatting: %r" % text)
 
         from MoinMoin.Page import Page
-        from MoinMoin.parser.text_moin_wiki import Parser as WikiParser
-        if percent:
-            from MoinMoin.formatter.text_html_percent import Formatter
-        else:
-            from MoinMoin.formatter.text_html import Formatter
 
         out = StringIO()
         request.redirect(out)
-        parser = WikiParser(text, request, line_anchors=False)
-        formatter = Formatter(request, terse=True)
-        reqformatter = None
-        if hasattr(request, 'formatter'):
-            reqformatter = request.formatter
-        request.formatter = formatter
         p = Page(request, "$$$$i18n$$$$")
-        formatter.setPage(p)
-        parser.format(formatter)
+        p.send_page_content(request, text)
         text = out.getvalue()
-        if reqformatter is None:
-            del request.formatter
-        else:
-            request.formatter = reqformatter
         request.redirect()
-        text = text.strip()
         return text
 
     def loadLanguage(self, request, trans_dir="i18n"):
