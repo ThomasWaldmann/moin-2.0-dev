@@ -22,6 +22,10 @@ class ConverterMacro(object):
         return ET.Element(ET.QName('line-break', namespaces.moin_page))
 
     def _FootNote_repl(self, args, text, context):
+        if args is None:
+            # TODO: footnote placing
+            return
+
         tag = ET.QName('note', namespaces.moin_page)
         tag_body = ET.QName('note-body', namespaces.moin_page)
         tag_class = ET.QName('note-class', namespaces.moin_page)
