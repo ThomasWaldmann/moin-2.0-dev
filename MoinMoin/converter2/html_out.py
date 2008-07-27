@@ -352,9 +352,7 @@ class ConverterPage(ConverterBase):
         special_root.root = ret
 
         for special in self._special:
-            print special, list(special.footnotes())
             for elem in special.footnotes():
-                print elem, special.root
                 special.root.append(elem)
 
             for elem, headings in special.tocs():
