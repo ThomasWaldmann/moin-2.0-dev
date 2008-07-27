@@ -28,7 +28,7 @@ from MoinMoin.Page import Page
 
 names = ["TitleSearch", "WordIndex", "TitleIndex",
          # Macros with arguments
-         "Icon", "Anchor", "TemplateList",
+         "Icon", "TemplateList",
 ]
 
 #############################################################################
@@ -67,7 +67,6 @@ class Macro:
         "TitleIndex": ["namespace"],
         "Goto": [],
         "Icon": ["user"], # users have different themes and user prefs
-        "Anchor": [],
         }
 
     # we need the lang macros to execute when html is generated,
@@ -273,8 +272,4 @@ class Macro:
         if not icon:
             raise ValueError("You need to give a non-empty icon name")
         return self.formatter.icon(icon.lower())
-
-    def macro_Anchor(self, anchor=None):
-        anchor = wikiutil.get_unicode(self.request, anchor, 'anchor', u'anchor')
-        return self.formatter.anchordef(anchor)
 
