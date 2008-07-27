@@ -28,7 +28,7 @@ from MoinMoin.Page import Page
 
 names = ["TitleSearch", "WordIndex", "TitleIndex",
          # Macros with arguments
-         "Icon", "Date", "DateTime", "Anchor", "MailTo", "GetVal", "TemplateList",
+         "Icon", "Anchor", "MailTo", "GetVal", "TemplateList",
 ]
 
 #############################################################################
@@ -277,49 +277,6 @@ class Macro:
         if not icon:
             raise ValueError("You need to give a non-empty icon name")
         return self.formatter.icon(icon.lower())
-
-    def __get_Date(self, args, format_date):
-        _ = self._
-        if args is None:
-            tm = time.time() # always UTC
-        elif len(args) >= 19 and args[4] == '-' and args[7] == '-' \
-                and args[10] == 'T' and args[13] == ':' and args[16] == ':':
-            # we ignore any time zone offsets here, assume UTC,
-            # and accept (and ignore) any trailing stuff
-            try:
-                year, month, day = int(args[0:4]), int(args[5:7]), int(args[8:10])
-                hour, minute, second = int(args[11:13]), int(args[14:16]), int(args[17:19])
-                tz = args[19:] # +HHMM, -HHMM or Z or nothing (then we assume Z)
-                tzoffset = 0 # we assume UTC no matter if there is a Z
-                if tz:
-                    sign = tz[0]
-                    if sign in '+-':
-                        tzh, tzm = int(tz[1:3]), int(tz[3:])
-                        tzoffset = (tzh*60+tzm)*60
-                        if sign == '-':
-                            tzoffset = -tzoffset
-                tm = (year, month, day, hour, minute, second, 0, 0, 0)
-            except ValueError, err:
-                raise ValueError("Bad timestamp %r: %s" % (args, err))
-            # as mktime wants a localtime argument (but we only have UTC),
-            # we adjust by our local timezone's offset
-            try:
-                tm = time.mktime(tm) - time.timezone - tzoffset
-            except (OverflowError, ValueError):
-                tm = 0 # incorrect, but we avoid an ugly backtrace
-        else:
-            # try raw seconds since epoch in UTC
-            try:
-                tm = float(args)
-            except ValueError, err:
-                raise ValueError("Bad timestamp %r: %s" % (args, err))
-        return format_date(tm)
-
-    def macro_Date(self, stamp=None):
-        return self.__get_Date(stamp, self.request.user.getFormattedDate)
-
-    def macro_DateTime(self, stamp=None):
-        return self.__get_Date(stamp, self.request.user.getFormattedDateTime)
 
     def macro_Anchor(self, anchor=None):
         anchor = wikiutil.get_unicode(self.request, anchor, 'anchor', u'anchor')
