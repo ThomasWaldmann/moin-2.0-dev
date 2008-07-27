@@ -25,7 +25,11 @@ class MacroBase(object):
         self.alt, self.context, self._args = alt, context, args
 
     def call_macro(self, content):
-        return wikiutil.invoke_extension_function(self.request, self.macro, self._args)
+        try:
+            return wikiutil.invoke_extension_function(self.request, self.macro, self._args)
+        except ValueError:
+            # TODO: Real error
+            return 'Error'
 
     def macro(self):
         raise NotImplementedError
