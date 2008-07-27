@@ -528,7 +528,8 @@ class Formatter(ConverterMacro):
         else:
             macro_type = 'block'
         elem = super(Formatter, self).macro(name, args, markup, macro_type)
-        self._stack_top_append(elem)
+        if elem:
+            self._stack_top_append(elem)
         return ''
 
     def _get_bang_args(self, line):
