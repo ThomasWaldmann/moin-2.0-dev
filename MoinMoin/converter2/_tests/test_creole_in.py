@@ -56,7 +56,7 @@ class TestConverter(object):
                 '<page %s><separator /></page>' % namespaces_string),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_emphasis(self):
         pairs = [
@@ -74,7 +74,7 @@ class TestConverter(object):
                 '<page %s><p>Text <emphasis>Emphasis</emphasis></p><p>Text</p></page>' % namespaces_string),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_escape(self):
         pairs = [
@@ -88,7 +88,7 @@ class TestConverter(object):
                 '<page %s><p>{{{escape}}}</p></page>' % namespaces_string),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_heading(self):
         pairs = [
@@ -124,7 +124,7 @@ class TestConverter(object):
                 '<page %s><h outline-level="3">Heading 3</h></page>' % namespaces_string),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_list(self):
         pairs = [
@@ -144,7 +144,7 @@ class TestConverter(object):
                 '<page %s><list item-label-generate="unordered"><list-item><list-item-body>List 1</list-item-body></list-item></list><list item-label-generate="ordered"><list-item><list-item-body>List 2</list-item-body></list-item></list></page>' % namespaces_string),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_macro(self):
         pairs = [
@@ -166,7 +166,7 @@ class TestConverter(object):
                 '<page %s><p>Text</p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="block" macro-name="Macro" /></page>' % namespaces_string),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_table(self):
         pairs = [
@@ -186,7 +186,7 @@ class TestConverter(object):
                 '<page %s><table><table-body><table-row><table-cell>Cell 1.1</table-cell><table-cell>Cell 1.2</table-cell></table-row><table-row><table-cell>Cell 2.1</table-cell><table-cell>Cell 2.2</table-cell></table-row></table-body></table></page>' % namespaces_string),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_nowiki(self):
         pairs = [
@@ -204,7 +204,7 @@ class TestConverter(object):
                 '<page %s><p><code>nowiki</code> <code>nowiki</code></p></page>' % namespaces_string),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_composite(self):
         pairs = [
@@ -214,7 +214,7 @@ class TestConverter(object):
                 '<page %s><p>Text</p><table><table-body><table-row><table-cell>Item</table-cell></table-row></table-body></table><p>Text</p></page>' % namespaces_string),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def _do(self, input, output):
         out = self.conv(input)

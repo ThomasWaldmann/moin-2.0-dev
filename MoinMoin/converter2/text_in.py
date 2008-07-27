@@ -39,7 +39,7 @@ class Converter(object):
             attrib[tag_page_href] = 'wiki:///' + self.page_name
 
         root = ET.Element(tag, attrib=attrib)
-        
+
         blockcode = ET.Element(ET.QName('blockcode', namespaces.moin_page),
                                children=[text.expandtabs()])
         root.append(blockcode)

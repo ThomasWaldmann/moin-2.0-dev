@@ -380,19 +380,19 @@ class Converter(ConverterMacro):
         self._stack_top_append(ET.Element(tag, children=[nowikiinline_text]))
 
     def _emph_repl(self, emph):
-        if not self._stack_top_check(('emphasis',)):
+        if not self._stack_top_check(('emphasis', )):
             tag = ET.QName('emphasis', namespaces.moin_page)
             self._stack_push(ET.Element(tag))
         else:
-            self._stack_pop_name(('emphasis',))
+            self._stack_pop_name(('emphasis', ))
             self._stack_pop()
 
     def _strong_repl(self, strong):
-        if not self._stack_top_check(('strong',)):
+        if not self._stack_top_check(('strong', )):
             tag = ET.QName('strong', namespaces.moin_page)
             self._stack_push(ET.Element(tag))
         else:
-            self._stack_pop_name(('strong',))
+            self._stack_pop_name(('strong', ))
             self._stack_pop()
 
     def _linebreak_repl(self, linebreak):
