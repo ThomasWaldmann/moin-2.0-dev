@@ -115,7 +115,7 @@ class ConverterBase(object):
                 if r is None:
                     r = ()
                 elif not isinstance(r, (list, tuple)):
-                    r = (r,)
+                    r = (r, )
                 new.extend(r)
             else:
                 new.append(child)
@@ -192,7 +192,7 @@ class ConverterBase(object):
     def visit_moinpage_list(self, elem):
         attrib = Attrib(elem)
         generate = attrib.get('item-label-generate')
-        
+
         if generate:
             if generate == 'ordered':
                 ret = self.new(ET.QName('ol', namespaces.html))

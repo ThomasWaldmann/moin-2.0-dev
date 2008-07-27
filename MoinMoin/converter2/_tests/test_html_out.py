@@ -58,7 +58,7 @@ class TestConverterBase(object):
                 '<div %s><hr /></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_html(self):
         pairs = [
@@ -66,7 +66,7 @@ class TestConverterBase(object):
                 '<div id="a" %s><p id="c">Test</p></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_list(self):
         pairs = [
@@ -78,7 +78,7 @@ class TestConverterBase(object):
                 '<div %s><dl><dt>Label</dt><dd>Item</dd></dl></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_style(self):
         pairs = [
@@ -88,7 +88,7 @@ class TestConverterBase(object):
                 '<div %s><p style="font-size: 1em; color: black">Text</p></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_table(self):
         pairs = [
@@ -96,7 +96,7 @@ class TestConverterBase(object):
                 '<div %s><table><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def _do(self, input, output):
         page = ET.XML(input)
@@ -113,7 +113,7 @@ class TestConverter(object):
                 '<div %s %s><page:macro><page:macro-body><p>Test</p></page:macro-body></page:macro></div>' % (namespaces_string_html_default, namespaces_string_page)),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def _do(self, input, output):
         page = ET.XML(input)
@@ -130,7 +130,7 @@ class TestConverterPage(object):
                 '<div %s><p>Test</p></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_note(self):
         pairs = [
@@ -138,7 +138,7 @@ class TestConverterPage(object):
                 '<div %s><p>Text<sup id="note-1-ref"><a href="#note-1">1</a></sup></p><p id="note-1"><sup><a href="#note-1-ref">1</a></sup>Note</p></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
-            yield (self._do,) + i
+            yield (self._do, ) + i
 
     def test_unknown(self):
         page = ET.XML("<page:unknown %s/>" % namespaces_string_page)
