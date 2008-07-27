@@ -89,3 +89,25 @@ class MacroPageLinkListBase(MacroBlockBase):
             page_list.append(item)
         return page_list
 
+class MacroNumberPageLinkListBase(MacroBlockBase):
+    def create_number_pagelink_list(self, num_pagenames, ordered=False):
+        """ creates an ET with a list of pagelinks from a list of pagenames """
+        tag_l = ET.QName('list', namespaces.moin_page)
+        attr_generate = ET.QName('item-label-generate', namespaces.moin_page)
+        tag_li = ET.QName('list-item', namespaces.moin_page)
+        tag_li_body = ET.QName('list-item-body', namespaces.moin_page)
+        tag_code = ET.QName('code', namespaces.moin_page)
+        tag_a = ET.QName('a', namespaces.moin_page)
+        attr_href_xlink = ET.QName('href', namespaces.xlink)
+
+        num_page_list = ET.Element(tag_l, attrib={attr_generate: ordered and 'ordered' or 'unordered'})
+        for num, pagename in num_pagenames:
+            num_code = ET.Element(tag_code, children=["%6d " % num])
+            url = u'wiki.local:' + pagename # XXX do a hint that this link is generated or pagelinks cache
+                                            # will have all pages, leading to problems with OrphanedPages!
+            pagelink = ET.Element(tag_a, attrib={attr_href_xlink: url}, children=[pagename])
+            item_body = ET.Element(tag_li_body, children=[num_code, pagelink])
+            item = ET.Element(tag_li, children=[item_body])
+            num_page_list.append(item)
+        return num_page_list
+
