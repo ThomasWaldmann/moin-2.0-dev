@@ -1251,7 +1251,8 @@ class Page(object):
 
         out = StringIO()
         tree = ET.ElementTree(doc)
-        tree.write(out, default_namespace=namespaces.html)
+        # TODO: Switch to xml
+        tree.write(out, default_namespace=namespaces.html, method='html')
         self.request.write(out.getvalue())
 
         request.clock.stop('send_page_content')
