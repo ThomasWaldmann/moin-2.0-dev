@@ -14,7 +14,7 @@ def test_MacroBase___init__():
 
     m = MacroBase(request, None, 'alt', 'context')
 
-    assert m.immutable == False
+    assert m.immutable is False
     assert m.request is request
     assert m.alt == 'alt'
     assert m.context == 'context'
