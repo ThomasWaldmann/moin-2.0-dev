@@ -26,10 +26,12 @@ class ConverterMacro(object):
             # TODO: footnote placing
             return
 
+        text = self.macro_text(args)
+
         tag = ET.QName('note', namespaces.moin_page)
         tag_body = ET.QName('note-body', namespaces.moin_page)
         tag_class = ET.QName('note-class', namespaces.moin_page)
-        elem_body = ET.Element(tag_body, children=[args])
+        elem_body = ET.Element(tag_body, children=text)
         elem = ET.Element(tag, attrib={tag_class: 'footnote'}, children=[elem_body])
 
         if context == 'block':
@@ -128,4 +130,12 @@ class ConverterMacro(object):
         tag_alt = ET.QName('alt', namespaces.moin_page)
         attrib = {tag_name: name, tag_args: args, tag_context: context, tag_alt: text}
         return ET.Element(tag, attrib)
+
+    def macro_text(self, text):
+        """
+        Should be overriden to format text in some macros according to the
+        input type.
+        @return Sequence of (ET.Element, unicode)
+        """
+        return [text]
 
