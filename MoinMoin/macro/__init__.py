@@ -28,7 +28,7 @@ from MoinMoin.Page import Page
 
 names = ["TitleSearch", "WordIndex", "TitleIndex",
          # Macros with arguments
-         "Icon", "TemplateList",
+         "Icon",
 ]
 
 #############################################################################
@@ -62,7 +62,6 @@ class Macro:
 
     Dependencies = {
         "TitleSearch": ["namespace"],
-        "TemplateList": ["namespace"],
         "WordIndex": ["namespace"],
         "TitleIndex": ["namespace"],
         "Goto": [],
@@ -149,29 +148,6 @@ class Macro:
     def macro_TitleSearch(self):
         from MoinMoin.macro.FullSearch import search_box
         return search_box("titlesearch", self)
-
-    def macro_TemplateList(self, needle=u'.+'):
-        # TODO: this should be renamed (RegExPageNameList?), it does not list only Templates...
-        _ = self._
-        try:
-            needle_re = re.compile(needle, re.IGNORECASE)
-        except re.error, err:
-            raise ValueError("Error in regex %r: %s" % (needle, err))
-
-        # Get page list readable by current user, filtered by needle
-        hits = self.request.rootpage.getPageList(filter=needle_re.search)
-        hits.sort()
-
-        result = []
-        result.append(self.formatter.bullet_list(1))
-        for pagename in hits:
-            result.append(self.formatter.listitem(1))
-            result.append(self.formatter.pagelink(1, pagename, generated=1))
-            result.append(self.formatter.text(pagename))
-            result.append(self.formatter.pagelink(0, pagename))
-            result.append(self.formatter.listitem(0))
-        result.append(self.formatter.bullet_list(0))
-        return ''.join(result)
 
     def _make_index(self, word_re=u'.+'):
         """ make an index page (used for TitleIndex and WordIndex macro)
