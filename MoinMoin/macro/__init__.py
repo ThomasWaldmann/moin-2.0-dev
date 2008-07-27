@@ -28,7 +28,7 @@ from MoinMoin.Page import Page
 
 names = ["TitleSearch", "WordIndex", "TitleIndex",
          # Macros with arguments
-         "Icon", "Anchor", "MailTo", "GetVal", "TemplateList",
+         "Icon", "Anchor", "GetVal", "TemplateList",
 ]
 
 #############################################################################
@@ -68,7 +68,6 @@ class Macro:
         "Goto": [],
         "Icon": ["user"], # users have different themes and user prefs
         "Anchor": [],
-        "Mailto": ["user"],
         "GetVal": ["pages"],
         }
 
@@ -279,33 +278,6 @@ class Macro:
     def macro_Anchor(self, anchor=None):
         anchor = wikiutil.get_unicode(self.request, anchor, 'anchor', u'anchor')
         return self.formatter.anchordef(anchor)
-
-    def macro_MailTo(self, email=unicode, text=u''):
-        if not email:
-            raise ValueError("You need to give an (obfuscated) email address")
-
-        from MoinMoin.mail.sendmail import decodeSpamSafeEmail
-
-        if self.request.user.valid:
-            # decode address and generate mailto: link
-            email = decodeSpamSafeEmail(email)
-            result = (self.formatter.url(1, 'mailto:' + email, css='mailto') +
-                      self.formatter.text(text or email) +
-                      self.formatter.url(0))
-        else:
-            # unknown user, maybe even a spambot, so
-            # just return text as given in macro args
-
-            if text:
-                result = self.formatter.text(text + " ")
-            else:
-                result = ''
-
-            result += (self.formatter.code(1) +
-                       self.formatter.text("<%s>" % email) +
-                       self.formatter.code(0))
-
-        return result
 
     def macro_GetVal(self, page=None, key=None):
         page = wikiutil.get_unicode(self.request, page, 'page')
