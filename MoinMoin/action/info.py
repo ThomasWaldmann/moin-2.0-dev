@@ -11,8 +11,11 @@
 
 from MoinMoin import config, wikiutil, action
 from MoinMoin.Page import Page
-from MoinMoin.logfile import editlog
 from MoinMoin.widget import html
+
+from MoinMoin.storage import EDIT_LOG_MTIME, EDIT_LOG_ACTION, EDIT_LOG_EXTRA, \
+                             EDIT_LOG_COMMENT
+
 
 def execute(pagename, request):
     """ show misc. infos about a page """
@@ -105,15 +108,20 @@ def execute(pagename, request):
             return page.link_to(request, text, querystr=query, **kw)
 
         # read in the complete log of this page
-        llog = editlog.LocalEditLog(request, rootpagename=pagename)
+        item = request.cfg.data_backend.get_item(pagename)
+        revs = item.list_revisions()
+
+        actions = []
         count = 0
         pgactioncount = 0
-        for line in llog:
-            rev = line.rev
-            actions = []
-            if line.action in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
-                size = page.size(rev=rev)
-                actions.append(render_action(_('view'), {'action': 'recall', 'rev': '%d' % rev}))
+
+        for revno in revs:
+            revision = item.get_revision(revno)
+            if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
+                size = page.size(rev=rev) # XXX Is the correct revision number passed here? 
+                                          # XXX Storage and the rest of moin seem to use different enumeration methods. URGH!
+                actions.append(render_action(_('view'), {'action': 'recall', 'rev': '%d' % revno}))
+
                 if pgactioncount == 0:
                     rchecked = ' checked="checked"'
                     lchecked = ''
@@ -122,30 +130,34 @@ def execute(pagename, request):
                     rchecked = ''
                 else:
                     lchecked = rchecked = ''
-                diff = '<input type="radio" name="rev1" value="%d"%s><input type="radio" name="rev2" value="%d"%s>' % (rev, lchecked, rev, rchecked)
-                if rev > 1:
-                    diff += render_action(' ' + _('to previous'), {'action': 'diff', 'rev1': rev-1, 'rev2': rev})
-                comment = line.comment
+                diff = '<input type="radio" name="rev1" value="%d"%s><input type="radio" name="rev2" value="%d"%s>' % (revno, lchecked, revno, rchecked)
+
+                if revno > 1:
+                    diff += render_action(' ' + _('to previous'), {'action': 'diff', 'rev1': revno-1, 'rev2': revno})
+
+                comment = revision[EDIT_LOG_COMMENT]
                 if not comment:
-                    if '/REVERT' in line.action:
-                        comment = _("Revert to revision %(rev)d.") % {'rev': int(line.extra)}
+                    if '/REVERT' in revision[EDIT_LOG_ACTION]:
+                        comment = _("Revert to revision %(revno)d.") % {'revno': int(revision[EDIT_LOG_EXTRA])}
                     elif '/RENAME' in line.action:
-                        comment = _("Renamed from '%(oldpagename)s'.") % {'oldpagename': line.extra}
+                        comment = _("Renamed from '%(oldpagename)s'.") % {'oldpagename': revision[EDIT_LOG_EXTRA]}
+
                 pgactioncount += 1
+
             else: # ATT*
                 rev = '-'
                 diff = '-'
 
-                filename = wikiutil.url_unquote(line.extra)
-                comment = "%s: %s %s" % (line.action, filename, line.comment)
+                filename = wikiutil.url_unquote(revision[EDIT_LOG_EXTRA])
+                comment = "%s: %s %s" % (revision[EDIT_LOG_ACTION], filename, revision[EDIT_LOG_COMMENT],)
                 size = 0
-                if line.action != 'ATTDEL':
+                if revision[EDIT_LOG_ACTION] != 'ATTDEL':
                     from MoinMoin.action import AttachFile
                     if AttachFile.exists(request, pagename, filename):
                         size = AttachFile.size(request, pagename, filename)
-                    if line.action == 'ATTNEW':
+                    if revision[EDIT_LOG_ACTION] == 'ATTNEW':
                         actions.append(render_action(_('view'), {'action': 'AttachFile', 'do': 'view', 'target': '%s' % filename}))
-                    elif line.action == 'ATTDRW':
+                    elif revision[EDIT_LOG_ACTION] == 'ATTDRW':
                         actions.append(render_action(_('edit'), {'action': 'AttachFile', 'drawing': '%s' % filename.replace(".draw", "")}))
 
                     actions.append(render_action(_('get'), {'action': 'AttachFile', 'do': 'get', 'target': '%s' % filename}))
@@ -153,11 +165,11 @@ def execute(pagename, request):
                         actions.append(render_action(_('del'), {'action': 'AttachFile', 'do': 'del', 'target': '%s' % filename}))
 
             history.addRow((
-                rev,
-                request.user.getFormattedDateTime(line.mtime),
+                revno,
+                request.user.getFormattedDateTime(revision[EDIT_LOG_MTIME]),
                 str(size),
                 diff,
-                line.getEditor(request) or _("N/A"),
+                line.getEditor(request) or _("N/A"), # FIXME line not available anymore. To what name does it translate now?
                 wikiutil.escape(comment) or '&nbsp;',
                 "&nbsp;".join(actions),
             ))
