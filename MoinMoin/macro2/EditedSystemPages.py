@@ -11,9 +11,9 @@ from emeraldtree import ElementTree as ET
 
 from MoinMoin.Page import Page
 from MoinMoin.util import namespaces
-from MoinMoin.macro2._base import MacroBlockBase
+from MoinMoin.macro2._base import MacroPageLinkListBase
 
-class Macro(MacroBlockBase):
+class Macro(MacroPageLinkListBase):
     def macro(self):
         if self.request.isSpiderAgent: # reduce bot cpu usage
             return ''
@@ -32,21 +32,5 @@ class Macro(MacroBlockBase):
         # Format as numbered list, sorted by page name
         pagenames.sort()
 
-        tag_l = ET.QName('list', namespaces.moin_page)
-        attr_generate = ET.QName('item-label-generate', namespaces.moin_page)
-        tag_li = ET.QName('list-item', namespaces.moin_page)
-        tag_li_body = ET.QName('list-item-body', namespaces.moin_page)
-        tag_a = ET.QName('a', namespaces.moin_page)
-        attr_href_xlink = ET.QName('href', namespaces.xlink)
-
-        editedpages_list = ET.Element(tag_l, attrib={attr_generate: 'ordered'})
-        for pagename in pagenames:
-            url = u'wiki.local:' + pagename # XXX do a hint that this link is generated or pagelinks cache
-                                            # will have all pages, leading to problems with OrphanedPages!
-            pagelink = ET.Element(tag_a, attrib={attr_href_xlink: url}, children=[pagename])
-            item_body = ET.Element(tag_li_body, children=[pagelink])
-            item = ET.Element(tag_li, children=[item_body])
-            editedpages_list.append(item)
-
-        return editedpages_list
+        return self.create_pagelink_list(pagenames, ordered=True)
 
