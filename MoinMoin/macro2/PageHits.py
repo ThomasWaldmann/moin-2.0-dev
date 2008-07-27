@@ -6,8 +6,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from emeraldtree import ElementTree as ET
-
 from MoinMoin import caching, logfile
 from MoinMoin.Page import Page
 from MoinMoin.logfile import eventlog
