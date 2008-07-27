@@ -486,7 +486,7 @@ class Formatter(ConverterMacro):
             val = val.strip('"')
             real_key = None
             if key == 'bgcolor':
-                key = ET.Qname('background-color', None)
+                key = ET.QName('background-color', None)
             elif key == 'align':
                 key = ET.QName('text-align', None)
             elif key == 'valign':
