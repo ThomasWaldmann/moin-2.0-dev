@@ -118,8 +118,8 @@ def execute(pagename, request):
         for revno in revs:
             revision = item.get_revision(revno)
             if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
-                size = page.size(rev=rev) # XXX Is the correct revision number passed here? 
-                                          # XXX Storage and the rest of moin seem to use different enumeration methods. URGH!
+                size = page.size(rev=revno) # XXX Is the correct revision number passed here? 
+                                            # XXX Storage and the rest of moin seem to use different enumeration methods. URGH!
                 actions.append(render_action(_('view'), {'action': 'recall', 'rev': '%d' % revno}))
 
                 if pgactioncount == 0:
@@ -139,7 +139,7 @@ def execute(pagename, request):
                 if not comment:
                     if '/REVERT' in revision[EDIT_LOG_ACTION]:
                         comment = _("Revert to revision %(revno)d.") % {'revno': int(revision[EDIT_LOG_EXTRA])}
-                    elif '/RENAME' in line.action:
+                    elif '/RENAME' in revision[EDIT_LOG_ACTION]:
                         comment = _("Renamed from '%(oldpagename)s'.") % {'oldpagename': revision[EDIT_LOG_EXTRA]}
 
                 pgactioncount += 1
@@ -166,10 +166,11 @@ def execute(pagename, request):
 
             history.addRow((
                 revno,
-                request.user.getFormattedDateTime(revision[EDIT_LOG_MTIME]),
+                request.user.getFormattedDateTime(float(revision[EDIT_LOG_MTIME])),
                 str(size),
                 diff,
-                line.getEditor(request) or _("N/A"), # FIXME line not available anymore. To what name does it translate now?
+                #line.getEditor(request) or _("N/A"), # FIXME line not available anymore. To what name does it translate now?
+                _("N/A"),
                 wikiutil.escape(comment) or '&nbsp;',
                 "&nbsp;".join(actions),
             ))
