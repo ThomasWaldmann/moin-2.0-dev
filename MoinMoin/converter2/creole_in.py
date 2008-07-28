@@ -124,7 +124,7 @@ class Rules:
             (\n)?
             ^}}} \s*$
         )'''
-    pre_escape = r' ^(?P<indent>\s*) ~ (?P<rest> \}\}\} \s*) $'
+    nowiki_escape = r' ^(?P<indent>\s*) ~ (?P<rest> \}\}\} \s*) $'
     table = r'''(?P<table>
             ^ \s*?
             [|].*? \s*?
@@ -141,27 +141,56 @@ class Rules:
             ) \s*
         ''' % '|'.join([link, macro_inline, object, nowiki_inline])
 
+    # Block elements
+    block = (
+        line,
+        head,
+        separator,
+        macro_block,
+        nowiki_block,
+        list,
+        table,
+        text_block,
+    )
+    block_re = re.compile('|'.join(block), re.X | re.U | re.M)
+
+    # Inline elements
+    inline = (
+        link,
+        url,
+        macro_inline,
+        nowiki_inline,
+        object,
+        strong,
+        emph,
+        linebreak,
+        escape,
+        text_inline
+    )
+    inline_re = re.compile('|'.join(inline), re.X | re.U | re.DOTALL)
+
+    # Link description
+    link_desc = (
+        object,
+        linebreak,
+        text_inline
+    )
+    link_desc_re = re.compile('|'.join(link_desc), re.X | re.U | re.DOTALL)
+
+    # Nowiki escape
+    nowiki_escape_re = re.compile(nowiki_escape, re.M | re.X)
+
+    # List items
+    item_re = re.compile(item, re.X | re.U | re.M)
+
+    # Table cells
+    cell_re = re.compile(cell, re.X | re.U)
+
 class Converter(ConverterMacro):
     """
     Parse the raw text and create a document object
     that can be converted into output using Emitter.
     """
-
-    # For pre escaping, in creole 1.0 done with ~:
-    pre_escape_re = re.compile(Rules.pre_escape, re.M | re.X)
-    # for link descriptions
-    link_re = re.compile('|'.join([Rules.object, Rules.linebreak, Rules.text_inline]),
-        re.X | re.U | re.DOTALL)
-    item_re = re.compile(Rules.item, re.X | re.U | re.M) # for list items
-    cell_re = re.compile(Rules.cell, re.X | re.U) # for table cells
-    # For block elements:
-    block_re = re.compile('|'.join([Rules.line, Rules.head, Rules.separator,
-        Rules.macro_block, Rules.nowiki_block, Rules.list, Rules.table,
-        Rules.text_block]), re.X | re.U | re.M)
-    # For inline elements:
-    inline_re = re.compile('|'.join([Rules.link, Rules.url, Rules.macro_inline,
-        Rules.nowiki_inline, Rules.object, Rules.strong, Rules.emph, Rules.linebreak,
-        Rules.escape, Rules.text_inline]), re.X | re.U | re.DOTALL)
 
     @classmethod
     def _factory(cls, input, output):
@@ -214,7 +243,7 @@ class Converter(ConverterMacro):
         tag_href = ET.QName('href', namespaces.xlink)
         element = ET.Element(tag, attrib = {tag_href: target})
         self._stack_push(element)
-        self._apply(self.link_re, link_text or text)
+        self._apply(Rules.link_desc_re, link_text or text)
         self._stack_pop()
 
     def _macroblock_repl(self, macroblock, macro_name, macro_args=''):
@@ -287,7 +316,7 @@ class Converter(ConverterMacro):
         self.parse_inline(item_text)
 
     def _list_repl(self, list):
-        self._apply(self.item_re, list)
+        self._apply(Rules.item_re, list)
 
     def _head_repl(self, head, head_head, head_text):
         self._stack_pop_name(('page', 'blockquote'))
@@ -325,7 +354,7 @@ class Converter(ConverterMacro):
         element = ET.Element(tag)
         self._stack_push(element)
 
-        for m in self.cell_re.finditer(table):
+        for m in Rules.cell_re.finditer(table):
             cell = m.group('cell')
             if cell:
                 tag = ET.QName('table-cell', namespaces.moin_page)
@@ -368,7 +397,7 @@ class Converter(ConverterMacro):
                 pass
 
         else:
-            text = self.pre_escape_re.sub(remove_tilde, nowikiblock_text)
+            text = Rules.nowiki_escape_re.sub(remove_tilde, nowikiblock_text)
             tag = ET.QName('blockcode', namespaces.moin_page)
             self._stack_top_append(ET.Element(tag, children=[text]))
 
@@ -445,12 +474,12 @@ class Converter(ConverterMacro):
     def parse_inline(self, raw):
         """Recognize inline elements inside blocks."""
 
-        self._apply(self.inline_re, raw)
+        self._apply(Rules.inline_re, raw)
 
     def parse_block(self, raw):
         """Recognize block elements."""
 
-        self._apply(self.block_re, raw)
+        self._apply(Rules.block_re, raw)
 
 from _registry import default_registry
 default_registry.register(Converter._factory)
