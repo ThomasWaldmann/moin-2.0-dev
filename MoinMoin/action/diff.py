@@ -48,9 +48,10 @@ def execute(pagename, request):
     _ = request.getText
 
     # get a list of old revisions, and back out if none are available
-    currentpage = Page(request, pagename)
-    currentrev = currentpage.current_rev()
-    if currentrev < 2:
+    currentpage = request.cfg.data_backend.get_item(pagename)
+    currentrev = currentpage.get_revision(-1)
+
+    if currentrev.revno < 1:  # Revision enumeration starts with 0 in the backend
         request.theme.add_msg(_("No older revisions available!"), "error")
         currentpage.send_page()
         return
@@ -103,7 +104,7 @@ def execute(pagename, request):
     oldrev = oldpage.get_real_rev()
     newrev = newpage.get_real_rev()
 
-    revlist = currentpage.getRevList()
+    revlist = currentpage.list_revisions()
 
     # code below assumes that the page exists and has at least
     # one revision in the revlist, just bail out if not. Users
