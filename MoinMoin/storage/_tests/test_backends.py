@@ -388,4 +388,27 @@ class BackendTest(object):
         self.create_meta_item_helper('no revision')
         item = self.backend.get_item('no revision')
         py.test.raises(NoSuchRevisionError, item.get_revision, -1)
+ 
+    def test_revisions_after_rename(self):
+        def create_item_with_revs(name, revnum):
+            self.create_rev_item_helper(name)
+            item = self.backend.get_item(name)
+            for revno in xrange(1, revnum):
+                item.create_revision(revno)
+                item.commit()
+            return item
+        revnum = 5
         
+        item = create_item_with_revs("A", revnum)
+        assert item.list_revisions() == range(revnum)
+        item.rename("B")
+        assert item.list_revisions() == range(revnum + 1)
+        item = self.backend.get_item("B")
+        assert item.list_revisions() == range(revnum + 1)
+        
+        item = create_item_with_revs("A", revnum)
+        assert item.list_revisions() == range(revnum)
+        item = self.backend.get_item("A")
+        assert item.list_revisions() == range(revnum)
+        
+    
