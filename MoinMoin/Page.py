@@ -1180,13 +1180,6 @@ class Page(object):
         if not content_only and self.default_formatter:
             request.theme.send_closing_html()
 
-        # cache the pagelinks
-        if do_cache and self.default_formatter and page_exists:
-            cache = caching.CacheEntry(request, self, 'pagelinks', scope='item', use_pickle=True)
-            if cache.needsUpdate(self._text_filename()):
-                # TODO
-                cache.update([])
-
     def getFormatterName(self):
         """ Return a formatter name as used in the caching system
 
@@ -1298,23 +1291,29 @@ class Page(object):
 
         return doc
 
-    def convert_input_cache(self, request, *args):
+    def convert_input_cache(self, request, body=None, format=None, format_args='',
+            pagelinks=False):
         """
         Loads document from cache if possible, otherwise create it.
         """
-        doc = self.load_from_cache(request)
+        data = self.load_from_cache(request,
+                pagelinks and 'pagelinks' or 'tree')
 
-        if not doc:
-            doc, pagelinks = self.convert_input(request, create_pagelinks=True,
-                    *args)
-            self.add_to_cache(request, 'tree', doc)
-            self.add_to_cache(request, 'pagelinks', pagelinks)
+        if data is None:
+            data = self.convert_input(request, body, format, format_args,
+                    create_pagelinks=True)
+            self.add_to_cache(request, 'tree', data[0])
+            self.add_to_cache(request, 'pagelinks', data[1])
 
-        return doc
+            if pagelinks:
+                return data[1]
+            return data[0]
 
-    def load_from_cache(self, request):
+        return data
+
+    def load_from_cache(self, request, name):
         """ Return page content cache or None """
-        cache = caching.CacheEntry(request, self, 'tree', scope='item', use_pickle=True)
+        cache = caching.CacheEntry(request, self, name, scope='item', use_pickle=True)
         attachmentsPath = self.getPagePath('attachments', check_create=0)
         if cache.needsUpdate(self._text_filename(), attachmentsPath):
             return
@@ -1435,62 +1434,8 @@ class Page(object):
         @return: page names this page links to
         """
         if self.exists():
-            cache = caching.CacheEntry(request, self, 'pagelinks', scope='item', do_locking=False, use_pickle=True)
-            if cache.needsUpdate(self._text_filename()):
-                links = self.parsePageLinks(request)
-                cache.update(links)
-            else:
-                try:
-                    links = cache.content()
-                except caching.CacheError:
-                    links = self.parsePageLinks(request)
-                    cache.update(links)
-        else:
-            links = []
-        return links
-
-    def parsePageLinks(self, request):
-        """ Parse page links by formatting with a pagelinks formatter
-
-        This is a old hack to get the pagelinks by rendering the page
-        with send_page. We can remove this hack after factoring
-        send_page and send_page_content into small reuseable methods.
-
-        More efficient now by using special pagelinks formatter and
-        redirecting possible output into null file.
-        """
-        pagename = self.page_name
-        if request.parsePageLinks_running.get(pagename, False):
-            #logging.debug("avoid recursion for page %r" % pagename)
-            return [] # avoid recursion
-
-        #logging.debug("running parsePageLinks for page %r" % pagename)
-        # remember we are already running this function for this page:
-        request.parsePageLinks_running[pagename] = True
-
-        request.clock.start('parsePageLinks')
-
-        class Null:
-            def write(self, data):
-                pass
-
-        request.redirect(Null())
-        request.mode_getpagelinks += 1
-        #logging.debug("mode_getpagelinks == %r" % request.mode_getpagelinks)
-        try:
-            try:
-                from MoinMoin.formatter.pagelinks import Formatter
-                formatter = Formatter(request, store_pagelinks=1)
-                page = Page(request, pagename, formatter=formatter)
-                page.send_page(content_only=1)
-            except:
-                logging.exception("pagelinks formatter failed, traceback follows")
-        finally:
-            request.mode_getpagelinks -= 1
-            #logging.debug("mode_getpagelinks == %r" % request.mode_getpagelinks)
-            request.redirect()
-            request.clock.stop('parsePageLinks')
-        return formatter.pagelinks
+            return self.convert_input_cache(request, pagelinks=True)
+        return ()
 
     def getCategories(self, request):
         """ Get categories this page belongs to.
