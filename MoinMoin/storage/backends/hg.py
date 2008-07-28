@@ -199,14 +199,9 @@ class MercurialBackend(Backend):
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
 
         revision = StoredRevision(item, revno)
-        revision._data = StringIO.StringIO(fctx.data())
-        def manglekeys(dict):
-            newdict = {}
-            for k in (key for key in dict.iterkeys() if key.startswith("_")):
-                newdict[k[1:]] = dict[k]  
-            return newdict
-        
-        revision._metadata = manglekeys(ctx.extra())
+        revision._data = StringIO.StringIO(fctx.data())                                                        
+        revision._metadata = dict(((key.lstrip("_"), value) for key, value in 
+                                   ctx.extra().iteritems() if key.startswith('_')))
         return revision
 
     def _list_revisions(self, item):
@@ -326,14 +321,8 @@ class MercurialBackend(Backend):
 
     def _commit_item(self, item):
         """Commit Item changes within transaction (Revision) to repository."""
-        rev = item._uncommitted_revision
-        def manglekeys(dict):
-            newdict = {}
-            for key in dict.iterkeys():
-                newdict["_%s" % key] = dict[key]
-            return newdict
-                
-        meta = manglekeys(dict(rev))
+        rev = item._uncommitted_revision                                                                               
+        meta = dict(("_%s" % key, value) for key, value in rev.iteritems())
         name = self._quote(item.name)
         lock = self._repolock()
         try:
