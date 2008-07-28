@@ -1258,7 +1258,8 @@ class Page(object):
 
         request.clock.stop('send_page_content')
 
-    def convert_input(self, request, body=None, format=None, format_args=''):
+    def convert_input(self, request, body=None, format=None, format_args='',
+            create_pagelinks=False):
         if body is None:
             body = self.data
         if not format:
@@ -1273,19 +1274,29 @@ class Page(object):
         InputConverter = reg.get(mime_type, 'application/x-moin-document', None)
 
         if InputConverter:
-            return InputConverter(request, self.page_name)(body)
+            doc = InputConverter(request, self.page_name)(body)
 
-        # Use oldstyle parser
-        Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
-        Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
-        parser = Parser(body, request, format_args=format_args)
-        formatter = Formatter(request, self)
+        else:
+            # Use oldstyle parser
+            Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
+            Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
+            parser = Parser(body, request, format_args=format_args)
+            formatter = Formatter(request, self)
 
-        parser.format(formatter)
+            parser.format(formatter)
 
-        attrib = {ET.QName('page-href', namespaces.moin_page): 'wiki:///' + self.page_name}
-        return ET.Element(ET.QName('page', namespaces.moin_page), attrib,
-                children=formatter.root[:])
+            attrib = {ET.QName('page-href', namespaces.moin_page): 'wiki:///' + self.page_name}
+            doc = ET.Element(ET.QName('page', namespaces.moin_page), attrib,
+                    children=formatter.root[:])
+
+        if create_pagelinks:
+            PagelinksConverter = reg.get('application/x-moin-document',
+                    'application/x-moin-document;links=pagelinks')
+            pagelinks = PagelinksConverter(request)(doc)
+
+            return doc, pagelinks
+
+        return doc
 
     def convert_input_cache(self, request, *args):
         """
@@ -1294,8 +1305,10 @@ class Page(object):
         doc = self.load_from_cache(request)
 
         if not doc:
-            doc = self.convert_input(request, *args)
-            self.add_to_cache(request, doc)
+            doc, pagelinks = self.convert_input(request, create_pagelinks=True,
+                    *args)
+            self.add_to_cache(request, 'tree', doc)
+            self.add_to_cache(request, 'pagelinks', pagelinks)
 
         return doc
 
@@ -1315,8 +1328,8 @@ class Page(object):
                         (self.page_name, str(err)))
             return
 
-    def add_to_cache(self, request, data):
-        cache = caching.CacheEntry(request, self, 'tree', scope='item', use_pickle=True)
+    def add_to_cache(self, request, name, data):
+        cache = caching.CacheEntry(request, self, name, scope='item', use_pickle=True)
         cache.update(data)
 
     def _specialPageText(self, request, special_type):
