@@ -529,7 +529,9 @@ class Page(object):
                 return len(self._body)
 
         try:
-            return self._item[rev].size
+            revision = self._item.get_revision(rev)
+            body = revision.read()
+            return len(body)
         except NoSuchRevisionError:
             return -1
 

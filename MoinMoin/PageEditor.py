@@ -854,83 +854,83 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         except caching.CacheError:
             return None
 
- #   def _write_file(self, text, action='SAVE', comment=u'', extra=u'', deleted=False):
- #       """ Write the text to the page item (and make a backup of old page).
+    def _write_file(self, text, action='SAVE', comment=u'', extra=u'', deleted=False):
+        """ Write the text to the page item (and make a backup of old page).
 
- #       @param text: text to save for this page
- #       @param deleted: if True, then don't write page content (used by deletePage)
- #       @rtype: int
- #       @return: mtime_usec of new page
- #       """
- #       request = self.request
- #       was_deprecated = self.pi.get('deprecated', False)
+        @param text: text to save for this page
+        @param deleted: if True, then don't write page content (used by deletePage)
+        @rtype: int
+        @return: mtime_usec of new page
+        """
+        request = self.request
+        was_deprecated = self.pi.get('deprecated', False)
 
- #       # remember conflict state
- #       self.setConflict(wikiutil.containsConflictMarker(text))
+        # remember conflict state
+        self.setConflict(wikiutil.containsConflictMarker(text))
 
- #       ###self._item.lock = True
+        ###self._item.lock = True
 
- #       if was_deprecated:
- #           ###newrev = self._item[0]
- #           newrev = self._item.get_revision(-1)
- #       else:
- #           if self.do_revision_backup:
- #               try:
- #                   current_revno = max(self._item.list_revisions())
- #               except ValueError:
- #                   current_revno = -1
- #               newrev = self._item.create_revision(current_revno + 1)
- #           else:
- #               newrev = self._rev
+        if was_deprecated:
+            ###newrev = self._item[0]
+            newrev = self._item.get_revision(-1)
+        else:
+            if self.do_revision_backup:
+                try:
+                    current_revno = max(self._item.list_revisions())
+                except ValueError:
+                    current_revno = -1
+                newrev = self._item.create_revision(current_revno + 1)
+            else:
+                newrev = self._rev
 
- #       if not deleted:
- #           metadata, data = wikiutil.split_body(text)
- #           newrev.write(data.encode(config.charset))
+        if not deleted:
+            metadata, data = wikiutil.split_body(text)
+            newrev.write(data.encode(config.charset))
 
- #           for key, value in metadata.iteritems():
- #               newrev[key] = value
+            for key, value in metadata.iteritems():
+                newrev[key] = value
 
- #       else:
- #           newrev.write("")
- #           ### newrev.deleted = True   # XXX Does it still work when this is commented out completely? Maybe store the info in metadata
+        else:
+            newrev.write("")
+            ### newrev.deleted = True   # XXX Does it still work when this is commented out completely? Maybe store the info in metadata
 
- #       ###newrev.save(action, extra, comment, self.uid_override)
+        ###newrev.save(action, extra, comment, self.uid_override)
 
- #       if self.uid_override is not None:
- #           addr, userid = "", ""
- #           hostname = self.uid_override
+        if self.uid_override is not None:
+            addr, userid = "", ""
+            hostname = self.uid_override
 
- #       else:
- #           # XXX Is this the correct request we are using below?
- #           addr = request.remote_addr
+        else:
+            # XXX Is this the correct request we are using below?
+            addr = request.remote_addr
 
- #           if hasattr(request, "user"):
- #               userid = request.user.valid and request.user.id or ''
- #           else:
- #               userid = ""
+            if hasattr(request, "user"):
+                userid = request.user.valid and request.user.id or ''
+            else:
+                userid = ""
 
- #           hostname = wikiutil.get_hostname(request, addr)
+            hostname = wikiutil.get_hostname(request, addr)
 
- #       timestamp = time.time()
+        timestamp = time.time()
 
- #       newrev[EDIT_LOG_MTIME] = str(timestamp)
- #       newrev[EDIT_LOG_ACTION] = action
- #       newrev[EDIT_LOG_ADDR] = addr
- #       newrev[EDIT_LOG_HOSTNAME] = hostname
- #       newrev[EDIT_LOG_USERID] = userid
- #       newrev[EDIT_LOG_EXTRA] = extra
- #       newrev[EDIT_LOG_COMMENT] = wikiutil.clean_input(comment)
+        newrev[EDIT_LOG_MTIME] = timestamp
+        newrev[EDIT_LOG_ACTION] = action
+        newrev[EDIT_LOG_ADDR] = addr
+        newrev[EDIT_LOG_HOSTNAME] = hostname
+        newrev[EDIT_LOG_USERID] = userid
+        newrev[EDIT_LOG_EXTRA] = extra
+        newrev[EDIT_LOG_COMMENT] = wikiutil.clean_input(comment)
 
- #       self._item.commit()
+        self._item.commit()
 
- #       ###self._item.lock = False
+        ###self._item.lock = False
 
- #       # reset page object
- #       self.reset()
+        # reset page object
+        self.reset()
 
- #       # add event log entry
- #       elog = eventlog.EventLog(request)
- #       elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, time.time())
+        # add event log entry
+        elog = eventlog.EventLog(request)
+        elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, time.time())
 
     def saveText(self, newtext, rev, **kw):
         """ Save new text for a page.
@@ -972,7 +972,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             # check if we already saved that page
             other = False
             next_line = None
-            llog = editlog.LocalEditLog(request, rootpagename=self.page_name)
+            llog = editlog.LocalEditLog(request, rootpagename=self.page_name)  # TODO: Rewrite this
             for line in llog:
                 if line.rev == rev:
                     break
@@ -1029,17 +1029,17 @@ Please review the page and save then. Do not save this page as it is!""")
             extra = kw.get('extra', u'')
             trivial = kw.get('trivial', 0)
             # write the page file
-            ###self._write_file(newtext, action, comment, extra, deleted=deleted)
-            # XXX HACK! Rewrite this to get the current revno from the hidden html form.
-            try:
-                current_revno = max(self._item.list_revisions())
-            except ValueError:
-                current_revno = -1
+            self._write_file(newtext, action, comment, extra, deleted=deleted)
+            # XXX HACK! Rewrite this to get the current revno from the hidden html form.    # TODO: Make the below save work.
+   #         try:
+   #             current_revno = max(self._item.list_revisions())
+   #         except ValueError:
+   #             current_revno = -1
 
-            rev = self._item.create_revision(current_revno + 1)
-            rev.write(newtext)
-            self._item.commit()
-            self.reset()
+   #         rev = self._item.create_revision(current_revno + 1)
+   #         rev.write(newtext)
+   #         self._item.commit()
+   #         self.reset()
 
             self._save_draft(None, None) # everything fine, kill the draft for this page
             if notify:
