@@ -13,10 +13,47 @@ from emeraldtree import ElementTree as ET
 from MoinMoin import wikiutil
 from MoinMoin.util import namespaces
 
-class ConverterExternOutput(object):
+class ConverterBase(object):
     tag_href = ET.QName('href', namespaces.xlink)
     tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
+    def handle_wiki(self, link):
+        pass
+
+    def handle_wikilocal(self, link, page_name):
+        pass
+
+    def recurse(self, elem, page_href):
+        page_href = elem.get(self.tag_page_href, page_href)
+
+        href = elem.get(self.tag_href, None)
+        if href is not None:
+            yield elem, href, page_href
+
+        for child in elem:
+            if isinstance(child, ET.Node):
+                for i in self.recurse(child, page_href):
+                    yield i
+
+    def __init__(self, request):
+        self.request = request
+
+    def __call__(self, tree):
+        for elem, href, page_href in self.recurse(tree, None):
+            new_href = None
+            if href.startswith('wiki.local:'):
+                if page_href.startswith('wiki:///'):
+                    page_name = page_href[8:]
+                else:
+                    page_name = ''
+                new_href = self.handle_wikilocal(href[11:], page_name)
+            elif href.startswith('wiki://'):
+                new_href = self.handle_wiki(href[7:])
+            if new_href is not None:
+                elem.set(self.tag_href, new_href)
+        return tree
+
+class ConverterExternOutput(ConverterBase):
     @classmethod
     def _factory(cls, input, output):
         if input == 'application/x-moin-document' and \
@@ -80,35 +117,41 @@ class ConverterExternOutput(object):
         # TODO query string
         return self.request.getScriptname() + '/' + link
 
-    def recurse(self, elem, page_href):
-        page_href = elem.get(self.tag_page_href, page_href)
+class ConverterPagelinks(ConverterBase):
+    @classmethod
+    def _factory(cls, input, output):
+        if input == 'application/x-moin-document' and \
+                output == 'application/x-moin-document;links=pagelinks':
+            return cls
 
-        href = elem.get(self.tag_href, None)
-        if href is not None:
-            yield elem, href, page_href
+    def handle_wikilocal(self, link, page_name):
+        if ':' in link:
+            wiki_name, link = link.split(':', 1)
 
-        for child in elem:
-            if isinstance(child, ET.Node):
-                for i in self.recurse(child, page_href):
-                    yield i
+            if wiki_name in ('attachment', 'drawing', 'mailto'):
+                return
 
-    def __init__(self, request):
-        self.request = request
+            wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, wiki_name, link)
+
+            if not err and wikitag != 'Self':
+                return None
+
+        # handle anchors
+        try:
+            link, anchor = link.rsplit("#", 1)
+        except ValueError:
+            pass
+
+        if link:
+            self.links.add(link)
 
     def __call__(self, tree):
-        for elem, href, page_href in self.recurse(tree, None):
-            new_href = None
-            if href.startswith('wiki.local:'):
-                if page_href.startswith('wiki:///'):
-                    page_name = page_href[8:]
-                else:
-                    page_name = ''
-                new_href = self.handle_wikilocal(href[11:], page_name)
-            elif href.startswith('wiki://'):
-                new_href = self.handle_wiki(href[7:])
-            if new_href is not None:
-                elem.set(self.tag_href, new_href)
-        return tree
+        self.links = set()
+
+        super(ConverterPagelinks, self).__call__(tree)
+
+        return self.links
 
 from _registry import default_registry
 default_registry.register(ConverterExternOutput._factory)
+default_registry.register(ConverterPagelinks._factory)
