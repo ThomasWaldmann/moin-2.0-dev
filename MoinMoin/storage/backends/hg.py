@@ -335,13 +335,13 @@ class MercurialBackend(Backend):
             msg = meta.get("comment", "")
             user = meta.get("editor", "anonymous")  # XXX: meta keys review
             data = rev._data.getvalue()
-            file = [name]
+            fname = [name]
 
             def getfilectx(repo, memctx, path):
                 return context.memfilectx(path, data, False, False, False)
 
             p1, p2 = self._repo.changelog.tip(), node.nullid
-            ctx = context.memctx(self._repo, (p1, p2), msg, file, getfilectx, user, extra=meta)
+            ctx = context.memctx(self._repo, (p1, p2), msg, fname, getfilectx, user, extra=meta)
             if not has_item:
                 ctx._status[1], ctx._status[0] = ctx._status[0], ctx._status[1]
             self._repo.commitctx(ctx)
