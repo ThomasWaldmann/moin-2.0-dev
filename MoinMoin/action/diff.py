@@ -8,7 +8,6 @@
 """
 
 from MoinMoin import wikiutil
-from MoinMoin.logfile import editlog
 from MoinMoin.Page import Page
 
 def execute(pagename, request):
@@ -58,10 +57,12 @@ def execute(pagename, request):
 
     if date: # this is how we get called from RecentChanges
         rev1 = 0
-        llog = editlog.LocalEditLog(request, rootpagename=pagename)
-        for line in llog:
-            if date >= line.mtime:
-                rev1 = line.rev
+        item = request.cfg.data_backend.get_item(pagename)
+        revs = item.list_revisions()
+        for revno in revs:
+            revision = item.get_revision(revno)
+            if date >= revision[EDIT_LOG_MTIME]:
+                rev1 = revision.revno
                 break
         else:
             rev1 = 1
