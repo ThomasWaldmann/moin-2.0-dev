@@ -286,6 +286,18 @@ class Page(object):
             return self.current_rev()
         return self.rev
 
+    @staticmethod  # TODO: Write own "decorator" for 2.3 compatibility
+    def from_item(request, item):
+        """
+        TODO: Remove this method.
+
+        Whenever you see this method used, you may want to consider refactoring its
+        callers to use the storage API directly rather than using a Page object.
+        """
+        page = Page(request, item.name)
+        page._item = item
+        return page
+
     def getPagePath(self, *args, **kw):
         """
         TODO: remove this
