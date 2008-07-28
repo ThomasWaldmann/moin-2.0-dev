@@ -15,8 +15,10 @@ def execute(pagename, request):
         checking for either a "rev=formerrevision" parameter
         or rev1 and rev2 parameters
     """
+    data_backend = request.cfg.data_backend
+
     if not request.user.may.read(pagename):
-        Page(request, pagename).send_page()
+        Page(request, pagename).send_page()  # TODO: Get rid of Page-usage here
         return
 
     try:
@@ -48,17 +50,18 @@ def execute(pagename, request):
     _ = request.getText
 
     # get a list of old revisions, and back out if none are available
-    currentpage = request.cfg.data_backend.get_item(pagename)
+    currentpage = data_backend.get_item(pagename)
     currentrev = currentpage.get_revision(-1)
+    currentrev = currentrev.revno
 
-    if currentrev.revno < 1:  # Revision enumeration starts with 0 in the backend
+    if currentrev < 1:  # Revision enumeration starts with 0 in the backend
         request.theme.add_msg(_("No older revisions available!"), "error")
         currentpage.send_page()
         return
 
     if date: # this is how we get called from RecentChanges
         rev1 = 0
-        item = request.cfg.data_backend.get_item(pagename)
+        item = data_backend.get_item(pagename)
         revs = item.list_revisions()
         for revno in revs:
             revision = item.get_revision(revno)
@@ -81,28 +84,37 @@ def execute(pagename, request):
 
     if rev1 == -1:
         oldrev = currentrev - 1
-        oldpage = Page(request, pagename, rev=oldrev)
+        ###oldpage = Page(request, pagename, rev=oldrev)
+        item = data_backend.get_item(pagename)
+        oldpage = item.get_revision(oldrev)
+
     elif rev1 == 0:
         oldrev = currentrev
         oldpage = currentpage
+
     else:
         oldrev = rev1
-        oldpage = Page(request, pagename, rev=oldrev)
+        ###oldpage = Page(request, pagename, rev=oldrev)
+        item = data_backend.get_item(pagename)
+        oldpage = item.get_revision(oldrev)
 
     if rev2 == 0:
         newrev = currentrev
-        newpage = currentpage
+        newpage = currentpage.get_revision(newrev)
+
     else:
         newrev = rev2
-        newpage = Page(request, pagename, rev=newrev)
+        ###newpage = Page(request, pagename, rev=newrev)
+        item = data_backend.get_item(pagename)
+        newpage = item.get_revision(newrev)
 
     edit_count = abs(newrev - oldrev)
 
     f = request.formatter
     request.write(f.div(1, id="content"))
 
-    oldrev = oldpage.get_real_rev()
-    newrev = newpage.get_real_rev()
+    oldrev = oldpage.revno
+    newrev = newpage.revno
 
     revlist = currentpage.list_revisions()
 
@@ -131,7 +143,8 @@ def execute(pagename, request):
     else:
         disable_next = u''
 
-    page_url = wikiutil.escape(currentpage.url(request), True)
+    ###page_url = wikiutil.escape(currentpage.url(request), True)
+    page_url = wikiutil.escape(Page.from_item(request, currentpage).url(request), True)
 
     revert_html = ""
     if request.user.may.revert(pagename):
@@ -183,8 +196,10 @@ def execute(pagename, request):
 
     if request.user.show_fancy_diff:
         from MoinMoin.util import diff_html
-        request.write(f.rawHTML(diff_html.diff(request, oldpage.get_raw_body(), newpage.get_raw_body())))
-        newpage.send_page(count_hit=0, content_only=1, content_id="content-below-diff")
+        request.write(f.rawHTML(diff_html.diff(request, oldpage.read(), newpage.read())))
+        ###newpage.send_page(count_hit=0, content_only=1, content_id="content-below-diff")
+        # XXX: Navigating stupidly from the revision to its item. Use a better approach here...
+        Page.from_item(request, newpage._item).send_page(count_hit=0, content_only=1, content_id="content-below-diff")
     else:
         from MoinMoin.util import diff_text
         lines = diff_text.diff(oldpage.getlines(), newpage.getlines())
