@@ -345,14 +345,6 @@ class ConfigFunctionality(object):
 
         # if we are to use the jabber bot, instantiate a server object for future use
         if self.jabber_enabled:
-
-            errmsg = "You must set a (long) secret string to send notifications!"
-            try:
-                if not self.secret:
-                    raise error.ConfigurationError(errmsg)
-            except AttributeError, err:
-                raise error.ConfigurationError(errmsg)
-
             from xmlrpclib import Server
             self.notification_server = Server(self.notification_bot_uri, )
 
@@ -369,6 +361,47 @@ class ConfigFunctionality(object):
 
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
+
+        if self.secrets is None:  # admin did not setup a real secret, so make up something
+            self.secrets = self.calc_secrets()
+
+        secret_key_names = ['action/cache', 'wikiutil/tickets', 'xmlrpc/ProcessMail', 'xmlrpc/RemoteScript', ]
+        if self.jabber_enabled:
+            secret_key_names.append('jabberbot')
+
+        secret_min_length = 10
+        if isinstance(self.secrets, str):
+            if len(self.secrets) < secret_min_length:
+                raise error.ConfigurationError("The secrets = '...' wiki config setting is a way too short string (minimum length is %d chars)!" % (
+                    secret_min_length))
+            # for lazy people: set all required secrets to same value
+            secrets = {}
+            for key in secret_key_names:
+                secrets[key] = self.secrets
+            self.secrets = secrets
+
+        # we check if we have all secrets we need and that they have minimum length
+        for secret_key_name in secret_key_names:
+            try:
+                secret = self.secrets[secret_key_name]
+                if len(secret) < secret_min_length:
+                    raise ValueError
+            except (KeyError, ValueError):
+                raise error.ConfigurationError("You must set a (at least %d chars long) secret string for secrets['%s']!" % (
+                    secret_min_length, secret_key_name))
+
+    def calc_secrets(self):
+        """ make up some 'secret' using some config values """
+        varnames = ['data_dir', 'data_underlay_dir', 'language_default',
+                    'mail_smarthost', 'mail_from', 'page_front_page',
+                    'theme_default', 'sitename', 'logo_string',
+                    'interwikiname', 'user_homewiki', 'acl_rights_before', ]
+        secret = ''
+        for varname in varnames:
+            var = getattr(self, varname, None)
+            if isinstance(var, (str, unicode)):
+                secret += repr(var)
+        return secret
 
     _meta_dict = None
     def load_meta_dict(self):
@@ -677,6 +710,7 @@ options_no_group_name = {
      "list of auth objects, to be called in this order (see HelpOnAuthentication)"),
     ('auth_methods_trusted', ['http', 'xmlrpc_applytoken'],
      'authentication methods for which users should be included in the special "Trusted" ACL group.'),
+    ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes. If you don't setup own secret(s), a secret string will be auto-generated from other config settings."""),
     ('DesktopEdition',
      False,
      "if True, give all local users special powers - ''only use this for a local desktop wiki!''"),
@@ -700,20 +734,22 @@ options_no_group_name = {
   # ==========================================================================
   'spam_leech_dos': ('Anti-Spam/Leech/DOS', None, (
     ('hosts_deny', [], "List of denied IPs; if an IP ends with a dot, it denies a whole subnet (class A, B or C)"),
-
     ('surge_action_limits',
      {# allow max. <count> <action> requests per <dt> secs
         # action: (count, dt)
-        'all': (30, 30),
+        'all': (30, 30), # all requests (except cache/AttachFile action) count for this limit
+        'default': (30, 60), # default limit for actions without a specific limit
         'show': (30, 60),
         'recall': (10, 120),
         'raw': (20, 40),  # some people use this for css
-        'AttachFile': (90, 60),
         'diff': (30, 60),
         'fullsearch': (10, 120),
         'edit': (30, 300), # can be lowered after making preview different from edit
         'rss_rc': (1, 60),
-        'default': (30, 60),
+        # The following actions are often used for images - to avoid pages with lots of images
+        # (like photo galleries) triggering surge protection, we assign rather high limits:
+        'AttachFile': (90, 60),
+        'cache': (600, 30), # cache action is very cheap/efficient
      },
      "Surge protection tries to deny clients causing too much load/traffic, see /SurgeProtection."),
     ('surge_lockout_time', 3600, "time [s] someone gets locked out when ignoring the warnings"),
@@ -1145,7 +1181,6 @@ options = {
       ('smarthost', None, "Address of SMTP server to use for sending mail (None = don't use SMTP server)."),
       ('sendmail', None, "sendmail command to use for sending mail (None = don't use sendmail)"),
 
-      ('import_secret', "", "Shared secret for mail importing"),
       ('import_subpage_template', u"$from-$date-$subject", "Create subpages using this template when importing mail."),
       ('import_pagename_search', ['subject', 'to', ], "Where to look for target pagename specification."),
       ('import_pagename_envelope', u"%s", "Use this to add some fixed prefix/postfix to the generated target pagename."),
