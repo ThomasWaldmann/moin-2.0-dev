@@ -286,7 +286,7 @@ class Converter(ConverterMacro):
         element = ET.Element(tag, attrib = {tag_href: target})
         self._stack_push(element)
         if link_text:
-            self.parse_inline(link_text)
+            self.parse_inlinedesc(link_text)
         else:
             self._stack_top_append(text)
         self._stack_pop()
@@ -440,10 +440,17 @@ class Converter(ConverterMacro):
         inline_object,
         inline_emphstrong,
         inline_freelink,
-        #inline_linebreak,
-        inline_text
+        inline_text,
     )
     inline_re = re.compile('|'.join(inline), re.X | re.U)
+
+    inlinedesc = (
+        inline_macro,
+        inline_nowiki,
+        inline_emphstrong,
+        inline_text,
+    )
+    inlinedesc_re = re.compile('|'.join(inlinedesc), re.X | re.U)
 
     def _stack_pop_name(self, tags):
         """
@@ -479,6 +486,11 @@ class Converter(ConverterMacro):
         """Recognize inline elements inside blocks."""
 
         self._apply(self.inline_re, 'inline', raw)
+
+    def parse_inlinedesc(self, raw):
+        """Recognize inline elements inside blocks."""
+
+        self._apply(self.inlinedesc_re, 'inline', raw)
 
     def parse_block(self, raw):
         """Recognize block elements."""
