@@ -149,19 +149,18 @@ class Converter(ConverterMacro):
 
     block_nowiki = r"""
         (?P<nowiki>
-            ^ \s* (?P<nowiki_marker> \{{3,} \s* $
+            ^ \s* {{{ \s* $
             (\n)?
             ([\#]!\ *(?P<nowiki_kind>\w*)(\ +[^\n]*)?\n)?
             (?P<nowiki_text>
                 (.|\n)+?
             )
             (\n)?
-            ^(?P=nowiki_marker) \s*$
+            ^}}} \s*$
         )
     """
 
-    def block_nowiki_repl(self, nowiki, nowiki_marker, nowiki_text,
-            nowiki_kind=None):
+    def block_nowiki_repl(self, nowiki, nowiki_text, nowiki_kind=None):
         self._stack_pop_name(('page', 'blockquote'))
 
         if nowiki_kind:
