@@ -353,15 +353,18 @@ class Converter(ConverterMacro):
         )
         (?P<freelink_bang>\!)?  # configurable: avoid getting CamelCase rendered as link
         (?P<freelink>
-         (?:
-          (%(parent)s)*  # there might be either ../ parent prefix(es)
-          |
-          ((?<!%(child)s)%(child)s)?  # or maybe a single / child prefix (but not if we already had it before)
+         ([A-Z][a-zA-Z]+:)?
+         (?P<freelink_page>
+          (?:
+           (%(parent)s)*  # there might be either ../ parent prefix(es)
+           |
+           ((?<!%(child)s)%(child)s)?  # or maybe a single / child prefix (but not if we already had it before)
+          )
+          (
+           ((?<!%(child)s)%(child)s)?  # there might be / child prefix (but not if we already had it before)
+           (?:[%(u)s][%(l)s]+){2,}  # at least 2 upper>lower transitions make CamelCase
+          )+  # we can have MainPage/SubPage/SubSubPage ...
          )
-         (
-          ((?<!%(child)s)%(child)s)?  # there might be / child prefix (but not if we already had it before)
-          (?:[%(u)s][%(l)s]+){2,}  # at least 2 upper>lower transitions make CamelCase
-         )+  # we can have MainPage/SubPage/SubSubPage ...
          (?:
           \#  # anchor separator          TODO check if this does not make trouble at places where word_rule is used
           \S+  # some anchor name
@@ -379,7 +382,7 @@ class Converter(ConverterMacro):
         'parent': re.escape(wikiutil.PARENT_PREFIX),
     }
 
-    def inline_freelink_repl(self, freelink, freelink_bang=None):
+    def inline_freelink_repl(self, freelink, freelink_page, freelink_bang=None):
         if freelink_bang:
             self._stack_top_append(freelink)
             return
@@ -388,7 +391,7 @@ class Converter(ConverterMacro):
         tag_href = ET.QName('href', namespaces.xlink)
 
         attrib = {tag_href: 'wiki.local:' + freelink}
-        element = ET.Element(tag, attrib, children=[freelink])
+        element = ET.Element(tag, attrib, children=[freelink_page])
         self._stack_top_append(element)
 
     # Block elements
