@@ -160,6 +160,8 @@ class TestConverter(object):
         pairs = [
             ('{{{nowiki}}}',
                 '<page %s><p><code>nowiki</code></p></page>' % namespaces_string),
+            ('`nowiki`',
+                '<page %s><p><code>nowiki</code></p></page>' % namespaces_string),
             ('{{{{nowiki}}}}',
                 '<page %s><p><code>{nowiki}</code></p></page>' % namespaces_string),
             ('text: {{{nowiki}}}, text',
@@ -170,6 +172,10 @@ class TestConverter(object):
                 '<page %s><blockcode>nowiki\nno\nwiki</blockcode></page>' % namespaces_string),
             ('{{{nowiki}}} {{{nowiki}}}',
                 '<page %s><p><code>nowiki</code> <code>nowiki</code></p></page>' % namespaces_string),
+            ('{{{}}}',
+                '<page %s><p /></page>' % namespaces_string),
+            ('``',
+                '<page %s><p /></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do, ) + i

@@ -163,9 +163,6 @@ class Converter(ConverterMacro):
     def block_nowiki_repl(self, nowiki, nowiki_text, nowiki_kind=None):
         self._stack_pop_name(('page', 'blockquote'))
 
-        def remove_tilde(m):
-            return m.group('indent') + m.group('rest')
-
         if nowiki_kind:
             # TODO: move somewhere else
             from MoinMoin import wikiutil
@@ -315,12 +312,27 @@ class Converter(ConverterMacro):
             {{{
             (?P<nowiki_text>.*?}*)
             }}}
+            |
+            `
+            (?P<nowiki_text_backtick>.*)
+            `
         )
     """
 
-    def inline_nowiki_repl(self, nowiki, nowiki_text):
+    def inline_nowiki_repl(self, nowiki, nowiki_text=None,
+            nowiki_text_backtick=None):
         tag = ET.QName('code', namespaces.moin_page)
-        self._stack_top_append(ET.Element(tag, children=[nowiki_text]))
+
+        text = None
+        if nowiki_text is not None:
+            text = nowiki_text
+        # Remove empty backtick nowiki samples
+        elif nowiki_text_backtick:
+            text = nowiki_text_backtick
+        else:
+            return
+
+        self._stack_top_append(ET.Element(tag, children=[text]))
 
     inline_object = r"""
         (?P<object>
