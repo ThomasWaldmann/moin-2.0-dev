@@ -139,7 +139,7 @@ class Converter(ConverterMacro):
             from MoinMoin import wikiutil
             from MoinMoin.converter2 import default_registry as reg
 
-            mimetype = wikiutil.MimeType(nowikiblock_kind).mime_type()
+            mimetype = wikiutil.MimeType(nowiki_kind).mime_type()
             Converter = reg.get(mimetype, 'application/x-moin-document', None)
 
             if Converter:
