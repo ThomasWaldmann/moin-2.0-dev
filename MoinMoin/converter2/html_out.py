@@ -97,6 +97,8 @@ class ConverterBase(object):
 
     tag_html_a = ET.QName('a', namespaces.html)
     tag_html_data = ET.QName('data', namespaces.html)
+    tag_html_div = ET.QName('div', namespaces.html)
+    tag_html_em = ET.QName('em', namespaces.html)
     tag_html_href = ET.QName('href', namespaces.html)
     tag_html_id = ET.QName('id', namespaces.html)
     tag_html_img = ET.QName('img', namespaces.html)
@@ -158,13 +160,11 @@ class ConverterBase(object):
         # TODO
         attrib = {}
 
-        tag_href_xlink = ET.QName('href', namespaces.xlink)
-        tag_href = ET.QName('href', namespaces.html)
-        href = elem.get(tag_href_xlink, None)
+        href = elem.get(self.tag_xlink_href, None)
         if href is not None:
-            attrib[tag_href] = href
+            attrib[self.tag_html_href] = href
 
-        return self.new_copy(ET.QName('a', namespaces.html), elem, attrib)
+        return self.new_copy(self.tag_html_a, elem, attrib)
 
     def visit_moinpage_blockcode(self, elem):
         return self.new_copy(ET.QName('pre', namespaces.html), elem)
@@ -174,10 +174,10 @@ class ConverterBase(object):
 
     def visit_moinpage_div(self, elem):
         # TODO
-        return self.new_copy(ET.QName('div', namespaces.html), elem)
+        return self.new_copy(self.tag_html_div, elem)
 
     def visit_moinpage_emphasis(self, elem):
-        return self.new_copy(ET.QName('em', namespaces.html), elem)
+        return self.new_copy(self.tag_html_em, elem)
 
     def visit_moinpage_h(self, elem):
         level = elem.get(ET.QName('outline-level', namespaces.moin_page), 1)
@@ -243,10 +243,10 @@ class ConverterBase(object):
         return self.new(out_tag, attrib)
 
     def visit_moinpage_p(self, elem):
-        return self.new_copy(ET.QName('p', namespaces.html), elem)
+        return self.new_copy(self.tag_html_p, elem)
 
     def visit_moinpage_page(self, elem):
-        return self.new_copy(ET.QName('div', namespaces.html), elem)
+        return self.new_copy(self.tag_html_div, elem)
 
     def visit_moinpage_separator(self, elem):
         return self.new(ET.QName('hr', namespaces.html))

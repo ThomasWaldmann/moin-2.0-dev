@@ -58,6 +58,8 @@ class TestConverterBase(object):
                 '<div %s><p><tt>Code</tt></p></div>' % namespaces_string_html_default),
             ('<page:page %s><page:separator/></page:page>' % namespaces_string_page,
                 '<div %s><hr /></div>' % namespaces_string_html_default),
+            ('<page:page %s><page:div><page:p>Text</page:p></page:div></page:page>' % namespaces_string_page,
+                '<div %s><div><p>Text</p></div></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
             yield (self._do, ) + i
