@@ -1,13 +1,17 @@
 """
 MoinMoin - Moin Wiki input converter
 
-@copyright: 2008 MoinMoin:BastianBlank (converter interface)
+@copyright: 2000-2002 Juergen Hermann <jh@web.de>
+            2006-2008 MoinMoin:ThomasWaldmann
+            2007 MoinMoin:ReimarBauer
+            2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
 
 import re
 from emeraldtree import ElementTree as ET
 
+from MoinMoin import config, wikiutil
 from MoinMoin.util import namespaces
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
@@ -341,6 +345,52 @@ class Converter(ConverterMacro):
         element = ET.Element(tag, attrib)
         self._stack_top_append(element)
 
+    inline_freelink = r"""
+        (?:
+         (?<![%(u)s%(l)s/])  # require anything not upper/lower/slash before
+         |
+         ^  # ... or beginning of line
+        )
+        (?P<freelink_bang>\!)?  # configurable: avoid getting CamelCase rendered as link
+        (?P<freelink>
+         (?:
+          (%(parent)s)*  # there might be either ../ parent prefix(es)
+          |
+          ((?<!%(child)s)%(child)s)?  # or maybe a single / child prefix (but not if we already had it before)
+         )
+         (
+          ((?<!%(child)s)%(child)s)?  # there might be / child prefix (but not if we already had it before)
+          (?:[%(u)s][%(l)s]+){2,}  # at least 2 upper>lower transitions make CamelCase
+         )+  # we can have MainPage/SubPage/SubSubPage ...
+         (?:
+          \#  # anchor separator          TODO check if this does not make trouble at places where word_rule is used
+          \S+  # some anchor name
+         )?
+        )
+        (?:
+         (?![%(u)s%(l)s/])  # require anything not upper/lower/slash following
+         |
+         $  # ... or end of line
+        )
+    """ % {
+        'u': config.chars_upper,
+        'l': config.chars_lower,
+        'child': re.escape(wikiutil.CHILD_PREFIX),
+        'parent': re.escape(wikiutil.PARENT_PREFIX),
+    }
+
+    def inline_freelink_repl(self, freelink, freelink_bang=None):
+        if freelink_bang:
+            self._stack_top_append(freelink)
+            return
+
+        tag = ET.QName('a', namespaces.moin_page)
+        tag_href = ET.QName('href', namespaces.xlink)
+
+        attrib = {tag_href: 'wiki.local:' + freelink}
+        element = ET.Element(tag, attrib, children=[freelink])
+        self._stack_top_append(element)
+
     # Block elements
     block = (
         block_line,
@@ -356,11 +406,11 @@ class Converter(ConverterMacro):
 
     inline = (
         inline_link,
-        #inline_url,
         inline_macro,
         inline_nowiki,
         inline_object,
         inline_emphstrong,
+        inline_freelink,
         #inline_linebreak,
         inline_text
     )
@@ -393,7 +443,7 @@ class Converter(ConverterMacro):
         """Invoke appropriate _*_repl method for every match"""
 
         for match in re.finditer(text):
-            data = dict(((k, v) for k, v in match.groupdict().iteritems() if v is not None))
+            data = dict(((str(k), v) for k, v in match.groupdict().iteritems() if v is not None))
             getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(**data)
 
     def parse_inline(self, raw):
