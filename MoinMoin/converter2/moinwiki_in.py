@@ -78,6 +78,47 @@ class Converter(ConverterMacro):
     def inline_text_repl(self, text):
         self._stack_top_append(text)
 
+    inline_emphstrong = r"""
+        (?P<emphstrong>
+            '{2,5}
+            (?=[^']+ (?P<emphstrong_follow> '{2,3} (?!') ) )?
+        )
+    """
+
+    def inline_emphstrong_repl(self, emphstrong, emphstrong_follow=''):
+        tag_emphasis = ET.QName('emphasis', namespaces.moin_page)
+        tag_strong = ET.QName('strong', namespaces.moin_page)
+
+        if len(emphstrong) == 5:
+            if self._stack_top_check(('emphasis', )):
+                self._stack_pop()
+                if self._stack_top_check(('strong', )):
+                    self._stack_pop()
+                else:
+                    self._stack_push(ET.Element(tag_strong))
+            elif self._stack_top_check(('strong', )):
+                if self._stack_top_check(('strong', )):
+                    self._stack_pop()
+                else:
+                    self._stack_push(ET.Element(tag_strong))
+            else:
+                if len(emphstrong_follow) == 3:
+                    self._stack_push(ET.Element(tag_emphasis))
+                    self._stack_push(ET.Element(tag_strong))
+                else:
+                    self._stack_push(ET.Element(tag_strong))
+                    self._stack_push(ET.Element(tag_emphasis))
+        elif len(emphstrong) == 3:
+            if self._stack_top_check(('strong', )):
+                self._stack_pop()
+            else:
+                self._stack_push(ET.Element(tag_strong))
+        elif len(emphstrong) == 2:
+            if self._stack_top_check(('emphasis', )):
+                self._stack_pop()
+            else:
+                self._stack_push(ET.Element(tag_emphasis))
+
     inline_link = r"""
         (?P<link>
             \[\[
@@ -158,8 +199,7 @@ class Converter(ConverterMacro):
         #inline_macro,
         #inline_nowiki,
         inline_object,
-        #inline_strong,
-        #inline_emph,
+        inline_emphstrong,
         #inline_linebreak,
         inline_text
     )
