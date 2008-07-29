@@ -31,18 +31,73 @@ from MoinMoin.converter2._wiki_macro import ConverterMacro
 class Rules:
     """Hold all the rules for generating regular expressions."""
 
-    # For the inline elements:
-    url =  r'''(?P<url>
-            (^ | (?<=\s | [.,:;!?()/=]))
-            (?P<escaped_url>~)?
-            (?P<url_target>
-                # TODO: config.url_schemas
-                (http|https|ftp|nntp|news|mailto|telnet|file|irc):
-                \S+?
+    block_head = r"""
+        (?P<head>
+            ^ \s*
+            (?P<head_head>=+) \s*
+            (?P<head_text> .*? ) \s*
+            =* \s*
+            $
+        )
+    """
+
+    block_line = r'(?P<line> ^ \s* $ )'
+    # empty line that separates paragraphs
+
+    block_macro = r"""
+        ^
+        \s*?
+        (?P<macroblock>
+            <<
+            (?P<macro_name> \w+)
+            (\( (?P<macro_args> .*?) \))? \s*
+            ([|] \s* (?P<macro_text> .+?) \s* )?
+            >>
+        )
+        \s*?
+        $
+    """
+
+    block_nowiki = r"""
+        (?P<nowikiblock>
+            ^{{{ \s* $
+            (\n)?
+            ([\#]!\ *(?P<nowikiblock_kind>\w*)(\ +[^\n]*)?\n)?
+            (?P<nowikiblock_text>
+                (.|\n)+?
             )
-            ($ | (?=\s | [,.:;!?()] (\s | $)))
-        )'''
-    link = r'''(?P<link>
+            (\n)?
+            ^}}} \s*$
+        )
+    """
+
+    block_separator = r'(?P<separator> ^ \s* ---- \s* $ )'
+
+    block_table = r"""
+        (?P<table>
+            ^ \s*?
+            [|].*? \s*?
+            [|]? \s*?
+            $
+        )
+    """
+
+    block_text = r'(?P<textblock> (?P<testblock_newline>(?<=\n))? .+ )'
+
+    inline_text =  r'(?P<textinline> .+? )'
+
+    inline_emph = r'(?P<emph> (?<!:)// )'
+    # there must be no : in front of the // avoids italic rendering in urls
+    # with unknown protocols
+
+    inline_strong = r'(?P<strong> \*\* )'
+
+    inline_linebreak = r'(?P<linebreak> \\\\ )'
+
+    inline_escape = r'(?P<escape> ~ (?P<escaped_char>\S) )'
+
+    inline_link = r"""
+        (?P<link>
             \[\[
             \s*
             (
@@ -56,124 +111,112 @@ class Rules:
             )
             \s*
             ([|] \s* (?P<link_text>.+?) \s*)?
-            ]]
-        )'''
-    object = r'''(?P<object>
-            {{
-            (?P<object_target>.+?) \s*
-            ([|] \s* (?P<object_text>.+?) \s*)?
-            }}
-        )'''
-    macro_block = r'''
-        ^
-        \s*?
-        (?P<macroblock>
+            \]\]
+        )
+    """
+
+    block_list = r"""
+        (?P<list>
+            ^ [ \t]* ([*][^*\#]|[\#][^\#*]).* $
+            ( \n[ \t]* [*\#]+.* $ )*
+        )
+    """
+    # Matches the whole list, separate items are parsed later. The list *must*
+    # start with a single bullet.
+
+    inline_macro = r"""
+        (?P<macroinline>
             <<
             (?P<macro_name> \w+)
             (\( (?P<macro_args> .*?) \))? \s*
             ([|] \s* (?P<macro_text> .+?) \s* )?
             >>
         )
-        \s*?
-        $'''
-    macro_inline = r'''(?P<macroinline>
-            <<
-            (?P<macro_name> \w+)
-            (\( (?P<macro_args> .*?) \))? \s*
-            ([|] \s* (?P<macro_text> .+?) \s* )?
-            >>
-        )'''
-    nowiki_inline = r'(?P<nowikiinline> {{{ (?P<nowikiinline_text>.*?}*) }}} )'
-    emph = r'(?P<emph> (?<!:)// )' # there must be no : in front of the //
-                                   # avoids italic rendering in urls with
-                                   # unknown protocols
-    strong = r'(?P<strong> \*\* )'
-    linebreak = r'(?P<linebreak> \\\\ )'
-    escape = r'(?P<escape> ~ (?P<escaped_char>\S) )'
+    """
 
-    # For the block elements:
-    separator = r'(?P<separator> ^ \s* ---- \s* $ )' # horizontal line
-    line = r'(?P<line> ^ \s* $ )' # empty line that separates paragraphs
-    head = r'''(?P<head>
-            ^ \s*
-            (?P<head_head>=+) \s*
-            (?P<head_text> .*? ) \s*
-            =* \s*
-            $
-        )'''
-    text_block = r'(?P<textblock> (?P<testblock_newline>(?<=\n))? .+ )'
-    text_inline =  r'(?P<textinline> .+? )'
-    list = r'''(?P<list>
-            ^ [ \t]* ([*][^*\#]|[\#][^\#*]).* $
-            ( \n[ \t]* [*\#]+.* $ )*
-        )''' # Matches the whole list, separate items are parsed later. The
-             # list *must* start with a single bullet.
-    item = r'''(?P<item>
+    inline_nowiki = r"""
+        (?P<nowikiinline>
+            {{{
+            (?P<nowikiinline_text>.*?}*)
+            }}}
+        )
+    """
+
+    inline_object = r"""
+        (?P<object>
+            {{
+            (?P<object_target>.+?) \s*
+            ([|] \s* (?P<object_text>.+?) \s*)?
+            }}
+        )
+    """
+
+    inline_url =  r"""
+        (?P<url>
+            (^ | (?<=\s | [.,:;!?()/=]))
+            (?P<escaped_url>~)?
+            (?P<url_target>
+                # TODO: config.url_schemas
+                (http|https|ftp|nntp|news|mailto|telnet|file|irc):
+                \S+?
+            )
+            ($ | (?=\s | [,.:;!?()] (\s | $)))
+        )
+    """
+
+    list_item = r"""
+        (?P<item>
             ^ \s*
             (?P<item_head> [\#*]+) \s*
             (?P<item_text> .*?)
             $
-        )''' # Matches single list items
-    nowiki_block = r'''(?P<nowikiblock>
-            ^{{{ \s* $
-            (\n)?
-            ([\#]!\ *(?P<nowikiblock_kind>\w*)(\ +[^\n]*)?\n)?
-            (?P<nowikiblock_text>
-                (.|\n)+?
-            )
-            (\n)?
-            ^}}} \s*$
-        )'''
-    nowiki_escape = r' ^(?P<indent>\s*) ~ (?P<rest> \}\}\} \s*) $'
-    table = r'''(?P<table>
-            ^ \s*?
-            [|].*? \s*?
-            [|]? \s*?
-            $
-        )'''
+        )
+    """
+    # Matches single list items
 
-    # For splitting table cells:
-    cell = r'''
-            \| \s*
-            (
-                (?P<head> [=][^|]+ ) |
-                (?P<cell> (  %s | [^|])+ )
-            ) \s*
-        ''' % '|'.join([link, macro_inline, object, nowiki_inline])
+    nowiki_escape = r' ^(?P<indent>\s*) ~ (?P<rest> \}\}\} \s*) $'
+
+    table_cell = r"""
+        \| \s*
+        (
+            (?P<head> [=][^|]+ ) |
+            (?P<cell> (  %s | [^|])+ )
+        ) \s*
+    """ % '|'.join([inline_link, inline_macro, inline_object, inline_nowiki])
 
     # Block elements
     block = (
-        line,
-        head,
-        separator,
-        macro_block,
-        nowiki_block,
-        list,
-        table,
-        text_block,
+        block_line,
+        block_head,
+        block_separator,
+        block_macro,
+        block_nowiki,
+        block_list,
+        block_table,
+        block_text,
     )
     block_re = re.compile('|'.join(block), re.X | re.U | re.M)
 
     # Inline elements
     inline = (
-        link,
-        url,
-        macro_inline,
-        nowiki_inline,
-        object,
-        strong,
-        emph,
-        linebreak,
-        escape,
-        text_inline
+        inline_link,
+        inline_url,
+        inline_macro,
+        inline_nowiki,
+        inline_object,
+        inline_strong,
+        inline_emph,
+        inline_linebreak,
+        inline_escape,
+        inline_text,
     )
     inline_re = re.compile('|'.join(inline), re.X | re.U | re.DOTALL)
 
     # Link description
     link_desc = (
-        object,
-        linebreak,
-        text_inline
+        inline_object,
+        inline_linebreak,
+        inline_text,
     )
     link_desc_re = re.compile('|'.join(link_desc), re.X | re.U | re.DOTALL)
 
@@ -181,10 +224,10 @@ class Rules:
     nowiki_escape_re = re.compile(nowiki_escape, re.M | re.X)
 
     # List items
-    item_re = re.compile(item, re.X | re.U | re.M)
+    list_item_re = re.compile(list_item, re.X | re.U | re.M)
 
     # Table cells
-    cell_re = re.compile(cell, re.X | re.U)
+    table_cell_re = re.compile(table_cell, re.X | re.U)
 
 class Converter(ConverterMacro):
     """
@@ -214,8 +257,7 @@ class Converter(ConverterMacro):
         self.parse_block(text)
         return self.root
 
-    # The _*_repl methods called for matches in regexps. Sometimes the
-    # same method needs several names, because of group names in regexps.
+    # The _*_repl methods called for matches in regexps.
 
     def _url_repl(self, url, url_target, escaped_url=None):
         """Handle raw urls in text."""
@@ -316,7 +358,7 @@ class Converter(ConverterMacro):
         self.parse_inline(item_text)
 
     def _list_repl(self, list):
-        self._apply(Rules.item_re, list)
+        self._apply(Rules.list_item_re, list)
 
     def _head_repl(self, head, head_head, head_text):
         self._stack_pop_name(('page', 'blockquote'))
@@ -354,7 +396,7 @@ class Converter(ConverterMacro):
         element = ET.Element(tag)
         self._stack_push(element)
 
-        for m in Rules.cell_re.finditer(table):
+        for m in Rules.table_cell_re.finditer(table):
             cell = m.group('cell')
             if cell:
                 tag = ET.QName('table-cell', namespaces.moin_page)
