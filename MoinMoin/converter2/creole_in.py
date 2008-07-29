@@ -44,6 +44,15 @@ class Rules:
     block_line = r'(?P<line> ^ \s* $ )'
     # empty line that separates paragraphs
 
+    block_list = r"""
+        (?P<list>
+            ^ [ \t]* ([*][^*\#]|[\#][^\#*]).* $
+            ( \n[ \t]* [*\#]+.* $ )*
+        )
+    """
+    # Matches the whole list, separate items are parsed later. The list *must*
+    # start with a single bullet.
+
     block_macro = r"""
         ^
         \s*?
@@ -114,15 +123,6 @@ class Rules:
             \]\]
         )
     """
-
-    block_list = r"""
-        (?P<list>
-            ^ [ \t]* ([*][^*\#]|[\#][^\#*]).* $
-            ( \n[ \t]* [*\#]+.* $ )*
-        )
-    """
-    # Matches the whole list, separate items are parsed later. The list *must*
-    # start with a single bullet.
 
     inline_macro = r"""
         (?P<macroinline>
