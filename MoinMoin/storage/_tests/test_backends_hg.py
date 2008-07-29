@@ -80,40 +80,33 @@ class TestMercurialBackend(BackendTest):
             revval = "revision metatdata value for key %d" % num
             assert rev["%s" % num] == revval * 100
    
-    def test_create_renamed_rev(self):
-        # nasty since renames are tracked copies
-        oldname, newname = "nasty", "one"
-        self.create_rev_item_helper(oldname)
-        item = self.backend.get_item(oldname)
-        item.rename(newname)
-        assert self.backend.has_item(newname)
-        assert not self.backend.has_item(oldname)
-        item = self.backend.create_item(oldname)
-        item.create_revision(0)
-   
-    # XXX: below backend behaviour to discuss with johill/dennda    
-    def test_confusing_1(self):
-        i1 = self.backend.create_item('existing')
-        i1.create_revision(0)
-        i1.commit()
-        i2 = self.backend.get_item('existing')
-        i2.change_metadata()
-        i2["meta"] = "has_rev"
-        i2.publish_metadata()
- 
-    def test_confusing_1_wtih_no_metadata(self):
-        i1 = self.backend.create_item('existing')
-        i1.create_revision(0)
-        i1.commit()
-        i2 = self.backend.get_item('existing')
-        i2.change_metadata()
-        i2.publish_metadata()
+    def test_revisions_after_rename(self):
+        def create_item_with_revs(name, revnum):
+            self.create_rev_item_helper(name)
+            item = self.backend.get_item(name)
+            for revno in xrange(1, revnum):
+                item.create_revision(revno)
+                item.commit()
+            return item
         
-    def test_confusing_2(self):
-        i1 = self.backend.create_item('existing')
-        i1.change_metadata()
-        i1.publish_metadata()
-        i2 = self.backend.get_item('existing')
-        i2.create_revision(0)
-        i2.commit()     
-
+        revnum = 5
+        item = create_item_with_revs("A", revnum)
+        assert item.list_revisions() == range(revnum)
+        item.rename("B")
+        # mercurial renames have to be commited unless
+        # we use hashes/ids to represent Items in hg
+        # and provide mapping like in FSBackend,
+        # however this is not the 'right way', read below
+        assert item.list_revisions() == range(revnum + 1)
+        # http://www.moinmo.in/PawelPacana/MercurialBackend/HadItem
+        assert self.backend.has_item("B")
+        assert not self.backend.has_item("A")
+        assert self.backend.had_item("A")
+        assert not self.backend.had_item("B")  
+        item = self.backend.get_item("A")
+        revs = item.list_revisions()
+        item.create_revision(max(revs) + 1)
+        item.commit()
+        item.create_revision(max(revs) + 2)
+        item.commit()
+        assert item.list_revisions() == range(revs + 2)  
