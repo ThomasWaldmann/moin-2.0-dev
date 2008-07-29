@@ -420,6 +420,24 @@ class Converter(ConverterMacro):
         element = ET.Element(tag, attrib, children=[text])
         self._stack_top_append(element)
 
+    inline_url = r"""
+        (?P<url>
+            (^ | (?<=\s | [.,:;!?()/=]))
+            (?P<url_target>
+                # TODO: config.url_schemas
+                (http|https|ftp|nntp|news|mailto|telnet|file|irc):
+                \S+?
+            )
+            ($ | (?=\s | [,.:;!?()] (\s | $)))
+        )
+    """
+
+    def inline_url_repl(self, url, url_target):
+        tag = ET.QName('a', namespaces.moin_page)
+        tag_href = ET.QName('href', namespaces.xlink)
+        element = ET.Element(tag, attrib = {tag_href: url_target}, children = [url_target])
+        self._stack_top_append(element)
+
     # Block elements
     block = (
         block_line,
@@ -440,6 +458,7 @@ class Converter(ConverterMacro):
         inline_object,
         inline_emphstrong,
         inline_freelink,
+        inline_url,
         inline_text,
     )
     inline_re = re.compile('|'.join(inline), re.X | re.U)
