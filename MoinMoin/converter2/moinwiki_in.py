@@ -145,7 +145,7 @@ class Converter(ConverterMacro):
 
     block_nowiki = r"""
         (?P<nowiki>
-            ^{{{ \s* $
+            ^ \s* {{{ \s* $
             (\n)?
             ([\#]!\ *(?P<nowiki_kind>\w*)(\ +[^\n]*)?\n)?
             (?P<nowiki_text>
@@ -167,7 +167,7 @@ class Converter(ConverterMacro):
             from MoinMoin import wikiutil
             from MoinMoin.converter2 import default_registry as reg
 
-            mimetype = wikiutil.MimeType(nowikiblock_kind).mime_type()
+            mimetype = wikiutil.MimeType(nowiki_kind).mime_type()
             Converter = reg.get(mimetype, 'application/x-moin-document', None)
 
             if Converter:
