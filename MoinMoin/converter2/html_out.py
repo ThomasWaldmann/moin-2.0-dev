@@ -96,10 +96,15 @@ class ConverterBase(object):
     ])
 
     tag_html_a = ET.QName('a', namespaces.html)
+    tag_html_data = ET.QName('data', namespaces.html)
     tag_html_href = ET.QName('href', namespaces.html)
     tag_html_id = ET.QName('id', namespaces.html)
+    tag_html_img = ET.QName('img', namespaces.html)
+    tag_html_object = ET.QName('object', namespaces.html)
     tag_html_p = ET.QName('p', namespaces.html)
+    tag_html_src = ET.QName('src', namespaces.html)
     tag_html_sup = ET.QName('sup', namespaces.html)
+    tag_xlink_href = ET.QName('href', namespaces.xlink)
 
     def __init__(self, request):
         self.request = request
@@ -223,20 +228,14 @@ class ConverterBase(object):
         return ret
 
     def visit_moinpage_object(self, elem):
-        tag_data = ET.QName('data', namespaces.html)
-        tag_img = ET.QName('img', namespaces.html)
-        tag_object = ET.QName('object', namespaces.html)
-        tag_src = ET.QName('src', namespaces.html)
-        tag_href_xlink = ET.QName('href', namespaces.xlink)
-
-        href = elem.get(tag_href_xlink, None)
+        href = elem.get(self.tag_xlink_href, None)
 
         if href and wikiutil.isPicture(href):
-            out_tag = tag_img
-            out_tag_href = tag_src
+            out_tag = self.tag_html_img
+            out_tag_href = self.tag_html_src
         else:
-            out_tag = tag_object
-            out_tag_href = tag_data
+            out_tag = self.tag_html_object
+            out_tag_href = self.tag_html_data
 
         attrib = {}
         if href is not None:
