@@ -228,6 +228,34 @@ class Converter(ConverterMacro):
             self._stack_top_append(text)
         self._stack_pop()
 
+    inline_macro = r"""
+        (?P<macro>
+            <<
+            (?P<macro_name> \w+)
+            (\( (?P<macro_args> .*?) \))? \s*
+            ([|] \s* (?P<macro_text> .+?) \s* )?
+            >>
+        )
+    """
+
+    def inline_macro_repl(self, macro, macro_name, macro_args=''):
+        """Handles macros using the placeholder syntax."""
+
+        elem = self.macro(macro_name, macro_args, macro, 'inline')
+        self._stack_top_append(elem)
+
+    inline_nowiki = r"""
+        (?P<nowiki>
+            {{{
+            (?P<nowiki_text>.*?}*)
+            }}}
+        )
+    """
+
+    def inline_nowiki_repl(self, nowiki, nowiki_text):
+        tag = ET.QName('code', namespaces.moin_page)
+        self._stack_top_append(ET.Element(tag, children=[nowiki_text]))
+
     inline_object = r"""
         (?P<object>
             {{
@@ -267,8 +295,8 @@ class Converter(ConverterMacro):
     inline = (
         inline_link,
         #inline_url,
-        #inline_macro,
-        #inline_nowiki,
+        inline_macro,
+        inline_nowiki,
         inline_object,
         inline_emphstrong,
         #inline_linebreak,
