@@ -53,6 +53,74 @@ class Converter(ConverterMacro):
         element = ET.Element(tag, attrib = {tag_level: str(level)}, children = [head_text])
         self._stack_top_append(element)
 
+    block_line = r'(?P<line> ^ \s* $ )'
+    # empty line that separates paragraphs
+
+    def block_line_repl(self, line):
+        self._stack_pop_name(('page', 'blockquote'))
+
+    block_list = r"""
+        (?P<list>
+            ^
+            (?P<list_indent> \s+ )
+            (
+                (?P<list_numbers> [0-9]+\.\s )
+                |
+                (?P<list_alpha> [aA]\.\s )
+                |
+                (?P<list_roman> [iI]\.\s )
+                |
+                (?P<list_bullet> \* )
+                |
+                (?P<list_none> \. )
+            )
+            \s*
+            (?P<list_text> .*? )
+            $
+        )
+    """
+
+    def block_list_repl(self, list, list_indent, list_numbers=None,
+            list_alpha=None, list_roman=None, list_bullet=None,
+            list_none=None, list_text=None):
+
+        level = len(list_indent)
+        if list_numbers or list_alpha or list_alpha:
+            type = 'ordered'
+        else:
+            type = 'unordered'
+
+        while True:
+            cur = self._stack[-1]
+            if cur.tag.name in ('page', 'blockquote'):
+                break
+            if cur.tag.name == 'list-item-body':
+                if level > cur.level:
+                    break
+            if cur.tag.name == 'list':
+                if level >= cur.level and type == cur.type:
+                    break
+            self._stack.pop()
+
+        if cur.tag.name != 'list':
+            tag = ET.QName('list', namespaces.moin_page)
+            tag_generate = ET.QName('item-label-generate', namespaces.moin_page)
+            attrib = {tag_generate: type}
+            element = ET.Element(tag, attrib=attrib)
+            element.level, element.type = level, type
+            self._stack_push(element)
+
+        tag = ET.QName('list-item', namespaces.moin_page)
+        tag_body = ET.QName('list-item-body', namespaces.moin_page)
+        element = ET.Element(tag)
+        element_body = ET.Element(tag_body)
+        element_body.level, element_body.type = level, type
+
+        self._stack_push(element)
+        self._stack_push(element_body)
+
+        self.parse_inline(list_text)
+
     block_macro = r"""
         ^
         \s*?
@@ -123,12 +191,6 @@ class Converter(ConverterMacro):
         self._stack_pop_name(('page', 'blockquote'))
         tag = ET.QName('separator', namespaces.moin_page)
         self._stack_top_append(ET.Element(tag))
-
-    block_line = r'(?P<line> ^ \s* $ )'
-    # empty line that separates paragraphs
-
-    def block_line_repl(self, line):
-        self._stack_pop_name(('page', 'blockquote'))
 
     block_text = r'(?P<text> (?P<text_newline>(?<=\n))? .+ )'
 
@@ -286,7 +348,7 @@ class Converter(ConverterMacro):
         block_separator,
         block_macro,
         block_nowiki,
-        #block_list,
+        block_list,
         #block_table,
         block_text,
     )
