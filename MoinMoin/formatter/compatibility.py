@@ -191,16 +191,16 @@ class Formatter(ConverterMacro):
     # Document Level #####################################################
 
     def startDocument(self, pagename):
-        raise NotImplementedError
+        raise NotImplementedError('startDocument')
 
     def endDocument(self):
-        raise NotImplementedError
+        raise NotImplementedError('endDocument')
 
     def startContent(self, **kw):
-        raise NotImplementedError
+        raise NotImplementedError('startContent')
 
     def endContent(self):
-        raise NotImplementedError
+        raise NotImplementedError('endContent')
 
     # Links ##############################################################
 
@@ -251,8 +251,7 @@ class Formatter(ConverterMacro):
         return ''
 
     def anchordef(self, name):
-        raise NotImplementedError
-        return ""
+        raise NotImplementedError('anchordef')
 
     def line_anchordef(self, lineno):
         # TODO
@@ -261,12 +260,10 @@ class Formatter(ConverterMacro):
         return ""
 
     def anchorlink(self, on, name='', **kw):
-        raise NotImplementedError
-        return ""
+        raise NotImplementedError('anchorlink')
 
     def line_anchorlink(self, on, lineno=0):
-        raise NotImplementedError
-        return ""
+        raise NotImplementedError('line_anchorlink')
 
     def image(self, src=None, **kw):
         """An inline image.
@@ -293,7 +290,7 @@ class Formatter(ConverterMacro):
             attrib[self.tag_data] = data
         return self.handle_on(on, self.tag_object, attrib)
     def transclusion_param(self, **kw):
-        raise NotImplementedError
+        raise NotImplementedError('transclusion_param')
 
     def smiley(self, text):
         # TODO
@@ -310,7 +307,7 @@ class Formatter(ConverterMacro):
         return ''
 
     def _text(self, text):
-        raise NotImplementedError
+        raise NotImplementedError('_text')
 
     def strong(self, on, **kw):
         return self.handle_on(on, self.tag_strong)
@@ -323,7 +320,7 @@ class Formatter(ConverterMacro):
         return ''
 
     def highlight(self, on, **kw):
-        raise NotImplementedError
+        raise NotImplementedError('highlight')
 
     def sup(self, on, **kw):
         # TODO
@@ -373,7 +370,7 @@ class Formatter(ConverterMacro):
     # Paragraphs, Lines, Rules ###########################################
 
     def linebreak(self, preformatted=1):
-        raise NotImplementedError
+        raise NotImplementedError('linebreak')
 
     def paragraph(self, on, **kw):
         self.in_p = on != 0
@@ -384,7 +381,7 @@ class Formatter(ConverterMacro):
         return ''
 
     def icon(self, type):
-        raise NotImplementedError
+        raise NotImplementedError('icon')
         return type
 
     # Lists ##############################################################
