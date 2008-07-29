@@ -9,6 +9,8 @@ import py.test
 
 from MoinMoin.converter2.html_out import *
 
+ns_str_default = 'xmlns="%s" xmlns:html="%s" xmlns:xlink="%s"' % (
+        namespaces.moin_page, namespaces.html, namespaces.xlink)
 namespaces_string_html = 'xmlns:html="%s"' % namespaces.html
 namespaces_string_html_default = 'xmlns="%s"' % namespaces.html
 namespaces_string_page = 'xmlns:page="%s"' % namespaces.moin_page
@@ -76,6 +78,16 @@ class TestConverterBase(object):
                 '<div %s><ol><li>Item</li></ol></div>' % namespaces_string_html_default),
             ('<page %s><list><list-item><list-item-label>Label</list-item-label><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string_page_default,
                 '<div %s><dl><dt>Label</dt><dd>Item</dd></dl></div>' % namespaces_string_html_default),
+        ]
+        for i in pairs:
+            yield (self._do, ) + i
+
+    def test_object(self):
+        pairs = [
+            ('<page %s><object xlink:href="href"/></page>' % ns_str_default,
+                '<div %s><object data="href" /></div>' % namespaces_string_html_default),
+            ('<page %s><object xlink:href="href.png"/></page>' % ns_str_default,
+                '<div %s><img src="href.png" /></div>' % namespaces_string_html_default),
         ]
         for i in pairs:
             yield (self._do, ) + i
