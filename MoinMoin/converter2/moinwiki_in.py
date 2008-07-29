@@ -18,7 +18,7 @@ from MoinMoin.converter2._wiki_macro import ConverterMacro
 class Converter(ConverterMacro):
     @classmethod
     def _factory(cls, input, output):
-        if input == 'text/moin-wiki;disabled' and output == 'application/x-moin-document':
+        if input == 'text/moin-wiki' and output == 'application/x-moin-document':
             return cls
 
     def __init__(self, request, page_name=None, args=None):
