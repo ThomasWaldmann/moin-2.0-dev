@@ -70,6 +70,8 @@ class TestConverter(object):
                 '<page %s><p>Text <emphasis>Emphasis\n</emphasis>Text</p></page>' % namespaces_string),
             ("Text ''Emphasis\n\nText",
                 '<page %s><p>Text <emphasis>Emphasis</emphasis></p><p>Text</p></page>' % namespaces_string),
+            ("Text''''''Text''''",
+                '<page %s><p>TextText</p></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do, ) + i

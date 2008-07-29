@@ -213,7 +213,7 @@ class Converter(ConverterMacro):
 
     inline_emphstrong = r"""
         (?P<emphstrong>
-            '{2,5}
+            '{2,6}
             (?=[^']+ (?P<emphstrong_follow> '{2,3} (?!') ) )?
         )
     """
