@@ -53,6 +53,77 @@ class Converter(ConverterMacro):
         element = ET.Element(tag, attrib = {tag_level: str(level)}, children = [head_text])
         self._stack_top_append(element)
 
+    block_macro = r"""
+        ^
+        \s*?
+        (?P<macro>
+            <<
+            (?P<macro_name> \w+)
+            (\( (?P<macro_args> .*?) \))? \s*
+            ([|] \s* (?P<macro_text> .+?) \s* )?
+            >>
+        )
+        \s*?
+        $
+    """
+
+    def block_macro_repl(self, macro, macro_name, macro_args=''):
+        """Handles macros using the placeholder syntax."""
+
+        self._stack_pop_name(('page', 'blockquote'))
+        elem = self.macro(macro_name, macro_args, macro, 'block')
+        if elem:
+            self._stack_top_append(elem)
+
+    block_nowiki = r"""
+        (?P<nowiki>
+            ^{{{ \s* $
+            (\n)?
+            ([\#]!\ *(?P<nowiki_kind>\w*)(\ +[^\n]*)?\n)?
+            (?P<nowiki_text>
+                (.|\n)+?
+            )
+            (\n)?
+            ^}}} \s*$
+        )
+    """
+
+    def block_nowiki_repl(self, nowiki, nowiki_text, nowiki_kind=None):
+        self._stack_pop_name(('page', 'blockquote'))
+
+        def remove_tilde(m):
+            return m.group('indent') + m.group('rest')
+
+        if nowiki_kind:
+            # TODO: move somewhere else
+            from MoinMoin import wikiutil
+            from MoinMoin.converter2 import default_registry as reg
+
+            mimetype = wikiutil.MimeType(nowikiblock_kind).mime_type()
+            Converter = reg.get(mimetype, 'application/x-moin-document', None)
+
+            if Converter:
+                self._stack_push(ET.Element(ET.QName('div', namespaces.moin_page)))
+
+                doc = Converter(self.request, self.page_name)(nowiki_text)
+                self._stack_top_append(doc)
+
+            else:
+                # TODO: warning
+                pass
+
+        else:
+            # TODO: escape
+            tag = ET.QName('blockcode', namespaces.moin_page)
+            self._stack_top_append(ET.Element(tag, children=[nowiki_text]))
+
+    block_separator = r'(?P<separator> ^ \s* -{4,} \s* $ )'
+
+    def block_separator_repl(self, separator):
+        self._stack_pop_name(('page', 'blockquote'))
+        tag = ET.QName('separator', namespaces.moin_page)
+        self._stack_top_append(ET.Element(tag))
+
     block_line = r'(?P<line> ^ \s* $ )'
     # empty line that separates paragraphs
 
@@ -184,9 +255,9 @@ class Converter(ConverterMacro):
     block = (
         block_line,
         block_head,
-        #block_separator,
-        #block_macro,
-        #block_nowiki,
+        block_separator,
+        block_macro,
+        block_nowiki,
         #block_list,
         #block_table,
         block_text,
