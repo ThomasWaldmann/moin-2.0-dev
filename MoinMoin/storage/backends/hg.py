@@ -82,6 +82,9 @@ from MoinMoin.storage.error import BackendError, NoSuchItemError,\
                                    NoSuchRevisionError,\
                                    RevisionNumberMismatchError,\
                                    ItemAlreadyExistsError, RevisionAlreadyExistsError
+from MoinMoin import log
+logging = log.getLogger("MercurialBackend")
+                                                                      
 PICKLEPROTOCOL = 1
 
 class MercurialBackend(Backend):
@@ -188,8 +191,8 @@ class MercurialBackend(Backend):
 
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
-        ctx = self._repo[self._repo.changelog.tip()]
-        name = self._quote(item.name)
+        ctx = self._repo[self._repo.changelog.tip()]        
+        name = self._quote(item.name)                                                                                                                                                  
         try:
             revs = item.list_revisions()
             if revno == -1 and revs:
@@ -210,16 +213,36 @@ class MercurialBackend(Backend):
         Retrieves only accessible rev numbers when internal indexfile
         inconsistency occurs.
         """
-        filelog = self._repo.file(self._quote(item.name))
+        name = (self._quote(item.name))
+        item_log = self._repo.file(name)
         cl_count = len(self._repo)
+        
+        def findrenames(filelog, sources):
+            n = filelog.node(0)
+            renamed = filelog.renamed(n) 
+            if renamed:
+                findrenames(self._repo.file(renamed[0]), sources)    
+                sources.append(renamed)
+                
+        source_items = []
+        findrenames(item_log, source_items)
+        
+        log = []
+        if source_items:
+            for itemname, node in source_items:                
+                fctx = self._repo.filectx(itemname, fileid=node)
+                log.extend(map(lambda x: (x, self._repo.file(itemname), ), range(fctx.filerev() + 1)))
+        log.extend(map(lambda x: (x, item_log, ),  range(len(item_log))))
+        
         revs = []
-        for revno in xrange(len(filelog)):
+        for revno in xrange(len(log)):
             try:
-                assert filelog.linkrev(filelog.node(revno)) < cl_count, \
-                    "Revision number out of bounds, repository inconsistency!"
-                revs.append(revno)
+                flog = log[revno][1]
+                assert flog.linkrev(flog.node(log[revno][0])) < cl_count        
+                revs.append(revno)        
             except (IndexError, AssertionError):  # malformed index file
-                pass  # XXX: should we log inconsistency?
+                logging.warn("Revision number out of bounds. Index file inconsistency: %s" % 
+                                                                        self._rpath(flog.indexfile))                                
         return revs
 
     def _write_revision_data(self, revision, data):
