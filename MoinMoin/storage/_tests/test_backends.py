@@ -433,3 +433,11 @@ class BackendTest(object):
         item.publish_metadata()
         item.rename("er")
         assert item["previous_name"] == "re"
+        
+    def test_long_names_back_and_forth(self):
+        item = self.backend.create_item("long_name_" * 100 + "with_happy_end")
+        item.create_revision(0)
+        item.commit()
+        assert self.backend.has_item("long_name_" * 100 + "with_happy_end")
+        item = self.backend.iteritems().next()
+        assert item.name == "long_name_" * 100 + "with_happy_end"
