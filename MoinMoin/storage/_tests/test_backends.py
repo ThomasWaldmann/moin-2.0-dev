@@ -426,3 +426,10 @@ class BackendTest(object):
         rev = item.get_revision(0)
         assert rev["revno"] == "0"
 
+    def test_meta_after_rename(self):
+        item = self.backend.create_item("re")
+        item.change_metadata()
+        item["previous_name"] = "re"
+        item.publish_metadata()
+        item.rename("er")
+        assert item["previous_name"] == "re"
