@@ -210,6 +210,16 @@ class BackendTest(object):
             assert isinstance(item, Item)
             count += 1
         assert count > 0
+        
+    def test_iteritems_3(self):
+        self.create_rev_item_helper("without_meta")
+        self.create_rev_item_helper("with_meta")
+        item = self.backend.get_item("with_meta")
+        item.change_metadata()
+        item["meta"] = "data"
+        item.publish_metadata()         
+        itemlist = [item for item in self.backend.iteritems()]
+        assert len(itemlist) == 2
 
     def test_existing_item_create_revision(self):
         self.create_rev_item_helper("existing")
