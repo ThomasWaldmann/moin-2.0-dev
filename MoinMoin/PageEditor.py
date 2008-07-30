@@ -536,8 +536,9 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             request.theme.add_msg(_('Edit was cancelled.'), "error")
             self.send_page()
 
-        if self.getRevList() == []:
-            del self._items[self.page_name]
+        # XXX Obsolete because we only store items when they are really committed.
+        ###if self.getRevList() == []:
+        ###    del self._items[self.page_name]
 
     def copyPage(self, newpagename, comment=u''):
         """ Copy the current version of the page (keeping the backups, logs and attachments).
