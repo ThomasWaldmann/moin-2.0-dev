@@ -439,7 +439,7 @@ class FSBackend(Backend):
                 # XXXX: might not work on windows
                 try:
                     os.unlink(os.path.join(self._path, item._fs_item_id, 'meta'))
-                except IOError, err:
+                except OSError, err:
                     if err.errno != errno.ENOENT:
                         raise
                     # ignore, there might not have been metadata
