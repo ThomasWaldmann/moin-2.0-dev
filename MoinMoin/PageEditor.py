@@ -614,14 +614,17 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         """
         request = self.request
         _ = self._
+        old_name = self.page_name
 
-        if not (request.user.may.delete(self.page_name)
+        if not (request.user.may.delete(old_name)
                 and request.user.may.write(newpagename)):
             msg = _('You are not allowed to rename this page!')
             raise self.AccessDenied, msg
 
         try:
-            self._items.rename_item(self.page_name, newpagename)
+            ###self._items.rename_item(self.page_name, newpagename)
+            item = self._backend.get_item(old_name)
+            item.rename(newpagename)
         except BackendError, err:
             return False, _(err.message)
 
@@ -629,8 +632,8 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         savetext = newpage.get_raw_body()
 
-        savetext = u"## page was renamed from %s\n%s" % (self.page_name, savetext)
-        newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE/RENAME', notify=False)
+        savetext = u"## page was renamed from %s\n%s" % (old_name, savetext)
+        newpage.saveText(savetext, 0, comment=comment, index=0, extra=old_name, action='SAVE/RENAME', notify=False)
 
         # delete pagelinks
         arena = newpage
@@ -649,7 +652,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             from MoinMoin.search.Xapian import Index
             index = Index(request)
             if index.exists():
-                index.remove_item(self.page_name, now=0)
+                index.remove_item(old_name, now=0)
                 index.update_page(newpagename)
 
         event = PageRenamedEvent(request, newpage, self, comment)
