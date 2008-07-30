@@ -56,7 +56,7 @@ def execute(pagename, request):
 
     if currentrev < 1:  # Revision enumeration starts with 0 in the backend
         request.theme.add_msg(_("No older revisions available!"), "error")
-        currentpage.send_page()
+        Page.from_item(request, currentpage).send_page()
         return
 
     if date: # this is how we get called from RecentChanges
@@ -202,7 +202,10 @@ def execute(pagename, request):
         Page.from_item(request, newpage._item).send_page(count_hit=0, content_only=1, content_id="content-below-diff")
     else:
         from MoinMoin.util import diff_text
-        lines = diff_text.diff(oldpage.getlines(), newpage.getlines())
+        # XXX and here...
+        oldlines = Page.from_item(request, oldpage._item).getlines()
+        newlines = Page.from_item(request, newpage._item).getlines()
+        lines = diff_text.diff(oldlines, newlines)
         if not lines:
             msg = f.text(" - " + _("No differences found!"))
             if edit_count > 1:
