@@ -570,15 +570,15 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
             new_rev.write(old_rev.read())
 
-            for key, value in old_rev:
-                new_rev[key] = value
+            for key in old_rev:
+                new_rev[key] = old_rev[key]
 
             new_item.commit()
 
         # transfer item metadata
         new_item.change_metadata()
-        for key, value in old_item:
-            new_item[key] = value
+        for key in old_item:
+            new_item[key] = old_item[key]
         new_item.publish_metadata()
 
         newpage = PageEditor(request, newpagename)
