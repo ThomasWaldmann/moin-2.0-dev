@@ -552,10 +552,33 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         if not self.request.user.may.write(newpagename):
             return False, _('You are not allowed to copy this page!')
 
-        try:
-            self._items.copy_item(self.page_name, newpagename)
-        except BackendError, err:
-            return False, _(err.message)
+        if newpagename == self.page_name:
+            return False, _("Copy failed because name and newname are the same.")
+
+        if not newpagename:
+            return False, _("You cannot copy to an empty item name.")
+
+        old_item = self._backend.get_item(self.page_name)
+        new_item = self._backend.create_item(newpagename)
+
+        # Transfer all revisions with their data and metadata
+        revs = old_item.list_revisions()  # TODO Make sure the list begins with the lowest value, that is, 0.
+        for revno in revs:
+            new_rev = new_item.create_revision(revno)
+            old_rev = old_item.get_revision(revno)
+
+            new_rev.write(old_rev.read())
+
+            for key, value in old_rev:
+                new_rev[key] = value
+
+            new_item.commit()
+
+        # transfer item metadata
+        new_item.change_metadata()
+        for key, value in old_item:
+            new_item[key] = value
+        new_item.publish_metadata()
 
         newpage = PageEditor(request, newpagename)
 
