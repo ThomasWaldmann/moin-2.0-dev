@@ -177,13 +177,15 @@ class MercurialBackend(Backend):
 
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
-        revs = item.list_revisions()
+        revs = self._list_revisions(item)
         if revs:
             if revno in revs:
                 raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
             if revno != revs[-1] + 1:
                 raise RevisionNumberMismatchError("Unable to create revision number %d. \
                     New Revision number must be next to latest Revision number." % revno)
+            # XXX: this check will go out as soon as merging is implemented higher ;)
+            # this will also need explicitly pointing parent revision in commit
         rev = NewRevision(item, revno)
         rev._data = StringIO.StringIO()
         rev._revno = revno
@@ -328,8 +330,7 @@ class MercurialBackend(Backend):
             if item._metadata is None:
                 pass               
             else:
-                write_meta_item(meta_item_path, item._metadata)
-            print "delete lock"                
+                write_meta_item(meta_item_path, item._metadata)               
             del item._lock
         else:
             if self.has_item(item.name):
@@ -361,29 +362,26 @@ class MercurialBackend(Backend):
 
     def _commit_item(self, item):
         """Commit Item changes within transaction (Revision) to repository."""
-        rev = item._uncommitted_revision                                                                               
+        rev = item._uncommitted_revision                
+        if not item._exists and self.has_item(item.name):
+            raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
+               
         meta = dict(("_%s" % key, value) for key, value in rev.iteritems())
         name = self._quote(item.name)
         lock = self._repolock()
         try:
-            has_item = self.has_item(item.name)
-            if has_item:
-                if rev.revno == 0:
-                    raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
-                elif rev.revno in item.list_revisions():
-                    raise RevisionAlreadyExistsError("Revision already exists: %d" % rev.revno)
-            msg = meta.get("comment", "")
-            user = meta.get("editor", "anonymous")  # XXX: meta keys review
-            data = rev._data.getvalue()
-            fname = [name]
-
             def getfilectx(repo, memctx, path):
                 return context.memfilectx(path, data, False, False, False)
-
+                        
+            msg = meta.get("comment", "")
+            user = meta.get("editor", "anonymous")  # XXX: meta keys spec
+            data = rev._data.getvalue()
+            fname = [name]
             p1, p2 = self._repo.changelog.tip(), node.nullid
-            ctx = context.memctx(self._repo, (p1, p2), msg, fname, getfilectx, user, extra=meta)
-            if not has_item:
-                ctx._status[1], ctx._status[0] = ctx._status[0], ctx._status[1]
+            # TODO: check this parents on merging task
+            ctx = context.memctx(self._repo, (p1, p2), msg, fname, getfilectx, user, extra=meta)            
+            if not item._exists:
+                ctx._status[1], ctx._status[0] = ctx._status[0], ctx._status[1]                
             self._repo.commitctx(ctx)
             item._exists = True
         finally:
