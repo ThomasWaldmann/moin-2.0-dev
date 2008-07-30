@@ -289,7 +289,15 @@ class MercurialBackend(Backend):
                     return context.memfilectx(path, '', False, False, copies)
 
                 msg = "Renamed %s to: %s" % (item.name.encode('utf-8'), newname.encode('utf-8'))
-                editor = ""  # XXX: get from upper layer here
+                editor = ""  
+                # XXX: get from upper layer here
+                # this is however more complicated to achieve
+                # in normal situation like create_revision - commit
+                # we could pass this as revision metadata
+                # has_item(old_item) must be False after rename,
+                # which is true after hg rename, hg commit
+                # but produces commit too early from higher level
+                # code point of view
                 p1, p2 = self._repo.changelog.tip(), node.nullid
                 ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx, user=editor)
                 ctx._status[2] = [files[0]]
@@ -326,6 +334,15 @@ class MercurialBackend(Backend):
         else:
             if self.has_item(item.name):
                 raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
+                # TODO: this is a bit misleading
+                # first - its used on concurrent creates when
+                # no locks are involved yet, to fail latter publish
+                # whats worse - its also used to prevent mixed commit/publish
+                # see test_item_create_existing_mixed_2
+                # thus it has to check has_item not only has_meta
+                # but is completely harmless if item exists
+                # this should be simplified sometime, however tests
+                # are passing and there are more important things to do by now  
             if item._metadata is None:
                 item._metadata = {}
             write_meta_item(meta_item_path, item._metadata) 
