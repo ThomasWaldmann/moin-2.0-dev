@@ -2608,8 +2608,10 @@ def add_metadata_to_body(metadata, data):
     """
     Adds the processing instructions to the data.
     """
+    from MoinMoin.storage import SIZE, EDIT_LOG
+    READONLY_METADATA = [SIZE] + list(EDIT_LOCK) + EDIT_LOG
 
-    from MoinMoin.storage.external import READONLY_METADATA
+
     metadata_data = ""
     for key, value in metadata.iteritems():
 

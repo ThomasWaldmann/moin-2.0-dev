@@ -25,10 +25,10 @@ from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
 from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
-from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
+#from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
 #from MoinMoin.storage.backends.moin17 import UserBackend, ItemBackend
 from MoinMoin.storage.backends.meta import LayerBackend
-from MoinMoin.storage.external import DELETED
+from MoinMoin.storage import DELETED
 from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
