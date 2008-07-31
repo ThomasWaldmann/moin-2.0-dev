@@ -17,49 +17,38 @@ def execute(pagename, request):
         checking for either a "rev=formerrevision" parameter
         or rev1 and rev2 parameters
     """
+    _ = request.getText
     data_backend = request.cfg.data_backend
 
     if not request.user.may.read(pagename):
         Page(request, pagename).send_page()  # TODO: Get rid of Page-usage here
         return
 
+    # spacing flag?
+    ignorews = int(request.form.get('ignorews', [0])[0])
+
     try:
         date = int(request.form.get('date', [None])[0])
     except StandardError:
         date = None
-    try:
-        rev1 = int(request.form.get('rev1', [None])[0])
-    except StandardError:
-        rev1 = None
-    try:
-        rev2 = int(request.form.get('rev2', [None])[0])
-    except StandardError:
-        rev2 = None
 
-    # a value being None means that it was not (or not validly) given,
-    # thus we make up some defaults (no default for date, if it is not
-    # given or not valid, we just don't use it):
-    if rev2 is None:
-        rev2 = -1  # -1 means latest rev (implemented by backend)
-    if rev1 is None:
-        rev1 = -2  # -2 means second latest rev (not implemented by backend)
+    if date is None:
+        try:
+            rev1 = int(request.form.get('rev1', ['-2'])[0])
+        except StandardError:
+            rev1 = -2  # -2 means second latest rev (not implemented by backend)
+        try:
+            rev2 = int(request.form.get('rev2', ['-1'])[0])
+        except StandardError:
+            rev2 = -1  # -1 means latest rev (implemented by backend)
 
-    # spacing flag?
-    ignorews = int(request.form.get('ignorews', [0])[0])
-
-    _ = request.getText
-
-    # get a list of old revisions, and back out if none are available
+    # get (absolute) current revision number
     try:
         currentpage = data_backend.get_item(pagename)
-        currentrev = currentpage.get_revision(-1)
-
+        currentrev = currentpage.get_revision(-1).revno
     except (NoSuchRevisionError, NoSuchItemError, ):
         # TODO: Handle Exception sanely
         pass
-
-    currentrev = currentrev.revno
-
 
     if currentrev == 0:  # Revision enumeration starts with 0 in the backend
         request.theme.add_msg(_("No older revisions available!"), "error")
@@ -68,8 +57,8 @@ def execute(pagename, request):
 
     # now we have made sure that we have at least 2 revisions (revno 0 and 1)
 
-    if date: # this is how we get called from RecentChanges
-             # try to find the latest rev1 before bookmark <date>
+    if date is not None: # this is how we get called from RecentChanges
+        # try to find the latest rev1 before bookmark <date>
         revs = currentpage.list_revisions()
         revs.reverse()  # begin with latest rev
         for revno in revs:
@@ -86,17 +75,25 @@ def execute(pagename, request):
             rev1 = revno  # if we didn't find a rev, we just take oldest rev we have
         rev2 = -1  # and compare it with latest we have
 
+    # now we can calculate the absolute revnos if we don't have them yet
+    if rev1 < 0:
+        rev1 += currentrev + 1
+    if rev2 < 0:
+        rev2 += currentrev + 1
+
+    # swap values if rev1 is later than rev2
+    if rev1 > rev2:
+        rev1, rev2 = rev2, rev1
+
+    oldrev, newrev = rev1, rev2
+    edit_count = abs(newrev - oldrev)
+
     # Start output
     # This action generates content in the user language
     request.setContentLanguage(request.lang)
 
     request.emit_http_headers()
     request.theme.send_title(_('Diff for "%s"') % (pagename, ), pagename=pagename, allow_doubleclick=1)
-
-    if rev1 >= 0 and rev2 >= 0 and rev1 > rev2 or rev1 == -1 and rev2 >= 0:
-        rev1, rev2 = rev2, rev1
-
-    oldrev, newrev = rev1, rev2
 
     try:
         oldrevision = currentpage.get_revision(oldrev)
@@ -107,28 +104,16 @@ def execute(pagename, request):
         # TODO: Handle Exception sanely
         pass
 
-    edit_count = abs(newrev - oldrev)
-
     f = request.formatter
     request.write(f.div(1, id="content"))
-
-    revlist = currentpage.list_revisions()
-
-    # code below assumes that the page exists and has at least
-    # one revision in the revlist, just bail out if not. Users
-    # shouldn't really run into this anyway.
-    if not revlist:
-        request.write(f.div(0)) # end content div
-        request.theme.send_footer(pagename)
-        request.theme.send_closing_html()
-        return
 
     title = _('Differences between revisions %d and %d') % (oldrev, newrev)
     if edit_count > 1:
         title += ' ' + _('(spanning %d versions)') % (edit_count, )
     title = f.text(title)
 
-    # Revision list starts from 2...
+    revlist = currentpage.list_revisions()
+
     if oldrev == min(revlist):
         disable_prev = u' disabled="true"'
     else:
@@ -154,7 +139,7 @@ def execute(pagename, request):
    </form>
   </span>
  </td>
- """ % (page_url, rev2, _("Revert to this revision"), disable_next)
+ """ % (page_url, rev1, _("Revert to this revision"), disable_next)
 
     navigation_html = """
 <span class="diff-header">%s</span>
@@ -210,11 +195,12 @@ def execute(pagename, request):
             if ignorews:
                 request.write(f.text(_('(ignoring whitespace)')), f.linebreak())
             else:
-                qstr = {'action': 'diff', 'ignorews': '1', }
-                if rev1:
-                    qstr['rev1'] = str(rev1)
-                if rev2:
-                    qstr['rev2'] = str(rev2)
+                qstr = {
+                    'action': 'diff',
+                    'ignorews': '1',
+                    'rev1': str(rev1),
+                    'rev2': str(rev2),
+                }
                 request.write(f.paragraph(1), Page(request, pagename).link_to(request,
                     text=_('Ignore changes in the amount of whitespace'),
                     querystr=qstr, rel='nofollow'), f.paragraph(0))
