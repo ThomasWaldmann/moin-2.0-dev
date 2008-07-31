@@ -10,6 +10,7 @@
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.storage import EDIT_LOG_MTIME
+from MoinMoin.storage.error import NoSuchRevisionError
 
 def execute(pagename, request):
     """ Handle "action=diff"
@@ -49,9 +50,16 @@ def execute(pagename, request):
     _ = request.getText
 
     # get a list of old revisions, and back out if none are available
-    currentpage = data_backend.get_item(pagename)
-    currentrev = currentpage.get_revision(-1)
+    try:
+        currentpage = data_backend.get_item(pagename)
+        currentrev = currentpage.get_revision(-1)
+
+    except (NoSuchRevisionError, NoSuchItemError, ):
+        # TODO: Handle Exception sanely
+        pass
+
     currentrev = currentrev.revno
+
 
     if currentrev == 0:  # Revision enumeration starts with 0 in the backend
         request.theme.add_msg(_("No older revisions available!"), "error")
@@ -65,7 +73,12 @@ def execute(pagename, request):
         revs = currentpage.list_revisions()
         revs.reverse()  # begin with latest rev
         for revno in revs:
-            revision = currentpage.get_revision(revno)
+            try:
+                revision = currentpage.get_revision(revno)
+            except NoSuchRevisionError:
+                # TODO: Handle Exception sanely
+                pass
+
             if revision[EDIT_LOG_MTIME] <= date:
                 rev1 = revision.revno
                 break
@@ -85,8 +98,14 @@ def execute(pagename, request):
 
     oldrev, newrev = rev1, rev2
 
-    oldrevision = currentpage.get_revision(oldrev)
-    newrevision = currentpage.get_revision(newrev)
+    try:
+        oldrevision = currentpage.get_revision(oldrev)
+        newrevision = currentpage.get_revision(newrev)
+
+    except NoSuchRevisionError:
+        ##request.makeForbidden(404, "The revision you tried to access does not exist.")  #XXX Localize this?
+        # TODO: Handle Exception sanely
+        pass
 
     edit_count = abs(newrev - oldrev)
 
