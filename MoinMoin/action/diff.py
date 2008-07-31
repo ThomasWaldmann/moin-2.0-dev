@@ -9,6 +9,7 @@
 
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
+from MoinMoin.storage import EDIT_LOG_MTIME
 
 def execute(pagename, request):
     """ Handle "action=diff"
@@ -22,27 +23,25 @@ def execute(pagename, request):
         return
 
     try:
-        date = request.form['date'][0]
-        try:
-            date = date
-        except StandardError:
-            date = 0
-    except KeyError:
-        date = 0
-
-    try:
-        rev1 = int(request.form.get('rev1', [-1])[0])
+        date = int(request.form.get('date', [None])[0])
     except StandardError:
-        rev1 = 0
+        date = None
     try:
-        rev2 = int(request.form.get('rev2', [0])[0])
+        rev1 = int(request.form.get('rev1', [None])[0])
     except StandardError:
-        rev2 = 0
+        rev1 = None
+    try:
+        rev2 = int(request.form.get('rev2', [None])[0])
+    except StandardError:
+        rev2 = None
 
-    if rev1 == -1 and rev2 == 0:
-        rev1 = request.rev
-        if rev1 is None:
-            rev1 = -1
+    # a value being None means that it was not (or not validly) given,
+    # thus we make up some defaults (no default for date, if it is not
+    # given or not valid, we just don't use it):
+    if rev2 is None:
+        rev2 = -1  # -1 means latest rev (implemented by backend)
+    if rev1 is None:
+        rev1 = -2  # -2 means second latest rev (not implemented by backend)
 
     # spacing flag?
     ignorews = int(request.form.get('ignorews', [0])[0])
@@ -54,23 +53,25 @@ def execute(pagename, request):
     currentrev = currentpage.get_revision(-1)
     currentrev = currentrev.revno
 
-    if currentrev < 1:  # Revision enumeration starts with 0 in the backend
+    if currentrev == 0:  # Revision enumeration starts with 0 in the backend
         request.theme.add_msg(_("No older revisions available!"), "error")
         Page.from_item(request, currentpage).send_page()
         return
 
+    # now we have made sure that we have at least 2 revisions (revno 0 and 1)
+
     if date: # this is how we get called from RecentChanges
-        rev1 = 0
-        item = data_backend.get_item(pagename)
-        revs = item.list_revisions()
+             # try to find the latest rev1 before bookmark <date>
+        revs = currentpage.list_revisions()
+        revs.reverse()  # begin with latest rev
         for revno in revs:
-            revision = item.get_revision(revno)
-            if date >= revision[EDIT_LOG_MTIME]:
+            revision = currentpage.get_revision(revno)
+            if revision[EDIT_LOG_MTIME] <= date:
                 rev1 = revision.revno
                 break
         else:
-            rev1 = 1
-        rev2 = 0
+            rev1 = revno  # if we didn't find a rev, we just take oldest rev we have
+        rev2 = -1  # and compare it with latest we have
 
     # Start output
     # This action generates content in the user language
@@ -79,42 +80,18 @@ def execute(pagename, request):
     request.emit_http_headers()
     request.theme.send_title(_('Diff for "%s"') % (pagename, ), pagename=pagename, allow_doubleclick=1)
 
-    if rev1 > 0 and rev2 > 0 and rev1 > rev2 or rev1 == 0 and rev2 > 0:
+    if rev1 >= 0 and rev2 >= 0 and rev1 > rev2 or rev1 == -1 and rev2 >= 0:
         rev1, rev2 = rev2, rev1
 
-    if rev1 == -1:
-        oldrev = currentrev - 1
-        ###oldpage = Page(request, pagename, rev=oldrev)
-        item = data_backend.get_item(pagename)
-        oldpage = item.get_revision(oldrev)
+    oldrev, newrev = rev1, rev2
 
-    elif rev1 == 0:
-        oldrev = currentrev
-        oldpage = currentpage
-
-    else:
-        oldrev = rev1
-        ###oldpage = Page(request, pagename, rev=oldrev)
-        item = data_backend.get_item(pagename)
-        oldpage = item.get_revision(oldrev)
-
-    if rev2 == 0:
-        newrev = currentrev
-        newpage = currentpage.get_revision(newrev)
-
-    else:
-        newrev = rev2
-        ###newpage = Page(request, pagename, rev=newrev)
-        item = data_backend.get_item(pagename)
-        newpage = item.get_revision(newrev)
+    oldrevision = currentpage.get_revision(oldrev)
+    newrevision = currentpage.get_revision(newrev)
 
     edit_count = abs(newrev - oldrev)
 
     f = request.formatter
     request.write(f.div(1, id="content"))
-
-    oldrev = oldpage.revno
-    newrev = newpage.revno
 
     revlist = currentpage.list_revisions()
 
@@ -196,15 +173,13 @@ def execute(pagename, request):
 
     if request.user.show_fancy_diff:
         from MoinMoin.util import diff_html
-        request.write(f.rawHTML(diff_html.diff(request, oldpage.read(), newpage.read())))
-        ###newpage.send_page(count_hit=0, content_only=1, content_id="content-below-diff")
-        # XXX: Navigating stupidly from the revision to its item. Use a better approach here...
-        Page.from_item(request, newpage._item).send_page(count_hit=0, content_only=1, content_id="content-below-diff")
+        request.write(f.rawHTML(diff_html.diff(request, oldrevision.read(), newrevision.read())))
+        Page.from_item(request, currentpage).send_page(count_hit=0, content_only=1, content_id="content-below-diff")
+
     else:
         from MoinMoin.util import diff_text
-        # XXX and here...
-        oldlines = Page.from_item(request, oldpage._item).getlines()
-        newlines = Page.from_item(request, newpage._item).getlines()
+        oldlines = oldrevision.read().split('\n')
+        newlines = newrevision.read().split('\n')
         lines = diff_text.diff(oldlines, newlines)
         if not lines:
             msg = f.text(" - " + _("No differences found!"))
