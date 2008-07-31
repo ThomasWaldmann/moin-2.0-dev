@@ -130,6 +130,10 @@ class TestConverter(object):
         pairs = [
             ('* Item',
                 '<page %s><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string),
+            (' *Item',
+                '<page %s><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string),
+            ('*Item',
+                '<page %s><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></page>' % namespaces_string),
             ('* Item\nItem',
                 '<page %s><list item-label-generate="unordered"><list-item><list-item-body>Item\nItem</list-item-body></list-item></list></page>' % namespaces_string),
             ('* Item 1\n*Item 2',
@@ -210,6 +214,12 @@ class TestConverter(object):
         pairs = [
             ('Text\n* Item\n\nText',
                 '<page %s><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><p>Text</p></page>' % namespaces_string),
+            ('Text\n* Item\n= Heading',
+                '<page %s><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><h outline-level="1">Heading</h></page>' % namespaces_string),
+            ('Text\n* Item\n{{{\nnowiki\n}}}',
+                '<page %s><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><blockcode>nowiki</blockcode></page>' % namespaces_string),
+            ('Text\n* Item\n|Item',
+                '<page %s><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><table><table-body><table-row><table-cell>Item</table-cell></table-row></table-body></table></page>' % namespaces_string),
             ('Text\n|Item\nText',
                 '<page %s><p>Text</p><table><table-body><table-row><table-cell>Item</table-cell></table-row></table-body></table><p>Text</p></page>' % namespaces_string),
         ]
