@@ -80,33 +80,3 @@ class TestMercurialBackend(BackendTest):
             revval = "revision metatdata value for key %d" % num
             assert rev["%s" % num] == revval * 100
    
-    def test_revisions_after_rename(self):
-        def create_item_with_revs(name, revnum):
-            self.create_rev_item_helper(name)
-            item = self.backend.get_item(name)
-            for revno in xrange(1, revnum):
-                item.create_revision(revno)
-                item.commit()
-            return item
-        
-        revnum = 5
-        item = create_item_with_revs("A", revnum)
-        assert item.list_revisions() == range(revnum)
-        item.rename("B")
-        # mercurial renames have to be commited unless
-        # we use hashes/ids to represent Items in hg
-        # and provide mapping like in FSBackend,
-        # however this is not the 'right way', read below
-        assert item.list_revisions() == range(revnum + 1)
-        # http://www.moinmo.in/PawelPacana/MercurialBackend/HadItem
-        assert self.backend.has_item("B")
-        assert not self.backend.has_item("A")
-        assert self.backend.had_item("A")
-        assert not self.backend.had_item("B")  
-        item = self.backend.get_item("A")
-        revs = item.list_revisions()
-        item.create_revision(max(revs) + 1)
-        item.commit()
-        item.create_revision(max(revs) + 2)
-        item.commit()
-        assert item.list_revisions() == range(revs + 2)  
