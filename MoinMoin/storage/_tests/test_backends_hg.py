@@ -58,6 +58,9 @@ class TestMercurialBackend(BackendTest):
         os.mkdir(os.path.join(datadir, "meta"))
         os.mkdir(os.path.join(datadir, "rev"))
         try:
+            nameitem = mkstemp(dir=datadir)[1]
+            py.test.raises(BackendError, MercurialBackend, datadir)            
+            os.unlink(revitem)
             revitem = mkstemp(dir=os.path.join(datadir, "rev"))[1]
             py.test.raises(BackendError, MercurialBackend, datadir)
             os.unlink(revitem)
