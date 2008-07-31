@@ -137,7 +137,7 @@ except ImportError:
     from MoinMoin.support import pycdb as cdb
     
 PICKLEPROTOCOL = 1
-RANDPOOL = 1024
+RAND_MAX = 1024
 logging = log.getLogger("MercurialBackend")                                                                   
 
 
@@ -479,9 +479,9 @@ class MercurialBackend(Backend):
     def _add_item(self, item):
         """Add new Item to name-mapping and create name file."""                                                                        
         m = md5.new()
-        m.update("%s%s%d" % (datetime.datetime.now(), item.name.encode("utf-8"), random.randint(0, 1024)))
+        m.update("%s%s%d" % (datetime.datetime.now(), item.name.encode("utf-8"), random.randint(0, RAND_MAX)))
         item_id = m.hexdigest()
-        # XXX: something shorter wanted :)
+        # XXX: something shorter wanted ;)
                                                                                                                                                            
         encoded_name = item.name.encode('utf-8')
         name_path = os.path.join(self._path, '%s.name' % item_id)
