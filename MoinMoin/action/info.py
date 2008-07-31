@@ -110,12 +110,13 @@ def execute(pagename, request):
         # read in the complete log of this page
         item = request.cfg.data_backend.get_item(pagename)
         revs = item.list_revisions()
+        revs.reverse()
 
-        actions = []
         count = 0
         pgactioncount = 0
 
         for revno in revs:
+            actions = []
             revision = item.get_revision(revno)
             if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
                 size = page.size(rev=revno) # XXX Is the correct revision number passed here? 
@@ -132,7 +133,7 @@ def execute(pagename, request):
                     lchecked = rchecked = ''
                 diff = '<input type="radio" name="rev1" value="%d"%s><input type="radio" name="rev2" value="%d"%s>' % (revno, lchecked, revno, rchecked)
 
-                if revno > 1:
+                if revno > 0:
                     diff += render_action(' ' + _('to previous'), {'action': 'diff', 'rev1': revno-1, 'rev2': revno})
 
                 comment = revision[EDIT_LOG_COMMENT]
