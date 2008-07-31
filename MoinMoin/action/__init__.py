@@ -247,6 +247,17 @@ def do_show(pagename, request, content_only=0, count_hit=1, cacheable=1, print_m
         rev = request.rev or 0
         if rev == 0:
             request.cacheable = cacheable
+        
+        # XXX Just keeping this for now in order to make the view action work.
+        from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+        backend = request.cfg.data_backend
+        try:
+            item = backend.get_item(pagename)
+            last_rev = item.get_revision(-1)
+            rev = last_rev.revno
+        except (NoSuchItemError, NoSuchRevisionError, ):
+            rev = 0            
+
         Page(request, pagename, rev=rev, formatter=mimetype).send_page(
             count_hit=count_hit,
             print_mode=print_mode,
