@@ -58,6 +58,9 @@ class TestMercurialBackend(BackendTest):
         os.mkdir(os.path.join(datadir, "meta"))
         os.mkdir(os.path.join(datadir, "rev"))
         try:
+            nameitem = mkstemp(dir=datadir)[1]
+            py.test.raises(BackendError, MercurialBackend, datadir)            
+            os.unlink(nameitem)
             revitem = mkstemp(dir=os.path.join(datadir, "rev"))[1]
             py.test.raises(BackendError, MercurialBackend, datadir)
             os.unlink(revitem)
@@ -80,40 +83,3 @@ class TestMercurialBackend(BackendTest):
             revval = "revision metatdata value for key %d" % num
             assert rev["%s" % num] == revval * 100
    
-    def test_create_renamed_rev(self):
-        # nasty since renames are tracked copies
-        oldname, newname = "nasty", "one"
-        self.create_rev_item_helper(oldname)
-        item = self.backend.get_item(oldname)
-        item.rename(newname)
-        assert self.backend.has_item(newname)
-        assert not self.backend.has_item(oldname)
-        item = self.backend.create_item(oldname)
-        item.create_revision(0)
-   
-    # XXX: below backend behaviour to discuss with johill/dennda    
-    def test_confusing_1(self):
-        i1 = self.backend.create_item('existing')
-        i1.create_revision(0)
-        i1.commit()
-        i2 = self.backend.get_item('existing')
-        i2.change_metadata()
-        i2["meta"] = "has_rev"
-        i2.publish_metadata()
- 
-    def test_confusing_1_wtih_no_metadata(self):
-        i1 = self.backend.create_item('existing')
-        i1.create_revision(0)
-        i1.commit()
-        i2 = self.backend.get_item('existing')
-        i2.change_metadata()
-        i2.publish_metadata()
-        
-    def test_confusing_2(self):
-        i1 = self.backend.create_item('existing')
-        i1.change_metadata()
-        i1.publish_metadata()
-        i2 = self.backend.get_item('existing')
-        i2.create_revision(0)
-        i2.commit()     
-
