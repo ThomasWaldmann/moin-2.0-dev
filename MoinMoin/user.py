@@ -23,7 +23,6 @@ import os, time, sha, codecs, hmac, base64
 from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import timefuncs, filesys, random_string
 from MoinMoin.util import timefuncs
-from MoinMoin.storage.external import ItemCollection
 from MoinMoin.search import term
 from MoinMoin.wikiutil import url_quote_plus
 
