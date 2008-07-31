@@ -33,15 +33,10 @@ from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
-import MoinMoin.events.notification as notification
+from MoinMoin.storage import DELETED, EDIT_LOG_MTIME, EDIT_LOG_ADDR, \
+                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID
 
-EDIT_LOG_MTIME = "edit_log_mtime"
-EDIT_LOG_ACTION = "edit_log_action"
-EDIT_LOG_ADDR = "edit_log_addr"
-EDIT_LOG_HOSTNAME = "edit_log_hostname"
-EDIT_LOG_USERID = "edit_log_userid"
-EDIT_LOG_EXTRA = "edit_log_extra"
-EDIT_LOG_COMMENT = "edit_log_comment"
+import MoinMoin.events.notification as notification
 
 # used for merging
 conflict_markers = ("\n---- /!\\ '''Edit conflict - other version:''' ----\n",

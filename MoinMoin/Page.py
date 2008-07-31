@@ -29,10 +29,9 @@ logging = log.getLogger(__name__)
 from MoinMoin import config, caching, util, wikiutil, user
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage import Backend
-#from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage import DELETED, EDIT_LOG_MTIME, EDIT_LOG_ADDR, \
-                                      EDIT_LOG_HOSTNAME, EDIT_LOG_USERID
+                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
