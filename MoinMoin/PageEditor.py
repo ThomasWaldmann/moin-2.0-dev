@@ -558,7 +558,8 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         new_item = self._backend.create_item(newpagename)
 
         # Transfer all revisions with their data and metadata
-        revs = old_item.list_revisions()  # TODO Make sure the list begins with the lowest value, that is, 0.
+        # Make sure the list begins with the lowest value, that is, 0.
+        revs = old_item.list_revisions()
         for revno in revs:
             new_rev = new_item.create_revision(revno)
             old_rev = old_item.get_revision(revno)
