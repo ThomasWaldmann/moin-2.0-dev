@@ -45,6 +45,10 @@ from UserDict import DictMixin
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
                                    NoSuchItemError
 
+
+# TODO Move these constants to appropriate locations. They are not related to
+# TODO storage on this layer whatsoever. E.g. user-storage doesn't use them at
+# TODO all. Just keeping them here for convenience for now.
 ACL = "acl"
 
 # special meta-data whose presence indicates that the item is deleted
