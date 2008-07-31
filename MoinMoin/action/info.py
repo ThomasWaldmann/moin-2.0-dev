@@ -110,7 +110,12 @@ def execute(pagename, request):
             return page.link_to(request, text, querystr=query, **kw)
 
         # read in the complete log of this page
-        item = request.cfg.data_backend.get_item(pagename)
+        try:
+            item = request.cfg.data_backend.get_item(pagename)
+        except NoSuchItemError:
+            # TODO Handle the exception sanely
+            pass
+
         revs = item.list_revisions()
         revs.reverse()
 
@@ -119,7 +124,12 @@ def execute(pagename, request):
 
         for revno in revs:
             actions = []
-            revision = item.get_revision(revno)
+            try:
+                revision = item.get_revision(revno)
+            except NoSuchRevisionError:
+                # TODO Handle exception sanely
+                pass
+
             if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
                 size = page.size(rev=revno) # XXX Is the correct revision number passed here? 
                                             # XXX Storage and the rest of moin seem to use different enumeration methods. URGH!
