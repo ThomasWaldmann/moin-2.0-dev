@@ -166,7 +166,11 @@ class MercurialBackend(Backend):
                     if os.listdir(path):
                         raise BackendError("Directory not empty: %s" % path)                                
                 except OSError:
-                    pass  # directory not existing                                                    
+                    pass  # directory not existing                
+            for item in os.listdir(self._path):
+                if (os.path.isdir(item) and item not in ('rev', 'meta') or 
+                        not os.path.isdir(os.path.join(self._path, item)) and item != "name-mapping"):
+                    raise BackendError("Directory not empty: %s" % self._path)                                                        
         try:
             self._repo = hg.repository(self._ui, self._r_path, create)
         except RepoError:
