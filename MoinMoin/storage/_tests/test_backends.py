@@ -120,7 +120,16 @@ class BackendTest(object):
     def test_item_rename_to_invalid(self):
         for num, invalid_name in enumerate(self.invalid_names):
             yield self.rename_item_invalid_name, "item_%s" % num, invalid_name
-            
+
+    def test_item_rename_threesome(self):
+        item1 = self.create_rev_item_helper("item1")
+        item2 = self.create_rev_item_helper("item2")
+        item1.create_revision(1)
+        item1.commit()
+        item2.rename("item3")
+        item1.rename("item2")
+        assert len(item1.list_revisions()) == 2
+
     def create_item_invalid_name(self, name):
         py.test.raises(TypeError, self.backend.create_item, name)
 
