@@ -11,10 +11,12 @@
 
 from MoinMoin import config, wikiutil, action
 from MoinMoin.Page import Page
+from MoinMoin import user
 from MoinMoin.widget import html
 
 from MoinMoin.storage import EDIT_LOG_MTIME, EDIT_LOG_ACTION, EDIT_LOG_EXTRA, \
-                             EDIT_LOG_COMMENT
+                             EDIT_LOG_COMMENT, EDIT_LOG_USERID, EDIT_LOG_ADDR, \
+                             EDIT_LOG_HOSTNAME
 
 
 def execute(pagename, request):
@@ -170,8 +172,7 @@ def execute(pagename, request):
                 request.user.getFormattedDateTime(float(revision[EDIT_LOG_MTIME])),
                 str(size),
                 diff,
-                #line.getEditor(request) or _("N/A"), # FIXME line not available anymore. To what name does it translate now?
-                _("N/A"),
+                user.get_printable_editor(request, revision[EDIT_LOG_USERID], revision[EDIT_LOG_ADDR], revision[EDIT_LOG_HOSTNAME]) or _("N/A"),
                 wikiutil.escape(comment) or '&nbsp;',
                 "&nbsp;".join(actions),
             ))
