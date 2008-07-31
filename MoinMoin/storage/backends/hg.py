@@ -4,54 +4,102 @@
 
     This package contains code for backend based on Mercurial distributed
     version control system. This backend provides several advantages for
-    normal filesystem backend like internal atomicity handling, multiple
-    concurrent editors without page edit locking or data cloning.
+    normal filesystem backend like: 
+    - internal atomicity handling and revisioning
+    - multiple concurrent editors without page edit-locks
+    - data cloning
 
     As this code is based on new API design, it should prove consistency of this
     design and show how to use it in proper way.
 
     ---
 
-    Second iteration of backend.
+    Third iteration of backend.
 
     Items with Revisions are stored in hg internal directory.
-    Operations on Items are done in memory utilizing new mercurial features:
+    Operations on Items are done in memory, utilizing new mercurial features:
     memchangectx and memfilectx, which allow easy manipulation of changesets
-    without the need of working copy.
-
-    Items with Metadata are not versioned and stored in separate directory.
-
-    Revision metadata is stored in mercurial internally, using dictionary binded
-    with each changeset: 'extra'. This gives cleaner code, and mercurial stores
+    without the need of working copy. Advantage is less I/O operations.
+    
+    Revision data before commit is also stored in memory using StringIO.
+    While this good for small Items, bigger ones that don't fit into memory
+    will fail. 
+    
+    Revision metadata is stored in mercurial internally, using dictionary bound
+    to each changeset: 'extra'. This gives cleaner code, and mercurial stores
     this in optimal way itself.
-
-    Still, development version of mercurial has some limitations to overcome:
+    
+    Item Metadata is not versioned and stored in separate directory.
+    
+    This implementation does not identify Items internally by name. Instead Items
+    have unique ID's which are currently MD5 hashes. Name-to-id translation is 
+    stored in cdb.
+    Renames are done by relinking name with hash. Item does not move itself in hg.
+    Thus 'hg rename' is not used, and renames won't be possible 'on console' without 
+    providing dedicated hg extensions.
+    
+    Dropping previous names implementation had few motivations:
+    - Item names on filesystem, altough previously quoted and trimmed to conform
+      limits - still needed some care when operating 'on console', so any way 
+      both implementations needed tools to translate names.
+    - Rename history compatibilty not breaking current API. In 'hg rename', commit 
+      after rename was forced, and there was no possibilty to pass revision metadata
+      (internationalized comment i.e.) without messing too much - either in API or 
+      masking such commits in hg. 
+    
+    One downfall of this new implementation is total name obfusaction for 'console'
+    editors. To address this problem few hg extensions should be provided:
+    - hg wrename
+    - hg wcommit
+    - hg wmerge
+    - hg wmanifest
+    - hg wlog with template for viewing revision metadata
+    All these extensions take real page name and translate to hash internally. 
+    
+    When possible, no tricky things like revision hiding or manifest/index 
+    manipulation takes place in this backend. Items revisions are stored as
+    file revisions. Revision metadata goes to changeset dict (changesets contain 
+    only one file).
+    
+    This backend uses development version of mercurial. Besides this there are
+    few limitations to overcome:
     - file revision number is not increased when doing empty file commits
-    - on empty commit file flags have to be manipulated to get file linked with
-      changeset
-    This affects:
-    - we cannot support so called 'multiple empty revisions in a row',
-      there is no possibility to commit (file) revision which hasnt changed since 
-      last time
-    - as 'extra' dict is property of changeset, without increasing filerevs we're not
-      able to link rev meta and rev data
-    - revision metadata ('extra' dict) change is not stored in/as revision data,
-      thus committing revision metadata changes is like commiting empty changesets
+      (to be more precise, when nothing changes beetween commits: revdata and revmeta)
+      (Johannes Berg insists this "shouldn't be disallowed arbitrarily", the term used
+      to describe this backend behaviour: "multiple empty revisions in a row")
+      (as long as revmeta is stored in changeset, empty revdata is sufficent to consider
+      commit as empty, and this is the _real_ problem)
+    - on empty commit file flags have to be manipulated to get file bound with changeset
+      (and without this revmeta is disconnected with Revision it describes)
+      (however this could be done)
+    
+    If we drop support for "multiple empty revisions in a row" and change implementation
+    of revision metadata we could survive without patching hg. However other implementations
+    of revmeta are not so neat as current one, and the patch is only three harmless lines ;)
+    (MoinMoin/storage/backends/research/repo_force_changes.diff)
 
-    To address this blockers, patch was applied on mercurial development version
-    (see below).
-
-    Repository layout hasnt changed much. Even though versioned items are stored now
-    internally in .hg/, one can get rev/ directory populated on hg update as this
-    is simply working copy directory.
+    Repository layout:
+    - Item as files in rev/ with filename 'ID'. Revisions stored internally in .hg/
+      Since we're doing memory commits there will be no files in this directory
+      until manual 'hg update' from console.
+    - Item Metadata stored in meta/ as 'ID.meta'
+    - Item real names are stored loosely in data/ as 'ID.name'. This is for console users, 
+      and reverse mapping.
+    - name-mapping db in data/name-mapping file
 
     data/
     +-- rev/
         +-- .hg/
-      ( +-- items_with_revs )  # this only if someone runs 'hg update'
+        +-- 0f4eac723857aa118122c08f534fcf56  # this only if someone runs 'hg update'
+        +-- ...
     +-- meta/
-        +-- items_without_revs
-
+        +-- 0f4eac723857aa118122c08f534fcf56.meta
+        +-- 4c4712a4141d261ec0ca8f9037950685.meta
+        +-- ...
+    +-- 0f4eac723857aa118122c08f534fcf56.name
+    +-- 4c4712a4141d261ec0ca8f9037950685.name
+    +-- ...
+    +-- name-mapping
 
     IMPORTANT: This version of backend runs on newest development version of mercurial
     and small, additional patch for allowing multiple empty commits in a row
