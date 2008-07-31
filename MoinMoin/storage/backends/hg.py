@@ -388,7 +388,7 @@ class MercurialBackend(Backend):
                 f = open(self._upath(item._id + ".meta"), "rb")
                 item._metadata = pickle.load(f)
                 f.close()
-            except OSError, err:
+            except IOError, err:
                 if err.errno != errno.ENOENT:
                     raise
                 item._metadata = {}
