@@ -61,9 +61,7 @@ class Page(object):
         self.request = request
         self.cfg = request.cfg
         self.page_name = page_name
-        self.rev = kw.get('rev', 0) # revision of this page
-        if self.rev is None:
-            self.rev = 0
+        self.rev = kw.get('rev', -1) # revision of this page
         self.include_self = kw.get('include_self', 0)
 
         formatter = kw.get('formatter', None)
@@ -528,7 +526,7 @@ class Page(object):
         else:
             return not hasattr(self._item._backend, '_layer_marked_underlay')
 
-    def size(self, rev=0):
+    def size(self, rev=-1):
         """
         Get Page size.
 
@@ -954,7 +952,7 @@ class Page(object):
 
             # send the page header
             if self.default_formatter:
-                if self.rev:
+                if self.rev != -1:
                     request.theme.add_msg("<strong>%s</strong><br>" % (
                         _('Revision %(rev)d as of %(date)s') % {
                             'rev': self.rev,
