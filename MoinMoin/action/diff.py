@@ -178,7 +178,7 @@ def execute(pagename, request):
     if request.user.show_fancy_diff:
         from MoinMoin.util import diff_html
         request.write(f.rawHTML(diff_html.diff(request, oldrevision.read(), newrevision.read())))
-        Page.from_item(request, currentpage, rev=newrevision.revno).send_page(count_hit=0, content_only=1, content_id="content-below-diff")
+        Page.from_item(request, currentpage, rev=oldrevision.revno).send_page(count_hit=0, content_only=1, content_id="content-below-diff")
 
     else:
         from MoinMoin.util import diff_text
