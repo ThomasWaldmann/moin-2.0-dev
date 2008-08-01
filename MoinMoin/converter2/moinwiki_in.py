@@ -15,6 +15,38 @@ from MoinMoin import config, wikiutil
 from MoinMoin.util import namespaces
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
+class _Iter(object):
+    """
+    Iterator with push back support
+
+    Collected items can be pushed back into the iterator and further calls will
+    return them.
+    """
+
+    def __init__(self, input):
+        self.__finished = False
+        self.__input = iter(input)
+        self.__prepend = []
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if self.__finished:
+            raise StopIteration
+
+        if self.__prepend:
+            return self.__prepend.pop(0)
+
+        try:
+            return self.__input.next()
+        except StopIteration:
+            self.__finished = True
+            raise
+
+    def push(self, item):
+        self.__prepend.append(item)
+
 class Converter(ConverterMacro):
     @classmethod
     def _factory(cls, input, output):
@@ -35,7 +67,19 @@ class Converter(ConverterMacro):
 
         self.root = ET.Element(tag, attrib=attrib)
         self._stack = [self.root]
-        self.parse_block(text)
+        self.iter_lines = _Iter(text.split('\n'))
+
+        # The iterator is used in several locations, so "for line in lines"
+        # will not work. Use it manualy.
+        try:
+            while True:
+                line = self.iter_lines.next()
+                match = self.block_re.match(line)
+                self._apply(match, 'block')
+
+        except StopIteration:
+            pass
+
         return self.root
 
     block_head = r"""
@@ -149,42 +193,55 @@ class Converter(ConverterMacro):
 
     block_nowiki = r"""
         (?P<nowiki>
-            ^ \s* {{{ \s* $
-            (\n)?
-            ([\#]!\ *(?P<nowiki_kind>\w*)(\ +[^\n]*)?\n)?
-            (?P<nowiki_text>
-                (.|\n)+?
-            )
-            (\n)?
-            ^}}} \s*$
+            ^ \s* (?P<nowiki_marker> \{{3,} ) \s* $
         )
     """
+    # Matches the beginning of a nowiki block
 
-    def block_nowiki_repl(self, nowiki, nowiki_text, nowiki_kind=None):
+    nowiki_end = r"""
+        ^ (?P<marker> }{3,} ) \s* $
+    """
+    # Matches the possibly escaped end of a nowiki block
+
+    def block_nowiki_lines(self, marker_len):
+        "Unescaping generator for the lines in a nowiki block"
+
+        while True:
+            line = self.iter_lines.next()
+            match = self.nowiki_end_re.match(line)
+            if match:
+                marker = match.group('marker')
+                if len(marker) >= marker_len:
+                    return
+                line = marker[:-1]
+            yield line
+
+    def block_nowiki_repl(self, nowiki, nowiki_marker):
         self._stack_pop_name(('page', 'blockquote'))
 
-        if nowiki_kind:
-            # TODO: move somewhere else
-            from MoinMoin import wikiutil
-            from MoinMoin.converter2 import default_registry as reg
+        tag = ET.QName('blockcode', namespaces.moin_page)
 
-            mimetype = wikiutil.MimeType(nowiki_kind).mime_type()
-            Converter = reg.get(mimetype, 'application/x-moin-document', None)
+        nowiki_marker_len = len(nowiki_marker)
 
-            if Converter:
-                self._stack_push(ET.Element(ET.QName('div', namespaces.moin_page)))
+        firstline = self.iter_lines.next()
 
-                doc = Converter(self.request, self.page_name)(nowiki_text)
-                self._stack_top_append(doc)
+        # Stop directly if we got an end marker in the first line
+        match = self.nowiki_end_re.match(firstline)
+        if match and len(match.group('marker')) >= nowiki_marker_len:
+            self._stack_top_append(ET.Element(tag))
+            return
 
-            else:
-                # TODO: warning
-                pass
+        if firstline.startswith('#!') and 0:
+            # TODO: parser
+            pass
 
         else:
-            # TODO: escape
-            tag = ET.QName('blockcode', namespaces.moin_page)
-            self._stack_top_append(ET.Element(tag, children=[nowiki_text]))
+            elem = ET.Element(tag, children=[firstline])
+            self._stack_top_append(elem)
+
+            for line in self.block_nowiki_lines(nowiki_marker_len):
+                elem.append('\n')
+                elem.append(line)
 
     block_separator = r'(?P<separator> ^ \s* -{4,} \s* $ )'
 
@@ -193,9 +250,9 @@ class Converter(ConverterMacro):
         tag = ET.QName('separator', namespaces.moin_page)
         self._stack_top_append(ET.Element(tag))
 
-    block_text = r'(?P<text> (?P<text_newline>(?<=\n))? .+ )'
+    block_text = r'(?P<text> .+ )'
 
-    def block_text_repl(self, text, text_newline=None):
+    def block_text_repl(self, text):
         if self._stack[-1].tag.name in ('table', 'table-body', 'list'):
             self._stack_pop_name(('page', 'blockquote'))
         if self._stack[-1].tag.name in ('page', 'blockquote'):
@@ -203,7 +260,7 @@ class Converter(ConverterMacro):
             element = ET.Element(tag)
             self._stack_push(element)
         # If we are in a paragraph already, don't loose the whitespace
-        elif text_newline is not None:
+        else:
             self._stack_top_append('\n')
         self.parse_inline(text)
 
@@ -286,7 +343,7 @@ class Converter(ConverterMacro):
         element = ET.Element(tag, attrib = {tag_href: target})
         self._stack_push(element)
         if link_text:
-            self.parse_inlinedesc(link_text)
+            self.parse_inline(link_text, self.inlinedesc_re)
         else:
             self._stack_top_append(text)
         self._stack_pop()
@@ -314,7 +371,7 @@ class Converter(ConverterMacro):
             }}}
             |
             `
-            (?P<nowiki_text_backtick>.*)
+            (?P<nowiki_text_backtick>.*?)
             `
         )
     """
@@ -471,6 +528,9 @@ class Converter(ConverterMacro):
     )
     inlinedesc_re = re.compile('|'.join(inlinedesc), re.X | re.U)
 
+    # Nowiki end
+    nowiki_end_re = re.compile(nowiki_end, re.X)
+
     def _stack_pop_name(self, tags):
         """
         Look up the tree to the first occurence
@@ -494,27 +554,18 @@ class Converter(ConverterMacro):
         tag = self._stack[-1].tag
         return tag.uri == namespaces.moin_page and tag.name in names
 
-    def _apply(self, re, prefix, text):
-        """Invoke appropriate _*_repl method for every match"""
+    def _apply(self, match, prefix):
+        """
+        Call the _repl method for the last matched group with the given prefix.
+        """
+        data = dict(((str(k), v) for k, v in match.groupdict().iteritems() if v is not None))
+        getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(**data)
+
+    def parse_inline(self, text, re=inline_re):
+        """Recognize inline elements within the given text"""
 
         for match in re.finditer(text):
-            data = dict(((str(k), v) for k, v in match.groupdict().iteritems() if v is not None))
-            getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(**data)
-
-    def parse_inline(self, raw):
-        """Recognize inline elements inside blocks."""
-
-        self._apply(self.inline_re, 'inline', raw)
-
-    def parse_inlinedesc(self, raw):
-        """Recognize inline elements inside blocks."""
-
-        self._apply(self.inlinedesc_re, 'inline', raw)
-
-    def parse_block(self, raw):
-        """Recognize block elements."""
-
-        self._apply(self.block_re, 'block', raw)
+            self._apply(match, 'inline')
 
 from _registry import default_registry
 default_registry.register(Converter._factory)
