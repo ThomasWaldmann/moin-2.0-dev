@@ -28,7 +28,7 @@ EDIT_LOCK_USERID = "edit_lock_userid"
 
 EDIT_LOCK = [EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID]
 
-READONLY_METADATA = [SIZE] + EDIT_LOCK + EDIT_LOG
+# READONLY_METADATA = [SIZE] + EDIT_LOCK + EDIT_LOG # nobody should import from here anymore
 
 
 class ItemCollection(UserDict.DictMixin, object):

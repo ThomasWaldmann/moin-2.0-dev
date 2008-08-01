@@ -270,7 +270,8 @@ class ConfigFunctionality(object):
 
         self.cache.ua_spiders = self.ua_spiders and re.compile(self.ua_spiders, re.IGNORECASE)
 
-        self._check_directories()
+        # XXX deactivated, please remove finally and integrate the code into the fs backends
+        #self._check_directories()
 
         if not isinstance(self.superuser, list):
             msg = """The superuser setting in your wiki configuration is not a list
@@ -374,8 +375,7 @@ class ConfigFunctionality(object):
             self.url_prefix_local = self.url_prefix_static
 
         # storage configuration
-        if self.user_backend is None:
-            self.user_backend = UserBackend("user", self.user_dir, self)
+        assert self.user_backend is not None, "error in config, please fix"
 
         if self.data_backend is None:
             self.data_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
