@@ -93,19 +93,19 @@ class Converter(ConverterMacro):
     """
 
     def block_head_repl(self, head, head_head, head_text):
-        self._stack_pop_name(('page', 'blockquote'))
+        self.stack_pop_name('page')
         level = len(head_head)
 
         tag = ET.QName('h', namespaces.moin_page)
         tag_level = ET.QName('outline-level', namespaces.moin_page)
         element = ET.Element(tag, attrib = {tag_level: str(level)}, children = [head_text])
-        self._stack_top_append(element)
+        self.stack_top_append(element)
 
     block_line = r'(?P<line> ^ \s* $ )'
     # empty line that separates paragraphs
 
     def block_line_repl(self, line):
-        self._stack_pop_name(('page', 'blockquote'))
+        self.stack_pop_name('page')
 
     block_list = r"""
         (?P<list>
@@ -139,7 +139,7 @@ class Converter(ConverterMacro):
             type = 'unordered'
 
         while True:
-            cur = self._stack[-1]
+            cur = self.stack_top()
             if cur.tag.name in ('page', 'blockquote'):
                 break
             if cur.tag.name == 'list-item-body':
@@ -148,7 +148,7 @@ class Converter(ConverterMacro):
             if cur.tag.name == 'list':
                 if level >= cur.level and type == cur.type:
                     break
-            self._stack.pop()
+            self.stack_pop()
 
         if cur.tag.name != 'list':
             tag = ET.QName('list', namespaces.moin_page)
@@ -156,7 +156,7 @@ class Converter(ConverterMacro):
             attrib = {tag_generate: type}
             element = ET.Element(tag, attrib=attrib)
             element.level, element.type = level, type
-            self._stack_push(element)
+            self.stack_push(element)
 
         tag = ET.QName('list-item', namespaces.moin_page)
         tag_body = ET.QName('list-item-body', namespaces.moin_page)
@@ -164,8 +164,8 @@ class Converter(ConverterMacro):
         element_body = ET.Element(tag_body)
         element_body.level, element_body.type = level, type
 
-        self._stack_push(element)
-        self._stack_push(element_body)
+        self.stack_push(element)
+        self.stack_push(element_body)
 
         self.parse_inline(list_text)
 
@@ -186,10 +186,10 @@ class Converter(ConverterMacro):
     def block_macro_repl(self, macro, macro_name, macro_args=''):
         """Handles macros using the placeholder syntax."""
 
-        self._stack_pop_name(('page', 'blockquote'))
+        self.stack_pop_name('page')
         elem = self.macro(macro_name, macro_args, macro, 'block')
         if elem:
-            self._stack_top_append(elem)
+            self.stack_top_append(elem)
 
     block_nowiki = r"""
         (?P<nowiki>
@@ -217,7 +217,7 @@ class Converter(ConverterMacro):
             yield line
 
     def block_nowiki_repl(self, nowiki, nowiki_marker):
-        self._stack_pop_name(('page', 'blockquote'))
+        self.stack_pop_name('page')
 
         tag = ET.QName('blockcode', namespaces.moin_page)
 
@@ -228,7 +228,7 @@ class Converter(ConverterMacro):
         # Stop directly if we got an end marker in the first line
         match = self.nowiki_end_re.match(firstline)
         if match and len(match.group('marker')) >= nowiki_marker_len:
-            self._stack_top_append(ET.Element(tag))
+            self.stack_top_append(ET.Element(tag))
             return
 
         if firstline.startswith('#!') and 0:
@@ -237,7 +237,7 @@ class Converter(ConverterMacro):
 
         else:
             elem = ET.Element(tag, children=[firstline])
-            self._stack_top_append(elem)
+            self.stack_top_append(elem)
 
             for line in self.block_nowiki_lines(nowiki_marker_len):
                 elem.append('\n')
@@ -246,28 +246,29 @@ class Converter(ConverterMacro):
     block_separator = r'(?P<separator> ^ \s* -{4,} \s* $ )'
 
     def block_separator_repl(self, separator):
-        self._stack_pop_name(('page', 'blockquote'))
+        self.stack_pop_name('page')
         tag = ET.QName('separator', namespaces.moin_page)
-        self._stack_top_append(ET.Element(tag))
+        self.stack_top_append(ET.Element(tag))
 
     block_text = r'(?P<text> .+ )'
 
     def block_text_repl(self, text):
-        if self._stack[-1].tag.name in ('table', 'table-body', 'list'):
-            self._stack_pop_name(('page', 'blockquote'))
-        if self._stack[-1].tag.name in ('page', 'blockquote'):
+        if self.stack_top_check('table', 'table-body', 'list'):
+            self.stack_pop_name('page')
+
+        if self.stack_top_check('page'):
             tag = ET.QName('p', namespaces.moin_page)
             element = ET.Element(tag)
-            self._stack_push(element)
+            self.stack_push(element)
         # If we are in a paragraph already, don't loose the whitespace
         else:
-            self._stack_top_append('\n')
+            self.stack_top_append('\n')
         self.parse_inline(text)
 
     inline_text = r'(?P<text> .+? )'
 
     def inline_text_repl(self, text):
-        self._stack_top_append(text)
+        self.stack_top_append(text)
 
     inline_emphstrong = r"""
         (?P<emphstrong>
@@ -281,34 +282,34 @@ class Converter(ConverterMacro):
         tag_strong = ET.QName('strong', namespaces.moin_page)
 
         if len(emphstrong) == 5:
-            if self._stack_top_check(('emphasis', )):
-                self._stack_pop()
-                if self._stack_top_check(('strong', )):
-                    self._stack_pop()
+            if self.stack_top_check('emphasis'):
+                self.stack_pop()
+                if self.stack_top_check('strong'):
+                    self.stack_pop()
                 else:
-                    self._stack_push(ET.Element(tag_strong))
-            elif self._stack_top_check(('strong', )):
-                if self._stack_top_check(('strong', )):
-                    self._stack_pop()
+                    self.stack_push(ET.Element(tag_strong))
+            elif self.stack_top_check('strong'):
+                if self.stack_top_check('strong'):
+                    self.stack_pop()
                 else:
-                    self._stack_push(ET.Element(tag_strong))
+                    self.stack_push(ET.Element(tag_strong))
             else:
                 if len(emphstrong_follow) == 3:
-                    self._stack_push(ET.Element(tag_emphasis))
-                    self._stack_push(ET.Element(tag_strong))
+                    self.stack_push(ET.Element(tag_emphasis))
+                    self.stack_push(ET.Element(tag_strong))
                 else:
-                    self._stack_push(ET.Element(tag_strong))
-                    self._stack_push(ET.Element(tag_emphasis))
+                    self.stack_push(ET.Element(tag_strong))
+                    self.stack_push(ET.Element(tag_emphasis))
         elif len(emphstrong) == 3:
-            if self._stack_top_check(('strong', )):
-                self._stack_pop()
+            if self.stack_top_check('strong'):
+                self.stack_pop()
             else:
-                self._stack_push(ET.Element(tag_strong))
+                self.stack_push(ET.Element(tag_strong))
         elif len(emphstrong) == 2:
-            if self._stack_top_check(('emphasis', )):
-                self._stack_pop()
+            if self.stack_top_check('emphasis'):
+                self.stack_pop()
             else:
-                self._stack_push(ET.Element(tag_emphasis))
+                self.stack_push(ET.Element(tag_emphasis))
 
     inline_link = r"""
         (?P<link>
@@ -341,12 +342,12 @@ class Converter(ConverterMacro):
         tag = ET.QName('a', namespaces.moin_page)
         tag_href = ET.QName('href', namespaces.xlink)
         element = ET.Element(tag, attrib = {tag_href: target})
-        self._stack_push(element)
+        self.stack_push(element)
         if link_text:
             self.parse_inline(link_text, self.inlinedesc_re)
         else:
-            self._stack_top_append(text)
-        self._stack_pop()
+            self.stack_top_append(text)
+        self.stack_pop()
 
     inline_macro = r"""
         (?P<macro>
@@ -362,7 +363,7 @@ class Converter(ConverterMacro):
         """Handles macros using the placeholder syntax."""
 
         elem = self.macro(macro_name, macro_args, macro, 'inline')
-        self._stack_top_append(elem)
+        self.stack_top_append(elem)
 
     inline_nowiki = r"""
         (?P<nowiki>
@@ -389,7 +390,7 @@ class Converter(ConverterMacro):
         else:
             return
 
-        self._stack_top_append(ET.Element(tag, children=[text]))
+        self.stack_top_append(ET.Element(tag, children=[text]))
 
     inline_object = r"""
         (?P<object>
@@ -412,7 +413,7 @@ class Converter(ConverterMacro):
             attrib[tag_alt] = object_text
 
         element = ET.Element(tag, attrib)
-        self._stack_top_append(element)
+        self.stack_top_append(element)
 
     inline_freelink = r"""
         (?P<freelink>
@@ -467,7 +468,7 @@ class Converter(ConverterMacro):
         text = freelink_page or freelink_interwiki_page
 
         if freelink_bang:
-            self._stack_top_append(text)
+            self.stack_top_append(text)
             return
 
         tag = ET.QName('a', namespaces.moin_page)
@@ -475,7 +476,7 @@ class Converter(ConverterMacro):
 
         attrib = {tag_href: 'wiki.local:' + link}
         element = ET.Element(tag, attrib, children=[text])
-        self._stack_top_append(element)
+        self.stack_top_append(element)
 
     inline_url = r"""
         (?P<url>
@@ -493,7 +494,7 @@ class Converter(ConverterMacro):
         tag = ET.QName('a', namespaces.moin_page)
         tag_href = ET.QName('href', namespaces.xlink)
         element = ET.Element(tag, attrib = {tag_href: url_target}, children = [url_target])
-        self._stack_top_append(element)
+        self.stack_top_append(element)
 
     # Block elements
     block = (
@@ -531,26 +532,29 @@ class Converter(ConverterMacro):
     # Nowiki end
     nowiki_end_re = re.compile(nowiki_end, re.X)
 
-    def _stack_pop_name(self, tags):
+    def stack_pop_name(self, *names):
         """
         Look up the tree to the first occurence
         of one of the listed kinds of nodes or root.
         Start at the node node.
         """
-        while len(self._stack) > 1 and self._stack[-1].tag.name not in tags:
+        while len(self._stack) > 1 and not self.stack_top_check(*names):
             self._stack.pop()
 
-    def _stack_pop(self):
+    def stack_pop(self):
         self._stack.pop()
 
-    def _stack_push(self, elem):
-        self._stack_top_append(elem)
+    def stack_push(self, elem):
+        self.stack_top_append(elem)
         self._stack.append(elem)
 
-    def _stack_top_append(self, elem):
+    def stack_top(self):
+        return self._stack[-1]
+
+    def stack_top_append(self, elem):
         self._stack[-1].append(elem)
 
-    def _stack_top_check(self, names):
+    def stack_top_check(self, *names):
         tag = self._stack[-1].tag
         return tag.uri == namespaces.moin_page and tag.name in names
 
