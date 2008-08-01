@@ -37,6 +37,7 @@ from MoinMoin.Page import Page
 from MoinMoin.util import filesys, timefuncs
 from MoinMoin.security.textcha import TextCha
 from MoinMoin.events import FileAttachedEvent, send_event
+from MoinMoin.storage.error import ItemAlreadyExistsError
 
 action_name = __name__.split('.')[-1]
 
@@ -202,8 +203,13 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
                                          # stored for different pages.
 
     backend = request.cfg.data_backend
-    item = backend.create_item(item_name)
-
+    try:
+        item = backend.create_item(item_name)
+    except ItemAlreadyExistsError:
+        if not overwrite:
+            raise AttachmentAlreadyExists
+        else:
+            item = backend.get_item(item_name)
 
  #   # get directory, and possibly create it
  #   attach_dir = getAttachDir(request, pagename, create=1)
@@ -211,33 +217,30 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
  #   fpath = os.path.join(attach_dir, target).encode(config.charset)
  #   exists = os.path.exists(fpath)
     exists = backend.has_item(item_name)
-    if exists and not overwrite:
-        raise AttachmentAlreadyExists
+    if exists:
+        last_rev = item.get_revision(-1).revno
+        new_rev = item.create_revision(last_rev + 1)
+
     else:
-        if exists:
-            last_rev = item.get_revision(-1).revno
-            new_rev = item.create_revision(last_rev + 1)
+        new_rev = item.create_revision(0)
 
-        else:
-            new_rev = item.create_revision(0)
+    #stream = open(fpath, 'wb')
+    #try:
+    #    _write_stream(filecontent, stream)
+    #finally:
+    #    stream.close()
 
-        #stream = open(fpath, 'wb')
-        #try:
-        #    _write_stream(filecontent, stream)
-        #finally:
-        #    stream.close()
+    _write_stream(filecontent, new_rev)
 
-        _write_stream(filecontent, new_rev)
+    # TODO: Error handling
+    item.commit()
 
-        # TODO: Error handling
-        item.commit()
+    _addLogEntry(request, 'ATTNEW', pagename, target)
 
-        _addLogEntry(request, 'ATTNEW', pagename, target)
-
-        #filesize = os.path.getsize(fpath)
-        filesize = 1337  # TODO: Sanely determine filesize somehow
-        event = FileAttachedEvent(request, pagename, target, filesize)
-        send_event(event)
+    #filesize = os.path.getsize(fpath)
+    filesize = 1337  # TODO: Sanely determine filesize somehow
+    event = FileAttachedEvent(request, pagename, target, filesize)
+    send_event(event)
 
     return target, filesize
 
