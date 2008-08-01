@@ -166,15 +166,25 @@ def info(pagename, request):
     return "\n<p>\n%s\n</p>\n" % attach_info
 
 
-def _write_stream(content, stream, bufsize=8192):
+#def _write_stream(content, stream, bufsize=8192):
+#    if hasattr(content, 'read'): # looks file-like
+#        import shutil
+#        shutil.copyfileobj(content, stream, bufsize)
+#    elif isinstance(content, str):
+#        stream.write(content)
+#    else:
+#        logging.error("unsupported content object: %r" % content)
+#        raise
+
+def _write_stream(content, new_rev, bufsize=8192):
     if hasattr(content, 'read'): # looks file-like
-        import shutil
-        shutil.copyfileobj(content, stream, bufsize)
+        new_rev.write(content.read())  # XXX Use buffer
     elif isinstance(content, str):
-        stream.write(content)
+        new_rev.write(content)
     else:
         logging.error("unsupported content object: %r" % content)
         raise
+
 
 def add_attachment(request, pagename, target, filecontent, overwrite=0):
     """ save <filecontent> to an attachment <target> of page <pagename>
@@ -185,30 +195,47 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     _ = request.getText
 
     # replace illegal chars
+    assert isinstance(pagename, basestring)
     target = wikiutil.taintfilename(target)
+    item_name = pagename + "/" + target  # pagenames are guaranteed to be unique in the backend,
+                                         # but we want to allow equally named attachments to be
+                                         # stored for different pages.
 
-    # get directory, and possibly create it
-    attach_dir = getAttachDir(request, pagename, create=1)
+    backend = request.cfg.data_backend
+    item = backend.create_item(item_name)
+
+
+ #   # get directory, and possibly create it
+ #   attach_dir = getAttachDir(request, pagename, create=1)
     # save file
-    fpath = os.path.join(attach_dir, target).encode(config.charset)
-    exists = os.path.exists(fpath)
+ #   fpath = os.path.join(attach_dir, target).encode(config.charset)
+ #   exists = os.path.exists(fpath)
+    exists = backend.has_item(item_name)
     if exists and not overwrite:
         raise AttachmentAlreadyExists
     else:
         if exists:
-            try:
-                os.remove(fpath)
-            except:
-                pass
-        stream = open(fpath, 'wb')
-        try:
-            _write_stream(filecontent, stream)
-        finally:
-            stream.close()
+            last_rev = item.get_revision(-1).revno
+            new_rev = item.create_revision(last_rev + 1)
+
+        else:
+            new_rev = item.create_revision(0)
+
+        #stream = open(fpath, 'wb')
+        #try:
+        #    _write_stream(filecontent, stream)
+        #finally:
+        #    stream.close()
+
+        _write_stream(filecontent, new_rev)
+
+        # TODO: Error handling
+        item.commit()
 
         _addLogEntry(request, 'ATTNEW', pagename, target)
 
-        filesize = os.path.getsize(fpath)
+        #filesize = os.path.getsize(fpath)
+        filesize = 1337  # TODO: Sanely determine filesize somehow
         event = FileAttachedEvent(request, pagename, target, filesize)
         send_event(event)
 
@@ -224,12 +251,13 @@ def _addLogEntry(request, action, pagename, filename, uid_override=None):
 
         `action` should be "ATTNEW" or "ATTDEL"
     """
-    from MoinMoin.logfile import editlog
-    fname = wikiutil.url_quote(filename, want_unicode=True)
+   # # TODO: Rewrite this, using new storage API directly
+   # from MoinMoin.logfile import editlog
+   # fname = wikiutil.url_quote(filename, want_unicode=True)
 
-    # Write to local log
-    llog = editlog.LocalEditLog(request, rootpagename=pagename)
-    llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname, uid_override=uid_override)
+   # # Write to local log
+   # llog = editlog.LocalEditLog(request, rootpagename=pagename)
+   # llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname, uid_override=uid_override)
 
 
 def _access_file(pagename, request):
