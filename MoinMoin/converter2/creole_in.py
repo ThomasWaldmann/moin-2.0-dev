@@ -62,6 +62,9 @@ class _Iter(object):
         self.__prepend.append(item)
 
 class Converter(ConverterMacro):
+    tag_blockcode = ET.QName('blockcode', namespaces.moin_page)
+    tag_page = ET.QName('page', namespaces.moin_page)
+
     @classmethod
     def _factory(cls, input, output):
         if input == 'text/creole' and output == 'application/x-moin-document':
@@ -194,8 +197,6 @@ class Converter(ConverterMacro):
 
         self.stack_pop_name('page')
 
-        tag = ET.QName('blockcode', namespaces.moin_page)
-
         firstline = iter.next()
 
         # Stop directly if we got an end marker in the first line
@@ -213,13 +214,12 @@ class Converter(ConverterMacro):
             # Parse it directly if the type is ourself
             if name in ('creole', ):
                 attrib = {}
-                tag = ET.QName('page', namespaces.moin_page)
 
                 for key, value in args[1].iteritems():
                     if key in ('background-color', 'color'):
                         attrib[ET.QName(key, namespaces.moin_page)] = value
 
-                self.stack_push(ET.Element(tag, attrib))
+                self.stack_push(ET.Element(self.tag_page, attrib))
 
                 try:
                     while True:
@@ -235,11 +235,18 @@ class Converter(ConverterMacro):
 
             else:
                 # TODO
+                attrib = {ET.QName('class', namespaces.html): 'error'}
+                elem = ET.Element(self.tag_blockcode, attrib, children=[firstline])
+                self.stack_top_append(elem)
+
+                for line in self.block_nowiki_lines(iter):
+                    elem.append('\n')
+                    elem.append(line)
                 pass
 
         else:
-            elem = ET.Element(tag, children=[firstline])
-            self.stack_push(elem)
+            elem = ET.Element(self.tag_blockcode, children=[firstline])
+            self.stack_top_append(elem)
 
             for line in self.block_nowiki_lines(iter):
                 elem.append('\n')
