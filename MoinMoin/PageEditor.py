@@ -943,6 +943,8 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         newrev[EDIT_LOG_USERID] = userid
         newrev[EDIT_LOG_EXTRA] = extra
         newrev[EDIT_LOG_COMMENT] = wikiutil.clean_input(comment)
+        # TODO: Check why this is interpreted as PI:
+        #newrev["mimetype"] = "text/moin-wiki"
 
         self._item.commit()
 
