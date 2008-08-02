@@ -244,6 +244,8 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
 
     filesize = _write_stream(filecontent, new_rev)
 
+    new_rev["filesize"] = str(filesize)
+
     #_addLogEntry(request, 'ATTNEW', pagename, target)
     # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
     new_rev[EDIT_LOG_MTIME] = str(time.time())
@@ -346,10 +348,21 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
             mt = wikiutil.MimeType(filename=file)
  #           fullpath = os.path.join(attach_dir, file).encode(config.charset)
  #           st = os.stat(fullpath)
+            backend = request.cfg.data_backend
+            try:
+                item = backend.get_item(pagename + "/" + file)
+                rev = item.get_revision(-1)
+            except (NoSuchItemError, NoSuchRevisionError):
+                # The file may have been renamed in the interim. Just don't show it then.
+                continue
+
+            fsize = float(rev["filesize"]) / 1024
+            fmtime = request.user.getFormattedDateTime(float(rev[EDIT_LOG_MTIME]))
+
             base, ext = os.path.splitext(file)
             parmdict = {'file': wikiutil.escape(file),
-                        'fsize': 1337, #FIXME! Was: "%.1f" % (float(st.st_size) / 1024),
-                        'fmtime': 1337, #FIXME! Was: request.user.getFormattedDateTime(st.st_mtime),
+                        'fsize': "%.1f" % fsize,
+                        'fmtime': fmtime,
                        }
 
             links = []
