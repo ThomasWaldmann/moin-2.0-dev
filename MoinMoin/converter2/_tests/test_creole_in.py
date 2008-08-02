@@ -26,7 +26,7 @@ def serialize(elem, **options):
 
 class TestConverter(object):
     def setup_class(self):
-        self.conv = Converter(object())
+        self.conv = Converter(self.request)
 
     def test_base(self):
         pairs = [
@@ -206,6 +206,9 @@ class TestConverter(object):
                 '<page %s><blockcode>nowiki\nno\nwiki</blockcode></page>' % namespaces_string),
             ('{{{nowiki}}} {{{nowiki}}}',
                 '<page %s><p><code>nowiki</code> <code>nowiki</code></p></page>' % namespaces_string),
+            # XXX: Is <page> correct?
+            ('{{{\n#!creole background-color=red\nnowiki\n}}}',
+               '<page %s><page background-color="red"><p>nowiki</p></page></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do, ) + i
@@ -227,6 +230,6 @@ class TestConverter(object):
             yield (self._do, ) + i
 
     def _do(self, input, output):
-        out = self.conv(input)
+        out = self.conv(unicode(input))
         assert serialize(out) == output
 
