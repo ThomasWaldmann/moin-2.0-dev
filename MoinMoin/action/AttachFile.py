@@ -356,12 +356,20 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
                 # The file may have been renamed in the interim. Just don't show it then.
                 continue
 
-            fsize = float(rev["filesize"]) / 1024
-            fmtime = request.user.getFormattedDateTime(float(rev[EDIT_LOG_MTIME]))
+            try:
+                fsize = float(rev["filesize"]) / 1024
+                fsize = "%.1f" % fsize
+            except KeyError:
+                fsize = "unknown"
+
+            try:
+                fmtime = request.user.getFormattedDateTime(float(rev[EDIT_LOG_MTIME]))
+            except KeyError:
+                fmtime = "unknown"
 
             base, ext = os.path.splitext(file)
             parmdict = {'file': wikiutil.escape(file),
-                        'fsize': "%.1f" % fsize,
+                        'fsize': fsize,
                         'fmtime': fmtime,
                        }
 
