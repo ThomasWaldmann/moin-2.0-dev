@@ -193,7 +193,13 @@ class Converter(ConverterMacro):
 
     block_nowiki = r"""
         (?P<nowiki>
-            ^ \s* (?P<nowiki_marker> \{{3,} ) \s* $
+            ^
+            \s*
+            (?P<nowiki_marker> \{{3,} )
+            \s*
+            (?P<nowiki_data> \#!.+ )?
+            \s*
+            $
         )
     """
     # Matches the beginning of a nowiki block
@@ -213,29 +219,59 @@ class Converter(ConverterMacro):
                 marker = match.group('marker')
                 if len(marker) >= marker_len:
                     return
-                line = marker[:-1]
+                line = marker
             yield line
 
-    def block_nowiki_repl(self, iter, nowiki, nowiki_marker):
+    def block_nowiki_repl(self, iter, nowiki, nowiki_marker, nowiki_data=None):
         self.stack_pop_name('page')
 
         tag = ET.QName('blockcode', namespaces.moin_page)
 
         nowiki_marker_len = len(nowiki_marker)
 
-        firstline = iter.next()
+        if nowiki_data:
+            firstline = nowiki_data
+        else:
+            firstline = iter.next()
 
-        # Stop directly if we got an end marker in the first line
-        match = self.nowiki_end_re.match(firstline)
-        if match and len(match.group('marker')) >= nowiki_marker_len:
-            self.stack_top_append(ET.Element(tag))
-            return
+            # Stop directly if we got an end marker in the first line
+            match = self.nowiki_end_re.match(firstline)
+            if match and len(match.group('marker')) >= nowiki_marker_len:
+                self.stack_top_append(ET.Element(tag))
+                return
 
         lines = self.block_nowiki_lines(iter, nowiki_marker_len)
 
-        if firstline.startswith('#!') and 0:
-            # TODO: parser
-            pass
+        if firstline.startswith('#!'):
+            args = wikiutil.parse_quoted_separated(firstline[2:], separator=None)
+            name = args[0].pop(0)
+
+            # Parse it directly if the type is ourself
+            if name in ('wiki', ):
+                attrib = {}
+                tag = ET.QName('page', namespaces.moin_page)
+
+                for key, value in args[1].iteritems():
+                    if key in ('background-color', 'color'):
+                        attrib[ET.QName(key, namespaces.moin_page)] = value
+
+                self.stack_push(ET.Element(tag, attrib))
+
+                try:
+                    while True:
+                        line = lines.next()
+                        match = self.block_re.match(line)
+                        self._apply(match, 'block', lines)
+
+                except StopIteration:
+                    pass
+
+                self.stack_pop_name('page')
+                self.stack_pop()
+
+            else:
+                # TODO
+                pass
 
         else:
             elem = ET.Element(tag, children=[firstline])
