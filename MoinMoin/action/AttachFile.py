@@ -316,7 +316,7 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
     fmt = request.html_formatter
 
     # access directory
-    attach_dir = getAttachDir(request, pagename)
+ #   attach_dir = getAttachDir(request, pagename)
     files = _get_files(request, pagename)
 
     if mime_type != '*':
@@ -344,12 +344,12 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
         html.append(fmt.bullet_list(1))
         for file in files:
             mt = wikiutil.MimeType(filename=file)
-            fullpath = os.path.join(attach_dir, file).encode(config.charset)
-            st = os.stat(fullpath)
+ #           fullpath = os.path.join(attach_dir, file).encode(config.charset)
+ #           st = os.stat(fullpath)
             base, ext = os.path.splitext(file)
             parmdict = {'file': wikiutil.escape(file),
-                        'fsize': "%.1f" % (float(st.st_size) / 1024),
-                        'fmtime': request.user.getFormattedDateTime(st.st_mtime),
+                        'fsize': 1337, #FIXME! Was: "%.1f" % (float(st.st_size) / 1024),
+                        'fmtime': 1337, #FIXME! Was: request.user.getFormattedDateTime(st.st_mtime),
                        }
 
             links = []
@@ -359,7 +359,6 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
                              fmt.text(label_del) +
                              fmt.url(0))
 
-            if may_delete and not readonly:
                 links.append(fmt.url(1, getAttachUrl(pagename, file, request, do='move')) +
                              fmt.text(label_move) +
                              fmt.url(0))
@@ -377,30 +376,31 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
                              fmt.text(label_view) +
                              fmt.url(0))
 
-            try:
-                is_zipfile = zipfile.is_zipfile(fullpath)
-                if is_zipfile:
-                    is_package = packages.ZipPackage(request, fullpath).isPackage()
-                    if is_package and request.user.isSuperUser():
-                        links.append(fmt.url(1, getAttachUrl(pagename, file, request, do='install')) +
-                                     fmt.text(label_install) +
-                                     fmt.url(0))
-                    elif (not is_package and mt.minor == 'zip' and
-                          may_delete and
-                          request.user.may.read(pagename) and
-                          request.user.may.write(pagename)):
-                        links.append(fmt.url(1, getAttachUrl(pagename, file, request, do='unzip')) +
-                                     fmt.text(label_unzip) +
-                                     fmt.url(0))
-            except RuntimeError:
-                # We don't want to crash with a traceback here (an exception
-                # here could be caused by an uploaded defective zip file - and
-                # if we crash here, the user does not get a UI to remove the
-                # defective zip file again).
-                # RuntimeError is raised by zipfile stdlib module in case of
-                # problems (like inconsistent slash and backslash usage in the
-                # archive).
-                logging.exception("An exception within zip file attachment handling occurred:")
+           ## TODO: Adjust this zipfile-related stuff
+           # try:
+           #     is_zipfile = zipfile.is_zipfile(fullpath)
+           #     if is_zipfile:
+           #         is_package = packages.ZipPackage(request, fullpath).isPackage()
+           #         if is_package and request.user.isSuperUser():
+           #             links.append(fmt.url(1, getAttachUrl(pagename, file, request, do='install')) +
+           #                          fmt.text(label_install) +
+           #                          fmt.url(0))
+           #         elif (not is_package and mt.minor == 'zip' and
+           #               may_delete and
+           #               request.user.may.read(pagename) and
+           #               request.user.may.write(pagename)):
+           #             links.append(fmt.url(1, getAttachUrl(pagename, file, request, do='unzip')) +
+           #                          fmt.text(label_unzip) +
+           #                          fmt.url(0))
+           # except RuntimeError:
+           #     # We don't want to crash with a traceback here (an exception
+           #     # here could be caused by an uploaded defective zip file - and
+           #     # if we crash here, the user does not get a UI to remove the
+           #     # defective zip file again).
+           #     # RuntimeError is raised by zipfile stdlib module in case of
+           #     # problems (like inconsistent slash and backslash usage in the
+           #     # archive).
+           #     logging.exception("An exception within zip file attachment handling occurred:")
 
             html.append(fmt.listitem(1))
             html.append("[%s]" % "&nbsp;| ".join(links))
