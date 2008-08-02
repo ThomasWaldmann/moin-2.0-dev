@@ -215,25 +215,28 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
                                          # stored for different pages.
 
     backend = request.cfg.data_backend
+
+    # XXX Can somebody please propose a way how to make the following
+    # XXX two try-except-blocks more beautiful?
     try:
         item = backend.create_item(item_name)
     except ItemAlreadyExistsError:
-        if not overwrite:
-            raise AttachmentAlreadyExists
-        else:
+        try:
             item = backend.get_item(item_name)
+            rev = item.get_revision(-1)
+            deleted = DELETED in rev
+        except NoSuchRevisionError:
+            deleted = True
 
- #   # get directory, and possibly create it
- #   attach_dir = getAttachDir(request, pagename, create=1)
-    # save file
- #   fpath = os.path.join(attach_dir, target).encode(config.charset)
- #   exists = os.path.exists(fpath)
-    exists = backend.has_item(item_name)
-    if exists:
-        last_rev = item.get_revision(-1).revno
-        new_rev = item.create_revision(last_rev + 1)
+        if overwrite or deleted:
+            item = backend.get_item(item_name)
+        else:
+            raise AttachmentAlreadyExists
 
-    else:
+    try:
+        current_revno = item.get_revision(-1).revno
+        new_rev = item.create_revision(current_revno + 1)
+    except NoSuchRevisionError:
         new_rev = item.create_revision(0)
 
     #stream = open(fpath, 'wb')
