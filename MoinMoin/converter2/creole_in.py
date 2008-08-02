@@ -86,16 +86,10 @@ class Converter(ConverterMacro):
         self._stack = [self.root]
         iter = _Iter(text.split('\n'))
 
-        # The iterator is used in several locations, so "for line in lines"
-        # will not work. Use it manualy.
-        try:
-            while True:
-                line = iter.next()
-                match = self.block_re.match(line)
-                self._apply(match, 'block', iter)
-
-        except StopIteration:
-            pass
+        # Please note that the iterator can be modified by other functions
+        for line in iter:
+            match = self.block_re.match(line)
+            self._apply(match, 'block', iter)
 
         return self.root
 
@@ -133,9 +127,9 @@ class Converter(ConverterMacro):
     # list_*.
 
     def block_list_repl(self, iter, list):
-        line = list
+        iter.push(list)
 
-        while True:
+        for line in iter:
             match = self.list_re.match(line)
             self._apply(match, 'list', iter)
 
@@ -143,8 +137,6 @@ class Converter(ConverterMacro):
                 # Allow the mainloop to take care of the line after a list.
                 iter.push(line)
                 break
-
-            line = iter.next()
 
     block_macro = r"""
         ^
@@ -183,8 +175,7 @@ class Converter(ConverterMacro):
     def block_nowiki_lines(self, iter):
         "Unescaping generator for the lines in a nowiki block"
 
-        while True:
-            line = iter.next()
+        for line in iter:
             match = self.nowiki_end_re.match(line)
             if match:
                 if not match.group('escape'):
@@ -197,15 +188,19 @@ class Converter(ConverterMacro):
 
         self.stack_pop_name('page')
 
-        firstline = iter.next()
+        try:
+            firstline = iter.next()
+        except StopIteration:
+            self.stack_push(ET.Element(self.tag_blockcode))
+            return
 
         # Stop directly if we got an end marker in the first line
         match = self.nowiki_end_re.match(firstline)
         if match and not match.group('escape'):
-            self.stack_push(ET.Element(tag))
+            self.stack_push(ET.Element(self.tag_blockcode))
             return
 
-        lines = self.block_nowiki_lines(iter)
+        lines = _Iter(self.block_nowiki_lines(iter))
 
         if firstline.startswith('#!'):
             args = wikiutil.parse_quoted_separated(firstline[2:], separator=None)
@@ -221,14 +216,9 @@ class Converter(ConverterMacro):
 
                 self.stack_push(ET.Element(self.tag_page, attrib))
 
-                try:
-                    while True:
-                        line = lines.next()
-                        match = self.block_re.match(line)
-                        self._apply(match, 'block', lines)
-
-                except StopIteration:
-                    pass
+                for line in lines:
+                    match = self.block_re.match(line)
+                    self._apply(match, 'block', lines)
 
                 self.stack_pop_name('page')
                 self.stack_pop()
@@ -242,7 +232,6 @@ class Converter(ConverterMacro):
                 for line in self.block_nowiki_lines(iter):
                     elem.append('\n')
                     elem.append(line)
-                pass
 
         else:
             elem = ET.Element(self.tag_blockcode, children=[firstline])
