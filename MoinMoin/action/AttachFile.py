@@ -179,7 +179,8 @@ def info(pagename, request):
 
 def _write_stream(content, new_rev, bufsize=8192):
     if hasattr(content, 'read'): # looks file-like
-        new_rev.write(content.read())  # XXX Use buffer
+        import shutil
+        shutil.copyfileobj(content, new_rev, bufsize)
     elif isinstance(content, str):
         new_rev.write(content)
     else:
