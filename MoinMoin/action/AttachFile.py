@@ -37,7 +37,7 @@ from MoinMoin.Page import Page
 from MoinMoin.util import filesys, timefuncs
 from MoinMoin.security.textcha import TextCha
 from MoinMoin.events import FileAttachedEvent, send_event
-from MoinMoin.search.term import AND, NameRE, LastRevisionMetaDataMatch
+from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
 from MoinMoin.storage.error import ItemAlreadyExistsError
 from MoinMoin.storage import EDIT_LOG_MTIME, EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
                              EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
@@ -252,7 +252,12 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     new_rev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
     new_rev[EDIT_LOG_EXTRA] = wikiutil.url_quote(target, want_unicode=True)
     new_rev[EDIT_LOG_COMMENT] = u''  # XXX At some point one may consider enabling attachment-comments
-    new_rev["format"] = "attachment"
+
+    #new_rev["format"] = "attachment"
+    mimetype = mimetypes.guess_type(target)[0]
+    if mimetype is None:
+        mimetype = "unknown"
+    new_rev["mimetype"] = mimetype
 
     # TODO: Error handling
     item.commit()
@@ -430,8 +435,8 @@ def _get_files(request, pagename):
     backend = request.cfg.data_backend
 
     # Get a list of all items (of the page matching the regex) whose latest revision
-    # has a metadata-key 'format' with the value 'attachment'
-    items = list(backend.search_item(AND(NameRE(regex), LastRevisionMetaDataMatch('format', 'attachment'))))
+    # has a metadata-key 'mimetype' indicating that it is NOT a regular moin-page
+    items = list(backend.search_item(AND(NameRE(regex), NOT(LastRevisionMetaDataMatch('mimetype', 'text/moin-wiki')))))
 
     # We only want the names of the items, not the whole item.
     item_names = [item.name for item in items]
