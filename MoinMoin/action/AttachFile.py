@@ -38,6 +38,8 @@ from MoinMoin.util import filesys, timefuncs
 from MoinMoin.security.textcha import TextCha
 from MoinMoin.events import FileAttachedEvent, send_event
 from MoinMoin.storage.error import ItemAlreadyExistsError
+from MoinMoin.storage import EDIT_LOG_MTIME, EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
+                             EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 
 action_name = __name__.split('.')[-1]
 
@@ -241,10 +243,17 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
 
     filesize = _write_stream(filecontent, new_rev)
 
+    #_addLogEntry(request, 'ATTNEW', pagename, target)
+    # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
+    new_rev[EDIT_LOG_MTIME] = str(time.time())
+    new_rev[EDIT_LOG_ACTION] = 'ATTNEW'
+    new_rev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
+    new_rev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
+    new_rev[EDIT_LOG_EXTRA] = wikiutil.url_quote(target, want_unicode=True)
+    new_rev[EDIT_LOG_COMMENT] = u''  # XXX At some point one may consider enabling attachment-comments
+
     # TODO: Error handling
     item.commit()
-
-    _addLogEntry(request, 'ATTNEW', pagename, target)
 
     #filesize = os.path.getsize(fpath)
     event = FileAttachedEvent(request, pagename, target, filesize)
@@ -262,13 +271,14 @@ def _addLogEntry(request, action, pagename, filename, uid_override=None):
 
         `action` should be "ATTNEW" or "ATTDEL"
     """
-   # # TODO: Rewrite this, using new storage API directly
-   # from MoinMoin.logfile import editlog
-   # fname = wikiutil.url_quote(filename, want_unicode=True)
-
-   # # Write to local log
-   # llog = editlog.LocalEditLog(request, rootpagename=pagename)
-   # llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname, uid_override=uid_override)
+#    # TODO: Rewrite this, using new storage API directly
+#    from MoinMoin.logfile import editlog
+#    fname = wikiutil.url_quote(filename, want_unicode=True)
+#
+#    # Write to local log
+#    llog = editlog.LocalEditLog(request, rootpagename=pagename)
+#    llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname, uid_override=uid_override)
+    pass
 
 
 def _access_file(pagename, request):
