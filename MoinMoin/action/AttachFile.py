@@ -756,16 +756,22 @@ def _do_del(pagename, request):
 
     try:
         item = backend.get_item(pagename + "/" + filename)
-        current_revno = item.get_revision(-1).revno
+        current_rev = item.get_revision(-1)
+        current_revno = current_rev.revno
         new_rev = item.create_revision(current_revno + 1)
     except (NoSuchItemError, NoSuchRevisionError):
         error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
 
-    # TODO: Is this if-statement correct? (wrt getText)
+    try:
+        deleted = current_rev[DELETED]
+    except KeyError:
+        deleted = False
+
     if error != "":
         error_msg(pagename, request, error)
 
-    else:
+    elif not deleted:
+        # Everything ok. "Delete" the attachment, i.e., create a new, empty revision with according metadata
         # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
         new_rev[EDIT_LOG_MTIME] = str(time.time())
         new_rev[EDIT_LOG_ACTION] = 'ATTDEL'
@@ -785,6 +791,8 @@ def _do_del(pagename, request):
 
         upload_form(pagename, request, msg=_("Attachment '%(filename)s' deleted.") % {'filename': filename})
 
+    else:
+        return _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
 
 def move_file(request, pagename, new_pagename, attachment, new_attachment):
     _ = request.getText
