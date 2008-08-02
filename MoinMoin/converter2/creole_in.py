@@ -80,15 +80,15 @@ class Converter(ConverterMacro):
 
         self.root = ET.Element(tag, attrib=attrib)
         self._stack = [self.root]
-        self.iter_lines = _Iter(text.split('\n'))
+        iter = _Iter(text.split('\n'))
 
         # The iterator is used in several locations, so "for line in lines"
         # will not work. Use it manualy.
         try:
             while True:
-                line = self.iter_lines.next()
+                line = iter.next()
                 match = self.block_re.match(line)
-                self._apply(match, 'block')
+                self._apply(match, 'block', iter)
 
         except StopIteration:
             pass
@@ -105,7 +105,7 @@ class Converter(ConverterMacro):
         )
     """
 
-    def block_head_repl(self, head, head_head, head_text):
+    def block_head_repl(self, iter, head, head_head, head_text):
         self.stack_pop_name('page')
         level = len(head_head)
 
@@ -117,7 +117,7 @@ class Converter(ConverterMacro):
     block_line = r'(?P<line> ^ \s* $ )'
     # empty line that separates paragraphs
 
-    def block_line_repl(self, line):
+    def block_line_repl(self, iter, line):
         self.stack_pop_name('page')
 
     block_list = r"""
@@ -128,19 +128,19 @@ class Converter(ConverterMacro):
     # Matches the beginning of a list. All lines within a list are handled by
     # list_*.
 
-    def block_list_repl(self, list):
+    def block_list_repl(self, iter, list):
         line = list
 
         while True:
             match = self.list_re.match(line)
-            self._apply(match, 'list')
+            self._apply(match, 'list', iter)
 
             if match.group('end') is not None:
                 # Allow the mainloop to take care of the line after a list.
-                self.iter_lines.push(line)
+                iter.push(line)
                 break
 
-            line = self.iter_lines.next()
+            line = iter.next()
 
     block_macro = r"""
         ^
@@ -156,7 +156,7 @@ class Converter(ConverterMacro):
         $
     """
 
-    def block_macro_repl(self, macro, macro_name, macro_args=''):
+    def block_macro_repl(self, iter, macro, macro_name, macro_args=''):
         """Handles macros using the placeholder syntax."""
 
         self.stack_pop_name('page')
@@ -176,11 +176,11 @@ class Converter(ConverterMacro):
     """
     # Matches the possibly escaped end of a nowiki block
 
-    def block_nowiki_lines(self):
+    def block_nowiki_lines(self, iter):
         "Unescaping generator for the lines in a nowiki block"
 
         while True:
-            line = self.iter_lines.next()
+            line = iter.next()
             match = self.nowiki_end_re.match(line)
             if match:
                 if not match.group('escape'):
@@ -188,14 +188,14 @@ class Converter(ConverterMacro):
                 line = match.group('rest')
             yield line
 
-    def block_nowiki_repl(self, nowiki):
+    def block_nowiki_repl(self, iter, nowiki):
         "Handles a complete nowiki block"
 
         self.stack_pop_name('page')
 
         tag = ET.QName('blockcode', namespaces.moin_page)
 
-        firstline = self.iter_lines.next()
+        firstline = iter.next()
 
         # Stop directly if we got an end marker in the first line
         match = self.nowiki_end_re.match(firstline)
@@ -211,13 +211,13 @@ class Converter(ConverterMacro):
             elem = ET.Element(tag, children=[firstline])
             self.stack_push(elem)
 
-            for line in self.block_nowiki_lines():
+            for line in self.block_nowiki_lines(iter):
                 elem.append('\n')
                 elem.append(line)
 
     block_separator = r'(?P<separator> ^ \s* ---- \s* $ )'
 
-    def block_separator_repl(self, separator):
+    def block_separator_repl(self, iter, separator):
         self.stack_pop_name('page')
         tag = ET.QName('separator', namespaces.moin_page)
         self.stack_top_append(ET.Element(tag))
@@ -231,7 +231,7 @@ class Converter(ConverterMacro):
         )
     """
 
-    def block_table_repl(self, table):
+    def block_table_repl(self, iter, table):
         self.stack_pop_name('table-body', 'page')
 
         if not self.stack_top_check('table-body'):
@@ -267,7 +267,7 @@ class Converter(ConverterMacro):
 
     block_text = r'(?P<text> .+ )'
 
-    def block_text_repl(self, text):
+    def block_text_repl(self, iter, text):
         if self.stack_top_check('table', 'table-body', 'list'):
             self.stack_pop_name('page')
 
@@ -451,7 +451,7 @@ class Converter(ConverterMacro):
     """
     # Matches a line which will end a list
 
-    def list_end_repl(self, end):
+    def list_end_repl(self, iter, end):
         self.stack_pop_name('page')
 
     list_item = r"""
@@ -464,7 +464,7 @@ class Converter(ConverterMacro):
     """
     # Matches single list items
 
-    def list_item_repl(self, item, item_head, item_text):
+    def list_item_repl(self, iter, item, item_head, item_text):
         level = len(item_head)
         type = item_head[-1]
 
@@ -590,12 +590,12 @@ class Converter(ConverterMacro):
         tag = self._stack[-1].tag
         return tag.uri == namespaces.moin_page and tag.name in names
 
-    def _apply(self, match, prefix):
+    def _apply(self, match, prefix, *args):
         """
         Call the _repl method for the last matched group with the given prefix.
         """
         data = dict(((k, v) for k, v in match.groupdict().iteritems() if v is not None))
-        getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(**data)
+        getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(*args, **data)
 
     def macro_text(self, text):
         conv = self.__class__(self.request, None)
