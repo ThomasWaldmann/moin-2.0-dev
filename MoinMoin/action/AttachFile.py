@@ -37,6 +37,7 @@ from MoinMoin.Page import Page
 from MoinMoin.util import filesys, timefuncs
 from MoinMoin.security.textcha import TextCha
 from MoinMoin.events import FileAttachedEvent, send_event
+from MoinMoin.search.term import AND, NameRE, LastRevisionMetaDataMatch
 from MoinMoin.storage.error import ItemAlreadyExistsError
 from MoinMoin.storage import EDIT_LOG_MTIME, EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
                              EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
@@ -251,6 +252,7 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     new_rev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
     new_rev[EDIT_LOG_EXTRA] = wikiutil.url_quote(target, want_unicode=True)
     new_rev[EDIT_LOG_COMMENT] = u''  # XXX At some point one may consider enabling attachment-comments
+    new_rev["format"] = "attachment"
 
     # TODO: Error handling
     item.commit()
@@ -412,13 +414,30 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
 
 
 def _get_files(request, pagename):
-    attach_dir = getAttachDir(request, pagename)
-    if os.path.isdir(attach_dir):
-        files = [fn.decode(config.charset) for fn in os.listdir(attach_dir)]
-        files.sort()
-    else:
-        files = []
-    return files
+  #  attach_dir = getAttachDir(request, pagename)
+  #  if os.path.isdir(attach_dir):
+  #      files = [fn.decode(config.charset) for fn in os.listdir(attach_dir)]
+  #      files.sort()
+  #  else:
+  #      files = []
+  #  return files
+    # MoinMoin.search.NameRE expects a Regular Expression Object.
+    # Find all items that are attached to $pagename. (Indicated by their
+    # Item-Name (in storage-backend) being constructed like: pagename + "/" + filename
+    import re
+    regex = re.compile('^%s/.*' % (pagename, ))
+
+    backend = request.cfg.data_backend
+
+    # Get a list of all items (of the page matching the regex) whose latest revision
+    # has a metadata-key 'format' with the value 'attachment'
+    items = list(backend.search_item(AND(NameRE(regex), LastRevisionMetaDataMatch('format', 'attachment'))))
+
+    # We only want the names of the items, not the whole item.
+    item_names = [item.name for item in items]
+
+    # We only want the filename, not the whole item_name.
+    return [f.split("/")[1] for f in item_names]
 
 
 def _get_filelist(request, pagename):
