@@ -251,6 +251,10 @@ class Converter(ConverterMacro):
                 attrib = {}
                 tag = ET.QName('page', namespaces.moin_page)
 
+                if args[0]:
+                    classes = ' '.join([i.replace('/', ' ') for i in args[0]])
+                    attrib[ET.QName('class', namespaces.html)] = classes
+
                 for key, value in args[1].iteritems():
                     if key in ('background-color', 'color'):
                         attrib[ET.QName(key, namespaces.moin_page)] = value
