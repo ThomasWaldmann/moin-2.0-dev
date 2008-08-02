@@ -38,9 +38,9 @@ from MoinMoin.util import filesys, timefuncs
 from MoinMoin.security.textcha import TextCha
 from MoinMoin.events import FileAttachedEvent, send_event
 from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
-from MoinMoin.storage.error import ItemAlreadyExistsError
+from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage import EDIT_LOG_MTIME, EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
-                             EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+                             EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, DELETED
 
 action_name = __name__.split('.')[-1]
 
@@ -457,7 +457,9 @@ def _get_files(request, pagename):
 
     # Get a list of all items (of the page matching the regex) whose latest revision
     # has a metadata-key 'mimetype' indicating that it is NOT a regular moin-page
-    items = list(backend.search_item(AND(NameRE(regex), NOT(LastRevisionMetaDataMatch('mimetype', 'text/moin-wiki')))))
+    items = list(backend.search_item(AND(NameRE(regex),
+                                     NOT(LastRevisionMetaDataMatch('mimetype', 'text/moin-wiki')),
+                                     NOT(LastRevisionMetaDataMatch('deleted', True)))))
 
     # We only want the names of the items, not the whole item.
     item_names = [item.name for item in items]
@@ -733,25 +735,55 @@ def _do_savedrawing(pagename, request):
 
 
 def _do_del(pagename, request):
+    """
+    Deleting an Attachment basically means creating a new, empty revision
+    on an Item that happened to be an 'Attachment' at some point, setting
+    the DELETED-Metadata-Key.
+    """
     _ = request.getText
 
-    pagename, filename, fpath = _access_file(pagename, request)
+    error = ""
+
     if not request.user.may.delete(pagename):
         return _('You are not allowed to delete attachments on this page.')
-    if not filename:
-        return # error msg already sent in _access_file
 
-    # delete file
-    os.remove(fpath)
-    _addLogEntry(request, 'ATTDEL', pagename, filename)
+    if not request.form.get('target', [''])[0]:
+        error = _("Filename of attachment not specified!")
+    else:
+        filename = wikiutil.taintfilename(request.form['target'][0])
 
-    if request.cfg.xapian_search:
-        from MoinMoin.search.Xapian import Index
-        index = Index(request)
-        if index.exists:
-            index.remove_item(pagename, filename)
+    backend = request.cfg.data_backend
 
-    upload_form(pagename, request, msg=_("Attachment '%(filename)s' deleted.") % {'filename': filename})
+    try:
+        item = backend.get_item(pagename + "/" + filename)
+        current_revno = item.get_revision(-1).revno
+        new_rev = item.create_revision(current_revno + 1)
+    except (NoSuchItemError, NoSuchRevisionError):
+        error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
+
+    # TODO: Is this if-statement correct? (wrt getText)
+    if error != "":
+        error_msg(pagename, request, error)
+
+    else:
+        # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
+        new_rev[EDIT_LOG_MTIME] = str(time.time())
+        new_rev[EDIT_LOG_ACTION] = 'ATTDEL'
+        new_rev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
+        new_rev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
+        new_rev[EDIT_LOG_EXTRA] = wikiutil.url_quote(filename, want_unicode=True)
+        new_rev[EDIT_LOG_COMMENT] = u''  # XXX At some point one may consider enabling attachment-comments
+        new_rev[DELETED] = True
+
+        item.commit()
+
+        if request.cfg.xapian_search:
+            from MoinMoin.search.Xapian import Index
+            index = Index(request)
+            if index.exists:
+                index.remove_item(pagename, filename)
+
+        upload_form(pagename, request, msg=_("Attachment '%(filename)s' deleted.") % {'filename': filename})
 
 
 def move_file(request, pagename, new_pagename, attachment, new_attachment):
