@@ -458,7 +458,7 @@ def _get_files(request, pagename):
     # Get a list of all items (of the page matching the regex) whose latest revision
     # has a metadata-key 'mimetype' indicating that it is NOT a regular moin-page
     items = list(backend.search_item(AND(NameRE(regex),
-                                     NOT(LastRevisionMetaDataMatch('mimetype', 'text/moin-wiki')),
+                                     NOT(LastRevisionMetaDataMatch('mimetype', 'text/x-unidentified-wiki-format')),
                                      NOT(LastRevisionMetaDataMatch('deleted', True)))))
 
     # We only want the names of the items, not the whole item.
