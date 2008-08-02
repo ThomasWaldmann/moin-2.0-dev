@@ -25,6 +25,7 @@
 import re
 from emeraldtree import ElementTree as ET
 
+from MoinMoin import wikiutil
 from MoinMoin.util import namespaces
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
@@ -203,9 +204,38 @@ class Converter(ConverterMacro):
             self.stack_push(ET.Element(tag))
             return
 
-        if firstline.startswith('#!') and 0:
-            # TODO: parser
-            pass
+        lines = self.block_nowiki_lines(iter)
+
+        if firstline.startswith('#!'):
+            args = wikiutil.parse_quoted_separated(firstline[2:], separator=None)
+            name = args[0].pop(0)
+
+            # Parse it directly if the type is ourself
+            if name in ('creole', ):
+                attrib = {}
+                tag = ET.QName('page', namespaces.moin_page)
+
+                for key, value in args[1].iteritems():
+                    if key in ('background-color', 'color'):
+                        attrib[ET.QName(key, namespaces.moin_page)] = value
+
+                self.stack_push(ET.Element(tag, attrib))
+
+                try:
+                    while True:
+                        line = lines.next()
+                        match = self.block_re.match(line)
+                        self._apply(match, 'block', lines)
+
+                except StopIteration:
+                    pass
+
+                self.stack_pop_name('page')
+                self.stack_pop()
+
+            else:
+                # TODO
+                pass
 
         else:
             elem = ET.Element(tag, children=[firstline])
@@ -472,7 +502,7 @@ class Converter(ConverterMacro):
         # type.
         while True:
             cur = self.stack_top()
-            if cur.tag.name in ('page', 'blockquote'):
+            if cur.tag.name == 'page':
                 break
             if cur.tag.name == 'list-item-body':
                 if level > cur.level:
