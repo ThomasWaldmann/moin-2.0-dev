@@ -178,14 +178,22 @@ def info(pagename, request):
 #        raise
 
 def _write_stream(content, new_rev, bufsize=8192):
-    if hasattr(content, 'read'): # looks file-like
-        import shutil
-        shutil.copyfileobj(content, new_rev, bufsize)
+    size = 0
+    if isinstance(content, file):
+        while True:
+            buf = content.read(bufsize)
+            size += len(buf)  # Worst case is 8192 here
+            if not buf:
+                break
+            new_rev.write(buf)
     elif isinstance(content, str):
         new_rev.write(content)
+        size = len(content)
     else:
         logging.error("unsupported content object: %r" % content)
         raise
+
+    return size
 
 
 def add_attachment(request, pagename, target, filecontent, overwrite=0):
@@ -231,7 +239,7 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     #finally:
     #    stream.close()
 
-    _write_stream(filecontent, new_rev)
+    filesize = _write_stream(filecontent, new_rev)
 
     # TODO: Error handling
     item.commit()
@@ -239,7 +247,6 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     _addLogEntry(request, 'ATTNEW', pagename, target)
 
     #filesize = os.path.getsize(fpath)
-    filesize = 1337  # TODO: Sanely determine filesize somehow
     event = FileAttachedEvent(request, pagename, target, filesize)
     send_event(event)
 
