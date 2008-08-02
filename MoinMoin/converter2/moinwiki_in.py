@@ -69,16 +69,9 @@ class Converter(ConverterMacro):
         self._stack = [self.root]
         iter = _Iter(text.split('\n'))
 
-        # The iterator is used in several locations, so "for line in lines"
-        # will not work. Use it manualy.
-        try:
-            while True:
-                line = iter.next()
-                match = self.block_re.match(line)
-                self._apply(match, 'block', iter)
-
-        except StopIteration:
-            pass
+        for line in iter:
+            match = self.block_re.match(line)
+            self._apply(match, 'block', iter)
 
         return self.root
 
@@ -212,14 +205,12 @@ class Converter(ConverterMacro):
     def block_nowiki_lines(self, iter, marker_len):
         "Unescaping generator for the lines in a nowiki block"
 
-        while True:
-            line = iter.next()
+        for line in iter:
             match = self.nowiki_end_re.match(line)
             if match:
                 marker = match.group('marker')
                 if len(marker) >= marker_len:
                     return
-                line = marker
             yield line
 
     def block_nowiki_repl(self, iter, nowiki, nowiki_marker, nowiki_data=None):
@@ -232,7 +223,10 @@ class Converter(ConverterMacro):
         if nowiki_data:
             firstline = nowiki_data
         else:
-            firstline = iter.next()
+            try:
+                firstline = iter.next()
+            except StopIteration:
+                return
 
             # Stop directly if we got an end marker in the first line
             match = self.nowiki_end_re.match(firstline)
@@ -240,7 +234,7 @@ class Converter(ConverterMacro):
                 self.stack_top_append(ET.Element(tag))
                 return
 
-        lines = self.block_nowiki_lines(iter, nowiki_marker_len)
+        lines = _Iter(self.block_nowiki_lines(iter, nowiki_marker_len))
 
         if firstline.startswith('#!'):
             args = wikiutil.parse_quoted_separated(firstline[2:], separator=None)
@@ -261,14 +255,9 @@ class Converter(ConverterMacro):
 
                 self.stack_push(ET.Element(tag, attrib))
 
-                try:
-                    while True:
-                        line = lines.next()
-                        match = self.block_re.match(line)
-                        self._apply(match, 'block', lines)
-
-                except StopIteration:
-                    pass
+                for line in lines:
+                    match = self.block_re.match(line)
+                    self._apply(match, 'block', lines)
 
                 self.stack_pop_name('page')
                 self.stack_pop()
