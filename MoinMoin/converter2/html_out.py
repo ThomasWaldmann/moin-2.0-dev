@@ -96,6 +96,7 @@ class ConverterBase(object):
     ])
 
     tag_html_a = ET.QName('a', namespaces.html)
+    tag_html_class = ET.QName('class', namespaces.html)
     tag_html_data = ET.QName('data', namespaces.html)
     tag_html_div = ET.QName('div', namespaces.html)
     tag_html_em = ET.QName('em', namespaces.html)
@@ -167,11 +168,15 @@ class ConverterBase(object):
         return self.new_copy(self.tag_html_a, elem, attrib)
 
     def visit_moinpage_blockcode(self, elem):
-        # TODO
-        attrib = {ET.QName('class', namespaces.html): 'codearea'}
-        ret = self.new(ET.QName('div', namespaces.html), attrib)
-        ret.append(self.new_copy(ET.QName('pre', namespaces.html), elem))
-        return ret
+        pre = self.new_copy(ET.QName('pre', namespaces.html), elem)
+
+        if elem.get(self.tag_html_class) == 'codearea':
+            attrib = {ET.QName('class', namespaces.html): 'codearea'}
+            div = self.new(ET.QName('div', namespaces.html), attrib)
+            div.append(pre)
+            return div
+
+        return pre
 
     def visit_moinpage_code(self, elem):
         return self.new_copy(ET.QName('tt', namespaces.html), elem)
