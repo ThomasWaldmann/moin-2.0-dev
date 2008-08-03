@@ -290,7 +290,7 @@ def _addLogEntry(request, action, pagename, filename, uid_override=None):
 #    # Write to local log
 #    llog = editlog.LocalEditLog(request, rootpagename=pagename)
 #    llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname, uid_override=uid_override)
-    pass
+    logging.debug("DEPRECATION WARNING: Some code is still using _addLogEntry in action/AttachFile.py!")
 
 
 def _access_file(pagename, request):
