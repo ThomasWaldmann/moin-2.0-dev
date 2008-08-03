@@ -287,6 +287,49 @@ class Converter(ConverterMacro):
         tag = ET.QName('separator', namespaces.moin_page)
         self.stack_top_append(ET.Element(tag))
 
+    block_table = r"""
+        ^
+        \s*
+        (?P<table>
+            \|\|
+            .*
+        )
+        \|\|
+        \s*
+        $
+    """
+
+    def block_table_repl(self, iter, table):
+        self.stack_pop_name('page')
+
+        tag = ET.QName('table', namespaces.moin_page)
+        element = ET.Element(tag)
+        self.stack_push(element)
+        tag = ET.QName('table-body', namespaces.moin_page)
+        element = ET.Element(tag)
+        self.stack_push(element)
+
+        self.block_table_row(table)
+
+        for line in iter:
+            match = self.table_re.match(line)
+            if not match:
+                # Allow the mainloop to take care of the line after a list.
+                iter.push(line)
+                break
+
+            self.block_table_row(match.group('table'))
+
+    def block_table_row(self, content):
+        tag = ET.QName('table-row', namespaces.moin_page)
+        element = ET.Element(tag)
+        self.stack_push(element)
+
+        for match in self.tablerow_re.finditer(content):
+            self._apply(match, 'tablerow')
+
+        self.stack_pop()
+
     block_text = r'(?P<text> .+ )'
 
     def block_text_repl(self, iter, text):
@@ -533,6 +576,29 @@ class Converter(ConverterMacro):
         element = ET.Element(tag, attrib = {tag_href: url_target}, children = [url_target])
         self.stack_top_append(element)
 
+    table = block_table
+
+    tablerow = r"""
+        (?P<cell>
+            (?P<cell_marker> \|{2,} )
+            ( < (?P<cell_args> .*? ) > )?
+            \s*
+            (?P<cell_text> .*? )
+            \s*
+            (?= ( \|\| | $ ) )
+        )
+    """
+
+    def tablerow_cell_repl(self, cell, cell_marker, cell_text, cell_args=None):
+        tag = ET.QName('table-cell', namespaces.moin_page)
+        element = ET.Element(tag)
+        self.stack_push(element)
+
+        self.parse_inline(cell_text)
+
+        self.stack_pop_name('table-cell')
+        self.stack_pop()
+
     # Block elements
     block = (
         block_line,
@@ -541,7 +607,7 @@ class Converter(ConverterMacro):
         block_macro,
         block_nowiki,
         block_list,
-        #block_table,
+        block_table,
         block_text,
     )
     block_re = re.compile('|'.join(block), re.X | re.U | re.M)
@@ -568,6 +634,12 @@ class Converter(ConverterMacro):
 
     # Nowiki end
     nowiki_end_re = re.compile(nowiki_end, re.X)
+
+    # Table
+    table_re = re.compile(table, re.X | re.U)
+
+    # Table row
+    tablerow_re = re.compile(tablerow, re.X | re.U)
 
     def stack_pop_name(self, *names):
         """
