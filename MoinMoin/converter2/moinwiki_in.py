@@ -251,11 +251,12 @@ class Converter(ConverterMacro):
             else:
                 # TODO
                 attrib = {ET.QName('class', namespaces.html): 'error'}
-                elem = ET.Element(tag, attrib, children=[firstline])
+                elem = ET.Element(tag, attrib)
                 self.stack_top_append(elem)
 
                 for line in lines:
-                    elem.append('\n')
+                    if len(elem):
+                        elem.append('\n')
                     elem.append(line)
 
         else:
