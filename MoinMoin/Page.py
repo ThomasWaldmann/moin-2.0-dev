@@ -1277,23 +1277,45 @@ class Page(object):
 
         return doc
 
-    def convert_input_cache(self, request, body=None, format=None, format_args='',
-            pagelinks=False):
+    def convert_input_cache_create(self, request, body=None, format=None,
+            format_args=''):
+        """
+        Create the document and write it to the cache.
+        """
+        data = self.convert_input(request, body, format, format_args,
+                create_pagelinks=True)
+        self.add_to_cache(request, 'tree', data[0])
+        self.add_to_cache(request, 'pagelinks', data[1])
+
+        return data
+
+    def convert_input_cache(self, request, body=None, format=None, format_args=''):
         """
         Loads document from cache if possible, otherwise create it.
         """
-        data = self.load_from_cache(request,
-                pagelinks and 'pagelinks' or 'tree')
+        data = self.load_from_cache(request, 'tree')
 
         if data is None:
-            data = self.convert_input(request, body, format, format_args,
-                    create_pagelinks=True)
-            self.add_to_cache(request, 'tree', data[0])
-            self.add_to_cache(request, 'pagelinks', data[1])
-
-            if pagelinks:
-                return data[1]
+            data = self.convert_input_cache_create(request, body, format,
+                    format_args)
             return data[0]
+
+        return data
+
+    def convert_input_cache_pagelinks(self, request):
+        """
+        Loads document from cache if possible, otherwise create it.
+        All exceptions by the converters are swallowed and an empty set
+        returned and cached instead.
+        """
+        data = self.load_from_cache(request, 'pagelinks')
+
+        if data is None:
+            try:
+                data = self.convert_input_cache_create(request, body)[1]
+            except Exception:
+                data = set()
+                self.add_to_cache(request, 'pagelinks', data)
 
         return data
 
@@ -1420,7 +1442,7 @@ class Page(object):
         @return: page names this page links to
         """
         if self.exists():
-            return self.convert_input_cache(request, pagelinks=True)
+            return self.convert_input_cache_pagelinks(request)
         return ()
 
     def getCategories(self, request):
