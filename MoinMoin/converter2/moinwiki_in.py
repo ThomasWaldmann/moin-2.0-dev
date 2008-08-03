@@ -570,7 +570,7 @@ class Converter(ConverterMacro):
 
     tablerow = r"""
         (?P<cell>
-            (?P<cell_marker> \|{2,} )
+            (?P<cell_marker> (\|\|)+ )
             ( < (?P<cell_args> .*? ) > )?
             \s*
             (?P<cell_text> .*? )
