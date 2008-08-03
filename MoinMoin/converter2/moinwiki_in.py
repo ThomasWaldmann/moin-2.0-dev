@@ -48,6 +48,10 @@ class _Iter(object):
         self.__prepend.append(item)
 
 class Converter(ConverterMacro):
+    tag_blockcode = ET.QName('blockcode', namespaces.moin_page)
+    tag_div = ET.QName('div', namespaces.moin_page)
+    tag_page = ET.QName('page', namespaces.moin_page)
+
     @classmethod
     def _factory(cls, request, input, output):
         if input == 'text/moin-wiki' and output == 'application/x-moin-document':
@@ -216,8 +220,6 @@ class Converter(ConverterMacro):
     def block_nowiki_repl(self, iter, nowiki, nowiki_marker, nowiki_data=''):
         self.stack_pop_name('page')
 
-        tag = ET.QName('blockcode', namespaces.moin_page)
-
         nowiki_marker_len = len(nowiki_marker)
 
         lines = _Iter(self.block_nowiki_lines(iter, nowiki_marker_len))
@@ -229,7 +231,6 @@ class Converter(ConverterMacro):
             # Parse it directly if the type is ourself
             if name in ('wiki', ):
                 attrib = {}
-                tag = ET.QName('page', namespaces.moin_page)
 
                 if args[0]:
                     classes = ' '.join([i.replace('/', ' ') for i in args[0]])
@@ -239,7 +240,7 @@ class Converter(ConverterMacro):
                     if key in ('background-color', 'color'):
                         attrib[ET.QName(key, namespaces.moin_page)] = value
 
-                self.stack_push(ET.Element(tag, attrib))
+                self.stack_push(ET.Element(self.tag_page, attrib))
 
                 for line in lines:
                     match = self.block_re.match(line)
@@ -249,18 +250,19 @@ class Converter(ConverterMacro):
                 self.stack_pop()
 
             else:
-                # TODO
-                attrib = {ET.QName('class', namespaces.html): 'error'}
-                elem = ET.Element(tag, attrib)
+                from MoinMoin.converter2 import default_registry as reg
+
+                mimetype = wikiutil.MimeType(name).mime_type()
+                Converter = reg.get(self.request, mimetype, 'application/x-moin-document')
+
+                elem = ET.Element(self.tag_div)
                 self.stack_top_append(elem)
 
-                for line in lines:
-                    if len(elem):
-                        elem.append('\n')
-                    elem.append(line)
+                doc = Converter(self.request, self.page_name, ' '.join(args[0]))(lines)
+                elem.extend(doc)
 
         else:
-            elem = ET.Element(tag)
+            elem = ET.Element(self.tag_blockcode)
             self.stack_top_append(elem)
 
             for line in lines:
