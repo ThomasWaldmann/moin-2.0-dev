@@ -275,8 +275,8 @@ class MercurialBackend(Backend):
 
         revision = StoredRevision(item, revno)
         revision._data = StringIO.StringIO(fctx.data())
-        revision._metadata = dict(((key.lstrip("_"), value) for key, value in
-                                   fctx.changectx().extra().iteritems() if key.startswith('_')))
+        revision._metadata = dict(((key.lstrip("moin_"), value) for key, value in
+                                   fctx.changectx().extra().iteritems() if key.startswith('moin_')))
         return revision
 
     def _list_revisions(self, item):
@@ -402,7 +402,7 @@ class MercurialBackend(Backend):
         if not item._id and self.has_item(item.name):
             raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
 
-        meta = dict(("_%s" % key, value) for key, value in rev.iteritems())
+        meta = dict(("moin_%s" % key, value) for key, value in rev.iteritems())
         lock = self._repolock()
         try:
             def getfilectx(repo, memctx, path):
