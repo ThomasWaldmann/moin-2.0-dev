@@ -9,16 +9,16 @@ import py.test
 
 from MoinMoin.converter2._registry import *
 
-def factory_all(input, output):
+def factory_all(request, input, output):
     return 1
 
-def factory_all2(input, output):
+def factory_all2(request, input, output):
     return 3
 
-def factory_none(input, output):
+def factory_none(request, input, output):
     pass
 
-def factory_special(input, output):
+def factory_special(request, input, output):
     if input == 'a':
         return 2
 
@@ -27,16 +27,16 @@ def test_get():
 
     r.register(factory_none)
     r.register(factory_special)
-    assert r.get('a', None) == 2
+    assert r.get(object(), 'a', None) == 2
     py.test.raises(TypeError, r.get, None, None)
 
     r.register(factory_all)
-    assert r.get(None, None) == 1
-    assert r.get('a', None) == 2
+    assert r.get(object(), None, None) == 1
+    assert r.get(object(), 'a', None) == 2
 
     r.register(factory_all2, r.PRIORITY_FIRST)
-    assert r.get(None, None) == 3
-    assert r.get('a', None) == 3
+    assert r.get(object(), None, None) == 3
+    assert r.get(object(), 'a', None) == 3
 
 def test_register():
     r = Registry()
