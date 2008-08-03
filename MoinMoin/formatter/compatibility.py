@@ -155,6 +155,8 @@ class Formatter(ConverterMacro):
     tag_table_cell = ET.QName('table-cell', namespaces.moin_page)
     tag_table_row = ET.QName('table-row', namespaces.moin_page)
 
+    tag_html_class = ET.QName('class', namespaces.html)
+
     def __init__(self, request, page, **kw):
         self.request, self.page = request, page
         self._ = request.getText
@@ -357,15 +359,17 @@ class Formatter(ConverterMacro):
 
     def code_area(self, on, code_id, code_type='code', show=0, start=-1, step=-1):
         # TODO
-        return ''
+        attrib = {self.tag_html_class: 'codearea'}
+        return self.handle_on(on, self.tag_blockcode, attrib)
 
     def code_line(self, on):
         # TODO
-        return ''
+        return self.handle_on(on, self.tag_span)
 
-    def code_token(self, tok_text, tok_type):
+    def code_token(self, on, tok_type):
         # TODO
-        return ''
+        attrib = {self.tag_html_class: tok_type}
+        return self.handle_on(on, self.tag_span, attrib)
 
     # Paragraphs, Lines, Rules ###########################################
 
