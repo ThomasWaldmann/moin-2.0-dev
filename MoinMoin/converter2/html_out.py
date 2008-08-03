@@ -332,7 +332,7 @@ class ConverterPage(ConverterBase):
     """
 
     @classmethod
-    def _factory(cls, input, output):
+    def _factory(cls, request, input, output):
         if input == 'application/x-moin-document' and \
            output == 'application/x-xhtml-moin-page':
             return cls

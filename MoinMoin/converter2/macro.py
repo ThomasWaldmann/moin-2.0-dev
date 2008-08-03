@@ -57,7 +57,7 @@ class Converter(object):
     tag_title = ET.QName('title', namespaces.moin_page)
 
     @classmethod
-    def _factory(cls, input, output):
+    def _factory(cls, request, input, output):
         if input == 'application/x-moin-document' and \
                 output == 'application/x-moin-document;macros=expandall':
             return cls

@@ -55,7 +55,7 @@ class ConverterBase(object):
 
 class ConverterExternOutput(ConverterBase):
     @classmethod
-    def _factory(cls, input, output):
+    def _factory(cls, request, input, output):
         if input == 'application/x-moin-document' and \
                 output == 'application/x-moin-document;links=extern':
             return cls
@@ -119,7 +119,7 @@ class ConverterExternOutput(ConverterBase):
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
-    def _factory(cls, input, output):
+    def _factory(cls, request, input, output):
         if input == 'application/x-moin-document' and \
                 output == 'application/x-moin-document;links=pagelinks':
             return cls

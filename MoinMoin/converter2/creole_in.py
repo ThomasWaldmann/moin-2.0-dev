@@ -66,7 +66,7 @@ class Converter(ConverterMacro):
     tag_page = ET.QName('page', namespaces.moin_page)
 
     @classmethod
-    def _factory(cls, input, output):
+    def _factory(cls, request, input, output):
         if input == 'text/creole' and output == 'application/x-moin-document':
             return cls
 

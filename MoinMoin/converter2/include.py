@@ -84,7 +84,7 @@ class Converter(object):
     tag_xi_xpointer = ET.QName('xpointer', namespaces.xinclude)
 
     @classmethod
-    def _factory(cls, input, output):
+    def _factory(cls, request, input, output):
         if input == 'application/x-moin-document' and \
                 output == 'application/x-moin-document;includes=expandall':
             return cls
