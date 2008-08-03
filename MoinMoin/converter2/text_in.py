@@ -26,7 +26,7 @@ class Converter(object):
     def __init__(self, request, page_name=None, args=None):
         self.page_name = page_name
 
-    def __call__(self, text):
+    def __call__(self, content):
         """Parse the text and return DOM tree."""
 
         tag = ET.QName('page', namespaces.moin_page)
@@ -38,8 +38,13 @@ class Converter(object):
 
         root = ET.Element(tag, attrib=attrib)
 
-        blockcode = ET.Element(ET.QName('blockcode', namespaces.moin_page),
-                               children=[text.expandtabs()])
+        blockcode = ET.Element(ET.QName('blockcode', namespaces.moin_page))
+
+        for line in content:
+            if len(blockcode):
+                blockcode.append('\n')
+            blockcode.append(line.expandtabs())
+
         root.append(blockcode)
         return root
 

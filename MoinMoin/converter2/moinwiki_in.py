@@ -57,7 +57,7 @@ class Converter(ConverterMacro):
         super(Converter, self).__init__(request)
         self.page_name = page_name
 
-    def __call__(self, text):
+    def __call__(self, content):
         tag = ET.QName('page', namespaces.moin_page)
         tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
@@ -67,7 +67,7 @@ class Converter(ConverterMacro):
 
         self.root = ET.Element(tag, attrib=attrib)
         self._stack = [self.root]
-        iter = _Iter(text.split('\n'))
+        iter = _Iter(content)
 
         for line in iter:
             match = self.block_re.match(line)

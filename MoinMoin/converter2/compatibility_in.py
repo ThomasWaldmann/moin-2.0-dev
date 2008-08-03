@@ -17,7 +17,7 @@ class Converter(object):
         self.request, self.page_name, self.args = request, page_name, args
         self.parser, self.formatter = parser, formatter
 
-    def __call__(self, text):
+    def __call__(self, content):
         tag = ET.QName('page', namespaces.moin_page)
         tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
@@ -27,6 +27,7 @@ class Converter(object):
 
         self.root = ET.Element(tag, attrib=attrib)
 
+        text = '\n'.join(content)
         # TODO: Remove Page object
         page = Page(self.request, self.page_name)
 

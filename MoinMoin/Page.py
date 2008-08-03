@@ -1266,7 +1266,7 @@ class Page(object):
 
         InputConverter = reg.get(request, mime_type, 'application/x-moin-document')
 
-        doc = InputConverter(request, self.page_name)(body)
+        doc = InputConverter(request, self.page_name)(body.split('\n'))
 
         if create_pagelinks:
             PagelinksConverter = reg.get(request, 'application/x-moin-document',
