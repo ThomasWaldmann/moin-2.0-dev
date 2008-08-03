@@ -143,6 +143,7 @@ class ConverterPagelinks(ConverterBase):
             pass
 
         if link:
+            link = wikiutil.AbsPageName(page_name, link)
             self.links.add(link)
 
     def __call__(self, tree):
