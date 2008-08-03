@@ -1312,7 +1312,7 @@ class Page(object):
 
         if data is None:
             try:
-                data = self.convert_input_cache_create(request, body)[1]
+                data = self.convert_input_cache_create(request)[1]
             except Exception:
                 data = set()
                 self.add_to_cache(request, 'pagelinks', data)
