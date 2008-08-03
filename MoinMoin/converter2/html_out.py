@@ -167,7 +167,11 @@ class ConverterBase(object):
         return self.new_copy(self.tag_html_a, elem, attrib)
 
     def visit_moinpage_blockcode(self, elem):
-        return self.new_copy(ET.QName('pre', namespaces.html), elem)
+        # TODO
+        attrib = {ET.QName('class', namespaces.html): 'codearea'}
+        ret = self.new(ET.QName('div', namespaces.html), attrib)
+        ret.append(self.new_copy(ET.QName('pre', namespaces.html), elem))
+        return ret
 
     def visit_moinpage_code(self, elem):
         return self.new_copy(ET.QName('tt', namespaces.html), elem)
