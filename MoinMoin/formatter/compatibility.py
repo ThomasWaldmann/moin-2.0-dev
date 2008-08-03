@@ -574,19 +574,12 @@ class Formatter(ConverterMacro):
         from MoinMoin.converter2 import default_registry as reg
 
         mimetype = wikiutil.MimeType(parser_name).mime_type()
-        Converter = reg.get(mimetype, 'application/x-moin-document', None)
+        Converter = reg.get(mimetype, 'application/x-moin-document')
 
         self._stack_push(ET.Element(ET.QName('div', namespaces.moin_page)))
 
-        if Converter:
-            doc = Converter(self.request, self.page.page_name)(text)
-            self._stack_top_append(doc)
-
-        else:
-            Parser = wikiutil.searchAndImportPlugin(self.request.cfg, "parser", parser_name)
-            parser = Parser(text, self.request, format_args=args)
-
-            parser.format(self)
+        doc = Converter(self.request, self.page.page_name)(text)
+        self._stack_top_append(doc)
 
         self._stack_pop()
         return ''
