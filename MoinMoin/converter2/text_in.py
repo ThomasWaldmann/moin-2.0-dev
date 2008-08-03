@@ -19,7 +19,7 @@ class Converter(object):
     """
 
     @classmethod
-    def _factory(cls, input, output):
+    def _factory(cls, request, input, output):
         # TODO: currently we register for text/plain, but as soon as priorities
         # are implemented, it could check input.startswith('text/').
         if input == 'text/plain' and output == 'application/x-moin-document':

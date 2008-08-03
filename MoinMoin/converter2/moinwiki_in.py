@@ -49,7 +49,7 @@ class _Iter(object):
 
 class Converter(ConverterMacro):
     @classmethod
-    def _factory(cls, input, output):
+    def _factory(cls, request, input, output):
         if input == 'text/moin-wiki' and output == 'application/x-moin-document':
             return cls
 

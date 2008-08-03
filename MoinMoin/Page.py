@@ -1221,14 +1221,14 @@ class Page(object):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util import namespaces
 
-        IncludeConverter = reg.get('application/x-moin-document',
+        IncludeConverter = reg.get(request, 'application/x-moin-document',
                 'application/x-moin-document;includes=expandall')
-        MacroConverter = reg.get('application/x-moin-document',
+        MacroConverter = reg.get(request, 'application/x-moin-document',
                 'application/x-moin-document;macros=expandall')
-        LinkConverter = reg.get('application/x-moin-document',
+        LinkConverter = reg.get(request, 'application/x-moin-document',
                 'application/x-moin-document;links=extern')
         # TODO: Real output format
-        HtmlConverter = reg.get('application/x-moin-document',
+        HtmlConverter = reg.get(request, 'application/x-moin-document',
                 'application/x-xhtml-moin-page')
 
         doc = None
@@ -1264,7 +1264,7 @@ class Page(object):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util import namespaces
 
-        InputConverter = reg.get(mime_type, 'application/x-moin-document', None)
+        InputConverter = reg.get(request, mime_type, 'application/x-moin-document', None)
 
         if InputConverter:
             doc = InputConverter(request, self.page_name)(body)
@@ -1283,7 +1283,7 @@ class Page(object):
                     children=formatter.root[:])
 
         if create_pagelinks:
-            PagelinksConverter = reg.get('application/x-moin-document',
+            PagelinksConverter = reg.get(request, 'application/x-moin-document',
                     'application/x-moin-document;links=pagelinks')
             pagelinks = PagelinksConverter(request)(doc)
 

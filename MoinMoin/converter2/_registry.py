@@ -29,7 +29,7 @@ class Registry(object):
     def _sort(self):
         self._converters.sort(key=lambda a: a.priority)
 
-    def get(self, input, output, default=_marker):
+    def get(self, request, input, output, default=_marker):
         """
         @param input Input MIME-Type
         @param output Input MIME-Type
@@ -37,7 +37,7 @@ class Registry(object):
         @return A converter or default value
         """
         for entry in self._converters:
-            conv = entry.factory(input, output)
+            conv = entry.factory(request, input, output)
             if conv is not None:
                 return conv
         if default is _marker:
