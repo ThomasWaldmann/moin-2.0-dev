@@ -7,15 +7,16 @@
     the description of the related features (which otherwise could
     get very confusing).
 
-    @copyright: 2001 Juergen Hermann <jh@web.de>
+    @copyright: 2001 Juergen Hermann <jh@web.de>,
+                2008 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
-Dependencies = ["language"]
+from MoinMoin.macro2._base import MacroInlineBase
 
-def macro_GetText(macro, text=u''):
+class Macro(MacroInlineBase):
     """ Return a translation of args, or args as is """
-    translation = macro.request.getText(text)
-
-    return macro.formatter.text(translation)
+    def macro(self, text=u''):
+        translation = self.request.getText(text)
+        return translation
 
