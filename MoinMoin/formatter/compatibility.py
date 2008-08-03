@@ -364,7 +364,12 @@ class Formatter(ConverterMacro):
 
     def code_line(self, on):
         # TODO
-        return self.handle_on(on, self.tag_span)
+        if on:
+            self._stack_push(ET.Element(self.tag_span))
+        else:
+            self._stack_pop()
+            self._stack_top_append('\n')
+        return ''
 
     def code_token(self, on, tok_type):
         # TODO
@@ -569,19 +574,17 @@ class Formatter(ConverterMacro):
         if not lines:
             return ''
 
-        text = '\n'.join(lines)
-
         from MoinMoin.converter2 import default_registry as reg
 
         mimetype = wikiutil.MimeType(parser_name).mime_type()
-        Converter = reg.get(mimetype, 'application/x-moin-document')
+        Converter = reg.get(self.request, mimetype, 'application/x-moin-document')
 
-        self._stack_push(ET.Element(ET.QName('div', namespaces.moin_page)))
+        elem = ET.Element(ET.QName('div', namespaces.moin_page))
+        self._stack_top_append(elem)
 
-        doc = Converter(self.request, self.page.page_name)(text)
-        self._stack_top_append(doc)
+        doc = Converter(self.request, self.page.page_name, args)(lines)
+        elem.extend(doc)
 
-        self._stack_pop()
         return ''
 
     # Other ##############################################################
