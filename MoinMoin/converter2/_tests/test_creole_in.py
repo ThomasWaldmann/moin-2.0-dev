@@ -230,6 +230,6 @@ class TestConverter(object):
             yield (self._do, ) + i
 
     def _do(self, input, output):
-        out = self.conv(unicode(input))
+        out = self.conv(unicode(input).split('\n'))
         assert serialize(out) == output
 
