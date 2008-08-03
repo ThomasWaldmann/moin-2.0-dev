@@ -715,9 +715,6 @@ class RequestBase(object):
         # caches unique ids
         self.init_unique_ids()
 
-        if hasattr(self, "_fmt_hd_counters"):
-            del self._fmt_hd_counters
-
     def loadTheme(self, theme_name):
         """ Load the Theme to use for this request.
 
