@@ -250,44 +250,40 @@ class Converter(ConverterMacro):
 
     block_table = r"""
         (?P<table>
-            ^ \s*?
-            [|].*? \s*?
-            [|]? \s*?
-            $
+            ^ \s* \| .* $
         )
     """
 
     def block_table_repl(self, iter, table):
-        self.stack_pop_name('table-body', 'page')
+        self.stack_pop_name('page')
 
-        if not self.stack_top_check('table-body'):
-            tag = ET.QName('table', namespaces.moin_page)
-            element = ET.Element(tag)
-            self.stack_push(element)
-            tag = ET.QName('table-body', namespaces.moin_page)
-            element = ET.Element(tag)
-            self.stack_push(element)
+        tag = ET.QName('table', namespaces.moin_page)
+        element = ET.Element(tag)
+        self.stack_push(element)
+        tag = ET.QName('table-body', namespaces.moin_page)
+        element = ET.Element(tag)
+        self.stack_push(element)
 
+        self.block_table_row(table)
+
+        for line in iter:
+            match = self.table_re.match(line)
+            if not match:
+                # Allow the mainloop to take care of the line after a list.
+                iter.push(line)
+                break
+
+            self.block_table_row(match.group('table'))
+
+        self.stack_pop_name('page')
+
+    def block_table_row(self, content):
         tag = ET.QName('table-row', namespaces.moin_page)
         element = ET.Element(tag)
         self.stack_push(element)
 
-        for m in self.table_cell_re.finditer(table):
-            cell = m.group('cell')
-            if cell:
-                tag = ET.QName('table-cell', namespaces.moin_page)
-                element = ET.Element(tag)
-                self.stack_push(element)
-
-                self.parse_inline(cell)
-
-                self.stack_pop()
-            else:
-                cell = m.group('head')
-                # TODO: How to handle table headings
-                tag = ET.QName('table-cell', namespaces.moin_page)
-                element = ET.Element(tag, children=[cell.strip('=')])
-                self.stack_top_append(element)
+        for match in self.tablerow_re.finditer(content):
+            self._apply(match, 'tablerow')
 
         self.stack_pop()
 
@@ -532,13 +528,28 @@ class Converter(ConverterMacro):
 
     list_text_repl = block_text_repl
 
-    table_cell = r"""
-        \| \s*
-        (
-            (?P<head> [=][^|]+ ) |
-            (?P<cell> (  %s | [^|])+ )
-        ) \s*
-    """ % '|'.join([inline_link, inline_macro, inline_object, inline_nowiki])
+    table = block_table
+
+    tablerow = r"""
+        (?P<cell>
+            \|
+            \s*
+            (?P<cell_head> [=] )?
+            (?P<cell_text> [^|]+ )
+            \s*
+        )
+    """
+
+    def tablerow_cell_repl(self, cell, cell_text, cell_head=None):
+        tag = ET.QName('table-cell', namespaces.moin_page)
+        element = ET.Element(tag)
+        self.stack_push(element)
+
+        # TODO: How to handle table headings
+        self.parse_inline(cell_text)
+
+        self.stack_pop_name('table-cell')
+        self.stack_pop()
 
     # Block elements
     block = (
@@ -587,8 +598,11 @@ class Converter(ConverterMacro):
     # Nowiki end
     nowiki_end_re = re.compile(nowiki_end, re.X)
 
-    # Table cells
-    table_cell_re = re.compile(table_cell, re.X | re.U)
+    # Table
+    table_re = re.compile(table, re.X | re.U)
+
+    # Table row
+    tablerow_re = re.compile(tablerow, re.X | re.U)
 
     def stack_pop_name(self, *names):
         """
