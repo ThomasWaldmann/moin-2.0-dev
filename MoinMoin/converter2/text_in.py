@@ -20,9 +20,7 @@ class Converter(object):
 
     @classmethod
     def _factory(cls, request, input, output):
-        # TODO: currently we register for text/plain, but as soon as priorities
-        # are implemented, it could check input.startswith('text/').
-        if input == 'text/plain' and output == 'application/x-moin-document':
+        if input.startswith('text/') and output == 'application/x-moin-document':
             return cls
 
     def __init__(self, request, page_name=None, args=None):
@@ -46,4 +44,4 @@ class Converter(object):
         return root
 
 from _registry import default_registry
-default_registry.register(Converter._factory)
+default_registry.register(Converter._factory, default_registry.PRIORITY_LAST)
