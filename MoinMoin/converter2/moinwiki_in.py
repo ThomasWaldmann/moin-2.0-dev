@@ -213,31 +213,17 @@ class Converter(ConverterMacro):
                     return
             yield line
 
-    def block_nowiki_repl(self, iter, nowiki, nowiki_marker, nowiki_data=None):
+    def block_nowiki_repl(self, iter, nowiki, nowiki_marker, nowiki_data=''):
         self.stack_pop_name('page')
 
         tag = ET.QName('blockcode', namespaces.moin_page)
 
         nowiki_marker_len = len(nowiki_marker)
 
-        if nowiki_data:
-            firstline = nowiki_data
-        else:
-            try:
-                firstline = iter.next()
-            except StopIteration:
-                return
-
-            # Stop directly if we got an end marker in the first line
-            match = self.nowiki_end_re.match(firstline)
-            if match and len(match.group('marker')) >= nowiki_marker_len:
-                self.stack_top_append(ET.Element(tag))
-                return
-
         lines = _Iter(self.block_nowiki_lines(iter, nowiki_marker_len))
 
-        if firstline.startswith('#!'):
-            args = wikiutil.parse_quoted_separated(firstline[2:], separator=None)
+        if nowiki_data.startswith('#!'):
+            args = wikiutil.parse_quoted_separated(nowiki_data[2:], separator=None)
             name = args[0].pop(0)
 
             # Parse it directly if the type is ourself
@@ -273,11 +259,12 @@ class Converter(ConverterMacro):
                     elem.append(line)
 
         else:
-            elem = ET.Element(tag, children=[firstline])
+            elem = ET.Element(tag)
             self.stack_top_append(elem)
 
             for line in lines:
-                elem.append('\n')
+                if len(elem):
+                    elem.append('\n')
                 elem.append(line)
 
     block_separator = r'(?P<separator> ^ \s* -{4,} \s* $ )'
