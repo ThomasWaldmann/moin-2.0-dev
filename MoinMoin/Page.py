@@ -1264,23 +1264,9 @@ class Page(object):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util import namespaces
 
-        InputConverter = reg.get(request, mime_type, 'application/x-moin-document', None)
+        InputConverter = reg.get(request, mime_type, 'application/x-moin-document')
 
-        if InputConverter:
-            doc = InputConverter(request, self.page_name)(body)
-
-        else:
-            # Use oldstyle parser
-            Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
-            Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
-            parser = Parser(body, request, format_args=format_args)
-            formatter = Formatter(request, self)
-
-            parser.format(formatter)
-
-            attrib = {ET.QName('page-href', namespaces.moin_page): 'wiki:///' + self.page_name}
-            doc = ET.Element(ET.QName('page', namespaces.moin_page), attrib,
-                    children=formatter.root[:])
+        doc = InputConverter(request, self.page_name)(body)
 
         if create_pagelinks:
             PagelinksConverter = reg.get(request, 'application/x-moin-document',
