@@ -9,21 +9,20 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-Dependencies = ['pages']
 
 import sys, os
-from StringIO import StringIO
 
+from MoinMoin.macro2._base import MacroDefinitionListBase
 from MoinMoin import wikiutil, version
 from MoinMoin import action, macro, parser
 from MoinMoin.logfile import editlog, eventlog
 from MoinMoin.Page import Page
 
-class SystemInfo:
-    def __init__(self, macro):
-        self.macro = macro
-        self.request = macro.request
-        self.formatter = macro.formatter
+class Macro(MacroDefinitionListBase):
+    def macro(self):
+        if self.request.isSpiderAgent: # reduce bot cpu usage
+            return ''
+        return self.create_definition_list(self.get_items())
 
     def formatInReadableUnits(self, size):
         size = float(size)
@@ -48,26 +47,19 @@ class SystemInfo:
             dirsize = -1
         return dirsize
 
-    def render(self):
-        _ = self.request.getText
-        return self.formatter.rawHTML(self.getInfo())
-
-    def getInfo(self):
+    def get_items(self):
         _ = self.request.getText
         request = self.request
 
-        buf = StringIO()
+        desc_list = []
+        row = lambda label, value, dl=desc_list: dl.append((label, value))
 
-        row = lambda label, value, buf=buf: buf.write(u'<dt>%s</dt><dd>%s</dd>' % (label, value))
-
-        buf.write(u'<dl>')
         row(_('Python Version'), sys.version)
         row(_('MoinMoin Version'), _('Release %s [Revision %s]') % (version.release, version.revision))
 
         if not request.user.valid:
             # for an anonymous user it ends here.
-            buf.write(u'</dl>')
-            return buf.getvalue()
+            return desc_list
 
         if request.user.isSuperUser():
             # superuser gets all page dependent stuff only
@@ -114,18 +106,18 @@ class SystemInfo:
         # a valid user gets info about all installed extensions
         row(_('Global extension macros'), ', '.join(macro.modules) or nonestr)
         row(_('Local extension macros'),
-            ', '.join(wikiutil.wikiPlugins('macro', self.macro.cfg)) or nonestr)
+            ', '.join(wikiutil.wikiPlugins('macro', request.cfg)) or nonestr)
 
         glob_actions = [x for x in action.modules
                         if not x in request.cfg.actions_excluded]
         row(_('Global extension actions'), ', '.join(glob_actions) or nonestr)
-        loc_actions = [x for x in wikiutil.wikiPlugins('action', self.macro.cfg)
+        loc_actions = [x for x in wikiutil.wikiPlugins('action', request.cfg)
                        if not x in request.cfg.actions_excluded]
         row(_('Local extension actions'), ', '.join(loc_actions) or nonestr)
 
         row(_('Global parsers'), ', '.join(parser.modules) or nonestr)
         row(_('Local extension parsers'),
-            ', '.join(wikiutil.wikiPlugins('parser', self.macro.cfg)) or nonestr)
+            ', '.join(wikiutil.wikiPlugins('parser', request.cfg)) or nonestr)
 
         from MoinMoin.search.builtin import Search
         xapState = (_('Disabled'), _('Enabled'))
@@ -159,17 +151,11 @@ class SystemInfo:
 
         try:
             from threading import activeCount
-            t_count = activeCount()
+            t_count = str(activeCount())
         except ImportError:
             t_count = None
 
         row(_('Active threads'), t_count or _('N/A'))
-        buf.write(u'</dl>')
 
-        return buf.getvalue()
-
-def macro_SystemInfo(macro):
-    if macro.request.isSpiderAgent: # reduce bot cpu usage
-        return ''
-    return SystemInfo(macro).render()
+        return desc_list
 

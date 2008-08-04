@@ -111,3 +111,20 @@ class MacroNumberPageLinkListBase(MacroBlockBase):
             num_page_list.append(item)
         return num_page_list
 
+class MacroDefinitionListBase(MacroBlockBase):
+    def create_definition_list(self, items):
+        """ creates an ET with a definition list made from items """
+        tag_l = ET.QName('list', namespaces.moin_page)
+        tag_li = ET.QName('list-item', namespaces.moin_page)
+        tag_li_label = ET.QName('list-item-label', namespaces.moin_page)
+        tag_li_body = ET.QName('list-item-body', namespaces.moin_page)
+
+        def_list = ET.Element(tag_l)
+        for label, body in items:
+            item_label = ET.Element(tag_li_label, children=[label])
+            item_body = ET.Element(tag_li_body, children=[body])
+            item = ET.Element(tag_li, children=[item_label, item_body])
+            def_list.append(item)
+        return def_list
+
+
