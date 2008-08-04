@@ -111,7 +111,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from mercurial import hg, ui, context, node, util
+from mercurial import hg, ui, context, util, commands
+from mercurial.node import nullid
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
 import cPickle as pickle
@@ -255,8 +256,6 @@ class MercurialBackend(Backend):
             if revno != revs[-1] + 1:
                 raise RevisionNumberMismatchError("Unable to create revision number %d. \
                     New Revision number must be next to latest Revision number." % revno)
-            # XXX: this check will go out as soon as merging is implemented higher ;)
-            # this will also need explicitly pointing parent revision in commit
         rev = NewRevision(item, revno)
         rev._data = StringIO.StringIO()
         rev._revno = revno
@@ -404,6 +403,7 @@ class MercurialBackend(Backend):
 
         meta = dict(("moin_%s" % key, value) for key, value in rev.iteritems())
         lock = self._repolock()
+         
         try:
             def getfilectx(repo, memctx, path):
                 return context.memfilectx(path, data, False, False, False)
@@ -414,14 +414,41 @@ class MercurialBackend(Backend):
             msg = meta.get("comment", "")
             user = meta.get("editor", "anonymous")  # XXX: meta keys spec
             data = rev._data.getvalue()
-            fname = [item._id]
-            p1, p2 = self._repo.changelog.tip(), node.nullid
-            # TODO: check this parents on merging task
+            fname = [item._id]            
+                        
+            revno = item._uncommitted_revision.revno
+            if revno > 0:  # commit can create new head            
+                filelog = self._repo.file(item._id)
+                n = filelog.node(revno - 1)
+                p1, p2 = self._repo[filelog.linkrev(n)].node(), nullid
+            else:
+                p1, p2 = self._repo.changelog.tip(), nullid
             ctx = context.memctx(self._repo, (p1, p2), msg, fname, getfilectx, user, extra=meta)
 
             if not item._id:
                 ctx._status[1], ctx._status[0] = ctx._status[0], ctx._status[1]
             self._repo.commitctx(ctx)
+                                                
+            # policy: always merge with tip, 
+            # at most two heads in this block
+            filelog = self._repo.file(item._id)
+            branch_heads = self._repo.branchheads()
+            if len(branch_heads) > 1:              
+                heads = filelog.heads()     # XXX: to further look!
+                                            # DOES work from console
+                                            # doesnt from backend...
+                meta = {}
+                if len(heads) > 1:                  
+                    for head in heads: 
+                        rev = filelog.linkrev(head)                      
+                        meta.update(self._repo[rev].extra())                 
+                    print ">>> ", meta
+                                                                                                           
+                commands.merge(self._ui, self._repo)  # XXX: invoke moin-merge here                                
+                msg = "Merged %s" % item._id  # XXX: just for now
+                self._repo.commit(text=msg, user=user, files=[item._id], extra=meta)                                  
+            else:
+                commands.update(self._ui, self._repo)  # merge relies on working copy...                         
         finally:
             del lock
             item._uncommitted_revision = None  # XXX: move to abstract
