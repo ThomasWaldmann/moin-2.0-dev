@@ -4,54 +4,102 @@
 
     This package contains code for backend based on Mercurial distributed
     version control system. This backend provides several advantages for
-    normal filesystem backend like internal atomicity handling, multiple
-    concurrent editors without page edit locking or data cloning.
+    normal filesystem backend like:
+    - internal atomicity handling and revisioning
+    - multiple concurrent editors without page edit-locks
+    - data cloning
 
     As this code is based on new API design, it should prove consistency of this
     design and show how to use it in proper way.
 
     ---
 
-    Second iteration of backend.
+    Third iteration of backend.
 
     Items with Revisions are stored in hg internal directory.
-    Operations on Items are done in memory utilizing new mercurial features:
+    Operations on Items are done in memory, utilizing new mercurial features:
     memchangectx and memfilectx, which allow easy manipulation of changesets
-    without the need of working copy.
+    without the need of working copy. Advantage is less I/O operations.
 
-    Items with Metadata are not versioned and stored in separate directory.
+    Revision data before commit is also stored in memory using StringIO.
+    While this good for small Items, bigger ones that don't fit into memory
+    will fail.
 
-    Revision metadata is stored in mercurial internally, using dictionary binded
-    with each changeset: 'extra'. This gives cleaner code, and mercurial stores
+    Revision metadata is stored in mercurial internally, using dictionary bound
+    to each changeset: 'extra'. This gives cleaner code, and mercurial stores
     this in optimal way itself.
 
-    Still, development version of mercurial has some limitations to overcome:
+    Item Metadata is not versioned and stored in separate directory.
+
+    This implementation does not identify Items internally by name. Instead Items
+    have unique ID's which are currently MD5 hashes. Name-to-id translation is
+    stored in cdb.
+    Renames are done by relinking name with hash. Item does not move itself in hg.
+    Thus 'hg rename' is not used, and renames won't be possible 'on console' without
+    providing dedicated hg extensions.
+
+    Dropping previous names implementation had few motivations:
+    - Item names on filesystem, altough previously quoted and trimmed to conform
+      limits - still needed some care when operating 'on console', so any way
+      both implementations needed tools to translate names.
+    - Rename history compatibilty not breaking current API. In 'hg rename', commit
+      after rename was forced, and there was no possibilty to pass revision metadata
+      (internationalized comment i.e.) without messing too much - either in API or
+      masking such commits in hg.
+
+    One downfall of this new implementation is total name obfusaction for 'console'
+    editors. To address this problem few hg extensions should be provided:
+    - hg wrename
+    - hg wcommit
+    - hg wmerge
+    - hg wmanifest
+    - hg wlog with template for viewing revision metadata
+    All these extensions take real page name and translate to hash internally.
+
+    When possible, no tricky things like revision hiding or manifest/index
+    manipulation takes place in this backend. Items revisions are stored as
+    file revisions. Revision metadata goes to changeset dict (changesets contain
+    only one file).
+
+    This backend uses development version of mercurial. Besides this there are
+    few limitations to overcome:
     - file revision number is not increased when doing empty file commits
-    - on empty commit file flags have to be manipulated to get file linked with
-      changeset
-    This affects:
-    - we cannot support so called 'multiple empty revisions in a row',
-      there is no possibility to commit (file) revision which hasnt changed since 
-      last time
-    - as 'extra' dict is property of changeset, without increasing filerevs we're not
-      able to link rev meta and rev data
-    - revision metadata ('extra' dict) change is not stored in/as revision data,
-      thus committing revision metadata changes is like commiting empty changesets
+      (to be more precise, when nothing changes beetween commits: revdata and revmeta)
+      (Johannes Berg insists this "shouldn't be disallowed arbitrarily", the term used
+      to describe this backend behaviour: "multiple empty revisions in a row")
+      (as long as revmeta is stored in changeset, empty revdata is sufficent to consider
+      commit as empty, and this is the _real_ problem)
+    - on empty commit file flags have to be manipulated to get file bound with changeset
+      (and without this revmeta is disconnected with Revision it describes)
+      (however this could be done)
 
-    To address this blockers, patch was applied on mercurial development version
-    (see below).
+    If we drop support for "multiple empty revisions in a row" and change implementation
+    of revision metadata we could survive without patching hg. However other implementations
+    of revmeta are not so neat as current one, and the patch is only three harmless lines ;)
+    (MoinMoin/storage/backends/research/repo_force_changes.diff)
 
-    Repository layout hasnt changed much. Even though versioned items are stored now
-    internally in .hg/, one can get rev/ directory populated on hg update as this
-    is simply working copy directory.
+    Repository layout:
+    - Item as files in rev/ with filename 'ID'. Revisions stored internally in .hg/
+      Since we're doing memory commits there will be no files in this directory
+      until manual 'hg update' from console.
+    - Item Metadata stored in meta/ as 'ID.meta'
+    - Item real names are stored loosely in data/ as 'ID.name'. This is for console users,
+      and reverse mapping.
+    - name-mapping db in data/name-mapping file
 
     data/
     +-- rev/
         +-- .hg/
-      ( +-- items_with_revs )  # this only if someone runs 'hg update'
+        +-- 0f4eac723857aa118122c08f534fcf56  # this only if someone runs 'hg update'
+        +-- ...
     +-- meta/
-        +-- items_without_revs
-
+        +-- 0f4eac723857aa118122c08f534fcf56.meta
+        +-- 4c4712a4141d261ec0ca8f9037950685.meta
+        +-- ...
+    +-- 0f4eac723857aa118122c08f534fcf56.name
+    +-- 4c4712a4141d261ec0ca8f9037950685.name
+    +-- ...
+    +-- name-mapping
 
     IMPORTANT: This version of backend runs on newest development version of mercurial
     and small, additional patch for allowing multiple empty commits in a row
@@ -62,27 +110,37 @@
     @copyright: 2008 MoinMoin:PawelPacana
     @license: GNU GPL, see COPYING for details.
 """
-# XXX: update wiki and describe design/problems
 
-from mercurial import hg, ui, context, node, util
+from mercurial import hg, ui, context, util, commands
+from mercurial.node import nullid
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
-import StringIO
 import cPickle as pickle
+import StringIO
 import tempfile
 import weakref
-import statvfs
 import shutil
+import random
+import datetime
 import md5
 import os
+import errno
 
-from MoinMoin.wikiutil import quoteWikinameFS, unquoteWikiname
+from MoinMoin import log
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import BackendError, NoSuchItemError,\
                                    NoSuchRevisionError,\
                                    RevisionNumberMismatchError,\
                                    ItemAlreadyExistsError, RevisionAlreadyExistsError
+try:
+    import cdb
+except ImportError:
+    from MoinMoin.support import pycdb as cdb
+
 PICKLEPROTOCOL = 1
+RAND_MAX = 1024
+logging = log.getLogger("MercurialBackend")
+
 
 class MercurialBackend(Backend):
     """Implements backend storage using mercurial version control system."""
@@ -95,18 +153,25 @@ class MercurialBackend(Backend):
         self._path = os.path.abspath(path)
         self._r_path = os.path.join(self._path, 'rev')
         self._u_path = os.path.join(self._path, 'meta')
+        self._name_db = os.path.join(self._path, 'name-mapping')
         self._ui = ui.ui(interactive=False, quiet=True)
         self._item_metadata_lock = {}
         self._lockref = None
+        self._name_lockref = None
+
         if not os.path.isdir(self._path):
-            raise BackendError("Invalid path: %s" % self._path)        
+            raise BackendError("Invalid path: %s" % self._path)
         if create:
             for path in (self._u_path, self._r_path):
                 try:
                     if os.listdir(path):
-                        raise BackendError("Directory not empty: %s" % path)                                
+                        raise BackendError("Directory not empty: %s" % path)
                 except OSError:
-                    pass  # directory not existing                                                    
+                    pass  # directory not existing
+            for item in os.listdir(self._path):
+                if (os.path.isdir(item) and item not in ('rev', 'meta') or
+                        not os.path.isdir(os.path.join(self._path, item)) and item != "name-mapping"):
+                    raise BackendError("Directory not empty: %s" % self._path)
         try:
             self._repo = hg.repository(self._ui, self._r_path, create)
         except RepoError:
@@ -120,15 +185,20 @@ class MercurialBackend(Backend):
             if not os.path.isdir(self._u_path):
                 if create:
                     shutil.rmtree(self._r_path)  # rollback
-                raise BackendError("Unable to create directory: %s" % self._path)                                                                 
-        # XXX: does it work on windows?
-        self._max_fname_length = os.statvfs(self._path)[statvfs.F_NAMEMAX]
-        self._repo._forcedchanges = True  # XXX: this comes from patch
+                raise BackendError("Unable to create directory: %s" % self._path)
+
+        if not os.path.exists(self._name_db):
+            lock = self._namelock()
+            try:
+                self._create_new_cdb()
+            finally:
+                del lock
+
+        self._repo._forcedchanges = True
 
     def has_item(self, itemname):
-        """Check whether Item with given name exists."""
-        name = self._quote(itemname)
-        return name in self._tipctx() or self._has_meta(itemname)
+        """Return true if Item exists."""
+        return self._get_item_id(itemname) is not None
 
     def create_item(self, itemname):
         """
@@ -142,7 +212,7 @@ class MercurialBackend(Backend):
         if self.has_item(itemname):
             raise ItemAlreadyExistsError("Item with that name already exists: %s" % itemname)
         item = Item(self, itemname)
-        item._exists = False   
+        item._id = None
         return item
 
     def get_item(self, itemname):
@@ -150,10 +220,11 @@ class MercurialBackend(Backend):
         Return an Item with given name, else raise NoSuchItemError
         exception.
         """
-        if not self.has_item(itemname):
+        item_id = self._get_item_id(itemname)
+        if not item_id:
             raise NoSuchItemError('Item does not exist: %s' % itemname)
         item = Item(self, itemname)
-        item._exists = True   
+        item._id = item_id
         return item
 
     def search_item(self, searchterm):
@@ -168,13 +239,17 @@ class MercurialBackend(Backend):
         Return generator for iterating through items collection
         in repository.
         """
-        itemlist = [name for name in iter(self._tipctx())] + os.listdir(self._u_path)
-        for itemname in itemlist:
-            yield Item(self, itemname)
+        c = cdb.init(self._name_db)
+        r = c.each()
+        while r:
+            item = Item(self, r[0])
+            item._id = r[1]
+            yield item
+            r = c.each()
 
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
-        revs = item.list_revisions()
+        revs = self._list_revisions(item)
         if revs:
             if revno in revs:
                 raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
@@ -189,24 +264,18 @@ class MercurialBackend(Backend):
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
         ctx = self._repo[self._repo.changelog.tip()]
-        name = self._quote(item.name)
         try:
-            revs = item.list_revisions()
+            revs = self._list_revisions(item)
             if revno == -1 and revs:
                 revno = max(revs)
-            fctx = ctx[name].filectx(revno)
+            fctx = ctx[item._id].filectx(revno)
         except LookupError:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
 
         revision = StoredRevision(item, revno)
         revision._data = StringIO.StringIO(fctx.data())
-        def manglekeys(dict):
-            newdict = {}
-            for k in (key for key in dict.iterkeys() if key.startswith("_")):
-                newdict[k[1:]] = dict[k]  
-            return newdict
-        
-        revision._metadata = manglekeys(ctx.extra())
+        revision._metadata = dict(((key.lstrip("moin_"), value) for key, value in
+                                   fctx.changectx().extra().iteritems() if key.startswith('moin_')))
         return revision
 
     def _list_revisions(self, item):
@@ -215,17 +284,20 @@ class MercurialBackend(Backend):
         Retrieves only accessible rev numbers when internal indexfile
         inconsistency occurs.
         """
-        filelog = self._repo.file(self._quote(item.name))
-        cl_count = len(self._repo)
-        revs = []
-        for revno in xrange(len(filelog)):
-            try:
-                assert filelog.linkrev(filelog.node(revno)) < cl_count, \
-                    "Revision number out of bounds, repository inconsistency!"
-                revs.append(revno)
-            except (IndexError, AssertionError):  # malformed index file
-                pass  # XXX: should we log inconsistency?
-        return revs
+        if not item._id:
+            return []
+        else:
+            filelog = self._repo.file(item._id)
+            cl_count = len(self._repo)
+            revs = []
+            for revno in xrange(len(filelog)):
+                try:
+                    assert filelog.linkrev(filelog.node(revno)) < cl_count
+                    revs.append(revno)
+                except (IndexError, AssertionError):  # malformed index file
+                    logging.warn("Revision number out of bounds. Index file inconsistency: %s" %
+                                                                        self._rpath(filelog.indexfile))
+            return revs
 
     def _write_revision_data(self, revision, data):
         """Write data to the Revision."""
@@ -252,74 +324,73 @@ class MercurialBackend(Backend):
         if not isinstance(newname, (str, unicode)):
             raise TypeError("Wrong Item destination name type: %s" % (type(newname)))
         # XXX: again, to the abstract
-        if not self.has_item(item.name):
-            raise NoSuchItemError('Source item does not exist: %s' % item.name)
-
         lock = self._repolock()
         try:
             if self.has_item(newname):
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
-            files = [self._quote(item.name), self._quote(newname)]
-            if self._has_meta(item.name):                
-                util.rename(self._upath(files[0]), self._upath(files[1]))
-            else:
-                def getfilectx(repo, memctx, path):
-                    if path == files[1]:
-                        copies = files[0]
-                    else:
-                        copies = None
-                    return context.memfilectx(path, '', False, False, copies)
 
-                msg = "Renamed %s to: %s" % (item.name.encode('utf-8'), newname.encode('utf-8'))
-                editor = ""  # XXX: get from upper layer here
-                p1, p2 = self._repo.changelog.tip(), node.nullid
-                ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx, user=editor)
-                ctx._status[2] = [files[0]]
-                ctx._status[1] = [files[1]]
-                self._repo.commitctx(ctx)
+            encoded_name = newname.encode('utf-8')
+            name_path = os.path.join(self._path, '%s.name' % item._id)
 
+            c = cdb.init(self._name_db)
+            maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
+            r = c.each()
+            while r:
+                name, id = r
+                if name == encoded_name:
+                    raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
+                elif id == item._id:
+                    maker.add(encoded_name, id)
+                else:
+                    maker.add(name, id)
+                r = c.each()
+            maker.finish()
+            util.rename(self._name_db + '.ndb', self._name_db)
+
+            name_file = open(name_path, mode='wb')
+            name_file.write(encoded_name)
+            name_file.close()
             item._name = newname
         finally:
             del lock
 
     def _change_item_metadata(self, item):
         """Start Item metadata transaction."""
-        if item._exists: 
+        if item._id:
             item._lock = self._itemlock(item)
 
     def _publish_item_metadata(self, item):
         """Dump Item metadata to file and finish transaction."""
-        meta_item_path = self._upath(self._quote(item.name))
-        
-        def write_meta_item(itempath, metadata):
-            tmpfd, tmpfpath = tempfile.mkstemp("-meta", "tmp-", self._u_path)
-            f = os.fdopen(tmpfd, 'wb')
+        def write_meta_item(item_path, metadata):
+            tmp_fd, tmp_fpath = tempfile.mkstemp("-meta", "tmp-", self._u_path)
+            f = os.fdopen(tmp_fd, 'wb')
             pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
             f.close()
-            util.rename(tmpfpath, itempath)   
-                 
-        if item._exists:
+            util.rename(tmp_fpath, item_path)
+
+        if item._id:
             if item._metadata is None:
-                pass               
+                pass
             else:
-                write_meta_item(meta_item_path, item._metadata)
-            print "delete lock"                
+                write_meta_item(self._upath("%s.meta" % item._id), item._metadata)
             del item._lock
         else:
-            if self.has_item(item.name):
-                raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
+            self._add_item(item)
             if item._metadata is None:
                 item._metadata = {}
-            write_meta_item(meta_item_path, item._metadata) 
-            item._exists = True      
+            write_meta_item(self._upath("%s.meta" % item._id), item._metadata)
 
     def _get_item_metadata(self, item):
         """Load Item metadata from file. Return dictionary."""
-        quoted_name = self._quote(item.name)
-        if os.path.exists(self._upath(quoted_name)):
-            f = open(self._upath(quoted_name), "rb")
-            item._metadata = pickle.load(f)
-            f.close()
+        if item._id:
+            try:
+                f = open(self._upath(item._id + ".meta"), "rb")
+                item._metadata = pickle.load(f)
+                f.close()
+            except IOError, err:
+                if err.errno != errno.ENOENT:
+                    raise
+                item._metadata = {}
         else:
             item._metadata = {}
         return item._metadata
@@ -327,36 +398,57 @@ class MercurialBackend(Backend):
     def _commit_item(self, item):
         """Commit Item changes within transaction (Revision) to repository."""
         rev = item._uncommitted_revision
-        def manglekeys(dict):
-            newdict = {}
-            for key in dict.iterkeys():
-                newdict["_%s" % key] = dict[key]
-            return newdict
-                
-        meta = manglekeys(dict(rev))
-        name = self._quote(item.name)
-        lock = self._repolock()
-        try:
-            has_item = self.has_item(item.name)
-            if has_item:
-                if rev.revno == 0:
-                    raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
-                elif rev.revno in item.list_revisions():
-                    raise RevisionAlreadyExistsError("Revision already exists: %d" % rev.revno)
-            msg = meta.get("comment", "")
-            user = meta.get("editor", "anonymous")  # XXX: meta keys review
-            data = rev._data.getvalue()
-            file = [name]
+        if not item._id and self.has_item(item.name):
+            raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
 
+        meta = dict(("moin_%s" % key, value) for key, value in rev.iteritems())
+        lock = self._repolock()
+         
+        try:
             def getfilectx(repo, memctx, path):
                 return context.memfilectx(path, data, False, False, False)
 
-            p1, p2 = self._repo.changelog.tip(), node.nullid
-            ctx = context.memctx(self._repo, (p1, p2), msg, file, getfilectx, user, extra=meta)
-            if not has_item:
+            if not item._id:
+                self._add_item(item)
+
+            msg = meta.get("comment", "")
+            user = meta.get("editor", "anonymous")  # XXX: meta keys spec
+            data = rev._data.getvalue()
+            fname = [item._id]            
+                        
+            revno = item._uncommitted_revision.revno
+            if revno > 0:  # commit can create new head            
+                filelog = self._repo.file(item._id)
+                n = filelog.node(revno - 1)
+                p1, p2 = self._repo[filelog.linkrev(n)].node(), nullid
+            else:
+                p1, p2 = self._repo.changelog.tip(), nullid
+            ctx = context.memctx(self._repo, (p1, p2), msg, fname, getfilectx, user, extra=meta)
+
+            if not item._id:
                 ctx._status[1], ctx._status[0] = ctx._status[0], ctx._status[1]
             self._repo.commitctx(ctx)
-            item._exists = True
+                                                
+            # policy: always merge with tip, 
+            # at most two heads in this block
+            filelog = self._repo.file(item._id)
+            branch_heads = self._repo.branchheads()
+            if len(branch_heads) > 1:              
+                heads = filelog.heads()     # XXX: to further look!
+                                            # DOES work from console
+                                            # doesnt from backend...
+                meta = {}
+                if len(heads) > 1:                  
+                    for head in heads: 
+                        rev = filelog.linkrev(head)                      
+                        meta.update(self._repo[rev].extra())                 
+                    print ">>> ", meta
+                                                                                                           
+                commands.merge(self._ui, self._repo)  # XXX: invoke moin-merge here                                
+                msg = "Merged %s" % item._id  # XXX: just for now
+                self._repo.commit(text=msg, user=user, files=[item._id], extra=meta)                                  
+            else:
+                commands.update(self._ui, self._repo)  # merge relies on working copy...                         
         finally:
             del lock
             item._uncommitted_revision = None  # XXX: move to abstract
@@ -365,43 +457,29 @@ class MercurialBackend(Backend):
         """Reverts uncommited Item changes."""
         item._uncommitted_revision = None  # XXX: move to abstract
 
-    def _trim(self, name):
-        """Trim given name to fit in maximum supported length on filesystem."""
-        # see http://www.moinmo.in/PawelPacana/MercurialBackend#Mercurialbehaviour
-        if len(name) > ((self._max_fname_length - 2) // 2):
-            m = md5.new()
-            m.update(name)
-            hashed = m.hexdigest()
-            return "%s-%s" % (name[:(self._max_fname_length - len(hashed) - 3) // 2], hashed)
-        else:
-            return name
-
-    def _lock(self, lockpath, lockref):        
-        if lockref and lockref():            
+    def _lock(self, lockpath, lockref):
+        """"Generic lock helper"""
+        if lockref and lockref():
             return lockref()
         lock = self._repo._lock(lockpath, True, None, None, '')
         lockref = weakref.ref(lock)
         return lock
-    
+
     def _repolock(self):
-        """Acquire global repository lock"""        
+        """Acquire global repository lock"""
         return self._lock(self._rpath("repo.lock"), self._lockref)
-        
+
+    def _namelock(self):
+        """Acquire name mapping lock"""
+        return self._lock(os.path.join(self._path, "%s.lock" % self._name_db), self._name_lockref)
+
     def _itemlock(self, item):
         """Acquire unrevisioned Item lock."""
         # XXX: long item name
         if not self._item_metadata_lock.has_key(item.name):
-            self._item_metadata_lock[item.name] = None    
-        lpath = self._upath(self._quote(item.name + ".lock"))
-        return self._lock(lpath, self._item_metadata_lock[item.name]) 
-        
-    def _tipctx(self):
-        """Return newest changeset in repository."""
-        return self._repo[self._repo.changelog.tip()]
-    
-    def _has_meta(self, itemname):
-        """Check if unversioned item with supplied name exists."""
-        return os.path.exists(self._upath(self._quote(itemname)))
+            self._item_metadata_lock[item.name] = None
+        lpath = self._upath(item._id + ".lock")
+        return self._lock(lpath, self._item_metadata_lock[item.name])
 
     def _rpath(self, filename):
         """Return absolute path to revisioned Item in repository."""
@@ -411,13 +489,51 @@ class MercurialBackend(Backend):
         """Return absolute path to unrevisioned Item in repository."""
         return os.path.join(self._u_path, filename)
 
-    def _quote(self, name):
-        """Return safely quoted name."""
-        if not isinstance(name, unicode):
-            name = unicode(name, 'utf-8')
-        return self._trim(quoteWikinameFS(name))
+    def _get_revision_metadata(self, rev):
+        """Return Revision metadata dictionary."""
+        tip = self._repo.changelog.tip()
+        fctx = self._repo[tip][item._id].filectx(revno)
+        return dict(((key.lstrip("_"), value) for key, value in
+                     ctx.changectx().extra().iteritems() if key.startswith('_')))
 
-    def _unquote(self, quoted):
-        """Return unquoted, real name."""
-        return unquoteWikiname(quoted)
+    def _create_new_cdb(self):
+        """Create new name-mapping if it doesn't exist yet."""
+        if not os.path.exists(self._name_db):
+            maker = cdb.cdbmake(self._name_db, self._name_db + '.tmp')
+            maker.finish()
 
+    def _get_item_id(self, itemname):
+        """Get ID of item (or None if no such item exists)"""
+        c = cdb.init(self._name_db)
+        return c.get(itemname.encode('utf-8'))
+
+    def _add_item(self, item):
+        """Add new Item to name-mapping and create name file."""
+        m = md5.new()
+        m.update("%s%s%d" % (datetime.datetime.now(), item.name.encode("utf-8"), random.randint(0, RAND_MAX)))
+        item_id = m.hexdigest()
+        # XXX: something shorter wanted ;)
+
+        encoded_name = item.name.encode('utf-8')
+        name_path = os.path.join(self._path, '%s.name' % item_id)
+
+        c = cdb.init(self._name_db)
+        maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
+        r = c.each()
+        while r:
+            name, id = r
+            if name == encoded_name:
+                maker.finish()
+                os.unlink(self._name_db + '.ndb')
+                raise ItemAlreadyExistsError("Destination item already exists: %s" % item.name)
+            else:
+                maker.add(name, id)
+            r = c.each()
+        maker.add(encoded_name, item_id)
+        maker.finish()
+        util.rename(self._name_db + '.ndb', self._name_db)
+
+        name_file = open(name_path, mode='wb')
+        name_file.write(encoded_name)
+        name_file.close()
+        item._id = item_id
