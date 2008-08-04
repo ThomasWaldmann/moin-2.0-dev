@@ -63,7 +63,7 @@ class Macro(MacroBlockBase):
         desc = _("This table shows all settings in this wiki that do not have default values. "
               "Settings that the configuration system doesn't know about are shown in ''italic'', "
               "those may be due to third-party extensions needing configuration or settings that "
-              "were removed from Moin.") # XXX , wiki=True)  --> html shown in paragraph
+              "were removed from Moin.", wiki=True, tree=True)
         result.append(
             ET.Element(tag_p, children=[desc]))
 

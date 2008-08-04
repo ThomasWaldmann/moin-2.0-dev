@@ -80,7 +80,7 @@ class Macro(MacroBlockBase):
                         default_txt = ET.Element(tag_span,
                                                  attrib={attr_title: default_txt},
                                                  children=['...'])
-                    description = _(description or '') # XXX , wiki=True)  --> html markup visible in table
+                    description = _(description or '', wiki=True, tree=True)
                 row = ET.Element(tag_table_row)
                 body.append(row)
                 row.append(ET.Element(tag_table_cell, children=[name]))
