@@ -269,7 +269,7 @@ Please review the page and save then. Do not save this page as it is!""")
             rev = self.current_rev()
         else:
             # page creation
-            rev = 0
+            rev = -1
 
         # Page editing is done using user language
         request.setContentLanguage(request.lang)
@@ -587,7 +587,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         # Save page text with a comment about the old name and log entry
         savetext = u"## page was copied from %s\n%s" % (self.page_name, savetext)
-        newpage.saveText(savetext, 0, comment=comment, index=0, extra=self.page_name, action='SAVE', notify=False)
+        newpage.saveText(savetext, None, comment=comment, index=0, extra=self.page_name, action='SAVE', notify=False)
 
         if request.cfg.xapian_search:
             from MoinMoin.search.Xapian import Index
@@ -629,7 +629,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         savetext = newpage.get_raw_body()
 
         savetext = u"## page was renamed from %s\n%s" % (old_name, savetext)
-        newpage.saveText(savetext, 0, comment=comment, index=0, extra=old_name, action='SAVE/RENAME', notify=False)
+        newpage.saveText(savetext, None, comment=comment, index=0, extra=old_name, action='SAVE/RENAME', notify=False)
 
         # delete pagelinks
         arena = newpage
@@ -676,7 +676,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         else:
             revstr = '%08d' % revision
             pg = Page(self.request, self.page_name, rev=revision)
-            msg = self.saveText(pg.get_raw_body(), 0, extra=revstr, action="SAVE/REVERT", notify=False, comment=comment)
+            msg = self.saveText(pg.get_raw_body(), None, extra=revstr, action="SAVE/REVERT", notify=False, comment=comment)
 
             # Remove cache entry (if exists)
             pg = Page(self.request, self.page_name)
@@ -707,7 +707,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             raise self.AccessDenied, msg
 
         try:
-            msg = self.saveText(u"deleted\n", 0, comment=comment or u'', deleted=True, notify=False)
+            msg = self.saveText(u"deleted\n", None, comment=comment or u'', deleted=True, notify=False)
             msg = msg.replace(
                 _("Thank you for your changes. Your attention to detail is appreciated."),
                 _('Page "%s" was successfully deleted!') % (wikiutil.escape(self.page_name), ))
@@ -877,7 +877,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         except caching.CacheError:
             return None
 
-    def _write_file(self, text, action='SAVE', comment=u'', extra=u'', deleted=False):
+    def _write_file(self, text, old_revno=None, action='SAVE', comment=u'', extra=u'', deleted=False):
         """ Write the text to the page item (and make a backup of old page).
 
         @param text: text to save for this page
@@ -888,6 +888,12 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         request = self.request
         was_deprecated = self.pi.get('deprecated', False)
 
+        if old_revno == None:
+            try:
+                old_revno = max(self._item.list_revisions())
+            except ValueError:
+                old_revno = -1
+
         # remember conflict state
         self.setConflict(wikiutil.containsConflictMarker(text))
 
@@ -897,14 +903,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             ###newrev = self._item[0]
             newrev = self._item.get_revision(-1)
         else:
-            if self.do_revision_backup:
-                try:
-                    current_revno = max(self._item.list_revisions())
-                except ValueError:
-                    current_revno = -1
-                newrev = self._item.create_revision(current_revno + 1)
-            else:
-                newrev = self._rev
+            newrev = self._item.create_revision(old_revno + 1)
 
         if not deleted:
             metadata, data = wikiutil.split_body(text)
@@ -993,7 +992,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         elif not newtext:
             msg = _('You cannot save empty pages.')
             raise self.EmptyPage, msg
-        elif rev != 0 and rev != self.current_rev():
+        elif rev is not None and rev != self.current_rev():
             # check if we already saved that page
             other = False
             next_line = None
@@ -1054,17 +1053,7 @@ Please review the page and save then. Do not save this page as it is!""")
             extra = kw.get('extra', u'')
             trivial = kw.get('trivial', 0)
             # write the page file
-            self._write_file(newtext, action, comment, extra, deleted=deleted)
-            # XXX HACK! Rewrite this to get the current revno from the hidden html form.    # TODO: Make the below save work.
-   #         try:
-   #             current_revno = max(self._item.list_revisions())
-   #         except ValueError:
-   #             current_revno = -1
-
-   #         rev = self._item.create_revision(current_revno + 1)
-   #         rev.write(newtext)
-   #         self._item.commit()
-   #         self.reset()
+            self._write_file(newtext, rev, action, comment, extra, deleted=deleted)
 
             self._save_draft(None, None) # everything fine, kill the draft for this page
             if notify:
