@@ -995,30 +995,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         elif not newtext:
             msg = _('You cannot save empty pages.')
             raise self.EmptyPage, msg
-        elif rev is not None and rev != self.current_rev():
-            # check if we already saved that page
-            other = False
-            next_line = None
-            llog = editlog.LocalEditLog(request, rootpagename=self.page_name)  # TODO: Rewrite this
-            for line in llog:
-                if line.rev == rev:
-                    break
-                if not line.is_from_current_user(request):
-                    other = True
-                next_line = line
-            if next_line and next_line.is_from_current_user(request):
-                saved_page = Page(request, self.page_name, rev=next_line.rev)
-                if newtext == saved_page.get_raw_body():
-                    msg = _("You already saved this page!")
-                    return msg
-                else:
-                    msg = _("You already edited this page! Please do not use the back button.")
-                    raise self.EditConflict, msg
-
-                msg = _("""Someone else saved this page while you were editing!
-Please review the page and save then. Do not save this page as it is!""")
-
-            raise self.EditConflict, msg
         elif newtext == self.get_raw_body():
             msg = _('You did not change the page content, not saved!')
             raise self.Unchanged, msg
