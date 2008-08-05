@@ -552,13 +552,14 @@ class Page(object):
         @rtype: MoinMoin.security.AccessControlList
         @return: ACL of this page
         """
+        from MoinMoin.security import AccessControlList
         if self._item is not None:
             try:
                 # XXX: easier way to get this??
-                return self._item.get_revision(-1)[ACL]
+                text = self._item.get_revision(-1)[ACL]
+                AccessControlList(self.request.cfg, text)
             except KeyError:
                 pass
-        from MoinMoin.security import AccessControlList
         return AccessControlList(self.request.cfg)
 
     def split_title(self, force=0):
