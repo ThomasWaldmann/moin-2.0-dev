@@ -104,6 +104,13 @@
     IMPORTANT: This version of backend runs on newest development version of mercurial
     and small, additional patch for allowing multiple empty commits in a row
     patch: MoinMoin/storage/backends/research/repo_force_changes.diff
+    
+    HOW TO GET IT WORKING:
+    1) hg clone -r 6773 http://selenic.com/repo/hg 
+        [newer revisions were not tested, do on your own risk]
+    2) make local
+    3) export PYTHONPATH=your_hg_devel_dir
+    4) apply patch from MoinMoin/storage/backends/research/repo_force_changes.diff
 
     ---
 
