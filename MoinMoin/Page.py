@@ -254,7 +254,7 @@ class Page(object):
      ###   return revisions
 
         revisions = []
-        if self._item:
+        if self._item is not None:
             revisions = self._item.list_revisions()
             revisions.reverse()
 
@@ -266,7 +266,7 @@ class Page(object):
 
         @return: int revision
         """
-        if self._item:
+        if self._item is not None:
             return max(self._item.list_revisions())
 
         return -1
@@ -274,12 +274,12 @@ class Page(object):
     def get_real_rev(self):
         """
         Returns the real revision number of this page.
-        A rev==0 is translated to the current revision.
+        A rev==-1 is translated to the current revision.
 
-        @returns: revision number > 0
+        @returns: revision number >= 0
         @rtype: int
         """
-        if self.rev == 0:
+        if self.rev == -1:
             return self.current_rev()
         return self.rev
 
@@ -552,7 +552,7 @@ class Page(object):
         @rtype: MoinMoin.security.AccessControlList
         @return: ACL of this page
         """
-        if self._item:
+        if self._item is not None:
             return self._item.acl
         else:
             from MoinMoin.security import AccessControlList
