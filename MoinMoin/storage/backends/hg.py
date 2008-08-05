@@ -408,47 +408,42 @@ class MercurialBackend(Backend):
             def getfilectx(repo, memctx, path):
                 return context.memfilectx(path, data, False, False, False)
 
+            msg = meta.get("moin_comment", "dummy")
+            user = meta.get("moin_editor", "anonymous")  # XXX: meta keys spec
+            data = rev._data.getvalue()
+
             if not item._id:
                 self._add_item(item)
-
-            msg = meta.get("comment", "")
-            user = meta.get("editor", "anonymous")  # XXX: meta keys spec
-            data = rev._data.getvalue()
-            fname = [item._id]            
-                        
-            revno = item._uncommitted_revision.revno
-            if revno > 0:  # commit can create new head            
-                filelog = self._repo.file(item._id)
-                n = filelog.node(revno - 1)
-                p1, p2 = self._repo[filelog.linkrev(n)].node(), nullid
-            else:
                 p1, p2 = self._repo.changelog.tip(), nullid
-            ctx = context.memctx(self._repo, (p1, p2), msg, fname, getfilectx, user, extra=meta)
+            else:                
+                fname = [item._id]            
+                filelog = self._repo.file(item._id)
+                n = filelog.node(item._uncommitted_revision.revno - 1)
+                p1, p2 = self._repo[filelog.linkrev(n)].node(), nullid
 
-            if not item._id:
-                ctx._status[1], ctx._status[0] = ctx._status[0], ctx._status[1]
-            self._repo.commitctx(ctx)
-                                                
-            # policy: always merge with tip, 
-            # at most two heads in this block
+            ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx, user, extra=meta)
+            if item._uncommitted_revision.revno == 0:
+                ctx._status[1] = [item._id]
+            else:
+                ctx._status[0] = [item._id]            
+            self._repo.commitctx(ctx)            
+                                    
+            # policy: always merge with tip, at most two heads in this block
             filelog = self._repo.file(item._id)
             branch_heads = self._repo.branchheads()
             if len(branch_heads) > 1:              
-                heads = filelog.heads()     # XXX: to further look!
-                                            # DOES work from console
-                                            # doesnt from backend...
+                heads = filelog.heads()
                 meta = {}
                 if len(heads) > 1:                  
                     for head in heads: 
                         rev = filelog.linkrev(head)                      
                         meta.update(self._repo[rev].extra())                 
-                    print ">>> ", meta
                                                                                                            
-                commands.merge(self._ui, self._repo)  # XXX: invoke moin-merge here                                
-                msg = "Merged %s" % item._id  # XXX: just for now
+                commands.merge(self._ui, self._repo)  # XXX: invoke moin diff3 merge here                                
+                msg = "Merged %s" % item.name  # XXX: just for now
                 self._repo.commit(text=msg, user=user, files=[item._id], extra=meta)                                  
             else:
-                commands.update(self._ui, self._repo)  # merge relies on working copy...                         
+                commands.update(self._ui, self._repo)                        
         finally:
             del lock
             item._uncommitted_revision = None  # XXX: move to abstract
