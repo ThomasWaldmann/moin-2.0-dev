@@ -891,7 +891,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         request = self.request
         was_deprecated = self.pi.get('deprecated', False)
 
-        if old_revno == None:
+        if old_revno is None:
             try:
                 old_revno = max(self._item.list_revisions())
             except ValueError:

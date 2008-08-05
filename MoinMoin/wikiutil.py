@@ -539,7 +539,7 @@ def set_edit_lock(item, request):
   ###         userid = self._request.user.valid and self._request.user.id or ''
   ###     else:
   ###         userid = ''
-     
+
   ###     self.metadata[EDIT_LOCK_TIMESTAMP] = str(timestamp)
   ###     self.metadata[EDIT_LOCK_ADDR] = addr
   ###     self.metadata[EDIT_LOCK_HOSTNAME] = hostname

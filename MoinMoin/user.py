@@ -487,8 +487,7 @@ class User:
         those starting with an underscore.
         """
         if not self.exists():
-           ### self._user = self._item_collection.new_item(self.id)
-           self._user = self._user_backend.create_item(self.id)
+            self._user = self._user_backend.create_item(self.id)
 
         ### self._user.lock = True
         self._user.change_metadata()
