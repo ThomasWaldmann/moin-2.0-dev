@@ -2611,12 +2611,14 @@ def add_metadata_to_body(metadata, data):
     from MoinMoin.storage import SIZE, EDIT_LOG
     READONLY_METADATA = [SIZE] + list(EDIT_LOCK) + EDIT_LOG
 
+    parsing_instructions = ["format", "language", "refresh", "acl",
+                            "redirect", "deprecated", "openiduser",
+                            "pragma", "internal", "external"]
 
     metadata_data = ""
     for key, value in metadata.iteritems():
 
-        # remove readonly metadata
-        if key in READONLY_METADATA:
+        if key not in parsing_instructions:
             continue
 
         # special handling for list metadata like acls
