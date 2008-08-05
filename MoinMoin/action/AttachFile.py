@@ -862,43 +862,60 @@ def _do_move(pagename, request):
     request.theme.add_msg(formhtml, "dialog")
     return thispage.send_page()
 
-
 def _do_get(pagename, request):
     _ = request.getText
 
-    pagename, filename, fpath = _access_file(pagename, request)
+    if not request.form.get('target', [''])[0]:
+        error = _("Filename of attachment not specified!")
+    else:
+        filename = wikiutil.taintfilename(request.form['target'][0])
+        #fpath = getFilename(request, pagename, filename)
+
     if not request.user.may.read(pagename):
         return _('You are not allowed to get attachments from this page.')
-    if not filename:
-        return # error msg already sent in _access_file
 
-    timestamp = timefuncs.formathttpdate(int(os.path.getmtime(fpath)))
-    if request.if_modified_since == timestamp:
-        request.emit_http_headers(["Status: 304 Not modified"])
+    backend = request.cfg.data_backend
+
+    try:
+        item = backend.get_item(pagename + "/" + filename)
+        rev = item.get_revision(-1)
+    except (NoSuchItemError, NoSuchRevisionError):
+        error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
+
     else:
-        mt = wikiutil.MimeType(filename=filename)
-        content_type = mt.content_type()
-        mime_type = mt.mime_type()
+        try:
+            timestamp = timefuncs.formathttpdate(float(rev[EDIT_LOG_MTIME]))
+            mimestr = rev["mimetype"]
+        except KeyError:
+            timestamp = timefuncs.formathttpdate(0)  # XXX Is this correct? What do we want to be displayed?
+            # XXX What if mimetype reading fails?
 
-        # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
-        # There is no solution that is compatible to IE except stripping non-ascii chars
-        filename_enc = filename.encode(config.charset)
+        if request.if_modified_since == timestamp:
+            request.emit_http_headers(["Status: 304 Not modified"])
+        else:
+            mt = wikiutil.MimeType(mimestr=mimestr)
+            content_type = mt.content_type()
+            mime_type = mt.mime_type()
 
-        # for dangerous files (like .html), when we are in danger of cross-site-scripting attacks,
-        # we just let the user store them to disk ('attachment').
-        # For safe files, we directly show them inline (this also works better for IE).
-        dangerous = mime_type in request.cfg.mimetypes_xss_protect
-        content_dispo = dangerous and 'attachment' or 'inline'
+            # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
+            # There is no solution that is compatible to IE except stripping non-ascii chars
+            filename_enc = filename.encode(config.charset)
 
-        request.emit_http_headers([
-            'Content-Type: %s' % content_type,
-            'Last-Modified: %s' % timestamp,
-            'Content-Length: %d' % os.path.getsize(fpath),
-            'Content-Disposition: %s; filename="%s"' % (content_dispo, filename_enc),
-        ])
+            # for dangerous files (like .html), when we are in danger of cross-site-scripting attacks,
+            # we just let the user store them to disk ('attachment').
+            # For safe files, we directly show them inline (this also works better for IE).
+            dangerous = mime_type in request.cfg.mimetypes_xss_protect
+            content_dispo = dangerous and 'attachment' or 'inline'
 
-        # send data
-        request.send_file(open(fpath, 'rb'))
+            request.emit_http_headers([
+                'Content-Type: %s' % content_type,
+                'Last-Modified: %s' % timestamp,
+                'Content-Length: %s' % rev["filesize"], # XXX Change this.
+                'Content-Disposition: %s; filename="%s"' % (content_dispo, filename_enc),
+            ])
+
+            # send data
+            request.send_file(rev)  # XXX Check if this is buffered
 
 
 def _do_install(pagename, request):
