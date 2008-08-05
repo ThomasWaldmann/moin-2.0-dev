@@ -31,7 +31,7 @@ from MoinMoin.logfile import eventlog
 from MoinMoin.storage import Backend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.storage import DELETED, EDIT_LOG_MTIME, EDIT_LOG_ADDR, \
-                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID
+                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, ACL
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
@@ -553,10 +553,13 @@ class Page(object):
         @return: ACL of this page
         """
         if self._item is not None:
-            return self._item.acl
-        else:
-            from MoinMoin.security import AccessControlList
-            return AccessControlList(self.request.cfg)
+            try:
+                # XXX: easier way to get this??
+                return self._item.get_revision(-1)[ACL]
+            except KeyError:
+                pass
+        from MoinMoin.security import AccessControlList
+        return AccessControlList(self.request.cfg)
 
     def split_title(self, force=0):
         """ Return a string with the page name split by spaces, if the user wants that.
