@@ -237,6 +237,14 @@ class Backend(object):
         """
         raise NotImplementedError()
 
+    def _get_revision_size(self, revision):
+        """
+        Lazily access the revision's data size. This needs not be
+        implemented if all StoredRevision objects are instantiated
+        with the size= keyword parameter.
+        """
+        raise NotImplementedError()
+
     def _seek_revision_data(self, revision, position, mode):
         """
         Set the revisions cursor on the revisions data.
@@ -501,11 +509,12 @@ class StoredRevision(Revision):
     manipulation.
     """
 
-    def __init__(self, item, revno, timestamp=None):
+    def __init__(self, item, revno, timestamp=None, size=None):
         """
         Initialize the NewRevision
         """
         Revision.__init__(self, item, revno, timestamp)
+        self._size = size
 
     def _get_ts(self):
         if self._timestamp is None:
@@ -517,6 +526,15 @@ class StoredRevision(Revision):
         return self._timestamp
 
     timestamp = property(_get_ts, doc="This property returns the creation timestamp of the Revision")
+
+    def _get_size(self):
+        if self._size is None:
+            self._size = self._backend._get_revision_size(self)
+            assert self._size is not None
+
+        return self._size
+
+    size = property(_get_size, doc="Size of revision's data")
 
     def __setitem__(self):
         """
@@ -555,6 +573,7 @@ class NewRevision(Revision):
         """
         Revision.__init__(self, item, revno, None)
         self._metadata = {}
+        self._size = 0
 
     def _get_ts(self):
         return self._timestamp
@@ -565,6 +584,10 @@ class NewRevision(Revision):
 
     timestamp = property(_get_ts, _set_ts, doc="This property accesses the creation timestamp of the Revision")
 
+    def _get_size(self):
+        return self._size
+
+    size = property(_get_size, doc="Size of data written so far")
 
     def __setitem__(self, key, value):
         """
@@ -587,6 +610,7 @@ class NewRevision(Revision):
         Write `data` to the NewRevisions data attribute. This is the actual (binary)
         data, e.g. the binary representation of an image.
         """
+        self._size += len(data)
         self._backend._write_revision_data(self, data)
 
 

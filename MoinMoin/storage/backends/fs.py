@@ -512,6 +512,11 @@ class FSBackend(Backend):
         res = self._get_revision_metadata(rev)
         return res[1], res[0]
 
+    def _get_revision_size(self, rev):
+        if rev._fs_file is None:
+            self._get_revision_metadata(rev)
+        return os.stat(rev._fs_revpath).st_size - rev._datastart
+
     def _seek_revision_data(self, rev, position, mode):
         if mode == 2:
             rev._fs_file.seek(position, mode)

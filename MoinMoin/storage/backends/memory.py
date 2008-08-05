@@ -115,9 +115,11 @@ class MemoryBackend(Backend):
         if revno not in self._item_revisions[item_id]:
             raise NoSuchRevisionError("No Revision #%d on Item %s - Available revisions: %r" % (revno, item.name, revisions))
 
+        data = self._item_revisions[item_id][revno][0]
         metadata = self._item_revisions[item_id][revno][1]
-        revision = StoredRevision(item, revno, metadata['__timestamp'])
-        revision._data = StringIO.StringIO(self._item_revisions[item_id][revno][0])
+
+        revision = StoredRevision(item, revno, timestamp=metadata['__timestamp'], size=len(data))
+        revision._data = StringIO.StringIO(data)
 
         revision._metadata = metadata
 

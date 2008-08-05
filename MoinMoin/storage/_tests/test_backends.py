@@ -409,3 +409,17 @@ class BackendTest(object):
         assert rev.timestamp is not None
         for nrev in self.backend.news():
             assert nrev.timestamp == rev.timestamp
+
+    def test_size(self):
+        item = self.backend.create_item('size1')
+        rev = item.create_revision(0)
+        rev.write('asdf')
+        assert rev.size == 4
+        rev.write('asdf')
+        assert rev.size == 8
+        item.commit()
+        rev = item.get_revision(0)
+        assert rev.size == 8
+
+        for nrev in self.backend.news():
+            assert nrev.size == 8
