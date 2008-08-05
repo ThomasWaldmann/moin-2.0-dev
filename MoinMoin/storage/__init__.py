@@ -441,6 +441,10 @@ class Revision(object, DictMixin):
         self._metadata = None
         self._timestamp = timestamp
 
+    def _get_item(self):
+        return self._item
+    item = property(_get_item)
+
     def get_revno(self):
         """
         Getter for the read-only revno-property.
