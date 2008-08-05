@@ -314,6 +314,21 @@ class Item(object, DictMixin):  # TODO Improve docstring
 
         self._metadata[key] = value
 
+    def __delitem__(self, key):
+        """
+        Delete an item metadata key.
+        """
+        if not self._locked:
+            raise AttributeError("Cannot write to unlocked metadata")
+
+        if key.startswith('__'):
+            raise KeyError(key)
+
+        if self._metadata is None:
+            self._metadata = self._backend._get_item_metadata(self)
+
+        del self._metadata[key]
+
     def __getitem__(self, key):
         """
         See __setitem__.__doc__ -- You may use my_item["key"] to get the corresponding
@@ -604,6 +619,12 @@ class NewRevision(Revision):
             raise TypeError("Value must be string, int, long, float, bool, complex or a nested tuple of the former")
 
         self._metadata[key] = value
+
+    def __delitem__(self, key):
+        if key.startswith('__'):
+            raise KeyError(key)
+
+        del self._metadata[key]
 
     def write(self, data):
         """
