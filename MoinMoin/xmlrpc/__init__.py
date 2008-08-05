@@ -558,7 +558,7 @@ class XmlRpcBase:
                 newtext = self._instr(pagetext)
             elif self.version == 1:
                 newtext = self._inlob(pagetext)
-            msg = page.saveText(newtext, 0)
+            msg = page.saveText(newtext, None)
         except page.SaveError, msg:
             logging.error("SaveError: %s" % msg)
             return xmlrpclib.Fault(1, "%s" % msg)
@@ -909,7 +909,7 @@ class XmlRpcBase:
 
         # write page
         try:
-            currentpage.saveText(newcontents.decode("utf-8"), last_remote_rev or 0, comment=comment)
+            currentpage.saveText(newcontents.decode("utf-8"), last_remote_rev or None, comment=comment)
         except PageEditor.Unchanged: # could happen in case of both wiki's pages being equal
             pass
         except PageEditor.EditConflict:

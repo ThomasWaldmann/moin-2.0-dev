@@ -141,7 +141,8 @@ def revert_page(request, pagename, editor):
         oldpg = Page.Page(request, pagename, rev=int(rev))
         pg = PageEditor.PageEditor(request, pagename, do_editor_backup=0)
         try:
-            savemsg = pg.saveText(oldpg.get_raw_body(), 0, extra=rev, action="SAVE/REVERT")
+            # XXX: should use rev from request to know nobody saved in the meantime
+            savemsg = pg.saveText(oldpg.get_raw_body(), None, extra=rev, action="SAVE/REVERT")
         except pg.SaveError, msg:
             savemsg = unicode(msg)
     return savemsg
