@@ -295,7 +295,7 @@ class FSBackend(Backend):
             except OSError, err:
                 if err.errno != errno.EEXIST:
                     raise
-            if cntr > 2 and not done and self._itemspace <= 2**31:
+            if cntr > 2 and not done and self._itemspace <= 2 ** 31:
                 self._itemspace *= 2
                 cntr = 0
             elif cntr > 20:

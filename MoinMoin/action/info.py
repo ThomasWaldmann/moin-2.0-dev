@@ -131,7 +131,7 @@ def execute(pagename, request):
                 pass
 
             if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
-                size = page.size(rev=revno) # XXX Is the correct revision number passed here? 
+                size = page.size(rev=revno) # XXX Is the correct revision number passed here?
                                             # XXX Storage and the rest of moin seem to use different enumeration methods. URGH!
                 actions.append(render_action(_('view'), {'action': 'recall', 'rev': '%d' % revno}))
 
@@ -162,7 +162,7 @@ def execute(pagename, request):
                 diff = '-'
 
                 filename = wikiutil.url_unquote(revision[EDIT_LOG_EXTRA])
-                comment = "%s: %s %s" % (revision[EDIT_LOG_ACTION], filename, revision[EDIT_LOG_COMMENT],)
+                comment = "%s: %s %s" % (revision[EDIT_LOG_ACTION], filename, revision[EDIT_LOG_COMMENT], )
                 size = 0
                 if revision[EDIT_LOG_ACTION] != 'ATTDEL':
                     from MoinMoin.action import AttachFile

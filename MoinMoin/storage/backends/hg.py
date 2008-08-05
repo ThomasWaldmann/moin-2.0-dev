@@ -31,7 +31,7 @@
       changeset
     This affects:
     - we cannot support so called 'multiple empty revisions in a row',
-      there is no possibility to commit (file) revision which hasnt changed since 
+      there is no possibility to commit (file) revision which hasnt changed since
       last time
     - as 'extra' dict is property of changeset, without increasing filerevs we're not
       able to link rev meta and rev data
@@ -99,14 +99,14 @@ class MercurialBackend(Backend):
         self._item_metadata_lock = {}
         self._lockref = None
         if not os.path.isdir(self._path):
-            raise BackendError("Invalid path: %s" % self._path)        
+            raise BackendError("Invalid path: %s" % self._path)
         if create:
             for path in (self._u_path, self._r_path):
                 try:
                     if os.listdir(path):
-                        raise BackendError("Directory not empty: %s" % path)                                
+                        raise BackendError("Directory not empty: %s" % path)
                 except OSError:
-                    pass  # directory not existing                                                    
+                    pass  # directory not existing
         try:
             self._repo = hg.repository(self._ui, self._r_path, create)
         except RepoError:
@@ -120,7 +120,7 @@ class MercurialBackend(Backend):
             if not os.path.isdir(self._u_path):
                 if create:
                     shutil.rmtree(self._r_path)  # rollback
-                raise BackendError("Unable to create directory: %s" % self._path)                                                                 
+                raise BackendError("Unable to create directory: %s" % self._path)
         # XXX: does it work on windows?
         self._max_fname_length = os.statvfs(self._path)[statvfs.F_NAMEMAX]
         self._repo._forcedchanges = True  # XXX: this comes from patch
@@ -142,7 +142,7 @@ class MercurialBackend(Backend):
         if self.has_item(itemname):
             raise ItemAlreadyExistsError("Item with that name already exists: %s" % itemname)
         item = Item(self, itemname)
-        item._exists = False   
+        item._exists = False
         return item
 
     def get_item(self, itemname):
@@ -153,7 +153,7 @@ class MercurialBackend(Backend):
         if not self.has_item(itemname):
             raise NoSuchItemError('Item does not exist: %s' % itemname)
         item = Item(self, itemname)
-        item._exists = True   
+        item._exists = True
         return item
 
     def search_item(self, searchterm):
@@ -203,9 +203,9 @@ class MercurialBackend(Backend):
         def manglekeys(dict):
             newdict = {}
             for k in (key for key in dict.iterkeys() if key.startswith("_")):
-                newdict[k[1:]] = dict[k]  
+                newdict[k[1:]] = dict[k]
             return newdict
-        
+
         revision._metadata = manglekeys(ctx.extra())
         return revision
 
@@ -260,7 +260,7 @@ class MercurialBackend(Backend):
             if self.has_item(newname):
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
             files = [self._quote(item.name), self._quote(newname)]
-            if self._has_meta(item.name):                
+            if self._has_meta(item.name):
                 util.rename(self._upath(files[0]), self._upath(files[1]))
             else:
                 def getfilectx(repo, memctx, path):
@@ -284,34 +284,34 @@ class MercurialBackend(Backend):
 
     def _change_item_metadata(self, item):
         """Start Item metadata transaction."""
-        if item._exists: 
+        if item._exists:
             item._lock = self._itemlock(item)
 
     def _publish_item_metadata(self, item):
         """Dump Item metadata to file and finish transaction."""
         meta_item_path = self._upath(self._quote(item.name))
-        
+
         def write_meta_item(itempath, metadata):
             tmpfd, tmpfpath = tempfile.mkstemp("-meta", "tmp-", self._u_path)
             f = os.fdopen(tmpfd, 'wb')
             pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
             f.close()
-            util.rename(tmpfpath, itempath)   
-                 
+            util.rename(tmpfpath, itempath)
+
         if item._exists:
             if item._metadata is None:
-                pass               
+                pass
             else:
                 write_meta_item(meta_item_path, item._metadata)
-            print "delete lock"                
+            print "delete lock"
             del item._lock
         else:
             if self.has_item(item.name):
                 raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
             if item._metadata is None:
                 item._metadata = {}
-            write_meta_item(meta_item_path, item._metadata) 
-            item._exists = True      
+            write_meta_item(meta_item_path, item._metadata)
+            item._exists = True
 
     def _get_item_metadata(self, item):
         """Load Item metadata from file. Return dictionary."""
@@ -332,7 +332,7 @@ class MercurialBackend(Backend):
             for key in dict.iterkeys():
                 newdict["_%s" % key] = dict[key]
             return newdict
-                
+
         meta = manglekeys(dict(rev))
         name = self._quote(item.name)
         lock = self._repolock()
@@ -376,29 +376,29 @@ class MercurialBackend(Backend):
         else:
             return name
 
-    def _lock(self, lockpath, lockref):        
-        if lockref and lockref():            
+    def _lock(self, lockpath, lockref):
+        if lockref and lockref():
             return lockref()
         lock = self._repo._lock(lockpath, True, None, None, '')
         lockref = weakref.ref(lock)
         return lock
-    
+
     def _repolock(self):
-        """Acquire global repository lock"""        
+        """Acquire global repository lock"""
         return self._lock(self._rpath("repo.lock"), self._lockref)
-        
+
     def _itemlock(self, item):
         """Acquire unrevisioned Item lock."""
         # XXX: long item name
         if not self._item_metadata_lock.has_key(item.name):
-            self._item_metadata_lock[item.name] = None    
+            self._item_metadata_lock[item.name] = None
         lpath = self._upath(self._quote(item.name + ".lock"))
-        return self._lock(lpath, self._item_metadata_lock[item.name]) 
-        
+        return self._lock(lpath, self._item_metadata_lock[item.name])
+
     def _tipctx(self):
         """Return newest changeset in repository."""
         return self._repo[self._repo.changelog.tip()]
-    
+
     def _has_meta(self, itemname):
         """Check if unversioned item with supplied name exists."""
         return os.path.exists(self._upath(self._quote(itemname)))
