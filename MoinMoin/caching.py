@@ -11,6 +11,7 @@
 import os
 import shutil
 import tempfile
+import sha
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -26,8 +27,7 @@ class CacheError(Exception):
 
 def get_arena_dir(request, arena, scope):
     if scope == 'item': # arena is a Page instance
-        # we could move cache out of the page directory and store it to cache_dir
-        return arena.getPagePath('cache', check_create=1)
+        return os.path.join(request.cfg.cache_dir, 'page', sha.new(arena.page_name).hexdigest())
     elif scope == 'wiki':
         return os.path.join(request.cfg.cache_dir, request.cfg.siteid, arena)
     elif scope == 'farm':
