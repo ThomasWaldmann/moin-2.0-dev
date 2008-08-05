@@ -558,7 +558,7 @@ class Page(object):
                 # XXX: easier way to get this??
                 text = self._item.get_revision(-1)[ACL]
                 AccessControlList(self.request.cfg, text)
-            except KeyError:
+            except (KeyError, NoSuchRevisionError):
                 pass
         return AccessControlList(self.request.cfg)
 
