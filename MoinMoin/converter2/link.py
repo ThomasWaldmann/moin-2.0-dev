@@ -60,62 +60,79 @@ class ConverterExternOutput(ConverterBase):
                 output == 'application/x-moin-document;links=extern':
             return cls
 
-    # TODO: Deduplicate code
+    # TODO: Deduplicate code, use real URI parser
     def handle_wiki(self, link):
         wikitag, link = link.split('/', 1)
 
-        if wikitag and wikitag != 'Self':
+        if '#' in link:
+            link, anchor = link.split("#", 1)
+        else:
+            anchor = None
+        if '?' in link:
+            link, query = link.split('?', 1)
+        else:
+            query = None
+
+        url = None
+
+        if wikitag != 'Self':
             wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, wikitag, link)
 
-            if not err and wikitag != 'Self':
-                # TODO query string
-                return wikiutil.join_wiki(wikiurl, wikitail)
+            if not err:
+                url = wikiutil.join_wiki(wikiurl, wikitail)
 
-        try:
-            link, anchor = link.rsplit("#", 1)
-        except ValueError:
-            anchor = None
+        if not url:
+            url = self.request.getScriptname() + '/' + link
+
+        if query:
+            url += '?' + wikiutil.url_quote_plus(query)
 
         if anchor:
-            link = link + '#' + wikiutil.url_quote_plus(anchor)
+            url += '#' + wikiutil.url_quote_plus(anchor)
 
-        # TODO query string
-        return self.request.getScriptname() + '/' + link
+        return url
 
     def handle_wikilocal(self, link, page_name):
-        if ':' in link:
-            wiki_name, link = link.split(':', 1)
+        url = None
 
-            # TODO
-            if wiki_name in ('attachment', 'drawing'):
-                return None
+        if link:
+            if '#' in link:
+                link, anchor = link.split("#", 1)
+            else:
+                anchor = None
+            if '?' in link:
+                link, query = link.split('?', 1)
+            else:
+                query = None
 
-            if wiki_name == 'mailto':
-                return 'mailto:' + link
+            if ':' in link:
+                wiki_name, link = link.split(':', 1)
 
-            wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, wiki_name, link)
+                # TODO
+                if wiki_name in ('attachment', 'drawing'):
+                    return None
 
-            if not err and wikitag != 'Self':
-                # TODO query string
-                return wikiutil.join_wiki(wikiurl, wikitail)
+                if wiki_name == 'mailto':
+                    return 'mailto:' + link
 
-        # handle anchors
-        try:
-            link, anchor = link.rsplit("#", 1)
-        except ValueError:
-            anchor = None
+                wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, wiki_name, link)
 
-        if not link:
+                if not err and wikitag != 'Self':
+                    url = wikiutil.join_wiki(wikiurl, wikitail)
+
+            if not url:
+                url = self.request.getScriptname() + '/' + wikiutil.AbsPageName(page_name, link)
+
+        else:
             link = page_name
 
-        # handle relative links
-        link = wikiutil.AbsPageName(page_name, link)
+        if query:
+            url += '?' + wikiutil.url_quote_plus(query)
 
         if anchor:
-            link = link + '#' + wikiutil.url_quote_plus(anchor)
+            url += '#' + wikiutil.url_quote_plus(anchor)
 
-        # TODO query string
-        return self.request.getScriptname() + '/' + link
+        return url
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
