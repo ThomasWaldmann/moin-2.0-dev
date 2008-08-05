@@ -13,7 +13,6 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil, user
-from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError
 from MoinMoin.Page import Page
 from MoinMoin.storage import EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
@@ -70,7 +69,6 @@ class LocalEditLog(object):
         Init stuff.
         """
         self.pagename = rootpagename
-        self.item = ItemCollection(request.cfg.data_backend, request)[rootpagename]
         self._iter = self.item.keys().__iter__()
 
     def __iter__(self):
@@ -145,7 +143,6 @@ class GlobalEditLog(object):
         """
         self.request = request
         self.backend = request.cfg.data_backend
-        self.item_collection = ItemCollection(request.cfg.data_backend, request)
         self.items = self.backend.news()
         self.pos = 0
 
