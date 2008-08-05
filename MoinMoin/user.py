@@ -488,14 +488,16 @@ class User:
         """
         if not self.exists():
             self._user = self._user_backend.create_item(self.id)
+        else:
+            self._user = self._user_backend.get_item(self.id)
 
         ### self._user.lock = True
         self._user.change_metadata()
 
         ###for key in self._user.metadata:
         ###   del self._user.metadata[key]
-        for key in self._user:
-            del self.user[key]
+        for key in self._user.keys():
+            del self._user[key]
 
         self.last_saved = str(time.time())
 
