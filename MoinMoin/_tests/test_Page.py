@@ -14,7 +14,7 @@ class TestPage:
     def testMeta(self):
         page = Page(self.request, u'FrontPage')
         meta = page.meta
-        for k, v in meta:
+        for k, v in meta.iteritems():
             if k == u'format':
                 assert v == u'wiki'
             elif k == u'language':
@@ -33,12 +33,11 @@ class TestPage:
         assert not Page(self.request, 'ThisPageDoesNotExist').exists()
         assert not Page(self.request, '').exists()
 
-    def testEditInfoSystemPage(self):
-        # system pages have no edit-log (and only 1 revision),
-        # thus edit_info will return None
-        page = Page(self.request, u'RecentChanges')
-        edit_info = page.edit_info()
-        assert edit_info == {}
+    def testLastEdit(self):
+        page = Page(self.request, u'FrontPage')
+        last_edit = page.last_edit()
+        assert 'editor' in last_edit
+        assert 'timestamp' in last_edit
 
     def testSplitTitle(self):
         page = Page(self.request, u"FrontPage")
@@ -68,7 +67,12 @@ class TestRootPage:
     def testPageList(self):
         rootpage = self.request.rootpage
         pagelist = rootpage.getPageList()
-        assert len(pagelist) > 100
+        cnt = 0
+        for pg in pagelist:
+            cnt += 1
+            if cnt > 100:
+                break
+        assert cnt > 100
         assert u'FrontPage' in pagelist
         assert u'' not in pagelist
 

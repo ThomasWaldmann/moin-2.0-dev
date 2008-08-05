@@ -25,7 +25,7 @@ def execute(pagename, request):
     request.emit_http_headers(["Content-Type: %s; charset=%s" % (mimetype, config.charset)])
 
     # Get list of user readable pages
-    pages = request.rootpage.getPageList()
+    pages = list(request.rootpage.getPageList())
     pages.sort()
 
     if mimetype == "text/xml":

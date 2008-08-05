@@ -7,6 +7,7 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 """
 import sys, os
 from MoinMoin.config.multiconfig import DefaultConfig
+from MoinMoin.storage.backends import memory, fs
 
 
 class LocalConfig(DefaultConfig):

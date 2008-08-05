@@ -56,7 +56,9 @@ class Load(ActionBase):
             filecontent = wikiutil.decodeUnknownInput(filecontent)
 
             self.pagename = target
-            pg = PageEditor(request, self.pagename)
+            page = Page(request, self.pagename)
+            rev = page.current_rev()
+            pg = PageEditor(request, self.pagename, do_editor_backup=0)
             try:
                 msg = pg.saveText(filecontent, 0, comment=comment)
                 status = True

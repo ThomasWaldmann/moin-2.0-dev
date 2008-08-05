@@ -35,12 +35,11 @@ def render(editor_tuple):
 def show_editors(request, pagename, timestamp):
     _ = request.getText
 
-    timestamp = int(timestamp * 1000000)
-    log = editlog.EditLog(request)
+    glog = editlog.GlobalEditLog(request)
     editors = {}
     pages = {}
-    for line in log.reverse():
-        if line.ed_time_usecs < timestamp:
+    for line in glog:
+        if line.mtime < timestamp:
             break
 
         if not request.user.may.read(line.pagename):
@@ -80,7 +79,7 @@ def show_pages(request, pagename, editor, timestamp):
     _ = request.getText
 
     timestamp = int(timestamp * 1000000)
-    log = editlog.EditLog(request)
+    glog = editlog.GlobalEditLog(request)
     pages = {}
     #  mimic macro object for use of RecentChanges subfunctions
     macro = tmp()
@@ -88,8 +87,8 @@ def show_pages(request, pagename, editor, timestamp):
     macro.formatter = request.html_formatter
 
     request.write("<table>")
-    for line in log.reverse():
-        if line.ed_time_usecs < timestamp:
+    for line in glog:
+        if line.mtime < timestamp:
             break
 
         if not request.user.may.read(line.pagename):
@@ -98,7 +97,7 @@ def show_pages(request, pagename, editor, timestamp):
         if not line.pagename in pages:
             pages[line.pagename] = 1
             if repr(line.getInterwikiEditorData(request)) == editor:
-                line.time_tuple = request.user.getTime(wikiutil.version2timestamp(line.ed_time_usecs))
+                line.time_tuple = request.user.getTime(line.mtime)
                 request.write(RecentChanges.format_page_edits(macro, [line], timestamp))
 
     request.write('''
@@ -117,11 +116,11 @@ def revert_page(request, pagename, editor):
     if not request.user.may.revert(pagename):
         return
 
-    log = editlog.EditLog(request, rootpagename=pagename)
+    llog = editlog.LocalEditLog(request, rootpagename=pagename)
 
     first = True
     rev = u"00000000"
-    for line in log.reverse():
+    for line in llog:
         if first:
             first = False
             if repr(line.getInterwikiEditorData(request)) != editor:
@@ -152,11 +151,11 @@ def revert_pages(request, editor, timestamp):
 
     editor = wikiutil.url_unquote(editor, want_unicode=False)
     timestamp = int(timestamp * 1000000)
-    log = editlog.EditLog(request)
+    glog = editlog.GlobalEditLog(request)
     pages = {}
     revertpages = []
-    for line in log.reverse():
-        if line.ed_time_usecs < timestamp:
+    for line in glog:
+        if line.mtime < timestamp:
             break
 
         if not request.user.may.read(line.pagename):
