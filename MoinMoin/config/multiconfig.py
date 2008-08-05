@@ -25,9 +25,6 @@ from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
 from MoinMoin import session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
-#from MoinMoin.storage.backends.moin16 import UserBackend, PageBackend
-#from MoinMoin.storage.backends.moin17 import UserBackend, ItemBackend
-from MoinMoin.storage.backends.meta import LayerBackend
 from MoinMoin.storage import DELETED
 from MoinMoin.support.python_compatibility import set
 
@@ -270,9 +267,6 @@ class ConfigFunctionality(object):
 
         self.cache.ua_spiders = self.ua_spiders and re.compile(self.ua_spiders, re.IGNORECASE)
 
-        # XXX deactivated, please remove finally and integrate the code into the fs backends
-        #self._check_directories()
-
         if not isinstance(self.superuser, list):
             msg = """The superuser setting in your wiki configuration is not a list
                      (e.g. ['Sample User', 'AnotherUser']).
@@ -374,20 +368,9 @@ class ConfigFunctionality(object):
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
-        # storage configuration
-        assert self.user_backend is not None, "error in config, please fix"
-
-        if self.data_backend is None:
-            self.data_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
-            #self.data_backend = ItemBackend("pages", os.path.join(self.data_dir, "items"), self)
-            if self.data_underlay_dir:
-                # layer the data backend into underlay
-                underlay_backend = PageBackend("underlay",
-                                               os.path.join(self.data_underlay_dir, "pages"),
-                                               self)
-                # XXX: To be fully compatible, the copy-on-write argument should be True!!
-                self.data_backend = LayerBackend([self.data_backend], False)
-                self.data_backend.addUnderlay(underlay_backend)
+        assert self.user_backend is not None, "error in config: no user storage configured"
+        assert self.data_backend is not None, "error in config: no data storage configured"
+        # XXX: add defaults again
 
     _meta_dict = None
     def load_meta_dict(self):
