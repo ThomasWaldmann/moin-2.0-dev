@@ -75,14 +75,14 @@ class TestMercurialBackend(BackendTest):
         rev = item.create_revision(0)
         for num in xrange(10000):
             revval = "revision metatdata value for key %d" % num
-            rev["%s" % num] = revval * 100
+            rev["%s" % num] = revval * 10
         item.commit()
         item = self.backend.get_item('existing')
         rev = item.get_revision(-1)
         assert len(dict(rev)) == 10000
         for num in xrange(10000):
             revval = "revision metatdata value for key %d" % num
-            assert rev["%s" % num] == revval * 100
+            assert rev["%s" % num] == revval * 10
 
     def test_concurrent_create_revision(self):
         """
