@@ -1500,8 +1500,8 @@ class RootPage(object):
                 else:
                     yield name
         else:
-            for name in items:
-                yield name
+            for i in items:
+                yield i.name
 
         request.clock.stop('getPageList')
 
