@@ -181,23 +181,17 @@ def info(pagename, request):
 #        raise
 
 def _write_stream(content, new_rev, bufsize=8192):
-    size = 0
     if isinstance(content, file):
         while True:
             buf = content.read(bufsize)
-            size += len(buf)  # Worst case is 8192 here
             if not buf:
                 break
             new_rev.write(buf)
     elif isinstance(content, str):
         new_rev.write(content)
-        size = len(content)
     else:
         logging.error("unsupported content object: %r" % content)
         raise
-
-    return size
-
 
 def add_attachment(request, pagename, target, filecontent, overwrite=0):
     """ save <filecontent> to an attachment <target> of page <pagename>
@@ -245,9 +239,7 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     #finally:
     #    stream.close()
 
-    filesize = _write_stream(filecontent, new_rev)
-
-    new_rev["filesize"] = str(filesize)
+    _write_stream(filecontent, new_rev)
 
     #_addLogEntry(request, 'ATTNEW', pagename, target)
     # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
@@ -268,10 +260,10 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     item.commit()
 
     #filesize = os.path.getsize(fpath)
-    event = FileAttachedEvent(request, pagename, target, filesize)
+    event = FileAttachedEvent(request, pagename, target, new_rev.size)
     send_event(event)
 
-    return target, filesize
+    return target, new_rev.size
 
 
 #############################################################################
@@ -360,19 +352,13 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
                 continue
 
             try:
-                fsize = float(rev["filesize"]) / 1024
-                fsize = "%.1f" % fsize
-            except KeyError:
-                fsize = "unknown"
-
-            try:
                 fmtime = request.user.getFormattedDateTime(float(rev[EDIT_LOG_MTIME]))
             except KeyError:
                 fmtime = "unknown"
 
             base, ext = os.path.splitext(file)
             parmdict = {'file': wikiutil.escape(file),
-                        'fsize': fsize,
+                        'fsize': "%.1f" % (float(rev.size) / 1024),
                         'fmtime': fmtime,
                        }
 
@@ -961,7 +947,7 @@ def _do_get(pagename, request):
             request.emit_http_headers([
                 'Content-Type: %s' % content_type,
                 'Last-Modified: %s' % timestamp,
-                'Content-Length: %s' % rev["filesize"], # XXX Change this.
+                'Content-Length: %s' % rev.size,
                 'Content-Disposition: %s; filename="%s"' % (content_dispo, filename_enc),
             ])
 
