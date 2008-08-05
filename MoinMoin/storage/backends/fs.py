@@ -101,7 +101,8 @@ class FSBackend(Backend):
                 inamef.close()
                 # try to open the revision file just in case somebody
                 # removed it manually
-                revf = open(os.path.join(self._path, itemid, 'rev.%d' % revno))
+                revpath = os.path.join(self._path, itemid, 'rev.%d' % revno)
+                revf = open(revpath)
                 revf.close()
             except IOError, err:
                 if err.errno != errno.ENOENT:
@@ -111,7 +112,7 @@ class FSBackend(Backend):
             item = Item(self, iname)
             item._fs_item_id = itemid
             rev = StoredRevision(item, revno, tstamp)
-            rev._fs_revpath = os.path.join(self._path, itemid, 'rev.%d' % revno)
+            rev._fs_revpath = revpath
             rev._fs_file = None
             yield rev
 
