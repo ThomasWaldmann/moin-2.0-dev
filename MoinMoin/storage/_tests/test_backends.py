@@ -468,7 +468,7 @@ class BackendTest(object):
         item = self.backend.create_item("first one")
         for revno in xrange(10):
             rev = item.create_revision(revno)
-            rev["revno"] = revno
+            rev["revno"] = str(revno)
             item.commit()
         assert item.list_revisions() == range(10)
         item.rename("second one")
@@ -483,6 +483,7 @@ class BackendTest(object):
         for revno in xrange(10):
             rev = item2.get_revision(revno)
             assert rev["revno"] == str(revno)
+
 
     def test_concurrent_create_revision(self):
         self.create_rev_item_helper("concurrent")
