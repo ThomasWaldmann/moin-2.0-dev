@@ -16,7 +16,7 @@ from MoinMoin import wikiutil, user
 from MoinMoin.storage.external import ItemCollection
 from MoinMoin.storage.error import NoSuchItemError
 from MoinMoin.Page import Page
-
+from MoinMoin.storage import EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 
 class EditLogLine(object):
     """
@@ -159,29 +159,21 @@ class GlobalEditLog(object):
         """
         Returns the next edit-log entry.
         """
-        mtime, rev, name = self.items.next()
+        rev = self.items.next()
 
         result = EditLogLine()
 
-        try:
-            item = self.item_collection[name]
-            result.action = item[rev].action
-            result.addr = item[rev].addr
-            result.hostname = item[rev].hostname
-            result.userid = item[rev].userid
-            result.extra = item[rev].extra
-            result.comment = item[rev].comment
-        except NoSuchItemError:
-            result.action = ""
-            result.addr = ""
-            result.hostname = ""
-            result.userid = ""
-            result.extra = ""
-            result.comment = ""
+        result.action = rev.get(EDIT_LOG_ACTION, '')
+        result.addr = rev.get(EDIT_LOG_ADDR, '')
+        result.hostname = rev.get(EDIT_LOG_HOSTNAME, '')
+        result.userid = rev.get(EDIT_LOG_USERID, '')
+        result.extra = rev.get(EDIT_LOG_EXTRA, '')
+        result.comment = rev.get(EDIT_LOG_COMMENT, '')
 
-        result.mtime = mtime
-        result.rev = rev
-        result.pagename = name
+        result.mtime = rev.timestamp
+        result.rev = rev.revno
+        result.revision = rev
+        result.pagename = rev.item.name
 
         self.pos = self.pos + 1
 
