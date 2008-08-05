@@ -66,7 +66,6 @@ class SyncPage(object):
         self.remote_deleted = remote_deleted
         self.local_mime_type = MIMETYPE_MOIN   # XXX no usable storage API yet
         self.remote_mime_type = MIMETYPE_MOIN
-        assert remote_rev != 99999999
 
     def __repr__(self):
         return repr("<Sync Page %r>" % unicode(self))
@@ -292,10 +291,9 @@ class MoinRemoteWiki(RemoteWiki):
             normalised_name = normalise_pagename(name, self.prefix)
             if normalised_name is None:
                 continue
-            if abs(revno) != 99999999: # I love sane in-band signalling
-                remote_rev = abs(revno)
-                remote_deleted = revno < 0
-                rpages.append(SyncPage(normalised_name, remote_rev=remote_rev, remote_name=name, remote_deleted=remote_deleted))
+            remote_rev = abs(revno)
+            remote_deleted = revno < 0
+            rpages.append(SyncPage(normalised_name, remote_rev=remote_rev, remote_name=name, remote_deleted=remote_deleted))
         return rpages
 
     def __repr__(self):
@@ -322,9 +320,9 @@ class MoinLocalWiki(RemoteWiki):
         if normalised_name is None:
             return None
         page = Page(self.request, page_name)
-        revno = page.get_real_rev()
-        if revno == 99999999: # I love sane in-band signalling
+        if not page.exists(includeDeleted=True):
             return None
+        revno = page.get_real_rev()
         return SyncPage(normalised_name, local_rev=revno, local_name=page_name, local_deleted=not page.exists())
 
     # Public methods:

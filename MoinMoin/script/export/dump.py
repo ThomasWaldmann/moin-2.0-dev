@@ -158,6 +158,9 @@ General syntax: moin [options] export dump [dump-options]
         request.user = user.User(request, name=self.options.dump_user)
 
         pages = request.rootpage.getPageList(user='') # get list of all pages in wiki
+        # XXX sorting shouldn't be necessary, and filtering
+        #     should be done within the getPageList call!
+        pages = list(pages)
         pages.sort()
         if self.options.page: # did user request a particular page or group of pages?
             try:

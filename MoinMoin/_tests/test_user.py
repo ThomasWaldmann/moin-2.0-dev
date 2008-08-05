@@ -6,11 +6,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os
 import py
 
 from MoinMoin import user, caching
-from MoinMoin.util import filesys
 
 
 class TestEncodePassword(object):
@@ -45,8 +43,6 @@ class TestLoginWithPassword(object):
         self.request.saved_cookie = ''
         self.request.user = user.User(self.request)
 
-        # Prevent user list caching - we create and delete users too fast for that.
-        filesys.dcdisable()
         self.user = None
 
     def teardown_method(self, method):
@@ -56,11 +52,6 @@ class TestLoginWithPassword(object):
         """
         # Remove user file and user
         if self.user is not None:
-            try:
-                path = self.user._User__filename()
-                os.remove(path)
-            except OSError:
-                pass
             del self.user
 
         # Restore original user
@@ -73,9 +64,6 @@ class TestLoginWithPassword(object):
             del self.request.cfg.cache.name2id
         except:
             pass
-
-        # Prevent user list caching - we create and delete users too fast for that.
-        filesys.dcdisable()
 
     def testAsciiPassword(self):
         """ user: login with ascii password """

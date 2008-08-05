@@ -37,6 +37,10 @@ from MoinMoin.Page import Page
 from MoinMoin.util import filesys, timefuncs
 from MoinMoin.security.textcha import TextCha
 from MoinMoin.events import FileAttachedEvent, send_event
+from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
+from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage import EDIT_LOG_MTIME, EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
+                             EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, DELETED
 
 action_name = __name__.split('.')[-1]
 
@@ -46,11 +50,6 @@ action_name = __name__.split('.')[-1]
 
 class AttachmentAlreadyExists(Exception):
     pass
-
-
-def getBasePath(request):
-    """ Get base path where page dirs for attachments are stored. """
-    return request.rootpage.getPagePath('pages')
 
 
 def getAttachDir(request, pagename, create=0):
@@ -171,15 +170,34 @@ def info(pagename, request):
     return "\n<p>\n%s\n</p>\n" % attach_info
 
 
-def _write_stream(content, stream, bufsize=8192):
-    if hasattr(content, 'read'): # looks file-like
-        import shutil
-        shutil.copyfileobj(content, stream, bufsize)
+#def _write_stream(content, stream, bufsize=8192):
+#    if hasattr(content, 'read'): # looks file-like
+#        import shutil
+#        shutil.copyfileobj(content, stream, bufsize)
+#    elif isinstance(content, str):
+#        stream.write(content)
+#    else:
+#        logging.error("unsupported content object: %r" % content)
+#        raise
+
+def _write_stream(content, new_rev, bufsize=8192):
+    size = 0
+    if isinstance(content, file):
+        while True:
+            buf = content.read(bufsize)
+            size += len(buf)  # Worst case is 8192 here
+            if not buf:
+                break
+            new_rev.write(buf)
     elif isinstance(content, str):
-        stream.write(content)
+        new_rev.write(content)
+        size = len(content)
     else:
         logging.error("unsupported content object: %r" % content)
         raise
+
+    return size
+
 
 def add_attachment(request, pagename, target, filecontent, overwrite=0):
     """ save <filecontent> to an attachment <target> of page <pagename>
@@ -190,32 +208,68 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     _ = request.getText
 
     # replace illegal chars
+    assert isinstance(pagename, basestring)
     target = wikiutil.taintfilename(target)
+    item_name = pagename + "/" + target  # pagenames are guaranteed to be unique in the backend,
+                                         # but we want to allow equally named attachments to be
+                                         # stored for different pages.
 
-    # get directory, and possibly create it
-    attach_dir = getAttachDir(request, pagename, create=1)
-    # save file
-    fpath = os.path.join(attach_dir, target).encode(config.charset)
-    exists = os.path.exists(fpath)
-    if exists and not overwrite:
-        raise AttachmentAlreadyExists
-    else:
-        if exists:
-            try:
-                os.remove(fpath)
-            except:
-                pass
-        stream = open(fpath, 'wb')
+    backend = request.cfg.data_backend
+
+    # XXX Can somebody please propose a way how to make the following
+    # XXX two try-except-blocks more beautiful?
+    try:
+        item = backend.create_item(item_name)
+    except ItemAlreadyExistsError:
         try:
-            _write_stream(filecontent, stream)
-        finally:
-            stream.close()
+            item = backend.get_item(item_name)
+            rev = item.get_revision(-1)
+            deleted = DELETED in rev
+        except NoSuchRevisionError:
+            deleted = True
 
-        _addLogEntry(request, 'ATTNEW', pagename, target)
+        if overwrite or deleted:
+            item = backend.get_item(item_name)
+        else:
+            raise AttachmentAlreadyExists
 
-        filesize = os.path.getsize(fpath)
-        event = FileAttachedEvent(request, pagename, target, filesize)
-        send_event(event)
+    try:
+        current_revno = item.get_revision(-1).revno
+        new_rev = item.create_revision(current_revno + 1)
+    except NoSuchRevisionError:
+        new_rev = item.create_revision(0)
+
+    #stream = open(fpath, 'wb')
+    #try:
+    #    _write_stream(filecontent, stream)
+    #finally:
+    #    stream.close()
+
+    filesize = _write_stream(filecontent, new_rev)
+
+    new_rev["filesize"] = str(filesize)
+
+    #_addLogEntry(request, 'ATTNEW', pagename, target)
+    # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
+    new_rev[EDIT_LOG_MTIME] = str(time.time())
+    new_rev[EDIT_LOG_ACTION] = 'ATTNEW'
+    new_rev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
+    new_rev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
+    new_rev[EDIT_LOG_EXTRA] = wikiutil.url_quote(target, want_unicode=True)
+    new_rev[EDIT_LOG_COMMENT] = u''  # XXX At some point one may consider enabling attachment-comments
+
+    #new_rev["format"] = "attachment"
+    mimetype = mimetypes.guess_type(target)[0]
+    if mimetype is None:
+        mimetype = "unknown"
+    new_rev["mimetype"] = mimetype
+
+    # TODO: Error handling
+    item.commit()
+
+    #filesize = os.path.getsize(fpath)
+    event = FileAttachedEvent(request, pagename, target, filesize)
+    send_event(event)
 
     return target, filesize
 
@@ -224,22 +278,19 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
 ### Internal helpers
 #############################################################################
 
-def _addLogEntry(request, action, pagename, filename):
+def _addLogEntry(request, action, pagename, filename, uid_override=None):
     """ Add an entry to the edit log on uploads and deletes.
 
         `action` should be "ATTNEW" or "ATTDEL"
     """
-    from MoinMoin.logfile import editlog
-    t = wikiutil.timestamp2version(time.time())
-    fname = wikiutil.url_quote(filename, want_unicode=True)
-
-    # Write to global log
-    log = editlog.EditLog(request)
-    log.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
-
-    # Write to local log
-    log = editlog.EditLog(request, rootpagename=pagename)
-    log.add(request, t, 99999999, action, pagename, request.remote_addr, fname)
+#    # TODO: Rewrite this, using new storage API directly
+#    from MoinMoin.logfile import editlog
+#    fname = wikiutil.url_quote(filename, want_unicode=True)
+#
+#    # Write to local log
+#    llog = editlog.LocalEditLog(request, rootpagename=pagename)
+#    llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname, uid_override=uid_override)
+    logging.debug("DEPRECATION WARNING: Some code is still using _addLogEntry in action/AttachFile.py!")
 
 
 def _access_file(pagename, request):
@@ -270,7 +321,7 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
     fmt = request.html_formatter
 
     # access directory
-    attach_dir = getAttachDir(request, pagename)
+ #   attach_dir = getAttachDir(request, pagename)
     files = _get_files(request, pagename)
 
     if mime_type != '*':
@@ -298,12 +349,31 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
         html.append(fmt.bullet_list(1))
         for file in files:
             mt = wikiutil.MimeType(filename=file)
-            fullpath = os.path.join(attach_dir, file).encode(config.charset)
-            st = os.stat(fullpath)
+ #           fullpath = os.path.join(attach_dir, file).encode(config.charset)
+ #           st = os.stat(fullpath)
+            backend = request.cfg.data_backend
+            try:
+                item = backend.get_item(pagename + "/" + file)
+                rev = item.get_revision(-1)
+            except (NoSuchItemError, NoSuchRevisionError):
+                # The file may have been renamed in the interim. Just don't show it then.
+                continue
+
+            try:
+                fsize = float(rev["filesize"]) / 1024
+                fsize = "%.1f" % fsize
+            except KeyError:
+                fsize = "unknown"
+
+            try:
+                fmtime = request.user.getFormattedDateTime(float(rev[EDIT_LOG_MTIME]))
+            except KeyError:
+                fmtime = "unknown"
+
             base, ext = os.path.splitext(file)
             parmdict = {'file': wikiutil.escape(file),
-                        'fsize': "%.1f" % (float(st.st_size) / 1024),
-                        'fmtime': request.user.getFormattedDateTime(st.st_mtime),
+                        'fsize': fsize,
+                        'fmtime': fmtime,
                        }
 
             links = []
@@ -313,7 +383,6 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
                              fmt.text(label_del) +
                              fmt.url(0))
 
-            if may_delete and not readonly:
                 links.append(fmt.url(1, getAttachUrl(pagename, file, request, do='move')) +
                              fmt.text(label_move) +
                              fmt.url(0))
@@ -331,30 +400,31 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
                              fmt.text(label_view) +
                              fmt.url(0))
 
-            try:
-                is_zipfile = zipfile.is_zipfile(fullpath)
-                if is_zipfile:
-                    is_package = packages.ZipPackage(request, fullpath).isPackage()
-                    if is_package and request.user.isSuperUser():
-                        links.append(fmt.url(1, getAttachUrl(pagename, file, request, do='install')) +
-                                     fmt.text(label_install) +
-                                     fmt.url(0))
-                    elif (not is_package and mt.minor == 'zip' and
-                          may_delete and
-                          request.user.may.read(pagename) and
-                          request.user.may.write(pagename)):
-                        links.append(fmt.url(1, getAttachUrl(pagename, file, request, do='unzip')) +
-                                     fmt.text(label_unzip) +
-                                     fmt.url(0))
-            except RuntimeError:
-                # We don't want to crash with a traceback here (an exception
-                # here could be caused by an uploaded defective zip file - and
-                # if we crash here, the user does not get a UI to remove the
-                # defective zip file again).
-                # RuntimeError is raised by zipfile stdlib module in case of
-                # problems (like inconsistent slash and backslash usage in the
-                # archive).
-                logging.exception("An exception within zip file attachment handling occurred:")
+           ## TODO: Adjust this zipfile-related stuff
+           # try:
+           #     is_zipfile = zipfile.is_zipfile(fullpath)
+           #     if is_zipfile:
+           #         is_package = packages.ZipPackage(request, fullpath).isPackage()
+           #         if is_package and request.user.isSuperUser():
+           #             links.append(fmt.url(1, getAttachUrl(pagename, file, request, do='install')) +
+           #                          fmt.text(label_install) +
+           #                          fmt.url(0))
+           #         elif (not is_package and mt.minor == 'zip' and
+           #               may_delete and
+           #               request.user.may.read(pagename) and
+           #               request.user.may.write(pagename)):
+           #             links.append(fmt.url(1, getAttachUrl(pagename, file, request, do='unzip')) +
+           #                          fmt.text(label_unzip) +
+           #                          fmt.url(0))
+           # except RuntimeError:
+           #     # We don't want to crash with a traceback here (an exception
+           #     # here could be caused by an uploaded defective zip file - and
+           #     # if we crash here, the user does not get a UI to remove the
+           #     # defective zip file again).
+           #     # RuntimeError is raised by zipfile stdlib module in case of
+           #     # problems (like inconsistent slash and backslash usage in the
+           #     # archive).
+           #     logging.exception("An exception within zip file attachment handling occurred:")
 
             html.append(fmt.listitem(1))
             html.append("[%s]" % "&nbsp;| ".join(links))
@@ -373,13 +443,32 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
 
 
 def _get_files(request, pagename):
-    attach_dir = getAttachDir(request, pagename)
-    if os.path.isdir(attach_dir):
-        files = [fn.decode(config.charset) for fn in os.listdir(attach_dir)]
-        files.sort()
-    else:
-        files = []
-    return files
+  #  attach_dir = getAttachDir(request, pagename)
+  #  if os.path.isdir(attach_dir):
+  #      files = [fn.decode(config.charset) for fn in os.listdir(attach_dir)]
+  #      files.sort()
+  #  else:
+  #      files = []
+  #  return files
+    # MoinMoin.search.NameRE expects a Regular Expression Object.
+    # Find all items that are attached to $pagename. (Indicated by their
+    # Item-Name (in storage-backend) being constructed like: pagename + "/" + filename
+    import re
+    regex = re.compile('^%s/.*' % (pagename, ))
+
+    backend = request.cfg.data_backend
+
+    # Get a list of all items (of the page matching the regex) whose latest revision
+    # has a metadata-key 'mimetype' indicating that it is NOT a regular moin-page
+    items = list(backend.search_item(AND(NameRE(regex),
+                                     NOT(LastRevisionMetaDataMatch('mimetype', 'text/x-unidentified-wiki-format')),
+                                     NOT(LastRevisionMetaDataMatch('deleted', True)))))
+
+    # We only want the names of the items, not the whole item.
+    item_names = [item.name for item in items]
+
+    # We only want the filename, not the whole item_name.
+    return [f.split("/")[1] for f in item_names]
 
 
 def _get_filelist(request, pagename):
@@ -649,26 +738,64 @@ def _do_savedrawing(pagename, request):
 
 
 def _do_del(pagename, request):
+    """
+    Deleting an Attachment basically means creating a new, empty revision
+    on an Item that happened to be an 'Attachment' at some point, setting
+    the DELETED-Metadata-Key.
+    """
     _ = request.getText
 
-    pagename, filename, fpath = _access_file(pagename, request)
+    error = ""
+
     if not request.user.may.delete(pagename):
         return _('You are not allowed to delete attachments on this page.')
-    if not filename:
-        return # error msg already sent in _access_file
 
-    # delete file
-    os.remove(fpath)
-    _addLogEntry(request, 'ATTDEL', pagename, filename)
+    if not request.form.get('target', [''])[0]:
+        error = _("Filename of attachment not specified!")
+    else:
+        filename = wikiutil.taintfilename(request.form['target'][0])
 
-    if request.cfg.xapian_search:
-        from MoinMoin.search.Xapian import Index
-        index = Index(request)
-        if index.exists:
-            index.remove_item(pagename, filename)
+    backend = request.cfg.data_backend
 
-    upload_form(pagename, request, msg=_("Attachment '%(filename)s' deleted.") % {'filename': filename})
+    try:
+        item = backend.get_item(pagename + "/" + filename)
+        current_rev = item.get_revision(-1)
+        current_revno = current_rev.revno
+        new_rev = item.create_revision(current_revno + 1)
+    except (NoSuchItemError, NoSuchRevisionError):
+        error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
 
+    try:
+        deleted = current_rev[DELETED]
+    except KeyError:
+        deleted = False
+
+    if error != "":
+        error_msg(pagename, request, error)
+
+    elif not deleted:
+        # Everything ok. "Delete" the attachment, i.e., create a new, empty revision with according metadata
+        # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
+        new_rev[EDIT_LOG_MTIME] = str(time.time())
+        new_rev[EDIT_LOG_ACTION] = 'ATTDEL'
+        new_rev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
+        new_rev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
+        new_rev[EDIT_LOG_EXTRA] = wikiutil.url_quote(filename, want_unicode=True)
+        new_rev[EDIT_LOG_COMMENT] = u''  # XXX At some point one may consider enabling attachment-comments
+        new_rev[DELETED] = True
+
+        item.commit()
+
+        if request.cfg.xapian_search:
+            from MoinMoin.search.Xapian import Index
+            index = Index(request)
+            if index.exists:
+                index.remove_item(pagename, filename)
+
+        upload_form(pagename, request, msg=_("Attachment '%(filename)s' deleted.") % {'filename': filename})
+
+    else:
+        return _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
 
 def move_file(request, pagename, new_pagename, attachment, new_attachment):
     _ = request.getText
@@ -786,43 +913,60 @@ def _do_move(pagename, request):
     request.theme.add_msg(formhtml, "dialog")
     return thispage.send_page()
 
-
 def _do_get(pagename, request):
     _ = request.getText
 
-    pagename, filename, fpath = _access_file(pagename, request)
+    if not request.form.get('target', [''])[0]:
+        error = _("Filename of attachment not specified!")
+    else:
+        filename = wikiutil.taintfilename(request.form['target'][0])
+        #fpath = getFilename(request, pagename, filename)
+
     if not request.user.may.read(pagename):
         return _('You are not allowed to get attachments from this page.')
-    if not filename:
-        return # error msg already sent in _access_file
 
-    timestamp = timefuncs.formathttpdate(int(os.path.getmtime(fpath)))
-    if request.if_modified_since == timestamp:
-        request.emit_http_headers(["Status: 304 Not modified"])
+    backend = request.cfg.data_backend
+
+    try:
+        item = backend.get_item(pagename + "/" + filename)
+        rev = item.get_revision(-1)
+    except (NoSuchItemError, NoSuchRevisionError):
+        error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
+
     else:
-        mt = wikiutil.MimeType(filename=filename)
-        content_type = mt.content_type()
-        mime_type = mt.mime_type()
+        try:
+            timestamp = timefuncs.formathttpdate(float(rev[EDIT_LOG_MTIME]))
+            mimestr = rev["mimetype"]
+        except KeyError:
+            timestamp = timefuncs.formathttpdate(0)  # XXX Is this correct? What do we want to be displayed?
+            # XXX What if mimetype reading fails?
 
-        # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
-        # There is no solution that is compatible to IE except stripping non-ascii chars
-        filename_enc = filename.encode(config.charset)
+        if request.if_modified_since == timestamp:
+            request.emit_http_headers(["Status: 304 Not modified"])
+        else:
+            mt = wikiutil.MimeType(mimestr=mimestr)
+            content_type = mt.content_type()
+            mime_type = mt.mime_type()
 
-        # for dangerous files (like .html), when we are in danger of cross-site-scripting attacks,
-        # we just let the user store them to disk ('attachment').
-        # For safe files, we directly show them inline (this also works better for IE).
-        dangerous = mime_type in request.cfg.mimetypes_xss_protect
-        content_dispo = dangerous and 'attachment' or 'inline'
+            # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
+            # There is no solution that is compatible to IE except stripping non-ascii chars
+            filename_enc = filename.encode(config.charset)
 
-        request.emit_http_headers([
-            'Content-Type: %s' % content_type,
-            'Last-Modified: %s' % timestamp,
-            'Content-Length: %d' % os.path.getsize(fpath),
-            'Content-Disposition: %s; filename="%s"' % (content_dispo, filename_enc),
-        ])
+            # for dangerous files (like .html), when we are in danger of cross-site-scripting attacks,
+            # we just let the user store them to disk ('attachment').
+            # For safe files, we directly show them inline (this also works better for IE).
+            dangerous = mime_type in request.cfg.mimetypes_xss_protect
+            content_dispo = dangerous and 'attachment' or 'inline'
 
-        # send data
-        request.send_file(open(fpath, 'rb'))
+            request.emit_http_headers([
+                'Content-Type: %s' % content_type,
+                'Last-Modified: %s' % timestamp,
+                'Content-Length: %s' % rev["filesize"], # XXX Change this.
+                'Content-Disposition: %s; filename="%s"' % (content_dispo, filename_enc),
+            ])
+
+            # send data
+            request.send_file(rev)  # XXX Check if this is buffered
 
 
 def _do_install(pagename, request):
