@@ -4,7 +4,7 @@
 
     Testcases specific only for MercurialBackend.
     Common backend API tests are defined in test_backends.py
-    
+
     ---
 
     @copyright: 2008 MoinMoin:PawelPacana
@@ -30,37 +30,37 @@ class TestMercurialBackend(BackendTest):
 
     def create_backend(self):
         self.test_dir = mkdtemp()
-        return MercurialBackend(self.test_dir)      
-                    
+        return MercurialBackend(self.test_dir)
+
     def kill_backend(self):
-        shutil.rmtree(self.test_dir)        
+        shutil.rmtree(self.test_dir)
 
     def test_backend_init(self):
         nonexisting = os.path.join("/", "non-existing-dir")
-        py.test.raises(BackendError, MercurialBackend, nonexisting)        
+        py.test.raises(BackendError, MercurialBackend, nonexisting)
         emptydir, file = mkdtemp(), mkstemp()[1]
-        dirstruct = mkdtemp()         
+        dirstruct = mkdtemp()
         os.mkdir(os.path.join(dirstruct, "meta"))
-        os.mkdir(os.path.join(dirstruct, "rev"))  
+        os.mkdir(os.path.join(dirstruct, "rev"))
         try:
             py.test.raises(BackendError, MercurialBackend, emptydir, create=False)
             assert isinstance(MercurialBackend(emptydir), MercurialBackend)
             py.test.raises(BackendError, MercurialBackend, emptydir)
             assert isinstance(MercurialBackend(emptydir, create=False), MercurialBackend)
             py.test.raises(BackendError, MercurialBackend, file)
-            assert isinstance(MercurialBackend(dirstruct), MercurialBackend)         
+            assert isinstance(MercurialBackend(dirstruct), MercurialBackend)
         finally:
             shutil.rmtree(emptydir)
             shutil.rmtree(dirstruct)
-            os.unlink(file)             
-            
+            os.unlink(file)
+
     def test_backend_init_non_empty_datadir(self):
-        datadir = mkdtemp()         
+        datadir = mkdtemp()
         os.mkdir(os.path.join(datadir, "meta"))
         os.mkdir(os.path.join(datadir, "rev"))
         try:
             nameitem = mkstemp(dir=datadir)[1]
-            py.test.raises(BackendError, MercurialBackend, datadir)            
+            py.test.raises(BackendError, MercurialBackend, datadir)
             os.unlink(nameitem)
             revitem = mkstemp(dir=os.path.join(datadir, "rev"))[1]
             py.test.raises(BackendError, MercurialBackend, datadir)
@@ -68,8 +68,8 @@ class TestMercurialBackend(BackendTest):
             mkstemp(dir=os.path.join(datadir, "meta"))[1]
             py.test.raises(BackendError, MercurialBackend, datadir)
         finally:
-            shutil.rmtree(datadir) 
-               
+            shutil.rmtree(datadir)
+
     def test_large_revision_meta(self):
         item = self.backend.create_item('existing')
         rev = item.create_revision(0)
@@ -83,17 +83,17 @@ class TestMercurialBackend(BackendTest):
         for num in xrange(10000):
             revval = "revision metatdata value for key %d" % num
             assert rev["%s" % num] == revval * 100
-            
+
     def test_concurrent_create_revision(self):
         """
         < COVER GENERIC TEST >
-        Hg backend will fail this generic test, because of 
+        Hg backend will fail this generic test, because of
         completely different policy. You can create new revision
-        in such case, just a new head is created (and currently we 
+        in such case, just a new head is created (and currently we
         merge heads automatically). Thus, see merge tests below.
-        """        
+        """
         pass
-            
+
     def test_item_branch_and_merge(self):
         self.create_rev_item_helper("double-headed")
         item1 = self.backend.get_item("double-headed")
@@ -105,7 +105,7 @@ class TestMercurialBackend(BackendTest):
         item1 = self.backend.get_item("double-headed")
         assert len(item1.list_revisions()) == 4  # one extra from merge
         assert item1.list_revisions() == item2.list_revisions()
-    
+
     def test_item_revmeta_merge(self):
         self.create_rev_item_helper("double-headed")
         item1 = self.backend.get_item("double-headed")
@@ -123,20 +123,20 @@ class TestMercurialBackend(BackendTest):
             assert rev["age"] == "younger"
             assert rev["first"] == "alfa"
             assert rev["second"] == "beta"
-        assert len(rev._metadata.keys()) == 3    
-    
+        assert len(rev._metadata.keys()) == 3
+
     def test_item_merge_data(self):
-        first_text = "Lorem ipsum." 
+        first_text = "Lorem ipsum."
         second_text = "Lorem ipsum dolor sit amet."
-        after_merge = ( 
-"""---- /!\ '''Edit conflict - other version:''' ---- 
+        after_merge = (
+"""---- /!\ '''Edit conflict - other version:''' ----
 Lorem ipsum.
-            
+
 ---- /!\ '''Edit conflict - your version:''' ----
 Lorem ipsum dolor sit amet.
-            
+
 ---- /!\ '''End of edit conflict''' ----
-""")        
+""")
         self.create_rev_item_helper("lorem-ipsum")
         item1 = self.backend.get_item("lorem-ipsum")
         item2 = self.backend.get_item("lorem-ipsum")
@@ -151,21 +151,21 @@ Lorem ipsum dolor sit amet.
     def test_file_heads_on_patched_mercurial(self):
         def getfilectx(repo, ctx, path):
             return context.memfilectx(path, data, False, False, False)
-        
+
         repo = self.backend._repo
-        assert repo._forcedchanges == True        
+        assert repo._forcedchanges == True
         fname = mkstemp(dir=self.backend._r_path)[1]
         item_name = os.path.split(fname)[1]
         repo.add([item_name])
-        repo.commit(text="added file") 
+        repo.commit(text="added file")
         parents = (repo[0].node(), node.nullid)
         ctx = context.memctx(repo, parents, "dummy", [item_name], getfilectx)
         data = "1"
         repo._commitctx(ctx)
         ctx = context.memctx(repo, parents, "dummy", [item_name], getfilectx)
         data = "2"
-        repo._commitctx(ctx)        
+        repo._commitctx(ctx)
         filelog = repo.file(item_name)
         assert len(filelog) == 3
         assert len(filelog.heads()) == 2
-    
+
