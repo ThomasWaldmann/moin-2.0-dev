@@ -19,6 +19,7 @@
 
 import StringIO
 from threading import Lock
+import time
 
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
@@ -114,10 +115,11 @@ class MemoryBackend(Backend):
         if revno not in self._item_revisions[item_id]:
             raise NoSuchRevisionError("No Revision #%d on Item %s - Available revisions: %r" % (revno, item.name, revisions))
 
-        revision = StoredRevision(item, revno)
+        metadata = self._item_revisions[item_id][revno][1]
+        revision = StoredRevision(item, revno, metadata['__timestamp'])
         revision._data = StringIO.StringIO(self._item_revisions[item_id][revno][0])
 
-        revision._metadata = self._item_revisions[item_id][revno][1]
+        revision._metadata = metadata
 
         return revision
 
@@ -222,10 +224,13 @@ class MemoryBackend(Backend):
 
         revision._data.seek(0)
 
-        if revision._metadata is not None:
-            self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata.copy())
-        else:
-            self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), {})
+        if revision.timestamp is None:
+            revision.timestamp = long(time.time())
+
+        if revision._metadata is None:
+            revision._metadata = {}
+        revision._metadata['__timestamp'] = revision.timestamp
+        self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata.copy())
 
         item._uncommitted_revision = None
 

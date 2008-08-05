@@ -117,6 +117,15 @@ class Backend(object):
         """
         raise NotImplementedError()
 
+    def news(self, timestamp=0):
+        """
+        Returns an iterator over all revisions created for all items
+        in their reverse timestamp order.
+
+        @param timestamp: cut-off time, return only items after this time
+        """
+        raise NotImplementedError()
+
     #
     # The below methods are defined for convenience.
     # If you need to write a backend it is sufficient
@@ -212,6 +221,19 @@ class Backend(object):
     def _get_revision_metadata(self, revision):
         """
         Load metadata for a given Revision, returns dict.
+        Alternatively, return a tuple (metadata dict, timestamp)
+        when loading the metadata cheaply also loads the timestamp.
+        """
+        raise NotImplementedError()
+
+    def _get_revision_timestamp(self, revision):
+        """
+        Lazily load the revision's timestamp. If accessing it
+        is cheap, it can be given as a parameter to StoredRevision
+        instantiation instead.
+        Return the timestamp (a long) or a tuple containing
+        (timestamp, metadata dict) if loading one of them cheaply
+        loads the other.
         """
         raise NotImplementedError()
 
@@ -400,9 +422,15 @@ class Revision(object, DictMixin):
     several Revisions at a time, one being the most recent Revision.
     This is a principle that is similar to the concepts used in Version-Control-
     Systems.
+
+    Each Revision object has a creation timestamp in the 'timestamp' property
+    that defaults to None for newly created revisions in which case it will be
+    assigned at commit() time. It is writable for use by converter backends,
+    care must be taken in that case to create monotonous timestamps!
+    This timestamp is also retrieved via the backend's news() method.
     """
 
-    def __init__(self, item, revno):
+    def __init__(self, item, revno, timestamp):
         """
         Initialize the Revision.
         """
@@ -411,6 +439,7 @@ class Revision(object, DictMixin):
         self._item = item
         self._backend = item._backend
         self._metadata = None
+        self._timestamp = timestamp
 
     def get_revno(self):
         """
@@ -419,6 +448,13 @@ class Revision(object, DictMixin):
         return self._revno
 
     revno = property(get_revno, doc = "This property stores the revno of the Revision-object. Only read-only access is allowed.")
+
+    def _load_metadata(self):
+        res = self._backend._get_revision_metadata(self)
+        if isinstance(res, tuple):
+            self._metadata, self._timestamp = res
+        else:
+            self._metadata = res
 
     def __getitem__(self, key):
         """
@@ -431,7 +467,7 @@ class Revision(object, DictMixin):
             raise KeyError(key)
 
         if self._metadata is None:
-            self._metadata = self._backend._get_revision_metadata(self)
+            self._load_metadata()
 
         return self._metadata[key]
 
@@ -441,7 +477,7 @@ class Revision(object, DictMixin):
         That allows using pythons `for mdkey in revopbj: do_something`-syntax.
         """
         if self._metadata is None:
-            self._metadata = self._backend._get_revision_metadata(self)
+            self._load_metadata()
 
         return filter(lambda x: not x.startswith('__'), self._metadata.keys())
 
@@ -461,11 +497,22 @@ class StoredRevision(Revision):
     manipulation.
     """
 
-    def __init__(self, item, revno):
+    def __init__(self, item, revno, timestamp=None):
         """
         Initialize the NewRevision
         """
-        Revision.__init__(self, item, revno)
+        Revision.__init__(self, item, revno, timestamp)
+
+    def _get_ts(self):
+        if self._timestamp is None:
+            res = self._backend._get_revision_timestamp(self)
+            if isinstance(res, tuple):
+                self._timestamp, self._metadata = res
+            else:
+                self._timestamp = res
+        return self._timestamp
+
+    timestamp = property(_get_ts, doc="This property returns the creation timestamp of the Revision")
 
     def __setitem__(self):
         """
@@ -502,8 +549,18 @@ class NewRevision(Revision):
         """
         Initialize the NewRevision
         """
-        Revision.__init__(self, item, revno)
+        Revision.__init__(self, item, revno, None)
         self._metadata = {}
+
+    def _get_ts(self):
+        return self._timestamp
+
+    def _set_ts(self, ts):
+        ts = long(ts)
+        self._timestamp = ts
+
+    timestamp = property(_get_ts, _set_ts, doc="This property accesses the creation timestamp of the Revision")
+
 
     def __setitem__(self, key, value):
         """
