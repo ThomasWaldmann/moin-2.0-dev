@@ -9,7 +9,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import MoinMoin.user
 from MoinMoin import user, wikiutil
+from MoinMoin.Page import Page
 from MoinMoin.events import EventResult
 
 class Result(EventResult):
@@ -77,7 +79,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
         'You have subscribed to a wiki page or wiki category on "%(sitename)s" for change notification.\n\n'
         'The "%(pagename)s" page has been changed by %(editor)s:\n') % {
             'pagename': page.page_name,
-            'editor': page.uid_override or user.getUserIdentification(request),
+            'editor': page.last_editor(),
             'sitename': page.cfg.sitename or request.getBaseURL(),
         }
 
@@ -97,7 +99,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
             'You have subscribed to a wiki page "%(sitename)s" for change notification.\n\n'
             'The page "%(pagename)s" has been deleted by %(editor)s:\n\n') % {
                 'pagename': page.page_name,
-                'editor': page.uid_override or user.getUserIdentification(request),
+                'editor': page.last_editor(),
                 'sitename': page.cfg.sitename or request.getBaseURL(),
         }
 
@@ -105,7 +107,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
         changes['text'] = _("Dear wiki user,\n\n"
             'You have subscribed to a wiki page "%(sitename)s" for change notification.\n\n'
             'The page "%(pagename)s" has been renamed from "%(oldname)s" by %(editor)s:\n') % {
-                'editor': page.uid_override or user.getUserIdentification(request),
+                'editor': page.last_editor(),
                 'pagename': page.page_name,
                 'sitename': page.cfg.sitename or request.getBaseURL(),
                 'oldname': kwargs['old_name']

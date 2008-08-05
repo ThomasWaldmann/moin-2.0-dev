@@ -244,9 +244,13 @@ def do_show(pagename, request, content_only=0, count_hit=1, cacheable=1, print_m
         Page(request, pagename).send_page()
     else:
         mimetype = request.form.get('mimetype', [u"text/html"])[0]
-        rev = request.rev or 0
-        if rev == 0:
+        if request.rev is None:
+            rev = -1
+        else:
+            rev = request.rev
+        if rev == -1:
             request.cacheable = cacheable
+        
         Page(request, pagename, rev=rev, formatter=mimetype).send_page(
             count_hit=count_hit,
             print_mode=print_mode,

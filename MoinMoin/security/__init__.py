@@ -23,6 +23,7 @@ import re
 
 from MoinMoin import wikiutil, user
 from MoinMoin.Page import Page
+from MoinMoin.storage import ACL
 
 #############################################################################
 ### Basic Permissions Interface -- most features enabled by default
@@ -63,7 +64,7 @@ def _check(request, pagename, username, right):
             # starting at the leaf, going to the root
             name = '/'.join(pages[:i])
             # Get page acl and ask for permission
-            acl = Page(request, name).getACL(request)
+            acl = Page(request, name).getACL()
             if acl.acl:
                 some_acl = True
                 allowed = acl.may(request, username, right)
@@ -78,7 +79,7 @@ def _check(request, pagename, username, right):
             p = request.page # reuse is good
         else:
             p = Page(request, pagename)
-        acl = p.getACL(request) # this will be fast in a reused page obj
+        acl = p.getACL() # this will be fast in a reused page obj
         allowed = acl.may(request, username, right)
         if allowed is not None:
             return allowed
@@ -448,7 +449,5 @@ class ACLStringIterator:
 
 def parseACL(request, text):
     """ Parse acl lines from text and return ACL object """
-    pi, dummy = wikiutil.get_processing_instructions(text)
-    acl_lines = [args for verb, args in pi if verb == 'acl']
-    return AccessControlList(request.cfg, acl_lines)
-
+    pi, dummy = wikiutil.split_body(text)
+    return AccessControlList(request.cfg, pi.get(ACL, []))

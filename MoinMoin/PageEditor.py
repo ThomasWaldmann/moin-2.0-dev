@@ -13,22 +13,30 @@
     @copyright: 2000-2004 by Juergen Hermann <jh@web.de>,
                 2005-2007 by MoinMoin:ThomasWaldmann,
                 2007 by MoinMoin:ReimarBauer
+                2008 by MoinMoin:ChristopherDenter
+
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, time, codecs, errno
+import errno
+import time
 
 
-from MoinMoin import caching, config, wikiutil, error
+from MoinMoin import config, caching, wikiutil, error, user
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
-from MoinMoin.logfile import editlog, eventlog
+from MoinMoin.logfile import eventlog
 from MoinMoin.mail.sendmail import encodeSpamSafeEmail
 from MoinMoin.support.python_compatibility import set
-from MoinMoin.util import filesys, timefuncs, web
+from MoinMoin.util import timefuncs, web
+from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
+from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
+from MoinMoin.storage import DELETED, EDIT_LOG_MTIME, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, \
+                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION, EDIT_LOG_COMMENT
+
 import MoinMoin.events.notification as notification
 
 # used for merging
@@ -95,6 +103,9 @@ class PageEditor(Page):
         self.do_revision_backup = keywords.get('do_revision_backup', 1)
         self.do_editor_backup = keywords.get('do_editor_backup', 1)
         self.uid_override = keywords.get('uid_override', None)
+
+        if self._item is None:
+            self._item = self._backend.create_item(self.page_name)
 
         self.lock = PageLock(self)
 
@@ -166,9 +177,7 @@ class PageEditor(Page):
         # check edit permissions
         if not request.user.may.write(self.page_name):
             msg = _('You are not allowed to edit this page.')
-        elif not self.isWritable():
-            msg = _('Page is immutable!')
-        elif self.rev:
+        elif self.rev >= 0:
             # Trying to edit an old version, this is not possible via
             # the web interface, but catch it just in case...
             msg = _('Cannot edit old revisions!')
@@ -261,7 +270,7 @@ Please review the page and save then. Do not save this page as it is!""")
             rev = self.current_rev()
         else:
             # page creation
-            rev = 0
+            rev = -1
 
         # Page editing is done using user language
         request.setContentLanguage(request.lang)
@@ -278,7 +287,7 @@ Please review the page and save then. Do not save this page as it is!""")
             raw_body = self.get_raw_body()
         elif 'template' in form:
             # If the page does not exist, we try to get the content from the template parameter.
-            template_page = wikiutil.unquoteWikiname(form['template'][0])
+            template_page = form['template'][0]
             if request.user.may.read(template_page):
                 raw_body = Page(request, template_page).get_raw_body()
                 if raw_body:
@@ -444,6 +453,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         # Category selection
         filterfn = self.cfg.cache.page_category_regexact.search
         cat_pages = request.rootpage.getPageList(filter=filterfn)
+        cat_pages = list(cat_pages)
         cat_pages.sort()
         cat_pages = [wikiutil.pagelinkmarkup(p) for p in cat_pages]
         cat_pages.insert(0, ('', _('<No addition>')))
@@ -522,6 +532,10 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             request.theme.add_msg(_('Edit was cancelled.'), "error")
             self.send_page()
 
+        # XXX Obsolete because we only store items when they are really committed.
+        ###if self.getRevList() == []:
+        ###    del self._items[self.page_name]
+
     def copyPage(self, newpagename, comment=u''):
         """ Copy the current version of the page (keeping the backups, logs and attachments).
 
@@ -532,48 +546,60 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         request = self.request
         _ = self._
 
-        if not newpagename:
-            return False, _("You can't copy to an empty pagename.")
-
         if not self.request.user.may.write(newpagename):
             return False, _('You are not allowed to copy this page!')
 
+        if newpagename == self.page_name:
+            return False, _("Copy failed because name and newname are the same.")
+
+        if not newpagename:
+            return False, _("You cannot copy to an empty item name.")
+
+        old_item = self._backend.get_item(self.page_name)
+        new_item = self._backend.create_item(newpagename)
+
+        # Transfer all revisions with their data and metadata
+        # Make sure the list begins with the lowest value, that is, 0.
+        revs = old_item.list_revisions()
+        for revno in revs:
+            new_rev = new_item.create_revision(revno)
+            old_rev = old_item.get_revision(revno)
+
+            new_rev.write(old_rev.read())
+
+            for key in old_rev:
+                new_rev[key] = old_rev[key]
+
+            new_item.commit()
+
+        # transfer item metadata
+        new_item.change_metadata()
+        for key in old_item:
+            new_item[key] = old_item[key]
+        new_item.publish_metadata()
+
         newpage = PageEditor(request, newpagename)
 
-        pageexists_error = _("""'''A page with the name {{{'%s'}}} already exists.'''
-
-Try a different name.""", wiki=True) % (wikiutil.escape(newpagename), )
-
-        # Check whether a page with the new name already exists
-        if newpage.exists(includeDeleted=1):
-            return False, pageexists_error
-
         # Get old page text
-        savetext = self.get_raw_body()
+        savetext = newpage.get_raw_body()
 
-        oldpath = self.getPagePath(check_create=0)
-        newpath = newpage.getPagePath(check_create=0)
+        if not comment:
+            comment = u"## page was copied from %s" % self.page_name
 
-        # Copy page
-        # NOTE: might fail if another process created newpagename just
-        try:
-            filesys.copytree(oldpath, newpath)
-            self.error = None
-            savetext = u"## page was copied from %s\n%s" % (self.page_name, savetext)
-            Page.__init__(self, request, newpagename)
-            self._write_file(savetext, "SAVENEW", comment)
+        # Save page text with a comment about the old name and log entry
+        savetext = u"## page was copied from %s\n%s" % (self.page_name, savetext)
+        newpage.saveText(savetext, None, comment=comment, index=0, extra=self.page_name, action='SAVE', notify=False)
 
-            event = PageCopiedEvent(request, newpage, self, comment)
-            send_event(event)
+        if request.cfg.xapian_search:
+            from MoinMoin.search.Xapian import Index
+            index = Index(request)
+            if index.exists():
+                index.update_page(newpagename)
 
-            return True, None
-        except OSError, err:
-            # Try to understand what happened. Maybe its better to check
-            # the error code, but I just reused the available code above...
-            if newpage.exists(includeDeleted=1):
-                return False, pageexists_error
-            else:
-                return False, _('Could not copy page because of file system error: %s.') % unicode(err)
+        event = PageCopiedEvent(request, newpage, self, comment)
+        send_event(event)
+
+        return True, None
 
     def renamePage(self, newpagename, comment=u''):
         """ Rename the current version of the page (making a backup before deletion
@@ -585,68 +611,51 @@ Try a different name.""", wiki=True) % (wikiutil.escape(newpagename), )
         """
         request = self.request
         _ = self._
+        old_name = self.page_name
 
-        if not (request.user.may.delete(self.page_name)
+        if not (request.user.may.delete(old_name)
                 and request.user.may.write(newpagename)):
             msg = _('You are not allowed to rename this page!')
             raise self.AccessDenied, msg
 
-        if not newpagename:
-            return False, _("You can't rename to an empty pagename.")
+        try:
+            ###self._items.rename_item(self.page_name, newpagename)
+            item = self._backend.get_item(old_name)
+            item.rename(newpagename)
+        except BackendError, err:
+            return False, _(err.message)
 
         newpage = PageEditor(request, newpagename)
 
-        pageexists_error = _("""'''A page with the name {{{'%s'}}} already exists.'''
+        savetext = newpage.get_raw_body()
 
-Try a different name.""", wiki=True) % (wikiutil.escape(newpagename), )
+        savetext = u"## page was renamed from %s\n%s" % (old_name, savetext)
+        newpage.saveText(savetext, None, comment=comment, index=0, extra=old_name, action='SAVE/RENAME', notify=False)
 
-        # Check whether a page with the new name already exists
-        if newpage.exists(includeDeleted=1):
-            return False, pageexists_error
+        # delete pagelinks
+        arena = newpage
+        key = 'pagelinks'
+        cache = caching.CacheEntry(request, arena, key, scope='item')
+        cache.remove()
 
-        # Get old page text
-        savetext = self.get_raw_body()
-
-        oldpath = self.getPagePath(check_create=0)
-        newpath = newpage.getPagePath(check_create=0)
-
-        # Rename page
-
-        # NOTE: might fail if another process created newpagename just
-        # NOW, while you read this comment. Rename is atomic for files -
-        # but for directories, rename will fail if the directory
-        # exists. We should have global edit-lock to avoid this.
-        # See http://docs.python.org/lib/os-file-dir.html
-        try:
-            os.rename(oldpath, newpath)
-            self.error = None
-            # Save page text with a comment about the old name
-            savetext = u"## page was renamed from %s\n%s" % (self.page_name, savetext)
-            newpage.saveText(savetext, 0, comment=comment, extra=self.page_name, action='SAVE/RENAME', notify=False)
-            # delete pagelinks
+        # clean the cache
+        for formatter_name in self.cfg.caching_formats:
             arena = newpage
-            key = 'pagelinks'
+            key = formatter_name
             cache = caching.CacheEntry(request, arena, key, scope='item')
             cache.remove()
 
-            # clean the cache
-            for formatter_name in self.cfg.caching_formats:
-                arena = newpage
-                key = formatter_name
-                cache = caching.CacheEntry(request, arena, key, scope='item')
-                cache.remove()
+        if request.cfg.xapian_search:
+            from MoinMoin.search.Xapian import Index
+            index = Index(request)
+            if index.exists():
+                index.remove_item(old_name, now=0)
+                index.update_page(newpagename)
 
-            event = PageRenamedEvent(request, newpage, self, comment)
-            send_event(event)
+        event = PageRenamedEvent(request, newpage, self, comment)
+        send_event(event)
 
-            return True, None
-        except OSError, err:
-            # Try to understand what happened. Maybe its better to check
-            # the error code, but I just reused the available code above...
-            if newpage.exists(includeDeleted=1):
-                return False, pageexists_error
-            else:
-                return False, _('Could not rename page because of file system error: %s.') % unicode(err)
+        return True, None
 
 
     def revertPage(self, revision, comment=u''):
@@ -668,7 +677,7 @@ Try a different name.""", wiki=True) % (wikiutil.escape(newpagename), )
         else:
             revstr = '%08d' % revision
             pg = Page(self.request, self.page_name, rev=revision)
-            msg = self.saveText(pg.get_raw_body(), 0, extra=revstr, action="SAVE/REVERT", notify=False, comment=comment)
+            msg = self.saveText(pg.get_raw_body(), None, extra=revstr, action="SAVE/REVERT", notify=False, comment=comment)
 
             # Remove cache entry (if exists)
             pg = Page(self.request, self.page_name)
@@ -682,7 +691,7 @@ Try a different name.""", wiki=True) % (wikiutil.escape(newpagename), )
 
             return msg
 
-    def deletePage(self, comment=None):
+    def deletePage(self, comment=""):
         """ Delete the current version of the page (making a backup before deletion
             and keeping the backups, logs and attachments).
 
@@ -699,7 +708,7 @@ Try a different name.""", wiki=True) % (wikiutil.escape(newpagename), )
             raise self.AccessDenied, msg
 
         try:
-            msg = self.saveText(u"deleted\n", 0, comment=comment or u'', deleted=True, notify=False)
+            msg = self.saveText(u"deleted\n", None, comment=comment or u'', deleted=True, notify=False)
             msg = msg.replace(
                 _("Thank you for your changes. Your attention to detail is appreciated."),
                 _('Page "%s" was successfully deleted!') % (wikiutil.escape(self.page_name), ))
@@ -871,25 +880,8 @@ Try a different name.""", wiki=True) % (wikiutil.escape(newpagename), )
         except caching.CacheError:
             return None
 
-    def copy_underlay_page(self):
-        # renamed from copypage to avoid conflicts with copyPage
-        """ Copy a page from underlay directory to page directory """
-        src = self.getPagePath(use_underlay=1, check_create=0)
-        dst = self.getPagePath(use_underlay=0, check_create=0)
-        if src and dst and src != dst and os.path.exists(src):
-            try:
-                os.rmdir(dst) # simply remove empty dst dirs
-                # XXX in fact, we should better remove anything we regard as an
-                # empty page, maybe also if there is also an edit-lock or
-                # empty cache. revisions subdir...
-            except:
-                pass
-            if not os.path.exists(dst):
-                filesys.copytree(src, dst)
-                self.reset() # reinit stuff
-
-    def _write_file(self, text, action='SAVE', comment=u'', extra=u'', deleted=False):
-        """ Write the text to the page file (and make a backup of old page).
+    def _write_file(self, text, old_revno=None, action='SAVE', comment=u'', extra=u'', deleted=False):
+        """ Write the text to the page item (and make a backup of old page).
 
         @param text: text to save for this page
         @param deleted: if True, then don't write page content (used by deletePage)
@@ -897,128 +889,75 @@ Try a different name.""", wiki=True) % (wikiutil.escape(newpagename), )
         @return: mtime_usec of new page
         """
         request = self.request
-        _ = self._
         was_deprecated = self.pi.get('deprecated', False)
 
-        self.copy_underlay_page()
+        if old_revno == None:
+            try:
+                old_revno = max(self._item.list_revisions())
+            except ValueError:
+                old_revno = -1
 
         # remember conflict state
         self.setConflict(wikiutil.containsConflictMarker(text))
 
-        # Write always on the standard directory, never change the
-        # underlay directory copy!
-        pagedir = self.getPagePath(use_underlay=0, check_create=0)
+        ###self._item.lock = True
 
-        revdir = os.path.join(pagedir, 'revisions')
-        cfn = os.path.join(pagedir, 'current')
-        clfn = os.path.join(pagedir, 'current-locked')
-        cltfn = os.path.join(pagedir, 'current-locked.tmp')
+        if was_deprecated:
+            ###newrev = self._item[0]
+            newrev = self._item.get_revision(-1)
+        else:
+            newrev = self._item.create_revision(old_revno + 1)
 
-        # !!! these log objects MUST be created outside the locked area !!!
+        if not deleted:
+            metadata, data = wikiutil.split_body(text)
+            newrev.write(data.encode(config.charset))
 
-        # The local log should be the standard edit log, not the
-        # underlay copy log!
-        pagelog = self.getPagePath('edit-log', use_underlay=0, isfile=1)
-        llog = editlog.EditLog(request, filename=pagelog,
-                               uid_override=self.uid_override)
-        # Open the global log
-        glog = editlog.EditLog(request, uid_override=self.uid_override)
+            for key, value in metadata.iteritems():
+                newrev[key] = value
 
-        if not os.path.exists(pagedir): # new page, create and init pagedir
-            os.mkdir(pagedir)
-        if not os.path.exists(revdir):
-            os.mkdir(revdir)
-            f = file(cfn, 'w')
-            f.write('%08d\n' % 0)
-            f.close()
+        else:
+            newrev.write("")
+            ### newrev.deleted = True   # XXX Does it still work when this is commented out completely? Maybe store the info in metadata
 
-        got_lock = False
-        retry = 0
+        ###newrev.save(action, extra, comment, self.uid_override)
 
-        try:
-            while not got_lock and retry < 100:
-                retry += 1
-                try:
-                    filesys.rename(cfn, clfn)
-                    got_lock = True
-                except OSError, err:
-                    got_lock = False
-                    if err.errno == 2: # there was no 'current' file
-                        time.sleep(0.1)
-                    else:
-                        raise self.CouldNotLock, _("Page could not get locked. Unexpected error (errno=%d).") % err.errno
+        if self.uid_override is not None:
+            addr, userid = "", ""
+            hostname = self.uid_override
 
-            if not got_lock:
-                raise self.CouldNotLock, _("Page could not get locked. Missing 'current' file?")
+        else:
+            # XXX Is this the correct request we are using below?
+            addr = request.remote_addr
 
-            # increment rev number of current(-locked) page
-            f = file(clfn)
-            revstr = f.read()
-            f.close()
-            try:
-                rev = int(revstr)
-            except ValueError, err:
-                raise self.SaveError, _("Unable to determine current page revision from the 'current' file. The page %s is damaged and cannot be edited right now.") % self.page_name
-
-            if not was_deprecated:
-                if self.do_revision_backup or rev == 0:
-                    rev += 1
-            revstr = '%08d' % rev
-            # write the current page rev to a temporary file
-            try:
-                f = file(cltfn, 'w')
-                f.write(revstr+'\n')
-                f.close()
-            except IOError, err:
-                try:
-                    os.remove(cltfn)
-                except:
-                    pass # we don't care for errors in the os.remove
-                # throw a nicer exception
-                if err.errno == errno.ENOSPC:
-                    raise self.SaveError, _("Cannot save page %s, no storage space left.") % self.page_name
-                else:
-                    raise self.SaveError, _("An I/O error occurred while saving page %s (errno=%d)") % (self.page_name, err.errno)
-            # atomically put it in place (except on windows)
+            if hasattr(request, "user"):
+                userid = request.user.valid and request.user.id or ''
             else:
-                filesys.rename(cltfn, clfn)
+                userid = ""
 
-            if not deleted:
-                # save to page file
-                pagefile = os.path.join(revdir, revstr)
-                f = codecs.open(pagefile, 'wb', config.charset)
-                # Write the file using text/* mime type
-                f.write(self.encodeTextMimeType(text))
-                f.close()
-                mtime_usecs = wikiutil.timestamp2version(os.path.getmtime(pagefile))
-                # set in-memory content
-                self.set_raw_body(text)
-            else:
-                mtime_usecs = wikiutil.timestamp2version(time.time())
-                # set in-memory content
-                self.set_raw_body(None)
+            hostname = wikiutil.get_hostname(request, addr)
 
-            # reset page object
-            self.reset()
+        timestamp = time.time()
 
-            # write the editlog entry
-            # for now simply make 2 logs, better would be some multilog stuff maybe
-            if self.do_revision_backup:
-                # do not globally log edits with no revision backup
-                # if somebody edits a deprecated page, log it in global log, but not local log
-                glog.add(request, mtime_usecs, rev, action, self.page_name, None, extra, comment)
-            if not was_deprecated and self.do_revision_backup:
-                # if we did not create a new revision number, do not locally log it
-                llog.add(request, mtime_usecs, rev, action, self.page_name, None, extra, comment)
-        finally:
-            if got_lock:
-                filesys.rename(clfn, cfn)
+        newrev[EDIT_LOG_MTIME] = timestamp
+        newrev[EDIT_LOG_ACTION] = action
+        newrev[EDIT_LOG_ADDR] = addr
+        newrev[EDIT_LOG_HOSTNAME] = hostname
+        newrev[EDIT_LOG_USERID] = userid
+        newrev[EDIT_LOG_EXTRA] = extra
+        newrev[EDIT_LOG_COMMENT] = wikiutil.clean_input(comment)
+        # TODO: Check why this is interpreted as PI:
+        newrev["mimetype"] = "text/x-unidentified-wiki-format"
+
+        self._item.commit()
+
+        ###self._item.lock = False
+
+        # reset page object
+        self.reset()
 
         # add event log entry
         elog = eventlog.EventLog(request)
-        elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, mtime_usecs)
-
-        return mtime_usecs, rev
+        elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, time.time())
 
     def saveText(self, newtext, rev, **kw):
         """ Save new text for a page.
@@ -1053,25 +992,22 @@ Try a different name.""", wiki=True) % (wikiutil.escape(newpagename), )
         if not request.user.may.save(self, newtext, rev, **kw):
             msg = _('You are not allowed to edit this page!')
             raise self.AccessDenied, msg
-        elif not self.isWritable():
-            msg = _('Page is immutable!')
-            raise self.Immutable, msg
         elif not newtext:
             msg = _('You cannot save empty pages.')
             raise self.EmptyPage, msg
-        elif rev != 0 and rev != self.current_rev():
+        elif rev is not None and rev != self.current_rev():
             # check if we already saved that page
             other = False
-            pagelog = self.getPagePath('edit-log', use_underlay=0, isfile=1)
             next_line = None
-            for line in editlog.EditLog(request, pagelog).reverse():
-                if int(line.rev) == int(rev):
+            llog = editlog.LocalEditLog(request, rootpagename=self.page_name)  # TODO: Rewrite this
+            for line in llog:
+                if line.rev == rev:
                     break
                 if not line.is_from_current_user(request):
                     other = True
                 next_line = line
             if next_line and next_line.is_from_current_user(request):
-                saved_page = Page(request, self.page_name, rev=int(next_line.rev))
+                saved_page = Page(request, self.page_name, rev=next_line.rev)
                 if newtext == saved_page.get_raw_body():
                     msg = _("You already saved this page!")
                     return msg
@@ -1092,7 +1028,7 @@ Please review the page and save then. Do not save this page as it is!""")
             # they are not the sames, the user must have admin
             # rights. This is a good place to update acl cache - instead
             # of wating for next request.
-            acl = self.getACL(request)
+            acl = self.getACL()
             if (not request.user.may.admin(self.page_name) and
                 parseACL(request, newtext).acl != acl.acl and
                 action != "SAVE/REVERT"):
@@ -1120,10 +1056,9 @@ Please review the page and save then. Do not save this page as it is!""")
             extra = kw.get('extra', u'')
             trivial = kw.get('trivial', 0)
             # write the page file
-            mtime_usecs, rev = self._write_file(newtext, action, comment, extra, deleted=deleted)
-            self.clean_acl_cache()
-            self._save_draft(None, None) # everything fine, kill the draft for this page
+            self._write_file(newtext, rev, action, comment, extra, deleted=deleted)
 
+            self._save_draft(None, None) # everything fine, kill the draft for this page
             if notify:
                 # send notifications
                 from MoinMoin import events
@@ -1266,44 +1201,34 @@ To leave the editor, press the Cancel button.""", wiki=True) % {
             if force or self.uid == self.owner:
                 self._deleteLockFile()
 
-
-    def _filename(self):
-        """ Get path and filename for edit-lock file. """
-        return self.pageobj.getPagePath('edit-lock', isfile=1)
-
-
     def _readLockFile(self):
-        """ Load lock info if not yet loaded. """
+   ###    """ Load lock info if not yet loaded. """
+   ###    _ = self._
+   ###    self.owner = None
+   ###    self.owner_html = wikiutil.escape(_("<unknown>"))
+   ###    self.timestamp = 0
+   ###    if self.locktype:
+   ###        (lock, self.timestamp, addr, hostname, userid) = self.pageobj._item.edit_lock
+   ###        if lock:
+   ###            self.owner = userid or addr
+   ###            self.owner_html = user.get_printable_editor(self.request, userid, addr, hostname)
+
         _ = self._
         self.owner = None
         self.owner_html = wikiutil.escape(_("<unknown>"))
         self.timestamp = 0
-
         if self.locktype:
-            try:
-                entry = editlog.EditLog(self.request, filename=self._filename()).next()
-            except StopIteration:
-                entry = None
-
-            if entry:
-                self.owner = entry.userid or entry.addr
-                self.owner_html = entry.getEditor(self.request)
-                self.timestamp = wikiutil.version2timestamp(entry.ed_time_usecs)
+            (lock, self.timestamp, addr, hostname, userid) = wikiutil.get_edit_lock(self.pageobj._item)
+            if lock:
+                self.owner = userid or addr
+                self.owner_html = user.get_printable_editor(self.request, userid, addr, hostname)
 
 
     def _writeLockFile(self):
         """ Write new lock file. """
-        self._deleteLockFile()
-        try:
-            editlog.EditLog(self.request, filename=self._filename()).add(
-               self.request, wikiutil.timestamp2version(self.now), 0, "LOCK", self.page_name)
-        except IOError:
-            pass
+        self.pageobj._item.edit_lock = True
 
     def _deleteLockFile(self):
         """ Delete the lock file unconditionally. """
-        try:
-            os.remove(self._filename())
-        except OSError:
-            pass
+        self.pageobj._item.edit_lock = False
 

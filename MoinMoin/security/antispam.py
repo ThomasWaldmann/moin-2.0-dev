@@ -60,7 +60,7 @@ def getblacklist(request, pagename, do_update):
     """
     from MoinMoin.PageEditor import PageEditor
     p = PageEditor(request, pagename, uid_override="Antispam subsystem")
-    mymtime = wikiutil.version2timestamp(p.mtime_usecs())
+    mymtime = p.mtime()
     if do_update:
         tooold = time.time() - 1800
         failure = caching.CacheEntry(request, "antispam", "failure", scope='wiki')
@@ -106,7 +106,7 @@ def getblacklist(request, pagename, do_update):
                     if isinstance(response, dict) and 'faultCode' in response:
                         raise WikirpcError("failed to get BadContent data", response)
                     p._write_file(response)
-                    mymtime = wikiutil.version2timestamp(p.mtime_usecs())
+                    mymtime = p.mtime()
                 else:
                     failure.update("") # we didn't get a modified version, this avoids
                                        # permanent polling for every save when there

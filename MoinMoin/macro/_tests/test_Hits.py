@@ -5,11 +5,13 @@
     @copyright: 2007-2008 MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
+
 import os
 
 from MoinMoin import caching, macro
 from MoinMoin.logfile import eventlog
 from MoinMoin.PageEditor import PageEditor
+from MoinMoin.parser.text import Parser
 from MoinMoin.Page import Page
 
 from MoinMoin._tests import become_trusted, create_page, nuke_page
@@ -36,7 +38,6 @@ class TestHits:
 
     def _make_macro(self):
         """Test helper"""
-        from MoinMoin.parser.text import Parser
         from MoinMoin.formatter.text_html import Formatter
         p = Parser("##\n", self.request)
         p.formatter = Formatter(self.request)

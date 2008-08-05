@@ -391,7 +391,7 @@ def timestamp2version(ts):
         We don't want to use floats, so we just scale by 1e6 to get
         an integer in usecs.
     """
-    return long(ts*1000000L) # has to be long for py 2.2.x
+    return long(ts*1000000L)
 
 def version2timestamp(v):
     """ Convert version number to UNIX timestamp (float).
@@ -496,6 +496,77 @@ class MetaDict(dict):
 # don't ever change this - DEPRECATED, only needed for 1.5 > 1.6 migration conversion
 QUOTE_CHARS = u'"'
 
+#############################################################################
+### Page edit locking
+#############################################################################
+
+EDIT_LOCK_TIMESTAMP = "edit_lock_timestamp"
+EDIT_LOCK_ADDR = "edit_lock_addr"
+EDIT_LOCK_HOSTNAME = "edit_lock_hostname"
+EDIT_LOCK_USERID = "edit_lock_userid"
+
+EDIT_LOCK = (EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID)
+
+def get_edit_lock(item):
+    """
+    Given an Item, get a tuple containing the timestamp of the edit-lock and the user.
+    """
+ ###  if item._edit_lock is None:
+ ###      for key in EDIT_LOCK:
+ ###          if not key in self.metadata:
+ ###              self._edit_lock = False, 0.0, "", "", ""
+ ###              break
+ ###      else:
+ ###          self._edit_lock = (True, float(self.metadata[EDIT_LOCK_TIMESTAMP]), self.metadata[EDIT_LOCK_ADDR], self.metadata[EDIT_LOCK_HOSTNAME], self.metadata[EDIT_LOCK_USERID])
+ ###  return self._edit_lock
+    for key in EDIT_LOCK:
+        if not key in item:
+            return (False, 0.0, "", "", "")
+        else:
+            return (True, float(item[EDIT_LOCK_TIMESTAMP]), item[EDIT_LOCK_ADDR],
+                    item[EDIT_LOCK_HOSTNAME], item[EDIT_LOCK_USERID])
+
+def set_edit_lock(item, request):
+    """
+    Set the lock property to True or False.
+    """
+  ### self.lock = True
+  ### if edit_lock:
+  ###     timestamp = time.time()
+  ###     addr = self._request.remote_addr
+  ###     hostname = wikiutil.get_hostname(self._request, addr)
+  ###     if hasattr(self._request, "user"):
+  ###         userid = self._request.user.valid and self._request.user.id or ''
+  ###     else:
+  ###         userid = ''
+     
+  ###     self.metadata[EDIT_LOCK_TIMESTAMP] = str(timestamp)
+  ###     self.metadata[EDIT_LOCK_ADDR] = addr
+  ###     self.metadata[EDIT_LOCK_HOSTNAME] = hostname
+  ###     self.metadata[EDIT_LOCK_USERID] = userid
+  ### else:
+  ###     del self.metadata[EDIT_LOCK_TIMESTAMP]
+  ###     del self.metadata[EDIT_LOCK_ADDR]
+  ###     del self.metadata[EDIT_LOCK_HOSTNAME]
+  ###     del self.metadata[EDIT_LOCK_USERID]
+  ### self.metadata.save()
+  ### self.lock = False
+  ### self._edit_lock = None
+    timestamp = time.time()
+    addr = request.remote_addr
+    hostname = wikiutil.get_hostname(request, addr)
+    if hasattr(request, "user"):
+        userid = request.user.valid and request.user.id or ''
+    else:
+        userid = ''
+
+    item.change_metadata()
+    item[EDIT_LOCK_TIMESTAMP] = str(timestamp)
+    item[EDIT_LOCK_ADDR] = addr
+    item[EDIT_LOCK_HOSTNAME] = hostname
+    item[EDIT_LOCK_USERID] = userid
+    item.publish_metadata()
+
 
 #############################################################################
 ### InterWiki
@@ -523,8 +594,7 @@ def get_max_mtime(file_list, page):
     page page. """
     timestamps = [os.stat(filename).st_mtime for filename in file_list]
     if page.exists():
-        # exists() is cached and thus cheaper than mtime_usecs()
-        timestamps.append(version2timestamp(page.mtime_usecs()))
+        timestamps.append(page.mtime())
     if timestamps:
         return max(timestamps)
     else:
@@ -2497,7 +2567,8 @@ def renderText(request, Parser, text):
     del out
     return result
 
-def get_processing_instructions(body):
+
+def split_body(body):
     """ Extract the processing instructions / acl / etc. at the beginning of a page's body.
 
         Hint: if you have a Page object p, you already have the result of this function in
@@ -2505,7 +2576,7 @@ def get_processing_instructions(body):
 
         Returns a list of (pi, restofline) tuples and a string with the rest of the body.
     """
-    pi = []
+    pi = {}
     while body.startswith('#'):
         try:
             line, body = body.split('\n', 1) # extract first line
@@ -2526,7 +2597,54 @@ def get_processing_instructions(body):
                 line = '##%s' % comment
 
         verb, args = (line[1:] + ' ').split(' ', 1) # split at the first blank
-        pi.append((verb.lower(), args.strip()))
+        pi.setdefault(verb.lower(), []).append(args.strip())
+
+    for key, value in pi.iteritems():
+        if len(value) == 1:
+            pi[key] = value[0]
 
     return pi, body
+
+
+def add_metadata_to_body(metadata, data):
+    """
+    Adds the processing instructions to the data.
+    """
+    from MoinMoin.storage import SIZE, EDIT_LOG
+    READONLY_METADATA = [SIZE] + list(EDIT_LOCK) + EDIT_LOG
+
+    parsing_instructions = ["format", "language", "refresh", "acl",
+                            "redirect", "deprecated", "openiduser",
+                            "pragma", "internal", "external"]
+
+    metadata_data = ""
+    for key, value in metadata.iteritems():
+
+        if key not in parsing_instructions:
+            continue
+
+        # special handling for list metadata like acls
+        if isinstance(value, list):
+            for line in value:
+                metadata_data += "#%s %s\n" % (key, line)
+        else:
+            metadata_data += "#%s %s\n" % (key, value)
+
+    return metadata_data + data
+
+
+def get_hostname(request, addr):
+    """
+    Looks up the hostname depending on the configuration.
+    """
+    if request.cfg.log_reverse_dns_lookups:
+        import socket
+        try:
+            hostname = socket.gethostbyaddr(addr)[0]
+            hostname = unicode(hostname, config.charset)
+        except (socket.error, UnicodeError):
+            hostname = addr
+    else:
+        hostname = addr
+    return hostname
 

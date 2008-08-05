@@ -712,12 +712,12 @@ class ThemeBase:
         _ = self.request.getText
         html = ''
         if self.shouldShowPageinfo(page):
-            info = page.lastEditInfo()
+            info = page.last_edit(printable=True)
             if info:
                 if info['editor']:
-                    info = _("last edited %(time)s by %(editor)s") % info
+                    info = _("last edited %(timestamp)s by %(editor)s") % info
                 else:
-                    info = _("last modified %(time)s") % info
+                    info = _("last modified %(timestamp)s") % info
                 pagename = page.page_name
                 if self.request.cfg.show_interwiki:
                     pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
@@ -884,8 +884,7 @@ var search_hint = "%(search_hint)s";
         page = d['page']
         if 'edit' in self.request.cfg.actions_excluded:
             return ""
-        if not (page.isWritable() and
-                self.request.user.may.write(page.page_name)):
+        if not (page.exists() and self.request.user.may.write(page.page_name)):
             return ""
         _ = self.request.getText
         querystr = {'action': 'edit'}
@@ -1198,7 +1197,7 @@ actionsMenuInit('%(label)s');
         if 'edit' in self.request.cfg.actions_excluded:
             return ""
 
-        if not (page.isWritable() and
+        if not (page.exists() and
                 self.request.user.may.write(page.page_name)):
             return self.disabledEdit()
 
@@ -1236,7 +1235,7 @@ actionsMenuInit('%(label)s');
         the browser is compatible with the editor.
         """
         page = d['page']
-        if not (page.isWritable() and
+        if not (page.exists() and
                 self.request.user.may.write(page.page_name) and
                 self.showBothEditLinks() and
                 self.guiworks(page)):
@@ -1731,7 +1730,7 @@ var gui_editor_link_text = "%(text)s";
                 'rev': rev,
                 'pagesize': pagename and page.size() or 0,
                 # exists checked to avoid creation of empty edit-log for non-existing pages
-                'last_edit_info': exists and page.lastEditInfo() or '',
+                'last_edit_info': exists and page.last_edit_info() or '',
                 'page_name': pagename or '',
                 'page_find_page': page_find_page,
                 'page_front_page': page_front_page,
