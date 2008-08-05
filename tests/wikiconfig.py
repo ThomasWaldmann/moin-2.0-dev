@@ -7,7 +7,6 @@ MoinMoin - test wiki configuration
 """
 
 import os
-
 from MoinMoin.config.multiconfig import DefaultConfig
 from MoinMoin.storage.backends import memory
 

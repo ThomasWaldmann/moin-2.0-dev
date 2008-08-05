@@ -20,7 +20,7 @@
 import py.test, re
 
 from MoinMoin.storage import Item, NewRevision
-from MoinMoin.storage.error import NoSuchItemError, ItemAlreadyExistsError, NoSuchRevisionError
+from MoinMoin.storage.error import NoSuchItemError, ItemAlreadyExistsError, NoSuchRevisionError, RevisionAlreadyExistsError
 from MoinMoin.search import term
 
 item_names = ("quite_normal",
@@ -220,6 +220,16 @@ class BackendTest(object):
             count += 1
         assert count > 0
 
+    def test_iteritems_3(self):
+        self.create_rev_item_helper("without_meta")
+        self.create_rev_item_helper("with_meta")
+        item = self.backend.get_item("with_meta")
+        item.change_metadata()
+        item["meta"] = "data"
+        item.publish_metadata()
+        itemlist = [item for item in self.backend.iteritems()]
+        assert len(itemlist) == 2
+
     def test_existing_item_create_revision(self):
         self.create_rev_item_helper("existing")
         item = self.backend.get_item("existing")
@@ -400,6 +410,88 @@ class BackendTest(object):
         self.create_meta_item_helper('no revision')
         item = self.backend.get_item('no revision')
         py.test.raises(NoSuchRevisionError, item.get_revision, -1)
+
+    def test_create_revision_change_meta(self):
+        item = self.backend.create_item("double")
+        rev = item.create_revision(0)
+        rev["revno"] = "0"
+        item.commit()
+        item.change_metadata()
+        item["meta"] = "data"
+        item.publish_metadata()
+        item = self.backend.get_item("double")
+        assert item["meta"] == "data"
+        rev = item.get_revision(0)
+        assert rev["revno"] == "0"
+
+    def test_create_revision_change_empty_meta(self):
+        item = self.backend.create_item("double")
+        rev = item.create_revision(0)
+        rev["revno"] = "0"
+        item.commit()
+        item.change_metadata()
+        item.publish_metadata()
+        item = self.backend.get_item("double")
+        rev = item.get_revision(0)
+        assert rev["revno"] == "0"
+
+    def test_change_meta_create_revision(self):
+        item = self.backend.create_item("double")
+        item.change_metadata()
+        item["meta"] = "data"
+        item.publish_metadata()
+        rev = item.create_revision(0)
+        rev["revno"] = "0"
+        item.commit()
+        item = self.backend.get_item("double")
+        assert item["meta"] == "data"
+        rev = item.get_revision(0)
+        assert rev["revno"] == "0"
+
+    def test_meta_after_rename(self):
+        item = self.backend.create_item("re")
+        item.change_metadata()
+        item["previous_name"] = "re"
+        item.publish_metadata()
+        item.rename("er")
+        assert item["previous_name"] == "re"
+
+    def test_long_names_back_and_forth(self):
+        item = self.backend.create_item("long_name_" * 100 + "with_happy_end")
+        item.create_revision(0)
+        item.commit()
+        assert self.backend.has_item("long_name_" * 100 + "with_happy_end")
+        item = self.backend.iteritems().next()
+        assert item.name == "long_name_" * 100 + "with_happy_end"
+
+    def test_revisions_after_rename(self):
+        item = self.backend.create_item("first one")
+        for revno in xrange(10):
+            rev = item.create_revision(revno)
+            rev["revno"] = revno
+            item.commit()
+        assert item.list_revisions() == range(10)
+        item.rename("second one")
+        assert not self.backend.has_item("first one")
+        assert self.backend.has_item("second one")
+        item1 = self.backend.create_item("first_one")
+        item1.create_revision(0)
+        item1.commit()
+        assert len(item1.list_revisions()) == 1
+        item2 = self.backend.get_item("second one")
+        assert item2.list_revisions() == range(10)
+        for revno in xrange(10):
+            rev = item2.get_revision(revno)
+            assert rev["revno"] == str(revno)
+
+    def test_concurrent_create_revision(self):
+        self.create_rev_item_helper("concurrent")
+        item1 = self.backend.get_item("concurrent")
+        item2 = self.backend.get_item("concurrent")
+        item1.create_revision(1)
+        item2.create_revision(1)
+        item1.commit()
+        py.test.raises(RevisionAlreadyExistsError, item2.commit)
 
     def test_timestamp(self):
         item = self.backend.create_item('ts1')
