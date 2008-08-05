@@ -201,7 +201,7 @@ class TestGroupDicts:
         page = create_page(request, u'UserGroup', page_content)
         page = append_page(request, u'UserGroup', u' * %s' % test_user)
         # saves the text without test_user
-        page.saveText(page_content, 0)
+        page.saveText(page_content, None)
         result = request.dicts.has_member('UserGroup', test_user)
         nuke_page(request, u'UserGroup')
 
@@ -219,7 +219,7 @@ class TestGroupDicts:
         # next member saved  as trivial change
         test_user = create_random_string_list(length=15, count=1)[0]
         member = u" * %s\n" % test_user
-        page.saveText(member, 0, trivial=1)
+        page.saveText(member, None, trivial=1)
         result = request.dicts.has_member('UserGroup', test_user)
         nuke_page(request, u'UserGroup')
 
