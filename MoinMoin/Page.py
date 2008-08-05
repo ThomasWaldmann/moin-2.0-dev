@@ -267,7 +267,7 @@ class Page(object):
         @return: int revision
         """
         if self._item is not None:
-            return max(self._item.list_revisions())
+            return max(-1, -1, *self._item.list_revisions())
 
         return -1
 
