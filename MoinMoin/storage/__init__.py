@@ -262,15 +262,19 @@ class Item(object, DictMixin):  # TODO Improve docstring
         my_item["key"] = "value" will do the trick. Note that keys must be of the
         type string (or unicode).
         Values must be of the type str, unicode or tuple, in which case every element
-        of the tuple must be a string (or unicode) object.
-        You must acquire a lock before writing to the Items metadata in order to
-        prevent side-effects.
+        of the tuple must be a string, unicode or tuple object.
+        You must wrap write-accesses to metadata in change_metadata/publish_metadata
+        calls.
+        Keys starting with two underscores are reserved and cannot be used.
         """
         if not self._locked:
             raise AttributeError("Cannot write to unlocked metadata")
 
         if not isinstance(key, (str, unicode)):
             raise TypeError("Key must be string type")
+
+        if key.startswith('__'):
+            raise TypeError("Key must not begin with two underscores")
 
         if not value_type_is_valid(value):
             raise TypeError("Value must be string, unicode, int, long, float, bool, complex or a nested tuple thereof.")
@@ -290,6 +294,9 @@ class Item(object, DictMixin):  # TODO Improve docstring
         if not isinstance(key, (unicode, str)):
             raise TypeError("key must be string type")
 
+        if key.startswith('__'):
+            raise KeyError(key)
+
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
 
@@ -303,7 +310,7 @@ class Item(object, DictMixin):  # TODO Improve docstring
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
 
-        return self._metadata.keys()
+        return filter(lambda x: not x.startswith('__'), self._metadata.keys())
 
     def change_metadata(self):
         """
@@ -420,6 +427,9 @@ class Revision(object, DictMixin):
         if not isinstance(key, (unicode, str)):
             raise TypeError("key must be string type")
 
+        if key.startswith('__'):
+            raise KeyError(key)
+
         if self._metadata is None:
             self._metadata = self._backend._get_revision_metadata(self)
 
@@ -433,7 +443,7 @@ class Revision(object, DictMixin):
         if self._metadata is None:
             self._metadata = self._backend._get_revision_metadata(self)
 
-        return self._metadata.keys()
+        return filter(lambda x: not x.startswith('__'), self._metadata.keys())
 
     def read_data(self, chunksize = -1):
         """
@@ -498,9 +508,13 @@ class NewRevision(Revision):
     def __setitem__(self, key, value):
         """
         Internal method used for dict-like access to the NewRevisions metadata-dict.
+        Keys starting with two underscores are reserved and cannot be used.
         """
         if not isinstance(key, (str, unicode)):
             raise TypeError("Key must be string type")
+
+        if key.startswith('__'):
+            raise TypeError("Key must not begin with two underscores")
 
         if not value_type_is_valid(value):
             raise TypeError("Value must be string, int, long, float, bool, complex or a nested tuple of the former")
