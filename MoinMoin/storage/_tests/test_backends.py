@@ -20,7 +20,7 @@
 import py.test, re
 
 from MoinMoin.storage import Item, NewRevision
-from MoinMoin.storage.error import NoSuchItemError, ItemAlreadyExistsError, NoSuchRevisionError
+from MoinMoin.storage.error import NoSuchItemError, ItemAlreadyExistsError, NoSuchRevisionError, RevisionAlreadyExistsError
 from MoinMoin.search import term
 
 item_names = ("quite_normal",
@@ -480,4 +480,13 @@ class BackendTest(object):
         for revno in xrange(10):
             rev = item2.get_revision(revno)
             assert rev["revno"] == str(revno)
-        
+            
+    def test_concurrent_create_revision(self):
+        self.create_rev_item_helper("concurrent")
+        item1 = self.backend.get_item("concurrent")
+        item2 = self.backend.get_item("concurrent")
+        item1.create_revision(1)
+        item2.create_revision(1)
+        item1.commit()
+        py.test.raises(RevisionAlreadyExistsError, item2.commit)
+     
