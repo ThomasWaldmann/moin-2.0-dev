@@ -401,3 +401,11 @@ class BackendTest(object):
         item = self.backend.get_item('no revision')
         py.test.raises(NoSuchRevisionError, item.get_revision, -1)
         
+    def test_timestamp(self):
+        item = self.backend.create_item('ts1')
+        rev = item.create_revision(0)
+        assert rev.timestamp is None
+        item.commit()
+        assert rev.timestamp is not None
+        for nrev in self.backend.news():
+            assert nrev.timestamp == rev.timestamp

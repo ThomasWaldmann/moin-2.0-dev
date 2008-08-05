@@ -57,10 +57,10 @@ class FSBackend(Backend):
         if nfs:
             _addnews = self._addnews
             def locked_addnews(args):
-                itemid, revid = args
-                _addnews(itemid, revid)
+                itemid, revid, ts = args
+                _addnews(itemid, revid, ts)
             newslock = self._news + '.lock'
-            self._addnews = lambda itemid, revid: self._do_locked(newslock, locked_addnews, (itemid, revid))
+            self._addnews = lambda itemid, revid, ts: self._do_locked(newslock, locked_addnews, (itemid, revid, ts))
 
     def _create_new_cdb(self, arg):
         """
@@ -110,18 +110,19 @@ class FSBackend(Backend):
                 continue
             item = Item(self, iname)
             item._fs_item_id = itemid
-            yield (StoredRevision(item, revno), tstamp)
+            yield StoredRevision(item, revno, tstamp)
 
-    def _addnews(self, itemid, revid):
+    def _addnews(self, itemid, revid, ts):
         """
         Add a news item with current timestamp and the given data.
 
         @param itemid: item's ID, must be a decimal integer in a string
         @param revid: revision ID, must be an integer
+        @param ts: timestamp
         """
         itemid = long(itemid)
         newsfile = open(self._news, 'ab')
-        newsfile.write(struct.pack('!LLQ', itemid, revid, long(time.time())))
+        newsfile.write(struct.pack('!LLQ', itemid, revid, ts))
         newsfile.close()
 
     def search_item(self, searchterm):
@@ -363,7 +364,10 @@ class FSBackend(Backend):
         # XXXX: Item.commit could pass this in
         rev = item._uncommitted_revision
 
-        metadata = {}
+        if rev.timestamp is None:
+            rev.timestamp = long(time.time())
+
+        metadata = {'__timestamp': rev.timestamp}
         metadata.update(rev)
         md = pickle.dumps(metadata, protocol=PICKLEPROTOCOL)
 
@@ -405,7 +409,7 @@ class FSBackend(Backend):
                     raise
                 raise RevisionAlreadyExistsError()
 
-        self._addnews(item._fs_item_id, rev.revno)
+        self._addnews(item._fs_item_id, rev.revno, rev.timestamp)
         # XXXX: Item.commit could very well do this.
         item._uncommitted_revision = None
 
@@ -498,7 +502,11 @@ class FSBackend(Backend):
             f.seek(4)
         ret = pickle.load(f)
         f.seek(pos)
-        return ret
+        return ret, ret['__timestamp']
+
+    def _get_revision_timestamp(self, rev):
+        res = self._get_revision_metadata(rev)
+        return res[1], res[0]
 
     def _seek_revision_data(self, rev, position, mode):
         if mode == 2:
