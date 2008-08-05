@@ -82,4 +82,69 @@ class TestMercurialBackend(BackendTest):
         for num in xrange(10000):
             revval = "revision metatdata value for key %d" % num
             assert rev["%s" % num] == revval * 100
-   
+            
+    def test_concurrent_create_revision(self):
+        """
+        < COVER GENERIC TEST >
+        Hg backend will fail this generic test, because of 
+        completely different policy. You can create new revision
+        in such case, just a new head is created (and currently we 
+        merge heads automatically). Thus, see merge tests below.
+        """        
+        pass
+            
+    def test_item_branch_and_merge(self):
+        self.create_rev_item_helper("double-headed")
+        item1 = self.backend.get_item("double-headed")
+        item2 = self.backend.get_item("double-headed")
+        item1.create_revision(1)
+        item2.create_revision(1)
+        item1.commit()
+        item2.commit()
+        item1 = self.backend.get_item("double-headed")
+        assert len(item1.list_revisions()) == 4  # one extra from merge
+        assert item1.list_revisions() == item2.list_revisions()
+    
+    def test_item_revmeta_merge(self):
+        self.create_rev_item_helper("double-headed")
+        item1 = self.backend.get_item("double-headed")
+        item2 = self.backend.get_item("double-headed")
+        rev1 = item1.create_revision(1)
+        rev2 = item2.create_revision(1)
+        rev1["age"] = "older"
+        rev1["first"] = "alfa"
+        rev2["age"] = "younger"
+        rev2["second"] = "beta"
+        item1.commit()
+        item2.commit()
+        item = self.backend.get_item("double-headed")
+        for rev in (item1.get_revision(-1), item.get_revision(3)):
+            assert rev["age"] == "younger"
+            assert rev["first"] == "alfa"
+            assert rev["second"] == "beta"
+        assert len(rev._metadata.keys()) == 3    
+    
+    def test_item_merge_data(self):
+        first_text = "Lorem ipsum." 
+        second_text = "Lorem ipsum dolor sit amet."
+        after_merge = ( 
+"""---- /!\ '''Edit conflict - other version:''' ---- 
+Lorem ipsum.
+            
+---- /!\ '''Edit conflict - your version:''' ----
+Lorem ipsum dolor sit amet.
+            
+---- /!\ '''End of edit conflict''' ----
+""")        
+        self.create_rev_item_helper("lorem-ipsum")
+        item1 = self.backend.get_item("lorem-ipsum")
+        item2 = self.backend.get_item("lorem-ipsum")
+        item1.create_revision(1).write(first_text)
+        item2.create_revision(1).write(second_text)
+        item1.commit()
+        item2.commit()
+        item = self.backend.get_item("lorem-ipsum")
+        rev = item.get_revision(-1)
+        assert rev.read() == after_merge
+
+    
