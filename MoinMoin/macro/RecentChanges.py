@@ -54,7 +54,7 @@ def format_page_edits(macro, lines, bookmark_mtime):
     d = {} # dict for passing stuff to theme
     line = lines[0]
     pagename = line.pagename
-    rev = int(line.rev)
+    rev = line.rev
     tnow = time.time()
     is_new = lines[-1].action == 'SAVENEW'
     is_renamed = lines[-1].action == 'SAVE/RENAME'
