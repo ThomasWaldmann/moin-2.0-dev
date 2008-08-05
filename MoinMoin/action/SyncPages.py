@@ -212,7 +212,7 @@ class ActionClass(object):
             finally:
                 self.call_rollback_funcs()
                 # XXX aquire readlock on self.page
-                self.page.saveText(self.page.get_raw_body() + "\n\n" + self.generate_log_table(), 0)
+                self.page.saveText(self.page.get_raw_body() + "\n\n" + self.generate_log_table(), None)
                 # XXX release readlock on self.page
 
                 remote.delete_auth_token()
@@ -430,7 +430,7 @@ class ActionClass(object):
                 # XXX upgrade to write lock
                 try:
                     local_change_done = True
-                    current_page.saveText(merged_text, sp.local_rev or 0, comment=comment) # YYY direct access
+                    current_page.saveText(merged_text, sp.local_rev or None, comment=comment) # YYY direct access
                 except PageEditor.Unchanged:
                     local_change_done = False
                 except PageEditor.EditConflict:
@@ -449,7 +449,7 @@ class ActionClass(object):
                         pg.deletePage(comment)
                     else:
                         try:
-                            savemsg = pg.saveText(oldpg.get_raw_body(), 0, comment=comment, extra=revstr, action="SAVE/REVERT")
+                            savemsg = pg.saveText(oldpg.get_raw_body(), None, comment=comment, extra=revstr, action="SAVE/REVERT")
                         except PageEditor.Unchanged:
                             pass
                     return sp.local_name

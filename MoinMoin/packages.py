@@ -276,7 +276,7 @@ class ScriptEngine:
             self.request.user = theuser
             page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
             try:
-                page.saveText(self.extract_file(filename).decode("utf-8"), 0, trivial=trivial, comment=comment)
+                page.saveText(self.extract_file(filename).decode("utf-8"), None, trivial=trivial, comment=comment)
                 self.msg += u"%(pagename)s added \n" % {"pagename": pagename}
             except PageEditor.Unchanged:
                 pass

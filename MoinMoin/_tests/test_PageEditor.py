@@ -163,7 +163,7 @@ class TestSave(object):
             deleter.deletePage()
 
         editor = PageEditor(self.request, pagename)
-        editor.saveText(testtext, 0)
+        editor.saveText(testtext, None)
 
         # PageEditor may not save a page if Abort is returned from PreSave event handlers
         page = Page(self.request, pagename)
@@ -179,7 +179,7 @@ class TestDictPageDeletion(object):
         pagename = u'SomeDict'
         page = PageEditor(self.request, pagename, do_editor_backup=0)
         body = u"This is an example text"
-        page.saveText(body, 0)
+        page.saveText(body, None)
 
         success_i, result = page.deletePage()
 

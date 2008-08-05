@@ -60,7 +60,9 @@ class Load(ActionBase):
             rev = page.current_rev()
             pg = PageEditor(request, self.pagename, do_editor_backup=0)
             try:
-                msg = pg.saveText(filecontent, 0, comment=comment)
+                # XXX: should use rev from request to know nobody
+                # saved in the meantime
+                msg = pg.saveText(filecontent, None, comment=comment)
                 status = True
             except pg.EditConflict, e:
                 msg = e.message

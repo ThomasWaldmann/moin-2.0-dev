@@ -69,7 +69,7 @@ def create_page(request, pagename, content, do_editor_backup=False):
     nuke_page(request, pagename)
     # now create from scratch:
     page = PageEditor(request, pagename, do_editor_backup=do_editor_backup)
-    page.saveText(content, 0)
+    page.saveText(content, None)
     return page
 
 def append_page(request, pagename, content, do_editor_backup=False):
@@ -79,7 +79,7 @@ def append_page(request, pagename, content, do_editor_backup=False):
     # adds the new content to the old
     content = "%s\n%s\n"% (raw, content)
     page = PageEditor(request, pagename, do_editor_backup=do_editor_backup)
-    page.saveText(content, 0)
+    page.saveText(content, None)
     return page
 
 def nuke_page(request, pagename):
