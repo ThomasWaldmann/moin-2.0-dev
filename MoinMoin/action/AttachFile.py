@@ -39,7 +39,7 @@ from MoinMoin.security.textcha import TextCha
 from MoinMoin.events import FileAttachedEvent, send_event
 from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
 from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage import EDIT_LOG_MTIME, EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
+from MoinMoin.storage import EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
                              EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, DELETED
 
 action_name = __name__.split('.')[-1]
@@ -243,7 +243,6 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
 
     #_addLogEntry(request, 'ATTNEW', pagename, target)
     # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
-    new_rev[EDIT_LOG_MTIME] = str(time.time())
     new_rev[EDIT_LOG_ACTION] = 'ATTNEW'
     new_rev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
     new_rev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
@@ -352,7 +351,7 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
                 continue
 
             try:
-                fmtime = request.user.getFormattedDateTime(float(rev[EDIT_LOG_MTIME]))
+                fmtime = request.user.getFormattedDateTime(float(rev.timestamp))
             except KeyError:
                 fmtime = "unknown"
 
@@ -762,7 +761,6 @@ def _do_del(pagename, request):
     elif not deleted:
         # Everything ok. "Delete" the attachment, i.e., create a new, empty revision with according metadata
         # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
-        new_rev[EDIT_LOG_MTIME] = str(time.time())
         new_rev[EDIT_LOG_ACTION] = 'ATTDEL'
         new_rev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
         new_rev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
@@ -921,7 +919,7 @@ def _do_get(pagename, request):
 
     else:
         try:
-            timestamp = timefuncs.formathttpdate(float(rev[EDIT_LOG_MTIME]))
+            timestamp = timefuncs.formathttpdate(float(rev.timestamp))
             mimestr = rev["mimetype"]
         except KeyError:
             timestamp = timefuncs.formathttpdate(0)  # XXX Is this correct? What do we want to be displayed?
