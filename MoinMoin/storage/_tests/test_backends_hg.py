@@ -12,6 +12,7 @@
 """
 
 from tempfile import mkdtemp, mkstemp
+from mercurial import node, context
 import py.test
 import shutil
 import os
@@ -58,6 +59,9 @@ class TestMercurialBackend(BackendTest):
         os.mkdir(os.path.join(datadir, "meta"))
         os.mkdir(os.path.join(datadir, "rev"))
         try:
+            nameitem = mkstemp(dir=datadir)[1]
+            py.test.raises(BackendError, MercurialBackend, datadir)
+            os.unlink(nameitem)
             revitem = mkstemp(dir=os.path.join(datadir, "rev"))[1]
             py.test.raises(BackendError, MercurialBackend, datadir)
             os.unlink(revitem)
@@ -71,49 +75,81 @@ class TestMercurialBackend(BackendTest):
         rev = item.create_revision(0)
         for num in xrange(10000):
             revval = "revision metatdata value for key %d" % num
-            rev["%s" % num] = revval * 100
+            rev["%s" % num] = revval * 10
         item.commit()
         item = self.backend.get_item('existing')
         rev = item.get_revision(-1)
         assert len(dict(rev)) == 10000
         for num in xrange(10000):
             revval = "revision metatdata value for key %d" % num
-            assert rev["%s" % num] == revval * 100
+            assert rev["%s" % num] == revval * 10
 
-    def test_create_renamed_rev(self):
-        # nasty since renames are tracked copies
-        oldname, newname = "nasty", "one"
-        self.create_rev_item_helper(oldname)
-        item = self.backend.get_item(oldname)
-        item.rename(newname)
-        assert self.backend.has_item(newname)
-        assert not self.backend.has_item(oldname)
-        item = self.backend.create_item(oldname)
+    def test_concurrent_create_revision(self):
+        """
+        < COVER GENERIC TEST >
+        Hg backend will fail this generic test, because of
+        completely different policy. You can create new revision
+        in such case, just a new head is created (and currently we
+        merge heads automatically). Thus, see merge tests below.
+        """
+        pass
+
+    def test_item_branch_and_merge(self):
+        item = self.backend.create_item("double-headed")
         item.create_revision(0)
+        item.commit()
+        item1 = self.backend.get_item("double-headed")
+        item2 = self.backend.get_item("double-headed")
+        item1.create_revision(1)
+        item2.create_revision(1)
+        item1.commit()
+        assert item1.list_revisions() == range(2)
+        import time     
+        time.sleep(1)  # without this, it fails...     
+        item2.commit()
+        assert item2.list_revisions() == range(4)
+        item1 = self.backend.get_item("double-headed")
+        assert len(item1.list_revisions()) == 4  
+        assert item1.list_revisions() == item2.list_revisions()
 
-    # XXX: below backend behaviour to discuss with johill/dennda
-    def test_confusing_1(self):
-        i1 = self.backend.create_item('existing')
-        i1.create_revision(0)
-        i1.commit()
-        i2 = self.backend.get_item('existing')
-        i2.change_metadata()
-        i2["meta"] = "has_rev"
-        i2.publish_metadata()
+    def test_item_revmeta_merge(self):
+        self.create_rev_item_helper("double-headed")
+        item1 = self.backend.get_item("double-headed")
+        item2 = self.backend.get_item("double-headed")
+        rev1 = item1.create_revision(1)
+        rev2 = item2.create_revision(1)
+        rev1["age"] = "older"
+        rev1["first"] = "alfa"
+        rev2["age"] = "younger"
+        rev2["second"] = "beta"
+        item1.commit()
+        item2.commit()
+        item = self.backend.get_item("double-headed")
+        for rev in (item1.get_revision(-1), item.get_revision(3)):
+            assert rev["age"] == "younger"
+            assert rev["first"] == "alfa"
+            assert rev["second"] == "beta"
+        assert len(rev._metadata.keys()) == 3
 
-    def test_confusing_1_wtih_no_metadata(self):
-        i1 = self.backend.create_item('existing')
-        i1.create_revision(0)
-        i1.commit()
-        i2 = self.backend.get_item('existing')
-        i2.change_metadata()
-        i2.publish_metadata()
+    def test_item_merge_data(self):
+        first_text = "Lorem ipsum."
+        second_text = "Lorem ipsum dolor sit amet."
+        after_merge = (
+"""---- /!\ '''Edit conflict - other version:''' ----
+Lorem ipsum.
 
-    def test_confusing_2(self):
-        i1 = self.backend.create_item('existing')
-        i1.change_metadata()
-        i1.publish_metadata()
-        i2 = self.backend.get_item('existing')
-        i2.create_revision(0)
-        i2.commit()
+---- /!\ '''Edit conflict - your version:''' ----
+Lorem ipsum dolor sit amet.
 
+---- /!\ '''End of edit conflict''' ----
+""")
+        self.create_rev_item_helper("lorem-ipsum")
+        item1 = self.backend.get_item("lorem-ipsum")
+        item2 = self.backend.get_item("lorem-ipsum")
+        item1.create_revision(1).write(first_text)
+        item2.create_revision(1).write(second_text)
+        item1.commit()
+        item2.commit()
+        item = self.backend.get_item("lorem-ipsum")
+        rev = item.get_revision(-1)
+        assert rev.read() == after_merge
