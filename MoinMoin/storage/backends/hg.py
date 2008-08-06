@@ -303,17 +303,13 @@ class MercurialBackend(Backend):
         """
         if not item._id:
             return []
-        else:
-            filelog = self._repo.file(item._id)
-            cl_count = len(self._repo)
+        else:                                                                            
             revs = []
-            for revno in xrange(len(filelog)):
-                try:
-                    assert filelog.linkrev(filelog.node(revno)) < cl_count
-                    revs.append(revno)
-                except (IndexError, AssertionError):  # malformed index file
-                    logging.warn("Revision number out of bounds. Index file inconsistency: %s" %
-                                                                        self._rpath(filelog.indexfile))
+            ctxs = [revno for revno in iter(self._repo) if item._id in self._repo[revno].files()]
+            # XXX: extremely slow, but no solution to include <merges> in revs by now
+            # XXX: consider cmdutil.walkchangerevs
+            for revno in xrange(len(ctxs)):
+                revs.append(revno)                                                                  
             return revs
 
     def _write_revision_data(self, revision, data):
