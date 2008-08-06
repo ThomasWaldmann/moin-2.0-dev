@@ -285,7 +285,12 @@ class MercurialBackend(Backend):
         revision._metadata = dict(((key.lstrip("moin_"), value) for key, value in
                                    fctx.changectx().extra().iteritems() if key.startswith('moin_')))
         return revision
-
+    
+    def _get_revision_size(self, rev):
+        tip = self._repo.changelog.tip()
+        ftx = self._repo[tip][rev._item_id].filectx(rev.revno)
+        return ftx.size()
+        
     def _list_revisions(self, item):
         """
         Return a list of Item revision numbers.
