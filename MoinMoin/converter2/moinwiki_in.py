@@ -495,6 +495,7 @@ class Converter(ConverterMacro):
          (?P<freelink_bang>\!)?  # configurable: avoid getting CamelCase rendered as link
          (
           (?P<freelink_interwiki>
+           # XXX: Known problem
            [A-Z][a-zA-Z]+\:
            (?P<freelink_interwiki_page>
             (?=[^ ]*[%(u)s%(l)s0..9][^ ]* )  # make sure there is something non-blank with at least one alphanum letter following
