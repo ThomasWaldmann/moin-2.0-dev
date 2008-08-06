@@ -153,25 +153,3 @@ Lorem ipsum dolor sit amet.
         item = self.backend.get_item("lorem-ipsum")
         rev = item.get_revision(-1)
         assert rev.read() == after_merge
-
-    def test_file_heads_on_patched_mercurial(self):
-        def getfilectx(repo, ctx, path):
-            return context.memfilectx(path, data, False, False, False)
-
-        repo = self.backend._repo
-        assert repo._forcedchanges == True
-        fname = mkstemp(dir=self.backend._r_path)[1]
-        item_name = os.path.split(fname)[1]
-        repo.add([item_name])
-        repo.commit(text="added file")
-        parents = (repo[0].node(), node.nullid)
-        ctx = context.memctx(repo, parents, "dummy", [item_name], getfilectx)
-        data = "1"
-        repo._commitctx(ctx)
-        ctx = context.memctx(repo, parents, "dummy", [item_name], getfilectx)
-        data = "2"
-        repo._commitctx(ctx)
-        filelog = repo.file(item_name)
-        assert len(filelog) == 3
-        assert len(filelog.heads()) == 2
-
