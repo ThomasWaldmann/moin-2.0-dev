@@ -407,12 +407,14 @@ class FSBackend(Backend):
             rp = os.path.join(self._path, item._fs_item_id, 'rev.%d' % rev.revno)
 
             try:
-                os.rename(rev._fs_revpath, rp)
-            except OSError, err:
+                try:
+                    os.link(rev._fs_revpath, rp)
+                except OSError, err:
+                    if err.errno != errno.EEXIST:
+                        raise
+                    raise RevisionAlreadyExistsError("")
+            finally:
                 os.unlink(rev._fs_revpath)
-                if err.errno != errno.EEXIST:
-                    raise
-                raise RevisionAlreadyExistsError()
 
         self._addnews(item._fs_item_id, rev.revno, rev.timestamp)
         # XXXX: Item.commit could very well do this.
