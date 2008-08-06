@@ -95,15 +95,21 @@ class TestMercurialBackend(BackendTest):
         pass
 
     def test_item_branch_and_merge(self):
-        self.create_rev_item_helper("double-headed")
+        item = self.backend.create_item("double-headed")
+        item.create_revision(0)
+        item.commit()
         item1 = self.backend.get_item("double-headed")
         item2 = self.backend.get_item("double-headed")
         item1.create_revision(1)
         item2.create_revision(1)
         item1.commit()
+        assert item1.list_revisions() == range(2)
+        import time     
+        time.sleep(1)  # without this, it fails...     
         item2.commit()
+        assert item2.list_revisions() == range(4)
         item1 = self.backend.get_item("double-headed")
-        assert len(item1.list_revisions()) == 4  # one extra from merge
+        assert len(item1.list_revisions()) == 4  
         assert item1.list_revisions() == item2.list_revisions()
 
     def test_item_revmeta_merge(self):
