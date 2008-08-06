@@ -26,12 +26,13 @@
     this page in the first place?" would be answered by looking at the metadata
     of the first revision. Thus, an Item basically is a collection of Revisions
     which contain the content for the Item. The last Revision represents the most
-    recent contents. An Item can have Metadata as well as Revisions.
+    recent contents. An Item can have Metadata or Revisions, or both.
 
     For normal operation, Revision data and metadata is immutable as soon as the
-    revision is committed to the storage. Item metadata, on the other hand, as
-    infrequently used as it may be, is mutable. Hence, it can only be modified
-    under a read lock.
+    revision is committed to storage by calling the commit() method on the Item
+    that holds the Revision.
+    Item metadata, on the other hand, as infrequently used as it may be, is mutable.
+    Hence, it can only be modified under a read lock.
 
     ---
 
@@ -73,6 +74,8 @@ class Backend(object):
     It abstracts access to backends. If you want to write
     a specific backend, say a mercurial backend, you have
     to implement the methods below.
+    A Backend knows of its Items and can perform several Item-related operations
+    such as search_item, get_item, create_item, etc.
     """
 
     def search_item(self, searchterm):
@@ -125,12 +128,11 @@ class Backend(object):
         raise NotImplementedError()
 
     #
-    # The below methods are defined for convenience.
     # If you need to write a backend it is sufficient
     # to implement the methods of this class. That
     # way you don't *have to* implement the other classes
     # like Item and Revision as well. Though, if you want
-    # to do that you can do it as well.
+    # to do that, you can do it as well.
     # Assuming my_item is instanceof(Item), when you call
     # my_item.create_revision(42), internally the
     # _create_revision() method of the items Backend is
@@ -147,8 +149,8 @@ class Backend(object):
 
     def _list_revisions(self, item):
         """
-        For a given Item, list all Revisions. Returns a list of ints representing
-        the Revision numbers.
+        For a given Item, return a list containing all revision numbers (as ints)
+        of the Revisions the Item has.
         """
         raise NotImplementedError()
 
@@ -156,6 +158,7 @@ class Backend(object):
         """
         Takes an Item object and creates a new Revision. Note that you need to pass
         a revision number for concurrency-reasons.
+        The newly created Revision-object is returned to the caller.
         """
         raise NotImplementedError()
 
@@ -172,7 +175,7 @@ class Backend(object):
         created a Revision on that Item and filled it with data you still need to
         commit() it. You don't need to pass what Revision you are committing because
         there is only one possible Revision to be committed for your /instance/ of
-        the item and thus the Revision to be saved is memorized.
+        the item and thus the Revision to be saved is memorized by the Item.
         """
         raise NotImplementedError()
 
@@ -192,7 +195,8 @@ class Backend(object):
 
     def _publish_item_metadata(self, item):
         """
-        This method tries to release a lock on the given Item.
+        This method tries to release a lock on the given Item and put the newly
+        added Metadata of the Item to storage.
         """
         raise NotImplementedError()
 
@@ -205,8 +209,7 @@ class Backend(object):
 
     def _write_revision_data(self, revision, data):
         """
-        Called to read a given amount of bytes of a revisions data. By default, all
-        data is read.
+        When this method is called, the passed data is written to the Revisions data.
         """
         raise NotImplementedError()
 
@@ -273,7 +276,6 @@ class Item(object, DictMixin):  # TODO Improve docstring
     def get_name(self):
         """
         name is a read-only property of this class.
-        This, we need to define this method.
         """
         return self._name
 
