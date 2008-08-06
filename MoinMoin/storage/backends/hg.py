@@ -425,18 +425,19 @@ class MercurialBackend(Backend):
             def getfilectx(repo, memctx, path):
                 return context.memfilectx(path, data, False, False, False)
 
-            msg = meta.get("moin_comment", "dummy")
+            msg = meta.get("moin_comment", "")
             user = meta.get("moin_editor", "anonymous")  # XXX: meta keys spec
             data = rev._data.getvalue()
 
+            p1, p2 = self._repo.changelog.tip(), nullid
             if not item._id:
-                self._add_item(item)
-                p1, p2 = self._repo.changelog.tip(), nullid
+                self._add_item(item)                
             else:
                 fname = [item._id]
                 filelog = self._repo.file(item._id)
                 n = filelog.node(item._uncommitted_revision.revno - 1)
-                p1, p2 = self._repo[filelog.linkrev(n)].node(), nullid
+                if rev.revno in self._list_revisions(item):
+                    p1, p2 = self._repo[filelog.linkrev(n)].node(), nullid
 
             ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx, user, extra=meta)
             if item._uncommitted_revision.revno == 0:
@@ -446,15 +447,16 @@ class MercurialBackend(Backend):
             self._repo.commitctx(ctx)
 
             # policy: always merge with tip, at most two heads in this block
-            filelog = self._repo.file(item._id)
-            branch_heads = self._repo.branchheads()
-            if len(branch_heads) > 1:
-                heads = filelog.heads()
+            if len(self._repo.heads()) > 1:
                 meta = {}
-                if len(heads) > 1:
-                    for head in heads:
-                        rev = filelog.linkrev(head)
-                        meta.update(self._repo[rev].extra())
+                
+                nodes = self._repo.changelog.nodesbetween([p1])[0]
+                newest_node = self._repo[len(self._repo) - 1].node()
+                for node in reversed(nodes):
+                    if (node not in (p1, newest_node) and 
+                                            item._id in self._repo.changectx(node).files()):
+                        for n in (node, newest_node):                        
+                            meta.update(self._repo.changectx(n).extra())                        
 
                 commands.merge(self._ui, self._repo)  # XXX: invoke moin diff3 merge here
                 msg = "Merged %s" % item.name  # XXX: just for now
