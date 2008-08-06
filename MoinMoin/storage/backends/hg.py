@@ -123,6 +123,7 @@ from mercurial.node import nullid
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
 import cPickle as pickle
+import struct
 import StringIO
 import tempfile
 import weakref
@@ -159,6 +160,7 @@ class MercurialBackend(Backend):
         Optionally can use already existing structure and repository.
         """
         self._path = os.path.abspath(path)
+        self._news = os.path.join(self._path, 'news')
         self._r_path = os.path.join(self._path, 'rev')
         self._u_path = os.path.join(self._path, 'meta')
         self._name_db = os.path.join(self._path, 'name-mapping')
@@ -461,6 +463,7 @@ class MercurialBackend(Backend):
                 self._repo.commit(text=msg, user=user, files=[item._id], extra=meta)
             else:
                 commands.update(self._ui, self._repo)
+            self._addnews(item._id, rev.revno, rev.timestamp)
         finally:
             del lock
             item._uncommitted_revision = None  # XXX: move to abstract
@@ -549,3 +552,48 @@ class MercurialBackend(Backend):
         name_file.write(encoded_name)
         name_file.close()
         item._id = item_id
+        
+    def news(self, timestamp=0):
+        """
+        News implementation reading the log file.
+        """
+        try:
+            newsfile = open(self._news, 'rb')
+        except IOError, err:
+            if err.errno != errno.ENOENT:
+                raise
+            return
+        newsfile.seek(0, 2)
+        offs = newsfile.tell() - 1
+        # shouldn't happen, but let's be sure we don't get a partial record
+        offs -= offs % 28
+        tstamp = None
+        while tstamp is None or tstamp >= timestamp and offs >= 0:
+            # seek to current position
+            newsfile.seek(offs)
+            # read news item
+            rec = newsfile.read(28)
+            # decrease current position by 16 to get to previous item
+            offs -= 28
+            item_id, revno, tstamp = struct.unpack('!16sLQ', rec)
+            try:
+                inamef = open(os.path.join(self._path, '%s,name' % item_id), 'rb')
+                iname = inamef.read().decode('utf-8')
+                inamef.close()
+            except IOError, err:
+                if err.errno != errno.ENOENT:
+                    raise
+                # oops, no such file, item/revision removed manually?
+                continue
+            item = Item(self, iname)
+            item._item_id = item_id
+            rev = StoredRevision(item, revno, tstamp)
+            yield rev
+
+    def _addnews(self, item_id, revid, ts):
+        """
+        Add a news item with current timestamp and the given data.
+        """
+        newsfile = open(self._news, 'ab')
+        newsfile.write(struct.pack('!16sLQ', item_id, revid, ts))
+        newsfile.close()
