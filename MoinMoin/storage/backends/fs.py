@@ -71,7 +71,7 @@ class FSBackend(Backend):
             maker = cdb.cdbmake(self._name_db, self._name_db + '.tmp')
             maker.finish()
 
-    def news(self, timestamp=0):
+    def news(self):
         """
         News implementation reading the log file.
         """
@@ -85,8 +85,7 @@ class FSBackend(Backend):
         offs = newsfile.tell() - 1
         # shouldn't happen, but let's be sure we don't get a partial record
         offs -= offs % 16
-        tstamp = None
-        while tstamp is None or tstamp >= timestamp and offs >= 0:
+        while offs >= 0:
             # seek to current position
             newsfile.seek(offs)
             # read news item

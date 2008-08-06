@@ -117,12 +117,10 @@ class Backend(object):
         """
         raise NotImplementedError()
 
-    def news(self, timestamp=0):
+    def news(self):
         """
         Returns an iterator over all revisions created for all items
         in their reverse timestamp order.
-
-        @param timestamp: cut-off time, return only items after this time
         """
         raise NotImplementedError()
 
