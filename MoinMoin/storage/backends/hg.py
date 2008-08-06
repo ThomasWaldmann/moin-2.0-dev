@@ -132,6 +132,7 @@ import datetime
 import md5
 import os
 import errno
+import time
 
 from MoinMoin import log
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
@@ -408,7 +409,11 @@ class MercurialBackend(Backend):
         if not item._id and self.has_item(item.name):
             raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
 
+        if rev.timestamp is None:
+            rev.timestamp = long(time.time())
+
         meta = dict(("moin_%s" % key, value) for key, value in rev.iteritems())
+        meta['__timestamp'] = rev.timestamp
         lock = self._repolock()
 
         try:
