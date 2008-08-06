@@ -114,6 +114,7 @@ class FSBackend(Backend):
             rev = StoredRevision(item, revno, tstamp)
             rev._fs_revpath = revpath
             rev._fs_file = None
+            rev._fs_metadata = None
             yield rev
 
     def _addnews(self, itemid, revid, ts):
@@ -199,6 +200,7 @@ class FSBackend(Backend):
         rev = StoredRevision(item, revno)
         rev._fs_revpath = revpath
         rev._fs_file = None
+        rev._fs_metadata = None
 
         return rev
 
@@ -504,13 +506,14 @@ class FSBackend(Backend):
             f = rev._fs_file
             pos = f.tell()
             f.seek(4)
-        ret = pickle.load(f)
+        rev._fs_metadata = pickle.load(f)
         f.seek(pos)
-        return ret, ret['__timestamp']
+        return rev._fs_metadata
 
     def _get_revision_timestamp(self, rev):
-        res = self._get_revision_metadata(rev)
-        return res[1], res[0]
+        if rev._fs_metadata is None:
+            self._get_revision_metadata(rev)
+        return rev._fs_metadata['__timestamp']
 
     def _get_revision_size(self, rev):
         if rev._fs_file is None:

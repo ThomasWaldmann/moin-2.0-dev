@@ -221,8 +221,6 @@ class Backend(object):
     def _get_revision_metadata(self, revision):
         """
         Load metadata for a given Revision, returns dict.
-        Alternatively, return a tuple (metadata dict, timestamp)
-        when loading the metadata cheaply also loads the timestamp.
         """
         raise NotImplementedError()
 
@@ -231,9 +229,7 @@ class Backend(object):
         Lazily load the revision's timestamp. If accessing it
         is cheap, it can be given as a parameter to StoredRevision
         instantiation instead.
-        Return the timestamp (a long) or a tuple containing
-        (timestamp, metadata dict) if loading one of them cheaply
-        loads the other.
+        Return the timestamp (a long).
         """
         raise NotImplementedError()
 
@@ -477,11 +473,7 @@ class Revision(object, DictMixin):
     revno = property(get_revno, doc = "This property stores the revno of the Revision-object. Only read-only access is allowed.")
 
     def _load_metadata(self):
-        res = self._backend._get_revision_metadata(self)
-        if isinstance(res, tuple):
-            self._metadata, self._timestamp = res
-        else:
-            self._metadata = res
+        self._metadata = self._backend._get_revision_metadata(self)
 
     def __getitem__(self, key):
         """
@@ -533,11 +525,7 @@ class StoredRevision(Revision):
 
     def _get_ts(self):
         if self._timestamp is None:
-            res = self._backend._get_revision_timestamp(self)
-            if isinstance(res, tuple):
-                self._timestamp, self._metadata = res
-            else:
-                self._timestamp = res
+            self._timestamp = self._backend._get_revision_timestamp(self)
         return self._timestamp
 
     timestamp = property(_get_ts, doc="This property returns the creation timestamp of the Revision")
