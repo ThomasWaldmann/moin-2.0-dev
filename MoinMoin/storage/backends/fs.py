@@ -1,6 +1,9 @@
 """
     MoinMoin - FS backend
 
+    XXX: Does NOT work on win32. some problems are documented below (see XXX),
+         some are maybe NOT.
+
     @copyright: 2008 MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
 """
@@ -263,7 +266,7 @@ class FSBackend(Backend):
                 maker.add(i, v)
             r = c.each()
         maker.finish()
-        # XXXX: doesn't work on windows
+        # XXX: doesn't work on windows
         os.rename(self._name_db + '.ndb', self._name_db)
         nf = open(npath, mode='wb')
         nf.write(nn)
@@ -276,7 +279,7 @@ class FSBackend(Backend):
         self._do_locked(os.path.join(self._path, 'name-mapping.lock'),
                         self._rename_item_locked, (item, newname))
 
-        # XXXX: Item.rename could very well do this
+        # XXX: Item.rename could very well do this
         item._name = newname
 
     def _add_item_internally_locked(self, arg):
@@ -300,7 +303,7 @@ class FSBackend(Backend):
                 self._itemspace *= 2
                 cntr = 0
             elif cntr > 20:
-                # XXXX: UnexpectedBackendError() that propagates to user?
+                # XXX: UnexpectedBackendError() that propagates to user?
                 raise Exception('item space full')
 
         nn = item.name.encode('utf-8')
@@ -342,7 +345,7 @@ class FSBackend(Backend):
         nf.close()
 
         # make item retrievable (by putting the name-mapping in place)
-        # XXXX: doesn't work on windows
+        # XXX: doesn't work on windows
         os.rename(self._name_db + '.ndb', self._name_db)
 
         item._fs_item_id = itemid
@@ -366,7 +369,7 @@ class FSBackend(Backend):
                         self._add_item_internally_locked, (item, newrev, metadata))
 
     def _commit_item(self, item):
-        # XXXX: Item.commit could pass this in
+        # XXX: Item.commit could pass this in
         rev = item._uncommitted_revision
 
         if rev.timestamp is None:
@@ -408,6 +411,7 @@ class FSBackend(Backend):
 
             try:
                 try:
+                    # XXX: doesn't work on windows
                     os.link(rev._fs_revpath, rp)
                 except OSError, err:
                     if err.errno != errno.EEXIST:
@@ -417,17 +421,17 @@ class FSBackend(Backend):
                 os.unlink(rev._fs_revpath)
 
         self._addnews(item._fs_item_id, rev.revno, rev.timestamp)
-        # XXXX: Item.commit could very well do this.
+        # XXX: Item.commit could very well do this.
         item._uncommitted_revision = None
 
     def _rollback_item(self, item):
-        # XXXX: Item.commit could pass this in.
+        # XXX: Item.commit could pass this in.
         rev = item._uncommitted_revision
 
         rev._fs_file.close()
         os.unlink(rev._fs_revpath)
 
-        # XXXX: Item.commit could very well do this.
+        # XXX: Item.commit could very well do this.
         item._uncommitted_revision = None
 
     def _change_item_metadata(self, item):
@@ -447,7 +451,7 @@ class FSBackend(Backend):
                 pass
             elif not md:
                 # metadata now empty, just rm the metadata file
-                # XXXX: might not work on windows
+                # XXX: might not work on windows
                 try:
                     os.unlink(os.path.join(self._path, item._fs_item_id, 'meta'))
                 except OSError, err:
@@ -459,7 +463,7 @@ class FSBackend(Backend):
                 f = open(tmp, 'wb')
                 pickle.dump(md, f, protocol=PICKLEPROTOCOL)
                 f.close()
-                # XXXX: doesn't work on windows
+                # XXX: doesn't work on windows
                 os.rename(tmp, os.path.join(self._path, item._fs_item_id, 'meta'))
             item._fs_metadata_lock.release()
             del item._fs_metadata_lock
