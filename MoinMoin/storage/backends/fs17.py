@@ -25,7 +25,7 @@ class FsItem(Item):
         self._fs_meta = {} # 'current' is the only page metadata and handled elsewhere
         try:
             current = int(open(currentpath, 'r').read().strip()) - 1 # new api is 0-based, old is 1-based
-        except (OSerror, IOError):
+        except (OSError, IOError):
             # no current file means no item
             raise NoSuchItemError("No such item, %r" % itemname)
         except ValueError:
