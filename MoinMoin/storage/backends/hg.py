@@ -275,14 +275,19 @@ class MercurialBackend(Backend):
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
         ctx = self._repo[self._repo.changelog.tip()]
-        try:
-            revs = self._list_revisions(item)
-            if revno == -1 and revs:
-                revno = max(revs)
-            fctx = ctx[item._id].filectx(revno)
-        except LookupError:
+        #try:
+        revs = self._list_revisions(item)
+        if revno == -1 and revs:
+            revno = max(revs)
+        #fctx = ctx[item._id].filectx(revno)
+        #except LookupError:
+        if revno not in revs:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
-
+        # XXX: to rewrite for more optimal
+        for item_rev, repo_rev in enumerate([revno_ for revno_ in iter(self._repo)
+                                              if item._id in self._repo[revno_].files()]):
+            if item_rev == revno:
+                ctx = self._repo[repo_rev]
         revision = StoredRevision(item, revno)
         revision._data = StringIO.StringIO(ctx.filectx(item._id).data())
         revision._item_id = item._id
