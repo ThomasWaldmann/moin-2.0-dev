@@ -269,6 +269,7 @@ class MercurialBackend(Backend):
         rev = NewRevision(item, revno)
         rev._data = StringIO.StringIO()
         rev._revno = revno
+        rev._item_id = item._id
         return rev
 
     def _get_revision(self, item, revno):
@@ -283,9 +284,10 @@ class MercurialBackend(Backend):
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
 
         revision = StoredRevision(item, revno)
-        revision._data = StringIO.StringIO(fctx.data())
-        revision._metadata = dict(((key.lstrip("moin_"), value) for key, value in
-                                   fctx.changectx().extra().iteritems() if key.startswith('moin_')))
+        revision._data = StringIO.StringIO(ctx.filectx(item._id).data())
+        revision._item_id = item._id
+        revision._metadata = dict(((key.lstrip("moin_"), value) for key, value in ctx.extra().iteritems() 
+                                   if key.startswith('moin_')))
         return revision
     
     def _get_revision_size(self, rev):
@@ -507,9 +509,9 @@ class MercurialBackend(Backend):
     def _get_revision_metadata(self, rev):
         """Return Revision metadata dictionary."""
         tip = self._repo.changelog.tip()
-        fctx = self._repo[tip][item._id].filectx(revno)
+        fctx = self._repo[tip][rev.item_id].filectx(rev.revno)
         return dict(((key.lstrip("_"), value) for key, value in
-                     ctx.changectx().extra().iteritems() if key.startswith('_')))
+                     fctx.changectx().extra().iteritems() if key.startswith('_')))
 
     def _create_new_cdb(self):
         """Create new name-mapping if it doesn't exist yet."""
