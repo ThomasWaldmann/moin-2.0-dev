@@ -553,14 +553,20 @@ class Page(object):
         @return: ACL of this page
         """
         from MoinMoin.security import AccessControlList
-        if self._item is not None:
+        assert self._item is not None
+        try:
+            current_rev = self._item.get_revision(-1)
+        except NoSuchRevisionError:
+            # seems to be a page without any revisions!?
+            return AccessControlList(self.request.cfg)
+        else:
             try:
-                # XXX: easier way to get this??
-                text = self._item.get_revision(-1)[ACL]
-                return AccessControlList(self.request.cfg, text)
-            except (KeyError, NoSuchRevisionError):
-                pass
-        return AccessControlList(self.request.cfg)
+                acl_string = current_rev[ACL]
+            except KeyError:
+                # there is no ACL defined on this page
+                return AccessControlList(self.request.cfg)
+            else:
+                return AccessControlList(self.request.cfg, acl_string)
 
     def split_title(self, force=0):
         """ Return a string with the page name split by spaces, if the user wants that.
