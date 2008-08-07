@@ -477,8 +477,6 @@ class FSBackend(Backend):
             rev._fs_file = f
             rev._datastart = datastart
 
-        if chunksize < 0:
-            return rev._fs_file.read()
         return rev._fs_file.read(chunksize)
 
     def _write_revision_data(self, rev, data):
