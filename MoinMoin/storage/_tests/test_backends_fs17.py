@@ -54,7 +54,7 @@ class TestFS17Backend(object):
         # populate it manually because the backend is just read-only
         join = os.path.join
         for name, revno, revdata, logdata, attachments in items:
-            pagedir = join(d, wikiutil.quoteWikinameFS(name))
+            pagedir = join(d, 'pages', wikiutil.quoteWikinameFS(name))
             try:
                 os.makedirs(join(pagedir, 'revisions'))
                 os.makedirs(join(pagedir, 'attachments'))
