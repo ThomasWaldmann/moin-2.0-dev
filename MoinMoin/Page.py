@@ -1494,8 +1494,9 @@ class RootPage(object):
         if user or return_objects:
             # Filter names
             pages = []
-            for name in items:
-                page = Page(request, name)
+            for item in items:
+                page = Page.from_item(request, item)
+                name = page.page_name
 
                 # Filter out pages user may not read.
                 if user and not user.may.read(name):
