@@ -566,7 +566,7 @@ class Page(object):
                 # there is no ACL defined on this page
                 return AccessControlList(self.request.cfg)
             else:
-                return AccessControlList(self.request.cfg, acl_string)
+                return AccessControlList(self.request.cfg, [acl_string])
 
     def split_title(self, force=0):
         """ Return a string with the page name split by spaces, if the user wants that.
