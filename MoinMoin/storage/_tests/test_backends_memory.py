@@ -20,9 +20,10 @@ class TestMemoryBackend(BackendTest):
     """
     def __init__(self):
         BackendTest.__init__(self, None)
-        
+
     def create_backend(self):
         return MemoryBackend()
 
     def kill_backend(self):
         pass
+
