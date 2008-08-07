@@ -9,9 +9,10 @@ special wiki links.
 """
 
 from emeraldtree import ElementTree as ET
+import urllib
 
 from MoinMoin import wikiutil
-from MoinMoin.util import namespaces
+from MoinMoin.util import namespaces, uri
 
 class ConverterBase(object):
     tag_href = ET.QName('href', namespaces.xlink)
@@ -23,32 +24,34 @@ class ConverterBase(object):
     def handle_wikilocal(self, link, page_name):
         pass
 
-    def recurse(self, elem, page_href):
-        page_href = elem.get(self.tag_page_href, page_href)
+    def recurse(self, elem, page_name):
+        new_page_href = elem.get(self.tag_page_href)
+        if new_page_href:
+            u = uri.Uri(new_page_href)
+            if u.authority == '' and u.path.startswith('/'):
+                page_name = u.path[1:]
 
         href = elem.get(self.tag_href, None)
         if href is not None:
-            yield elem, href, page_href
+            yield elem, uri.Uri(href), page_name
 
         for child in elem:
             if isinstance(child, ET.Node):
-                for i in self.recurse(child, page_href):
+                for i in self.recurse(child, page_name):
                     yield i
 
     def __init__(self, request):
         self.request = request
 
     def __call__(self, tree):
-        for elem, href, page_href in self.recurse(tree, None):
+        for elem, href, page_name in self.recurse(tree, None):
+            print elem, href, page_name
             new_href = None
-            if href.startswith('wiki.local:'):
-                if page_href.startswith('wiki:///'):
-                    page_name = page_href[8:]
-                else:
-                    page_name = ''
-                new_href = self.handle_wikilocal(href[11:], page_name)
-            elif href.startswith('wiki://'):
-                new_href = self.handle_wiki(href[7:])
+            if href.scheme == 'wiki.local':
+                new_href = self.handle_wikilocal(href, page_name)
+            elif href.scheme == 'wiki':
+                new_href = self.handle_wiki(href)
+            print new_href
             if new_href is not None:
                 elem.set(self.tag_href, new_href)
         return tree
@@ -60,53 +63,27 @@ class ConverterExternOutput(ConverterBase):
                 output == 'application/x-moin-document;links=extern':
             return cls
 
-    # TODO: Deduplicate code, use real URI parser
-    def handle_wiki(self, link):
-        wikitag, link = link.split('/', 1)
-
-        if '#' in link:
-            link, anchor = link.split("#", 1)
-        else:
-            anchor = None
-        if '?' in link:
-            link, query = link.split('?', 1)
-        else:
-            query = None
-
+    # TODO: Deduplicate code
+    def handle_wiki(self, input):
         url = None
 
-        if wikitag != 'Self':
-            wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, wikitag, link)
+        if input.authority:
+            wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, input.authority, input.path[1:])
 
             if not err:
                 url = wikiutil.join_wiki(wikiurl, wikitail)
 
         if not url:
-            url = self.request.getScriptname() + '/' + link
+            url = self.request.getScriptname() + input.path
 
-        if query:
-            url += '?' + wikiutil.url_quote_plus(query)
+        return str(uri.Uri(url, query=input.query, fragment=input.fragment))
 
-        if anchor:
-            url += '#' + wikiutil.url_quote_plus(anchor)
-
-        return url
-
-    def handle_wikilocal(self, link, page_name):
+    def handle_wikilocal(self, input, page_name):
         url = None
 
-        if link:
-            if '#' in link:
-                link, anchor = link.split("#", 1)
-            else:
-                anchor = None
-            if '?' in link:
-                link, query = link.split('?', 1)
-            else:
-                query = None
-
-            if ':' in link:
-                wiki_name, link = link.split(':', 1)
+        if input.path:
+            if ':' in input.path:
+                wiki_name, link = input.path.split(':', 1)
 
                 # TODO
                 if wiki_name in ('attachment', 'drawing'):
@@ -120,19 +97,16 @@ class ConverterExternOutput(ConverterBase):
                 if not err and wikitag != 'Self':
                     url = wikiutil.join_wiki(wikiurl, wikitail)
 
-            if not url:
-                url = self.request.getScriptname() + '/' + wikiutil.AbsPageName(page_name, link)
+            else:
+                link = input.path
 
         else:
             link = page_name
 
-        if query:
-            url += '?' + wikiutil.url_quote_plus(query)
+        if not url:
+            url = self.request.getScriptname() + '/' + wikiutil.AbsPageName(page_name, link)
 
-        if anchor:
-            url += '#' + wikiutil.url_quote_plus(anchor)
-
-        return url
+        return str(uri.Uri(urllib.quote(url), query=input.query, fragment=input.fragment))
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
