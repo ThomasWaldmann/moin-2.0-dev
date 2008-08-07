@@ -81,7 +81,7 @@ class Backend(object):
     def search_item(self, searchterm):
         """
         Takes a searchterm and returns an iterator (maybe empty) over matching
-        objects.
+        item objects (NOT item names!).
         """
         # Very simple implementation because we have no indexing
         # or anything like that. If you want to optimize this, override it.
