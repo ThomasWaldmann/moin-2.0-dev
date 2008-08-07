@@ -186,6 +186,9 @@ class MercurialBackend(Backend):
                     raise BackendError("Directory not empty: %s" % self._path)
         try:
             self._repo = hg.repository(self._ui, self._r_path, create)
+            os.environ["HGMERGE"] = "internal:fail"
+            # self._ui.setconfig("merge-patterns", "**", "internal:fail")
+            # self._ui.setconfig("ui", "merge", "internal:fail")
         except RepoError:
             if create:
                 raise BackendError("Repository exists at path: %s" % self._r_path)
