@@ -45,17 +45,6 @@ class MemoryBackend(Backend):
 
         self._item_metadata_lock = {}       # {id : Lockobject}
 
-    def search_item(self, searchterm):
-        """
-        Takes a searchterm and returns an iterator (maybe empty) over matching
-        objects.
-        """
-        # This is a very very very stupid algorithm
-        for item in self.iteritems():
-            searchterm.prepare()
-            if searchterm.evaluate(item):
-                yield item
-
     def news(self):
         """
         Returns an iterator over all revisions created for all items in their
