@@ -143,7 +143,11 @@ class FsPageItem(Item):
 
     def iter_attachments(self):
         attachmentspath = self._backend._get_item_path(self.name, 'attachments')
-        for f in os.listdir(attachmentspath):
+        try:
+            attachments = os.listdir(attachmentspath)
+        except OSError:
+            attachments = []
+        for f in attachments:
             attachname = f.decode('utf-8')
             try:
                 name = '%s/%s' % (self.name, attachname)
