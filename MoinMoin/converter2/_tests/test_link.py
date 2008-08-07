@@ -15,38 +15,36 @@ class TestConverterExternOutput(object):
 
     def test_wiki(self):
         pairs = [
-            ('/Test',
+            ('wiki:///Test',
                 './Test'),
-            ('/Test?mode=raw',
+            ('wiki:///Test?mode=raw',
                 './Test?mode=raw'),
-            ('/Test#anchor',
+            ('wiki:///Test#anchor',
                 './Test#anchor'),
-            ('/Test?mode=raw#anchor',
+            ('wiki:///Test?mode=raw#anchor',
                 './Test?mode=raw#anchor'),
-            ('Self/Test',
-                './Test'),
         ]
         for i in pairs:
             yield (self._do_wiki, ) + i
 
     def test_wikilocal(self):
         pairs = [
-            ('Test',
+            ('wiki.local:Test',
                 'Root',
                 './Test'),
-            ('Test',
+            ('wiki.local:Test',
                 'Root/Sub',
                 './Test'),
-            ('/Test',
+            ('wiki.local:/Test',
                 'Root',
                 './Root/Test'),
-            ('/Test',
+            ('wiki.local:/Test',
                 'Root/Sub',
                 './Root/Sub/Test'),
-            ('../Test',
+            ('wiki.local:../Test',
                 'Root',
                 './Test'),
-            ('../Test',
+            ('wiki.local:../Test',
                 'Root/Sub',
                 './Root/Test'),
         ]
@@ -56,11 +54,11 @@ class TestConverterExternOutput(object):
     def _do_wiki(self, input, output, skip=None):
         if skip:
             py.test.skip(skip)
-        out = self.conv.handle_wiki(input)
+        out = self.conv.handle_wiki(uri.Uri(input))
         assert out == output
 
     def _do_wikilocal(self, input, page_name, output, skip=None):
         if skip:
             py.test.skip(skip)
-        out = self.conv.handle_wikilocal(input, page_name)
+        out = self.conv.handle_wikilocal(uri.Uri(input), page_name)
         assert out == output
