@@ -19,7 +19,7 @@ AccessControlList = security.AccessControlList
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.user import User
 
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestACLStringIterator(object):
 
@@ -292,9 +292,6 @@ class TestPageAcls(object):
 
         # Restore user
         self.request.user.name = self.savedUser
-
-        for page_name, dummy in self.pages:
-            nuke_page(self.request, page_name)
 
     def testPageACLs(self):
         """ security: test page acls """

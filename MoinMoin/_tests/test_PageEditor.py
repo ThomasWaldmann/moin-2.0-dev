@@ -12,7 +12,7 @@ from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 
 # TODO: check if and where we can use the helpers:
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestExpandVars(object):
     """PageEditor: testing page editor"""
@@ -116,7 +116,6 @@ class TestExpandPrivateVariables(TestExpandUserName):
     def teardown_method(self, method):
         super(TestExpandPrivateVariables, self).teardown_method(method)
         self.request.user.valid = self.savedValid
-        self.deleteTestPage()
 
     def testPrivateVariables(self):
         """ PageEditor: expand user variables """
@@ -130,10 +129,6 @@ class TestExpandPrivateVariables(TestExpandUserName):
         data = self.request.cfg.data_backend.get_data_backend(self.name, 1)
         data.write(u' ME:: %s\n' % self.name)
         data.close()
-
-    def deleteTestPage(self):
-        """ Delete temporary page, bypass logs and notifications """
-        self.request.cfg.data_backend.remove_item(self.name)
 
 
 class TestSave(object):
@@ -199,7 +194,6 @@ class TestCopyPage(object):
 
     def teardown_method(self, method):
         self.request.user.valid = self.savedValid
-        self.deleteTestPage()
 
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
@@ -209,11 +203,6 @@ class TestCopyPage(object):
         data = self.request.cfg.data_backend.get_data_backend(self.pagename, 1)
         data.write(self.text)
         data.close()
-
-    def deleteTestPage(self):
-        """ Delete temporary page, bypass logs and notifications """
-        self.request.cfg.data_backend.remove_item(self.pagename)
-        self.request.cfg.data_backend.remove_item(self.copy_pagename)
 
     def test_copy_page(self):
         """

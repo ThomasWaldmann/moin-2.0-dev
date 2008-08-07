@@ -11,7 +11,7 @@ import os, StringIO
 from MoinMoin import caching
 from MoinMoin.action import AttachFile, cache
 
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestSendCached:
     """ testing action cache """
@@ -53,7 +53,6 @@ class TestSendCached:
         AttachFile.add_attachment(request, pagename, attachname, "Test content33333", True)
         result4 = cache.key(request, itemname=pagename, attachname=attachname, secret='baz')
         assert len(result4) == len(result2)  # same length of key for different input lengths
-        nuke_page(request, pagename)
 
     def test_put_cache_minimal(self):
         """Test if put_cache() works"""
