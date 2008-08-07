@@ -6,8 +6,6 @@
 
     This backend is neither intended for nor capable of being used for production.
 
-    TODO: support attachments via action.AttachFile
-
     @copyright: 2008 MoinMoin:JohannesBerg,
                 2008 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
@@ -53,6 +51,12 @@ class FSBackend(Backend):
         """
         return self._get_item_path(itemname, "revisions", "%08d" % (revno + 1))
 
+    def _get_att_path(self, itemname, attachname):
+        """
+        Returns the full path to the attachment file.
+        """
+        return self._get_item_path(itemname, "attachments", attachname.encode('utf-8'))
+
     def _current_path(self, itemname):
         return self._get_item_path(itemname, "current")
 
@@ -68,9 +72,16 @@ class FSBackend(Backend):
                 continue
             else:
                 yield item
+                for attachitem in item.iter_attachments():
+                    yield attachitem
 
     def get_item(self, itemname):
-        return FsItem(self, itemname)
+        try:
+            # first try to get a page:
+            return FsItem(self, itemname)
+        except NoSuchItemError:
+            # do a second try, interpreting it as attachment:
+            return FsAttItem(self, itemname)
 
     def _get_item_metadata(self, item):
         return item._fs_meta
@@ -79,10 +90,15 @@ class FSBackend(Backend):
         # we report ALL revision numbers:
         # - zero-based (because the new storage api works zero based)
         # - we even included deleted revisions' revnos
-        return range(item._fs_current)
+        return range(item._fs_current + 1)
 
     def _get_revision(self, item, revno):
-        return FsRevision(item, revno)
+        if isinstance(item, FsItem):
+            return FsRevision(item, revno)
+        elif isinstance(item, FsAttItem):
+            return FsAttRevision(item, revno)
+        else:
+            raise
 
     def _get_revision_metadata(self, rev):
         return rev._fs_meta
@@ -120,9 +136,21 @@ class FsItem(Item):
         self._fs_current = current
         self._fs_editlog = EditLog(editlogpath)
 
+    def iter_attachments(self):
+        attachmentspath = self._backend._get_item_path(self.name, 'attachments')
+        for f in os.listdir(attachmentspath):
+            attachname = f.decode('utf-8')
+            try:
+                name = '%s/%s' % (self.name, attachname)
+                item = FsAttItem(self._backend, name)
+            except NoSuchItemError:
+                continue
+            else:
+                yield item
+
 
 class FsRevision(StoredRevision):
-    """ A moin 1.7 filesystem combined meta+data revision """
+    """ A moin 1.7 filesystem item revision (page, combines meta+data) """
     def __init__(self, item, revno):
         StoredRevision.__init__(self, item, revno)
         revpath = item._backend._get_rev_path(item.name, revno)
@@ -172,6 +200,53 @@ class FsRevision(StoredRevision):
         self._fs_data_file = StringIO(data)
 
 
+class FsAttItem(Item):
+    """ A moin 1.7 filesystem item (attachment) """
+    def __init__(self, backend, name):
+        Item.__init__(self, backend, name)
+        try:
+            itemname, attachname = name.rsplit('/')
+        except ValueError: # no '/' in there
+            raise NoSuchItemError("No such attachment item, %r" % name)
+        editlogpath = self._backend._get_item_path(itemname, 'edit-log')
+        self._fs_current = 0 # attachments only have 1 revision with revno 0
+        self._fs_meta = {} # no attachment item level metadata
+        self._fs_editlog = EditLog(editlogpath)
+        attachpath = self._backend._get_att_path(itemname, attachname)
+        if not os.path.isfile(attachpath):
+            # no attachment file means no item
+            raise NoSuchItemError("No such attachment item, %r" % name)
+        self._fs_attachname = attachname
+        self._fs_attachpath = attachpath
+
+class FsAttRevision(StoredRevision):
+    """ A moin 1.7 filesystem item revision (attachment) """
+    def __init__(self, item, revno):
+        if revno != 0:
+            raise NoSuchRevisionError('Item %r has no revision %d (attachments just have revno 0)!' %
+                    (item.name, revno))
+        StoredRevision.__init__(self, item, revno)
+        attpath = item._fs_attachpath
+        editlog = item._fs_editlog
+        try:
+            editlog_data = editlog.find_attach(item._fs_attachname)
+        except KeyError:
+            editlog_data = { # make something up
+                EDIT_LOG_MTIME: os.path.getmtime(attpath),
+                EDIT_LOG_ACTION: 'ATTNEW',
+                EDIT_LOG_ADDR: '0.0.0.0',
+                EDIT_LOG_HOSTNAME: '0.0.0.0',
+                EDIT_LOG_USERID: '',
+                EDIT_LOG_EXTRA: '',
+                EDIT_LOG_COMMENT: '',
+            }
+        meta = editlog_data
+        meta['__timestamp'] = editlog_data[EDIT_LOG_MTIME]
+        meta['__size'] = 0 # not needed for converter
+        self._fs_meta = meta
+        self._fs_data_file = file(attpath, 'rb')
+
+
 from MoinMoin.logfile import LogFile
 from MoinMoin import wikiutil
 
@@ -205,4 +280,18 @@ class EditLog(LogFile):
             raise KeyError
         del meta['__rev']
         return meta
+
+    def find_attach(self, attachname):
+        """ Find metadata for some attachment name in the edit-log. """
+        for meta in self:
+            print repr(meta)
+            if (meta['__rev'] == 99999998 and  # 99999999-1 because of 0-based
+                meta[EDIT_LOG_ACTION] =='ATTNEW' and
+                meta[EDIT_LOG_EXTRA] == attachname):
+                break
+        else:
+            raise KeyError
+        del meta['__rev']
+        return meta
+
 
