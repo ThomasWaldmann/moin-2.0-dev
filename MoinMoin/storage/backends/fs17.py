@@ -85,9 +85,6 @@ class FSPageBackend(Backend):
             # do a second try, interpreting it as attachment:
             return FsAttachmentItem(self, itemname)
 
-    def search_item(self, searchterm):
-        return [] # just here to not have it crash when rendering a normal page
-
     def _get_item_metadata(self, item):
         return item._fs_meta
 
