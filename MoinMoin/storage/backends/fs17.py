@@ -22,7 +22,7 @@ from MoinMoin.storage import Backend, Item, StoredRevision, DELETED, \
                              EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
-class FSBackend(Backend):
+class FSPageBackend(Backend):
     """
     MoinMoin 1.7 compatible, read-only, "just for the migration" filesystem backend.
 
@@ -69,7 +69,7 @@ class FSBackend(Backend):
         for f in os.listdir(pages_dir):
             itemname = wikiutil.unquoteWikiname(f)
             try:
-                item = FsItem(self, itemname)
+                item = FsPageItem(self, itemname)
             except NoSuchItemError:
                 continue
             else:
@@ -80,10 +80,10 @@ class FSBackend(Backend):
     def get_item(self, itemname):
         try:
             # first try to get a page:
-            return FsItem(self, itemname)
+            return FsPageItem(self, itemname)
         except NoSuchItemError:
             # do a second try, interpreting it as attachment:
-            return FsAttItem(self, itemname)
+            return FsAttachmentItem(self, itemname)
 
     def search_item(self, searchterm):
         return [] # just here to not have it crash when rendering a normal page
@@ -98,10 +98,10 @@ class FSBackend(Backend):
         return range(item._fs_current + 1)
 
     def _get_revision(self, item, revno):
-        if isinstance(item, FsItem):
-            return FsRevision(item, revno)
-        elif isinstance(item, FsAttItem):
-            return FsAttRevision(item, revno)
+        if isinstance(item, FsPageItem):
+            return FsPageRevision(item, revno)
+        elif isinstance(item, FsAttachmentItem):
+            return FsAttachmentRevision(item, revno)
         else:
             raise
 
@@ -123,7 +123,7 @@ class FSBackend(Backend):
 
 # Specialized Items/Revisions
 
-class FsItem(Item):
+class FsPageItem(Item):
     """ A moin 1.7 filesystem item (page) """
     def __init__(self, backend, itemname):
         Item.__init__(self, backend, itemname)
@@ -147,14 +147,14 @@ class FsItem(Item):
             attachname = f.decode('utf-8')
             try:
                 name = '%s/%s' % (self.name, attachname)
-                item = FsAttItem(self._backend, name)
+                item = FsAttachmentItem(self._backend, name)
             except NoSuchItemError:
                 continue
             else:
                 yield item
 
 
-class FsRevision(StoredRevision):
+class FsPageRevision(StoredRevision):
     """ A moin 1.7 filesystem item revision (page, combines meta+data) """
     def __init__(self, item, revno):
         StoredRevision.__init__(self, item, revno)
@@ -207,7 +207,7 @@ class FsRevision(StoredRevision):
         self._fs_data_file = StringIO(data)
 
 
-class FsAttItem(Item):
+class FsAttachmentItem(Item):
     """ A moin 1.7 filesystem item (attachment) """
     def __init__(self, backend, name):
         Item.__init__(self, backend, name)
@@ -226,7 +226,7 @@ class FsAttItem(Item):
         self._fs_attachname = attachname
         self._fs_attachpath = attachpath
 
-class FsAttRevision(StoredRevision):
+class FsAttachmentRevision(StoredRevision):
     """ A moin 1.7 filesystem item revision (attachment) """
     def __init__(self, item, revno):
         if revno != 0:

@@ -12,7 +12,7 @@ import py.test
 
 from MoinMoin import wikiutil
 from MoinMoin.storage import Item, DELETED, EDIT_LOG_MTIME
-from MoinMoin.storage.backends.fs17 import FSBackend
+from MoinMoin.storage.backends.fs17 import FSPageBackend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 item_data = "Foo Bar"
@@ -50,7 +50,7 @@ class TestFS17Backend(object):
     def setup_method(self, method):
         # create backend
         self.tempdir = d = tempfile.mkdtemp('', 'moin-')
-        self.backend = FSBackend(self.tempdir)
+        self.backend = FSPageBackend(self.tempdir)
         # populate it manually because the backend is just read-only
         join = os.path.join
         for name, revno, revdata, logdata, attachments in items:
@@ -172,8 +172,7 @@ class TestFS17Backend(object):
 
     def test_revision_that_doesnt_exist(self):
         item = self.backend.get_item(item_name)
-        py.test.raises(NoSuchRevisionError, item.get_revision, -1)
-        py.test.raises(NoSuchRevisionError, item.get_revision, 9999)
+        py.test.raises(NoSuchRevisionError, item.get_revision, 42)
 
     def test_revision_attachment_that_doesnt_exist(self):
         name = item_name + '/' + attachment_name
