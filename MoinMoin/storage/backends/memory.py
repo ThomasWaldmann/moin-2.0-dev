@@ -20,6 +20,7 @@
 import StringIO
 from threading import Lock
 import time
+from operator import attrgetter
 
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
@@ -54,6 +55,24 @@ class MemoryBackend(Backend):
             searchterm.prepare()
             if searchterm.evaluate(item):
                 yield item
+
+    def news(self):
+        """
+        Returns an iterator over all revisions created for all items in their
+        reverse timestamp order.
+        """
+        #XXX Harden the below against concurrency, etc.
+        all_revisions = []
+
+        for item_name in self._itemmap:
+            item = self.get_item(item_name)
+            for revno in item.list_revisions():
+                rev = item.get_revision(revno)
+                all_revisions.append(rev)
+
+        all_revisions.sort(key = attrgetter("timestamp"))
+        all_revisions.reverse()
+        return iter(all_revisions)
 
 
     def get_item(self, itemname):
