@@ -278,6 +278,16 @@ class BackendTest(object):
             chunk = rev.read(1)
         assert data == "Alle meine Entchen"
 
+    def test_item_reading_negative_chunk(self):
+        item = self.backend.create_item("negative_chunk")
+        rev = item.create_revision(0)
+        rev.write("Alle meine Entchen" * 10)
+        item.commit()
+        rev = item.get_revision(0)
+        assert rev.read(-1) == "Alle meine Entchen" * 10
+        rev.seek(0)
+        assert rev.read(-123) == "Alle meine Entchen" * 10
+
     def test_item_get_revision(self):
         item = self.backend.create_item("item#12")
         rev = item.create_revision(0)

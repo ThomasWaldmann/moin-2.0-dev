@@ -277,9 +277,6 @@ class MemoryBackend(Backend):
         Called to read a given amount of bytes of a revisions data. By default, all
         data is read.
         """
-        if chunksize < 0:
-            return revision._data.read()
-
         return revision._data.read(chunksize)
 
     def _write_revision_data(self, revision, data):
