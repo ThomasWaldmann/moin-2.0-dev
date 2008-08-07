@@ -566,7 +566,7 @@ class Page(object):
                 # there is no ACL defined on this page
                 return AccessControlList(self.request.cfg)
             else:
-                return AccessControlList(self.request.cfg, acl_string)
+                return AccessControlList(self.request.cfg, [acl_string])
 
     def split_title(self, force=0):
         """ Return a string with the page name split by spaces, if the user wants that.
@@ -1494,8 +1494,9 @@ class RootPage(object):
         if user or return_objects:
             # Filter names
             pages = []
-            for name in items:
-                page = Page(request, name)
+            for item in items:
+                page = Page.from_item(request, item)
+                name = page.page_name
 
                 # Filter out pages user may not read.
                 if user and not user.may.read(name):

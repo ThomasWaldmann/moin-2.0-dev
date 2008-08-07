@@ -10,7 +10,6 @@ import py.test
 
 from MoinMoin._tests.ldap_testbase import LDAPTstBase, LdapEnvironment, check_environ, SLAPD_EXECUTABLE
 from MoinMoin._tests.ldap_testdata import *
-from MoinMoin._tests import nuke_user
 
 # first check if we have python 2.4, python-ldap and slapd:
 msg = check_environ()
@@ -97,8 +96,6 @@ class TestBugDefaultPasswd(LDAPTstBase):
         from MoinMoin.auth import MoinAuth
         moin_auth = MoinAuth()
         self.config = self.TestConfig(auth=[ldap_auth, moin_auth], user_autocreate=True)
-
-        nuke_user(self.request, u'usera')
 
         handle_auth = self.request.handle_auth
 

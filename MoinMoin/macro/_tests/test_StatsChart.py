@@ -12,7 +12,7 @@ from MoinMoin import caching, macro
 from MoinMoin.logfile import eventlog
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.Page import Page
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestStatsCharts:
     """StartsChart: testing StatsChart macro """
@@ -24,9 +24,6 @@ class TestStatsCharts:
         # clean page scope cache entries
         for key in ['text_html', 'pagelinks', ]:
             caching.CacheEntry(self.request, self.page, key, scope='item').remove()
-
-    def teardown_class(self):
-        nuke_page(self.request, self.pagename)
 
     def _make_macro(self):
         """Test helper"""

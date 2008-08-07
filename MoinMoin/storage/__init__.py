@@ -81,9 +81,15 @@ class Backend(object):
     def search_item(self, searchterm):
         """
         Takes a searchterm and returns an iterator (maybe empty) over matching
-        objects.
+        item objects (NOT item names!).
         """
-        raise NotImplementedError()
+        # Very simple implementation because we have no indexing
+        # or anything like that. If you want to optimize this, override it.
+        # Needs self.iteritems.
+        for item in self.iteritems():
+            searchterm.prepare()
+            if searchterm.evaluate(item):
+                yield item
 
     def get_item(self, itemname):
         """

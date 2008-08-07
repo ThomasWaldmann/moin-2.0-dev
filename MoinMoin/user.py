@@ -42,10 +42,8 @@ def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
     filter = term.ItemMetaDataMatch(key, value)
     ###identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
-    identifier = request.cfg.user_backend.search_item(filter)
-    users = []
-    for user in identifier:
-        users.append(User(request, user))
+    items = request.cfg.user_backend.search_item(filter)
+    users = [User(request, item.name) for item in items]
     return users
 
 
