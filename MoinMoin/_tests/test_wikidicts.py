@@ -13,7 +13,7 @@ from MoinMoin import wikidicts
 from MoinMoin import Page
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.user import User
-from MoinMoin._tests import append_page, become_trusted, create_page, create_random_string_list, nuke_page, nuke_user
+from MoinMoin._tests import append_page, become_trusted, create_page, create_random_string_list
 
 class TestGroupPage:
 
@@ -128,7 +128,6 @@ class TestGroupDicts:
         isgroup = request.cfg.cache.page_group_regexact.search
         grouppages = request.rootpage.getPageList(user='', filter=isgroup)
         result = request.dicts.has_member(u'AnotherGroup', u'ExampleUser')
-        nuke_page(request, u'AnotherGroup')
 
         assert result is True
 
@@ -144,8 +143,6 @@ class TestGroupDicts:
         isgroup = request.cfg.cache.page_group_regexact.search
         grouppages = request.rootpage.getPageList(user='', filter=isgroup)
         result = request.dicts.has_member(u'OtherGroup', u'ExampleUser')
-        nuke_page(request, u'OtherGroup')
-        nuke_page(request, u'SomeGroup')
 
         assert result is True
 
@@ -161,7 +158,6 @@ class TestGroupDicts:
         page = create_page(request, u'UserGroup', "\n".join(page_content))
         page = append_page(request, u'UserGroup', u' * %s' % test_user)
         result = request.dicts.has_member('UserGroup', test_user)
-        nuke_page(request, u'UserGroup')
 
         assert result is True
 
@@ -183,8 +179,6 @@ class TestGroupDicts:
             User(request, name=test_user, password=test_user).save()
 
         result = request.dicts.has_member('UserGroup', test_user)
-        nuke_page(request, u'UserGroup')
-        nuke_user(request, test_user)
 
         assert result is True
 
@@ -203,7 +197,6 @@ class TestGroupDicts:
         # saves the text without test_user
         page.saveText(page_content, None)
         result = request.dicts.has_member('UserGroup', test_user)
-        nuke_page(request, u'UserGroup')
 
         assert result is False
 
@@ -221,7 +214,6 @@ class TestGroupDicts:
         member = u" * %s\n" % test_user
         page.saveText(member, None, trivial=1)
         result = request.dicts.has_member('UserGroup', test_user)
-        nuke_page(request, u'UserGroup')
 
         assert result is True
 
