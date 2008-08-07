@@ -118,7 +118,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from mercurial import hg, ui, context, util, commands
+from mercurial import hg, ui, context, util, commands, merge
 from mercurial.node import nullid
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
@@ -136,6 +136,8 @@ import errno
 import time
 
 from MoinMoin import log
+from MoinMoin.util import diff3
+from MoinMoin.PageEditor import conflict_markers
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import BackendError, NoSuchItemError,\
                                    NoSuchRevisionError,\
@@ -184,6 +186,9 @@ class MercurialBackend(Backend):
                     raise BackendError("Directory not empty: %s" % self._path)
         try:
             self._repo = hg.repository(self._ui, self._r_path, create)
+            os.environ["HGMERGE"] = "internal:fail"
+            # self._ui.setconfig("merge-patterns", "**", "internal:fail")
+            # self._ui.setconfig("ui", "merge", "internal:fail")
         except RepoError:
             if create:
                 raise BackendError("Repository exists at path: %s" % self._r_path)
@@ -326,8 +331,6 @@ class MercurialBackend(Backend):
         Called to read a given amount of bytes of a revisions data. By default, all
         data is read.
         """
-        if chunksize < 0:
-            return revision._data.read()
         return revision._data.read(chunksize)
 
     def _seek_revision_data(self, revision, position, mode):
@@ -425,7 +428,6 @@ class MercurialBackend(Backend):
         meta = dict(("moin_%s" % key, value) for key, value in rev.iteritems())
         meta['__timestamp'] = rev.timestamp
         lock = self._repolock()
-
         try:
             def getfilectx(repo, memctx, path):
                 return context.memfilectx(path, data, False, False, False)
@@ -440,36 +442,44 @@ class MercurialBackend(Backend):
             else:
                 fname = [item._id]
                 filelog = self._repo.file(item._id)
-                n = filelog.node(item._uncommitted_revision.revno - 1)
+                n = filelog.node(rev.revno - 1)
                 if rev.revno in self._list_revisions(item):
                     p1, p2 = self._repo[filelog.linkrev(n)].node(), nullid
 
             ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx, user, extra=meta)
-            if item._uncommitted_revision.revno == 0:
+            if rev.revno == 0:
                 ctx._status[1] = [item._id]
             else:
                 ctx._status[0] = [item._id]
             self._repo.commitctx(ctx)
-
-            # policy: always merge with tip, at most two heads in this block
-            if len(self._repo.heads()) > 1:
-                meta = {}
-                
+            
+            if len(self._repo.heads()) > 1:  # policy: always merge with tip, 
+                meta = {}                    # at most two heads in this block
                 nodes = self._repo.changelog.nodesbetween([p1])[0]
                 newest_node = self._repo[len(self._repo) - 1].node()
                 for node in reversed(nodes):
                     if (node not in (p1, newest_node) and 
-                                            item._id in self._repo.changectx(node).files()):
+                                    item._id in self._repo.changectx(node).files()):
                         for n in (node, newest_node):                        
-                            meta.update(self._repo.changectx(n).extra())                        
-
-                commands.merge(self._ui, self._repo)  # XXX: invoke moin diff3 merge here
-                msg = "Merged %s" % item.name  # XXX: just for now
-                self._repo.commit(text=msg, user=user, files=[item._id], extra=meta)
+                            meta.update(self._repo.changectx(n).extra())
+                        break                        
+                
+                merge.update(self._repo, newest_node, True, False, False)                       
+                msg = "Merged %s" % item.name  # XXX: just for now                
+                parent_data = self._get_revision(item, rev.revno - 1).read()
+                other_data = self._get_revision(item, rev.revno).read()
+                my_data = data                
+                data = diff3.text_merge(parent_data, other_data, my_data, True, *conflict_markers)
+                #print data            
+                #self._repo.wwrite(item._id, data, "")
+                #self._repo.commit(user=user, text=msg, files=[item._id], extra=meta)
+                p1, p2 = self._repo.heads()
+                ctx = context.memctx(self._repo, (p1, p2), msg, [item._id], getfilectx, user, extra=meta)
+                self._repo._commitctx(ctx)            
             else:
                 commands.update(self._ui, self._repo)
             self._addnews(item._id, rev.revno, rev.timestamp)
-        finally:
+        finally:           
             del lock
             item._uncommitted_revision = None  # XXX: move to abstract
 
