@@ -45,13 +45,11 @@ class ConverterBase(object):
 
     def __call__(self, tree):
         for elem, href, page_name in self.recurse(tree, None):
-            print elem, href, page_name
             new_href = None
             if href.scheme == 'wiki.local':
                 new_href = self.handle_wikilocal(href, page_name)
             elif href.scheme == 'wiki':
                 new_href = self.handle_wiki(href)
-            print new_href
             if new_href is not None:
                 elem.set(self.tag_href, new_href)
         return tree
@@ -115,26 +113,12 @@ class ConverterPagelinks(ConverterBase):
                 output == 'application/x-moin-document;links=pagelinks':
             return cls
 
-    def handle_wikilocal(self, link, page_name):
-        if ':' in link:
-            wiki_name, link = link.split(':', 1)
+    def handle_wikilocal(self, input, page_name):
+        if ':' in input.path:
+            return None
 
-            if wiki_name in ('attachment', 'drawing', 'mailto'):
-                return
-
-            wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, wiki_name, link)
-
-            if not err and wikitag != 'Self':
-                return None
-
-        # handle anchors
-        try:
-            link, anchor = link.rsplit("#", 1)
-        except ValueError:
-            pass
-
-        if link:
-            link = wikiutil.AbsPageName(page_name, link)
+        if input.path:
+            link = wikiutil.AbsPageName(page_name, input.path)
             self.links.add(link)
 
     def __call__(self, tree):
