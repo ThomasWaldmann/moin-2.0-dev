@@ -41,7 +41,8 @@ class FSBackend(Backend):
         Returns the full path to the page directory.
         """
         name = wikiutil.quoteWikinameFS(name)
-        return os.path.join(self._path, name, *args)
+        path = os.path.join(self._path, 'pages', name, *args)
+        return path
 
     def _get_rev_path(self, itemname, revno):
         """
@@ -64,7 +65,8 @@ class FSBackend(Backend):
         return os.path.isfile(self._current_path(itemname))
 
     def iteritems(self):
-        for f in os.listdir(self._path):
+        pages_dir = os.path.join(self._path, 'pages')
+        for f in os.listdir(pages_dir):
             itemname = wikiutil.unquoteWikiname(f)
             try:
                 item = FsItem(self, itemname)
@@ -82,6 +84,9 @@ class FSBackend(Backend):
         except NoSuchItemError:
             # do a second try, interpreting it as attachment:
             return FsAttItem(self, itemname)
+
+    def search_item(self, searchterm):
+        return [] # just here to not have it crash when rendering a normal page
 
     def _get_item_metadata(self, item):
         return item._fs_meta
@@ -153,6 +158,8 @@ class FsRevision(StoredRevision):
     """ A moin 1.7 filesystem item revision (page, combines meta+data) """
     def __init__(self, item, revno):
         StoredRevision.__init__(self, item, revno)
+        if revno == -1: # not used by converter, but nice to try a life wiki
+            revno = item._fs_current
         revpath = item._backend._get_rev_path(item.name, revno)
         editlog = item._fs_editlog
         # we just read the page and parse it here, makes the rest of the code simpler:
@@ -284,7 +291,6 @@ class EditLog(LogFile):
     def find_attach(self, attachname):
         """ Find metadata for some attachment name in the edit-log. """
         for meta in self:
-            print repr(meta)
             if (meta['__rev'] == 99999998 and  # 99999999-1 because of 0-based
                 meta[EDIT_LOG_ACTION] =='ATTNEW' and
                 meta[EDIT_LOG_EXTRA] == attachname):
