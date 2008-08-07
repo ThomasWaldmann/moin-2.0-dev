@@ -409,7 +409,7 @@ class Converter(ConverterMacro):
 
         # TODO: Query string / fragment
         if link_page is not None:
-            target = str(uri.Uri(scheme='wiki.local', path=link_page))
+            target = str(uri.Uri(scheme='wiki.local', path=link_page.encode('utf-8')))
             text = link_page
         else:
             target = link_url
@@ -545,7 +545,8 @@ class Converter(ConverterMacro):
         attrib = {}
 
         if freelink_page:
-            link = uri.Uri(scheme='wiki.local', path=freelink_page)
+            # XXX: unicode
+            link = uri.Uri(scheme='wiki.local', path=freelink_page.encode('utf-8'))
             text = freelink_page
 
         else:
@@ -555,8 +556,10 @@ class Converter(ConverterMacro):
                 self.stack_top_append(freelink)
                 return
 
-            link = uri.Uri(scheme='wiki', authority=freelink_interwiki_ref,
-                    path='/' + freelink_interwiki_page)
+            # XXX: unicode
+            link = uri.Uri(scheme='wiki',
+                    authority=freelink_interwiki_ref.encode('utf-8'),
+                    path='/' + freelink_interwiki_page.encode('utf-8'))
             text = freelink_interwiki_page
 
         attrib[self.tag_href] = str(link)
