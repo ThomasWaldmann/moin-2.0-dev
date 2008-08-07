@@ -26,3 +26,4 @@ class TestMemoryBackend(BackendTest):
 
     def kill_backend(self):
         pass
+
