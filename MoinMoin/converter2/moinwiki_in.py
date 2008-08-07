@@ -12,7 +12,7 @@ import re
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import config, wikiutil
-from MoinMoin.util import namespaces
+from MoinMoin.util import namespaces, uri
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
 class _Iter(object):
@@ -48,8 +48,10 @@ class _Iter(object):
         self.__prepend.append(item)
 
 class Converter(ConverterMacro):
+    tag_a = ET.QName('a', namespaces.moin_page)
     tag_blockcode = ET.QName('blockcode', namespaces.moin_page)
     tag_div = ET.QName('div', namespaces.moin_page)
+    tag_href = ET.QName('href', namespaces.xlink)
     tag_page = ET.QName('page', namespaces.moin_page)
 
     @classmethod
@@ -395,16 +397,18 @@ class Converter(ConverterMacro):
                 (?P<link_page> [^|\]]+? )
             )
             \s*
-            ([|] \s* (?P<link_text>.+?) \s*)?
+            ([|] \s* (?P<link_text>[^|]*?) \s*)?
+            ([|] \s* (?P<link_args>.*?) \s*)?
             \]\]
         )
     """
 
-    def inline_link_repl(self, link, link_url=None, link_page=None, link_text=None):
+    def inline_link_repl(self, link, link_url=None, link_page=None,
+            link_text=None, link_args=None):
         """Handle all kinds of links."""
 
         if link_page is not None:
-            target = 'wiki.local:' + link_page
+            target = str(uri.Uri(scheme='wiki.local', path=link_page))
             text = link_page
         else:
             target = link_url
@@ -486,21 +490,20 @@ class Converter(ConverterMacro):
         self.stack_top_append(element)
 
     inline_freelink = r"""
-        (?P<freelink>
          (?:
           (?<![%(u)s%(l)s/])  # require anything not upper/lower/slash before
           |
           ^  # ... or beginning of line
          )
          (?P<freelink_bang>\!)?  # configurable: avoid getting CamelCase rendered as link
-         (
-          (?P<freelink_interwiki>
-           # XXX: Known problem
-           [A-Z][a-zA-Z]+\:
-           (?P<freelink_interwiki_page>
-            (?=[^ ]*[%(u)s%(l)s0..9][^ ]* )  # make sure there is something non-blank with at least one alphanum letter following
-            [^"\'}\]|:,.\)?!]+  # we take all until we hit some blank or punctuation char ...
-           )
+         (?P<freelink>
+          (?P<freelink_interwiki_ref>
+           [A-Z][a-zA-Z]+
+          )
+          \:
+          (?P<freelink_interwiki_page>
+           (?=[^ ]*[%(u)s%(l)s0..9][^ ]* )  # make sure there is something non-blank with at least one alphanum letter following
+           [^"\'}\]|:,.\)?!]+  # we take all until we hit some blank or punctuation char ...
           )
           |
           (?P<freelink_page>
@@ -524,7 +527,6 @@ class Converter(ConverterMacro):
           |
           $  # ... or end of line
          )
-        )
     """ % {
         'u': config.chars_upper,
         'l': config.chars_lower,
@@ -533,20 +535,28 @@ class Converter(ConverterMacro):
     }
 
     def inline_freelink_repl(self, freelink, freelink_bang=None,
-            freelink_interwiki=None, freelink_interwiki_page=None,
+            freelink_interwiki_page=None, freelink_interwiki_ref=None,
             freelink_page=None):
-        link = freelink_page or freelink_interwiki
-        text = freelink_page or freelink_interwiki_page
-
         if freelink_bang:
-            self.stack_top_append(text)
+            self.stack_top_append(freelink)
             return
 
-        tag = ET.QName('a', namespaces.moin_page)
-        tag_href = ET.QName('href', namespaces.xlink)
+        # TODO: Query string / fragment
+        attrib = {}
 
-        attrib = {tag_href: 'wiki.local:' + link}
-        element = ET.Element(tag, attrib, children=[text])
+        if freelink_page:
+            link = uri.Uri(scheme='wiki.local', path=freelink_page)
+            text = freelink_page
+
+        else:
+            # TODO: Check if interwiki is valid
+            link = uri.Uri(scheme='wiki', authority=freelink_interwiki_ref,
+                    path='/' + freelink_interwiki_page)
+            text = freelink_interwiki_page
+
+        attrib[self.tag_href] = str(link)
+
+        element = ET.Element(self.tag_a, attrib, children=[text])
         self.stack_top_append(element)
 
     inline_url = r"""
