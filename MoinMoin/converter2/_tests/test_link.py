@@ -29,6 +29,9 @@ class TestConverterExternOutput(object):
 
     def test_wikilocal(self):
         pairs = [
+            ('wiki.local:',
+                'Root',
+                './Root'),
             ('wiki.local:Test',
                 'Root',
                 './Test'),

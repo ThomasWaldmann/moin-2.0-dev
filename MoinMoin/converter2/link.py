@@ -63,21 +63,36 @@ class ConverterExternOutput(ConverterBase):
 
     # TODO: Deduplicate code
     def handle_wiki(self, input):
-        url = None
+        ret = uri.Uri(query=input.query, fragment=input.fragment)
 
         if input.authority:
             wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, input.authority, input.path[1:])
 
             if not err:
-                url = wikiutil.join_wiki(wikiurl, wikitail)
+                tmp = uri.Uri(wikiutil.join_wiki(wikiurl, wikitail))
+                ret.scheme, ret.authority, ret.path = tmp.scheme, tmp.authority, tmp.path
+                if tmp.query:
+                    if ret.query:
+                        ret.query += ';' + tmp.query
+                    else:
+                        ret.query = tmp.query
+                if tmp.fragment:
+                    if ret.fragment:
+                        ret.fragment += ';' + tmp.fragment
+                    else:
+                        ret.fragment = tmp.fragment
+            else:
+                # TODO
+                pass
 
-        if not url:
-            url = self.request.getScriptname() + input.path
+        else:
+            ret.path = self.request.getScriptname() + input.path
 
-        return str(uri.Uri(url, query=input.query, fragment=input.fragment))
+        return str(ret)
 
     def handle_wikilocal(self, input, page_name):
-        url = None
+        ret = uri.Uri(query=input.query, fragment=input.fragment)
+        link = None
 
         if input.path:
             if ':' in input.path:
@@ -90,10 +105,8 @@ class ConverterExternOutput(ConverterBase):
                 if wiki_name == 'mailto':
                     return 'mailto:' + link
 
-                wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, wiki_name, link)
-
-                if not err and wikitag != 'Self':
-                    url = wikiutil.join_wiki(wikiurl, wikitail)
+                # TODO: Remove users
+                return
 
             else:
                 link = input.path
@@ -101,10 +114,10 @@ class ConverterExternOutput(ConverterBase):
         else:
             link = page_name
 
-        if not url:
-            url = self.request.getScriptname() + '/' + wikiutil.AbsPageName(page_name, link)
+        if link:
+            ret.path = self.request.getScriptname() + '/' + wikiutil.AbsPageName(page_name, link)
 
-        return str(uri.Uri(urllib.quote(url), query=input.query, fragment=input.fragment))
+        return str(ret)
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
