@@ -32,7 +32,7 @@ class TestMercurialBackend(BackendTest):
         names = item_names + (u'_ĄółóĄ_', ) # tricky for internal hg quoting, however
                                             # not much needed if item names are hashes
         BackendTest.__init__(self, None, valid_names=names)
-        
+
 
     def create_backend(self):
         self.test_dir = mkdtemp()
@@ -109,10 +109,10 @@ instead of throwing RevisionAlreadyExistsError")
         no revisions appear. Just adding some meta or data,
         or what is stranger, delay like time.sleep(1) beetwen
         item1 and item2 commits makes it work as expected.
-        AFAIK this is not locking isssue, though needs more 
-        ivestigation in later time.        
+        AFAIK this is not locking isssue, though needs more
+        ivestigation in later time.
         This does not affect normal usage, since such empty
-        merge is useless, and is just duplication of data.        
+        merge is useless, and is just duplication of data.
         """
         item = self.backend.create_item("double-headed")
         item.create_revision(0)
@@ -125,7 +125,7 @@ instead of throwing RevisionAlreadyExistsError")
         item2.commit()
         assert item2.list_revisions() == range(4)
         item1 = self.backend.get_item("double-headed")
-        assert len(item1.list_revisions()) == 4  
+        assert len(item1.list_revisions()) == 4
         assert item1.list_revisions() == item2.list_revisions()
 
     def test_item_revmeta_merge(self):
@@ -157,8 +157,8 @@ instead of throwing RevisionAlreadyExistsError")
         item1.create_revision(1).write(first_text)
         item2.create_revision(1).write(second_text)
         item1.commit()
-        item2.commit()        
+        item2.commit()
         item = self.backend.get_item("lorem-ipsum")
         rev = item.get_revision(-1)
-        text = rev.read()            
+        text = rev.read()
         assert text == after_merge
