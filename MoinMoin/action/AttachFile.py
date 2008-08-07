@@ -470,11 +470,14 @@ def error_msg(pagename, request, msg):
 #############################################################################
 
 def send_link_rel(request, pagename):
-    files = _get_files(request, pagename)
-    for fname in files:
-        url = getAttachUrl(pagename, fname, request, do='view', escaped=1)
-        request.write(u'<link rel="Appendix" title="%s" href="%s">\n' % (
-                      wikiutil.escape(fname), url))
+    # XXX the need for this stuff is questionable
+    # and soon we won't have attachments any more, so we don't need it anyway
+    #files = _get_files(request, pagename)
+    #for fname in files:
+    #    url = getAttachUrl(pagename, fname, request, do='view', escaped=1)
+    #    request.write(u'<link rel="Appendix" title="%s" href="%s">\n' % (
+    #                  wikiutil.escape(fname), url))
+    pass
 
 
 def send_hotdraw(pagename, request):
