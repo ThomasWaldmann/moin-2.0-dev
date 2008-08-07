@@ -49,27 +49,16 @@ def become_superuser(request):
     if su_name not in request.cfg.superuser:
         request.cfg.superuser.append(su_name)
 
-def nuke_user(request, username):
-    """ completely delete a user """
-    user_dir = request.cfg.user_dir
-    user_id = user.getUserId(request, username)
-    # really get rid of the user
-    fpath = os.path.join(user_dir, user_id)
-    os.remove(fpath)
-    # delete cache
-    arena = 'user'
-    key = 'name2id'
-    caching.CacheEntry(request, arena, key, scope='wiki').remove()
-
 # Creating and destroying test pages --------------------------------
 
 def create_page(request, pagename, content, do_editor_backup=False):
     """ create a page with some content """
-    # make sure there is nothing already there:
-    nuke_page(request, pagename)
-    # now create from scratch:
+    # create page from scratch:
     page = PageEditor(request, pagename, do_editor_backup=do_editor_backup)
-    page.saveText(content, None)
+    try:
+        page.saveText(content, None)
+    except PageEditor.Unchanged:
+        pass
     return page
 
 def append_page(request, pagename, content, do_editor_backup=False):
@@ -81,15 +70,6 @@ def append_page(request, pagename, content, do_editor_backup=False):
     page = PageEditor(request, pagename, do_editor_backup=do_editor_backup)
     page.saveText(content, None)
     return page
-
-def nuke_page(request, pagename):
-    """ completely delete a page, everything in the pagedir """
-    #page = PageEditor(request, pagename, do_editor_backup=False)
-    #page.deletePage()
-    ## really get rid of everything there:
-    #fpath = page.getPagePath(check_create=0)
-    #shutil.rmtree(fpath, True)
-    request.cfg.data_backend.remove_item(pagename)
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """

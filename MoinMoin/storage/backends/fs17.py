@@ -85,9 +85,6 @@ class FSPageBackend(Backend):
             # do a second try, interpreting it as attachment:
             return FsAttachmentItem(self, itemname)
 
-    def search_item(self, searchterm):
-        return [] # just here to not have it crash when rendering a normal page
-
     def _get_item_metadata(self, item):
         return item._fs_meta
 
@@ -143,7 +140,11 @@ class FsPageItem(Item):
 
     def iter_attachments(self):
         attachmentspath = self._backend._get_item_path(self.name, 'attachments')
-        for f in os.listdir(attachmentspath):
+        try:
+            attachments = os.listdir(attachmentspath)
+        except OSError:
+            attachments = []
+        for f in attachments:
             attachname = f.decode('utf-8')
             try:
                 name = '%s/%s' % (self.name, attachname)
@@ -299,5 +300,156 @@ class EditLog(LogFile):
             raise KeyError
         del meta['__rev']
         return meta
+
+
+import re, codecs
+from MoinMoin import config
+
+class FSUserBackend(Backend):
+    """
+    MoinMoin 1.7 compatible, read-only, "just for the migration" filesystem backend.
+
+    Everything not needed for the migration will likely just raise a NotImplementedError.
+    """
+    def __init__(self, path, kill_save=False):
+        """
+        Initialise filesystem backend.
+
+        @param path: storage path (data_dir)
+        """
+        self._path = path
+        if kill_save:
+            # XXX dirty trick because this backend is read-only,
+            # XXX to be able to use the wiki logged-in
+            from MoinMoin.user import User
+            User.save = lambda x: None # do nothing, we can't save
+
+    def _get_item_path(self, name, *args):
+        """
+        Returns the full path to the page directory.
+        """
+        path = os.path.join(self._path, 'user', name, *args)
+        return path
+
+    def has_item(self, itemname):
+        return os.path.isfile(self._get_item_path(itemname))
+
+    def iteritems(self):
+        user_dir = os.path.join(self._path, 'user')
+        for itemname in os.listdir(user_dir):
+            try:
+                item = FsUserItem(self, itemname)
+            except NoSuchItemError:
+                continue
+            else:
+                yield item
+
+    def get_item(self, itemname):
+        return FsUserItem(self, itemname)
+
+    def _get_item_metadata(self, item):
+        return item._fs_meta
+
+    def _list_revisions(self, item):
+        # user items have no revisions (storing everything in item metadata)
+        return []
+
+    def _get_revision(self, item, revno):
+        raise NoSuchRevisionError('Item %r has no revision %d (no revisions at all)!' %
+                (item.name, revno))
+
+
+# Specialized Items/Revisions
+
+class FsUserItem(Item):
+    """ A moin 1.7 filesystem item (user) """
+    user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
+
+    def __init__(self, backend, itemname):
+        if not self.user_re.match(itemname):
+            raise NoSuchItemError("userid does not match user_re")
+        Item.__init__(self, backend, itemname)
+        try:
+            self._fs_meta = self._parse_userprofile(itemname)
+        except (OSError, IOError):
+            # no current file means no item
+            raise NoSuchItemError("No such item, %r" % itemname)
+
+    def _parse_userprofile(self, itemname):
+        meta_file = codecs.open(self._backend._get_item_path(itemname), "r", config.charset)
+        metadata = {}
+        for line in meta_file:
+            if line.startswith('#') or line.strip() == "":
+                continue
+            key, value = line.strip().split('=', 1)
+            # Decode list values
+            if key.endswith('[]'):
+                key = key[:-2]
+                value = _decode_list(value)
+
+            # Decode dict values
+            elif key.endswith('{}'):
+                key = key[:-2]
+                value = _decode_dict(value)
+
+            metadata[key] = value
+        meta_file.close()
+        return metadata
+
+
+def _encode_list(items):
+    """
+    Encode list of items in user data file
+
+    Items are separated by '\t' characters.
+
+    @param items: list unicode strings
+    @rtype: unicode
+    @return: list encoded as unicode
+    """
+    items = [item.strip() for item in items]
+    items = [item for item in items if item]
+    line = '\t'.join(items)
+    return line
+
+def _decode_list(line):
+    """
+    Decode list of items from user data file
+
+    @param line: line containing list of items, encoded with _encode_list
+    @rtype: list of unicode strings
+    @return: list of items in encoded in line
+    """
+    items = [item.strip() for item in line.split('\t')]
+    items = [item for item in items if item]
+    return items
+
+def _encode_dict(items):
+    """
+    Encode dict of items in user data file
+
+    Items are separated by '\t' characters.
+    Each item is key:value.
+
+    @param items: dict of unicode:unicode
+    @rtype: unicode
+    @return: dict encoded as unicode
+    """
+    items = [u'%s:%s' % (key, value) for key, value in items.items()]
+    line = '\t'.join(items)
+    return line
+
+def _decode_dict(line):
+    """
+    Decode dict of key:value pairs from user data file
+
+    @param line: line containing a dict, encoded with _encode_dict
+    @rtype: dict
+    @return: dict  unicode:unicode items
+    """
+    items = [item.strip() for item in line.split('\t')]
+    items = [item for item in items if item]
+    items = [item.split(':', 1) for item in items]
+    return dict(items)
 
 

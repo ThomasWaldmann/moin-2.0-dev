@@ -27,7 +27,7 @@ class CacheError(Exception):
 
 def get_arena_dir(request, arena, scope):
     if scope == 'item': # arena is a Page instance
-        return os.path.join(request.cfg.cache_dir, 'page', sha.new(arena.page_name).hexdigest())
+        return os.path.join(request.cfg.cache_dir, 'page', sha.new(arena.page_name.encode('utf-8')).hexdigest())
     elif scope == 'wiki':
         return os.path.join(request.cfg.cache_dir, request.cfg.siteid, arena)
     elif scope == 'farm':

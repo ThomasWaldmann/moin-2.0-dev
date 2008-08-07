@@ -104,9 +104,9 @@
     IMPORTANT: This version of backend runs on newest development version of mercurial
     and small, additional patch for allowing multiple empty commits in a row
     patch: MoinMoin/storage/backends/research/repo_force_changes.diff
-    
+
     HOW TO GET IT WORKING:
-    1) hg clone -r 6773 http://selenic.com/repo/hg 
+    1) hg clone -r 6773 http://selenic.com/repo/hg
         [newer revisions were not tested, do on your own risk]
     2) make local
     3) export PYTHONPATH=your_hg_devel_dir
@@ -242,13 +242,6 @@ class MercurialBackend(Backend):
         item._id = item_id
         return item
 
-    def search_item(self, searchterm):
-        """Returns generator for iterating over matched items by searchterm."""
-        for item in self.iteritems():
-            searchterm.prepare()
-            if searchterm.evaluate(item):
-                yield item
-
     def iteritems(self):
         """
         Return generator for iterating through items collection
@@ -296,15 +289,15 @@ class MercurialBackend(Backend):
         revision = StoredRevision(item, revno)
         revision._data = StringIO.StringIO(ctx.filectx(item._id).data())
         revision._item_id = item._id
-        revision._metadata = dict(((key.lstrip("moin_"), value) for key, value in ctx.extra().iteritems() 
+        revision._metadata = dict(((key.lstrip("moin_"), value) for key, value in ctx.extra().iteritems()
                                    if key.startswith('moin_')))
         return revision
-    
+
     def _get_revision_size(self, rev):
         tip = self._repo.changelog.tip()
         ftx = self._repo[tip][rev._item_id].filectx(rev.revno)
         return ftx.size()
-        
+
     def _list_revisions(self, item):
         """
         Return a list of Item revision numbers.
@@ -313,13 +306,13 @@ class MercurialBackend(Backend):
         """
         if not item._id:
             return []
-        else:                                                                            
+        else:
             revs = []
             ctxs = [revno for revno in iter(self._repo) if item._id in self._repo[revno].files()]
             # XXX: extremely slow, but no solution to include <merges> in revs by now
             # XXX: consider cmdutil.walkchangerevs
             for revno in xrange(len(ctxs)):
-                revs.append(revno)                                                                  
+                revs.append(revno)
             return revs
 
     def _write_revision_data(self, revision, data):
@@ -438,7 +431,7 @@ class MercurialBackend(Backend):
 
             p1, p2 = self._repo.changelog.tip(), nullid
             if not item._id:
-                self._add_item(item)                
+                self._add_item(item)
             else:
                 fname = [item._id]
                 filelog = self._repo.file(item._id)
@@ -452,34 +445,34 @@ class MercurialBackend(Backend):
             else:
                 ctx._status[0] = [item._id]
             self._repo.commitctx(ctx)
-            
-            if len(self._repo.heads()) > 1:  # policy: always merge with tip, 
+
+            if len(self._repo.heads()) > 1:  # policy: always merge with tip,
                 meta = {}                    # at most two heads in this block
                 nodes = self._repo.changelog.nodesbetween([p1])[0]
                 newest_node = self._repo[len(self._repo) - 1].node()
                 for node in reversed(nodes):
-                    if (node not in (p1, newest_node) and 
+                    if (node not in (p1, newest_node) and
                                     item._id in self._repo.changectx(node).files()):
-                        for n in (node, newest_node):                        
+                        for n in (node, newest_node):
                             meta.update(self._repo.changectx(n).extra())
-                        break                        
-                
-                merge.update(self._repo, newest_node, True, False, False)                       
-                msg = "Merged %s" % item.name  # XXX: just for now                
+                        break
+
+                merge.update(self._repo, newest_node, True, False, False)
+                msg = "Merged %s" % item.name  # XXX: just for now
                 parent_data = self._get_revision(item, rev.revno - 1).read()
                 other_data = self._get_revision(item, rev.revno).read()
-                my_data = data                
+                my_data = data
                 data = diff3.text_merge(parent_data, other_data, my_data, True, *conflict_markers)
-                #print data            
+                #print data
                 #self._repo.wwrite(item._id, data, "")
                 #self._repo.commit(user=user, text=msg, files=[item._id], extra=meta)
                 p1, p2 = self._repo.heads()
                 ctx = context.memctx(self._repo, (p1, p2), msg, [item._id], getfilectx, user, extra=meta)
-                self._repo._commitctx(ctx)            
+                self._repo._commitctx(ctx)
             else:
                 commands.update(self._ui, self._repo)
             self._addnews(item._id, rev.revno, rev.timestamp)
-        finally:           
+        finally:
             del lock
             item._uncommitted_revision = None  # XXX: move to abstract
 
@@ -567,7 +560,7 @@ class MercurialBackend(Backend):
         name_file.write(encoded_name)
         name_file.close()
         item._id = item_id
-        
+
     def news(self, timestamp=0):
         """
         News implementation reading the log file.

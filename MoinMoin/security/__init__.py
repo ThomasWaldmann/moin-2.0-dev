@@ -253,6 +253,7 @@ class AccessControlList:
     def __init__(self, cfg, lines=[]):
         """Initialize an ACL, starting from <nothing>.
         """
+        assert isinstance(lines, (list, tuple))
         if lines:
             self.acl = [] # [ ('User', {"read": 0, ...}), ... ]
             self.acl_lines = []
@@ -450,4 +451,9 @@ class ACLStringIterator:
 def parseACL(request, text):
     """ Parse acl lines from text and return ACL object """
     pi, dummy = wikiutil.split_body(text)
-    return AccessControlList(request.cfg, pi.get(ACL, []))
+    acls =  pi.get(ACL, [])
+    if not isinstance(acls, list):
+        # split_body only returns a list for acl key, if there were multiple acl lines!
+        acls = [acls] # make sure we have a LIST of acl lines
+    return AccessControlList(request.cfg, acls)
+

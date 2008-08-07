@@ -20,6 +20,7 @@
 import StringIO
 from threading import Lock
 import time
+from operator import attrgetter
 
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
@@ -44,16 +45,23 @@ class MemoryBackend(Backend):
 
         self._item_metadata_lock = {}       # {id : Lockobject}
 
-    def search_item(self, searchterm):
+    def news(self):
         """
-        Takes a searchterm and returns an iterator (maybe empty) over matching
-        objects.
+        Returns an iterator over all revisions created for all items in their
+        reverse timestamp order.
         """
-        # This is a very very very stupid algorithm
-        for item in self.iteritems():
-            searchterm.prepare()
-            if searchterm.evaluate(item):
-                yield item
+        #XXX Harden the below against concurrency, etc.
+        all_revisions = []
+
+        for item_name in self._itemmap:
+            item = self.get_item(item_name)
+            for revno in item.list_revisions():
+                rev = item.get_revision(revno)
+                all_revisions.append(rev)
+
+        all_revisions.sort(key = attrgetter("timestamp"))
+        all_revisions.reverse()
+        return iter(all_revisions)
 
 
     def get_item(self, itemname):
@@ -261,6 +269,9 @@ class MemoryBackend(Backend):
         """
         This method tries to release a lock on the given Item.
         """
+        if item._item_id is None and self.has_item(item.name):
+            raise  ItemAlreadyExistsError, "The Item whose metadata you tried to publish already exists."
+
         if item._item_id is None:
             # not committed yet, no locking, store item
             self._add_item_internally(item)

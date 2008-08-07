@@ -132,15 +132,6 @@ class FSBackend(Backend):
         newsfile.write(struct.pack('!LLQ', itemid, revid, ts))
         newsfile.close()
 
-    def search_item(self, searchterm):
-        # Very simple implementation because we have no indexing
-        # or anything like that, and the name matches are already
-        # quite optimised by default.
-        for item in self.iteritems():
-            searchterm.prepare()
-            if searchterm.evaluate(item):
-                yield item
-
     def _get_item_id(self, itemname):
         """
         Get ID of item (or None if no such item exists)
