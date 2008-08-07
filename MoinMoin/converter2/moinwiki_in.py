@@ -407,6 +407,7 @@ class Converter(ConverterMacro):
             link_text=None, link_args=None):
         """Handle all kinds of links."""
 
+        # TODO: Query string / fragment
         if link_page is not None:
             target = str(uri.Uri(scheme='wiki.local', path=link_page))
             text = link_page
@@ -541,7 +542,6 @@ class Converter(ConverterMacro):
             self.stack_top_append(freelink)
             return
 
-        # TODO: Query string / fragment
         attrib = {}
 
         if freelink_page:
@@ -549,7 +549,12 @@ class Converter(ConverterMacro):
             text = freelink_page
 
         else:
-            # TODO: Check if interwiki is valid
+            wikitag_bad = wikiutil.resolve_interwiki(self.request,
+                    freelink_interwiki_ref, freelink_interwiki_page)[3]
+            if wikitag_bad:
+                self.stack_top_append(freelink)
+                return
+
             link = uri.Uri(scheme='wiki', authority=freelink_interwiki_ref,
                     path='/' + freelink_interwiki_page)
             text = freelink_interwiki_page
