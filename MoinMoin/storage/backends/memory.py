@@ -342,6 +342,8 @@ class TracingStoredRevision(StoredRevision):
 
 class TracingBackend(MemoryBackend):
     """ Records every operation. When you are finished calling things, run get_code or get_func."""
+    # XXX could use weakrefs to determine if objects are still alive and keep them alive according
+    # to the sampled info in order to emulate scalability issues
     Item = TracingItem
     StoredRevision = TracingStoredRevision
     NewRevision = TracingNewRevision
@@ -382,7 +384,7 @@ def _get_thingie_wrapper(thingie):
     def wrap_thingie(func):
         def wrapper(*args, **kwargs):
             assert not kwargs
-            retval = func(*args, **kwargs)
+            retval = func(*args, **kwargs) # XXX no try/except -> we do not log operations with exceptions ...
             args[0]._backend.log_expr("    %s%s.%s(*%s)" % (_retval_to_expr(retval),
                 _get_thingie_id(thingie, args[0]), func.func_name, repr(args[1:])))
             return retval
