@@ -230,7 +230,7 @@ class Converter(ConverterMacro):
         lines = _Iter(self.block_nowiki_lines(iter, nowiki_marker_len))
 
         if nowiki_data.startswith('#!'):
-            args = wikiutil.parse_quoted_separated(nowiki_data[2:], separator=None)
+            args = wikiutil.parse_quoted_separated(nowiki_data[2:].strip(), separator=None)
             name = args[0].pop(0)
 
             # Parse it directly if the type is ourself
