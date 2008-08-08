@@ -168,7 +168,7 @@ class FsPageRevision(StoredRevision):
         editlog = item._fs_editlog
         # we just read the page and parse it here, makes the rest of the code simpler:
         try:
-            content = file(revpath, 'r').read()
+            content = open(revpath, 'r').read()
         except (IOError, OSError):
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
             meta = {DELETED: True}
@@ -253,7 +253,7 @@ class FsAttachmentRevision(StoredRevision):
         meta = editlog_data
         meta['__size'] = 0 # not needed for converter
         self._fs_meta = meta
-        self._fs_data_file = file(attpath, 'rb')
+        self._fs_data_file = open(attpath, 'rb') # XXX keeps file open as long as attachment revision exists
 
 
 from MoinMoin.logfile import LogFile
