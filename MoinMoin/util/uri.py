@@ -3,6 +3,8 @@ MoinMoin - Generic? URI implementation
 
 Implements the generic URI form defined by RFC 3986.
 
+TODO: Invent a unicode-aware class for wiki links
+
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
@@ -75,6 +77,12 @@ class Uri(object):
                 fragment = match.group('fragment')
                 if fragment is not None:
                     self.fragment = urllib.unquote(fragment)
+
+    def __setattr__(self, key, value):
+        if key in ('scheme', 'authority', 'path', 'query', 'fragment'):
+            if value is not None:
+                value = str(value)
+        super(Uri, self).__setattr__(key, value)
 
     def __str__(self):
         ret = []
