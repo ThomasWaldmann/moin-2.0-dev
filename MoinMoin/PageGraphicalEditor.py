@@ -55,7 +55,7 @@ class PageGraphicalEditor(PageEditor.PageEditor):
         # check edit permissions
         if not request.user.may.write(self.page_name):
             msg = _('You are not allowed to edit this page.')
-        elif self.rev != self.current_rev():
+        elif self.rev >= 0:
             # Trying to edit an old version, this is not possible via
             # the web interface, but catch it just in case...
             msg = _('Cannot edit old revisions!')
@@ -73,7 +73,7 @@ class PageGraphicalEditor(PageEditor.PageEditor):
         # Did one of the prechecks fail?
         if msg:
             request.theme.add_msg(msg, "error")
-            self.send_page()
+            self.send_page(emit_headers=False)
             return
 
         # check if we want to load a draft
