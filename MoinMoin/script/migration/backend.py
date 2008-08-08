@@ -50,7 +50,7 @@ class PluginScript(MoinScript):
 
 def clone(src, dst):
     """Clone items from source into destination backend with revision creation order preservation."""
-    for revision in src.news():
+    for revision in reversed([rev for rev in src.news()]):
         name = revision.item.name
         if revision.revno == 0:  # first rev, create item
             new_item = dst.create_item(name)
