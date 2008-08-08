@@ -14,6 +14,7 @@
 """
 
 import shutil
+from operator import attrgetter
 
 from MoinMoin.script import MoinScript, fatal
 
@@ -42,22 +43,23 @@ class PluginScript(MoinScript):
         except AttributeError:
             fatal("Please, configure your %(user)s_backend and %(user)s_backend_source in wikiconfig.py." %
                   {'user': self.options.backend_type})
-        try:
-            clone(src_backend, dst_backend)
-        except NotImplementedError:  # compat for fs17 for a while
-            old_clone(src_backend, dst_backend)
+        clone(src_backend, dst_backend)
 
 
 def clone(src, dst):
     """Clone items from source into destination backend with revision creation order preservation."""
-    for revision in reversed([rev for rev in src.news()]):
+    revs = []
+    for item in src.iteritems():
+        revs.extend([item.get_revision(revno) for revno in item.list_revisions()])
+    revs.sort(key = attrgetter("timestamp"))
+    for revision in revs:
         name = revision.item.name
         if revision.revno == 0:  # first rev, create item
             new_item = dst.create_item(name)
-            new_item.change_metatdata()
+            new_item.change_metadata()
             for key in item.iterkeys():
                 new_item[key] = revision.item[key]
-            new_item.publish_metatdata()
+            new_item.publish_metadata()
         else:
             new_item = dst.get_item(name)
         new_rev = new_item.create_revision(revision.revno)
@@ -69,27 +71,4 @@ def clone(src, dst):
                 new_rev[k] = tuple(v)
         shutil.copyfileobj(revision, new_rev)
         new_item.commit()
-
-def old_clone(source, destination):
-    """Clone items from source into destination backend. NO revision creation order."""
-    def clone_item(backend, item):
-        new_item = backend.create_item(item.name)
-        for revno in item.list_revisions():  # revs
-            rev, new_rev = item.get_revision(revno), new_item.create_revision(revno)
-            for k, v in rev.iteritems():
-                try:
-                    new_rev[k] = v
-                except TypeError:
-                    new_rev[k] = tuple(v)  # list to tuple
-            new_rev.timestamp = rev.timestamp
-            shutil.copyfileobj(rev, new_rev)
-            new_item.commit()
-
-        new_item.change_metadata()  # meta
-        for key in item.keys():
-            new_item[key] = item[key]
-        new_item.publish_metadata()
-
-    for item in source.iteritems():
-        clone_item(destination, item)
 
