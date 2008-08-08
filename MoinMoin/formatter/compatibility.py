@@ -16,7 +16,7 @@ from HTMLParser import HTMLParser as _HTMLParserBase
 
 from MoinMoin import wikiutil
 from MoinMoin.converter2._wiki_macro import ConverterMacro
-from MoinMoin.util import namespaces
+from MoinMoin.util import namespaces, uri
 
 class _HTMLParser(_HTMLParserBase):
     AUTOCLOSE = "p", "li", "tr", "th", "td", "head", "body"
