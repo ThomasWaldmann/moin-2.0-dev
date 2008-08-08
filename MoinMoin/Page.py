@@ -283,7 +283,6 @@ class Page(object):
             return self.current_rev()
         return self.rev
 
-    @staticmethod  # TODO: Write own "decorator" for 2.3 compatibility
     def from_item(request, item, rev=-1):
         """
         TODO: Remove this method.
@@ -295,6 +294,8 @@ class Page(object):
         page._item = item
         page.rev = rev
         return page
+
+    from_item = staticmethod(from_item)
 
     def getPagePath(self, *args, **kw):
         """
