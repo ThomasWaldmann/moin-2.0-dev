@@ -14,7 +14,6 @@
 """
 
 import shutil
-from operator import attrgetter
 
 from MoinMoin.script import MoinScript, fatal
 
@@ -51,7 +50,7 @@ def clone(src, dst):
     revs = []
     for item in src.iteritems():
         revs.extend([item.get_revision(revno) for revno in item.list_revisions()])
-    revs.sort(key = attrgetter("timestamp"))
+    revs.sort(lambda x, y: cmp(x.timestamp, y.timestamp))
     for revision in revs:
         name = revision.item.name
         if revision.revno == 0:  # first rev, create item
