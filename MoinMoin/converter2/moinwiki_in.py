@@ -69,7 +69,10 @@ class Converter(ConverterMacro):
 
         attrib = {}
         if self.page_name is not None:
-            attrib[tag_page_href] = 'wiki:///' + self.page_name
+            # TODO: unicode URI
+            attrib[tag_page_href] = str(uri.Uri(scheme='wiki',
+                authority='',
+                path='/' + self.page_name.encode('utf-8')))
 
         self.root = ET.Element(tag, attrib=attrib)
         self._stack = [self.root]
@@ -409,6 +412,7 @@ class Converter(ConverterMacro):
 
         # TODO: Query string / fragment
         if link_page is not None:
+            # TODO: unicode URI
             target = str(uri.Uri(scheme='wiki.local', path=link_page.encode('utf-8')))
             text = link_page
         else:
@@ -545,8 +549,13 @@ class Converter(ConverterMacro):
         attrib = {}
 
         if freelink_page:
-            # XXX: unicode
-            link = uri.Uri(scheme='wiki.local', path=freelink_page.encode('utf-8'))
+            page = freelink_page.encode('utf-8')
+            if '#' in page:
+                path, fragment = page.rsplit('#', 1)
+            else:
+                path, fragment = page, None
+            # TODO: unicode URI
+            link = uri.Uri(scheme='wiki.local', path=path, fragment=fragment)
             text = freelink_page
 
         else:
@@ -556,7 +565,7 @@ class Converter(ConverterMacro):
                 self.stack_top_append(freelink)
                 return
 
-            # XXX: unicode
+            # TODO: unicode URI
             link = uri.Uri(scheme='wiki',
                     authority=freelink_interwiki_ref.encode('utf-8'),
                     path='/' + freelink_interwiki_page.encode('utf-8'))
