@@ -14,7 +14,7 @@
 
     ---
 
-    Third iteration of backend.
+    Fourth iteration of backend.
 
     Items with Revisions are stored in hg internal directory.
     Operations on Items are done in memory, utilizing new mercurial features:
@@ -255,6 +255,43 @@ class MercurialBackend(Backend):
             yield item
             r = c.each()
 
+    def news(self, timestamp=0):
+        """
+        News implementation reading the log file.
+        """
+        try:
+            newsfile = open(self._news, 'rb')
+        except IOError, err:
+            if err.errno != errno.ENOENT:
+                raise
+            return
+        newsfile.seek(0, 2)
+        offs = newsfile.tell() - 1
+        # shouldn't happen, but let's be sure we don't get a partial record
+        offs -= offs % 28
+        tstamp = None
+        while tstamp is None or tstamp >= timestamp and offs >= 0:
+            # seek to current position
+            newsfile.seek(offs)
+            # read news item
+            rec = newsfile.read(28)
+            # decrease current position by 16 to get to previous item
+            offs -= 28
+            item_id, revno, tstamp = struct.unpack('!16sLQ', rec)
+            try:
+                inamef = open(os.path.join(self._path, '%s,name' % item_id), 'rb')
+                iname = inamef.read().decode('utf-8')
+                inamef.close()
+            except IOError, err:
+                if err.errno != errno.ENOENT:
+                    raise
+                # oops, no such file, item/revision removed manually?
+                continue
+            item = Item(self, iname)
+            item._item_id = item_id
+            rev = StoredRevision(item, revno, tstamp)
+            yield rev
+
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
         revs = self._list_revisions(item)
@@ -294,9 +331,38 @@ class MercurialBackend(Backend):
         return revision
 
     def _get_revision_size(self, rev):
+        """Get size of Revision."""
         tip = self._repo.changelog.tip()
         ftx = self._repo[tip][rev._item_id].filectx(rev.revno)
         return ftx.size()
+
+    def _get_revision_metadata(self, rev):
+        """Return Revision metadata dictionary."""
+        tip = self._repo.changelog.tip()
+        fctx = self._repo[tip][rev.item_id].filectx(rev.revno)
+        return dict(((key.lstrip("_"), value) for key, value in
+                     fctx.changectx().extra().iteritems() if key.startswith('_')))
+
+    def _get_revision_timestamp(self, rev):
+        """Return revision timestamp"""
+        if rev._metadata is None:
+            self._get_revision_metadata(rev)
+        return rev._metadata['__timestamp']
+
+    def _write_revision_data(self, revision, data):
+        """Write data to the Revision."""
+        revision._data.write(data)
+
+    def _read_revision_data(self, revision, chunksize):
+        """
+        Called to read a given amount of bytes of a revisions data. By default, all
+        data is read.
+        """
+        return revision._data.read(chunksize)
+
+    def _seek_revision_data(self, revision, position, mode):
+        """Set the revisions cursor on the revisions data."""
+        revision._data.seek(position, mode)
 
     def _list_revisions(self, item):
         """
@@ -314,21 +380,6 @@ class MercurialBackend(Backend):
             for revno in xrange(len(ctxs)):
                 revs.append(revno)
             return revs
-
-    def _write_revision_data(self, revision, data):
-        """Write data to the Revision."""
-        revision._data.write(data)
-
-    def _read_revision_data(self, revision, chunksize):
-        """
-        Called to read a given amount of bytes of a revisions data. By default, all
-        data is read.
-        """
-        return revision._data.read(chunksize)
-
-    def _seek_revision_data(self, revision, position, mode):
-        """Set the revisions cursor on the revisions data."""
-        revision._data.seek(position, mode)
 
     def _rename_item(self, item, newname):
         """
@@ -368,6 +419,21 @@ class MercurialBackend(Backend):
         finally:
             del lock
 
+    def _get_item_metadata(self, item):
+        """Load Item metadata from file. Return dictionary."""
+        if item._id:
+            try:
+                f = open(self._upath(item._id + ".meta"), "rb")
+                item._metadata = pickle.load(f)
+                f.close()
+            except IOError, err:
+                if err.errno != errno.ENOENT:
+                    raise
+                item._metadata = {}
+        else:
+            item._metadata = {}
+        return item._metadata
+
     def _change_item_metadata(self, item):
         """Start Item metadata transaction."""
         if item._id:
@@ -393,21 +459,6 @@ class MercurialBackend(Backend):
             if item._metadata is None:
                 item._metadata = {}
             write_meta_item(self._upath("%s.meta" % item._id), item._metadata)
-
-    def _get_item_metadata(self, item):
-        """Load Item metadata from file. Return dictionary."""
-        if item._id:
-            try:
-                f = open(self._upath(item._id + ".meta"), "rb")
-                item._metadata = pickle.load(f)
-                f.close()
-            except IOError, err:
-                if err.errno != errno.ENOENT:
-                    raise
-                item._metadata = {}
-        else:
-            item._metadata = {}
-        return item._metadata
 
     def _commit_item(self, item):
         """Commit Item changes within transaction (Revision) to repository."""
@@ -512,13 +563,6 @@ class MercurialBackend(Backend):
         """Return absolute path to unrevisioned Item in repository."""
         return os.path.join(self._u_path, filename)
 
-    def _get_revision_metadata(self, rev):
-        """Return Revision metadata dictionary."""
-        tip = self._repo.changelog.tip()
-        fctx = self._repo[tip][rev.item_id].filectx(rev.revno)
-        return dict(((key.lstrip("_"), value) for key, value in
-                     fctx.changectx().extra().iteritems() if key.startswith('_')))
-
     def _create_new_cdb(self):
         """Create new name-mapping if it doesn't exist yet."""
         if not os.path.exists(self._name_db):
@@ -561,42 +605,7 @@ class MercurialBackend(Backend):
         name_file.close()
         item._id = item_id
 
-    def news(self, timestamp=0):
-        """
-        News implementation reading the log file.
-        """
-        try:
-            newsfile = open(self._news, 'rb')
-        except IOError, err:
-            if err.errno != errno.ENOENT:
-                raise
-            return
-        newsfile.seek(0, 2)
-        offs = newsfile.tell() - 1
-        # shouldn't happen, but let's be sure we don't get a partial record
-        offs -= offs % 28
-        tstamp = None
-        while tstamp is None or tstamp >= timestamp and offs >= 0:
-            # seek to current position
-            newsfile.seek(offs)
-            # read news item
-            rec = newsfile.read(28)
-            # decrease current position by 16 to get to previous item
-            offs -= 28
-            item_id, revno, tstamp = struct.unpack('!16sLQ', rec)
-            try:
-                inamef = open(os.path.join(self._path, '%s,name' % item_id), 'rb')
-                iname = inamef.read().decode('utf-8')
-                inamef.close()
-            except IOError, err:
-                if err.errno != errno.ENOENT:
-                    raise
-                # oops, no such file, item/revision removed manually?
-                continue
-            item = Item(self, iname)
-            item._item_id = item_id
-            rev = StoredRevision(item, revno, tstamp)
-            yield rev
+
 
     def _addnews(self, item_id, revid, ts):
         """
