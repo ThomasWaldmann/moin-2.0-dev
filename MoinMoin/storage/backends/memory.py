@@ -269,6 +269,9 @@ class MemoryBackend(Backend):
         """
         This method tries to release a lock on the given Item.
         """
+        if item._item_id is None and self.has_item(item.name):
+            raise  ItemAlreadyExistsError, "The Item whose metadata you tried to publish already exists."
+
         if item._item_id is None:
             # not committed yet, no locking, store item
             self._add_item_internally(item)
