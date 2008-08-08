@@ -8,7 +8,7 @@ MoinMoin - Macro base class
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
-from MoinMoin.util import namespaces
+from MoinMoin.util import namespaces, uri
 
 class MacroBase(object):
     """
@@ -81,8 +81,10 @@ class MacroPageLinkListBase(MacroBlockBase):
 
         page_list = ET.Element(tag_l, attrib={attr_generate: ordered and 'ordered' or 'unordered'})
         for pagename in pagenames:
-            url = u'wiki.local:' + pagename # XXX do a hint that this link is generated or pagelinks cache
-                                            # will have all pages, leading to problems with OrphanedPages!
+            # XXX do a hint that this link is generated or pagelinks cache
+            # will have all pages, leading to problems with OrphanedPages!
+            # TODO: unicode URI
+            url = str(uri.Uri(scheme='wiki.local', path=pagename.encode('utf-8')))
             pagelink = ET.Element(tag_a, attrib={attr_href_xlink: url}, children=[pagename])
             item_body = ET.Element(tag_li_body, children=[pagelink])
             item = ET.Element(tag_li, children=[item_body])
@@ -103,8 +105,10 @@ class MacroNumberPageLinkListBase(MacroBlockBase):
         num_page_list = ET.Element(tag_l, attrib={attr_generate: ordered and 'ordered' or 'unordered'})
         for num, pagename in num_pagenames:
             num_code = ET.Element(tag_code, children=["%6d " % num])
-            url = u'wiki.local:' + pagename # XXX do a hint that this link is generated or pagelinks cache
-                                            # will have all pages, leading to problems with OrphanedPages!
+            # XXX do a hint that this link is generated or pagelinks cache
+            # will have all pages, leading to problems with OrphanedPages!
+            # TODO: unicode URI
+            url = str(uri.Uri(scheme='wiki.local', path=pagename.encode('utf-8')))
             pagelink = ET.Element(tag_a, attrib={attr_href_xlink: url}, children=[pagename])
             item_body = ET.Element(tag_li_body, children=[num_code, pagelink])
             item = ET.Element(tag_li, children=[item_body])
