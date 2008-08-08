@@ -156,10 +156,10 @@ logging = log.getLogger("MercurialBackend")
 class MercurialBackend(Backend):
     """Implements backend storage using mercurial version control system."""
 
-    def __init__(self, path, create=True):
+    def __init__(self, path):
         """
         Create backend data layout and initialize mercurial repository.
-        Optionally can use already existing structure and repository.
+        If bakckend already exists, use structure and repository.
         """
         self._path = os.path.abspath(path)
         self._news = os.path.join(self._path, 'news')
@@ -170,37 +170,31 @@ class MercurialBackend(Backend):
         self._item_metadata_lock = {}
         self._lockref = None
         self._name_lockref = None
+        os.environ["HGMERGE"] = "internal:fail"
 
-        if not os.path.isdir(self._path):
-            raise BackendError("Invalid path: %s" % self._path)
-        if create:
-            for path in (self._u_path, self._r_path):
-                try:
-                    if os.listdir(path):
-                        raise BackendError("Directory not empty: %s" % path)
-                except OSError:
-                    pass  # directory not existing
-            for item in os.listdir(self._path):
-                if (os.path.isdir(item) and item not in ('rev', 'meta') or
-                        not os.path.isdir(os.path.join(self._path, item)) and item != "name-mapping"):
-                    raise BackendError("Directory not empty: %s" % self._path)
         try:
-            self._repo = hg.repository(self._ui, self._r_path, create)
-            os.environ["HGMERGE"] = "internal:fail"
-            # self._ui.setconfig("merge-patterns", "**", "internal:fail")
-            # self._ui.setconfig("ui", "merge", "internal:fail")
+            os.mkdir(self._path)
+        except OSError, err:
+            if err.errno == errno.EACCES:
+                raise BackendError("No permisions on path: %s" % self._path)
+            elif not os.path.isdir(self._path):
+                raise BackendError("Invalid path: %s" % self._path)
+        # if directories not empty and no mapping exists, refuse
+        for path in (self._u_path, self._r_path):
+            try:
+                if os.listdir(path) and not os.path.exists(self._name_db):
+                    raise BackendError("No name-mapping and directory not empty: %s" % path)
+            except OSError:
+                 os.mkdir(path)
+        # also refuse on no mapping and some unrelated files in main dir:
+        # XXX: should we even bother they could use names on fs for future items?
+        if (not os.path.exists(self._name_db) and
+            filter(lambda x: x not in ['rev', 'meta', 'name-mapping', 'news'], os.listdir(self._path))):
+            raise BackendError("No name-mapping and directory not empty: %s" % self._path)
+        try:
+            self._repo = hg.repository(self._ui, self._r_path, create=True)
         except RepoError:
-            if create:
-                raise BackendError("Repository exists at path: %s" % self._r_path)
-            else:
-                raise BackendError("Repository does not exist at path: %s" % self._r_path)
-        try:
-            os.mkdir(self._u_path)
-        except OSError:
-            if not os.path.isdir(self._u_path):
-                if create:
-                    shutil.rmtree(self._r_path)  # rollback
-                raise BackendError("Unable to create directory: %s" % self._path)
+            self._repo = hg.repository(self._ui, self._r_path)
 
         if not os.path.exists(self._name_db):
             lock = self._namelock()
@@ -514,9 +508,6 @@ class MercurialBackend(Backend):
                 other_data = self._get_revision(item, rev.revno).read()
                 my_data = data
                 data = diff3.text_merge(parent_data, other_data, my_data, True, *conflict_markers)
-                #print data
-                #self._repo.wwrite(item._id, data, "")
-                #self._repo.commit(user=user, text=msg, files=[item._id], extra=meta)
                 p1, p2 = self._repo.heads()
                 ctx = context.memctx(self._repo, (p1, p2), msg, [item._id], getfilectx, user, extra=meta)
                 self._repo._commitctx(ctx)
