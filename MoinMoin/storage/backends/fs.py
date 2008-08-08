@@ -216,8 +216,8 @@ class FSBackend(Backend):
         if revno in revs:
             raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the item %r" % (revno, item.name))
         elif revno != last_rev + 1:
-            raise RevisionNumberMismatchError("The latest revision is %d, thus you cannot create revision number %d. \
-                                               The revision number must be latest_revision + 1." % (last_rev, revno))
+            raise RevisionNumberMismatchError("The latest revision of the item '%r' is %d, thus you cannot create revision number %d. \
+                                               The revision number must be latest_revision + 1." % (item.name, last_rev, revno))
 
         rev = NewRevision(item, revno)
         rev._revno = revno
