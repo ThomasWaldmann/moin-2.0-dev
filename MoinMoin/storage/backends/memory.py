@@ -60,8 +60,9 @@ class MemoryBackend(Backend):
                 all_revisions.append(rev)
 
         all_revisions.sort(key = attrgetter("timestamp"))
-        all_revisions.reverse()
-        return iter(all_revisions)
+
+        # For the sake of 2.3 compatibility we don't use .reverse() here...:
+        return iter(all_revisions[::-1])
 
 
     def get_item(self, itemname):
