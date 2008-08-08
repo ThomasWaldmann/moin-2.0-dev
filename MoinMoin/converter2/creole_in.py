@@ -26,7 +26,7 @@ import re
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
-from MoinMoin.util import namespaces
+from MoinMoin.util import namespaces, uri
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
 class _Iter(object):
@@ -80,7 +80,10 @@ class Converter(ConverterMacro):
 
         attrib = {}
         if self.page_name is not None:
-            attrib[tag_page_href] = 'wiki:///' + self.page_name
+            # TODO: unicode URI
+            attrib[tag_page_href] = str(uri.Uri(scheme='wiki',
+                authority='',
+                path='/' + self.page_name.encode('utf-8')))
 
         self.root = ET.Element(tag, attrib=attrib)
         self._stack = [self.root]
@@ -364,7 +367,8 @@ class Converter(ConverterMacro):
         """Handle all kinds of links."""
 
         if link_page is not None:
-            target = 'wiki.local:' + link_page
+            # TODO: unicode URI
+            target = str(uri.Uri(scheme='wiki.local', path=link_page.encode('utf-8')))
             text = link_page
         else:
             target = link_url
