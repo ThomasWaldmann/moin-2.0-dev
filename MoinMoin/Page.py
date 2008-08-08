@@ -464,11 +464,7 @@ class Page(object):
         @return: mtime of page (or 0 if page does not exist)
         """
         if self._rev is not None:
-            try:
-                timestamp = self._rev[EDIT_LOG_MTIME]
-            except KeyError:
-                timestamp = 0
-
+            timestamp = self._rev.timestamp
             if printable:
                 timestamp = self.request.user.getFormattedDateTime(timestamp)
 
