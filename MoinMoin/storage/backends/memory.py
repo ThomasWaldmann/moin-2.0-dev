@@ -20,7 +20,6 @@
 import StringIO
 from threading import Lock
 import time
-from operator import attrgetter
 
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
@@ -59,10 +58,9 @@ class MemoryBackend(Backend):
                 rev = item.get_revision(revno)
                 all_revisions.append(rev)
 
-        all_revisions.sort(key = attrgetter("timestamp"))
-
-        # For the sake of 2.3 compatibility we don't use .reverse() here...:
-        return iter(all_revisions[::-1])
+        all_revisions.sort(lambda x, y: cmp(x.timestamp, y.timestamp))
+        all_revisions.reverse()
+        return iter(all_revisions)
 
 
     def get_item(self, itemname):
