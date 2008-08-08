@@ -213,7 +213,10 @@ class Formatter(ConverterMacro):
                 pagename = page.page_name
             tag = ET.QName('a', namespaces.moin_page)
             tag_href = ET.QName('href', namespaces.xlink)
-            attrib = {tag_href: "wiki.local:" + pagename}
+            # TODO: unicode URI
+            link = str(uri.Uri(scheme='wiki.local',
+                path=pagename.encode('utf-8')))
+            attrib = {tag_href: link}
             self._stack_push(ET.Element(tag, attrib))
         else:
             self._stack_pop()
@@ -223,7 +226,11 @@ class Formatter(ConverterMacro):
         if on:
             tag = ET.QName('a', namespaces.moin_page)
             tag_href = ET.QName('href', namespaces.xlink)
-            attrib = {tag_href: "wiki://" + interwiki + '/' + pagename}
+            # TODO: unicode URI
+            link = str(uri.Uri(scheme='wiki',
+                authority=interwiki.encode('utf-8'),
+                path = '/' + pagename.encode('utf-8')))
+            attrib = {tag_href: link}
             self._stack_push(ET.Element(tag, attrib))
         else:
             self._stack_pop()
