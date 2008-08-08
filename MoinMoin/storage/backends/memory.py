@@ -60,8 +60,9 @@ class MemoryBackend(Backend):
                 all_revisions.append(rev)
 
         all_revisions.sort(key = attrgetter("timestamp"))
-        all_revisions.reverse()
-        return iter(all_revisions)
+
+        # For the sake of 2.3 compatibility we don't use .reverse() here...:
+        return iter(all_revisions[::-1])
 
 
     def get_item(self, itemname):
@@ -120,18 +121,20 @@ class MemoryBackend(Backend):
         if revno == -1 and revisions:
             revno = max(item.list_revisions())
 
-        if item_id not in self._item_revisions or revno not in self._item_revisions[item_id]:
+        try:
+            data = self._item_revisions[item_id][revno][0]
+            metadata = self._item_revisions[item_id][revno][1]
+
+        except KeyError:
             raise NoSuchRevisionError("No Revision #%d on Item %s - Available revisions: %r" % (revno, item.name, revisions))
 
-        data = self._item_revisions[item_id][revno][0]
-        metadata = self._item_revisions[item_id][revno][1]
+        else:
+            revision = StoredRevision(item, revno, timestamp=metadata['__timestamp'], size=len(data))
+            revision._data = StringIO.StringIO(data)
 
-        revision = StoredRevision(item, revno, timestamp=metadata['__timestamp'], size=len(data))
-        revision._data = StringIO.StringIO(data)
+            revision._metadata = metadata
 
-        revision._metadata = metadata
-
-        return revision
+            return revision
 
     def _list_revisions(self, item):
         """
