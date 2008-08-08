@@ -13,9 +13,11 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import shutil
+
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.storage import EDIT_LOG_MTIME
-CHUNK_SIZE = 4096
+
 
 class PluginScript(MoinScript):
     """Backend migration class."""
@@ -54,11 +56,9 @@ class PluginScript(MoinScript):
                         new_rev[k] = v
                     except TypeError:
                         new_rev[k] = tuple(v)  # list to tuple
-                    if not new_rev._metadata.has_key('__timestamp'):  # __key not accesible thorugh public API
-                            new_rev._metadata['__timestamp'] = rev[EDIT_LOG_MTIME]
-
-                for chunk in rev.read(CHUNK_SIZE):
-                    new_rev.write(chunk)
+                if not new_rev._metadata.has_key('__timestamp'):  # __key not accessible through public API
+                    new_rev._metadata['__timestamp'] = rev[EDIT_LOG_MTIME]
+                shutil.copyfileobj(rev, new_rev)
                 new_item.commit()
 
             new_item.change_metadata()  # meta
