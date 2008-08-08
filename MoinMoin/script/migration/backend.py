@@ -1,12 +1,12 @@
 # -*- coding: iso-8859-1 -*-
 """
     MoinMoin - backend migration script
-    
-    Recreate data from source backend either in data_backend or user_backend.    
+
+    Recreate data from source backend either in data_backend or user_backend.
     Assumptions:
     - defined user_backend/data_backend in wikiconfig
     - defined migration source backend (default: migration_source in wikiconfig)
-    
+
     TODO: tests
 
     @copyright: 2008 MoinMoin:PawelPacana
@@ -37,24 +37,24 @@ class PluginScript(MoinScript):
         elif self.options.backend_type == "data":
             dst_backend = request.cfg.data_backend
         else:
-            fatal("Please, choose backend type [--type].")                
+            fatal("Please, choose backend type [--type].")
         src = self.options.source_backend
         try:
             src_backend = getattr(request.cfg, src)
         except AttributeError:
             fatal("No such source backend: %s" % src)
-              
+
         def clone_item(backend, item):
             new_item = backend.create_item(item.name)
             for revno in item.list_revisions():  # revs
-                rev, new_rev = item.get_revision(revno), new_item.create_revision(revno)                
+                rev, new_rev = item.get_revision(revno), new_item.create_revision(revno)
                 rev.keys()  # metadata loaded lazily
                 # filter out deprecated meta
-                meta = dict(filter(lambda x: x[0] != EDIT_LOG_MTIME, rev.iteritems()))                                
+                meta = dict(filter(lambda x: x[0] != EDIT_LOG_MTIME, rev.iteritems()))
                 # this didn't work: new_rev.update(rev)
                 new_rev._metadata.update(meta)
                 if not new_rev.has_key('__timestamp'):
-                    new_rev._metadata['__timestamp'] = rev[EDIT_LOG_MTIME]                   
+                    new_rev._metadata['__timestamp'] = rev[EDIT_LOG_MTIME]
                 new_rev.write(rev.read())
                 new_item.commit()
 
