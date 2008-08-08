@@ -9,11 +9,9 @@ Expands all macro elements in a internal Moin document.
 """
 
 from emeraldtree import ElementTree as ET
-import htmlentitydefs
-from HTMLParser import HTMLParser as _HTMLParserBase
 
 from MoinMoin import macro, Page, wikiutil
-from MoinMoin.util import namespaces
+from MoinMoin.util import namespaces, uri
 
 class _PseudoParser(object):
     def __init__(self, request):
@@ -62,7 +60,7 @@ class Converter(object):
                 output == 'application/x-moin-document;macros=expandall':
             return cls
 
-    def handle_macro(self, elem, page_href):
+    def handle_macro(self, elem, page_name):
         name = elem.get(self.tag_macro_name)
         args = elem.get(self.tag_macro_args)
         context = elem.get(self.tag_macro_context)
@@ -70,8 +68,8 @@ class Converter(object):
 
         elem_body = ET.Element(self.tag_macro_body)
 
-        if not self._handle_macro_new(elem_body, page_href, name, args, context, alt):
-            self._handle_macro_old(elem_body, page_href, name, args, context, alt)
+        if not self._handle_macro_new(elem_body, page_name, name, args, context, alt):
+            self._handle_macro_old(elem_body, page_name, name, args, context, alt)
 
         elem.append(elem_body)
 
@@ -89,9 +87,7 @@ class Converter(object):
             return ET.Element(self.tag_p, children=[elem])
         return elem
 
-    def _handle_macro_new(self, elem_body, page_href, name, args, context, alt):
-        page_name = page_href[8:]
-
+    def _handle_macro_new(self, elem_body, page_name, name, args, context, alt):
         try:
             cls = wikiutil.importPlugin(self.request.cfg, 'macro2', name, function='Macro')
         except wikiutil.PluginMissingError:
@@ -104,11 +100,11 @@ class Converter(object):
 
         return True
 
-    def _handle_macro_old(self, elem_body, page_href, name, args, context, alt):
+    def _handle_macro_old(self, elem_body, page_name, name, args, context, alt):
         Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
 
         request = _PseudoRequest(self.request, name)
-        page = Page.Page(request, page_href[8:])
+        page = Page.Page(request, page_name)
         request.formatter = formatter = Formatter(request, page)
 
         m = macro.Macro(_PseudoParser(request))
@@ -156,23 +152,28 @@ class Converter(object):
 
         elem_body.extend(formatter.root[:])
 
-    def recurse(self, elem, page_href):
-        page_href = elem.get(self.tag_page_href, page_href)
+    def recurse(self, elem, page_name):
+        new_page_href = elem.get(self.tag_page_href)
+        if new_page_href:
+            # TODO: unicode URI
+            u = uri.Uri(new_page_href)
+            if u.authority == '' and u.path.startswith('/'):
+                page_name = u.path[1:].decode('utf-8')
 
         if elem.tag == self.tag_macro:
-            yield elem, page_href
+            yield elem, page_name
 
         for child in elem:
             if isinstance(child, ET.Node):
-                for i in self.recurse(child, page_href):
+                for i in self.recurse(child, page_name):
                     yield i
 
     def __init__(self, request):
         self.request = request
 
     def __call__(self, tree):
-        for elem, page_href in self.recurse(tree, None):
-            self.handle_macro(elem, page_href)
+        for elem, page_name in self.recurse(tree, None):
+            self.handle_macro(elem, page_name)
 
         return tree
 
