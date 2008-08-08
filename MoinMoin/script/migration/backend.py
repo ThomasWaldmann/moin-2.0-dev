@@ -7,7 +7,7 @@
     - defined user_backend/data_backend in wikiconfig
     - defined migration source backend (default: migration_source in wikiconfig)
 
-    TODO: tests
+    TODO: tests, case for comparing already existing items (interrupted migration)
 
     @copyright: 2008 MoinMoin:PawelPacana
     @license: GNU GPL, see COPYING for details.
@@ -15,6 +15,7 @@
 
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.storage import EDIT_LOG_MTIME
+CHUNK_SIZE = 4096
 
 class PluginScript(MoinScript):
     """Backend migration class."""
@@ -48,14 +49,16 @@ class PluginScript(MoinScript):
             new_item = backend.create_item(item.name)
             for revno in item.list_revisions():  # revs
                 rev, new_rev = item.get_revision(revno), new_item.create_revision(revno)
-                rev.keys()  # metadata loaded lazily
-                # filter out deprecated meta
-                meta = dict(filter(lambda x: x[0] != EDIT_LOG_MTIME, rev.iteritems()))
-                # this didn't work: new_rev.update(rev)
-                new_rev._metadata.update(meta)
-                if not new_rev.has_key('__timestamp'):
-                    new_rev._metadata['__timestamp'] = rev[EDIT_LOG_MTIME]
-                new_rev.write(rev.read())
+                for k, v in rev.iteritems():
+                    try:
+                        new_rev[k] = v
+                    except TypeError:
+                        new_rev[k] = tuple(v)  # list to tuple
+                    if not new_rev._metadata.has_key('__timestamp'):  # __key not accesible thorugh public API
+                            new_rev._metadata['__timestamp'] = rev[EDIT_LOG_MTIME]
+
+                for chunk in rev.read(CHUNK_SIZE):
+                    new_rev.write(chunk)
                 new_item.commit()
 
             new_item.change_metadata()  # meta
