@@ -11,7 +11,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from tempfile import mkdtemp, mkstemp
+from tempfile import mkdtemp, mkstemp, gettempdir
 import py.test
 import shutil
 import os
@@ -33,7 +33,6 @@ class TestMercurialBackend(BackendTest):
                                             # not much needed if item names are hashes
         BackendTest.__init__(self, None, valid_names=names)
 
-
     def create_backend(self):
         self.test_dir = mkdtemp()
         return MercurialBackend(self.test_dir)
@@ -42,37 +41,61 @@ class TestMercurialBackend(BackendTest):
         shutil.rmtree(self.test_dir)
 
     def test_backend_init(self):
-        nonexisting = os.path.join("/", "non-existing-dir")
-        py.test.raises(BackendError, MercurialBackend, nonexisting)
         emptydir, file = mkdtemp(), mkstemp()[1]
+        nonexisting = os.path.join(gettempdir(), 'to-be-created')
         dirstruct = mkdtemp()
         os.mkdir(os.path.join(dirstruct, "meta"))
         os.mkdir(os.path.join(dirstruct, "rev"))
         try:
-            py.test.raises(BackendError, MercurialBackend, emptydir, create=False)
+            assert isinstance(MercurialBackend(nonexisting), MercurialBackend)
             assert isinstance(MercurialBackend(emptydir), MercurialBackend)
-            py.test.raises(BackendError, MercurialBackend, emptydir)
-            assert isinstance(MercurialBackend(emptydir, create=False), MercurialBackend)
+            assert isinstance(MercurialBackend(emptydir), MercurialBackend) # init on existing
             py.test.raises(BackendError, MercurialBackend, file)
             assert isinstance(MercurialBackend(dirstruct), MercurialBackend)
         finally:
             shutil.rmtree(emptydir)
             shutil.rmtree(dirstruct)
+            shutil.rmtree(nonexisting)
             os.unlink(file)
 
+    def test_permission(self):
+        import sys
+        if sys.platform == 'win32':
+            py.test.skip("Not much usable test on win32.")
+        no_perms = os.path.join("/", "permission-error-dir")
+        py.test.raises(BackendError, MercurialBackend, no_perms)
+
     def test_backend_init_non_empty_datadir(self):
+        # assumption: if no mapping-file exists
+        # then any file in /meta, /rev and / other
+        # than name-mapping or news takes potential
+        # 'name' slot on fs for future item
         datadir = mkdtemp()
         os.mkdir(os.path.join(datadir, "meta"))
         os.mkdir(os.path.join(datadir, "rev"))
         try:
-            nameitem = mkstemp(dir=datadir)[1]
-            py.test.raises(BackendError, MercurialBackend, datadir)
-            os.unlink(nameitem)
+            # no name-mapping file
             revitem = mkstemp(dir=os.path.join(datadir, "rev"))[1]
             py.test.raises(BackendError, MercurialBackend, datadir)
             os.unlink(revitem)
-            mkstemp(dir=os.path.join(datadir, "meta"))[1]
+            metaitem = mkstemp(dir=os.path.join(datadir, "meta"))[1]
             py.test.raises(BackendError, MercurialBackend, datadir)
+            os.unlink(metaitem)
+            nameitem = mkstemp(dir=datadir)[1]
+            py.test.raises(BackendError, MercurialBackend, datadir)
+            os.unlink(nameitem)
+            # mapping file
+            file = open(os.path.join(datadir, "name-mapping"), 'w')
+            file.close()
+            nameitem = mkstemp(dir=datadir)[1]
+            assert isinstance(MercurialBackend(datadir), MercurialBackend)
+            os.unlink(nameitem)
+            revitem = mkstemp(dir=os.path.join(datadir, "rev"))[1]
+            assert isinstance(MercurialBackend(datadir), MercurialBackend)
+            os.unlink(revitem)
+            metaitem = mkstemp(dir=os.path.join(datadir, "meta"))[1]
+            assert isinstance(MercurialBackend(datadir), MercurialBackend)
+            os.unlink(metaitem)
         finally:
             shutil.rmtree(datadir)
 
