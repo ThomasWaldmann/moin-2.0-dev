@@ -9,7 +9,8 @@
 
     TODO: tests, case for comparing already existing items (interrupted migration)
 
-    @copyright: 2008 MoinMoin:PawelPacana
+    @copyright: 2008 MoinMoin:PawelPacana,
+                2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -45,35 +46,36 @@ class PluginScript(MoinScript):
         clone(src_backend, dst_backend)
 
 
-def clone(src, dst):
-    """Clone items from source into destination backend with revision creation order preservation."""
-    revs = []
-    for item in src.iteritems():
-        for revno in item.list_revisions():
-            rev = item.get_revision(revno)
-            revs.append((rev.timestamp, rev.revno, item.name, ))
-    revs.sort()
+def clone(src, dst, verbose):
+    """
+    From a given source backend src, copy all items (including the items metadata),
+    and their revisions (including the revisions metadata) into a given destination
+    backend dst.
+    """
+    # For every item in our old backend...
+    for old_item in src.iteritems():
+        new_item = dst.create_item(old_item.name)
 
-    for revitem in revs:
-        timestamp, revno, name = revitem
-        item = src.get_item(name)
-        try:
-            new_item = dst.get_item(name)
-        except NoSuchItemError:
-            new_item = dst.create_item(name)
-            new_item.change_metadata()
-            for k, v in item.iteritems():
-                new_item[k] = v
-            new_item.publish_metadata()
+        # ...copy the items metadata...
+        new_item.change_metadata()
+        for k, v in old_item.iteritems():
+            new_item[k] = v
+        new_item.publish_metadata()
 
-        new_rev = new_item.create_revision(revno)
-        new_rev.timestamp = timestamp
-        revision = item.get_revision(revno)
-        for k, v in revision.iteritems():
-            try:
-                new_rev[k] = v
-            except TypeError:
-                new_rev[k] = tuple(v)
-        shutil.copyfileobj(revision, new_rev)
-        new_item.commit()
+        # ...copy each revision of that item...
+        for revno in old_item.list_revisions():
+            old_rev = old_item.get_revision(revno)
+            new_rev = new_item.create_revision(revno)
 
+            # ...copy the metadata of the revision...
+            for k, v in old_rev.iteritems():
+                try:  # XXX Wrong layer to fix this, imho
+                    new_rev[k] = v
+                except TypeError:
+                    new_rev[k] = tuple(v)
+            new_rev.timestamp = old_rev.timestamp
+
+            # ... and copy the data of the revision.
+            shutil.copyfileobj(old_rev, new_rev)
+
+            new_item.commit()
