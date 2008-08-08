@@ -57,7 +57,6 @@ DELETED = "deleted"
 
 SIZE = "size"
 
-EDIT_LOG_MTIME = "edit_log_mtime"
 EDIT_LOG_ACTION = "edit_log_action"
 EDIT_LOG_ADDR = "edit_log_addr"
 EDIT_LOG_HOSTNAME = "edit_log_hostname"
@@ -65,7 +64,7 @@ EDIT_LOG_USERID = "edit_log_userid"
 EDIT_LOG_EXTRA = "edit_log_extra"
 EDIT_LOG_COMMENT = "edit_log_comment"
 
-EDIT_LOG = [EDIT_LOG_MTIME, EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
+EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
 
 
 class Backend(object):

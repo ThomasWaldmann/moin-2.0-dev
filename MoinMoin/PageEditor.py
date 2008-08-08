@@ -34,8 +34,8 @@ from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
-from MoinMoin.storage import DELETED, EDIT_LOG_MTIME, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, \
-                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION, EDIT_LOG_COMMENT
+from MoinMoin.storage import DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
 import MoinMoin.events.notification as notification
 
@@ -938,7 +938,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         timestamp = time.time()
 
-        newrev[EDIT_LOG_MTIME] = timestamp
         newrev[EDIT_LOG_ACTION] = action
         newrev[EDIT_LOG_ADDR] = addr
         newrev[EDIT_LOG_HOSTNAME] = hostname
