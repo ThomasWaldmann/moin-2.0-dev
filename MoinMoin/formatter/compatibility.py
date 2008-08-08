@@ -134,6 +134,7 @@ class Formatter(ConverterMacro):
     tag_h = ET.QName('h', namespaces.moin_page)
     tag_href = ET.QName('href', namespaces.xlink)
     tag_id = ET.QName('id', namespaces.moin_page)
+    tag_line_break = ET.QName('line-break', namespaces.moin_page)
     tag_item_label_generate = ET.QName('item-label-generate', namespaces.moin_page)
     tag_list = ET.QName('list', namespaces.moin_page)
     tag_list_item = ET.QName('list-item', namespaces.moin_page)
@@ -379,7 +380,8 @@ class Formatter(ConverterMacro):
     # Paragraphs, Lines, Rules ###########################################
 
     def linebreak(self, preformatted=1):
-        raise NotImplementedError('linebreak')
+        self._stack_top_append(ET.Element(self.tag_line_break))
+        return ''
 
     def paragraph(self, on, **kw):
         self.in_p = on != 0
