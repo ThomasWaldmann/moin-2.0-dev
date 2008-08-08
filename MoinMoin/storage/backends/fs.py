@@ -222,7 +222,7 @@ class FSBackend(Backend):
         rev = NewRevision(item, revno)
         rev._revno = revno
         fd, rev._fs_revpath = tempfile.mkstemp('-rev', 'tmp-', self._path)
-        rev._fs_file = os.fdopen(fd, 'wb')
+        rev._fs_file = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
         f = rev._fs_file
         f.write(struct.pack('!I', self._revmeta_reserved_space + 4))
         f.seek(self._revmeta_reserved_space + 4)
@@ -376,7 +376,7 @@ class FSBackend(Backend):
             oldrp = rev._fs_revpath
             oldf = rev._fs_file
             fd, rev._fs_revpath = tempfile.mkstemp('-rev', 'tmp-', self._path)
-            rev._fs_file = os.fdopen(fd, 'wb')
+            rev._fs_file = os.fdopen(fd, 'wb') # XXX keeps file open as long as rev exists (see also below)
             f = rev._fs_file
             f.write(struct.pack('!I', len(md) + 4))
             # write metadata
@@ -386,6 +386,7 @@ class FSBackend(Backend):
             shutil.copyfileobj(oldf, f)
             oldf.close()
             os.unlink(oldrp)
+            # XXX f.close() missing? (see also below)
         else:
             if not hasdata:
                 rev._fs_file.seek(0)
@@ -393,7 +394,7 @@ class FSBackend(Backend):
             else:
                 rev._fs_file.seek(4)
             rev._fs_file.write(md)
-            rev._fs_file.close()
+            rev._fs_file.close() # XXX this GETS closed!
 
         if item._fs_item_id is None:
             self._add_item_internally(item, newrev=rev._fs_revpath)
@@ -465,7 +466,7 @@ class FSBackend(Backend):
             datastart = f.read(4)
             datastart = struct.unpack('!L', datastart)[0]
             f.seek(datastart)
-            rev._fs_file = f
+            rev._fs_file = f # XXX keeps file open as long as rev exists
             rev._datastart = datastart
 
         return rev._fs_file.read(chunksize)
@@ -494,7 +495,9 @@ class FSBackend(Backend):
             datastart = f.read(4)
             datastart = struct.unpack('!L', datastart)[0]
             pos = datastart
-            rev._fs_file = f
+            rev._fs_file = f # XXX keeps file open as long as rev exists
+                             # XXX further, this is easily triggered by accessing ANY
+                             # XXX revision metadata (e.g. the timestamp or size or ACL)
             rev._datastart = datastart
         else:
             f = rev._fs_file
@@ -519,3 +522,4 @@ class FSBackend(Backend):
             rev._fs_file.seek(position, mode)
         else:
             rev._fs_file.seek(position + rev._datastart, mode)
+
