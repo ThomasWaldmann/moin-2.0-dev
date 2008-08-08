@@ -172,7 +172,7 @@ class FSBackend(Backend):
         c = cdb.init(self._name_db)
         r = c.each()
         while r:
-            item = Item(self, r[0])
+            item = Item(self, r[0].decode('utf-8'))
             item._fs_item_id = r[1]
             yield item
             r = c.each()
