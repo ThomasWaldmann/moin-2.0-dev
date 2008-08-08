@@ -49,20 +49,25 @@ def clone(src, dst):
     """Clone items from source into destination backend with revision creation order preservation."""
     revs = []
     for item in src.iteritems():
-        revs.extend([item.get_revision(revno) for revno in item.list_revisions()])
-    revs.sort(lambda x, y: cmp(x.timestamp, y.timestamp))
-    for revision in revs:
-        name = revision.item.name
-        if revision.revno == 0:  # first rev, create item
+        for revno in item.list_revisions():
+            rev = item.get_revision(revno)
+            revs.append((rev.timestamp, rev.revno, item.name, ))
+    revs.sort()
+
+    for revitem in revs:
+        timestamp, revno, name = revitem
+        item = src.get_item(name)
+        if revno == 0:  # first rev, create item
             new_item = dst.create_item(name)
             new_item.change_metadata()
             for key in item.iterkeys():
-                new_item[key] = revision.item[key]
+                new_item[key] = item[key]
             new_item.publish_metadata()
         else:
             new_item = dst.get_item(name)
-        new_rev = new_item.create_revision(revision.revno)
-        new_rev.timestamp = revision.timestamp
+        new_rev = new_item.create_revision(revno)
+        new_rev.timestamp = timestamp
+        revision = item.get_revision(revno)
         for k, v in revision.iteritems():
             try:
                 new_rev[k] = v
