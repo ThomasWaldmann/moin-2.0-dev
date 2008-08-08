@@ -56,8 +56,7 @@ class PluginScript(MoinScript):
                         new_rev[k] = v
                     except TypeError:
                         new_rev[k] = tuple(v)  # list to tuple
-                if not new_rev._metadata.has_key('__timestamp'):  # __key not accessible through public API
-                    new_rev._metadata['__timestamp'] = rev[EDIT_LOG_MTIME]
+                new_rev.timestamp = rev.timestamp
                 shutil.copyfileobj(rev, new_rev)
                 new_item.commit()
 
