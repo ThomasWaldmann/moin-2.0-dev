@@ -416,7 +416,8 @@ class Converter(ConverterMacro):
             target = str(uri.Uri(scheme='wiki.local', path=link_page.encode('utf-8')))
             text = link_page
         else:
-            target = link_url
+            # TODO: unicode URI
+            target = str(uri.Uri(link_url.encode('utf-8')))
             text = link_url
         tag = ET.QName('a', namespaces.moin_page)
         tag_href = ET.QName('href', namespaces.xlink)
@@ -487,7 +488,10 @@ class Converter(ConverterMacro):
         tag_alt = ET.QName('alt', namespaces.moin_page)
         tag_href = ET.QName('href', namespaces.xlink)
 
-        attrib = {tag_href: object_target}
+        # TODO: unicode URI
+        target = str(uri.Uri(object_target.encode('utf-8')))
+
+        attrib = {tag_href: target}
         if object_text is not None:
             attrib[tag_alt] = object_text
 
@@ -591,7 +595,9 @@ class Converter(ConverterMacro):
     def inline_url_repl(self, url, url_target):
         tag = ET.QName('a', namespaces.moin_page)
         tag_href = ET.QName('href', namespaces.xlink)
-        element = ET.Element(tag, attrib = {tag_href: url_target}, children = [url_target])
+        # TODO: unicode URI
+        url = str(uri.Uri(url_target.encode('utf-8')))
+        element = ET.Element(tag, attrib = {tag_href: url}, children = [url_target])
         self.stack_top_append(element)
 
     table = block_table
