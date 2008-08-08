@@ -27,9 +27,10 @@ class ConverterBase(object):
     def recurse(self, elem, page_name):
         new_page_href = elem.get(self.tag_page_href)
         if new_page_href:
+            # TODO: unicode URI
             u = uri.Uri(new_page_href)
             if u.authority == '' and u.path.startswith('/'):
-                page_name = u.path[1:]
+                page_name = u.path[1:].decode('utf-8')
 
         href = elem.get(self.tag_href, None)
         if href is not None:
@@ -131,7 +132,8 @@ class ConverterPagelinks(ConverterBase):
             return None
 
         if input.path:
-            link = wikiutil.AbsPageName(page_name, input.path)
+            # TODO: unicode URI
+            link = wikiutil.AbsPageName(page_name, input.path.decode('utf-8'))
             self.links.add(link)
 
     def __call__(self, tree):
