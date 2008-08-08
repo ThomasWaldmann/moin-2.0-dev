@@ -19,6 +19,10 @@ import shutil
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.storage.error import NoSuchItemError
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
+
 class PluginScript(MoinScript):
     """Backend migration class."""
     def __init__(self, argv, def_values):
@@ -26,6 +30,10 @@ class PluginScript(MoinScript):
         self.parser.add_option(
             "-t", "--type", dest="backend_type",
             help="Migrate specified type of backend: user, data"
+        )
+        self.parser.add_option(
+            "-v", "--verbose", dest="verbose", default=False,
+            help="Provide progress information while performing the migration"
         )
 
     def mainloop(self):
@@ -43,7 +51,7 @@ class PluginScript(MoinScript):
         except AttributeError:
             fatal("Please, configure your %(user)s_backend and %(user)s_backend_source in wikiconfig.py." %
                   {'user': self.options.backend_type})
-        clone(src_backend, dst_backend)
+        clone(src_backend, dst_backend, self.options.verbose)
 
 
 def clone(src, dst, verbose):
@@ -54,6 +62,8 @@ def clone(src, dst, verbose):
     """
     # For every item in our old backend...
     for old_item in src.iteritems():
+        if verbose:
+            logging.info("Copying '%s'" % old_item.name)
         new_item = dst.create_item(old_item.name)
 
         # ...copy the items metadata...
