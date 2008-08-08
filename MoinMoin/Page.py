@@ -30,8 +30,8 @@ from MoinMoin import config, caching, util, wikiutil, user
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage import Backend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage import DELETED, EDIT_LOG_MTIME, EDIT_LOG_ADDR, \
-                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, ACL
+from MoinMoin.storage import DELETED, EDIT_LOG_ADDR, ACL, \
+                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
@@ -464,11 +464,7 @@ class Page(object):
         @return: mtime of page (or 0 if page does not exist)
         """
         if self._rev is not None:
-            try:
-                timestamp = self._rev[EDIT_LOG_MTIME]
-            except KeyError:
-                timestamp = 0
-
+            timestamp = self._rev.timestamp
             if printable:
                 timestamp = self.request.user.getFormattedDateTime(timestamp)
 
@@ -553,20 +549,20 @@ class Page(object):
         @return: ACL of this page
         """
         from MoinMoin.security import AccessControlList
-        assert self._item is not None
-        try:
-            current_rev = self._item.get_revision(-1)
-        except NoSuchRevisionError:
-            # seems to be a page without any revisions!?
-            return AccessControlList(self.request.cfg)
-        else:
+        # Empty ACLs are used for all cases except this case: we have an item
+        # AND a item revision AND ACLs defined within that revision's metadata.
+        acls = []
+        if self._item is not None: # an item exists
             try:
-                acl_string = current_rev[ACL]
-            except KeyError:
-                # there is no ACL defined on this page
-                return AccessControlList(self.request.cfg)
+                current_rev = self._item.get_revision(-1)
+            except NoSuchRevisionError: # item has no revisions
+                pass
             else:
-                return AccessControlList(self.request.cfg, [acl_string])
+                try:
+                    acls = [current_rev[ACL]]
+                except KeyError: # no ACLs defined on current revision
+                    pass
+        return AccessControlList(self.request.cfg, acls)
 
     def split_title(self, force=0):
         """ Return a string with the page name split by spaces, if the user wants that.

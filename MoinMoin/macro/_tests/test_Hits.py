@@ -26,7 +26,7 @@ class TestHits:
         self.page = create_page(request, self.pagename, u"Foo!")
 
         # for that test eventlog needs to be empty
-        fpath = request.rootpage.getPagePath('event-log', isfile=1)
+        fpath = os.path.join(request.cfg.data_dir, 'event-log')
         if os.path.exists(fpath):
             os.remove(fpath)
 
@@ -50,7 +50,7 @@ class TestHits:
 
     def _cleanStats(self):
         # cleans all involved cache and log files
-        fpath = self.request.rootpage.getPagePath('event-log', isfile=1)
+        fpath = os.path.join(self.request.cfg.data_dir, 'event-log')
         if os.path.exists(fpath):
             os.remove(fpath)
         # hits is based on hitcounts which reads the cache

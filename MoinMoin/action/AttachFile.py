@@ -181,7 +181,7 @@ def info(pagename, request):
 #        raise
 
 def _write_stream(content, new_rev, bufsize=8192):
-    if isinstance(content, file):
+    if hasattr(content, "read"):
         while True:
             buf = content.read(bufsize)
             if not buf:

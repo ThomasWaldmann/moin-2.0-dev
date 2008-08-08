@@ -9,7 +9,6 @@
 
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
-from MoinMoin.storage import EDIT_LOG_MTIME
 from MoinMoin.storage.error import NoSuchRevisionError
 
 def execute(pagename, request):
@@ -68,7 +67,7 @@ def execute(pagename, request):
                 # TODO: Handle Exception sanely
                 pass
 
-            if revision[EDIT_LOG_MTIME] <= date:
+            if revision.timestamp <= date:
                 rev1 = revision.revno
                 break
         else:

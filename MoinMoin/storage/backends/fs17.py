@@ -18,9 +18,12 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin.storage import Backend, Item, StoredRevision, DELETED, \
-                             EDIT_LOG_MTIME, EDIT_LOG_ACTION, EDIT_LOG_ADDR, \
-                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+                             EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
+                             EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
+
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+
 
 class FSPageBackend(Backend):
     """
@@ -112,7 +115,7 @@ class FSPageBackend(Backend):
         return rev._fs_data_file.seek(position, mode)
 
     def _get_revision_timestamp(self, rev):
-        return rev._fs_meta['__timestamp']
+        return rev._fs_meta[EDIT_LOG_MTIME]
 
     def _get_revision_size(self, rev):
         return rev._fs_meta['__size']
@@ -202,7 +205,6 @@ class FsPageRevision(StoredRevision):
                     }
             meta, data = wikiutil.split_body(content)
         meta.update(editlog_data)
-        meta['__timestamp'] = editlog_data[EDIT_LOG_MTIME]
         meta['__size'] = 0 # not needed for converter
         self._fs_meta = meta
         self._fs_data_file = StringIO(data)
@@ -249,7 +251,6 @@ class FsAttachmentRevision(StoredRevision):
                 EDIT_LOG_COMMENT: '',
             }
         meta = editlog_data
-        meta['__timestamp'] = editlog_data[EDIT_LOG_MTIME]
         meta['__size'] = 0 # not needed for converter
         self._fs_meta = meta
         self._fs_data_file = file(attpath, 'rb')
