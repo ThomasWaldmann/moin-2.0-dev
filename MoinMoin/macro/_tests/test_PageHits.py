@@ -25,7 +25,7 @@ class TestHits:
         self.page = create_page(request, self.pagename, u"Foo!")
 
         # for that test eventlog needs to be empty
-        fpath = request.rootpage.getPagePath('event-log', isfile=1)
+        fpath = os.path.join(self.request.cfg.data_dir, 'event-log')
         if os.path.exists(fpath):
             os.remove(fpath)
 
