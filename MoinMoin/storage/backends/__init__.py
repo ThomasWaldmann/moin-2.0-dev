@@ -14,8 +14,9 @@ from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
 
 def clone(source, destination, verbose=False):
     """
-    Creates exact copy of source Backend with all its Items in the given
-    destination Backend. Optionally outputs results of copy.
+    Create exact copy of source Backend with all its Items in the given
+    destination Backend. Return a tuple of: processed Revisions count,
+    skipped Revsion numbers dict, failed Revision numbers dict
     """
     def compare_revision(rev1, rev2):
         if rev1.timestamp != rev2.timestamp:
@@ -30,11 +31,16 @@ def clone(source, destination, verbose=False):
         return True
 
     if verbose:
-        from MoinMoin import log
-        logging = log.getLogger(__name__)
-    skips, fails = {}, {}
+        import sys, os
+        # reopen stdout file descriptor with write mode
+        # and 0 as the buffer size (unbuffered)
+        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+        sys.stdout.write("[connverting %s to %s]: " % (source.__class__.__name__,
+                                                       destination.__class__.__name__, ))
+    count, skips, fails = 0, {}, {}
 
     for revision in source.history(reverse=False):
+
         name = revision.item.name
         try:
             new_item = destination.get_item(name)
@@ -48,31 +54,34 @@ def clone(source, destination, verbose=False):
         try:
             new_rev = new_item.create_revision(revision.revno)
         except RevisionAlreadyExistsError:
-            if compare_revision(new_item.get_revision(revision.revno), revision):
+            existing_revision = new_item.get_revision(revision.revno)
+            if compare_revision(existing_revision, revision):
                 try:
                     skips[name].append(revision.revno)
                 except KeyError:
                     skips[name] = [revision.revno]
                 if verbose:
-                    logging.info('s')
+                    sys.stdout.write("s")
             else:
                 try:
                     fails[name].append(revision.revno)
                 except KeyError:
                     fails[name] = [revision.revno]
                 if verbose:
-                    logging.info('F')
+                      sys.stdout.write("F")
         else:
             for k, v in revision.iteritems():
                 try:
                     new_rev[k] = v
-                except TypeError:
-                    new_rev[k] = tuple(v)
+                except TypeError:           # remove as soon as this gets fixed: see 17:32 < ThomasWaldmann>
+                    new_rev[k] = tuple(v)   # http://www.moinmo.in/MoinMoinChat/Logs/moin-dev/2008-08-09
             new_rev.timestamp = revision.timestamp
             shutil.copyfileobj(revision, new_rev)
 
             new_item.commit()
             if verbose:
-                logging.info('.')
-
-    return skips, fails
+                sys.stdout.write(".")
+        count += 1
+    if verbose:
+        sys.stdout.write("\n")
+    return count, skips, fails
