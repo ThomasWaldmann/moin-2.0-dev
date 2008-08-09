@@ -45,7 +45,7 @@ class TestPage:
 
     def testGetRevList(self):
         page = Page(self.request, u"FrontPage")
-        assert 1 in page.getRevList()
+        assert 0 in page.getRevList()
 
     def testGetPageLinks(self):
         page = Page(self.request, u"FrontPage")
@@ -70,9 +70,9 @@ class TestRootPage:
         cnt = 0
         for pg in pagelist:
             cnt += 1
-            if cnt > 100:
+            if cnt > 10:
                 break
-        assert cnt > 100
+        assert cnt > 10
         assert u'FrontPage' in pagelist
         assert u'' not in pagelist
 
