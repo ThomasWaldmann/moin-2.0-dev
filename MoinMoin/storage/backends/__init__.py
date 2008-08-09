@@ -73,7 +73,7 @@ def clone(source, destination, verbose=False):
                 except KeyError:
                     fails[name] = [revision.revno]
                 if verbose:
-                      sys.stdout.write("F")
+                    sys.stdout.write("F")
         else:
             for k, v in revision.iteritems():
                 try:
