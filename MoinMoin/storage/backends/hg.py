@@ -129,16 +129,14 @@ import tempfile
 import weakref
 import shutil
 import random
-import datetime
 import md5
 import os
 import errno
 import time
 
-from MoinMoin import log
 from MoinMoin.util import diff3
 from MoinMoin.PageEditor import conflict_markers
-from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
+from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision, EDIT_LOG_USERID, EDIT_LOG_COMMENT
 from MoinMoin.storage.error import BackendError, NoSuchItemError,\
                                    NoSuchRevisionError,\
                                    RevisionNumberMismatchError,\
@@ -150,7 +148,6 @@ except ImportError:
 
 PICKLEPROTOCOL = 1
 RAND_MAX = 1024
-logging = log.getLogger("MercurialBackend")
 
 
 class MercurialBackend(Backend):
@@ -216,8 +213,7 @@ class MercurialBackend(Backend):
         like a proxy for storing filled data. This method returns Item object.
         """
         if not isinstance(itemname, (str, unicode)):
-            raise TypeError("Wrong Item name type: %s" % (type(itemname)))
-        # XXX: should go to abstract
+            raise TypeError("Wrong Item name type: %s" % (type(itemname)))  # XXX: should go to abstract
         if self.has_item(itemname):
             raise ItemAlreadyExistsError("Item with that name already exists: %s" % itemname)
         item = Item(self, itemname)
@@ -250,9 +246,7 @@ class MercurialBackend(Backend):
             r = c.each()
 
     def history(self, timestamp=0, reverse=True):
-        """
-        History implementation reading the log file.
-        """
+        """History implementation reading the log file."""
         assert reverse is True, "history reading in non-reverse order not implemented yet"
         try:
             historyfile = open(self._history, 'rb')
@@ -305,24 +299,19 @@ class MercurialBackend(Backend):
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
         ctx = self._repo[self._repo.changelog.tip()]
-        #try:
         revs = self._list_revisions(item)
         if revno == -1 and revs:
             revno = max(revs)
-        #fctx = ctx[item._id].filectx(revno)
-        #except LookupError:
         if revno not in revs:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
         # XXX: to rewrite for more optimal
-        for item_rev, repo_rev in enumerate([revno_ for revno_ in iter(self._repo)
-                                              if item._id in self._repo[revno_].files()]):
-            if item_rev == revno:
+        for num, repo_rev in enumerate([r for r in iter(self._repo) if item._id in self._repo[r].files()]):
+            if num == revno:
                 ctx = self._repo[repo_rev]
         revision = StoredRevision(item, revno)
         revision._data = StringIO.StringIO(ctx.filectx(item._id).data())
         revision._item_id = item._id
-        revision._metadata = dict(((key.lstrip("moin_"), value) for key, value in ctx.extra().iteritems()
-                                   if key.startswith('moin_')))
+        revision._metadata = None
         return revision
 
     def _get_revision_size(self, rev):
@@ -334,14 +323,23 @@ class MercurialBackend(Backend):
     def _get_revision_metadata(self, rev):
         """Return Revision metadata dictionary."""
         tip = self._repo.changelog.tip()
-        fctx = self._repo[tip][rev.item_id].filectx(rev.revno)
-        return dict(((key.lstrip("_"), value) for key, value in
-                     fctx.changectx().extra().iteritems() if key.startswith('_')))
+        # XXX: this needs rethink after soc
+        # (along with idea of dropping patch and 1:1 mapping beetwen backend revs and hg filerevs)
+        for num, repo_rev in enumerate([r for r in iter(self._repo) if rev._item_id in self._repo[r].files()]):
+            if num == rev.revno:
+                ctx = self._repo[repo_rev]
+        metadata = {}
+        for k, v in ctx.extra().iteritems():
+            if k.startswith('moin_'):
+                metadata[k.lstrip('moin_')] = v
+            elif k.startswith('__'):
+                metadata[k] = v
+        return metadata
 
     def _get_revision_timestamp(self, rev):
         """Return revision timestamp"""
         if rev._metadata is None:
-            self._get_revision_metadata(rev)
+            return self._get_revision_metadata(rev)['__timestamp']
         return rev._metadata['__timestamp']
 
     def _write_revision_data(self, revision, data):
@@ -371,7 +369,7 @@ class MercurialBackend(Backend):
             revs = []
             ctxs = [revno for revno in iter(self._repo) if item._id in self._repo[revno].files()]
             # XXX: extremely slow, but no solution to include <merges> in revs by now
-            # XXX: consider cmdutil.walkchangerevs
+            # considering mercurial.cmdutil.walkchangerevs
             for revno in xrange(len(ctxs)):
                 revs.append(revno)
             return revs
@@ -457,32 +455,32 @@ class MercurialBackend(Backend):
 
     def _commit_item(self, item):
         """Commit Item changes within transaction (Revision) to repository."""
-        rev = item._uncommitted_revision
+        def getfilectx(repo, memctx, path):
+            return context.memfilectx(path, data, False, False, False)
+
         if not item._id and self.has_item(item.name):
             raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
 
+        rev = item._uncommitted_revision
         if rev.timestamp is None:
             rev.timestamp = long(time.time())
+        msg, user = rev.get(EDIT_LOG_COMMENT, ""), rev.get(EDIT_LOG_USERID, "anonymous")
+        data = rev._data.getvalue()
+        meta = {'__timestamp': rev.timestamp}
+        for k, v in rev.iteritems():
+            meta["moin_%s" % k] = v
 
-        meta = dict(("moin_%s" % key, value) for key, value in rev.iteritems())
-        meta['__timestamp'] = rev.timestamp
         lock = self._repolock()
         try:
-            def getfilectx(repo, memctx, path):
-                return context.memfilectx(path, data, False, False, False)
-
-            msg = meta.get("moin_comment", "")
-            user = meta.get("moin_editor", "anonymous")  # XXX: meta keys spec
-            data = rev._data.getvalue()
-
             p1, p2 = self._repo.changelog.tip(), nullid
             if not item._id:
                 self._add_item(item)
             else:
-                fname = [item._id]
-                filelog = self._repo.file(item._id)
-                n = filelog.node(rev.revno - 1)
                 if rev.revno in self._list_revisions(item):
+                    # XXX: API requires raise RevisionAlreadyExistsError here
+                    # we're _knowingly_ breaking this stuff _now_
+                    filelog = self._repo.file(item._id)
+                    n = filelog.node(rev.revno - 1)
                     p1, p2 = self._repo[filelog.linkrev(n)].node(), nullid
 
             ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx, user, extra=meta)
@@ -492,6 +490,8 @@ class MercurialBackend(Backend):
                 ctx._status[0] = [item._id]
             self._repo.commitctx(ctx)
 
+            # XXX: this is merging in backend
+            # in a few days should go to MergeAction
             if len(self._repo.heads()) > 1:  # policy: always merge with tip,
                 meta = {}                    # at most two heads in this block
                 nodes = self._repo.changelog.nodesbetween([p1])[0]
@@ -541,7 +541,6 @@ class MercurialBackend(Backend):
 
     def _itemlock(self, item):
         """Acquire unrevisioned Item lock."""
-        # XXX: long item name
         if not self._item_metadata_lock.has_key(item.name):
             self._item_metadata_lock[item.name] = None
         lpath = self._upath(item._id + ".lock")
@@ -569,9 +568,8 @@ class MercurialBackend(Backend):
     def _add_item(self, item):
         """Add new Item to name-mapping and create name file."""
         m = md5.new()
-        m.update("%s%s%d" % (datetime.datetime.now(), item.name.encode("utf-8"), random.randint(0, RAND_MAX)))
+        m.update("%s%s%d" % (time.time(), item.name.encode("utf-8"), random.randint(0, RAND_MAX)))
         item_id = m.hexdigest()
-        # XXX: something shorter wanted ;)
 
         encoded_name = item.name.encode('utf-8')
         name_path = os.path.join(self._path, '%s.name' % item_id)
@@ -597,12 +595,8 @@ class MercurialBackend(Backend):
         name_file.close()
         item._id = item_id
 
-
-
     def _addhistory(self, item_id, revid, ts):
-        """
-        Add a history item with current timestamp and the given data.
-        """
+        """Add a history item with current timestamp and the given data."""
         historyfile = open(self._history, 'ab')
         historyfile.write(struct.pack('!16sLQ', item_id, revid, ts))
         historyfile.close()
