@@ -1,0 +1,6 @@
+This is where the new moin17 storage backend stores its items.
+
+Currently, items only implement wiki pages.
+
+Later, a converter shall convert attachments to items (needs mimetype support in moin/items first).
+

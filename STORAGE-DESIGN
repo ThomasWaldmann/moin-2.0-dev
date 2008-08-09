@@ -1,0 +1,239 @@
+
+ INTRODUCTION
+==============
+
+MoinMoin traditionally has stored all data in an ad-hoc way on the
+filesystem and not structured this storage much. Caches and persistent data
+were intermingled, user and page storage were treated as entirely different
+things and, though accessed through specific routines, not abstracted.
+During Google's "Summer of Code" program in 2007, Heinrich Wendel worked on
+abstracting out the storage code to make it possible to use different
+storage 'backends', for example storing all data into a database rather than
+keeping it on the filesystem. While he did a good job of abstracting out the
+storage code and removing the previously rather deeply inbuilt assumption
+that all data is stored on the filesystem, he wasn't able to complete this
+work, today page attachments and per-page caches are still stored on the
+filesystem and a pure database backend is not possible to implement due to
+this. Additionally, a number of design mistakes in the backend were made
+that, at least partially, stem from the design problems the original
+filesystem storage code had and unfortunately preclude implementing better
+storage code even where the underlying storage permits.
+
+During Google's Summer of Code program in 2008, we will work on removing the
+limitations (making the attachment code use regular storage) and fixing the
+design mistakes. This document outlines the new design of the storage code.
+
+
+ OVERVIEW
+==========
+
+Based on MoinMoin's needs, we have identified the following requirements:
+
+ * The storage code must permit storing 'items' with arbitrary names,
+   per-item metadata and any number (even zero) of revisions which each
+   include data and metadata.
+ * Metadata is comprised of key/value pairs where keys are unicode strings
+   and values arbitrary python objects ([-], no arbitrary objects allowed)
+ * Revisions (including data and metadata) are assumed to be immutable.
+ * Items must be looked up by name.
+ * The storage must allow renaming items (e.g. a page rename) and should,
+   where possible, allow concurrent readers to obtain the data despite a
+   rename. [-]
+ * Per-item metadata must be mutable and hence atomically updateable in
+   full, not just each metadata key/value pair.
+ * Item and Revision creation must be atomic so that as soon as the item or
+   revision becomes reachable (can be looked up by name) all initial data is
+   reachable as well. [-]
+ * It must be possible to create items with initial revisions, i.e. there
+   must not be a time during saving a newly created item with newly added
+   revisions that the revisions are not visible to readers. [-]
+ * Storage code must be able to synchronise across multiple processes since
+   the MoinMoin code might run in a multi-process webserver.
+ * No read-locks should be necessary for read-only accesses to revision
+   data (hence the immutability assumption.)
+ * It should be possible to (efficiently) search through items including
+   lookups by item and revision metadata.
+ * Per-item locks must be available to avoid update-conflicts, i.e. two
+   writers concurrently overwriting an item's metadata with a new version in
+   which case one of the updates would be lost. Such locks must, of course,
+   also cover the read part of an update.
+
+(Items marked [-] are currently not implementable, cf. the BUGS file.)
+
+
+ CLASS STRUCTURE
+=================
+
+class Backend(object):
+	#
+	# Has the following:
+	#  - 'search' method taking a search term as filter expression
+	#    and returning an iterator over matching item objects
+	#  - 'get_item' method (returns Item object or raises exception)
+	#  - 'try_get_item' method (returms Item object or None)
+	#  - 'has_item' method
+	#  - 'create_item' method
+	#  - 'iteritems' method (like the dict method)
+	#  - 'rename' method (oldname, newname)
+	#
+	# I'm not sure the backend should implement full dict semantics,
+	# that seems prone to abuse because it's syntactically easier to
+	# write "for name in backend: item = backend[name] ..." instead
+	# of "for name, item in backend.iteritems(): ..." but the latter
+	# avoids race conditions.
+	#
+	# Many things are implemented by the abstract Backend class that
+	# backends derive from, backends need to implement:
+	#  - has_item(name)
+	#  - try_get_item(name)
+	#  - create_item(name)
+	#  - iteritems()
+	#  - rename()
+	#
+	# And, if not overriding the appropriate Item/Revision methods:
+	#  - _create_revision(itemobj, revno)	- returns NewRevision()
+	#  - _get_revision(itemobj, revno)	- returns Revision()
+	#  - _list_revisions(itemobj)		- returns number list
+	#  - _save(itemobj)			- see notes
+	#  - _abort(itemobj)			- rolls back modifications
+	#  - _get_revision_metadata(revobj)	- metadata for existing
+	#					  revision, see notes
+	#  - _new_revision_metadata(revobj)	- new metadata object
+	#  - _get_item_metadata(itemobj)	- returns dict, atomic
+	#  - _lock(itemobj) / _unlock(itemobj)
+	#
+	# Base class code implements:
+	#  - search() using iteritems(), but backends could optimise this
+	#    by looking at the filter expression
+	#  - _new_revision_metadata() returning an empty Metadata instance
+	#  - get_item() by using try_get_item()
+
+class Item(object, DictMixin):
+	#
+	# Has the following:
+	#  - dict-like access to revisions (Revision objects)
+	#  - 'name' property (read-only)
+	#  - dict-like 'metadata' property, mutable (Metadata object)
+	#  - create_revision(revno) method which returns
+	#    a NewRevision object
+	#  - 'save' method
+	#  - 'abort' method
+	#  - 'do_locked(fn)' method
+	#
+	# Base class already implements all this via the backend:
+	#  - 'metadata' property (via backend._get_item_metadata)
+	#  - 'save'/'abort' methods (via backend._save/backend._abort)
+	#  - 'name' property (given when instantiated)
+	#  - 'create_revision' method (via backend._create_revision)
+	#  - internal '_new_revisions' property that is a list of all newly
+	#    created revisions for help of save/abort
+	#  - dict-like access to revisions via backend._list_revisions and
+	#    backend._get_revision
+	#  - 'do_locked' method (via backend._lock, backend._unlock)
+	#
+	# Note: metadata is only mutable within 'do_locked' and then only if
+	# the metadata had not been loaded before by any accesses to it
+	# outside the critical section. Additionally, the exit path of
+	# 'do_locked' will fault (and call .abort()) if neither .save() nor
+	# .abort() are called within it so that update conflicts cannot
+	# happen with proper use of the API.
+
+class Revision(object):
+	#
+	# Has the following:
+	#  - dict-like 'metadata' property, immutable (Metadata object)
+	#  - (file-like?) 'data' property, immutable
+	#  - 'item' property (read-only)
+	#  - 'revno' property
+	#
+	# Base class already implements a lot of things for the backend:
+	#  - 'metadata' property (via backend._get_revision_metadata)
+	#
+	# Backend implements:
+	#  - 'data' property [we could give some help with a
+	#    backend._get_revision_data method]
+
+class NewRevision(object):
+	#
+	# Like Revision, but 'metadata' and 'data' are mutable
+	#
+	# Base class already implements a lot of things for the backend:
+	#  - 'metadata' property (via backend._new_revision_metadata)
+	#
+	# Backend implements:
+	#  - 'data' property [we could give some help with a
+	#    backend._new_revision_data method]
+
+class Metadata(object, DictMixin):
+	#
+	# Mostly behaves like a dict, with the following exceptions:
+	#  - mutable vs. immutable determined at object creation time
+	#  - has read-only property 'modified'
+	#  - if mutable, 'modified' property is set to True on any changes
+	#  - if immutable, modifications are not allowed
+	# [- internal '_mutable' property (that can only transition from
+	#    True to False) to allow Item code to mark as immutable when
+	#    lock is dropped.]
+	#
+	# The internal implementation should allow a backend to create a
+	# descendent class that implements loading data lazily but with both
+	# positive and negative lookup caching. This should be implemented
+	# in a LazyMetadata class that descends from this class and backends
+	# would use to write lazily-loading metadata objects.
+
+
+ ERROR HANDLING
+================
+
+Obviously errors can happen: items that don't exist yet, don't have a
+requested revision, etc.
+
+The following error classes are available:
+ * NoSuchItemError (for backend.get_item)
+ * KeyError (for missing metadata key lookups)
+ * KeyError (for missing revision object lookups in Item)
+ * ItemAlreadyExistsError (saving a new item that has been created in the
+   mean time; also for backend.create_item? or should that just succeed?)
+   - property 'item' that gives an Item instance for the existing item
+ * RevisionAlreadyExistsError (saving an item with a new revision that
+   exists already now)
+   - revision number (or revision object?) property
+ * PermissionDeniedError (when any access is done through ACL-checking
+   backend)
+
+ FURTHER NOTES
+===============
+
+ * It might make sense to have interface classes just describing the
+   required functionality and not implementing the helper methods yet.
+
+ * backend._get_revision_metadata can return a Metadata instance, in which
+   case that is used as the metadata property for the revision, or it can
+   return a dict that is then used to instantiate a Metadata object
+   containing exactly those values. This allows some backends to load all
+   metadata at once and others to return a lazily-loading object.
+
+ * Item.save (and to implement it, usually backend._save) has the following
+   atomicity guarantees:
+    - each newly created revision is atomically added to the revision list
+      including all data and metadata (and with multiple new revisions, this
+      is done in the order they were created in), no guarantee that all
+      revisions are added atomically at once [1]
+    - item metadata is saved atomically
+    - the order of these two is not determined (use .save() twice)
+    - when creating a new item, the item is only reachable with the added
+      revisions, i.e. if a newly created item is saved after adding a
+      revision, there must not be any point in time where the revision list
+      of an item can be seen as empty by another thread or process.
+
+ * The filesystem backend has inherent race conditions (access vs. rename),
+   should we handle those, and if so, how? One possibility would be to make
+   the backend detect the race conditions and then globally retry the
+   operation from scratch, a read operation, for example, could simply
+   redirect the browser to the same page again for example.
+
+
+
+[1] SQL backend simply commits all data before adding it to the revision
+    table, filesystem backend saves everything before increasing the
+    'current' file and requires that revisions are created in-order

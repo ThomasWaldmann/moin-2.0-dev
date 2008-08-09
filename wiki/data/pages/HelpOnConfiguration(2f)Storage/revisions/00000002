@@ -1,0 +1,32 @@
+= General =
+
+Since version 1.7 MoinMoin includes a configurable storage engine. With the help of this storage engine you can decide where and how your data is saved. With earliere versions you only had the option to save the wiki data and users on the fileystem. With the new storage engine it will later be possible to use an improved filesystem backend and after that even a database backend might be done.
+
+= Backends =
+
+Currently 4 backends are supported:
+
+  * moin16.UserBackend: This backend is the default to save user data and is compatible with MoinMoin 1.6.
+  * moin16.PageBackend: This backend is the default for pages and is compatible with MoinMoin 1.6.
+  * meta.LayerBackend: This is a virtual backend which simulates an underlay structure.
+  * meta.NamespaceBackend: This is a virtual backend which allows different sites to be stored in different backends based on the start of their name, comparable with the mount structure in *nix systems.
+
+= Configuration =
+
+There are 5 new configuration variables for the storage engine, the default values are set to be compatible to MoinMoin 1.6:
+
+  * indexes: A list of metadata keys which should be indexed for better performance when searching for them.
+  * user_backend: The storage backend to access users
+  * page_backend: The storage backend to access pages created by users
+  * underlay_backend: The storage backend to access the underlay pages
+  * data_backend: The storage backend to access all pages
+
+= Example =
+
+{{{#!python
+  self.indexes = ["name", "openids", "jid", "email", DELETED]
+  self.user_backend = UserBackend("user", self.user_dir, self)
+  page_backend = PageBackend("pages", os.path.join(self.data_dir, "pages"), self)
+  underlay_backend = PageBackend("underlay", os.path.join(self.data_underlay_dir, "pages"), self, is_underlay=True)
+  self.data_backend = LayerBackend([page_backend, underlay_backend])
+}}}
