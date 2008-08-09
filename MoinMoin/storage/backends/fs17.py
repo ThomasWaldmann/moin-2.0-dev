@@ -109,9 +109,13 @@ class FSPageBackend(Backend):
         return rev._fs_meta
 
     def _read_revision_data(self, rev, chunksize):
+        if rev._fs_data_file is None:
+            rev._fs_data_file = open(rev._fs_data_fname, 'rb') # XXX keeps file open as long as rev exists
         return rev._fs_data_file.read(chunksize)
 
     def _seek_revision_data(self, rev, position, mode):
+        if rev._fs_data_file is None:
+            rev._fs_data_file = open(rev._fs_data_fname, 'rb') # XXX keeps file open as long as rev exists
         return rev._fs_data_file.seek(position, mode)
 
     def _get_revision_timestamp(self, rev):
@@ -168,7 +172,7 @@ class FsPageRevision(StoredRevision):
         editlog = item._fs_editlog
         # we just read the page and parse it here, makes the rest of the code simpler:
         try:
-            content = file(revpath, 'r').read()
+            content = open(revpath, 'r').read()
         except (IOError, OSError):
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
             meta = {DELETED: True}
@@ -207,6 +211,7 @@ class FsPageRevision(StoredRevision):
         meta.update(editlog_data)
         meta['__size'] = 0 # not needed for converter
         self._fs_meta = meta
+        self._fs_data_fname = None # "file" is already opened here:
         self._fs_data_file = StringIO(data)
 
 
@@ -253,7 +258,8 @@ class FsAttachmentRevision(StoredRevision):
         meta = editlog_data
         meta['__size'] = 0 # not needed for converter
         self._fs_meta = meta
-        self._fs_data_file = file(attpath, 'rb')
+        self._fs_data_fname = attpath
+        self._fs_data_file = None
 
 
 from MoinMoin.logfile import LogFile
