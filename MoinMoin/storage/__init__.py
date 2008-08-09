@@ -394,7 +394,10 @@ class Item(object, DictMixin):  # TODO Improve docstring
         """
         Release lock on the Item.
         """
+        if not self._locked:
+            raise AccessError("cannot publish without change_metadata")
         self._backend._publish_item_metadata(self)
+        self._read_accessed = False
         self._locked = False
 
     def get_revision(self, revno):
