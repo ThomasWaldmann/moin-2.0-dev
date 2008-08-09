@@ -30,7 +30,7 @@ rootdir = py.magic.autopath().dirpath()
 moindir = rootdir.join("..")
 
 sys.path.insert(0, str(moindir))
-from MoinMoin._tests import maketestwiki, compat
+from MoinMoin._tests import compat
 modules["unittest"] = compat # evil hack
 
 wikiconfig_dir = str(moindir.join("tests"))
@@ -70,13 +70,10 @@ except ImportError:
     coverage = None
 
 
-def init_test_request(static_state=[False]):
+def init_test_request():
     from MoinMoin.request import request_cli
     from MoinMoin.user import User
     from MoinMoin.formatter.text_html import Formatter as HtmlFormatter
-    if not static_state[0]:
-        maketestwiki.run(True)
-        static_state[0] = True
     if sys.path[0] != wikiconfig_dir:
         sys.path.insert(0, wikiconfig_dir) # this is a race with py.test's collectors
                                            # because they modify sys.path as well
