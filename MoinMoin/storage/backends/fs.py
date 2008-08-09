@@ -78,47 +78,52 @@ class FSBackend(Backend):
         """
         History implementation reading the log file.
         """
-        assert reverse is True, "history reading in non-reverse order not implemented yet"
-        try:
-            historyfile = open(self._history, 'rb')
-        except IOError, err:
-            if err.errno != errno.ENOENT:
-                raise
-            return
-        historyfile.seek(0, 2)
-        offs = historyfile.tell() - 1
-        # shouldn't happen, but let's be sure we don't get a partial record
-        offs -= offs % 16
-        while offs >= 0:
-            # seek to current position
-            historyfile.seek(offs)
-            # read history item
-            rec = historyfile.read(16)
-            # decrease current position by 16 to get to previous item
-            offs -= 16
-            itemid, revno, tstamp = struct.unpack('!LLQ', rec)
-            itemid = str(itemid)
+        if not reverse:
+            # XXX write a more efficient version
+            revs = list(self.history(reverse=True))
+            for rev in revs.reverse():
+                yield rev
+        else:
             try:
-                inamef = open(os.path.join(self._path, itemid, 'name'), 'rb')
-                iname = inamef.read().decode('utf-8')
-                inamef.close()
-                # try to open the revision file just in case somebody
-                # removed it manually
-                revpath = os.path.join(self._path, itemid, 'rev.%d' % revno)
-                revf = open(revpath)
-                revf.close()
+                historyfile = open(self._history, 'rb')
             except IOError, err:
                 if err.errno != errno.ENOENT:
                     raise
-                # oops, no such file, item/revision removed manually?
-                continue
-            item = Item(self, iname)
-            item._fs_item_id = itemid
-            rev = StoredRevision(item, revno, tstamp)
-            rev._fs_revpath = revpath
-            rev._fs_file = None
-            rev._fs_metadata = None
-            yield rev
+                return
+            historyfile.seek(0, 2)
+            offs = historyfile.tell() - 1
+            # shouldn't happen, but let's be sure we don't get a partial record
+            offs -= offs % 16
+            while offs >= 0:
+                # seek to current position
+                historyfile.seek(offs)
+                # read history item
+                rec = historyfile.read(16)
+                # decrease current position by 16 to get to previous item
+                offs -= 16
+                itemid, revno, tstamp = struct.unpack('!LLQ', rec)
+                itemid = str(itemid)
+                try:
+                    inamef = open(os.path.join(self._path, itemid, 'name'), 'rb')
+                    iname = inamef.read().decode('utf-8')
+                    inamef.close()
+                    # try to open the revision file just in case somebody
+                    # removed it manually
+                    revpath = os.path.join(self._path, itemid, 'rev.%d' % revno)
+                    revf = open(revpath)
+                    revf.close()
+                except IOError, err:
+                    if err.errno != errno.ENOENT:
+                        raise
+                    # oops, no such file, item/revision removed manually?
+                    continue
+                item = Item(self, iname)
+                item._fs_item_id = itemid
+                rev = StoredRevision(item, revno, tstamp)
+                rev._fs_revpath = revpath
+                rev._fs_file = None
+                rev._fs_metadata = None
+                yield rev
 
     def _addhistory(self, itemid, revid, ts):
         """
