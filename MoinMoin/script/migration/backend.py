@@ -17,7 +17,7 @@
 import shutil
 
 from MoinMoin.script import MoinScript, fatal
-from MoinMoin.storage.error import NoSuchItemError
+from MoinMoin.storage.error import ItemAlreadyExistsError, RevisionAlreadyExistsError
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -54,7 +54,7 @@ class PluginScript(MoinScript):
         clone(src_backend, dst_backend, self.options.verbose)
 
 
-def clone(src, dst, verbose):
+def clone(src, dst, verbose=False):
     """
     From a given source backend src, copy all items (including the items metadata),
     and their revisions (including the revisions metadata) into a given destination
@@ -64,7 +64,11 @@ def clone(src, dst, verbose):
     for old_item in src.iteritems():
         if verbose:
             logging.info("Copying '%s'" % old_item.name)
-        new_item = dst.create_item(old_item.name)
+
+        try:  # (maybe the last migration-attempt has been aborted)
+            new_item = dst.create_item(old_item.name)
+        except ItemAlreadyExistsError:
+            new_item = dst.get_item(old_item.name)
 
         # ...copy the items metadata...
         new_item.change_metadata()
@@ -75,7 +79,10 @@ def clone(src, dst, verbose):
         # ...copy each revision of that item...
         for revno in old_item.list_revisions():
             old_rev = old_item.get_revision(revno)
-            new_rev = new_item.create_revision(revno)
+            try:  # (Continue if revision has already been created properly last time)
+                new_rev = new_item.create_revision(revno)
+            except RevisionAlreadyExistsError:
+                continue
 
             # ...copy the metadata of the revision...
             for k, v in old_rev.iteritems():
