@@ -8,8 +8,7 @@ MoinMoin - test wiki configuration
 
 import os
 from MoinMoin.config.multiconfig import DefaultConfig
-from MoinMoin.storage.backends import memory, flatfile
-from MoinMoin.script.migration.backend import clone
+from MoinMoin.storage.backends import memory, flatfile, clone
 
 class Config(DefaultConfig):
     sitename = u'Developer Test Wiki'
@@ -21,7 +20,7 @@ class Config(DefaultConfig):
 
     # configure backends
     data_backend = memory.MemoryBackend()
-    test_num_pages = clone(flatfile.FlatFileBackend('tests/data'), data_backend)
+    test_num_pages = clone(flatfile.FlatFileBackend('tests/data'), data_backend)[0]
     user_backend = memory.MemoryBackend()
     page_front_page = 'FrontPage'
 
