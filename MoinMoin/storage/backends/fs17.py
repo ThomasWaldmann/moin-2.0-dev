@@ -404,21 +404,6 @@ class FsUserItem(Item):
         return metadata
 
 
-def _encode_list(items):
-    """
-    Encode list of items in user data file
-
-    Items are separated by '\t' characters.
-
-    @param items: list unicode strings
-    @rtype: unicode
-    @return: list encoded as unicode
-    """
-    items = [item.strip() for item in items]
-    items = [item for item in items if item]
-    line = '\t'.join(items)
-    return line
-
 def _decode_list(line):
     """
     Decode list of items from user data file
@@ -429,22 +414,7 @@ def _decode_list(line):
     """
     items = [item.strip() for item in line.split('\t')]
     items = [item for item in items if item]
-    return items
-
-def _encode_dict(items):
-    """
-    Encode dict of items in user data file
-
-    Items are separated by '\t' characters.
-    Each item is key:value.
-
-    @param items: dict of unicode:unicode
-    @rtype: unicode
-    @return: dict encoded as unicode
-    """
-    items = [u'%s:%s' % (key, value) for key, value in items.items()]
-    line = '\t'.join(items)
-    return line
+    return tuple(items)
 
 def _decode_dict(line):
     """
@@ -458,5 +428,3 @@ def _decode_dict(line):
     items = [item for item in items if item]
     items = [item.split(':', 1) for item in items]
     return dict(items)
-
-
