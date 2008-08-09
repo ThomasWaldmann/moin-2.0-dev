@@ -162,7 +162,7 @@ class MercurialBackend(Backend):
         If bakckend already exists, use structure and repository.
         """
         self._path = os.path.abspath(path)
-        self._news = os.path.join(self._path, 'news')
+        self._history = os.path.join(self._path, 'history')
         self._r_path = os.path.join(self._path, 'rev')
         self._u_path = os.path.join(self._path, 'meta')
         self._name_db = os.path.join(self._path, 'name-mapping')
@@ -189,7 +189,7 @@ class MercurialBackend(Backend):
         # also refuse on no mapping and some unrelated files in main dir:
         # XXX: should we even bother they could use names on fs for future items?
         if (not os.path.exists(self._name_db) and
-            filter(lambda x: x not in ['rev', 'meta', 'name-mapping', 'news'], os.listdir(self._path))):
+            filter(lambda x: x not in ['rev', 'meta', 'name-mapping', 'history'], os.listdir(self._path))):
             raise BackendError("No name-mapping and directory not empty: %s" % self._path)
         try:
             self._repo = hg.repository(self._ui, self._r_path, create=True)
@@ -249,26 +249,27 @@ class MercurialBackend(Backend):
             yield item
             r = c.each()
 
-    def news(self, timestamp=0):
+    def history(self, timestamp=0, reverse=True):
         """
-        News implementation reading the log file.
+        History implementation reading the log file.
         """
+        assert reverse is True, "history reading in non-reverse order not implemented yet"
         try:
-            newsfile = open(self._news, 'rb')
+            historyfile = open(self._history, 'rb')
         except IOError, err:
             if err.errno != errno.ENOENT:
                 raise
             return
-        newsfile.seek(0, 2)
-        offs = newsfile.tell() - 1
+        historyfile.seek(0, 2)
+        offs = historyfile.tell() - 1
         # shouldn't happen, but let's be sure we don't get a partial record
         offs -= offs % 28
         tstamp = None
         while tstamp is None or tstamp >= timestamp and offs >= 0:
             # seek to current position
-            newsfile.seek(offs)
-            # read news item
-            rec = newsfile.read(28)
+            historyfile.seek(offs)
+            # read history item
+            rec = historyfile.read(28)
             # decrease current position by 16 to get to previous item
             offs -= 28
             item_id, revno, tstamp = struct.unpack('!16sLQ', rec)
@@ -513,7 +514,7 @@ class MercurialBackend(Backend):
                 self._repo._commitctx(ctx)
             else:
                 commands.update(self._ui, self._repo)
-            self._addnews(item._id, rev.revno, rev.timestamp)
+            self._addhistory(item._id, rev.revno, rev.timestamp)
         finally:
             del lock
             item._uncommitted_revision = None  # XXX: move to abstract
@@ -598,10 +599,10 @@ class MercurialBackend(Backend):
 
 
 
-    def _addnews(self, item_id, revid, ts):
+    def _addhistory(self, item_id, revid, ts):
         """
-        Add a news item with current timestamp and the given data.
+        Add a history item with current timestamp and the given data.
         """
-        newsfile = open(self._news, 'ab')
-        newsfile.write(struct.pack('!16sLQ', item_id, revid, ts))
-        newsfile.close()
+        historyfile = open(self._history, 'ab')
+        historyfile.write(struct.pack('!16sLQ', item_id, revid, ts))
+        historyfile.close()

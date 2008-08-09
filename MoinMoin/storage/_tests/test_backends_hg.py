@@ -68,7 +68,7 @@ class TestMercurialBackend(BackendTest):
     def test_backend_init_non_empty_datadir(self):
         # assumption: if no mapping-file exists
         # then any file in /meta, /rev and / other
-        # than name-mapping or news takes potential
+        # than name-mapping or history takes potential
         # 'name' slot on fs for future item
         datadir = mkdtemp()
         os.mkdir(os.path.join(datadir, "meta"))

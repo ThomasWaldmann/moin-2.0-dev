@@ -510,7 +510,7 @@ class BackendTest(object):
         assert rev.timestamp is None
         item.commit()
         assert rev.timestamp is not None
-        for nrev in self.backend.news():
+        for nrev in self.backend.history():
             assert nrev.timestamp == rev.timestamp
 
     def test_size(self):
@@ -524,5 +524,5 @@ class BackendTest(object):
         rev = item.get_revision(0)
         assert rev.size == 8
 
-        for nrev in self.backend.news():
+        for nrev in self.backend.history():
             assert nrev.size == 8

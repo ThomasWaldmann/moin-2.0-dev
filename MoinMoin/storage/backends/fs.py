@@ -46,7 +46,7 @@ class FSBackend(Backend):
         """
         self._path = path
         self._name_db = os.path.join(path, 'name-mapping')
-        self._news = os.path.join(path, 'news')
+        self._history = os.path.join(path, 'history')
         self._itemspace = 128
         self._revmeta_reserved_space = reserved_metadata_space
 
@@ -55,15 +55,15 @@ class FSBackend(Backend):
         if not os.path.exists(self._name_db):
             self._do_locked(self._name_db + '.lock', self._create_new_cdb, None)
 
-        # on NFS, append semantics are broken, so decorate the _addnews
+        # on NFS, append semantics are broken, so decorate the _addhistory
         # method with a lock
         if nfs:
-            _addnews = self._addnews
-            def locked_addnews(args):
+            _addhistory = self._addhistory
+            def locked_addhistory(args):
                 itemid, revid, ts = args
-                _addnews(itemid, revid, ts)
-            newslock = self._news + '.lock'
-            self._addnews = lambda itemid, revid, ts: self._do_locked(newslock, locked_addnews, (itemid, revid, ts))
+                _addhistory(itemid, revid, ts)
+            historylock = self._history + '.lock'
+            self._addhistory = lambda itemid, revid, ts: self._do_locked(historylock, locked_addhistory, (itemid, revid, ts))
 
     def _create_new_cdb(self, arg):
         """
@@ -74,25 +74,26 @@ class FSBackend(Backend):
             maker = cdb.cdbmake(self._name_db, self._name_db + '.tmp')
             maker.finish()
 
-    def news(self):
+    def history(self, reverse=True):
         """
-        News implementation reading the log file.
+        History implementation reading the log file.
         """
+        assert reverse is True, "history reading in non-reverse order not implemented yet"
         try:
-            newsfile = open(self._news, 'rb')
+            historyfile = open(self._history, 'rb')
         except IOError, err:
             if err.errno != errno.ENOENT:
                 raise
             return
-        newsfile.seek(0, 2)
-        offs = newsfile.tell() - 1
+        historyfile.seek(0, 2)
+        offs = historyfile.tell() - 1
         # shouldn't happen, but let's be sure we don't get a partial record
         offs -= offs % 16
         while offs >= 0:
             # seek to current position
-            newsfile.seek(offs)
-            # read news item
-            rec = newsfile.read(16)
+            historyfile.seek(offs)
+            # read history item
+            rec = historyfile.read(16)
             # decrease current position by 16 to get to previous item
             offs -= 16
             itemid, revno, tstamp = struct.unpack('!LLQ', rec)
@@ -119,18 +120,18 @@ class FSBackend(Backend):
             rev._fs_metadata = None
             yield rev
 
-    def _addnews(self, itemid, revid, ts):
+    def _addhistory(self, itemid, revid, ts):
         """
-        Add a news item with current timestamp and the given data.
+        Add a history item with current timestamp and the given data.
 
         @param itemid: item's ID, must be a decimal integer in a string
         @param revid: revision ID, must be an integer
         @param ts: timestamp
         """
         itemid = long(itemid)
-        newsfile = open(self._news, 'ab')
-        newsfile.write(struct.pack('!LLQ', itemid, revid, ts))
-        newsfile.close()
+        historyfile = open(self._history, 'ab')
+        historyfile.write(struct.pack('!LLQ', itemid, revid, ts))
+        historyfile.close()
 
     def _get_item_id(self, itemname):
         """
@@ -412,7 +413,7 @@ class FSBackend(Backend):
             finally:
                 os.unlink(rev._fs_revpath)
 
-        self._addnews(item._fs_item_id, rev.revno, rev.timestamp)
+        self._addhistory(item._fs_item_id, rev.revno, rev.timestamp)
         # XXX: Item.commit could very well do this.
         item._uncommitted_revision = None
 
