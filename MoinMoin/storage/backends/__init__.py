@@ -46,7 +46,6 @@ def clone(source, destination, verbose=False):
         name = revision.item.name
         try:
             new_item = destination.get_item(name)
-            count[0] += 1
         except NoSuchItemError:
             new_item = destination.create_item(name)
             new_item.change_metadata()
