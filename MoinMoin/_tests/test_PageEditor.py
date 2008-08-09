@@ -209,7 +209,7 @@ class TestCopyPage(object):
         self.createTestPage()
         result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
         revision = Page(self.request, self.copy_pagename).current_rev()
-        assert result and revision is 2
+        assert result and revision == 1
 
     def test_copy_page_acl_read(self):
         """
