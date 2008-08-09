@@ -432,54 +432,42 @@ class AbstractTagStore(object):
         return NotImplemented
 
 
-class PickleTagStore(AbstractTagStore):
+class MetadataTagStore(AbstractTagStore):
     """ This class manages the storage of tags in pickle files. """
 
     def __init__(self, page):
-        """ Creates a new TagStore that uses pickle files.
+        """
+        Creates a new TagStore using item metadata.
 
         @param page: a Page object where the tags should be related to
         """
-
         self.page = page
-        self.filename = page.getPagePath('synctags', use_underlay=0, check_create=1, isfile=1)
-        lock_dir = os.path.join(page.getPagePath('cache', use_underlay=0, check_create=1), '__taglock__')
-        self.rlock = lock.ReadLock(lock_dir, 60.0)
-        self.wlock = lock.WriteLock(lock_dir, 60.0)
-
-        if not self.rlock.acquire(3.0):
-            raise EnvironmentError("Could not lock in PickleTagStore")
+        self.item = page.request.cfg.data_backend.get_item(page.page_name)
+        self.item.change_metadata()
         try:
             self.load()
         finally:
-            self.rlock.release()
+            self.item.publish_metadata()
 
     def load(self):
         """ Loads the tags from the data file. """
         try:
-            datafile = file(self.filename, "rb")
-            self.tags = pickle.load(datafile)
-        except (IOError, EOFError):
+            self.tags = pickle.loads(self.item['wikisync_tags'])
+        except KeyError:
             self.tags = []
-        else:
-            datafile.close()
 
     def commit(self):
-        """ Writes the memory contents to the data file. """
-        datafile = file(self.filename, "wb")
-        pickle.dump(self.tags, datafile, pickle.HIGHEST_PROTOCOL)
-        datafile.close()
+        self.item['wikisync_tags'] = pickle.dumps(self.tags, pickle.HIGHEST_PROTOCOL)
 
     # public methods ---------------------------------------------------
     def add(self, **kwargs):
-        if not self.wlock.acquire(3.0):
-            raise EnvironmentError("Could not lock in PickleTagStore")
+        self.item.change_metadata()
         try:
             self.load()
             self.tags.append(Tag(**kwargs))
             self.commit()
         finally:
-            self.wlock.release()
+            self.item.publish_metadata()
 
     def get_all_tags(self):
         return self.tags[:]
@@ -492,13 +480,12 @@ class PickleTagStore(AbstractTagStore):
         return temp[-1]
 
     def clear(self):
-        self.tags = []
-        if not self.wlock.acquire(3.0):
-            raise EnvironmentError("Could not lock in PickleTagStore")
+        self.item.change_metadata()
         try:
+            self.tags = []
             self.commit()
         finally:
-            self.wlock.release()
+            self.item.publish_metadata()
 
     def fetch(self, iwid_full, direction=None):
         iwid_full = unpackLine(iwid_full)
@@ -514,5 +501,5 @@ class PickleTagStore(AbstractTagStore):
 
 # currently we just have one implementation, so we do not need
 # a factory method
-TagStore = PickleTagStore
+TagStore = MetadataTagStore
 

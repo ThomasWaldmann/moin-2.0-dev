@@ -26,7 +26,6 @@ class TestEmbedObject:
         become_trusted(request)
         self.page = create_page(request, pagename, u"Foo")
 
-        AttachFile.getAttachDir(request, pagename)
         test_files = [
             ('test.ogg', 'vorbis'),
             ('test.svg', 'SVG'),

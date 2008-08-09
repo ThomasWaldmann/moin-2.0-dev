@@ -182,7 +182,7 @@ class MercurialBackend(Backend):
                 if os.listdir(path) and not os.path.exists(self._name_db):
                     raise BackendError("No name-mapping and directory not empty: %s" % path)
             except OSError:
-                 os.mkdir(path)
+                os.mkdir(path)
         # also refuse on no mapping and some unrelated files in main dir:
         # XXX: should we even bother they could use names on fs for future items?
         if (not os.path.exists(self._name_db) and

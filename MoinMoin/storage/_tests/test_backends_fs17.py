@@ -11,7 +11,7 @@ import os, re, tempfile, shutil
 import py.test
 
 from MoinMoin import wikiutil
-from MoinMoin.storage import Item, DELETED, EDIT_LOG_MTIME
+from MoinMoin.storage import Item, DELETED
 from MoinMoin.storage.backends.fs17 import FSPageBackend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
@@ -157,13 +157,13 @@ class TestFS17Backend(object):
     def test_metadata_mtime(self):
         item = self.backend.get_item(item_name)
         rev = item.get_revision(0)
-        assert rev[EDIT_LOG_MTIME] == item_mtime
+        assert rev.timestamp == item_mtime
 
     def test_metadata_mtime_attachment(self):
         name = item_name + '/' + attachment_name
         item = self.backend.get_item(name)
         rev = item.get_revision(0)
-        assert rev[EDIT_LOG_MTIME] == attachment_mtime
+        assert rev.timestamp == attachment_mtime
 
     def test_item_revision_count(self):
         item = self.backend.get_item(item_name)

@@ -62,7 +62,11 @@ class FlatFileBackend(Backend):
         return ''.join(res).decode('utf-8')
 
     def history(self, reverse=True):
-        return iter([])
+        list = [i.get_revision(-1) for i in self.iteritems()]
+        list.sort(lambda x, y: cmp(x.timestamp, y.timestamp))
+        if reverse:
+            list.reverse()
+        return iter(list)
 
     def get_item(self, itemname):
         quoted = self._quote(itemname)
