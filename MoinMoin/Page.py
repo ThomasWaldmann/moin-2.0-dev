@@ -445,7 +445,7 @@ class Page(object):
         @return: the last editor, either printable or not.
         """
         if not printable:
-            editordata = user.get_editor(self.request, self._rev.userid, self._rev.addr, self._rev.hostname)
+            editordata = user.get_editor(self.request, self._rev[EDIT_LOG_USERID], self._rev[EDIT_LOG_ADDR], self._rev[EDIT_LOG_HOSTNAME])
             if editordata[0] == 'interwiki':
                 return "%s:%s" % editordata[1]
             else:
