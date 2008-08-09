@@ -1,18 +1,21 @@
 """
-    MoinMoin - MemoryBackend
+    MoinMoin - MemoryBackend + TracingBackend
 
-    This represents a simple Backend that stores all data in memory.
+    This module contains a simple Backend that stores all data in memory
+    and a TracingBackend that can generate a python function that contains
+    all recorded operations.
+
     This is mainly done for testing and documentation / demonstration purposes.
     Thus, this backend IS NOT designed for concurrent use.
 
     DO NOT (even for the smallest glimpse of a second) consider to use this backend
     for any production site that needs persistant storage.
-    (Assuming you got no infinite stream of power-supply.)
 
     ---
 
     @copyright: 2008 MoinMoin:ChristopherDenter,
-                2008 MoinMoin:JohannesBerg
+                2008 MoinMoin:JohannesBerg,
+                2008 MoinMoin:AlexanderSchremmer
     @license: GNU GPL, see COPYING for details.
 
 """
@@ -21,13 +24,16 @@ import StringIO
 from threading import Lock
 import time
 
-from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
+from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision, Revision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError
 
 
 class MemoryBackend(Backend):
+    Item = Item
+    StoredRevision = StoredRevision
+    NewRevision = NewRevision
     """
     Implementation of the MemoryBackend. All data is kept in attributes of this
     class. As soon as the MemoryBackend-object goes out of scope, your data is LOST.
@@ -70,7 +76,7 @@ class MemoryBackend(Backend):
         if not self.has_item(itemname):
             raise NoSuchItemError("No such item, %r" % (itemname))
 
-        item = Item(self, itemname)
+        item = self.Item(self, itemname)
         item._item_id = self._itemmap[itemname]
 
         if not item._item_id in self._item_metadata:  # Maybe somebody already got an instance of this Item and thus there already is a Lock for that Item.
@@ -96,7 +102,7 @@ class MemoryBackend(Backend):
         elif self.has_item(itemname):
             raise ItemAlreadyExistsError("An Item with the name %r already exists!" % (itemname))
 
-        item = Item(self, itemname)
+        item = self.Item(self, itemname)
         item._item_id = None
 
         return item
@@ -127,7 +133,7 @@ class MemoryBackend(Backend):
             raise NoSuchRevisionError("No Revision #%d on Item %s - Available revisions: %r" % (revno, item.name, revisions))
 
         else:
-            revision = StoredRevision(item, revno, timestamp=metadata['__timestamp'], size=len(data))
+            revision = self.StoredRevision(item, revno, timestamp=metadata['__timestamp'], size=len(data))
             revision._data = StringIO.StringIO(data)
 
             revision._metadata = metadata
@@ -167,7 +173,7 @@ class MemoryBackend(Backend):
             pass  # First if-clause will raise an Exception if the Item has just
                   # been created (and not committed), because there is no entry in self._item_revisions yet. Thus, silenced.
 
-        new_revision = NewRevision(item, revno)
+        new_revision = self.NewRevision(item, revno)
         new_revision._revno = revno
         new_revision._data = StringIO.StringIO()
 
@@ -320,3 +326,81 @@ class MemoryBackend(Backend):
         Set the revisions cursor on the revisions data.
         """
         revision._data.seek(position, mode)
+
+
+# ------ The tracing backend
+
+class TracingItem(Item):
+    pass
+
+class TracingNewRevision(NewRevision):
+    pass
+
+class TracingStoredRevision(StoredRevision):
+    pass
+
+
+class TracingBackend(MemoryBackend):
+    """ Records every operation. When you are finished calling things, run get_code or get_func."""
+    Item = TracingItem
+    StoredRevision = TracingStoredRevision
+    NewRevision = TracingNewRevision
+    codebuffer = []
+
+    def __init__(self, filename=None):
+        MemoryBackend.__init__(self)
+        self._backend = self # hehe, more uniform code :)
+        self.filename = filename
+
+    def log_expr(self, expr):
+        self.codebuffer.append(expr)
+
+    def get_code(self):
+        return "\n".join(["def run(backend):", "    pass"] + self.codebuffer)
+
+    def get_func(self):
+        if self.filename:
+            file(self.filename, "w").write(self.get_code())
+        l = {}
+        eval(compile(self.get_code(), self.filename or "not_on_disk", "exec"), l, l)
+        return l["run"]
+
+def _get_thingie_id(thingie, item):
+    """ Generates a unique id for item depending on its class of objects. """
+    if thingie == "backend":
+        return "backend"
+    return "%s_%i" % (thingie, id(item), )
+
+def _retval_to_expr(retval):
+    """ Determines whether we need to do an assignment and generates the assignment subexpr if necessary. """
+    for thingie, klass in (("item", Item), ("rev", Revision)):
+        if isinstance(retval, klass):
+            return _get_thingie_id(thingie, retval) + " = "
+    return ""
+
+def _get_thingie_wrapper(thingie):
+    def wrap_thingie(func):
+        def wrapper(*args, **kwargs):
+            assert not kwargs
+            retval = func(*args, **kwargs)
+            args[0]._backend.log_expr("    %s%s.%s(*%s)" % (_retval_to_expr(retval),
+                _get_thingie_id(thingie, args[0]), func.func_name, repr(args[1:])))
+            return retval
+        return wrapper
+    return wrap_thingie
+
+
+wrap_rev = _get_thingie_wrapper("rev")
+wrap_item = _get_thingie_wrapper("item")
+wrap_be = _get_thingie_wrapper("backend")
+
+def do_meta_patchery():
+    for fromclass, toclass, wrappergen in ((MemoryBackend, TracingBackend, wrap_be), (Item, TracingItem, wrap_item),
+                               (NewRevision, TracingNewRevision, wrap_rev), (StoredRevision, TracingStoredRevision, wrap_rev)):
+        for name, func in fromclass.__dict__.iteritems():
+            if not name.startswith("_") and hasattr(func, 'func_name'):
+                setattr(toclass, name, wrappergen(func))
+do_meta_patchery()
+
+del do_meta_patchery, wrap_rev, wrap_item, wrap_be, _get_thingie_wrapper
+

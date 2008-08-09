@@ -12,7 +12,7 @@
 """
 
 from MoinMoin.storage._tests.test_backends import BackendTest
-from MoinMoin.storage.backends.memory import MemoryBackend
+from MoinMoin.storage.backends.memory import MemoryBackend, TracingBackend
 
 class TestMemoryBackend(BackendTest):
     """
@@ -26,4 +26,21 @@ class TestMemoryBackend(BackendTest):
 
     def kill_backend(self):
         pass
+
+class TestTracingBackend(BackendTest):
+    def __init__(self):
+        BackendTest.__init__(self, None)
+        self.be = None
+
+    def create_backend(self):
+        assert self.be is None
+        self.be = TracingBackend()
+        return self.be
+
+    def kill_backend(self):
+        assert self.be is not None
+        try:
+            self.be.get_func() # lets see if it compiles
+        finally:
+            self.be = None
 
