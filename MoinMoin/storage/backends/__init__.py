@@ -43,21 +43,10 @@ def clone(source, destination, verbose=False):
                 new_item[k] = v
             new_item.publish_metadata()
 
-        new_rev = copy.create_revision(revision.revo)
-        for k, v in revision.iteritems():
-            try:
-                new_rev[k] = v
-            except TypeError:
-                new_rev[k] = tuple(v)
-        new_rev.timestamp = revision.timestamp
-        shutil.copyfileobj(revision, new_rev)
-
         try:
-            new_item.commit()
-            if verbose:
-                logging.info('.')
+            new_rev = new_item.create_revision(revision.revno)
         except RevisionAlreadyExistsError:
-            if compare_revision(new_rev, revision):
+            if compare_revision(new_item.get_revision(revision.revno), revision):
                 try:
                     skips[name].append(revision.revno)
                 except KeyError:
@@ -71,4 +60,17 @@ def clone(source, destination, verbose=False):
                     fails[name] = [revision.revno]
                 if verbose:
                     logging.info('F')
+        else:
+            for k, v in revision.iteritems():
+                try:
+                    new_rev[k] = v
+                except TypeError:
+                    new_rev[k] = tuple(v)
+            new_rev.timestamp = revision.timestamp
+            shutil.copyfileobj(revision, new_rev)
+
+            new_item.commit()
+            if verbose:
+                logging.info('.')
+
     return skips, fails
