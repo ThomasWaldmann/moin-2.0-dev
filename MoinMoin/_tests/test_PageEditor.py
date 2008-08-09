@@ -124,11 +124,10 @@ class TestExpandPrivateVariables(TestExpandUserName):
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
         """
-        self.request.cfg.data_backend.create_item(self.name)
-        self.request.cfg.data_backend.create_revision(self.name, 1)
-        data = self.request.cfg.data_backend.get_data_backend(self.name, 1)
-        data.write(u' ME:: %s\n' % self.name)
-        data.close()
+        item = self.request.cfg.data_backend.create_item(self.name)
+        rev = item.create_revision(0)
+        rev.write(u' ME:: %s\n' % self.name)
+        item.commit()
 
 
 class TestSave(object):
@@ -198,11 +197,10 @@ class TestCopyPage(object):
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
         """
-        self.request.cfg.data_backend.create_item(self.pagename)
-        self.request.cfg.data_backend.create_revision(self.pagename, 1)
-        data = self.request.cfg.data_backend.get_data_backend(self.pagename, 1)
-        data.write(self.text)
-        data.close()
+        item = self.request.cfg.data_backend.create_item(self.pagename)
+        rev = item.create_revision(0)
+        rev.write(self.text)
+        item.commit()
 
     def test_copy_page(self):
         """
@@ -211,7 +209,7 @@ class TestCopyPage(object):
         self.createTestPage()
         result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
         revision = Page(self.request, self.copy_pagename).current_rev()
-        assert result and revision is 2
+        assert result and revision == 1
 
     def test_copy_page_acl_read(self):
         """

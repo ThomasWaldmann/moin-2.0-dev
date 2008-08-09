@@ -43,7 +43,6 @@ def clone(source, destination, verbose=False):
     skips, fails = {}, {}
 
     for revision in source.history(reverse=False):
-
         name = revision.item.name
         try:
             new_item = destination.get_item(name)
@@ -73,7 +72,7 @@ def clone(source, destination, verbose=False):
                 except KeyError:
                     fails[name] = [revision.revno]
                 if verbose:
-                      sys.stdout.write("F")
+                    sys.stdout.write("F")
         else:
             for k, v in revision.iteritems():
                 try:
