@@ -129,7 +129,7 @@ class Backend(object):
         """
         Returns an iterator over ALL revisions of ALL items stored in the
         backend.
-        
+
         If reverse is True (default), give history in reverse revision
         timestamp order, otherwise in revision timestamp order.
 
@@ -137,7 +137,18 @@ class Backend(object):
               another) requires that the iterator goes over really every
               revision we have).
         """
-        raise NotImplementedError()
+        # generic and slow history implementation
+        revs = []
+        for item in self.iteritems():
+            for revno in item.list_revisions():
+                rev = item.get_revision(revno)
+                revs.append((rev.timestamp, rev.revno, item.name, ))
+        revs.sort() # from oldest to newest
+        if reverse:
+            revs.reverse()
+        for ts, revno, name in revs:
+            item = self.get_item(name)
+            yield item.get_revision(revno)
 
     #
     # If you need to write a backend it is sufficient
