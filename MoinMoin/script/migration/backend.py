@@ -14,7 +14,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import shutil
+import shutil, sys
 
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.storage.backends import clone
@@ -31,6 +31,11 @@ class PluginScript(MoinScript):
             "-t", "--type", dest="backend_type",
             help="Migrate specified type of backend: user, data"
         )
+        self.parser.add_option(
+            "-f", "--fails", dest="show_failed", action="store_true",
+            help="Print failed migration items"
+        )
+
 
     def mainloop(self):
         self.init_request()
@@ -47,10 +52,13 @@ class PluginScript(MoinScript):
         except AttributeError:
             fatal("Please, configure your %(user)s_backend and %(user)s_backend_source in wikiconfig.py." %
                   {'user': self.options.backend_type})
+
         cnt, skips, fails = clone(src_backend, dst_backend, self.options.verbose)
-        if self.options.verbose:
-            from MoinMoin import log
-            logging = log.getLogger(__name__)
-            logging.info("Processed: %d >> %d skipped, %d failed" % (cnt, len(skips), len(fails), ))
-            # TODO: one can add verbosity level to show failed pages
+        sys.stdout.write("Backend migration finished!\nProcessed revisions: %d >> %d converted, %d skipped, %d failed\n" %
+                         (cnt[0] + cnt[1] + cnt[2], cnt[0], cnt[1], cnt[2], ))
+
+        if self.options.show_failed and len(fails):
+            sys.stdout.write("\nFailed report\n-------------\n")
+            for name in fails.iterkeys():
+                sys.stdout.write("%r: %s\n" % (name, fails[name]))
 
