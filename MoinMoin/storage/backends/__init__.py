@@ -8,6 +8,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import shutil
+
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
 
 def clone(source, destination, verbose=False):
