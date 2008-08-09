@@ -7,7 +7,7 @@
     - defined user_backend/data_backend in wikiconfig
     - defined user_backend_source/data_backend_source in wikiconfig
 
-    TODO: tests, case for comparing already existing items (interrupted migration)
+    TODO: tests!
 
     @copyright: 2008 MoinMoin:PawelPacana,
                 2008 MoinMoin:ChristopherDenter
@@ -24,12 +24,12 @@ class PluginScript(MoinScript):
     def __init__(self, argv, def_values):
         MoinScript.__init__(self, argv, def_values)
         self.parser.add_option(
-            "-t", "--type", dest="backend_type",
-            help="Migrate specified type of backend: user, data"
+            "-v", "--verbose", dest="verbose", action="store_true",
+            help="Provide progress information while performing the migration"
         )
         self.parser.add_option(
-            "-v", "--verbose", dest="verbose", default=False,
-            help="Provide progress information while performing the migration"
+            "-t", "--type", dest="backend_type",
+            help="Migrate specified type of backend: user, data"
         )
 
     def mainloop(self):
@@ -47,4 +47,10 @@ class PluginScript(MoinScript):
         except AttributeError:
             fatal("Please, configure your %(user)s_backend and %(user)s_backend_source in wikiconfig.py." %
                   {'user': self.options.backend_type})
-        clone(src_backend, dst_backend, self.options.verbose)
+        cnt, skips, fails = clone(src_backend, dst_backend, self.options.verbose)
+        if self.options.verbose:
+            from MoinMoin import log
+            logging = log.getLogger(__name__)
+            logging.info("Processed: %d >> %d skipped, %d failed" % (cnt, len(skips), len(fails), ))
+            # TODO: one can add verbosity level to show failed pages
+
