@@ -68,13 +68,14 @@ class TestRootPage:
         rootpage = self.request.rootpage
         pagelist = rootpage.getPageList()
         cnt = 0
+        have_frontpage = False
         for pg in pagelist:
+            if pg == u'FrontPage':
+                have_frontpage = True
+            assert pg != u''
             cnt += 1
-            if cnt > 10:
-                break
-        assert cnt > 10
-        assert u'FrontPage' in pagelist
-        assert u'' not in pagelist
+        assert cnt >= self.request.cfg.test_num_pages
+        assert have_frontpage
 
 
 coverage_modules = ['MoinMoin.Page']
