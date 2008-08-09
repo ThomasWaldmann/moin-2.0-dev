@@ -87,7 +87,7 @@ class TestSearch:
     def testTitleSearchNegatedFindAll(self):
         """ search: negated title search for some pagename that does not exist results in all pagenames """
         result = search.searchPages(self.request, u"-title:%s" % self.doesnotexist)
-        assert len(result.hits) > 100 # XXX should be "all"
+        assert len(result.hits) >= self.request.cfg.test_num_pages
 
     def testTitleSearchNegativeTerm(self):
         """ search: title search for a AND expression with a negative term """
@@ -98,7 +98,7 @@ class TestSearch:
     def testFullSearchNegatedFindAll(self):
         """ search: negated full search for some string that does not exist results in all pages """
         result = search.searchPages(self.request, u"-%s" % self.doesnotexist)
-        assert len(result.hits) > 100 # XXX should be "all"
+        assert len(result.hits) >= self.request.cfg.test_num_pages
 
     def testFullSearchNegativeTerm(self):
         """ search: full search for a AND expression with a negative term """

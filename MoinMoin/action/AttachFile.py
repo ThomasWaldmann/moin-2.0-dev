@@ -143,14 +143,22 @@ def getFilename(request, pagename, filename):
 
 def exists(request, pagename, filename):
     """ check if page <pagename> has a file <filename> attached """
-    fpath = getFilename(request, pagename, filename)
-    return os.path.exists(fpath)
+    try:
+        item = request.cfg.data_backend.get_item(pagename + "/" + filename)
+        rev = item.get_revision(-1)
+        return True
+    except (NoSuchItemError, NoSuchRevisionError):
+        return False
 
 
 def size(request, pagename, filename):
     """ return file size of file attachment """
-    fpath = getFilename(request, pagename, filename)
-    return os.path.getsize(fpath)
+    try:
+        item = request.cfg.data_backend.get_item(pagename + "/" + filename)
+        rev = item.get_revision(-1)
+        return rev.size
+    except (NoSuchItemError, NoSuchRevisionError):
+        return None
 
 
 def info(pagename, request):

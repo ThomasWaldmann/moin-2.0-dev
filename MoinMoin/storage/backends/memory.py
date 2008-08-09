@@ -50,6 +50,8 @@ class MemoryBackend(Backend):
 
         self._item_metadata_lock = {}       # {id : Lockobject}
 
+        self._revision_history = []
+
     def history(self, reverse=True):
         """
         Returns an iterator over all revisions created for all items in
