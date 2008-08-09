@@ -61,7 +61,7 @@ class FlatFileBackend(Backend):
                 res.append(c)
         return ''.join(res).decode('utf-8')
 
-    def news(self):
+    def history(self, reverse=True):
         return iter([])
 
     def get_item(self, itemname):

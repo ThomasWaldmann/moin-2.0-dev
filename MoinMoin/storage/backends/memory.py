@@ -50,10 +50,10 @@ class MemoryBackend(Backend):
 
         self._item_metadata_lock = {}       # {id : Lockobject}
 
-    def news(self):
+    def history(self, reverse=True):
         """
-        Returns an iterator over all revisions created for all items in their
-        reverse timestamp order.
+        Returns an iterator over all revisions created for all items in
+        (reverse [default] or non-reverse) timestamp order.
         """
         #XXX Harden the below against concurrency, etc.
         all_revisions = []
@@ -65,7 +65,8 @@ class MemoryBackend(Backend):
                 all_revisions.append(rev)
 
         all_revisions.sort(lambda x, y: cmp(x.timestamp, y.timestamp))
-        all_revisions.reverse()
+        if reverse:
+            all_revisions.reverse()
         return iter(all_revisions)
 
 

@@ -143,7 +143,7 @@ class GlobalEditLog(object):
         """
         self.request = request
         self.backend = request.cfg.data_backend
-        self.items = self.backend.news()
+        self.items = self.backend.history()
         self.pos = 0
 
     def __iter__(self):

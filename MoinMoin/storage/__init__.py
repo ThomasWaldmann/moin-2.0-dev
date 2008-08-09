@@ -125,10 +125,17 @@ class Backend(object):
         """
         raise NotImplementedError()
 
-    def news(self):
+    def history(self, reverse=True):
         """
-        Returns an iterator over all revisions created for all items
-        in their reverse timestamp order.
+        Returns an iterator over ALL revisions of ALL items stored in the
+        backend.
+        
+        If reverse is True (default), give history in reverse revision
+        timestamp order, otherwise in revision timestamp order.
+
+        Note: some functionality (e.g. completely cloning one storage into
+              another) requires that the iterator goes over really every
+              revision we have).
         """
         raise NotImplementedError()
 
@@ -451,7 +458,7 @@ class Revision(object, DictMixin):
     that defaults to None for newly created revisions in which case it will be
     assigned at commit() time. It is writable for use by converter backends,
     care must be taken in that case to create monotonous timestamps!
-    This timestamp is also retrieved via the backend's news() method.
+    This timestamp is also retrieved via the backend's history() method.
     """
 
     def __init__(self, item, revno, timestamp):
