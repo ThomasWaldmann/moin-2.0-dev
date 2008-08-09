@@ -16,7 +16,7 @@
 import shutil
 
 from MoinMoin.script import MoinScript, fatal
-
+from MoinMoin.storage.error import NoSuchItemError
 
 class PluginScript(MoinScript):
     """Backend migration class."""
@@ -57,14 +57,15 @@ def clone(src, dst):
     for revitem in revs:
         timestamp, revno, name = revitem
         item = src.get_item(name)
-        if revno == 0:  # first rev, create item
+        try:
+            new_item = dst.get_item(name)
+        except NoSuchItemError:
             new_item = dst.create_item(name)
             new_item.change_metadata()
-            for key in item.iterkeys():
-                new_item[key] = item[key]
+            for k, v in item.iteritems():
+                new_item[k] = v
             new_item.publish_metadata()
-        else:
-            new_item = dst.get_item(name)
+
         new_rev = new_item.create_revision(revno)
         new_rev.timestamp = timestamp
         revision = item.get_revision(revno)
