@@ -331,9 +331,9 @@ class MercurialBackend(Backend):
         metadata = {}
         for k, v in ctx.extra().iteritems():
             if k.startswith('moin_'):
-                metadata[k.lstrip('moin_')] = v
+                metadata[k.lstrip('moin_')] = pickle.loads(v)
             elif k.startswith('__'):
-                metadata[k] = v
+                metadata[k] = pickle.loads(v)
         return metadata
 
     def _get_revision_timestamp(self, rev):
@@ -466,9 +466,9 @@ class MercurialBackend(Backend):
             rev.timestamp = long(time.time())
         msg, user = rev.get(EDIT_LOG_COMMENT, ""), rev.get(EDIT_LOG_USERID, "anonymous")
         data = rev._data.getvalue()
-        meta = {'__timestamp': rev.timestamp}
+        meta = {'__timestamp': pickle.dumps(rev.timestamp, PICKLEPROTOCOL)}
         for k, v in rev.iteritems():
-            meta["moin_%s" % k] = v
+            meta["moin_%s" % k] = pickle.dumps(v, PICKLEPROTOCOL)
 
         lock = self._repolock()
         try:
