@@ -70,11 +70,11 @@ class TestCaching(object):
         page._write_file(test_data1)
         cache = caching.CacheEntry(self.request, page, 'test_key', 'item')
         cache.update(test_data1)
-        assert not cache.needsUpdate(cache.arena_dir)
+        assert not cache.needsUpdate([page])
         time.sleep(3) # XXX fails without, due to mtime granularity
         page = PageEditor(self.request, page_name)
         page._write_file(test_data2)
-        assert cache.needsUpdate(page._text_filename())
+        assert cache.needsUpdate([page])
 
     def test_filelike_readwrite(self):
         request = self.request
