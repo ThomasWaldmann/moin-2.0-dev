@@ -343,22 +343,6 @@ class Page(object):
         logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
         return "/tmp/"
 
-
-    def _text_filename(self, **kw):
-        """
-        TODO: remove this
-
-        The name of the page file, possibly of an older page.
-
-        @keyword rev: page revision, overriding self.rev
-        @rtype: string
-        @return: complete filename (including path) to this page
-        """
-        rev = kw.get('rev', 0)
-        if rev == 0:
-            rev = self.get_real_rev()
-        return self.getPagePath("revisions", '%08d' % rev, check_create = False)
-
     # Last Edit stuff
 
     def last_edit(self, printable=False):
@@ -1060,7 +1044,7 @@ class Page(object):
         # cache the pagelinks
         if do_cache and self.default_formatter and page_exists:
             cache = caching.CacheEntry(request, self, 'pagelinks', scope='item', use_pickle=True)
-            if cache.needsUpdate(self._text_filename()):
+            if cache.needsUpdate([self]):
                 links = self.formatter.pagelinks
                 cache.update(links)
 
@@ -1165,7 +1149,7 @@ class Page(object):
 
         from MoinMoin.action.AttachFile import getAttachDir
         attachmentsPath = getAttachDir(request, self.page_name)
-        if cache.needsUpdate(self._text_filename(), attachmentsPath):
+        if cache.needsUpdate([self]):
             raise Exception('CacheNeedsUpdate')
 
         import marshal
@@ -1271,7 +1255,7 @@ class Page(object):
         """
         if self.exists():
             cache = caching.CacheEntry(request, self, 'pagelinks', scope='item', do_locking=False, use_pickle=True)
-            if cache.needsUpdate(self._text_filename()):
+            if cache.needsUpdate([self]):
                 links = self.parsePageLinks(request)
                 cache.update(links)
             else:
