@@ -23,7 +23,8 @@
                 2005 MoinMoin:AlexanderSchremmer,
                 2005 DiegoOngaro at ETSZONE (diego@etszone.com),
                 2005-2007 MoinMoin:ReimarBauer,
-                2007-2008 MoinMoin:ThomasWaldmann
+                2007-2008 MoinMoin:ThomasWaldmann,
+                2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -631,6 +632,8 @@ def _do_upload(pagename, request):
         return _('You are not allowed to overwrite a file attachment of this page.')
 
     filename = form.get('file__filename__')
+    if not filename:
+        return _("Filename of attachment not specified!")
     rename = form.get('rename', [u''])[0].strip()
     if rename:
         target = rename
@@ -639,9 +642,6 @@ def _do_upload(pagename, request):
 
     target = preprocess_filename(target)
     target = wikiutil.clean_input(target)
-
-    if not target:
-        return _("Filename of attachment not specified!")
 
     # get file content
     filecontent = request.form.get('file', [None])[0]
