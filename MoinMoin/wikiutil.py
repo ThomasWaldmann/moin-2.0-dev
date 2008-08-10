@@ -2602,6 +2602,8 @@ def split_body(body):
     for key, value in pi.iteritems():
         if len(value) == 1:
             pi[key] = value[0]
+        else:
+            pi[key] = tuple(value)
 
     return pi, body
 

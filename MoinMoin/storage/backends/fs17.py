@@ -210,7 +210,11 @@ class FsPageRevision(StoredRevision):
             meta, data = wikiutil.split_body(content)
         meta.update(editlog_data)
         meta['__size'] = len(data) # needed for converter checks
-        self._fs_meta = meta
+        self._fs_meta = {}
+        for k, v in meta.iteritems():
+            if isinstance(v, list):
+                v = tuple(v)
+            self._fs_meta[k] = v
         self._fs_data_fname = None # "file" is already opened here:
         self._fs_data_file = StringIO(data)
 
