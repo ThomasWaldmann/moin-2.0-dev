@@ -119,7 +119,7 @@
 """
 
 from mercurial import hg, ui, context, util, commands, merge
-from mercurial.node import nullid
+from mercurial.node import nullid, nullrev, short
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
 import cPickle as pickle
@@ -309,8 +309,8 @@ class MercurialBackend(Backend):
         ctxrevs = filter(lambda r: item._id in self._repo[r].files(), iter(self._repo))
         for num, ctxrevno in enumerate(ctxrevs):
             if num == revno:
-                ctx = self._repo[repo_rev]
-        revision = StoredRevision(item, revno)
+                ctx = self._repo[ctxrevno]
+        revision = MercurialStoredRevision(item, revno)
         revision._data = StringIO.StringIO(ctx.filectx(item._id).data())
         revision._item_id = item._id
         revision._metadata = None
@@ -597,3 +597,41 @@ class MercurialBackend(Backend):
         historyfile = open(self._history, 'ab')
         historyfile.write(struct.pack('!16sLQ', item_id, revid, ts))
         historyfile.close()
+
+    #
+    # extended API below
+    #
+
+    def _get_revision_node(self, revision):
+        """Return internal short SHA1 id of Revision"""
+        ctxrevs = filter(lambda r: revision._item_id in self._repo[r].files(), iter(self._repo))
+        for rev, ctxrev in enumerate(ctxrevs):
+            if rev == revision.revno:
+                return short(self._repo[ctxrev].node())
+
+    def _get_revision_parents(self, revision):
+        """Return parent revision numbers of Revision."""
+        ctxrevs = filter(lambda r: revision._item_id in self._repo[r].files(), iter(self._repo))
+        rcache = {}
+        for revno, ctxrevno in enumerate(ctxrevs):
+            rcache[ctxrevno] = revno
+            if revno == revision.revno:
+                parentctxrevs = [p for p in self._repo.changelog.parentrevs(ctxrevno) if p != nullrev]
+        parents = []
+        for p in parentctxrevs:
+            try:
+                parents.append(rcache[p])
+            except KeyError:
+                pass
+        return parents
+
+
+class MercurialStoredRevision(StoredRevision):
+    def __init__(self, item, revno, timestamp=None, size=None):
+        StoredRevision.__init__(self, item, revno, timestamp, size)
+
+    def get_parents(self):
+        return self._backend._get_revision_parents(self)
+
+    def get_node(self):
+        return self._backend._get_revision_node(self)
