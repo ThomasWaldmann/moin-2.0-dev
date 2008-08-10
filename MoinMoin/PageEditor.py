@@ -917,7 +917,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         else:
             newrev.write("")
-            ### newrev.deleted = True   # XXX Does it still work when this is commented out completely? Maybe store the info in metadata
+            newrev[DELETED] = True
 
         ###newrev.save(action, extra, comment, self.uid_override)
 
