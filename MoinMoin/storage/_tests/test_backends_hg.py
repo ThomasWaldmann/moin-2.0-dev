@@ -145,6 +145,8 @@ instead of throwing RevisionAlreadyExistsError")
         item1.create_revision(1)['a'] = 's'
         item2.create_revision(1)['a'] = 'ss'
         item1.commit()
+        # import time
+        # time.sleep(1)
         item2.commit()
         assert item2.list_revisions() == range(4)
         item1 = self.backend.get_item("double-headed")
