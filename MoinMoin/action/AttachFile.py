@@ -106,28 +106,6 @@ def getAttachUrl(pagename, filename, request, addts=0, escaped=0, do='get', draw
     return url
 
 
-def getIndicator(request, pagename):
-    """ Get an attachment indicator for a page (linked clip image) or
-        an empty string if not attachments exist.
-    """
-    _ = request.getText
-    attach_dir = getAttachDir(request, pagename)
-    if not os.path.exists(attach_dir):
-        return ''
-
-    files = os.listdir(attach_dir)
-    if not files:
-        return ''
-
-    fmt = request.formatter
-    attach_count = _('[%d attachments]') % len(files)
-    attach_icon = request.theme.make_icon('attach', vars={'attach_count': attach_count})
-    attach_link = (fmt.url(1, attachUrl(request, pagename, action=action_name), rel='nofollow') +
-                   attach_icon +
-                   fmt.url(0))
-    return attach_link
-
-
 def getFilename(request, pagename, filename):
     """ make complete pathfilename of file "name" attached to some page "pagename"
         @param request: request object

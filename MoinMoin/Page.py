@@ -638,7 +638,6 @@ class Page(object):
         @param querystr: the query string to add after a "?" after the url
         @param anchor: if specified, make a link to this anchor
         @keyword on: opening/closing tag only
-        @keyword attachment_indicator: if 1, add attachment indicator after link tag
         @keyword css_class: css class to use
         @rtype: string
         @return: formatted link
@@ -651,19 +650,7 @@ class Page(object):
         if not self.exists():
             kw['css_class'] = 'nonexistent'
 
-        attachment_indicator = kw.get('attachment_indicator')
-        if attachment_indicator is None:
-            attachment_indicator = 0 # default is off
-        else:
-            del kw['attachment_indicator'] # avoid having this as <a> tag attribute
-
         link = self.link_to_raw(request, text, querystr, anchor, **kw)
-
-        # Create a link to attachments if any exist
-        if attachment_indicator:
-            from MoinMoin.action import AttachFile
-            link += AttachFile.getIndicator(request, self.page_name)
-
         return link
 
     def getSubscribers(self, request, **kw):
