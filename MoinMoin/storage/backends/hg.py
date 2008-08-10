@@ -146,7 +146,8 @@ try:
 except ImportError:
     from MoinMoin.support import pycdb as cdb
 
-PICKLEPROTOCOL = 1
+PICKLE_ITEM_META = 1
+PICKLE_REV_META = 0
 RAND_MAX = 1024
 
 
@@ -437,7 +438,7 @@ class MercurialBackend(Backend):
         def write_meta_item(item_path, metadata):
             tmp_fd, tmp_fpath = tempfile.mkstemp("-meta", "tmp-", self._u_path)
             f = os.fdopen(tmp_fd, 'wb')
-            pickle.dump(item._metadata, f, protocol=PICKLEPROTOCOL)
+            pickle.dump(item._metadata, f, protocol=PICKLE_ITEM_META)
             f.close()
             util.rename(tmp_fpath, item_path)
 
@@ -464,11 +465,12 @@ class MercurialBackend(Backend):
         rev = item._uncommitted_revision
         if rev.timestamp is None:
             rev.timestamp = long(time.time())
-        msg, user = rev.get(EDIT_LOG_COMMENT, ""), rev.get(EDIT_LOG_USERID, "anonymous")
+        msg = rev.get(EDIT_LOG_COMMENT, "").encode("utf-8")
+        user = rev.get(EDIT_LOG_USERID, "anonymous")
         data = rev._data.getvalue()
-        meta = {'__timestamp': pickle.dumps(rev.timestamp, PICKLEPROTOCOL)}
+        meta = {'__timestamp': pickle.dumps(rev.timestamp, PICKLE_REV_META)}
         for k, v in rev.iteritems():
-            meta["moin_%s" % k] = pickle.dumps(v, PICKLEPROTOCOL)
+            meta["moin_%s" % k] = pickle.dumps(v, PICKLE_REV_META)
 
         lock = self._repolock()
         try:
