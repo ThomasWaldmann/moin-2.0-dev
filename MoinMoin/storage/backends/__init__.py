@@ -20,7 +20,7 @@ def clone(source, destination, verbose=False):
     - skipped Item:Revsion numbers list dict,
     - failed Item:Revision numbers list dict
     """
-    def compare_revision(rev1, rev2):
+    def same_revision(rev1, rev2):
         if rev1.timestamp != rev2.timestamp:
             return False
         for k, v in rev1.iteritems():
@@ -57,7 +57,7 @@ def clone(source, destination, verbose=False):
             new_rev = new_item.create_revision(revision.revno)
         except RevisionAlreadyExistsError:
             existing_revision = new_item.get_revision(revision.revno)
-            if compare_revision(existing_revision, revision):
+            if same_revision(existing_revision, revision):
                 count[1] += 1
                 try:
                     skips[name].append(revision.revno)
