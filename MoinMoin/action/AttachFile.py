@@ -1072,9 +1072,11 @@ def send_viewfile(pagename, request):
     _ = request.getText
     fmt = request.html_formatter
 
-    pagename, filename, fpath = _access_file(pagename, request)
-    if not filename:
-        return
+    if not request.form.get('target', [''])[0]:
+        error = _("Filename of attachment not specified!")
+    else:
+        filename = wikiutil.taintfilename(request.form['target'][0])
+        fpath = getFilename(request, pagename, filename)
 
     request.write('<h2>' + _("Attachment '%(filename)s'") % {'filename': filename} + '</h2>')
     # show a download link above the content
@@ -1095,25 +1097,29 @@ def send_viewfile(pagename, request):
     elif mt.major == 'text':
         ext = os.path.splitext(filename)[1]
         Parser = wikiutil.getParserForExtension(request.cfg, ext)
-        if Parser is not None:
-            try:
-                content = file(fpath, 'r').read()
-                content = wikiutil.decodeUnknownInput(content)
-                colorizer = Parser(content, request, filename=filename)
-                colorizer.format(request.formatter)
-                return
-            except IOError:
-                pass
+        try:
+            backend = request.cfg.data_backend
+            item = backend.get_item(pagename + "/" + filename)
+            rev = item.get_revision(-1)
+        except (NoSuchItemError, NoSuchRevisionError):
+            error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
+        else:
+            content = rev.read()  # XXX unbuffered reading as before?!
+            content = wikiutil.decodeUnknownInput(content)
 
-        request.write(request.formatter.preformatted(1))
-        # If we have text but no colorizing parser we try to decode file contents.
-        content = open(fpath, 'r').read()
-        content = wikiutil.decodeUnknownInput(content)
-        content = wikiutil.escape(content)
-        request.write(request.formatter.text(content))
-        request.write(request.formatter.preformatted(0))
-        return
+            if Parser is not None:
+                    colorizer = Parser(content, request, filename=filename)
+                    colorizer.format(request.formatter)
+                    return
 
+            request.write(request.formatter.preformatted(1))
+            # If we have text but no colorizing parser we try to decode file contents.
+            content = wikiutil.escape(content)
+            request.write(request.formatter.text(content))
+            request.write(request.formatter.preformatted(0))
+            return
+
+    # XXX Fix this zipfile stuff
     try:
         package = packages.ZipPackage(request, fpath)
         if package.isPackage():
@@ -1158,33 +1164,39 @@ def send_viewfile(pagename, request):
     request.write(m.execute('EmbedObject', u'target=%s, pagename=%s' % (filename, pagename)))
     return
 
-
 def _do_view(pagename, request):
     _ = request.getText
 
-    orig_pagename = pagename
-    pagename, filename, fpath = _access_file(pagename, request)
     if not request.user.may.read(pagename):
         return _('You are not allowed to view attachments of this page.')
-    if not filename:
-        return
 
-    # send header & title
-    request.emit_http_headers()
-    # Use user interface language for this generated page
-    request.setContentLanguage(request.lang)
-    title = _('attachment:%(filename)s of %(pagename)s') % {
-        'filename': filename, 'pagename': pagename}
-    request.theme.send_title(title, pagename=pagename)
+    if not request.form.get('target', [''])[0]:
+        error = _("Filename of attachment not specified!")
+    else:
+        filename = wikiutil.taintfilename(request.form["target"][0])
 
-    # send body
-    request.write(request.formatter.startContent())
-    send_viewfile(orig_pagename, request)
-    send_uploadform(pagename, request)
-    request.write(request.formatter.endContent())
+    backend = request.cfg.data_backend
+    try:
+        item = backend.get_item(pagename + "/" + filename)
+        rev = item.get_revision(-1)
+    except (NoSuchItemError, NoSuchRevisionError):
+        error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
+    else:
+        # send header & title
+        request.emit_http_headers()
+        # Use user interface language for this generated page
+        request.setContentLanguage(request.lang)
+        title = _('attachment:%s of %s') % (filename, pagename)
+        request.theme.send_title(title, pagename=pagename)
 
-    request.theme.send_footer(pagename)
-    request.theme.send_closing_html()
+        # send body
+        request.write(request.formatter.startContent())
+        send_viewfile(pagename, request)
+        send_uploadform(pagename, request)
+        request.write(request.formatter.endContent())
+
+        request.theme.send_footer(pagename)
+        request.theme.send_closing_html()
 
 
 #############################################################################
