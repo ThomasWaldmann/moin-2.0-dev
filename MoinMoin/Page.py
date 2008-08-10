@@ -512,7 +512,7 @@ class Page(object):
             return False
 
         try:
-            if not includeDeleted and self._rev["DELETED"]:
+            if not includeDeleted and self._rev[DELETED]:
                 return False
         except KeyError:
             pass
