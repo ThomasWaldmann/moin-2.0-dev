@@ -560,9 +560,11 @@ class Page(object):
                 pass
             else:
                 try:
-                    acls = [current_rev[ACL]]
+                    acls = current_rev[ACL]
                 except KeyError: # no ACLs defined on current revision
                     pass
+        if not isinstance(acls, (list, tuple)):
+            acls = (acls, )
         return AccessControlList(self.request.cfg, acls)
 
     def split_title(self, force=0):
