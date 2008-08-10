@@ -1497,23 +1497,6 @@ class RootPage(object):
 
         request.clock.stop('getPageList')
 
-    def getPageDict(self, user=None, exists=1, filter=None, include_underlay=True):
-        """
-        Return a dictionary of filtered page objects readable by user.
-
-        See getPageList docstring for more details.
-
-        @param user: the user requesting the pages
-        @param filter: filter function
-        @param exists: only existing pages
-        @rtype: dict {unicode: Page}
-        @return: user readable pages
-        """
-        pages = {}
-        for name in self.getPageList(user=user, exists=exists, filter=filter, include_underlay=include_underlay):
-            pages[name] = Page(self.request, name)
-        return pages
-
     def getPageCount(self, exists=0):
         """
         Return page count.
