@@ -497,11 +497,10 @@ class Page(object):
             return False
         return not hasattr(self._item._backend, '_layer_marked_underlay')
 
-    def exists(self, rev=0, domain=None, includeDeleted=False):
+    def exists(self, domain=None, includeDeleted=False):
         """
         Does this page exist?
 
-        @param rev: revision to look for. Default: check current
         @param domain: where to look for the page. Default: look in all,
                        available values: 'underlay', 'standard'
         @param includeDeleted: include deleted pages?
@@ -512,7 +511,7 @@ class Page(object):
             return False
 
         try:
-            if not includeDeleted and self._rev["DELETED"]:
+            if not includeDeleted and self._rev[DELETED]:
                 return False
         except KeyError:
             pass
@@ -560,9 +559,11 @@ class Page(object):
                 pass
             else:
                 try:
-                    acls = [current_rev[ACL]]
+                    acls = current_rev[ACL]
                 except KeyError: # no ACLs defined on current revision
                     pass
+        if not isinstance(acls, (list, tuple)):
+            acls = (acls, )
         return AccessControlList(self.request.cfg, acls)
 
     def split_title(self, force=0):

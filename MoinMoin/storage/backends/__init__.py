@@ -75,10 +75,7 @@ def clone(source, destination, verbose=False):
                     sys.stdout.write("F")
         else:
             for k, v in revision.iteritems():
-                try:
-                    new_rev[k] = v
-                except TypeError:           # remove as soon as this gets fixed: see 17:32 < ThomasWaldmann>
-                    new_rev[k] = tuple(v)   # http://www.moinmo.in/MoinMoinChat/Logs/moin-dev/2008-08-09
+                new_rev[k] = v
             new_rev.timestamp = revision.timestamp
             shutil.copyfileobj(revision, new_rev)
 
