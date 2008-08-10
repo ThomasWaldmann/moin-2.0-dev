@@ -306,7 +306,8 @@ class MercurialBackend(Backend):
         if revno not in revs:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
         # XXX: to rewrite for more optimal
-        for num, repo_rev in enumerate([r for r in iter(self._repo) if item._id in self._repo[r].files()]):
+        ctxrevs = filter(lambda r: item._id in self._repo[r].files(), iter(self._repo))
+        for num, ctxrevno in enumerate(ctxrevs):
             if num == revno:
                 ctx = self._repo[repo_rev]
         revision = StoredRevision(item, revno)
@@ -361,19 +362,13 @@ class MercurialBackend(Backend):
     def _list_revisions(self, item):
         """
         Return a list of Item revision numbers.
-        Retrieves only accessible rev numbers when internal indexfile
-        inconsistency occurs.
         """
         if not item._id:
             return []
         else:
-            revs = []
-            ctxs = [revno for revno in iter(self._repo) if item._id in self._repo[revno].files()]
-            # XXX: extremely slow, but no solution to include <merges> in revs by now
-            # considering mercurial.cmdutil.walkchangerevs
-            for revno in xrange(len(ctxs)):
-                revs.append(revno)
-            return revs
+#           # XXX: use mercurial.cmdutil.walkchangerevs
+            revs = filter(lambda r: item._id in self._repo[r].files(), iter(self._repo))
+            return range(len(revs))
 
     def _rename_item(self, item, newname):
         """
