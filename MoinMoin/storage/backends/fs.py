@@ -81,7 +81,7 @@ class FSBackend(Backend):
         if not reverse:
             # XXX write a more efficient version
             revs = list(self.history(reverse=True))
-            for rev in revs.reverse():
+            for rev in revs[::-1]:
                 yield rev
         else:
             try:
