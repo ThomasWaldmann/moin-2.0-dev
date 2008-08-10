@@ -8,7 +8,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 import time
+
 from MoinMoin import wikiutil
+from MoinMoin.Page import Page
 
 datetime_fmt = "%Y-%m-%dT%H:%M:%S+00:00"
 
@@ -26,10 +28,10 @@ def make_url_xml(vars):
 </url>
 """ % vars
 
-def sitemap_url(request, base, page):
+def sitemap_url(request, base, pagename):
     """ return a sitemap <url>..</url> fragment for page object <page> """
+    page = Page(request, pagename)
     url = page.url(request)
-    pagename = page.page_name
     lastmod = page.mtime(printable=True)
     if lastmod == "0": # can happen in case of errors
         lastmod = now()
@@ -86,11 +88,10 @@ def execute(pagename, request):
         underlay = int(form.get('underlay', [1])[0])
     except ValueError:
         underlay = 1
-    pages = request.rootpage.getPageDict(include_underlay=underlay)
-    pagelist = pages.keys()
-    pagelist.sort()
-    for name in pagelist:
-        result.append(sitemap_url(request, base, pages[name]))
+    pagenames = list(request.rootpage.getPageList(include_underlay=underlay))
+    pagenames.sort()
+    for pagename in pagenames:
+        result.append(sitemap_url(request, base, pagename))
 
     result.append("""</urlset>\n""")
 

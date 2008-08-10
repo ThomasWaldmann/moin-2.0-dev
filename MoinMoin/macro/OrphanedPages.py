@@ -8,20 +8,24 @@
 
 Dependencies = ["pages"]
 
-def macro_OrphanedPages(macro):
-    _ = macro.request.getText
+from MoinMoin.Page import Page
 
-    if macro.request.mode_getpagelinks: # prevent recursion
+def macro_OrphanedPages(macro):
+    request = macro.request
+    _ = request.getText
+
+    if request.mode_getpagelinks: # prevent recursion
         return ''
-    if macro.request.isSpiderAgent: # reduce bot cpu usage
+    if request.isSpiderAgent: # reduce bot cpu usage
         return ''
 
     # delete all linked pages from a dict of all pages
-    pages = macro.request.rootpage.getPageDict()
+    pagenames = dict([(pagename, None) for pagename in request.rootpage.getPageList()])
+
     orphaned = {}
-    orphaned.update(pages)
-    for page in pages.values():
-        links = page.getPageLinks(macro.request)
+    orphaned.update(pagenames)
+    for pagename in pagenames:
+        links = Page(request, pagename).getPageLinks(request)
         for link in links:
             if link in orphaned:
                 del orphaned[link]
