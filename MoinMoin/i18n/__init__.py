@@ -62,7 +62,8 @@ def i18n_init(request):
         logging.debug("trying to load translations from cache")
         meta_cache = caching.CacheEntry(request, 'i18n', 'meta', scope='farm', use_pickle=True)
         i18n_dir = os.path.join(request.cfg.moinmoin_dir, 'i18n')
-        if meta_cache.needsUpdate(i18n_dir):
+        i18n_dir_mtime = os.path.getmtime(i18n_dir)
+        if meta_cache.needsUpdate([i18n_dir_mtime]):
             logging.debug("cache needs update")
             _languages = {}
             for lang_file in glob.glob(po_filename(request, language='*', domain='MoinMoin')): # XXX only MoinMoin domain for now
@@ -201,7 +202,8 @@ class Translation(object):
         request.clock.start('loadLanguage')
         cache = caching.CacheEntry(request, arena='i18n', key=self.language, scope='farm', use_pickle=True)
         langfilename = po_filename(request, self.language, self.domain, i18n_dir=trans_dir)
-        needsupdate = cache.needsUpdate(langfilename)
+        langfile_mtime = os.path.getmtime(langfilename)
+        needsupdate = cache.needsUpdate([langfile_mtime])
         if not needsupdate:
             try:
                 unformatted = cache.content()
