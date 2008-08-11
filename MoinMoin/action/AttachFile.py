@@ -770,40 +770,42 @@ def _do_del(pagename, request):
     else:
         return _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
 
-def move_file(request, pagename, new_pagename, attachment, new_attachment):
+def move_attachment(request, pagename, new_pagename, attachment, new_attachment):
+    """
+    In order to move an attachment, we simply rename the item to which the
+    attachment (i.e. a revision) belongs.
+    """
+    # XXX This is the easiest approach to get something functional wrt attachment
+    # XXX moving. It has a few drawbacks wrt the history being displayed in Recent
+    # XXX Changes. No completely sane solution is possible at this point, so we
+    # XXX choose the easiest. Once this gets refactored, the way an attachment is
+    # XXX moved might be changed as well.
     _ = request.getText
 
-    newpage = Page(request, new_pagename)
-    if newpage.exists(includeDeleted=1) and request.user.may.write(new_pagename) and request.user.may.delete(pagename):
-        new_attachment_path = os.path.join(getAttachDir(request, new_pagename,
-                              create=1), new_attachment).encode(config.charset)
-        attachment_path = os.path.join(getAttachDir(request, pagename),
-                          attachment).encode(config.charset)
+    backend = request.cfg.data_backend
 
-        if os.path.exists(new_attachment_path):
-            upload_form(pagename, request,
-                msg=_("Attachment '%(new_pagename)s/%(new_filename)s' already exists.") % {
-                    'new_pagename': new_pagename,
-                    'new_filename': new_attachment})
-            return
+    if not backend.has_item(new_pagename):  # XXX Is this a proper way to do the check?
+        upload_form(pagename, request, msg=_("Page '%s' does not exist or you don't have enough rights." % new_pagename))
+        return
 
-        if new_attachment_path != attachment_path:
-            # move file
-            filesys.rename(attachment_path, new_attachment_path)
-            _addLogEntry(request, 'ATTDEL', pagename, attachment)
-            _addLogEntry(request, 'ATTNEW', new_pagename, new_attachment)
-            upload_form(pagename, request,
-                        msg=_("Attachment '%(pagename)s/%(filename)s' moved to '%(new_pagename)s/%(new_filename)s'.") % {
-                            'pagename': pagename,
-                            'filename': attachment,
-                            'new_pagename': new_pagename,
-                            'new_filename': new_attachment})
-        else:
-            upload_form(pagename, request, msg=_("Nothing changed"))
-    else:
-        upload_form(pagename, request, msg=_("Page '%(new_pagename)s' does not exist or you don't have enough rights.") % {
-            'new_pagename': new_pagename})
+    try:
+        item = backend.get_item(pagename + "/" + attachment)
+        item.rename(new_pagename + "/" + new_attachment)
+    except NoSuchItemError:
+        return _("Attachment '%s' does not exist!" % attachment)
+    except ItemAlreadyExistsError:
+        upload_form(pagename, request,
+            msg=_("Attachment '%(new_pagename)s/%(new_attachment)s' already exists.") % {
+                'new_pagename': new_pagename,
+                'new_attachment': new_attachment})
+        return
 
+    upload_form(pagename, request,
+                msg=_("Attachment '%(pagename)s/%(filename)s' moved to '%(new_pagename)s/%(new_filename)s'.") % {
+                      'pagename': pagename,
+                      'filename': attachment,
+                      'new_pagename': new_pagename,
+                      'new_filename': new_attachment})
 
 def _do_attachment_move(pagename, request):
     _ = request.getText
@@ -829,62 +831,69 @@ def _do_attachment_move(pagename, request):
         upload_form(pagename, request, msg=_("Move aborted because new attachment name is empty."))
 
     attachment = request.form.get('oldattachmentname')[0]
-    move_file(request, pagename, new_pagename, attachment, new_attachment)
-
+    move_attachment(request, pagename, new_pagename, attachment, new_attachment)
 
 def _do_move(pagename, request):
     _ = request.getText
 
-    pagename, filename, fpath = _access_file(pagename, request)
     if not request.user.may.delete(pagename):
         return _('You are not allowed to move attachments from this page.')
-    if not filename:
-        return # error msg already sent in _access_file
 
-    # move file
-    d = {'action': action_name,
-         'baseurl': request.getScriptname(),
-         'do': 'attachment_move',
-         'ticket': wikiutil.createTicket(request),
-         'pagename': pagename,
-         'pagename_quoted': wikiutil.quoteWikinameURL(pagename),
-         'attachment_name': filename,
-         'move': _('Move'),
-         'cancel': _('Cancel'),
-         'newname_label': _("New page name"),
-         'attachment_label': _("New attachment name"),
-        }
-    formhtml = '''
-<form action="%(baseurl)s/%(pagename_quoted)s" method="POST">
-<input type="hidden" name="action" value="%(action)s">
-<input type="hidden" name="do" value="%(do)s">
-<input type="hidden" name="ticket" value="%(ticket)s">
-<table>
-    <tr>
-        <td class="label"><label>%(newname_label)s</label></td>
-        <td class="content">
-            <input type="text" name="newpagename" value="%(pagename)s" size="80">
-        </td>
-    </tr>
-    <tr>
-        <td class="label"><label>%(attachment_label)s</label></td>
-        <td class="content">
-            <input type="text" name="newattachmentname" value="%(attachment_name)s" size="80">
-        </td>
-    </tr>
-    <tr>
-        <td></td>
-        <td class="buttons">
-            <input type="hidden" name="oldattachmentname" value="%(attachment_name)s">
-            <input type="submit" name="move" value="%(move)s">
-            <input type="submit" name="cancel" value="%(cancel)s">
-        </td>
-    </tr>
-</table>
-</form>''' % d
-    thispage = Page(request, pagename)
-    request.theme.add_msg(formhtml, "dialog")
-    return thispage.send_page()
+    if not request.form.get('target', [''])[0]:
+        error = _("Filename of attachment not specified!")
+    else:
+        filename = wikiutil.taintfilename(request.form['target'][0])
+        try:  # XXX The revision object is not used here. Just check if we have it. Refactor.
+            backend = request.cfg.data_backend
+            item = backend.get_item(pagename + "/" + filename)
+            rev = item.get_revision(-1)
+        except (NoSuchItemError, NoSuchRevisionError):
+            error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
+
+        # move file
+        d = {'action': action_name,
+             'baseurl': request.getScriptname(),
+             'do': 'attachment_move',
+             'ticket': wikiutil.createTicket(request),
+             'pagename': pagename,
+             'pagename_quoted': wikiutil.quoteWikinameURL(pagename),
+             'attachment_name': filename,
+             'move': _('Move'),
+             'cancel': _('Cancel'),
+             'newname_label': _("New page name"),
+             'attachment_label': _("New attachment name"),
+            }
+        formhtml = '''
+    <form action="%(baseurl)s/%(pagename_quoted)s" method="POST">
+    <input type="hidden" name="action" value="%(action)s">
+    <input type="hidden" name="do" value="%(do)s">
+    <input type="hidden" name="ticket" value="%(ticket)s">
+    <table>
+        <tr>
+            <td class="label"><label>%(newname_label)s</label></td>
+            <td class="content">
+                <input type="text" name="newpagename" value="%(pagename)s" size="80">
+            </td>
+        </tr>
+        <tr>
+            <td class="label"><label>%(attachment_label)s</label></td>
+            <td class="content">
+                <input type="text" name="newattachmentname" value="%(attachment_name)s" size="80">
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td class="buttons">
+                <input type="hidden" name="oldattachmentname" value="%(attachment_name)s">
+                <input type="submit" name="move" value="%(move)s">
+                <input type="submit" name="cancel" value="%(cancel)s">
+            </td>
+        </tr>
+    </table>
+    </form>''' % d
+        thispage = Page(request, pagename)
+        request.theme.add_msg(formhtml, "dialog")
+        return thispage.send_page()
 
 def _do_get(pagename, request):
     _ = request.getText
