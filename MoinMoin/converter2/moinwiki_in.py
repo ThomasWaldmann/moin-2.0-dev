@@ -451,8 +451,12 @@ class Converter(ConverterMacro):
 
         # TODO: Query string / fragment
         if link_page is not None:
+            if '#' in link_page:
+                path, fragment = link_page.rsplit('#', 1)
+            else:
+                path, fragment = link_page, None
             # TODO: unicode URI
-            target = str(uri.Uri(scheme='wiki.local', path=link_page.encode('utf-8')))
+            target = str(uri.Uri(scheme='wiki.local', path=path.encode('utf-8'), fragment=fragment))
             text = link_page
         else:
             # TODO: unicode URI
