@@ -12,7 +12,7 @@ import re
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import config, wikiutil
-from MoinMoin.util import namespaces, uri
+from MoinMoin.util import namespaces, tree, uri
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
 class _Iter(object):
@@ -415,6 +415,27 @@ class Converter(ConverterMacro):
             else:
                 self.stack_push(ET.Element(self.tag_emphasis))
 
+    inline_size = r"""
+        (?P<size>
+           (?P<size_begin>
+              ~[-+]
+           )
+           |
+           (?P<size_end>
+              [-+]~
+           )
+        )
+    """
+
+    def inline_size_repl(self, size, size_begin=None, size_end=None):
+        if size_begin:
+            size = size[1] == '+' and '120%' or '85%'
+            attrib = {tree.moin_page.font_size: size}
+            elem = tree.moin_page.span(attrib=attrib)
+            self.stack_push(elem)
+        else:
+            self.stack_pop()
+
     inline_subscript = r"""
         (?P<subscript>
             ,,
@@ -707,6 +728,7 @@ class Converter(ConverterMacro):
         inline_object,
         inline_emphstrong,
         inline_comment,
+        inline_size,
         inline_subscript,
         inline_superscript,
         inline_underline,
