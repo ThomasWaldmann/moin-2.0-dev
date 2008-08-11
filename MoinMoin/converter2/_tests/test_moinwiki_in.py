@@ -111,7 +111,7 @@ class TestConverter(object):
             ("~-smaller-~",
                 '<page %s><p><span font-size="85%%">smaller</span></p></page>' % namespaces_string),
             ("~+larger+~",
-                '<page %s><p><span font-size="120%%">larget</span></p></page>' % namespaces_string),
+                '<page %s><p><span font-size="120%%">larger</span></p></page>' % namespaces_string),
             ("--(strike through)--",
                 '<page %s><p></p></page>' % namespaces_string, 'broken test'),
         ]
