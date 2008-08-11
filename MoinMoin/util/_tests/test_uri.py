@@ -95,7 +95,7 @@ def test_Uri_1():
     u = Uri(i)
     assert u.scheme == 'http'
     assert u.authority is None
-    assert u.path is None 
+    assert u.path is None
     assert u.query == 'action=raw'
     assert u.fragment == 'body'
     assert str(u) == i
