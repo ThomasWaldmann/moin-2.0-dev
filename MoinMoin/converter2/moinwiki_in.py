@@ -403,10 +403,10 @@ class Converter(ConverterMacro):
                 (?P<link_url>
                     [a-zA-Z0-9+.-]+
                     ://
-                    [^|\]]+?
+                    [^|]+?
                 )
                 |
-                (?P<link_page> [^|\]]+? )
+                (?P<link_page> [^|]+? )
             )
             \s*
             ([|] \s* (?P<link_text>[^|]*?) \s*)?
