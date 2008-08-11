@@ -436,6 +436,22 @@ class Converter(ConverterMacro):
         else:
             self.stack_pop()
 
+    inline_strike = r"""
+        (?P<strike>
+           (?P<strike_begin>)
+           --\(
+           |
+           \)--
+        )
+    """
+
+    def inline_strike_repl(self, strike, strike_begin=None):
+        if strike_begin is not None:
+            # TODO
+            self.stack_push(tree.moin_page.span())
+        else:
+            self.stack_pop()
+
     inline_subscript = r"""
         (?P<subscript>
             ,,
@@ -729,6 +745,7 @@ class Converter(ConverterMacro):
         inline_emphstrong,
         inline_comment,
         inline_size,
+        inline_strike,
         inline_subscript,
         inline_superscript,
         inline_underline,
