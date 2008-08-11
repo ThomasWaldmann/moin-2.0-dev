@@ -15,7 +15,12 @@ from MoinMoin.Page import Page
 from MoinMoin.util import namespaces
 
 class XPointer(list):
+    """
+    Simple XPointer parser
+    """
+
     tokenizer_rules = r"""
+        # Match escaped syntax elements
         \^[()^]
         |
         (?P<braket_open> \( )
@@ -24,6 +29,7 @@ class XPointer(list):
         |
         (?P<whitespace> \s+ )
         |
+        # Anything else
         [^()^]+
     """
     tokenizer_re = re.compile(tokenizer_rules, re.X)
@@ -146,6 +152,8 @@ class Converter(object):
                                 xp_include_level = data
 
                 if href:
+                    # We have a single page to include
+                    # TODO: handle URIs
                     if href.startswith('wiki:///'):
                         include = href[8:]
                     elif href.startswith('wiki.local:'):
@@ -155,6 +163,7 @@ class Converter(object):
                     pages = ((page, 'wiki:///' + include), )
 
                 elif xp_include_pages:
+                    # We have a regex of pages to include
                     inc_match = re.compile(xp_include_pages)
                     pagelist = self.request.rootpage.getPageList(filter=inc_match.match)
                     pagelist.sort()
@@ -165,6 +174,7 @@ class Converter(object):
                     if xp_include_items is not None:
                         pagelist = pagelist[xp_include_items + 1:]
 
+                    # TODO: URI
                     pages = ((Page(self.request, p), 'wiki:///' + p) for p in pagelist)
 
                 div = ET.Element(self.tag_div)
