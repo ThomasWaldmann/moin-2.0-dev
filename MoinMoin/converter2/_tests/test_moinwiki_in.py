@@ -100,6 +100,24 @@ class TestConverter(object):
         for i in pairs:
             yield (self._do, ) + i
 
+    def test_inline(self):
+        pairs = [
+            ("__underline__",
+                '<page %s><p>underline</p></page>' % namespaces_string, 'broken test'),
+            (",,sub,,script",
+                '<page %s><p>subscript</p></page>' % namespaces_string, 'broken test'),
+            ("^super^script",
+                '<page %s><p>superscript</p></page>' % namespaces_string, 'broken test'),
+            ("~-smaller-~",
+                '<page %s><p><span font-size="85%%">smaller</span></p></page>' % namespaces_string),
+            ("~+larger+~",
+                '<page %s><p><span font-size="120%%">larget</span></p></page>' % namespaces_string),
+            ("--(strike through)--",
+                '<page %s><p></p></page>' % namespaces_string, 'broken test'),
+        ]
+        for i in pairs:
+            yield (self._do, ) + i
+
     def test_list(self):
         pairs = [
             (' * Item',
@@ -190,7 +208,9 @@ class TestConverter(object):
         for i in pairs:
             yield (self._do, ) + i
 
-    def _do(self, input, output):
+    def _do(self, input, output, skip=None):
+        if skip:
+            py.test.skip(skip)
         out = self.conv(input.split('\n'))
         assert serialize(out) == output
 
