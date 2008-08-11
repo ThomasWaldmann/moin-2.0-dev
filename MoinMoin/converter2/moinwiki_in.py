@@ -81,6 +81,16 @@ class Converter(ConverterMacro):
 
         return self.root
 
+    block_comment = r"""
+        (?P<comment>
+            ^ \#\#
+        )
+    """
+
+    def block_comment_repl(self, iter, comment):
+        # A comment also ends anything
+        self.stack_pop_name('page')
+
     block_head = r"""
         (?P<head>
             ^ \s*
@@ -623,6 +633,7 @@ class Converter(ConverterMacro):
     # Block elements
     block = (
         block_line,
+        block_comment,
         block_head,
         block_separator,
         block_macro,
