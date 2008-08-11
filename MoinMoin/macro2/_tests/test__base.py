@@ -20,7 +20,7 @@ def test_MacroBase___init__():
     assert m.context == 'context'
 
 def test_MacroBlockBase___call__():
-    item = object()
+    item = u'text'
 
     class Test(MacroBlockBase):
         def call_macro(self, content):
@@ -33,7 +33,7 @@ def test_MacroBlockBase___call__():
     assert r == 'alt'
 
 def test_MacroInlineBase___call__():
-    item = object()
+    item = u'text'
 
     class Test(MacroInlineBase):
         def call_macro(self, content):
@@ -46,7 +46,7 @@ def test_MacroInlineBase___call__():
     assert r is item
 
 def test_MacroInlineOnlyBase___call__():
-    item = object()
+    item = u'text'
 
     class Test(MacroInlineOnlyBase):
         def call_macro(self, content):
