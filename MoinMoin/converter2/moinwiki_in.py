@@ -415,6 +415,26 @@ class Converter(ConverterMacro):
             else:
                 self.stack_push(ET.Element(self.tag_emphasis))
 
+    inline_subscript = r"""
+        (?P<subscript>
+            ,,
+        )
+    """
+
+    def inline_subscript_repl(self, subscript):
+        # TODO
+        pass
+
+    inline_superscript = r"""
+        (?P<superscript>
+            \^
+        )
+    """
+
+    def inline_superscript_repl(self, superscript):
+        # TODO
+        pass
+
     inline_underline = r"""
         (?P<underline>
             __
@@ -687,6 +707,8 @@ class Converter(ConverterMacro):
         inline_object,
         inline_emphstrong,
         inline_comment,
+        inline_subscript,
+        inline_superscript,
         inline_underline,
         inline_freelink,
         inline_url,
