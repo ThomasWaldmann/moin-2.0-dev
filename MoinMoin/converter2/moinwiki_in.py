@@ -551,6 +551,12 @@ class Converter(ConverterMacro):
             \S+  # some anchor name
            )?
           )
+          |
+          (?P<freelink_email>
+           [-\w._+]+  # name
+           \@  # at
+           [\w-]+(\.[\w-]+)+  # server/domain
+          )
          )
          (?:
           (?![%(u)s%(l)s/])  # require anything not upper/lower/slash following
@@ -566,7 +572,7 @@ class Converter(ConverterMacro):
 
     def inline_freelink_repl(self, freelink, freelink_bang=None,
             freelink_interwiki_page=None, freelink_interwiki_ref=None,
-            freelink_page=None):
+            freelink_page=None, freelink_email=None):
         if freelink_bang:
             self.stack_top_append(freelink)
             return
@@ -582,6 +588,10 @@ class Converter(ConverterMacro):
             # TODO: unicode URI
             link = uri.Uri(scheme='wiki.local', path=path, fragment=fragment)
             text = freelink_page
+
+        elif freelink_email:
+            link = 'mailto:' + freelink_email
+            text = freelink_email
 
         else:
             wikitag_bad = wikiutil.resolve_interwiki(self.request,
