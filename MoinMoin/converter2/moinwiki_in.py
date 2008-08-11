@@ -59,20 +59,17 @@ class Converter(ConverterMacro):
         if input == 'text/moin-wiki' and output == 'application/x-moin-document':
             return cls
 
-    def __init__(self, request, page_name=None, args=None):
+    def __init__(self, request, page_url=None, args=None):
         super(Converter, self).__init__(request)
-        self.page_name = page_name
+        self.page_url = page_url
 
     def __call__(self, content):
         tag = ET.QName('page', namespaces.moin_page)
         tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
         attrib = {}
-        if self.page_name is not None:
-            # TODO: unicode URI
-            attrib[tag_page_href] = str(uri.Uri(scheme='wiki',
-                authority='',
-                path='/' + self.page_name.encode('utf-8')))
+        if self.page_url:
+            attrib[tag_page_href] = self.page_url
 
         self.root = ET.Element(tag, attrib=attrib)
         self._stack = [self.root]

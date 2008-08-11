@@ -23,8 +23,8 @@ class Converter(object):
         if input.startswith('text/') and output == 'application/x-moin-document':
             return cls
 
-    def __init__(self, request, page_name=None, args=None):
-        self.page_name = page_name
+    def __init__(self, request, page_url=None, args=None):
+        self.page_url = page_url
 
     def __call__(self, content):
         """Parse the text and return DOM tree."""
@@ -33,8 +33,8 @@ class Converter(object):
         tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
         attrib = {}
-        if self.page_name is not None:
-            attrib[tag_page_href] = 'wiki:///' + self.page_name
+        if self.page_url:
+            attrib[tag_page_href] = self.page_url
 
         root = ET.Element(tag, attrib=attrib)
 
