@@ -173,7 +173,7 @@ class TestConverter(object):
             ('{{{nowiki}}} {{{nowiki}}}',
                 '<page %s><p><code>nowiki</code> <code>nowiki</code></p></page>' % namespaces_string),
             ('{{{}}}',
-                '<page %s><p /></page>' % namespaces_string),
+                '<page %s><p><code></code></p></page>' % namespaces_string),
             ('``',
                 '<page %s><p /></page>' % namespaces_string),
         ]
