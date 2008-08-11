@@ -10,11 +10,11 @@ from emeraldtree import ElementTree as ET
 
 from MoinMoin import config, wikiutil
 from MoinMoin.Page import Page
-from MoinMoin.util import namespaces
+from MoinMoin.util import namespaces, uri
 
 class Converter(object):
-    def __init__(self, request, page_name, args, parser, formatter):
-        self.request, self.page_name, self.args = request, page_name, args
+    def __init__(self, request, page_url, args, parser, formatter):
+        self.request, self.page_url, self.args = request, page_url, args
         self.parser, self.formatter = parser, formatter
 
     def __call__(self, content):
@@ -22,14 +22,15 @@ class Converter(object):
         tag_page_href = ET.QName('page-href', namespaces.moin_page)
 
         attrib = {}
-        if self.page_name is not None:
-            attrib[tag_page_href] = 'wiki:///' + self.page_name
+        if self.page_url is not None:
+            attrib[tag_page_href] = self.page_url
 
         self.root = ET.Element(tag, attrib=attrib)
 
         text = '\n'.join(content)
         # TODO: Remove Page object
-        page = Page(self.request, self.page_name)
+        # TODO: unicode URI
+        page = Page(self.request, uri.Uri(self.page_url).path.decode('utf-8')[1:])
 
         parser = self.parser(text, self.request, format_args=self.args)
         formatter = self.formatter(self.request, page)
@@ -49,8 +50,8 @@ def _factory(request, input, output):
             return
 
         cls = type('Converter.%s' % str(input), (Converter, ), {})
-        def init(self, request, page_name=None, args=None):
-            super(cls, self).__init__(request, page_name, args, Parser, Formatter)
+        def init(self, request, page_url=None, args=None):
+            super(cls, self).__init__(request, page_url, args, Parser, Formatter)
         cls.__init__ = init
 
         return cls
