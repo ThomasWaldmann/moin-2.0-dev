@@ -130,7 +130,7 @@ class ConverterPagelinks(ConverterBase):
             return cls
 
     def handle_wikilocal(self, input, page_name):
-        if ':' in input.path:
+        if not input.path or ':' in input.path:
             return None
 
         if input.path:
