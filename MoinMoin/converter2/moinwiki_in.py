@@ -508,8 +508,8 @@ class Converter(ConverterMacro):
           )
           \:
           (?P<freelink_interwiki_page>
-           (?=[^ ]*[%(u)s%(l)s0..9][^ ]* )  # make sure there is something non-blank with at least one alphanum letter following
-           [^"\'}\]|:,.\)?!]+  # we take all until we hit some blank or punctuation char ...
+           (?=\S*[%(u)s%(l)s0..9]\S* )  # make sure there is something non-blank with at least one alphanum letter following
+           [^\s"\'}\]|:,.\)?!]+  # we take all until we hit some blank or punctuation char ...
           )
           |
           (?P<freelink_page>
