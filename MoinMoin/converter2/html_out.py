@@ -1,7 +1,7 @@
 """
 MoinMoin - HTML output converter
 
-Converts an internal document into HTML.
+Converts an internal document tree into a HTML tree.
 
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
@@ -19,11 +19,13 @@ class Attrib(object):
     tag_style = ET.QName('style', namespaces.html)
 
     def simple_attrib(self, key, value, out, out_style):
+        """ Adds the attribute with the HTML namespace to the output. """
         out[ET.QName(key.name, namespaces.html)] = value
 
     visit_title = simple_attrib
 
     def simple_style(self, key, value, out, out_style):
+        """ Adds the attribute to the HTML style attribute. """
         out_style[key.name] = value
 
     visit_background_color = simple_style
@@ -34,6 +36,8 @@ class Attrib(object):
     def __init__(self, element):
         self.element = element
 
+        # Detect if we either namespace of the element matches the input or the
+        # output.
         self.default_uri_input = self.default_uri_output = None
         if element.tag.uri == namespaces.moin_page:
             self.default_uri_input = element.tag.uri
@@ -55,6 +59,8 @@ class Attrib(object):
 
         for key, value in self.element.attrib.iteritems():
             if key.uri == namespaces.moin_page:
+                # We never have _ in attribute names, so ignore them instead of
+                # create ambigues matches.
                 if not '_' in key.name:
                     n = 'visit_' + key.name.replace('-', '_')
                     f = getattr(self, n, None)
@@ -71,9 +77,11 @@ class Attrib(object):
                 elif self.default_uri_output:
                     new_default[ET.QName(key.name, self.default_uri_output)] = value
 
+        # Attributes with namespace overrides attributes with empty namespace.
         new_default.update(new)
         new_default_css.update(new_css)
 
+        # Create CSS style attribute
         if new_default_css:
             style = new_default_css.items()
             style.sort(key=lambda i: i[0])
@@ -147,6 +155,7 @@ class ConverterBase(object):
             if f is not None:
                 return f(elem)
 
+        # Element with unknown namespaces are just copied
         return self.new_copy(elem.tag, elem)
 
     def visit_moinpage(self, elem):
@@ -155,10 +164,10 @@ class ConverterBase(object):
         if f:
             return f(elem)
 
+        # Unknown element are just copied
         return self.new_copy(elem.tag, elem)
 
     def visit_moinpage_a(self, elem):
-        # TODO
         attrib = {}
 
         href = elem.get(self.tag_xlink_href, None)
@@ -170,6 +179,7 @@ class ConverterBase(object):
     def visit_moinpage_blockcode(self, elem):
         pre = self.new_copy(ET.QName('pre', namespaces.html), elem)
 
+        # TODO: Unify somehow
         if elem.get(self.tag_html_class) == 'codearea':
             attrib = {ET.QName('class', namespaces.html): 'codearea'}
             div = self.new(ET.QName('div', namespaces.html), attrib)
@@ -182,7 +192,6 @@ class ConverterBase(object):
         return self.new_copy(ET.QName('tt', namespaces.html), elem)
 
     def visit_moinpage_div(self, elem):
-        # TODO
         return self.new_copy(self.tag_html_div, elem)
 
     def visit_moinpage_emphasis(self, elem):
@@ -201,6 +210,7 @@ class ConverterBase(object):
         return self.new_copy(ET.QName('h%d' % level, namespaces.html), elem)
 
     def visit_moinpage_line_break(self, elem):
+        # TODO: attributes?
         return self.new(ET.QName('br', namespaces.html))
 
     def visit_moinpage_list(self, elem):
