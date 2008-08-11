@@ -415,6 +415,16 @@ class Converter(ConverterMacro):
             else:
                 self.stack_push(ET.Element(self.tag_emphasis))
 
+    inline_underline = r"""
+        (?P<underline>
+            __
+        )
+    """
+
+    def inline_underline_repl(self, underline):
+        # TODO
+        pass
+
     inline_link = r"""
         (?P<link>
             \[\[
@@ -673,6 +683,7 @@ class Converter(ConverterMacro):
         inline_object,
         inline_emphstrong,
         inline_comment,
+        inline_underline,
         inline_freelink,
         inline_url,
         inline_text,
