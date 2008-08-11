@@ -463,4 +463,5 @@ class FromUnderlay(Term):
     """
     _cost = 1 # trivial
     def _evaluate(self, item):
-        return hasattr(backend, '_layer_marked_underlay')
+        return hasattr(item._backend, '_layer_marked_underlay')
+

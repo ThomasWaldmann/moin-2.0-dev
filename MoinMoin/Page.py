@@ -343,22 +343,6 @@ class Page(object):
         logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
         return "/tmp/"
 
-
-    def _text_filename(self, **kw):
-        """
-        TODO: remove this
-
-        The name of the page file, possibly of an older page.
-
-        @keyword rev: page revision, overriding self.rev
-        @rtype: string
-        @return: complete filename (including path) to this page
-        """
-        rev = kw.get('rev', 0)
-        if rev == 0:
-            rev = self.get_real_rev()
-        return self.getPagePath("revisions", '%08d' % rev, check_create = False)
-
     # Last Edit stuff
 
     def last_edit(self, printable=False):
@@ -638,7 +622,6 @@ class Page(object):
         @param querystr: the query string to add after a "?" after the url
         @param anchor: if specified, make a link to this anchor
         @keyword on: opening/closing tag only
-        @keyword attachment_indicator: if 1, add attachment indicator after link tag
         @keyword css_class: css class to use
         @rtype: string
         @return: formatted link
@@ -651,19 +634,7 @@ class Page(object):
         if not self.exists():
             kw['css_class'] = 'nonexistent'
 
-        attachment_indicator = kw.get('attachment_indicator')
-        if attachment_indicator is None:
-            attachment_indicator = 0 # default is off
-        else:
-            del kw['attachment_indicator'] # avoid having this as <a> tag attribute
-
         link = self.link_to_raw(request, text, querystr, anchor, **kw)
-
-        # Create a link to attachments if any exist
-        if attachment_indicator:
-            from MoinMoin.action import AttachFile
-            link += AttachFile.getIndicator(request, self.page_name)
-
         return link
 
     def getSubscribers(self, request, **kw):
@@ -1073,7 +1044,7 @@ class Page(object):
         # cache the pagelinks
         if do_cache and self.default_formatter and page_exists:
             cache = caching.CacheEntry(request, self, 'pagelinks', scope='item', use_pickle=True)
-            if cache.needsUpdate(self._text_filename()):
+            if cache.needsUpdate([self]):
                 links = self.formatter.pagelinks
                 cache.update(links)
 
@@ -1178,7 +1149,7 @@ class Page(object):
 
         from MoinMoin.action.AttachFile import getAttachDir
         attachmentsPath = getAttachDir(request, self.page_name)
-        if cache.needsUpdate(self._text_filename(), attachmentsPath):
+        if cache.needsUpdate([self]):
             raise Exception('CacheNeedsUpdate')
 
         import marshal
@@ -1284,7 +1255,7 @@ class Page(object):
         """
         if self.exists():
             cache = caching.CacheEntry(request, self, 'pagelinks', scope='item', do_locking=False, use_pickle=True)
-            if cache.needsUpdate(self._text_filename()):
+            if cache.needsUpdate([self]):
                 links = self.parsePageLinks(request)
                 cache.update(links)
             else:
@@ -1509,23 +1480,6 @@ class RootPage(object):
                 yield i.name
 
         request.clock.stop('getPageList')
-
-    def getPageDict(self, user=None, exists=1, filter=None, include_underlay=True):
-        """
-        Return a dictionary of filtered page objects readable by user.
-
-        See getPageList docstring for more details.
-
-        @param user: the user requesting the pages
-        @param filter: filter function
-        @param exists: only existing pages
-        @rtype: dict {unicode: Page}
-        @return: user readable pages
-        """
-        pages = {}
-        for name in self.getPageList(user=user, exists=exists, filter=filter, include_underlay=include_underlay):
-            pages[name] = Page(self.request, name)
-        return pages
 
     def getPageCount(self, exists=0):
         """
