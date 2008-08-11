@@ -110,13 +110,15 @@ class ConverterExternOutput(ConverterBase):
                 return
 
             else:
-                link = input.path
+                # TODO: unicode URI
+                link = input.path.decode('utf-8')
 
         else:
             link = page_name
 
         if link:
-            ret.path = self.request.getScriptname() + '/' + wikiutil.AbsPageName(page_name, link)
+            # TODO: unicode URI
+            ret.path = self.request.getScriptname() + '/' + wikiutil.AbsPageName(page_name, link).encode('utf-8')
 
         return str(ret)
 
