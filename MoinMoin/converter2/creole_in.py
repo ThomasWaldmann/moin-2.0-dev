@@ -152,7 +152,7 @@ class Converter(ConverterMacro):
         $
     """
 
-    def block_macro_repl(self, iter, macro, macro_name, macro_args=''):
+    def block_macro_repl(self, iter, macro, macro_name, macro_args=u''):
         """Handles macros using the placeholder syntax."""
 
         self.stack_pop_name('page')
@@ -387,7 +387,7 @@ class Converter(ConverterMacro):
         )
     """
 
-    def inline_macro_repl(self, macro, macro_name, macro_args=''):
+    def inline_macro_repl(self, macro, macro_name, macro_args=u''):
         """Handles macros using the placeholder syntax."""
 
         elem = self.macro(macro_name, macro_args, macro, 'inline')

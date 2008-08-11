@@ -182,7 +182,7 @@ class Converter(ConverterMacro):
         $
     """
 
-    def block_macro_repl(self, iter, macro, macro_name, macro_args=''):
+    def block_macro_repl(self, iter, macro, macro_name, macro_args=u''):
         """Handles macros using the placeholder syntax."""
 
         self.stack_pop_name('page')
@@ -219,7 +219,7 @@ class Converter(ConverterMacro):
                     return
             yield line
 
-    def block_nowiki_repl(self, iter, nowiki, nowiki_marker, nowiki_data=''):
+    def block_nowiki_repl(self, iter, nowiki, nowiki_marker, nowiki_data=u''):
         self.stack_pop_name('page')
 
         nowiki_marker_len = len(nowiki_marker)
@@ -436,7 +436,7 @@ class Converter(ConverterMacro):
         )
     """
 
-    def inline_macro_repl(self, macro, macro_name, macro_args=''):
+    def inline_macro_repl(self, macro, macro_name, macro_args=u''):
         """Handles macros using the placeholder syntax."""
 
         elem = self.macro(macro_name, macro_args, macro, 'inline')
