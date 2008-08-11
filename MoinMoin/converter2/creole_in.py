@@ -224,14 +224,16 @@ class Converter(ConverterMacro):
                 self.stack_pop()
 
             else:
-                # TODO
-                attrib = {ET.QName('class', namespaces.html): 'error'}
-                elem = ET.Element(self.tag_blockcode, attrib, children=[firstline])
+                from MoinMoin.converter2 import default_registry as reg
+
+                mimetype = wikiutil.MimeType(name).mime_type()
+                Converter = reg.get(self.request, mimetype, 'application/x-moin-document')
+
+                elem = ET.Element(ET.QName('div', namespaces.moin_page))
                 self.stack_top_append(elem)
 
-                for line in self.block_nowiki_lines(iter):
-                    elem.append('\n')
-                    elem.append(line)
+                doc = Converter(self.request, self.page_url, ' '.join(args[0]))(lines)
+                elem.extend(doc)
 
         else:
             elem = ET.Element(self.tag_blockcode, children=[firstline])
