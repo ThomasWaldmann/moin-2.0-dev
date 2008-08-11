@@ -1,6 +1,9 @@
 """
 MoinMoin - Compatibility input converter
 
+Uses old-style parser if there is one for the requested type and the
+compatibility formatter to create a converter.
+
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
@@ -13,19 +16,19 @@ from MoinMoin.Page import Page
 from MoinMoin.util import namespaces, uri
 
 class Converter(object):
+    tag_page = ET.QName('page', namespaces.moin_page)
+    tag_page_href = ET.QName('page-href', namespaces.moin_page)
+
     def __init__(self, request, page_url, args, parser, formatter):
         self.request, self.page_url, self.args = request, page_url, args
         self.parser, self.formatter = parser, formatter
 
     def __call__(self, content):
-        tag = ET.QName('page', namespaces.moin_page)
-        tag_page_href = ET.QName('page-href', namespaces.moin_page)
-
         attrib = {}
         if self.page_url is not None:
-            attrib[tag_page_href] = self.page_url
+            attrib[self.tag_page_href] = self.page_url
 
-        self.root = ET.Element(tag, attrib=attrib)
+        self.root = ET.Element(self.tag_page, attrib=attrib)
 
         text = '\n'.join(content)
         # TODO: Remove Page object
@@ -57,4 +60,5 @@ def _factory(request, input, output):
         return cls
 
 from _registry import default_registry
+# Need to register ourself after all normal parsers but before the wildcard
 default_registry.register(_factory, default_registry.PRIORITY_MIDDLE + 1)
