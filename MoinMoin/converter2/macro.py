@@ -110,7 +110,7 @@ class Converter(object):
         m = macro.Macro(_PseudoParser(request))
 
         try:
-            ret = m.execute(name, args)
+            ret = m.execute(name, args or None)
         except ImportError, err:
             message = unicode(err)
             if not name in message:
@@ -144,7 +144,7 @@ class Converter(object):
             request.formatter = m.formatter = HtmlFormatter(request)
             m.formatter.setPage(page)
 
-            ret = m.execute(name, args)
+            ret = m.execute(name, args or None)
 
             # Pipe the result through the HTML parser
             formatter = Formatter(request, page)
