@@ -120,16 +120,16 @@ class Converter(object):
         except AssertionError, e:
             from warnings import warn
             message = 'Macro ' + name + ' get an assertion in the compatibility formatter'
-            if e.message:
-                message += ': ' + e.message
+            if e.args:
+                message += ': ' + e.args[0]
             warn(message, DeprecationWarning)
             ret = True
         except NotImplementedError, e:
             # Force usage of fallback on not implemented methods
             from warnings import warn
             message = 'Macro ' + name + ' calls methods in the compatibility formatter which are not implemented'
-            if e.message:
-                message += ': ' + e.message
+            if e.args:
+                message += ': ' + e.args[0]
             warn(message, DeprecationWarning)
             ret = True
 
