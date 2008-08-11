@@ -357,6 +357,26 @@ class Converter(ConverterMacro):
     def inline_text_repl(self, text):
         self.stack_top_append(text)
 
+    inline_comment = r"""
+        (?P<comment>
+            (?P<comment_begin>
+                (^|(?<=\s))
+                /\*
+                \s+
+            )
+            |
+            (?P<comment_end>
+                \s+
+                \*/
+                (?=\s)
+            )
+        )
+    """
+
+    def inline_comment_repl(self, comment, comment_begin=None, comment_end=None):
+        # TODO
+        pass
+
     inline_emphstrong = r"""
         (?P<emphstrong>
             '{2,6}
@@ -642,6 +662,7 @@ class Converter(ConverterMacro):
         inline_nowiki,
         inline_object,
         inline_emphstrong,
+        inline_comment,
         inline_freelink,
         inline_url,
         inline_text,
