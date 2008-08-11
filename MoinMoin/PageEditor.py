@@ -445,7 +445,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         filterfn = self.cfg.cache.page_category_regexact.search
         cat_pages = request.rootpage.getPageList(filter=filterfn)
         cat_pages.sort()
-        cat_pages = [wikiutil.pagelinkmarkup(p) for p in cat_pages]
         cat_pages.insert(0, ('', _('<No addition>')))
         request.write("<p>")
         request.write(_('Add to: %(category)s') % {
