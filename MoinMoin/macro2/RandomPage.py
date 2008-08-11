@@ -19,7 +19,7 @@ random.seed()
 
 from emeraldtree import ElementTree as ET
 
-from MoinMoin.util import namespaces
+from MoinMoin.util import namespaces, uri
 from MoinMoin.Page import Page
 from MoinMoin.macro2._base import MacroInlineBase
 
@@ -57,8 +57,11 @@ class Macro(MacroInlineBase):
 
         result = ET.Element(tag_span)
         for name in pages:
+            # TODO: unicode URI
+            link = str(uri.Uri(scheme='wiki', authority='',
+                path='/' + name.encode('utf-8')))
             result.append(ET.Element(tag_a,
-                                     attrib={attr_href_xlink: u'wiki.local:' + name},
+                                     attrib={attr_href_xlink: link},
                                      children=[name]))
             result.append(", ")
 
