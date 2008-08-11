@@ -1021,17 +1021,17 @@ class Page(object):
                 wikiutil.url_quote_plus(self.page_name, ''), ))
             return
 
-        if self.hilite_re:
+        #if self.hilite_re:
             # TODO
             #try:
             #except re.error, err:
-                if 'highlight' in request.form:
-                    del request.form['highlight']
-                request.theme.add_msg(_('Invalid highlighting regular expression "%(regex)s": %(error)s') % {
-                                          'regex': self.hilite_re,
-                                          'error': str(err),
-                                      }, "warning")
-                self.hilite_re = None
+        #        if 'highlight' in request.form:
+        #            del request.form['highlight']
+        #        request.theme.add_msg(_('Invalid highlighting regular expression "%(regex)s": %(error)s') % {
+        #                                  'regex': self.hilite_re,
+        #                                  'error': str(err),
+        #                              }, "warning")
+        #        self.hilite_re = None
 
         if 'deprecated' in pi:
             # deprecated page, append last backup version to current contents
