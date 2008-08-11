@@ -1262,11 +1262,15 @@ class Page(object):
 
         from emeraldtree import ElementTree as ET
         from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util import namespaces
+        from MoinMoin.util import namespaces, uri
 
         InputConverter = reg.get(request, mime_type, 'application/x-moin-document')
 
-        doc = InputConverter(request, self.page_name)(body.split('\n'))
+        # TODO: unicode URI
+        url = str(uri.Uri(scheme='wiki', authority='',
+            path='/' + self.page_name.encode('utf-8')))
+
+        doc = InputConverter(request, url)(body.split('\n'))
 
         if create_pagelinks:
             PagelinksConverter = reg.get(request, 'application/x-moin-document',
