@@ -270,7 +270,7 @@ class Converter(ConverterMacro):
                 elem = ET.Element(self.tag_div)
                 self.stack_top_append(elem)
 
-                doc = Converter(self.request, self.page_name, ' '.join(args[0]))(lines)
+                doc = Converter(self.request, self.page_url, ' '.join(args[0]))(lines)
                 elem.extend(doc)
 
         else:
