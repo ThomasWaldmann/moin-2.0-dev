@@ -246,9 +246,8 @@ class MercurialBackend(Backend):
             yield item
             r = c.each()
 
-    def history(self, timestamp=0, reverse=True):
+    def history(self, reverse=True):
         """History implementation reading the log file."""
-        assert reverse is True, "history reading in non-reverse order not implemented yet"
         try:
             historyfile = open(self._history, 'rb')
         except IOError, err:
@@ -259,14 +258,18 @@ class MercurialBackend(Backend):
         offs = historyfile.tell() - 1
         # shouldn't happen, but let's be sure we don't get a partial record
         offs -= offs % 28
-        tstamp = None
-        while tstamp is None or tstamp >= timestamp and offs >= 0:
-            # seek to current position
-            historyfile.seek(offs)
+        while offs >= 0:
+            if reverse:
+                # seek to current position
+                historyfile.seek(offs)
+                # decrease current position by 16 to get to previous item
+                offs -= 28
+
             # read history item
             rec = historyfile.read(28)
-            # decrease current position by 16 to get to previous item
-            offs -= 28
+            if len(rec) < 28:
+                break
+
             item_id, revno, tstamp = struct.unpack('!16sLQ', rec)
             try:
                 inamef = open(os.path.join(self._path, '%s,name' % item_id), 'rb')
@@ -279,7 +282,7 @@ class MercurialBackend(Backend):
                 continue
             item = Item(self, iname)
             item._item_id = item_id
-            rev = StoredRevision(item, revno, tstamp)
+            rev = MercurialStoredRevision(item, revno, tstamp)
             yield rev
 
     def _create_revision(self, item, revno):
