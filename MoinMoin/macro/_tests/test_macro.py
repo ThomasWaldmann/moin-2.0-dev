@@ -15,6 +15,9 @@ from MoinMoin.formatter.text_html import Formatter
 class TestMacro:
     def testTrivialMacro(self):
         """macro: trivial macro works"""
+        import py
+        py.test.skip("BR macro was converted to macro2")
+
         m = self._make_macro()
         expected = m.formatter.linebreak(0)
         result = m.execute("BR", "")

@@ -15,6 +15,9 @@ from MoinMoin.Page import Page
 
 from MoinMoin._tests import become_trusted, create_page, nuke_page
 
+import py
+py.test.skip("PageHits macro was converted to macro2")
+
 class TestHits:
     """Hits: testing Hits macro """
     pagename = u'AutoCreatedMoinMoinTemporaryTestPageForPageHits'
