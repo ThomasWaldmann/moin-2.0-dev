@@ -447,8 +447,8 @@ class Converter(ConverterMacro):
 
     def inline_strike_repl(self, strike, strike_begin=None):
         if strike_begin is not None:
-            # TODO
-            self.stack_push(tree.moin_page.span())
+            attrib = {tree.moin_page.text_decoration: 'line-through'}
+            self.stack_push(tree.moin_page.span(attrib=attrib))
         else:
             self.stack_pop()
 
@@ -479,8 +479,11 @@ class Converter(ConverterMacro):
     """
 
     def inline_underline_repl(self, underline):
-        # TODO
-        pass
+        if not self.stack_top_check('span'):
+            attrib = {tree.moin_page.text_decoration: 'underline'}
+            self.stack_push(tree.moin_page.span(attrib=attrib))
+        else:
+            self.stack_pop()
 
     inline_link = r"""
         (?P<link>
