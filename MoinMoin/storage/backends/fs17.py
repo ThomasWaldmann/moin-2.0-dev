@@ -175,17 +175,26 @@ class FsPageRevision(StoredRevision):
             content = open(revpath, 'r').read()
         except (IOError, OSError):
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
-            meta = {DELETED: True}
-            # TODO: if page revision is deleted, we have no on-page metadata.
-            # We need to AT LEAST look up acl metadata in the (non-deleted)
-            # revision revno-1 and copy it to the deleted one.
+            meta = {}
+            # if this page revision is deleted, we have no on-page metadata.
+            # Thus, we have to copy it from the (non-deleted) revision revno-1:
+            try:
+                previous_rev = FsPageRevision(item, revno-1)
+                meta.update(previous_rev._fs_meta) # XXX do we want all metadata?
+            except NoSuchRevisionError:
+                pass # should not happen
+            meta[DELETED] = True
             data = ''
             try:
                 editlog_data = editlog.find_rev(revno)
             except KeyError:
+                try:
+                    previous_rev_mtime = meta[EDIT_LOG_MTIME]
+                except KeyError:
+                    previous_rev_mtime = -1
                 if 0 <= revno <= item._fs_current:
                     editlog_data = { # make something up
-                        EDIT_LOG_MTIME: 0,
+                        EDIT_LOG_MTIME: previous_rev_mtime + 1, # we have no clue when it was, but it was later...
                         EDIT_LOG_ACTION: 'SAVE/DELETE',
                         EDIT_LOG_ADDR: '0.0.0.0',
                         EDIT_LOG_HOSTNAME: '0.0.0.0',
