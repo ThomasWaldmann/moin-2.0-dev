@@ -788,14 +788,6 @@ def move_attachment(request, pagename, new_pagename, attachment, new_attachment)
     backend = request.cfg.data_backend
 
     try:
-        item = backend.get_item(new_pagename)
-        rev = item.get_revision(-1)
-        assert rev["mimetype"] == "text/x-unidentified-wiki-format"  # XXX Mimetype handling needs improvement
-    except (NoSuchItemError, NoSuchRevisionError, AssertionError):
-        upload_form(pagename, request, msg=_("Page '%s' does not exist." % new_pagename))
-        return
-
-    try:
         item = backend.get_item(pagename + "/" + attachment)
         item.rename(new_pagename + "/" + new_attachment)
     except NoSuchItemError:
