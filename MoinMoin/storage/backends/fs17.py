@@ -249,9 +249,14 @@ class FsAttachmentItem(Item):
             raise NoSuchItemError("No such attachment item, %r" % name)
         self._fs_attachname = attachname
         self._fs_attachpath = attachpath
-        # TODO: we need access to parent (page) item's current revision to
-        # look for on-page revision metadata like ACLs there
-        # self._fs_parentcurrentrev = ...
+        # fetch parent page's ACL as it protected the attachment also:
+        try:
+            parentpage = FsPageItem(backend, itemname)
+            parent_current_rev = parentpage.get_revision(-1)
+            acl = parent_current_rev._fs_meta.get('acl')
+        except (NoSuchItemError, NoSuchRevisionError):
+            acl = None
+        self._fs_parent_acl = acl
 
 class FsAttachmentRevision(StoredRevision):
     """ A moin 1.7 filesystem item revision (attachment) """
@@ -276,9 +281,9 @@ class FsAttachmentRevision(StoredRevision):
             }
         meta = editlog_data
         meta['__size'] = 0 # not needed for converter
-        # TODO: used item._fs_parentcurrentrev to access parent's revision metadata.
-        # At least ACL needs to get copied to the attachment revision,
-        # except if we use acl_hierarchic.
+        # attachments in moin 1.7 were protected by their "parent" page's acl
+        if item._fs_parent_acl is not None:
+            meta['acl'] = item._fs_parent_acl # XXX not needed for acl_hierarchic
         self._fs_meta = meta
         self._fs_data_fname = attpath
         self._fs_data_file = None
