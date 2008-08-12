@@ -20,6 +20,8 @@ item_name = "test_page"
 item_mtime = 12345678
 item_comment = "saved test item"
 item_revisions = 2
+
+deleted_item_data = "#acl All:\r\nFoo bar"
 deleted_item_name = "deleted_page"
 
 attachment_name = u"test.txt"
@@ -34,12 +36,18 @@ item_editlog = "\r\n".join([
     logentry(str(item_mtime * 1000000 + 1), '00000002', 'SAVE', item_name, '', '', '', '', item_comment),
 ])
 
+deleted_item_editlog = "\r\n".join([
+    logentry(str(item_mtime * 1000000), '00000001', 'SAVE', item_name, '', '', '', '', item_comment),
+    logentry(str(item_mtime * 1000000 + 1), '00000002', 'SAVE/DELETE', item_name, '', '', '', '', item_comment),
+])
+
 items = [# name, rev, data, logline, attachments
          (item_name, 1, item_data, item_editlog, [attachment_name]),
          (item_name, 2, item_data, item_editlog, []),
          (u"äöüßłó ąćółąńśćżź", 1, item_data, '', []),
          (ur"name#special(characters?.\,", 1, item_data, '', []),
-         (deleted_item_name, 1, '', '', []), # no rev 1 data, no edit-log
+         (deleted_item_name, 1, deleted_item_data, '', []),
+         (deleted_item_name, 2, '', '', []), # no rev 2 data, no edit-log
         ]
 
 class TestFS17Backend(object):
@@ -138,6 +146,9 @@ class TestFS17Backend(object):
         item = self.backend.get_item(deleted_item_name)
         rev = item.get_revision(0)
         data = rev.read()
+        assert data != ""
+        rev = item.get_revision(1)
+        data = rev.read()
         assert data == ""
 
     def test_metadata_that_doesnt_exist(self):
@@ -151,8 +162,9 @@ class TestFS17Backend(object):
 
     def test_metadata_deleted(self):
         item = self.backend.get_item(deleted_item_name)
-        rev = item.get_revision(0)
+        rev = item.get_revision(1)
         assert rev[DELETED] is True
+        assert rev['acl'] == "All:" # fs17 backend gets this from rev N-1
 
     def test_metadata_mtime(self):
         item = self.backend.get_item(item_name)
