@@ -34,7 +34,7 @@ class _PseudoRequest(object):
                 text = text[:100] + '...'
             from warnings import warn
             message = 'Macro ' + self.__name + ' used request.write: ' + text
-            warn(message, DeprecationWarning)
+            warn(message, DeprecationWarning, stacklevel=2)
             self.__written = True
 
     @property
