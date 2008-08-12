@@ -176,12 +176,15 @@ def execute(pagename, request):
                     if request.user.may.delete(pagename):
                         actions.append(render_action(_('del'), {'action': 'AttachFile', 'do': 'del', 'target': '%s' % filename}))
 
+            userid = revision.get(EDIT_LOG_USERID, _("N/A"))
+            addr = revision.get(EDIT_LOG_ADDR, _("N/A"))
+            hostname = revision.get(EDIT_LOG_HOSTNAME, _("N/A"))
             history.addRow((
                 revno,
                 request.user.getFormattedDateTime(float(revision.timestamp)),
                 str(size),
                 diff,
-                user.get_printable_editor(request, revision[EDIT_LOG_USERID], revision[EDIT_LOG_ADDR], revision[EDIT_LOG_HOSTNAME]) or _("N/A"),
+                user.get_printable_editor(request, userid, addr, hostname) or _("N/A"),
                 wikiutil.escape(comment) or '&nbsp;',
                 "&nbsp;".join(actions),
             ))
