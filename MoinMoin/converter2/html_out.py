@@ -31,6 +31,7 @@ class Attrib(object):
     visit_background_color = simple_style
     visit_font_size = simple_style
     visit_text_align = simple_style
+    visit_text_decoration = simple_style
     visit_vertical_align = simple_style
 
     def __init__(self, element):
