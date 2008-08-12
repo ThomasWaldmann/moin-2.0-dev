@@ -574,14 +574,17 @@ def execute(pagename, request):
     do = request.form.get('do', ['upload_form'])
     handler = globals().get('_do_%s' % do[0])
     if handler:
-        msg = handler(pagename, request)
+        filename = request.form.get('target', None)
+        if filename:
+            filename = wikiutil.taintfilename(filename[0])
+        msg = handler(pagename, request, filename=filename)
     else:
         msg = _('Unsupported AttachFile sub-action: %s') % (wikiutil.escape(do[0]), )
     if msg:
         error_msg(pagename, request, msg)
 
 
-def _do_upload_form(pagename, request):
+def _do_upload_form(pagename, request, filename):
     upload_form(pagename, request)
 
 
@@ -611,7 +614,7 @@ def preprocess_filename(filename):
     return filename
 
 
-def _do_upload(pagename, request):
+def _do_upload(pagename, request, filename):
     _ = request.getText
     # Currently we only check TextCha for upload (this is what spammers ususally do),
     # but it could be extended to more/all attachment write access
@@ -664,7 +667,7 @@ def _do_upload(pagename, request):
     upload_form(pagename, request, msg)
 
 
-def _do_savedrawing(pagename, request):
+def _do_savedrawing(pagename, request, filename):
     _ = request.getText
 
     if not request.user.may.write(pagename):
@@ -711,7 +714,7 @@ def _do_savedrawing(pagename, request):
     request.write("OK")
 
 
-def _do_del(pagename, request):
+def _do_del(pagename, request, filename):
     """
     Deleting an Attachment basically means creating a new, empty revision
     on an Item that happened to be an 'Attachment' at some point, setting
@@ -811,7 +814,7 @@ def move_attachment(request, pagename, new_pagename, attachment, new_attachment)
                       'new_pagename': new_pagename,
                       'new_filename': new_attachment})
 
-def _do_attachment_move(pagename, request):
+def _do_attachment_move(pagename, request, filename):
     _ = request.getText
 
     if 'cancel' in request.form:
@@ -837,7 +840,7 @@ def _do_attachment_move(pagename, request):
     attachment = request.form.get('oldattachmentname')[0]
     move_attachment(request, pagename, new_pagename, attachment, new_attachment)
 
-def _do_move(pagename, request):
+def _do_move(pagename, request, filename):
     _ = request.getText
 
     if not request.user.may.delete(pagename):
@@ -899,7 +902,7 @@ def _do_move(pagename, request):
         request.theme.add_msg(formhtml, "dialog")
         return thispage.send_page()
 
-def _do_get(pagename, request):
+def _do_get(pagename, request, filename):
     _ = request.getText
 
     if not request.form.get('target', [''])[0]:
@@ -955,7 +958,7 @@ def _do_get(pagename, request):
             request.send_file(rev)  # XXX Check if this is buffered
 
 
-def _do_install(pagename, request):
+def _do_install(pagename, request, filename):
     _ = request.getText
 
     pagename, target, targetpath = _access_file(pagename, request)
@@ -979,7 +982,7 @@ def _do_install(pagename, request):
     upload_form(pagename, request, msg=msg)
 
 
-def _do_unzip(pagename, request, overwrite=False):
+def _do_unzip(pagename, request, filename, overwrite=False):
     _ = request.getText
     pagename, filename, fpath = _access_file(pagename, request)
 
@@ -1081,7 +1084,7 @@ def _do_unzip(pagename, request, overwrite=False):
     upload_form(pagename, request, msg=wikiutil.escape(msg))
 
 
-def send_viewfile(pagename, request):
+def send_viewfile(pagename, request, filename):
     _ = request.getText
     fmt = request.html_formatter
 
@@ -1133,30 +1136,30 @@ def send_viewfile(pagename, request):
             return
 
     # XXX Fix this zipfile stuff
-    try:
-        package = packages.ZipPackage(request, fpath)
-        if package.isPackage():
-            request.write("<pre><b>%s</b>\n%s</pre>" % (_("Package script:"), wikiutil.escape(package.getScript())))
-            return
+   # try:
+   #     package = packages.ZipPackage(request, fpath)
+   #     if package.isPackage():
+   #         request.write("<pre><b>%s</b>\n%s</pre>" % (_("Package script:"), wikiutil.escape(package.getScript())))
+   #         return
 
-        if zipfile.is_zipfile(fpath) and mt.minor == 'zip':
-            zf = zipfile.ZipFile(fpath, mode='r')
-            request.write("<pre>%-46s %19s %12s\n" % (_("File Name"), _("Modified")+" "*5, _("Size")))
-            for zinfo in zf.filelist:
-                date = "%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time
-                request.write(wikiutil.escape("%-46s %s %12d\n" % (zinfo.filename, date, zinfo.file_size)))
-            request.write("</pre>")
-            return
-    except RuntimeError:
-        # We don't want to crash with a traceback here (an exception
-        # here could be caused by an uploaded defective zip file - and
-        # if we crash here, the user does not get a UI to remove the
-        # defective zip file again).
-        # RuntimeError is raised by zipfile stdlib module in case of
-        # problems (like inconsistent slash and backslash usage in the
-        # archive).
-        logging.exception("An exception within zip file attachment handling occurred:")
-        return
+   #     if zipfile.is_zipfile(fpath) and mt.minor == 'zip':
+   #         zf = zipfile.ZipFile(fpath, mode='r')
+   #         request.write("<pre>%-46s %19s %12s\n" % (_("File Name"), _("Modified")+" "*5, _("Size")))
+   #         for zinfo in zf.filelist:
+   #             date = "%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time
+   #             request.write(wikiutil.escape("%-46s %s %12d\n" % (zinfo.filename, date, zinfo.file_size)))
+   #         request.write("</pre>")
+   #         return
+   # except RuntimeError:
+   #     # We don't want to crash with a traceback here (an exception
+   #     # here could be caused by an uploaded defective zip file - and
+   #     # if we crash here, the user does not get a UI to remove the
+   #     # defective zip file again).
+   #     # RuntimeError is raised by zipfile stdlib module in case of
+   #     # problems (like inconsistent slash and backslash usage in the
+   #     # archive).
+   #     logging.exception("An exception within zip file attachment handling occurred:")
+   #     return
 
     from MoinMoin import macro
     from MoinMoin.parser.text import Parser
@@ -1177,7 +1180,7 @@ def send_viewfile(pagename, request):
     request.write(m.execute('EmbedObject', u'target=%s, pagename=%s' % (filename, pagename)))
     return
 
-def _do_view(pagename, request):
+def _do_view(pagename, request, filename):
     _ = request.getText
 
     if not request.user.may.read(pagename):
@@ -1204,7 +1207,7 @@ def _do_view(pagename, request):
 
         # send body
         request.write(request.formatter.startContent())
-        send_viewfile(pagename, request)
+        send_viewfile(pagename, request, filename)
         send_uploadform(pagename, request)
         request.write(request.formatter.endContent())
 
