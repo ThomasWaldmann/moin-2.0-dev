@@ -103,7 +103,7 @@ class TestConverter(object):
     def test_inline(self):
         pairs = [
             ("__underline__",
-                '<page %s><p>underline</p></page>' % namespaces_string, 'broken test'),
+                '<page %s><p><span text-decoration="underline">underline</span></p></page>' % namespaces_string),
             (",,sub,,script",
                 '<page %s><p>subscript</p></page>' % namespaces_string, 'broken test'),
             ("^super^script",
@@ -113,7 +113,7 @@ class TestConverter(object):
             ("~+larger+~",
                 '<page %s><p><span font-size="120%%">larger</span></p></page>' % namespaces_string),
             ("--(strike through)--",
-                '<page %s><p></p></page>' % namespaces_string, 'broken test'),
+                '<page %s><p><span text-decoration="line-through">strike through</span></p></page>' % namespaces_string),
         ]
         for i in pairs:
             yield (self._do, ) + i
