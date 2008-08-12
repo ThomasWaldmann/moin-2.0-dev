@@ -156,10 +156,19 @@ class Converter(ConverterMacro):
             list_none=None, list_text=None):
 
         level = len(list_indent)
-        if list_numbers or list_alpha or list_alpha:
+
+        type = 'unordered'
+        style_type = None
+        if list_numbers:
             type = 'ordered'
-        else:
-            type = 'unordered'
+        elif list_alpha:
+            type = 'ordered'
+            style_type = 'upper-alpha'
+        elif list_roman:
+            type = 'ordered'
+            style_type = 'upper-roman'
+        elif list_none:
+            style_type = 'none'
 
         while True:
             cur = self.stack_top()
@@ -169,14 +178,18 @@ class Converter(ConverterMacro):
                 if level > cur.level:
                     break
             if cur.tag.name == 'list':
-                if level >= cur.level and type == cur.type:
+                if (level >= cur.level and type == cur.type and
+                        style_type == cur.style_type):
                     break
             self.stack_pop()
 
         if cur.tag.name != 'list':
-            attrib = {self.tag_item_label_generate: type}
+            attrib = {tree.moin_page.item_label_generate: type}
+            if style_type:
+                attrib[tree.moin_page.list_style_type] = style_type
             element = ET.Element(self.tag_list, attrib=attrib)
             element.level, element.type = level, type
+            element.style_type = style_type
             self.stack_push(element)
 
         element = ET.Element(self.tag_list_item)
