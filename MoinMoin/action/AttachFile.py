@@ -784,8 +784,12 @@ def move_attachment(request, pagename, new_pagename, attachment, new_attachment)
 
     backend = request.cfg.data_backend
 
-    if not backend.has_item(new_pagename):  # XXX Is this a proper way to do the check?
-        upload_form(pagename, request, msg=_("Page '%s' does not exist or you don't have enough rights." % new_pagename))
+    try:
+        item = backend.get_item(new_pagename)
+        rev = item.get_revision(-1)
+        assert rev["mimetype"] == "text/x-unidentified-wiki-format"  # XXX Mimetype handling needs improvement
+    except (NoSuchItemError, NoSuchRevisionError, AssertionError):
+        upload_form(pagename, request, msg=_("Page '%s' does not exist." % new_pagename))
         return
 
     try:
