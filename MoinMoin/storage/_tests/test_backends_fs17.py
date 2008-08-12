@@ -21,7 +21,8 @@ item_mtime = 12345678
 item_comment = "saved test item"
 item_revisions = 2
 
-deleted_item_data = "#acl All:\r\nFoo bar"
+deleted_item_acl = "All:"
+deleted_item_data = "#acl %s\r\nFoo bar" % deleted_item_acl
 deleted_item_name = "deleted_page"
 
 attachment_name = u"test.txt"
@@ -46,7 +47,7 @@ items = [# name, rev, data, logline, attachments
          (item_name, 2, item_data, item_editlog, []),
          (u"äöüßłó ąćółąńśćżź", 1, item_data, '', []),
          (ur"name#special(characters?.\,", 1, item_data, '', []),
-         (deleted_item_name, 1, deleted_item_data, '', []),
+         (deleted_item_name, 1, deleted_item_data, '', [attachment_name]),
          (deleted_item_name, 2, '', '', []), # no rev 2 data, no edit-log
         ]
 
@@ -164,7 +165,7 @@ class TestFS17Backend(object):
         item = self.backend.get_item(deleted_item_name)
         rev = item.get_revision(1)
         assert rev[DELETED] is True
-        assert rev['acl'] == "All:" # fs17 backend gets this from rev N-1
+        assert rev['acl'] == deleted_item_acl # fs17 backend gets this from rev N-1
 
     def test_metadata_mtime(self):
         item = self.backend.get_item(item_name)
@@ -191,4 +192,9 @@ class TestFS17Backend(object):
         item = self.backend.get_item(name)
         py.test.raises(NoSuchRevisionError, item.get_revision, 1) # attachment only has rev 0
 
+    def test_revision_attachment_acl(self):
+        name = deleted_item_name + '/' + attachment_name
+        item = self.backend.get_item(name)
+        rev = item.get_revision(0)
+        assert rev['acl'] == deleted_item_acl
 
