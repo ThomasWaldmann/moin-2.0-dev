@@ -11,6 +11,7 @@ from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
 from MoinMoin.util import namespaces
+from MoinMoin.util.tree import html
 
 class ElementException(RuntimeError):
     pass
@@ -30,6 +31,7 @@ class Attrib(object):
 
     visit_background_color = simple_style
     visit_font_size = simple_style
+    visit_list_style_type = simple_style
     visit_text_align = simple_style
     visit_text_decoration = simple_style
     visit_vertical_align = simple_style
@@ -216,17 +218,18 @@ class ConverterBase(object):
 
     def visit_moinpage_list(self, elem):
         attrib = Attrib(elem)
+        attrib_new = attrib.new()
         generate = attrib.get('item-label-generate')
 
         if generate:
             if generate == 'ordered':
-                ret = self.new(ET.QName('ol', namespaces.html))
+                ret = self.new(html.ol, attrib_new)
             elif generate == 'unordered':
-                ret = self.new(ET.QName('ul', namespaces.html))
+                ret = self.new(html.ul, attrib_new)
             else:
                 raise ValueError('List label generation not supported: ' + generate)
         else:
-            ret = self.new(ET.QName('dl', namespaces.html))
+            ret = self.new(html.dl, attrib_new)
 
         for item in elem:
             if item.tag.uri == namespaces.moin_page and item.tag.name == 'list-item':
