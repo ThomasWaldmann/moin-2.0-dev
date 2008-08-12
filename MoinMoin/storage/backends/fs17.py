@@ -176,6 +176,9 @@ class FsPageRevision(StoredRevision):
         except (IOError, OSError):
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
             meta = {DELETED: True}
+            # TODO: if page revision is deleted, we have no on-page metadata.
+            # We need to AT LEAST look up acl metadata in the (non-deleted)
+            # revision revno-1 and copy it to the deleted one.
             data = ''
             try:
                 editlog_data = editlog.find_rev(revno)
@@ -237,6 +240,9 @@ class FsAttachmentItem(Item):
             raise NoSuchItemError("No such attachment item, %r" % name)
         self._fs_attachname = attachname
         self._fs_attachpath = attachpath
+        # TODO: we need access to parent (page) item's current revision to
+        # look for on-page revision metadata like ACLs there
+        # self._fs_parentcurrentrev = ...
 
 class FsAttachmentRevision(StoredRevision):
     """ A moin 1.7 filesystem item revision (attachment) """
@@ -261,6 +267,9 @@ class FsAttachmentRevision(StoredRevision):
             }
         meta = editlog_data
         meta['__size'] = 0 # not needed for converter
+        # TODO: used item._fs_parentcurrentrev to access parent's revision metadata.
+        # At least ACL needs to get copied to the attachment revision,
+        # except if we use acl_hierarchic.
         self._fs_meta = meta
         self._fs_data_fname = attpath
         self._fs_data_file = None
