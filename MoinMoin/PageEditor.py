@@ -889,6 +889,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         @rtype: int
         @return: mtime_usec of new page
         """
+        _ = self._
         request = self.request
         was_deprecated = self.pi.get('deprecated', False)
 
@@ -911,7 +912,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
                 newrev = self._item.create_revision(old_revno + 1)
             except RevisionAlreadyExistsError:
                 raise PageEditor.EditConflict(_("Someone else saved this page while you were editing!"))
-                                              
+
         if not deleted:
             metadata, data = wikiutil.split_body(text)
             newrev.write(data.encode(config.charset))
