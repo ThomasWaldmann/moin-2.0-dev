@@ -20,7 +20,7 @@ class Config(DefaultConfig):
 
     # configure backends
     data_backend = memory.MemoryBackend()
-    test_num_pages = clone(flatfile.FlatFileBackend('tests/data'), data_backend)[0][0]
+    test_num_pages = len(clone(flatfile.FlatFileBackend('tests/data'), data_backend)[0])
     user_backend = memory.MemoryBackend()
     page_front_page = 'FrontPage'
 

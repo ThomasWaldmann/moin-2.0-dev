@@ -53,9 +53,13 @@ class PluginScript(MoinScript):
             fatal("Please, configure your %(user)s_backend and %(user)s_backend_source in wikiconfig.py." %
                   {'user': self.options.backend_type})
 
-        cnt, skips, fails = clone(src_backend, dst_backend, self.options.verbose)
-        sys.stdout.write("Backend migration finished!\nProcessed revisions: %d >> %d converted, %d skipped, %d failed\n" %
-                         (cnt[0] + cnt[1] + cnt[2], cnt[0], cnt[1], cnt[2], ))
+        converts, skips, fails = clone(src_backend, dst_backend, self.options.verbose)
+        cnt = [0, 0, 0]
+        for num, dict in enumerate((converts, skips, fails)):
+            cnt[num] = sum([len(v) for v in dict.itervalues()])
+
+        sys.stdout.write("Backend migration finished!\nProcessed items: %d\n" % len(converts))
+        sys.stdout.write("Processed revisions: %d >> %d converted, %d skipped, %d failed\n" %  (sum(cnt), cnt[0], cnt[1], cnt[2], ))
 
         if self.options.show_failed and len(fails):
             sys.stdout.write("\nFailed report\n-------------\n")
