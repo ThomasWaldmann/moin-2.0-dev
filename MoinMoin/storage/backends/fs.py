@@ -84,6 +84,7 @@ class FSBackend(Backend):
             if err.errno != errno.ENOENT:
                 raise
             return
+        offs = 0
         if reverse:
             historyfile.seek(0, 2)
             offs = historyfile.tell() - 1
