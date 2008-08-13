@@ -84,7 +84,6 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        ###self._items = ItemCollection(request.cfg.data_backend, request)
         self._backend = request.cfg.data_backend
 
         self.reset()
@@ -121,7 +120,6 @@ class Page(object):
             return
 
         try:
-            ###self.__item = self._items[self.page_name]
             self.__item = self._backend.get_item(self.page_name)
             self.__rev = self.__item.get_revision(self.rev)
             self._body = None
@@ -187,8 +185,6 @@ class Page(object):
     def get_data(self):
         if self._data is None:
             if self._rev is not None:
-                ###data = self._rev.data.read()
-                ###self._rev.data.close()
                 data = self._rev.read_data()
                 data = data.decode(config.charset)
                 self._data = self.decodeTextMimeType(data)
@@ -248,11 +244,6 @@ class Page(object):
         @rtype: list of ints
         @return: page revisions
         """
-     ###   revisions = []
-     ###   if self._item:
-     ###       revisions = self._item.keys()
-     ###   return revisions
-
         revisions = []
         if self._item is not None:
             revisions = self._item.list_revisions()
@@ -312,34 +303,6 @@ class Page(object):
         @rtype: string
         @return: the full path to the storage area
         """
-       # check_create = kw.get('check_create', 1)
-       # isfile = kw.get('isfile', 0)
-       # use_underlay = kw.get('use_underlay', -1)
-
-       # if self._page_name_force is not None:
-       #     name = self._page_name_force
-       # else:
-       #     name = self.page_name
-
-       # # XXX not honouring use_underlay setting at this time,
-       # #     does not make sense much longer...
-       # if self._item is None:
-       #     path = self.request.cfg.data_backend._get_item_path(name)
-       # else:
-       #     path = self._item._backend._get_item_path(name)
-
-       # fullpath = os.path.join(*((path, ) + args))
-       # if check_create:
-       #     if isfile:
-       #         dirname, filename = os.path.split(fullpath)
-       #     else:
-       #         dirname = fullpath
-       #     try:
-       #         os.makedirs(dirname)
-       #     except OSError, err:
-       #         if not os.path.exists(dirname):
-       #             raise err
-       # return fullpath
         logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
         return "/tmp/"
 
@@ -1398,7 +1361,6 @@ class RootPage(object):
         Init the item collection.
         """
         self.request = request
-        ###self._items = ItemCollection(request.cfg.data_backend, request)
         self._backend = request.cfg.data_backend
 
     def getPagePath(self, fname, isfile):
@@ -1407,7 +1369,6 @@ class RootPage(object):
 
         Just a hack for event and edit log currently.
         """
-        ###return os.path.join(self.request.cfg.data_dir, fname)
         logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
         return "/tmp/"
 
@@ -1491,7 +1452,6 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        ###items = self._items.iterate(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
         items = self._backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
 
         count = 0
