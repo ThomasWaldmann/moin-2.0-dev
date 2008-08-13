@@ -468,28 +468,28 @@ class Converter(ConverterMacro):
     inline_subscript = r"""
         (?P<subscript>
             ,,
+            (?P<subscript_text> .*? )
+            ,,
         )
     """
 
-    def inline_subscript_repl(self, subscript):
-        if not self.stack_top_check('span'):
-            attrib = {tree.moin_page.baseline_shift: 'sub'}
-            self.stack_push(tree.moin_page.span(attrib=attrib))
-        else:
-            self.stack_pop()
+    def inline_subscript_repl(self, subscript, subscript_text):
+        attrib = {tree.moin_page.baseline_shift: 'sub'}
+        elem = tree.moin_page.span(attrib=attrib, children=[subscript_text])
+        self.stack_top_append(elem)
 
     inline_superscript = r"""
         (?P<superscript>
             \^
+            (?P<superscript_text> .*? )
+            \^
         )
     """
 
-    def inline_superscript_repl(self, superscript):
-        if not self.stack_top_check('span'):
-            attrib = {tree.moin_page.baseline_shift: 'super'}
-            self.stack_push(tree.moin_page.span(attrib=attrib))
-        else:
-            self.stack_pop()
+    def inline_superscript_repl(self, superscript, superscript_text):
+        attrib = {tree.moin_page.baseline_shift: 'super'}
+        elem = tree.moin_page.span(attrib=attrib, children=[superscript_text])
+        self.stack_top_append(elem)
 
     inline_underline = r"""
         (?P<underline>
