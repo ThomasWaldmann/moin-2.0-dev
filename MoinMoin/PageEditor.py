@@ -34,6 +34,7 @@ from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
+from MoinMoin.storage.error import RevisionAlreadyExistsError
 from MoinMoin.storage import DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                              EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
@@ -906,8 +907,11 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             ###newrev = self._item[0]
             newrev = self._item.get_revision(-1)
         else:
-            newrev = self._item.create_revision(old_revno + 1)
-
+            try:
+                newrev = self._item.create_revision(old_revno + 1)
+            except RevisionAlreadyExistsError:
+                raise PageEditor.EditConflict(_("Someone else saved this page while you were editing!"))
+                                              
         if not deleted:
             metadata, data = wikiutil.split_body(text)
             newrev.write(data.encode(config.charset))
