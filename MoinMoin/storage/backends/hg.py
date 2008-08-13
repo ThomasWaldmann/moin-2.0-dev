@@ -473,11 +473,7 @@ class MercurialBackend(Backend):
                 self._add_item(item)
             else:
                 if rev.revno in self._list_revisions(item):
-                    # XXX: API requires raise RevisionAlreadyExistsError here
-                    # we're _knowingly_ breaking this stuff _now_
-                    filelog = self._repo.file(item._id)
-                    n = filelog.node(rev.revno - 1)
-                    p1, p2 = self._repo[filelog.linkrev(n)].node(), nullid
+                    raise RevisionAlreadyExistsError("Item Revision already exists: %s" % rev.revno)
 
             ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx, user, extra=meta)
             if rev.revno == 0:
@@ -485,31 +481,7 @@ class MercurialBackend(Backend):
             else:
                 ctx._status[0] = [item._id]
             self._repo.commitctx(ctx)
-
-            # XXX: this is merging in backend
-            # in a few days should go to MergeAction
-            if len(self._repo.heads()) > 1:  # policy: always merge with tip,
-                meta = {}                    # at most two heads in this block
-                nodes = self._repo.changelog.nodesbetween([p1])[0]
-                newest_node = self._repo[len(self._repo) - 1].node()
-                for node in reversed(nodes):
-                    if (node not in (p1, newest_node) and
-                                    item._id in self._repo.changectx(node).files()):
-                        for n in (node, newest_node):
-                            meta.update(self._repo.changectx(n).extra())
-                        break
-
-                merge.update(self._repo, newest_node, True, False, False)
-                msg = "Merged %s" % item.name  # XXX: just for now
-                parent_data = self._get_revision(item, rev.revno - 1).read()
-                other_data = self._get_revision(item, rev.revno).read()
-                my_data = data
-                data = diff3.text_merge(parent_data, other_data, my_data, True, *conflict_markers)
-                p1, p2 = self._repo.heads()
-                ctx = context.memctx(self._repo, (p1, p2), msg, [item._id], getfilectx, user, extra=meta)
-                self._repo._commitctx(ctx)
-            else:
-                commands.update(self._ui, self._repo)
+            # commands.update(self._ui, self._repo)
             self._addhistory(item._id, rev.revno, rev.timestamp)
         finally:
             del lock
