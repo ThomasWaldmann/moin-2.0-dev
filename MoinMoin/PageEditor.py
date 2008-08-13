@@ -533,10 +533,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             request.theme.add_msg(_('Edit was cancelled.'), "error")
             self.send_page()
 
-        # XXX Obsolete because we only store items when they are really committed.
-        ###if self.getRevList() == []:
-        ###    del self._items[self.page_name]
-
     def copyPage(self, newpagename, comment=u''):
         """ Copy the current version of the page (keeping the backups, logs and attachments).
 
@@ -620,7 +616,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             raise self.AccessDenied, msg
 
         try:
-            ###self._items.rename_item(self.page_name, newpagename)
             item = self._backend.get_item(old_name)
             item.rename(newpagename)
         except BackendError, err:
@@ -902,10 +897,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         # remember conflict state
         self.setConflict(wikiutil.containsConflictMarker(text))
 
-        ###self._item.lock = True
-
         if was_deprecated:
-            ###newrev = self._item[0]
             newrev = self._item.get_revision(-1)
         else:
             try:
@@ -924,14 +916,11 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             newrev.write("")
             newrev[DELETED] = True
 
-        ###newrev.save(action, extra, comment, self.uid_override)
-
         if self.uid_override is not None:
             addr, userid = "", ""
             hostname = self.uid_override
 
         else:
-            # XXX Is this the correct request we are using below?
             addr = request.remote_addr
 
             if hasattr(request, "user"):
@@ -954,9 +943,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         self._item.commit()
 
-        ###self._item.lock = False
-
-        # reset page object
         self.reset()
 
         # add event log entry
