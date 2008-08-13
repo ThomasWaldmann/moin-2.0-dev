@@ -271,14 +271,8 @@ class FSBackend(Backend):
         nf.close()
 
     def _rename_item(self, item, newname):
-        if not isinstance(newname, (str, unicode)):
-            raise TypeError("Itemnames must have string type, not %s" % (type(newname)))
-
         self._do_locked(os.path.join(self._path, 'name-mapping.lock'),
                         self._rename_item_locked, (item, newname))
-
-        # XXX: Item.rename could very well do this
-        item._name = newname
 
     def _add_item_internally_locked(self, arg):
         """
@@ -366,13 +360,11 @@ class FSBackend(Backend):
         self._do_locked(os.path.join(self._path, 'name-mapping.lock'),
                         self._add_item_internally_locked, (item, newrev, metadata))
 
-    def _commit_item(self, item):
-        # XXX: Item.commit could pass this in
-        rev = item._uncommitted_revision
-
+    def _commit_item(self, rev):
         if rev.timestamp is None:
             rev.timestamp = long(time.time())
 
+        item = rev.item
         metadata = {'__timestamp': rev.timestamp}
         metadata.update(rev)
         md = pickle.dumps(metadata, protocol=PICKLEPROTOCOL)
@@ -420,18 +412,10 @@ class FSBackend(Backend):
                 os.unlink(rev._fs_revpath)
 
         self._addhistory(item._fs_item_id, rev.revno, rev.timestamp)
-        # XXX: Item.commit could very well do this.
-        item._uncommitted_revision = None
 
-    def _rollback_item(self, item):
-        # XXX: Item.commit could pass this in.
-        rev = item._uncommitted_revision
-
+    def _rollback_item(self, rev):
         rev._fs_file.close()
         os.unlink(rev._fs_revpath)
-
-        # XXX: Item.commit could very well do this.
-        item._uncommitted_revision = None
 
     def _change_item_metadata(self, item):
         if not item._fs_item_id is None:

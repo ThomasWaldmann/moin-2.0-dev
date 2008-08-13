@@ -378,9 +378,6 @@ class MercurialBackend(Backend):
         Renames given Item name to newname. Raises NoSuchItemError if source
         item is unreachable or ItemAlreadyExistsError if destination exists.
         """
-        if not isinstance(newname, (str, unicode)):
-            raise TypeError("Wrong Item destination name type: %s" % (type(newname)))
-        # XXX: again, to the abstract
         lock = self._repolock()
         try:
             if self.has_item(newname):
@@ -407,7 +404,6 @@ class MercurialBackend(Backend):
             name_file = open(name_path, mode='wb')
             name_file.write(encoded_name)
             name_file.close()
-            item._name = newname
         finally:
             del lock
 
@@ -452,15 +448,15 @@ class MercurialBackend(Backend):
                 item._metadata = {}
             write_meta_item(self._upath("%s.meta" % item._id), item._metadata)
 
-    def _commit_item(self, item):
+    def _commit_item(self, rev):
         """Commit Item changes within transaction (Revision) to repository."""
         def getfilectx(repo, memctx, path):
             return context.memfilectx(path, data, False, False, False)
 
+        item = rev.item
         if not item._id and self.has_item(item.name):
             raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
 
-        rev = item._uncommitted_revision
         if rev.timestamp is None:
             rev.timestamp = long(time.time())
         msg = rev.get(EDIT_LOG_COMMENT, "").encode("utf-8")
@@ -517,11 +513,9 @@ class MercurialBackend(Backend):
             self._addhistory(item._id, rev.revno, rev.timestamp)
         finally:
             del lock
-            item._uncommitted_revision = None  # XXX: move to abstract
 
-    def _rollback_item(self, item):
-        """Reverts uncommited Item changes."""
-        item._uncommitted_revision = None  # XXX: move to abstract
+    def _rollback_item(self, rev):
+        pass  # generic rollback is sufficent, deleting would raise AttributeError
 
     def _lock(self, lockpath, lockref):
         """"Generic lock helper"""

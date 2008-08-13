@@ -124,22 +124,13 @@ class FlatFileBackend(Backend):
         return rev
 
     def _rename_item(self, item, newname):
-        if not isinstance(newname, (str, unicode)):
-            raise TypeError("Itemnames must have string type, not %s" % (type(newname)))
-
         try:
             os.rename(os.path.join(self._path, self._quote(item.name)),
                       os.path.join(self._path, self._quote(newname)))
         except OSError:
             raise ItemAlreadyExistsError('')
 
-        # XXX: Item.rename could very well do this
-        item._name = newname
-
-    def _commit_item(self, item):
-        # XXX: Item.commit could pass this in
-        rev = item._uncommitted_revision
-
+    def _commit_item(self, rev):
         p = os.path.join(self._path, self._quote(item.name))
         f = open(p, 'wb')
         rev._data.seek(0)
@@ -148,15 +139,8 @@ class FlatFileBackend(Backend):
         f.write(data)
         f.close()
 
-        # XXX: Item.commit could very well do this.
-        item._uncommitted_revision = None
-
-    def _rollback_item(self, item):
-        # XXX: Item.commit could pass this in.
-        rev = item._uncommitted_revision
-
-        # XXX: Item.commit could very well do this.
-        item._uncommitted_revision = None
+    def _rollback_item(self, rev):
+        pass
 
     def _change_item_metadata(self, item):
         pass
