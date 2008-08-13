@@ -190,9 +190,6 @@ class MemoryBackend(Backend):
         if newname in self._itemmap:
             raise ItemAlreadyExistsError("Cannot rename Item %s to %s since there already is an Item with that name." % (item.name, newname))
 
-        elif not isinstance(newname, (str, unicode)):
-            raise TypeError("Itemnames must have string type, not %s" % (type(newname)))
-
         name = None
 
         for itemname, itemid in self._itemmap.iteritems():
@@ -205,7 +202,6 @@ class MemoryBackend(Backend):
         copy_me = self._itemmap[name]
         self._itemmap[newname] = copy_me
         del self._itemmap[name]
-        item._name = newname
 
     def _add_item_internally(self, item):
         """
@@ -222,7 +218,7 @@ class MemoryBackend(Backend):
 
         self._last_itemid += 1
 
-    def _commit_item(self, item):
+    def _commit_item(self, revision):
         """
         Commits the changes that have been done to a given Item. That is, after you
         created a Revision on that Item and filled it with data you still need to
@@ -231,8 +227,7 @@ class MemoryBackend(Backend):
         the item and thus the Revision to be saved is memorized in the items
         _uncommitted_revision attribute.
         """
-        revision = item._uncommitted_revision
-
+        item = revision.item
         if item._item_id is None:
             if self.has_item(item.name):
                 raise ItemAlreadyExistsError("You tried to commit an Item with the name %r, but there already is an Item with that name." % item.name)
@@ -252,16 +247,14 @@ class MemoryBackend(Backend):
         revision._metadata['__timestamp'] = revision.timestamp
         self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata.copy())
 
-        item._uncommitted_revision = None
-
-    def _rollback_item(self, item):
+    def _rollback_item(self, rev):
         """
         This method is invoked when external events happen that cannot be handled in a
         sane way and thus the changes that have been made must be rolled back.
         """
         # Since we have no temporary files or other things to deal with in this backend,
         # we can just set the items uncommitted revision to None and go on with our life.
-        item._uncommitted_revision = None
+        pass
 
     def _change_item_metadata(self, item):
         """
