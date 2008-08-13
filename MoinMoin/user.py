@@ -34,14 +34,12 @@ def getUserList(request):
     @rtype: list
     @return: all user IDs
     """
-    ###return ItemCollection(request.cfg.user_backend, request).keys()
     all_users = request.cfg.user_backend.iteritems()
     return [item.name for item in all_users]
 
 def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
     filter = term.ItemMetaDataMatch(key, value)
-    ###identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
     items = request.cfg.user_backend.search_item(filter)
     users = [User(request, item.name) for item in items]
     return users
@@ -64,7 +62,6 @@ def get_by_jabber_id(request, jabber_id):
 def getUserIdByOpenId(request, openid):
     """ Searches for an user with a particular openid id and returns it. """
     filter = term.ItemHasMetaDataValue('openids', openid)
-    ###identifier = ItemCollection(request.cfg.user_backend, request).iterate(filter)
     identifier = request.cfg.user_backend.search_item(filter)
 
     users = []
@@ -81,9 +78,7 @@ def getUserId(request, searchName):
     @return: the corresponding user ID or None
     """
     try:
-        ###coll = ItemCollection(request.cfg.user_backend, request)
         backend = request.cfg.user_backend
-
         for user in backend.search_item(term.ItemMetaDataMatch('name', searchName)):
             return user.name
         return None
@@ -248,7 +243,6 @@ class User:
                                First tuple element was used for authentication.
         """
 
-        ###self._item_collection = ItemCollection(request.cfg.user_backend, None)
         self._user_backend = request.cfg.user_backend
         self._user = None
 
@@ -354,7 +348,6 @@ class User:
         @rtype: bool
         @return: true, if we have a user account
         """
-        ###return self.id in self._item_collection
         return self._user_backend.has_item(self.id)
 
     def load_from_id(self, password=None):
@@ -371,11 +364,9 @@ class User:
         if not self.exists():
             return
 
-        ### self._user = self._item_collection[self.id]
         self._user = self._user_backend.get_item(self.id)
 
         user_data = dict()
-        ###user_data.update(self._user.metadata)
         for metadata_key in self._user:
             user_data[metadata_key] = self._user[metadata_key]
 
@@ -489,11 +480,7 @@ class User:
         else:
             self._user = self._user_backend.get_item(self.id)
 
-        ### self._user.lock = True
         self._user.change_metadata()
-
-        ###for key in self._user.metadata:
-        ###   del self._user.metadata[key]
         for key in self._user.keys():
             del self._user[key]
 
@@ -502,12 +489,10 @@ class User:
         attrs = self.persistent_items()
         attrs.sort()
         for key, value in attrs:
-            ###self._user.metadata[key] = value
             if isinstance(value, list):
                 value = tuple(value)
             self._user[key] = value
 
-        ###self._user.metadata.save()
         self._user.publish_metadata()
 
         arena = 'user'
