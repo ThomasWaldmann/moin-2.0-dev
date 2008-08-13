@@ -21,6 +21,8 @@ class Namespace(object):
         self.namespace = namespace
 
     def __getattr__(self, key):
+        if key.endswith('_'):
+            key = key[:-1]
         return Name(key.replace('_', '-'), self.namespace)
 
 html = Namespace(namespaces.html)
