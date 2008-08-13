@@ -145,6 +145,8 @@ instead of throwing RevisionAlreadyExistsError")
         item1.create_revision(1)['a'] = 's'
         item2.create_revision(1)['a'] = 'ss'
         item1.commit()
+        # import time
+        # time.sleep(1)
         item2.commit()
         assert item2.list_revisions() == range(4)
         item1 = self.backend.get_item("double-headed")
@@ -164,11 +166,11 @@ instead of throwing RevisionAlreadyExistsError")
         item1.commit()
         item2.commit()
         item = self.backend.get_item("double-headed")
-        for rev in (item1.get_revision(-1), item.get_revision(3)):
+        for rev in (item1.get_revision(3), item.get_revision(-1)):
+            assert len([k for k in rev.iterkeys()]) == 3
             assert rev["age"] == "younger"
             assert rev["first"] == "alfa"
             assert rev["second"] == "beta"
-        assert len(rev._metadata.keys()) == 3
 
     def test_item_merge_data(self):
         first_text = "Lorem ipsum."
