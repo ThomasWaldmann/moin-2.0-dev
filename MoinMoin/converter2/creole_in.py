@@ -221,7 +221,7 @@ class Converter(ConverterMacro):
         lines = _Iter(self.block_nowiki_lines(iter))
 
         if firstline.startswith('#!'):
-            args = wikiutil.parse_quoted_separated(firstline[2:], separator=None)
+            args = wikiutil.parse_quoted_separated(firstline[2:].strip(), separator=None)
             name = args[0].pop(0)
 
             # Parse it directly if the type is ourself
@@ -316,11 +316,6 @@ class Converter(ConverterMacro):
         else:
             self.stack_top_append('\n')
         self.parse_inline(text)
-
-    inline_text = r'(?P<text> .+? )'
-
-    def inline_text_repl(self, text):
-        self.stack_top_append(text)
 
     inline_emph = r'(?P<emph> (?<!:)// )'
     # there must be no : in front of the // avoids italic rendering in urls
@@ -575,7 +570,6 @@ class Converter(ConverterMacro):
         inline_emph,
         inline_linebreak,
         inline_escape,
-        inline_text,
     )
     inline_re = re.compile('|'.join(inline), re.X | re.U)
 
@@ -583,7 +577,6 @@ class Converter(ConverterMacro):
     link_desc = (
         inline_object,
         inline_linebreak,
-        inline_text,
     )
     link_desc_re = re.compile('|'.join(link_desc), re.X | re.U)
 
@@ -626,6 +619,10 @@ class Converter(ConverterMacro):
     def stack_top_append(self, elem):
         self._stack[-1].append(elem)
 
+    def stack_top_append_iftrue(self, elem):
+        if elem:
+            self.stack_top_append(elem)
+
     def stack_top_check(self, *names):
         tag = self._stack[-1].tag
         return tag.uri == namespaces.moin_page and tag.name in names
@@ -646,8 +643,16 @@ class Converter(ConverterMacro):
     def parse_inline(self, text, re=inline_re):
         """Recognize inline elements within the given text"""
 
+        pos = 0
         for match in re.finditer(text):
+            # Handle leading text
+            self.stack_top_append_iftrue(text[pos:match.start()])
+            pos = match.end()
+
             self._apply(match, 'inline')
+
+        # Handle trailing text
+        self.stack_top_append_iftrue(text[pos:])
 
 from _registry import default_registry
 default_registry.register(Converter._factory)

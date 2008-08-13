@@ -365,11 +365,6 @@ class Converter(ConverterMacro):
             self.stack_top_append('\n')
         self.parse_inline(text)
 
-    inline_text = r'(?P<text> .+? )'
-
-    def inline_text_repl(self, text):
-        self.stack_top_append(text)
-
     inline_comment = r"""
         (?P<comment>
             (?P<comment_begin>
@@ -773,7 +768,6 @@ class Converter(ConverterMacro):
         inline_underline,
         inline_freelink,
         inline_url,
-        inline_text,
     )
     inline_re = re.compile('|'.join(inline), re.X | re.U)
 
@@ -781,7 +775,6 @@ class Converter(ConverterMacro):
         inline_macro,
         inline_nowiki,
         inline_emphstrong,
-        inline_text,
     )
     inlinedesc_re = re.compile('|'.join(inlinedesc), re.X | re.U)
 
@@ -816,6 +809,10 @@ class Converter(ConverterMacro):
     def stack_top_append(self, elem):
         self._stack[-1].append(elem)
 
+    def stack_top_append_iftrue(self, elem):
+        if elem:
+            self.stack_top_append(elem)
+
     def stack_top_check(self, *names):
         tag = self._stack[-1].tag
         return tag.uri == namespaces.moin_page and tag.name in names
@@ -830,8 +827,16 @@ class Converter(ConverterMacro):
     def parse_inline(self, text, re=inline_re):
         """Recognize inline elements within the given text"""
 
+        pos = 0
         for match in re.finditer(text):
+            # Handle leading text
+            self.stack_top_append_iftrue(text[pos:match.start()])
+            pos = match.end()
+
             self._apply(match, 'inline')
+
+        # Handle trailing text
+        self.stack_top_append_iftrue(text[pos:])
 
 from _registry import default_registry
 default_registry.register(Converter._factory)
