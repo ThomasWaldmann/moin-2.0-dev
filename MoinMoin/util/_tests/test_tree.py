@@ -37,6 +37,10 @@ def test_Namespace():
     assert name.name == 'outline-level'
     assert name.uri == uri
 
+    name = namespace.class_
+    assert name.name == 'class'
+    assert name.uri == uri
+
 def test_html():
     assert isinstance(html, Namespace)
     assert html.namespace == namespaces.html
