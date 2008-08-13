@@ -154,7 +154,7 @@ def execute(pagename, request):
                 break
         # these values come form mercurial.hgweb.webcommands or graph.tmpl
         bg_height = 39
-        canvasheight = (len(history) + 1) * bg_height - 27;
+        canvasheight = (len(history) + 1) * bg_height - 27
         canvaswidth = 224
 
         request.write(unicode(html.H2().append(_('Revision History'))))

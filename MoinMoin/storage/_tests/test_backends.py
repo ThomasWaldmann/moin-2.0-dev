@@ -538,7 +538,7 @@ class BackendTest(object):
             assert rev["key"] == value
 
         for revno, value in enumerate(('string', 13, 42L, 3.14, 23+0j,
-                                       ('1', 1, 1L, 1+0j,(1, ), ), u'ąłć', (u'ó', u'żźć'), )):
+                                       ('1', 1, 1L, 1+0j, (1, ), ), u'ąłć', (u'ó', u'żźć'), )):
             yield test_value, value, revno
 
     def test_history(self):
