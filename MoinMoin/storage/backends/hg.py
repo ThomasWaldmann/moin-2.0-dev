@@ -439,14 +439,18 @@ class MercurialBackend(Backend):
         if item._id:
             if item._metadata is None:
                 pass
+            elif not item._metadata:
+                try:
+                    os.remove(self._upath("%s.meta" % item._id))
+                except OSError:
+                    pass
             else:
                 write_meta_item(self._upath("%s.meta" % item._id), item._metadata)
             del item._lock
         else:
             self._add_item(item)
-            if item._metadata is None:
-                item._metadata = {}
-            write_meta_item(self._upath("%s.meta" % item._id), item._metadata)
+            if item._metadata:
+                write_meta_item(self._upath("%s.meta" % item._id), item._metadata)
 
     def _commit_item(self, rev):
         """Commit Item changes within transaction (Revision) to repository."""
