@@ -156,17 +156,6 @@ def info(pagename, request):
         }
     return "\n<p>\n%s\n</p>\n" % attach_info
 
-
-#def _write_stream(content, stream, bufsize=8192):
-#    if hasattr(content, 'read'): # looks file-like
-#        import shutil
-#        shutil.copyfileobj(content, stream, bufsize)
-#    elif isinstance(content, str):
-#        stream.write(content)
-#    else:
-#        logging.error("unsupported content object: %r" % content)
-#        raise
-
 def _write_stream(content, new_rev, bufsize=8192):
     if hasattr(content, "read"):
         while True:
@@ -220,15 +209,8 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     except NoSuchRevisionError:
         new_rev = item.create_revision(0)
 
-    #stream = open(fpath, 'wb')
-    #try:
-    #    _write_stream(filecontent, stream)
-    #finally:
-    #    stream.close()
-
     _write_stream(filecontent, new_rev)
 
-    #_addLogEntry(request, 'ATTNEW', pagename, target)
     # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
     new_rev[EDIT_LOG_ACTION] = 'ATTNEW'
     new_rev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
@@ -236,7 +218,6 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     new_rev[EDIT_LOG_EXTRA] = wikiutil.url_quote(target, want_unicode=True)
     new_rev[EDIT_LOG_COMMENT] = u''  # XXX At some point one may consider enabling attachment-comments
 
-    #new_rev["format"] = "attachment"
     mimetype = mimetypes.guess_type(target)[0]
     if mimetype is None:
         mimetype = "unknown"
@@ -245,7 +226,6 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     # TODO: Error handling
     item.commit()
 
-    #filesize = os.path.getsize(fpath)
     event = FileAttachedEvent(request, pagename, target, new_rev.size)
     send_event(event)
 
@@ -298,8 +278,6 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
     _ = request.getText
     fmt = request.html_formatter
 
-    # access directory
- #   attach_dir = getAttachDir(request, pagename)
     files = _get_files(request, pagename)
 
     if mime_type != '*':
@@ -327,8 +305,6 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
         html.append(fmt.bullet_list(1))
         for file in files:
             mt = wikiutil.MimeType(filename=file)
- #           fullpath = os.path.join(attach_dir, file).encode(config.charset)
- #           st = os.stat(fullpath)
             backend = request.cfg.data_backend
             try:
                 item = backend.get_item(pagename + "/" + file)
@@ -415,13 +391,6 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
 
 
 def _get_files(request, pagename):
-  #  attach_dir = getAttachDir(request, pagename)
-  #  if os.path.isdir(attach_dir):
-  #      files = [fn.decode(config.charset) for fn in os.listdir(attach_dir)]
-  #      files.sort()
-  #  else:
-  #      files = []
-  #  return files
     # MoinMoin.search.NameRE expects a Regular Expression Object.
     # Find all items that are attached to $pagename. (Indicated by their
     # Item-Name (in storage-backend) being constructed like: pagename + "/" + filename
@@ -901,7 +870,6 @@ def _do_get(pagename, request, filename):
         error = _("Filename of attachment not specified!")
     else:
         filename = wikiutil.taintfilename(request.form['target'][0])
-        #fpath = getFilename(request, pagename, filename)
 
     if not request.user.may.read(pagename):
         return _('You are not allowed to get attachments from this page.')
@@ -915,6 +883,7 @@ def _do_get(pagename, request, filename):
         error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
 
     else:
+        # XXX rather use dict.get() here...
         try:
             timestamp = timefuncs.formathttpdate(float(rev.timestamp))
             mimestr = rev["mimetype"]
