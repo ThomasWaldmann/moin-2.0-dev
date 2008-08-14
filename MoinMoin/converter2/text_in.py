@@ -8,9 +8,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from emeraldtree import ElementTree as ET
-
-from MoinMoin.util import namespaces
+from MoinMoin.util.tree import moin_page
 
 class Converter(object):
     """
@@ -29,16 +27,13 @@ class Converter(object):
     def __call__(self, content):
         """Parse the text and return DOM tree."""
 
-        tag = ET.QName('page', namespaces.moin_page)
-        tag_page_href = ET.QName('page-href', namespaces.moin_page)
-
         attrib = {}
         if self.page_url:
-            attrib[tag_page_href] = self.page_url
+            attrib[moin_page.page_href] = self.page_url
 
-        root = ET.Element(tag, attrib=attrib)
+        root = moin_page.page(attrib=attrib)
 
-        blockcode = ET.Element(ET.QName('blockcode', namespaces.moin_page))
+        blockcode = moin_page.blockcode()
 
         for line in content:
             if len(blockcode):
