@@ -7,7 +7,8 @@
     ---
 
     @copyright: 2008 MoinMoin:ChristopherDenter,
-                2008 MoinMoin:JohannesBerg
+                2008 MoinMoin:JohannesBerg,
+                2008 MoinMoin:AlexanderSchremmer
     @license: GNU GPL, see COPYING for details.
 """
 

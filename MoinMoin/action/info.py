@@ -5,7 +5,8 @@
     Displays page history, some general page infos and statistics.
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2006-2008 MoinMoin:ThomasWaldmann
+                2006-2008 MoinMoin:ThomasWaldmann,
+                2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 

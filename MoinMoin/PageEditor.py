@@ -12,9 +12,8 @@
 
     @copyright: 2000-2004 by Juergen Hermann <jh@web.de>,
                 2005-2007 by MoinMoin:ThomasWaldmann,
-                2007 by MoinMoin:ReimarBauer
+                2007 by MoinMoin:ReimarBauer,
                 2008 by MoinMoin:ChristopherDenter
-
     @license: GNU GPL, see COPYING for details.
 """
 
