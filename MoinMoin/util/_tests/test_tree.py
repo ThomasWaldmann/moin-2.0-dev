@@ -43,8 +43,6 @@ def test_Namespace():
 
 def test_html():
     assert isinstance(html, Namespace)
-    assert html.namespace == namespaces.html
 
 def test_moin_page():
     assert isinstance(moin_page, Namespace)
-    assert moin_page.namespace == namespaces.moin_page

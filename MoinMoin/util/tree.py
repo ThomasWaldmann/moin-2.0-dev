@@ -7,8 +7,6 @@ MoinMoin - Tree name and element generator
 
 from emeraldtree import ElementTree as ET
 
-from MoinMoin.util import namespaces
-
 class Name(ET.QName):
     """
     QName and factory for elements with this QName
@@ -25,6 +23,13 @@ class Namespace(object):
             key = key[:-1]
         return Name(key.replace('_', '-'), self.namespace)
 
-html = Namespace(namespaces.html)
-moin_page = Namespace(namespaces.moin_page)
-xlink = Namespace(namespaces.xlink)
+# Own namespaces
+moin_page = Namespace('http://moinmo.in/namespaces/page')
+
+# Well-known namespaces
+dc = Namespace('http://purl.org/dc/elements/1.1/')
+html = Namespace('http://www.w3.org/1999/xhtml')
+mathml = Namespace('http://www.w3.org/1998/Math/MathML')
+svg = Namespace('http://www.w3.org/2000/svg')
+xinclude = Namespace('http://www.w3.org/2001/XInclude')
+xlink = Namespace('http://www.w3.org/1999/xlink')
