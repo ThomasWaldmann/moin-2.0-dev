@@ -14,14 +14,18 @@ class Name(ET.QName):
     def __call__(self, attrib=None, children=(), **extra):
         return ET.Element(self, attrib=attrib, children=children, **extra)
 
-class Namespace(object):
-    def __init__(self, namespace):
-        self.namespace = namespace
-
+class Namespace(unicode):
     def __getattr__(self, key):
         if key.endswith('_'):
             key = key[:-1]
-        return Name(key.replace('_', '-'), self.namespace)
+        return Name(key.replace('_', '-'), self)
+
+    def __repr__(self):
+        return '<%s(%r)>' % (self.__class__.__name__, self)
+
+    @property
+    def namespace(self):
+        return self
 
 # Own namespaces
 moin_page = Namespace('http://moinmo.in/namespaces/page')
