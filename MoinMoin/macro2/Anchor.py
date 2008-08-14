@@ -6,9 +6,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from emeraldtree import ElementTree as ET
-
-from MoinMoin.util import namespaces
+from MoinMoin.util.tree import moin_page
 from MoinMoin.macro2._base import MacroInlineBase
 
 class Macro(MacroInlineBase):
@@ -16,7 +14,5 @@ class Macro(MacroInlineBase):
         if not anchor:
             raise ValueError("Anchor: you need to give an anchor name.")
 
-        tag_span = ET.QName('span', namespaces.moin_page)
-        attr_id = ET.QName('id', namespaces.moin_page)
-        return ET.Element(tag_span, attrib={attr_id: anchor})
+        return moin_page.span(attrib={moin_page.id: anchor})
 

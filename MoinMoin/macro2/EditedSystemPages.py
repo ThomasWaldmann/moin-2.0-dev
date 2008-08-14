@@ -7,8 +7,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from emeraldtree import ElementTree as ET
-
 from MoinMoin.Page import Page
 from MoinMoin.util import namespaces
 from MoinMoin.macro2._base import MacroPageLinkListBase

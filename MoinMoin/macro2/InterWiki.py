@@ -6,9 +6,7 @@
     @license: GNU GPL, see COPYING for details
 """
 
-from emeraldtree import ElementTree as ET
-
-from MoinMoin.util import namespaces
+from MoinMoin.util.tree import moin_page, xlink
 from MoinMoin import wikiutil
 from MoinMoin.macro2._base import MacroBlockBase
 
@@ -18,30 +16,19 @@ class Macro(MacroBlockBase):
         iwlist = interwiki_list.items() # this is where we cached it
         iwlist.sort()
 
-        tag_l = ET.QName('list', namespaces.moin_page)
-        tag_li = ET.QName('list-item', namespaces.moin_page)
-        tag_li_label = ET.QName('list-item-label', namespaces.moin_page)
-        tag_li_body = ET.QName('list-item-body', namespaces.moin_page)
-        tag_code = ET.QName('code', namespaces.moin_page)
-        tag_a = ET.QName('a', namespaces.moin_page)
-        attr_href_xlink = ET.QName('href', namespaces.xlink)
-
-        iw_list = ET.Element(tag_l)
+        iw_list = moin_page.list()
         for tag, url in iwlist:
             href = wikiutil.join_wiki(url, 'RecentChanges')
-            link = ET.Element(tag_a, attrib={attr_href_xlink: href}, children=[tag])
-            label = ET.Element(tag_code, children=[link])
-            iw_item_label = ET.Element(tag_li_label, children=[label])
-
+            link = moin_page.a(attrib={xlink.href: href}, children=[tag])
+            label = moin_page.code(children=[link])
+            iw_item_label = moin_page.list_item_label(children=[label])
             if '$PAGE' not in url:
-                link = ET.Element(tag_a, attrib={attr_href_xlink: url}, children=[url])
+                link = moin_page.a(attrib={xlink.href: url}, children=[url])
             else:
                 link = url
-            body = ET.Element(tag_code, children=[link])
-            iw_item_body = ET.Element(tag_li_body, children=[body])
-
-            iw_item = ET.Element(tag_li, children=[iw_item_label, iw_item_body])
+            body = moin_page.code(children=[link])
+            iw_item_body = moin_page.list_item_body(children=[body])
+            iw_item = moin_page.list_item(children=[iw_item_label, iw_item_body])
             iw_list.append(iw_item)
-
         return iw_list
 
