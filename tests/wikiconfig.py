@@ -17,10 +17,11 @@ class Config(DefaultConfig):
     _base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
     data_dir = os.path.join(_base_dir, "data") # needed for plugins package
     #data_underlay_dir = os.path.join(_base_dir, "underlay")
+    flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     # configure backends
     data_backend = memory.MemoryBackend()
-    test_num_pages = clone(flatfile.FlatFileBackend('tests/data'), data_backend)[0][0]
+    test_num_pages = len(clone(flatfile.FlatFileBackend(flat_dir), data_backend)[0])
     user_backend = memory.MemoryBackend()
     page_front_page = 'FrontPage'
 

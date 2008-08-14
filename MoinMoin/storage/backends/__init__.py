@@ -16,11 +16,11 @@ def clone(source, destination, verbose=False):
     """
     Create exact copy of source Backend with all its Items in the given
     destination Backend. Return a tuple consisting of:
-    - converted, skipped, failed count list,
+    - converted Item:Revsion numbers list dict,
     - skipped Item:Revsion numbers list dict,
     - failed Item:Revision numbers list dict
     """
-    def compare_revision(rev1, rev2):
+    def same_revision(rev1, rev2):
         if rev1.timestamp != rev2.timestamp:
             return False
         for k, v in rev1.iteritems():
@@ -39,8 +39,7 @@ def clone(source, destination, verbose=False):
         sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
         sys.stdout.write("[connverting %s to %s]: " % (source.__class__.__name__,
                                                        destination.__class__.__name__, ))
-    count = [0, 0, 0]
-    skips, fails = {}, {}
+    converts, skips, fails = {}, {}, {}
 
     for revision in source.history(reverse=False):
         name = revision.item.name
@@ -57,8 +56,7 @@ def clone(source, destination, verbose=False):
             new_rev = new_item.create_revision(revision.revno)
         except RevisionAlreadyExistsError:
             existing_revision = new_item.get_revision(revision.revno)
-            if compare_revision(existing_revision, revision):
-                count[1] += 1
+            if same_revision(existing_revision, revision):
                 try:
                     skips[name].append(revision.revno)
                 except KeyError:
@@ -66,7 +64,6 @@ def clone(source, destination, verbose=False):
                 if verbose:
                     sys.stdout.write("s")
             else:
-                count[2] += 1
                 try:
                     fails[name].append(revision.revno)
                 except KeyError:
@@ -80,10 +77,13 @@ def clone(source, destination, verbose=False):
             shutil.copyfileobj(revision, new_rev)
 
             new_item.commit()
-            count[0] += 1
+            try:
+                converts[name].append(revision.revno)
+            except KeyError:
+                converts[name] = [revision.revno]
             if verbose:
                 sys.stdout.write(".")
 
     if verbose:
         sys.stdout.write("\n")
-    return count, skips, fails
+    return converts, skips, fails

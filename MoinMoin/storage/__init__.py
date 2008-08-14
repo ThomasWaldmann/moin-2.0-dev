@@ -419,7 +419,11 @@ class Item(object, DictMixin):  # TODO Improve docstring
         Rename the item. By default this uses the rename method the backend
         specifies internally.
         """
+        if not isinstance(newname, (str, unicode)):
+            raise TypeError("Item names must have string type, not %s" % (type(newname)))
+
         self._backend._rename_item(self, newname)
+        self._name = newname
 
     def commit(self):
         """
@@ -428,14 +432,16 @@ class Item(object, DictMixin):  # TODO Improve docstring
         """
         assert self._uncommitted_revision is not None
 
-        self._backend._commit_item(self)
+        self._backend._commit_item(self._uncommitted_revision)
+        self._uncommitted_revision = None
 
     def rollback(self):
         """
         Invoke this method when external events happen that cannot be handled in a
         sane way and thus the changes that have been made must be rolled back.
         """
-        self._backend._rollback_item(self)
+        self._backend._rollback_item(self._uncommitted_revision)
+        self._uncommitted_revision = None
 
     def create_revision(self, revno):
         """
