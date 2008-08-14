@@ -43,13 +43,10 @@ class MemoryBackend(Backend):
         Initialize this Backend.
         """
         self._last_itemid = 0
-
         self._itemmap = {}                  # {itemname : itemid}   // names may change...
         self._item_metadata = {}            # {id : {metadata}}
         self._item_revisions = {}           # {id : {revision_id : (revision_data, {revision_metadata})}}
-
         self._item_metadata_lock = {}       # {id : Lockobject}
-
         self._revision_history = []
 
     def history(self, reverse=True):
@@ -57,20 +54,10 @@ class MemoryBackend(Backend):
         Returns an iterator over all revisions created for all items in
         (reverse [default] or non-reverse) timestamp order.
         """
-        #XXX Harden the below against concurrency, etc.
-        all_revisions = []
-
-        for item_name in self._itemmap:
-            item = self.get_item(item_name)
-            for revno in item.list_revisions():
-                rev = item.get_revision(revno)
-                all_revisions.append(rev)
-
-        all_revisions.sort(lambda x, y: cmp(x.timestamp, y.timestamp))
         if reverse:
-            all_revisions.reverse()
-        return iter(all_revisions)
-
+            return iter(self._revision_history[::-1])
+        else:
+            return iter(self._revision_history)
 
     def get_item(self, itemname):
         """
@@ -246,6 +233,7 @@ class MemoryBackend(Backend):
             revision._metadata = {}
         revision._metadata['__timestamp'] = revision.timestamp
         self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata.copy())
+        self._revision_history.append(revision)
 
     def _rollback_item(self, rev):
         """
