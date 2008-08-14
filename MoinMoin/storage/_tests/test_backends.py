@@ -494,7 +494,6 @@ class BackendTest(object):
             rev = item2.get_revision(revno)
             assert rev["revno"] == str(revno)
 
-
     def test_concurrent_create_revision(self):
         self.create_rev_item_helper("concurrent")
         item1 = self.backend.get_item("concurrent")
@@ -512,6 +511,8 @@ class BackendTest(object):
         assert rev.timestamp is not None
         for nrev in self.backend.history():
             assert nrev.timestamp == rev.timestamp
+        item = self.backend.get_item('ts1')
+        assert item.get_revision(0).timestamp == rev.timestamp
 
     def test_size(self):
         item = self.backend.create_item('size1')
@@ -526,3 +527,39 @@ class BackendTest(object):
 
         for nrev in self.backend.history():
             assert nrev.size == 8
+
+    def test_various_revision_metadata_values(self):
+        def test_value(value, revno):
+            item = self.backend.create_item('valid_values_%s' % revno)
+            rev = item.create_revision(0)
+            rev["key"] = value
+            item.commit()
+            rev = item.get_revision(0)
+            assert rev["key"] == value
+
+        for revno, value in enumerate(('string', 13, 42L, 3.14, 23+0j,
+                                       ('1', 1, 1L, 1+0j, (1, ), ), u'ąłć', (u'ó', u'żźć'), )):
+            yield test_value, value, revno
+
+    def test_history(self):
+        import time
+        order = [('first', 0, ), ('second', 0, ), ('first', 1, ), ('a', 0), ]
+        for name, revno in order:
+            if revno == 0:
+                item = self.backend.create_item(name)
+            else:
+                item = self.backend.get_item(name)
+            item.create_revision(revno)
+            item.commit()
+            time.sleep(0.1)
+
+        for num, rev in enumerate(self.backend.history(reverse=False)):
+            name, revno = order[num]
+            assert rev.item.name == name
+            assert rev.revno == revno
+
+        order.reverse()
+        for num, rev in enumerate(self.backend.history()):
+            name, revno = order[num]
+            assert rev.item.name == name
+            assert rev.revno == revno
