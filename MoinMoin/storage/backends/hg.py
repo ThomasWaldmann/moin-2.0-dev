@@ -122,6 +122,7 @@ from mercurial import hg, ui, context, util, commands, merge
 from mercurial.node import nullid, nullrev, short
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
+from mercurial.cmdutil import revrange
 import cPickle as pickle
 import struct
 import StringIO
@@ -248,31 +249,30 @@ class MercurialBackend(Backend):
 
     def history(self, reverse=True):
         """History implementation reading the log file."""
-        if reverse:
-            ctxiter = reversed(list(iter(self._repo)))
-        else:
-            ctxiter = iter(self._repo)
-        for ctxrevno in ctxiter:
-            ctx = self._repo[ctxrevno]
-            id = ctx.files()[0]
-            meta = ctx.extra()
-            revno, tstamp = pickle.loads(meta["__revision"]), pickle.loads(meta["__timestamp"])
-            namefile = open(os.path.join(self._path, '%s.name' % id), 'rb')
+        changefn = util.cachefunc(lambda r: self._repo[r].changeset())
+
+        for ctxrevno in self._iterate_changesets(changefn=changefn, reverse=reverse):
+            item_id = changefn(ctxrevno)[3][0]
+            revno = pickle.loads(changefn(ctxrevno)[5]["__revision"])
+            tstamp = pickle.loads(changefn(ctxrevno)[5]["__timestamp"])
+            namefile = open(os.path.join(self._path, '%s.name' % item_id), 'rb')
             name = namefile.read().decode('utf-8')
             item = Item(self, name)
             rev = MercurialStoredRevision(item, revno, tstamp)
-            rev._item_id = id
+            rev._item_id = item_id
             yield rev
 
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
-        revs = self._list_revisions(item)
-        if revs:
-            if revno in revs:
-                raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
-            if revno != revs[-1] + 1:
-                raise RevisionNumberMismatchError("Unable to create revision number %d. \
-                    New Revision number must be next to latest Revision number." % revno)
+#
+#        has, last, ctxrevno = self._has_revision(item, revno)
+#        if has:
+#            raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
+#        elif revno != last + 1:
+#            raise RevisionNumberMismatchError("Unable to create revision number %d. \
+#                    New Revision number must be next to latest Revision number." % revno)
+#
+
         rev = NewRevision(item, revno)
         rev._data = StringIO.StringIO()
         rev._revno = revno
@@ -281,17 +281,13 @@ class MercurialBackend(Backend):
 
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
-        ctx = self._repo[self._repo.changelog.tip()]
-        revs = self._list_revisions(item)
-        if revno == -1 and revs:
-            revno = max(revs)
-        if revno not in revs:
+        has, last, ctxrevno = self._has_revision(item, revno)
+        if not has:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
-        # XXX: to rewrite for more optimal
-        ctxrevs = filter(lambda r: item._id in self._repo[r].files(), iter(self._repo))
-        for num, ctxrevno in enumerate(ctxrevs):
-            if num == revno:
-                ctx = self._repo[ctxrevno]
+        if revno == -1:
+            revno = last
+        ctx = self._repo[ctxrevno]
+
         revision = MercurialStoredRevision(item, revno)
         revision._data = StringIO.StringIO(ctx.filectx(item._id).data())
         revision._item_id = item._id
@@ -306,14 +302,14 @@ class MercurialBackend(Backend):
 
     def _get_revision_metadata(self, rev):
         """Return Revision metadata dictionary."""
-        tip = self._repo.changelog.tip()
-        # XXX: this needs rethink after soc
-        # (along with idea of dropping patch and 1:1 mapping beetwen backend revs and hg filerevs)
-        for num, repo_rev in enumerate([r for r in iter(self._repo) if rev._item_id in self._repo[r].files()]):
-            if num == rev.revno:
-                ctx = self._repo[repo_rev]
+        changefn = util.cachefunc(lambda r: self._repo[r].changeset())
+        for ctxrevno in self._iterate_changesets(changefn=changefn, item_id=rev._item_id):
+            if pickle.loads(changefn(ctxrevno)[5]['__revision']) == rev.revno:
+                extra = changefn(ctxrevno)[5]
+                break
+
         metadata = {}
-        for k, v in ctx.extra().iteritems():
+        for k, v in extra.iteritems():
             if k.startswith('moin_'):
                 metadata[k.lstrip('moin_')] = pickle.loads(v)
             elif k.startswith('__'):
@@ -348,9 +344,15 @@ class MercurialBackend(Backend):
         if not item._id:
             return []
         else:
-#           # XXX: use mercurial.cmdutil.walkchangerevs
-            revs = filter(lambda r: item._id in self._repo[r].files(), iter(self._repo))
-            return range(len(revs))
+            # TODO: add some sort of caching (atfer soc), this costs a lot
+            revs = []
+            changefn = util.cachefunc(lambda r: self._repo[r].changeset())
+            for ctxrevno in self._iterate_changesets(item_id=item._id, changefn=changefn):
+                revno = pickle.loads(changefn(ctxrevno)[5]['__revision'])
+                revs.append(revno)
+                if revno == 0:  # iterating from top
+                    revs.reverse()
+                    return revs
 
     def _rename_item(self, item, newname):
         """
@@ -445,6 +447,7 @@ class MercurialBackend(Backend):
         msg = rev.get(EDIT_LOG_COMMENT, "").encode("utf-8")
         user = rev.get(EDIT_LOG_USERID, "anonymous")
         data = rev._data.getvalue()
+
         meta = {'__timestamp': pickle.dumps(rev.timestamp, PICKLE_REV_META),
                 '__revision': pickle.dumps(rev.revno, PICKLE_REV_META)}
         for k, v in rev.iteritems():
@@ -456,7 +459,7 @@ class MercurialBackend(Backend):
             if not item._id:
                 self._add_item(item)
             else:
-                if rev.revno in self._list_revisions(item):
+                if self._has_revision(item, rev.revno)[0]:
                     raise RevisionAlreadyExistsError("Item Revision already exists: %s" % rev.revno)
 
             ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx, user, extra=meta)
@@ -470,7 +473,7 @@ class MercurialBackend(Backend):
             del lock
 
     def _rollback_item(self, rev):
-        pass  # generic rollback is sufficent, deleting would raise AttributeError
+        pass  # generic rollback is sufficent
 
     def _lock(self, lockpath, lockref):
         """"Generic lock helper"""
@@ -544,6 +547,51 @@ class MercurialBackend(Backend):
         name_file.close()
         item._id = item_id
 
+    def _has_revision(self, item, revno):
+        if not item._id:
+            return False, -1, -1
+        changefn = util.cachefunc(lambda r: self._repo[r].changeset())
+        for ctxrevno in self._iterate_changesets(item_id=item._id, changefn=changefn):
+            last_revno = pickle.loads(changefn(ctxrevno)[5]['__revision'])
+            return revno <= last_revno, last_revno, ctxrevno
+        return False, -1, -1
+
+    def _iterate_changesets(self, changefn=None, reverse=True, item_id=None):
+        changeset = changefn or util.cachefunc(lambda r: self._repo[r].changeset())
+
+        def increasing_windows(start, end, windowsize=8, sizelimit=512):
+            if start < end:
+                while start < end:
+                    yield start, min(windowsize, end-start)
+                    start += windowsize
+                    if windowsize < sizelimit:
+                        windowsize *= 2
+            else:
+                while start > end:
+                    yield start, min(windowsize, start-end-1)
+                    start -= windowsize
+                    if windowsize < sizelimit:
+                        windowsize *= 2
+
+        def wanted(changeset_revision):
+            if not item_id:
+                return True
+            else:
+                return item_id in changeset(changeset_revision)[3]
+
+        start, end = -1, 0
+        if not len(self._repo):
+            change_revs = []
+        else:
+            if not reverse:
+                start, end = end, start
+            change_revs = revrange(self._repo, ['%d:%d' % (start, end, )])
+
+        for i, window in increasing_windows(0, len(change_revs)):
+            revs = [change_rev for change_rev in change_revs[i:i+window] if wanted(change_rev)]
+            for revno in revs:
+                yield revno
+
     #
     # extended API below
     #
@@ -581,3 +629,4 @@ class MercurialStoredRevision(StoredRevision):
 
     def get_node(self):
         return self._backend._get_revision_node(self)
+
