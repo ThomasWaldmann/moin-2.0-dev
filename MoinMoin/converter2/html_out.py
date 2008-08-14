@@ -10,18 +10,17 @@ Converts an internal document tree into a HTML tree.
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
-from MoinMoin.util import namespaces
-from MoinMoin.util.tree import html
+from MoinMoin.util.tree import html, moin_page, xlink
 
 class ElementException(RuntimeError):
     pass
 
 class Attrib(object):
-    tag_style = ET.QName('style', namespaces.html)
+    tag_style = html.style
 
     def simple_attrib(self, key, value, out, out_style):
         """ Adds the attribute with the HTML namespace to the output. """
-        out[ET.QName(key.name, namespaces.html)] = value
+        out[ET.QName(key.name, html.namespace)] = value
 
     visit_title = simple_attrib
 
@@ -42,13 +41,13 @@ class Attrib(object):
         # Detect if we either namespace of the element matches the input or the
         # output.
         self.default_uri_input = self.default_uri_output = None
-        if element.tag.uri == namespaces.moin_page:
+        if element.tag.uri == moin_page.namespace:
             self.default_uri_input = element.tag.uri
         if element.tag.uri in ConverterBase.namespaces_valid_output:
             self.default_uri_output = element.tag.uri
 
     def get(self, name):
-        ret = self.element.get(ET.QName(name, namespaces.moin_page))
+        ret = self.element.get(ET.QName(name, moin_page.namespace))
         if ret:
             return ret
         if self.default_uri_input:
@@ -61,7 +60,7 @@ class Attrib(object):
         new_default_css = {}
 
         for key, value in self.element.attrib.iteritems():
-            if key.uri == namespaces.moin_page:
+            if key.uri == moin_page.namespace:
                 # We never have _ in attribute names, so ignore them instead of
                 # create ambigues matches.
                 if not '_' in key.name:
@@ -100,25 +99,28 @@ class Attrib(object):
 
 class ConverterBase(object):
     namespaces_visit = {
-        namespaces.moin_page: 'moinpage',
+        moin_page.namespace: 'moinpage',
     }
     namespaces_valid_output = frozenset([
-        namespaces.html,
+        html.namespace,
     ])
 
-    tag_html_a = ET.QName('a', namespaces.html)
-    tag_html_class = ET.QName('class', namespaces.html)
-    tag_html_data = ET.QName('data', namespaces.html)
-    tag_html_div = ET.QName('div', namespaces.html)
-    tag_html_em = ET.QName('em', namespaces.html)
-    tag_html_href = ET.QName('href', namespaces.html)
-    tag_html_id = ET.QName('id', namespaces.html)
-    tag_html_img = ET.QName('img', namespaces.html)
-    tag_html_object = ET.QName('object', namespaces.html)
-    tag_html_p = ET.QName('p', namespaces.html)
-    tag_html_src = ET.QName('src', namespaces.html)
-    tag_html_sup = ET.QName('sup', namespaces.html)
-    tag_xlink_href = ET.QName('href', namespaces.xlink)
+    tag_html_a = html.a
+    tag_html_br = html.br
+    tag_html_class = html.class_
+    tag_html_data = html.data
+    tag_html_div = html.div
+    tag_html_em = html.em
+    tag_html_href = html.href
+    tag_html_id = html.id
+    tag_html_img = html.img
+    tag_html_object = html.object
+    tag_html_p = html.p
+    tag_html_pre = html.pre
+    tag_html_src = html.src
+    tag_html_sup = html.sup
+    tag_html_tt = html.tt
+    tag_xlink_href = xlink.href
 
     def __init__(self, request):
         self.request = request
@@ -180,19 +182,19 @@ class ConverterBase(object):
         return self.new_copy(self.tag_html_a, elem, attrib)
 
     def visit_moinpage_blockcode(self, elem):
-        pre = self.new_copy(ET.QName('pre', namespaces.html), elem)
+        pre = self.new_copy(self.tag_html_pre, elem)
 
         # TODO: Unify somehow
         if elem.get(self.tag_html_class) == 'codearea':
-            attrib = {ET.QName('class', namespaces.html): 'codearea'}
-            div = self.new(ET.QName('div', namespaces.html), attrib)
+            attrib = {self.tag_html_class: 'codearea'}
+            div = self.new(self.tag_html_div, attrib)
             div.append(pre)
             return div
 
         return pre
 
     def visit_moinpage_code(self, elem):
-        return self.new_copy(ET.QName('tt', namespaces.html), elem)
+        return self.new_copy(self.tag_html_tt, elem)
 
     def visit_moinpage_div(self, elem):
         return self.new_copy(self.tag_html_div, elem)
@@ -201,7 +203,7 @@ class ConverterBase(object):
         return self.new_copy(self.tag_html_em, elem)
 
     def visit_moinpage_h(self, elem):
-        level = elem.get(ET.QName('outline-level', namespaces.moin_page), 1)
+        level = elem.get(moin_page.outline_level, 1)
         try:
             level = int(level)
         except ValueError:
@@ -210,11 +212,11 @@ class ConverterBase(object):
             level = 1
         elif level > 6:
             level = 6
-        return self.new_copy(ET.QName('h%d' % level, namespaces.html), elem)
+        return self.new_copy(ET.QName('h%d' % level, html.namespace), elem)
 
     def visit_moinpage_line_break(self, elem):
         # TODO: attributes?
-        return self.new(ET.QName('br', namespaces.html))
+        return self.new(self.tag_html_br)
 
     def visit_moinpage_list(self, elem):
         attrib = Attrib(elem)
@@ -232,19 +234,19 @@ class ConverterBase(object):
             ret = self.new(html.dl, attrib_new)
 
         for item in elem:
-            if item.tag.uri == namespaces.moin_page and item.tag.name == 'list-item':
+            if item.tag.uri == moin_page.namespace and item.tag.name == 'list-item':
                 if not generate:
                     for label in item:
-                        if label.tag.uri == namespaces.moin_page and label.tag.name == 'list-item-label':
-                            ret_label = self.new_copy(ET.QName('dt', namespaces.html), label)
+                        if label.tag.uri == moin_page.namespace and label.tag.name == 'list-item-label':
+                            ret_label = self.new_copy(html.dt, label)
                             ret.append(ret_label)
 
                 for body in item:
-                    if body.tag.uri == namespaces.moin_page and body.tag.name == 'list-item-body':
+                    if body.tag.uri == moin_page.namespace and body.tag.name == 'list-item-body':
                         if generate:
-                            ret_body = self.new_copy(ET.QName('li', namespaces.html), body)
+                            ret_body = self.new_copy(html.li, body)
                         else:
-                            ret_body = self.new_copy(ET.QName('dd', namespaces.html), body)
+                            ret_body = self.new_copy(html.dd, body)
                         ret.append(ret_body)
                         break
 
@@ -272,28 +274,28 @@ class ConverterBase(object):
         return self.new_copy(self.tag_html_div, elem)
 
     def visit_moinpage_separator(self, elem):
-        return self.new(ET.QName('hr', namespaces.html))
+        return self.new(html.hr)
 
     def visit_moinpage_span(self, elem):
         # TODO
-        return self.new_copy(ET.QName('span', namespaces.html), elem)
+        return self.new_copy(html.span, elem)
 
     def visit_moinpage_strong(self, elem):
-        return self.new_copy(ET.QName('strong', namespaces.html), elem)
+        return self.new_copy(html.strong, elem)
 
     def visit_moinpage_table(self, elem):
         attrib = Attrib(elem).new()
-        ret = self.new(ET.QName('table', namespaces.html), attrib)
+        ret = self.new(html.table, attrib)
         for item in elem:
             tag = None
-            if item.tag.uri == namespaces.moin_page:
+            if item.tag.uri == moin_page.namespace:
                 if item.tag.name == 'table-body':
-                    tag = ET.QName('tbody', namespaces.html)
+                    tag = html.tbody
                 elif item.tag.name == 'table-header':
-                    tag = ET.QName('thead', namespaces.html)
+                    tag = html.thead
                 elif item.tag.name == 'table-footer':
-                    tag = ET.QName('tfoot', namespaces.html)
-            elif item.tag.uri == namespaces.html and \
+                    tag = html.tfoot
+            elif item.tag.uri == html.namespace and \
                     item.tag.name in ('tbody', 'thead', 'tfoot'):
                 tag = item.tag
             if tag is not None:
@@ -301,10 +303,10 @@ class ConverterBase(object):
         return ret
 
     def visit_moinpage_table_cell(self, elem):
-        return self.new_copy(ET.QName('td', namespaces.html), elem)
+        return self.new_copy(html.td, elem)
 
     def visit_moinpage_table_row(self, elem):
-        return self.new_copy(ET.QName('tr', namespaces.html), elem)
+        return self.new_copy(html.tr, elem)
 
 class Converter(ConverterBase):
     """
@@ -378,8 +380,8 @@ class ConverterPage(ConverterBase):
                 special.root.append(elem)
 
             for elem, headings in special.tocs():
-                attrib_h = {ET.QName('class', namespaces.html): 'table-of-contents-heading'}
-                elem_h = ET.Element(ET.QName('p', namespaces.html),
+                attrib_h = {self.tag_html_class: 'table-of-contents-heading'}
+                elem_h = self.tag_html_p(
                         attrib=attrib_h, children=[_('Contents')])
                 elem.append(elem_h)
 
@@ -398,22 +400,22 @@ class ConverterPage(ConverterBase):
                         stack.pop()
                         last_level -= 1
                     while last_level < level:
-                        stack_push(ET.Element(ET.QName('ol', namespaces.html)))
-                        stack_push(ET.Element(ET.QName('li', namespaces.html)))
+                        stack_push(html.ol())
+                        stack_push(html.li())
                         last_level += 1
                     if need_item:
                         stack.pop()
-                        stack_push(ET.Element(ET.QName('li', namespaces.html)))
+                        stack_push(html.li())
 
-                    attrib = {ET.QName('href', namespaces.html): '#' + id}
+                    attrib = {self.tag_html_href: '#' + id}
                     text = ''.join(elem.itertext())
-                    elem_a = ET.Element(ET.QName('a', namespaces.html), attrib, children=[text])
+                    elem_a = self.tag_html_a(attrib, children=[text])
                     stack_top_append(elem_a)
 
         return ret
 
     def visit(self, elem):
-        if elem.get(ET.QName('page-href', namespaces.moin_page)):
+        if elem.get(moin_page.page_href):
             self._special_stack.append(SpecialPage())
 
             ret = super(ConverterPage, self).visit(elem)
@@ -435,7 +437,7 @@ class ConverterPage(ConverterBase):
         raise ElementException(n)
 
     def visit_moinpage_h(self, elem):
-        level = elem.get(ET.QName('outline-level', namespaces.moin_page), 1)
+        level = elem.get(moin_page.outline_level, 1)
         try:
             level = int(level)
         except ValueError:
@@ -444,12 +446,12 @@ class ConverterPage(ConverterBase):
             level = 1
         elif level > 6:
             level = 6
-        elem = self.new_copy(ET.QName('h%d' % level, namespaces.html), elem)
+        elem = self.new_copy(ET.QName('h%d' % level, html.namespace), elem)
 
-        id = elem.get(ET.QName('id', namespaces.html))
+        id = elem.get(html.id)
         if not id:
             id = 'toc-%d' % self._toc_id
-            elem.set(ET.QName('id', namespaces.html), id)
+            elem.set(html.id, id)
             self._toc_id += 1
 
         self._special_stack[-1].add_heading(elem, level, id)
@@ -460,7 +462,7 @@ class ConverterPage(ConverterBase):
 
         body = None
         for child in elem:
-            if child.tag.uri == namespaces.moin_page:
+            if child.tag.uri == moin_page.namespace:
                 if child.tag.name == 'note-body':
                     body = self.do_children(child)
 
@@ -471,11 +473,11 @@ class ConverterPage(ConverterBase):
 
         elem_ref = ET.XML("""
 <html:sup xmlns:html="%s" html:id="%s"><html:a html:href="#%s">%s</html:a></html:sup>
-""" % (namespaces.html, id_ref, id_note, id))
+""" % (html.namespace, id_ref, id_note, id))
 
         elem_note = ET.XML("""
 <html:p xmlns:html="%s" html:id="%s"><html:sup><html:a html:href="#%s">%s</html:a></html:sup></html:p>
-""" % (namespaces.html, id_note, id_ref, id))
+""" % (html.namespace, id_note, id_ref, id))
 
         elem_note.extend(body)
 
@@ -485,14 +487,14 @@ class ConverterPage(ConverterBase):
 
     def visit_moinpage_macro(self, elem):
         for body in elem:
-            if body.tag.uri == namespaces.moin_page and body.tag.name == 'macro-body':
+            if body.tag.uri == moin_page.namespace and body.tag.name == 'macro-body':
                 return self.do_children(body)
 
     def visit_moinpage_table_of_content(self, elem):
-        level = int(elem.get(ET.QName('outline-level', namespaces.moin_page), 6))
+        level = int(elem.get(moin_page.outline_level, 6))
 
-        attrib = {ET.QName('class', namespaces.html): 'table-of-contents'}
-        elem = self.new(ET.QName('div', namespaces.html), attrib)
+        attrib = {self.tag_html_class: 'table-of-contents'}
+        elem = self.new(self.tag_html_div, attrib)
 
         self._special_stack[-1].add_toc(elem, level)
         return elem
