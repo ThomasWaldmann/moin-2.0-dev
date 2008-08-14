@@ -27,6 +27,7 @@ from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
 from MoinMoin.util import namespaces, uri
+from MoinMoin.util.tree import moin_page
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
 class _Iter(object):
@@ -37,9 +38,9 @@ class _Iter(object):
     return them.
     """
 
-    def __init__(self, input):
+    def __init__(self, parent):
         self.__finished = False
-        self.__input = iter(input)
+        self.__parent = iter(parent)
         self.__prepend = []
 
     def __iter__(self):
@@ -53,7 +54,7 @@ class _Iter(object):
             return self.__prepend.pop(0)
 
         try:
-            return self.__input.next()
+            return self.__parent.next()
         except StopIteration:
             self.__finished = True
             raise
@@ -70,7 +71,6 @@ class Converter(ConverterMacro):
     tag_emphasis = ET.QName('emphasis', namespaces.moin_page)
     tag_h = ET.QName('h', namespaces.moin_page)
     tag_href = ET.QName('href', namespaces.xlink)
-    tag_item_label_generate = ET.QName('item-label-generate', namespaces.moin_page)
     tag_line_break = ET.QName('line-break', namespaces.moin_page)
     tag_list = ET.QName('list', namespaces.moin_page)
     tag_list_item_body = ET.QName('list-item-body', namespaces.moin_page)
@@ -88,29 +88,31 @@ class Converter(ConverterMacro):
     tag_table_row = ET.QName('table-row', namespaces.moin_page)
 
     @classmethod
-    def _factory(cls, request, input, output):
+    def factory(cls, _request, input, output):
         if input == 'text/creole' and output == 'application/x-moin-document':
             return cls
 
-    def __init__(self, request, page_url=None, args=None):
+    def __init__(self, request, page_url=None, _args=None):
         super(Converter, self).__init__(request)
         self.page_url = page_url
+
+        self._stack = []
 
     def __call__(self, content):
         attrib = {}
         if self.page_url:
             attrib[self.tag_page_href] = self.page_url
 
-        self.root = ET.Element(self.tag_page, attrib=attrib)
-        self._stack = [self.root]
-        iter = _Iter(content)
+        root = ET.Element(self.tag_page, attrib=attrib)
+        self._stack = [root]
+        iter_content = _Iter(content)
 
         # Please note that the iterator can be modified by other functions
-        for line in iter:
+        for line in iter_content:
             match = self.block_re.match(line)
-            self._apply(match, 'block', iter)
+            self._apply(match, 'block', iter_content)
 
-        return self.root
+        return root
 
     block_head = r"""
         (?P<head>
@@ -122,18 +124,17 @@ class Converter(ConverterMacro):
         )
     """
 
-    def block_head_repl(self, iter, head, head_head, head_text):
+    def block_head_repl(self, _iter_content, head, head_head, head_text):
         self.stack_pop_name('page')
-        level = len(head_head)
-        attrib = {self.tag_outline_level: str(level)}
 
+        attrib = {self.tag_outline_level: str(len(head_head))}
         element = ET.Element(self.tag_h, attrib=attrib, children=[head_text])
         self.stack_top_append(element)
 
     block_line = r'(?P<line> ^ \s* $ )'
     # empty line that separates paragraphs
 
-    def block_line_repl(self, iter, line):
+    def block_line_repl(self, _iter_content, line):
         self.stack_pop_name('page')
 
     block_list = r"""
@@ -144,16 +145,16 @@ class Converter(ConverterMacro):
     # Matches the beginning of a list. All lines within a list are handled by
     # list_*.
 
-    def block_list_repl(self, iter, list):
-        iter.push(list)
+    def block_list_repl(self, iter_content, list):
+        iter_content.push(list)
 
-        for line in iter:
+        for line in iter_content:
             match = self.list_re.match(line)
-            self._apply(match, 'list', iter)
+            self._apply(match, 'list', iter_content)
 
             if match.group('end') is not None:
                 # Allow the mainloop to take care of the line after a list.
-                iter.push(line)
+                iter_content.push(line)
                 break
 
     block_macro = r"""
@@ -170,10 +171,11 @@ class Converter(ConverterMacro):
         $
     """
 
-    def block_macro_repl(self, iter, macro, macro_name, macro_args=u''):
+    def block_macro_repl(self, _iter_content, macro, macro_name,
+            macro_args=u''):
         """Handles macros using the placeholder syntax."""
-
         self.stack_pop_name('page')
+
         elem = self.macro(macro_name, macro_args, macro, 'block')
         if elem:
             self.stack_top_append(elem)
@@ -190,10 +192,10 @@ class Converter(ConverterMacro):
     """
     # Matches the possibly escaped end of a nowiki block
 
-    def block_nowiki_lines(self, iter):
+    def block_nowiki_lines(self, iter_content):
         "Unescaping generator for the lines in a nowiki block"
 
-        for line in iter:
+        for line in iter_content:
             match = self.nowiki_end_re.match(line)
             if match:
                 if not match.group('escape'):
@@ -201,13 +203,13 @@ class Converter(ConverterMacro):
                 line = match.group('rest')
             yield line
 
-    def block_nowiki_repl(self, iter, nowiki):
+    def block_nowiki_repl(self, iter_content, nowiki):
         "Handles a complete nowiki block"
 
         self.stack_pop_name('page')
 
         try:
-            firstline = iter.next()
+            firstline = iter_content.next()
         except StopIteration:
             self.stack_push(ET.Element(self.tag_blockcode))
             return
@@ -218,10 +220,11 @@ class Converter(ConverterMacro):
             self.stack_push(ET.Element(self.tag_blockcode))
             return
 
-        lines = _Iter(self.block_nowiki_lines(iter))
+        lines = _Iter(self.block_nowiki_lines(iter_content))
 
         if firstline.startswith('#!'):
-            args = wikiutil.parse_quoted_separated(firstline[2:].strip(), separator=None)
+            args = wikiutil.parse_quoted_separated(
+                    firstline[2:].strip(), separator=None)
             name = args[0].pop(0)
 
             # Parse it directly if the type is ourself
@@ -245,25 +248,25 @@ class Converter(ConverterMacro):
                 from MoinMoin.converter2 import default_registry as reg
 
                 mimetype = wikiutil.MimeType(name).mime_type()
-                Converter = reg.get(self.request, mimetype, 'application/x-moin-document')
+                converter = reg.get(self.request, mimetype, 'application/x-moin-document')
 
                 elem = ET.Element(self.tag_div)
                 self.stack_top_append(elem)
 
-                doc = Converter(self.request, self.page_url, ' '.join(args[0]))(lines)
+                doc = converter(self.request, self.page_url, ' '.join(args[0]))(lines)
                 elem.extend(doc)
 
         else:
             elem = ET.Element(self.tag_blockcode, children=[firstline])
             self.stack_top_append(elem)
 
-            for line in self.block_nowiki_lines(iter):
+            for line in self.block_nowiki_lines(lines):
                 elem.append('\n')
                 elem.append(line)
 
     block_separator = r'(?P<separator> ^ \s* ---- \s* $ )'
 
-    def block_separator_repl(self, iter, separator):
+    def block_separator_repl(self, _iter_content, separator):
         self.stack_pop_name('page')
         self.stack_top_append(ET.Element(self.tag_separator))
 
@@ -273,7 +276,7 @@ class Converter(ConverterMacro):
         )
     """
 
-    def block_table_repl(self, iter, table):
+    def block_table_repl(self, iter_content, table):
         self.stack_pop_name('page')
 
         element = ET.Element(self.tag_table)
@@ -283,11 +286,11 @@ class Converter(ConverterMacro):
 
         self.block_table_row(table)
 
-        for line in iter:
+        for line in iter_content:
             match = self.table_re.match(line)
             if not match:
                 # Allow the mainloop to take care of the line after a list.
-                iter.push(line)
+                iter_content.push(line)
                 break
 
             self.block_table_row(match.group('table'))
@@ -305,7 +308,7 @@ class Converter(ConverterMacro):
 
     block_text = r'(?P<text> .+ )'
 
-    def block_text_repl(self, iter, text):
+    def block_text_repl(self, _iter_content, text):
         if self.stack_top_check('table', 'table-body', 'list'):
             self.stack_pop_name('page')
 
@@ -473,7 +476,7 @@ class Converter(ConverterMacro):
     """
     # Matches a line which will end a list
 
-    def list_end_repl(self, iter, end):
+    def list_end_repl(self, _iter_content, end):
         self.stack_pop_name('page')
 
     list_item = r"""
@@ -486,9 +489,9 @@ class Converter(ConverterMacro):
     """
     # Matches single list items
 
-    def list_item_repl(self, iter, item, item_head, item_text):
-        level = len(item_head)
-        type = item_head[-1]
+    def list_item_repl(self, _iter_content, item, item_head, item_text):
+        list_level = len(item_head)
+        list_type = item_head[-1]
 
         # Try to locate the list element which matches the requested level and
         # type.
@@ -497,23 +500,23 @@ class Converter(ConverterMacro):
             if cur.tag.name == 'page':
                 break
             if cur.tag.name == 'list-item-body':
-                if level > cur.level:
+                if list_level > cur.list_level:
                     break
             if cur.tag.name == 'list':
-                if level >= cur.level and type == cur.type:
+                if list_level >= cur.list_level and list_type == cur.list_type:
                     break
             self.stack_pop()
 
         if cur.tag.name != 'list':
-            generate = type == '#' and 'ordered' or 'unordered'
-            attrib = {self.tag_item_label_generate: generate}
+            generate = list_type == '#' and 'ordered' or 'unordered'
+            attrib = {moin_page.item_label_generate: generate}
             element = ET.Element(self.tag_list, attrib=attrib)
-            element.level, element.type = level, type
+            element.list_level, element.list_type = list_level, list_type
             self.stack_push(element)
 
         element = ET.Element(self.tag_list_item)
         element_body = ET.Element(self.tag_list_item_body)
-        element_body.level, element_body.type = level, type
+        element_body.list_level, element_body.list_type = list_level, list_type
 
         self.stack_push(element)
         self.stack_push(element_body)
@@ -619,11 +622,14 @@ class Converter(ConverterMacro):
     def stack_top_append(self, elem):
         self._stack[-1].append(elem)
 
-    def stack_top_append_iftrue(self, elem):
+    def stack_top_append_ifnotempty(self, elem):
         if elem:
             self.stack_top_append(elem)
 
     def stack_top_check(self, *names):
+        """
+        Checks if the name of the top of the stack matches the parameters.
+        """
         tag = self._stack[-1].tag
         return tag.uri == namespaces.moin_page and tag.name in names
 
@@ -640,19 +646,19 @@ class Converter(ConverterMacro):
         conv.parse_inline(text)
         return conv._stack[0][:]
 
-    def parse_inline(self, text, re=inline_re):
+    def parse_inline(self, text, inline_re=inline_re):
         """Recognize inline elements within the given text"""
 
         pos = 0
-        for match in re.finditer(text):
+        for match in inline_re.finditer(text):
             # Handle leading text
-            self.stack_top_append_iftrue(text[pos:match.start()])
+            self.stack_top_append_ifnotempty(text[pos:match.start()])
             pos = match.end()
 
             self._apply(match, 'inline')
 
         # Handle trailing text
-        self.stack_top_append_iftrue(text[pos:])
+        self.stack_top_append_ifnotempty(text[pos:])
 
-from _registry import default_registry
-default_registry.register(Converter._factory)
+from MoinMoin.converter2._registry import default_registry
+default_registry.register(Converter.factory)
