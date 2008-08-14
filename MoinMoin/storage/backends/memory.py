@@ -1,3 +1,4 @@
+# -*- coding: iso-8859-1 -*-
 """
     MoinMoin - MemoryBackend + TracingBackend
 
@@ -8,8 +9,8 @@
     This is mainly done for testing and documentation / demonstration purposes.
     Thus, this backend IS NOT designed for concurrent use.
 
-    DO NOT (even for the smallest glimpse of a second) consider to use this backend
-    for any production site that needs persistant storage.
+    DO NOT (even for the smallest glimpse of a second) consider to use this
+    backend for any production site that needs persistant storage.
 
     ---
 
@@ -17,7 +18,6 @@
                 2008 MoinMoin:JohannesBerg,
                 2008 MoinMoin:AlexanderSchremmer
     @license: GNU GPL, see COPYING for details.
-
 """
 
 import StringIO
