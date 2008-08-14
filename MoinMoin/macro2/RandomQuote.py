@@ -19,8 +19,6 @@
 
 import random
 
-from emeraldtree import ElementTree as ET
-
 from MoinMoin.Page import Page
 from MoinMoin.macro2._base import MacroInlineBase
 
