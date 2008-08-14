@@ -561,15 +561,15 @@ class Converter(ConverterMacro):
 
     # Inline elements
     inline = (
-        inline_link,
         inline_url,
+        inline_escape,
+        inline_link,
         inline_macro,
         inline_nowiki,
         inline_object,
         inline_strong,
         inline_emph,
         inline_linebreak,
-        inline_escape,
     )
     inline_re = re.compile('|'.join(inline), re.X | re.U)
 
