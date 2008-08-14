@@ -12,7 +12,7 @@ import re
 
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
-from MoinMoin.util import namespaces
+from MoinMoin.util.tree import html, moin_page, xinclude, xlink
 
 class XPointer(list):
     """
@@ -79,15 +79,15 @@ class XPointer(list):
             self.append(self.Entry(''.join(name), None))
 
 class Converter(object):
-    tag_a = ET.QName('a', namespaces.moin_page)
-    tag_div = ET.QName('div', namespaces.moin_page)
-    tag_h = ET.QName('h', namespaces.moin_page)
-    tag_href = ET.QName('href', namespaces.xlink)
-    tag_page_href = ET.QName('page-href', namespaces.moin_page)
-    tag_outline_level = ET.QName('outline-level', namespaces.moin_page)
-    tag_xi_href = ET.QName('href', namespaces.xinclude)
-    tag_xi_include = ET.QName('include', namespaces.xinclude)
-    tag_xi_xpointer = ET.QName('xpointer', namespaces.xinclude)
+    tag_a = moin_page.a
+    tag_div = moin_page.div
+    tag_h = moin_page.h
+    tag_href = xlink.href
+    tag_page_href = moin_page.page_href
+    tag_outline_level = moin_page.outline_level
+    tag_xi_href = xinclude.href
+    tag_xi_include = xinclude.include
+    tag_xi_xpointer = xinclude.xpointer
 
     @classmethod
     def _factory(cls, request, input, output):
@@ -132,7 +132,7 @@ class Converter(object):
                         if uri is None and name == 'xmlns':
                             d_prefix, d_uri = entry.data.split('=', 1)
                             xp_namespaces[d_prefix] = d_uri
-                        elif uri == namespaces.moin_page and name == 'include':
+                        elif uri == moin_page.namespace and name == 'include':
                             xp_include = XPointer(entry.data)
 
                     if xp_include:
@@ -182,7 +182,7 @@ class Converter(object):
                 for page, page_href in pages:
                     if page_href in self.stack:
                         w = ('<p xmlns="%s"><strong class="error">Recursive include of "%s" forbidden</strong></p>'
-                                % (namespaces.html, page.page_name))
+                                % (html.namespace, page.page_name))
                         div.append(ET.XML(w))
                         continue
                     # TODO: Is this correct?
