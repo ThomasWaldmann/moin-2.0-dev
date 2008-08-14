@@ -6,7 +6,8 @@ MoinMoin - Macro base class
 """
 
 from MoinMoin import wikiutil
-from MoinMoin.util import tree, uri
+from MoinMoin.util import uri
+from MoinMoin.util.tree import moin_page, xlink
 
 class MacroBase(object):
     """
@@ -54,7 +55,7 @@ class MacroInlineBase(MacroBase):
         ret = self.call_macro(content)
         if self.context == 'inline':
             return ret
-        return tree.moin_page.p(children=[ret])
+        return moin_page.p(children=[ret])
 
 class MacroInlineOnlyBase(MacroBase):
     """
@@ -70,40 +71,40 @@ class MacroInlineOnlyBase(MacroBase):
 class MacroPageLinkListBase(MacroBlockBase):
     def create_pagelink_list(self, pagenames, ordered=False):
         """ creates an ET with a list of pagelinks from a list of pagenames """
-        page_list = tree.moin_page.list(attrib={tree.moin_page.item_label_generate: ordered and 'ordered' or 'unordered'})
+        page_list = moin_page.list(attrib={moin_page.item_label_generate: ordered and 'ordered' or 'unordered'})
         for pagename in pagenames:
             # TODO: unicode URI
             # This link can never reach pagelinks
             url = str(uri.Uri(scheme='wiki', authority='', path='/' + pagename.encode('utf-8')))
-            pagelink = tree.moin_page.a(attrib={tree.xlink.href: url}, children=[pagename])
-            item_body = tree.moin_page.list_item_body(children=[pagelink])
-            item = tree.moin_page.list_item(children=[item_body])
+            pagelink = moin_page.a(attrib={xlink.href: url}, children=[pagename])
+            item_body = moin_page.list_item_body(children=[pagelink])
+            item = moin_page.list_item(children=[item_body])
             page_list.append(item)
         return page_list
 
 class MacroNumberPageLinkListBase(MacroBlockBase):
     def create_number_pagelink_list(self, num_pagenames, ordered=False):
         """ creates an ET with a list of pagelinks from a list of pagenames """
-        page_list = tree.moin_page.list(attrib={tree.moin_page.item_label_generate: ordered and 'ordered' or 'unordered'})
+        page_list = moin_page.list(attrib={moin_page.item_label_generate: ordered and 'ordered' or 'unordered'})
         for num, pagename in num_pagenames:
-            num_code = tree.moin_page.code(children=["%6d " % num])
+            num_code = moin_page.code(children=["%6d " % num])
             # TODO: unicode URI
             # This link can never reach pagelinks
             url = str(uri.Uri(scheme='wiki', authority='', path='/' + pagename.encode('utf-8')))
-            pagelink = tree.moin_page.a(attrib={attr_href_xlink: url}, children=[pagename])
-            item_body = tree.moin_page.list_item_body(children=[num_code, pagelink])
-            item = tree.moin_page.list_item(children=[item_body])
+            pagelink = moin_page.a(attrib={xlink.href: url}, children=[pagename])
+            item_body = moin_page.list_item_body(children=[num_code, pagelink])
+            item = moin_page.list_item(children=[item_body])
             num_page_list.append(item)
         return num_page_list
 
 class MacroDefinitionListBase(MacroBlockBase):
     def create_definition_list(self, items):
         """ creates an ET with a definition list made from items """
-        def_list = tree.moin_page.list()
+        def_list = moin_page.list()
         for label, body in items:
-            item_label = tree.moin_page.list_item_label(children=[label])
-            item_body = tree.moin_page.list_item_body(children=[body])
-            item = tree.moin_page.list_item(children=[item_label, item_body])
+            item_label = moin_page.list_item_label(children=[label])
+            item_body = moin_page.list_item_body(children=[body])
+            item = moin_page.list_item(children=[item_label, item_body])
             def_list.append(item)
         return def_list
 

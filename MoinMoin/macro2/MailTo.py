@@ -7,9 +7,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from emeraldtree import ElementTree as ET
-
-from MoinMoin.util import namespaces
+from MoinMoin.util.tree import moin_page, xlink
 from MoinMoin.macro2._base import MacroInlineBase
 
 class Macro(MacroInlineBase):
@@ -22,19 +20,12 @@ class Macro(MacroInlineBase):
         if self.request.user.valid:
             # decode address and generate mailto: link
             email = decodeSpamSafeEmail(email)
-
-            tag_a = ET.QName('a', namespaces.moin_page)
-            attr_href_xlink = ET.QName('href', namespaces.xlink)
-            result = ET.Element(tag_a, attrib={attr_href_xlink: u'mailto:%s' % email},
-                                children=[text or email])
-
+            result = moin_page.a(attrib={xlink.href: u'mailto:%s' % email}, children=[text or email])
         else:
             # unknown user, maybe even a spambot, so just return text as given in macro args
             if text:
                 text += " "
-
-            tag_code = ET.QName('code', namespaces.moin_page)
-            result = ET.Element(tag_code, children=[text, "<%s>" % email])
+            result = moin_page.code(children=[text, "<%s>" % email])
 
         return result
 

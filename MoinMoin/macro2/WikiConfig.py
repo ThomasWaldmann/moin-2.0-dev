@@ -7,11 +7,9 @@
     @license: GNU GPL, see COPYING for details
 """
 
-from emeraldtree import ElementTree as ET
-
 from MoinMoin.config import multiconfig
 from MoinMoin.macro2._base import MacroBlockBase
-from MoinMoin.util import namespaces
+from MoinMoin.util.tree import moin_page
 
 class Macro(MacroBlockBase):
     def macro(self):
@@ -36,50 +34,30 @@ class Macro(MacroBlockBase):
                     default = default.value
                 settings[name] = default
 
-        tag_div = ET.QName('div', namespaces.moin_page)
-
-        tag_heading = ET.QName('h', namespaces.moin_page)
-        attr_level = ET.QName('outline-level', namespaces.moin_page)
-
-        tag_span = ET.QName('span', namespaces.moin_page)
-        attr_title = ET.QName('title', namespaces.moin_page)
-
-        tag_p = ET.QName('p', namespaces.moin_page)
-        tag_code = ET.QName('code', namespaces.moin_page)
-        tag_strong = ET.QName('strong', namespaces.moin_page)
-        tag_emphasis = ET.QName('emphasis', namespaces.moin_page)
-
-        tag_table = ET.QName('table', namespaces.moin_page)
-        tag_table_header = ET.QName('table-header', namespaces.moin_page)
-        tag_table_body = ET.QName('table-body', namespaces.moin_page)
-        tag_table_row = ET.QName('table-row', namespaces.moin_page)
-        tag_table_cell = ET.QName('table-cell', namespaces.moin_page)
-
-        result = ET.Element(tag_div)
+        result = moin_page.div()
 
         result.append(
-            ET.Element(tag_heading, attrib={attr_level: '1'}, children=[_("Wiki configuration")]))
+            moin_page.h(attrib={moin_page.outline_level: '1'}, children=[_("Wiki configuration")]))
 
         desc = _("This table shows all settings in this wiki that do not have default values. "
               "Settings that the configuration system doesn't know about are shown in ''italic'', "
               "those may be due to third-party extensions needing configuration or settings that "
               "were removed from Moin.", wiki=True, tree=True)
-        result.append(
-            ET.Element(tag_p, children=[desc]))
+        result.append(moin_page.p(children=[desc]))
 
-        table = ET.Element(tag_table)
+        table = moin_page.table()
         result.append(table)
 
-        header = ET.Element(tag_table_header)
+        header = moin_page.table_header()
         table.append(header)
 
-        row = ET.Element(tag_table_row)
+        row = moin_page.table_row()
         header.append(row)
         for text in [_('Variable name'), _('Setting'), ]:
-            strong_text = ET.Element(tag_strong, children=[text])
-            row.append(ET.Element(tag_table_cell, children=[strong_text]))
+            strong_text = moin_page.strong(children=[text])
+            row.append(moin_page.table_cell(children=[strong_text]))
 
-        body = ET.Element(tag_table_body)
+        body = moin_page.table_body()
         table.append(body)
 
         def iter_vnames(cfg):
@@ -102,15 +80,16 @@ class Macro(MacroBlockBase):
             if vname in settings and settings[vname] == value:
                 continue
             found.append((vname, value))
+
         found.sort()
         for vname, value in found:
             if not vname in settings:
-                vname = ET.Element(tag_emphasis, children=[vname])
+                vname = moin_page.emphasis(children=[vname])
             vtxt = '%r' % (value, )
-            row = ET.Element(tag_table_row)
+            row = moin_page.table_row()
             body.append(row)
-            row.append(ET.Element(tag_table_cell, children=[vname]))
-            vtxt_code = ET.Element(tag_code, children=[vtxt])
-            row.append(ET.Element(tag_table_cell, children=[vtxt_code]))
+            row.append(moin_page.table_cell(children=[vname]))
+            vtxt_code = moin_page.code(children=[vtxt])
+            row.append(moin_page.table_cell(children=[vtxt_code]))
         return result
 
