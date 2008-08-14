@@ -123,7 +123,6 @@ def execute(pagename, request):
     else:
         disable_next = u''
 
-    ###page_url = wikiutil.escape(currentpage.url(request), True)
     page_url = wikiutil.escape(Page.from_item(request, currentpage).url(request), True)
 
     revert_html = ""
@@ -214,4 +213,3 @@ def execute(pagename, request):
     request.write(f.div(0)) # end content div
     request.theme.send_footer(pagename)
     request.theme.send_closing_html()
-

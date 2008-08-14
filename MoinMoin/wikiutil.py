@@ -511,14 +511,6 @@ def get_edit_lock(item):
     """
     Given an Item, get a tuple containing the timestamp of the edit-lock and the user.
     """
- ###  if item._edit_lock is None:
- ###      for key in EDIT_LOCK:
- ###          if not key in self.metadata:
- ###              self._edit_lock = False, 0.0, "", "", ""
- ###              break
- ###      else:
- ###          self._edit_lock = (True, float(self.metadata[EDIT_LOCK_TIMESTAMP]), self.metadata[EDIT_LOCK_ADDR], self.metadata[EDIT_LOCK_HOSTNAME], self.metadata[EDIT_LOCK_USERID])
- ###  return self._edit_lock
     for key in EDIT_LOCK:
         if not key in item:
             return (False, 0.0, "", "", "")
@@ -530,28 +522,6 @@ def set_edit_lock(item, request):
     """
     Set the lock property to True or False.
     """
-  ### self.lock = True
-  ### if edit_lock:
-  ###     timestamp = time.time()
-  ###     addr = self._request.remote_addr
-  ###     hostname = wikiutil.get_hostname(self._request, addr)
-  ###     if hasattr(self._request, "user"):
-  ###         userid = self._request.user.valid and self._request.user.id or ''
-  ###     else:
-  ###         userid = ''
-
-  ###     self.metadata[EDIT_LOCK_TIMESTAMP] = str(timestamp)
-  ###     self.metadata[EDIT_LOCK_ADDR] = addr
-  ###     self.metadata[EDIT_LOCK_HOSTNAME] = hostname
-  ###     self.metadata[EDIT_LOCK_USERID] = userid
-  ### else:
-  ###     del self.metadata[EDIT_LOCK_TIMESTAMP]
-  ###     del self.metadata[EDIT_LOCK_ADDR]
-  ###     del self.metadata[EDIT_LOCK_HOSTNAME]
-  ###     del self.metadata[EDIT_LOCK_USERID]
-  ### self.metadata.save()
-  ### self.lock = False
-  ### self._edit_lock = None
     timestamp = time.time()
     addr = request.remote_addr
     hostname = wikiutil.get_hostname(request, addr)
