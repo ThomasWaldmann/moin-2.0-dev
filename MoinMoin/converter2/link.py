@@ -12,11 +12,12 @@ from emeraldtree import ElementTree as ET
 import urllib
 
 from MoinMoin import wikiutil
-from MoinMoin.util import namespaces, uri
+from MoinMoin.util import uri
+from MoinMoin.util.tree import moin_page, xlink
 
 class ConverterBase(object):
-    tag_href = ET.QName('href', namespaces.xlink)
-    tag_page_href = ET.QName('page-href', namespaces.moin_page)
+    tag_href = xlink.href
+    tag_page_href = moin_page.page_href
 
     def handle_wiki(self, link):
         pass
