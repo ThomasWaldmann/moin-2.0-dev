@@ -77,8 +77,6 @@ class Converter(ConverterMacro):
     tag_list_item = ET.QName('list-item', namespaces.moin_page)
     tag_object = ET.QName('object', namespaces.moin_page)
     tag_outline_level = ET.QName('outline-level', namespaces.moin_page)
-    tag_page = ET.QName('page', namespaces.moin_page)
-    tag_page_href = ET.QName('page-href', namespaces.moin_page)
     tag_p = ET.QName('p', namespaces.moin_page)
     tag_separator = ET.QName('separator', namespaces.moin_page)
     tag_strong = ET.QName('strong', namespaces.moin_page)
@@ -101,9 +99,9 @@ class Converter(ConverterMacro):
     def __call__(self, content):
         attrib = {}
         if self.page_url:
-            attrib[self.tag_page_href] = self.page_url
+            attrib[moin_page.page_href] = str(self.page_url)
 
-        root = ET.Element(self.tag_page, attrib=attrib)
+        root = moin_page.page(attrib=attrib)
         self._stack = [root]
         iter_content = _Iter(content)
 
@@ -260,7 +258,7 @@ class Converter(ConverterMacro):
             elem = ET.Element(self.tag_blockcode, children=[firstline])
             self.stack_top_append(elem)
 
-            for line in self.block_nowiki_lines(lines):
+            for line in lines:
                 elem.append('\n')
                 elem.append(line)
 
