@@ -26,8 +26,8 @@ import re
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
-from MoinMoin.util import namespaces, uri
-from MoinMoin.util.tree import moin_page
+from MoinMoin.util import uri
+from MoinMoin.util.tree import moin_page, xlink
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
 class _Iter(object):
@@ -63,27 +63,27 @@ class _Iter(object):
         self.__prepend.append(item)
 
 class Converter(ConverterMacro):
-    tag_a = ET.QName('a', namespaces.moin_page)
-    tag_alt = ET.QName('alt', namespaces.moin_page)
-    tag_blockcode = ET.QName('blockcode', namespaces.moin_page)
-    tag_code = ET.QName('code', namespaces.moin_page)
-    tag_div = ET.QName('div', namespaces.moin_page)
-    tag_emphasis = ET.QName('emphasis', namespaces.moin_page)
-    tag_h = ET.QName('h', namespaces.moin_page)
-    tag_href = ET.QName('href', namespaces.xlink)
-    tag_line_break = ET.QName('line-break', namespaces.moin_page)
-    tag_list = ET.QName('list', namespaces.moin_page)
-    tag_list_item_body = ET.QName('list-item-body', namespaces.moin_page)
-    tag_list_item = ET.QName('list-item', namespaces.moin_page)
-    tag_object = ET.QName('object', namespaces.moin_page)
-    tag_outline_level = ET.QName('outline-level', namespaces.moin_page)
-    tag_p = ET.QName('p', namespaces.moin_page)
-    tag_separator = ET.QName('separator', namespaces.moin_page)
-    tag_strong = ET.QName('strong', namespaces.moin_page)
-    tag_table_body = ET.QName('table-body', namespaces.moin_page)
-    tag_table_cell = ET.QName('table-cell', namespaces.moin_page)
-    tag_table = ET.QName('table', namespaces.moin_page)
-    tag_table_row = ET.QName('table-row', namespaces.moin_page)
+    tag_a = moin_page.a
+    tag_alt = moin_page.alt
+    tag_blockcode = moin_page.blockcode
+    tag_code = moin_page.code
+    tag_div = moin_page.div
+    tag_emphasis = moin_page.emphasis
+    tag_h = moin_page.h
+    tag_href = xlink.href
+    tag_line_break = moin_page.line_break
+    tag_list = moin_page.list
+    tag_list_item_body = moin_page.list_item_body
+    tag_list_item = moin_page.list_item
+    tag_object = moin_page.object
+    tag_outline_level = moin_page.outline_level
+    tag_p = moin_page.p
+    tag_separator = moin_page.separator
+    tag_strong = moin_page.strong
+    tag_table_body = moin_page.table_body
+    tag_table_cell = moin_page.table_cell
+    tag_table = moin_page.table
+    tag_table_row = moin_page.table_row
 
     @classmethod
     def factory(cls, _request, input, output):
@@ -231,9 +231,9 @@ class Converter(ConverterMacro):
 
                 for key, value in args[1].iteritems():
                     if key in ('background-color', 'color'):
-                        attrib[ET.QName(key, namespaces.moin_page)] = value
+                        attrib[ET.QName(key, moin_page.namespace)] = value
 
-                self.stack_push(ET.Element(self.tag_page, attrib))
+                self.stack_push(moin_page.page(attrib))
 
                 for line in lines:
                     match = self.block_re.match(line)
@@ -629,7 +629,7 @@ class Converter(ConverterMacro):
         Checks if the name of the top of the stack matches the parameters.
         """
         tag = self._stack[-1].tag
-        return tag.uri == namespaces.moin_page and tag.name in names
+        return tag.uri == moin_page.namespace and tag.name in names
 
     def _apply(self, match, prefix, *args):
         """
