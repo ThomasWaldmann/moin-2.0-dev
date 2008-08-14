@@ -9,12 +9,12 @@ import py.test
 
 from MoinMoin.converter2.moinwiki_in import *
 
-namespaces_string = 'xmlns="%s"' % namespaces.moin_page
-namespaces_string_xlink = 'xmlns:xlink="%s"' % namespaces.xlink
+namespaces_string = 'xmlns="%s"' % moin_page.namespace
+namespaces_string_xlink = 'xmlns:xlink="%s"' % xlink.namespace
 
 namespaces_list = {
-    namespaces.moin_page: '',
-    namespaces.xlink: 'xlink',
+    moin_page.namespace: '',
+    xlink.namespace: 'xlink',
 }
 
 def serialize(elem, **options):
