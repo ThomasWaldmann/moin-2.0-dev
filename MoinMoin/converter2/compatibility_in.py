@@ -40,7 +40,7 @@ class Converter(object):
 
         return root
 
-def _factory(request, _input, output):
+def _factory(request, input, output):
     if output == 'application/x-moin-document':
         try:
             parser = wikiutil.searchAndImportPlugin(
