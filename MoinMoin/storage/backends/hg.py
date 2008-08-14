@@ -264,14 +264,12 @@ class MercurialBackend(Backend):
 
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
-#
-#        has, last, ctxrevno = self._has_revision(item, revno)
-#        if has:
-#            raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
-#        elif revno != last + 1:
-#            raise RevisionNumberMismatchError("Unable to create revision number %d. \
-#                    New Revision number must be next to latest Revision number." % revno)
-#
+        has, last, ctxrevno = self._has_revision(item, revno)
+        if has:
+            raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
+        elif revno != last + 1:
+            raise RevisionNumberMismatchError("Unable to create revision number %d. \
+                    New Revision number must be next to latest Revision number." % revno)
 
         rev = NewRevision(item, revno)
         rev._data = StringIO.StringIO()
