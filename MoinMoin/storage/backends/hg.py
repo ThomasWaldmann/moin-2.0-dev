@@ -248,41 +248,20 @@ class MercurialBackend(Backend):
 
     def history(self, reverse=True):
         """History implementation reading the log file."""
-        try:
-            historyfile = open(self._history, 'rb')
-        except IOError, err:
-            if err.errno != errno.ENOENT:
-                raise
-            return
-        historyfile.seek(0, 2)
-        offs = historyfile.tell() - 1
-        # shouldn't happen, but let's be sure we don't get a partial record
-        offs -= offs % 28
-        while offs >= 0:
-            if reverse:
-                # seek to current position
-                historyfile.seek(offs)
-                # decrease current position by 16 to get to previous item
-                offs -= 28
-
-            # read history item
-            rec = historyfile.read(28)
-            if len(rec) < 28:
-                break
-
-            item_id, revno, tstamp = struct.unpack('!16sLQ', rec)
-            try:
-                inamef = open(os.path.join(self._path, '%s,name' % item_id), 'rb')
-                iname = inamef.read().decode('utf-8')
-                inamef.close()
-            except IOError, err:
-                if err.errno != errno.ENOENT:
-                    raise
-                # oops, no such file, item/revision removed manually?
-                continue
-            item = Item(self, iname)
-            item._item_id = item_id
+        if reverse:
+            ctxiter = reversed(list(iter(self._repo)))
+        else:
+            ctxiter = iter(self._repo)
+        for ctxrevno in ctxiter:
+            ctx = self._repo[ctxrevno]
+            id = ctx.files()[0]
+            meta = ctx.extra()
+            revno, tstamp = pickle.loads(meta["__revision"]),pickle.loads(meta["__timestamp"])
+            namefile = open(os.path.join(self._path, '%s.name' % id), 'rb')
+            name = namefile.read().decode('utf-8')
+            item = Item(self, name)
             rev = MercurialStoredRevision(item, revno, tstamp)
+            rev._item_id = id
             yield rev
 
     def _create_revision(self, item, revno):
@@ -466,7 +445,8 @@ class MercurialBackend(Backend):
         msg = rev.get(EDIT_LOG_COMMENT, "").encode("utf-8")
         user = rev.get(EDIT_LOG_USERID, "anonymous")
         data = rev._data.getvalue()
-        meta = {'__timestamp': pickle.dumps(rev.timestamp, PICKLE_REV_META)}
+        meta = {'__timestamp': pickle.dumps(rev.timestamp, PICKLE_REV_META),
+                '__revision': pickle.dumps(rev.revno, PICKLE_REV_META)}
         for k, v in rev.iteritems():
             meta["moin_%s" % k] = pickle.dumps(v, PICKLE_REV_META)
 
@@ -486,7 +466,6 @@ class MercurialBackend(Backend):
                 ctx._status[0] = [item._id]
             self._repo.commitctx(ctx)
             # commands.update(self._ui, self._repo)
-            self._addhistory(item._id, rev.revno, rev.timestamp)
         finally:
             del lock
 
@@ -564,12 +543,6 @@ class MercurialBackend(Backend):
         name_file.write(encoded_name)
         name_file.close()
         item._id = item_id
-
-    def _addhistory(self, item_id, revid, ts):
-        """Add a history item with current timestamp and the given data."""
-        historyfile = open(self._history, 'ab')
-        historyfile.write(struct.pack('!16sLQ', item_id, revid, ts))
-        historyfile.close()
 
     #
     # extended API below
