@@ -10,19 +10,19 @@ import py.test
 from MoinMoin.converter2.html_out import *
 
 ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:html="%s" xmlns:xlink="%s"' % (
-        namespaces.moin_page,
-        namespaces.moin_page,
-        namespaces.html,
-        namespaces.xlink)
-ns_html = 'xmlns="%s"' % namespaces.html
-ns_html_real = 'xmlns:html="%s"' % namespaces.html
-ns_page = 'xmlns:page="%s"' % namespaces.moin_page
+        moin_page.namespace,
+        moin_page.namespace,
+        html.namespace,
+        xlink.namespace)
+ns_html = 'xmlns="%s"' % html.namespace
+ns_html_real = 'xmlns:html="%s"' % html.namespace
+ns_page = 'xmlns:page="%s"' % moin_page.namespace
 
 def serialize(elem, **options):
     from cStringIO import StringIO
     file = StringIO()
     tree = ET.ElementTree(elem)
-    n = {namespaces.html: '', namespaces.moin_page: 'page'}
+    n = {html.namespace: '', moin_page.namespace: 'page'}
     tree.write(file, namespaces=n, **options)
     return file.getvalue()
 
