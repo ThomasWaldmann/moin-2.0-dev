@@ -11,7 +11,8 @@ Expands all macro elements in a internal Moin document.
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import macro, Page, wikiutil
-from MoinMoin.util import namespaces, uri
+from MoinMoin.util import uri
+from MoinMoin.util.tree import html, moin_page
 
 class _PseudoParser(object):
     def __init__(self, request):
@@ -42,18 +43,6 @@ class _PseudoRequest(object):
         return self.__written
 
 class Converter(object):
-    tag_alt = ET.QName('alt', namespaces.moin_page)
-    tag_class = ET.QName('class', namespaces.html)
-    tag_macro = ET.QName('macro', namespaces.moin_page)
-    tag_macro_args = ET.QName('macro-args', namespaces.moin_page)
-    tag_macro_body = ET.QName('macro-body', namespaces.moin_page)
-    tag_macro_name = ET.QName('macro-name', namespaces.moin_page)
-    tag_macro_context = ET.QName('macro-context', namespaces.moin_page)
-    tag_p = ET.QName('p', namespaces.moin_page)
-    tag_page_href = ET.QName('page-href', namespaces.moin_page)
-    tag_strong = ET.QName('strong', namespaces.moin_page)
-    tag_title = ET.QName('title', namespaces.moin_page)
-
     @classmethod
     def _factory(cls, request, input, output):
         if input == 'application/x-moin-document' and \
@@ -61,12 +50,12 @@ class Converter(object):
             return cls
 
     def handle_macro(self, elem, page_name):
-        name = elem.get(self.tag_macro_name)
-        args = elem.get(self.tag_macro_args)
-        context = elem.get(self.tag_macro_context)
-        alt = elem.get(self.tag_alt, None)
+        name = elem.get(moin_page.macro_name)
+        args = elem.get(moin_page.macro_args)
+        context = elem.get(moin_page.macro_context)
+        alt = elem.get(moin_page.alt, None)
 
-        elem_body = ET.Element(self.tag_macro_body)
+        elem_body = moin_page.macro_body()
 
         if not self._handle_macro_new(elem_body, page_name, name, args, context, alt):
             self._handle_macro_old(elem_body, page_name, name, args, context, alt)
@@ -75,16 +64,16 @@ class Converter(object):
 
     def _error(self, message, context, alt):
         if alt:
-            attrib = {self.tag_class: 'error', self.tag_title: message}
+            attrib = {html.class_: 'error', moin_page.title: message}
             children = alt
         else:
             attrib = {}
             children = message
 
-        elem = ET.Element(self.tag_strong, attrib=attrib, children=[children])
+        elem = moin_page.strong(attrib=attrib, children=[children])
 
         if context == 'block':
-            return ET.Element(self.tag_p, children=[elem])
+            return moin_page.p(children=[elem])
         return elem
 
     def _handle_macro_new(self, elem_body, page_name, name, args, context, alt):
@@ -153,14 +142,14 @@ class Converter(object):
         elem_body.extend(formatter.root[:])
 
     def recurse(self, elem, page_name):
-        new_page_href = elem.get(self.tag_page_href)
+        new_page_href = elem.get(moin_page.page_href)
         if new_page_href:
             # TODO: unicode URI
             u = uri.Uri(new_page_href)
             if u.authority == '' and u.path.startswith('/'):
                 page_name = u.path[1:].decode('utf-8')
 
-        if elem.tag == self.tag_macro:
+        if elem.tag == moin_page.macro:
             yield elem, page_name
 
         for child in elem:
