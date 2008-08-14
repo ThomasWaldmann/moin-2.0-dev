@@ -256,7 +256,7 @@ class MercurialBackend(Backend):
             ctx = self._repo[ctxrevno]
             id = ctx.files()[0]
             meta = ctx.extra()
-            revno, tstamp = pickle.loads(meta["__revision"]),pickle.loads(meta["__timestamp"])
+            revno, tstamp = pickle.loads(meta["__revision"]), pickle.loads(meta["__timestamp"])
             namefile = open(os.path.join(self._path, '%s.name' % id), 'rb')
             name = namefile.read().decode('utf-8')
             item = Item(self, name)
