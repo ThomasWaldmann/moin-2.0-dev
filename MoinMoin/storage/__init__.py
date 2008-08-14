@@ -463,10 +463,6 @@ class Item(object, DictMixin):  # TODO Improve docstring
             return self._uncommitted_revision
 
 
-# the classes here are still not finished but will be (and polished) while the memorybackend and the tests
-# are created
-
-
 class Revision(object, DictMixin):
     """
     An object of this class represents a Revision of an Item. An Item can have
@@ -494,6 +490,7 @@ class Revision(object, DictMixin):
 
     def _get_item(self):
         return self._item
+
     item = property(_get_item)
 
     def get_revno(self):
@@ -540,6 +537,7 @@ class Revision(object, DictMixin):
         want.
         """
         return self._backend._read_revision_data(self, chunksize)
+
 
 class StoredRevision(Revision):
     """
@@ -655,7 +653,6 @@ class NewRevision(Revision):
         self._backend._write_revision_data(self, data)
 
 
-
 # Little helper function:
 def value_type_is_valid(value):
     """
@@ -666,12 +663,10 @@ def value_type_is_valid(value):
     """
     if isinstance(value, (str, unicode, int, long, float, complex)):
         return True
-
     elif isinstance(value, tuple):
         for element in value:
             if not value_type_is_valid(element):
                 return False
-
         else:
             return True
 
