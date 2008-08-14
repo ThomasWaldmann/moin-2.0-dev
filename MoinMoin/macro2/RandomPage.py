@@ -17,9 +17,8 @@
 import random
 random.seed()
 
-from emeraldtree import ElementTree as ET
-
-from MoinMoin.util import namespaces, uri
+from MoinMoin.util import uri
+from MoinMoin.util.tree import moin_page, xlink
 from MoinMoin.Page import Page
 from MoinMoin.macro2._base import MacroInlineBase
 
@@ -51,18 +50,11 @@ class Macro(MacroInlineBase):
 
         pages.sort()
 
-        tag_span = ET.QName('span', namespaces.moin_page)
-        tag_a = ET.QName('a', namespaces.moin_page)
-        attr_href_xlink = ET.QName('href', namespaces.xlink)
-
-        result = ET.Element(tag_span)
+        result = moin_page.span()
         for name in pages:
             # TODO: unicode URI
-            link = str(uri.Uri(scheme='wiki', authority='',
-                path='/' + name.encode('utf-8')))
-            result.append(ET.Element(tag_a,
-                                     attrib={attr_href_xlink: link},
-                                     children=[name]))
+            link = str(uri.Uri(scheme='wiki', authority='', path='/' + name.encode('utf-8')))
+            result.append(moin_page.a(attrib={xlink.href: link}, children=[name]))
             result.append(", ")
 
         del result[-1] # kill last comma
