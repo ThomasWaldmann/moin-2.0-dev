@@ -10,13 +10,13 @@ import py.test
 
 from MoinMoin.converter2._wiki_macro import *
 
-namespaces_string = 'xmlns="%s"' % namespaces.moin_page
-namespaces_string_xinclude = 'xmlns:xi="%s"' % namespaces.xinclude
-namespaces_xpstring = 'xmlns(page=%s)' % namespaces.moin_page
+namespaces_string = 'xmlns="%s"' % moin_page.namespace
+namespaces_string_xinclude = 'xmlns:xi="%s"' % xinclude.namespace
+namespaces_xpstring = 'xmlns(page=%s)' % moin_page.namespace
 
 namespaces_list = {
-    namespaces.moin_page: '',
-    namespaces.xinclude: 'xi',
+    moin_page.namespace: '',
+    xinclude.namespace: 'xi',
 }
 
 def serialize(elem, **options):

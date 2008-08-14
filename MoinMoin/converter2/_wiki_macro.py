@@ -10,7 +10,8 @@ Base class for wiki parser with macro support.
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
-from MoinMoin.util import namespaces, uri
+from MoinMoin.util import uri
+from MoinMoin.util.tree import moin_page, xinclude
 
 class ConverterMacro(object):
     def __init__(self, request):
@@ -19,7 +20,7 @@ class ConverterMacro(object):
     def _BR_repl(self, args, text, context):
         if context == 'block':
             return
-        return ET.Element(ET.QName('line-break', namespaces.moin_page))
+        return moin_page.line_break()
 
     def _FootNote_repl(self, args, text, context):
         if args is None:
@@ -28,15 +29,12 @@ class ConverterMacro(object):
 
         text = self.macro_text(args)
 
-        tag = ET.QName('note', namespaces.moin_page)
-        tag_body = ET.QName('note-body', namespaces.moin_page)
-        tag_class = ET.QName('note-class', namespaces.moin_page)
-        elem_body = ET.Element(tag_body, children=text)
-        elem = ET.Element(tag, attrib={tag_class: 'footnote'}, children=[elem_body])
+        elem_body = moin_page.note_body(children=text)
+        attrib = {moin_page.note_class: 'footnote'}
+        elem = moin_page.note(attrib=attrib, children=[elem_body])
 
         if context == 'block':
-            tag = ET.QName('p', namespaces.moin_page)
-            return ET.Element(tag, children=[elem])
+            return moin_page.p(children=[elem])
         return elem
 
     def _Include_macro(self,
@@ -48,10 +46,6 @@ class ConverterMacro(object):
             skipitems=int,
             titlesonly=bool,
             editlink=bool):
-
-        tag = ET.QName('include', namespaces.xinclude)
-        tag_href = ET.QName('href', namespaces.xinclude)
-        tag_xpointer = ET.QName('xpointer', namespaces.xinclude)
 
         attrib = {}
         xpointer = []
@@ -75,7 +69,7 @@ class ConverterMacro(object):
             # TODO: unicode URI
             link = str(uri.Uri(scheme='wiki.local',
                     path=pagename.encode('utf-8')))
-            attrib[tag_href] = link
+            attrib[xinclude.href] = link
 
         if heading == 'heading':
             heading = ''
@@ -93,11 +87,11 @@ class ConverterMacro(object):
 
         if xpointer:
             # TODO: Namespace?
-            ns = 'xmlns(page=%s) ' % namespaces.moin_page
+            ns = 'xmlns(page=%s) ' % moin_page.namespace
 
-            attrib[tag_xpointer] = ns + ' '.join(xpointer)
+            attrib[xinclude.xpointer] = ns + ' '.join(xpointer)
 
-        return ET.Element(tag, attrib=attrib)
+        return xinclude.include(attrib=attrib)
 
     def _Include_repl(self, args, text, context):
         if context == 'inline':
@@ -109,16 +103,15 @@ class ConverterMacro(object):
         if context == 'inline':
             return text
 
-        tag = ET.QName('table-of-content', namespaces.moin_page)
         attrib = {}
         try:
             level = int(args)
         except ValueError:
             pass
         else:
-            attrib[ET.QName('outline-level', namespaces.moin_page)] = str(level)
+            attrib[moin_page.outline_level] = str(level)
 
-        return ET.Element(tag, attrib=attrib)
+        return moin_page.table_of_content(attrib=attrib)
 
     def macro(self, name, args, text, context):
         func = getattr(self, '_%s_repl' % name, None)
@@ -126,13 +119,13 @@ class ConverterMacro(object):
             return func(args, text, context)
 
         # TODO: other namespace?
-        tag = ET.QName('macro', namespaces.moin_page)
-        tag_name = ET.QName('macro-name', namespaces.moin_page)
-        tag_args = ET.QName('macro-args', namespaces.moin_page)
-        tag_context = ET.QName('macro-context', namespaces.moin_page)
-        tag_alt = ET.QName('alt', namespaces.moin_page)
-        attrib = {tag_name: name, tag_args: args, tag_context: context, tag_alt: text}
-        return ET.Element(tag, attrib)
+        attrib = {
+            moin_page.alt: text,
+            moin_page.macro_name: name,
+            moin_page.macro_args: args,
+            moin_page.macro_context: context,
+        }
+        return moin_page.macro(attrib)
 
     def macro_text(self, text):
         """
