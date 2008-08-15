@@ -6,13 +6,12 @@
 
     @license: GNU GPL, see COPYING for details.
 """
-import os
+
 from MoinMoin import macro
 from MoinMoin.macro import Action
-from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestAction:
     """ testing macro Action calling action raw """
@@ -38,7 +37,6 @@ class TestAction:
         self.page = create_page(request, self.pagename, u'= title1 =\n||A||B||\n')
         m = self._make_macro()
         result = Action.macro_Action(m, 'raw')
-        nuke_page(request, self.pagename)
 
         expected = '<a href="./AutoCreatedMoinMoinTemporaryTestPageForAction?action=raw">raw</a>'
         assert result == expected

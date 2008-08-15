@@ -6,13 +6,12 @@
 
     @license: GNU GPL, see COPYING for details.
 """
-import os
+
 from MoinMoin import macro
 from MoinMoin.macro import FootNote
-from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestFootNote:
     """ testing macro Action calling action raw """
@@ -21,9 +20,6 @@ class TestFootNote:
     def setup_class(self):
         become_trusted(self.request)
         self.page = create_page(self.request, self.pagename, u"Foo!")
-
-    def teardown_class(self):
-        nuke_page(self.request, self.pagename)
 
     def _make_macro(self):
         """Test helper"""

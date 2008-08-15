@@ -21,13 +21,16 @@
     displaying errors and doing stuff after an action.
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2006 MoinMoin:ThomasWaldmann
+                2006 MoinMoin:ThomasWaldmann,
+                2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 
 from MoinMoin.util import pysupport
 from MoinMoin import config, wikiutil
 from MoinMoin.Page import Page
+from MoinMoin.action.AttachFile import _do_view, _do_get
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 # create a list of extension actions from the package directory
 modules = pysupport.getPackageModules(__file__)
@@ -232,6 +235,19 @@ def do_raw(pagename, request):
     if not request.user.may.read(pagename):
         Page(request, pagename).send_page()
     else:
+        try:
+            item = request.cfg.data_backend.get_item(pagename)
+            rev = item.get_revision(-1)
+            mimetype = rev["mimetype"]
+        except (NoSuchItemError, NoSuchRevisionError, KeyError):
+            pass  # TODO: Handle sanely. Must we actually handle that here or just ignore it?
+        else:
+            if mimetype != "text/x-unidentified-wiki-format":  # XXX Improve mimetype handling
+                pagename, filename = pagename.split("/")
+                _do_get(pagename, request, filename=filename)
+                return
+
+
         rev = request.rev or 0
         Page(request, pagename, rev=rev).send_raw()
 
@@ -243,10 +259,27 @@ def do_show(pagename, request, content_only=0, count_hit=1, cacheable=1, print_m
     if not request.user.may.read(pagename):
         Page(request, pagename).send_page()
     else:
+        try:
+            item = request.cfg.data_backend.get_item(pagename)
+            rev = item.get_revision(-1)
+            mimetype = rev["mimetype"]
+        except (NoSuchItemError, NoSuchRevisionError, KeyError):
+            pass  # TODO: Handle sanely. Must we actually handle that here or just ignore it?
+        else:
+            if mimetype != "text/x-unidentified-wiki-format":  # XXX Improve mimetype handling
+                pagename, filename = pagename.split("/")
+                _do_view(pagename, request, filename=filename)
+                return
+
         mimetype = request.form.get('mimetype', [u"text/html"])[0]
-        rev = request.rev or 0
-        if rev == 0:
+
+        if request.rev is None:
+            rev = -1
+        else:
+            rev = request.rev
+        if rev == -1:
             request.cacheable = cacheable
+
         Page(request, pagename, rev=rev, formatter=mimetype).send_page(
             count_hit=count_hit,
             print_mode=print_mode,

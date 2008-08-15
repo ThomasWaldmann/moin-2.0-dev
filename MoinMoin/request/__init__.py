@@ -179,7 +179,7 @@ class RequestBase(object):
                 self.args = {}
                 self.form = {}
                 self.action = 'xmlrpc'
-                self.rev = None
+                self.rev = -1
             else:
                 try:
                     self.args = self.form = self.setup_args()
@@ -190,13 +190,10 @@ class RequestBase(object):
                 try:
                     self.rev = int(self.form['rev'][0])
                 except:
-                    self.rev = None
+                    self.rev = -1
 
             from MoinMoin.Page import RootPage
             self.rootpage = RootPage(self)
-
-            from MoinMoin.logfile import editlog
-            self.editlog = editlog.EditLog(self)
 
             from MoinMoin import i18n
             self.i18n = i18n

@@ -7,17 +7,23 @@ MoinMoin - test wiki configuration
 """
 
 import os
-
 from MoinMoin.config.multiconfig import DefaultConfig
-
+from MoinMoin.storage.backends import memory, flatfile, clone
 
 class Config(DefaultConfig):
     sitename = u'Developer Test Wiki'
     logo_string = sitename
 
     _base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
-    data_dir = os.path.join(_base_dir, "data")
-    data_underlay_dir = os.path.join(_base_dir, "underlay")
+    data_dir = os.path.join(_base_dir, "data") # needed for plugins package
+    #data_underlay_dir = os.path.join(_base_dir, "underlay")
+    flat_dir = os.path.join(os.path.dirname(__file__), 'data')
+
+    # configure backends
+    data_backend = memory.MemoryBackend()
+    test_num_pages = len(clone(flatfile.FlatFileBackend(flat_dir), data_backend)[0])
+    user_backend = memory.MemoryBackend()
+    page_front_page = 'FrontPage'
 
     show_hosts = 1
 
@@ -25,4 +31,3 @@ class Config(DefaultConfig):
 
     # used to check if it is really a wiki we may modify
     is_test_wiki = True
-

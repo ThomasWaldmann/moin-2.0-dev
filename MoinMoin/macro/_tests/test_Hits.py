@@ -5,14 +5,16 @@
     @copyright: 2007-2008 MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
+
 import os
 
 from MoinMoin import caching, macro
 from MoinMoin.logfile import eventlog
 from MoinMoin.PageEditor import PageEditor
+from MoinMoin.parser.text import Parser
 from MoinMoin.Page import Page
 
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestHits:
     """Hits: testing Hits macro """
@@ -24,19 +26,15 @@ class TestHits:
         self.page = create_page(request, self.pagename, u"Foo!")
 
         # for that test eventlog needs to be empty
-        fpath = request.rootpage.getPagePath('event-log', isfile=1)
+        fpath = os.path.join(request.cfg.data_dir, 'event-log')
         if os.path.exists(fpath):
             os.remove(fpath)
 
         # hits is based on hitcounts which reads the cache
         caching.CacheEntry(request, 'charts', 'hitcounts', scope='wiki').remove()
 
-    def teardown_class(self):
-        nuke_page(self.request, self.pagename)
-
     def _make_macro(self):
         """Test helper"""
-        from MoinMoin.parser.text import Parser
         from MoinMoin.formatter.text_html import Formatter
         p = Parser("##\n", self.request)
         p.formatter = Formatter(self.request)
@@ -52,7 +50,7 @@ class TestHits:
 
     def _cleanStats(self):
         # cleans all involved cache and log files
-        fpath = self.request.rootpage.getPagePath('event-log', isfile=1)
+        fpath = os.path.join(self.request.cfg.data_dir, 'event-log')
         if os.path.exists(fpath):
             os.remove(fpath)
         # hits is based on hitcounts which reads the cache

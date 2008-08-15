@@ -103,8 +103,8 @@ class SystemInfo:
             row(_('Disk usage of %(data_dir)s/') % {'data_dir': data_dir},
             self.formatInReadableUnits(self.getDirectorySize(data_dir)))
 
-            edlog = editlog.EditLog(request)
-            row(_('Entries in edit log'), "%s (%s)" % (edlog.lines(), self.formatInReadableUnits(edlog.size())))
+            glog = editlog.GlobalEditLog(request)
+            row(_('Entries in edit log'), "%s" % glog.lines())
 
             # This puts a heavy load on the server when the log is large
             eventlogger = eventlog.EventLog(request)

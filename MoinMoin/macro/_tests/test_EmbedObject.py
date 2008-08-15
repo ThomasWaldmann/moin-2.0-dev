@@ -13,7 +13,7 @@ import py
 from MoinMoin import macro
 from MoinMoin.action import AttachFile
 
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestEmbedObject:
     """ testing macro Action calling action raw """
@@ -26,7 +26,6 @@ class TestEmbedObject:
         become_trusted(request)
         self.page = create_page(request, pagename, u"Foo")
 
-        AttachFile.getAttachDir(request, pagename)
         test_files = [
             ('test.ogg', 'vorbis'),
             ('test.svg', 'SVG'),
@@ -36,9 +35,6 @@ class TestEmbedObject:
         ]
         for filename, filecontent in test_files:
             AttachFile.add_attachment(request, pagename, filename, filecontent, overwrite=0)
-
-    def teardown_class(self):
-        nuke_page(self.request, self.pagename)
 
     def _make_macro(self):
         """ Test helper """

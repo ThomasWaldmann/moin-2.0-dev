@@ -9,7 +9,7 @@
 import os, StringIO
 from MoinMoin.action import AttachFile
 from MoinMoin.PageEditor import PageEditor
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestAttachFile:
     """ testing action AttachFile"""
@@ -24,11 +24,8 @@ class TestAttachFile:
         create_page(self.request, self.pagename, u"Foo!")
 
         AttachFile.add_attachment(self.request, self.pagename, filename, "Test content", True)
-        exists = AttachFile.exists(self.request, self.pagename, filename)
-
-        nuke_page(self.request, self.pagename)
-
-        assert exists
+        assert self.request.cfg.data_backend.has_item(self.pagename + '/' + filename)
+        assert AttachFile.exists(self.request, self.pagename, filename)
 
     def test_add_attachment_for_file_object(self):
         """Test if add_attachment() works with file like object"""
@@ -43,14 +40,12 @@ class TestAttachFile:
         filecontent = StringIO.StringIO(data)
 
         AttachFile.add_attachment(self.request, self.pagename, filename, filecontent, True)
-        exists = AttachFile.exists(self.request, self.pagename, filename)
-        path = AttachFile.getAttachDir(self.request, self.pagename)
-        imagef = os.path.join(path, filename)
-        file_size = os.path.getsize(imagef)
 
-        nuke_page(self.request, self.pagename)
+        assert self.request.cfg.data_backend.has_item(self.pagename + '/' + filename)
+        assert AttachFile.exists(self.request, self.pagename, filename)
+        rev = self.request.cfg.data_backend.get_item(self.pagename + '/' + filename).get_revision(-1)
+        assert rev.size == len(data)
 
-        assert exists and file_size == len(data)
 
     def test_get_attachment_path_created_on_getFilename(self):
         """
@@ -58,8 +53,6 @@ class TestAttachFile:
         """
         filename = ""
         file_exists = os.path.exists(AttachFile.getFilename(self.request, self.pagename, filename))
-
-        nuke_page(self.request, self.pagename)
 
         assert file_exists
 

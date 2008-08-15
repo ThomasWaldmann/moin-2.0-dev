@@ -45,7 +45,10 @@ except NameError:
             args = (kw['cmp'], )
 
         l.sort(*args)
+        if 'reverse' in kw:
+            l.reverse(*args)
         return l
+
 
 """
 This is a feature from python 2.4, needed for compatibility with python 2.3,
