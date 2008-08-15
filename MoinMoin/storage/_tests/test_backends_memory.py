@@ -35,13 +35,20 @@ class TestTracingBackend(BackendTest):
 
     def create_backend(self):
         assert self.be is None
-        self.be = TracingBackend()
+        import random
+        self.be = TracingBackend()#"/tmp/codebuf%i.py" % random.randint(1, 2**30))
         return self.be
 
     def kill_backend(self):
         assert self.be is not None
         try:
-            self.be.get_func() # lets see if it compiles
+            func = self.be.get_func()
+            try:
+                func(MemoryBackend()) # should not throw any exc
+            except:
+                # I get exceptions here because py.test seems to handle setup/teardown incorrectly
+                # in generative tests
+                pass#print "EXC"
         finally:
             self.be = None
 
