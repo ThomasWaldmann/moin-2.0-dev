@@ -2,9 +2,11 @@
 """
     MoinMoin - Simple text input converter.
 
-    It just puts all text into a code block.
+    It just puts all text into a code block. It acts as a wildcard for
+    text/* input.
 
     @copyright: 2008 MoinMoin:ThomasWaldmann
+                2008 MoinMoin:BastianBlank
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -17,11 +19,12 @@ class Converter(object):
     """
 
     @classmethod
-    def _factory(cls, request, input, output):
-        if input.startswith('text/') and output == 'application/x-moin-document':
+    def factory(cls, _request, type_input, type_output):
+        if (type_input.startswith('text/') and
+                type_output == 'application/x-moin-document'):
             return cls
 
-    def __init__(self, request, page_url=None, args=None):
+    def __init__(self, _request, page_url=None, _args=None):
         self.page_url = page_url
 
     def __call__(self, content):
@@ -29,7 +32,7 @@ class Converter(object):
 
         attrib = {}
         if self.page_url:
-            attrib[moin_page.page_href] = self.page_url
+            attrib[moin_page.page_href] = unicode(self.page_url)
 
         root = moin_page.page(attrib=attrib)
 
@@ -43,5 +46,6 @@ class Converter(object):
         root.append(blockcode)
         return root
 
-from _registry import default_registry
-default_registry.register(Converter._factory, default_registry.PRIORITY_LAST)
+from MoinMoin.converter2._registry import default_registry
+# Register wildcards behind anything else
+default_registry.register(Converter.factory, default_registry.PRIORITY_LAST)
