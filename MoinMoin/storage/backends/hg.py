@@ -164,6 +164,7 @@ class MercurialBackend(Backend):
         self._history = os.path.join(self._path, 'history')
         self._r_path = os.path.join(self._path, 'rev')
         self._u_path = os.path.join(self._path, 'meta')
+        self._c_path = os.path.join(self._path, 'cache')
         self._name_db = os.path.join(self._path, 'name-mapping')
         self._ui = ui.ui(interactive=False, quiet=True)
         self._item_metadata_lock = {}
@@ -179,7 +180,7 @@ class MercurialBackend(Backend):
             elif not os.path.isdir(self._path):
                 raise BackendError("Invalid path: %s" % self._path)
         # if directories not empty and no mapping exists, refuse
-        for path in (self._u_path, self._r_path):
+        for path in (self._u_path, self._r_path, self._c_path):
             try:
                 if os.listdir(path) and not os.path.exists(self._name_db):
                     raise BackendError("No name-mapping and directory not empty: %s" % path)
@@ -188,7 +189,7 @@ class MercurialBackend(Backend):
         # also refuse on no mapping and some unrelated files in main dir:
         # XXX: should we even bother they could use names on fs for future items?
         if (not os.path.exists(self._name_db) and
-            filter(lambda x: x not in ['rev', 'meta', 'name-mapping', 'history'], os.listdir(self._path))):
+            filter(lambda x: x not in ['cache', 'rev', 'meta', 'name-mapping', 'history'], os.listdir(self._path))):
             raise BackendError("No name-mapping and directory not empty: %s" % self._path)
         try:
             self._repo = hg.repository(self._ui, self._r_path, create=True)
@@ -264,11 +265,12 @@ class MercurialBackend(Backend):
 
     def _create_revision(self, item, revno):
         """Create new Item Revision."""
-        has, last, ctxrevno = self._has_revision(item, revno)
-        if has:
-            raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
-        elif revno != last + 1:
-            raise RevisionNumberMismatchError("Unable to create revision number %d. \
+        revs = self._list_revisions(item)
+        if revs:
+            if revno in revs:
+                raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
+            if revno != revs[-1] + 1:
+                raise RevisionNumberMismatchError("Unable to create revision number %d. \
                     New Revision number must be next to latest Revision number." % revno)
 
         rev = NewRevision(item, revno)
@@ -342,15 +344,22 @@ class MercurialBackend(Backend):
         if not item._id:
             return []
         else:
-            # TODO: add some sort of caching (atfer soc), this costs a lot
-            revs = []
-            changefn = util.cachefunc(lambda r: self._repo[r].changeset())
-            for ctxrevno in self._iterate_changesets(item_id=item._id, changefn=changefn):
-                revno = pickle.loads(changefn(ctxrevno)[5]['__revision'])
-                revs.append(revno)
-                if revno == 0:  # iterating from top
-                    revs.reverse()
-                    return revs
+            try:
+                f = open(self._cpath(item._id + ".cache"))
+                revs = [int(revno) for revno in f.read().split(",")[:-1]]
+                f.close()
+                revs.sort()
+                return revs
+            except IOError:
+                revs = []
+                changefn = util.cachefunc(lambda r: self._repo[r].changeset())
+                for ctxrevno in self._iterate_changesets(item_id=item._id, changefn=changefn):
+                    revno = pickle.loads(changefn(ctxrevno)[5]['__revision'])
+                    revs.append(revno)
+                    if revno == 0:  # iterating from top
+                        revs.reverse()
+                        return revs
+                return []
 
     def _rename_item(self, item, newname):
         """
@@ -457,7 +466,7 @@ class MercurialBackend(Backend):
             if not item._id:
                 self._add_item(item)
             else:
-                if self._has_revision(item, rev.revno)[0]:
+                if rev.revno in self._list_revisions(item):
                     raise RevisionAlreadyExistsError("Item Revision already exists: %s" % rev.revno)
 
             ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx, user, extra=meta)
@@ -467,6 +476,9 @@ class MercurialBackend(Backend):
                 ctx._status[0] = [item._id]
             self._repo.commitctx(ctx)
             # commands.update(self._ui, self._repo)
+            f = open(self._cpath("%s.cache" % item._id), 'a+')
+            f.write(str(rev.revno) + ",")
+            f.close()
         finally:
             del lock
 
@@ -504,6 +516,9 @@ class MercurialBackend(Backend):
         """Return absolute path to unrevisioned Item in repository."""
         return os.path.join(self._u_path, filename)
 
+    def _cpath(self, filename):
+        return os.path.join(self._c_path, filename)
+
     def _create_new_cdb(self):
         """Create new name-mapping if it doesn't exist yet."""
         if not os.path.exists(self._name_db):
@@ -539,7 +554,10 @@ class MercurialBackend(Backend):
         maker.add(encoded_name, item_id)
         maker.finish()
         util.rename(self._name_db + '.ndb', self._name_db)
-
+        # create cache file
+        f = open(self._cpath("%s.cache" % item_id), 'w')
+        f.close()
+        # create reverse naming file
         name_file = open(name_path, mode='wb')
         name_file.write(encoded_name)
         name_file.close()
