@@ -53,18 +53,15 @@ class ROWrapperBackend(Backend):
         Returns an iterator over all items available in this backend.
         (Like the dict method).
         """
-        # XXX Potentially a costly operation. Rewrite more efficiently.
         items = []
-        names = []
+        names = {}
         for item in self.first.iteritems():
-            items.append(item)
-            names.append(item.name)
+            names[item.name] = True
+            yield item
 
         for item in self.second.iteritems():
-            if not item.name in names:
-                items.append(item)
-
-        return iter(items)
+            if not names[item.name]:
+                yield item
 
     def history(self, reverse=True):
         """
