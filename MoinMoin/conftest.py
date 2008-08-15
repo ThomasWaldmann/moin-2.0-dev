@@ -78,11 +78,24 @@ def init_test_request():
         sys.path.insert(0, wikiconfig_dir) # this is a race with py.test's collectors
                                            # because they modify sys.path as well
     request = request_cli.Request()
+    if not request.cfg.data_backend:
+        request.cfg.provide_fresh_backends()
     request.form = request.args = request.setup_args()
     request.user = User(request)
     request.html_formatter = HtmlFormatter(request)
     request.formatter = request.html_formatter
     return request
+
+
+def dirties_backend(func):
+    """ Decorator for methods that dirty the current backend and
+        require a fresh one after execution. """
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        finally:
+            args[0].request.cfg.provide_fresh_backends()
+    return wrapper
 
 
 class TestConfig:
