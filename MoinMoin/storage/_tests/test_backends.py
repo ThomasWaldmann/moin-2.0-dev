@@ -30,7 +30,7 @@ item_names = ("quite_normal",
               "very_long_name_" * 100 + "ending_1",
               "very_long_name_" * 100 + "ending_2", )
 
-invalid_names = (42, object())
+invalid_names = (42, {}, (1,), [1], )
 
 class BackendTest(object):
     """
