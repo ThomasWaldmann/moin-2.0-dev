@@ -91,7 +91,7 @@ class TestRealCreation:
         assert zipfile.is_zipfile(temp.name)
 
     def testSearch(self):
-        package = PackagePages(self.request.rootpage.page_name, self.request)
+        package = PackagePages("", self.request)
         assert package.searchpackage(self.request, "BadCon") == [u'BadContent']
 
     def testListCreate(self):
