@@ -21,7 +21,7 @@ class Converter(object):
     def __call__(self, content):
         attrib = {}
         if self.page_url is not None:
-            attrib[moin_page.page_href] = self.page_url
+            attrib[moin_page.page_href] = unicode(self.page_url)
 
         root = moin_page.page(attrib=attrib)
 
@@ -41,12 +41,17 @@ class Converter(object):
         return root
 
 def _factory(request, input, output):
+    """
+    Creates a class dynamicaly which uses the matching old-style parser and
+    compatiblity formatter.
+    """
     if output == 'application/x-moin-document':
         try:
             parser = wikiutil.searchAndImportPlugin(
                     request.cfg, "parser", input)
             formatter = wikiutil.searchAndImportPlugin(
                     request.cfg, "formatter", 'compatibility')
+        # One of the two plugins is not available, ignore it
         except wikiutil.PluginMissingError:
             return
 
