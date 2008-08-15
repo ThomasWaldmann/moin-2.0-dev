@@ -342,7 +342,7 @@ class TracingBackend(MemoryBackend):
         self.codebuffer.append(expr)
 
     def get_code(self):
-        return "\n".join(["def run(backend):", "    pass"] + self.codebuffer)
+        return "\n".join(["def run(backend, got_exc=lambda x: None):", "    pass"] + self.codebuffer)
 
     def get_func(self):
         if self.filename:
@@ -367,10 +367,28 @@ def _retval_to_expr(retval):
 def _get_thingie_wrapper(thingie):
     def wrap_thingie(func):
         def wrapper(*args, **kwargs):
-            assert not kwargs
-            retval = func(*args, **kwargs) # XXX no try/except -> we do not log operations with exceptions ...
-            args[0]._backend.log_expr("    %s%s.%s(*%s)" % (_retval_to_expr(retval),
-                _get_thingie_id(thingie, args[0]), func.func_name, repr(args[1:])))
+            exc = None
+            log = args[0]._backend.log_expr
+            level = 4
+            retval = None
+            try:
+                try:
+                    retval = func(*args, **kwargs)
+                except Exception, e:
+                    exc = type(e).__name__ # yes, not very exact
+                    log(" " * level + "try:")
+                    level += 4
+                    raise
+            finally:
+                log(" " * level + "%s%s.%s(*%s, **%s)" % (_retval_to_expr(retval),
+                _get_thingie_id(thingie, args[0]), func.func_name, repr(args[1:]), repr(kwargs)))
+                if exc:
+                    level -= 4
+                    log(" " * level + "except Exception, e:")
+                    level += 4
+                    log(" " * level + "if type(e).__name__ != %r:" % (exc, ))
+                    level += 4
+                    log(" " * level + "got_exc(e)")
             return retval
         return wrapper
     return wrap_thingie
