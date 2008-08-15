@@ -34,12 +34,29 @@ def test_Namespace():
     assert name.name == 'a'
     assert name.uri == uri
 
+    name = namespace('a')
+    assert isinstance(name, Name)
+    assert name.name == 'a'
+    assert name.uri == uri
+
     name = namespace.outline_level
+    assert name.name == 'outline-level'
+    assert name.uri == uri
+
+    name = namespace('outline-level')
     assert name.name == 'outline-level'
     assert name.uri == uri
 
     name = namespace.class_
     assert name.name == 'class'
+    assert name.uri == uri
+
+    name = namespace('class')
+    assert name.name == 'class'
+    assert name.uri == uri
+
+    name = namespace('class_')
+    assert name.name == 'class_'
     assert name.uri == uri
 
 def test_html():
