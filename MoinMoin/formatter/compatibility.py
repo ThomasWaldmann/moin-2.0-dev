@@ -16,7 +16,8 @@ from HTMLParser import HTMLParser as _HTMLParserBase
 
 from MoinMoin import wikiutil
 from MoinMoin.converter2._wiki_macro import ConverterMacro
-from MoinMoin.util import namespaces, uri
+from MoinMoin.util import uri
+from MoinMoin.util.tree import html, moin_page, xlink
 
 class _HTMLParser(_HTMLParserBase):
     AUTOCLOSE = "p", "li", "tr", "th", "td", "head", "body"
@@ -41,7 +42,7 @@ class _HTMLParser(_HTMLParserBase):
     # (Internal) Handles start tags.
 
     def handle_starttag(self, tag, attrs):
-        tag = ET.QName(tag.lower(), namespaces.html)
+        tag = html(tag.lower())
         if tag.name == "meta":
             return
         if tag.name in self.AUTOCLOSE:
@@ -55,7 +56,7 @@ class _HTMLParser(_HTMLParserBase):
                 # Handle short attributes
                 if value is None:
                     value = key
-                key = ET.QName(key.lower(), namespaces.html)
+                key = ET.QName(key.lower(), html)
                 attrib[key] = value
         self.__builder.start(tag, attrib)
         if tag.name in self.IGNOREEND:
@@ -67,7 +68,7 @@ class _HTMLParser(_HTMLParserBase):
 
     def handle_endtag(self, tag):
         if not isinstance(tag, ET.QName):
-            tag = ET.QName(tag.lower(), namespaces.html)
+            tag = html(tag.lower())
         if tag.name in self.IGNOREEND:
             return
         lasttag = self.__stack.pop()
@@ -125,38 +126,38 @@ class _HTMLParser(_HTMLParserBase):
 class Formatter(ConverterMacro):
     hardspace = ' '
 
-    tag_a = ET.QName('a', namespaces.moin_page)
-    tag_blockcode = ET.QName('blockcode', namespaces.moin_page)
-    tag_data = ET.QName('data', namespaces.moin_page)
-    tag_div = ET.QName('div', namespaces.moin_page)
-    tag_emphasis = ET.QName('emphasis', namespaces.moin_page)
-    tag_font_size = ET.QName('font-size', namespaces.moin_page)
-    tag_h = ET.QName('h', namespaces.moin_page)
-    tag_href = ET.QName('href', namespaces.xlink)
-    tag_id = ET.QName('id', namespaces.moin_page)
-    tag_line_break = ET.QName('line-break', namespaces.moin_page)
-    tag_item_label_generate = ET.QName('item-label-generate', namespaces.moin_page)
-    tag_list = ET.QName('list', namespaces.moin_page)
-    tag_list_item = ET.QName('list-item', namespaces.moin_page)
-    tag_list_item_body = ET.QName('list-item-body', namespaces.moin_page)
-    tag_list_item_label = ET.QName('list-item-label', namespaces.moin_page)
-    tag_macro = ET.QName('macro', namespaces.moin_page)
-    tag_macro_args = ET.QName('macro-args', namespaces.moin_page)
-    tag_macro_name = ET.QName('macro-name', namespaces.moin_page)
-    tag_macro_type = ET.QName('macro-type', namespaces.moin_page)
-    tag_object = ET.QName('object', namespaces.moin_page)
-    tag_outline_level = ET.QName('outline-level', namespaces.moin_page)
-    tag_p = ET.QName('p', namespaces.moin_page)
-    tag_src = ET.QName('src', namespaces.moin_page)
-    tag_separator = ET.QName('separator', namespaces.moin_page)
-    tag_span = ET.QName('span', namespaces.moin_page)
-    tag_strong = ET.QName('strong', namespaces.moin_page)
-    tag_table = ET.QName('table', namespaces.moin_page)
-    tag_table_body = ET.QName('table-body', namespaces.moin_page)
-    tag_table_cell = ET.QName('table-cell', namespaces.moin_page)
-    tag_table_row = ET.QName('table-row', namespaces.moin_page)
+    tag_a = moin_page.a
+    tag_blockcode = moin_page.blockcode
+    tag_data = moin_page.data
+    tag_div = moin_page.div
+    tag_emphasis = moin_page.emphasis
+    tag_font_size = moin_page.font_size
+    tag_h = moin_page.h
+    tag_href = xlink.href
+    tag_id = moin_page.id
+    tag_line_break = moin_page.line_break
+    tag_item_label_generate = moin_page.item_label_generate
+    tag_list = moin_page.list
+    tag_list_item = moin_page.list_item
+    tag_list_item_body = moin_page.list_item_body
+    tag_list_item_label = moin_page.list_item_label
+    tag_macro = moin_page.macro
+    tag_macro_args = moin_page.macro_args
+    tag_macro_name = moin_page.macro_name
+    tag_macro_type = moin_page.macro_type
+    tag_object = moin_page.object
+    tag_outline_level = moin_page.outline_level
+    tag_p = moin_page.p
+    tag_src = moin_page.src
+    tag_separator = moin_page.separator
+    tag_span = moin_page.span
+    tag_strong = moin_page.strong
+    tag_table = moin_page.table
+    tag_table_body = moin_page.table_body
+    tag_table_cell = moin_page.table_cell
+    tag_table_row = moin_page.table_row
 
-    tag_html_class = ET.QName('class', namespaces.html)
+    tag_html_class = html.class_
 
     def __init__(self, request, page, **kw):
         self.request, self.page = request, page
@@ -211,8 +212,8 @@ class Formatter(ConverterMacro):
         if on:
             if not pagename and page:
                 pagename = page.page_name
-            tag = ET.QName('a', namespaces.moin_page)
-            tag_href = ET.QName('href', namespaces.xlink)
+            tag = moin_page.a
+            tag_href = xlink.href
             # TODO: unicode URI
             link = str(uri.Uri(scheme='wiki.local',
                 path=pagename.encode('utf-8')))
@@ -224,8 +225,8 @@ class Formatter(ConverterMacro):
 
     def interwikilink(self, on, interwiki='', pagename='', **kw):
         if on:
-            tag = ET.QName('a', namespaces.moin_page)
-            tag_href = ET.QName('href', namespaces.xlink)
+            tag = moin_page.a
+            tag_href = xlink.href
             # TODO: unicode URI
             link = str(uri.Uri(scheme='wiki',
                 authority=interwiki.encode('utf-8'),
@@ -346,7 +347,7 @@ class Formatter(ConverterMacro):
 
     def code(self, on, **kw):
         if on:
-            self._stack_push(ET.Element(ET.QName('code', namespaces.moin_page)))
+            self._stack_push(ET.Element(moin_page.code))
         else:
             self._stack_pop()
         return ''
@@ -514,11 +515,11 @@ class Formatter(ConverterMacro):
             elif key == 'valign':
                 key = ET.QName('vertical-align', None)
             elif key == 'class':
-                key = ET.QName('class', namespaces.html)
+                key = ET.QName('class', html)
             elif key == 'style':
-                key = ET.QName('style', namespaces.html)
+                key = ET.QName('style', html)
             elif prefix == '' and key in ('colspan', 'rowspan', 'abbr'):
-                key = ET.QName(key, namespaces.html)
+                key = ET.QName(key, html)
             else:
                 continue
             ret[key] = val
@@ -588,7 +589,7 @@ class Formatter(ConverterMacro):
         mimetype = wikiutil.MimeType(parser_name).mime_type()
         Converter = reg.get(self.request, mimetype, 'application/x-moin-document')
 
-        elem = ET.Element(ET.QName('div', namespaces.moin_page))
+        elem = ET.Element(moin_page.div)
         self._stack_top_append(elem)
 
         doc = Converter(self.request, self.page.page_name, args)(lines)
