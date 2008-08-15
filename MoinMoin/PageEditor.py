@@ -265,7 +265,7 @@ Please review the page and save then. Do not save this page as it is!""")
                 # We don't show preview when in conflict
                 preview = None
 
-        elif self.exists():
+        elif self.exists(includeDeleted=True):
             # revision of existing page
             rev = self.current_rev()
         else:
