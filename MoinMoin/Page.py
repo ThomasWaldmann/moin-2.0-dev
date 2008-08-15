@@ -1360,7 +1360,6 @@ class RootPage(object):
         Init the item collection.
         """
         self.request = request
-        self._backend = request.cfg.data_backend
 
     def getPagePath(self, fname, isfile):
         """
@@ -1418,7 +1417,7 @@ class RootPage(object):
         if filterfunction:
             filter.add(term.NameFn(filterfunction))
 
-        items = self._backend.search_item(filter)
+        items = self.request.cfg.data_backend.search_item(filter)
 
         if user or return_objects:
             # Filter names
@@ -1451,7 +1450,7 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = self._backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
+        items = self.request.cfg.data_backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
 
         count = 0
         for item in items:

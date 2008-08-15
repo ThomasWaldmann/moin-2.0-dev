@@ -15,14 +15,17 @@ class Config(DefaultConfig):
     logo_string = sitename
 
     _base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
-    data_dir = os.path.join(_base_dir, "data") # needed for plugins package
+    data_dir = os.path.join(_base_dir, "data") # needed for plugins package TODO
     #data_underlay_dir = os.path.join(_base_dir, "underlay")
     flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     # configure backends
-    data_backend = memory.MemoryBackend()
-    test_num_pages = len(clone(flatfile.FlatFileBackend(flat_dir), data_backend)[0])
-    user_backend = memory.MemoryBackend()
+    data_backend = user_backend = None
+    def provide_fresh_backends(self):
+        self.data_backend = memory.MemoryBackend()
+        self.test_num_pages = len(clone(flatfile.FlatFileBackend(self.flat_dir), self.data_backend)[0])
+        self.user_backend = memory.MemoryBackend()
+
     page_front_page = 'FrontPage'
 
     show_hosts = 1
