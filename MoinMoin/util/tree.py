@@ -15,6 +15,9 @@ class Name(ET.QName):
         return ET.Element(self, attrib=attrib, children=children, **extra)
 
 class Namespace(unicode):
+    def __call__(self, name):
+        return Name(name, self)
+
     def __getattr__(self, key):
         if key.endswith('_'):
             key = key[:-1]
