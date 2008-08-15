@@ -135,8 +135,7 @@ import os
 import errno
 import time
 
-from MoinMoin.util import diff3
-from MoinMoin.PageEditor import conflict_markers
+
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision, EDIT_LOG_USERID, EDIT_LOG_COMMENT
 from MoinMoin.storage.error import BackendError, NoSuchItemError,\
                                    NoSuchRevisionError,\
