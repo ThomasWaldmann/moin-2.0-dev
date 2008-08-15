@@ -722,7 +722,7 @@ options_no_group_name = {
     ('actions_excluded',
      ['xmlrpc',  # we do not want wiki admins unknowingly offering xmlrpc service
       'MyPages',  # only works when used with a non-default SecurityPolicy (e.g. autoadmin)
-      #'CopyPage',  # has questionable behaviour regarding subpages a user can't read, but can copy
+      'CopyPage',  # has questionable behaviour regarding subpages a user can't read, but can copy
      ],
      "Exclude unwanted actions (list of strings)"),
 
