@@ -66,11 +66,11 @@ DeletePage|FooPage|Test ...
 """).installPackage()
 
     def testBasicPackageThings(self):
-        py.test.skip("Underlay is not implemented yet.")
         become_superuser(self.request)
         myPackage = DebugPackage(self.request, 'test')
         myPackage.installPackage()
         assert myPackage.msg == u'foo\nFooPage added \n'
+        py.test.skip("Underlay is not implemented yet.")
         testseite2 = Page(self.request, 'TestSeite2')
         assert testseite2.getPageText() == "Hello world, I am the file testdatei"
         assert testseite2.isUnderlayPage()
