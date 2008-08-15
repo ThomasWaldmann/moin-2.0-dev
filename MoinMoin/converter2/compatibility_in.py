@@ -31,7 +31,7 @@ class Converter(object):
         # TODO: Remove Page object
         page = Page(self.request, url.path.decode('utf-8')[1:])
 
-        parser = self.parser(text, self.request, format_args=self.args)
+        parser = self.parser(text, self.request, format_args=self.args or '')
         formatter = self.formatter(self.request, page)
 
         parser.format(formatter)
