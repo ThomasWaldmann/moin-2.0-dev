@@ -217,7 +217,7 @@ class TestCopyPage(object):
         Tests copying a page without write rights
         """
         self.text = u'#acl SomeUser:read,write,delete All:read\n'
-        self.createTestPage()
+        #self.createTestPage()
         result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
         revision = Page(self.request, self.copy_pagename).current_rev()
         assert result and revision is 2
@@ -227,7 +227,7 @@ class TestCopyPage(object):
         Tests copying a page without read rights
         """
         self.text = u'#acl SomeUser:read,write,delete All:\n'
-        self.createTestPage()
+        #self.createTestPage()
         result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
         revision = Page(self.request, self.copy_pagename).current_rev()
         assert result and revision is 2

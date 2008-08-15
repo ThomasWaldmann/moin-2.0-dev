@@ -19,7 +19,7 @@
 
 import errno
 import time
-
+import shutil
 
 from MoinMoin import config, caching, wikiutil, error, user
 from MoinMoin.Page import Page
@@ -33,7 +33,7 @@ from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
-from MoinMoin.storage.error import RevisionAlreadyExistsError
+from MoinMoin.storage.error import ItemAlreadyExistsError, RevisionAlreadyExistsError
 from MoinMoin.storage import DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                              EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
@@ -552,16 +552,25 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             return False, _("You cannot copy to an empty item name.")
 
         old_item = self._backend.get_item(self.page_name)
-        new_item = self._backend.create_item(newpagename)
+        try:
+            new_item = self._backend.create_item(newpagename)
+            last_revno = 0
+        except ItemAlreadyExistsError:
+            # In this case, we just add all revisions of the old item to the
+            # revisions of the new item. Note that the new item may already have
+            # some revisions. Thus, we start at the new items last_revno + 1
+            new_item = self._backend.get_item(self.page_name)
+            last_rev = new_item.get_revision(-1)  # TODO May fail, but shouldn't
+            last_revno = last_rev.revno + 1
 
         # Transfer all revisions with their data and metadata
         # Make sure the list begins with the lowest value, that is, 0.
         revs = old_item.list_revisions()
         for revno in revs:
-            new_rev = new_item.create_revision(revno)
+            new_rev = new_item.create_revision(revno + last_revno)
             old_rev = old_item.get_revision(revno)
 
-            new_rev.write(old_rev.read())
+            shutil.copyfileobj(old_rev, new_rev, 8192)
 
             for key in old_rev:
                 new_rev[key] = old_rev[key]
