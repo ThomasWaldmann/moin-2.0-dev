@@ -135,7 +135,6 @@ class Formatter(ConverterMacro):
     tag_h = moin_page.h
     tag_href = xlink.href
     tag_id = moin_page.id
-    tag_line_break = moin_page.line_break
     tag_item_label_generate = moin_page.item_label_generate
     tag_list = moin_page.list
     tag_list_item = moin_page.list_item
@@ -149,7 +148,6 @@ class Formatter(ConverterMacro):
     tag_outline_level = moin_page.outline_level
     tag_p = moin_page.p
     tag_src = moin_page.src
-    tag_separator = moin_page.separator
     tag_span = moin_page.span
     tag_strong = moin_page.strong
     tag_table = moin_page.table
@@ -169,12 +167,12 @@ class Formatter(ConverterMacro):
         self.in_pre = 0
         self._base_depth = 0
 
-        self.root = ET.Element(None)
+        self.root = moin_page.div()
         self._stack = [self.root]
 
     def handle_on(self, on, tag, attrib={}):
         if on:
-            self._stack_push(ET.Element(tag, attrib))
+            self._stack_push(tag(attrib))
         else:
             self._stack_pop()
         return ''
@@ -212,27 +210,23 @@ class Formatter(ConverterMacro):
         if on:
             if not pagename and page:
                 pagename = page.page_name
-            tag = moin_page.a
-            tag_href = xlink.href
             # TODO: unicode URI
             link = str(uri.Uri(scheme='wiki.local',
                 path=pagename.encode('utf-8')))
-            attrib = {tag_href: link}
-            self._stack_push(ET.Element(tag, attrib))
+            attrib = {self.tag_href: link}
+            self._stack_push(self.tag_a(attrib))
         else:
             self._stack_pop()
         return ''
 
     def interwikilink(self, on, interwiki='', pagename='', **kw):
         if on:
-            tag = moin_page.a
-            tag_href = xlink.href
             # TODO: unicode URI
             link = str(uri.Uri(scheme='wiki',
                 authority=interwiki.encode('utf-8'),
                 path = '/' + pagename.encode('utf-8')))
-            attrib = {tag_href: link}
-            self._stack_push(ET.Element(tag, attrib))
+            attrib = {self.tag_href: link}
+            self._stack_push(self.tag_a(attrib))
         else:
             self._stack_pop()
         return ''
@@ -347,7 +341,7 @@ class Formatter(ConverterMacro):
 
     def code(self, on, **kw):
         if on:
-            self._stack_push(ET.Element(moin_page.code))
+            self._stack_push(moin_page.code())
         else:
             self._stack_pop()
         return ''
@@ -374,7 +368,7 @@ class Formatter(ConverterMacro):
     def code_line(self, on):
         # TODO
         if on:
-            self._stack_push(ET.Element(self.tag_span))
+            self._stack_push(self.tag_span())
         else:
             self._stack_pop()
             self._stack_top_append('\n')
@@ -388,7 +382,7 @@ class Formatter(ConverterMacro):
     # Paragraphs, Lines, Rules ###########################################
 
     def linebreak(self, preformatted=1):
-        self._stack_top_append(ET.Element(self.tag_line_break))
+        self._stack_top_append(moin_page.line_break())
         return ''
 
     def paragraph(self, on, **kw):
@@ -396,7 +390,7 @@ class Formatter(ConverterMacro):
         return self.handle_on(on, self.tag_p)
 
     def rule(self, size=0, **kw):
-        self._stack_top_append(ET.Element(self.tag_separator))
+        self._stack_top_append(moin_page.separator())
         return ''
 
     def icon(self, type):
@@ -415,12 +409,11 @@ class Formatter(ConverterMacro):
 
     def listitem(self, on, **kw):
         if on:
-            elem_item_body = ET.Element(self.tag_list_item_body)
-            elem_item = ET.Element(self.tag_list_item,
-                    children=[elem_item_body])
+            elem_item_body = self.tag_list_item_body()
+            elem_item = self.tag_list_item(children=[elem_item_body])
             # The old moin wiki parser seems to forget the list sometimes
             if self._stack[-1].tag.name != 'list':
-                elem = ET.Element(self.tag_list, children=[elem_item])
+                elem = self.tag_list(children=[elem_item])
             else:
                 elem = elem_item
             self._stack_top_append(elem)
@@ -439,7 +432,7 @@ class Formatter(ConverterMacro):
 
             self._stack[-1].remove(elem)
 
-            new_list = ET.Element(self.tag_list)
+            new_list = self.tag_list()
             new_item = None
 
             for child in elem:
@@ -457,7 +450,7 @@ class Formatter(ConverterMacro):
                     new_item = None
 
                 if not new_item:
-                    new_item = ET.Element(self.tag_list_item)
+                    new_item = self.tag_list_item()
                     new_list.append(new_item)
 
                 new_item.append(child)
@@ -527,9 +520,9 @@ class Formatter(ConverterMacro):
 
     def table(self, on, attrib={}, **kw):
         if on:
-            elem_body = ET.Element(self.tag_table_body)
+            elem_body = self.tag_table_body()
             attrib = self._checkTableAttr(attrib, 'table')
-            elem = ET.Element(self.tag_table, attrib, children=[elem_body])
+            elem = self.tag_table(attrib, children=[elem_body])
             self._stack_top_append(elem)
             self._stack.append(elem_body)
         else:
@@ -589,7 +582,7 @@ class Formatter(ConverterMacro):
         mimetype = wikiutil.MimeType(parser_name).mime_type()
         Converter = reg.get(self.request, mimetype, 'application/x-moin-document')
 
-        elem = ET.Element(moin_page.div)
+        elem = moin_page.div()
         self._stack_top_append(elem)
 
         doc = Converter(self.request, self.page.page_name, args)(lines)
