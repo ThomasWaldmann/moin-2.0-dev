@@ -249,17 +249,15 @@ class MercurialBackend(Backend):
 
     def history(self, reverse=True):
         """History implementation reading the log file."""
-        changefn = util.cachefunc(lambda r: self._repo[r].changeset())
-
-        for ctxrevno in self._iterate_changesets(changefn=changefn, reverse=reverse):
-            item_id = changefn(ctxrevno)[3][0]
-            revno = pickle.loads(changefn(ctxrevno)[5]["__revision"])
-            tstamp = pickle.loads(changefn(ctxrevno)[5]["__timestamp"])
+        for changeset, ctxrev in self._iterate_changesets(reverse=reverse):
+            item_id = changeset[3][0]
+            revno = pickle.loads(changeset[5]["__revision"])
+            tstamp = pickle.loads(changeset[5]["__timestamp"])
             namefile = open(os.path.join(self._path, '%s.name' % item_id), 'rb')
             name = namefile.read().decode('utf-8')
             item = Item(self, name)
             rev = MercurialStoredRevision(item, revno, tstamp)
-            rev._item_id = item_id
+            rev._item_id = item._id = item_id
             yield rev
 
     def _create_revision(self, item, revno):
@@ -280,15 +278,13 @@ class MercurialBackend(Backend):
 
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
-        has, last, ctxrevno = self._has_revision(item, revno)
+        has, last, changectx = self._has_revision(item, revno)
         if not has:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
         if revno == -1:
             revno = last
-        ctx = self._repo[ctxrevno]
-
         revision = MercurialStoredRevision(item, revno)
-        revision._data = StringIO.StringIO(ctx.filectx(item._id).data())
+        revision._data = StringIO.StringIO(changectx.filectx(item._id).data())
         revision._item_id = item._id
         revision._metadata = None
         return revision
@@ -300,14 +296,9 @@ class MercurialBackend(Backend):
 
     def _get_revision_metadata(self, rev):
         """Return Revision metadata dictionary."""
-        changefn = util.cachefunc(lambda r: self._repo[r].changeset())
-        for ctxrevno in self._iterate_changesets(changefn=changefn, item_id=rev._item_id):
-            if pickle.loads(changefn(ctxrevno)[5]['__revision']) == rev.revno:
-                extra = changefn(ctxrevno)[5]
-                break
-
+        changectx = self._has_revision(rev.item, rev.revno)[2]
         metadata = {}
-        for k, v in extra.iteritems():
+        for k, v in changectx.extra().iteritems():
             if k.startswith('moin_'):
                 metadata[k.lstrip('moin_')] = pickle.loads(v)
             elif k.startswith('__'):
@@ -344,15 +335,17 @@ class MercurialBackend(Backend):
         else:
             try:
                 f = open(self._cpath(item._id + ".cache"))
-                revs = [int(revno) for revno in f.read().split(",")[:-1]]
+                revs = [int(revpair.split(':')[0]) for revpair in f.read().split(',') if revpair]
                 f.close()
                 revs.sort()
                 return revs
+            except EOFError:
+                return []
             except IOError:
                 revs = []
                 changefn = util.cachefunc(lambda r: self._repo[r].changeset())
-                for ctxrevno in self._iterate_changesets(item_id=item._id, changefn=changefn):
-                    revno = pickle.loads(changefn(ctxrevno)[5]['__revision'])
+                for changeset in self._iterate_changesets(item_id=item._id):
+                    revno = pickle.loads(changeset[5]['__revision'])
                     revs.append(revno)
                     if revno == 0:  # iterating from top
                         revs.reverse()
@@ -474,8 +467,12 @@ class MercurialBackend(Backend):
                 ctx._status[0] = [item._id]
             self._repo.commitctx(ctx)
             # commands.update(self._ui, self._repo)
-            f = open(self._cpath("%s.cache" % item._id), 'a+')
-            f.write(str(rev.revno) + ",")
+
+            tiprevno = self._repo['tip'].rev()
+            f = open(self._cpath("%s.cache" % item._id), 'a')
+            if not f.tell() and not rev.revno == 0:
+                self._recreate_cache(item, f)
+            f.write("%d:%d," % (rev.revno, tiprevno, ))
             f.close()
         finally:
             del lock
@@ -563,29 +560,30 @@ class MercurialBackend(Backend):
 
     def _has_revision(self, item, revno):
         if not item._id:
+            return False, -1, None
+        try:
+            f = open(self._cpath(item._id + ".cache"))
+            revpairs = [revpair for revpair in f.read().split(',') if revpair]
+            f.close()
+            if revpairs and revno == -1:
+                revno = int(max(revpairs)[0])
+            for rev, ctxrev in [pair.split(':') for pair in revpairs]:
+                if int(rev) == revno:
+                     return True, int(max(revpairs)[0]), self._repo[ctxrev]
             return False, -1, -1
-        changefn = util.cachefunc(lambda r: self._repo[r].changeset())
-        for ctxrevno in self._iterate_changesets(item_id=item._id, changefn=changefn):
-            last_revno = pickle.loads(changefn(ctxrevno)[5]['__revision'])
-            return revno <= last_revno, last_revno, ctxrevno
-        return False, -1, -1
+        except IOError:
+            for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
+                last_revno = pickle.loads(changeset[5]['__revision'])
+                return revno <= last_revno, last_revno, self._repo[revno]
+            return False, -1, None
 
-    def _iterate_changesets(self, changefn=None, reverse=True, item_id=None):
-        changeset = changefn or util.cachefunc(lambda r: self._repo[r].changeset())
+    def _iterate_changesets(self, reverse=True, item_id=None):
+        changeset = util.cachefunc(lambda r: self._repo[r].changeset())
 
-        def increasing_windows(start, end, windowsize=8, sizelimit=512):
-            if start < end:
-                while start < end:
-                    yield start, min(windowsize, end-start)
-                    start += windowsize
-                    if windowsize < sizelimit:
-                        windowsize *= 2
-            else:
-                while start > end:
-                    yield start, min(windowsize, start-end-1)
-                    start -= windowsize
-                    if windowsize < sizelimit:
-                        windowsize *= 2
+        def split_windows(start, end, windowsize=512):
+            while start < end:
+                yield start, min(windowsize, end-start)
+                start += windowsize
 
         def wanted(changeset_revision):
             if not item_id:
@@ -601,10 +599,17 @@ class MercurialBackend(Backend):
                 start, end = end, start
             change_revs = revrange(self._repo, ['%d:%d' % (start, end, )])
 
-        for i, window in increasing_windows(0, len(change_revs)):
+        for i, window in split_windows(0, len(change_revs)):
             revs = [change_rev for change_rev in change_revs[i:i+window] if wanted(change_rev)]
             for revno in revs:
-                yield revno
+                yield changeset(revno), revno
+
+    def _recreate_cache(self, item, cachefile):
+        revpairs = []
+        for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
+            revpairs.append((pickle.loads(changeset[5]['__revision']), ctxrev, ))
+        revpairs.sort()
+        cachefile.write("".join(["%d:%d," % (rev, ctxrev) for rev, ctx in revpairs]))
 
     #
     # extended API below
