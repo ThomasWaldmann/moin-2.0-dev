@@ -295,8 +295,7 @@ class MercurialBackend(Backend):
 
     def _get_revision_size(self, rev):
         """Get size of Revision."""
-        tip = self._repo.changelog.tip()
-        ftx = self._repo[tip][rev._item_id].filectx(rev.revno)
+        ftx = self._repo['tip'][rev._item_id].filectx(rev.revno)
         return ftx.size()
 
     def _get_revision_metadata(self, rev):
@@ -461,7 +460,7 @@ class MercurialBackend(Backend):
 
         lock = self._repolock()
         try:
-            p1, p2 = self._repo.changelog.tip(), nullid
+            p1, p2 = self._repo['tip'].node(), nullid
             if not item._id:
                 self._add_item(item)
             else:
