@@ -2,36 +2,32 @@
 """
     MoinMoin - Backends - Storage API Definition.
 
-    During GSoC 2007 Heinrich Wendel designed an API for the storage layer.
-    As of GSoC 2008, this API is greatly improved, changed and integrated
-    into the MoinMoin system.
-
-    ---
-
     The storage API consists of the classes defined in this module. That is:
-    Backend-, Item-, Revision-, NewRevision- and StoredRevision-classes.
+    Backend, Item, Revision, NewRevision and StoredRevision.
 
     A concrete backend implements the abstract methods defined by the API,
-    but also uses concrete methods that have already been defined in this module
+    but also uses concrete methods that have already been defined in this
+    module.
+    A backend is a collection of items. (Examples for backends include SQL,
+    mercurial or filesystem. All of those are means to store data.)
 
-    A Backend is a collection of Items. (Examples for backends would be SQL-,
-    Mercurial- or a Filesystem backend. All of those are means to store data.)
+    Items are, well, the units you store within those backends, e.g. (in our
+    context) pages or attachments. An item itself has revisions and metadata.
+    For instance, you can use that to show a diff between two `versions` of a
+    page, where the page "Foo" is represented by an item and the two versions
+    are represented by two revisions on that item.
 
-    Items are, well, the units you store within those Backends, e.g. (in our
-    context), Pages. An Item itself has Revisions and Metadata. For instance,
-    you can use that to show a diff between two `versions` of a page.
-
-    Metadata is data that describes other data. An Item has Metadata. A single
-    Revision has Metadata as well. E.g. "Which user created this Revision?"
-    would be something stored in the Metadata of a Revision, while "Who created
+    Metadata is data that describes other data. An item has metadata. A single
+    revision has metadata as well. E.g. "Which user created this revision?"
+    would be something stored in the metadata of a revision, while "Who created
     this page in the first place?" would be answered by looking at the metadata
-    of the first revision. Thus, an Item basically is a collection of Revisions
-    which contain the content for the Item. The last Revision represents the most
-    recent contents. An Item can have Metadata or Revisions, or both.
+    of the first revision. Thus, an item basically is a collection of revisions
+    which contain the content for the item. The last revision represents the most
+    recent contents. A stored item can have metadata or revisions, or both.
 
-    For normal operation, Revision data and metadata is immutable as soon as the
-    revision is committed to storage by calling the commit() method on the Item
-    that holds the Revision.
+    For normal operation, revision data and metadata is immutable as soon as the
+    revision is committed to storage (by calling the commit() method on the item
+    that holds the revision), thus making it a StoredRevision.
     Item metadata, on the other hand, as infrequently used as it may be, is mutable.
     Hence, it can only be modified under a read lock.
 
@@ -43,7 +39,6 @@
 """
 
 from UserDict import DictMixin
-
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
                                    NoSuchItemError
 
@@ -70,18 +65,30 @@ EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, 
 
 class Backend(object):
     """
-    This class defines the storage API for moinmoin.
-    It abstracts access to backends. If you want to write
-    a specific backend, say a mercurial backend, you have
-    to implement the methods below.
-    A Backend knows of its Items and can perform several Item-related operations
+    This class abstracts access to backends. If you want to write a specific
+    backend, say a mercurial backend, you have to implement the methods below.
+    A backend knows of its items and can perform several item related operations
     such as search_item, get_item, create_item, etc.
     """
-
+    #
+    # If you need to write a backend it is sufficient
+    # to implement the methods of this class. That
+    # way you don't *have to* implement the other classes
+    # like Item and Revision as well. Though, if you want
+    # to, you can do it as well.
+    # Assuming my_item is instanceof(Item), when you call
+    # my_item.create_revision(42), internally the
+    # _create_revision() method of the items backend is
+    # invoked and the item passes itself as parameter.
+    #
     def search_item(self, searchterm):
         """
-        Takes a searchterm and returns an iterator (maybe empty) over matching
-        item objects (NOT item names!).
+        Takes a MoinMoin search term and returns an iterator (maybe empty) over
+        matching item objects (NOT item names!).
+
+        @type searchterm: MoinMoin search term
+        @param searchterm: The term for which to search.
+        @rtype: iterator of item objects
         """
         # Very simple implementation because we have no indexing
         # or anything like that. If you want to optimize this, override it.
@@ -93,7 +100,12 @@ class Backend(object):
 
     def get_item(self, itemname):
         """
-        Returns Item object or raises Exception if that Item does not exist.
+        Returns item object or raises Exception if that item does not exist.
+
+        @type itemname: string
+        @param itemname: The name of the item we want to get.
+        @rtype: item object
+        @raise NoSuchItemError: No item with name 'itemname' is known to this backend.
         """
         raise NotImplementedError()
 
@@ -101,6 +113,10 @@ class Backend(object):
         """
         This method is added for convenience. With it you don't need to try get_item
         and catch an exception that may be thrown if the item doesn't exist yet.
+
+        @type itemname: string
+        @param itemname: The name of the item of which we want to know whether it exists.
+        @rtype: bool
         """
         # XXX Is there a more beautiful way to approach this?
         # XXX This is going to cause nasty lockups if get_item itself tries to use this method. URGH!
@@ -108,14 +124,18 @@ class Backend(object):
         try:
             self.get_item(itemname)
             return True
-
         except NoSuchItemError:
             return False
 
     def create_item(self, itemname):
         """
-        Creates an item with a given itemname. If that Item already exists,
-        raise an Exception.
+        Creates an item with a given itemname. If that item already exists,
+        raise an exception.
+
+        @type itemname: string
+        @param itemname: Name of the item we want to create.
+        @rtype: item object
+        @raise ItemAlreadyExistsError: The item you were trying to create already exists.
         """
         raise NotImplementedError()
 
@@ -123,6 +143,8 @@ class Backend(object):
         """
         Returns an iterator over all items available in this backend.
         (Like the dict method).
+
+        @rtype: iterator of item objects
         """
         raise NotImplementedError()
 
@@ -137,6 +159,10 @@ class Backend(object):
         Note: some functionality (e.g. completely cloning one storage into
               another) requires that the iterator goes over really every
               revision we have).
+
+        @type reverse: bool
+        @param reverse: Indicate whether the iterator should go in reverse order.
+        @rtype: iterator of revision objects
         """
         # generic and slow history implementation
         revs = []
@@ -151,55 +177,82 @@ class Backend(object):
             item = self.get_item(name)
             yield item.get_revision(revno)
 
-    #
-    # If you need to write a backend it is sufficient
-    # to implement the methods of this class. That
-    # way you don't *have to* implement the other classes
-    # like Item and Revision as well. Though, if you want
-    # to do that, you can do it as well.
-    # Assuming my_item is instanceof(Item), when you call
-    # my_item.create_revision(42), internally the
-    # _create_revision() method of the items Backend is
-    # invoked and the item passes itself as paramter.
-    #
-
     def _get_revision(self, item, revno):
         """
-        For a given Item and Revision number, return the corresponding Revision
-        of that Item.
-        Note: If you pass -1 as revno, this shall return the latest Revision of the Item.
+        For a given item and revision number, return the corresponding revision
+        of that item.
+        Note: If you pass -1 as revno, this shall return the latest revision of the item.
+
+        @type item: Object of class Item.
+        @param item: The Item on which we want to operate.
+        @type revno: int
+        @param revno: Indicate which revision is wanted precisely. If revno is
+        -1, return the most recent revision.
+        @rtype: Object of class Revision
+        @raise NoSuchRevisionError: No revision with that revno was found on item.
         """
         raise NotImplementedError()
 
     def _list_revisions(self, item):
         """
-        For a given Item, return a list containing all revision numbers (as ints)
-        of the Revisions the Item has.
+        For a given item, return a list containing all revision numbers (as ints)
+        of the revisions the item has.
+
+        @type item: Object of class Item.
+        @param item: The Item on which we want to operate.
+        @return: list of ints (possibly empty)
         """
         raise NotImplementedError()
 
     def _create_revision(self, item, revno):
         """
-        Takes an Item object and creates a new Revision. Note that you need to pass
+        Takes an item object and creates a new revision. Note that you need to pass
         a revision number for concurrency-reasons.
-        The newly created Revision-object is returned to the caller.
+        The newly created revision-object is returned to the caller.
+
+        @type item: Object of class Item.
+        @param item: The Item on which we want to operate.
+        @type revno: int
+        @param revno: Indicate which revision we want to create.
+        @precondition: item.get_revision(-1).revno == revno - 1
+        @return: Object of class Revision.
+        @raise RevisionAlreadyExistsError: Raised if a revision with that number
+        already exists on item.
+        @raise RevisionNumberMismatchError: Raised if precondition is not
+        fulfilled.
         """
         raise NotImplementedError()
 
     def _rename_item(self, item, newname):
         """
-        Renames a given item. Raises Exception of the Item you are trying to rename
-        does not exist or if the newname is already chosen by another Item.
+        Renames a given item. Raises Exception if the item you are trying to rename
+        does not exist or if the newname is already chosen by another item.
+
+        @type item: Object of class Item.
+        @param item: The Item on which we want to operate.
+        @type newname: string
+        @param newname: Name of item after this operation has succeeded.
+        @precondition: self.has_item(newname) == False
+        @postcondition: self.has_item(newname) == True
+        @raises ItemAlreadyExistsError: Raised if an item with name 'newname'
+        already exists.
+        @raises AssertionError: Precondition not fulfilled. (Item not yet
+        committed to storage)
+        @return: None
         """
         raise NotImplementedError()
 
     def _commit_item(self, item):
         """
-        Commits the changes that have been done to a given Item. That is, after you
-        created a Revision on that Item and filled it with data you still need to
-        commit() it. You don't need to pass what Revision you are committing because
-        there is only one possible Revision to be committed for your /instance/ of
-        the item and thus the Revision to be saved is memorized by the Item.
+        Commits the changes that have been done to a given item. That is, after you
+        created a revision on that item and filled it with data you still need to
+        commit() it. You don't need to pass what revision you are committing because
+        there is only one possible revision to be committed for your /instance/ of
+        the item and thus the revision to be saved is memorized by the item.
+
+        @type item: Object of class Item.
+        @param item: The Item on which we want to operate.
+        @return: None
         """
         raise NotImplementedError()
 
@@ -207,20 +260,34 @@ class Backend(object):
         """
         This method is invoked when external events happen that cannot be handled in a
         sane way and thus the changes that have been made must be rolled back.
+
+        @type item: Object of class Item.
+        @param item: The Item on which we want to operate.
+        @return: None
         """
         raise NotImplementedError()
 
     def _change_item_metadata(self, item):
         """
-        This method is used to acquire a lock on an Item. This is necessary to prevent
+        This method is used to acquire a lock on an item. This is necessary to prevent
         side-effects caused by concurrency.
+
+        @type item: Object of class Item.
+        @param item: The Item on which we want to operate.
+        @precondition: item not already locked
+        @return: None
         """
         raise NotImplementedError()
 
     def _publish_item_metadata(self, item):
         """
-        This method tries to release a lock on the given Item and put the newly
-        added Metadata of the Item to storage.
+        This method tries to release a lock on the given item and put the newly
+        added Metadata of the item to storage.
+
+        @type item: Object of class Item.
+        @param item: The Item on which we want to operate.
+        @raise AssertionError: item was not locked
+        @return: None
         """
         raise NotImplementedError()
 
@@ -228,24 +295,44 @@ class Backend(object):
         """
         Called to read a given amount of bytes of a revisions data. By default, all
         data is read.
+
+        @type revision: Object of class StoredRevision.
+        @param revision: The revision on which we want to operate.
+        @type chunksize: int
+        @param chunksize: amount of bytes to be read at a time
+        @return: string
         """
         raise NotImplementedError()
 
     def _write_revision_data(self, revision, data):
         """
-        When this method is called, the passed data is written to the Revisions data.
+        When this method is called, the passed data is written to the revisions data.
+
+        @type revision: Object of class NewRevision.
+        @param revision: The revision on which we want to operate.
+        @type data: str
+        @param data: The data to be written on the revision.
+        @return: None
         """
         raise NotImplementedError()
 
     def _get_item_metadata(self, item):
         """
         Load metadata for a given item, return dict.
+
+        @type item: Object of class Item.
+        @param item: The Item on which we want to operate.
+        @return: dict of metadata key / value pairs.
         """
         raise NotImplementedError()
 
     def _get_revision_metadata(self, revision):
         """
-        Load metadata for a given Revision, returns dict.
+        Load metadata for a given revision, returns dict.
+
+        @type revision: Object of a subclass of Revision.
+        @param revision: The revision on which we want to operate.
+        @return: dict of metadata key / value pairs.
         """
         raise NotImplementedError()
 
@@ -255,6 +342,10 @@ class Backend(object):
         is cheap, it can be given as a parameter to StoredRevision
         instantiation instead.
         Return the timestamp (a long).
+
+        @type revision: Object of a subclass of Revision.
+        @param revision: The revision on which we want to operate.
+        @return: long
         """
         raise NotImplementedError()
 
@@ -263,39 +354,46 @@ class Backend(object):
         Lazily access the revision's data size. This needs not be
         implemented if all StoredRevision objects are instantiated
         with the size= keyword parameter.
+
+        @type revision: Object of a subclass of Revision.
+        @param revision: The revision on which we want to operate.
+        @return: int
         """
         raise NotImplementedError()
 
     def _seek_revision_data(self, revision, position, mode):
         """
         Set the revisions cursor on the revisions data.
+
+        @type revision: Object of StoredRevision.
+        @param revision: The revision on which we want to operate.
+        @type position: int
+        @param position: Indicates where to position the cursor
+        @type mode: int
+        @param mode: 0 for absolute positioning, 1 to seek relatively to the
+        current position, 2 to seek relative to the files end.
+        @return: None
         """
         raise NotImplementedError()
 
 
-    # XXX Further internals of this class may follow
-
-
-class Item(object, DictMixin):  # TODO Improve docstring
+class Item(object, DictMixin):
     """
-    An Item object collects the information of an item (e.g. a page) that is
-    stored in persistent storage. It has metadata and Revisions.
-    An Item object is just a proxy to the information stored in the backend.
+    An item object collects the information of an item (e.g. a page) that is
+    stored in persistent storage. It has metadata and revisions.
+    An item object is just a proxy to the information stored in the backend.
     It doesn't necessarily live very long.
     """
     def __init__(self, backend, itemname):
         """
-        Initialize an Item. Memorize the backend to which it belongs.
+        Initialize an item. Memorize the backend to which it belongs.
         """
         self._backend = backend
         self._name = itemname
-
         self._locked = False
         self._read_accessed = False
         self._metadata = None  # Will be loaded lazily upon first real access.
-
         self._uncommitted_revision = None
-
 
     def get_name(self):
         """
@@ -303,11 +401,11 @@ class Item(object, DictMixin):  # TODO Improve docstring
         """
         return self._name
 
-    name = property(get_name, doc="This is the name of this Item. This attribute is read-only.")
+    name = property(get_name, doc="This is the name of this item. This attribute is read-only.")
 
     def __setitem__(self, key, value):
         """
-        In order to acces the Items metadata you can use the well-known dict-like
+        In order to acces the items metadata you can use the well-known dict-like
         semantics python-dictionaries offer. If you want to set a value,
         my_item["key"] = "value" will do the trick. Note that keys must be of the
         type string (or unicode).
@@ -369,7 +467,7 @@ class Item(object, DictMixin):  # TODO Improve docstring
 
     def keys(self):
         """
-        This method returns a list of all metadata-keys of this Item (i.e., a list of Strings.)
+        This method returns a list of all metadata-keys of this item (i.e., a list of Strings.)
         That allows using pythons `for mdkey in itemobj: do_something`-syntax.
         """
         if self._metadata is None:
@@ -379,11 +477,11 @@ class Item(object, DictMixin):  # TODO Improve docstring
 
     def change_metadata(self):
         """
-        Acquire lock for the Items metadata. The actual locking is, by default,
+        Acquire lock for the items metadata. The actual locking is, by default,
         implemented on the backend-level.
         """
         if self._uncommitted_revision is not None:
-            raise RuntimeError("You tried to change the metadata of the item %r but there are uncommitted Revisions on that Item. Commit first." % (self.name))
+            raise RuntimeError("You tried to change the metadata of the item %r but there are uncommitted revisions on that item. Commit first." % (self.name))
 
         if self._read_accessed:
             raise AccessError("Cannot lock after reading metadata")
@@ -393,7 +491,7 @@ class Item(object, DictMixin):  # TODO Improve docstring
 
     def publish_metadata(self):
         """
-        Release lock on the Item.
+        Release lock on the item.
         """
         if not self._locked:
             raise AccessError("cannot publish without change_metadata")
@@ -404,7 +502,7 @@ class Item(object, DictMixin):  # TODO Improve docstring
     def get_revision(self, revno):
         """
         Fetches a given revision and returns it to the caller.
-        Note: If you pass -1 as revno, this shall return the latest Revision of the Item.
+        Note: If you pass -1 as revno, this shall return the latest revision of the item.
         """
         return self._backend._get_revision(self, revno)
 
@@ -445,16 +543,16 @@ class Item(object, DictMixin):  # TODO Improve docstring
 
     def create_revision(self, revno):
         """
-        Create a new revision on the Item. By default this uses the
+        Create a new revision on the item. By default this uses the
         create_revision method the backend specifies internally.
         """
         if self._locked:
-            raise RuntimeError("You tried to create revision #%d on the item %r, but there is unpublished metadata on that Item. Publish first." % (revno, self.name))
+            raise RuntimeError("You tried to create revision #%d on the item %r, but there is unpublished metadata on that item. Publish first." % (revno, self.name))
 
 
         if self._uncommitted_revision is not None:
             if self._uncommitted_revision.revno != revno:
-                raise RevisionNumberMismatchError("There already is an uncommitted Revision #%d on this Item that doesn't match the revno %d you specified." % (self._uncommitted_revision.revno, revno))
+                raise RevisionNumberMismatchError("There already is an uncommitted revision #%d on this item that doesn't match the revno %d you specified." % (self._uncommitted_revision.revno, revno))
 
             else:
                 return self._uncommitted_revision
@@ -466,12 +564,12 @@ class Item(object, DictMixin):  # TODO Improve docstring
 
 class Revision(object, DictMixin):
     """
-    An object of this class represents a Revision of an Item. An Item can have
-    several Revisions at a time, one being the most recent Revision.
+    An object of this class represents a revision of an item. An item can have
+    several revisions at a time, one being the most recent revision.
     This is a principle that is similar to the concepts used in Version-Control-
     Systems.
 
-    Each Revision object has a creation timestamp in the 'timestamp' property
+    Each revision object has a creation timestamp in the 'timestamp' property
     that defaults to None for newly created revisions in which case it will be
     assigned at commit() time. It is writable for use by converter backends,
     care must be taken in that case to create monotonous timestamps!
@@ -480,7 +578,7 @@ class Revision(object, DictMixin):
 
     def __init__(self, item, revno, timestamp):
         """
-        Initialize the Revision.
+        Initialize the revision.
         """
         self._revno = revno
 
@@ -500,7 +598,7 @@ class Revision(object, DictMixin):
         """
         return self._revno
 
-    revno = property(get_revno, doc = "This property stores the revno of the Revision-object. Only read-only access is allowed.")
+    revno = property(get_revno, doc = "This property stores the revno of the revision-object. Only read-only access is allowed.")
 
     def _load_metadata(self):
         self._metadata = self._backend._get_revision_metadata(self)
@@ -522,7 +620,7 @@ class Revision(object, DictMixin):
 
     def keys(self):
         """
-        This method returns a list of all metadata-keys of this Revision (i.e., a list of Strings.)
+        This method returns a list of all metadata-keys of this revision (i.e., a list of Strings.)
         That allows using pythons `for mdkey in revopbj: do_something`-syntax.
         """
         if self._metadata is None:
@@ -534,7 +632,7 @@ class Revision(object, DictMixin):
         """
         Allows file-like read-operations. You can pass a chunksize and it will
         only read as many bytes at a time as you wish. The default, however, is
-        to load the whole Revision data into memory, which may not be what you
+        to load the whole revision data into memory, which may not be what you
         want.
         """
         return self._backend._read_revision_data(self, chunksize)
@@ -542,7 +640,7 @@ class Revision(object, DictMixin):
 
 class StoredRevision(Revision):
     """
-    This is the brother of NewRevision. It allows reading data from a Revision
+    This is the brother of NewRevision. It allows reading data from a revision
     that has already been stored in persistant storage. It doesn't allow data-
     manipulation.
     """
@@ -559,7 +657,7 @@ class StoredRevision(Revision):
             self._timestamp = self._backend._get_revision_timestamp(self)
         return self._timestamp
 
-    timestamp = property(_get_ts, doc="This property returns the creation timestamp of the Revision")
+    timestamp = property(_get_ts, doc="This property returns the creation timestamp of the revision")
 
     def _get_size(self):
         if self._size is None:
@@ -572,15 +670,15 @@ class StoredRevision(Revision):
 
     def __setitem__(self):
         """
-        Revision metadata cannot be altered, thus, we raise an Exception.
+        revision metadata cannot be altered, thus, we raise an Exception.
         """
-        raise AttributeError("Metadata of already existing Revisions may not be altered.")
+        raise AttributeError("Metadata of already existing revisions may not be altered.")
 
     def read(self, chunksize = -1):
         """
         Allows file-like read-operations. You can pass a chunksize and it will
         only read as many bytes at a time as you wish. The default, however, is
-        to load the whole Revision data into memory, which may not be what you
+        to load the whole revision data into memory, which may not be what you
         want.
         """
         return self._backend._read_revision_data(self, chunksize)
@@ -599,7 +697,7 @@ class StoredRevision(Revision):
 
 class NewRevision(Revision):
     """
-    This is basically the same as Revision but with mutable metadata and data properties.
+    This is basically the same as revision but with mutable metadata and data properties.
     """
     def __init__(self, item, revno):
         """
@@ -616,7 +714,7 @@ class NewRevision(Revision):
         ts = long(ts)
         self._timestamp = ts
 
-    timestamp = property(_get_ts, _set_ts, doc="This property accesses the creation timestamp of the Revision")
+    timestamp = property(_get_ts, _set_ts, doc="This property accesses the creation timestamp of the revision")
 
     def _get_size(self):
         return self._size
