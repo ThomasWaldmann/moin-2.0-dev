@@ -196,7 +196,8 @@ class Backend(object):
     def _list_revisions(self, item):
         """
         For a given item, return a list containing all revision numbers (as ints)
-        of the revisions the item has.
+        of the revisions the item has. The list must be ordered, starting with
+        0.
 
         @type item: Object of class Item.
         @param item: The Item on which we want to operate.
@@ -207,7 +208,9 @@ class Backend(object):
     def _create_revision(self, item, revno):
         """
         Takes an item object and creates a new revision. Note that you need to pass
-        a revision number for concurrency-reasons.
+        a revision number for concurrency-reasons. If this is the first revision
+        you create on the item, the revno must be 0. The revnos then must be
+        subsequent.
         The newly created revision-object is returned to the caller.
 
         @type item: Object of class Item.
