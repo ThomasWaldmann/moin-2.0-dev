@@ -147,18 +147,14 @@ class MemoryBackend(Backend):
         """
         try:
             last_rev = max(self._item_revisions[item._item_id].iterkeys())
-
         except (ValueError, KeyError):
             last_rev = -1
-
+        if revno != last_rev + 1:
+            raise RevisionNumberMismatchError(("The latest revision of the item '%r' is %d, thus you cannot create revision number %d. "
+                                               "The revision number must be latest_revision + 1.") % (item.name, last_rev, revno))
         try:
             if revno in self._item_revisions[item._item_id]:
                 raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the item %r" % (revno, item.name))
-
-            elif revno != last_rev + 1:
-                raise RevisionNumberMismatchError("The latest revision of the item '%r' is %d, thus you cannot create revision number %d. \
-                                                   The revision number must be latest_revision + 1." % (item.name, last_rev, revno))
-
         except KeyError:
             pass  # First if-clause will raise an Exception if the Item has just
                   # been created (and not committed), because there is no entry in self._item_revisions yet. Thus, silenced.
@@ -166,7 +162,6 @@ class MemoryBackend(Backend):
         new_revision = self.NewRevision(item, revno)
         new_revision._revno = revno
         new_revision._data = StringIO.StringIO()
-
         return new_revision
 
     def _rename_item(self, item, newname):
