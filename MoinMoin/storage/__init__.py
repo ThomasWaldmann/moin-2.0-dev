@@ -11,13 +11,14 @@
     A backend is a collection of items. (Examples for backends include SQL,
     mercurial or filesystem. All of those are means to store data.)
 
-    Items are, well, the units you store within those backends, e.g. (in our
-    context) pages or attachments. An item itself has revisions and metadata.
-    For instance, you can use that to show a diff between two `versions` of a
-    page, where the page "Foo" is represented by an item and the two versions
-    are represented by two revisions on that item.
+    Items are the units you store within those backends. You can store content
+    of arbitrary type in an item, e.g. text, images or even films.
+    An item itself has revisions and metadata. For instance, you can use that
+    to show a diff between two `versions` of a page, where the page "Foo" is
+    represented by an item and the two versions  are represented by two
+    revisions on that item.
 
-    Metadata is data that describes other data. An item has metadata. A single
+    Metadata is data that describes other data. An item has metadata. Each
     revision has metadata as well. E.g. "Which user created this revision?"
     would be something stored in the metadata of a revision, while "Who created
     this page in the first place?" would be answered by looking at the metadata
@@ -25,13 +26,11 @@
     which contain the content for the item. The last revision represents the most
     recent contents. A stored item can have metadata or revisions, or both.
 
-    For normal operation, revision data and metadata is immutable as soon as the
+    For normal operation, revision data and metadata are immutable as soon as the
     revision is committed to storage (by calling the commit() method on the item
     that holds the revision), thus making it a StoredRevision.
     Item metadata, on the other hand, as infrequently used as it may be, is mutable.
     Hence, it can only be modified under a read lock.
-
-    ---
 
     @copyright: 2008 MoinMoin:ChristopherDenter,
                 2008 MoinMoin:JohannesBerg
