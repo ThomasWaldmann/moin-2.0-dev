@@ -1267,8 +1267,8 @@ class Page(object):
         InputConverter = reg.get(request, mime_type, 'application/x-moin-document')
 
         # TODO: unicode URI
-        url = str(uri.Uri(scheme='wiki', authority='',
-            path='/' + self.page_name.encode('utf-8')))
+        url = uri.Uri(scheme='wiki', authority='',
+            path='/' + self.page_name.encode('utf-8'))
 
         doc = InputConverter(request, url)(body.split('\n'))
 
