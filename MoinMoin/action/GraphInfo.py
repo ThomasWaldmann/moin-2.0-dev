@@ -31,8 +31,6 @@ def execute(pagename, request):
     def history(page, pagename, request):
         """Render history graph"""
         _ = request.getText
-        def reversed(list):  # waiting for 2.4
-            return list[::-1]
 
         def render_action(text, query, **kw):
             kw.update(dict(rel='nofollow'))
@@ -53,6 +51,7 @@ def execute(pagename, request):
         history, revs = [], []
         colors = {}
         new_color = 1
+        cnt = None
         for cnt, revno in enumerate(reversed(item.list_revisions())):
             actions = []
             try:
@@ -60,7 +59,6 @@ def execute(pagename, request):
             except NoSuchRevisionError:
                 pass  # TODO: copy from info, when done there
 
-            # this stuff comes from info action
             if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
                 size = revision.size
 
@@ -72,8 +70,6 @@ def execute(pagename, request):
                     lchecked = rchecked = ''
                 diff = '<input type="radio" name="rev1" value="%d" %s> \
                         <input type="radio" name="rev2" value="%d" %s>' % (revno, lchecked, revno, rchecked)
-                if revno > 0:
-                    diff += render_action(' ' + _('to previous'), {'action': 'diff', 'rev1': revno - 1, 'rev2': revno})
 
                 comment = revision[EDIT_LOG_COMMENT]
                 if not comment:
@@ -101,7 +97,7 @@ def execute(pagename, request):
 
             # Compute revs and next_revs
             if revno not in revs:
-                revs.append(revno) # new head
+                revs.append(revno)  # new head
                 colors[revno] = new_color
                 new_color += 1
 
@@ -110,10 +106,7 @@ def execute(pagename, request):
             next = revs[:]
 
             # Add parents to next_revs
-            #parents = request.cfg.data_backend._get_revision_parents(revision)
             parents = revision.get_parents()
-            # from mercurial.node import nullid
-            # parents = [nullid, nullid]
             addparents = [p for p in parents if p not in next]
             next[idx:idx + 1] = addparents
 
@@ -136,7 +129,6 @@ def execute(pagename, request):
 
             revs = next
 
-            #view = render_action(_('view'), )
             url = page.url(request, {'action': 'recall', 'rev': '%d' % revno})
             editor = user.get_printable_editor(request, revision[EDIT_LOG_USERID], revision[EDIT_LOG_ADDR],
                                           revision[EDIT_LOG_HOSTNAME]) or _("N/A")
@@ -144,50 +136,37 @@ def execute(pagename, request):
             comment = wikiutil.escape(comment) or '&nbsp;'
             node = "%d:%s" % (revno, request.cfg.data_backend._get_revision_node(revision))
 
-            history.append((url, (idx, color), edges, node + comment, editor, date, [], [], ))
-
-            # XXX: display also:
-            # - str(size)
-            # - diff
-            # - "&nbsp;".join(actions)
+            history.append((url, (idx, color), edges, node, editor, date, comment, "%d B" % size, diff, "&nbsp;".join(actions)))
             if cnt >= max_count:
                 break
-        # these values come form mercurial.hgweb.webcommands or graph.tmpl
-        bg_height = 39
+
+        bg_height = 39   # these values come form mercurial.hgweb.webcommands or graph.tmpl
         canvasheight = (len(history) + 1) * bg_height - 27
         canvaswidth = 224
 
         request.write(unicode(html.H2().append(_('Revision History'))))
-        if not cnt: # there was no entry in logfile
+        if cnt is None:  # there was no entry in logfile
             request.write(_('No log entries found.'))
             return
 
         div = html.DIV(id="page-history")
-        # XXX: move to head, get static path
-        div.append('<!--[if IE]><script type="text/javascript" src="/moin_static180/graph/excanvas.js"></script><![endif]-->')
-
+        buttons ='<input type="submit" value="%s">' % (_("Diff"), ) #<input type="submit" value="%s">' % (_("Merge"), )
+        div.append(buttons)
+        div.append('<!--[if IE]><script type="text/javascript" src="%s/graph/excanvas.js"></script><![endif]-->' % request.cfg.url_prefix_static)
         div.append(html.INPUT(type="hidden", name="action", value="diff"))
         noscript = html.DIV(id="noscript")
         noscript.append("This action only works with JavaScript-enabled browsers.")
         wrapper = html.DIV(id="wrapper")
-        # nodebgs = html.UL(id="nodebgs")
         nodebgs = '<ul id="nodebgs"></ul>'
-        # graphnodes = html.UL(id="graphnodes")
         graphnodes = '<ul id="graphnodes"></ul>'
-
         wrapper.append(nodebgs)
         wrapper.append('<canvas id="graph" width="%d" height="%d"></canvas>' % (canvaswidth, canvasheight, ))
         wrapper.append(graphnodes)
-
-        # graph = html.SCRIPT(type="text/javascript", src="/moin_static180/graph.js")
-        graph = '<script type="text/javascript", src="/moin_static180/graph/graph.js"></script>'
-
-        # XXX: get static path properly, move stylesheet to headr
-        stylesheet = '<link rel="stylesheet" href="/moin_static180/graph/graph.css" type="text/css">'
+        graph = '<script type="text/javascript", src="%s/graph/graph.js"></script>' % request.cfg.url_prefix_static
+        request.cfg.stylesheets.extend([('all', request.cfg.url_prefix_static + '/graph/graph.css', )])
         div.append(noscript)
         div.append(wrapper)
         div.append(graph)
-        div.append(stylesheet)
 
         render_graph = """
 <script>
@@ -209,9 +188,9 @@ graph.edge = function(x0, y0, x1, y1, color) {
 
 }
 
-var revlink = '<li style="_STYLE"><span class="desc">';
-revlink += '<a href="_VIEW" title="_VIEW">_DESC</a>';
-revlink += '</span><span class="info">_DATE, by _USER</span></li>';
+var revlink = '<li style="_STYLE"><span class="desc_">';
+revlink += '<a href="_URL" title="_URL">_NODE</a> _COMMENT';
+revlink += '</span><span class="info_">_RADIO _DATE, by _USER</span><span class="size_"> _SIZE</span>_ACTIONS</li>';
 
 graph.vertex = function(x, y, color, parity, cur) {
 
@@ -225,11 +204,15 @@ graph.vertex = function(x, y, color, parity, cur) {
     var nstyle = 'padding-left: ' + left + 'px;';
     var item = revlink.replace(/_STYLE/, nstyle);
     item = item.replace(/_PARITY/, 'parity' + parity);
-    item = item.replace(/_VIEW/, cur[0]);
-    item = item.replace(/_VIEW/, cur[0]);
-    item = item.replace(/_DESC/, cur[3]);
+    item = item.replace(/_URL/, cur[0]);
+    item = item.replace(/_URL/, cur[0]);
+    item = item.replace(/_NODE/, cur[3]);
     item = item.replace(/_USER/, cur[4]);
     item = item.replace(/_DATE/, cur[5]);
+    item = item.replace(/_COMMENT/, cur[6]);
+    item = item.replace(/_SIZE/, cur[7]);
+    item = item.replace(/_RADIO/, cur[8]);
+    item = item.replace(/_ACTIONS/, cur[9]);
 
     return [bg, item];
 
