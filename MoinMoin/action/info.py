@@ -14,7 +14,6 @@ from MoinMoin import config, wikiutil, action
 from MoinMoin.Page import Page
 from MoinMoin import user
 from MoinMoin.widget import html
-
 from MoinMoin.storage import EDIT_LOG_ACTION, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                              EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 
@@ -156,7 +155,6 @@ def execute(pagename, request):
                         comment = _("Renamed from '%(oldpagename)s'.") % {'oldpagename': revision[EDIT_LOG_EXTRA]}
 
                 pgactioncount += 1
-
             else: # ATT*
                 rev = '-'
                 diff = '-'

@@ -544,10 +544,8 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
         if not self.request.user.may.write(newpagename):
             return False, _('You are not allowed to copy this page!')
-
         if newpagename == self.page_name:
             return False, _("Copy failed because name and newname are the same.")
-
         if not newpagename:
             return False, _("You cannot copy to an empty item name.")
 
@@ -584,7 +582,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         new_item.publish_metadata()
 
         newpage = PageEditor(request, newpagename)
-
         # Get old page text
         savetext = newpage.get_raw_body()
 
@@ -630,9 +627,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             return False, _(err.message)
 
         newpage = PageEditor(request, newpagename)
-
         savetext = newpage.get_raw_body()
-
         savetext = u"## page was renamed from %s\n%s" % (old_name, savetext)
         newpage.saveText(savetext, None, comment=comment, index=0, extra=old_name, action='SAVE/RENAME', notify=False)
 
@@ -660,7 +655,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         send_event(event)
 
         return True, None
-
 
     def revertPage(self, revision, comment=u''):
         """ Reverts page to the given revision
@@ -719,7 +713,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
             event = PageDeletedEvent(request, self, comment)
             send_event(event)
-
         except self.SaveError, message:
             # XXX do not only catch base class SaveError here, but
             # also the derived classes, so we can give better err msgs
@@ -919,7 +912,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
 
             for key, value in metadata.iteritems():
                 newrev[key] = value
-
         else:
             newrev.write("")
             newrev[DELETED] = True
@@ -927,7 +919,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         if self.uid_override is not None:
             addr, userid = "", ""
             hostname = self.uid_override
-
         else:
             addr = request.remote_addr
 
@@ -939,18 +930,15 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             hostname = wikiutil.get_hostname(request, addr)
 
         timestamp = time.time()
-
         newrev[EDIT_LOG_ACTION] = action
         newrev[EDIT_LOG_ADDR] = addr
         newrev[EDIT_LOG_HOSTNAME] = hostname
         newrev[EDIT_LOG_USERID] = userid
         newrev[EDIT_LOG_EXTRA] = extra
         newrev[EDIT_LOG_COMMENT] = wikiutil.clean_input(comment)
-        # TODO: Check why this is interpreted as PI:
         newrev["mimetype"] = "text/x-unidentified-wiki-format"
 
         self._item.commit()
-
         self.reset()
 
         # add event log entry
@@ -1176,17 +1164,6 @@ To leave the editor, press the Cancel button.""", wiki=True) % {
                 self._deleteLockFile()
 
     def _readLockFile(self):
-   ###    """ Load lock info if not yet loaded. """
-   ###    _ = self._
-   ###    self.owner = None
-   ###    self.owner_html = wikiutil.escape(_("<unknown>"))
-   ###    self.timestamp = 0
-   ###    if self.locktype:
-   ###        (lock, self.timestamp, addr, hostname, userid) = self.pageobj._item.edit_lock
-   ###        if lock:
-   ###            self.owner = userid or addr
-   ###            self.owner_html = user.get_printable_editor(self.request, userid, addr, hostname)
-
         _ = self._
         self.owner = None
         self.owner_html = wikiutil.escape(_("<unknown>"))
@@ -1205,4 +1182,3 @@ To leave the editor, press the Cancel button.""", wiki=True) % {
     def _deleteLockFile(self):
         """ Delete the lock file unconditionally. """
         self.pageobj._item.edit_lock = False
-

@@ -58,7 +58,6 @@ class ROWrapperBackend(Backend):
         for item in self.first.iteritems():
             names[item.name] = True
             yield item
-
         for item in self.second.iteritems():
             if not names[item.name]:
                 yield item
@@ -81,7 +80,6 @@ class ROWrapperBackend(Backend):
         for revision in self.first.history(reverse):
             revisions.append(revision)
             item_revs.append((revision.revno, revision.item.name))
-
         for revision in self.second.history(reverse):
             if not (revision.revno, revision.item.name) in item_revs:
                 revisions.append(revision)

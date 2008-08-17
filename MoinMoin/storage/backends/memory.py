@@ -88,13 +88,11 @@ class MemoryBackend(Backend):
         """
         if not isinstance(itemname, (str, unicode)):
             raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
-
         elif self.has_item(itemname):
             raise ItemAlreadyExistsError("An Item with the name %r already exists!" % (itemname))
 
         item = self.Item(self, itemname)
         item._item_id = None
-
         return item
 
     def iteritems(self):
@@ -114,14 +112,11 @@ class MemoryBackend(Backend):
 
         if revno == -1 and revisions:
             revno = max(item.list_revisions())
-
         try:
             data = self._item_revisions[item_id][revno][0]
             metadata = self._item_revisions[item_id][revno][1]
-
         except KeyError:
             raise NoSuchRevisionError("No Revision #%d on Item %s - Available revisions: %r" % (revno, item.name, revisions))
-
         else:
             revision = self.StoredRevision(item, revno, timestamp=metadata['__timestamp'], size=len(data))
             revision._data = StringIO.StringIO(data)
@@ -173,12 +168,10 @@ class MemoryBackend(Backend):
             raise ItemAlreadyExistsError("Cannot rename Item %s to %s since there already is an Item with that name." % (item.name, newname))
 
         name = None
-
         for itemname, itemid in self._itemmap.iteritems():
             if itemid == item._item_id:
                 name = itemname
                 break
-
         assert name is not None
 
         copy_me = self._itemmap[name]
@@ -195,9 +188,7 @@ class MemoryBackend(Backend):
         self._itemmap[item.name] = item._item_id
         self._item_metadata[item._item_id] = {}
         self._item_revisions[item._item_id] = {}  # no revisions yet
-
         self._item_metadata_lock[item._item_id] = Lock()
-
         self._last_itemid += 1
 
     def _commit_item(self, revision):
@@ -214,7 +205,6 @@ class MemoryBackend(Backend):
             if self.has_item(item.name):
                 raise ItemAlreadyExistsError("You tried to commit an Item with the name %r, but there already is an Item with that name." % item.name)
             self._add_item_internally(item)
-
         elif self.has_item(item.name) and (revision.revno in self._item_revisions[item._item_id]):
             item._uncommitted_revision = None  # Discussion-Log: http://moinmo.in/MoinMoinChat/Logs/moin-dev/2008-06-20 around 17:27
             raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the Item %r!" % (revision.revno, item.name))
@@ -223,7 +213,6 @@ class MemoryBackend(Backend):
 
         if revision.timestamp is None:
             revision.timestamp = long(time.time())
-
         if revision._metadata is None:
             revision._metadata = {}
         revision._metadata['__timestamp'] = revision.timestamp
@@ -257,13 +246,11 @@ class MemoryBackend(Backend):
         """
         if item._item_id is None and self.has_item(item.name):
             raise  ItemAlreadyExistsError, "The Item whose metadata you tried to publish already exists."
-
         if item._item_id is None:
             # not committed yet, no locking, store item
             self._add_item_internally(item)
         else:
             self._item_metadata_lock[item._item_id].release()
-
         if item._metadata is not None:
             self._item_metadata[item._item_id] = item._metadata.copy()
         else:
@@ -288,7 +275,6 @@ class MemoryBackend(Backend):
         """
         try:
             return dict(self._item_metadata[item._item_id])
-
         except KeyError:  # The Item we are operating on has not been committed yet.
             return dict()
 
@@ -297,7 +283,6 @@ class MemoryBackend(Backend):
         Load metadata for a given Revision, returns dict.
         """
         item = revision._item
-
         return self._item_revisions[item._item_id][revision.revno][1]
 
     def _seek_revision_data(self, revision, position, mode):
