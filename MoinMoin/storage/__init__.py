@@ -212,8 +212,7 @@ class Backend(object):
     def _create_revision(self, item, revno):
         """
         Takes an item object and creates a new revision. Note that you need to pass
-        a revision number for concurrency-reasons. If this is the first revision
-        you create on the item, the revno must be 0. The revnos then must be
+        a revision number for concurrency-reasons. The revnos then must be
         subsequent.
         The newly created revision-object is returned to the caller.
 
