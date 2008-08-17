@@ -655,7 +655,7 @@ class Revision(object, DictMixin):
         if self._metadata is None:
             self._load_metadata()
 
-        return filter(lambda x: not x.startswith('__'), self._metadata.keys())
+        return [key for key in self._metadata if not key.startswith("__")]
 
     def read_data(self, chunksize = -1):
         """
