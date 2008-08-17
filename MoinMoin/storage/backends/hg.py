@@ -624,19 +624,19 @@ class MercurialBackend(Backend):
 
     def _get_revision_node(self, revision):
         """Return internal short SHA1 id of Revision"""
-        ctxrevs = filter(lambda r: revision._item_id in self._repo[r].files(), iter(self._repo))
-        for rev, ctxrev in enumerate(ctxrevs):
-            if rev == revision.revno:
-                return short(self._repo[ctxrev].node())
+        for changeset, ctxrevno in self._iterate_changesets(item_id=revision._item_id):
+            if pickle.loads(changeset[5]['__revision']) == revision.revno:
+                return short(self._repo[ctxrevno].node())
 
     def _get_revision_parents(self, revision):
         """Return parent revision numbers of Revision."""
-        ctxrevs = filter(lambda r: revision._item_id in self._repo[r].files(), iter(self._repo))
         rcache = {}
-        for revno, ctxrevno in enumerate(ctxrevs):
+        for changeset, ctxrevno in self._iterate_changesets(item_id=revision._item_id):
+            revno = pickle.loads(changeset[5]['__revision'])
             rcache[ctxrevno] = revno
-            if revno == revision.revno:
+            if  revno == revision.revno:
                 parentctxrevs = [p for p in self._repo.changelog.parentrevs(ctxrevno) if p != nullrev]
+
         parents = []
         for p in parentctxrevs:
             try:
