@@ -9,6 +9,8 @@
   - Handle attachment and drawing links. Depends on the outcome of the storage
     merge.
 
+* Include converter: Handle URIs using the Uri class.
+
 * Allow creation of unicode URIs for wiki links. This should also provide
   access to the query parameters.
 
