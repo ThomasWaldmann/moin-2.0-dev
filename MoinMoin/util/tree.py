@@ -24,7 +24,8 @@ class Namespace(unicode):
         return Name(key.replace('_', '-'), self)
 
     def __repr__(self):
-        return '<%s(%r)>' % (self.__class__.__name__, self)
+        inner = super(Namespace, self).__repr__()
+        return '<%s(%s)>' % (self.__class__.__name__, inner)
 
     @property
     def namespace(self):
