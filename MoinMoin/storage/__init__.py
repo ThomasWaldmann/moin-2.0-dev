@@ -197,7 +197,11 @@ class Backend(object):
         """
         For a given item, return a list containing all revision numbers (as ints)
         of the revisions the item has. The list must be ordered, starting with
-        0.
+        the oldest revision-number.
+        (One may decide to delete certain revisions completely at one point. For
+        that case, list_revisions does not need to return subsequent revision
+        numbers. _create_revision() on the other hand must only create
+        subsequent revision numbers.)
 
         @type item: Object of class Item.
         @param item: The Item on which we want to operate.
@@ -245,27 +249,26 @@ class Backend(object):
         """
         raise NotImplementedError()
 
-    def _commit_item(self, item):
+    def _commit_item(self, revision):
         """
         Commits the changes that have been done to a given item. That is, after you
         created a revision on that item and filled it with data you still need to
-        commit() it. You don't need to pass what revision you are committing because
-        there is only one possible revision to be committed for your /instance/ of
-        the item and thus the revision to be saved is memorized by the item.
+        commit() it. You need to pass the revision you want to commit. The item
+        can be looked up by the revisions 'item' property.
 
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
+        @type revision: Object of class NewRevision.
+        @param revision: The revision we want to commit to  storage.
         @return: None
         """
         raise NotImplementedError()
 
-    def _rollback_item(self, item):
+    def _rollback_item(self, revision):
         """
         This method is invoked when external events happen that cannot be handled in a
         sane way and thus the changes that have been made must be rolled back.
 
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
+        @type revision: Object of class NewRevision.
+        @param revision: The revision we want to roll back.
         @return: None
         """
         raise NotImplementedError()
@@ -274,6 +277,13 @@ class Backend(object):
         """
         This method is used to acquire a lock on an item. This is necessary to prevent
         side-effects caused by concurrency.
+        You need to call this method before altering the metadata of the item.
+        E.g.:   item.change_metadata()  # Invokes this method
+                item["metadata_key"] = "metadata_value"
+                item.publish_metadata()
+
+        As you can see, the lock acquired by this method is released by calling
+        the publish_metadata() method on the item.
 
         @type item: Object of class Item.
         @param item: The Item on which we want to operate.
@@ -286,6 +296,12 @@ class Backend(object):
         """
         This method tries to release a lock on the given item and put the newly
         added Metadata of the item to storage.
+        You need to call this method after altering the metadata of the item.
+        E.g.:   item.change_metadata()
+                item["metadata_key"] = "metadata_value"
+                item.publish_metadata()  # Invokes this method
+
+        The lock this method releases is acquired by the change_metadata method.
 
         @type item: Object of class Item.
         @param item: The Item on which we want to operate.
@@ -373,8 +389,8 @@ class Backend(object):
         @type position: int
         @param position: Indicates where to position the cursor
         @type mode: int
-        @param mode: 0 for absolute positioning, 1 to seek relatively to the
-        current position, 2 to seek relative to the files end.
+        @param mode: 0 for 'absolute positioning', 1 to seek 'relatively to the
+        current position', 2 to seek 'relative to the files end'.
         @return: None
         """
         raise NotImplementedError()
@@ -390,6 +406,12 @@ class Item(object, DictMixin):
     def __init__(self, backend, itemname):
         """
         Initialize an item. Memorize the backend to which it belongs.
+
+        @type backend: Object of a subclass of Backend.
+        @param backend: The backend that stores this item.
+        @type itemname: unicode
+        @param itemname: The name representing this item in the backend. Unique
+        within the backend.
         """
         self._backend = backend
         self._name = itemname
@@ -408,7 +430,7 @@ class Item(object, DictMixin):
 
     def __setitem__(self, key, value):
         """
-        In order to acces the items metadata you can use the well-known dict-like
+        In order to access the items metadata you can use the well-known dict-like
         semantics python-dictionaries offer. If you want to set a value,
         my_item["key"] = "value" will do the trick. Note that keys must be of the
         type string (or unicode).
@@ -417,52 +439,57 @@ class Item(object, DictMixin):
         You must wrap write-accesses to metadata in change_metadata/publish_metadata
         calls.
         Keys starting with two underscores are reserved and cannot be used.
+
+        @type key: str or unicode
+        @param key: The keyword that is used to look up the corresponding value.
+        @type value: str, unicode, int, long float, bool, complex or a nested
+        tuple thereof.
+        @param value: The value that is referenced by the keyword `key` in this
+        specific items metadata-dict.
         """
         if not self._locked:
             raise AttributeError("Cannot write to unlocked metadata")
-
         if not isinstance(key, (str, unicode)):
             raise TypeError("Key must be string type")
-
         if key.startswith('__'):
             raise TypeError("Key must not begin with two underscores")
-
         if not value_type_is_valid(value):
             raise TypeError("Value must be string, unicode, int, long, float, bool, complex or a nested tuple thereof.")
-
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
-
         self._metadata[key] = value
 
     def __delitem__(self, key):
         """
-        Delete an item metadata key.
+        Delete an item metadata key/value pair.
+
+        @type key: str or unicode
+        @param key: Key identifying a unique key/value pair in this items
+        metadata.
+        @postcondition: self[key] raises KeyError
         """
         if not self._locked:
             raise AttributeError("Cannot write to unlocked metadata")
-
         if key.startswith('__'):
             raise KeyError(key)
-
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
-
         del self._metadata[key]
 
     def __getitem__(self, key):
         """
         See __setitem__.__doc__ -- You may use my_item["key"] to get the corresponding
         metadata-value. Note however, that the key you pass must be of type str or unicode.
+
+        @type key: str or unicode
+        @param key: The key refering to the value we want to return.
+        @return self._metadata[key]
         """
         self._read_accessed = True
-
         if not isinstance(key, (unicode, str)):
             raise TypeError("key must be string type")
-
         if key.startswith('__'):
             raise KeyError(key)
-
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
 
@@ -472,20 +499,21 @@ class Item(object, DictMixin):
         """
         This method returns a list of all metadata-keys of this item (i.e., a list of Strings.)
         That allows using pythons `for mdkey in itemobj: do_something`-syntax.
+
+        @return: list of metadata keys not starting with two leading underscores
         """
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
 
-        return filter(lambda x: not x.startswith('__'), self._metadata.keys())
+        return [key for key in self._metadata if not key.startswith("__")]
 
     def change_metadata(self):
         """
-        Acquire lock for the items metadata. The actual locking is, by default,
-        implemented on the backend-level.
+        @see: Backend._change_item_metadata.__doc__
         """
         if self._uncommitted_revision is not None:
-            raise RuntimeError("You tried to change the metadata of the item %r but there are uncommitted revisions on that item. Commit first." % (self.name))
-
+            raise RuntimeError(("You tried to change the metadata of the item %r but there "
+                                "are uncommitted revisions on that item. Commit first.") % (self.name))
         if self._read_accessed:
             raise AccessError("Cannot lock after reading metadata")
 
@@ -494,7 +522,7 @@ class Item(object, DictMixin):
 
     def publish_metadata(self):
         """
-        Release lock on the item.
+        @see: Backend._publis_item_metadata.__doc__
         """
         if not self._locked:
             raise AccessError("cannot publish without change_metadata")
@@ -504,21 +532,19 @@ class Item(object, DictMixin):
 
     def get_revision(self, revno):
         """
-        Fetches a given revision and returns it to the caller.
-        Note: If you pass -1 as revno, this shall return the latest revision of the item.
+        @see: Backend._get_revision.__doc__
         """
         return self._backend._get_revision(self, revno)
 
     def list_revisions(self):
         """
-        Returns a list of ints representing the revisions this item has.
+        @see: Backend._list_revisions.__doc__
         """
         return self._backend._list_revisions(self)
 
     def rename(self, newname):
         """
-        Rename the item. By default this uses the rename method the backend
-        specifies internally.
+        @see: Backend._rename_item.__doc__
         """
         if not isinstance(newname, (str, unicode)):
             raise TypeError("Item names must have string type, not %s" % (type(newname)))
@@ -528,38 +554,33 @@ class Item(object, DictMixin):
 
     def commit(self):
         """
-        Commit the item. By default this uses the commit method the backend
-        specifies internally.
+        @see: Backend._commit_item.__doc__
         """
         assert self._uncommitted_revision is not None
-
         self._backend._commit_item(self._uncommitted_revision)
         self._uncommitted_revision = None
 
     def rollback(self):
         """
-        Invoke this method when external events happen that cannot be handled in a
-        sane way and thus the changes that have been made must be rolled back.
+        @see: Backend._rollback_item.__doc__
         """
         self._backend._rollback_item(self._uncommitted_revision)
         self._uncommitted_revision = None
 
     def create_revision(self, revno):
         """
-        Create a new revision on the item. By default this uses the
-        create_revision method the backend specifies internally.
+        @see: Backend._create_revision.__doc__
         """
         if self._locked:
-            raise RuntimeError("You tried to create revision #%d on the item %r, but there is unpublished metadata on that item. Publish first." % (revno, self.name))
-
-
+            raise RuntimeError(("You tried to create revision #%d on the item %r, but there "
+                               "is unpublished metadata on that item. Publish first.") % (revno, self.name))
         if self._uncommitted_revision is not None:
             if self._uncommitted_revision.revno != revno:
-                raise RevisionNumberMismatchError("There already is an uncommitted revision #%d on this item that doesn't match the revno %d you specified." % (self._uncommitted_revision.revno, revno))
-
+                raise RevisionNumberMismatchError(("There already is an uncommitted revision #%d on this item "
+                                                   "that doesn't match the revno %d you specified.") %
+                                                   (self._uncommitted_revision.revno, revno))
             else:
                 return self._uncommitted_revision
-
         else:
             self._uncommitted_revision = self._backend._create_revision(self, revno)
             return self._uncommitted_revision
@@ -567,24 +588,31 @@ class Item(object, DictMixin):
 
 class Revision(object, DictMixin):
     """
-    An object of this class represents a revision of an item. An item can have
+    This class serves as superclass for StoredRevision and NewRevision.
+    An object of either subclass represents a revision of an item. An item can have
     several revisions at a time, one being the most recent revision.
     This is a principle that is similar to the concepts used in Version-Control-
     Systems.
 
     Each revision object has a creation timestamp in the 'timestamp' property
     that defaults to None for newly created revisions in which case it will be
-    assigned at commit() time. It is writable for use by converter backends,
+    assigned at commit() time. It is writable for use by converter backends, but
     care must be taken in that case to create monotonous timestamps!
     This timestamp is also retrieved via the backend's history() method.
     """
-
     def __init__(self, item, revno, timestamp):
         """
         Initialize the revision.
+
+        @type item: Object of class Item.
+        @param item: The item to which this revision belongs.
+        @type revno: int
+        @param revno: The unique number identifiyng this revision on the item.
+        @type timestamp: int
+        @param timestamp: int representing the UNIX time this revision was
+        created. (UNIX time: seconds since the epoch, i.e. 1st of January 1970, 00:00 UTC)
         """
         self._revno = revno
-
         self._item = item
         self._backend = item._backend
         self._metadata = None
@@ -601,21 +629,20 @@ class Revision(object, DictMixin):
         """
         return self._revno
 
-    revno = property(get_revno, doc = "This property stores the revno of the revision-object. Only read-only access is allowed.")
+    revno = property(get_revno, doc = ("This property stores the revno of the revision-object. "
+                                       "Only read-only access is allowed."))
 
     def _load_metadata(self):
         self._metadata = self._backend._get_revision_metadata(self)
 
     def __getitem__(self, key):
         """
-        Get the corresponding value to the key from the metadata dict.
+        @see: Item.__getitem__.__doc__
         """
         if not isinstance(key, (unicode, str)):
             raise TypeError("key must be string type")
-
         if key.startswith('__'):
             raise KeyError(key)
-
         if self._metadata is None:
             self._load_metadata()
 
@@ -623,8 +650,7 @@ class Revision(object, DictMixin):
 
     def keys(self):
         """
-        This method returns a list of all metadata-keys of this revision (i.e., a list of Strings.)
-        That allows using pythons `for mdkey in revopbj: do_something`-syntax.
+        @see: Item.keys.__doc__
         """
         if self._metadata is None:
             self._load_metadata()
@@ -633,10 +659,7 @@ class Revision(object, DictMixin):
 
     def read_data(self, chunksize = -1):
         """
-        Allows file-like read-operations. You can pass a chunksize and it will
-        only read as many bytes at a time as you wish. The default, however, is
-        to load the whole revision data into memory, which may not be what you
-        want.
+        @see: Backend._read_revision_data.__doc__
         """
         return self._backend._read_revision_data(self, chunksize)
 
@@ -644,10 +667,9 @@ class Revision(object, DictMixin):
 class StoredRevision(Revision):
     """
     This is the brother of NewRevision. It allows reading data from a revision
-    that has already been stored in persistant storage. It doesn't allow data-
-    manipulation.
+    that has already been stored in storage. It doesn't allow data manipulation
+    and can only be used for information retrieval.
     """
-
     def __init__(self, item, revno, timestamp=None, size=None):
         """
         Initialize the NewRevision
@@ -731,10 +753,8 @@ class NewRevision(Revision):
         """
         if not isinstance(key, (str, unicode)):
             raise TypeError("Key must be string type")
-
         if key.startswith('__'):
             raise TypeError("Key must not begin with two underscores")
-
         if not value_type_is_valid(value):
             raise TypeError("Value must be string, int, long, float, bool, complex or a nested tuple of the former")
 
@@ -762,6 +782,11 @@ def value_type_is_valid(value):
     str, unicode, bool, int, long, float, complex and tuple.
     Since tuples can contain other types, we need to check the
     types recursively.
+
+    @type value: str, unicode, int, long, float, complex, tuple
+    @param value: A value of which we want to know if it is a valid metadata
+    value.
+    @return: bool
     """
     if isinstance(value, (str, unicode, int, long, float, complex)):
         return True
@@ -771,5 +796,3 @@ def value_type_is_valid(value):
                 return False
         else:
             return True
-
-
