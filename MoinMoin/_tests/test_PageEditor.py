@@ -7,7 +7,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import py
 
+from MoinMoin.conftest import dirties_backend
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 
@@ -203,33 +205,50 @@ class TestCopyPage(object):
         rev.write(self.text)
         item.commit()
 
+    def copyTest(self):
+        result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
+        revision = Page(self.request, self.copy_pagename).current_rev()
+        return result, revision
+
+    @dirties_backend
     def test_copy_page(self):
         """
         Tests copying a page without restricted acls
         """
         self.createTestPage()
-        result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
-        revision = Page(self.request, self.copy_pagename).current_rev()
+        result, revision = self.copyTest()
         assert result and revision == 1
+
+    @dirties_backend
+    def test_copy_page_to_already_existing_page(self):
+        """
+        Tests copying a page to a page that already exists
+        """
+        self.createTestPage()
+        result, revision = self.copyTest()
+        result, revision = self.copyTest()
+        assert result and revision == 2
 
     def test_copy_page_acl_read(self):
         """
         Tests copying a page without write rights
         """
+        py.test.skip("No use is being made of ACLs right now. Fix after SoC.")
         self.text = u'#acl SomeUser:read,write,delete All:read\n'
         self.createTestPage()
         result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
         revision = Page(self.request, self.copy_pagename).current_rev()
-        assert result and revision is 2
+        assert result and revision == 2
 
     def test_copy_page_acl_no_read(self):
         """
         Tests copying a page without read rights
         """
+        py.test.skip("No use is being made of ACLs right now. Fix after SoC.")
         self.text = u'#acl SomeUser:read,write,delete All:\n'
         self.createTestPage()
         result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
         revision = Page(self.request, self.copy_pagename).current_rev()
-        assert result and revision is 2
+        assert result and revision == 2
 
 coverage_modules = ['MoinMoin.PageEditor']

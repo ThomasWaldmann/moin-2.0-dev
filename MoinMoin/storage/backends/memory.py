@@ -1,3 +1,4 @@
+# -*- coding: iso-8859-1 -*-
 """
     MoinMoin - MemoryBackend + TracingBackend
 
@@ -8,8 +9,8 @@
     This is mainly done for testing and documentation / demonstration purposes.
     Thus, this backend IS NOT designed for concurrent use.
 
-    DO NOT (even for the smallest glimpse of a second) consider to use this backend
-    for any production site that needs persistant storage.
+    DO NOT (even for the smallest glimpse of a second) consider to use this
+    backend for any production site that needs persistant storage.
 
     ---
 
@@ -17,7 +18,6 @@
                 2008 MoinMoin:JohannesBerg,
                 2008 MoinMoin:AlexanderSchremmer
     @license: GNU GPL, see COPYING for details.
-
 """
 
 import StringIO
@@ -43,13 +43,10 @@ class MemoryBackend(Backend):
         Initialize this Backend.
         """
         self._last_itemid = 0
-
         self._itemmap = {}                  # {itemname : itemid}   // names may change...
         self._item_metadata = {}            # {id : {metadata}}
         self._item_revisions = {}           # {id : {revision_id : (revision_data, {revision_metadata})}}
-
         self._item_metadata_lock = {}       # {id : Lockobject}
-
         self._revision_history = []
 
     def history(self, reverse=True):
@@ -57,20 +54,10 @@ class MemoryBackend(Backend):
         Returns an iterator over all revisions created for all items in
         (reverse [default] or non-reverse) timestamp order.
         """
-        #XXX Harden the below against concurrency, etc.
-        all_revisions = []
-
-        for item_name in self._itemmap:
-            item = self.get_item(item_name)
-            for revno in item.list_revisions():
-                rev = item.get_revision(revno)
-                all_revisions.append(rev)
-
-        all_revisions.sort(lambda x, y: cmp(x.timestamp, y.timestamp))
         if reverse:
-            all_revisions.reverse()
-        return iter(all_revisions)
-
+            return iter(self._revision_history[::-1])
+        else:
+            return iter(self._revision_history)
 
     def get_item(self, itemname):
         """
@@ -160,18 +147,14 @@ class MemoryBackend(Backend):
         """
         try:
             last_rev = max(self._item_revisions[item._item_id].iterkeys())
-
         except (ValueError, KeyError):
             last_rev = -1
-
+        if revno != last_rev + 1:
+            raise RevisionNumberMismatchError(("The latest revision of the item '%r' is %d, thus you cannot create revision number %d. "
+                                               "The revision number must be latest_revision + 1.") % (item.name, last_rev, revno))
         try:
             if revno in self._item_revisions[item._item_id]:
                 raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the item %r" % (revno, item.name))
-
-            elif revno != last_rev + 1:
-                raise RevisionNumberMismatchError("The latest revision of the item '%r' is %d, thus you cannot create revision number %d. \
-                                                   The revision number must be latest_revision + 1." % (item.name, last_rev, revno))
-
         except KeyError:
             pass  # First if-clause will raise an Exception if the Item has just
                   # been created (and not committed), because there is no entry in self._item_revisions yet. Thus, silenced.
@@ -179,7 +162,6 @@ class MemoryBackend(Backend):
         new_revision = self.NewRevision(item, revno)
         new_revision._revno = revno
         new_revision._data = StringIO.StringIO()
-
         return new_revision
 
     def _rename_item(self, item, newname):
@@ -246,6 +228,7 @@ class MemoryBackend(Backend):
             revision._metadata = {}
         revision._metadata['__timestamp'] = revision.timestamp
         self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata.copy())
+        self._revision_history.append(revision)
 
     def _rollback_item(self, rev):
         """
@@ -354,7 +337,7 @@ class TracingBackend(MemoryBackend):
         self.codebuffer.append(expr)
 
     def get_code(self):
-        return "\n".join(["def run(backend):", "    pass"] + self.codebuffer)
+        return "\n".join(["def run(backend, got_exc=lambda x: None):", "    pass"] + self.codebuffer)
 
     def get_func(self):
         if self.filename:
@@ -379,10 +362,28 @@ def _retval_to_expr(retval):
 def _get_thingie_wrapper(thingie):
     def wrap_thingie(func):
         def wrapper(*args, **kwargs):
-            assert not kwargs
-            retval = func(*args, **kwargs) # XXX no try/except -> we do not log operations with exceptions ...
-            args[0]._backend.log_expr("    %s%s.%s(*%s)" % (_retval_to_expr(retval),
-                _get_thingie_id(thingie, args[0]), func.func_name, repr(args[1:])))
+            exc = None
+            log = args[0]._backend.log_expr
+            level = 4
+            retval = None
+            try:
+                try:
+                    retval = func(*args, **kwargs)
+                except Exception, e:
+                    exc = type(e).__name__ # yes, not very exact
+                    log(" " * level + "try:")
+                    level += 4
+                    raise
+            finally:
+                log(" " * level + "%s%s.%s(*%s, **%s)" % (_retval_to_expr(retval),
+                _get_thingie_id(thingie, args[0]), func.func_name, repr(args[1:]), repr(kwargs)))
+                if exc:
+                    level -= 4
+                    log(" " * level + "except Exception, e:")
+                    level += 4
+                    log(" " * level + "if type(e).__name__ != %r:" % (exc, ))
+                    level += 4
+                    log(" " * level + "got_exc(e)")
             return retval
         return wrapper
     return wrap_thingie
