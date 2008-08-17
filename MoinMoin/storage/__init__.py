@@ -389,8 +389,8 @@ class Backend(object):
         @type position: int
         @param position: Indicates where to position the cursor
         @type mode: int
-        @param mode: 0 for absolute positioning, 1 to seek relatively to the
-        current position, 2 to seek relative to the files end.
+        @param mode: 0 for 'absolute positioning', 1 to seek 'relatively to the
+        current position', 2 to seek 'relative to the files end'.
         @return: None
         """
         raise NotImplementedError()
@@ -512,7 +512,8 @@ class Item(object, DictMixin):
         @see: Backend._change_item_metadata.__doc__
         """
         if self._uncommitted_revision is not None:
-            raise RuntimeError("You tried to change the metadata of the item %r but there are uncommitted revisions on that item. Commit first." % (self.name))
+            raise RuntimeError(("You tried to change the metadata of the item %r but there "
+                                "are uncommitted revisions on that item. Commit first.") % (self.name))
         if self._read_accessed:
             raise AccessError("Cannot lock after reading metadata")
 
@@ -571,15 +572,15 @@ class Item(object, DictMixin):
         @see: Backend._create_revision.__doc__
         """
         if self._locked:
-            raise RuntimeError("You tried to create revision #%d on the item %r, but there is unpublished metadata on that item. Publish first." % (revno, self.name))
-
+            raise RuntimeError(("You tried to create revision #%d on the item %r, but there "
+                               "is unpublished metadata on that item. Publish first.") % (revno, self.name))
         if self._uncommitted_revision is not None:
             if self._uncommitted_revision.revno != revno:
-                raise RevisionNumberMismatchError("There already is an uncommitted revision #%d on this item that doesn't match the revno %d you specified." % (self._uncommitted_revision.revno, revno))
-
+                raise RevisionNumberMismatchError(("There already is an uncommitted revision #%d on this item "
+                                                   "that doesn't match the revno %d you specified.") %
+                                                   (self._uncommitted_revision.revno, revno))
             else:
                 return self._uncommitted_revision
-
         else:
             self._uncommitted_revision = self._backend._create_revision(self, revno)
             return self._uncommitted_revision
@@ -628,7 +629,8 @@ class Revision(object, DictMixin):
         """
         return self._revno
 
-    revno = property(get_revno, doc = "This property stores the revno of the revision-object. Only read-only access is allowed.")
+    revno = property(get_revno, doc = ("This property stores the revno of the revision-object. 
+                                      "Only read-only access is allowed."))
 
     def _load_metadata(self):
         self._metadata = self._backend._get_revision_metadata(self)
@@ -751,10 +753,8 @@ class NewRevision(Revision):
         """
         if not isinstance(key, (str, unicode)):
             raise TypeError("Key must be string type")
-
         if key.startswith('__'):
             raise TypeError("Key must not begin with two underscores")
-
         if not value_type_is_valid(value):
             raise TypeError("Value must be string, int, long, float, bool, complex or a nested tuple of the former")
 
@@ -782,6 +782,11 @@ def value_type_is_valid(value):
     str, unicode, bool, int, long, float, complex and tuple.
     Since tuples can contain other types, we need to check the
     types recursively.
+
+    @type value: str, unicode, int, long, float, complex, tuple
+    @param value: A value of which we want to know if it is a valid metadata
+    value.
+    @return: bool
     """
     if isinstance(value, (str, unicode, int, long, float, complex)):
         return True
@@ -791,5 +796,3 @@ def value_type_is_valid(value):
                 return False
         else:
             return True
-
-
