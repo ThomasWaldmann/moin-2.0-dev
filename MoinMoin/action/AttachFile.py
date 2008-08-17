@@ -869,7 +869,6 @@ def _do_get(pagename, request, filename):
         error = _("Filename of attachment not specified!")
     else:
         filename = wikiutil.taintfilename(request.form['target'][0])
-
     if not request.user.may.read(pagename):
         return _('You are not allowed to get attachments from this page.')
 

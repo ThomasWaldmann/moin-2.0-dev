@@ -66,6 +66,7 @@ class RevisionAlreadyExistsError(BackendError):
 
 class RevisionNumberMismatchError(BackendError):
     """
-    Raised if the Revision you are trying to create has a wrong revision number.
+    Raised if the Revision you are trying to create is not the
+    last_revision_number + 1.
     """
     pass
