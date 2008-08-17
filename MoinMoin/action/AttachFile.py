@@ -183,7 +183,6 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     item_name = pagename + "/" + target  # pagenames are guaranteed to be unique in the backend,
                                          # but we want to allow equally named attachments to be
                                          # stored for different pages.
-
     backend = request.cfg.data_backend
 
     # XXX Can somebody please propose a way how to make the following
@@ -220,7 +219,7 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
 
     mimetype = mimetypes.guess_type(target)[0]
     if mimetype is None:
-        mimetype = "unknown"
+        mimetype = "application/octet-stream"
     new_rev["mimetype"] = mimetype
 
     # TODO: Error handling
@@ -883,13 +882,11 @@ def _do_get(pagename, request, filename):
         error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
 
     else:
-        # XXX rather use dict.get() here...
+        timestamp = timefuncs.formathttpdate(float(rev.timestamp))  # Mandatory backend variable
         try:
-            timestamp = timefuncs.formathttpdate(float(rev.timestamp))
             mimestr = rev["mimetype"]
         except KeyError:
-            timestamp = timefuncs.formathttpdate(0)  # XXX Is this correct? What do we want to be displayed?
-            # XXX What if mimetype reading fails?
+            mimestr = mimetypes.guess_type(rev.item.name)[0]
 
         if request.if_modified_since == timestamp:
             request.emit_http_headers(["Status: 304 Not modified"])
@@ -917,7 +914,6 @@ def _do_get(pagename, request, filename):
 
             # send data
             request.send_file(rev)  # XXX Check if this is buffered
-
 
 def _do_install(pagename, request, filename):
     _ = request.getText
