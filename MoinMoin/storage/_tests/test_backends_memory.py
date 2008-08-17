@@ -4,8 +4,6 @@
 
     This defines tests for the MemoryBackend.
 
-    ---
-
     @copyright: 2008 MoinMoin:ChristopherDenter,
                 2008 MoinMoin:JohannesBerg,
                 2008 MoinMoin:AlexanderSchremmer
@@ -48,7 +46,7 @@ class TestTracingBackend(BackendTest):
             except:
                 # I get exceptions here because py.test seems to handle setup/teardown incorrectly
                 # in generative tests
-                pass#print "EXC"
+                pass #print "EXC"
         finally:
             self.be = None
 

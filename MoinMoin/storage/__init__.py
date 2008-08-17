@@ -630,8 +630,8 @@ class Revision(object, DictMixin):
         """
         return self._revno
 
-    revno = property(get_revno, doc = ("This property stores the revno of the revision-object. "
-                                       "Only read-only access is allowed."))
+    revno = property(get_revno, doc=("This property stores the revno of the revision-object. "
+                                     "Only read-only access is allowed."))
 
     def _load_metadata(self):
         self._metadata = self._backend._get_revision_metadata(self)
@@ -658,7 +658,7 @@ class Revision(object, DictMixin):
 
         return [key for key in self._metadata if not key.startswith("__")]
 
-    def read_data(self, chunksize = -1):
+    def read_data(self, chunksize=-1):
         """
         @see: Backend._read_revision_data.__doc__
         """
@@ -700,7 +700,7 @@ class StoredRevision(Revision):
         """
         raise AttributeError("Metadata of already existing revisions may not be altered.")
 
-    def read(self, chunksize = -1):
+    def read(self, chunksize=-1):
         """
         Allows file-like read-operations. You can pass a chunksize and it will
         only read as many bytes at a time as you wish. The default, however, is
