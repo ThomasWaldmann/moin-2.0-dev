@@ -197,7 +197,11 @@ class Backend(object):
         """
         For a given item, return a list containing all revision numbers (as ints)
         of the revisions the item has. The list must be ordered, starting with
-        the first revision-number.
+        the oldest revision-number.
+        (One may decide to delete certain revisions completely at one point. For
+        that case, list_revisions does not need to return subsequent revision
+        numbers. _create_revision() on the other hand must only create
+        subsequent revision numbers.)
 
         @type item: Object of class Item.
         @param item: The Item on which we want to operate.
