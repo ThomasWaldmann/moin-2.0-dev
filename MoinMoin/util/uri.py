@@ -45,38 +45,39 @@ class Uri(object):
     """
     _re = re.compile(rules, re.X)
 
-    def __init__(self, input=None,
+    def __init__(self, url=None,
             scheme=None, authority=None, path=None, query=None, fragment=None):
-        self.scheme = scheme
-        self.authority = authority
-        self.path = path
-        self.query = query
-        self.fragment = fragment
 
-        if input:
-            match = self._re.match(input)
+        if url:
+            match = self._re.match(url)
 
             if match:
                 scheme = match.group('scheme')
                 if scheme is not None:
                     # Common sense, scheme is lowercase
-                    self.scheme = scheme.lower()
+                    scheme = scheme.lower()
 
                 authority = match.group('authority')
                 if authority is not None:
-                    self.authority = urllib.unquote(authority)
+                    authority = urllib.unquote(authority)
 
                 path = match.group('path')
                 if path is not None:
-                    self.path = urllib.unquote(path)
+                    path = urllib.unquote(path)
 
                 query = match.group('query')
                 if query is not None:
-                    self.query = urllib.unquote(query)
+                    query = urllib.unquote(query)
 
                 fragment = match.group('fragment')
                 if fragment is not None:
-                    self.fragment = urllib.unquote(fragment)
+                    fragment = urllib.unquote(fragment)
+
+        self.scheme = scheme
+        self.authority = authority
+        self.path = path
+        self.query = query
+        self.fragment = fragment
 
     def __setattr__(self, key, value):
         if key in ('scheme', 'authority', 'path', 'query', 'fragment'):
