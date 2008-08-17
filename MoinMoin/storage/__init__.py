@@ -249,27 +249,26 @@ class Backend(object):
         """
         raise NotImplementedError()
 
-    def _commit_item(self, item):
+    def _commit_item(self, revision):
         """
         Commits the changes that have been done to a given item. That is, after you
         created a revision on that item and filled it with data you still need to
-        commit() it. You don't need to pass what revision you are committing because
-        there is only one possible revision to be committed for your /instance/ of
-        the item and thus the revision to be saved is memorized by the item.
+        commit() it. You need to pass the revision you want to commit. The item
+        can be looked up by the revisions 'item' property.
 
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
+        @type revision: Object of class NewRevision.
+        @param revision: The revision we want to commit to persistant storage.
         @return: None
         """
         raise NotImplementedError()
 
-    def _rollback_item(self, item):
+    def _rollback_item(self, revision):
         """
         This method is invoked when external events happen that cannot be handled in a
         sane way and thus the changes that have been made must be rolled back.
 
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
+        @type revision: Object of class NewRevision.
+        @param revision: The revision we want to roll back.
         @return: None
         """
         raise NotImplementedError()
