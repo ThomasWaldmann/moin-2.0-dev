@@ -29,6 +29,12 @@ class Namespace(object):
     def __repr__(self):
         return '<%s(%r)>' % (self.__class__.__name__, self.namespace)
 
+    def __str__(self):
+        return self.namespace
+
+    def __unicode__(self):
+        return self.namespace
+
 # Own namespaces
 moin_page = Namespace('http://moinmo.in/namespaces/page')
 
