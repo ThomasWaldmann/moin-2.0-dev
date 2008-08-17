@@ -141,10 +141,6 @@ from MoinMoin.storage.error import BackendError, NoSuchItemError,\
                                    NoSuchRevisionError,\
                                    RevisionNumberMismatchError,\
                                    ItemAlreadyExistsError, RevisionAlreadyExistsError
-try:
-    import cdb
-except ImportError:
-    from MoinMoin.support import pycdb as cdb
 
 PICKLE_ITEM_META = 1
 PICKLE_REV_META = 0
@@ -160,11 +156,10 @@ class MercurialBackend(Backend):
         If bakckend already exists, use structure and repository.
         """
         self._path = os.path.abspath(path)
-        self._history = os.path.join(self._path, 'history')
         self._r_path = os.path.join(self._path, 'rev')
         self._u_path = os.path.join(self._path, 'meta')
         self._c_path = os.path.join(self._path, 'cache')
-        self._name_db = os.path.join(self._path, 'name-mapping')
+        self._name_db = os.path.join(self._r_path, '.name-mapping')
         self._ui = ui.ui(interactive=False, quiet=True)
         self._item_metadata_lock = {}
         self._lockref = None
@@ -178,29 +173,22 @@ class MercurialBackend(Backend):
                 raise BackendError("No permisions on path: %s" % self._path)
             elif not os.path.isdir(self._path):
                 raise BackendError("Invalid path: %s" % self._path)
-        # if directories not empty and no mapping exists, refuse
         for path in (self._u_path, self._r_path, self._c_path):
             try:
-                if os.listdir(path) and not os.path.exists(self._name_db):
-                    raise BackendError("No name-mapping and directory not empty: %s" % path)
-            except OSError:
                 os.mkdir(path)
-        # also refuse on no mapping and some unrelated files in main dir:
-        # XXX: should we even bother they could use names on fs for future items?
-        if (not os.path.exists(self._name_db) and
-            filter(lambda x: x not in ['cache', 'rev', 'meta', 'name-mapping', 'history'], os.listdir(self._path))):
-            raise BackendError("No name-mapping and directory not empty: %s" % self._path)
+            except OSError:
+                pass
         try:
             self._repo = hg.repository(self._ui, self._r_path, create=True)
         except RepoError:
             self._repo = hg.repository(self._ui, self._r_path)
 
         if not os.path.exists(self._name_db):
-            lock = self._namelock()
-            try:
-                self._create_new_cdb()
-            finally:
-                del lock
+            f = open(self._name_db, 'w')
+            f.close()
+            namedb_fname = os.path.split(self._name_db)[-1]
+            self._repo.add([namedb_fname])
+            self._repo.commit(text='Init namedb.', user='wiki', files=[namedb_fname])
 
         self._repo._forcedchanges = True
 
@@ -239,13 +227,12 @@ class MercurialBackend(Backend):
         Return generator for iterating through items collection
         in repository.
         """
-        c = cdb.init(self._name_db)
-        r = c.each()
-        while r:
-            item = Item(self, r[0])
-            item._id = r[1]
+        namedb = self._read_name_db()
+        for line in namedb:
+            id, name = line.split(' ', 1)
+            item = Item(self, name.decode('utf-8'))
+            item._id = id
             yield item
-            r = c.each()
 
     def history(self, reverse=True):
         """History implementation reading the log file."""
@@ -253,8 +240,7 @@ class MercurialBackend(Backend):
             item_id = changeset[3][0]
             revno = pickle.loads(changeset[5]["__revision"])
             tstamp = pickle.loads(changeset[5]["__timestamp"])
-            namefile = open(os.path.join(self._path, '%s.name' % item_id), 'rb')
-            name = namefile.read().decode('utf-8')
+            name = self._get_item_name(item_id)
             item = Item(self, name)
             rev = MercurialStoredRevision(item, revno, tstamp)
             rev._item_id = item._id = item_id
@@ -363,26 +349,25 @@ class MercurialBackend(Backend):
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
 
             encoded_name = newname.encode('utf-8')
-            name_path = os.path.join(self._path, '%s.name' % item._id)
-
-            c = cdb.init(self._name_db)
-            maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
-            r = c.each()
-            while r:
-                name, id = r
-                if name == encoded_name:
-                    raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
-                elif id == item._id:
-                    maker.add(encoded_name, id)
+            namedb, namelist = self._read_name_db(), []
+            for line in namedb:
+                id, name = line.split(' ', 1)
+                if id == item._id:
+                    namelist.append("%s %s" % (id, encoded_name, ))
                 else:
-                    maker.add(name, id)
-                r = c.each()
-            maker.finish()
-            util.rename(self._name_db + '.ndb', self._name_db)
+                    namelist.append("%s %s" % (id, name, ))
 
-            name_file = open(name_path, mode='wb')
-            name_file.write(encoded_name)
-            name_file.close()
+            fd, fname = tempfile.mkstemp("-tmp", "namedb-", self._path)
+            os.write(fd, "\n".join(namelist) + "\n")
+            os.close(fd)
+
+            name_lock = self._namelock()
+            try:
+                util.rename(fname, self._name_db)
+            finally:
+                del name_lock
+            namedb_fname = os.path.split(self._name_db)[-1]
+            self._repo.commit(user="wiki", text="Updated namedb.", files=[namedb_fname])
         finally:
             del lock
 
@@ -428,8 +413,15 @@ class MercurialBackend(Backend):
             del item._lock
         else:
             self._add_item(item)
+            lock = self._repolock()
+            try:
+                namedb_fname = os.path.split(self._name_db)[-1]
+                self._repo.commit(user="wiki", text="Updated namedb.", files=[namedb_fname])
+            finally:
+                del lock
             if item._metadata:
                 write_meta_item(self._upath("%s.meta" % item._id), item._metadata)
+
 
     def _commit_item(self, rev):
         """Commit Item changes within transaction (Revision) to repository."""
@@ -456,6 +448,8 @@ class MercurialBackend(Backend):
             p1, p2 = self._repo['tip'].node(), nullid
             if not item._id:
                 self._add_item(item)
+                namedb_fname = os.path.split(self._name_db)[-1]
+                self._repo.commit(user="wiki", text="Updated namedb.", files=[namedb_fname])
             else:
                 if rev.revno in self._list_revisions(item):
                     raise RevisionAlreadyExistsError("Item Revision already exists: %s" % rev.revno)
@@ -514,48 +508,60 @@ class MercurialBackend(Backend):
     def _cpath(self, filename):
         return os.path.join(self._c_path, filename)
 
-    def _create_new_cdb(self):
-        """Create new name-mapping if it doesn't exist yet."""
-        if not os.path.exists(self._name_db):
-            maker = cdb.cdbmake(self._name_db, self._name_db + '.tmp')
-            maker.finish()
+    def _read_name_db(self):
+        lock = self._namelock()
+        try:
+            try:
+                f = open(self._name_db, 'r')
+                namedb = []
+                for line in f.readlines():
+                    namedb.append(line.strip())
+                f.close()
+                return namedb
+            except IOError:
+                return []
+        finally:
+            del lock
 
-    def _get_item_id(self, itemname):
+    def _get_item_id(self, item_name):
         """Get ID of item (or None if no such item exists)"""
-        c = cdb.init(self._name_db)
-        return c.get(itemname.encode('utf-8'))
+        namedb = self._read_name_db()
+        for line in namedb:
+            id, name = line.split(' ', 1)
+            if name == item_name.encode('utf-8'):
+                return id
+
+    def _get_item_name(self, item_id):
+        """Get name of item (or None if no such item exists)"""
+        namedb = self._read_name_db()
+        for line in namedb:
+            id, name = line.split(' ', 1)
+            if id == item_id:
+                return name.decode('utf-8')
 
     def _add_item(self, item):
         """Add new Item to name-mapping and create name file."""
         m = md5.new()
         m.update("%s%s%d" % (time.time(), item.name.encode("utf-8"), random.randint(0, RAND_MAX)))
         item_id = m.hexdigest()
-
         encoded_name = item.name.encode('utf-8')
-        name_path = os.path.join(self._path, '%s.name' % item_id)
 
-        c = cdb.init(self._name_db)
-        maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
-        r = c.each()
-        while r:
-            name, id = r
+        namedb = self._read_name_db()
+        for line in namedb:
+            id, name = line.split(' ', 1)
             if name == encoded_name:
-                maker.finish()
-                os.unlink(self._name_db + '.ndb')
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % item.name)
-            else:
-                maker.add(name, id)
-            r = c.each()
-        maker.add(encoded_name, item_id)
-        maker.finish()
-        util.rename(self._name_db + '.ndb', self._name_db)
-        # create cache file
+
+        name_lock = self._namelock()
+        try:
+            f = open(self._name_db, 'a')
+            f.write("%s %s\n" % (item_id, encoded_name, ))
+            f.close()
+        finally:
+            del name_lock
+
         f = open(self._cpath("%s.cache" % item_id), 'w')
         f.close()
-        # create reverse naming file
-        name_file = open(name_path, mode='wb')
-        name_file.write(encoded_name)
-        name_file.close()
         item._id = item_id
 
     def _has_revision(self, item, revno):
@@ -587,7 +593,8 @@ class MercurialBackend(Backend):
 
         def wanted(changeset_revision):
             if not item_id:
-                return True
+                namedb_fname = os.path.split(self._name_db)[-1]
+                return namedb_fname not in changeset(changeset_revision)[3]
             else:
                 return item_id in changeset(changeset_revision)[3]
 
