@@ -165,7 +165,6 @@ class MercurialBackend(Backend):
         self._lockref = None
         self._name_lockref = None
         os.environ["HGMERGE"] = "internal:fail"
-
         try:
             os.mkdir(self._path)
         except OSError, err:
@@ -182,15 +181,20 @@ class MercurialBackend(Backend):
             self._repo = hg.repository(self._ui, self._r_path, create=True)
         except RepoError:
             self._repo = hg.repository(self._ui, self._r_path)
+        self._repo._forcedchanges = True
+        self._set_hooks()
 
         if not os.path.exists(self._name_db):
-            f = open(self._name_db, 'w')
-            f.close()
-            namedb_fname = os.path.split(self._name_db)[-1]
-            self._repo.add([namedb_fname])
-            self._repo.commit(text='Init namedb.', user='wiki', files=[namedb_fname])
+            self._init_namedb()
 
-        self._repo._forcedchanges = True
+    def _set_hooks(self):
+        config = ("[hooks]",
+                 "preoutgoing.namedb = python:MoinMoin.storage.backends.hg.commit_namedb",
+                 "prechangegroup.namedb = python:MoinMoin.storage.backends.hg.commit_namedb",
+                 "", )
+        f = open(os.path.join(self._r_path, '.hg', 'hgrc'), 'w')
+        f.writelines("\n".join(config))
+        f.close()
 
     def has_item(self, itemname):
         """Return true if Item exists."""
@@ -366,8 +370,6 @@ class MercurialBackend(Backend):
                 util.rename(fname, self._name_db)
             finally:
                 del name_lock
-            namedb_fname = os.path.split(self._name_db)[-1]
-            self._repo.commit(user="wiki", text="Updated namedb.", files=[namedb_fname])
         finally:
             del lock
 
@@ -413,12 +415,6 @@ class MercurialBackend(Backend):
             del item._lock
         else:
             self._add_item(item)
-            lock = self._repolock()
-            try:
-                namedb_fname = os.path.split(self._name_db)[-1]
-                self._repo.commit(user="wiki", text="Updated namedb.", files=[namedb_fname])
-            finally:
-                del lock
             if item._metadata:
                 write_meta_item(self._upath("%s.meta" % item._id), item._metadata)
 
@@ -448,8 +444,6 @@ class MercurialBackend(Backend):
             p1, p2 = self._repo['tip'].node(), nullid
             if not item._id:
                 self._add_item(item)
-                namedb_fname = os.path.split(self._name_db)[-1]
-                self._repo.commit(user="wiki", text="Updated namedb.", files=[namedb_fname])
             else:
                 if rev.revno in self._list_revisions(item):
                     raise RevisionAlreadyExistsError("Item Revision already exists: %s" % rev.revno)
@@ -460,7 +454,7 @@ class MercurialBackend(Backend):
             else:
                 ctx._status[0] = [item._id]
             self._repo.commitctx(ctx)
-            # commands.update(self._ui, self._repo)
+            commands.update(self._ui, self._repo)
 
             tiprevno = self._repo['tip'].rev()
             f = open(self._cpath("%s.cache" % item._id), 'a')
@@ -618,6 +612,13 @@ class MercurialBackend(Backend):
         revpairs.sort()
         cachefile.write("".join(["%d:%d," % (rev, ctxrev) for rev, ctx in revpairs]))
 
+    def _init_namedb(self):
+            f = open(self._name_db, 'w')
+            f.close()
+            namedb_fname = os.path.split(self._name_db)[-1]
+            self._repo.add([namedb_fname])
+            self._repo.commit(text='(init name-mapping)', user='storage', files=[namedb_fname])
+
     #
     # extended API below
     #
@@ -656,3 +657,13 @@ class MercurialStoredRevision(StoredRevision):
     def get_node(self):
         return self._backend._get_revision_node(self)
 
+
+    #
+    # repository hooks - managing name-mapping file commits on push/pull requests
+    #
+
+def commit_namedb(ui, repo, **kw):
+    changes = [[], ['.name-mapping'], [], [], [], []]
+    parent = repo['tip'].node()
+    ctx = context.workingctx(repo, (parent, nullid), "(updated name-mapping)", "storage", changes=changes)
+    repo._commitctx(ctx)
