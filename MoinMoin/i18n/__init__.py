@@ -195,7 +195,7 @@ class Translation(object):
         # TODO: Switch to xml
         tree.write(out, encoding='utf-8',
                 default_namespace=namespaces.html, method='html')
-        return out.getvalue()
+        return out.getvalue().decode('utf-8')
 
     def loadLanguage(self, request, trans_dir="i18n"):
         request.clock.start('loadLanguage')
