@@ -14,10 +14,9 @@
     @copyright: 2000-2004 by Juergen Hermann <jh@web.de>,
                 2005-2008 by MoinMoin:ThomasWaldmann,
                 2006 by MoinMoin:FlorianFesti,
-                2007 by MoinMoin:ReimarBauer
-                2007 by MoinMoin:HeinrichWendel
+                2007 by MoinMoin:ReimarBauer,
+                2007 by MoinMoin:HeinrichWendel,
                 2008 by MoinMoin:ChristopherDenter
-
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -1361,7 +1360,6 @@ class RootPage(object):
         Init the item collection.
         """
         self.request = request
-        self._backend = request.cfg.data_backend
 
     def getPagePath(self, fname, isfile):
         """
@@ -1419,7 +1417,7 @@ class RootPage(object):
         if filterfunction:
             filter.add(term.NameFn(filterfunction))
 
-        items = self._backend.search_item(filter)
+        items = self.request.cfg.data_backend.search_item(filter)
 
         if user or return_objects:
             # Filter names
@@ -1452,7 +1450,7 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = self._backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
+        items = self.request.cfg.data_backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
 
         count = 0
         for item in items:

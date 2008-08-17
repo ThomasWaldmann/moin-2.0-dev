@@ -3,7 +3,8 @@
     MoinMoin - show diff between 2 page revisions
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2006-2008 MoinMoin:ThomasWaldmann
+                2006-2008 MoinMoin:ThomasWaldmann,
+                2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 

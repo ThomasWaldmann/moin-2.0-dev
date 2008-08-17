@@ -9,8 +9,8 @@
     Some related code is in the userform and userprefs modules.
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2003-2007 MoinMoin:ThomasWaldmann
-                2007 MoinMoin:HeinrichWendel
+                2003-2007 MoinMoin:ThomasWaldmann,
+                2007 MoinMoin:HeinrichWendel,
                 2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """

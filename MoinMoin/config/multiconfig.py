@@ -360,8 +360,8 @@ class ConfigFunctionality(object):
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
-        assert self.user_backend is not None, "error in config: no user storage configured"
-        assert self.data_backend is not None, "error in config: no data storage configured"
+        assert hasattr(self, "user_backend"), "error in config: no user storage configured"
+        assert hasattr(self, "data_backend"), "error in config: no data storage configured"
         # XXX: add defaults again
 
         if self.secrets is None:  # admin did not setup a real secret, so make up something

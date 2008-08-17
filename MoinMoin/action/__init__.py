@@ -21,7 +21,8 @@
     displaying errors and doing stuff after an action.
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2006 MoinMoin:ThomasWaldmann
+                2006 MoinMoin:ThomasWaldmann,
+                2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 

@@ -6,7 +6,8 @@
                 2004 by Florian Festi,
                 2006 by Mikko Virkkil,
                 2005-2008 MoinMoin:ThomasWaldmann,
-                2007 MoinMoin:ReimarBauer
+                2007 MoinMoin:ReimarBauer,
+                2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 
