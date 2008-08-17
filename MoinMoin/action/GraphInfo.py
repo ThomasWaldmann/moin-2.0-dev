@@ -163,7 +163,7 @@ def execute(pagename, request):
         wrapper.append('<canvas id="graph" width="%d" height="%d"></canvas>' % (canvaswidth, canvasheight, ))
         wrapper.append(graphnodes)
         graph = '<script type="text/javascript", src="%s/graph/graph.js"></script>' % request.cfg.url_prefix_static
-        request.cfg.stylesheets.extend([('all', request.cfg.url_prefix_static + '/graph/graph.css', )])
+        request.cfg.stylesheets = [('all', request.cfg.url_prefix_static + '/graph/graph.css', )]
         div.append(noscript)
         div.append(wrapper)
         div.append(graph)
