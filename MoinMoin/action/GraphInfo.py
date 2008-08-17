@@ -168,7 +168,6 @@ def execute(pagename, request):
         wrapper.append('<canvas id="graph" width="%d" height="%d"></canvas>' % (canvaswidth, canvasheight, ))
         wrapper.append(graphnodes)
         graph = '<script type="text/javascript", src="%s/graph/graph.js"></script>' % request.cfg.url_prefix_static
-        request.cfg.stylesheets = [('all', request.cfg.url_prefix_static + '/graph/graph.css', )]
         div.append(noscript)
         div.append(wrapper)
         div.append(graph)
@@ -235,6 +234,7 @@ graph.render(data);
 
     _ = request.getText
     f = request.formatter
+    request.cfg.stylesheets = [('all', request.cfg.url_prefix_static + '/graph/graph.css', )]
     request.emit_http_headers()
     request.setContentLanguage(request.lang)
     request.theme.send_title(_('Info for "%s"') % (page.split_title(), ), page=page)
