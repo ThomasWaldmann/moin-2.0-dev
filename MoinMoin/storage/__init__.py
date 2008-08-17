@@ -430,7 +430,7 @@ class Item(object, DictMixin):
 
     def __setitem__(self, key, value):
         """
-        In order to acces the items metadata you can use the well-known dict-like
+        In order to access the items metadata you can use the well-known dict-like
         semantics python-dictionaries offer. If you want to set a value,
         my_item["key"] = "value" will do the trick. Note that keys must be of the
         type string (or unicode).
@@ -505,7 +505,7 @@ class Item(object, DictMixin):
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
 
-        return filter(lambda x: not x.startswith('__'), self._metadata.keys())
+        return [key for key in self._metadata if not key.startswith("__")]
 
     def change_metadata(self):
         """
@@ -629,8 +629,8 @@ class Revision(object, DictMixin):
         """
         return self._revno
 
-    revno = property(get_revno, doc = ("This property stores the revno of the revision-object. 
-                                      "Only read-only access is allowed."))
+    revno = property(get_revno, doc = ("This property stores the revno of the revision-object. "
+                                       "Only read-only access is allowed."))
 
     def _load_metadata(self):
         self._metadata = self._backend._get_revision_metadata(self)
