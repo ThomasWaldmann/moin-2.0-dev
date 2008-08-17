@@ -414,9 +414,7 @@ class Page(object):
             timestamp = self._rev.timestamp
             if printable:
                 timestamp = self.request.user.getFormattedDateTime(timestamp)
-
             return timestamp
-
         return 0
 
     def isUnderlayPage(self, includeDeleted=True):
