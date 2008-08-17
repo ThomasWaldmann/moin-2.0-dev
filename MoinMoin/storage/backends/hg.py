@@ -182,15 +182,17 @@ class MercurialBackend(Backend):
         except RepoError:
             self._repo = hg.repository(self._ui, self._r_path)
         self._repo._forcedchanges = True
-        self._set_hooks()
+        self._set_config()
 
         if not os.path.exists(self._name_db):
             self._init_namedb()
 
-    def _set_hooks(self):
+    def _set_config(self):
         config = ("[hooks]",
                  "preoutgoing.namedb = python:MoinMoin.storage.backends.hg.commit_namedb",
                  "prechangegroup.namedb = python:MoinMoin.storage.backends.hg.commit_namedb",
+                 "[extensions]",
+                 "MoinMoin.storage.backends.hg = ",
                  "", )
         f = open(os.path.join(self._r_path, '.hg', 'hgrc'), 'w')
         f.writelines("\n".join(config))
@@ -667,3 +669,22 @@ def commit_namedb(ui, repo, **kw):
     parent = repo['tip'].node()
     ctx = context.workingctx(repo, (parent, nullid), "(updated name-mapping)", "storage", changes=changes)
     repo._commitctx(ctx)
+
+
+    #
+    # repository commands (extensions)
+    #
+
+def backup(ui, source, dest=None, **opts):
+    commit_namedb(ui, source)
+    commands.clone(ui, source, dest, **opts)
+
+from mercurial.commands import remoteopts
+cmdtable = {"backup": (backup,
+         [('U', 'noupdate', None, 'the clone will only contain a repository (no working copy)'),
+          ('r', 'rev', [], 'a changeset you would like to have after cloning'),
+          ('', 'pull', None, 'use pull protocol to copy metadata'),
+          ('', 'uncompressed', None, 'use uncompressed transfer (fast over LAN)'),
+         ] + remoteopts,
+         'hg backup [OPTION]... SOURCE [DEST]'),
+}
