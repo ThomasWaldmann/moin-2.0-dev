@@ -27,9 +27,8 @@ class Converter(object):
 
         text = '\n'.join(content)
         # TODO: unicode URI
-        url = uri.Uri(self.page_url)
         # TODO: Remove Page object
-        page = Page(self.request, url.path.decode('utf-8')[1:])
+        page = Page(self.request, self.page_url.path.decode('utf-8')[1:])
 
         parser = self.parser(text, self.request, format_args=self.args or '')
         formatter = self.formatter(self.request, page)
