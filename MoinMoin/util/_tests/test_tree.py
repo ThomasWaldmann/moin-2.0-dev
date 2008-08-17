@@ -26,8 +26,7 @@ def test_Namespace():
     uri = 'uri:a'
 
     namespace = Namespace(uri)
-    assert namespace == uri
-    assert namespace is namespace.namespace
+    assert namespace.namespace == uri
 
     name = namespace.a
     assert isinstance(name, Name)
