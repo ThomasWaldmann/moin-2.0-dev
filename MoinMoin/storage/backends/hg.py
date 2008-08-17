@@ -165,6 +165,7 @@ class MercurialBackend(Backend):
         self._lockref = None
         self._name_lockref = None
         os.environ["HGMERGE"] = "internal:fail"
+        os.environ["HGENCODING"] = "utf-8"
         try:
             os.mkdir(self._path)
         except OSError, err:
