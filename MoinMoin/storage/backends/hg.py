@@ -122,6 +122,7 @@ from mercurial import hg, ui, context, util, commands, merge
 from mercurial.node import nullid, nullrev, short
 from mercurial.repo import RepoError
 from mercurial.revlog import LookupError
+from mercurial.cmdutil import revrange
 import cPickle as pickle
 import struct
 import StringIO
@@ -134,17 +135,12 @@ import os
 import errno
 import time
 
-from MoinMoin.util import diff3
-from MoinMoin.PageEditor import conflict_markers
+
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision, EDIT_LOG_USERID, EDIT_LOG_COMMENT
 from MoinMoin.storage.error import BackendError, NoSuchItemError,\
                                    NoSuchRevisionError,\
                                    RevisionNumberMismatchError,\
                                    ItemAlreadyExistsError, RevisionAlreadyExistsError
-try:
-    import cdb
-except ImportError:
-    from MoinMoin.support import pycdb as cdb
 
 PICKLE_ITEM_META = 1
 PICKLE_REV_META = 0
@@ -160,16 +156,16 @@ class MercurialBackend(Backend):
         If bakckend already exists, use structure and repository.
         """
         self._path = os.path.abspath(path)
-        self._history = os.path.join(self._path, 'history')
         self._r_path = os.path.join(self._path, 'rev')
         self._u_path = os.path.join(self._path, 'meta')
-        self._name_db = os.path.join(self._path, 'name-mapping')
+        self._c_path = os.path.join(self._path, 'cache')
+        self._name_db = os.path.join(self._r_path, '.name-mapping')
         self._ui = ui.ui(interactive=False, quiet=True)
         self._item_metadata_lock = {}
         self._lockref = None
         self._name_lockref = None
         os.environ["HGMERGE"] = "internal:fail"
-
+        os.environ["HGENCODING"] = "utf-8"
         try:
             os.mkdir(self._path)
         except OSError, err:
@@ -177,31 +173,31 @@ class MercurialBackend(Backend):
                 raise BackendError("No permisions on path: %s" % self._path)
             elif not os.path.isdir(self._path):
                 raise BackendError("Invalid path: %s" % self._path)
-        # if directories not empty and no mapping exists, refuse
-        for path in (self._u_path, self._r_path):
+        for path in (self._u_path, self._r_path, self._c_path):
             try:
-                if os.listdir(path) and not os.path.exists(self._name_db):
-                    raise BackendError("No name-mapping and directory not empty: %s" % path)
-            except OSError:
                 os.mkdir(path)
-        # also refuse on no mapping and some unrelated files in main dir:
-        # XXX: should we even bother they could use names on fs for future items?
-        if (not os.path.exists(self._name_db) and
-            filter(lambda x: x not in ['rev', 'meta', 'name-mapping', 'history'], os.listdir(self._path))):
-            raise BackendError("No name-mapping and directory not empty: %s" % self._path)
+            except OSError:
+                pass
         try:
             self._repo = hg.repository(self._ui, self._r_path, create=True)
         except RepoError:
             self._repo = hg.repository(self._ui, self._r_path)
+        self._repo._forcedchanges = True
+        self._set_config()
 
         if not os.path.exists(self._name_db):
-            lock = self._namelock()
-            try:
-                self._create_new_cdb()
-            finally:
-                del lock
+            self._init_namedb()
 
-        self._repo._forcedchanges = True
+    def _set_config(self):
+        config = ("[hooks]",
+                 "preoutgoing.namedb = python:MoinMoin.storage.backends.hg.commit_namedb",
+                 "prechangegroup.namedb = python:MoinMoin.storage.backends.hg.commit_namedb",
+                 "[extensions]",
+                 "MoinMoin.storage.backends.hg = ",
+                 "", )
+        f = open(os.path.join(self._r_path, '.hg', 'hgrc'), 'w')
+        f.writelines("\n".join(config))
+        f.close()
 
     def has_item(self, itemname):
         """Return true if Item exists."""
@@ -238,30 +234,23 @@ class MercurialBackend(Backend):
         Return generator for iterating through items collection
         in repository.
         """
-        c = cdb.init(self._name_db)
-        r = c.each()
-        while r:
-            item = Item(self, r[0])
-            item._id = r[1]
+        namedb = self._read_name_db()
+        for line in namedb:
+            id, name = line.split(' ', 1)
+            item = Item(self, name.decode('utf-8'))
+            item._id = id
             yield item
-            r = c.each()
 
     def history(self, reverse=True):
         """History implementation reading the log file."""
-        if reverse:
-            ctxiter = reversed(list(iter(self._repo)))
-        else:
-            ctxiter = iter(self._repo)
-        for ctxrevno in ctxiter:
-            ctx = self._repo[ctxrevno]
-            id = ctx.files()[0]
-            meta = ctx.extra()
-            revno, tstamp = pickle.loads(meta["__revision"]), pickle.loads(meta["__timestamp"])
-            namefile = open(os.path.join(self._path, '%s.name' % id), 'rb')
-            name = namefile.read().decode('utf-8')
+        for changeset, ctxrev in self._iterate_changesets(reverse=reverse):
+            item_id = changeset[3][0]
+            revno = pickle.loads(changeset[5]["__revision"])
+            tstamp = pickle.loads(changeset[5]["__timestamp"])
+            name = self._get_item_name(item_id)
             item = Item(self, name)
             rev = MercurialStoredRevision(item, revno, tstamp)
-            rev._item_id = id
+            rev._item_id = item._id = item_id
             yield rev
 
     def _create_revision(self, item, revno):
@@ -273,6 +262,7 @@ class MercurialBackend(Backend):
             if revno != revs[-1] + 1:
                 raise RevisionNumberMismatchError("Unable to create revision number %d. \
                     New Revision number must be next to latest Revision number." % revno)
+
         rev = NewRevision(item, revno)
         rev._data = StringIO.StringIO()
         rev._revno = revno
@@ -281,39 +271,27 @@ class MercurialBackend(Backend):
 
     def _get_revision(self, item, revno):
         """Returns given Revision of an Item."""
-        ctx = self._repo[self._repo.changelog.tip()]
-        revs = self._list_revisions(item)
-        if revno == -1 and revs:
-            revno = max(revs)
-        if revno not in revs:
+        has, last, changectx = self._has_revision(item, revno)
+        if not has:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
-        # XXX: to rewrite for more optimal
-        ctxrevs = filter(lambda r: item._id in self._repo[r].files(), iter(self._repo))
-        for num, ctxrevno in enumerate(ctxrevs):
-            if num == revno:
-                ctx = self._repo[ctxrevno]
+        if revno == -1:
+            revno = last
         revision = MercurialStoredRevision(item, revno)
-        revision._data = StringIO.StringIO(ctx.filectx(item._id).data())
+        revision._data = StringIO.StringIO(changectx.filectx(item._id).data())
         revision._item_id = item._id
         revision._metadata = None
         return revision
 
     def _get_revision_size(self, rev):
         """Get size of Revision."""
-        tip = self._repo.changelog.tip()
-        ftx = self._repo[tip][rev._item_id].filectx(rev.revno)
+        ftx = self._repo['tip'][rev._item_id].filectx(rev.revno)
         return ftx.size()
 
     def _get_revision_metadata(self, rev):
         """Return Revision metadata dictionary."""
-        tip = self._repo.changelog.tip()
-        # XXX: this needs rethink after soc
-        # (along with idea of dropping patch and 1:1 mapping beetwen backend revs and hg filerevs)
-        for num, repo_rev in enumerate([r for r in iter(self._repo) if rev._item_id in self._repo[r].files()]):
-            if num == rev.revno:
-                ctx = self._repo[repo_rev]
+        changectx = self._has_revision(rev.item, rev.revno)[2]
         metadata = {}
-        for k, v in ctx.extra().iteritems():
+        for k, v in changectx.extra().iteritems():
             if k.startswith('moin_'):
                 metadata[k.lstrip('moin_')] = pickle.loads(v)
             elif k.startswith('__'):
@@ -348,9 +326,24 @@ class MercurialBackend(Backend):
         if not item._id:
             return []
         else:
-#           # XXX: use mercurial.cmdutil.walkchangerevs
-            revs = filter(lambda r: item._id in self._repo[r].files(), iter(self._repo))
-            return range(len(revs))
+            try:
+                f = open(self._cpath(item._id + ".cache"))
+                revs = [int(revpair.split(':')[0]) for revpair in f.read().split(',') if revpair]
+                f.close()
+                revs.sort()
+                return revs
+            except EOFError:
+                return []
+            except IOError:
+                revs = []
+                changefn = util.cachefunc(lambda r: self._repo[r].changeset())
+                for changeset in self._iterate_changesets(item_id=item._id):
+                    revno = pickle.loads(changeset[5]['__revision'])
+                    revs.append(revno)
+                    if revno == 0:  # iterating from top
+                        revs.reverse()
+                        return revs
+                return []
 
     def _rename_item(self, item, newname):
         """
@@ -363,26 +356,23 @@ class MercurialBackend(Backend):
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
 
             encoded_name = newname.encode('utf-8')
-            name_path = os.path.join(self._path, '%s.name' % item._id)
-
-            c = cdb.init(self._name_db)
-            maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
-            r = c.each()
-            while r:
-                name, id = r
-                if name == encoded_name:
-                    raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
-                elif id == item._id:
-                    maker.add(encoded_name, id)
+            namedb, namelist = self._read_name_db(), []
+            for line in namedb:
+                id, name = line.split(' ', 1)
+                if id == item._id:
+                    namelist.append("%s %s" % (id, encoded_name, ))
                 else:
-                    maker.add(name, id)
-                r = c.each()
-            maker.finish()
-            util.rename(self._name_db + '.ndb', self._name_db)
+                    namelist.append("%s %s" % (id, name, ))
 
-            name_file = open(name_path, mode='wb')
-            name_file.write(encoded_name)
-            name_file.close()
+            fd, fname = tempfile.mkstemp("-tmp", "namedb-", self._path)
+            os.write(fd, "\n".join(namelist) + "\n")
+            os.close(fd)
+
+            name_lock = self._namelock()
+            try:
+                util.rename(fname, self._name_db)
+            finally:
+                del name_lock
         finally:
             del lock
 
@@ -431,6 +421,7 @@ class MercurialBackend(Backend):
             if item._metadata:
                 write_meta_item(self._upath("%s.meta" % item._id), item._metadata)
 
+
     def _commit_item(self, rev):
         """Commit Item changes within transaction (Revision) to repository."""
         def getfilectx(repo, memctx, path):
@@ -445,6 +436,7 @@ class MercurialBackend(Backend):
         msg = rev.get(EDIT_LOG_COMMENT, "").encode("utf-8")
         user = rev.get(EDIT_LOG_USERID, "anonymous")
         data = rev._data.getvalue()
+
         meta = {'__timestamp': pickle.dumps(rev.timestamp, PICKLE_REV_META),
                 '__revision': pickle.dumps(rev.revno, PICKLE_REV_META)}
         for k, v in rev.iteritems():
@@ -452,7 +444,7 @@ class MercurialBackend(Backend):
 
         lock = self._repolock()
         try:
-            p1, p2 = self._repo.changelog.tip(), nullid
+            p1, p2 = self._repo['tip'].node(), nullid
             if not item._id:
                 self._add_item(item)
             else:
@@ -465,12 +457,19 @@ class MercurialBackend(Backend):
             else:
                 ctx._status[0] = [item._id]
             self._repo.commitctx(ctx)
-            # commands.update(self._ui, self._repo)
+            commands.update(self._ui, self._repo)
+
+            tiprevno = self._repo['tip'].rev()
+            f = open(self._cpath("%s.cache" % item._id), 'a')
+            if not f.tell() and not rev.revno == 0:
+                self._recreate_cache(item, f)
+            f.write("%d:%d," % (rev.revno, tiprevno, ))
+            f.close()
         finally:
             del lock
 
     def _rollback_item(self, rev):
-        pass  # generic rollback is sufficent, deleting would raise AttributeError
+        pass  # generic rollback is sufficent
 
     def _lock(self, lockpath, lockref):
         """"Generic lock helper"""
@@ -503,46 +502,125 @@ class MercurialBackend(Backend):
         """Return absolute path to unrevisioned Item in repository."""
         return os.path.join(self._u_path, filename)
 
-    def _create_new_cdb(self):
-        """Create new name-mapping if it doesn't exist yet."""
-        if not os.path.exists(self._name_db):
-            maker = cdb.cdbmake(self._name_db, self._name_db + '.tmp')
-            maker.finish()
+    def _cpath(self, filename):
+        return os.path.join(self._c_path, filename)
 
-    def _get_item_id(self, itemname):
+    def _read_name_db(self):
+        lock = self._namelock()
+        try:
+            try:
+                f = open(self._name_db, 'r')
+                namedb = []
+                for line in f.readlines():
+                    namedb.append(line.strip())
+                f.close()
+                return namedb
+            except IOError:
+                return []
+        finally:
+            del lock
+
+    def _get_item_id(self, item_name):
         """Get ID of item (or None if no such item exists)"""
-        c = cdb.init(self._name_db)
-        return c.get(itemname.encode('utf-8'))
+        namedb = self._read_name_db()
+        for line in namedb:
+            id, name = line.split(' ', 1)
+            if name == item_name.encode('utf-8'):
+                return id
+
+    def _get_item_name(self, item_id):
+        """Get name of item (or None if no such item exists)"""
+        namedb = self._read_name_db()
+        for line in namedb:
+            id, name = line.split(' ', 1)
+            if id == item_id:
+                return name.decode('utf-8')
 
     def _add_item(self, item):
         """Add new Item to name-mapping and create name file."""
         m = md5.new()
         m.update("%s%s%d" % (time.time(), item.name.encode("utf-8"), random.randint(0, RAND_MAX)))
         item_id = m.hexdigest()
-
         encoded_name = item.name.encode('utf-8')
-        name_path = os.path.join(self._path, '%s.name' % item_id)
 
-        c = cdb.init(self._name_db)
-        maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
-        r = c.each()
-        while r:
-            name, id = r
+        namedb = self._read_name_db()
+        for line in namedb:
+            id, name = line.split(' ', 1)
             if name == encoded_name:
-                maker.finish()
-                os.unlink(self._name_db + '.ndb')
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % item.name)
-            else:
-                maker.add(name, id)
-            r = c.each()
-        maker.add(encoded_name, item_id)
-        maker.finish()
-        util.rename(self._name_db + '.ndb', self._name_db)
 
-        name_file = open(name_path, mode='wb')
-        name_file.write(encoded_name)
-        name_file.close()
+        name_lock = self._namelock()
+        try:
+            f = open(self._name_db, 'a')
+            f.write("%s %s\n" % (item_id, encoded_name, ))
+            f.close()
+        finally:
+            del name_lock
+
+        f = open(self._cpath("%s.cache" % item_id), 'w')
+        f.close()
         item._id = item_id
+
+    def _has_revision(self, item, revno):
+        if not item._id:
+            return False, -1, None
+        try:
+            f = open(self._cpath(item._id + ".cache"))
+            revpairs = [revpair for revpair in f.read().split(',') if revpair]
+            f.close()
+            if revpairs and revno == -1:
+                revno = int(max(revpairs)[0])
+            for rev, ctxrev in [pair.split(':') for pair in revpairs]:
+                if int(rev) == revno:
+                    return True, int(max(revpairs)[0]), self._repo[ctxrev]
+            return False, -1, -1
+        except IOError:
+            for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
+                last_revno = pickle.loads(changeset[5]['__revision'])
+                return revno <= last_revno, last_revno, self._repo[revno]
+            return False, -1, None
+
+    def _iterate_changesets(self, reverse=True, item_id=None):
+        changeset = util.cachefunc(lambda r: self._repo[r].changeset())
+
+        def split_windows(start, end, windowsize=512):
+            while start < end:
+                yield start, min(windowsize, end-start)
+                start += windowsize
+
+        def wanted(changeset_revision):
+            if not item_id:
+                namedb_fname = os.path.split(self._name_db)[-1]
+                return namedb_fname not in changeset(changeset_revision)[3]
+            else:
+                return item_id in changeset(changeset_revision)[3]
+
+        start, end = -1, 0
+        if not len(self._repo):
+            change_revs = []
+        else:
+            if not reverse:
+                start, end = end, start
+            change_revs = revrange(self._repo, ['%d:%d' % (start, end, )])
+
+        for i, window in split_windows(0, len(change_revs)):
+            revs = [change_rev for change_rev in change_revs[i:i+window] if wanted(change_rev)]
+            for revno in revs:
+                yield changeset(revno), revno
+
+    def _recreate_cache(self, item, cachefile):
+        revpairs = []
+        for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
+            revpairs.append((pickle.loads(changeset[5]['__revision']), ctxrev, ))
+        revpairs.sort()
+        cachefile.write("".join(["%d:%d," % (rev, ctxrev) for rev, ctx in revpairs]))
+
+    def _init_namedb(self):
+            f = open(self._name_db, 'w')
+            f.close()
+            namedb_fname = os.path.split(self._name_db)[-1]
+            self._repo.add([namedb_fname])
+            self._repo.commit(text='(init name-mapping)', user='storage', files=[namedb_fname])
 
     #
     # extended API below
@@ -550,19 +628,19 @@ class MercurialBackend(Backend):
 
     def _get_revision_node(self, revision):
         """Return internal short SHA1 id of Revision"""
-        ctxrevs = filter(lambda r: revision._item_id in self._repo[r].files(), iter(self._repo))
-        for rev, ctxrev in enumerate(ctxrevs):
-            if rev == revision.revno:
-                return short(self._repo[ctxrev].node())
+        for changeset, ctxrevno in self._iterate_changesets(item_id=revision._item_id):
+            if pickle.loads(changeset[5]['__revision']) == revision.revno:
+                return short(self._repo[ctxrevno].node())
 
     def _get_revision_parents(self, revision):
         """Return parent revision numbers of Revision."""
-        ctxrevs = filter(lambda r: revision._item_id in self._repo[r].files(), iter(self._repo))
         rcache = {}
-        for revno, ctxrevno in enumerate(ctxrevs):
+        for changeset, ctxrevno in self._iterate_changesets(item_id=revision._item_id):
+            revno = pickle.loads(changeset[5]['__revision'])
             rcache[ctxrevno] = revno
-            if revno == revision.revno:
+            if  revno == revision.revno:
                 parentctxrevs = [p for p in self._repo.changelog.parentrevs(ctxrevno) if p != nullrev]
+
         parents = []
         for p in parentctxrevs:
             try:
@@ -581,3 +659,33 @@ class MercurialStoredRevision(StoredRevision):
 
     def get_node(self):
         return self._backend._get_revision_node(self)
+
+
+    #
+    # repository hooks - managing name-mapping file commits on push/pull requests
+    #
+
+def commit_namedb(ui, repo, **kw):
+    changes = [[], ['.name-mapping'], [], [], [], []]
+    parent = repo['tip'].node()
+    ctx = context.workingctx(repo, (parent, nullid), "(updated name-mapping)", "storage", changes=changes)
+    repo._commitctx(ctx)
+
+
+    #
+    # repository commands (extensions)
+    #
+
+def backup(ui, source, dest=None, **opts):
+    commit_namedb(ui, source)
+    commands.clone(ui, source, dest, **opts)
+
+from mercurial.commands import remoteopts
+cmdtable = {"backup": (backup,
+         [('U', 'noupdate', None, 'the clone will only contain a repository (no working copy)'),
+          ('r', 'rev', [], 'a changeset you would like to have after cloning'),
+          ('', 'pull', None, 'use pull protocol to copy metadata'),
+          ('', 'uncompressed', None, 'use uncompressed transfer (fast over LAN)'),
+         ] + remoteopts,
+         'hg backup [OPTION]... SOURCE [DEST]'),
+}

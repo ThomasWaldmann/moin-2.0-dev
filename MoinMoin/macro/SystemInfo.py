@@ -88,12 +88,13 @@ class SystemInfo:
             pagelist = request.rootpage.getPageList(user='')
             systemPages = []
             totalsize = 0
-            for page in pagelist:
+            for num, page in enumerate(pagelist):
                 if wikiutil.isSystemPage(request, page):
                     systemPages.append(page)
                 totalsize += Page(request, page).size()
+            pagecount = num + 1
 
-            row(_('Number of pages'), str(len(pagelist)-len(systemPages)))
+            row(_('Number of pages'), str(pagecount - len(systemPages)))
             row(_('Number of system pages'), str(len(systemPages)))
 
             row(_('Accumulated page sizes'), self.formatInReadableUnits(totalsize))

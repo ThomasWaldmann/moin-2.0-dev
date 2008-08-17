@@ -66,30 +66,10 @@ class TestMercurialBackend(BackendTest):
         py.test.raises(BackendError, MercurialBackend, no_perms)
 
     def test_backend_init_non_empty_datadir(self):
-        # assumption: if no mapping-file exists
-        # then any file in /meta, /rev and / other
-        # than name-mapping or history takes potential
-        # 'name' slot on fs for future item
         datadir = mkdtemp()
         os.mkdir(os.path.join(datadir, "meta"))
         os.mkdir(os.path.join(datadir, "rev"))
         try:
-            # no name-mapping file
-            revitem = mkstemp(dir=os.path.join(datadir, "rev"))[1]
-            py.test.raises(BackendError, MercurialBackend, datadir)
-            os.unlink(revitem)
-            metaitem = mkstemp(dir=os.path.join(datadir, "meta"))[1]
-            py.test.raises(BackendError, MercurialBackend, datadir)
-            os.unlink(metaitem)
-            nameitem = mkstemp(dir=datadir)[1]
-            py.test.raises(BackendError, MercurialBackend, datadir)
-            os.unlink(nameitem)
-            # mapping file
-            file = open(os.path.join(datadir, "name-mapping"), 'w')
-            file.close()
-            nameitem = mkstemp(dir=datadir)[1]
-            assert isinstance(MercurialBackend(datadir), MercurialBackend)
-            os.unlink(nameitem)
             revitem = mkstemp(dir=os.path.join(datadir, "rev"))[1]
             assert isinstance(MercurialBackend(datadir), MercurialBackend)
             os.unlink(revitem)
