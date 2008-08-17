@@ -528,6 +528,21 @@ class BackendTest(object):
         for nrev in self.backend.history():
             assert nrev.size == 8
 
+    def test_size_2(self):
+        item = self.backend.create_item('size2')
+        rev = item.create_revision(0)
+        rev.write('asdf')
+        assert rev.size == 4
+        item.commit()
+        rev = item.create_revision(1)
+        rev["size"] = "should be 0"
+        assert rev.size == 0
+        item.commit()
+        rev = item.get_revision(1)
+        assert rev.size == 0
+        rev = item.get_revision(0)
+        assert rev.size == 4
+
     def test_various_revision_metadata_values(self):
         def test_value(value, revno):
             item = self.backend.create_item('valid_values_%s' % revno)

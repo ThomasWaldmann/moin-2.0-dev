@@ -180,7 +180,7 @@ class GlobalEditLog(object):
         """
         Returns the number of edit-log entries.
         """
-        return len(self.items)
+        return len(list(self.items))
 
     def date(self):
         """
