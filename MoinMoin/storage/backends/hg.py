@@ -569,7 +569,7 @@ class MercurialBackend(Backend):
                 revno = int(max(revpairs)[0])
             for rev, ctxrev in [pair.split(':') for pair in revpairs]:
                 if int(rev) == revno:
-                     return True, int(max(revpairs)[0]), self._repo[ctxrev]
+                    return True, int(max(revpairs)[0]), self._repo[ctxrev]
             return False, -1, -1
         except IOError:
             for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
