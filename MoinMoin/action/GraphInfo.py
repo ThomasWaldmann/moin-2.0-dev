@@ -17,11 +17,12 @@ from MoinMoin import wikiutil
 from MoinMoin import user
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
-from MoinMoin.storage import EDIT_LOG_ACTION, EDIT_LOG_EXTRA, \
-                             EDIT_LOG_COMMENT, EDIT_LOG_USERID, EDIT_LOG_ADDR, \
-                             EDIT_LOG_HOSTNAME
+from MoinMoin.storage import EDIT_LOG_ACTION, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                             EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
+
 
 def execute(pagename, request):
+    """Show graphical information about page revisions."""
     page = Page(request, pagename)
 
     if not request.user.may.read(pagename) or not page.exists(includeDeleted=True):
@@ -46,7 +47,7 @@ def execute(pagename, request):
         try:
             item = request.cfg.data_backend.get_item(pagename)
         except NoSuchItemError:
-            pass  # TODO: copy from info, when done there
+            pass  # TODO: move from storage branch, when done there
 
         history, revs = [], []
         colors = {}
@@ -57,7 +58,7 @@ def execute(pagename, request):
             try:
                 revision = item.get_revision(revno)
             except NoSuchRevisionError:
-                pass  # TODO: copy from info, when done there
+                pass  # TODO: move from storage branch, when done there
 
             if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
                 size = revision.size
@@ -77,7 +78,10 @@ def execute(pagename, request):
                         comment = _("Revert to revision %(revno)d.") % {'revno': int(revision[EDIT_LOG_EXTRA])}
                     elif '/RENAME' in revision[EDIT_LOG_ACTION]:
                         comment = _("Renamed from '%(oldpagename)s'.") % {'oldpagename': revision[EDIT_LOG_EXTRA]}
-            else:  # ATTACHMENTS
+            else:
+                # Attachments
+                # TODO: attachments seem not to work like they should in info action
+                #       i'm dropping this stuff for now, waiting for cleanup there
                 rev = diff = '-'
                 filename = wikiutil.url_unquote(revision[EDIT_LOG_EXTRA])
                 comment = "%s: %s %s" % (revision[EDIT_LOG_ACTION], filename, revision[EDIT_LOG_COMMENT], )
@@ -152,8 +156,9 @@ def execute(pagename, request):
         div = html.DIV(id="page-history")
         buttons ='<input type="submit" value="%s">' % (_("Diff"), ) #<input type="submit" value="%s">' % (_("Merge"), )
         div.append(buttons)
-        div.append('<!--[if IE]><script type="text/javascript" src="%s/graph/excanvas.js"></script><![endif]-->' % request.cfg.url_prefix_static)
         div.append(html.INPUT(type="hidden", name="action", value="diff"))
+
+        div.append('<!--[if IE]><script type="text/javascript" src="%s/graph/excanvas.js"></script><![endif]-->' % request.cfg.url_prefix_static)
         noscript = html.DIV(id="noscript")
         noscript.append("This action only works with JavaScript-enabled browsers.")
         wrapper = html.DIV(id="wrapper")
