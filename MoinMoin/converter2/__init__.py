@@ -1,6 +1,18 @@
 """
 MoinMoin - Converter support
 
+Converters are used to convert between formats or between different featuresets
+of one format.
+
+There are usualy three types of converters:
+- Between an input format like Moin Wiki or Creole and the internal tree
+  representation.
+- Between the internal tree and an output format like HTML.
+- Between different featuresets of the internal tree representation like URI
+  types or macro expansion.
+
+TODO: Merge with new-style macros.
+
 @copyright: 2008 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
