@@ -414,9 +414,7 @@ class Page(object):
             timestamp = self._rev.timestamp
             if printable:
                 timestamp = self.request.user.getFormattedDateTime(timestamp)
-
             return timestamp
-
         return 0
 
     def isUnderlayPage(self, includeDeleted=True):
@@ -427,7 +425,9 @@ class Page(object):
         @rtype: bool
         @return: true if page lives in the underlay dir
         """
-        if not includeDeleted and self._rev.deleted:
+        if not includeDeleted and DELETED in self._rev:
+            return False
+        elif not self._item:
             return False
         return hasattr(self._item._backend, '_layer_marked_underlay')
 
@@ -439,7 +439,9 @@ class Page(object):
         @rtype: bool
         @return: true if page lives in the data dir
         """
-        if not includeDeleted and self._rev.deleted:
+        if not includeDeleted and DELETED in self._rev:
+            return False
+        elif not self._item:
             return False
         return not hasattr(self._item._backend, '_layer_marked_underlay')
 

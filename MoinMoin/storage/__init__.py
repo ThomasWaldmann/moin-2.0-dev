@@ -226,7 +226,8 @@ class Backend(object):
         @raise RevisionAlreadyExistsError: Raised if a revision with that number
         already exists on item.
         @raise RevisionNumberMismatchError: Raised if precondition is not
-        fulfilled.
+        fulfilled. Note: This behavior will be changed, allowing monotonic
+        revnos and not requiring revnos to be subsequent as well.
         """
         raise NotImplementedError()
 
@@ -576,8 +577,8 @@ class Item(object, DictMixin):
                                "is unpublished metadata on that item. Publish first.") % (revno, self.name))
         if self._uncommitted_revision is not None:
             if self._uncommitted_revision.revno != revno:
-                raise RevisionNumberMismatchError(("There already is an uncommitted revision #%d on this item "
-                                                   "that doesn't match the revno %d you specified.") %
+                raise RevisionNumberMismatchError(("There already is an uncommitted revision #%d on this item that doesn't match the "
+                                                   "revno %d you specified. The Storage API does not yet allow non-contiguous revnos") %
                                                    (self._uncommitted_revision.revno, revno))
             else:
                 return self._uncommitted_revision
@@ -655,7 +656,7 @@ class Revision(object, DictMixin):
         if self._metadata is None:
             self._load_metadata()
 
-        return filter(lambda x: not x.startswith('__'), self._metadata.keys())
+        return [key for key in self._metadata if not key.startswith("__")]
 
     def read_data(self, chunksize = -1):
         """
