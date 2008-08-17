@@ -98,7 +98,6 @@ def execute(pagename, request):
     try:
         oldrevision = currentpage.get_revision(oldrev)
         newrevision = currentpage.get_revision(newrev)
-
     except NoSuchRevisionError:
         ##request.makeForbidden(404, "The revision you tried to access does not exist.")  #XXX Localize this?
         # TODO: Handle Exception sanely
@@ -178,7 +177,6 @@ def execute(pagename, request):
         from MoinMoin.util import diff_html
         request.write(f.rawHTML(diff_html.diff(request, oldrevision.read(), newrevision.read())))
         Page.from_item(request, currentpage, rev=oldrevision.revno).send_page(count_hit=0, content_only=1, content_id="content-below-diff")
-
     else:
         from MoinMoin.util import diff_text
         oldlines = oldrevision.read().split('\n')

@@ -184,9 +184,6 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
                                          # but we want to allow equally named attachments to be
                                          # stored for different pages.
     backend = request.cfg.data_backend
-
-    # XXX Can somebody please propose a way how to make the following
-    # XXX two try-except-blocks more beautiful?
     try:
         item = backend.create_item(item_name)
     except ItemAlreadyExistsError:
@@ -240,13 +237,6 @@ def _addLogEntry(request, action, pagename, filename, uid_override=None):
 
         `action` should be "ATTNEW" or "ATTDEL"
     """
-#    # TODO: Rewrite this, using new storage API directly
-#    from MoinMoin.logfile import editlog
-#    fname = wikiutil.url_quote(filename, want_unicode=True)
-#
-#    # Write to local log
-#    llog = editlog.LocalEditLog(request, rootpagename=pagename)
-#    llog.add(request, time.time(), 99999999, action, pagename, request.remote_addr, fname, uid_override=uid_override)
     logging.debug("DEPRECATION WARNING: Some code is still using _addLogEntry in action/AttachFile.py!")
 
 
@@ -395,7 +385,6 @@ def _get_files(request, pagename):
     # Item-Name (in storage-backend) being constructed like: pagename + "/" + filename
     import re
     regex = re.compile('^%s/.*' % (pagename, ))
-
     backend = request.cfg.data_backend
 
     # Get a list of all items (of the page matching the regex) whose latest revision
@@ -598,7 +587,6 @@ def _do_upload(pagename, request, filename):
 
     if not request.user.may.write(pagename):
         return _('You are not allowed to attach a file to this page.')
-
     if overwrite and not request.user.may.delete(pagename):
         return _('You are not allowed to overwrite a file attachment of this page.')
 
@@ -694,14 +682,12 @@ def _do_del(pagename, request, filename):
 
     if not request.user.may.delete(pagename):
         return _('You are not allowed to delete attachments on this page.')
-
     if not request.form.get('target', [''])[0]:
         error = _("Filename of attachment not specified!")
     else:
         filename = wikiutil.taintfilename(request.form['target'][0])
 
     backend = request.cfg.data_backend
-
     try:
         item = backend.get_item(pagename + "/" + filename)
         current_rev = item.get_revision(-1)
@@ -717,7 +703,6 @@ def _do_del(pagename, request, filename):
 
     if error != "":
         error_msg(pagename, request, error)
-
     elif not deleted:
         # Everything ok. "Delete" the attachment, i.e., create a new, empty revision with according metadata
         # XXX Intentionally leaving out some of the information the old _addLogEntry saved. Maybe add them later.
@@ -873,13 +858,11 @@ def _do_get(pagename, request, filename):
         return _('You are not allowed to get attachments from this page.')
 
     backend = request.cfg.data_backend
-
     try:
         item = backend.get_item(pagename + "/" + filename)
         rev = item.get_revision(-1)
     except (NoSuchItemError, NoSuchRevisionError):
         error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
-
     else:
         timestamp = timefuncs.formathttpdate(float(rev.timestamp))  # Mandatory backend variable
         try:
@@ -1141,7 +1124,6 @@ def _do_view(pagename, request, filename):
 
     if not request.user.may.read(pagename):
         return _('You are not allowed to view attachments of this page.')
-
     if not request.form.get('target', [''])[0]:
         error = _("Filename of attachment not specified!")
     else:

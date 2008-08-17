@@ -93,14 +93,11 @@ class Page(object):
         """
         self.__item = None
         self.__rev = None
-
         self._loaded = False
-
         self._body = None
         self._data = None
         self._meta = None
         self._pi = None
-
         self._body_modified = 0
 
         if depth == 0:
@@ -258,7 +255,6 @@ class Page(object):
         """
         if self._item is not None:
             return max(-1, -1, *self._item.list_revisions())
-
         return -1
 
     def get_real_rev(self):
@@ -322,7 +318,6 @@ class Page(object):
             'timestamp': self.mtime(printable),
             'editor': self.last_editor(printable),
         }
-
         return result
 
     def last_edit_info(self):
