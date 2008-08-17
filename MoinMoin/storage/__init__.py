@@ -197,7 +197,7 @@ class Backend(object):
         """
         For a given item, return a list containing all revision numbers (as ints)
         of the revisions the item has. The list must be ordered, starting with
-        0.
+        the first revision-number.
 
         @type item: Object of class Item.
         @param item: The Item on which we want to operate.
@@ -420,19 +420,14 @@ class Item(object, DictMixin):
         """
         if not self._locked:
             raise AttributeError("Cannot write to unlocked metadata")
-
         if not isinstance(key, (str, unicode)):
             raise TypeError("Key must be string type")
-
         if key.startswith('__'):
             raise TypeError("Key must not begin with two underscores")
-
         if not value_type_is_valid(value):
             raise TypeError("Value must be string, unicode, int, long, float, bool, complex or a nested tuple thereof.")
-
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
-
         self._metadata[key] = value
 
     def __delitem__(self, key):
@@ -441,13 +436,10 @@ class Item(object, DictMixin):
         """
         if not self._locked:
             raise AttributeError("Cannot write to unlocked metadata")
-
         if key.startswith('__'):
             raise KeyError(key)
-
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
-
         del self._metadata[key]
 
     def __getitem__(self, key):
@@ -456,13 +448,10 @@ class Item(object, DictMixin):
         metadata-value. Note however, that the key you pass must be of type str or unicode.
         """
         self._read_accessed = True
-
         if not isinstance(key, (unicode, str)):
             raise TypeError("key must be string type")
-
         if key.startswith('__'):
             raise KeyError(key)
-
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
 
@@ -485,7 +474,6 @@ class Item(object, DictMixin):
         """
         if self._uncommitted_revision is not None:
             raise RuntimeError("You tried to change the metadata of the item %r but there are uncommitted revisions on that item. Commit first." % (self.name))
-
         if self._read_accessed:
             raise AccessError("Cannot lock after reading metadata")
 
@@ -532,7 +520,6 @@ class Item(object, DictMixin):
         specifies internally.
         """
         assert self._uncommitted_revision is not None
-
         self._backend._commit_item(self._uncommitted_revision)
         self._uncommitted_revision = None
 
@@ -551,7 +538,6 @@ class Item(object, DictMixin):
         """
         if self._locked:
             raise RuntimeError("You tried to create revision #%d on the item %r, but there is unpublished metadata on that item. Publish first." % (revno, self.name))
-
 
         if self._uncommitted_revision is not None:
             if self._uncommitted_revision.revno != revno:
