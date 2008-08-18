@@ -1400,6 +1400,7 @@ class RootPage(object):
         @rtype: list of unicode strings
         @return: user readable wiki page names
         """
+        # XXX: better update this docstring
 
         request = self.request
         request.clock.start('getPageList')
