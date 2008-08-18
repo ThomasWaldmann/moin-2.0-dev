@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    MoinMoin - Test - MercurialBackend
+    MoinMoin - MercurialBackend tests
 
     Testcases specific only for MercurialBackend.
     Common backend API tests are defined in test_backends.py
