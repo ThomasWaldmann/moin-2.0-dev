@@ -614,7 +614,7 @@ def commit_namedb(ui, repo, **kw):
 
 def backup(ui, source, dest=None, **opts):
     """Wrapper for hg clone command. Sync name-mapping file before cloning."""
-    commit_namedb(ui, source)
+    opts['pull'] = True
     commands.clone(ui, source, dest, **opts)
 
 from mercurial.commands import remoteopts
