@@ -219,8 +219,10 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
         mimetype = "application/octet-stream"
     new_rev["mimetype"] = mimetype
 
-    # TODO: Error handling
-    item.commit()
+    try:
+        item.commit()
+    except ItemAlreadyExistsError:
+        raise AttachmentAlreadyExists
 
     event = FileAttachedEvent(request, pagename, target, new_rev.size)
     send_event(event)
