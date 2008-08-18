@@ -892,7 +892,7 @@ def _do_get(pagename, request, filename):
             ])
 
             # send data
-            request.send_file(rev)  # XXX Check if this is buffered
+            request.send_file(rev)
 
 def _do_install(pagename, request, filename):
     _ = request.getText
