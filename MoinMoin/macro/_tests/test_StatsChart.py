@@ -14,6 +14,11 @@ from MoinMoin.PageEditor import PageEditor
 from MoinMoin.Page import Page
 from MoinMoin._tests import become_trusted, create_page, nuke_page
 
+class _PseudoParser(object):
+    def __init__(self, request, formatter):
+        self.request, self.formatter = request, formatter
+        self.form = request.form
+
 class TestStatsCharts:
     """StartsChart: testing StatsChart macro """
     pagename = u'AutoCreatedMoinMoinTemporaryTestPageStatsChart'
@@ -30,14 +35,11 @@ class TestStatsCharts:
 
     def _make_macro(self):
         """Test helper"""
-        from MoinMoin.parser.text import Parser
         from MoinMoin.formatter.text_html import Formatter
-        p = Parser("##\n", self.request)
-        p.formatter = Formatter(self.request)
+        p = _PseudoParser(self.request, Formatter(self.request))
         p.formatter.page = self.page
-        self.request.page = self.page
         self.request.formatter = p.formatter
-        p.form = self.request.form
+        self.request.page = self.page
         m = macro.Macro(p)
         return m
 
