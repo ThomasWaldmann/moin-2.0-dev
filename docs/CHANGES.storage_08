@@ -5,6 +5,8 @@ Version 1.8-storage-cdenter:
 
   New Features:
     * Possibility to choose between (potentially) many forms of data storage.
+    * Possibility to easily write new backends. (SQL, Usage of Googles
+    * appengine, etc.)
     * New-style filesystem backend to store data on disk.
     * Mercurial backend, that allows storing a wikis contents with the mercurial
       dcvs.
