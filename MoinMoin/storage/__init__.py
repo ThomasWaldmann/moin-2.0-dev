@@ -674,27 +674,19 @@ class StoredRevision(Revision):
 
     def __setitem__(self):
         """
-        revision metadata cannot be altered, thus, we raise an Exception.
+        Revision metadata cannot be altered, thus, we raise an Exception.
         """
         raise AttributeError("Metadata of already existing revisions may not be altered.")
 
     def read(self, chunksize=-1):
         """
-        Allows file-like read-operations. You can pass a chunksize and it will
-        only read as many bytes at a time as you wish. The default, however, is
-        to load the whole revision data into memory, which may not be what you
-        want.
+        @see: Backend._read_revision_data.__doc__
         """
         return self._backend._read_revision_data(self, chunksize)
 
     def seek(self, position, mode=0):
         """
-        Set the current position for reading the revisions data.
-        The mode argument is optional and defaults to 0 (absolute file
-        positioning); other values are 1 (seek relative to the current
-        position) and 2 (seek relative to the file's end).
-        There is no return value.
-        (docstring stolen from StringIO.StringIO().seek.__doc__)
+        @see: StringIO.StringIO().seek.__doc__
         """
         self._backend._seek_revision_data(self, position, mode)
 
@@ -729,6 +721,13 @@ class NewRevision(Revision):
         """
         Internal method used for dict-like access to the NewRevisions metadata-dict.
         Keys starting with two underscores are reserved and cannot be used.
+
+        @type key: str or unicode
+        @param key: The keyword that is used to look up the corresponding value.
+        @type value: str, unicode, int, long float, bool, complex or a nested
+        tuple thereof.
+        @param value: The value that is referenced by the keyword `key` in this
+        specific items metadata-dict.
         """
         if not isinstance(key, (str, unicode)):
             raise TypeError("Key must be string type")
@@ -747,8 +746,7 @@ class NewRevision(Revision):
 
     def write(self, data):
         """
-        Write `data` to the NewRevisions data attribute. This is the actual (binary)
-        data, e.g. the binary representation of an image.
+        @see: Backend._write_revision_data.__doc__
         """
         self._size += len(data)
         self._backend._write_revision_data(self, data)
