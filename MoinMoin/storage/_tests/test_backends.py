@@ -2,14 +2,12 @@
 """
     MoinMoin - TestBackend
 
-    This module provides class for testing backend API. This class tries
+    This module provides class for testing backends. This class tries
     to cover sane backend usage examples.
 
     This class should be inherited by descendant backend test classes.
-    Add tests suitable for API here and for your backend in backend-specific
-    test class with this one inherited.
-
-    ---
+    Add tests general for all backends here. Your backend-specific tests
+    put in class inherited from this one.
 
     @copyright: 2008 MoinMoin:PawelPacana,
     @copyright: 2008 MoinMoin:ChristopherDenter,

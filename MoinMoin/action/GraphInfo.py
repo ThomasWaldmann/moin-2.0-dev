@@ -22,7 +22,7 @@ from MoinMoin.storage import EDIT_LOG_ACTION, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, 
 
 
 def execute(pagename, request):
-    """Show graphical information about page revisions."""
+    """Show page history drawing revision graph."""
     page = Page(request, pagename)
 
     if not request.user.may.read(pagename) or not page.exists(includeDeleted=True):
@@ -30,7 +30,7 @@ def execute(pagename, request):
         return
 
     def history(page, pagename, request):
-        """Render history graph"""
+        """Render graphical information about page revisions."""
         _ = request.getText
 
         def render_action(text, query, **kw):
@@ -79,9 +79,6 @@ def execute(pagename, request):
                     elif '/RENAME' in revision[EDIT_LOG_ACTION]:
                         comment = _("Renamed from '%(oldpagename)s'.") % {'oldpagename': revision[EDIT_LOG_EXTRA]}
             else:
-                # Attachments
-                # TODO: attachments seem not to work like they should in info action
-                #       i'm dropping this stuff for now, waiting for cleanup there
                 rev = diff = '-'
                 filename = wikiutil.url_unquote(revision[EDIT_LOG_EXTRA])
                 comment = "%s: %s %s" % (revision[EDIT_LOG_ACTION], filename, revision[EDIT_LOG_COMMENT], )
@@ -108,12 +105,10 @@ def execute(pagename, request):
             idx = revs.index(revno)
             color = colors.pop(revno)
             next = revs[:]
-
             # Add parents to next_revs
             parents = revision.get_parents()
             addparents = [p for p in parents if p not in next]
             next[idx:idx + 1] = addparents
-
             # Set colors for the parents
             for i, p in enumerate(addparents):
                 if not i:
@@ -121,7 +116,6 @@ def execute(pagename, request):
                 else:
                     colors[p] = new_color
                     new_color += 1
-
             # Add edges to the graph
             edges = []
             for col, r in enumerate(revs):
@@ -130,7 +124,6 @@ def execute(pagename, request):
                 elif r == revno:
                     for p in parents:
                         edges.append((col, next.index(p), colors[p]))
-
             revs = next
 
             url = page.url(request, {'action': 'recall', 'rev': '%d' % revno})
@@ -154,7 +147,8 @@ def execute(pagename, request):
             return
 
         div = html.DIV(id="page-history")
-        buttons ='<input type="submit" value="%s">' % (_("Diff"), ) #<input type="submit" value="%s">' % (_("Merge"), )
+        buttons ='<input type="submit" value="%s">' % (_("Diff"), )
+        # TODO: <input type="submit" value="%s">' % (_("Merge"), ) and merge related stuff, see global SOC TODO
         div.append(buttons)
         div.append(html.INPUT(type="hidden", name="action", value="diff"))
 

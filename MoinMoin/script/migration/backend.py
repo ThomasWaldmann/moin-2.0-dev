@@ -7,8 +7,6 @@
     - defined user_backend/data_backend in wikiconfig
     - defined user_backend_source/data_backend_source in wikiconfig
 
-    TODO: tests!
-
     @copyright: 2008 MoinMoin:PawelPacana,
                 2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
@@ -35,7 +33,6 @@ class PluginScript(MoinScript):
             "-f", "--fails", dest="show_failed", action="store_true",
             help="Print failed migration items"
         )
-
 
     def mainloop(self):
         self.init_request()
