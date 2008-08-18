@@ -733,15 +733,9 @@ def move_attachment(request, pagename, new_pagename, attachment, new_attachment)
     In order to move an attachment, we simply rename the item to which the
     attachment (i.e. a revision) belongs.
     """
-    # XXX This is the easiest approach to get something functional wrt attachment
-    # XXX moving. It has a few drawbacks wrt the history being displayed in Recent
-    # XXX Changes. No completely sane solution is possible at this point, so we
-    # XXX choose the easiest. Once this gets refactored, the way an attachment is
-    # XXX moved might be changed as well.
     _ = request.getText
 
     backend = request.cfg.data_backend
-
     try:
         item = backend.get_item(pagename + "/" + attachment)
         item.rename(new_pagename + "/" + new_attachment)
@@ -797,9 +791,10 @@ def _do_move(pagename, request, filename):
         error = _("Filename of attachment not specified!")
     else:
         filename = wikiutil.taintfilename(request.form['target'][0])
-        try:  # XXX The revision object is not used here. Just check if we have it. Refactor.
+        try:
             backend = request.cfg.data_backend
             item = backend.get_item(pagename + "/" + filename)
+            # We need to check if there is a revision with data
             rev = item.get_revision(-1)
         except (NoSuchItemError, NoSuchRevisionError):
             error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
