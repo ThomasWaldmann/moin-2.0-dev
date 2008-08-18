@@ -46,6 +46,42 @@ def test_Uri_1():
     assert u.fragment is None
     assert str(u) == i
 
+    i = 'http:///StartSeite?action=raw#body'
+    u = Uri(i)
+    assert u.scheme == 'http'
+    assert u.authority == ''
+    assert u.path == '/StartSeite'
+    assert u.query == 'action=raw'
+    assert u.fragment == 'body'
+    assert str(u) == i
+
+    i = 'http:///StartSeite?action=raw'
+    u = Uri(i)
+    assert u.scheme == 'http'
+    assert u.authority == ''
+    assert u.path == '/StartSeite'
+    assert u.query == 'action=raw'
+    assert u.fragment is None
+    assert str(u) == i
+
+    i = 'http:///StartSeite'
+    u = Uri(i)
+    assert u.scheme == 'http'
+    assert u.authority == ''
+    assert u.path == '/StartSeite'
+    assert u.query is None
+    assert u.fragment is None
+    assert str(u) == i
+
+    i = 'http://'
+    u = Uri(i)
+    assert u.scheme == 'http'
+    assert u.authority == ''
+    assert u.path is None
+    assert u.query is None
+    assert u.fragment is None
+    assert str(u) == i
+
     i = 'http:'
     u = Uri(i)
     assert u.scheme == 'http'
