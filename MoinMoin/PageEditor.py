@@ -33,7 +33,7 @@ from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
-from MoinMoin.storage.error import ItemAlreadyExistsError, RevisionAlreadyExistsError
+from MoinMoin.storage.error import ItemAlreadyExistsError, RevisionAlreadyExistsError, NoSuchRevisionError
 from MoinMoin.Page import DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                           EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
@@ -558,8 +558,11 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             # revisions of the new item. Note that the new item may already have
             # some revisions. Thus, we start at the new items last_revno + 1
             new_item = self._backend.get_item(self.page_name)
-            last_rev = new_item.get_revision(-1)  # TODO May fail, but shouldn't
-            last_revno = last_rev.revno + 1
+            try:
+                last_rev = new_item.get_revision(-1)
+                last_revno = last_rev.revno + 1
+            except NoSuchRevisionError:
+                last_revno = 0
 
         # Transfer all revisions with their data and metadata
         # Make sure the list begins with the lowest value, that is, 0.
