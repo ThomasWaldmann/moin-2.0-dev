@@ -40,8 +40,8 @@ from MoinMoin.security.textcha import TextCha
 from MoinMoin.events import FileAttachedEvent, send_event
 from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
 from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage import EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
-                             EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, DELETED
+from MoinMoin.Page import EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
+                          EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, DELETED
 
 action_name = __name__.split('.')[-1]
 

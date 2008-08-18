@@ -29,11 +29,24 @@ from MoinMoin import config, caching, util, wikiutil, user
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage import Backend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.storage import DELETED, EDIT_LOG_ADDR, ACL, \
-                             EDIT_LOG_HOSTNAME, EDIT_LOG_USERID
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
+ACL = "acl"
+
+# special meta-data whose presence indicates that the item is deleted
+DELETED = "deleted"
+
+SIZE = "size"
+
+EDIT_LOG_ACTION = "edit_log_action"
+EDIT_LOG_ADDR = "edit_log_addr"
+EDIT_LOG_HOSTNAME = "edit_log_hostname"
+EDIT_LOG_USERID = "edit_log_userid"
+EDIT_LOG_EXTRA = "edit_log_extra"
+EDIT_LOG_COMMENT = "edit_log_comment"
+
+EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
 
 def is_cache_exception(e):
     args = e.args

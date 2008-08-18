@@ -11,7 +11,8 @@ import os, re, tempfile, shutil
 import py.test
 
 from MoinMoin import wikiutil
-from MoinMoin.storage import Item, DELETED
+from MoinMoin.storage import Item
+from MoinMoin.Page import DELETED
 from MoinMoin.storage.backends.fs17 import FSPageBackend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
