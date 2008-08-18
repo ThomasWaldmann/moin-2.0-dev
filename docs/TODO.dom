@@ -43,10 +43,13 @@
 * Remove unused formatters. Only compatibility and text_html will survive.
 
 * Fix GUI editor.
-  Currently it gets the HTML with expanded macros and links.
+  - Don't expand macros and links(?) in HTML.
+  - Replace html -> moin wiki converter.
 
 * Include macro: Argument parsing.
   The argument parsing through wikiutil.invoke_extension_method is currently
   incompatible with several examples of the macro usage.
+
+* Macro handling: Handle errors.
 
 * Converters, Macros: Merge.
