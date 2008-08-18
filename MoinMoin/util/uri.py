@@ -45,39 +45,41 @@ class Uri(object):
     """
     _re = re.compile(rules, re.X)
 
-    def __init__(self, url=None,
+    def __init__(self, uri=None,
             scheme=None, authority=None, path=None, query=None, fragment=None):
 
-        if url:
-            match = self._re.match(url)
+        uri_scheme = uri_authority = uri_path = uri_query = uri_fragment = None
+
+        if uri:
+            match = self._re.match(uri)
 
             if match:
-                scheme = match.group('scheme')
-                if scheme is not None:
+                uri_scheme = match.group('scheme')
+                if uri_scheme is not None:
                     # Common sense, scheme is lowercase
-                    scheme = scheme.lower()
+                    uri_scheme = uri_scheme.lower()
 
-                authority = match.group('authority')
-                if authority is not None:
-                    authority = urllib.unquote(authority)
+                uri_authority = match.group('authority')
+                if uri_authority is not None:
+                    uri_authority = urllib.unquote(uri_authority)
 
-                path = match.group('path')
-                if path is not None:
-                    path = urllib.unquote(path)
+                uri_path = match.group('path')
+                if uri_path is not None:
+                    uri_path = urllib.unquote(uri_path)
 
-                query = match.group('query')
-                if query is not None:
-                    query = urllib.unquote(query)
+                uri_query = match.group('query')
+                if uri_query is not None:
+                    uri_query = urllib.unquote(uri_query)
 
-                fragment = match.group('fragment')
-                if fragment is not None:
-                    fragment = urllib.unquote(fragment)
+                uri_fragment = match.group('fragment')
+                if uri_fragment is not None:
+                    uri_fragment = urllib.unquote(uri_fragment)
 
-        self.scheme = scheme
-        self.authority = authority
-        self.path = path
-        self.query = query
-        self.fragment = fragment
+        self.scheme = scheme or uri_scheme
+        self.authority = authority or uri_authority
+        self.path = path or uri_path
+        self.query = query or uri_query
+        self.fragment = fragment or uri_fragment
 
     def __setattr__(self, key, value):
         if key in ('scheme', 'authority', 'path', 'query', 'fragment'):

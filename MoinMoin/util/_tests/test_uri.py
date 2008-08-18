@@ -144,3 +144,12 @@ def test_Uri_4():
     assert u.path == 'Neu?'
     assert u.query == 'Neu?'
     assert str(u) == 'wiki:Neu%3F?Neu?'
+
+def test_Uri_5():
+    i = 'wiki://MoinMoin/StartSeite?action=raw#body'
+    u = Uri(i, scheme='newwiki', path='/newStartSeite', query='action=false')
+    assert u.scheme == 'newwiki'
+    assert u.authority == 'MoinMoin'
+    assert u.path == '/newStartSeite'
+    assert u.query == 'action=false'
+    assert u.fragment == 'body'
