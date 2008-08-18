@@ -112,8 +112,7 @@ def execute(pagename, request):
         try:
             item = request.cfg.data_backend.get_item(pagename)
         except NoSuchItemError:
-            # TODO Handle the exception sanely
-            pass
+            request.theme.add_msg(_("The Page you requested was not found."), "error")
 
         revs = item.list_revisions()
         revs.reverse()
@@ -123,15 +122,10 @@ def execute(pagename, request):
 
         for revno in revs:
             actions = []
-            try:
-                revision = item.get_revision(revno)
-            except NoSuchRevisionError:
-                # TODO Handle exception sanely
-                pass
+            revision = item.get_revision(revno)
 
             if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
-                size = page.size(rev=revno) # XXX Is the correct revision number passed here?
-                                            # XXX Storage and the rest of moin seem to use different enumeration methods. URGH!
+                size = page.size(rev=revno)
                 actions.append(render_action(_('view'), {'action': 'recall', 'rev': '%d' % revno}))
 
                 if pgactioncount == 0:
