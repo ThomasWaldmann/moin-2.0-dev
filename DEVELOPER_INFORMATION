@@ -1,12 +1,13 @@
-List of things we know are broken at the moment
-===============================================
+Notes for Developers (storage)
+==============================
+
+ This document contains information about things that are broken and must be
+ fixed. Additionally, it also contains information on things that need to be
+ done before the storage code can be used productively.
     
     - In some scenarios, the FSBackend keeps too many files open, which causes
       an exception to be shown. See http://tinyurl.com/5paw95 for a traceback.
 
-    - The handling of zipfiles via AttachFile is not implemented. The
-      corresponding code is commented out and needs to be rewritten with the new
-      storage API in mind. See MoinMoin/action/AttachFile.py.
 
     - In order to allow future versions of the storage API to act in a
       "delete" friendly way (i.e., not disallowing deletion of items / revisions
@@ -33,6 +34,12 @@ List of things we know are broken at the moment
       the information provided by the page behind the url may be unexpected.
       Thus, "skipping" some revision numbers is necessary.
 
+
+    - The handling of zipfiles via AttachFile is not implemented. The
+      corresponding code is commented out and needs to be rewritten with the new
+      storage API in mind. See MoinMoin/action/AttachFile.py.
+
+
     - Since revisions can be filled with contents of arbitrary types, mimetype
       informations need to be available in order to tell what a revision
       contains as data. In fact, this is implemented already, but not in a sane
@@ -42,3 +49,11 @@ List of things we know are broken at the moment
         - For all parsers supported by moin, introduce appropriate metadata.
           This, however, is not a trivial task. E.g. you need to differentiate
           between the usual MoinMoin parser, creole, rst, etc.
+
+
+    - Rename ROWrapperBackend to LayerBackend since that better reflects what it
+      does.
+
+    
+    - Idea: Add a NamespaceBackend that allows storing Items in different
+      Backends, dependent on the beginning of their name.
