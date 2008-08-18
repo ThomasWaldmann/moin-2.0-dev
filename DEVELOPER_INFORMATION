@@ -53,6 +53,7 @@ Notes for Developers (storage)
 
     - Rename ROWrapperBackend to LayerBackend since that better reflects what it
       does.
+      In addition to that, the code for that backend must be completed.
 
     
     - Idea: Add a NamespaceBackend that allows storing Items in different
