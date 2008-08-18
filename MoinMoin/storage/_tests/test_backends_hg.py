@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-    MoinMoin - Test - MercurialBackend
+    MoinMoin - MercurialBackend tests
 
     Testcases specific only for MercurialBackend.
     Common backend API tests are defined in test_backends.py
-
-    ---
 
     @copyright: 2008 MoinMoin:PawelPacana
     @license: GNU GPL, see COPYING for details.
@@ -27,10 +25,9 @@ class TestMercurialBackend(BackendTest):
         from mercurial.context import memctx
     except ImportError:
         py.test.skip("Wrong version of mercurial: please test on development version.")
-        # disabled = True
+
     def __init__(self):
-        names = item_names + (u'_ĄółóĄ_', ) # tricky for internal hg quoting, however
-                                            # not much needed if item names are hashes
+        names = item_names + (u'_ĄółóĄ_', )
         BackendTest.__init__(self, None, valid_names=names)
 
     def create_backend(self):
