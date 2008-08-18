@@ -157,7 +157,7 @@ class Formatter(ConverterMacro):
 
     tag_html_class = html.class_
 
-    def __init__(self, request, page, **kw):
+    def __init__(self, request, page=None, **kw):
         self.request, self.page = request, page
         self._ = request.getText
 
@@ -169,6 +169,9 @@ class Formatter(ConverterMacro):
 
         self.root = moin_page.div()
         self._stack = [self.root]
+
+    def setPage(self, page):
+        self.page = page
 
     def handle_on(self, on, tag, attrib={}):
         if on:
