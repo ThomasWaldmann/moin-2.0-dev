@@ -100,17 +100,17 @@ class MercurialBackend(Backend):
             self._init_namedb()
 
     def has_item(self, itemname):
-        """Return true if Item with given name exists."""
+        """Return True if Item with given name exists."""
         return self._get_item_id(itemname) is not None
 
     def create_item(self, itemname):
         """
-        Create Item in repository. This Item hasn't got any Revisions yet. Unless
-        you create_revision+commit or change_metadata+publish_metdata, Item acts
-        like a proxy for storing filled data. This method returns Item object.
+        Create Item with given name.
+        Raise ItemAlreadyExistsError if Item already exists.
+        Return Item object.
         """
         if not isinstance(itemname, (str, unicode)):
-            raise TypeError("Wrong Item name type: %s" % (type(itemname)))  # XXX: should go to abstract
+            raise TypeError("Wrong Item name type: %s" % (type(itemname)))
         if self.has_item(itemname):
             raise ItemAlreadyExistsError("Item with that name already exists: %s" % itemname)
         item = Item(self, itemname)
@@ -119,8 +119,8 @@ class MercurialBackend(Backend):
 
     def get_item(self, itemname):
         """
-        Return an Item with given name, else raise NoSuchItemError
-        exception.
+        Return an Item with given name.
+        Raise NoSuchItemError if Item does not exist.
         """
         item_id = self._get_item_id(itemname)
         if not item_id:
@@ -131,7 +131,7 @@ class MercurialBackend(Backend):
 
     def iteritems(self):
         """
-        Return generator for iterating through items collection
+        Return generator for iterating through collection of Items
         in repository.
         """
         name2id, id2name = self._read_name_db()
@@ -141,7 +141,11 @@ class MercurialBackend(Backend):
             yield item
 
     def history(self, reverse=True):
-        """History implementation reading the log file."""
+        """
+        Return generator for iterating in given direction over Item Revisions
+        with timestamp order preserved.
+        Yields MercurialStoredRevision objects.
+        """
         for changeset, ctxrev in self._iterate_changesets(reverse=reverse):
             item_id = changeset[3][0]
             revno = pickle.loads(changeset[5]["__revision"])
@@ -153,7 +157,7 @@ class MercurialBackend(Backend):
             yield rev
 
     def _create_revision(self, item, revno):
-        """Create new Item Revision."""
+        """Create new Item Revision. Return NewRevision object."""
         revs = self._list_revisions(item)
         if revs:
             if revno in revs:
@@ -161,7 +165,6 @@ class MercurialBackend(Backend):
             if revno != revs[-1] + 1:
                 raise RevisionNumberMismatchError("Unable to create revision number %d. \
                     New Revision number must be next to latest Revision number." % revno)
-
         rev = NewRevision(item, revno)
         rev._data = StringIO.StringIO()
         rev._revno = revno
@@ -169,7 +172,11 @@ class MercurialBackend(Backend):
         return rev
 
     def _get_revision(self, item, revno):
-        """Returns given Revision of an Item."""
+        """
+        Return given Revision of an Item. Raise NoSuchRevisionError
+        if Revision does not exist.
+        Return MercurialStoredRevision object.
+        """
         has, last, changectx = self._has_revision(item, revno)
         if not has:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
@@ -182,12 +189,12 @@ class MercurialBackend(Backend):
         return revision
 
     def _get_revision_size(self, rev):
-        """Get size of Revision."""
+        """Return size of given Revision in bytes."""
         ftx = self._repo['tip'][rev._item_id].filectx(rev.revno)
         return ftx.size()
 
     def _get_revision_metadata(self, rev):
-        """Return Revision metadata dictionary."""
+        """Return given Revision Metadata dictionary."""
         changectx = self._has_revision(rev.item, rev.revno)[2]
         metadata = {}
         for k, v in changectx.extra().iteritems():
@@ -198,29 +205,29 @@ class MercurialBackend(Backend):
         return metadata
 
     def _get_revision_timestamp(self, rev):
-        """Return revision timestamp"""
+        """Return given Revision timestamp"""
         if rev._metadata is None:
             return self._get_revision_metadata(rev)['__timestamp']
         return rev._metadata['__timestamp']
 
     def _write_revision_data(self, revision, data):
-        """Write data to the Revision."""
+        """Write data to the given Revision."""
         revision._data.write(data)
 
     def _read_revision_data(self, revision, chunksize):
         """
-        Called to read a given amount of bytes of a revisions data. By default, all
-        data is read.
+        Read given amount of bytes of Revision data.
+        By default, all data is read.
         """
         return revision._data.read(chunksize)
 
     def _seek_revision_data(self, revision, position, mode):
-        """Set the revisions cursor on the revisions data."""
+        """Set the Revisions cursor on the Revisions data."""
         revision._data.seek(position, mode)
 
     def _list_revisions(self, item):
         """
-        Return a list of Item revision numbers.
+        Return a list of Item Revision numbers.
         """
         if not item._id:
             return []
@@ -235,7 +242,6 @@ class MercurialBackend(Backend):
                 return []
             except IOError:
                 revs = []
-                changefn = util.cachefunc(lambda r: self._repo[r].changeset())
                 for changeset in self._iterate_changesets(item_id=item._id):
                     revno = pickle.loads(changeset[5]['__revision'])
                     revs.append(revno)
@@ -246,13 +252,13 @@ class MercurialBackend(Backend):
 
     def _rename_item(self, item, newname):
         """
-        Rename given Item name to newname. Raise ItemAlreadyExistsError if destination exists.
+        Rename given Item name to newname.
+        Raise ItemAlreadyExistsError if destination exists.
         """
         lock = self._repolock()
         try:
             if self.has_item(newname):
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
-
             namemapping_list = []
             name2id, id2name = self._read_name_db()
             for id, name in id2name.iteritems():
@@ -318,13 +324,13 @@ class MercurialBackend(Backend):
 
 
     def _commit_item(self, rev):
-        """Commit Item changes within transaction to repository."""
+        """
+        Commit given Item Revision to repository.
+        If Revision already exists, raise RevisionAlreadyExistsError.
+        Update Item cache file.
+        """
         def getfilectx(repo, memctx, path):
             return context.memfilectx(path, data, False, False, False)
-
-        item = rev.item
-        if not item._id and self.has_item(item.name):
-            raise ItemAlreadyExistsError("Item already exists: %s" % item.name)
 
         if rev.timestamp is None:
             rev.timestamp = long(time.time())
@@ -333,12 +339,13 @@ class MercurialBackend(Backend):
         data = rev._data.getvalue()
 
         meta = {'__timestamp': pickle.dumps(rev.timestamp, PICKLE_REV_META),
-                '__revision': pickle.dumps(rev.revno, PICKLE_REV_META)}
+                '__revision': pickle.dumps(rev.revno, PICKLE_REV_META), }
         for k, v in rev.iteritems():
             meta["moin_%s" % k] = pickle.dumps(v, PICKLE_REV_META)
 
         lock = self._repolock()
         try:
+            item = rev.item
             p1, p2 = self._repo['tip'].node(), nullid
             if not item._id:
                 self._add_item(item)
@@ -366,9 +373,13 @@ class MercurialBackend(Backend):
     def _rollback_item(self, rev):
         pass  # generic rollback is sufficent
 
-
-
     def _has_revision(self, item, revno):
+        """
+        Check whether Item has given Revision.
+        Return (True, last Revision number, repository changelog revision) tuple
+        if found.
+        Return (False, -1, None) tuple if Item does not have given Revision.
+        """
         if not item._id:
             return False, -1, None
         try:
@@ -388,6 +399,10 @@ class MercurialBackend(Backend):
             return False, -1, None
 
     def _iterate_changesets(self, reverse=True, item_id=None):
+        """
+        Return generator fo iterating over repository changelog.
+        Yields tuple consisting of changeset and changesets number in changelog.
+        """
         changeset = util.cachefunc(lambda r: self._repo[r].changeset())
 
         def split_windows(start, end, windowsize=512):
@@ -414,8 +429,6 @@ class MercurialBackend(Backend):
             revs = [change_rev for change_rev in change_revs[i:i+window] if wanted(change_rev)]
             for revno in revs:
                 yield changeset(revno), revno
-
-
 
     def _lock(self, lockpath, lockref):
         """Acquire weak reference to lock object."""
@@ -518,6 +531,10 @@ class MercurialBackend(Backend):
         item._id = item_id
 
     def _recreate_cache(self, item, cachefile):
+        """
+        Iterate through Item Revisions and create cache file
+        to optimize further Revision lookups.
+        """
         revpairs = []
         for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
             revpairs.append((pickle.loads(changeset[5]['__revision']), ctxrev, ))
@@ -541,11 +558,11 @@ class MercurialBackend(Backend):
         f.close()
 
     #
-    # extended API below
+    # extended API below - needed for drawing revision graph
     #
 
     def _get_revision_node(self, revision):
-        """Return internal short SHA1 id of Revision"""
+        """Return internal ID (short SHA1) of Revision"""
         for changeset, ctxrevno in self._iterate_changesets(item_id=revision._item_id):
             if pickle.loads(changeset[5]['__revision']) == revision.revno:
                 return short(self._repo[ctxrevno].node())
@@ -558,7 +575,6 @@ class MercurialBackend(Backend):
             rcache[ctxrevno] = revno
             if  revno == revision.revno:
                 parentctxrevs = [p for p in self._repo.changelog.parentrevs(ctxrevno) if p != nullrev]
-
         parents = []
         for p in parentctxrevs:
             try:
@@ -578,29 +594,32 @@ class MercurialStoredRevision(StoredRevision):
     def get_node(self):
         return self._backend._get_revision_node(self)
 
-
     #
     # repository hooks - managing name-mapping file commits on push/pull requests
     #
 
 def commit_namedb(ui, repo, **kw):
+    """
+    Commit name-mapping file.
+    Used to keep repositories in sync with name-mapping on pull/push/clone requests.
+    """
     changes = [[], ['.name-mapping'], [], [], [], []]
     parent = repo['tip'].node()
     ctx = context.workingctx(repo, (parent, nullid), "(updated name-mapping)", "storage", changes=changes)
     repo._commitctx(ctx)
-
 
     #
     # repository commands (extensions)
     #
 
 def backup(ui, source, dest=None, **opts):
+    """Wrapper for hg clone command. Sync name-mapping file before cloning."""
     commit_namedb(ui, source)
     commands.clone(ui, source, dest, **opts)
 
 from mercurial.commands import remoteopts
 cmdtable = {"backup": (backup,
-         [('U', 'noupdate', None, 'the clone will only contain a repository (no working copy)'),
+         [('U', 'noupdate', None, 'the backup will only contain a repository (no working copy)'),
           ('r', 'rev', [], 'a changeset you would like to have after cloning'),
           ('', 'pull', None, 'use pull protocol to copy metadata'),
           ('', 'uncompressed', None, 'use uncompressed transfer (fast over LAN)'),
