@@ -15,7 +15,7 @@ logging = log.getLogger(__name__)
 from MoinMoin import wikiutil, user
 from MoinMoin.storage.error import NoSuchItemError
 from MoinMoin.Page import Page
-from MoinMoin.storage import EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+from MoinMoin.Page import EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 
 class EditLogLine(object):
     """
