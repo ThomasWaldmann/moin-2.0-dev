@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    MoinMoin - TestBackend
+    MoinMoin - Backend tests
 
     This module provides class for testing backends. This class tries
     to cover sane backend usage examples.

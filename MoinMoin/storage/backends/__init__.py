@@ -17,7 +17,7 @@ def clone(source, destination, verbose=False):
     Create exact copy of source Backend with all its Items in the given
     destination Backend.
     Return a tuple consisting of three dictionaries (Item name:Revsion numbers list):
-    converted, skipped and failed Items dictionary
+    converted, skipped and failed Items dictionary.
     """
     def same_revision(rev1, rev2):
         if rev1.timestamp != rev2.timestamp:
