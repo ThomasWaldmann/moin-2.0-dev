@@ -134,10 +134,9 @@ class MercurialBackend(Backend):
         Return generator for iterating through items collection
         in repository.
         """
-        namedb = self._read_name_db()
-        for line in namedb:
-            id, name = line.split(' ', 1)
-            item = Item(self, name.decode('utf-8'))
+        name2id, id2name = self._read_name_db()
+        for id, name in id2name.iteritems():
+            item = Item(self, name)
             item._id = id
             yield item
 
@@ -247,27 +246,23 @@ class MercurialBackend(Backend):
 
     def _rename_item(self, item, newname):
         """
-        Renames given Item name to newname. Raises NoSuchItemError if source
-        item is unreachable or ItemAlreadyExistsError if destination exists.
+        Rename given Item name to newname. Raise ItemAlreadyExistsError if destination exists.
         """
         lock = self._repolock()
         try:
             if self.has_item(newname):
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
 
-            encoded_name = newname.encode('utf-8')
-            namedb, namelist = self._read_name_db(), []
-            for line in namedb:
-                id, name = line.split(' ', 1)
+            namemapping_list = []
+            name2id, id2name = self._read_name_db()
+            for id, name in id2name.iteritems():
                 if id == item._id:
-                    namelist.append("%s %s" % (id, encoded_name, ))
+                    namemapping_list.append("%s %s" % (id, newname.encode('utf-8'), ))
                 else:
-                    namelist.append("%s %s" % (id, name, ))
-
+                    namemapping_list.append("%s %s" % (id, name.encode('utf-8'), ))
             fd, fname = tempfile.mkstemp("-tmp", "namedb-", self._path)
-            os.write(fd, "\n".join(namelist) + "\n")
+            os.write(fd, "\n".join(namemapping_list) + "\n")
             os.close(fd)
-
             name_lock = self._namelock()
             try:
                 util.rename(fname, self._name_db)
@@ -277,7 +272,7 @@ class MercurialBackend(Backend):
             del lock
 
     def _get_item_metadata(self, item):
-        """Load Item metadata from file. Return dictionary."""
+        """Load Item Metadata from file. Return metadata dictionary."""
         if item._id:
             try:
                 f = open(self._metapath(item._id + ".meta"), "rb")
@@ -292,12 +287,12 @@ class MercurialBackend(Backend):
         return item._metadata
 
     def _change_item_metadata(self, item):
-        """Start Item metadata transaction."""
+        """Start Item Metadata transaction."""
         if item._id:
             item._lock = self._itemlock(item)
 
     def _publish_item_metadata(self, item):
-        """Dump Item metadata to file and finish transaction."""
+        """Dump Item Metadata to file and finish transaction."""
         def write_meta_item(item_path, metadata):
             tmp_fd, tmp_fpath = tempfile.mkstemp("-meta", "tmp-", self._meta_path)
             f = os.fdopen(tmp_fd, 'wb')
@@ -323,7 +318,7 @@ class MercurialBackend(Backend):
 
 
     def _commit_item(self, rev):
-        """Commit Item changes within transaction (Revision) to repository."""
+        """Commit Item changes within transaction to repository."""
         def getfilectx(repo, memctx, path):
             return context.memfilectx(path, data, False, False, False)
 
@@ -471,50 +466,46 @@ class MercurialBackend(Backend):
         """
         Read contents of name-mapping file into memory. This is done within
         lock because of possible data corruption when renames occur.
+        Return two dicts: name-id and id-name mappings.
         """
         lock = self._namelock()
         try:
-            try:
-                f = open(self._name_db, 'r')
-                namedb = []
-                for line in f.readlines():
-                    namedb.append(line.strip())
-                f.close()
-                return namedb
-            except IOError:
-                return []
+            name2id, id2name = {}, {}
+            f = open(self._name_db, 'r')
+            for line in f.readlines():
+                id, name = line.strip().split(' ', 1)
+                name = name.decode('utf-8')
+                id2name[id], name2id[name] = name, id
+            f.close()
+            return name2id, id2name
         finally:
             del lock
 
     def _get_item_id(self, item_name):
-        """Get ID of item (or None if no such item exists)"""
-        namedb = self._read_name_db()
-        for line in namedb:
-            id, name = line.split(' ', 1)
-            if name == item_name.encode('utf-8'):
-                return id
+        """Get internal ID of Item by given name. Return None if no such exists."""
+        name2id, id2name = self._read_name_db()
+        return name2id.get(item_name, None)
 
     def _get_item_name(self, item_id):
-        """Get name of item (or None if no such item exists)"""
-        namedb = self._read_name_db()
-        for line in namedb:
-            id, name = line.split(' ', 1)
-            if id == item_id:
-                return name.decode('utf-8')
+        """Get name of Item by given ID. Return None if no such exists."""
+        name2id, id2name = self._read_name_db()
+        return id2name.get(item_id, None)
 
     def _add_item(self, item):
-        """Add new Item to name-mapping and create name file."""
+        """
+        Add new Item to name-mapping database and create Item cache file.
+        Assign internal ID to Item. This ID is computed hash from Item name,
+        timestamp and random integer.
+        """
+        encoded_name = item.name.encode("utf-8")
         m = md5.new()
-        m.update("%s%s%d" % (time.time(), item.name.encode("utf-8"), random.randint(0, RAND_MAX)))
+        m.update("%s%s%d" % (time.time(), encoded_name, random.randint(0, RAND_MAX)))
         item_id = m.hexdigest()
-        encoded_name = item.name.encode('utf-8')
 
-        namedb = self._read_name_db()
-        for line in namedb:
-            id, name = line.split(' ', 1)
-            if name == encoded_name:
+        name2id, id2name = self._read_name_db()
+        for id, name in id2name.iteritems():
+            if name == item.name:
                 raise ItemAlreadyExistsError("Destination item already exists: %s" % item.name)
-
         name_lock = self._namelock()
         try:
             f = open(self._name_db, 'a')
@@ -522,8 +513,7 @@ class MercurialBackend(Backend):
             f.close()
         finally:
             del name_lock
-
-        f = open(self._cachepath("%s.cache" % item_id), 'w')
+        f = open(self._cachepath("%s.cache" % item_id), 'w')  # create cache file
         f.close()
         item._id = item_id
 
