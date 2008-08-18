@@ -1,6 +1,7 @@
 * Moin Wiki input converter:
   - Support inline comments.
   - Support table attributes.
+  - Support smylies
 
 * Creole input converter: Parse interwiki the same way then Moin Wiki.
 
@@ -43,5 +44,9 @@
 
 * Fix GUI editor.
   Currently it gets the HTML with expanded macros and links.
+
+* Include macro: Argument parsing.
+  The argument parsing through wikiutil.invoke_extension_method is currently
+  incompatible with several examples of the macro usage.
 
 * Converters, Macros: Merge.
