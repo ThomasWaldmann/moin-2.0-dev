@@ -244,10 +244,7 @@ class MercurialBackend(Backend):
                 revs = []
                 for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
                     revno = pickle.loads(changeset[5]['__revision'])
-                    revs.append(revno)
-                    if revno == 0:  # iterating from top
-                        revs.reverse()
-                        return revs
+                    return range(revno + 1)
                 return []
 
     def _rename_item(self, item, newname):
