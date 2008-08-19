@@ -242,7 +242,7 @@ class MercurialBackend(Backend):
                 return []
             except IOError:
                 revs = []
-                for changeset in self._iterate_changesets(item_id=item._id):
+                for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
                     revno = pickle.loads(changeset[5]['__revision'])
                     revs.append(revno)
                     if revno == 0:  # iterating from top
@@ -395,7 +395,7 @@ class MercurialBackend(Backend):
         except IOError:
             for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
                 last_revno = pickle.loads(changeset[5]['__revision'])
-                return revno <= last_revno, last_revno, self._repo[revno]
+                return revno <= last_revno, last_revno, self._repo[ctxrev]
             return False, -1, None
 
     def _iterate_changesets(self, reverse=True, item_id=None):
