@@ -373,8 +373,8 @@ class MercurialBackend(Backend):
     def _has_revision(self, item, revno):
         """
         Check whether Item has given Revision.
-        Return (True, last Revision number, repository changelog revision) tuple
-        if found.
+        Return (True, last Revision number, corresponding repository changelog
+        revision) tuple if found.
         Return (False, -1, None) tuple if Item does not have given Revision.
         """
         if not item._id:
@@ -392,7 +392,8 @@ class MercurialBackend(Backend):
         except IOError:
             for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
                 last_revno = pickle.loads(changeset[5]['__revision'])
-                return revno <= last_revno, last_revno, self._repo[ctxrev]
+                if revno == -1 or revno == last_revno:
+                    return True, last_revno, self._repo[ctxrev]
             return False, -1, None
 
     def _iterate_changesets(self, reverse=True, item_id=None):
