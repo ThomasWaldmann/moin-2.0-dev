@@ -332,7 +332,7 @@ class MercurialBackend(Backend):
         if rev.timestamp is None:
             rev.timestamp = long(time.time())
         msg = rev.get(EDIT_LOG_COMMENT, "").encode("utf-8")
-        user = rev.get(EDIT_LOG_USERID, "anonymous")
+        user = rev.get(EDIT_LOG_USERID).encode("utf-8") or "anonymous"
         data = rev._data.getvalue()
 
         meta = {'__timestamp': pickle.dumps(rev.timestamp, PICKLE_REV_META),
