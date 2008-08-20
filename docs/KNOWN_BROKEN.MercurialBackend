@@ -1,7 +1,5 @@
 
 Broken stuff:
-- GraphInfo sometimes draws inconsistent revision graph
-
 - RecentChanges may produces tracebacks when reading concurrently from
 	repository changelog and getting all revisions,
 	this vanished after adding some boosters but is likely to reappear on heavier
