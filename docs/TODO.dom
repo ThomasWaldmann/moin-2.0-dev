@@ -1,9 +1,9 @@
 * Moin Wiki input converter:
   - Support inline comments.
   - Support table attributes.
-  - Support smylies
+  - Support smileys
 
-* Creole input converter: Parse interwiki the same way then Moin Wiki.
+* Creole input converter: Parse interwiki the same way as Moin Wiki.
 
 * Link converter:
   - Mark nonexistant and interwiki links.
@@ -53,3 +53,4 @@
 * Macro handling: Handle errors.
 
 * Converters, Macros: Merge.
+
