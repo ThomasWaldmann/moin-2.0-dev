@@ -23,9 +23,9 @@ class XPointer(list):
         # Match escaped syntax elements
         \^[()^]
         |
-        (?P<braket_open> \( )
+        (?P<bracket_open> \( )
         |
-        (?P<braket_close> \) )
+        (?P<bracket_close> \) )
         |
         (?P<whitespace> \s+ )
         |
@@ -50,9 +50,9 @@ class XPointer(list):
         stack = []
 
         for match in self.tokenizer_re.finditer(input):
-            if match.group('braket_open'):
+            if match.group('bracket_open'):
                 stack.append([])
-            elif match.group('braket_close'):
+            elif match.group('bracket_close'):
                 top = stack.pop()
                 if stack:
                     stack[-1].append('(')
@@ -96,7 +96,7 @@ class Converter(object):
             return cls
 
     def recurse(self, elem, page_href):
-        # Check if you reached a new page
+        # Check if we reached a new page
         page_href_new = elem.get(self.tag_page_href)
         if page_href_new and page_href_new != page_href:
             page_href = page_href_new
