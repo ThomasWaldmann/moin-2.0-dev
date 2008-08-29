@@ -5,6 +5,9 @@
     You can use this backend to directly get read-only access to your
     wiki server's filesystem.
 
+    TODO: nearly working, but needs more work at other places,
+          e.g. in the router backend, to be useful.
+
     @copyright: 2008 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
@@ -47,20 +50,28 @@ class FileServerBackend(Backend):
         @type root_dir: unicode
         @param root_dir: root directory below which we serve files
         """
+        root_dir = root_dir.rstrip('/')
+        assert root_dir
         self.root_dir = unicode(root_dir)
 
-    def _path(self, itemname):
-        # XXX check whether ../.. precautions are needed
-        filename = os.path.join(self.root_dir, itemname)
-        return filename
+    def _item2path(self, itemname):
+        # XXX check whether ../.. precautions are needed,
+        # looks like not, because moin sanitizes the item name before
+        # calling the storage code
+        return os.path.join(self.root_dir, itemname)
+
+    def _path2item(self, path):
+        root = self.root_dir
+        assert path.startswith(root)
+        return path[len(root)+1:]
 
     def iteritems(self):
         for dirpath, dirnames, filenames in os.walk(self.root_dir):
-            yield DirItem(self, dirpath)
+            yield DirItem(self, self._path2item(dirpath))
             for filename in filenames:
                 try:
-                    item = FileItem(self, os.path.join(dirpath, filename))
-                except NoFileError:
+                    item = FileItem(self, self._path2item(os.path.join(dirpath, filename)))
+                except (NoFileError, NoSuchItemError):
                     pass  # not a regular file, maybe socket or ...
                 else:
                     yield item
@@ -114,7 +125,7 @@ class FileDirItem(Item):
     """ A filesystem file or directory """
     def __init__(self, backend, name):
         Item.__init__(self, backend, name)
-        filepath = backend._path(name)
+        filepath = backend._item2path(name)
         try:
             self._fs_stat = os.stat(filepath)
         except OSError, err:
