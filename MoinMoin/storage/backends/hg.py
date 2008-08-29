@@ -242,12 +242,9 @@ class MercurialBackend(Backend):
                 return []
             except IOError:
                 revs = []
-                for changeset in self._iterate_changesets(item_id=item._id):
+                for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
                     revno = pickle.loads(changeset[5]['__revision'])
-                    revs.append(revno)
-                    if revno == 0:  # iterating from top
-                        revs.reverse()
-                        return revs
+                    return range(revno + 1)
                 return []
 
     def _rename_item(self, item, newname):
@@ -323,7 +320,7 @@ class MercurialBackend(Backend):
                 write_meta_item(self._metapath("%s.meta" % item._id), item._metadata)
 
 
-    def _commit_item(self, rev):
+    def _commit_item(self, rev, second_parent=nullid):
         """
         Commit given Item Revision to repository.
         If Revision already exists, raise RevisionAlreadyExistsError.
@@ -335,7 +332,7 @@ class MercurialBackend(Backend):
         if rev.timestamp is None:
             rev.timestamp = long(time.time())
         msg = rev.get(EDIT_LOG_COMMENT, "").encode("utf-8")
-        user = rev.get(EDIT_LOG_USERID, "anonymous")
+        user = (rev.get(EDIT_LOG_USERID) or "anonymous").encode("utf-8")
         data = rev._data.getvalue()
 
         meta = {'__timestamp': pickle.dumps(rev.timestamp, PICKLE_REV_META),
@@ -346,12 +343,20 @@ class MercurialBackend(Backend):
         lock = self._repolock()
         try:
             item = rev.item
-            p1, p2 = self._repo['tip'].node(), nullid
+            p1, p2 = self._repo['tip'].node(), second_parent
             if not item._id:
                 self._add_item(item)
             else:
                 if rev.revno in self._list_revisions(item):
                     raise RevisionAlreadyExistsError("Item Revision already exists: %s" % rev.revno)
+            if rev.revno > 0:
+                oldrev = self._get_revision(item, rev.revno - 1)
+                parents = [self._get_revision_node(oldrev)[0]]
+                if p2 != nullid:
+                    parents.append(p2)
+            else:
+                parents = []
+            meta['__parents'] = pickle.dumps(parents, PICKLE_REV_META)
 
             ctx = context.memctx(self._repo, (p1, p2), msg, [], getfilectx, user, extra=meta)
             if rev.revno == 0:
@@ -376,8 +381,8 @@ class MercurialBackend(Backend):
     def _has_revision(self, item, revno):
         """
         Check whether Item has given Revision.
-        Return (True, last Revision number, repository changelog revision) tuple
-        if found.
+        Return (True, last Revision number, corresponding repository changelog
+        revision) tuple if found.
         Return (False, -1, None) tuple if Item does not have given Revision.
         """
         if not item._id:
@@ -395,7 +400,8 @@ class MercurialBackend(Backend):
         except IOError:
             for changeset, ctxrev in self._iterate_changesets(item_id=item._id):
                 last_revno = pickle.loads(changeset[5]['__revision'])
-                return revno <= last_revno, last_revno, self._repo[revno]
+                if revno == -1 or revno == last_revno:
+                    return True, last_revno, self._repo[ctxrev]
             return False, -1, None
 
     def _iterate_changesets(self, reverse=True, item_id=None):
@@ -562,27 +568,22 @@ class MercurialBackend(Backend):
     #
 
     def _get_revision_node(self, revision):
-        """Return internal ID (short SHA1) of Revision"""
+        """Return internal ID tuple (SHA1, short SHA1) of Revision"""
         for changeset, ctxrevno in self._iterate_changesets(item_id=revision._item_id):
             if pickle.loads(changeset[5]['__revision']) == revision.revno:
-                return short(self._repo[ctxrevno].node())
+                node = self._repo[ctxrevno].node()
+                return node, short(node)
 
     def _get_revision_parents(self, revision):
         """Return parent revision numbers of Revision."""
-        rcache = {}
+        def get_revision(ctxrev):
+            return pickle.loads(self._repo[ctxrev].extra()['__revision'])
+
         for changeset, ctxrevno in self._iterate_changesets(item_id=revision._item_id):
             revno = pickle.loads(changeset[5]['__revision'])
-            rcache[ctxrevno] = revno
             if  revno == revision.revno:
-                parentctxrevs = [p for p in self._repo.changelog.parentrevs(ctxrevno) if p != nullrev]
-        parents = []
-        for p in parentctxrevs:
-            try:
-                parents.append(rcache[p])
-            except KeyError:
-                pass
-        return parents
-
+                parent_nodes = pickle.loads(self._repo[ctxrevno].extra()['__parents'])
+        return [get_revision(ctxrevno) for ctxrevno in parent_nodes]
 
 class MercurialStoredRevision(StoredRevision):
     def __init__(self, item, revno, timestamp=None, size=None):

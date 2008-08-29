@@ -1,14 +1,9 @@
 
 Broken stuff:
-- GraphInfo sometimes draws inconsistent revision graph
-
 - RecentChanges may produces tracebacks when reading concurrently from
-	repository changelog and getting all revisions, 
+	repository changelog and getting all revisions,
 	this vanished after adding some boosters but is likely to reappear on heavier
 	load
-
-- after backend backup (hg backup/ hg clone --pull), cloned backend is not
-	willing to serve requested revision data and crashes
 
 - data synchronisation (hg pull/push) is NOT working :(
 
