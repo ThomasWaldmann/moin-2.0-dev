@@ -12,10 +12,12 @@ from emeraldtree import ElementTree as ET
 import urllib
 
 from MoinMoin import wikiutil
+from MoinMoin.Page import Page
 from MoinMoin.util import uri
-from MoinMoin.util.tree import moin_page, xlink
+from MoinMoin.util.tree import html, moin_page, xlink
 
 class ConverterBase(object):
+    tag_class = html.class_
     tag_href = xlink.href
     tag_page_href = moin_page.page_href
 
@@ -116,8 +118,13 @@ class ConverterExternOutput(ConverterBase):
             link = page_name
 
         if link:
+            abs_page_name = wikiutil.AbsPageName(page_name, link)
+            page = Page(self.request, abs_page_name, None)
+            if not page.exists():
+                elem.set(self.tag_class, 'nonexistent')
+
             # TODO: unicode URI
-            ret.path = self.request.getScriptname() + '/' + wikiutil.AbsPageName(page_name, link).encode('utf-8')
+            ret.path = self.request.getScriptname() + '/' + abs_page_name.encode('utf-8')
 
         elem.set(self.tag_href, str(ret))
 
