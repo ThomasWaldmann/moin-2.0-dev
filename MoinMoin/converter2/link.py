@@ -82,6 +82,8 @@ class ConverterExternOutput(ConverterBase):
                         ret.fragment += ';' + tmp.fragment
                     else:
                         ret.fragment = tmp.fragment
+
+                elem.set(self.tag_class, 'interwiki')
             else:
                 # TODO
                 pass
