@@ -6,7 +6,7 @@
 * Creole input converter: Parse interwiki the same way as Moin Wiki.
 
 * Link converter:
-  - Mark nonexistant and interwiki links.
+  - Mark interwiki links.
   - Handle attachment and drawing links. Depends on the outcome of the storage
     merge.
 
