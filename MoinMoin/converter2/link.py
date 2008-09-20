@@ -19,10 +19,10 @@ class ConverterBase(object):
     tag_href = xlink.href
     tag_page_href = moin_page.page_href
 
-    def handle_wiki(self, link):
+    def handle_wiki(self, elem, link):
         pass
 
-    def handle_wikilocal(self, link, page_name):
+    def handle_wikilocal(self, elem, link, page_name):
         pass
 
     def recurse(self, elem, page_name):
@@ -47,13 +47,10 @@ class ConverterBase(object):
 
     def __call__(self, tree):
         for elem, href, page_name in self.recurse(tree, None):
-            new_href = None
             if href.scheme == 'wiki.local':
-                new_href = self.handle_wikilocal(href, page_name)
+                self.handle_wikilocal(elem, href, page_name)
             elif href.scheme == 'wiki':
-                new_href = self.handle_wiki(href)
-            if new_href is not None:
-                elem.set(self.tag_href, new_href)
+                self.handle_wiki(elem, href)
         return tree
 
 class ConverterExternOutput(ConverterBase):
@@ -64,7 +61,7 @@ class ConverterExternOutput(ConverterBase):
             return cls
 
     # TODO: Deduplicate code
-    def handle_wiki(self, input):
+    def handle_wiki(self, elem, input):
         ret = uri.Uri(query=input.query, fragment=input.fragment)
 
         if input.authority:
@@ -90,9 +87,9 @@ class ConverterExternOutput(ConverterBase):
         else:
             ret.path = self.request.getScriptname() + input.path
 
-        return str(ret)
+        elem.set(self.tag_href, str(ret))
 
-    def handle_wikilocal(self, input, page_name):
+    def handle_wikilocal(self, elem, input, page_name):
         ret = uri.Uri(query=input.query, fragment=input.fragment)
         link = None
 
@@ -102,10 +99,11 @@ class ConverterExternOutput(ConverterBase):
 
                 # TODO
                 if wiki_name in ('attachment', 'drawing'):
-                    return None
+                    return
 
                 if wiki_name == 'mailto':
-                    return 'mailto:' + link
+                    elem.set(self.tag_href, 'mailto:' + link)
+                    return
 
                 # TODO: Remove users
                 return
@@ -121,7 +119,7 @@ class ConverterExternOutput(ConverterBase):
             # TODO: unicode URI
             ret.path = self.request.getScriptname() + '/' + wikiutil.AbsPageName(page_name, link).encode('utf-8')
 
-        return str(ret)
+        elem.set(self.tag_href, str(ret))
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
@@ -130,9 +128,9 @@ class ConverterPagelinks(ConverterBase):
                 output == 'application/x-moin-document;links=pagelinks':
             return cls
 
-    def handle_wikilocal(self, input, page_name):
+    def handle_wikilocal(self, elem, input, page_name):
         if not input.path or ':' in input.path:
-            return None
+            return
 
         if input.path:
             # TODO: unicode URI
