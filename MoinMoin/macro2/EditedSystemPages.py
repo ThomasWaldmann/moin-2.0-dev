@@ -8,7 +8,6 @@
 """
 
 from MoinMoin.Page import Page
-from MoinMoin.util import namespaces
 from MoinMoin.macro2._base import MacroPageLinkListBase
 
 class Macro(MacroPageLinkListBase):
