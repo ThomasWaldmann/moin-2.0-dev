@@ -11,116 +11,12 @@ representation.
 """
 
 from emeraldtree import ElementTree as ET
-import htmlentitydefs
-from HTMLParser import HTMLParser as _HTMLParserBase
+from emeraldtree.HTMLTreeBuilder import HTMLParser
 
 from MoinMoin import wikiutil
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 from MoinMoin.util import uri
 from MoinMoin.util.tree import html, moin_page, xlink
-
-class _HTMLParser(_HTMLParserBase):
-    AUTOCLOSE = "p", "li", "tr", "th", "td", "head", "body"
-    IGNOREEND = "img", "hr", "meta", "link", "br", "input", 'col'
-
-    def __init__(self, encoding=None):
-        self.__stack = []
-        self.__builder = ET.TreeBuilder()
-        self.encoding = encoding or "iso-8859-1"
-        _HTMLParserBase.__init__(self)
-
-    ##
-    # Flushes parser buffers, and return the root element.
-    #
-    # @return An Element instance.
-
-    def close(self):
-        _HTMLParserBase.close(self)
-        return self.__builder.close()
-
-    ##
-    # (Internal) Handles start tags.
-
-    def handle_starttag(self, tag, attrs):
-        tag = html(tag.lower())
-        if tag.name == "meta":
-            return
-        if tag.name in self.AUTOCLOSE:
-            if self.__stack and self.__stack[-1] == tag:
-                self.handle_endtag(tag)
-        self.__stack.append(tag)
-        attrib = {}
-        if attrs:
-            for key, value in attrs:
-                key = key.lower()
-                # Handle short attributes
-                if value is None:
-                    value = key
-                key = ET.QName(key.lower(), html)
-                attrib[key] = value
-        self.__builder.start(tag, attrib)
-        if tag.name in self.IGNOREEND:
-            self.__stack.pop()
-            self.__builder.end(tag)
-
-    ##
-    # (Internal) Handles end tags.
-
-    def handle_endtag(self, tag):
-        if not isinstance(tag, ET.QName):
-            tag = html(tag.lower())
-        if tag.name in self.IGNOREEND:
-            return
-        lasttag = self.__stack.pop()
-        if tag != lasttag and lasttag in self.AUTOCLOSE:
-            self.handle_endtag(lasttag)
-        self.__builder.end(tag)
-
-    ##
-    # (Internal) Handles character references.
-
-    def handle_charref(self, char):
-        if char[:1] == "x":
-            char = int(char[1:], 16)
-        else:
-            char = int(char)
-        if 0 <= char < 128:
-            self.__builder.data(chr(char))
-        else:
-            self.__builder.data(unichr(char))
-
-    ##
-    # (Internal) Handles entity references.
-
-    def handle_entityref(self, name):
-        entity = htmlentitydefs.entitydefs.get(name)
-        if entity:
-            if len(entity) == 1:
-                entity = ord(entity)
-            else:
-                entity = int(entity[2:-1])
-            if 0 <= entity < 128:
-                self.__builder.data(chr(entity))
-            else:
-                self.__builder.data(unichr(entity))
-        else:
-            self.unknown_entityref(name)
-
-    ##
-    # (Internal) Handles character data.
-
-    def handle_data(self, data):
-        # convert to unicode
-        if isinstance(data, str):
-            data = data.decode(self.encoding, "ignore")
-        self.__builder.data(data)
-
-    ##
-    # (Hook) Handles unknown entity references.  The default action
-    # is to ignore unknown entities.
-
-    def unknown_entityref(self, name):
-        pass # ignore by default; override if necessary
 
 
 class Formatter(ConverterMacro):
@@ -614,7 +510,7 @@ class Formatter(ConverterMacro):
         if not markup:
             return ''
 
-        parser = _HTMLParser()
+        parser = HTMLParser()
         parser.feed('<div>')
         parser.feed(markup)
         parser.feed('</div>')
