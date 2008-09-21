@@ -1219,7 +1219,7 @@ class Page(object):
         from cStringIO import StringIO
         from emeraldtree import ElementTree as ET
         from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util import namespaces
+        from MoinMoin.util.tree import html
 
         IncludeConverter = reg.get(request, 'application/x-moin-document',
                 'application/x-moin-document;includes=expandall')
@@ -1246,7 +1246,7 @@ class Page(object):
         tree = ET.ElementTree(doc)
         # TODO: Switch to xml
         tree.write(out, encoding=self.output_charset,
-                default_namespace=namespaces.html, method='html')
+                default_namespace=html, method='html')
         self.request.write(out.getvalue())
 
         request.clock.stop('send_page_content')
@@ -1262,7 +1262,7 @@ class Page(object):
 
         from emeraldtree import ElementTree as ET
         from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util import namespaces, uri
+        from MoinMoin.util import uri
 
         InputConverter = reg.get(request, mime_type, 'application/x-moin-document')
 

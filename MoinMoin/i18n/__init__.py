@@ -172,7 +172,7 @@ class Translation(object):
 
         from emeraldtree import ElementTree as ET
         from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util import namespaces
+        from MoinMoin.util.tree import html
 
         InputConverter = reg.get(request, 'text/moin-wiki',
                  'application/x-moin-document')
@@ -194,7 +194,7 @@ class Translation(object):
         tree = ET.ElementTree(doc)
         # TODO: Switch to xml
         tree.write(out, encoding='utf-8',
-                default_namespace=namespaces.html, method='html')
+                default_namespace=html, method='html')
         return out.getvalue().decode('utf-8')
 
     def loadLanguage(self, request, trans_dir="i18n"):
