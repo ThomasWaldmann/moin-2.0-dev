@@ -37,7 +37,7 @@
 from emeraldtree import ElementTree as ET
 
 from MoinMoin.macro2._base import MacroBlockBase
-from MoinMoin.util import namespaces
+from MoinMoin.util.tree import html
 from MoinMoin import wikiutil
 
 class Macro(MacroBlockBase):
@@ -62,7 +62,7 @@ class Macro(MacroBlockBase):
 
         xml = [
             u'<form xmlns="%s" class="macro" method="post" action="%s/%s">' % (
-                namespaces.html,
+                html,
                 self.request.getScriptname(),
                 wikiutil.quoteWikinameURL(self.page_name)),
             u'<div>',

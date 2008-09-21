@@ -10,7 +10,7 @@ Provides a goto box.
 from emeraldtree import ElementTree as ET
 
 from MoinMoin.macro2._base import MacroBlockBase
-from MoinMoin.util import namespaces
+from MoinMoin.util.tree import html
 
 class Macro(MacroBlockBase):
     def macro(self):
@@ -24,7 +24,7 @@ class Macro(MacroBlockBase):
         <input type="submit" value="%s" />
     </p>
 </form>
-""" % (namespaces.html,
+""" % (html,
         self.request.getScriptname(),
         self.page_name,
         _("Go To Page")))
