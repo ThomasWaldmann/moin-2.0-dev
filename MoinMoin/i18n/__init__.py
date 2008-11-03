@@ -281,7 +281,7 @@ def getText(original, request, lang, **kw):
     else:
         try:
             language = languages[lang]['x-language-in-english']
-            dictpagename = "%sDict" % language
+            dictpagename = "%sDict" % language.replace(' ', '')
             dicts = request.dicts
             if dicts.has_dict(dictpagename):
                 userdict = dicts.dict(dictpagename)
@@ -331,7 +331,7 @@ def requestLanguage(request, try_user=True):
     # is available on this wiki...
     lang = get_browser_language(request)
     if not lang:
-        available = wikiLanguages()
+        available = wikiLanguages() or ["en"]
         # Or return the wiki default language...
         if request.cfg.language_default in available:
             lang = request.cfg.language_default

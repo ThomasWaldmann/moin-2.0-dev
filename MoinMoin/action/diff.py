@@ -107,12 +107,12 @@ def execute(pagename, request):
         revlist = currentpage.list_revisions()
 
         if oldrev == min(revlist):
-            disable_prev = u' disabled="true"'
+            disable_prev = u' disabled="disabled"'
         else:
             disable_prev = u''
 
         if newrev == max(revlist):
-            disable_next = u' disabled="true"'
+            disable_next = u' disabled="disabled"'
         else:
             disable_next = u''
 
@@ -121,45 +121,45 @@ def execute(pagename, request):
         revert_html = ""
         if request.user.may.revert(pagename):
             revert_html = """
-     <td style="border:0">
-      <span style="text-align:center">
-       <form action="%s" method="get">
-        <input name="action" value="revert" type="hidden">
-        <input name="rev" value="%d" type="hidden">
-        <input value="%s" type="submit"%s>
-       </form>
-      </span>
-     </td>
-     """ % (page_url, rev1, _("Revert to this revision"), disable_next)
+            <td style="border:0">
+             <form action="%s" method="get">
+              <div style="text-align:center">
+               <input name="action" value="revert" type="hidden">
+               <input name="rev" value="%d" type="hidden">
+               <input value="%s" type="submit"%s>
+              </div>
+             </form>
+            </td>
+            """ % (page_url, rev2, _("Revert to this revision"), disable_next)
 
         navigation_html = """
-    <span class="diff-header">%s</span>
-    <table class="diff">
-    <tr>
-     <td style="border:0">
-      <span style="text-align:left">
-       <form action="%s" method="get">
-        <input name="action" value="diff" type="hidden">
-        <input name="rev1" value="%d" type="hidden">
-        <input name="rev2" value="%d" type="hidden">
-        <input value="%s" type="submit"%s>
-       </form>
-      </span>
-     </td>
-     %s
-     <td style="border:0">
-      <span style="text-align:right">
-       <form action="%s" method="get">
-        <input name="action" value="diff" type="hidden">
-        <input name="rev1" value="%d" type="hidden">
-        <input name="rev2" value="%d" type="hidden">
-        <input value="%s" type="submit"%s>
-       </form>
-      </span>
-     </td>
-    </tr>
-    </table>
-    """ % (title,
+        <span class="diff-header">%s</span>
+        <table class="diff">
+        <tr>
+         <td style="border:0">
+          <form action="%s" method="get">
+           <div style="text-align:left">
+            <input name="action" value="diff" type="hidden">
+            <input name="rev1" value="%d" type="hidden">
+            <input name="rev2" value="%d" type="hidden">
+            <input value="%s" type="submit"%s>
+           </div>
+          </form>
+         </td>
+         %s
+         <td style="border:0">
+          <form action="%s" method="get">
+           <div style="text-align:right">
+            <input name="action" value="diff" type="hidden">
+            <input name="rev1" value="%d" type="hidden">
+            <input name="rev2" value="%d" type="hidden">
+            <input value="%s" type="submit"%s>
+           </div>
+          </form>
+         </td>
+        </tr>
+        </table>
+        """ % (title,
            page_url, oldrev - 1, oldrev, _("Previous change"), disable_prev,
            revert_html,
            page_url, newrev, newrev + 1, _("Next change"), disable_next, )
@@ -205,3 +205,4 @@ def execute(pagename, request):
         request.write(f.div(0)) # end content div
         request.theme.send_footer(pagename)
         request.theme.send_closing_html()
+

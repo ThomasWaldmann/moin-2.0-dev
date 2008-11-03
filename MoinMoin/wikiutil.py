@@ -975,6 +975,7 @@ MIMETYPES_MORE = {
  '.py': 'text/x-python',
  '.cfg': 'text/plain',
  '.conf': 'text/plain',
+ '.irc': 'text/plain',
 }
 [mimetypes.add_type(mimetype, ext, True) for ext, mimetype in MIMETYPES_MORE.items()]
 
@@ -1169,7 +1170,7 @@ def importBuiltinPlugin(kind, name, function="execute"):
     See importPlugin docstring.
     """
     if not name in builtinPlugins(kind):
-        raise PluginMissingError
+        raise PluginMissingError()
     moduleName = 'MoinMoin.%s.%s' % (kind, name)
     return importNameFromPlugin(moduleName, function)
 
@@ -1221,24 +1222,22 @@ def wikiPlugins(kind, cfg):
     """
     # short-cut if we've loaded the dict already
     # (or already failed to load it)
-    if kind in cfg._site_plugin_lists:
-        return cfg._site_plugin_lists[kind]
-
-    result = {}
-
-    for modname in cfg._plugin_modules:
-        try:
-            module = pysupport.importName(modname, kind)
-            packagepath = os.path.dirname(module.__file__)
-            plugins = pysupport.getPluginModules(packagepath)
-
-            for p in plugins:
-                if not p in result:
-                    result[p] = '%s.%s' % (modname, kind)
-        except AttributeError:
-            pass
-
-    cfg._site_plugin_lists[kind] = result
+    cache = cfg._site_plugin_lists
+    if kind in cache:
+        result = cache[kind]
+    else:
+        result = {}
+        for modname in cfg._plugin_modules:
+            try:
+                module = pysupport.importName(modname, kind)
+                packagepath = os.path.dirname(module.__file__)
+                plugins = pysupport.getPluginModules(packagepath)
+                for p in plugins:
+                    if not p in result:
+                        result[p] = '%s.%s' % (modname, kind)
+            except AttributeError:
+                pass
+        cache[kind] = result
     return result
 
 
@@ -2482,7 +2481,7 @@ def createTicket(request, tm=None, action=None):
                              action you call when posting the form.
     """
 
-    import sha
+    from MoinMoin.support.python_compatibility import hash_new
     if tm is None:
         tm = "%010x" % time.time()
 
@@ -2499,7 +2498,7 @@ def createTicket(request, tm=None, action=None):
             action = 'None'
 
     secret = request.cfg.secrets['wikiutil/tickets']
-    digest = sha.new(secret)
+    digest = hash_new('sha1', secret)
 
     ticket = "%s.%s.%s" % (tm, pagename, action)
     digest.update(ticket)
