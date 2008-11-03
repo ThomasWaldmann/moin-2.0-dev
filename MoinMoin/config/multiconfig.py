@@ -571,7 +571,8 @@ also the spelling of the directory name.
         Since each configured plugin path has unique plugins, we load the
         plugin packages as "moin_plugin_<sha1(path)>.plugin".
         """
-        import imp, sha
+        import imp
+        from MoinMoin.support.python_compatibility import hash_new
 
         plugin_dirs = [self.plugin_dir] + self.plugin_dirs
         self._plugin_modules = []
@@ -581,7 +582,7 @@ also the spelling of the directory name.
             imp.acquire_lock()
             try:
                 for pdir in plugin_dirs:
-                    csum = 'p_%s' % sha.new(pdir).hexdigest()
+                    csum = 'p_%s' % hash_new('sha1', pdir).hexdigest()
                     modname = '%s.%s' % (self.siteid, csum)
                     # If the module is not loaded, try to load it
                     if not modname in sys.modules:
@@ -593,11 +594,12 @@ also the spelling of the directory name.
                             # Load the module and set in sys.modules
                             module = imp.load_module(modname, fp, path, info)
                             setattr(sys.modules[self.siteid], 'csum', module)
-                            self._plugin_modules.append(modname)
                         finally:
                             # Make sure fp is closed properly
                             if fp:
                                 fp.close()
+                    if modname not in self._plugin_modules:
+                        self._plugin_modules.append(modname)
             finally:
                 imp.release_lock()
         except ImportError, err:
@@ -639,7 +641,7 @@ class DefaultConfig(ConfigFunctionality):
     # the options dictionary.
 
 
-def _default_password_checker(request, username, password):
+def _default_password_checker(cfg, request, username, password):
     """ Check if a password is secure enough.
         We use a built-in check to get rid of the worst passwords.
 
@@ -651,18 +653,19 @@ def _default_password_checker(request, username, password):
         @return: None if there is no problem with the password,
                  some string with an error msg, if the password is problematic.
     """
+    _ = request.getText
     try:
         # in any case, do a very simple built-in check to avoid the worst passwords
         if len(password) < 6:
-            raise ValueError("Password too short.")
+            raise ValueError(_("Password is too short."))
         if len(set(password)) < 4:
-            raise ValueError("Password has not enough different characters.")
+            raise ValueError(_("Password has not enough different characters."))
 
         username_lower = username.lower()
         password_lower = password.lower()
         if username in password or password in username or \
            username_lower in password_lower or password_lower in username_lower:
-            raise ValueError("Password too easy (containment).")
+            raise ValueError(_("Password is too easy (password contains name or name contains password)."))
 
         keyboards = (ur"`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./", # US kbd
                      ur"^1234567890ß´qwertzuiopü+asdfghjklöä#yxcvbnm,.-", # german kbd
@@ -671,10 +674,10 @@ def _default_password_checker(request, username, password):
             rev_kbd = kbd[::-1]
             if password in kbd or password in rev_kbd or \
                password_lower in kbd or password_lower in rev_kbd:
-                raise ValueError("Password too easy (kbd sequence)")
+                raise ValueError(_("Password is too easy (keyboard sequence)."))
         return None
     except ValueError, err:
-        return str(err)
+        return unicode(err)
 
 
 class DefaultExpression(object):
@@ -695,6 +698,8 @@ options_no_group_name = {
      "See HelpOnSessions."),
     ('session_id_handler', DefaultExpression('session.MoinCookieSessionIDHandler()'),
      "Only used by the DefaultSessionHandler, see HelpOnSessions."),
+    ('cookie_secure', None,
+     'Use secure cookie. (None = auto-enable secure cookie for https, True = ever use secure cookie, False = never use secure cookie).'),
     ('cookie_domain', None,
      'Domain used in the session cookie. (None = do not specify domain).'),
     ('cookie_path', None,
@@ -734,7 +739,9 @@ options_no_group_name = {
 
   )),
   # ==========================================================================
-  'spam_leech_dos': ('Anti-Spam/Leech/DOS', None, (
+  'spam_leech_dos': ('Anti-Spam/Leech/DOS',
+  'These settings help limiting ressource usage and avoiding abuse.',
+  (
     ('hosts_deny', [], "List of denied IPs; if an IP ends with a dot, it denies a whole subnet (class A, B or C)"),
     ('surge_action_limits',
      {# allow max. <count> <action> requests per <dt> secs
@@ -775,14 +782,16 @@ options_no_group_name = {
      "A regex of HTTP_USER_AGENTs that should be excluded from logging and are not allowed to use actions."),
 
     ('unzip_single_file_size', 2.0 * 1000 ** 2,
-     "max. number of files which are extracted from the zip file"),
+     "max. size of a single file in the archive which will be extracted [bytes]"),
     ('unzip_attachments_space', 200.0 * 1000 ** 2,
      "max. total amount of bytes can be used to unzip files [bytes]"),
     ('unzip_attachments_count', 101,
-     "max. size of a single file in the archive which will be extracted [bytes]"),
+     "max. number of files which are extracted from the zip file"),
   )),
   # ==========================================================================
-  'style': ('Style / Theme / UI related', None, (
+  'style': ('Style / Theme / UI related',
+  'These settings control how the wiki user interface will look like.',
+  (
     ('sitename', u'Untitled Wiki',
      "Short description of your wiki site, displayed below the logo on each page, and used in RSS documents as the channel title [Unicode]"),
     ('interwikiname', None, "unique and stable InterWiki name (prefix, moniker) of the site, or None"),
@@ -1063,7 +1072,9 @@ options_no_group_name = {
 #
 #
 options = {
-    'acl': ('Access control lists', None, (
+    'acl': ('Access control lists',
+    'ACLs control who may do what, see HelpOnAccessControlLists.',
+    (
       ('hierarchic', False, 'True to use hierarchical ACLs'),
       ('rights_default', u"Trusted:read,write,delete,revert Known:read,write,delete,revert All:read,write",
        "ACL used if no ACL is specified on the page"),
@@ -1087,8 +1098,6 @@ options = {
     )),
 
     'user': ('Users / User settings', None, (
-      ('autocreate', False,
-       "if True, user accounts are created automatically (see HelpOnAuthentication)."),
       ('email_unique', True,
        "if True, check email addresses for uniqueness and don't accept duplicates."),
       ('jid_unique', True,
@@ -1194,6 +1203,15 @@ options = {
       ('import_pagename_envelope', u"%s", "Use this to add some fixed prefix/postfix to the generated target pagename."),
       ('import_pagename_regex', r'\[\[([^\]]*)\]\]', "Regular expression used to search for target pagename specification."),
       ('import_wiki_addrs', [], "Target mail addresses to consider when importing mail"),
+    )),
+
+    'backup': ('Backup settings',
+        'These settings control how the backup action works and who is allowed to use it.',
+    (
+      ('compression', 'gz', 'What compression to use for the backup ("gz" or "bz2").'),
+      ('users', [], 'List of trusted user names who are allowed to get a backup.'),
+      ('include', [], 'List of pathes to backup.'),
+      ('exclude', lambda filename: False, 'Function f(filename) that tells whether a file should be excluded from backup. By default, nothing is excluded.'),
     )),
 }
 

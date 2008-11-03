@@ -3,16 +3,19 @@
     MoinMoin - some common code for testing
 
     @copyright: 2007 MoinMoin:KarolNowak,
-                2008 MoinMoin:ThomasWaldmann
+                2008 MoinMoin:ThomasWaldmann, MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
 
 import os, shutil
 
+from MoinMoin.parser.text import Parser
+from MoinMoin.formatter.text_html import Formatter
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.util import random_string
 from MoinMoin import caching, user
+
 # Promoting the test user -------------------------------------------
 # Usually the tests run as anonymous user, but for some stuff, you
 # need more privs...
@@ -75,3 +78,15 @@ def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """
     chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     return [u"%s" % random_string(length, chars) for counter in range(count)]
+
+def make_macro(request, page):
+    """ creates the macro """
+    from MoinMoin import macro
+    p = Parser("##\n", request)
+    p.formatter = Formatter(request)
+    p.formatter.page = page
+    request.page = page
+    request.formatter = p.formatter
+    p.form = request.form
+    m = macro.Macro(p)
+    return m

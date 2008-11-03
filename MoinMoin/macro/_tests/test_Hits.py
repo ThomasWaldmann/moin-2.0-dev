@@ -14,7 +14,7 @@ from MoinMoin.PageEditor import PageEditor
 from MoinMoin.parser.text import Parser
 from MoinMoin.Page import Page
 
-from MoinMoin._tests import become_trusted, create_page
+from MoinMoin._tests import become_trusted, create_page, make_macro
 
 class TestHits:
     """Hits: testing Hits macro """
@@ -24,28 +24,15 @@ class TestHits:
         request = self.request
         become_trusted(request)
         self.page = create_page(request, self.pagename, u"Foo!")
-
         # for that test eventlog needs to be empty
         fpath = os.path.join(request.cfg.data_dir, 'event-log')
         if os.path.exists(fpath):
             os.remove(fpath)
-
         # hits is based on hitcounts which reads the cache
         caching.CacheEntry(request, 'charts', 'hitcounts', scope='wiki').remove()
 
-    def _make_macro(self):
-        """Test helper"""
-        from MoinMoin.formatter.text_html import Formatter
-        p = Parser("##\n", self.request)
-        p.formatter = Formatter(self.request)
-        p.formatter.page = self.page
-        self.request.formatter = p.formatter
-        p.form = self.request.form
-        m = macro.Macro(p)
-        return m
-
     def _test_macro(self, name, args):
-        m = self._make_macro()
+        m = make_macro(self.request, self.page)
         return m.execute(name, args)
 
     def _cleanStats(self):
@@ -65,7 +52,6 @@ class TestHits:
         eventlog.EventLog(self.request).add(self.request, 'VIEWPAGE', {'pagename': 'WikiSandBox'})
         for i in range(count):
             eventlog.EventLog(self.request).add(self.request, 'VIEWPAGE', {'pagename': self.pagename})
-
         result = self._test_macro(u'Hits', u'')
         self._cleanStats()
         assert result == str(count)
@@ -79,7 +65,6 @@ class TestHits:
         for i in range(count):
             for pagename in pagenames:
                 eventlog.EventLog(self.request).add(self.request, 'VIEWPAGE', {'pagename': pagename})
-
         result = self._test_macro(u'Hits', u'all=True')
         self._cleanStats()
         assert result == str(count * num_pages)
@@ -89,7 +74,6 @@ class TestHits:
         eventlog.EventLog(self.request).add(self.request, 'SAVEPAGE', {'pagename': self.pagename})
         # simulate a log entry SAVEPAGE for WikiSandBox to destinguish current page
         eventlog.EventLog(self.request).add(self.request, 'SAVEPAGE', {'pagename': 'WikiSandBox'})
-
         result = self._test_macro(u'Hits', u'event_type=SAVEPAGE')
         self._cleanStats()
         assert result == "1"
@@ -98,7 +82,6 @@ class TestHits:
         """ macro test: 'all=True, event_type=SAVEPAGE' for Hits (all pages are counted for SAVEPAGE)"""
         eventlog.EventLog(self.request).add(self.request, 'SAVEPAGE', {'pagename': 'WikiSandBox'})
         eventlog.EventLog(self.request).add(self.request, 'SAVEPAGE', {'pagename': self.pagename})
-
         result = self._test_macro(u'Hits', u'all=True, event_type=SAVEPAGE')
         self._cleanStats()
         assert result == "2"

@@ -112,7 +112,7 @@ class RequestBase(object):
     proxy_host = 'x-forwarded-host' # original host: header as seen by the proxy (e.g. wiki.example.org)
     proxy_xff = 'x-forwarded-for' # list of original remote_addrs as seen by the proxies (e.g. <clientip>,<proxy1>,<proxy2>,...)
 
-    def __init__(self, properties={}):
+    def __init__(self, properties={}, given_config=None):
 
         # twistd's daemonize() overrides our umask, so we reset it here every
         # request. we do it for all request types to avoid similar problems.
@@ -163,7 +163,7 @@ class RequestBase(object):
             # order is important here!
             self.__dict__.update(properties)
             try:
-                self._load_multi_cfg()
+                self._load_multi_cfg(given_config)
             except error.NoConfigMatchedError:
                 self.makeForbidden(404, 'No wiki configuration matching the URL found!\r\n')
                 return
@@ -351,12 +351,15 @@ class RequestBase(object):
 
     dicts = property(getDicts, None, delDicts)
 
-    def _load_multi_cfg(self):
+    def _load_multi_cfg(self, given_config=None):
         # protect against calling multiple times
         if not hasattr(self, 'cfg'):
-            self.clock.start('load_multi_cfg')
-            self.cfg = multiconfig.getConfig(self.url)
-            self.clock.stop('load_multi_cfg')
+            if given_config is None:
+                self.clock.start('load_multi_cfg')
+                self.cfg = multiconfig.getConfig(self.url)
+                self.clock.stop('load_multi_cfg')
+            else:
+                self.cfg = given_config('MoinMoin._tests.wikiconfig') # used for tests' TestConfig
 
     def setAcceptedCharsets(self, accept_charset):
         """ Set accepted_charsets by parsing accept-charset header
@@ -449,7 +452,8 @@ class RequestBase(object):
         """
         self.is_ssl = bool(env.get('SSL_PROTOCOL') or
                            env.get('SSL_PROTOCOL_VERSION') or
-                           env.get('HTTPS') == 'on')
+                           env.get('HTTPS', 'off').lower() in ('on', '1') or
+                           env.get('wsgi.url_scheme') == 'https')
 
     def setHost(self, host=None):
         """ Set http_host
@@ -888,7 +892,7 @@ class RequestBase(object):
                 indicator += "B"
 
         pid = os.getpid()
-        msg = 'Timing %5d %-6s %4s %-10s %s\n' % (pid, total, indicator, action, self.url)
+        msg = 'Timing %5d %-6s %4s %-10s %s' % (pid, total, indicator, action, self.url)
         logging.info(msg)
 
     def send_file(self, fileobj, bufsize=8192, do_flush=False):
@@ -1615,12 +1619,21 @@ class RequestBase(object):
         # only execute finishers once
         self._finishers = []
 
-        try:
-            #del self.user    # keeping this is useful for testing
-            del self.theme
-            del self.dicts
-        except:
-            pass
+        for attr_name in [
+            'editlog', # avoid leaking file handles for open edit-log
+            'theme',
+            'dicts',
+            'user',
+            'rootpage',
+            'page',
+            'html_formatter',
+            'formatter',
+            #'cfg', -- do NOT delattr cfg - it causes problems in the xapian indexing thread
+            ]:
+            try:
+                delattr(self, attr_name)
+            except:
+                pass
 
     def add_finisher(self, method):
         self._finishers.append(method)
