@@ -14,6 +14,11 @@ from MoinMoin.PageEditor import PageEditor
 
 from MoinMoin._tests import become_trusted, create_page, make_macro, nuke_page
 
+class _PseudoParser(object):
+    def __init__(self, request, formatter):
+        self.request, self.formatter = request, formatter
+        self.form = request.form
+
 class TestAction:
     """ testing macro Action calling action raw """
     pagename = u'AutoCreatedMoinMoinTemporaryTestPageForAction'

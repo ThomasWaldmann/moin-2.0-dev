@@ -26,9 +26,9 @@ from MoinMoin import wikiutil, i18n
 from MoinMoin.Page import Page
 
 
-names = ["TitleSearch", "WordIndex", "TitleIndex", "GoTo",
+names = ["TitleSearch", "WordIndex", "TitleIndex",
          # Macros with arguments
-         "Icon", "Date", "DateTime", "Anchor", "MailTo", "GetVal", "TemplateList",
+         "Icon",
 ]
 
 #############################################################################
@@ -62,16 +62,9 @@ class Macro:
 
     Dependencies = {
         "TitleSearch": ["namespace"],
-        "TemplateList": ["namespace"],
         "WordIndex": ["namespace"],
         "TitleIndex": ["namespace"],
-        "Goto": [],
         "Icon": ["user"], # users have different themes and user prefs
-        "Date": ["time"],
-        "DateTime": ["time"],
-        "Anchor": [],
-        "Mailto": ["user"],
-        "GetVal": ["pages"],
         }
 
     # we need the lang macros to execute when html is generated,
@@ -100,7 +93,7 @@ class Macro:
 
     def format_error(self, err):
         """ format an error object for output instead of normal macro output """
-        return self.formatter.text(u'<<%s: %s>>' % (self.name, err.args[0]))
+        return self.formatter.text(u'<<%s: %s>>' % (self.name, err))
 
     def execute(self, macro_name, args):
         """ Get and execute a macro
@@ -154,29 +147,6 @@ class Macro:
     def macro_TitleSearch(self):
         from MoinMoin.macro.FullSearch import search_box
         return search_box("titlesearch", self)
-
-    def macro_TemplateList(self, needle=u'.+'):
-        # TODO: this should be renamed (RegExPageNameList?), it does not list only Templates...
-        _ = self._
-        try:
-            needle_re = re.compile(needle, re.IGNORECASE)
-        except re.error, err:
-            raise ValueError("Error in regex %r: %s" % (needle, err))
-
-        # Get page list readable by current user, filtered by needle
-        hits = self.request.rootpage.getPageList(filter=needle_re.search)
-        hits.sort()
-
-        result = []
-        result.append(self.formatter.bullet_list(1))
-        for pagename in hits:
-            result.append(self.formatter.listitem(1))
-            result.append(self.formatter.pagelink(1, pagename, generated=1))
-            result.append(self.formatter.text(pagename))
-            result.append(self.formatter.pagelink(0, pagename))
-            result.append(self.formatter.listitem(0))
-        result.append(self.formatter.bullet_list(0))
-        return ''.join(result)
 
     def _make_index(self, word_re=u'.+'):
         """ make an index page (used for TitleIndex and WordIndex macro)
@@ -272,113 +242,9 @@ class Macro:
         word_re = u'[%s][%s]+' % (config.chars_upper, config.chars_lower)
         return self._make_index(word_re=word_re)
 
-    def macro_GoTo(self):
-        """ Make a goto box
-
-        @rtype: unicode
-        @return: goto box html fragment
-        """
-        _ = self._
-        html = [
-            u'<form method="get" action="%s"><div>' % self.request.href(self.formatter.page.page_name),
-            u'<div>',
-            u'<input type="hidden" name="action" value="goto">',
-            u'<input type="text" name="target" size="30">',
-            u'<input type="submit" value="%s">' % _("Go To Page"),
-            u'</div>',
-            u'</form>',
-            ]
-        html = u'\n'.join(html)
-        return self.formatter.rawHTML(html)
-
     def macro_Icon(self, icon=u''):
         # empty icon name isn't valid either
         if not icon:
             raise ValueError("You need to give a non-empty icon name")
         return self.formatter.icon(icon.lower())
-
-    def __get_Date(self, args, format_date):
-        _ = self._
-        if args is None:
-            tm = time.time() # always UTC
-        elif len(args) >= 19 and args[4] == '-' and args[7] == '-' \
-                and args[10] == 'T' and args[13] == ':' and args[16] == ':':
-            # we ignore any time zone offsets here, assume UTC,
-            # and accept (and ignore) any trailing stuff
-            try:
-                year, month, day = int(args[0:4]), int(args[5:7]), int(args[8:10])
-                hour, minute, second = int(args[11:13]), int(args[14:16]), int(args[17:19])
-                tz = args[19:] # +HHMM, -HHMM or Z or nothing (then we assume Z)
-                tzoffset = 0 # we assume UTC no matter if there is a Z
-                if tz:
-                    sign = tz[0]
-                    if sign in '+-':
-                        tzh, tzm = int(tz[1:3]), int(tz[3:])
-                        tzoffset = (tzh*60+tzm)*60
-                        if sign == '-':
-                            tzoffset = -tzoffset
-                tm = (year, month, day, hour, minute, second, 0, 0, 0)
-            except ValueError, err:
-                raise ValueError("Bad timestamp %r: %s" % (args, err))
-            # as mktime wants a localtime argument (but we only have UTC),
-            # we adjust by our local timezone's offset
-            try:
-                tm = time.mktime(tm) - time.timezone - tzoffset
-            except (OverflowError, ValueError):
-                tm = 0 # incorrect, but we avoid an ugly backtrace
-        else:
-            # try raw seconds since epoch in UTC
-            try:
-                tm = float(args)
-            except ValueError, err:
-                raise ValueError("Bad timestamp %r: %s" % (args, err))
-        return format_date(tm)
-
-    def macro_Date(self, stamp=None):
-        return self.__get_Date(stamp, self.request.user.getFormattedDate)
-
-    def macro_DateTime(self, stamp=None):
-        return self.__get_Date(stamp, self.request.user.getFormattedDateTime)
-
-    def macro_Anchor(self, anchor=None):
-        anchor = wikiutil.get_unicode(self.request, anchor, 'anchor', u'anchor')
-        return self.formatter.anchordef(anchor)
-
-    def macro_MailTo(self, email=unicode, text=u''):
-        if not email:
-            raise ValueError("You need to give an (obfuscated) email address")
-
-        from MoinMoin.mail.sendmail import decodeSpamSafeEmail
-
-        if self.request.user.valid:
-            # decode address and generate mailto: link
-            email = decodeSpamSafeEmail(email)
-            result = (self.formatter.url(1, 'mailto:' + email, css='mailto') +
-                      self.formatter.text(text or email) +
-                      self.formatter.url(0))
-        else:
-            # unknown user, maybe even a spambot, so
-            # just return text as given in macro args
-
-            if text:
-                result = self.formatter.text(text + " ")
-            else:
-                result = ''
-
-            result += (self.formatter.code(1) +
-                       self.formatter.text("<%s>" % email) +
-                       self.formatter.code(0))
-
-        return result
-
-    def macro_GetVal(self, page=None, key=None):
-        page = wikiutil.get_unicode(self.request, page, 'page')
-        if not self.request.user.may.read(page):
-            raise ValueError("You don't have enough rights on this page")
-        key = wikiutil.get_unicode(self.request, key, 'key')
-        if page is None or key is None:
-            raise ValueError("You need to give: pagename, key")
-        d = self.request.dicts.dict(page)
-        result = d.get(key, '')
-        return self.formatter.text(result)
 
