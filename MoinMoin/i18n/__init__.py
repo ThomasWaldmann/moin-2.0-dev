@@ -157,7 +157,7 @@ class Translation(object):
         except (AttributeError, AssertionError), err:
             logging.warning("direction problem in %r: %s" % (self.language, str(err)))
 
-    def formatMarkup(self, request, text, percent):
+    def formatMarkup(self, request, text, percent, tree=False):
         """ Formats the text using the wiki parser/formatter.
 
         This raises an exception if a text needs itself to be translated,
@@ -165,37 +165,37 @@ class Translation(object):
 
         @param request: the request object
         @param text: the text to format
-        @param percent: True if result is used as left-side of a % operator and
-                        thus any GENERATED % needs to be escaped as %%.
+        @param percent: unused
+        @param tree: produce a tree
         """
         logging.debug("formatting: %r" % text)
 
-        from MoinMoin.Page import Page
-        from MoinMoin.parser.text_moin_wiki import Parser as WikiParser
-        if percent:
-            from MoinMoin.formatter.text_html_percent import Formatter
-        else:
-            from MoinMoin.formatter.text_html import Formatter
+        from emeraldtree import ElementTree as ET
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.tree import html
+
+        InputConverter = reg.get(request, 'text/moin-wiki',
+                 'application/x-moin-document')
+
+        doc = InputConverter(request)(text.split('\n'))
+
+        if tree:
+            return doc
+
+        LinkConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-moin-document;links=extern')
+        HtmlConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-xhtml-moin-page')
+
+        doc = LinkConverter(request)(doc)
+        doc = HtmlConverter(request)(doc)
 
         out = StringIO()
-        request.redirect(out)
-        parser = WikiParser(text, request, line_anchors=False)
-        formatter = Formatter(request, terse=True)
-        reqformatter = None
-        if hasattr(request, 'formatter'):
-            reqformatter = request.formatter
-        request.formatter = formatter
-        p = Page(request, "$$$$i18n$$$$")
-        formatter.setPage(p)
-        parser.format(formatter)
-        text = out.getvalue()
-        if reqformatter is None:
-            del request.formatter
-        else:
-            request.formatter = reqformatter
-        request.redirect()
-        text = text.strip()
-        return text
+        tree = ET.ElementTree(doc)
+        # TODO: Switch to xml
+        tree.write(out, encoding='utf-8',
+                default_namespace=html, method='html')
+        return out.getvalue().decode('utf-8')
 
     def loadLanguage(self, request, trans_dir="i18n"):
         request.clock.start('loadLanguage')
@@ -233,7 +233,8 @@ def getDirection(lang):
     """ Return the text direction for a language, either 'ltr' or 'rtl'. """
     return languages[lang]['x-direction']
 
-def getText(original, request, lang, **kw):
+def getText(original, request, lang, wiki=False, tree=False, percent=False,
+        **kw):
     """ Return a translation of some original text.
 
     @param original: the original (english) text
@@ -249,8 +250,7 @@ def getText(original, request, lang, **kw):
                       Only specify this option for wiki==True, it doesn't do
                       anything for wiki==False.
     """
-    formatted = kw.get('wiki', False) # 1.6 and early 1.7 (until 2/2008) used 'formatted' with True as default!
-    percent = kw.get('percent', False)
+    formatted = wiki # 1.6 and early 1.7 (until 2/2008) used 'formatted' with True as default!
     if original == u"":
         return u"" # we don't want to get *.po files metadata!
 
@@ -266,7 +266,7 @@ def getText(original, request, lang, **kw):
     if original in translation.raw:
         translated = translation.raw[original]
         if formatted:
-            key = (original, percent)
+            key = (original, percent, tree)
             if key in translation.formatted:
                 translated = translation.formatted[key]
                 if translated is None:
@@ -274,7 +274,7 @@ def getText(original, request, lang, **kw):
                     translated = original + u'*' # get some error indication to the UI
             else:
                 translation.formatted[key] = None # we use this as "formatting in progress" indicator
-                translated = translation.formatMarkup(request, translated, percent)
+                translated = translation.formatMarkup(request, translated, percent, tree)
                 translation.formatted[key] = translated # remember it
     else:
         try:
@@ -293,10 +293,10 @@ def getText(original, request, lang, **kw):
             # on the fly (this is needed for quickhelp).
             if lang != 'en':
                 logging.debug("falling back to english, requested string not in %r translation: %r" % (lang, original))
-                translated = getText(original, request, 'en', wiki=formatted, percent=percent)
+                translated = getText(original, request, 'en', wiki=formatted, percent=percent, tree=tree)
             elif formatted: # and lang == 'en'
                 logging.debug("formatting for %r on the fly: %r" % (lang, original))
-                translated = translations[lang].formatMarkup(request, original, percent)
+                translated = translations[lang].formatMarkup(request, original, percent, tree)
     return translated
 
 
