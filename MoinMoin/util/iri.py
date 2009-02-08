@@ -106,26 +106,26 @@ class Iri(object):
 
         authority = match.group('authority')
         if authority is not None:
-            self._authority = _ValueAuthority(authority, True)
+            self._authority = IriAuthority(authority, True)
 
         path = match.group('path')
         if path is not None:
-            self._path = _ValuePath(path, True)
+            self._path = IriPath(path, True)
 
         query = match.group('query')
         if query is not None:
-            self._query = _ValueQuery(query, True)
+            self._query = IriQuery(query, True)
 
         fragment = match.group('fragment')
         if fragment is not None:
-            self._fragment = _ValueFragment(fragment, True)
+            self._fragment = IriFragment(fragment, True)
 
     def __del_authority(self):
         self._authority = None
     def __get_authority(self):
         return self._authority
     def __set_authority(self, value):
-        self._authority = _ValueAuthority(value)
+        self._authority = IriAuthority(value)
     authority = property(__get_authority, __set_authority, __del_authority,
             """
             Authority part of the IRI.
@@ -161,7 +161,7 @@ class Iri(object):
     def __get_path(self):
         return self._path
     def __set_path(self, value):
-        self._path = _ValuePath(value)
+        self._path = IriPath(value)
     path = property(__get_path, __set_path, __del_path,
             """
             Path part of the IRI.
@@ -197,7 +197,7 @@ class Iri(object):
     def __get_query(self):
         return self._query
     def __set_query(self, value):
-        self._query = _ValueQuery(value)
+        self._query = IriQuery(value)
     query = property(__get_query, __set_query, __del_query,
             """
             Query part of the IRI.
@@ -233,7 +233,7 @@ class Iri(object):
     def __get_fragment(self):
         return self._fragment
     def __set_fragment(self, value):
-        self._fragment = _ValueFragment(value)
+        self._fragment = IriFragment(value)
     fragment = property(__get_fragment, __set_fragment, __del_fragment,
             """
             Fragment part of the IRI.
@@ -312,7 +312,9 @@ class _Value(unicode):
     _unquote_re = re.compile(unquote_rules)
 
     def __new__(cls, input, quoted=False):
-        if quoted:
+        if isinstance(input, cls):
+            input_quoted = input._quoted
+        elif quoted:
             input, input_quoted = cls._unquote(input)
         else:
             input_quoted = None
@@ -395,21 +397,21 @@ class _Value(unicode):
             return self._quoted
         return self.replace(u'%', u'%25')
 
-class _ValueAuthority(_Value):
+class IriAuthority(_Value):
     quote_rules = (
         # Not correct, but we have anything in authority
         (ord(u'@'), ord(u'@')),
         (ord(u':'), ord(u':')),
     ) + _Value.quote_rules
 
-class _ValuePath(_Value):
+class IriPath(_Value):
     quote_rules = (
         (ord(u'@'), ord(u'@')),
         (ord(u':'), ord(u':')),
         (ord(u'/'), ord(u'/')),
     ) + _Value.quote_rules
 
-class _ValueQuery(_Value):
+class IriQuery(_Value):
     quote_rules = (
         (ord(u'@'), ord(u'@')),
         (ord(u':'), ord(u':')),
@@ -421,7 +423,7 @@ class _ValueQuery(_Value):
         (0x100000, 0x10FFFD),
     )
 
-class _ValueFragment(_Value):
+class IriFragment(_Value):
     quote_rules = (
         (ord(u'@'), ord(u'@')),
         (ord(u':'), ord(u':')),
