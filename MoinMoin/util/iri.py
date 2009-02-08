@@ -138,8 +138,10 @@ class Iri(object):
             ret.extend((self.scheme, ':'))
         if self.authority is not None:
             ret.extend(('//', self._quote_authority(self.authority)))
-        if self.path is not None:
-            ret.append(self._quote_path(self.path))
+
+        path = self.path_fullquoted
+        if path is not None:
+            ret.append(path)
 
         query = self.query_fullquoted
         if query is not None:
@@ -195,9 +197,6 @@ class Iri(object):
     def _quote_authority(self, s):
         return self._quote(s, self.quote_authority_rules)
 
-    def _quote_path(self, s):
-        return self._quote(s, self.quote_path_rules)
-
     def _unquote(self, s):
         # TODO: call re only once (using split?)
         ret1 = []
@@ -222,6 +221,28 @@ class Iri(object):
         ret1.append(t)
         ret2.append(t)
         return u''.join(ret1), u''.join(ret2)
+
+    def __del_path(self):
+        del self._path
+    def __get_path(self):
+        return self._path[0]
+    def __set_path(self, value):
+        self._path = value, None
+    path = property(__get_path, __set_path, __del_path)
+
+    @property
+    def path_fullquoted(self):
+        path = self._path[1] or self._path[0]
+        if path is not None:
+            return self._quote(path, self.quote_path_rules)
+
+    @property
+    def path_quoted(self):
+        path = self._path
+        if path[1] is not None:
+            return path[1]
+        if path[0] is not None:
+            return path[0].replace(u'%', u'%25')
 
     def __del_query(self):
         del self._query

@@ -184,6 +184,8 @@ def test_Iri_4():
     u = Iri(scheme='wiki', path='Neu%?#', query='Neu%?#', fragment='Neu%?#')
     assert u.scheme == 'wiki'
     assert u.path == 'Neu%?#'
+    assert u.path_fullquoted == 'Neu%25%3F%23'
+    assert u.path_quoted == 'Neu%25?#'
     assert u.query == 'Neu%?#'
     assert u.query_fullquoted == 'Neu%25?%23'
     assert u.query_quoted == 'Neu%25?#'
