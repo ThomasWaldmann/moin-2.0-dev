@@ -116,6 +116,14 @@ class Iri(object):
 
     def __init__(self, iri=None,
             scheme=None, authority=None, path=None, query=None, fragment=None):
+        """
+        @param iri A full IRI in unicode
+        @param scheme Scheme part of the IRI, overrides the same part of the IRI.
+        @param authority Authority part of the IRI, overrides the same part of the IRI.
+        @param path Path part of the IRI, overrides the same part of the IRI.
+        @param query Query part of the IRI, overrides the same part of the IRI.
+        @param fragment Fragment part of the IRI, overrides the same part of the IRI.
+        """
 
         self.scheme = self.authority = self.path = self.query = self.fragment = None
 
@@ -199,6 +207,12 @@ class Iri(object):
         return u''.join(ret)
 
     def _unquote(self, s):
+        """
+        Unquotes percent-encoded strings.
+
+        @param s Input string
+        @return Tuple of full decoded and minimal quoted string
+        """
         ret1 = []
         ret2 = []
         pos = 0
@@ -222,17 +236,29 @@ class Iri(object):
         ret2.append(t)
         return u''.join(ret1), u''.join(ret2)
 
-    def __get_all_fullquoted(self, part, rules):
-        if part[1] is not None:
-            return self._quote(part[1], rules, True)
-        if part[0] is not None:
-            return self._quote(part[0], rules)
+    def __get_all_fullquoted(self, value, rules):
+        """
+        Provide full quoted form of the value.
 
-    def __get_all_quoted(self, part):
-        if part[1] is not None:
-            return part[1]
-        if part[0] is not None:
-            return part[0].replace(u'%', u'%25')
+        @param value Internal value
+        @return Full quoted form of the value
+        """
+        if value[1] is not None:
+            return self._quote(value[1], rules, True)
+        if value[0] is not None:
+            return self._quote(value[0], rules)
+
+    def __get_all_quoted(self, value):
+        """
+        Provide minimal quoted form of the value.
+
+        @param value Internal value
+        @return Minimal quoted form of the value
+        """
+        if value[1] is not None:
+            return value[1]
+        if value[0] is not None:
+            return value[0].replace(u'%', u'%25')
 
     def __del_authority(self):
         del self._authority
@@ -240,14 +266,17 @@ class Iri(object):
         return self._authority[0]
     def __set_authority(self, value):
         self._authority = value, None
-    authority = property(__get_authority, __set_authority, __del_authority)
+    authority = property(__get_authority, __set_authority, __del_authority,
+            "Unquoted form of the authority part of the IRI.")
 
     @property
     def authority_fullquoted(self):
+        "Full quoted form of the authority part of the IRI."
         return self.__get_all_fullquoted(self._authority, self.quote_authority_rules)
 
     @property
     def authority_quoted(self):
+        "Minimal quoted form of the authority part of the IRI."
         return self.__get_all_quoted(self._authority)
 
     def __del_path(self):
@@ -256,14 +285,17 @@ class Iri(object):
         return self._path[0]
     def __set_path(self, value):
         self._path = value, None
-    path = property(__get_path, __set_path, __del_path)
+    path = property(__get_path, __set_path, __del_path,
+            "Unquoted form of the path part of the IRI.")
 
     @property
     def path_fullquoted(self):
+        "Full quoted form of the path part of the IRI."
         return self.__get_all_fullquoted(self._path, self.quote_path_rules)
 
     @property
     def path_quoted(self):
+        "Minimal quoted form of the path part of the IRI."
         return self.__get_all_quoted(self._path)
 
     def __del_query(self):
@@ -272,14 +304,17 @@ class Iri(object):
         return self._query[0]
     def __set_query(self, value):
         self._query = value, None
-    query = property(__get_query, __set_query, __del_query)
+    query = property(__get_query, __set_query, __del_query,
+            "Unquoted form of the query part of the IRI.")
 
     @property
     def query_fullquoted(self):
+        "Full quoted form of the query part of the IRI."
         return self.__get_all_fullquoted(self._query, self.quote_query_rules)
 
     @property
     def query_quoted(self):
+        "Minimal quoted form of the query part of the IRI."
         return self.__get_all_quoted(self._query)
 
     def __del_fragment(self):
@@ -288,12 +323,15 @@ class Iri(object):
         return self._fragment[0]
     def __set_fragment(self, value):
         self._fragment = value, None
-    fragment = property(__get_fragment, __set_fragment, __del_fragment)
+    fragment = property(__get_fragment, __set_fragment, __del_fragment,
+            "Unquoted form of the fragment part of the IRI.")
 
     @property
     def fragment_fullquoted(self):
+        "Full quoted form of the fragment part of the IRI."
         return self.__get_all_fullquoted(self._fragment, self.quote_fragment_rules)
 
     @property
     def fragment_quoted(self):
+        "Minimal quoted form of the fragment part of the IRI."
         return self.__get_all_quoted(self._fragment)
