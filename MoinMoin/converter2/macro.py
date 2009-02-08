@@ -11,7 +11,7 @@ Expands all macro elements in a internal Moin document.
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import macro, Page, wikiutil
-from MoinMoin.util import uri
+from MoinMoin.util import iri
 from MoinMoin.util.tree import html, moin_page
 
 class _PseudoParser(object):
@@ -144,10 +144,9 @@ class Converter(object):
     def recurse(self, elem, page_name):
         new_page_href = elem.get(moin_page.page_href)
         if new_page_href:
-            # TODO: unicode URI
-            u = uri.Uri(new_page_href)
-            if u.authority == '' and u.path.startswith('/'):
-                page_name = u.path[1:].decode('utf-8')
+            i = iri.Iri(new_page_href)
+            if i.authority == '' and i.path.startswith('/'):
+                page_name = i.path[1:]
 
         if elem.tag == moin_page.macro:
             yield elem, page_name

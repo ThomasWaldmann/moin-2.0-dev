@@ -26,7 +26,7 @@ import re
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
-from MoinMoin.util import uri
+from MoinMoin.util import iri
 from MoinMoin.util.tree import moin_page, xlink
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
@@ -372,8 +372,7 @@ class Converter(ConverterMacro):
         """Handle all kinds of links."""
 
         if link_page is not None:
-            # TODO: unicode URI
-            target = str(uri.Uri(scheme='wiki.local', path=link_page.encode('utf-8')))
+            target = unicode(iri.Iri(scheme='wiki.local', path=link_page))
             text = link_page
         else:
             target = link_url

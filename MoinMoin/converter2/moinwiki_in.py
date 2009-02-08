@@ -12,7 +12,7 @@ import re
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import config, wikiutil
-from MoinMoin.util import uri
+from MoinMoin.util import iri
 from MoinMoin.util.tree import html, moin_page, xlink
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
@@ -531,12 +531,10 @@ class Converter(ConverterMacro):
                 path, fragment = link_page.rsplit('#', 1)
             else:
                 path, fragment = link_page, None
-            # TODO: unicode URI
-            target = str(uri.Uri(scheme='wiki.local', path=path.encode('utf-8'), fragment=fragment))
+            target = unicode(iri.Iri(scheme='wiki.local', path=path, fragment=fragment))
             text = link_page
         else:
-            # TODO: unicode URI
-            target = str(uri.Uri(link_url.encode('utf-8')))
+            target = unicode(iri.Iri(link_url))
             text = link_url
         element = ET.Element(self.tag_a, attrib={self.tag_href: target})
         self.stack_push(element)
@@ -599,8 +597,7 @@ class Converter(ConverterMacro):
     def inline_object_repl(self, object, object_target, object_text=None):
         """Handles objects included in the page."""
 
-        # TODO: unicode URI
-        target = str(uri.Uri(object_target.encode('utf-8')))
+        target = unicode(iri.Iri(object_target))
 
         attrib = {self.tag_href: target}
         if object_text is not None:
@@ -675,8 +672,7 @@ class Converter(ConverterMacro):
                 path, fragment = page.rsplit('#', 1)
             else:
                 path, fragment = page, None
-            # TODO: unicode URI
-            link = uri.Uri(scheme='wiki.local', path=path, fragment=fragment)
+            link = iri.Iri(scheme='wiki.local', path=path, fragment=fragment)
             text = freelink_page
 
         elif freelink_email:
@@ -690,13 +686,12 @@ class Converter(ConverterMacro):
                 self.stack_top_append(freelink)
                 return
 
-            # TODO: unicode URI
-            link = uri.Uri(scheme='wiki',
-                    authority=freelink_interwiki_ref.encode('utf-8'),
-                    path='/' + freelink_interwiki_page.encode('utf-8'))
+            link = iri.Iri(scheme='wiki',
+                    authority=freelink_interwiki_ref,
+                    path='/' + freelink_interwiki_page)
             text = freelink_interwiki_page
 
-        attrib[self.tag_href] = str(link)
+        attrib[self.tag_href] = unicode(link)
 
         element = ET.Element(self.tag_a, attrib, children=[text])
         self.stack_top_append(element)
@@ -714,8 +709,7 @@ class Converter(ConverterMacro):
     """
 
     def inline_url_repl(self, url, url_target):
-        # TODO: unicode URI
-        url = str(uri.Uri(url_target.encode('utf-8')))
+        url = unicode(iri.Iri(url_target))
         attrib = {self.tag_href: url}
         element = ET.Element(self.tag_a, attrib=attrib, children=[url_target])
         self.stack_top_append(element)

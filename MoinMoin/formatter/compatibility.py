@@ -15,7 +15,7 @@ from emeraldtree.HTMLTreeBuilder import HTMLParser
 
 from MoinMoin import wikiutil
 from MoinMoin.converter2._wiki_macro import ConverterMacro
-from MoinMoin.util import uri
+from MoinMoin.util import iri
 from MoinMoin.util.tree import html, moin_page, xlink
 
 
@@ -109,9 +109,7 @@ class Formatter(ConverterMacro):
         if on:
             if not pagename and page:
                 pagename = page.page_name
-            # TODO: unicode URI
-            link = str(uri.Uri(scheme='wiki.local',
-                path=pagename.encode('utf-8')))
+            link = unicode(iri.Iri(scheme='wiki.local', path=pagename))
             attrib = {self.tag_href: link}
             self._stack_push(self.tag_a(attrib))
         else:
@@ -120,10 +118,9 @@ class Formatter(ConverterMacro):
 
     def interwikilink(self, on, interwiki='', pagename='', **kw):
         if on:
-            # TODO: unicode URI
-            link = str(uri.Uri(scheme='wiki',
-                authority=interwiki.encode('utf-8'),
-                path = '/' + pagename.encode('utf-8')))
+            link = unicode(iri.Iri(scheme='wiki',
+                authority=interwiki,
+                path = '/' + pagename))
             attrib = {self.tag_href: link}
             self._stack_push(self.tag_a(attrib))
         else:

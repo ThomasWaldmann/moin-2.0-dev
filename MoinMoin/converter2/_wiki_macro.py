@@ -10,7 +10,7 @@ Base class for wiki parser with macro support.
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
-from MoinMoin.util import uri
+from MoinMoin.util import iri
 from MoinMoin.util.tree import moin_page, xinclude
 
 class ConverterMacro(object):
@@ -66,9 +66,7 @@ class ConverterMacro(object):
             if skipitems:
                 add_moin_xpointer('skipitems', skipitems)
         else:
-            # TODO: unicode URI
-            link = str(uri.Uri(scheme='wiki.local',
-                    path=pagename.encode('utf-8')))
+            link = unicode(iri.Iri(scheme='wiki.local', path=pagename))
             attrib[xinclude.href] = link
 
         if heading == 'heading':

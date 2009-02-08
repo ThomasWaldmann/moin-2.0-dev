@@ -13,7 +13,7 @@ import urllib
 
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
-from MoinMoin.util import uri
+from MoinMoin.util import iri
 from MoinMoin.util.tree import html, moin_page, xlink
 
 class ConverterBase(object):
@@ -30,14 +30,13 @@ class ConverterBase(object):
     def recurse(self, elem, page_name):
         new_page_href = elem.get(self.tag_page_href)
         if new_page_href:
-            # TODO: unicode URI
-            u = uri.Uri(new_page_href)
-            if u.authority == '' and u.path.startswith('/'):
-                page_name = u.path[1:].decode('utf-8')
+            i = iri.Iri(new_page_href)
+            if i.authority == '' and i.path.startswith('/'):
+                page_name = i.path[1:]
 
         href = elem.get(self.tag_href, None)
         if href is not None:
-            yield elem, uri.Uri(href), page_name
+            yield elem, iri.Iri(href), page_name
 
         for child in elem:
             if isinstance(child, ET.Node):
@@ -64,13 +63,13 @@ class ConverterExternOutput(ConverterBase):
 
     # TODO: Deduplicate code
     def handle_wiki(self, elem, input):
-        ret = uri.Uri(query=input.query, fragment=input.fragment)
+        ret = iri.Iri(query=input.query, fragment=input.fragment)
 
         if input.authority:
             wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, input.authority, input.path[1:])
 
             if not err:
-                tmp = uri.Uri(wikiutil.join_wiki(wikiurl, wikitail))
+                tmp = iri.Iri(wikiutil.join_wiki(wikiurl, wikitail))
                 ret.scheme, ret.authority, ret.path = tmp.scheme, tmp.authority, tmp.path
                 if tmp.query:
                     if ret.query:
@@ -89,12 +88,12 @@ class ConverterExternOutput(ConverterBase):
                 pass
 
         else:
-            ret.path = self.request.getScriptname() + input.path
+            ret.path = self.request.url_root + input.path
 
         elem.set(self.tag_href, str(ret))
 
     def handle_wikilocal(self, elem, input, page_name):
-        ret = uri.Uri(query=input.query, fragment=input.fragment)
+        ret = iri.Iri(query=input.query, fragment=input.fragment)
         link = None
 
         if input.path:
@@ -126,7 +125,7 @@ class ConverterExternOutput(ConverterBase):
                 elem.set(self.tag_class, 'nonexistent')
 
             # TODO: unicode URI
-            ret.path = self.request.getScriptname() + '/' + abs_page_name.encode('utf-8')
+            ret.path = self.request.url_root + '/' + abs_page_name.encode('utf-8')
 
         elem.set(self.tag_href, str(ret))
 
