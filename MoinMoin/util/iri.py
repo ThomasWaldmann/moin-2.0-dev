@@ -134,8 +134,9 @@ class Iri(object):
 
     def __unicode__(self):
         ret = []
+
         if self.scheme:
-            ret.extend((self.scheme, ':'))
+            ret.extend((self.scheme, u':'))
 
         authority = self.authority_fullquoted
         if authority is not None:
@@ -147,7 +148,7 @@ class Iri(object):
 
         query = self.query_fullquoted
         if query is not None:
-            ret.extend(('?', query))
+            ret.extend((u'?', query))
 
         fragment = self.fragment_fullquoted
         if fragment is not None:
@@ -192,7 +193,7 @@ class Iri(object):
                     ret.append(i)
                     break
             else:
-                ret.extend(('%%%02X' % ord(a) for a in i.encode('utf-8')))
+                ret.extend((u'%%%02X' % ord(a) for a in i.encode('utf-8')))
 
         return u''.join(ret)
 
@@ -209,7 +210,7 @@ class Iri(object):
             pos = match.end()
 
             part = []
-            for item in match.group().split('%')[1:]:
+            for item in match.group().split(u'%')[1:]:
                 part.append(chr(int(item, 16)))
             ret1.append(''.join(part).decode('utf-8', 'replace'))
             # TODO: Reencode % and illegal sequences
