@@ -145,8 +145,10 @@ class Iri(object):
         if query is not None:
             ret.extend(('?', query))
 
-        if self.fragment is not None:
-            ret.extend(('#', self._quote_fragment(self.fragment)))
+        fragment = self.fragment_fullquoted
+        if fragment is not None:
+            ret.extend((u'#', fragment))
+
         return ''.join(ret)
 
     def _parse(self, iri):
@@ -173,7 +175,7 @@ class Iri(object):
 
         fragment = match.group('fragment')
         if fragment is not None:
-            self.fragment, fragment_q = self._unquote(fragment)
+            self._fragment = self._unquote(fragment)
 
     def _quote(self, s, rules):
         ret = []
@@ -195,9 +197,6 @@ class Iri(object):
 
     def _quote_path(self, s):
         return self._quote(s, self.quote_path_rules)
-
-    def _quote_fragment(self, s):
-        return self._quote(s, self.quote_fragment_rules)
 
     def _unquote(self, s):
         # TODO: call re only once (using split?)
@@ -245,3 +244,25 @@ class Iri(object):
             return query[1]
         if query[0] is not None:
             return query[0].replace(u'%', u'%25')
+        
+    def __del_fragment(self):
+        del self._fragment
+    def __get_fragment(self):
+        return self._fragment[0]
+    def __set_fragment(self, value):
+        self._fragment = value, None
+    fragment = property(__get_fragment, __set_fragment, __del_fragment)
+
+    @property
+    def fragment_fullquoted(self):
+        fragment = self._fragment[1] or self._fragment[0]
+        if fragment is not None:
+            return self._quote(fragment, self.quote_fragment_rules)
+
+    @property
+    def fragment_quoted(self):
+        fragment = self._fragment
+        if fragment[1] is not None:
+            return fragment[1]
+        if fragment[0] is not None:
+            return fragment[0].replace(u'%', u'%25')
