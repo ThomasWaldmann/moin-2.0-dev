@@ -79,34 +79,35 @@ class Iri(object):
         (0xE1000, 0xEFFFD),
     )
 
-    quote_authority_rules = quote_rules + (
+    quote_authority_rules = (
         # Not correct, but we have anything in authority
         (ord('@'), ord('@')),
         (ord(':'), ord(':')),
-    )
+    ) + quote_rules
 
-    quote_path_rules = quote_rules + (
+    quote_path_rules = (
         (ord('@'), ord('@')),
         (ord(':'), ord(':')),
         (ord('/'), ord('/')),
-    )
+    ) + quote_rules
 
-    quote_query_rules = quote_rules + (
+    quote_query_rules = (
         (ord('@'), ord('@')),
         (ord(':'), ord(':')),
         (ord('/'), ord('/')),
         (ord('?'), ord('?')),
+    ) + quote_rules + (
         (  0xE000,   0xF8FF),
         ( 0xF0000,  0xFFFFD),
         (0x100000, 0x10FFFD),
     )
 
-    quote_fragment_rules = quote_rules + (
+    quote_fragment_rules = (
         (ord('@'), ord('@')),
         (ord(':'), ord(':')),
         (ord('/'), ord('/')),
         (ord('?'), ord('?')),
-    )
+    ) + quote_rules
 
     unquote_rules = r"(%[0-9a-fA-F]{2})+"
 
@@ -198,7 +199,6 @@ class Iri(object):
         return u''.join(ret)
 
     def _unquote(self, s):
-        # TODO: call re only once (using split?)
         ret1 = []
         ret2 = []
         pos = 0
