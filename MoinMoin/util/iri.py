@@ -160,7 +160,7 @@ class Iri(object):
         match = self._overall_re.match(unicode(iri))
 
         if not match:
-            return
+            raise ValueError('Input does not look like an IRI')
 
         scheme = match.group('scheme')
         if scheme is not None:
