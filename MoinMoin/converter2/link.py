@@ -139,8 +139,7 @@ class ConverterPagelinks(ConverterBase):
             return
 
         if input.path:
-            # TODO: unicode URI
-            link = wikiutil.AbsPageName(page_name, input.path.decode('utf-8'))
+            link = wikiutil.AbsPageName(page_name, input.path)
             self.links.add(link)
 
     def __call__(self, tree):
