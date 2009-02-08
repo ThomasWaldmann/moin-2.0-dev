@@ -112,8 +112,7 @@ class ConverterExternOutput(ConverterBase):
                 return
 
             else:
-                # TODO: unicode URI
-                link = input.path.decode('utf-8')
+                link = input.path
 
         else:
             link = page_name
@@ -124,10 +123,9 @@ class ConverterExternOutput(ConverterBase):
             if not page.exists():
                 elem.set(self.tag_class, 'nonexistent')
 
-            # TODO: unicode URI
-            ret.path = self.request.url_root + '/' + abs_page_name.encode('utf-8')
+            ret.path = self.request.url_root + '/' + abs_page_name
 
-        elem.set(self.tag_href, str(ret))
+        elem.set(self.tag_href, unicode(ret))
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
