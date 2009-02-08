@@ -168,11 +168,11 @@ class Iri(object):
 
         authority = match.group('authority')
         if authority is not None:
-            self.authority, authority_q = self._unquote(authority)
+            self._authority = self._unquote(authority)
 
         path = match.group('path')
         if path is not None:
-            self.path, path_q = self._unquote(path)
+            self._path = self._unquote(path)
 
         query = match.group('query')
         if query is not None:
