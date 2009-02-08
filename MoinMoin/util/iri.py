@@ -199,21 +199,27 @@ class Iri(object):
     def _quote_fragment(self, s):
         return self._quote(s, self.quote_fragment_rules)
 
-    def _unquote_full_repl(self, match):
-        ret = []
-        for item in s.split('%')[1:]:
-            ret.append(chr(int(item, 16)))
-        return ''.join(ret).decode('utf-8')
-
-    def _unquote_minimal_repl(self, match):
-        ret = []
-        for item in s.split('%')[1:]:
-            ret.append(chr(int(item, 16)))
-        # TODO: Reencode % and illegal sequences
-        return ''.join(ret).decode('utf-8')
-
     def _unquote(self, s):
         # TODO: call re only once (using split?)
-        r1 = self._unquote_re.sub(self._unquote_full_repl, s)
-        r2 = self._unquote_re.sub(self._unquote_minimal_repl, s)
-        return r1, r2
+        ret1 = []
+        ret2 = []
+        pos = 0
+        for match in self._unquote_re.finditer(s):
+            # Handle leading text
+            t = s[pos:match.start()]
+            ret1.append(t)
+            ret2.append(t)
+            pos = match.end()
+
+            part = []
+            for item in match.group().split('%')[1:]:
+                part.append(chr(int(item, 16)))
+            ret1.append(''.join(part).decode('utf-8', 'replace'))
+            # TODO: Reencode % and illegal sequences
+            ret2.append(''.join(part).decode('utf-8'))
+
+        # Handle trailing text
+        t = s[pos:]
+        ret1.append(t)
+        ret2.append(t)
+        return u''.join(ret1), u''.join(ret2)
