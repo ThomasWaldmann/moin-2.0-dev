@@ -155,7 +155,7 @@ class Iri(object):
         if fragment is not None:
             ret.extend((u'#', fragment))
 
-        return ''.join(ret)
+        return u''.join(ret)
 
     def _parse(self, iri):
         match = self._overall_re.match(unicode(iri))
@@ -183,14 +183,14 @@ class Iri(object):
         if fragment is not None:
             self._fragment = self._unquote(fragment)
 
-    def _quote(self, s, rules):
+    def _quote(self, s, rules, requote=False):
         ret = []
 
         for i in s:
             c = ord(i)
 
             for rule in rules:
-                if c >= rule[0] and c <= rule[1]:
+                if c >= rule[0] and c <= rule[1] or requote and i == u'%':
                     ret.append(i)
                     break
             else:
@@ -222,6 +222,12 @@ class Iri(object):
         ret2.append(t)
         return u''.join(ret1), u''.join(ret2)
 
+    def __get_all_fullquoted(self, part, rules):
+        if part[1] is not None:
+            return self._quote(part[1], rules, True)
+        if part[0] is not None:
+            return self._quote(part[0], rules)
+
     def __del_authority(self):
         del self._authority
     def __get_authority(self):
@@ -232,9 +238,7 @@ class Iri(object):
 
     @property
     def authority_fullquoted(self):
-        authority = self._authority[1] or self._authority[0]
-        if authority is not None:
-            return self._quote(authority, self.quote_authority_rules)
+        return self.__get_all_fullquoted(self._authority, self.quote_authority_rules)
 
     @property
     def authority_quoted(self):
@@ -254,9 +258,7 @@ class Iri(object):
 
     @property
     def path_fullquoted(self):
-        path = self._path[1] or self._path[0]
-        if path is not None:
-            return self._quote(path, self.quote_path_rules)
+        return self.__get_all_fullquoted(self._path, self.quote_path_rules)
 
     @property
     def path_quoted(self):
@@ -276,9 +278,7 @@ class Iri(object):
 
     @property
     def query_fullquoted(self):
-        query = self._query[1] or self._query[0]
-        if query is not None:
-            return self._quote(query, self.quote_query_rules)
+        return self.__get_all_fullquoted(self._query, self.quote_query_rules)
 
     @property
     def query_quoted(self):
@@ -298,9 +298,7 @@ class Iri(object):
 
     @property
     def fragment_fullquoted(self):
-        fragment = self._fragment[1] or self._fragment[0]
-        if fragment is not None:
-            return self._quote(fragment, self.quote_fragment_rules)
+        return self.__get_all_fullquoted(self._fragment, self.quote_fragment_rules)
 
     @property
     def fragment_quoted(self):
