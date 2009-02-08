@@ -228,6 +228,12 @@ class Iri(object):
         if part[0] is not None:
             return self._quote(part[0], rules)
 
+    def __get_all_quoted(self, part):
+        if part[1] is not None:
+            return part[1]
+        if part[0] is not None:
+            return part[0].replace(u'%', u'%25')
+
     def __del_authority(self):
         del self._authority
     def __get_authority(self):
@@ -242,11 +248,7 @@ class Iri(object):
 
     @property
     def authority_quoted(self):
-        authority = self._authority
-        if authority[1] is not None:
-            return authority[1]
-        if authority[0] is not None:
-            return authority[0].replace(u'%', u'%25')
+        return self.__get_all_quoted(self._authority)
 
     def __del_path(self):
         del self._path
@@ -262,11 +264,7 @@ class Iri(object):
 
     @property
     def path_quoted(self):
-        path = self._path
-        if path[1] is not None:
-            return path[1]
-        if path[0] is not None:
-            return path[0].replace(u'%', u'%25')
+        return self.__get_all_quoted(self._path)
 
     def __del_query(self):
         del self._query
@@ -282,12 +280,8 @@ class Iri(object):
 
     @property
     def query_quoted(self):
-        query = self._query
-        if query[1] is not None:
-            return query[1]
-        if query[0] is not None:
-            return query[0].replace(u'%', u'%25')
-        
+        return self.__get_all_quoted(self._query)
+
     def __del_fragment(self):
         del self._fragment
     def __get_fragment(self):
@@ -302,8 +296,4 @@ class Iri(object):
 
     @property
     def fragment_quoted(self):
-        fragment = self._fragment
-        if fragment[1] is not None:
-            return fragment[1]
-        if fragment[0] is not None:
-            return fragment[0].replace(u'%', u'%25')
+        return self.__get_all_quoted(self._fragment)
