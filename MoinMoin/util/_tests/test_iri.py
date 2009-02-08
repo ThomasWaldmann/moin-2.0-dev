@@ -181,18 +181,21 @@ def test_Iri_4():
     assert u.query == 'Neu?'
     assert unicode(u) == 'wiki:Neu%3F?Neu?'
 
-    u = Iri(scheme='wiki', path='Neu%?#', query='Neu%?#', fragment='Neu%?#')
+    u = Iri(scheme='wiki', authority='Neu%?#', path='/Neu%?#', query='Neu%?#', fragment='Neu%?#')
     assert u.scheme == 'wiki'
-    assert u.path == 'Neu%?#'
-    assert u.path_fullquoted == 'Neu%25%3F%23'
-    assert u.path_quoted == 'Neu%25?#'
+    assert u.authority == 'Neu%?#'
+    assert u.authority_fullquoted == 'Neu%25%3F%23'
+    assert u.authority_quoted == 'Neu%25?#'
+    assert u.path == '/Neu%?#'
+    assert u.path_fullquoted == '/Neu%25%3F%23'
+    assert u.path_quoted == '/Neu%25?#'
     assert u.query == 'Neu%?#'
     assert u.query_fullquoted == 'Neu%25?%23'
     assert u.query_quoted == 'Neu%25?#'
     assert u.fragment == 'Neu%?#'
     assert u.fragment_fullquoted == 'Neu%25?%23'
     assert u.fragment_quoted == 'Neu%25?#'
-    assert unicode(u) == 'wiki:Neu%25%3F%23?Neu%25?%23#Neu%25?%23'
+    assert unicode(u) == 'wiki://Neu%25%3F%23/Neu%25%3F%23?Neu%25?%23#Neu%25?%23'
 
 def test_Iri_5():
     i = 'wiki://MoinMoin/StartSeite?action=raw#body'

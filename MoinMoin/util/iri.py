@@ -136,8 +136,10 @@ class Iri(object):
         ret = []
         if self.scheme:
             ret.extend((self.scheme, ':'))
-        if self.authority is not None:
-            ret.extend(('//', self._quote_authority(self.authority)))
+
+        authority = self.authority_fullquoted
+        if authority is not None:
+            ret.extend((u'//', authority))
 
         path = self.path_fullquoted
         if path is not None:
@@ -194,9 +196,6 @@ class Iri(object):
 
         return u''.join(ret)
 
-    def _quote_authority(self, s):
-        return self._quote(s, self.quote_authority_rules)
-
     def _unquote(self, s):
         # TODO: call re only once (using split?)
         ret1 = []
@@ -221,6 +220,28 @@ class Iri(object):
         ret1.append(t)
         ret2.append(t)
         return u''.join(ret1), u''.join(ret2)
+
+    def __del_authority(self):
+        del self._authority
+    def __get_authority(self):
+        return self._authority[0]
+    def __set_authority(self, value):
+        self._authority = value, None
+    authority = property(__get_authority, __set_authority, __del_authority)
+
+    @property
+    def authority_fullquoted(self):
+        authority = self._authority[1] or self._authority[0]
+        if authority is not None:
+            return self._quote(authority, self.quote_authority_rules)
+
+    @property
+    def authority_quoted(self):
+        authority = self._authority
+        if authority[1] is not None:
+            return authority[1]
+        if authority[0] is not None:
+            return authority[0].replace(u'%', u'%25')
 
     def __del_path(self):
         del self._path
