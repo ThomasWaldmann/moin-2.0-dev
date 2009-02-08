@@ -270,24 +270,24 @@ class _Value(unicode):
     # Rules for quoting parts of the IRI.
     # Each entry represents a range of unicode code points.
     quote_rules = (
-        (ord('0'), ord('9')),
-        (ord('A'), ord('Z')),
-        (ord('a'), ord('z')),
-        (ord('-'), ord('-')),
-        (ord('.'), ord('.')),
-        (ord('_'), ord('_')),
-        (ord('~'), ord('~')),
-        (ord('!'), ord('!')),
-        (ord('$'), ord('$')),
-        (ord('&'), ord('&')),
-        (ord("'"), ord("'")),
-        (ord('('), ord('(')),
-        (ord(')'), ord(')')),
-        (ord('*'), ord('*')),
-        (ord('+'), ord('+')),
-        (ord(','), ord(',')),
-        (ord(';'), ord(';')),
-        (ord('='), ord('=')),
+        (ord(u'0'), ord(u'9')),
+        (ord(u'A'), ord(u'Z')),
+        (ord(u'a'), ord(u'z')),
+        (ord(u'-'), ord(u'-')),
+        (ord(u'.'), ord(u'.')),
+        (ord(u'_'), ord(u'_')),
+        (ord(u'~'), ord(u'~')),
+        (ord(u'!'), ord(u'!')),
+        (ord(u'$'), ord(u'$')),
+        (ord(u'&'), ord(u'&')),
+        (ord(u"'"), ord(u"'")),
+        (ord(u'('), ord(u'(')),
+        (ord(u')'), ord(u')')),
+        (ord(u'*'), ord(u'*')),
+        (ord(u'+'), ord(u'+')),
+        (ord(u','), ord(u',')),
+        (ord(u';'), ord(u';')),
+        (ord(u'='), ord(u'=')),
         (   0xA0,  0xD7FF),
         ( 0xF900,  0xFDCF),
         ( 0xFDF0,  0xFFEF),
@@ -398,23 +398,23 @@ class _Value(unicode):
 class _ValueAuthority(_Value):
     quote_rules = (
         # Not correct, but we have anything in authority
-        (ord('@'), ord('@')),
-        (ord(':'), ord(':')),
+        (ord(u'@'), ord(u'@')),
+        (ord(u':'), ord(u':')),
     ) + _Value.quote_rules
 
 class _ValuePath(_Value):
     quote_rules = (
-        (ord('@'), ord('@')),
-        (ord(':'), ord(':')),
-        (ord('/'), ord('/')),
+        (ord(u'@'), ord(u'@')),
+        (ord(u':'), ord(u':')),
+        (ord(u'/'), ord(u'/')),
     ) + _Value.quote_rules
 
 class _ValueQuery(_Value):
     quote_rules = (
-        (ord('@'), ord('@')),
-        (ord(':'), ord(':')),
-        (ord('/'), ord('/')),
-        (ord('?'), ord('?')),
+        (ord(u'@'), ord(u'@')),
+        (ord(u':'), ord(u':')),
+        (ord(u'/'), ord(u'/')),
+        (ord(u'?'), ord(u'?')),
     ) + _Value.quote_rules + (
         (  0xE000,   0xF8FF),
         ( 0xF0000,  0xFFFFD),
@@ -423,8 +423,8 @@ class _ValueQuery(_Value):
 
 class _ValueFragment(_Value):
     quote_rules = (
-        (ord('@'), ord('@')),
-        (ord(':'), ord(':')),
-        (ord('/'), ord('/')),
-        (ord('?'), ord('?')),
+        (ord(u'@'), ord(u'@')),
+        (ord(u':'), ord(u':')),
+        (ord(u'/'), ord(u'/')),
+        (ord(u'?'), ord(u'?')),
     ) + _Value.quote_rules
