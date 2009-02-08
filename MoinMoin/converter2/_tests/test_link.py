@@ -57,11 +57,11 @@ class TestConverterExternOutput(object):
     def _do_wiki(self, input, output, skip=None):
         if skip:
             py.test.skip(skip)
-        out = self.conv.handle_wiki(uri.Uri(input))
+        out = self.conv.handle_wiki(ET.Element(None), iri.Iri(input))
         assert out == output
 
     def _do_wikilocal(self, input, page_name, output, skip=None):
         if skip:
             py.test.skip(skip)
-        out = self.conv.handle_wikilocal(uri.Uri(input), page_name)
+        out = self.conv.handle_wikilocal(ET.Element(None), iri.Iri(input), page_name)
         assert out == output
