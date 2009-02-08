@@ -123,7 +123,11 @@ class ConverterExternOutput(ConverterBase):
             if not page.exists():
                 elem.set(self.tag_class, 'nonexistent')
 
-            ret.path = self.request.url_root + '/' + abs_page_name
+            root = iri.Iri(self.request.url_root)
+            # TODO: Use Iri + Iri or Uri + Iri
+            ret.scheme = root.scheme
+            ret.authority = root.authority
+            ret.path = root.path + abs_page_name
 
         elem.set(self.tag_href, unicode(ret))
 
