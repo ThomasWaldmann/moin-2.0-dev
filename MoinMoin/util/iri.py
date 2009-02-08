@@ -116,40 +116,21 @@ class Iri(object):
     def __init__(self, iri=None,
             scheme=None, authority=None, path=None, query=None, fragment=None):
 
+        self.scheme = self.authority = self.path = self.query = self.fragment = None
+
         if iri:
-            match = self._overall_re.match(unicode(iri))
+            self._parse(iri)
 
-            if match:
-                if scheme is None:
-                    scheme = match.group('scheme')
-                    if scheme is not None:
-                        scheme = scheme.lower()
-
-                if authority is None:
-                    authority = match.group('authority')
-                    if authority is not None:
-                        authority, authority_q = self._unquote(authority)
-
-                if path is None:
-                    path = match.group('path')
-                    if path is not None:
-                        path, path_q = self._unquote(path)
-
-                if query is None:
-                    query = match.group('query')
-                    if query is not None:
-                        query, query_q = self._unquote(query)
-
-                if fragment is None:
-                    fragment = match.group('fragment')
-                    if fragment is not None:
-                        fragment, fragment_q = self._unquote(fragment)
-
-        self.scheme = scheme
-        self.authority = authority
-        self.path = path
-        self.query = query
-        self.fragment = fragment
+        if scheme is not None:
+            self.scheme = scheme
+        if authority is not None:
+            self.authority = authority
+        if path is not None:
+            self.path = path
+        if query is not None:
+            self.query = query
+        if fragment is not None:
+            self.fragment = fragment
 
     def __unicode__(self):
         ret = []
@@ -164,6 +145,32 @@ class Iri(object):
         if self.fragment is not None:
             ret.extend(('#', self._quote_fragment(self.fragment)))
         return ''.join(ret)
+
+    def _parse(self, iri):
+        match = self._overall_re.match(unicode(iri))
+
+        if not match:
+            return
+
+        scheme = match.group('scheme')
+        if scheme is not None:
+            self.scheme = scheme.lower()
+
+        authority = match.group('authority')
+        if authority is not None:
+            self.authority, authority_q = self._unquote(authority)
+
+        path = match.group('path')
+        if path is not None:
+            self.path, path_q = self._unquote(path)
+
+        query = match.group('query')
+        if query is not None:
+            self.query, query_q = self._unquote(query)
+
+        fragment = match.group('fragment')
+        if fragment is not None:
+            self.fragment, fragment_q = self._unquote(fragment)
 
     def _quote(self, s, rules):
         ret = []
