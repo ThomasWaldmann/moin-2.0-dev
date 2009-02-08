@@ -140,8 +140,11 @@ class Iri(object):
             ret.extend(('//', self._quote_authority(self.authority)))
         if self.path is not None:
             ret.append(self._quote_path(self.path))
-        if self.query is not None:
-            ret.extend(('?', self._quote_query(self.query)))
+
+        query = self.query_fullquoted
+        if query is not None:
+            ret.extend(('?', query))
+
         if self.fragment is not None:
             ret.extend(('#', self._quote_fragment(self.fragment)))
         return ''.join(ret)
@@ -166,7 +169,7 @@ class Iri(object):
 
         query = match.group('query')
         if query is not None:
-            self.query, query_q = self._unquote(query)
+            self._query = self._unquote(query)
 
         fragment = match.group('fragment')
         if fragment is not None:
@@ -192,9 +195,6 @@ class Iri(object):
 
     def _quote_path(self, s):
         return self._quote(s, self.quote_path_rules)
-
-    def _quote_query(self, s):
-        return self._quote(s, self.quote_query_rules)
 
     def _quote_fragment(self, s):
         return self._quote(s, self.quote_fragment_rules)
@@ -223,3 +223,25 @@ class Iri(object):
         ret1.append(t)
         ret2.append(t)
         return u''.join(ret1), u''.join(ret2)
+
+    def __del_query(self):
+        del self._query
+    def __get_query(self):
+        return self._query[0]
+    def __set_query(self, value):
+        self._query = value, None
+    query = property(__get_query, __set_query, __del_query)
+
+    @property
+    def query_fullquoted(self):
+        query = self._query[1] or self._query[0]
+        if query is not None:
+            return self._quote(query, self.quote_query_rules)
+
+    @property
+    def query_quoted(self):
+        query = self._query
+        if query[1] is not None:
+            return query[1]
+        if query[0] is not None:
+            return query[0].replace(u'%', u'%25')
