@@ -181,6 +181,13 @@ def test_Iri_4():
     assert u.query == 'Neu?'
     assert unicode(u) == 'wiki:Neu%3F?Neu?'
 
+    u = Iri(scheme='wiki', path='Neu%?#', query='Neu%?#')
+    assert u.scheme == 'wiki'
+    assert u.path == 'Neu%?#'
+    assert u.query == 'Neu%?#'
+    assert u.query_quoted == 'Neu%25?#'
+    assert unicode(u) == 'wiki:Neu%25%3F%23?Neu%25?%23'
+
 def test_Iri_5():
     i = 'wiki://MoinMoin/StartSeite?action=raw#body'
     u = Iri(i, scheme='newwiki', path='/newStartSeite', query='action=false')
