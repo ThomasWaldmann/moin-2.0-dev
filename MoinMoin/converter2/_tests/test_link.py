@@ -30,25 +30,25 @@ class TestConverterExternOutput(object):
     def test_wikilocal(self):
         pairs = [
             ('wiki.local:',
-                'Root',
+                'wiki:///Root',
                 './Root'),
             ('wiki.local:Test',
-                'Root',
+                'wiki:///Root',
                 './Test'),
             ('wiki.local:Test',
-                'Root/Sub',
+                'wiki:///Root/Sub',
                 './Test'),
             ('wiki.local:/Test',
-                'Root',
+                'wiki:///Root',
                 './Root/Test'),
             ('wiki.local:/Test',
-                'Root/Sub',
+                'wiki:///Root/Sub',
                 './Root/Sub/Test'),
             ('wiki.local:../Test',
-                'Root',
+                'wiki:///Root',
                 './Test'),
             ('wiki.local:../Test',
-                'Root/Sub',
+                'wiki:///Root/Sub',
                 './Root/Test'),
         ]
         for i in pairs:
@@ -57,11 +57,13 @@ class TestConverterExternOutput(object):
     def _do_wiki(self, input, output, skip=None):
         if skip:
             py.test.skip(skip)
-        out = self.conv.handle_wiki(ET.Element(None), iri.Iri(input))
-        assert out == output
+        elem = ET.Element(None)
+        self.conv.handle_wiki(elem, iri.Iri(input))
+        assert elem.get(xlink.href) == output
 
-    def _do_wikilocal(self, input, page_name, output, skip=None):
+    def _do_wikilocal(self, input, page, output, skip=None):
         if skip:
             py.test.skip(skip)
-        out = self.conv.handle_wikilocal(ET.Element(None), iri.Iri(input), page_name)
-        assert out == output
+        elem = ET.Element(None)
+        self.conv.handle_wikilocal(elem, iri.Iri(input), iri.Iri(page))
+        assert elem.get(xlink.href) == output
