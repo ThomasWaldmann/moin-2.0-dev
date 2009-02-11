@@ -43,7 +43,7 @@ class Iri(object):
 
     _overall_re = re.compile(overall_rules, re.X)
 
-    def __init__(self, iri=None,
+    def __init__(self, iri=None, quoted=True,
             scheme=None, authority=None, path=None, query=None, fragment=None):
         """
         @param iri A full IRI in unicode
@@ -57,7 +57,7 @@ class Iri(object):
         self.scheme = self._authority = self._path = self._query = self._fragment = None
 
         if iri:
-            self._parse(iri)
+            self._parse(iri, quoted)
 
         if scheme is not None:
             self.scheme = scheme
@@ -96,7 +96,7 @@ class Iri(object):
 
     def __add__(self, other):
         if isinstance(other, basestring):
-            return self + Iri(other)
+            return self + Iri(other, False)
 
         if isinstance(other, Iri):
             if other.scheme is not None:
@@ -124,7 +124,7 @@ class Iri(object):
 
         return NotImplemented
 
-    def _parse(self, iri):
+    def _parse(self, iri, quoted):
         match = self._overall_re.match(unicode(iri))
 
         if not match:
@@ -136,26 +136,26 @@ class Iri(object):
 
         authority = match.group('authority')
         if authority is not None:
-            self._authority = IriAuthority(authority, True)
+            self._authority = IriAuthority(authority, quoted)
 
         path = match.group('path')
         if path is not None:
-            self._path = IriPath(path, True)
+            self._path = IriPath(path, quoted)
 
         query = match.group('query')
         if query is not None:
-            self._query = IriQuery(query, True)
+            self._query = IriQuery(query, quoted)
 
         fragment = match.group('fragment')
         if fragment is not None:
-            self._fragment = IriFragment(fragment, True)
+            self._fragment = IriFragment(fragment, quoted)
 
     def __del_authority(self):
         self._authority = None
     def __get_authority(self):
         return self._authority
     def __set_authority(self, value):
-        self._authority = IriAuthority(value)
+        self._authority = IriAuthority(value, False)
     authority = property(__get_authority, __set_authority, __del_authority,
             """
             Authority part of the IRI.
@@ -191,7 +191,7 @@ class Iri(object):
     def __get_path(self):
         return self._path
     def __set_path(self, value):
-        self._path = IriPath(value)
+        self._path = IriPath(value, False)
     path = property(__get_path, __set_path, __del_path,
             """
             Path part of the IRI.
@@ -227,7 +227,7 @@ class Iri(object):
     def __get_query(self):
         return self._query
     def __set_query(self, value):
-        self._query = IriQuery(value)
+        self._query = IriQuery(value, False)
     query = property(__get_query, __set_query, __del_query,
             """
             Query part of the IRI.
@@ -263,7 +263,7 @@ class Iri(object):
     def __get_fragment(self):
         return self._fragment
     def __set_fragment(self, value):
-        self._fragment = IriFragment(value)
+        self._fragment = IriFragment(value, False)
     fragment = property(__get_fragment, __set_fragment, __del_fragment,
             """
             Fragment part of the IRI.
@@ -341,7 +341,7 @@ class _Value(unicode):
     unquote_rules = r"(%[0-9a-fA-F]{2})+"
     _unquote_re = re.compile(unquote_rules)
 
-    def __new__(cls, input, quoted=False):
+    def __new__(cls, input, quoted=True):
         # This object is immutable, no need to copy it
         if isinstance(input, cls):
             return input
@@ -459,7 +459,8 @@ class IriAuthority(object):
 
     _authority_re = re.compile(authority_rules, re.X)
 
-    def __init__(self, iri_authority, quoted=False, userinfo=None, host=None, port=None):
+    def __init__(self, iri_authority=None, quoted=True,
+            userinfo=None, host=None, port=None):
         self._userinfo = self._host = self.port = None
 
         if iri_authority:
@@ -514,7 +515,7 @@ class IriAuthority(object):
 
         return u''.join(ret)
 
-    def _parse(self, iri_authority, quoted=False):
+    def _parse(self, iri_authority, quoted):
         match = self._authority_re.match(iri_authority)
 
         if not match:
@@ -552,7 +553,7 @@ class IriAuthority(object):
     def __get_userinfo(self):
         return self._userinfo
     def __set_userinfo(self, value):
-        self._userinfo = IriAuthorityUserinfo(value)
+        self._userinfo = IriAuthorityUserinfo(value, False)
     userinfo = property(__get_userinfo, __set_userinfo, __del_userinfo)
 
     @property
@@ -570,7 +571,7 @@ class IriAuthority(object):
     def __get_host(self):
         return self._host
     def __set_host(self, value):
-        self._host = IriAuthorityHost(value)
+        self._host = IriAuthorityHost(value, False)
     host = property(__get_host, __set_host, __del_host)
 
     @property
@@ -592,14 +593,14 @@ class IriAuthorityHost(_ValueAuthority):
 class IriPath(object):
     __slots__ = '_list'
 
-    def __init__(self, iri_path=None, quoted=False):
+    def __init__(self, iri_path=None, quoted=True):
         self._list = []
 
         if iri_path:
             if isinstance(iri_path, IriPath):
                 self._list = iri_path._list[:]
             elif isinstance(iri_path, (tuple, list)):
-                self._list = [IriPathSegment(i) for i in iri_path]
+                self._list = [IriPathSegment(i, False) for i in iri_path]
             else:
                 l = [IriPathSegment(i, quoted) for i in iri_path.split(u'/')]
                 self._list = self._remove_dots(l)
@@ -631,7 +632,7 @@ class IriPath(object):
 
     def __add__(self, other):
         if isinstance(other, (basestring, list, tuple)):
-            return self + IriPath(other)
+            return self + IriPath(other, False)
 
         if isinstance(other, IriPath):
             if other._list and other._list[0] == '':
