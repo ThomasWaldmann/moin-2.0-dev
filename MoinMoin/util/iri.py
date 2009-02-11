@@ -115,12 +115,14 @@ class Iri(object):
                         query = other.query or self.query
                     else:
                         path = self.path + other.path
-                        query = self.query
+                        query = other.query
                     authority = self.authority
                 scheme = self.scheme
 
             return Iri(scheme=scheme, authority=authority, path=path,
                     query=query, fragment=other.fragment)
+
+        return NotImplemented
 
     def _parse(self, iri):
         match = self._overall_re.match(unicode(iri))
@@ -609,6 +611,19 @@ class IriPath(object):
 
     def __len__(self):
         return len(self._list)
+
+    def __add__(self, other):
+        if isinstance(other, basestring):
+            return self + IriPath(other)
+
+        if isinstance(other, IriPath):
+            if other._list and other._list[0] == '':
+                segments = other._list
+            else:
+                segments = self._list[:-1] + other._list
+            return IriPath(segments=segments)
+
+        return NotImplemented
 
     def __unicode__(self):
         return u'/'.join(self._list)
