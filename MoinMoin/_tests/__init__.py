@@ -9,7 +9,6 @@
 
 import os, shutil
 
-from MoinMoin.parser.text import Parser
 from MoinMoin.formatter.text_html import Formatter
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
@@ -106,12 +105,17 @@ def create_random_string_list(length=14, count=10):
 
 def make_macro(request, page):
     """ creates the macro """
+
+    class _PseudoParser(object):
+        def __init__(self, request, formatter):
+            self.request, self.formatter = request, formatter
+            self.form = request.form
+
     from MoinMoin import macro
-    p = Parser("##\n", request)
-    p.formatter = Formatter(request)
-    p.formatter.page = page
-    request.page = page
-    request.formatter = p.formatter
-    p.form = request.form
+    from MoinMoin.formatter.text_html import Formatter
+    p = _PseudoParser(self.request, Formatter(self.request))
+    p.formatter.page = self.page
+    self.request.formatter = p.formatter
     m = macro.Macro(p)
     return m
+

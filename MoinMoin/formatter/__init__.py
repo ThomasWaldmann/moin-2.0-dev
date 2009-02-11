@@ -302,53 +302,6 @@ class FormatterBase:
     def table_cell(self, on, attrs={}, **kw):
         raise NotImplementedError
 
-    # Dynamic stuff / Plugins ############################################
-
-    def macro(self, macro_obj, name, args, markup=None):
-        # call the macro
-        try:
-            return macro_obj.execute(name, args)
-        except ImportError, err:
-            errmsg = unicode(err)
-            if not name in errmsg:
-                raise
-            if markup:
-                return (self.span(1, title=errmsg) +
-                        self.text(markup) +
-                        self.span(0))
-            else:
-                return self.text(errmsg)
-    def _get_bang_args(self, line):
-        if line.startswith('#!'):
-            try:
-                name, args = line[2:].split(None, 1)
-            except ValueError:
-                return ''
-            else:
-                return args
-        return None
-
-    def parser(self, parser_name, lines):
-        """ parser_name MUST be valid!
-            writes out the result instead of returning it!
-        """
-        # attention: this is copied into text_python!
-        parser = wikiutil.searchAndImportPlugin(self.request.cfg, "parser", parser_name)
-        args = None
-        if lines:
-            args = self._get_bang_args(lines[0])
-            logging.debug("formatter.parser: parser args %r" % args)
-            if args is not None:
-                lines = lines[1:]
-        if lines and not lines[0]:
-            lines = lines[1:]
-        if lines and not lines[-1].strip():
-            lines = lines[:-1]
-        p = parser('\n'.join(lines), self.request, format_args=args)
-        p.format(self)
-        del p
-        return ''
-
     # Other ##############################################################
 
     def div(self, on, **kw):
