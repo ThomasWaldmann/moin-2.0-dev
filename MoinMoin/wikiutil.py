@@ -818,16 +818,13 @@ def RelPageName(context, pagename):
 
 def pagelinkmarkup(pagename, text=None):
     """ return markup that can be used as link to page <pagename> """
-    from MoinMoin.parser.text_moin_wiki import Parser
-    if re.match(Parser.word_rule + "$", pagename, re.U|re.X) and \
-            (text is None or text == pagename):
-        return pagename
+    # XXX: This used to check for CamelCase
+    # TODO: To be replaced by a converter application/x-moin-document -> real markup
+    if text is None or text == pagename:
+        text = ''
     else:
-        if text is None or text == pagename:
-            text = ''
-        else:
-            text = '|%s' % text
-        return u'[[%s%s]]' % (pagename, text)
+        text = u'|%s' % text
+    return u'[[%s%s]]' % (pagename, text)
 
 #############################################################################
 ### mimetype support

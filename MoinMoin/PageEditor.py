@@ -443,7 +443,6 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         filterfn = self.cfg.cache.page_category_regexact.search
         cat_pages = request.rootpage.getPageList(filter=filterfn)
         cat_pages.sort()
-        cat_pages = [wikiutil.pagelinkmarkup(p) for p in cat_pages]
         cat_pages.insert(0, ('', _('<No addition>')))
         request.write("<p>")
         request.write(_('Add to: %(category)s') % {
@@ -480,14 +479,15 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         request.write('</fieldset>')
         request.write("</form>")
 
+        # TODO
         # QuickHelp originally by Georg Mischler <schorsch@lightingwiki.com>
-        markup = self.pi['format'] or request.cfg.default_markup
-        parser = wikiutil.searchAndImportPlugin(self.request.cfg, "parser", markup)
-        quickhelp = getattr(parser, 'quickhelp', None)
-        if quickhelp:
-            request.write(request.formatter.div(1, id="editor-help"))
-            request.write(_(quickhelp, wiki=True))
-            request.write(request.formatter.div(0))
+        #markup = self.pi['format'] or request.cfg.default_markup
+        #parser = wikiutil.searchAndImportPlugin(self.request.cfg, "parser", markup)
+        #quickhelp = getattr(parser, 'quickhelp', None)
+        #if quickhelp:
+        #    request.write(request.formatter.div(1, id="editor-help"))
+        #    request.write(_(quickhelp, wiki=True))
+        #    request.write(request.formatter.div(0))
 
         if preview is not None:
             if staytop:

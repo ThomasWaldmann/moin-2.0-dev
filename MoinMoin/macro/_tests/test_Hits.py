@@ -11,7 +11,11 @@ from MoinMoin import caching, macro
 from MoinMoin.logfile import eventlog
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.Page import Page
+
 from MoinMoin._tests import become_trusted, create_page, make_macro, nuke_eventlog, nuke_page
+
+import py
+py.test.skip("Hits macro was converted to macro2")
 
 class TestHits:
     """Hits: testing Hits macro """

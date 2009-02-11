@@ -296,7 +296,6 @@ strong.highlight
 
 div.codearea { /* the div makes the border */
 	margin: 0.5em 0;
-	padding: 0;
 	border: 1pt solid #AEBDCC;
 	background-color: #F3F5F7;
 	color: black;
@@ -304,7 +303,6 @@ div.codearea { /* the div makes the border */
 
 div.codearea pre { /* the pre has no border and is inside the div */
 	margin: 0;
-	padding: 10pt;
 	border: none;
 }
 
