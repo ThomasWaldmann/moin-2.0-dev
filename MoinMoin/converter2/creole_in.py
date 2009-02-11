@@ -99,7 +99,7 @@ class Converter(ConverterMacro):
     def __call__(self, content):
         attrib = {}
         if self.page_url:
-            attrib[moin_page.page_href] = str(self.page_url)
+            attrib[moin_page.page_href] = unicode(self.page_url)
 
         root = moin_page.page(attrib=attrib)
         self._stack = [root]
