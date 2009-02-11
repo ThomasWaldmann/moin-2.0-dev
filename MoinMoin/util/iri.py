@@ -76,19 +76,19 @@ class Iri(object):
         if self.scheme:
             ret.extend((self.scheme, u':'))
 
-        authority = self.authority
+        authority = self._authority
         if authority is not None:
             ret.extend((u'//', authority.fullquoted))
 
-        path = self.path
+        path = self._path
         if path is not None:
             ret.append(path.fullquoted)
 
-        query = self.query
+        query = self._query
         if query is not None:
             ret.extend((u'?', query.fullquoted))
 
-        fragment = self.fragment
+        fragment = self._fragment
         if fragment is not None:
             ret.extend((u'#', fragment.fullquoted))
 
@@ -397,12 +397,150 @@ class _Value(unicode):
             return self._quoted
         return self.replace(u'%', u'%25')
 
-class IriAuthority(_Value):
+class _ValueAuthority(_Value):
     quote_rules = (
         # Not correct, but we have anything in authority
         (ord(u'@'), ord(u'@')),
         (ord(u':'), ord(u':')),
     ) + _Value.quote_rules
+
+class IriAuthority(object):
+    authority_rules = r"""
+    ^
+    (
+        (?P<userinfo>
+            [^@]*
+        )
+        @
+    )?
+    (?P<host>
+        .*?
+    )
+    (
+        :
+        (?P<port>
+            \d*
+        )
+    )?
+    $
+    """
+
+    _authority_re = re.compile(authority_rules, re.X)
+
+    def __init__(self, iri_authority, quoted=False, userinfo=None, host=None, port=None):
+        self._userinfo = self._host = self.port = None
+
+        if iri_authority:
+            self._parse(iri_authority, quoted)
+
+        if userinfo is not None:
+            self.userinfo = userinfo
+        if host is not None:
+            self.host = host
+        if userinfo is not None:
+            self.port = port
+
+    def __eq__(self, other):
+        if isinstance(other, basestring):
+            return unicode(self) == other
+        if isinstance(other, IriAuthority):
+            return self._userinfo == other._userinfo and \
+                    self._host == other._host and \
+                    self.port == other.port
+        return NotImplemented
+
+    def __ne__(self, other):
+        ret = self.__eq__(other)
+        if ret is NotImplemented:
+            return ret
+        return not ret
+
+    def __unicode__(self):
+        return self.__get(self._userinfo, self._host)
+
+    def __get(self, userinfo, host):
+        ret = []
+
+        if userinfo is not None:
+            ret.extend((userinfo, u'@'))
+        if host is not None:
+            ret.append(host)
+        if self.port is not None:
+            ret.extend((u':', self.port))
+
+        return u''.join(ret)
+
+    def _parse(self, iri_authority, quoted=False):
+        match = self._authority_re.match(iri_authority)
+
+        if not match:
+            raise ValueError('Input does not look like an IRI authority')
+
+        userinfo = match.group('userinfo')
+        if userinfo is not None:
+            self._userinfo = IriAuthorityUserinfo(userinfo, quoted)
+
+        host = match.group('host')
+        if host is not None:
+            self._host = IriAuthorityHost(host, quoted)
+
+        port = match.group('port')
+        if port is not None:
+            self.port = int(port)
+
+    @property
+    def fullquoted(self):
+        userinfo = self._userinfo and self._userinfo.fullquoted
+        host = self._host and self._host.fullquoted
+        return self.__get(userinfo, host)
+
+    @property
+    def quoted(self):
+        userinfo = self._userinfo and self._userinfo.quoted
+        host = self._host and self._host.quoted
+        return self.__get(userinfo, host)
+
+    def __del_userinfo(self):
+        self._userinfo = None
+    def __get_userinfo(self):
+        return self._userinfo
+    def __set_userinfo(self, value):
+        self._userinfo = IriAuthorityUserinfo(value)
+    userinfo = property(__get_userinfo, __set_userinfo, __del_userinfo)
+
+    @property
+    def userinfo_fullquoted(self):
+        if self._userinfo is not None:
+            return self._userinfo.fullquoted
+
+    @property
+    def userinfo_quoted(self):
+        if self._userinfo is not None:
+            return self._userinfo.quoted
+
+    def __del_host(self):
+        self._host = None
+    def __get_host(self):
+        return self._host
+    def __set_host(self, value):
+        self._host = IriAuthorityHost(value)
+    host = property(__get_host, __set_host, __del_host)
+
+    @property
+    def host_fullquoted(self):
+        if self._host is not None:
+            return self._host.fullquoted
+
+    @property
+    def host_quoted(self):
+        if self._host is not None:
+            return self._host.quoted
+
+class IriAuthorityUserinfo(_ValueAuthority):
+    pass
+
+class IriAuthorityHost(_ValueAuthority):
+    pass
 
 class IriPath(_Value):
     quote_rules = (
