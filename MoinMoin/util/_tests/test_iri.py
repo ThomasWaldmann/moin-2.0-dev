@@ -191,6 +191,65 @@ def test_Iri_3():
     assert u.fragment == 'body'
     assert unicode(u) == i
 
+def test_Iri_add_1():
+    base = Iri('wiki://moinmo.in/Some/Page?action=raw#body')
+
+    u = base + Iri('http://thinkmo.de/')
+    assert u.scheme == 'http'
+    assert u.authority == 'thinkmo.de'
+    assert u.path == '/'
+    assert u.query is None
+    assert u.fragment is None
+
+    u = base + Iri('//thinkmo.de/')
+    assert u.scheme == 'wiki'
+    assert u.authority == 'thinkmo.de'
+    assert u.path == '/'
+    assert u.query is None
+    assert u.fragment is None
+
+    u = base + Iri('/')
+    assert u.scheme == 'wiki'
+    assert u.authority == 'moinmo.in'
+    assert u.path == '/'
+    assert u.query is None
+    assert u.fragment is None
+
+    u = base + Iri('/?action=edit')
+    assert u.scheme == 'wiki'
+    assert u.authority == 'moinmo.in'
+    assert u.path == '/'
+    assert u.query == 'action=edit'
+    assert u.fragment is None
+
+    u = base + Iri('..')
+    assert u.scheme == 'wiki'
+    assert u.authority == 'moinmo.in'
+    assert u.path == '/Some'
+    assert u.query is None
+    assert u.fragment is None
+
+    u = base + Iri('')
+    assert u.scheme == 'wiki'
+    assert u.authority == 'moinmo.in'
+    assert u.path == '/Some/Page'
+    assert u.query is None
+    assert u.fragment is None
+
+    u = base + Iri('?action=edit')
+    assert u.scheme == 'wiki'
+    assert u.authority == 'moinmo.in'
+    assert u.path == '/Some/Page'
+    assert u.query == 'action=edit'
+    assert u.fragment is None
+
+    u = base + Iri('#head')
+    assert u.scheme == 'wiki'
+    assert u.authority == 'moinmo.in'
+    assert u.path == '/Some/Page'
+    assert u.query == 'action=raw'
+    assert u.fragment == 'head'
+
 def test_Iri_quote():
     u = Iri(scheme='wiki', authority='Neu%?#', path='/Neu%?#', query='Neu%?#', fragment='Neu%?#')
     assert u.scheme == 'wiki'
