@@ -88,13 +88,13 @@ class ConverterExternOutput(ConverterBase):
 
             if path[0] == '':
                 # TODO: Don't missuse __add__
-                link.path = page.path[:] + path[1:]
+                link.path = iri.IriPath(segments=page.path[1:] + path[1:])
             elif path[0] == '..':
-                link.path = page.path + path[1:]
+                link.path = iri.IriPath(page.path[1:]) + path[1:]
             else:
                 link.path = path
 
-            page = Page(self.request, unicode(link.path)[1:], None)
+            page = Page(self.request, unicode(link.path), None)
             if not page.exists():
                 elem.set(self.tag_class, 'nonexistent')
         else:
@@ -119,11 +119,11 @@ class ConverterPagelinks(ConverterBase):
 
         if path[0] == '':
             # TODO: Don't missuse __add__
-            path = page.path[:] + path[1:]
+            path = iri.IriPath(segments=page.path[1:] + path[1:])
         elif path[0] == '..':
-            path = page.path + path[1:]
+            path = iri.IriPath(page.path[1:]) + path[1:]
 
-        self.links.add(unicode(path)[1:])
+        self.links.add(unicode(path))
 
     def __call__(self, tree):
         self.links = set()
