@@ -342,9 +342,11 @@ class _Value(unicode):
     _unquote_re = re.compile(unquote_rules)
 
     def __new__(cls, input, quoted=False):
+        # This object is immutable, no need to copy it
         if isinstance(input, cls):
-            input_quoted = input._quoted
-        elif quoted:
+            return input
+
+        if quoted:
             input, input_quoted = cls._unquote(input)
         else:
             input_quoted = None
