@@ -490,6 +490,11 @@ class IriAuthority(object):
             return ret
         return not ret
 
+    def __nonzero__(self):
+        if self._userinfo or self._host or self.port:
+            return True
+        return False
+
     def __unicode__(self):
         return self.__get(self._userinfo, self._host)
 
@@ -591,6 +596,8 @@ class IriPath(object):
         if iri_path:
             if isinstance(iri_path, IriPath):
                 l = iri_path._list[:]
+            elif isinstance(iri_path, (tuple, list)):
+                segments = iri_path
             else:
                 l = [IriPathSegment(i, quoted) for i in iri_path.split(u'/')]
 
@@ -647,9 +654,19 @@ class IriPath(object):
     def __len__(self):
         return len(self._list)
 
+    def __nonzero__(self):
+        return bool(self._list)
+
     def __add__(self, other):
         if isinstance(other, basestring):
             return self + IriPath(other)
+
+        if isinstance(other, (list, tuple)):
+            if other[0] == '':
+                segments = other
+            else:
+                segments = self._list[:-1] + other
+            return IriPath(segments=segments)
 
         if isinstance(other, IriPath):
             if other._list and other._list[0] == '':
