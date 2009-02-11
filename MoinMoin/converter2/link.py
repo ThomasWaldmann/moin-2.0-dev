@@ -27,29 +27,27 @@ class ConverterBase(object):
     def handle_wikilocal(self, elem, link, page_name):
         pass
 
-    def recurse(self, elem, page_name):
+    def recurse(self, elem, page):
         new_page_href = elem.get(self.tag_page_href)
         if new_page_href:
-            i = iri.Iri(new_page_href)
-            if i.authority == '' and i.path.startswith('/'):
-                page_name = i.path[1:]
+            page = iri.Iri(new_page_href)
 
-        href = elem.get(self.tag_href, None)
-        if href is not None:
-            yield elem, iri.Iri(href), page_name
+        href = elem.get(self.tag_href)
+        if href:
+            yield elem, iri.Iri(href), page
 
         for child in elem:
             if isinstance(child, ET.Node):
-                for i in self.recurse(child, page_name):
+                for i in self.recurse(child, page):
                     yield i
 
     def __init__(self, request):
         self.request = request
 
     def __call__(self, tree):
-        for elem, href, page_name in self.recurse(tree, None):
+        for elem, href, page in self.recurse(tree, None):
             if href.scheme == 'wiki.local':
-                self.handle_wikilocal(elem, href, page_name)
+                self.handle_wikilocal(elem, href, page)
             elif href.scheme == 'wiki':
                 self.handle_wiki(elem, href)
         return tree
@@ -63,24 +61,13 @@ class ConverterExternOutput(ConverterBase):
 
     # TODO: Deduplicate code
     def handle_wiki(self, elem, input):
-        ret = iri.Iri(query=input.query, fragment=input.fragment)
+        link = iri.Iri(query=input.query, fragment=input.fragment)
 
         if input.authority:
             wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, input.authority, input.path[1:])
 
             if not err:
-                tmp = iri.Iri(wikiutil.join_wiki(wikiurl, wikitail))
-                ret.scheme, ret.authority, ret.path = tmp.scheme, tmp.authority, tmp.path
-                if tmp.query:
-                    if ret.query:
-                        ret.query += ';' + tmp.query
-                    else:
-                        ret.query = tmp.query
-                if tmp.fragment:
-                    if ret.fragment:
-                        ret.fragment += ';' + tmp.fragment
-                    else:
-                        ret.fragment = tmp.fragment
+                output = iri.Iri(wikiutil.join_wiki(wikiurl, wikitail)) + link
 
                 elem.set(self.tag_class, 'interwiki')
             else:
@@ -88,48 +75,34 @@ class ConverterExternOutput(ConverterBase):
                 pass
 
         else:
-            ret.path = self.request.url_root + input.path
+            link.path = input.path
+            output = iri.Iri(self.request.url_root) + link
 
-        elem.set(self.tag_href, str(ret))
+        elem.set(self.tag_href, unicode(output))
 
-    def handle_wikilocal(self, elem, input, page_name):
-        ret = iri.Iri(query=input.query, fragment=input.fragment)
-        link = None
+    def handle_wikilocal(self, elem, input, page):
+        link = iri.Iri(query=input.query, fragment=input.fragment)
 
         if input.path:
-            if ':' in input.path:
-                wiki_name, link = input.path.split(':', 1)
+            path = input.path
 
-                # TODO
-                if wiki_name in ('attachment', 'drawing'):
-                    return
-
-                if wiki_name == 'mailto':
-                    elem.set(self.tag_href, 'mailto:' + link)
-                    return
-
-                # TODO: Remove users
-                return
-
+            if path[0] == '':
+                # TODO: Don't missuse __add__
+                link.path = page.path[:] + path[1:]
+            elif path[0] == '..':
+                link.path = page.path + path[1:]
             else:
-                link = input.path
+                link.path = path
 
-        else:
-            link = page_name
-
-        if link:
-            abs_page_name = wikiutil.AbsPageName(page_name, link)
-            page = Page(self.request, abs_page_name, None)
+            page = Page(self.request, unicode(link.path)[1:], None)
             if not page.exists():
                 elem.set(self.tag_class, 'nonexistent')
+        else:
+            link.path = page.path
 
-            root = iri.Iri(self.request.url_root)
-            # TODO: Use Iri + Iri or Uri + Iri
-            ret.scheme = root.scheme
-            ret.authority = root.authority
-            ret.path = root.path + abs_page_name
+        output = iri.Iri(self.request.url_root) + link
 
-        elem.set(self.tag_href, unicode(ret))
+        elem.set(self.tag_href, unicode(output))
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
@@ -138,13 +111,19 @@ class ConverterPagelinks(ConverterBase):
                 output == 'application/x-moin-document;links=pagelinks':
             return cls
 
-    def handle_wikilocal(self, elem, input, page_name):
+    def handle_wikilocal(self, elem, input, page):
         if not input.path or ':' in input.path:
             return
 
-        if input.path:
-            link = wikiutil.AbsPageName(page_name, input.path)
-            self.links.add(link)
+        path = input.path
+
+        if path[0] == '':
+            # TODO: Don't missuse __add__
+            path = page.path[:] + path[1:]
+        elif path[0] == '..':
+            path = page.path + path[1:]
+
+        self.links.add(unicode(path)[1:])
 
     def __call__(self, tree):
         self.links = set()
