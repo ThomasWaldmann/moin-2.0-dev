@@ -590,13 +590,43 @@ class IriPath(object):
 
         if iri_path:
             if isinstance(iri_path, IriPath):
-                self._list = iri_path._list[:]
+                l = iri_path._list[:]
             else:
-                # TODO: remove dot segments on absolute path
-                self._list = [IriPathSegment(i, quoted) for i in iri_path.split(u'/')]
+                l = [IriPathSegment(i, quoted) for i in iri_path.split(u'/')]
 
         if segments is not None:
-            self._list = [IriPathSegment(i) for i in segments]
+            l = [IriPathSegment(i) for i in segments]
+
+        # TODO: remove dot segments on absolute path
+        if l and l[0] == '':
+            empty = l[0]
+
+            # Get reversed list with first (empty) element removed
+            l1 = iter(l[:0:-1])
+            l2 = []
+            remove = 0
+            try:
+                while True:
+                    i = l1.next()
+                    if i == '.':
+                        if not l2:
+                            l2.insert(0, empty)
+                    elif i == '..':
+                        if not l2:
+                            l2.insert(0, empty)
+                        remove += 1
+                    else:
+                        if remove:
+                            remove -= 1
+                        else:
+                            l2.insert(0, i)
+
+            except StopIteration: pass
+
+            l2.insert(0, empty)
+            l = l2
+
+        self._list = l
 
     def __eq__(self, other):
         if isinstance(other, basestring):
