@@ -292,3 +292,54 @@ def test_IriAuthority_parser_3():
     assert u.port == 1234
     assert unicode(u) == i
 
+def test_IriPath_1():
+    i = '/'
+    u = IriPath(i)
+    assert len(u) == 2
+    assert u[0] == ''
+    assert u[1] == ''
+    assert unicode(u) == i
+
+    i = '/test'
+    u = IriPath(i)
+    assert len(u) == 2
+    assert u[0] == ''
+    assert u[1] == 'test'
+    assert unicode(u) == i
+
+    i = '/test/'
+    u = IriPath(i)
+    assert len(u) == 3
+    assert u[0] == ''
+    assert u[1] == 'test'
+    assert u[2] == ''
+    assert unicode(u) == i
+
+    i = '/test/..'
+    u = IriPath(i)
+    assert len(u) == 2
+    assert u[0] == ''
+    assert u[1] == ''
+    assert unicode(u) == i
+
+    i = '/test/../'
+    u = IriPath(i)
+    assert len(u) == 2
+    assert u[0] == ''
+    assert u[1] == ''
+    assert unicode(u) == i
+
+    i = '/..'
+    u = IriPath(i)
+    assert len(u) == 2
+    assert u[0] == ''
+    assert u[1] == ''
+    assert unicode(u) == i
+
+    i = '/../'
+    u = IriPath(i)
+    assert len(u) == 2
+    assert u[0] == ''
+    assert u[1] == ''
+    assert unicode(u) == i
+

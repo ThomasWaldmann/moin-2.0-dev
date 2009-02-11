@@ -549,6 +549,7 @@ class IriPath(object):
         self._list = []
 
         if iri_path:
+            # TODO: remove dot segments on absolute path
             self._list = [IriPathSegment(i, quoted) for i in iri_path.split(u'/')]
 
         if segments is not None:
@@ -566,6 +567,12 @@ class IriPath(object):
         if ret is NotImplemented:
             return ret
         return not ret
+
+    def __getitem__(self, slice):
+        return self._list[slice]
+
+    def __len__(self):
+        return len(self._list)
 
     def __unicode__(self):
         return u'/'.join(self._list)
