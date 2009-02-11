@@ -542,7 +542,43 @@ class IriAuthorityUserinfo(_ValueAuthority):
 class IriAuthorityHost(_ValueAuthority):
     pass
 
-class IriPath(_Value):
+class IriPath(object):
+    __slots__ = '_list'
+
+    def __init__(self, iri_path=None, quoted=False, segments=None):
+        self._list = []
+
+        if iri_path:
+            self._list = [IriPathSegment(i, quoted) for i in iri_path.split(u'/')]
+
+        if segments is not None:
+            self._list = [IriPathSegment(i) for i in segments]
+
+    def __eq__(self, other):
+        if isinstance(other, basestring):
+            return unicode(self) == other
+        if isinstance(other, IriPath):
+            return self._list == other._list
+        return NotImplemented
+
+    def __ne__(self, other):
+        ret = self.__eq__(other)
+        if ret is NotImplemented:
+            return ret
+        return not ret
+
+    def __unicode__(self):
+        return u'/'.join(self._list)
+
+    @property
+    def fullquoted(self):
+        return u'/'.join((i.fullquoted for i in self._list))
+
+    @property
+    def quoted(self):
+        return u'/'.join((i.quoted for i in self._list))
+
+class IriPathSegment(_Value):
     quote_rules = (
         (ord(u'@'), ord(u'@')),
         (ord(u':'), ord(u':')),
