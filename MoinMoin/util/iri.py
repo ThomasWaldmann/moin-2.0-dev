@@ -501,7 +501,9 @@ class IriAuthority(object):
         if host is not None:
             ret.append(host)
         if self.port is not None:
-            ret.extend((u':', self.port))
+            ret.append(u':')
+            if self.port:
+                ret.append(unicode(self.port))
 
         return u''.join(ret)
 
@@ -521,7 +523,10 @@ class IriAuthority(object):
 
         port = match.group('port')
         if port is not None:
-            self.port = int(port)
+            if port:
+                self.port = int(port)
+            else:
+                self.port = 0
 
     @property
     def fullquoted(self):
