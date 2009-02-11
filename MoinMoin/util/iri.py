@@ -94,6 +94,34 @@ class Iri(object):
 
         return u''.join(ret)
 
+    def __add__(self, other):
+        if isinstance(other, basestring):
+            return self + Iri(other)
+
+        if isinstance(other, Iri):
+            if other.scheme is not None:
+                scheme = other.scheme
+                authority = other.authority
+                path = other.path
+                query = other.query
+            else:
+                if other.authority is not None:
+                    authority = other.authority
+                    path = other.path
+                    query = other.query
+                else:
+                    if not other.path:
+                        path = self.path
+                        query = other.query or self.query
+                    else:
+                        path = self.path + other.path
+                        query = self.query
+                    authority = self.authority
+                scheme = self.scheme
+
+            return Iri(scheme=scheme, authority=authority, path=path,
+                    query=query, fragment=other.fragment)
+
     def _parse(self, iri):
         match = self._overall_re.match(unicode(iri))
 
@@ -431,7 +459,12 @@ class IriAuthority(object):
         self._userinfo = self._host = self.port = None
 
         if iri_authority:
-            self._parse(iri_authority, quoted)
+            if isinstance(iri_authority, IriAuthority):
+                self._userinfo = iri_authority._userinfo
+                self._host = iri_authority._host
+                self.port = iri_authority.port
+            else:
+                self._parse(iri_authority, quoted)
 
         if userinfo is not None:
             self.userinfo = userinfo
@@ -549,8 +582,11 @@ class IriPath(object):
         self._list = []
 
         if iri_path:
-            # TODO: remove dot segments on absolute path
-            self._list = [IriPathSegment(i, quoted) for i in iri_path.split(u'/')]
+            if isinstance(iri_path, IriPath):
+                self._list = iri_path._list[:]
+            else:
+                # TODO: remove dot segments on absolute path
+                self._list = [IriPathSegment(i, quoted) for i in iri_path.split(u'/')]
 
         if segments is not None:
             self._list = [IriPathSegment(i) for i in segments]
