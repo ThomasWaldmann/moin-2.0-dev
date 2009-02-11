@@ -9,7 +9,24 @@ import py.test
 
 from MoinMoin.util.iri import *
 
-def test_Iri_1():
+def test_Iri_init_1():
+    u = Iri(scheme='wiki', path='/StartSeite', query='action=raw')
+    assert u.scheme == 'wiki'
+    assert u.authority is None
+    assert u.path == '/StartSeite'
+    assert u.query == 'action=raw'
+    assert u.fragment is None
+
+def test_Iri_init_override_2():
+    i = 'wiki://MoinMoin/StartSeite?action=raw#body'
+    u = Iri(i, scheme='newwiki', path='/newStartSeite', query='action=false')
+    assert u.scheme == 'newwiki'
+    assert u.authority == 'MoinMoin'
+    assert u.path == '/newStartSeite'
+    assert u.query == 'action=false'
+    assert u.fragment == 'body'
+
+def test_Iri_parser():
     i = 'http://moinmo.in/StartSeite?action=raw#body'
     u = Iri(i)
     assert u.scheme == 'http'
@@ -174,13 +191,7 @@ def test_Iri_3():
     assert u.fragment == 'body'
     assert unicode(u) == i
 
-def test_Iri_4():
-    u = Iri(scheme='wiki', path='Neu?', query='Neu?')
-    assert u.scheme == 'wiki'
-    assert u.path == 'Neu?'
-    assert u.query == 'Neu?'
-    assert unicode(u) == 'wiki:Neu%3F?Neu?'
-
+def test_Iri_quote():
     u = Iri(scheme='wiki', authority='Neu%?#', path='/Neu%?#', query='Neu%?#', fragment='Neu%?#')
     assert u.scheme == 'wiki'
     assert u.authority == 'Neu%?#'
@@ -197,11 +208,28 @@ def test_Iri_4():
     assert u.fragment_quoted == 'Neu%25?#'
     assert unicode(u) == 'wiki://Neu%25%3F%23/Neu%25%3F%23?Neu%25?%23#Neu%25?%23'
 
-def test_Iri_5():
-    i = 'wiki://MoinMoin/StartSeite?action=raw#body'
-    u = Iri(i, scheme='newwiki', path='/newStartSeite', query='action=false')
-    assert u.scheme == 'newwiki'
-    assert u.authority == 'MoinMoin'
-    assert u.path == '/newStartSeite'
-    assert u.query == 'action=false'
-    assert u.fragment == 'body'
+def test_IriAuthority_parser_1():
+    i = 'moinmo.in'
+    u = IriAuthority(i)
+    assert u.userinfo is None
+    assert u.host == 'moinmo.in'
+    assert u.port is None
+    assert unicode(u) == i
+
+def test_IriAuthority_parser_2():
+    py.test.skip()
+    i = '@moinmo.in:'
+    u = IriAuthority(i)
+    assert u.userinfo == ''
+    assert u.host == 'moinmo.in'
+    assert u.port == 0
+    assert unicode(u) == i
+
+def test_IriAuthority_parser_3():
+    i = 'test:test@moinmo.in:1234'
+    u = IriAuthority(i)
+    assert u.userinfo == 'test:test'
+    assert u.host == 'moinmo.in'
+    assert u.port == 1234
+    assert unicode(u) == i
+
