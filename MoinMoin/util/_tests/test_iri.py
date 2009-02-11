@@ -222,17 +222,25 @@ def test_Iri_add_1():
     assert u.query == 'action=edit'
     assert u.fragment is None
 
-    u = base + Iri('..')
-    assert u.scheme == 'wiki'
-    assert u.authority == 'moinmo.in'
-    assert u.path == '/Some'
-    assert u.query is None
-    assert u.fragment is None
-
     u = base + Iri('')
     assert u.scheme == 'wiki'
     assert u.authority == 'moinmo.in'
     assert u.path == '/Some/Page'
+    assert u.query == 'action=raw'
+    assert u.fragment is None
+
+    u = base + Iri('.')
+    assert u.scheme == 'wiki'
+    assert u.authority == 'moinmo.in'
+    assert u.path == '/Some/'
+    assert u.query is None
+    assert u.fragment is None
+
+    u = base + Iri('..')
+    print unicode(u)
+    assert u.scheme == 'wiki'
+    assert u.authority == 'moinmo.in'
+    assert u.path == '/'
     assert u.query is None
     assert u.fragment is None
 
@@ -276,7 +284,6 @@ def test_IriAuthority_parser_1():
     assert unicode(u) == i
 
 def test_IriAuthority_parser_2():
-    py.test.skip()
     i = '@moinmo.in:'
     u = IriAuthority(i)
     assert u.userinfo == ''
@@ -300,6 +307,37 @@ def test_IriPath_1():
     assert u[1] == ''
     assert unicode(u) == i
 
+def test_IriPath_2():
+    i = '/.'
+    u = IriPath(i)
+    assert len(u) == 2
+    assert u[0] == ''
+    assert u[1] == ''
+    assert unicode(u) == '/'
+
+    i = '/./'
+    u = IriPath(i)
+    assert len(u) == 2
+    assert u[0] == ''
+    assert u[1] == ''
+    assert unicode(u) == '/'
+
+def test_IriPath_3():
+    i = '/..'
+    u = IriPath(i)
+    assert len(u) == 2
+    assert u[0] == ''
+    assert u[1] == ''
+    assert unicode(u) == '/'
+
+    i = '/../'
+    u = IriPath(i)
+    assert len(u) == 2
+    assert u[0] == ''
+    assert u[1] == ''
+    assert unicode(u) == '/'
+
+def test_IriPath_4():
     i = '/test'
     u = IriPath(i)
     assert len(u) == 2
@@ -320,26 +358,21 @@ def test_IriPath_1():
     assert len(u) == 2
     assert u[0] == ''
     assert u[1] == ''
-    assert unicode(u) == i
+    assert unicode(u) == '/'
 
     i = '/test/../'
     u = IriPath(i)
     assert len(u) == 2
     assert u[0] == ''
     assert u[1] == ''
-    assert unicode(u) == i
+    assert unicode(u) == '/'
 
-    i = '/..'
+def test_IriPath_5():
+    i = '/test/test1/../../test2'
     u = IriPath(i)
     assert len(u) == 2
     assert u[0] == ''
-    assert u[1] == ''
-    assert unicode(u) == i
+    assert u[1] == 'test2'
+    assert unicode(u) == '/test2'
 
-    i = '/../'
-    u = IriPath(i)
-    assert len(u) == 2
-    assert u[0] == ''
-    assert u[1] == ''
-    assert unicode(u) == i
 
