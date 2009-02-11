@@ -49,7 +49,7 @@ class Converter(object):
                 output == 'application/x-moin-document;macros=expandall':
             return cls
 
-    def handle_macro(self, elem, page_name):
+    def handle_macro(self, elem, page):
         name = elem.get(moin_page.macro_name)
         args = elem.get(moin_page.macro_args)
         context = elem.get(moin_page.macro_context)
@@ -57,8 +57,8 @@ class Converter(object):
 
         elem_body = moin_page.macro_body()
 
-        if not self._handle_macro_new(elem_body, page_name, name, args, context, alt):
-            self._handle_macro_old(elem_body, page_name, name, args, context, alt)
+        if not self._handle_macro_new(elem_body, page, name, args, context, alt):
+            self._handle_macro_old(elem_body, page, name, args, context, alt)
 
         elem.append(elem_body)
 
@@ -76,24 +76,24 @@ class Converter(object):
             return moin_page.p(children=[elem])
         return elem
 
-    def _handle_macro_new(self, elem_body, page_name, name, args, context, alt):
+    def _handle_macro_new(self, elem_body, page, name, args, context, alt):
         try:
             cls = wikiutil.importPlugin(self.request.cfg, 'macro2', name, function='Macro')
         except wikiutil.PluginMissingError:
             return False
 
-        macro = cls(self.request, page_name, alt, context, args)
+        macro = cls(self.request, page, alt, context, args)
         ret = macro()
 
         elem_body.append(ret)
 
         return True
 
-    def _handle_macro_old(self, elem_body, page_name, name, args, context, alt):
+    def _handle_macro_old(self, elem_body, page, name, args, context, alt):
         Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
 
         request = _PseudoRequest(self.request, name)
-        page = Page.Page(request, page_name)
+        page = Page.Page(request, unicode(page.path)[1:])
         request.formatter = formatter = Formatter(request, page)
 
         m = macro.Macro(_PseudoParser(request))
@@ -141,27 +141,25 @@ class Converter(object):
 
         elem_body.extend(formatter.root[:])
 
-    def recurse(self, elem, page_name):
+    def recurse(self, elem, page):
         new_page_href = elem.get(moin_page.page_href)
         if new_page_href:
-            i = iri.Iri(new_page_href)
-            if i.authority == '' and i.path.startswith('/'):
-                page_name = i.path[1:]
+            page = iri.Iri(new_page_href)
 
         if elem.tag == moin_page.macro:
-            yield elem, page_name
+            yield elem, page
 
         for child in elem:
             if isinstance(child, ET.Node):
-                for i in self.recurse(child, page_name):
+                for i in self.recurse(child, page):
                     yield i
 
     def __init__(self, request):
         self.request = request
 
     def __call__(self, tree):
-        for elem, page_name in self.recurse(tree, None):
-            self.handle_macro(elem, page_name)
+        for elem, page in self.recurse(tree, None):
+            self.handle_macro(elem, page)
 
         return tree
 
