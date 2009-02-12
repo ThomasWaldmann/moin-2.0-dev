@@ -72,7 +72,8 @@ class ConverterExternOutput(ConverterBase):
                 elem.set(self.tag_class, 'interwiki')
             else:
                 # TODO
-                pass
+                link.path = input.path
+                output = iri.Iri(self.request.url_root) + link
 
         else:
             link.path = input.path
@@ -87,10 +88,9 @@ class ConverterExternOutput(ConverterBase):
             path = input.path
 
             if path[0] == '':
-                # TODO: Don't missuse __add__
-                link.path = iri.IriPath(segments=page.path[1:] + path[1:])
+                link.path = page.path[1:].extend(path[1:])
             elif path[0] == '..':
-                link.path = iri.IriPath(page.path[1:]) + path[1:]
+                link.path = page.path[1:] + path[1:]
             else:
                 link.path = path
 
@@ -118,10 +118,9 @@ class ConverterPagelinks(ConverterBase):
         path = input.path
 
         if path[0] == '':
-            # TODO: Don't missuse __add__
-            path = iri.IriPath(segments=page.path[1:] + path[1:])
+            path = page.path[1:].extend(path[1:])
         elif path[0] == '..':
-            path = iri.IriPath(page.path[1:]) + path[1:]
+            path = page.path[1:] + path[1:]
 
         self.links.add(unicode(path))
 
