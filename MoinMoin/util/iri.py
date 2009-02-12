@@ -590,50 +590,17 @@ class IriAuthorityHost(_ValueAuthority):
 class IriPath(object):
     __slots__ = '_list'
 
-    def __init__(self, iri_path=None, quoted=False, segments=None):
+    def __init__(self, iri_path=None, quoted=False):
         self._list = []
 
         if iri_path:
             if isinstance(iri_path, IriPath):
-                l = iri_path._list[:]
+                self._list = iri_path._list[:]
             elif isinstance(iri_path, (tuple, list)):
-                segments = iri_path
+                self._list = [IriPathSegment(i) for i in iri_path]
             else:
                 l = [IriPathSegment(i, quoted) for i in iri_path.split(u'/')]
-
-        if segments is not None:
-            l = [IriPathSegment(i) for i in segments]
-
-        # TODO: remove dot segments on absolute path
-        if l and l[0] == '':
-            empty = l[0]
-
-            # Get reversed list with first (empty) element removed
-            l1 = iter(l[:0:-1])
-            l2 = []
-            remove = 0
-            try:
-                while True:
-                    i = l1.next()
-                    if i == '.':
-                        if not l2:
-                            l2.insert(0, empty)
-                    elif i == '..':
-                        if not l2:
-                            l2.insert(0, empty)
-                        remove += 1
-                    else:
-                        if remove:
-                            remove -= 1
-                        else:
-                            l2.insert(0, i)
-
-            except StopIteration: pass
-
-            l2.insert(0, empty)
-            l = l2
-
-        self._list = l
+                self._list = self._remove_dots(l)
 
     def __eq__(self, other):
         if isinstance(other, basestring):
@@ -648,8 +615,11 @@ class IriPath(object):
             return ret
         return not ret
 
-    def __getitem__(self, slice):
-        return self._list[slice]
+    def __getitem__(self, key):
+        ret = self._list[key]
+        if isinstance(key, slice):
+            return self.__class__(self, ret)
+        return ret
 
     def __len__(self):
         return len(self._list)
@@ -658,27 +628,54 @@ class IriPath(object):
         return bool(self._list)
 
     def __add__(self, other):
-        if isinstance(other, basestring):
+        if isinstance(other, (basestring, list, tuple)):
             return self + IriPath(other)
-
-        if isinstance(other, (list, tuple)):
-            if other[0] == '':
-                segments = other
-            else:
-                segments = self._list[:-1] + other
-            return IriPath(segments=segments)
 
         if isinstance(other, IriPath):
             if other._list and other._list[0] == '':
                 segments = other._list
             else:
                 segments = self._list[:-1] + other._list
-            return IriPath(segments=segments)
+            return IriPath(self._remove_dots(segments))
 
         return NotImplemented
 
     def __unicode__(self):
         return u'/'.join(self._list)
+
+    def _remove_dots(self, segments):
+        if not segments or segments[0] != '':
+            return segments
+
+        empty = segments[0]
+
+        # Get reversed list with first (empty) element removed
+        l1 = iter(segments[:0:-1])
+        l2 = []
+        remove = 0
+        try:
+            while True:
+                i = l1.next()
+                if i == '.':
+                    if not l2:
+                        l2.insert(0, empty)
+                elif i == '..':
+                    if not l2:
+                        l2.insert(0, empty)
+                    remove += 1
+                else:
+                    if remove:
+                        remove -= 1
+                    else:
+                        l2.insert(0, i)
+
+        except StopIteration: pass
+
+        l2.insert(0, empty)
+        return l2
+
+    def extend(self, value):
+        self._list.extend((IriPathSegment(i) for i in value))
 
     @property
     def fullquoted(self):
