@@ -70,6 +70,26 @@ class Iri(object):
         if fragment is not None:
             self.fragment = fragment
 
+    def __eq__(self, other):
+        if isinstance(other, basestring):
+            return unicode(self) == other
+
+        if isinstance(other, Iri):
+            if self.scheme != other.scheme: return False
+            if self._authority != other._authority: return False
+            if self._path != other._path: return False
+            if self._query != other._query: return False
+            if self._fragment != other._fragment: return False
+            return True
+
+        return NotImplemented
+
+    def __ne__(self, other):
+        ret = self.__eq__(other)
+        if ret is NotImplemented:
+            return ret
+        return not ret
+
     def __unicode__(self):
         ret = []
 
