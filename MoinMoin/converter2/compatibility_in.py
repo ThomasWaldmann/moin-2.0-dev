@@ -14,8 +14,8 @@ from MoinMoin.util import uri
 from MoinMoin.util.tree import moin_page
 
 class Converter(object):
-    def __init__(self, request, page_url, args, parser, formatter):
-        self.request, self.page_url, self.args = request, page_url, args
+    def __init__(self, request, page, args, parser, formatter):
+        self.request, self.page, self.args = request, page, args
         self.parser, self.formatter = parser, formatter
 
     def __call__(self, content):
@@ -26,9 +26,8 @@ class Converter(object):
         root = moin_page.page(attrib=attrib)
 
         text = '\n'.join(content)
-        # TODO: unicode URI
         # TODO: Remove Page object
-        page = Page(self.request, self.page_url.path.decode('utf-8')[1:])
+        page = Page(self.request, unicode(self.page.path)[1:])
 
         parser = self.parser(text, self.request, format_args=self.args or '')
         formatter = self.formatter(self.request, page)
@@ -55,8 +54,8 @@ def _factory(request, input, output):
             return
 
         cls = type('Converter.%s' % str(input), (Converter, ), {})
-        def init(self, request, page_url=None, args=None):
-            super(cls, self).__init__(request, page_url, args, parser, formatter)
+        def init(self, request, page=None, args=None):
+            super(cls, self).__init__(request, page, args, parser, formatter)
         cls.__init__ = init
 
         return cls
