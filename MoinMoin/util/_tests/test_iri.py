@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 MoinMoin - Tests for MoinMoin.util.iri
 
@@ -268,21 +269,25 @@ def test_Iri_add_1():
     assert u.fragment == 'head'
 
 def test_Iri_quote():
-    u = Iri(scheme='wiki', authority='Neu%?#', path='/Neu%?#', query='Neu%?#', fragment='Neu%?#')
-    assert u.scheme == 'wiki'
-    assert u.authority == 'Neu%?#'
-    assert u.authority_fullquoted == 'Neu%25%3F%23'
-    assert u.authority_quoted == 'Neu%25?#'
-    assert u.path == '/Neu%?#'
-    assert u.path_fullquoted == '/Neu%25%3F%23'
-    assert u.path_quoted == '/Neu%25?#'
-    assert u.query == 'Neu%?#'
-    assert u.query_fullquoted == 'Neu%25?%23'
-    assert u.query_quoted == 'Neu%25?#'
-    assert u.fragment == 'Neu%?#'
-    assert u.fragment_fullquoted == 'Neu%25?%23'
-    assert u.fragment_quoted == 'Neu%25?#'
-    assert unicode(u) == 'wiki://Neu%25%3F%23/Neu%25%3F%23?Neu%25?%23#Neu%25?%23'
+    u = Iri(scheme=u'wiki', authority=u'Näu%?#', path=u'/Näu%?#', query=u'Näu%?#', fragment=u'Näu%?#')
+    assert u.scheme == u'wiki'
+    assert u.authority == u'Näu%?#'
+    assert u.authority.fullquoted == u'Näu%25%3F%23'
+    assert u.authority.quoted == u'Näu%25?#'
+    assert u.authority.urlquoted == u'N%C3%A4u%25%3F%23'
+    assert u.path == u'/Näu%?#'
+    assert u.path.fullquoted == u'/Näu%25%3F%23'
+    assert u.path.quoted == u'/Näu%25?#'
+    assert u.path.urlquoted == u'/N%C3%A4u%25%3F%23'
+    assert u.query == u'Näu%?#'
+    assert u.query.fullquoted == u'Näu%25?%23'
+    assert u.query.quoted == u'Näu%25?#'
+    assert u.query.urlquoted == u'N%C3%A4u%25?%23'
+    assert u.fragment == u'Näu%?#'
+    assert u.fragment.fullquoted == u'Näu%25?%23'
+    assert u.fragment.quoted == u'Näu%25?#'
+    assert u.fragment.urlquoted == u'N%C3%A4u%25?%23'
+    assert u == u'wiki://Näu%25%3F%23/Näu%25%3F%23?Näu%25?%23#Näu%25?%23'
 
 def test_IriAuthority_parser_1():
     i = 'moinmo.in'
