@@ -66,9 +66,6 @@ class Formatter(ConverterMacro):
         self.root = moin_page.div()
         self._stack = [self.root]
 
-    def setPage(self, page):
-        self.page = page
-
     def handle_on(self, on, tag, attrib={}):
         if on:
             self._stack_push(tag(attrib))
@@ -481,7 +478,7 @@ class Formatter(ConverterMacro):
         elem = moin_page.div()
         self._stack_top_append(elem)
 
-        doc = Converter(self.request, self.page.page_name, args)(lines)
+        doc = Converter(self.request, self.page, args)(lines)
         elem.extend(doc)
 
         return ''
