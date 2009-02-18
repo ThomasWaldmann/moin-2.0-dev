@@ -317,9 +317,9 @@ class Iri(object):
 class _Value(unicode):
     __slots__ = '_quoted'
 
-    # Rules for quoting parts of the IRI.
+    # Rules for quoting parts of the IRI, also applies to URI.
     # Each entry represents a range of unicode code points.
-    quote_rules = (
+    quote_rules_ascii = (
         (ord(u'0'), ord(u'9')),
         (ord(u'A'), ord(u'Z')),
         (ord(u'a'), ord(u'z')),
@@ -338,6 +338,11 @@ class _Value(unicode):
         (ord(u','), ord(u',')),
         (ord(u';'), ord(u';')),
         (ord(u'='), ord(u'=')),
+    )
+
+    # Rules for quoting parts of the IRI.
+    # Each entry represents a range of unicode code points.
+    quote_rules_unicode = (
         (   0xA0,  0xD7FF),
         ( 0xF900,  0xFDCF),
         ( 0xFDF0,  0xFFEF),
@@ -376,7 +381,7 @@ class _Value(unicode):
         return ret
 
     @classmethod
-    def _quote(cls, input, requote=False):
+    def _quote(cls, input, url=False, requote=False):
         """
         Quote all illegal characters.
 
@@ -386,6 +391,10 @@ class _Value(unicode):
         """
         ret = []
 
+        rules = cls.quote_rules_ascii
+        if not url:
+            rules = rules + cls.quote_rules_unicode
+
         for i in input:
             # Check if we have an already quoted string.
             if requote and i == u'%':
@@ -394,7 +403,7 @@ class _Value(unicode):
 
             # Check if the current character matches any of the given ranges
             c = ord(i)
-            for rule in cls.quote_rules:
+            for rule in rules:
                 if c >= rule[0] and c <= rule[1]:
                     ret.append(i)
                     break
@@ -440,7 +449,7 @@ class _Value(unicode):
     @property
     def fullquoted(self):
         if self._quoted is not None:
-            return self._quote(self._quoted, True)
+            return self._quote(self._quoted, requote=True)
         return self._quote(self)
 
     @property
@@ -449,12 +458,18 @@ class _Value(unicode):
             return self._quoted
         return self.replace(u'%', u'%25')
 
+    @property
+    def urlquoted(self):
+        if self._quoted is not None:
+            return self._quote(self._quoted, url=True, requote=True)
+        return self._quote(self, url=True)
+
 class _ValueAuthority(_Value):
-    quote_rules = (
+    quote_rules_ascii = _Value.quote_rules_ascii + (
         # Not correct, but we have anything in authority
         (ord(u'@'), ord(u'@')),
         (ord(u':'), ord(u':')),
-    ) + _Value.quote_rules
+    )
 
 class IriAuthority(object):
     authority_rules = r"""
@@ -566,6 +581,12 @@ class IriAuthority(object):
     def quoted(self):
         userinfo = self._userinfo and self._userinfo.quoted
         host = self._host and self._host.quoted
+        return self.__get(userinfo, host)
+
+    @property
+    def urlquoted(self):
+        userinfo = self._userinfo and self._userinfo.urlquoted
+        host = self._host and self._host.urlquoted
         return self.__get(userinfo, host)
 
     def __del_userinfo(self):
@@ -708,29 +729,35 @@ class IriPath(object):
     def quoted(self):
         return u'/'.join((i.quoted for i in self._list))
 
+    @property
+    def urlquoted(self):
+        return u'/'.join((i.urlquoted for i in self._list))
+
 class IriPathSegment(_Value):
-    quote_rules = (
+    quote_rules_ascii = _Value.quote_rules_ascii + (
         (ord(u'@'), ord(u'@')),
         (ord(u':'), ord(u':')),
         (ord(u'/'), ord(u'/')),
-    ) + _Value.quote_rules
+    )
 
 class IriQuery(_Value):
-    quote_rules = (
+    quote_rules_ascii = _Value.quote_rules_ascii + (
         (ord(u'@'), ord(u'@')),
         (ord(u':'), ord(u':')),
         (ord(u'/'), ord(u'/')),
         (ord(u'?'), ord(u'?')),
-    ) + _Value.quote_rules + (
+    )
+    
+    quote_rules_unicode = _Value.quote_rules_unicode + (
         (  0xE000,   0xF8FF),
         ( 0xF0000,  0xFFFFD),
         (0x100000, 0x10FFFD),
     )
 
 class IriFragment(_Value):
-    quote_rules = (
+    quote_rules_ascii = _Value.quote_rules_ascii + (
         (ord(u'@'), ord(u'@')),
         (ord(u':'), ord(u':')),
         (ord(u'/'), ord(u'/')),
         (ord(u'?'), ord(u'?')),
-    ) + _Value.quote_rules
+    )
