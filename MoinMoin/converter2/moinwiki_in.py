@@ -89,7 +89,7 @@ class Converter(ConverterMacro):
         if self.page_url:
             attrib[self.tag_page_href] = unicode(self.page_url)
 
-        root = ET.Element(self.tag_page, attrib=attrib)
+        root = self.tag_page(attrib=attrib)
         self._stack = [root]
         iter_content = _Iter(content)
 
@@ -123,7 +123,7 @@ class Converter(ConverterMacro):
         self.stack_pop_name('page')
 
         attrib = {self.tag_outline_level: str(len(head_head))}
-        element = ET.Element(self.tag_h, attrib=attrib, children=[head_text])
+        element = self.tag_h(attrib=attrib, children=[head_text])
         self.stack_top_append(element)
 
     block_line = r'(?P<line> ^ \s* $ )'
@@ -189,7 +189,7 @@ class Converter(ConverterMacro):
             attrib = {moin_page.item_label_generate: type}
             if style_type:
                 attrib[moin_page.list_style_type] = style_type
-            element = ET.Element(self.tag_list, attrib=attrib)
+            element = self.tag_list(attrib=attrib)
             element.level, element.type = level, type
             element.style_type = style_type
             self.stack_push(element)
@@ -277,7 +277,7 @@ class Converter(ConverterMacro):
                     if key in ('background-color', 'color'):
                         attrib[ET.QName(key, moin_page.namespace)] = value
 
-                self.stack_push(ET.Element(self.tag_page, attrib))
+                self.stack_push(self.tag_page(attrib))
 
                 for line in lines:
                     match = self.block_re.match(line)
@@ -536,7 +536,7 @@ class Converter(ConverterMacro):
         else:
             target = unicode(iri.Iri(link_url))
             text = link_url
-        element = ET.Element(self.tag_a, attrib={self.tag_href: target})
+        element = self.tag_a(attrib={self.tag_href: target})
         self.stack_push(element)
         if link_text:
             self.parse_inline(link_text, self.inlinedesc_re)
@@ -583,7 +583,7 @@ class Converter(ConverterMacro):
         else:
             return
 
-        self.stack_top_append(ET.Element(self.tag_code, children=[text]))
+        self.stack_top_append(self.tag_code(children=[text]))
 
     inline_object = r"""
         (?P<object>
@@ -603,7 +603,7 @@ class Converter(ConverterMacro):
         if object_text is not None:
             attrib[self.tag_alt] = object_text
 
-        element = ET.Element(self.tag_object, attrib)
+        element = self.tag_object(attrib)
         self.stack_top_append(element)
 
     inline_freelink = r"""
@@ -693,7 +693,7 @@ class Converter(ConverterMacro):
 
         attrib[self.tag_href] = unicode(link)
 
-        element = ET.Element(self.tag_a, attrib, children=[text])
+        element = self.tag_a(attrib, children=[text])
         self.stack_top_append(element)
 
     inline_url = r"""
@@ -711,7 +711,7 @@ class Converter(ConverterMacro):
     def inline_url_repl(self, url, url_target):
         url = unicode(iri.Iri(url_target))
         attrib = {self.tag_href: url}
-        element = ET.Element(self.tag_a, attrib=attrib, children=[url_target])
+        element = self.tag_a(attrib=attrib, children=[url_target])
         self.stack_top_append(element)
 
     table = block_table
