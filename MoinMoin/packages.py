@@ -7,7 +7,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, sys
+import os, re, sys
 import zipfile
 
 from MoinMoin import config, wikiutil, caching, user
@@ -201,7 +201,9 @@ class ScriptEngine:
 
         from MoinMoin.version import release
         version_int = [int(x) for x in version.split(".")]
-        release = [int(x) for x in release.split(".")]
+        # use a regex here to get only the numbers of the release string (e.g. ignore betaX)
+        release = re.compile('\d+').findall(release)[0:3]
+        release = [int(x) for x in release]
         if version_int > release:
             if lines > 0:
                 self.goto = lines
@@ -526,7 +528,7 @@ Example:
     if len(args) > 3:
         request_url = args[3]
     else:
-        request_url = "localhost/"
+        request_url = None
 
     # Setup MoinMoin environment
     from MoinMoin.web.contexts import ScriptContext
