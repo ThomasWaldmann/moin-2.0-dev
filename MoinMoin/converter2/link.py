@@ -88,7 +88,9 @@ class ConverterExternOutput(ConverterBase):
             path = input.path
 
             if path[0] == '':
-                link.path = page.path[1:].extend(path[1:])
+                tmp = page.path[1:]
+                tmp.extend(path[1:])
+                link.path = tmp
             elif path[0] == '..':
                 link.path = page.path[1:] + path[1:]
             else:
@@ -98,7 +100,7 @@ class ConverterExternOutput(ConverterBase):
             if not page.exists():
                 elem.set(self.tag_class, 'nonexistent')
         else:
-            link.path = page.path
+            link.path = page.path[1:]
 
         output = iri.Iri(self.request.url_root) + link
 
