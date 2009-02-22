@@ -621,7 +621,7 @@ class IriPath(object):
     def __getitem__(self, key):
         ret = self._list[key]
         if isinstance(key, slice):
-            return self.__class__(self, ret)
+            return self.__class__(ret)
         return ret
 
     def __len__(self):
