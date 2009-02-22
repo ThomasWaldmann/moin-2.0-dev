@@ -90,6 +90,15 @@ def test_Iri_parser():
     assert u.fragment is None
     assert unicode(u) == i
 
+    i = 'http:///'
+    u = Iri(i)
+    assert u.scheme == 'http'
+    assert u.authority == ''
+    assert u.path == '/'
+    assert u.query is None
+    assert u.fragment is None
+    assert unicode(u) == i
+
     i = 'http://'
     u = Iri(i)
     assert u.scheme == 'http'
