@@ -72,11 +72,11 @@ class ConverterExternOutput(ConverterBase):
                 elem.set(self.tag_class, 'interwiki')
             else:
                 # TODO
-                link.path = input.path
+                link.path = input.path[1:]
                 output = iri.Iri(self.request.url_root) + link
 
         else:
-            link.path = input.path
+            link.path = input.path[1:]
             output = iri.Iri(self.request.url_root) + link
 
         elem.set(self.tag_href, unicode(output))
