@@ -17,7 +17,7 @@
 import random
 random.seed()
 
-from MoinMoin.util import uri
+from MoinMoin.util import iri
 from MoinMoin.util.tree import moin_page, xlink
 from MoinMoin.Page import Page
 from MoinMoin.macro2._base import MacroInlineBase
@@ -52,8 +52,7 @@ class Macro(MacroInlineBase):
 
         result = moin_page.span()
         for name in pages:
-            # TODO: unicode URI
-            link = str(uri.Uri(scheme='wiki', authority='', path='/' + name.encode('utf-8')))
+            link = unicode(iri.Iri(scheme=u'wiki', authority=u'', path=u'/' + name))
             result.append(moin_page.a(attrib={xlink.href: link}, children=[name]))
             result.append(", ")
 
