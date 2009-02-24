@@ -27,7 +27,7 @@ def searchPages(request, query, sort='weight', mtime=None, historysearch=None, *
     @rtype: SearchResults instance
     @return: search results
     """
-    from MoinMoin.search.queryparser import QueryParser
+    from MoinMoin.search.queryparser import QueryParser, QueryError
     from MoinMoin.search.builtin import Search
 
     if isinstance(query, str) or isinstance(query, unicode):

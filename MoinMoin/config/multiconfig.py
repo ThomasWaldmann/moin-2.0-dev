@@ -503,8 +503,8 @@ file. It should match the actual charset of the configuration file.
 """
 
         decode_names = (
-            'sitename', 'logo_string', 'navi_bar', 'page_front_page',
-            'page_category_regex', 'page_dict_regex',
+            'sitename', 'interwikiname', 'user_homewiki', 'logo_string', 'navi_bar',
+            'page_front_page', 'page_category_regex', 'page_dict_regex',
             'page_group_regex', 'page_template_regex', 'page_license_page',
             'page_local_spelling_words', 'acl_rights_default',
             'acl_rights_before', 'acl_rights_after', 'mail_from'
@@ -651,33 +651,30 @@ def _default_password_checker(cfg, request, username, password):
         If you don't want to check passwords, use password_checker = None.
 
         @return: None if there is no problem with the password,
-                 some string with an error msg, if the password is problematic.
+                 some unicode object with an error msg, if the password is problematic.
     """
     _ = request.getText
-    try:
-        # in any case, do a very simple built-in check to avoid the worst passwords
-        if len(password) < 6:
-            raise ValueError(_("Password is too short."))
-        if len(set(password)) < 4:
-            raise ValueError(_("Password has not enough different characters."))
+    # in any case, do a very simple built-in check to avoid the worst passwords
+    if len(password) < 6:
+        return _("Password is too short.")
+    if len(set(password)) < 4:
+        return _("Password has not enough different characters.")
 
-        username_lower = username.lower()
-        password_lower = password.lower()
-        if username in password or password in username or \
-           username_lower in password_lower or password_lower in username_lower:
-            raise ValueError(_("Password is too easy (password contains name or name contains password)."))
+    username_lower = username.lower()
+    password_lower = password.lower()
+    if username in password or password in username or \
+       username_lower in password_lower or password_lower in username_lower:
+        return _("Password is too easy (password contains name or name contains password).")
 
-        keyboards = (ur"`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./", # US kbd
-                     ur"^1234567890ß´qwertzuiopü+asdfghjklöä#yxcvbnm,.-", # german kbd
-                    ) # add more keyboards!
-        for kbd in keyboards:
-            rev_kbd = kbd[::-1]
-            if password in kbd or password in rev_kbd or \
-               password_lower in kbd or password_lower in rev_kbd:
-                raise ValueError(_("Password is too easy (keyboard sequence)."))
-        return None
-    except ValueError, err:
-        return unicode(err)
+    keyboards = (ur"`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./", # US kbd
+                 ur"^1234567890ß´qwertzuiopü+asdfghjklöä#yxcvbnm,.-", # german kbd
+                ) # add more keyboards!
+    for kbd in keyboards:
+        rev_kbd = kbd[::-1]
+        if password in kbd or password in rev_kbd or \
+           password_lower in kbd or password_lower in rev_kbd:
+            return _("Password is too easy (keyboard sequence).")
+    return None
 
 
 class DefaultExpression(object):
@@ -794,11 +791,11 @@ options_no_group_name = {
   (
     ('sitename', u'Untitled Wiki',
      "Short description of your wiki site, displayed below the logo on each page, and used in RSS documents as the channel title [Unicode]"),
-    ('interwikiname', None, "unique and stable InterWiki name (prefix, moniker) of the site, or None"),
+    ('interwikiname', None, "unique and stable InterWiki name (prefix, moniker) of the site [Unicode], or None"),
     ('logo_string', None, "The wiki logo top of page, HTML is allowed (`<img>` is possible as well) [Unicode]"),
     ('html_pagetitle', None, "Allows you to set a specific HTML page title (if None, it defaults to the value of `sitename`)"),
     ('navi_bar', [u'RecentChanges', u'FindPage', u'HelpContents', ],
-     'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[url link title]"`, to use a shortened name for long page name, use `u"[LongLongPageName title]"`. To use page names with spaces, use `u"[page_name_with_spaces any title]"` [list of Unicode strings]'),
+     'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode strings]'),
 
     ('theme_default', 'modern',
      "the name of the theme that is used by default (see HelpOnThemes)"),
@@ -999,6 +996,8 @@ options_no_group_name = {
     ('language_default', 'en', "Default language for user interface and page content, see HelpOnLanguages."),
     ('language_ignore_browser', False, "if True, ignore user's browser language settings, see HelpOnLanguages."),
 
+    ('log_remote_addr', True,
+     "if True, log the remote IP address (and maybe hostname)."),
     ('log_reverse_dns_lookups', True,
      "if True, do a reverse DNS lookup on page SAVE. If your DNS is broken, set this to False to speed up SAVE."),
     ('log_timing', False,
@@ -1103,8 +1102,8 @@ options = {
       ('jid_unique', True,
        "if True, check Jabber IDs for uniqueness and don't accept duplicates."),
 
-      ('homewiki', 'Self',
-       "interwiki name of the wiki where the user home pages are located (useful if you have ''many'' users). You could even link to nonwiki \"user pages\" if the wiki username is in the target URL."),
+      ('homewiki', u'Self',
+       "interwiki name of the wiki where the user home pages are located [Unicode] - useful if you have ''many'' users. You could even link to nonwiki \"user pages\" if the wiki username is in the target URL."),
 
       ('checkbox_fields',
        [
@@ -1211,7 +1210,7 @@ options = {
       ('compression', 'gz', 'What compression to use for the backup ("gz" or "bz2").'),
       ('users', [], 'List of trusted user names who are allowed to get a backup.'),
       ('include', [], 'List of pathes to backup.'),
-      ('exclude', lambda filename: False, 'Function f(filename) that tells whether a file should be excluded from backup. By default, nothing is excluded.'),
+      ('exclude', lambda self, filename: False, 'Function f(self, filename) that tells whether a file should be excluded from backup. By default, nothing is excluded.'),
     )),
 }
 
