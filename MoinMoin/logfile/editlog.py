@@ -49,7 +49,7 @@ class EditLogLine(object):
             representing the user that did the edit.
 
             The type id is one of 'ip' (DNS or numeric IP), 'user' (user name)
-            or 'homepage' (Page instance of user's homepage).
+            or 'homepage' (Page instance of user's homepage) or 'anon' ('').
         """
         return user.get_editor(request, self.userid, self.addr, self.hostname)
 
@@ -101,7 +101,13 @@ class LocalEditLog(object):
 
         @deprecated: drop that as fast as possible, only used by attachements.
         """
-        hostname = wikiutil.get_hostname(request, host)
+        if request.cfg.log_remote_addr:
+            hostname = wikiutil.get_hostname(request, host)
+        else:
+            host = ''
+            hostname = ''
+
+        comment = wikiutil.clean_input(comment)
         user_id = request.user.valid and request.user.id or ''
 
         mtime = wikiutil.timestamp2version(mtime)

@@ -25,7 +25,6 @@ import re
 import StringIO
 from MoinMoin import config, wikiutil
 from MoinMoin.macro import Macro
-from MoinMoin.support.python_compatibility import rsplit # Needed for python 2.3
 from _creole import Parser as CreoleParser
 
 Dependencies = []
@@ -228,14 +227,10 @@ class Emitter:
 #        return self.formatter.smiley(node.content)
 
     def header_emit(self, node):
-        from MoinMoin.support.python_compatibility import hash_new
-
-        pntt = '%s%s%d' % (self.formatter.page.page_name,
-            self.get_text(node), node.level)
-        ident = "head-%s" % hash_new('sha1', pntt.encode(config.charset)).hexdigest()
+        text = self.get_text(node)
         return ''.join([
-            self.formatter.heading(1, node.level, id=ident),
-            self.formatter.text(node.content or ''),
+            self.formatter.heading(1, node.level, id=text),
+            self.formatter.text(text),
             self.formatter.heading(0, node.level),
         ])
 
@@ -273,11 +268,7 @@ class Emitter:
                 elif word.startswith(wikiutil.CHILD_PREFIX):
                     word = "%s/%s" % (self.formatter.page.page_name,
                         word[wikiutil.CHILD_PREFIX_LEN:])
-                # handle anchors
-                parts = rsplit(word, "#", 1)
-                anchor = ""
-                if len(parts) == 2:
-                    word, anchor = parts
+                word, anchor = wikiutil.split_anchor(word)
                 return ''.join([
                     self.formatter.pagelink(1, word, anchor=anchor),
                     self.emit_children(node) or self.formatter.text(target),
@@ -296,8 +287,9 @@ class Emitter:
                 # interwiki link
                 wiki = m.group('inter_wiki')
                 page = m.group('inter_page')
+                page, anchor = wikiutil.split_anchor(page)
                 return ''.join([
-                    self.formatter.interwikilink(1, wiki, page),
+                    self.formatter.interwikilink(1, wiki, page, anchor=anchor),
                     self.emit_children(node) or self.formatter.text(page),
                     self.formatter.interwikilink(0),
                 ])
@@ -331,7 +323,7 @@ class Emitter:
                 # inserted anchors
                 url = wikiutil.url_unquote(target, want_unicode=True)
                 if target.startswith('#'):
-                    return self.formatter.rawHTML(u'<a name="%s"></a>' % url[1:])
+                    return self.formatter.anchordef(url[1:])
                 # default to images
                 return self.formatter.attachment_image(
                     url, alt=text, html_class='image')
@@ -351,7 +343,7 @@ class Emitter:
                     return self.formatter.attachment_image(
                         url, alt=text, html_class='image')
                 elif scheme == 'drawing':
-                    return self.formatter.attachment_drawing(url, text)
+                    return self.formatter.attachment_drawing(url, text, alt=text)
                 else:
                     pass
             elif m.group('inter_wiki'):

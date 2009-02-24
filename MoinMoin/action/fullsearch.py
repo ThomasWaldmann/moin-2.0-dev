@@ -179,22 +179,23 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
         sort = 'weight'
 
     # search the pages
+    from MoinMoin.search.queryparser import QueryParser, QueryError
     from MoinMoin.search import searchPages
-    from MoinMoin.search.queryparser import QueryParser
     try:
         query = QueryParser(case=case, regex=regex,
                 titlesearch=titlesearch).parse_query(needle)
-        results = searchPages(request, query, sort, mtime, historysearch)
-    except ValueError: # catch errors in the search query
+    except QueryError: # catch errors in the search query
         request.theme.add_msg(_('Your search query {{{"%s"}}} is invalid. Please refer to '
                 'HelpOnSearching for more information.', wiki=True, percent=True) % wikiutil.escape(needle), "error")
         Page(request, pagename).send_page()
         return
 
-    # directly show a single hit
-    # Note: can't work with attachment search
-    # improve if we have one...
-    if len(results.hits) == 1:
+    results = searchPages(request, query, sort, mtime, historysearch)
+
+    # directly show a single hit for title searches
+    # this is the "quick jump" functionality if you don't remember
+    # the pagename exactly, but just some parts of it
+    if titlesearch and len(results.hits) == 1:
         page = results.hits[0]
         if not page.attachment: # we did not find an attachment
             page = Page(request, page.page_name)
@@ -206,7 +207,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
             url = page.url(request, querystr=querydict)
             request.http_redirect(url)
             return
-    elif not results.hits: # no hits?
+    if not results.hits: # no hits?
         f = request.formatter
         querydict = wikiutil.parseQueryString(request.query_string)
         querydict.update({'titlesearch': 0})

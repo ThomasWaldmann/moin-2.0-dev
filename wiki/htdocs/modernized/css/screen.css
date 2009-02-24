@@ -18,6 +18,8 @@ a:link { color: #47f; text-decoration: none; }
 a:link:hover, a:link:active { text-decoration: underline; color: green; }
 a:visited { text-decoration: none; color: #04a;}
 a:visited:hover { text-decoration: none; color: red; }
+a.nonexistent:link { color: #666 }
+a.nonexistent:hover { color: black; text-decoration: underline }
 
 a.download {
     font-size: 120%; 
@@ -125,7 +127,7 @@ textarea {
 #pagetrail {
     clear: right;
     display: inline;
-    margin: 0.5em 0;
+    margin: 0 0.88em 0.25em 0.88em;
     padding: 0;
     font-size: 0.88em;
 }

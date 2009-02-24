@@ -108,10 +108,12 @@ def get_editor(request, userid, addr, hostname):
     """ Return a tuple of type id and string or Page object
         representing the user that did the edit.
 
-        The type id is one of 'ip' (DNS or numeric IP), 'user' (user name)
-        or 'homepage' (Page instance of user's homepage).
+        The type id is one of 'ip' (DNS or numeric IP), 'email' (email addr),
+        'interwiki' (Interwiki homepage) or 'anon' ('').
     """
-    result = 'ip', request.cfg.show_hosts and hostname or ''
+    result = 'anon', ''
+    if request.cfg.show_hosts and self.hostname:
+        result = 'ip', self.hostname
     if userid:
         userdata = User(request, userid)
         if userdata.mailto_author and userdata.email:
@@ -122,11 +124,10 @@ def get_editor(request, userid, addr, hostname):
                 result = ('interwiki', interwiki)
     return result
 
-
 def get_printable_editor(request, userid, addr, hostname):
     """ Return a HTML-safe string representing the user that did the edit.
     """
-    if request.cfg.show_hosts:
+    if request.cfg.show_hosts and hostname and addr:
         title = " @ %s[%s]" % (hostname, addr)
     else:
         title = ""
@@ -158,6 +159,9 @@ def get_printable_editor(request, userid, addr, hostname):
             idx = len(info)
         title = '???' + title
         text = request.formatter.text(info[:idx])
+    elif kind == 'anon':
+        title = ''
+        text = _('anonymous')
     else:
         raise Exception("unknown EditorData type")
     return (request.formatter.span(1, title=title) +
@@ -563,7 +567,7 @@ class User:
         @param tm: timestamp
         """
         if self.valid:
-            interwikiname = unicode(self._cfg.interwikiname or '')
+            interwikiname = self._cfg.interwikiname or u''
             bookmark = unicode(tm)
             self.bookmarks[interwikiname] = bookmark
             self.save()
@@ -575,7 +579,7 @@ class User:
         @return: bookmark timestamp or None
         """
         bm = None
-        interwikiname = unicode(self._cfg.interwikiname or '')
+        interwikiname = self._cfg.interwikiname or u''
         if self.valid:
             try:
                 bm = int(self.bookmarks[interwikiname])
@@ -589,7 +593,7 @@ class User:
         @rtype: int
         @return: 0 on success, 1 on failure
         """
-        interwikiname = unicode(self._cfg.interwikiname or '')
+        interwikiname = self._cfg.interwikiname or u''
         if self.valid:
             try:
                 del self.bookmarks[interwikiname]
@@ -915,7 +919,6 @@ class User:
         return msg + '-' + h
 
     def apply_recovery_token(self, tok, newpass):
-        key = self.recoverpass_key
         parts = tok.split('-')
         if len(parts) != 2:
             return False
@@ -927,7 +930,8 @@ class User:
         if stamp + 12*60*60 < time.time():
             return False
         # check hmac
-        h = hmac_new(self.recoverpass_key, str(stamp)).hexdigest()
+        # key must be of type string
+        h = hmac_new(str(self.recoverpass_key), str(stamp)).hexdigest()
         if h != parts[1]:
             return False
         self.recoverpass_key = ""
