@@ -10,7 +10,6 @@ compatibility formatter to create a converter.
 
 from MoinMoin import wikiutil
 from MoinMoin.formatter.compatibility import Formatter
-from MoinMoin.util import uri
 from MoinMoin.util.tree import moin_page
 
 class Converter(object):
