@@ -6,7 +6,7 @@ MoinMoin - Macro base class
 """
 
 from MoinMoin import wikiutil
-from MoinMoin.util import uri
+from MoinMoin.util import iri
 from MoinMoin.util.tree import moin_page, xlink
 
 class MacroBase(object):
@@ -73,9 +73,8 @@ class MacroPageLinkListBase(MacroBlockBase):
         """ creates an ET with a list of pagelinks from a list of pagenames """
         page_list = moin_page.list(attrib={moin_page.item_label_generate: ordered and 'ordered' or 'unordered'})
         for pagename in pagenames:
-            # TODO: unicode URI
             # This link can never reach pagelinks
-            url = str(uri.Uri(scheme='wiki', authority='', path='/' + pagename.encode('utf-8')))
+            url = unicode(iri.Iri(scheme=u'wiki', authority=u'', path=u'/' + pagename))
             pagelink = moin_page.a(attrib={xlink.href: url}, children=[pagename])
             item_body = moin_page.list_item_body(children=[pagelink])
             item = moin_page.list_item(children=[item_body])
@@ -88,9 +87,8 @@ class MacroNumberPageLinkListBase(MacroBlockBase):
         page_list = moin_page.list(attrib={moin_page.item_label_generate: ordered and 'ordered' or 'unordered'})
         for num, pagename in num_pagenames:
             num_code = moin_page.code(children=["%6d " % num])
-            # TODO: unicode URI
             # This link can never reach pagelinks
-            url = str(uri.Uri(scheme='wiki', authority='', path='/' + pagename.encode('utf-8')))
+            url = unicode(iri.Iri(scheme=u'wiki', authority=u'', path=u'/' + pagename))
             pagelink = moin_page.a(attrib={xlink.href: url}, children=[pagename])
             item_body = moin_page.list_item_body(children=[num_code, pagelink])
             item = moin_page.list_item(children=[item_body])
