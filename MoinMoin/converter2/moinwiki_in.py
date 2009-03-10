@@ -255,7 +255,7 @@ class Converter(ConverterMacro):
                     if key in ('background-color', 'color'):
                         attrib[moin_page(key)] = value
 
-                elem = moin_page.page(attrib)
+                elem = moin_page.div(attrib)
 
                 self.stack_top_append(elem)
                 old_stack = self._stack
@@ -273,11 +273,8 @@ class Converter(ConverterMacro):
                 mimetype = wikiutil.MimeType(name).mime_type()
                 converter = reg.get(self.request, mimetype, 'application/x-moin-document')
 
-                elem = moin_page.div()
-                self.stack_top_append(elem)
-
                 doc = converter(self.request, self.page_url, ' '.join(args[0]))(lines)
-                elem.extend(doc)
+                self.stack_top_append(doc)
 
         else:
             elem = moin_page.blockcode()
