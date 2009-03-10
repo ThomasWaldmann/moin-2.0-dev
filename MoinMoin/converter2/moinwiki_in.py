@@ -89,8 +89,10 @@ class Converter(ConverterMacro):
         if self.page_url:
             attrib[self.tag_page_href] = unicode(self.page_url)
 
-        root = self.tag_page(attrib=attrib)
-        self._stack = [root]
+        body = moin_page.body()
+        root = moin_page.page(attrib=attrib, children=(body, ))
+
+        self._stack = [body]
         iter_content = _Iter(content)
 
         for line in iter_content:
@@ -107,7 +109,7 @@ class Converter(ConverterMacro):
 
     def block_comment_repl(self, _iter_content, comment):
         # A comment also ends anything
-        self.stack_pop_name('page')
+        self.stack_clear()
 
     block_head = r"""
         (?P<head>
@@ -120,7 +122,7 @@ class Converter(ConverterMacro):
     """
 
     def block_head_repl(self, _iter_content, head, head_head, head_text):
-        self.stack_pop_name('page')
+        self.stack_clear()
 
         attrib = {self.tag_outline_level: str(len(head_head))}
         element = self.tag_h(attrib=attrib, children=[head_text])
@@ -130,7 +132,7 @@ class Converter(ConverterMacro):
     # empty line that separates paragraphs
 
     def block_line_repl(self, _iter_content, line):
-        self.stack_pop_name('page')
+        self.stack_clear()
 
     block_list = r"""
         (?P<list>
@@ -174,7 +176,7 @@ class Converter(ConverterMacro):
 
         while True:
             cur = self.stack_top()
-            if cur.tag.name in ('page', 'blockquote'):
+            if cur.tag.name in ('body', 'blockquote'):
                 break
             if cur.tag.name == 'list-item-body':
                 if level > cur.level:
@@ -220,7 +222,7 @@ class Converter(ConverterMacro):
     def block_macro_repl(self, _iter_content, macro, macro_name, macro_args=u''):
         """Handles macros using the placeholder syntax."""
 
-        self.stack_pop_name('page')
+        self.stack_clear()
         elem = self.macro(macro_name, macro_args, macro, 'block')
         if elem:
             self.stack_top_append(elem)
@@ -255,7 +257,7 @@ class Converter(ConverterMacro):
             yield line
 
     def block_nowiki_repl(self, iter_content, nowiki, nowiki_marker, nowiki_data=u''):
-        self.stack_pop_name('page')
+        self.stack_clear()
 
         nowiki_marker_len = len(nowiki_marker)
 
@@ -277,14 +279,17 @@ class Converter(ConverterMacro):
                     if key in ('background-color', 'color'):
                         attrib[ET.QName(key, moin_page.namespace)] = value
 
-                self.stack_push(self.tag_page(attrib))
+                elem = self.tag_page(attrib)
+
+                self.stack_top_append(elem)
+                old_stack = self._stack
+                self._stack = [elem]
 
                 for line in lines:
                     match = self.block_re.match(line)
                     self._apply(match, 'block', lines)
 
-                self.stack_pop_name('page')
-                self.stack_pop()
+                self._stack = old_stack
 
             else:
                 from MoinMoin.converter2 import default_registry as reg
@@ -310,7 +315,7 @@ class Converter(ConverterMacro):
     block_separator = r'(?P<separator> ^ \s* -{4,} \s* $ )'
 
     def block_separator_repl(self, _iter_content, separator):
-        self.stack_pop_name('page')
+        self.stack_clear()
         self.stack_top_append(ET.Element(self.tag_separator))
 
     block_table = r"""
@@ -326,7 +331,7 @@ class Converter(ConverterMacro):
     """
 
     def block_table_repl(self, iter_content, table):
-        self.stack_pop_name('page')
+        self.stack_clear()
 
         element = ET.Element(self.tag_table)
         self.stack_push(element)
@@ -357,9 +362,9 @@ class Converter(ConverterMacro):
 
     def block_text_repl(self, _iter_content, text):
         if self.stack_top_check('table', 'table-body', 'list'):
-            self.stack_pop_name('page')
+            self.stack_clear()
 
-        if self.stack_top_check('page'):
+        if self.stack_top_check('body'):
             element = ET.Element(self.tag_p)
             self.stack_push(element)
         # If we are in a paragraph already, don't loose the whitespace
@@ -782,6 +787,9 @@ class Converter(ConverterMacro):
 
     # Table row
     tablerow_re = re.compile(tablerow, re.X | re.U)
+
+    def stack_clear(self):
+        del self._stack[1:]
 
     def stack_pop_name(self, *names):
         """
