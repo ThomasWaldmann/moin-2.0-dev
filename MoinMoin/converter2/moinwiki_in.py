@@ -49,30 +49,6 @@ class _Iter(object):
         self.__prepend.append(item)
 
 class Converter(ConverterMacro):
-    tag_a = moin_page.a
-    tag_alt = moin_page.alt
-    tag_blockcode = moin_page.blockcode
-    tag_code = moin_page.code
-    tag_div = moin_page.div
-    tag_emphasis = moin_page.emphasis
-    tag_h = moin_page.h
-    tag_href = xlink.href
-    tag_item_label_generate = moin_page.item_label_generate
-    tag_list = moin_page.list
-    tag_list_item = moin_page.list_item
-    tag_list_item_body = moin_page.list_item_body
-    tag_object = moin_page.object
-    tag_outline_level = moin_page.outline_level
-    tag_page = moin_page.page
-    tag_page_href = moin_page.page_href
-    tag_p = moin_page.p
-    tag_separator = moin_page.separator
-    tag_strong = moin_page.strong
-    tag_table = moin_page.table
-    tag_table_body = moin_page.table_body
-    tag_table_cell = moin_page.table_cell
-    tag_table_row = moin_page.table_row
-
     @classmethod
     def factory(cls, _request, input, output):
         if input == 'text/moin-wiki' and output == 'application/x-moin-document':
@@ -87,7 +63,7 @@ class Converter(ConverterMacro):
     def __call__(self, content):
         attrib = {}
         if self.page_url:
-            attrib[self.tag_page_href] = unicode(self.page_url)
+            attrib[moin_page.page_href] = unicode(self.page_url)
 
         body = moin_page.body()
         root = moin_page.page(attrib=attrib, children=(body, ))
@@ -124,8 +100,8 @@ class Converter(ConverterMacro):
     def block_head_repl(self, _iter_content, head, head_head, head_text):
         self.stack_clear()
 
-        attrib = {self.tag_outline_level: str(len(head_head))}
-        element = self.tag_h(attrib=attrib, children=[head_text])
+        attrib = {moin_page.outline_level: str(len(head_head))}
+        element = moin_page.h(attrib=attrib, children=[head_text])
         self.stack_top_append(element)
 
     block_line = r'(?P<line> ^ \s* $ )'
@@ -191,13 +167,13 @@ class Converter(ConverterMacro):
             attrib = {moin_page.item_label_generate: type}
             if style_type:
                 attrib[moin_page.list_style_type] = style_type
-            element = self.tag_list(attrib=attrib)
+            element = moin_page.list(attrib=attrib)
             element.level, element.type = level, type
             element.style_type = style_type
             self.stack_push(element)
 
-        element = ET.Element(self.tag_list_item)
-        element_body = ET.Element(self.tag_list_item_body)
+        element = moin_page.list_item()
+        element_body = moin_page.list_item_body()
         element_body.level, element_body.type = level, type
 
         self.stack_push(element)
@@ -273,13 +249,13 @@ class Converter(ConverterMacro):
 
                 if args[0]:
                     classes = ' '.join([i.replace('/', ' ') for i in args[0]])
-                    attrib[ET.QName('class', html.namespace)] = classes
+                    attrib[html.class_] = classes
 
                 for key, value in args[1].iteritems():
                     if key in ('background-color', 'color'):
-                        attrib[ET.QName(key, moin_page.namespace)] = value
+                        attrib[moin_page(key)] = value
 
-                elem = self.tag_page(attrib)
+                elem = moin_page.page(attrib)
 
                 self.stack_top_append(elem)
                 old_stack = self._stack
@@ -297,14 +273,14 @@ class Converter(ConverterMacro):
                 mimetype = wikiutil.MimeType(name).mime_type()
                 converter = reg.get(self.request, mimetype, 'application/x-moin-document')
 
-                elem = ET.Element(self.tag_div)
+                elem = moin_page.div()
                 self.stack_top_append(elem)
 
                 doc = converter(self.request, self.page_url, ' '.join(args[0]))(lines)
                 elem.extend(doc)
 
         else:
-            elem = ET.Element(self.tag_blockcode)
+            elem = moin_page.blockcode()
             self.stack_top_append(elem)
 
             for line in lines:
@@ -316,7 +292,7 @@ class Converter(ConverterMacro):
 
     def block_separator_repl(self, _iter_content, separator):
         self.stack_clear()
-        self.stack_top_append(ET.Element(self.tag_separator))
+        self.stack_top_append(moin_page.separator())
 
     block_table = r"""
         ^
@@ -333,9 +309,9 @@ class Converter(ConverterMacro):
     def block_table_repl(self, iter_content, table):
         self.stack_clear()
 
-        element = ET.Element(self.tag_table)
+        element = moin_page.table()
         self.stack_push(element)
-        element = ET.Element(self.tag_table_body)
+        element = moin_page.table_body()
         self.stack_push(element)
 
         self.block_table_row(table)
@@ -350,7 +326,7 @@ class Converter(ConverterMacro):
             self.block_table_row(match.group('table'))
 
     def block_table_row(self, content):
-        element = ET.Element(self.tag_table_row)
+        element = moin_page.table_row()
         self.stack_push(element)
 
         for match in self.tablerow_re.finditer(content):
@@ -365,7 +341,7 @@ class Converter(ConverterMacro):
             self.stack_clear()
 
         if self.stack_top_check('body'):
-            element = ET.Element(self.tag_p)
+            element = moin_page.p()
             self.stack_push(element)
         # If we are in a paragraph already, don't loose the whitespace
         else:
@@ -406,29 +382,29 @@ class Converter(ConverterMacro):
                 if self.stack_top_check('strong'):
                     self.stack_pop()
                 else:
-                    self.stack_push(ET.Element(self.tag_strong))
+                    self.stack_push(moin_page.strong())
             elif self.stack_top_check('strong'):
                 if self.stack_top_check('strong'):
                     self.stack_pop()
                 else:
-                    self.stack_push(ET.Element(self.tag_strong))
+                    self.stack_push(moin_page.strong())
             else:
                 if len(emphstrong_follow) == 3:
-                    self.stack_push(ET.Element(self.tag_emphasis))
-                    self.stack_push(ET.Element(self.tag_strong))
+                    self.stack_push(moin_page.emphasis())
+                    self.stack_push(moin_page.strong())
                 else:
-                    self.stack_push(ET.Element(self.tag_strong))
-                    self.stack_push(ET.Element(self.tag_emphasis))
+                    self.stack_push(moin_page.strong())
+                    self.stack_push(moin_page.emphasis())
         elif len(emphstrong) == 3:
             if self.stack_top_check('strong'):
                 self.stack_pop()
             else:
-                self.stack_push(ET.Element(self.tag_strong))
+                self.stack_push(moin_page.strong())
         elif len(emphstrong) == 2:
             if self.stack_top_check('emphasis'):
                 self.stack_pop()
             else:
-                self.stack_push(ET.Element(self.tag_emphasis))
+                self.stack_push(moin_page.emphasis())
 
     inline_size = r"""
         (?P<size>
@@ -541,7 +517,7 @@ class Converter(ConverterMacro):
         else:
             target = unicode(iri.Iri(link_url))
             text = link_url
-        element = self.tag_a(attrib={self.tag_href: target})
+        element = moin_page.a(attrib={xlink.href: target})
         self.stack_push(element)
         if link_text:
             self.parse_inline(link_text, self.inlinedesc_re)
@@ -588,7 +564,7 @@ class Converter(ConverterMacro):
         else:
             return
 
-        self.stack_top_append(self.tag_code(children=[text]))
+        self.stack_top_append(moin_page.code(children=[text]))
 
     inline_object = r"""
         (?P<object>
@@ -604,11 +580,11 @@ class Converter(ConverterMacro):
 
         target = unicode(iri.Iri(object_target))
 
-        attrib = {self.tag_href: target}
+        attrib = {xlink.href: target}
         if object_text is not None:
-            attrib[self.tag_alt] = object_text
+            attrib[moin_page.alt] = object_text
 
-        element = self.tag_object(attrib)
+        element = moin_page.object(attrib)
         self.stack_top_append(element)
 
     inline_freelink = r"""
@@ -696,9 +672,9 @@ class Converter(ConverterMacro):
                     path='/' + freelink_interwiki_page)
             text = freelink_interwiki_page
 
-        attrib[self.tag_href] = unicode(link)
+        attrib[xlink.href] = unicode(link)
 
-        element = self.tag_a(attrib, children=[text])
+        element = moin_page.a(attrib, children=[text])
         self.stack_top_append(element)
 
     inline_url = r"""
@@ -715,8 +691,8 @@ class Converter(ConverterMacro):
 
     def inline_url_repl(self, url, url_target):
         url = unicode(iri.Iri(url_target))
-        attrib = {self.tag_href: url}
-        element = self.tag_a(attrib=attrib, children=[url_target])
+        attrib = {xlink.href: url}
+        element = moin_page.a(attrib=attrib, children=[url_target])
         self.stack_top_append(element)
 
     table = block_table
@@ -733,7 +709,7 @@ class Converter(ConverterMacro):
     """
 
     def tablerow_cell_repl(self, cell, cell_marker, cell_text, cell_args=None):
-        element = ET.Element(self.tag_table_cell)
+        element = moin_page.table_cell()
         self.stack_push(element)
 
         self.parse_inline(cell_text)
