@@ -271,7 +271,11 @@ class ConverterBase(object):
         return self.new_copy(self.tag_html_p, elem)
 
     def visit_moinpage_page(self, elem):
-        return self.new_copy(self.tag_html_div, elem)
+        for item in elem:
+            if item.tag.uri == moin_page.namespace and item.tag.name == 'body':
+                return self.new_copy(self.tag_html_div, item)
+
+        raise RuntimeError(repr(elem[:]))
 
     def visit_moinpage_separator(self, elem):
         return self.new(html.hr)
