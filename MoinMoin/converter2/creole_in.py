@@ -63,28 +63,6 @@ class _Iter(object):
         self.__prepend.append(item)
 
 class Converter(ConverterMacro):
-    tag_a = moin_page.a
-    tag_alt = moin_page.alt
-    tag_blockcode = moin_page.blockcode
-    tag_code = moin_page.code
-    tag_div = moin_page.div
-    tag_emphasis = moin_page.emphasis
-    tag_h = moin_page.h
-    tag_href = xlink.href
-    tag_line_break = moin_page.line_break
-    tag_list = moin_page.list
-    tag_list_item_body = moin_page.list_item_body
-    tag_list_item = moin_page.list_item
-    tag_object = moin_page.object
-    tag_outline_level = moin_page.outline_level
-    tag_p = moin_page.p
-    tag_separator = moin_page.separator
-    tag_strong = moin_page.strong
-    tag_table_body = moin_page.table_body
-    tag_table_cell = moin_page.table_cell
-    tag_table = moin_page.table
-    tag_table_row = moin_page.table_row
-
     @classmethod
     def factory(cls, _request, input, output):
         if input == 'text/creole' and output == 'application/x-moin-document':
@@ -127,8 +105,8 @@ class Converter(ConverterMacro):
     def block_head_repl(self, _iter_content, head, head_head, head_text):
         self.stack_clear()
 
-        attrib = {self.tag_outline_level: str(len(head_head))}
-        element = ET.Element(self.tag_h, attrib=attrib, children=[head_text])
+        attrib = {moin_page.outline_level: str(len(head_head))}
+        element = moin_page.h(attrib=attrib, children=(head_text, ))
         self.stack_top_append(element)
 
     block_line = r'(?P<line> ^ \s* $ )'
@@ -211,13 +189,13 @@ class Converter(ConverterMacro):
         try:
             firstline = iter_content.next()
         except StopIteration:
-            self.stack_push(ET.Element(self.tag_blockcode))
+            self.stack_push(moin_page.blockcode())
             return
 
         # Stop directly if we got an end marker in the first line
         match = self.nowiki_end_re.match(firstline)
         if match and not match.group('escape'):
-            self.stack_push(ET.Element(self.tag_blockcode))
+            self.stack_push(moin_page.blockcode())
             return
 
         lines = _Iter(self.block_nowiki_lines(iter_content))
@@ -233,7 +211,7 @@ class Converter(ConverterMacro):
 
                 for key, value in args[1].iteritems():
                     if key in ('background-color', 'color'):
-                        attrib[ET.QName(key, moin_page.namespace)] = value
+                        attrib[moin_page(key)] = value
 
                 self.stack_push(moin_page.page(attrib))
 
@@ -250,14 +228,14 @@ class Converter(ConverterMacro):
                 mimetype = wikiutil.MimeType(name).mime_type()
                 converter = reg.get(self.request, mimetype, 'application/x-moin-document')
 
-                elem = ET.Element(self.tag_div)
+                elem = moin_page.div()
                 self.stack_top_append(elem)
 
                 doc = converter(self.request, self.page_url, ' '.join(args[0]))(lines)
                 elem.extend(doc)
 
         else:
-            elem = ET.Element(self.tag_blockcode, children=[firstline])
+            elem = moin_page.blockcode(children=(firstline, ))
             self.stack_top_append(elem)
 
             for line in lines:
@@ -268,7 +246,7 @@ class Converter(ConverterMacro):
 
     def block_separator_repl(self, _iter_content, separator):
         self.stack_clear()
-        self.stack_top_append(ET.Element(self.tag_separator))
+        self.stack_top_append(moin_page.separator())
 
     block_table = r"""
         (?P<table>
@@ -279,9 +257,9 @@ class Converter(ConverterMacro):
     def block_table_repl(self, iter_content, table):
         self.stack_clear()
 
-        element = ET.Element(self.tag_table)
+        element = moin_page.table()
         self.stack_push(element)
-        element = ET.Element(self.tag_table_body)
+        element = moin_page.table_body()
         self.stack_push(element)
 
         self.block_table_row(table)
@@ -298,7 +276,7 @@ class Converter(ConverterMacro):
         self.stack_clear()
 
     def block_table_row(self, content):
-        element = ET.Element(self.tag_table_row)
+        element = moin_page.table_row()
         self.stack_push(element)
 
         for match in self.tablerow_re.finditer(content):
@@ -313,7 +291,7 @@ class Converter(ConverterMacro):
             self.stack_clear()
 
         if self.stack_top_check('body'):
-            element = ET.Element(self.tag_p)
+            element = moin_page.p()
             self.stack_push(element)
         # If we are in a paragraph already, don't loose the whitespace
         else:
@@ -326,7 +304,7 @@ class Converter(ConverterMacro):
 
     def inline_emph_repl(self, emph):
         if not self.stack_top_check('emphasis'):
-            self.stack_push(ET.Element(self.tag_emphasis))
+            self.stack_push(moin_page.emphasis())
         else:
             self.stack_pop_name('emphasis')
             self.stack_pop()
@@ -335,7 +313,7 @@ class Converter(ConverterMacro):
 
     def inline_strong_repl(self, strong):
         if not self.stack_top_check('strong'):
-            self.stack_push(ET.Element(self.tag_strong))
+            self.stack_push(moin_page.strong())
         else:
             self.stack_pop_name('strong')
             self.stack_pop()
@@ -343,7 +321,7 @@ class Converter(ConverterMacro):
     inline_linebreak = r'(?P<linebreak> \\\\ )'
 
     def inline_linebreak_repl(self, linebreak):
-        element = ET.Element(self.tag_line_break)
+        element = moin_page.line_break()
         self.stack_top_append(element)
 
     inline_escape = r'(?P<escape> ~ (?P<escaped_char>\S) )'
@@ -379,7 +357,7 @@ class Converter(ConverterMacro):
         else:
             target = link_url
             text = link_url
-        element = ET.Element(self.tag_a, attrib = {self.tag_href: target})
+        element = moin_page.a(attrib={xlink.href: target})
         self.stack_push(element)
         self.parse_inline(link_text or text, self.link_desc_re)
         self.stack_pop()
@@ -409,7 +387,7 @@ class Converter(ConverterMacro):
     """
 
     def inline_nowiki_repl(self, nowiki, nowiki_text):
-        self.stack_top_append(ET.Element(self.tag_code, children=[nowiki_text]))
+        self.stack_top_append(moin_page.code(children=(nowiki_text, )))
 
     inline_object = r"""
         (?P<object>
@@ -423,11 +401,11 @@ class Converter(ConverterMacro):
     def inline_object_repl(self, object, object_target, object_text=None):
         """Handles objects included in the page."""
 
-        attrib = {self.tag_href: object_target}
+        attrib = {xlink.href: object_target}
         if object_text is not None:
-            attrib[self.tag_alt] = object_text
+            attrib[moin_page.alt] = object_text
 
-        element = ET.Element(self.tag_object, attrib)
+        element = moin_page.object(attrib)
         self.stack_top_append(element)
 
     inline_url = r"""
@@ -448,8 +426,8 @@ class Converter(ConverterMacro):
 
         if not escaped_url:
             # this url is NOT escaped
-            attrib = {self.tag_href: url_target}
-            element = ET.Element(self.tag_a, attrib=attrib, children=[url_target])
+            attrib = {xlink.href: url_target}
+            element = moin_page.a(attrib=attrib, children=(url_target, ))
             self.stack_top_append(element)
         else:
             # this url is escaped, we render it as text
@@ -509,12 +487,12 @@ class Converter(ConverterMacro):
         if cur.tag.name != 'list':
             generate = list_type == '#' and 'ordered' or 'unordered'
             attrib = {moin_page.item_label_generate: generate}
-            element = ET.Element(self.tag_list, attrib=attrib)
+            element = moin_page.list(attrib=attrib)
             element.list_level, element.list_type = list_level, list_type
             self.stack_push(element)
 
-        element = ET.Element(self.tag_list_item)
-        element_body = ET.Element(self.tag_list_item_body)
+        element = moin_page.list_item()
+        element_body = moin_page.list_item_body()
         element_body.list_level, element_body.list_type = list_level, list_type
 
         self.stack_push(element)
@@ -539,7 +517,7 @@ class Converter(ConverterMacro):
     """
 
     def tablerow_cell_repl(self, cell, cell_text, cell_head=None):
-        element = ET.Element(self.tag_table_cell)
+        element = moin_page.table_cell()
         self.stack_push(element)
 
         # TODO: How to handle table headings
