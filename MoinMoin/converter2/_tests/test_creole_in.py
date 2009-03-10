@@ -25,29 +25,29 @@ class TestConverter(object):
 
     def test_base(self):
         pairs = [
-            ('Text',
+            (u'Text',
                 '<page><body><p>Text</p></body></page>'),
-            ('Text\nTest',
+            (u'Text\nTest',
                 '<page><body><p>Text\nTest</p></body></page>'),
-            ('Text\n\nTest',
+            (u'Text\n\nTest',
                 '<page><body><p>Text</p><p>Test</p></body></page>'),
-            ('Line\\\\Break',
+            (u'Line\\\\Break',
                 '<page><body><p>Line<line-break />Break</p></body></page>'),
-            ('Line\\\\\nBreak',
+            (u'Line\\\\\nBreak',
                 '<page><body><p>Line<line-break />\nBreak</p></body></page>'),
-            ('http://moinmo.in/',
+            (u'http://moinmo.in/',
                 '<page><body><p><a xlink:href="http://moinmo.in/">http://moinmo.in/</a></p></body></page>'),
-            ('[[http://moinmo.in/]]',
+            (u'[[http://moinmo.in/]]',
                 '<page><body><p><a xlink:href="http://moinmo.in/">http://moinmo.in/</a></p></body></page>'),
-            ('[[http://moinmo.in/|MoinMoin]]',
+            (u'[[http://moinmo.in/|MoinMoin]]',
                 '<page><body><p><a xlink:href="http://moinmo.in/">MoinMoin</a></p></body></page>'),
-            ('[[MoinMoin]]',
+            (u'[[MoinMoin]]',
                 '<page><body><p><a xlink:href="wiki.local:MoinMoin">MoinMoin</a></p></body></page>'),
-            ('{{http://moinmo.in/}}',
+            (u'{{http://moinmo.in/}}',
                 '<page><body><p><object xlink:href="http://moinmo.in/" /></p></body></page>'),
-            ('{{http://moinmo.in/|MoinMoin}}',
+            (u'{{http://moinmo.in/|MoinMoin}}',
                 '<page><body><p><object alt="MoinMoin" xlink:href="http://moinmo.in/" /></p></body></page>'),
-            ('----',
+            (u'----',
                 '<page><body><separator /></body></page>'),
         ]
         for i in pairs:
@@ -55,17 +55,17 @@ class TestConverter(object):
 
     def test_emphasis(self):
         pairs = [
-            ('//Emphasis//',
+            (u'//Emphasis//',
                 '<page><body><p><emphasis>Emphasis</emphasis></p></body></page>'),
-            ('**Strong**',
+            (u'**Strong**',
                 '<page><body><p><strong>Strong</strong></p></body></page>'),
-            ('//**Both**//',
+            (u'//**Both**//',
                 '<page><body><p><emphasis><strong>Both</strong></emphasis></p></body></page>'),
-            ('**//Both//**',
+            (u'**//Both//**',
                 '<page><body><p><strong><emphasis>Both</emphasis></strong></p></body></page>'),
-            ('Text //Emphasis\n//Text',
+            (u'Text //Emphasis\n//Text',
                 '<page><body><p>Text <emphasis>Emphasis\n</emphasis>Text</p></body></page>'),
-            ('Text //Emphasis\n\nText',
+            (u'Text //Emphasis\n\nText',
                 '<page><body><p>Text <emphasis>Emphasis</emphasis></p><p>Text</p></body></page>'),
         ]
         for i in pairs:
@@ -73,13 +73,13 @@ class TestConverter(object):
 
     def test_escape(self):
         pairs = [
-            ('~http://moinmo.in/',
+            (u'~http://moinmo.in/',
                 '<page><body><p>http://moinmo.in/</p></body></page>'),
-            ('~[[escape]]',
+            (u'~[[escape]]',
                 '<page><body><p>[[escape]]</p></body></page>'),
-            ('~<<escape>>',
+            (u'~<<escape>>',
                 '<page><body><p>&lt;&lt;escape&gt;&gt;</p></body></page>'),
-            ('~{~{{escape}}}',
+            (u'~{~{{escape}}}',
                 '<page><body><p>{{{escape}}}</p></body></page>'),
         ]
         for i in pairs:
@@ -87,35 +87,35 @@ class TestConverter(object):
 
     def test_heading(self):
         pairs = [
-            ('= Heading 1',
+            (u'= Heading 1',
                 '<page><body><h outline-level="1">Heading 1</h></body></page>'),
-            ('== Heading 2',
+            (u'== Heading 2',
                 '<page><body><h outline-level="2">Heading 2</h></body></page>'),
-            ('=== Heading 3',
+            (u'=== Heading 3',
                 '<page><body><h outline-level="3">Heading 3</h></body></page>'),
-            ('==== Heading 4',
+            (u'==== Heading 4',
                 '<page><body><h outline-level="4">Heading 4</h></body></page>'),
-            ('===== Heading 5',
+            (u'===== Heading 5',
                 '<page><body><h outline-level="5">Heading 5</h></body></page>'),
-            ('====== Heading 6',
+            (u'====== Heading 6',
                 '<page><body><h outline-level="6">Heading 6</h></body></page>'),
-            ('= Heading 1 =',
+            (u'= Heading 1 =',
                 '<page><body><h outline-level="1">Heading 1</h></body></page>'),
-            ('== Heading 2 ==',
+            (u'== Heading 2 ==',
                 '<page><body><h outline-level="2">Heading 2</h></body></page>'),
-            ('=== Heading 3 ===',
+            (u'=== Heading 3 ===',
                 '<page><body><h outline-level="3">Heading 3</h></body></page>'),
-            ('==== Heading 4 ====',
+            (u'==== Heading 4 ====',
                 '<page><body><h outline-level="4">Heading 4</h></body></page>'),
-            ('===== Heading 5 =====',
+            (u'===== Heading 5 =====',
                 '<page><body><h outline-level="5">Heading 5</h></body></page>'),
-            ('====== Heading 6 ======',
+            (u'====== Heading 6 ======',
                 '<page><body><h outline-level="6">Heading 6</h></body></page>'),
-            ('=== Heading 3',
+            (u'=== Heading 3',
                 '<page><body><h outline-level="3">Heading 3</h></body></page>'),
-            ('=== Heading 3 =',
+            (u'=== Heading 3 =',
                 '<page><body><h outline-level="3">Heading 3</h></body></page>'),
-            ('=== Heading 3 ==',
+            (u'=== Heading 3 ==',
                 '<page><body><h outline-level="3">Heading 3</h></body></page>'),
         ]
         for i in pairs:
@@ -123,23 +123,23 @@ class TestConverter(object):
 
     def test_list(self):
         pairs = [
-            ('* Item',
+            (u'* Item',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>'),
-            (' *Item',
+            (u' *Item',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>'),
-            ('*Item',
+            (u'*Item',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>'),
-            ('* Item\nItem',
+            (u'* Item\nItem',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item\nItem</list-item-body></list-item></list></body></page>'),
-            ('* Item 1\n*Item 2',
+            (u'* Item 1\n*Item 2',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>'),
-            ('* Item 1\n** Item 1.2\n* Item 2',
+            (u'* Item 1\n** Item 1.2\n* Item 2',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item 1<list item-label-generate="unordered"><list-item><list-item-body>Item 1.2</list-item-body></list-item></list></list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>'),
-            ('* List 1\n\n* List 2',
+            (u'* List 1\n\n* List 2',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>List 1</list-item-body></list-item></list><list item-label-generate="unordered"><list-item><list-item-body>List 2</list-item-body></list-item></list></body></page>'),
-            ('# Item',
+            (u'# Item',
                 '<page><body><list item-label-generate="ordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>'),
-            ('* List 1\n# List 2',
+            (u'* List 1\n# List 2',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>List 1</list-item-body></list-item></list><list item-label-generate="ordered"><list-item><list-item-body>List 2</list-item-body></list-item></list></body></page>'),
         ]
         for i in pairs:
@@ -147,21 +147,21 @@ class TestConverter(object):
 
     def test_macro(self):
         pairs = [
-            ('<<BR>>',
+            (u'<<BR>>',
                 '<page><body /></page>'),
-            ('Text<<BR>>Text',
+            (u'Text<<BR>>Text',
                 '<page><body><p>Text<line-break />Text</p></body></page>'),
-            ('<<Macro>>',
+            (u'<<Macro>>',
                 '<page><body><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="block" macro-name="Macro" /></body></page>'),
-            (' <<Macro>> ',
+            (u' <<Macro>> ',
                 '<page><body><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="block" macro-name="Macro" /></body></page>'),
-            ('Text <<Macro>>',
+            (u'Text <<Macro>>',
                 '<page><body><p>Text <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="inline" macro-name="Macro" /></p></body></page>'),
-            ('Text\n<<Macro>>',
+            (u'Text\n<<Macro>>',
                 '<page><body><p>Text</p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="block" macro-name="Macro" /></body></page>'),
-            ('Text\nText <<Macro>>',
+            (u'Text\nText <<Macro>>',
                 '<page><body><p>Text\nText <macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="inline" macro-name="Macro" /></p></body></page>'),
-            ('Text\n\n<<Macro>>',
+            (u'Text\n\n<<Macro>>',
                 '<page><body><p>Text</p><macro alt="&lt;&lt;Macro&gt;&gt;" macro-args="" macro-context="block" macro-name="Macro" /></body></page>'),
         ]
         for i in pairs:
@@ -169,19 +169,19 @@ class TestConverter(object):
 
     def test_table(self):
         pairs = [
-            ('|Cell',
+            (u'|Cell',
                 '<page><body><table><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></body></page>'),
-            ('|Cell|',
+            (u'|Cell|',
                 '<page><body><table><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></body></page>'),
-            ('|Cell 1|Cell 2',
+            (u'|Cell 1|Cell 2',
                 '<page><body><table><table-body><table-row><table-cell>Cell 1</table-cell><table-cell>Cell 2</table-cell></table-row></table-body></table></body></page>'),
-            ('|Cell 1|Cell 2|',
+            (u'|Cell 1|Cell 2|',
                 '<page><body><table><table-body><table-row><table-cell>Cell 1</table-cell><table-cell>Cell 2</table-cell></table-row></table-body></table></body></page>'),
-            ('|Row 1\n|Row 2\n',
+            (u'|Row 1\n|Row 2\n',
                 '<page><body><table><table-body><table-row><table-cell>Row 1</table-cell></table-row><table-row><table-cell>Row 2</table-cell></table-row></table-body></table></body></page>'),
-            ('|Row 1|\n|Row 2|\n',
+            (u'|Row 1|\n|Row 2|\n',
                 '<page><body><table><table-body><table-row><table-cell>Row 1</table-cell></table-row><table-row><table-cell>Row 2</table-cell></table-row></table-body></table></body></page>'),
-            ('|Cell 1.1|Cell 1.2|\n|Cell 2.1|Cell 2.2|\n',
+            (u'|Cell 1.1|Cell 1.2|\n|Cell 2.1|Cell 2.2|\n',
                 '<page><body><table><table-body><table-row><table-cell>Cell 1.1</table-cell><table-cell>Cell 1.2</table-cell></table-row><table-row><table-cell>Cell 2.1</table-cell><table-cell>Cell 2.2</table-cell></table-row></table-body></table></body></page>'),
         ]
         for i in pairs:
@@ -189,20 +189,20 @@ class TestConverter(object):
 
     def test_nowiki(self):
         pairs = [
-            ('{{{nowiki}}}',
+            (u'{{{nowiki}}}',
                 '<page><body><p><code>nowiki</code></p></body></page>'),
-            ('{{{{nowiki}}}}',
+            (u'{{{{nowiki}}}}',
                 '<page><body><p><code>{nowiki}</code></p></body></page>'),
-            ('text: {{{nowiki}}}, text',
+            (u'text: {{{nowiki}}}, text',
                 '<page><body><p>text: <code>nowiki</code>, text</p></body></page>'),
-            ('{{{\nnowiki\n}}}',
+            (u'{{{\nnowiki\n}}}',
                 '<page><body><blockcode>nowiki</blockcode></body></page>'),
-            ('{{{\nnowiki\nno\nwiki\n}}}',
+            (u'{{{\nnowiki\nno\nwiki\n}}}',
                 '<page><body><blockcode>nowiki\nno\nwiki</blockcode></body></page>'),
-            ('{{{nowiki}}} {{{nowiki}}}',
+            (u'{{{nowiki}}} {{{nowiki}}}',
                 '<page><body><p><code>nowiki</code> <code>nowiki</code></p></body></page>'),
             # XXX: Is <page> correct?
-            ('{{{\n#!creole background-color=red\nnowiki\n}}}',
+            (u'{{{\n#!creole background-color=red\nnowiki\n}}}',
                '<page><body><page background-color="red"><body><p>nowiki</p></body></page></body></page>'),
         ]
         for i in pairs:
@@ -210,15 +210,15 @@ class TestConverter(object):
 
     def test_composite(self):
         pairs = [
-            ('Text\n* Item\n\nText',
+            (u'Text\n* Item\n\nText',
                 '<page><body><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><p>Text</p></body></page>'),
-            ('Text\n* Item\n= Heading',
+            (u'Text\n* Item\n= Heading',
                 '<page><body><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><h outline-level="1">Heading</h></body></page>'),
-            ('Text\n* Item\n{{{\nnowiki\n}}}',
+            (u'Text\n* Item\n{{{\nnowiki\n}}}',
                 '<page><body><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><blockcode>nowiki</blockcode></body></page>'),
-            ('Text\n* Item\n|Item',
+            (u'Text\n* Item\n|Item',
                 '<page><body><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><table><table-body><table-row><table-cell>Item</table-cell></table-row></table-body></table></body></page>'),
-            ('Text\n|Item\nText',
+            (u'Text\n|Item\nText',
                 '<page><body><p>Text</p><table><table-body><table-row><table-cell>Item</table-cell></table-row></table-body></table><p>Text</p></body></page>'),
         ]
         for i in pairs:
@@ -229,9 +229,9 @@ class TestConverter(object):
         file = StringIO()
         tree = ET.ElementTree(elem)
         tree.write(file, namespaces=namespaces_list, **options)
-        return cls.output_re.sub('', file.getvalue())
+        return cls.output_re.sub(u'', file.getvalue())
 
     def _do(self, input, output):
-        out = self.conv(unicode(input).split('\n'))
+        out = self.conv(input.split(u'\n'))
         assert self._serialize(out) == output
 
