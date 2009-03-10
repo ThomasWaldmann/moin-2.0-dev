@@ -34,8 +34,6 @@ class Converter(object):
         if self.page_url:
             attrib[moin_page.page_href] = unicode(self.page_url)
 
-        root = moin_page.page(attrib=attrib)
-
         blockcode = moin_page.blockcode()
 
         for line in content:
@@ -43,8 +41,8 @@ class Converter(object):
                 blockcode.append('\n')
             blockcode.append(line.expandtabs())
 
-        root.append(blockcode)
-        return root
+        body = moin_page.body(children=(blockcode, ))
+        return moin_page.page(attrib=attrib, children=(body, ))
 
 from MoinMoin.converter2._registry import default_registry
 # Register wildcards behind anything else
