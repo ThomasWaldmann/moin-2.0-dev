@@ -5,6 +5,8 @@
     Code for building messages informing about events (changes)
     happening in the wiki.
 
+    TODO check usage of user.getUserIdentification(request) vs. page.last_editor()
+
     @copyright: 2007 by Karol Nowak <grywacz@gmail.com>
     @license: GNU GPL, see COPYING for details.
 """
@@ -79,7 +81,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
         'The "%(pagename)s" page has been changed by %(editor)s:\n') % {
             'pagename': page.page_name,
             'editor': page.last_editor(),
-            'sitename': page.cfg.sitename or request.getBaseURL(),
+            'sitename': page.cfg.sitename or request.url_root,
         }
 
         # append a diff (or append full page text if there is no diff)
@@ -99,7 +101,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
             'The page "%(pagename)s" has been deleted by %(editor)s:\n\n') % {
                 'pagename': page.page_name,
                 'editor': page.last_editor(),
-                'sitename': page.cfg.sitename or request.getBaseURL(),
+                'sitename': page.cfg.sitename or request.url_root,
         }
 
     elif msgtype == "page_renamed":
@@ -108,7 +110,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
             'The page "%(pagename)s" has been renamed from "%(oldname)s" by %(editor)s:\n') % {
                 'editor': page.last_editor(),
                 'pagename': page.page_name,
-                'sitename': page.cfg.sitename or request.getBaseURL(),
+                'sitename': page.cfg.sitename or request.url_root,
                 'oldname': kwargs['old_name']
         }
 
@@ -151,7 +153,7 @@ def attachment_added(request, _, page_name, attach_name, attach_size):
 
     data['subject'] = _("New attachment added to page %(pagename)s on %(sitename)s") % {
                 'pagename': page_name,
-                'sitename': request.cfg.sitename or request.getBaseURL(),
+                'sitename': request.cfg.sitename or request.url_root,
                 }
 
     data['text'] = _("Dear Wiki user,\n\n"

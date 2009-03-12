@@ -83,7 +83,7 @@ def execute(pagename, request):
         _ = request.getText
         default_count, limit_max_count = request.cfg.history_count
         try:
-            max_count = int(request.form.get('max_count', [default_count])[0])
+            max_count = int(request.values.get('max_count', default_count))
         except:
             max_count = default_count
         max_count = min(max_count, limit_max_count)
@@ -163,7 +163,7 @@ def execute(pagename, request):
                     if revision[EDIT_LOG_ACTION] == 'ATTNEW':
                         actions.append(render_action(_('view'), {'action': 'AttachFile', 'do': 'view', 'target': '%s' % filename}))
                     elif revision[EDIT_LOG_ACTION] == 'ATTDRW':
-                        actions.append(render_action(_('edit'), {'action': 'AttachFile', 'drawing': '%s' % filename.replace(".draw", "")}))
+                        actions.append(render_action(_('edit'), {'action': 'AttachFile', 'drawing': '%s' % filename.replace(".tdraw", "")}))
 
                     actions.append(render_action(_('get'), {'action': 'AttachFile', 'do': 'get', 'target': '%s' % filename}))
                     if request.user.may.delete(pagename):
@@ -210,8 +210,6 @@ def execute(pagename, request):
 
     title = page.split_title()
 
-    request.emit_http_headers()
-
     request.setContentLanguage(request.lang)
     f = request.formatter
 
@@ -230,14 +228,8 @@ def execute(pagename, request):
         request.write("[%s] " % page.link_to(request, text=text, querystr=querystr, rel='nofollow'))
     request.write(f.paragraph(0))
 
-    try:
-        show_hitcounts = int(request.form.get('hitcounts', [0])[0]) != 0
-    except ValueError:
-        show_hitcounts = False
-    try:
-        show_general = int(request.form.get('general', [0])[0]) != 0
-    except ValueError:
-        show_general = False
+    show_hitcounts = int(request.values.get('hitcounts', 0)) != 0
+    show_general = int(request.values.get('general', 0)) != 0
 
     if show_hitcounts:
         from MoinMoin.stats import hitcounts

@@ -23,7 +23,7 @@ class TestAction:
         self.page = create_page(request, self.pagename, u'= title1 =\n||A||B||\n')
         m = make_macro(self.request, self.page)
         result = Action.macro_Action(m, 'raw')
-        expected = '<a href="./AutoCreatedMoinMoinTemporaryTestPageForAction?action=raw">raw</a>'
+        expected = '<a href="/AutoCreatedMoinMoinTemporaryTestPageForAction?action=raw">raw</a>'
         assert result == expected
 
 coverage_modules = ['MoinMoin.macro.Action']

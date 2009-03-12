@@ -69,8 +69,8 @@ class TestSendCached:
                                         key=key+'.meta', use_pickle=True)
         meta = meta_cache.content()
         assert meta['httpdate_last_modified'].endswith(' GMT') # only a very rough check, it has used cache mtime as last_modified
-        assert "Content-Type: application/octet-stream" in meta['headers']
-        assert "Content-Length: %d" % len(data) in meta['headers']
+        assert ("Content-Type", "application/octet-stream") in meta['headers']
+        assert ("Content-Length", len(data)) in meta['headers']
 
     def test_put_cache_guess_ct_give_lm(self):
         """Test if put_cache() works, when we give filename (so it guesses content_type) and last_modified"""
@@ -88,8 +88,8 @@ class TestSendCached:
                                         key=key+'.meta', use_pickle=True)
         meta = meta_cache.content()
         assert meta['httpdate_last_modified'] == 'Thu, 01 Jan 1970 00:00:01 GMT'
-        assert "Content-Type: image/png" in meta['headers']
-        assert "Content-Length: %d" % len(data) in meta['headers']
+        assert ("Content-Type", "image/png") in meta['headers']
+        assert ("Content-Length", len(data)) in meta['headers']
 
     def test_put_cache_file_like_data(self):
         """Test if put_cache() works when we give it a file like object for the content"""
@@ -108,8 +108,8 @@ class TestSendCached:
                                         key=key+'.meta', use_pickle=True)
         meta = meta_cache.content()
         assert meta['httpdate_last_modified'].endswith(' GMT') # only a very rough check, it has used cache mtime as last_modified
-        assert "Content-Type: application/octet-stream" in meta['headers']
-        assert "Content-Length: %d" % len(data) in meta['headers']
+        assert ("Content-Type", "application/octet-stream") in meta['headers']
+        assert ("Content-Length", len(data)) in meta['headers']
 
         data_cache = caching.CacheEntry(request,
                                         arena=cache.cache_arena,
