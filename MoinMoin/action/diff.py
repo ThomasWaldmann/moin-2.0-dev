@@ -25,20 +25,20 @@ def execute(pagename, request):
         return
 
     # spacing flag?
-    ignorews = int(request.form.get('ignorews', [0])[0])
+    ignorews = int(request.values.get('ignorews', 0))
 
     try:
-        date = int(request.form.get('date', [None])[0])
+        date = int(request.values.get('date'))
     except StandardError:
         date = None
 
     if date is None:
         try:
-            rev1 = int(request.form.get('rev1', ['-2'])[0])
+            rev1 = int(request.values.get('rev1', -2))
         except StandardError:
             rev1 = -2  # -2 means second latest rev (not implemented by backend)
         try:
-            rev2 = int(request.form.get('rev2', ['-1'])[0])
+            rev2 = int(request.values.get('rev2', -1))
         except StandardError:
             rev2 = -1  # -1 means latest rev (implemented by backend)
 

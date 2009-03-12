@@ -28,12 +28,17 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, time, zipfile, mimetypes, errno
+import os, time, zipfile, errno, datetime
+from StringIO import StringIO
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import config, wikiutil, packages
+# keep both imports below as they are, order is important:
+from MoinMoin import wikiutil
+import mimetypes
+
+from MoinMoin import config, packages
 from MoinMoin.Page import Page
 from MoinMoin.util import filesys, timefuncs
 from MoinMoin.security.textcha import TextCha
@@ -42,6 +47,7 @@ from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
 from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError
 from MoinMoin.Page import EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, DELETED
+from MoinMoin.support import tarfile
 
 action_name = __name__.split('.')[-1]
 
@@ -76,34 +82,20 @@ def absoluteName(url, pagename):
     else:
         return u"/".join(pieces[:-1]), pieces[-1]
 
-
-def attachUrl(request, pagename, filename=None, **kw):
-    # filename is not used yet, but should be used later to make a sub-item url
-    if kw:
-        qs = '?%s' % wikiutil.makeQueryString(kw, want_unicode=False)
-    else:
-        qs = ''
-    return "%s/%s%s" % (request.getScriptname(), wikiutil.quoteWikinameURL(pagename), qs)
-
-
 def getAttachUrl(pagename, filename, request, addts=0, escaped=0, do='get', drawing='', upload=False):
     """ Get URL that points to attachment `filename` of page `pagename`. """
     if upload:
         if not drawing:
-            url = attachUrl(request, pagename, filename,
-                            rename=wikiutil.taintfilename(filename), action=action_name)
+            url = request.href(pagename, rename=wikiutil.taintfilename(filename),
+                               action=action_name)
         else:
-            url = attachUrl(request, pagename, filename,
-                            rename=wikiutil.taintfilename(filename), drawing=drawing, action=action_name)
+            url = request.href(pagename, rename=wikiutil.taintfilename(filename),
+                               drawing=drawing, action=action_name)
     else:
         if not drawing:
-            url = attachUrl(request, pagename, filename,
-                            target=filename, action=action_name, do=do)
+            url = request.href(pagename, target=filename, action=action_name, do=do)
         else:
-            url = attachUrl(request, pagename, filename,
-                            drawing=drawing, action=action_name)
-    if escaped:
-        url = wikiutil.escape(url)
+            url = request.href(pagename, drawing=drawing, action=action_name)
     return url
 
 
@@ -251,10 +243,10 @@ def _access_file(pagename, request):
     _ = request.getText
 
     error = None
-    if not request.form.get('target', [''])[0]:
+    if not request.values.get('target'):
         error = _("Filename of attachment not specified!")
     else:
-        filename = wikiutil.taintfilename(request.form['target'][0])
+        filename = wikiutil.taintfilename(request.values['target'])
         fpath = getFilename(request, pagename, filename)
 
         if os.path.isfile(fpath):
@@ -330,7 +322,7 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
                          fmt.text(label_get) +
                          fmt.url(0))
 
-            if ext == '.draw':
+            if ext == '.tdraw':
                 links.append(fmt.url(1, getAttachUrl(pagename, file, request, drawing=base)) +
                              fmt.text(label_edit) +
                              fmt.url(0))
@@ -430,14 +422,15 @@ def send_hotdraw(pagename, request):
 
     now = time.time()
     pubpath = request.cfg.url_prefix_static + "/applets/TWikiDrawPlugin"
-    basename = request.form['drawing'][0]
-    drawpath = getAttachUrl(pagename, basename + '.draw', request, escaped=1)
-    pngpath = getAttachUrl(pagename, basename + '.png', request, escaped=1)
-    pagelink = attachUrl(request, pagename, '', action=action_name, ts=now)
+    basename = request.values['drawing']
+    ci = ContainerItem(request, pagename, basename + '.tdraw')
+    drawpath = ci.member_url(basename + '.draw')
+    pngpath = ci.member_url(basename + '.png')
+    pagelink = request.href(pagename, action=action_name, ts=now)
     helplink = Page(request, "HelpOnActions/AttachFile").url(request)
-    savelink = attachUrl(request, pagename, '', action=action_name, do='savedrawing')
+    savelink = request.href(pagename, action=action_name, do='savedrawing')
     #savelink = Page(request, pagename).url(request) # XXX include target filename param here for twisted
-                                           # request, {'savename': request.form['drawing'][0]+'.draw'}
+                                           # request, {'savename': request.values['drawing']+'.draw'}
     #savelink = '/cgi-bin/dumpform.bat'
 
     timestamp = '&amp;ts=%s' % now
@@ -482,7 +475,7 @@ def send_uploadform(pagename, request):
     if writeable:
         request.write('<h2>' + _("New Attachment") + '</h2>')
         request.write("""
-<form action="%(baseurl)s/%(pagename)s" method="POST" enctype="multipart/form-data">
+<form action="%(url)s" method="POST" enctype="multipart/form-data">
 <dl>
 <dt>%(upload_label_file)s</dt>
 <dd><input type="file" name="file" size="50"></dd>
@@ -499,14 +492,13 @@ def send_uploadform(pagename, request):
 </p>
 </form>
 """ % {
-    'baseurl': request.getScriptname(),
-    'pagename': wikiutil.quoteWikinameURL(pagename),
+    'url': request.href(pagename),
     'action_name': action_name,
     'upload_label_file': _('File to upload'),
     'upload_label_rename': _('Rename to'),
-    'rename': wikiutil.escape(request.form.get('rename', [''])[0], 1),
+    'rename': wikiutil.escape(request.values.get('rename', ''), 1),
     'upload_label_overwrite': _('Overwrite existing attachment of same name'),
-    'overwrite_checked': ('', 'checked')[request.form.get('overwrite', ['0'])[0] == '1'],
+    'overwrite_checked': ('', 'checked')[request.form.get('overwrite', '0') == '1'],
     'upload_button': _('Upload'),
     'textcha': TextCha(request).render(),
 })
@@ -517,7 +509,7 @@ def send_uploadform(pagename, request):
     if not writeable:
         request.write('<p>%s</p>' % _('You are not allowed to attach a file to this page.'))
 
-    if writeable and request.form.get('drawing', [None])[0]:
+    if writeable and request.values.get('drawing'):
         send_hotdraw(pagename, request)
 
 
@@ -529,15 +521,15 @@ def execute(pagename, request):
     """ Main dispatcher for the 'AttachFile' action. """
     _ = request.getText
 
-    do = request.form.get('do', ['upload_form'])
-    handler = globals().get('_do_%s' % do[0])
+    do = request.values.get('do', 'upload_form')
+    handler = globals().get('_do_%s' % do)
     if handler:
-        filename = request.form.get('target', None)
+        filename = request.values.get('target')
         if filename:
-            filename = wikiutil.taintfilename(filename[0])
+            filename = wikiutil.taintfilename(filename)
         msg = handler(pagename, request, filename=filename)
     else:
-        msg = _('Unsupported AttachFile sub-action: %s') % (wikiutil.escape(do[0]), )
+        msg = _('Unsupported AttachFile sub-action: %s') % wikiutil.escape(do)
     if msg:
         error_msg(pagename, request, msg)
 
@@ -549,7 +541,6 @@ def _do_upload_form(pagename, request, filename):
 def upload_form(pagename, request, msg=''):
     _ = request.getText
 
-    request.emit_http_headers()
     # Use user interface language for this generated page
     request.setContentLanguage(request.lang)
     request.theme.add_msg(msg, "dialog")
@@ -580,9 +571,15 @@ def _do_upload(pagename, request, filename):
         return _('TextCha: Wrong answer! Go back and try again...')
 
     form = request.form
-    overwrite = form.get('overwrite', [u'0'])[0]
+
+    file_upload = request.files.get('file')
+    if not file_upload:
+        # This might happen when trying to upload file names
+        # with non-ascii characters on Safari.
+        return _("No file content. Delete non ASCII characters from the file name and try again.")
+
     try:
-        overwrite = int(overwrite)
+        overwrite = int(form.get('overwrite', '0'))
     except:
         overwrite = 0
 
@@ -591,38 +588,82 @@ def _do_upload(pagename, request, filename):
     if overwrite and not request.user.may.delete(pagename):
         return _('You are not allowed to overwrite a file attachment of this page.')
 
-    filename = form.get('file__filename__')
-    if not filename:
-        return _("Filename of attachment not specified!")
-    rename = form.get('rename', [u''])[0].strip()
+    rename = form.get('rename', u'').strip()
     if rename:
         target = rename
     else:
-        target = filename
+        target = file_upload.filename
 
-    target = preprocess_filename(target)
     target = wikiutil.clean_input(target)
-
-    # get file content
-    filecontent = request.form.get('file', [None])[0]
-    if filecontent is None:
-        # This might happen when trying to upload file names
-        # with non-ascii characters on Safari.
-        return _("No file content. Delete non ASCII characters from the file name and try again.")
+    if not target:
+        return _("Filename of attachment not specified!")
 
     # add the attachment
     try:
-        target, bytes = add_attachment(request, pagename, target, filecontent, overwrite=overwrite)
+        target, bytes = add_attachment(request, pagename, target, file_upload.stream, overwrite=overwrite)
         msg = _("Attachment '%(target)s' (remote name '%(filename)s')"
                 " with %(bytes)d bytes saved.") % {
-                'target': target, 'filename': filename, 'bytes': bytes}
+                'target': target, 'filename': file_upload.filename, 'bytes': bytes}
     except AttachmentAlreadyExists:
         msg = _("Attachment '%(target)s' (remote name '%(filename)s') already exists.") % {
-            'target': target, 'filename': filename}
+            'target': target, 'filename': file_upload.filename}
 
     # return attachment list
     upload_form(pagename, request, msg)
 
+
+class ContainerItem:
+    """ A storage container (multiple objects in 1 tarfile) """
+
+    def __init__(self, request, pagename, containername):
+        self.request = request
+        self.pagename = pagename
+        self.containername = containername
+        self.container_filename = getFilename(request, pagename, containername)
+
+    def member_url(self, member):
+        """ return URL for accessing container member
+            (we use same URL for get (GET) and put (POST))
+        """
+        url = Page(self.request, self.pagename).url(self.request, {
+            'action': 'AttachFile',
+            'do': 'box',  # shorter to type than 'container'
+            'target': self.containername,
+            #'member': member,
+        })
+        return url + '&member=%s' % member
+        # member needs to be last in qs because twikidraw looks for "file extension" at the end
+
+    def get(self, member):
+        """ return a file-like object with the member file data
+        """
+        tf = tarfile.TarFile(self.container_filename)
+        return tf.extractfile(member)
+
+    def put(self, member, content, content_length=None):
+        """ save data into a container's member """
+        tf = tarfile.TarFile(self.container_filename, mode='a')
+        if isinstance(member, unicode):
+            member = member.encode('utf-8')
+        ti = tarfile.TarInfo(member)
+        if isinstance(content, str):
+            if content_length is None:
+                content_length = len(content)
+            content = StringIO(content) # we need a file obj
+        elif not hasattr(content, 'read'):
+            logging.error("unsupported content object: %r" % content)
+            raise
+        assert content_length >= 0  # we don't want -1 interpreted as 4G-1
+        ti.size = content_length
+        tf.addfile(ti, content)
+        tf.close()
+
+    def truncate(self):
+        f = open(self.container_filename, 'w')
+        f.close()
+
+    def exists(self):
+        return os.path.exists(self.container_filename)
 
 def _do_savedrawing(pagename, request, filename):
     _ = request.getText
@@ -630,44 +671,38 @@ def _do_savedrawing(pagename, request, filename):
     if not request.user.may.write(pagename):
         return _('You are not allowed to save a drawing on this page.')
 
-    filename = request.form['filename'][0]
-    filecontent = request.form['filepath'][0]
+    file_upload = request.files.get('filepath')
+    if not file_upload:
+        # This might happen when trying to upload file names
+        # with non-ascii characters on Safari.
+        return _("No file content. Delete non ASCII characters from the file name and try again.")
 
+    filename = request.form['filename']
     basepath, basename = os.path.split(filename)
     basename, ext = os.path.splitext(basename)
 
-    # get directory, and possibly create it
-    attach_dir = getAttachDir(request, pagename, create=1)
-    savepath = os.path.join(attach_dir, basename + ext)
-
-    if ext == '.draw':
-        _addLogEntry(request, 'ATTDRW', pagename, basename + ext)
+    ci = ContainerItem(request, pagename, basename + '.tdraw')
+    filecontent = file_upload.stream
+    content_length = None
+    if ext == '.draw': # TWikiDraw POSTs this first
+        _addLogEntry(request, 'ATTDRW', pagename, basename + '.tdraw')
+        ci.truncate()
         filecontent = filecontent.read() # read file completely into memory
         filecontent = filecontent.replace("\r", "")
     elif ext == '.map':
+        # touch attachment directory to invalidate cache if new map is saved
+        attach_dir = getAttachDir(request, pagename)
+        os.utime(attach_dir, None)
         filecontent = filecontent.read() # read file completely into memory
         filecontent = filecontent.strip()
-
-    if filecontent:
-        # filecontent is either a file or a non-empty string
-        stream = open(savepath, 'wb')
-        try:
-            _write_stream(filecontent, stream)
-        finally:
-            stream.close()
     else:
-        # filecontent is empty string (e.g. empty map file), delete the target file
-        try:
-            os.unlink(savepath)
-        except OSError, err:
-            if err.errno != errno.ENOENT: # no such file
-                raise
+        #content_length = file_upload.content_length
+        # XXX gives -1 for wsgiref :( If this is fixed, we could use the file obj,
+        # without reading it into memory completely:
+        filecontent = filecontent.read()
 
-    # touch attachment directory to invalidate cache if new map is saved
-    if ext == '.map':
-        os.utime(attach_dir, None)
+    ci.put(basename + ext, filecontent, content_length)
 
-    request.emit_http_headers()
     request.write("OK")
 
 
@@ -683,10 +718,8 @@ def _do_del(pagename, request, filename):
 
     if not request.user.may.delete(pagename):
         return _('You are not allowed to delete attachments on this page.')
-    if not request.form.get('target', [''])[0]:
+    if not filename:
         error = _("Filename of attachment not specified!")
-    else:
-        filename = wikiutil.taintfilename(request.form['target'][0])
 
     backend = request.cfg.data_backend
     try:
@@ -702,7 +735,7 @@ def _do_del(pagename, request, filename):
     except KeyError:
         deleted = False
 
-    if error != "":
+    if error:
         error_msg(pagename, request, error)
     elif not deleted:
         # Everything ok. "Delete" the attachment, i.e., create a new, empty revision with according metadata
@@ -759,17 +792,17 @@ def _do_attachment_move(pagename, request, filename):
 
     if 'cancel' in request.form:
         return _('Move aborted!')
-    if not wikiutil.checkTicket(request, request.form['ticket'][0]):
+    if not wikiutil.checkTicket(request, request.form['ticket']):
         return _('Please use the interactive user interface to move attachments!')
     if not request.user.may.delete(pagename):
         return _('You are not allowed to move attachments from this page.')
 
     if 'newpagename' in request.form:
-        new_pagename = request.form.get('newpagename')[0]
+        new_pagename = request.form.get('newpagename')
     else:
         upload_form(pagename, request, msg=_("Move aborted because new page name is empty."))
     if 'newattachmentname' in request.form:
-        new_attachment = request.form.get('newattachmentname')[0]
+        new_attachment = request.form.get('newattachmentname')
         if new_attachment != wikiutil.taintfilename(new_attachment):
             upload_form(pagename, request, msg=_("Please use a valid filename for attachment '%(filename)s'.") % {
                                   'filename': new_attachment})
@@ -777,7 +810,7 @@ def _do_attachment_move(pagename, request, filename):
     else:
         upload_form(pagename, request, msg=_("Move aborted because new attachment name is empty."))
 
-    attachment = request.form.get('oldattachmentname')[0]
+    attachment = request.form.get('oldattachmentname')
     move_attachment(request, pagename, new_pagename, attachment, new_attachment)
 
 def _do_move(pagename, request, filename):
@@ -786,25 +819,23 @@ def _do_move(pagename, request, filename):
     if not request.user.may.delete(pagename):
         return _('You are not allowed to move attachments from this page.')
 
-    if not request.form.get('target', [''])[0]:
-        error = _("Filename of attachment not specified!")
+    if not filename:
+        return _("Filename of attachment not specified!")
     else:
-        filename = wikiutil.taintfilename(request.form['target'][0])
         try:
             backend = request.cfg.data_backend
             item = backend.get_item(pagename + "/" + filename)
             # We need to check if there is a revision with data
             rev = item.get_revision(-1)
         except (NoSuchItemError, NoSuchRevisionError):
-            error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
+            return _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
 
         # move file
         d = {'action': action_name,
-             'baseurl': request.getScriptname(),
+             'url': request.href(pagename),
              'do': 'attachment_move',
              'ticket': wikiutil.createTicket(request),
              'pagename': pagename,
-             'pagename_quoted': wikiutil.quoteWikinameURL(pagename),
              'attachment_name': filename,
              'move': _('Move'),
              'cancel': _('Cancel'),
@@ -812,44 +843,82 @@ def _do_move(pagename, request, filename):
              'attachment_label': _("New attachment name"),
             }
         formhtml = '''
-    <form action="%(baseurl)s/%(pagename_quoted)s" method="POST">
-    <input type="hidden" name="action" value="%(action)s">
-    <input type="hidden" name="do" value="%(do)s">
-    <input type="hidden" name="ticket" value="%(ticket)s">
-    <table>
-        <tr>
-            <td class="label"><label>%(newname_label)s</label></td>
-            <td class="content">
-                <input type="text" name="newpagename" value="%(pagename)s" size="80">
-            </td>
-        </tr>
-        <tr>
-            <td class="label"><label>%(attachment_label)s</label></td>
-            <td class="content">
-                <input type="text" name="newattachmentname" value="%(attachment_name)s" size="80">
-            </td>
-        </tr>
-        <tr>
-            <td></td>
-            <td class="buttons">
-                <input type="hidden" name="oldattachmentname" value="%(attachment_name)s">
-                <input type="submit" name="move" value="%(move)s">
-                <input type="submit" name="cancel" value="%(cancel)s">
-            </td>
-        </tr>
-    </table>
-    </form>''' % d
+<form action="%(url)s" method="POST">
+<input type="hidden" name="action" value="%(action)s">
+<input type="hidden" name="do" value="%(do)s">
+<input type="hidden" name="ticket" value="%(ticket)s">
+<table>
+    <tr>
+        <td class="label"><label>%(newname_label)s</label></td>
+        <td class="content">
+            <input type="text" name="newpagename" value="%(pagename)s" size="80">
+        </td>
+    </tr>
+    <tr>
+        <td class="label"><label>%(attachment_label)s</label></td>
+        <td class="content">
+            <input type="text" name="newattachmentname" value="%(attachment_name)s" size="80">
+        </td>
+    </tr>
+    <tr>
+        <td></td>
+        <td class="buttons">
+            <input type="hidden" name="oldattachmentname" value="%(attachment_name)s">
+            <input type="submit" name="move" value="%(move)s">
+            <input type="submit" name="cancel" value="%(cancel)s">
+        </td>
+    </tr>
+</table>
+</form>''' % d
         thispage = Page(request, pagename)
         request.theme.add_msg(formhtml, "dialog")
         return thispage.send_page()
 
+def _do_box(pagename, request):
+    _ = request.getText
+
+    pagename, filename, fpath = _access_file(pagename, request)
+    if not request.user.may.read(pagename):
+        return _('You are not allowed to get attachments from this page.')
+    if not filename:
+        return # error msg already sent in _access_file
+
+    timestamp = datetime.datetime.fromtimestamp(os.path.getmtime(fpath))
+    if_modified = request.if_modified_since
+    if if_modified and if_modified >= timestamp:
+        request.status_code = 304
+    else:
+        ci = ContainerItem(request, pagename, filename)
+        filename = wikiutil.taintfilename(request.values['member'])
+        mt = wikiutil.MimeType(filename=filename)
+        content_type = mt.content_type()
+        mime_type = mt.mime_type()
+
+        # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
+        # There is no solution that is compatible to IE except stripping non-ascii chars
+        filename_enc = filename.encode(config.charset)
+
+        # for dangerous files (like .html), when we are in danger of cross-site-scripting attacks,
+        # we just let the user store them to disk ('attachment').
+        # For safe files, we directly show them inline (this also works better for IE).
+        dangerous = mime_type in request.cfg.mimetypes_xss_protect
+        content_dispo = dangerous and 'attachment' or 'inline'
+
+        request.content_type = content_type
+        request.last_modified = timestamp
+        #request.content_length = os.path.getsize(fpath)
+        content_dispo_string = '%s; filename="%s"' % (content_dispo, filename_enc)
+        request.headers.add('Content-Disposition', content_dispo_string)
+
+        # send data
+        request.send_file(ci.get(filename))
+
+
 def _do_get(pagename, request, filename):
     _ = request.getText
 
-    if not request.form.get('target', [''])[0]:
-        error = _("Filename of attachment not specified!")
-    else:
-        filename = wikiutil.taintfilename(request.form['target'][0])
+    if not filename:
+        return _("Filename of attachment not specified!")
     if not request.user.may.read(pagename):
         return _('You are not allowed to get attachments from this page.')
 
@@ -858,7 +927,7 @@ def _do_get(pagename, request, filename):
         item = backend.get_item(pagename + "/" + filename)
         rev = item.get_revision(-1)
     except (NoSuchItemError, NoSuchRevisionError):
-        error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
+        return _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
     else:
         timestamp = timefuncs.formathttpdate(float(rev.timestamp))  # Mandatory backend variable
         try:
@@ -867,7 +936,7 @@ def _do_get(pagename, request, filename):
             mimestr = mimetypes.guess_type(rev.item.name)[0]
 
         if request.if_modified_since == timestamp:
-            request.emit_http_headers(["Status: 304 Not modified"])
+            request.status_code = 304
         else:
             mt = wikiutil.MimeType(mimestr=mimestr)
             content_type = mt.content_type()
@@ -882,14 +951,11 @@ def _do_get(pagename, request, filename):
             # For safe files, we directly show them inline (this also works better for IE).
             dangerous = mime_type in request.cfg.mimetypes_xss_protect
             content_dispo = dangerous and 'attachment' or 'inline'
-
-            request.emit_http_headers([
-                'Content-Type: %s' % content_type,
-                'Last-Modified: %s' % timestamp,
-                'Content-Length: %s' % rev.size,
-                'Content-Disposition: %s; filename="%s"' % (content_dispo, filename_enc),
-            ])
-
+            request.content_type = content_type
+            request.last_modified = timestamp
+            request.content_length = rev.size
+            content_dispo_string = '%s; filename="%s"' % (content_dispo, filename_enc)
+            request.headers.add('Content-Disposition', content_dispo_string)
             # send data
             request.send_file(rev)
 
@@ -1023,10 +1089,9 @@ def send_viewfile(pagename, request, filename):
     _ = request.getText
     fmt = request.html_formatter
 
-    if not request.form.get('target', [''])[0]:
+    if not filename:
         error = _("Filename of attachment not specified!")
     else:
-        filename = wikiutil.taintfilename(request.form['target'][0])
         fpath = getFilename(request, pagename, filename)
 
     request.write('<h2>' + _("Attachment '%(filename)s'") % {'filename': filename} + '</h2>')
@@ -1070,7 +1135,7 @@ def send_viewfile(pagename, request, filename):
             request.write(request.formatter.preformatted(0))
             return
 
-    # XXX Fix this zipfile stuff
+   # XXX Fix this zipfile stuff
    # try:
    #     package = packages.ZipPackage(request, fpath)
    #     if package.isPackage():
@@ -1120,23 +1185,20 @@ def _do_view(pagename, request, filename):
 
     if not request.user.may.read(pagename):
         return _('You are not allowed to view attachments of this page.')
-    if not request.form.get('target', [''])[0]:
-        error = _("Filename of attachment not specified!")
-    else:
-        filename = wikiutil.taintfilename(request.form["target"][0])
+    if not filename:
+        return _("Filename of attachment not specified!")
 
     backend = request.cfg.data_backend
     try:
         item = backend.get_item(pagename + "/" + filename)
         rev = item.get_revision(-1)
     except (NoSuchItemError, NoSuchRevisionError):
-        error = _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
+        return _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
     else:
-        # send header & title
-        request.emit_http_headers()
         # Use user interface language for this generated page
         request.setContentLanguage(request.lang)
-        title = _('attachment:%s of %s') % (filename, pagename)
+        title = _('attachment:%(filename)s of %(pagename)s') % {
+            'filename': filename, 'pagename': pagename}
         request.theme.send_title(title, pagename=pagename)
 
         # send body
