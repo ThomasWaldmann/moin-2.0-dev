@@ -23,7 +23,6 @@ import MoinMoin.events as events
 from MoinMoin.events import PageChangedEvent, PageRenamedEvent
 from MoinMoin.events import PageDeletedEvent, PageCopiedEvent
 from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
-from MoinMoin import session
 import MoinMoin.web.session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
@@ -370,6 +369,9 @@ class ConfigFunctionality(object):
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
+        if self.url_prefix_fckeditor is None:
+            self.url_prefix_fckeditor = self.url_prefix_local + '/applets/FCKeditor'
+
         if self.secrets is None:  # admin did not setup a real secret, so make up something
             self.secrets = self.calc_secrets()
 
@@ -697,22 +699,18 @@ class DefaultExpression(object):
 options_no_group_name = {
   # ==========================================================================
   'session': ('Session settings', "Session-related settings, see HelpOnSessions.", (
-    ('session_handler', DefaultExpression('session.DefaultSessionHandler()'),
-     "See HelpOnSessions."),
-    ('session_id_handler', DefaultExpression('session.MoinCookieSessionIDHandler()'),
-     "Only used by the DefaultSessionHandler, see HelpOnSessions."),
     ('session_service', DefaultExpression('web.session.FileSessionService()'),
-     "New session service (used by the new WSGI layer)"),
+     "The session service."),
     ('cookie_secure', None,
      'Use secure cookie. (None = auto-enable secure cookie for https, True = ever use secure cookie, False = never use secure cookie).'),
+    ('cookie_httponly', True,
+     'Use a httponly cookie that can only be used by the server, not by clientside scripts.'),
     ('cookie_domain', None,
      'Domain used in the session cookie. (None = do not specify domain).'),
     ('cookie_path', None,
      'Path used in the session cookie (None = auto-detect).'),
-    ('cookie_lifetime', 12,
-     'Session lifetime [h] of logged-in users (see HelpOnSessions for details).'),
-    ('anonymous_session_lifetime', None,
-     'Session lifetime [h] of users who are not logged in (None = disable anon sessions).'),
+    ('cookie_lifetime', (0, 12),
+     'Session lifetime [h] of (anonymous, logged-in) users (see HelpOnSessions for details).'),
   )),
   # ==========================================================================
   'auth': ('Authentication / Authorization / Security settings', None, (
@@ -850,8 +848,6 @@ options_no_group_name = {
      'show section numbers in headings by default'),
     ('show_timings', False, "show some timing values at bottom of a page"),
     ('show_version', False, "show moin's version at the bottom of a page"),
-    ('traceback_show', True,
-     "if True, show debug tracebacks to users when moin crashes"),
 
     ('page_credits',
      [
@@ -922,6 +918,8 @@ options_no_group_name = {
      "used as the base URL for icons, css, etc. - includes the moin version number and changes on every release. This replaces the deprecated and sometimes confusing `url_prefix = '/wiki'` setting."),
     ('url_prefix_local', None,
      "used as the base URL for some Javascript - set this to a URL on same server as the wiki if your url_prefix_static points to a different server."),
+    ('url_prefix_fckeditor', None,
+     "used as the base URL for FCKeditor - similar to url_prefix_local, but just for FCKeditor."),
 
     ('url_prefix_action', None,
      "Use 'action' to enable action URL generation to be compatible with robots.txt. It will generate .../action/info/PageName?action=info then. Recommended for internet wikis."),

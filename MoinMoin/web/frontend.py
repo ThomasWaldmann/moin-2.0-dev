@@ -19,24 +19,21 @@ class FrontEnd(object):
 
     def add_options(self):
         parser = self.parser
-        parser.add_option("-d", "--debug", action="store_true",
-                          help="Enable debug mode of server (show tracebacks)")
+        parser.add_option("-d", "--debug", dest="debug",
+                          help="Debug mode of server (off/web/external, default is to use MOIN_DEBUGGER env var)")
         parser.add_option("-c", "--config-dir", dest="config_dir", metavar="DIR",
                           help=("Path to the directory containing the wiki "
                                 "configuration files. Default: current directory"))
         parser.add_option("--htdocs", dest="htdocs",
                           help=("Path to the directory containing Moin's "
-                                "static files. Default: /usr/share/moin/htdocs"))
-        parser.set_default('htdocs', '/usr/share/moin/htdocs')
+                                "static files. Default: use builtin MoinMoin/web/static/htdocs"))
+        parser.set_default('htdocs', True)
 
     def run(self, args=None):
         options, args = self.parser.parse_args(args)
         logging.debug('Options: %r', options)
 
-        if options.htdocs:
-            application = make_application(shared=options.htdocs)
-        else:
-            application = make_application()
+        application = make_application(shared=options.htdocs)
 
         try:
             self.run_server(application, options)

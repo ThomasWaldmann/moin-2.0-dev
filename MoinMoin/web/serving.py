@@ -18,8 +18,8 @@ logging = log.getLogger(__name__)
 import werkzeug._internal
 werkzeug._internal._logger = log.getLogger('werkzeug')
 
-from werkzeug.utils import SharedDataMiddleware
-from werkzeug.serving import BaseRequestHandler, run_simple
+from werkzeug import run_simple
+from werkzeug.serving import BaseRequestHandler
 
 class RequestHandler(BaseRequestHandler):
     """
@@ -72,8 +72,10 @@ def make_application(shared=None, trusted_proxies=None):
     Make an instance of the MoinMoin WSGI application. This involves
     wrapping it in middlewares as needed (static files, debugging, etc.).
 
-    @param shared: directory where static files are located
-    @param trusted_proxies: list of trusted proxies
+    @param shared: see MoinMoin.web.static.make_static_serving_app.
+                   If falsy, do not use static serving app.
+    @param trusted_proxies: list of trusted proxies. If None or empty, do not
+                            use the ProxyTrust middleware.
     @rtype: callable
     @return: a WSGI callable
     """
@@ -82,17 +84,9 @@ def make_application(shared=None, trusted_proxies=None):
     if trusted_proxies:
         application = ProxyTrust(application, trusted_proxies)
 
-    if isinstance(shared, dict):
-        application = SharedDataMiddleware(application, shared)
-    elif shared:
-        if shared is True:
-            shared = '/usr/share/moin/htdocs'
-
-        if os.path.isdir(shared):
-            mapping = {config.url_prefix_static: shared,
-                       '/favicon.ico': os.path.join(shared, 'favicon.ico'),
-                       '/robots.txt': os.path.join(shared, 'robots.txt')}
-            application = SharedDataMiddleware(application, mapping)
+    if shared:
+        from MoinMoin.web.static import make_static_serving_app
+        application = make_static_serving_app(application, shared)
 
     return application
 
@@ -134,8 +128,8 @@ def switch_user(uid, gid=None):
         raise RuntimeError("can't change uid/gid to %s/%s" % (uid, gid))
     logging.info("Running as uid/gid %d/%d" % (uid, gid))
 
-def run_server(host='localhost', port=8080, docs='/usr/share/moin/htdocs',
-               threaded=True, use_debugger=False, user=None, group=None):
+def run_server(host='localhost', port=8080, docs=True,
+               threaded=True, debug='off', user=None, group=None):
     """ Run a standalone server on specified host/port. """
     application = make_application(shared=docs)
 
@@ -146,7 +140,13 @@ def run_server(host='localhost', port=8080, docs='/usr/share/moin/htdocs',
     if user:
         switch_user(user, group)
 
+    if debug == 'external':
+        # no threading is better for debugging, the main (and only)
+        # thread then will just terminate when an exception happens
+        threaded = False
+
     run_simple(host, port, application, threaded=threaded,
-               use_debugger=use_debugger,
+               use_debugger=(debug == 'web'),
+               passthrough_errors=(debug == 'external'),
                request_handler=RequestHandler)
 

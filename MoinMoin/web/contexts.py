@@ -10,8 +10,8 @@
 
 import time, inspect, StringIO, sys, warnings
 
-from werkzeug.utils import Headers, http_date, create_environ, redirect
-from werkzeug.exceptions import Unauthorized, NotFound, abort
+from werkzeug import Headers, http_date, create_environ, redirect, abort
+from werkzeug.exceptions import Unauthorized, NotFound
 
 from MoinMoin import i18n, error, user, config, wikiutil
 from MoinMoin.config import multiconfig
@@ -229,7 +229,7 @@ class HTTPContext(BaseContext):
         if n is None:
             return self.request.in_data
         else:
-            return self.request.input_stream.read(n)
+            return self.request.in_stream.read(n)
 
     def makeForbidden(self, resultcode, msg):
         status = {401: Unauthorized,
@@ -305,6 +305,7 @@ class HTTPContext(BaseContext):
         def simple_wrapper(fileobj, bufsize):
             return iter(lambda: fileobj.read(bufsize), '')
         file_wrapper = self.environ.get('wsgi.file_wrapper', simple_wrapper)
+        self.request.direct_passthrough = True
         self.request.response = file_wrapper(fileobj, bufsize)
         raise MoinMoinFinish('sent file')
 
