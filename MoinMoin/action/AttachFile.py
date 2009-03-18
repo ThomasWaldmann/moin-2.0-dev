@@ -27,13 +27,17 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, time, zipfile, mimetypes, errno, datetime
+import os, time, zipfile, errno, datetime
 from StringIO import StringIO
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import config, wikiutil, packages
+# keep both imports below as they are, order is important:
+from MoinMoin import wikiutil
+import mimetypes
+
+from MoinMoin import config, packages
 from MoinMoin.Page import Page
 from MoinMoin.util import filesys, timefuncs
 from MoinMoin.security.textcha import TextCha
@@ -523,17 +527,6 @@ def upload_form(pagename, request, msg=''):
     request.theme.send_closing_html()
 
 
-def preprocess_filename(filename):
-    """ preprocess the filename we got from upload form,
-        strip leading drive and path (IE misbehaviour)
-    """
-    if filename and len(filename) > 1 and (filename[1] == ':' or filename[0] == '\\'): # C:.... or \path... or \\server\...
-        bsindex = filename.rfind('\\')
-        if bsindex >= 0:
-            filename = filename[bsindex+1:]
-    return filename
-
-
 def _do_upload(pagename, request):
     _ = request.getText
     # Currently we only check TextCha for upload (this is what spammers ususally do),
@@ -564,7 +557,7 @@ def _do_upload(pagename, request):
     if rename:
         target = rename
     else:
-        target = file_upload.filename
+        target = file_upload.filename or u''
 
     target = wikiutil.clean_input(target)
 
@@ -1108,7 +1101,7 @@ def send_viewfile(pagename, request):
                 fmt.url(0))
         request.write('For using an external program follow this link %s' % link)
         return
-    request.write(m.execute('EmbedObject', u'target=%s, pagename=%s' % (filename, pagename)))
+    request.write(m.execute('EmbedObject', u'target="%s", pagename="%s"' % (filename, pagename)))
     return
 
 

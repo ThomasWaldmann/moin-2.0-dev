@@ -19,7 +19,7 @@ class PluginScript(MoinScript):
         MoinScript.__init__(self, argv, def_values)
         self.parser.add_option(
             "--docs", dest="docs",
-            help="Set the documents directory. Default: wiki/htdocs or /usr/share/moin/htdocs"
+            help="Set the documents directory. Default: use builtin MoinMoin/web/static/htdocs"
         )
         self.parser.add_option(
             "--user", dest="user",
@@ -50,8 +50,8 @@ class PluginScript(MoinScript):
             help="Set file to store pid of moin daemon in. Default: moin.pid"
         )
         self.parser.add_option(
-            "--debug", dest="debug", action="store_true",
-            help="Enable debug mode of server (show tracebacks)"
+            "--debug", dest="debug",
+            help="Debug mode of server. off: no debugging (default), web: for browser based debugging, external: for using an external debugger."
         )
 
     def mainloop(self):
@@ -105,29 +105,26 @@ class PluginScript(MoinScript):
             if self.options.interface is not None: # needs to work for "" value also
                 Config.interface = self.options.interface
             if self.options.debug:
-                Config.debug = True
-
-            if not hasattr(Config, 'docs'):
-                docs = os.path.join('wiki', 'htdocs')
-                if not os.path.exists(docs):
-                    docs = "/usr/share/moin/htdocs"
-                Config.docs = docs
+                Config.debug = self.options.debug
 
             if self.options.start:
                 daemon = Daemon('moin', pidfile, run_server, Config)
                 daemon.do_start()
             else:
                 run_server(Config.interface, Config.port, Config.docs,
-                           use_debugger=Config.debug, user=Config.user,
-                           group=Config.group)
+                           debug=Config.debug, user=Config.user, group=Config.group)
 
 class DefaultConfig:
-    docs = os.path.join('wiki', 'htdocs')
-    if not os.path.exists(docs):
-        docs = "/usr/share/moin/htdocs"
+    # where the static data is served from - you can either use:
+    # docs = True  # serve the builtin static data from MoinMoin/web/static/htdocs/
+    # docs = '/where/ever/you/like/to/keep/htdocs'  # serve it from the given path
+    # docs = False  # do not serve static files at all (will not work except
+    #               # you serve them in some other working way)
+    docs = True
+
     user = None
     group = None
     port = 8080
     interface = 'localhost'
-    debug = False
+    debug = 'off'
 

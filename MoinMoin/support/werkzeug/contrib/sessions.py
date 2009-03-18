@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
-"""
+r"""
     werkzeug.contrib.sessions
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    This module contains some helper classes that helps one to add session
-    support to a python WSGI application.
+    This module contains some helper classes that help one to add session
+    support to a python WSGI application.  For full client-side session
+    storage see :mod:`~werkzeug.contrib.securecookie` which implements a
+    secure, client-side session storage.
 
-    Example::
+
+    Application Integration
+    =======================
+
+    ::
 
         from werkzeug.contrib.sessions import SessionMiddleware, \
              FilesystemSessionStore
@@ -42,21 +48,22 @@
                 response.set_cookie('cookie_name', request.session.sid)
             return response(environ, start_response)
 
-
-    :copyright: 2007 by Armin Ronacher.
+    :copyright: (c) 2009 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
 import re
 import os
-from os import path, unlink
+from os import path
 from time import time
-from random import Random, random
+from random import random
 try:
     from hashlib import sha1
 except ImportError:
     from sha import new as sha1
 from cPickle import dump, load, HIGHEST_PROTOCOL
+
 from werkzeug.utils import ClosingIterator, dump_cookie, parse_cookie
+from werkzeug.datastructures import CallbackDict
 
 
 _sha1_re = re.compile(r'^[a-fA-F0-9]{40}$')
@@ -72,18 +79,15 @@ def generate_key(salt=None):
     return sha1('%s%s%s' % (salt, time(), _urandom())).hexdigest()
 
 
-class ModificationTrackingDict(dict):
+class ModificationTrackingDict(CallbackDict):
     __slots__ = ('modified',)
 
     def __init__(self, *args, **kwargs):
-        dict.__init__(self, *args, **kwargs)
+        def on_update(self):
+            self.modified = True
         self.modified = False
-
-    def __repr__(self):
-        return '<%s %s%s>' % (
-            self.__class__.__name__,
-            dict.__repr__(self)
-        )
+        CallbackDict.__init__(self, on_update=on_update)
+        dict.update(self, *args, **kwargs)
 
     def copy(self):
         """Create a flat copy of the dict."""
@@ -98,33 +102,9 @@ class ModificationTrackingDict(dict):
     def __copy__(self):
         return self.copy()
 
-    def call_with_modification(f):
-        def oncall(self, *args, **kw):
-            try:
-                return f(self, *args, **kw)
-            finally:
-                self.modified = True
-        try:
-            oncall.__name__ = f.__name__
-            oncall.__doc__ = f.__doc__
-            oncall.__module__ = f.__module__
-        except:
-            pass
-        return oncall
-
-    __setitem__ = call_with_modification(dict.__setitem__)
-    __delitem__ = call_with_modification(dict.__delitem__)
-    clear = call_with_modification(dict.clear)
-    pop = call_with_modification(dict.pop)
-    popitem = call_with_modification(dict.popitem)
-    setdefault = call_with_modification(dict.setdefault)
-    update = call_with_modification(dict.update)
-    del call_with_modification
-
 
 class Session(ModificationTrackingDict):
-    """
-    Subclass of a dict that keeps track of direct object changes.  Changes
+    """Subclass of a dict that keeps track of direct object changes.  Changes
     in mutable structures are not tracked, for those you have to set
     `modified` to `True` by hand.
     """
@@ -142,16 +122,19 @@ class Session(ModificationTrackingDict):
             self.should_save and '*' or ''
         )
 
+    @property
     def should_save(self):
         """True if the session should be saved."""
         return self.modified or self.new
-    should_save = property(should_save)
 
 
 class SessionStore(object):
     """Baseclass for all session stores.  The Werkzeug contrib module does not
-    implement any useful stores beside the filesystem store, application
+    implement any useful stores besides the filesystem store, application
     developers are encouraged to create their own stores.
+
+    :param session_class: The session class to use.  Defaults to
+                          :class:`Session`.
     """
 
     def __init__(self, session_class=None):
@@ -191,12 +174,20 @@ class SessionStore(object):
 
 
 class FilesystemSessionStore(SessionStore):
-    """Simple example session store that saves session on the filesystem like
+    """Simple example session store that saves sessions in the filesystem like
     PHP does.
+
+    :param path: the path to the folder used for storing the sessions.
+                 If not provided the default temporary directory is used.
+    :param filename_template: a string template used to give the session
+                              a filename.  ``%s`` is replaced with the
+                              session id.
+    :param session_class: The session class to use.  Defaults to
+                          :class:`Session`.
     """
 
     def __init__(self, path=None, filename_template='werkzeug_%s.sess',
-                 session_class=Session):
+                 session_class=None):
         SessionStore.__init__(self, session_class)
         if path is None:
             from tempfile import gettempdir
@@ -217,6 +208,8 @@ class FilesystemSessionStore(SessionStore):
     def delete(self, session):
         fn = self.get_session_filename(session.sid)
         try:
+            # Late import because Google Appengine won't allow os.unlink
+            from os import unlink
             unlink(fn)
         except OSError:
             pass
@@ -243,17 +236,17 @@ class SessionMiddleware(object):
     fast as sessions managed by the application itself and will put a key into
     the WSGI environment only relevant for the application which is against
     the concept of WSGI.
+
+    The cookie parameters are the same as for the :func:`~werkzeug.dump_cookie`
+    function just prefixed with ``cookie_``.  Additionally `max_age` is
+    called `cookie_age` and not `cookie_max_age` because of backwards
+    compatibility.
     """
 
     def __init__(self, app, store, cookie_name='session_id',
                  cookie_age=None, cookie_expires=None, cookie_path='/',
                  cookie_domain=None, cookie_secure=None,
                  cookie_httponly=False, environ_key='werkzeug.session'):
-        """The cookie parameters are the same as for the `dump_cookie`
-        function just prefixed with "cookie_".  Additionally "max_age" is
-        called "cookie_age" and not "cookie_max_age" because of backwards
-        compatibility.
-        """
         self.app = app
         self.store = store
         self.cookie_name = cookie_name
