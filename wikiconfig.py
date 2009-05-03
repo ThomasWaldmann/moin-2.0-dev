@@ -27,6 +27,11 @@ class LocalConfig(multiconfig.DefaultConfig):
     #instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
+    # For development we use a simple in-memory backend for data storage
+    # TODO Change this to a sane setting later
+    data_backend = memory.MemoryBackend()
+    user_backend = memory.MemoryBackend()
+
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
 
