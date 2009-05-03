@@ -109,8 +109,8 @@ def get_editor(request, userid, addr, hostname):
         'interwiki' (Interwiki homepage) or 'anon' ('').
     """
     result = 'anon', ''
-    if request.cfg.show_hosts and self.hostname:
-        result = 'ip', self.hostname
+    if request.cfg.show_hosts and hostname:
+        result = 'ip', hostname
     if userid:
         userdata = User(request, userid)
         if userdata.mailto_author and userdata.email:
