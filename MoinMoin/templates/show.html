@@ -43,6 +43,7 @@ Data:
                 <td>{{ entry.comment|e }}</td>
                 <td>{{ '<a href="?rev=%d">%s</a>' % (entry.rev_no, 'show') }}</td>
                 <td>{{ '<a href="?rev=%d&action=get">%s</a>' % (entry.rev_no, 'get') }}</td>
+                <td>{{ '<a href="?rev=%d&action=revert">%s</a>' % (entry.rev_no, 'revert') }}</td>
             </tr>
             {% endfor %}
         </table>

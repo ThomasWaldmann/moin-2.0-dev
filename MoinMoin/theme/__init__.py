@@ -929,6 +929,7 @@ var search_hint = "%(search_hint)s";
         rev = request.rev
 
         menu = [
+            'revert',
             'delete',
             'RenderAsDocbook',
             'refresh',
@@ -943,7 +944,6 @@ var search_hint = "%(search_hint)s";
             'SubscribeUser',
             '__separator__',
             'Despam',
-            'revert',
             'PackagePages',
             'SyncPages',
             ]
@@ -1044,7 +1044,7 @@ var search_hint = "%(search_hint)s";
         data = {
             'label': titles['__title__'],
             'options': '\n'.join(options),
-            'rev_field': rev and '<input type="hidden" name="rev" value="%d">' % rev or '',
+            'rev_field': rev is not None and '<input type="hidden" name="rev" value="%d">' % rev or '',
             'do_button': _("Do"),
             'url': self.request.href(page.page_name)
             }
