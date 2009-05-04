@@ -7,7 +7,11 @@ This item exists, but not this revision.
 <h1>Item: {{ rev.item.name }} {% if rev.revno != last_rev_no %}(Revision {{ rev.revno }}){% endif %}</h1>
 {% endblock %}
 Data:
+{% if rev.deleted %}
+This item exists, but current revision is deleted.
+{% else %}
 {{ data_rendered }}
+{% endif %}
 <hr>Meta:
 {{ meta_rendered }}
 {% endif %}
