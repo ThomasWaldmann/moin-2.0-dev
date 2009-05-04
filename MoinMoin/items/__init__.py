@@ -64,6 +64,13 @@ class Item(object):
                                  )
         return content
 
+    def do_delete(self):
+        template = self.env.get_template('delete.html')
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.item_name,
+                                 )
+        return content
+
     def _write_stream(self, content, new_rev, bufsize=8192):
         if hasattr(content, "read"):
             while True:
@@ -77,42 +84,64 @@ class Item(object):
             logging.error("unsupported content object: %r" % content)
             raise
 
+    def delete(self):
+        # called from delete UI/POST
+        comment = self.request.form.get('comment')
+        meta, data = {}, ''
+        self._save(meta, data, comment=comment)
+
     def save(self):
+        # called from modify UI/POST
         request = self.request
-        item_name = self.item_name
+        meta_text = request.form.get('meta_text', '')
+        meta = self.meta_text_to_dict(meta_text)
         data_file = request.files.get('data_file')
         data_text = request.form.get('data_text')
-        meta_text = request.form.get('meta_text', '')
         if data_text is not None:
             data = self.data_form_to_internal(data_text)
             data = self.data_internal_to_storage(data)
+            mimetype = 'text/plain'
         elif data_file:
             data = data_file.stream
+            mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
         else:
-            data = ''
-        meta = self.meta_text_to_dict(meta_text)
+            raise # shouldn't happen
+        self._save(meta, data, mimetype=mimetype)
+
+    def _save(self, meta, data, action='SAVE', mimetype=None, comment='', extra=''):
+        request = self.request
+        item_name = self.item_name
         backend = request.cfg.data_backend
         try:
             storage_item = backend.get_item(item_name)
         except NoSuchItemError:
             storage_item = backend.create_item(item_name)
         try:
-            rev_no = storage_item.get_revision(-1).revno
+            currentrev = storage_item.get_revision(-1)
+            rev_no = currentrev.revno
+            if mimetype is None:
+                # if we didn't get mimetype info, thus reusing the one from current rev:
+                mimetype = currentrev.get("mimetype")
         except NoSuchRevisionError:
             rev_no = -1
         newrev = storage_item.create_revision(rev_no + 1)
+        if not data:
+            # saving empty data is same as deleting
+            # XXX unclear: do we have meta-only items that shall not be "deleted" state?
+            newrev[DELETED] = True
+            comment = comment or 'deleted'
         self._write_stream(data, newrev)
         timestamp = time.time()
-        newrev[EDIT_LOG_COMMENT] = meta.get(EDIT_LOG_COMMENT, '')
-        mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
-        # mimetype: 1. meta data, 2. url/post 3. filename
+        newrev[EDIT_LOG_COMMENT] = meta.get(EDIT_LOG_COMMENT, comment)
+        # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
+        # allow override by give metadata:
         newrev["mimetype"] = meta.get('mimetype', mimetype)
-        newrev[EDIT_LOG_ACTION] = 'SAVE'
+        newrev[EDIT_LOG_ACTION] = action
         newrev[EDIT_LOG_ADDR] = request.remote_addr
         newrev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
         newrev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
-        newrev[EDIT_LOG_EXTRA] = ''
+        newrev[EDIT_LOG_EXTRA] = extra
         storage_item.commit()
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
