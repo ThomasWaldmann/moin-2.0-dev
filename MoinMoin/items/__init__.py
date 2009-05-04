@@ -71,6 +71,14 @@ class Item(object):
                                  )
         return content
 
+    def do_revert(self):
+        template = self.env.get_template('revert.html')
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.item_name,
+                                  rev=self.rev,
+                                 )
+        return content
+
     def _write_stream(self, content, new_rev, bufsize=8192):
         if hasattr(content, "read"):
             while True:
@@ -89,6 +97,11 @@ class Item(object):
         comment = self.request.form.get('comment')
         meta, data = {}, ''
         self._save(meta, data, comment=comment)
+
+    def revert(self):
+        # called from revert UI/POST
+        comment = self.request.form.get('comment')
+        self._save(self.meta, self.data, comment=comment)
 
     def save(self):
         # called from modify UI/POST
