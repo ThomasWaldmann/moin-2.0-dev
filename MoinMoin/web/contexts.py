@@ -252,7 +252,7 @@ class HTTPContext(BaseContext):
         user pages meant to be seen only by another user, when both users
         share the same caching proxy.
 
-        AVOID using no-cache and no-store for attachments as it is completely broken on IE!
+        AVOID using no-cache and no-store for file downloads as it is completely broken on IE!
 
         Details: http://support.microsoft.com/support/kb/articles/Q234/0/67.ASP
         """
