@@ -64,34 +64,28 @@ class Item(object):
                                  )
         return content
 
-    def do_rename(self):
-        template = self.env.get_template('rename.html')
+    def _action_query(self, action, label=None, target=None, revno=None):
+        template = self.env.get_template('action_query.html')
         content = template.render(gettext=self.request.getText,
+                                  action=action,
+                                  label=label or action,
                                   item_name=self.item_name,
+                                  revno=revno,
+                                  target=target,
                                  )
         return content
+
+    def do_rename(self):
+        return self._action_query('rename', target=self.item_name)
 
     def do_copy(self):
-        template = self.env.get_template('copy.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
-                                 )
-        return content
+        return self._action_query('copy', target=self.item_name)
 
     def do_delete(self):
-        template = self.env.get_template('delete.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
-                                 )
-        return content
+        return self._action_query('delete')
 
     def do_revert(self):
-        template = self.env.get_template('revert.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
-                                  rev=self.rev,
-                                 )
-        return content
+        return self._action_query('revert', revno=self.rev.revno)
 
     def _write_stream(self, content, new_rev, bufsize=8192):
         if hasattr(content, "read"):
