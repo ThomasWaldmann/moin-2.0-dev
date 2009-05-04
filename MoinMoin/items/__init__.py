@@ -10,7 +10,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, time, datetime
+import os, time, datetime, shutil
 
 from jinja2 import Environment, PackageLoader, Template, FileSystemBytecodeCache, Markup
 
@@ -71,6 +71,13 @@ class Item(object):
                                  )
         return content
 
+    def do_copy(self):
+        template = self.env.get_template('copy.html')
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.item_name,
+                                 )
+        return content
+
     def do_delete(self):
         template = self.env.get_template('delete.html')
         content = template.render(gettext=self.request.getText,
@@ -98,6 +105,33 @@ class Item(object):
         else:
             logging.error("unsupported content object: %r" % content)
             raise
+
+    def copy(self):
+        # called from copy UI/POST
+        request = self.request
+        comment = request.form.get('comment')
+        target = request.form.get('target')
+        old_item = self.rev.item
+        backend = request.cfg.data_backend
+        new_item = backend.create_item(target)
+        # Transfer all revisions with their data and metadata
+        # Make sure the list begins with the lowest value, that is, 0.
+        revs = old_item.list_revisions()
+        for revno in revs:
+            old_rev = old_item.get_revision(revno)
+            new_rev = new_item.create_revision(revno)
+            shutil.copyfileobj(old_rev, new_rev, 8192)
+            for key in old_rev:
+                new_rev[key] = old_rev[key]
+            new_item.commit()
+        current_rev = old_item.get_revision(revno)
+        # transfer item metadata
+        new_item.change_metadata()
+        for key in old_item:
+            new_item[key] = old_item[key]
+        new_item.publish_metadata()
+        # we just create a new revision with almost same meta/data to show up on RC
+        self._save(current_rev, current_rev, item_name=target, action='SAVE/COPY', extra=self.item_name, comment=comment)
 
     def rename(self):
         # called from rename UI/POST
@@ -136,9 +170,10 @@ class Item(object):
             raise # shouldn't happen
         self._save(meta, data, mimetype=mimetype)
 
-    def _save(self, meta, data, action='SAVE', mimetype=None, comment='', extra=''):
+    def _save(self, meta, data, item_name=None, action='SAVE', mimetype=None, comment='', extra=''):
         request = self.request
-        item_name = self.item_name
+        if item_name is None:
+            item_name = self.item_name
         backend = request.cfg.data_backend
         try:
             storage_item = backend.get_item(item_name)
