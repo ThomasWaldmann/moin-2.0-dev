@@ -15,13 +15,29 @@ Data:
 {% block history %}
     {% if log %}
     <hr>History:
+        <form action="" method="GET">
+        <div id="page-history">
+        <input type="hidden" name="action" value="diff">
         <table>
+            <tr>
+                <th align="right">#</td>
+                <th>Date</td>
+                <th align="right">Size</td>
+                <th align="right"><input type="submit" value="Diff"></th>
+                <th>Editor</td>
+                <th>MimeType</td>
+                <th>Comment</td>
+                <th colspan="2">Actions</td>
+            </tr>
             {% for entry in log %}
             <tr>
                 <td align="right">{{ entry.rev_no }}</td>
-                <td align="right">{{ entry.mtime }}</td>
+                <td>{{ entry.mtime }}</td>
                 <td align="right">{{ entry.size }}</td>
-                <td>diff</td>
+                <td>
+                    <input type="radio" name="rev1" value="{{ entry.rev_no }}">
+                    <input type="radio" name="rev2" value="{{ entry.rev_no }}">
+                </td>
                 <td>{{ entry.editor }}</td>
                 <td>{{ entry.mimetype|e }}</td>
                 <td>{{ entry.comment|e }}</td>
@@ -30,6 +46,9 @@ Data:
             </tr>
             {% endfor %}
         </table>
+        </div>
+        </form>
     {% endif %}
 {% endblock %}
+
 
