@@ -1146,8 +1146,6 @@ actionsMenuInit('%(label)s');
                 editbar_actions.append('<a href="#" class="nbcomment" onClick="toggleComments();return false;">%s</a>' % _('Comments'))
             elif editbar_item == 'Modify':
                 editbar_actions.append(self.modifyLink(page))
-            elif editbar_item == 'Info':
-                editbar_actions.append(self.infoLink(page))
             elif editbar_item == 'Subscribe':
                 editbar_actions.append(self.subscribeLink(page))
             elif editbar_item == 'Quicklink':
@@ -1183,16 +1181,6 @@ actionsMenuInit('%(label)s');
         text = _('Modify')
         attrs = {'rel': 'nofollow', }
         return page.link_to(self.request, text=text, querystr=querystr, **attrs)
-
-    def infoLink(self, page):
-        """ Return link to page information """
-        if 'info' in self.request.cfg.actions_excluded:
-            return ""
-
-        _ = self.request.getText
-        return page.link_to(self.request,
-                            text=_('Info'),
-                            querystr={'action': 'info'}, css_class='nbinfo', rel='nofollow')
 
     def subscribeLink(self, page):
         """ Return subscribe/unsubscribe link to valid users
