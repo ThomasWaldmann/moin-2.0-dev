@@ -287,7 +287,7 @@ def get_available_actions(config, page, user):
                 not user.may.delete(page.page_name):
                 # Prevent modification of underlay only pages, or pages
                 # the user can't write and can't delete
-                excluded = [u'RenamePage', u'DeletePage', ]
+                excluded = [u'rename', u'delete', ]
         return set([action for action in actions if not action in excluded])
 
 
