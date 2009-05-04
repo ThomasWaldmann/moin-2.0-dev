@@ -519,22 +519,6 @@ class TestLinkingMarkup(ParserTestCase):
             result = self.needle.search(html).group(1)
             assert result == expected
 
-    def testLinkAttachment(self):
-        html = self.parse("[[attachment:some file.txt]]")
-        assert '<a ' in html
-        assert 'href="' in html
-        assert 'class="attachment nonexistent"' in html
-        assert 'action=AttachFile' in html
-        assert 'some+file.txt' in html
-
-    def testLinkAttachmentImage(self):
-        html = self.parse("[[attachment:some file.png]]")
-        assert '<a ' in html # must create a link
-        assert 'href="' in html
-        assert 'class="attachment nonexistent"' in html
-        assert 'action=AttachFile' in html
-        assert 'some+file.png' in html
-
 
 class TestTransclusionMarkup(ParserTestCase):
     """ Test wiki markup """

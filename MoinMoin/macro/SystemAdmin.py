@@ -9,7 +9,6 @@
 """
 
 from MoinMoin.userform import do_user_browser
-from MoinMoin.action.AttachFile import do_admin_browser
 
 Dependencies = ["time"]
 
@@ -22,7 +21,6 @@ def macro_SystemAdmin(macro):
         return ''
 
     _MENU = {
-        'attachments': (_("File attachment browser"), do_admin_browser),
         'users': (_("User account browser"), do_user_browser),
     }
     choice = request.values.get('sysadm')

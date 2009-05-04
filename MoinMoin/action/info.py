@@ -47,11 +47,6 @@ def execute(pagename, request):
                           'value': digest, }),
                       f.paragraph(0))
 
-        # show attachments (if allowed)
-        attachment_info = action.getHandler(request, 'AttachFile', 'info')
-        if attachment_info:
-            request.write(attachment_info(pagename, request))
-
         # show subscribers
         subscribers = page.getSubscribers(request, include_self=1, return_users=1)
         if subscribers:
@@ -150,24 +145,7 @@ def execute(pagename, request):
 
                 pgactioncount += 1
             else: # ATT*
-                rev = '-'
-                diff = '-'
-
-                filename = wikiutil.url_unquote(revision[EDIT_LOG_EXTRA])
-                comment = "%s: %s %s" % (revision[EDIT_LOG_ACTION], filename, revision[EDIT_LOG_COMMENT], )
-                size = 0
-                if revision[EDIT_LOG_ACTION] != 'ATTDEL':
-                    from MoinMoin.action import AttachFile
-                    if AttachFile.exists(request, pagename, filename):
-                        size = AttachFile.size(request, pagename, filename)
-                    if revision[EDIT_LOG_ACTION] == 'ATTNEW':
-                        actions.append(render_action(_('view'), {'action': 'AttachFile', 'do': 'view', 'target': '%s' % filename}))
-                    elif revision[EDIT_LOG_ACTION] == 'ATTDRW':
-                        actions.append(render_action(_('edit'), {'action': 'AttachFile', 'drawing': '%s' % filename.replace(".tdraw", "")}))
-
-                    actions.append(render_action(_('get'), {'action': 'AttachFile', 'do': 'get', 'target': '%s' % filename}))
-                    if request.user.may.delete(pagename):
-                        actions.append(render_action(_('del'), {'action': 'AttachFile', 'do': 'del', 'target': '%s' % filename}))
+                raise "ATT*(?) in edit log, should not happen"
 
             userid = revision.get(EDIT_LOG_USERID, _("N/A"))
             addr = revision.get(EDIT_LOG_ADDR, _("N/A"))

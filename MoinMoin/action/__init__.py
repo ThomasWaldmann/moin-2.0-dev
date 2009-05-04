@@ -31,14 +31,12 @@
 from MoinMoin.util import pysupport
 from MoinMoin import config, wikiutil
 from MoinMoin.Page import Page
-from MoinMoin.action.AttachFile import _do_view, _do_get
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 # create a list of extension actions from the package directory
 modules = pysupport.getPackageModules(__file__)
 
 # builtin-stuff (see do_<name> below):
-names = ['show', 'recall', 'raw', 'format', 'content', 'print', 'refresh', 'goto', ]
+names = []
 
 class ActionBase:
     """ action base class with some generic stuff to inherit
@@ -228,107 +226,6 @@ class ActionBase:
             self.render_msg(self.make_form(), "dialog") # display the form again
 
 
-# Builtin Actions ------------------------------------------------------------
-
-def do_raw(pagename, request):
-    """ send raw content of a page (e.g. wiki markup) """
-    if not request.user.may.read(pagename):
-        Page(request, pagename).send_page()
-    else:
-        try:
-            item = request.cfg.data_backend.get_item(pagename)
-            rev = item.get_revision(-1)
-            mimetype = rev["mimetype"]
-        except (NoSuchItemError, NoSuchRevisionError, KeyError):
-            pass  # TODO: Handle sanely. Must we actually handle that here or just ignore it?
-        else:
-            if mimetype != "text/x-unidentified-wiki-format":  # XXX Improve mimetype handling
-                pagename, filename = pagename.split("/")
-                _do_get(pagename, request, filename=filename)
-                return
-
-
-        rev = request.rev or 0
-        Page(request, pagename, rev=rev).send_raw()
-
-def do_show(pagename, request, content_only=0, count_hit=1, cacheable=1, print_mode=0, mimetype=u'text/html'):
-    """ show a page, either current revision or the revision given by "rev=" value.
-        if count_hit is non-zero, we count the request for statistics.
-    """
-    # We must check if the current page has different ACLs.
-    if not request.user.may.read(pagename):
-        Page(request, pagename).send_page()
-    else:
-        try:
-            item = request.cfg.data_backend.get_item(pagename)
-            rev = item.get_revision(-1)
-            mimetype = rev["mimetype"]
-        except (NoSuchItemError, NoSuchRevisionError, KeyError):
-            pass  # TODO: Handle sanely. Must we actually handle that here or just ignore it?
-        else:
-            if mimetype != "text/x-unidentified-wiki-format":  # XXX Improve mimetype handling
-                pagename, filename = pagename.split("/")
-                _do_view(pagename, request, filename=filename)
-                return
-
-        mimetype = request.values.get('mimetype', u"text/html")
-
-        if request.rev is None:
-            rev = -1
-        else:
-            rev = request.rev
-        if rev == -1:
-            request.cacheable = cacheable
-
-        Page(request, pagename, rev=rev, formatter=mimetype).send_page(
-            count_hit=count_hit,
-            print_mode=print_mode,
-            content_only=content_only,
-        )
-
-def do_format(pagename, request):
-    """ send a page using a specific formatter given by "mimetype=" value.
-        Since 5.5.2006 this functionality is also done by do_show, but do_format
-        has a default of text/plain when no format is given.
-        It also does not count in statistics and also does not set the cacheable flag.
-        DEPRECATED: remove this action when we don't need it any more for compatibility.
-    """
-    do_show(pagename, request, count_hit=0, cacheable=0, mimetype=u'text/plain')
-
-def do_content(pagename, request):
-    """ same as do_show, but we only show the content """
-    # XXX temporary fix to make it work until Page.send_page gets refactored
-    request.mimetype = 'text/html'
-    request.status_code = 200
-    do_show(pagename, request, count_hit=0, content_only=1)
-
-def do_print(pagename, request):
-    """ same as do_show, but with print_mode set """
-    do_show(pagename, request, print_mode=1)
-
-def do_recall(pagename, request):
-    """ same as do_show, but never caches and never counts hits """
-    do_show(pagename, request, count_hit=0, cacheable=0)
-
-def do_refresh(pagename, request):
-    """ Handle refresh action """
-    # Without arguments, refresh action will refresh the page text_html cache.
-    arena = request.values.get('arena', 'Page.py')
-    if arena == 'Page.py':
-        arena = Page(request, pagename)
-    key = request.values.get('key', 'text_html')
-
-    # Remove cache entry (if exists), and send the page
-    from MoinMoin import caching
-    caching.CacheEntry(request, arena, key, scope='item').remove()
-    caching.CacheEntry(request, arena, "pagelinks", scope='item').remove()
-    do_show(pagename, request)
-
-def do_goto(pagename, request):
-    """ redirect to another page """
-    target = request.values.get('target', '')
-    request.http_redirect(Page(request, target).url(request))
-
 # Dispatching ----------------------------------------------------------------
 def get_names(config):
     """ Get a list of known actions.
@@ -390,7 +287,7 @@ def get_available_actions(config, page, user):
                 not user.may.delete(page.page_name):
                 # Prevent modification of underlay only pages, or pages
                 # the user can't write and can't delete
-                excluded = [u'RenamePage', u'DeletePage', ] # AttachFile must NOT be here!
+                excluded = [u'RenamePage', u'DeletePage', ]
         return set([action for action in actions if not action in excluded])
 
 

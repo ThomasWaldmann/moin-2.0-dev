@@ -36,7 +36,6 @@ import mimetypes
 
 from MoinMoin import config, caching
 from MoinMoin.util import filesys
-from MoinMoin.action import AttachFile
 from MoinMoin.support.python_compatibility import hmac_new
 
 action_name = __name__.split('.')[-1]
@@ -80,7 +79,7 @@ def key(request, wikiname=None, itemname=None, attachname=None, content=None, se
     @param request: the request object
     @param wikiname: the name of the wiki (if not given, will be read from cfg)
     @param itemname: the name of the page
-    @param attachname: the filename of the attachment
+    @param attachname: the filename of the attachment - XXX NOT USED ANY MORE
     @param content: content data as unicode object (e.g. for page content or
                     parser section content)
     @param secret: secret for hMAC calculation (default: use secret from cfg)
@@ -89,10 +88,12 @@ def key(request, wikiname=None, itemname=None, attachname=None, content=None, se
         secret = request.cfg.secrets['action/cache']
     if content:
         hmac_data = content
-    elif itemname is not None and attachname is not None:
+    elif itemname is not None:
         wikiname = wikiname or request.cfg.interwikiname or request.cfg.siteid
-        fuid = filesys.fuid(AttachFile.getFilename(request, itemname, attachname))
-        hmac_data = u''.join([wikiname, itemname, attachname, repr(fuid)])
+        def _uid(itemname):
+            return '' # TODO (no filesystem files any more! have some UID in metadata?) XXX
+        uid = _uid(itemname)
+        hmac_data = u''.join([wikiname, itemname, uid])
     else:
         raise AssertionError('cache_key called with unsupported parameters')
 

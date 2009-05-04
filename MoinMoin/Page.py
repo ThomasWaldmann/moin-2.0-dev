@@ -2,22 +2,13 @@
 """
     MoinMoin - Page class
 
-    Page is used for read-only access to a wiki page. For r/w access see PageEditor.
-    A Page object is used to access a wiki page (in general) as well as to access
-    some specific revision of a wiki page.
+    Page is used for read-only access to a wiki page.
 
     The RootPage is some virtual page located at / and is mainly used to do namespace
     operations like getting the page list.
 
-    TODO: see CHANGES.storage
-
-    @copyright: 2000-2004 by Juergen Hermann <jh@web.de>,
-                2005-2008 by MoinMoin:ThomasWaldmann,
-                2006 by MoinMoin:FlorianFesti,
-                2007 by MoinMoin:ReimarBauer,
-                2007 by MoinMoin:HeinrichWendel,
-                2008 by MoinMoin:ChristopherDenter
-    @license: GNU GPL, see COPYING for details.
+    DEPRECATED - move stuff you need out of here, to MoinMoin.items or another
+    place that makes sense.
 """
 
 import os, re, codecs
@@ -757,34 +748,6 @@ class Page(object):
 
         return pi
 
-    def send_raw(self, content_disposition=None):
-        """ Output the raw page data (action=raw).
-            With no content_disposition, the browser usually just displays the
-            data on the screen, with content_disposition='attachment', it will
-            offer a dialogue to save it to disk (used by Save action).
-        """
-        request = self.request
-        request.mimetype = 'text/plain'
-        if self.exists():
-            # use the correct last-modified value from the on-disk file
-            # to ensure cacheability where supported. Because we are sending
-            # RAW (file) content, the file mtime is correct as Last-Modified header.
-            request.status_code = 200
-            request.last_modified = self.mtime()
-            text = self.encodeTextMimeType(self.body)
-            #request.setHttpHeader("Content-Length: %d" % len(text))  # XXX WRONG! text is unicode obj, but we send utf-8!
-            if content_disposition:
-                # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
-                # There is no solution that is compatible to IE except stripping non-ascii chars
-                filename_enc = "%s.txt" % self.page_name.encode(config.charset)
-                dispo_string = '%s; filename="%s"' % (content_disposition, filename_enc)
-                request.headers.add('Content-Disposition', dispo_string)
-        else:
-            request.status_code = 404
-            text = u"Page %s not found." % self.page_name
-
-        request.write(text)
-
     def send_page(self, **keywords):
         """ Output the formatted page.
 
@@ -1119,9 +1082,6 @@ class Page(object):
     def loadCache(self, request):
         """ Return page content cache or raises 'CacheNeedsUpdate' """
         cache = caching.CacheEntry(request, self, self.getFormatterName(), scope='item')
-
-        from MoinMoin.action.AttachFile import getAttachDir
-        attachmentsPath = getAttachDir(request, self.page_name)
         if cache.needsUpdate([self]):
             raise Exception('CacheNeedsUpdate')
 

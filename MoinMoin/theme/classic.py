@@ -189,7 +189,7 @@ class Theme(ThemeBase):
             available = list(available)
             available.sort()
             for action in available:
-                # Always add spaces: AttachFile -> Attach File
+                # Always add spaces: LikesPages -> Like Pages
                 # XXX do not make a page object just for split_title
                 #title = Page(request, action).split_title(force=1)
                 title = action
