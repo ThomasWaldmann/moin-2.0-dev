@@ -16,7 +16,7 @@ from jinja2 import Environment, PackageLoader, Template, FileSystemBytecodeCache
 
 from werkzeug import http_date
 
-from MoinMoin import wikiutil, config
+from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
 from MoinMoin.Page import Page
 from MoinMoin.Page import DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
@@ -164,8 +164,9 @@ There is no help, you're doomed!
             log.append(dict(
                 rev_no=rev_no,
                 size=r.size,
-                mtime=r.timestamp,
-                editor='',
+                mtime=self.request.user.getFormattedDateTime(float(r.timestamp)),
+                editor=user.get_printable_editor(self.request,
+                       r[EDIT_LOG_USERID], r[EDIT_LOG_ADDR], r[EDIT_LOG_HOSTNAME]) or _("N/A"),
                 comment=r.get(EDIT_LOG_COMMENT, ''),
                 mimetype=r.get('mimetype', ''),
             ))

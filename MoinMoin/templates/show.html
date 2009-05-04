@@ -18,15 +18,15 @@ Data:
         <table>
             {% for entry in log %}
             <tr>
-                <td>{{ entry.rev_no }}</td>
-                <td>{{ entry.mtime }}</td>
+                <td align="right">{{ entry.rev_no }}</td>
+                <td align="right">{{ entry.mtime }}</td>
+                <td align="right">{{ entry.size }}</td>
+                <td>diff</td>
                 <td>{{ entry.editor }}</td>
-                <td>{{ entry.size }}</td>
-                <td>{{ entry.mimetype }}</td>
-                <td>{{ entry.comment }}</td>
+                <td>{{ entry.mimetype|e }}</td>
+                <td>{{ entry.comment|e }}</td>
                 <td>{{ '<a href="?rev=%d">%s</a>' % (entry.rev_no, 'show') }}</td>
                 <td>{{ '<a href="?rev=%d&action=get">%s</a>' % (entry.rev_no, 'get') }}</td>
-                <td>{{ '<a href="?rev=%d&action=revert">%s</a>' % (entry.rev_no, 'revert') }}</td>
             </tr>
             {% endfor %}
         </table>
