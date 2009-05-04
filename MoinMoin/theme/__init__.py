@@ -702,7 +702,7 @@ class ThemeBase:
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
             contentActions = [u'', u'show', u'refresh', u'preview', u'diff',
-                              u'subscribe', u'rename', u'CopyPage', u'delete',
+                              u'subscribe', u'rename', u'copy', u'delete',
                              ]
             return self.request.action in contentActions
         return False
@@ -932,17 +932,14 @@ var search_hint = "%(search_hint)s";
             'revert',
             'delete',
             'rename',
+            'copy',
+            '__separator__',
             'RenderAsDocbook',
             'refresh',
-            '__separator__',
             'LikePages',
             'LocalSiteMap',
-            '__separator__',
-            'CopyPage',
-            '__separator__',
             'MyPages',
             'SubscribeUser',
-            '__separator__',
             'Despam',
             'PackagePages',
             'SyncPages',
@@ -956,7 +953,7 @@ var search_hint = "%(search_hint)s";
             'delete': _('Delete Item'),
             'refresh': _('Delete Cache'),
             'rename': _('Rename Item'),
-            'CopyPage': _('Copy Page'),
+            'copy': _('Copy Item'),
             'LikePages': _('Like Pages'),
             'LocalSiteMap': _('Local Site Map'),
             'MyPages': _('My Pages'),
