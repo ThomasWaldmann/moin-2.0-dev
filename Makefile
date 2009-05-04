@@ -16,18 +16,16 @@ install-docs:
 	wget -U MoinMoin/Makefile -O build/INSTALL.html "http://master19.moinmo.in/InstallDocs?action=print"
 	sed \
 		-e 's#href="/#href="http://master19.moinmo.in/#g' \
-		-e 's#http://[a-z0-9\.]*/wiki/modernized/#../wiki/htdocs/modernized/#g' \
-		-e 's#/wiki/common/#../wiki/htdocs/common/#g' \
-		-e 's#/wiki/modernized/#../wiki/htdocs/modernized/#g' \
+		-e 's#http://master19.moinmo.in/moin_static.../#../MoinMoin/web/static/htdocs/#g' \
+		-e 's#http://static.moinmo.in/moin_static.../#../MoinMoin/web/static/htdocs/#g' \
         build/INSTALL.html >docs/INSTALL.html
 	-rm build/INSTALL.html
 
 	wget -U MoinMoin/Makefile -O build/UPDATE.html "http://master19.moinmo.in/HelpOnUpdating?action=print"
 	sed \
 		-e 's#href="/#href="http://master19.moinmo.in/#g' \
-		-e 's#http://[a-z0-9\.]*/wiki/modernized/#../wiki/htdocs/modernized/#g' \
-		-e 's#/wiki/common/#../wiki/htdocs/common/#g' \
-		-e 's#/wiki/modernized/#../wiki/htdocs/modernized/#g' \
+		-e 's#http://master19.moinmo.in/moin_static.../#../MoinMoin/web/static/htdocs/#g' \
+		-e 's#http://static.moinmo.in/moin_static.../#../MoinMoin/web/static/htdocs/#g' \
         build/UPDATE.html >docs/UPDATE.html
 	-rm build/UPDATE.html
 	-rmdir build
@@ -61,6 +59,10 @@ pagepacks:
 	
 dist:
 	-rm MANIFEST
+	-rm -rf tests/wiki
+	-rm -rf wiki/data/cache/{__metalock__,__session__,wikiconfig}
+	->wiki/data/event-log
+	->wiki/data/edit-log
 	python setup.py sdist
 
 # Create patchlevel module

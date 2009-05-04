@@ -984,6 +984,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
             raise self.EmptyPage, msg
         elif newtext == self.get_raw_body():
             msg = _('You did not change the page content, not saved!')
+            self.lock.release()
             raise self.Unchanged, msg
         else:
             from MoinMoin.security import parseACL

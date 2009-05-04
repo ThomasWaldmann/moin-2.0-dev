@@ -399,6 +399,7 @@ def _get_filelist(request, pagename):
 
 
 def error_msg(pagename, request, msg):
+    msg = wikiutil.escape(msg)
     request.theme.add_msg(msg, "error")
     Page(request, pagename).send_page()
 
@@ -529,7 +530,7 @@ def execute(pagename, request):
             filename = wikiutil.taintfilename(filename)
         msg = handler(pagename, request, filename=filename)
     else:
-        msg = _('Unsupported AttachFile sub-action: %s') % wikiutil.escape(do)
+        msg = _('Unsupported AttachFile sub-action: %s') % do
     if msg:
         error_msg(pagename, request, msg)
 
@@ -539,6 +540,8 @@ def _do_upload_form(pagename, request, filename):
 
 
 def upload_form(pagename, request, msg=''):
+    if msg:
+        msg = wikiutil.escape(msg)
     _ = request.getText
 
     # Use user interface language for this generated page
@@ -552,18 +555,7 @@ def upload_form(pagename, request, msg=''):
     request.theme.send_closing_html()
 
 
-def preprocess_filename(filename):
-    """ preprocess the filename we got from upload form,
-        strip leading drive and path (IE misbehaviour)
-    """
-    if filename and len(filename) > 1 and (filename[1] == ':' or filename[0] == '\\'): # C:.... or \path... or \\server\...
-        bsindex = filename.rfind('\\')
-        if bsindex >= 0:
-            filename = filename[bsindex+1:]
-    return filename
-
-
-def _do_upload(pagename, request, filename):
+def _do_upload(pagename, request):
     _ = request.getText
     # Currently we only check TextCha for upload (this is what spammers ususally do),
     # but it could be extended to more/all attachment write access
@@ -592,7 +584,7 @@ def _do_upload(pagename, request, filename):
     if rename:
         target = rename
     else:
-        target = file_upload.filename
+        target = file_upload.filename or u''
 
     target = wikiutil.clean_input(target)
     if not target:
@@ -830,19 +822,19 @@ def _do_move(pagename, request, filename):
         except (NoSuchItemError, NoSuchRevisionError):
             return _("Attachment '%(filename)s' does not exist!") % {'filename': filename}
 
-        # move file
-        d = {'action': action_name,
-             'url': request.href(pagename),
-             'do': 'attachment_move',
-             'ticket': wikiutil.createTicket(request),
-             'pagename': pagename,
-             'attachment_name': filename,
-             'move': _('Move'),
-             'cancel': _('Cancel'),
-             'newname_label': _("New page name"),
-             'attachment_label': _("New attachment name"),
-            }
-        formhtml = '''
+    # move file
+    d = {'action': action_name,
+         'url': request.href(pagename),
+         'do': 'attachment_move',
+         'ticket': wikiutil.createTicket(request),
+         'pagename': wikiutil.escape(pagename, 1),
+         'attachment_name': wikiutil.escape(filename, 1),
+         'move': _('Move'),
+         'cancel': _('Cancel'),
+         'newname_label': _("New page name"),
+         'attachment_label': _("New attachment name"),
+        }
+    formhtml = '''
 <form action="%(url)s" method="POST">
 <input type="hidden" name="action" value="%(action)s">
 <input type="hidden" name="do" value="%(do)s">
@@ -972,13 +964,13 @@ def _do_install(pagename, request, filename):
 
     if package.isPackage():
         if package.installPackage():
-            msg = _("Attachment '%(filename)s' installed.") % {'filename': wikiutil.escape(target)}
+            msg = _("Attachment '%(filename)s' installed.") % {'filename': target}
         else:
-            msg = _("Installation of '%(filename)s' failed.") % {'filename': wikiutil.escape(target)}
+            msg = _("Installation of '%(filename)s' failed.") % {'filename': target}
         if package.msg:
-            msg += "<br><pre>%s</pre>" % wikiutil.escape(package.msg)
+            msg += " " + package.msg
     else:
-        msg = _('The file %s is not a MoinMoin package file.') % wikiutil.escape(target)
+        msg = _('The file %s is not a MoinMoin package file.') % target
 
     upload_form(pagename, request, msg=msg)
 
@@ -1082,7 +1074,7 @@ def _do_unzip(pagename, request, filename, overwrite=False):
         logging.exception("An exception within zip file attachment handling occurred:")
         msg = _("A severe error occurred:") + ' ' + str(err)
 
-    upload_form(pagename, request, msg=wikiutil.escape(msg))
+    upload_form(pagename, request, msg=msg)
 
 
 def send_viewfile(pagename, request, filename):
