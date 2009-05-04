@@ -283,12 +283,8 @@ pagesets = [
 weekdays = [_('Sun'), _('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')]
 
 actions = [
-    _('AttachFile'),
-    _('DeletePage'),
     _('LikePages'),
     _('LocalSiteMap'),
-    _('RenamePage'),
-    _('SpellCheck'),
 ]
 
 misc = [
