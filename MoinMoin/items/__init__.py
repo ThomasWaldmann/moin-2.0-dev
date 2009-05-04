@@ -64,6 +64,13 @@ class Item(object):
                                  )
         return content
 
+    def do_rename(self):
+        template = self.env.get_template('rename.html')
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.item_name,
+                                 )
+        return content
+
     def do_delete(self):
         template = self.env.get_template('delete.html')
         content = template.render(gettext=self.request.getText,
@@ -91,6 +98,14 @@ class Item(object):
         else:
             logging.error("unsupported content object: %r" % content)
             raise
+
+    def rename(self):
+        # called from rename UI/POST
+        comment = self.request.form.get('comment')
+        # we just create a new revision with almost same meta/data to show up on RC
+        self._save(self.meta, self.data, action='SAVE/RENAME', extra=self.item_name, comment=comment)
+        target = self.request.form.get('target')
+        self.rev.item.rename(target)
 
     def delete(self):
         # called from delete UI/POST
