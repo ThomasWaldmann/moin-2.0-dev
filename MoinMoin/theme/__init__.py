@@ -702,7 +702,7 @@ class ThemeBase:
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
             contentActions = [u'', u'show', u'refresh', u'preview', u'diff',
-                              u'subscribe', u'RenamePage', u'CopyPage', u'DeletePage',
+                              u'subscribe', u'RenamePage', u'CopyPage', u'delete',
                              ]
             return self.request.action in contentActions
         return False
@@ -929,6 +929,7 @@ var search_hint = "%(search_hint)s";
         rev = request.rev
 
         menu = [
+            'delete',
             'RenderAsDocbook',
             'refresh',
             '__separator__',
@@ -937,7 +938,6 @@ var search_hint = "%(search_hint)s";
             '__separator__',
             'RenamePage',
             'CopyPage',
-            'DeletePage',
             '__separator__',
             'MyPages',
             'SubscribeUser',
@@ -953,10 +953,10 @@ var search_hint = "%(search_hint)s";
             '__title__': _("More Actions:"),
             # Translation may need longer or shorter separator
             '__separator__': _('------------------------'),
+            'delete': _('Delete Item'),
             'refresh': _('Delete Cache'),
             'RenamePage': _('Rename Page'),
             'CopyPage': _('Copy Page'),
-            'DeletePage': _('Delete Page'),
             'LikePages': _('Like Pages'),
             'LocalSiteMap': _('Local Site Map'),
             'MyPages': _('My Pages'),
