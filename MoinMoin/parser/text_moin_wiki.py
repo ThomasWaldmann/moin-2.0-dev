@@ -140,12 +140,10 @@ class Parser:
 
     # link targets:
     extern_rule = r'(?P<extern_addr>(?P<extern_scheme>%s)\:.*)' % url_scheme
-    attach_rule = r'(?P<attach_scheme>attachment|drawing)\:(?P<attach_addr>.*)'
     page_rule = r'(?P<page_name>.*)'
 
     link_target_rules = r'|'.join([
         extern_rule,
-        attach_rule,
         page_rule,
     ])
     link_target_re = re.compile(link_target_rules, re.VERBOSE|re.UNICODE)
@@ -721,60 +719,6 @@ class Parser:
                 #        desc +
                 #        self.formatter.transclusion(0))
 
-            elif m.group('attach_scheme'):
-                scheme = m.group('attach_scheme')
-                url = wikiutil.url_unquote(m.group('attach_addr'))
-                if scheme == 'attachment':
-                    mt = wikiutil.MimeType(filename=url)
-                    if mt.major == 'text':
-                        desc = self._transclude_description(desc, url)
-                        return self.formatter.attachment_inlined(url, desc)
-                    # destinguishs if browser need a plugin in place
-                    elif mt.major == 'image' and mt.minor in config.browser_supported_images:
-                        desc = self._transclude_description(desc, url)
-                        tag_attrs, query_args = self._get_params(params,
-                                                                 tag_attrs={'alt': desc,
-                                                                            'title': desc, },
-                                                                 acceptable_attrs=acceptable_attrs_img)
-                        return self.formatter.attachment_image(url, **tag_attrs)
-                    else:
-                        from MoinMoin.action import AttachFile
-                        pagename = self.formatter.page.page_name
-                        if AttachFile.exists(self.request, pagename, url):
-                            href = AttachFile.getAttachUrl(pagename, url, self.request, escaped=0)
-                            tag_attrs, query_args = self._get_params(params,
-                                                                     tag_attrs={'title': desc, },
-                                                                     acceptable_attrs=acceptable_attrs_object)
-                            return (self.formatter.transclusion(1, data=href, type=mt.spoil(), **tag_attrs) +
-                                    self.formatter.text(self._transclude_description(desc, url)) +
-                                    self.formatter.transclusion(0))
-                        else:
-                            return (self.formatter.attachment_link(1, url) +
-                                    self.formatter.text(self._transclude_description(desc, url)) +
-                                    self.formatter.attachment_link(0))
-
-                        #NOT USED CURRENTLY:
-
-                        # use EmbedObject for other mimetypes
-                        if mt is not None:
-                            from MoinMoin import macro
-                            macro.request = self.request
-                            macro.formatter = self.request.html_formatter
-                            p = Parser("##\n", request)
-                            m = macro.Macro(p)
-                            pagename = self.formatter.page.page_name
-                            return m.execute('EmbedObject', u'target=%s' % url)
-                elif scheme == 'drawing':
-                    desc = self._transclude_description(desc, url)
-                    if desc:
-                        tag_attrs= {'alt': desc, 'title': desc, }
-                    else:
-                        tag_attrs = {}
-                    tag_attrs, query_args = self._get_params(params,
-                                                             tag_attrs=tag_attrs,
-                                                             acceptable_attrs=acceptable_attrs_img)
-                    return self.formatter.attachment_drawing(url, desc, **tag_attrs)
-
             elif m.group('page_name'):
                 # experimental client side transclusion
                 page_name_all = m.group('page_name')
@@ -892,18 +836,6 @@ class Parser:
                         self._link_description(desc, target, target) +
                         self.formatter.url(0))
 
-            elif mt.group('attach_scheme'):
-                scheme = mt.group('attach_scheme')
-                url = wikiutil.url_unquote(mt.group('attach_addr'))
-                tag_attrs, query_args = self._get_params(params,
-                                                         tag_attrs={'title': desc, },
-                                                         acceptable_attrs=acceptable_attrs)
-                if scheme == 'attachment':
-                    return (self.formatter.attachment_link(1, url, querystr=query_args, **tag_attrs) +
-                            self._link_description(desc, target, url) +
-                            self.formatter.attachment_link(0))
-                elif scheme == 'drawing':
-                    return self.formatter.attachment_drawing(url, desc, alt=desc, **tag_attrs)
             else:
                 if desc:
                     desc = '|' + desc

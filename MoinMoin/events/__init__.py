@@ -105,20 +105,6 @@ class PageCopiedEvent(PageEvent):
         self.comment = comment
 
 
-class FileAttachedEvent(PageEvent):
-
-    name = u"FileAttachedEvent"
-    description = _(u"""A new attachment has been added""")
-    req_superuser = False
-
-    def __init__(self, request, pagename, filename, size):
-        PageEvent.__init__(self, request)
-        self.request = request
-        self.pagename = pagename
-        self.filename = filename
-        self.size = size
-
-
 class PageRevertedEvent(PageEvent):
 
     name = u"PageRevertedEvent"

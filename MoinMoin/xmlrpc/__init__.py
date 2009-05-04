@@ -34,7 +34,6 @@ from MoinMoin import auth, config, user, wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.logfile import editlog
-from MoinMoin.action import AttachFile
 from MoinMoin import caching
 
 
@@ -910,78 +909,6 @@ class XmlRpcBase:
         # XXX unlock page
 
         return current_rev
-
-
-    # XXX BEGIN WARNING XXX
-    # All xmlrpc_*Attachment* functions have to be considered as UNSTABLE API -
-    # they are neither standard nor are they what we need when we have switched
-    # attachments (1.5 style) to mimetype items (hopefully in 1.6).
-    # They will be partly removed, esp. the semantics of the function "listAttachments"
-    # cannot be sensibly defined for items.
-    # If the first beta or more stable release of 1.6 will have new item semantics,
-    # we will remove the functions before it is released.
-    def xmlrpc_listAttachments(self, pagename):
-        """ Get all attachments associated with pagename
-        Deprecated.
-
-        @param pagename: pagename (utf-8)
-        @rtype: list
-        @return: a list of utf-8 attachment names
-        """
-        pagename = self._instr(pagename)
-        # User may read page?
-        if not self.request.user.may.read(pagename):
-            return self.notAllowedFault()
-
-        result = AttachFile._get_files(self.request, pagename)
-        return result
-
-    def xmlrpc_getAttachment(self, pagename, attachname):
-        """ Get attachname associated with pagename
-
-        @param pagename: pagename (utf-8)
-        @param attachname: attachment name (utf-8)
-        @rtype base64
-        @return base64 data
-        """
-        pagename = self._instr(pagename)
-        # User may read page?
-        if not self.request.user.may.read(pagename):
-            return self.notAllowedFault()
-
-        filename = wikiutil.taintfilename(self._instr(attachname))
-        filename = AttachFile.getFilename(self.request, pagename, filename)
-        if not os.path.isfile(filename):
-            return self.noSuchPageFault()
-        return self._outlob(open(filename, 'rb').read())
-
-    def xmlrpc_putAttachment(self, pagename, attachname, data):
-        """ Set attachname associated with pagename to data
-
-        @param pagename: pagename (utf-8)
-        @param attachname: attachment name (utf-8)
-        @param data: file data (base64)
-        @rtype boolean
-        @return True if attachment was set
-        """
-        pagename = self._instr(pagename)
-        # User may read page?
-        if not self.request.user.may.read(pagename):
-            return self.notAllowedFault()
-
-        # also check ACLs
-        if not self.request.user.may.write(pagename):
-            return xmlrpclib.Fault(1, "You are not allowed to edit this page")
-
-        attachname = wikiutil.taintfilename(attachname)
-        filename = AttachFile.getFilename(self.request, pagename, attachname)
-        if os.path.exists(filename) and not os.path.isfile(filename):
-            return self.noSuchPageFault()
-        open(filename, 'wb+').write(data.data)
-        AttachFile._addLogEntry(self.request, 'ATTNEW', pagename, filename)
-        return xmlrpclib.Boolean(1)
-
-    # XXX END WARNING XXX
 
 
     def xmlrpc_getBotTranslations(self):

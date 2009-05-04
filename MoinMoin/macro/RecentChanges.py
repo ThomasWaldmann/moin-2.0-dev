@@ -29,18 +29,7 @@ def format_comment(request, line):
     comment = line.comment
     action = line.action
     _ = request.getText
-    if action.startswith('ATT'):
-        filename = wikiutil.url_unquote(line.extra)
-        if action == 'ATTNEW':
-            comment = _("Upload of attachment '%(filename)s'.") % {
-                'filename': filename}
-        elif action == 'ATTDEL':
-            comment = _("Attachment '%(filename)s' deleted.") % {
-                'filename': filename}
-        elif action == 'ATTDRW':
-            comment = _("Drawing '%(filename)s' saved.") % {
-                'filename': filename}
-    elif '/REVERT' in action:
+    if '/REVERT' in action:
         rev = int(line.extra)
         comment = (_("Revert to revision %(rev)d.") % {'rev': rev}) + " " + comment
     elif '/RENAME' in action:

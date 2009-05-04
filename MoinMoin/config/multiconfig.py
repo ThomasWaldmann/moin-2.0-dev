@@ -21,8 +21,7 @@ from MoinMoin.auth import MoinAuth
 import MoinMoin.auth as authmodule
 import MoinMoin.events as events
 from MoinMoin.events import PageChangedEvent, PageRenamedEvent
-from MoinMoin.events import PageDeletedEvent, PageCopiedEvent
-from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
+from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
@@ -751,18 +750,17 @@ options_no_group_name = {
     ('surge_action_limits',
      {# allow max. <count> <action> requests per <dt> secs
         # action: (count, dt)
-        'all': (30, 30), # all requests (except cache/AttachFile action) count for this limit
+        'all': (30, 30), # all requests (except cache/get action) count for this limit
         'default': (30, 60), # default limit for actions without a specific limit
         'show': (30, 60),
         'recall': (10, 120),
-        'raw': (20, 40),  # some people use this for css
         'diff': (30, 60),
         'fullsearch': (10, 120),
-        'edit': (30, 300), # can be lowered after making preview different from edit
+        'modify': (30, 300), # can be lowered after making preview different from edit
         'rss_rc': (1, 60),
         # The following actions are often used for images - to avoid pages with lots of images
         # (like photo galleries) triggering surge protection, we assign rather high limits:
-        'AttachFile': (90, 60),
+        'get': (90, 60),
         'cache': (600, 30), # cache action is very cheap/efficient
      },
      "Surge protection tries to deny clients causing too much load/traffic, see /SurgeProtection."),
@@ -836,7 +834,7 @@ options_no_group_name = {
     ('datetime_fmt', '%Y-%m-%d %H:%M:%S', 'Default format for dates and times (when the user has no preferences or chose the "default" date format)'),
     ('chart_options', None, "If you have gdchart, use something like chart_options = {'width': 720, 'height': 540}"),
 
-    ('edit_bar', ['Edit', 'Comments', 'Discussion', 'Info', 'Subscribe', 'Quicklink', 'Attachments', 'ActionsMenu'],
+    ('edit_bar', ['Modify', 'Comments', 'Discussion', 'Info', 'Subscribe', 'Quicklink', 'ActionsMenu'],
      'list of edit bar entries'),
     ('history_count', (100, 200), "number of revisions shown for info/history action (default_count_shown, max_count_shown)"),
 
@@ -973,7 +971,6 @@ options_no_group_name = {
         PageDeletedEvent.__name__,
         PageCopiedEvent.__name__,
         PageRevertedEvent.__name__,
-        FileAttachedEvent.__name__,
      ], None),
     ('jabber_subscribed_events_default', [], None),
 

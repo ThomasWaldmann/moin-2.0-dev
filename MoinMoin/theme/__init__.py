@@ -51,7 +51,6 @@ class ThemeBase:
         'view':        (_("View"),                "moin-show.png",   12, 13),
         'home':        (_("Home"),                "moin-home.png",   13, 12),
         'up':          (_("Up"),                  "moin-parent.png", 15, 13),
-        # FileAttach
         'attach':     ("%(attach_count)s",       "moin-attach.png",  7, 15),
         'attachimg':  ("",                       "attach.png",      32, 32),
         # RecentChanges
@@ -704,7 +703,7 @@ class ThemeBase:
             # A better solution will be if the action itself answer the question: showPageInfo().
             contentActions = [u'', u'show', u'refresh', u'preview', u'diff',
                               u'subscribe', u'RenamePage', u'CopyPage', u'DeletePage',
-                              u'SpellCheck', u'print']
+                             ]
             return self.request.action in contentActions
         return False
 
@@ -805,10 +804,6 @@ searchBlur(e);
         @rtype: unicode
         @return: script for html head
         """
-        # Don't add script for print view
-        if self.request.action == 'print':
-            return u''
-
         _ = self.request.getText
         script = u"""
 <script type="text/javascript">
@@ -876,7 +871,6 @@ var search_hint = "%(search_hint)s";
             },
             self.externalScript('common'),
             self.headscript(d), # Should move to separate .js file
-            self.guiEditorScript(d),
             self.html_stylesheets(d),
             self.rsslink(d),
             self.universal_edit_button(d),
@@ -935,12 +929,9 @@ var search_hint = "%(search_hint)s";
         rev = request.rev
 
         menu = [
-            'raw',
-            'print',
             'RenderAsDocbook',
             'refresh',
             '__separator__',
-            'SpellCheck',
             'LikePages',
             'LocalSiteMap',
             '__separator__',
@@ -962,10 +953,7 @@ var search_hint = "%(search_hint)s";
             '__title__': _("More Actions:"),
             # Translation may need longer or shorter separator
             '__separator__': _('------------------------'),
-            'raw': _('Raw Text'),
-            'print': _('Print View'),
             'refresh': _('Delete Cache'),
-            'SpellCheck': _('Check Spelling'), # rename action!
             'RenamePage': _('Rename Page'),
             'CopyPage': _('Copy Page'),
             'DeletePage': _('Delete Page'),
@@ -1033,9 +1021,8 @@ var search_hint = "%(search_hint)s";
 
             options.append(option % data)
 
-        # Add custom actions not in the standard menu, except for
-        # some actions like AttachFile (we have them on top level)
-        more = [item for item in available if not item in titles and not item in ('AttachFile', )]
+        # Add custom actions not in the standard menu
+        more = [item for item in available if not item in titles]
         more.sort()
         if more:
             # Add separator
@@ -1045,7 +1032,7 @@ var search_hint = "%(search_hint)s";
             # Add more actions (all enabled)
             for action in more:
                 data = {'action': action, 'disabled': ''}
-                # Always add spaces: AttachFile -> Attach File
+                # Always add spaces: LikePages -> Like Pages
                 # XXX do not create page just for using split_title -
                 # creating pages for non-existent does 2 storage lookups
                 #title = Page(request, action).split_title(force=1)
@@ -1160,16 +1147,14 @@ actionsMenuInit('%(label)s');
                 # link target to get correct mouseover pointer appearance. return false
                 # keeps the browser away from jumping to the link target::
                 editbar_actions.append('<a href="#" class="nbcomment" onClick="toggleComments();return false;">%s</a>' % _('Comments'))
-            elif editbar_item == 'Edit':
-                editbar_actions.append(self.editorLink(page))
+            elif editbar_item == 'Modify':
+                editbar_actions.append(self.modifyLink(page))
             elif editbar_item == 'Info':
                 editbar_actions.append(self.infoLink(page))
             elif editbar_item == 'Subscribe':
                 editbar_actions.append(self.subscribeLink(page))
             elif editbar_item == 'Quicklink':
                 editbar_actions.append(self.quicklinkLink(page))
-            elif editbar_item == 'Attachments':
-                editbar_actions.append(self.attachmentsLink(page))
             elif editbar_item == 'ActionsMenu':
                 editbar_actions.append(self.actionsMenu(page))
         return editbar_actions
@@ -1191,89 +1176,16 @@ actionsMenuInit('%(label)s');
             return page.link_to(self.request, text=_(suppl_name),
                                 querystr={'action': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
 
-    def guiworks(self, page):
-        """ Return whether the gui editor / converter can work for that page.
-
-            The GUI editor currently only works for wiki format.
-            For simplicity, we also tell it does not work if the admin forces the text editor.
-        """
-        is_wiki = page.pi['format'] == 'wiki'
-        gui_disallowed = self.cfg.editor_force and self.cfg.editor_default == 'text'
-        return is_wiki and not gui_disallowed
-
-
-    def editorLink(self, page):
-        """ Return a link to the editor
-
-        If the user can't edit, return a disabled edit link.
-
-        If the user want to show both editors, it will display "Edit
-        (Text)", otherwise as "Edit".
-        """
-        if 'edit' in self.request.cfg.actions_excluded:
+    def modifyLink(self, page):
+        """ Return a link to the modify action """
+        if 'modify' in self.request.cfg.actions_excluded:
             return ""
 
-        if not (page.exists() and
-                self.request.user.may.write(page.page_name)):
-            return self.disabledEdit()
-
         _ = self.request.getText
-        querystr = {'action': 'edit'}
-
-        guiworks = self.guiworks(page)
-        if self.showBothEditLinks() and guiworks:
-            text = _('Edit (Text)')
-            querystr['editor'] = 'text'
-            attrs = {'name': 'texteditlink', 'rel': 'nofollow', }
-        else:
-            text = _('Edit')
-            if guiworks:
-                # 'textonly' will be upgraded dynamically to 'guipossible' by JS
-                querystr['editor'] = 'textonly'
-                attrs = {'name': 'editlink', 'rel': 'nofollow', }
-            else:
-                querystr['editor'] = 'text'
-                attrs = {'name': 'texteditlink', 'rel': 'nofollow', }
-
+        querystr = {'action': 'modify'}
+        text = _('Modify')
+        attrs = {'rel': 'nofollow', }
         return page.link_to(self.request, text=text, querystr=querystr, **attrs)
-
-    def showBothEditLinks(self):
-        """ Return True if both edit links should be displayed """
-        editor = self.request.user.editor_ui
-        if editor == '<default>':
-            editor = self.request.cfg.editor_ui
-        return editor == 'freechoice'
-
-    def guiEditorScript(self, d):
-        """ Return a script that set the gui editor link variables
-
-        The link will be created only when javascript is enabled and
-        the browser is compatible with the editor.
-        """
-        page = d['page']
-        if not (page.exists() and
-                self.request.user.may.write(page.page_name) and
-                self.showBothEditLinks() and
-                self.guiworks(page)):
-            return ''
-
-        _ = self.request.getText
-        return """\
-<script type="text/javascript">
-<!-- // GUI edit link and i18n
-var gui_editor_link_href = "%(url)s";
-var gui_editor_link_text = "%(text)s";
-//-->
-</script>
-""" % {'url': page.url(self.request, querystr={'action': 'edit', 'editor': 'gui', }),
-       'text': _('Edit (GUI)'),
-      }
-
-    def disabledEdit(self):
-        """ Return a disabled edit link """
-        _ = self.request.getText
-        return ('<span class="disabled">%s</span>'
-                % _('Immutable Page'))
 
     def infoLink(self, page):
         """ Return link to page information """
@@ -1320,16 +1232,6 @@ var gui_editor_link_text = "%(text)s";
         if action in self.request.cfg.actions_excluded:
             return ""
         return page.link_to(self.request, text=text, querystr={'action': action}, css_class='nbquicklink', rel='nofollow')
-
-    def attachmentsLink(self, page):
-        """ Return link to page attachments """
-        if 'AttachFile' in self.request.cfg.actions_excluded:
-            return ""
-
-        _ = self.request.getText
-        return page.link_to(self.request,
-                            text=_('Attachments'),
-                            querystr={'action': 'AttachFile'}, css_class='nbattachments', rel='nofollow')
 
     def startPage(self):
         """ Start page div with page language and direction
@@ -1646,41 +1548,8 @@ var gui_editor_link_text = "%(text)s";
 
         # Links
         output.append('<link rel="Start" href="%s">\n' % request.href(page_front_page))
-        if pagename:
-            output.append('<link rel="Alternate" title="%s" href="%s">\n' % (
-                    _('Wiki Markup'), request.href(pagename, action='raw')))
-            output.append('<link rel="Alternate" media="print" title="%s" href="%s">\n' % (
-                    _('Print View'), request.href(pagename, action='print')))
-
-            # !!! currently disabled due to Mozilla link prefetching, see
-            # http://www.mozilla.org/projects/netlib/Link_Prefetching_FAQ.html
-            #~ all_pages = request.getPageList()
-            #~ if all_pages:
-            #~     try:
-            #~         pos = all_pages.index(pagename)
-            #~     except ValueError:
-            #~         # this shopuld never happend in theory, but let's be sure
-            #~         pass
-            #~     else:
-            #~         request.write('<link rel="First" href="%s/%s">\n' % (request.script_root, quoteWikinameURL(all_pages[0]))
-            #~         if pos > 0:
-            #~             request.write('<link rel="Previous" href="%s/%s">\n' % (request.script_root, quoteWikinameURL(all_pages[pos-1])))
-            #~         if pos+1 < len(all_pages):
-            #~             request.write('<link rel="Next" href="%s/%s">\n' % (request.script_root, quoteWikinameURL(all_pages[pos+1])))
-            #~         request.write('<link rel="Last" href="%s/%s">\n' % (request.script_root, quoteWikinameURL(all_pages[-1])))
-
-            if page_parent_page:
-                output.append('<link rel="Up" href="%s">\n' % request.href(page_parent_page))
-
-        # write buffer because we call AttachFile
-        request.write(''.join(output))
-        output = []
-
-        # XXX maybe this should be removed completely. moin emits all attachments as <link rel="Appendix" ...>
-        # and it is at least questionable if this fits into the original intent of rel="Appendix".
-        if pagename and request.user.may.read(pagename):
-            from MoinMoin.action import AttachFile
-            AttachFile.send_link_rel(request, pagename)
+        if pagename and page_parent_page:
+            output.append('<link rel="Up" href="%s">\n' % request.href(page_parent_page))
 
         output.extend([
             '<link rel="Search" href="%s">\n' % request.href(page_find_page),
@@ -1817,7 +1686,7 @@ var gui_editor_link_text = "%(text)s";
         request.clock.stop('total')
 
         # Close html code
-        if request.cfg.show_timings and request.action != 'print':
+        if request.cfg.show_timings:
             request.write('<ul id="timings">\n')
             for t in request.clock.dump():
                 request.write('<li>%s</li>\n' % t)
