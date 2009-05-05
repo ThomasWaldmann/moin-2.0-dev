@@ -150,7 +150,7 @@ This might happen if you are trying to use a pre 1.3 configuration file, or
 made a syntax or spelling error.
 
 Another reason for this could be a name clash. It is not possible to have
-config names like e.g. stats.py - because that collides with MoinMoin/stats/ -
+config names like e.g. storage.py - because that collides with MoinMoin/storage/ -
 have a look into your MoinMoin code directory what other names are NOT
 possible.
 
