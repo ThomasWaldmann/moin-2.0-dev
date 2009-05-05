@@ -862,9 +862,9 @@ def _do_move(pagename, request, filename):
     </tr>
 </table>
 </form>''' % d
-        thispage = Page(request, pagename)
-        request.theme.add_msg(formhtml, "dialog")
-        return thispage.send_page()
+    thispage = Page(request, pagename)
+    request.theme.add_msg(formhtml, "dialog")
+    return thispage.send_page()
 
 def _do_box(pagename, request):
     _ = request.getText
