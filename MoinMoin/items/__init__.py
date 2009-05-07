@@ -12,6 +12,9 @@
 
 import os, time, datetime, shutil
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 from jinja2 import Environment, PackageLoader, Template, FileSystemBytecodeCache, Markup
 
 from werkzeug import http_date
@@ -149,19 +152,19 @@ class Item(object):
     def save(self):
         # called from modify UI/POST
         request = self.request
-        meta_text = request.form.get('meta_text', '')
-        meta = self.meta_text_to_dict(meta_text)
         data_file = request.files.get('data_file')
-        data_text = request.form.get('data_text')
-        if data_text is not None:
-            data = self.data_form_to_internal(data_text)
-            data = self.data_internal_to_storage(data)
-            mimetype = 'text/plain'
-        elif data_file:
+        if data_file.filename:
+            # user selected a file to upload
             data = data_file.stream
             mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
         else:
-            raise # shouldn't happen
+            # take text from textarea
+            data_text = request.form.get('data_text', '')
+            data = self.data_form_to_internal(data_text)
+            data = self.data_internal_to_storage(data)
+            mimetype = 'text/plain'
+        meta_text = request.form.get('meta_text', '')
+        meta = self.meta_text_to_dict(meta_text)
         self._save(meta, data, mimetype=mimetype)
 
     def _save(self, meta, data, item_name=None, action='SAVE', mimetype=None, comment='', extra=''):
