@@ -29,7 +29,7 @@ This item does not exist (yet), but you can try creating it now.
     <tr>
         <td>
         {% for mname, mlabel in mimetypes %}
-            {{ '<a href="?action=modify&mimetype=%s">%s</a> - ' % (mname, mlabel) }}
+            <a href="?action=modify&mimetype={{ mname|urlquote }}">{{ mlabel|e }}</a> - 
         {% endfor %}
         </td>
     </tr>
