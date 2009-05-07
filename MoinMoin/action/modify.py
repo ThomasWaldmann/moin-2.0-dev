@@ -21,5 +21,5 @@ def execute(item_name, request):
     elif request.method == 'POST':
         cancelled = 'button_cancel' in request.form
         if not cancelled:
-            item.save()
+            item.modify()
         request.http_redirect(request.href(item_name)) # show item

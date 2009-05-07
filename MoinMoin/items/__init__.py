@@ -149,7 +149,7 @@ class Item(object):
         comment = self.request.form.get('comment')
         self._save(self.meta, self.data, comment=comment)
 
-    def save(self):
+    def modify(self):
         # called from modify UI/POST
         request = self.request
         data_file = request.files.get('data_file')
