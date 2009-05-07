@@ -59,5 +59,12 @@ This item exists, but current revision is deleted.
         </form>
     {% endif %}
 {% endblock %}
-
+{% block index %}
+    {% if index %}
+        <hr>Index of sub items:
+        {% for fullname, relname, mimetype in index %}
+            <a href="/{{ fullname|urlquote }}">{{ relname|e }} ({{ mimetype|e }})</a> 
+        {% endfor %}
+    {% endif %}
+{% endblock %}
 

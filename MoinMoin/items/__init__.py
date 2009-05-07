@@ -203,6 +203,45 @@ class Item(object):
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
 
+    def get_index(self):
+        """ create an index of sub items of this item """
+        import re
+        from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
+
+        if self.item_name:
+            prefix = self.item_name + u'/'
+        else:
+            # trick: an item of empty name can be considered as "virtual root item",
+            # that has all wiki items as sub items
+            prefix = u''
+        sub_item_re = u"^%s.*" % re.escape(prefix)
+        regex = re.compile(sub_item_re, re.UNICODE)
+
+        item_iterator = self.request.cfg.data_backend.search_item(
+                            AND(NameRE(regex),
+                                NOT(LastRevisionMetaDataMatch('deleted', True))))
+
+        # We only want the sub-item part of the item names, not the whole item objects.
+        prefix_len = len(prefix)
+        items = [(item.name, item.name[prefix_len:], item.get_revision(-1).get("mimetype"))
+                 for item in item_iterator]
+        return sorted(items)
+
+    def flat_index(self):
+        index = self.get_index()
+        index = [(fullname, relname, mimetype)
+                 for fullname, relname, mimetype in index
+                 if u'/' not in relname]
+        return index
+
+    def do_index(self):
+        template = self.env.get_template('index.html')
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.item_name,
+                                  index=self.flat_index(),
+                                 )
+        return content
+
 
 class NonExistent(Item):
     supported_mimetypes = [] # only explicitely used
@@ -296,6 +335,7 @@ There is no help, you're doomed!
                                   last_rev_no=rev_nos[-1],
                                   data_rendered=self._render_data(),
                                   meta_rendered=self._render_meta(),
+                                  index=self.flat_index(),
                                  )
         return content
 
