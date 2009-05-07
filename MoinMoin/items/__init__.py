@@ -217,14 +217,18 @@ class NonExistent(Item):
         ]),
     ]
     mimetype_groups = [
-        ('text items', [
+        ('page markup text items', [
             ('text/moin-wiki', 'wiki (moin)'), 
             ('text/creole-wiki', 'wiki (creole)'), 
-            ('text/plain', 'plain text'), 
-            ('text/csv', 'csv'),
             ('text/html', 'html'),
+        ]),
+        ('highlighted text items', [
             ('text/x-diff', 'diff/patch'),
             ('text/x-python', 'python code'),
+        ]),
+        ('other text items', [
+            ('text/plain', 'plain text'), 
+            ('text/csv', 'csv'),
         ]),
         ('image items', [
             ('image/jpeg', 'JPEG'), 
