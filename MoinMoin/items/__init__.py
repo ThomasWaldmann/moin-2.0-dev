@@ -84,9 +84,6 @@ class Item(object):
     def do_copy(self):
         return self._action_query('copy', target=self.item_name)
 
-    def do_delete(self):
-        return self._action_query('delete')
-
     def do_revert(self):
         return self._action_query('revert', revno=self.rev.revno)
 
@@ -138,12 +135,6 @@ class Item(object):
         target = self.request.form.get('target')
         self.rev.item.rename(target)
 
-    def delete(self):
-        # called from delete UI/POST
-        comment = self.request.form.get('comment')
-        meta, data = {}, ''
-        self._save(meta, data, comment=comment)
-
     def revert(self):
         # called from revert UI/POST
         comment = self.request.form.get('comment')
@@ -152,17 +143,22 @@ class Item(object):
     def modify(self):
         # called from modify UI/POST
         request = self.request
-        data_file = request.files.get('data_file')
-        if data_file.filename:
-            # user selected a file to upload
-            data = data_file.stream
-            mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
+        delete = request.form.get('delete')
+        if delete:
+            data = ''
+            mimetype = None
         else:
-            # take text from textarea
-            data_text = request.form.get('data_text', '')
-            data = self.data_form_to_internal(data_text)
-            data = self.data_internal_to_storage(data)
-            mimetype = 'text/plain'
+            data_file = request.files.get('data_file')
+            if data_file.filename:
+                # user selected a file to upload
+                data = data_file.stream
+                mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
+            else:
+                # take text from textarea
+                data_text = request.form.get('data_text', '')
+                data = self.data_form_to_internal(data_text)
+                data = self.data_internal_to_storage(data)
+                mimetype = 'text/plain'
         meta_text = request.form.get('meta_text', '')
         meta = self.meta_text_to_dict(meta_text)
         self._save(meta, data, mimetype=mimetype)
