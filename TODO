@@ -43,6 +43,14 @@ Currently it is all in one file, can be split later.
 Everything we want to be able to do with items should be implemented there.
 Stuff shall be implemented at the MOST GENERAL LEVEL of the hierarchy.
 
+"delete" ACL right: kill it, makes no sense.
+"revert" ACL right: same?
+"create" ACL right: add this?
+"move" ACL right: add this? note: includes deletion if implemented by Trash/*
+
+implement deletion as mv X Trash/X - do we still need meta[DELETED] then?
+index pages: could filter by name (thus not displaying Trash/*, except if wanted)
+
 
 templating engine jinja used now
 ---------------------------------
