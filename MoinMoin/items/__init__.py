@@ -218,11 +218,25 @@ class NonExistent(Item):
     ]
     mimetype_groups = [
         ('text items', [
+            ('text/moin-wiki', 'wiki (moin)'), 
+            ('text/creole-wiki', 'wiki (creole)'), 
             ('text/plain', 'plain text'), 
+            ('text/csv', 'csv'),
+            ('text/html', 'html'),
+            ('text/x-diff', 'diff/patch'),
+            ('text/x-python', 'python code'),
         ]),
         ('image items', [
-            ('image/jpeg', 'JPEG image'), 
-            ('image/png', 'PNG image'),
+            ('image/jpeg', 'JPEG'), 
+            ('image/png', 'PNG'),
+            ('image/svg+xml', 'SVG'),
+        ]),
+        ('other items', [
+            ('application/pdf', 'PDF'), 
+            ('application/zip', 'ZIP'),
+            ('application/x-tar', 'TAR'),
+            ('application/x-gtar', 'TGZ'),
+            ('application/octet-stream', 'binary file'),
         ]),
     ]
 
@@ -360,6 +374,16 @@ class Image(Binary):
     def _render_data(self):
         return '<img src="?action=get&rev=%d">' % self.rev.revno
 
+class SvgImage(Binary):
+    supported_mimetypes = ['image/svg+xml']
+
+    def _render_data(self):
+        return """
+            <object data="?action=get&rev=%d" type="image/svg+xml">
+            image needs SVG rendering capability
+            </object>
+        """ % self.rev.revno
+
 class Text(Binary):
     supported_mimetypes = ['text/']
     is_text = True
@@ -400,6 +424,7 @@ class Text(Binary):
     def do_modify(self):
         template = self.env.get_template('modify_text.html')
         content = template.render(gettext=self.request.getText,
+                                  item_name=self.item_name,
                                   rows_data=20, rows_meta=3, cols=80,
                                   revno=0,
                                   data_text=self.data_storage_to_internal(self.data),
@@ -410,10 +435,10 @@ class Text(Binary):
         return content
 
 
-class MoinWiki(Text):
-    supported_mimetypes = ['text/x-unidentified-wiki-format',
-                           'text/moin',
-                          ]  # XXX Improve mimetype handling
+class MoinParserSupported(Text):
+    supported_mimetypes = []
+    format = 'wiki' # override this, if needed
+    format_args = ''
     def _render_data(self):
         # TODO: switch from Page to Item subclass
         request = self.request
@@ -424,8 +449,8 @@ class MoinWiki(Text):
         formatter.setPage(page)
         #lang = pi.get('language', request.cfg.language_default)
         #request.setContentLanguage(lang)
-        Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", pi['format'])
-        parser = Parser(body, request, format_args=pi['formatargs'])
+        Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", self.format)
+        parser = Parser(body, request, format_args=self.format_args)
         from StringIO import StringIO
         buffer = StringIO()
         request.redirect(buffer)
@@ -434,6 +459,39 @@ class MoinWiki(Text):
         request.redirect()
         del buffer
         return content
+
+class MoinWiki(MoinParserSupported):
+    supported_mimetypes = ['text/x-unidentified-wiki-format',
+                           'text/moin-wiki',
+                          ]  # XXX Improve mimetype handling
+    format = 'wiki'
+    format_args = ''
+
+
+class CreoleWiki(MoinParserSupported):
+    supported_mimetypes = ['text/creole-wiki']
+    format = 'creole'
+    format_args = ''
+
+class CSV(MoinParserSupported):
+    supported_mimetypes = ['text/csv']
+    format = 'csv'
+    format_args = ''
+
+class DiffPatch(MoinParserSupported):
+    supported_mimetypes = ['text/x-diff']
+    format = 'highlight'
+    format_args = 'diff'
+
+class HTML(MoinParserSupported):
+    supported_mimetypes = ['text/html']
+    format = 'html'
+    format_args = ''
+
+class PythonSrc(MoinParserSupported):
+    supported_mimetypes = ['text/x-python']
+    format = 'highlight'
+    format_args = 'python'
 
 
 class Manager(object):
@@ -450,6 +508,9 @@ class Manager(object):
         self.env = Environment(loader=PackageLoader('MoinMoin', 'templates'),
                                bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'), 
                                extensions=['jinja2.ext.i18n'])
+        from werkzeug import url_quote, url_encode
+        self.env.filters['urlencode'] = lambda x: url_encode(x)
+        self.env.filters['urlquote'] = lambda x: url_quote(x)
 
     def _find_item_class(self, mimetype, BaseClass=Item, best_match_len=-1):
         Class = None
