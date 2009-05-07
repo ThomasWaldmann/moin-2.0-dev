@@ -399,31 +399,25 @@ class Text(Binary):
             return ''
     data = property(fget=get_data)
 
+    # text/plain mandates crlf - but in memory, we want lf only
     def data_internal_to_form(self, text):
-        """ convert data from memory unicode text format to form format """
-        data = text
-        return data
+        """ convert data from memory format to form format """
+        return text.replace(u'\n', u'\r\n')
     
     def data_form_to_internal(self, data):
-        """ convert data from form format to memory unicode text format """
-        text = data
-        return text
+        """ convert data from form format to memory format """
+        return data.replace(u'\r\n', u'\n')
     
     def data_internal_to_storage(self, text):
-        """ convert data from memory unicode text format to storage format """
-        text = text.replace(u'\n', u'\r\n') # text/plain mandates crlf
-        data = text.encode(config.charset)
-        return data
+        """ convert data from memory format to storage format """
+        return text.replace(u'\n', u'\r\n').encode(config.charset)
     
     def data_storage_to_internal(self, data):
-        """ convert data from storage format to in memory unicode text """
-        # text processing items can overwrite this with a text normalization
-        text = data.decode(config.charset)
-        text = text.replace(u'\r', u'')
-        return text
+        """ convert data from storage format to memory format """
+        return data.decode(config.charset).replace(u'\r\n', u'\n')
     
     def _render_data(self):
-        return "<pre>%s</pre>" % self.data_storage_to_internal(self.data) # XXX to_form()?
+        return u"<pre>%s</pre>" % self.data_storage_to_internal(self.data) # XXX to_form()?
 
     def do_modify(self):
         template = self.env.get_template('modify_text.html')
