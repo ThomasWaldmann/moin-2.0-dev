@@ -229,6 +229,7 @@ class NonExistent(Item):
         ('other text items', [
             ('text/plain', 'plain text'), 
             ('text/csv', 'csv'),
+            ('text/x-irclog', 'IRC log'),
         ]),
         ('image items', [
             ('image/jpeg', 'JPEG'), 
@@ -476,15 +477,20 @@ class CSV(MoinParserSupported):
     format = 'csv'
     format_args = ''
 
+class HTML(MoinParserSupported):
+    supported_mimetypes = ['text/html']
+    format = 'html'
+    format_args = ''
+
 class DiffPatch(MoinParserSupported):
     supported_mimetypes = ['text/x-diff']
     format = 'highlight'
     format_args = 'diff'
 
-class HTML(MoinParserSupported):
-    supported_mimetypes = ['text/html']
-    format = 'html'
-    format_args = ''
+class IRCLog(MoinParserSupported):
+    supported_mimetypes = ['text/x-irclog']
+    format = 'highlight'
+    format_args = 'irc'
 
 class PythonSrc(MoinParserSupported):
     supported_mimetypes = ['text/x-python']
