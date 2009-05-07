@@ -702,7 +702,7 @@ class ThemeBase:
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
             contentActions = [u'', u'show', u'refresh', u'preview', u'diff',
-                              u'subscribe', u'rename', u'copy', u'delete',
+                              u'subscribe', u'rename', u'copy', 
                              ]
             return self.request.action in contentActions
         return False
@@ -929,8 +929,6 @@ var search_hint = "%(search_hint)s";
         rev = request.rev
 
         menu = [
-            'revert',
-            'delete',
             'rename',
             'copy',
             '__separator__',
@@ -950,7 +948,6 @@ var search_hint = "%(search_hint)s";
             '__title__': _("More Actions:"),
             # Translation may need longer or shorter separator
             '__separator__': _('------------------------'),
-            'delete': _('Delete Item'),
             'refresh': _('Delete Cache'),
             'rename': _('Rename Item'),
             'copy': _('Copy Item'),
@@ -959,7 +956,6 @@ var search_hint = "%(search_hint)s";
             'MyPages': _('My Pages'),
             'SubscribeUser': _('Subscribe User'),
             'Despam': _('Remove Spam'),
-            'revert': _('Revert to this revision'),
             'PackagePages': _('Package Pages'),
             'RenderAsDocbook': _('Render as Docbook'),
             'SyncPages': _('Sync Pages'),
@@ -985,11 +981,6 @@ var search_hint = "%(search_hint)s";
                 if not page.canUseCache():
                     data['action'] = 'show'
                     data['disabled'] = disabled
-
-            # revert action enabled only if user can revert
-            if action == 'revert' and not request.user.may.revert(page.page_name):
-                data['action'] = 'show'
-                data['disabled'] = disabled
 
             # SubscribeUser action enabled only if user has admin rights
             if action == 'SubscribeUser' and not request.user.may.admin(page.page_name):

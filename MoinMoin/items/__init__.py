@@ -161,7 +161,8 @@ class Item(object):
                 mimetype = 'text/plain'
         meta_text = request.form.get('meta_text', '')
         meta = self.meta_text_to_dict(meta_text)
-        self._save(meta, data, mimetype=mimetype)
+        comment = self.request.form.get('comment')
+        self._save(meta, data, mimetype=mimetype, comment=comment)
 
     def _save(self, meta, data, item_name=None, action='SAVE', mimetype=None, comment='', extra=''):
         request = self.request
@@ -188,7 +189,7 @@ class Item(object):
             comment = comment or 'deleted'
         self._write_stream(data, newrev)
         timestamp = time.time()
-        newrev[EDIT_LOG_COMMENT] = meta.get(EDIT_LOG_COMMENT, comment)
+        newrev[EDIT_LOG_COMMENT] = comment or meta.get(EDIT_LOG_COMMENT, '')
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
         # allow override by give metadata:
