@@ -340,54 +340,63 @@ There is no help, you're doomed!
                                  )
         return content
 
-    def do_get(self, content_disposition=None):
+    def do_get(self):
         request = self.request
-        rev = self.rev
         # XXX is it ok to use rev.timestamp for tar/cache/normal?
-        timestamp = datetime.datetime.fromtimestamp(rev.timestamp)
+        timestamp = datetime.datetime.fromtimestamp(self.rev.timestamp)
         if_modified = request.if_modified_since
         # TODO: fix 304 behaviour, does not work yet! header problem?
         if if_modified and if_modified >= timestamp:
             request.status_code = 304
         else:
-            from_cache = request.values.get('from_cache')
-            from_tar = request.values.get('from_tar')
-            if from_cache:
-                sendcache = SendCache(request, from_cache)
-                headers = sendcache._get_headers()
-                for key, value in headers:
-                    lkey = key.lower()
-                    if lkey == 'content-type':
-                        content_type = value
-                    elif lkey == 'content-length':
-                        content_length = value
-                    elif lkey == 'content-disposition':
-                        content_disposition = value
-                    else:
-                        request.headers.add(key, value)
-                file_to_send = self._get_datafile()
-            elif from_tar: # content = file contained within a tar item revision
-                # TODO: make it work, file access to storage items?
-                filename = wikiutil.taintfilename(from_tar)
-                mt = wikiutil.MimeType(filename=filename)
-                content_disposition = mt.content_disposition(request.cfg)
-                content_type = mt.content_type()
-                content_length = os.path.getsize(fpath) # XXX
-                ci = ContainerItem(request, self.item_name)
-                file_to_send = ci.get(filename)
-            else: # content = item revision
-                try:
-                    mimestr = rev["mimetype"]
-                except KeyError:
-                    mimestr = mimetypes.guess_type(rev.item.name)[0]
-                mt = wikiutil.MimeType(mimestr=mimestr)
-                content_disposition = mt.content_disposition(request.cfg)
-                content_type = mt.content_type()
-                content_length = rev.size
-                file_to_send = rev
+            self._do_get_modified(timestamp)
 
-            self._send(content_type, content_length, timestamp, file_to_send,
-                       content_disposition=content_disposition)
+    def _do_get_modified(self, timestamp):
+        request = self.request
+        from_cache = request.values.get('from_cache')
+        from_tar = request.values.get('from_tar')
+        self._do_get(timestamp, from_cache, from_tar)
+
+    def _do_get(self, timestamp, from_cache=None, from_tar=None):
+        request = self.request
+        if from_cache:
+            content_disposition = None
+            sendcache = SendCache(request, from_cache)
+            headers = sendcache._get_headers()
+            for key, value in headers:
+                lkey = key.lower()
+                if lkey == 'content-type':
+                    content_type = value
+                elif lkey == 'content-length':
+                    content_length = value
+                elif lkey == 'content-disposition':
+                    content_disposition = value
+                else:
+                    request.headers.add(key, value)
+            file_to_send = sendcache._get_datafile()
+        elif from_tar: # content = file contained within a tar item revision
+            # TODO: make it work, file access to storage items?
+            filename = wikiutil.taintfilename(from_tar)
+            mt = wikiutil.MimeType(filename=filename)
+            content_disposition = mt.content_disposition(request.cfg)
+            content_type = mt.content_type()
+            content_length = os.path.getsize(fpath) # XXX
+            ci = ContainerItem(request, self.item_name)
+            file_to_send = ci.get(filename)
+        else: # content = item revision
+            rev = self.rev
+            try:
+                mimestr = rev["mimetype"]
+            except KeyError:
+                mimestr = mimetypes.guess_type(rev.item.name)[0]
+            mt = wikiutil.MimeType(mimestr=mimestr)
+            content_disposition = mt.content_disposition(request.cfg)
+            content_type = mt.content_type()
+            content_length = rev.size
+            file_to_send = rev
+
+        self._send(content_type, content_length, timestamp, file_to_send,
+                   content_disposition=content_disposition)
 
     def _send(self, content_type, content_length, timestamp, file_to_send,
               filename=None, content_disposition=None, timeout=24*3600):
@@ -414,6 +423,38 @@ class Image(Binary):
 
     def _render_data(self):
         return '<img src="?action=get&rev=%d">' % self.rev.revno
+
+class TransformableImage(Image):
+    supported_mimetypes = ['image/png', 'image/jpeg', 'image/gif', ]
+
+    def _render_data(self):
+        return '<img src="?action=get&rev=%d">' % self.rev.revno
+
+    def _do_get_modified(self, timestamp):
+        request = self.request
+        width = request.values.get('w')
+        height = request.values.get('h')
+        if width or height:
+            # resize requested, XXX check ACL behaviour! XXX
+            cache_meta = [ # we use a list to have order stability
+                ('wikiname', request.cfg.interwikiname or request.cfg.siteid),
+                ('itemname', self.item_name),
+                ('revision', self.rev.revno),
+                # XXX even better than wikiname/itemname/revision would be a content hash!
+                ('width', width),
+                ('height', height),
+            ]
+            cache = SendCache.from_meta(request, cache_meta)
+            if not cache.exists():
+                orig_image = self.rev.read()
+                #transformed_image = transform(orig_image, width, height)
+                transformed_image = orig_image # XXX for now, just use same image data
+                cache.put(transformed_image, content_type=self.rev['mimetype'])
+            from_cache = cache.key
+        else:
+            from_cache = request.values.get('from_cache')
+        self._do_get(timestamp, from_cache=from_cache)
+
 
 class SvgImage(Binary):
     supported_mimetypes = ['image/svg+xml']
