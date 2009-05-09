@@ -342,80 +342,71 @@ There is no help, you're doomed!
 
     def do_get(self, content_disposition=None):
         request = self.request
-        from_cache = request.values.get('from_cache')
-        from_tar = request.values.get('from_tar')
-        if from_cache:
-            sendcache = SendCache(request, from_cache)
-            sendcache.do_get()
-        elif from_tar:
-            self.do_get_from_tar(from_tar)
+        rev = self.rev
+        # XXX is it ok to use rev.timestamp for tar/cache/normal?
+        timestamp = datetime.datetime.fromtimestamp(rev.timestamp)
+        if_modified = request.if_modified_since
+        # TODO: fix 304 behaviour, does not work yet! header problem?
+        if if_modified and if_modified >= timestamp:
+            request.status_code = 304
         else:
-            rev = self.rev
-            # TODO: fix 304 behaviour, does not work yet! header problem?
-            timestamp = datetime.datetime.fromtimestamp(rev.timestamp)
-            if_modified = request.if_modified_since
-            if if_modified and if_modified >= timestamp:
-                request.status_code = 304
-            else:
-                request.status_code = 200
-                request.content_length = rev.size
-                timeout = 24 * 3600
-                request.headers.add('Cache-Control', 'max-age=%d, public' % timeout)
-                request.headers.add('Expires', http_date(time.time() + timeout))
-                request.headers.add('Last-Modified', http_date(timestamp))
+            from_cache = request.values.get('from_cache')
+            from_tar = request.values.get('from_tar')
+            if from_cache:
+                sendcache = SendCache(request, from_cache)
+                headers = sendcache._get_headers()
+                for key, value in headers:
+                    lkey = key.lower()
+                    if lkey == 'content-type':
+                        content_type = value
+                    elif lkey == 'content-length':
+                        content_length = value
+                    elif lkey == 'content-disposition':
+                        content_disposition = value
+                    else:
+                        request.headers.add(key, value)
+                file_to_send = self._get_datafile()
+            elif from_tar: # content = file contained within a tar item revision
+                # TODO: make it work, file access to storage items?
+                filename = wikiutil.taintfilename(from_tar)
+                mt = wikiutil.MimeType(filename=filename)
+                content_disposition = mt.content_disposition(request.cfg)
+                content_type = mt.content_type()
+                content_length = os.path.getsize(fpath) # XXX
+                ci = ContainerItem(request, self.item_name)
+                file_to_send = ci.get(filename)
+            else: # content = item revision
                 try:
                     mimestr = rev["mimetype"]
                 except KeyError:
                     mimestr = mimetypes.guess_type(rev.item.name)[0]
                 mt = wikiutil.MimeType(mimestr=mimestr)
+                content_disposition = mt.content_disposition(request.cfg)
                 content_type = mt.content_type()
-                mime_type = mt.mime_type()
-                request.content_type = content_type # request.mimetype = ... ?
-                # for dangerous files (like .html), when we are in danger of cross-site-scripting attacks,
-                # we just let the user store them to disk ('attachment').
-                # For safe files, we directly show them inline (this also works better for IE).
-                dangerous = mime_type in request.cfg.mimetypes_xss_protect
-                if content_disposition is None:
-                    content_disposition = dangerous and 'attachment' or 'inline'
-                # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
-                # There is no solution that is compatible to IE except stripping non-ascii chars
-                #filename_enc = filename.encode(config.charset)
-                #content_disposition += '; filename="%s"' % filename_enc
-                request.headers.add('Content-Disposition', content_disposition)
-                # send data
-                request.send_file(rev)
+                content_length = rev.size
+                file_to_send = rev
 
-    def do_get_from_tar(self, member):
-        # TODO: make it work, file access to storage items?
-        timestamp = datetime.datetime.fromtimestamp(self.timestamp)
-        if_modified = request.if_modified_since
-        if if_modified and if_modified >= timestamp:
-            request.status_code = 304
-        else:
-            ci = ContainerItem(request, item_name)
-            filename = wikiutil.taintfilename(member)
-            mt = wikiutil.MimeType(filename=filename)
-            content_type = mt.content_type()
-            mime_type = mt.mime_type()
+            self._send(content_type, content_length, timestamp, file_to_send,
+                       content_disposition=content_disposition)
 
-            # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
-            # There is no solution that is compatible to IE except stripping non-ascii chars
-            filename_enc = filename.encode(config.charset)
+    def _send(self, content_type, content_length, timestamp, file_to_send,
+              filename=None, content_disposition=None, timeout=24*3600):
+        request = self.request
+        request.headers.add('Cache-Control', 'max-age=%d, public' % timeout)
+        now = time.time()
+        request.headers.add('Expires', http_date(now + timeout))
 
-            # for dangerous files (like .html), when we are in danger of cross-site-scripting attacks,
-            # we just let the user store them to disk ('attachment').
-            # For safe files, we directly show them inline (this also works better for IE).
-            dangerous = mime_type in request.cfg.mimetypes_xss_protect
-            content_dispo = dangerous and 'attachment' or 'inline'
+        # XXX choose:
+        request.last_modified = timestamp
+        request.headers.add('Last-Modified', http_date(timestamp))
 
-            request.content_type = content_type
-            request.last_modified = timestamp
-            #request.content_length = os.path.getsize(fpath)
-            content_dispo_string = '%s; filename="%s"' % (content_dispo, filename_enc)
-            request.headers.add('Content-Disposition', content_dispo_string)
-
-            # send data
-            request.send_file(ci.get(filename))
+        if content_disposition is not None:
+            request.headers.add('Content-Disposition', content_disposition)
+        
+        request.status_code = 200
+        request.content_type = content_type
+        request.content_length = content_length
+        request.send_file(file_to_send)
 
 
 class Image(Binary):
