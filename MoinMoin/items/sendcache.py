@@ -29,10 +29,7 @@
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-# keep both imports below as they are, order is important:
 from MoinMoin import wikiutil
-import mimetypes
-
 from MoinMoin import config, caching
 from MoinMoin.support.python_compatibility import hmac_new
 
@@ -146,42 +143,34 @@ class SendCache(object):
         key = self.key
         import os.path
         from MoinMoin.util import timefuncs
-
+        
         if filename:
             # make sure we just have a simple filename (without path)
             filename = os.path.basename(filename)
-
-            if content_type is None:
-                # try autodetect
-                mt, enc = mimetypes.guess_type(filename)
-                if mt:
-                    content_type = mt
+            mt = wikiutil.MimeType(filename=filename)
+        else:
+            mt = None
 
         if content_type is None:
-            content_type = 'application/octet-stream'
+            if mt is not None:
+                content_type = mt.content_type()
+            else:
+                content_type = 'application/octet-stream'
 
         self.data_cache.update(data)
         content_length = content_length or data_cache.size()
-        last_modified = last_modified or data_cache.mtime()
-
-        httpdate_last_modified = timefuncs.formathttpdate(int(last_modified))
         headers = [('Content-Type', content_type),
-                   ('Last-Modified', httpdate_last_modified),
                    ('Content-Length', content_length),
                   ]
-        if content_disposition and filename:
-            # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
-            # There is no solution that is compatible to IE except stripping non-ascii chars
-            filename = filename.encode(config.charset)
-            headers.append(('Content-Disposition', '%s; filename="%s"' % (content_disposition, filename)))
+        if content_disposition is None and mt is not None:
+            content_disposition = mt.content_disposition()
+        if content_disposition:
+            headers.append(('Content-Disposition', content_disposition))
 
         self.meta_cache.update({
-            'httpdate_last_modified': httpdate_last_modified,
-            'last_modified': last_modified,
             'headers': headers,
             'original': original,
         })
-
 
     def exists(self, strict=False):
         """
@@ -201,7 +190,6 @@ class SendCache(object):
 
         return meta_cached and data_cached
 
-
     def remove(self):
         """ delete headers/data cache for key
 
@@ -210,7 +198,6 @@ class SendCache(object):
         self.meta_cache.remove()
         self.data_cache.remove()
 
-
     def url(self):
         """ return URL for the object cached for key """
         return self.request.href(action='get', from_cache=self.key)
@@ -218,33 +205,10 @@ class SendCache(object):
     def _get_headers(self):
         """ get last_modified and headers cached for key """
         meta = self.meta_cache.content()
-        return meta['httpdate_last_modified'], meta['headers']
+        return meta['headers']
 
     def _get_datafile(self):
         """ get an open data file for the data cached for key """
         self.data_cache.open(mode='r')
         return self.data_cache
-
-    def do_get(self):
-        """ send a complete http response with headers/data cached for key """
-        request = self.request
-        try:
-            last_modified, headers = self._get_headers()
-            if request.if_modified_since == last_modified:
-                request.status_code = 304
-            else:
-                data_file = self._get_datafile()
-                for key, value in headers:
-                    lkey = key.lower()
-                    if lkey == 'content-type':
-                        request.content_type = value
-                    elif lkey == 'last-modified':
-                        request.last_modified = value
-                    elif lkey == 'content-length':
-                        request.content_length = value
-                    else:
-                        request.headers.add(key, value)
-                request.send_file(data_file)
-        except caching.CacheError:
-            request.status_code = 404
 
