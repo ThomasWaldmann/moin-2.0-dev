@@ -26,6 +26,7 @@ from MoinMoin.Page import DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMME
                           EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
+from MoinMoin.items.sendcache import SendCache
 
 class Item(object):
     is_text = False
@@ -341,8 +342,12 @@ There is no help, you're doomed!
 
     def do_get(self, content_disposition=None):
         request = self.request
+        from_cache = request.values.get('from_cache')
         from_tar = request.values.get('from_tar')
-        if from_tar:
+        if from_cache:
+            sendcache = SendCache(request, from_cache)
+            sendcache.do_get()
+        elif from_tar:
             self.do_get_from_tar(from_tar)
         else:
             rev = self.rev
