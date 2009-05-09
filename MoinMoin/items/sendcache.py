@@ -39,8 +39,7 @@ class SendCache(object):
     do_locking = False
 
     @classmethod
-    def from_meta(request, wikiname=None, itemname=None, revision=None,
-                  content=None, secret=None):
+    def from_meta(cls, request, cache_meta=None, content=None, secret=None):
         """
         Calculate a (hard-to-guess) cache key from meta data
 
@@ -66,21 +65,15 @@ class SendCache(object):
               only once and then add some different prefixes to it to get the final
               cache keys.
 
-        @param wikiname: the name of the wiki (if not given, will be read from cfg)
-        @param itemname: the name of the page
+        @param cache_meta: object to compute cache key
         @param content: content data as unicode object (e.g. for page content or
                         parser section content)
         @param secret: secret for hMAC calculation (default: use secret from cfg)
         """
         if content:
             hmac_data = content
-        elif itemname is not None and revision is not None:
-            wikiname = wikiname or request.cfg.interwikiname or request.cfg.siteid
-            def _uid(wikiname, itemname, revision):
-                # XXX this works as long as no renames happen, a content
-                # hash would be better, though, but we have none yet.
-                return u':'.join([wikiname, itemname, str(revision)])
-            hmac_data = _uid(wikiname, itemname, revision)
+        elif cache_meta is not None:
+            hmac_data = repr(cache_meta)
         else:
             raise ValueError('from_meta called with unsupported parameters')
 
@@ -123,7 +116,6 @@ class SendCache(object):
             content_type=None,
             content_disposition=None,
             content_length=None,
-            last_modified=None,
             original=None):
         """
         Put an object into the cache to send it with cache action later.
@@ -134,7 +126,6 @@ class SendCache(object):
         @param content_type: content-type header value (str, default: autodetect from filename)
         @param content_disposition: type for content-disposition header (str, default: None)
         @param content_length: data length for content-length header (int, default: autodetect)
-        @param last_modified: last modified timestamp (int, default: autodetect)
         @param original: location of original object (default: None) - this is just written to
                          the metadata cache "as is" and could be used for cache cleanup,
                          use (wikiname, itemname).
@@ -156,14 +147,16 @@ class SendCache(object):
                 content_type = mt.content_type()
             else:
                 content_type = 'application/octet-stream'
+        else:
+            mt = wikiutil.MimeType(mimestr=content_type)
 
         self.data_cache.update(data)
-        content_length = content_length or data_cache.size()
+        content_length = content_length or self.data_cache.size()
         headers = [('Content-Type', content_type),
                    ('Content-Length', content_length),
                   ]
         if content_disposition is None and mt is not None:
-            content_disposition = mt.content_disposition()
+            content_disposition = mt.content_disposition(request.cfg)
         if content_disposition:
             headers.append(('Content-Disposition', content_disposition))
 
@@ -203,7 +196,7 @@ class SendCache(object):
         return self.request.href(action='get', from_cache=self.key)
 
     def _get_headers(self):
-        """ get last_modified and headers cached for key """
+        """ get headers cached for key """
         meta = self.meta_cache.content()
         return meta['headers']
 
