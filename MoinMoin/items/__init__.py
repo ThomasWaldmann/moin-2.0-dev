@@ -132,10 +132,12 @@ class Item(object):
     def rename(self):
         # called from rename UI/POST
         comment = self.request.form.get('comment')
+        oldname = self.item_name
+        newname = self.request.form.get('target')
+        self.rev.item.rename(newname)
         # we just create a new revision with almost same meta/data to show up on RC
-        self._save(self.meta, self.data, action='SAVE/RENAME', extra=self.item_name, comment=comment)
-        target = self.request.form.get('target')
-        self.rev.item.rename(target)
+        # XXX any better way to do this?
+        self._save(self.meta, self.data, item_name=newname, action='SAVE/RENAME', extra=oldname, comment=comment)
 
     def revert(self):
         # called from revert UI/POST
