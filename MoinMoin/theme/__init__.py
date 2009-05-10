@@ -816,18 +816,6 @@ var search_hint = "%(search_hint)s";
     }
         return script
 
-    def shouldUseRSS(self, page):
-        """ Return True if RSS feature is available and we are on the
-            RecentChanges page, or False.
-
-            Currently rss is broken on plain Python, and works only when
-            installing PyXML. Return true if PyXML is installed.
-        """
-        if not rss_supported:
-            return False
-        return page.page_name == u'RecentChanges' or \
-           page.page_name == self.request.getText(u'RecentChanges')
-
     def rsshref(self, page):
         """ Create rss href, used for rss button and head link
 
@@ -850,11 +838,10 @@ var search_hint = "%(search_hint)s";
         """
         link = u''
         page = d['page']
-        if self.shouldUseRSS(page):
-            link = (u'<link rel="alternate" title="%s Recent Changes" '
-                    u'href="%s" type="application/rss+xml">') % (
-                        wikiutil.escape(self.cfg.sitename, True),
-                        wikiutil.escape(self.rsshref(page), True) )
+        link = (u'<link rel="alternate" title="%s Recent Changes" '
+                u'href="%s" type="application/rss+xml">') % (
+                    wikiutil.escape(self.cfg.sitename, True),
+                    wikiutil.escape(self.rsshref(page), True) )
         return link
 
     def html_head(self, d):
@@ -929,6 +916,8 @@ var search_hint = "%(search_hint)s";
         rev = request.rev
 
         menu = [
+            'rc',
+            '__separator__',
             'rename',
             'copy',
             '__separator__',
@@ -950,6 +939,7 @@ var search_hint = "%(search_hint)s";
             '__separator__': _('------------------------'),
             'refresh': _('Delete Cache'),
             'rename': _('Rename Item'),
+            'rc': _('Recent Changes'),
             'copy': _('Copy Item'),
             'LikePages': _('Like Pages'),
             'LocalSiteMap': _('Local Site Map'),
@@ -1267,133 +1257,6 @@ actionsMenuInit('%(label)s');
         """
         return self.endPage()
 
-    # RecentChanges ######################################################
-
-    def recentchanges_entry(self, d):
-        """
-        Assemble a single recentchanges entry (table row)
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: recentchanges entry html
-        """
-        _ = self.request.getText
-        html = []
-        html.append('<tr>\n')
-
-        html.append('<td class="rcicon1">%(icon_html)s</td>\n' % d)
-
-        html.append('<td class="rcpagelink">%(pagelink_html)s</td>\n' % d)
-
-        html.append('<td class="rctime">')
-        if d['time_html']:
-            html.append("%(time_html)s" % d)
-        html.append('</td>\n')
-
-        html.append('<td class="rcicon2">%(info_html)s</td>\n' % d)
-
-        html.append('<td class="rceditor">')
-        if d['editors']:
-            html.append('<br>'.join(d['editors']))
-        html.append('</td>\n')
-
-        html.append('<td class="rccomment">')
-        if d['comments']:
-            if d['changecount'] > 1:
-                notfirst = 0
-                for comment in d['comments']:
-                    html.append('%s<tt>#%02d</tt>&nbsp;%s' % (
-                        notfirst and '<br>' or '', comment[0], comment[1]))
-                    notfirst = 1
-            else:
-                comment = d['comments'][0]
-                html.append('%s' % comment[1])
-        html.append('</td>\n')
-
-        html.append('</tr>\n')
-
-        return ''.join(html)
-
-    def recentchanges_daybreak(self, d):
-        """
-        Assemble a rc daybreak indication (table row)
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: recentchanges daybreak html
-        """
-        if d['bookmark_link_html']:
-            set_bm = '&nbsp; %(bookmark_link_html)s' % d
-        else:
-            set_bm = ''
-        return ('<tr class="rcdaybreak"><td colspan="%d">'
-                '<strong>%s</strong>'
-                '%s'
-                '</td></tr>\n') % (6, d['date'], set_bm)
-
-    def recentchanges_header(self, d):
-        """
-        Assemble the recentchanges header (intro + open table)
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: recentchanges header html
-        """
-        _ = self.request.getText
-
-        # Should use user interface language and direction
-        html = '<div class="recentchanges"%s>\n' % self.ui_lang_attr()
-        html += '<div>\n'
-        page = d['page']
-        if self.shouldUseRSS(page):
-            link = [
-                u'<div class="rcrss">',
-                self.request.formatter.url(1, self.rsshref(page)),
-                self.request.formatter.rawHTML(self.make_icon("rss")),
-                self.request.formatter.url(0),
-                u'</div>',
-                ]
-            html += ''.join(link)
-        html += '<p>'
-        # Add day selector
-        if d['rc_days']:
-            days = []
-            for day in d['rc_days']:
-                if day == d['rc_max_days']:
-                    days.append('<strong>%d</strong>' % day)
-                else:
-                    days.append(
-                        wikiutil.link_tag(self.request,
-                            '%s?max_days=%d' % (d['q_page_name'], day),
-                            str(day),
-                            self.request.formatter, rel='nofollow'))
-            days = ' | '.join(days)
-            html += (_("Show %s days.") % (days, ))
-
-        if d['rc_update_bookmark']:
-            html += " %(rc_update_bookmark)s %(rc_curr_bookmark)s" % d
-
-        html += '</p>\n</div>\n'
-
-        html += '<table>\n'
-        return html
-
-    def recentchanges_footer(self, d):
-        """
-        Assemble the recentchanges footer (close table)
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: recentchanges footer html
-        """
-        _ = self.request.getText
-        html = ''
-        html += '</table>\n'
-        if d['rc_msg']:
-            html += "<br>%(rc_msg)s\n" % d
-        html += '</div>\n'
-        return html
-
     # Language stuff ####################################################
 
     def ui_lang_attr(self):
@@ -1503,7 +1366,7 @@ actionsMenuInit('%(label)s');
                           page_title_index, 'TitleIndex',
                           page_find_page, 'FindPage',
                           page_site_navigation, 'SiteNavigation',
-                          'RecentChanges', ]:
+                         ]:
             user_head.append(request.cfg.html_head_index)
         # if it is a normal page, index it, but do not follow the links, because
         # there are a lot of illegal links (like actions) or duplicates:

@@ -34,8 +34,6 @@ not_translated_system_pages = [
 ]
 
 essential_system_pages = [
-    _('RecentChanges'),
-    _('WikiTipOfTheDay'), # used by RecentChanges
     _('TitleIndex'),
     _('WordIndex'),
     _('FindPage'),

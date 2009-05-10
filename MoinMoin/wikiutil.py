@@ -706,8 +706,8 @@ def getLocalizedPage(request, pagename): # was: getSysPage
 
     We include some special treatment for the case that <pagename> is the
     currently rendered page, as this is the case for some pages used very
-    often, like FrontPage, RecentChanges etc. - in that case we reuse the
-    already existing page object instead creating a new one.
+    often, like FrontPage, etc. - in that case we reuse the already existing
+    page object instead creating a new one.
 
     @param request: the request object
     @param pagename: the name of the page
