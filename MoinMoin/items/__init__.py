@@ -303,6 +303,14 @@ class Binary(Item):
     modify_help = """\
 There is no help, you're doomed!
 """
+    # XXX reads item rev data into memory!
+    def get_data(self):
+        if self.rev is not None:
+            return self.rev.read_data()
+        else:
+            return ''
+    data = property(fget=get_data)
+
     def _revlog(self, item, rev_nos):
         log = []
         for rev_no in reversed(rev_nos):
@@ -559,13 +567,6 @@ class SvgImage(Binary):
 class Text(Binary):
     supported_mimetypes = ['text/']
     is_text = True
-
-    def get_data(self):
-        if self.rev is not None:
-            return self.rev.read_data()
-        else:
-            return ''
-    data = property(fget=get_data)
 
     # text/plain mandates crlf - but in memory, we want lf only
     def data_internal_to_form(self, text):
