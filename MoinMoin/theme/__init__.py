@@ -1525,6 +1525,7 @@ actionsMenuInit('%(label)s');
         #request.write('<!-- auth_method == %s -->' % repr(request.user.auth_method))
         request.write('</body>\n</html>\n\n')
 
+
 class ThemeNotFound(Exception):
     """ Thrown if the supplied theme could not be found anywhere """
 
@@ -1568,6 +1569,6 @@ def load_theme_fallback(request, theme_name=None):
             request.theme = load_theme(request.cfg.theme_default)
         except ThemeNotFound:
             fallback = 2
-            from MoinMoin.theme.modern import Theme
+            from MoinMoin.theme.modernized import Theme
             request.theme = Theme(request)
 
