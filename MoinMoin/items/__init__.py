@@ -11,6 +11,7 @@
 """
 
 import os, time, datetime, shutil
+from StringIO import StringIO
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -424,17 +425,84 @@ class Image(Binary):
     def _render_data(self):
         return '<img src="?action=get&rev=%d">' % self.rev.revno
 
+
 class TransformableImage(Image):
     supported_mimetypes = ['image/png', 'image/jpeg', 'image/gif', ]
 
     def _render_data(self):
         return '<img src="?action=get&rev=%d">' % self.rev.revno
 
+    def _transform(self, content_type, size=None, transpose_op=None):
+        """ resize to new size (optional), transpose according to exif infos,
+            return data as content_type (default: same ct as original image)
+        """
+        try:
+            from PIL import Image as PILImage
+        except ImportError:
+            # no PIL, we can't do anything
+            return self.rev.read()
+
+        if content_type == 'image/jpeg':
+            output_type = 'JPEG'
+        elif content_type == 'image/png':
+            output_type = 'PNG'
+        elif content_type == 'image/gif':
+            output_type = 'GIF'
+        else:
+            raise ValueError("content_type %r not supported" % content_type)
+
+        #image = PILImage.open(self.rev) # XXX needs: read() seek() tell()
+        buf = StringIO(self.rev.read())
+        image = PILImage.open(buf)
+        image.load()
+        buf.close()
+
+        try:
+            # if we have EXIF data, we can transpose (e.g. rotate left),
+            # so the rendered image is correctly oriented:
+            transpose_op = transpose_op or 1 # or self.exif['Orientation']
+        except KeyError:
+            transpose_op = 1 # no change
+
+        if size is not None:
+            image = image.copy() # create copy first as thumbnail works in-place
+            image.thumbnail(size, PILImage.ANTIALIAS)
+
+        transpose_func = {
+            1: lambda image: image,
+            2: lambda image: image.transpose(PILImage.FLIP_LEFT_RIGHT),
+            3: lambda image: image.transpose(PILImage.ROTATE_180),
+            4: lambda image: image.transpose(PILImage.FLIP_TOP_BOTTOM),
+            5: lambda image: image.transpose(PILImage.ROTATE_90).transpose(PILImage.FLIP_TOP_BOTTOM),
+            6: lambda image: image.transpose(PILImage.ROTATE_270),
+            7: lambda image: image.transpose(PILImage.ROTATE_90).transpose(PILImage.FLIP_LEFT_RIGHT),
+            8: lambda image: image.transpose(PILImage.ROTATE_90),
+        }
+        image = transpose_func[transpose_op](image)
+
+        buf = StringIO()
+        image.save(buf, output_type)
+        buf.flush() # XXX needed?
+        data = buf.getvalue()
+        buf.close()
+        return data
+
     def _do_get_modified(self, timestamp):
         request = self.request
-        width = request.values.get('w')
-        height = request.values.get('h')
-        if width or height:
+        try:
+            width = int(request.values.get('w'))
+        except (TypeError, ValueError):
+            width = None
+        try:
+            height = int(request.values.get('h'))
+        except (TypeError, ValueError):
+            height = None
+        try:
+            transpose = int(request.values.get('t'))
+            assert 1 <= transpose <= 8
+        except (TypeError, ValueError, AssertionError):
+            transpose = 1
+        if width or height or transpose != 1:
             # resize requested, XXX check ACL behaviour! XXX
             cache_meta = [ # we use a list to have order stability
                 ('wikiname', request.cfg.interwikiname or request.cfg.siteid),
@@ -443,13 +511,14 @@ class TransformableImage(Image):
                 # XXX even better than wikiname/itemname/revision would be a content hash!
                 ('width', width),
                 ('height', height),
+                ('transpose', transpose),
             ]
             cache = SendCache.from_meta(request, cache_meta)
             if not cache.exists():
-                orig_image = self.rev.read()
-                #transformed_image = transform(orig_image, width, height)
-                transformed_image = orig_image # XXX for now, just use same image data
-                cache.put(transformed_image, content_type=self.rev['mimetype'])
+                content_type = self.rev['mimetype']
+                size = (width or 99999, height or 99999)
+                transformed_image = self._transform(content_type, size=size, transpose_op=transpose)
+                cache.put(transformed_image, content_type=content_type)
             from_cache = cache.key
         else:
             from_cache = request.values.get('from_cache')
@@ -527,7 +596,6 @@ class MoinParserSupported(Text):
         #request.setContentLanguage(lang)
         Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", self.format)
         parser = Parser(body, request, format_args=self.format_args)
-        from StringIO import StringIO
         buffer = StringIO()
         request.redirect(buffer)
         parser.format(formatter)
