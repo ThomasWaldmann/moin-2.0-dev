@@ -152,15 +152,6 @@ class ThemeBase:
         self.env.filters['urlencode'] = lambda x: url_encode(x)
         self.env.filters['urlquote'] = lambda x: url_quote(x)
 
-    def img_url(self, img):
-        """ Generate an image href
-
-        @param img: the image filename
-        @rtype: string
-        @return: the image href
-        """
-        return "%s/%s/img/%s" % (self.cfg.url_prefix_static, self.name, img)
-
     def emit_custom_html(self, html):
         """
         generate custom HTML code in `html`
@@ -382,7 +373,7 @@ class ThemeBase:
         @rtype: unicode
         @return: shortened version.
         """
-        maxLength = self.maxPagenameLength()
+        maxLength = self.maxPagenameLength
         # First use only the sub page name, that might be enough
         if len(name) > maxLength:
             name = name.split('/')[-1]
@@ -392,9 +383,7 @@ class ThemeBase:
                 name = u'%s...%s' % (name[:half + left], name[-half:])
         return name
 
-    def maxPagenameLength(self):
-        """ Return maximum length for shortened page names """
-        return 25
+    maxPagenameLength = 25  # maximum length for shortened page names
 
     def navibar(self, d):
         """ Assemble the navibar
@@ -496,8 +485,10 @@ class ThemeBase:
                 alt, icon, w, h = self.iconsByFile[icon]
             else:
                 alt, icon, w, h = '', icon, '', ''
+        
+        img_url = "%s/%s/img/%s" % (self.cfg.url_prefix_static, self.name, icon)
 
-        return alt, self.img_url(icon), w, h
+        return alt, img_url, w, h
 
     def make_icon(self, icon, vars=None, **kw):
         """
@@ -773,17 +764,6 @@ var search_hint = "%(search_hint)s";
     }
         return script
 
-    def rsshref(self, page):
-        """ Create rss href, used for rss button and head link
-
-        @rtype: unicode
-        @return: rss href
-        """
-        request = self.request
-        url = page.url(request, querystr={
-                'do': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0)
-        return url
-
     def rsslink(self, d):
         """ Create rss link in head, used by FireFox
 
@@ -793,12 +773,14 @@ var search_hint = "%(search_hint)s";
         @rtype: unicode
         @return: html head
         """
-        link = u''
+        request = self.request
         page = d['page']
+        url = page.url(request, querystr={
+                'do': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0)
         link = (u'<link rel="alternate" title="%s Recent Changes" '
                 u'href="%s" type="application/rss+xml">') % (
                     wikiutil.escape(self.cfg.sitename, True),
-                    wikiutil.escape(self.rsshref(page), True) )
+                    wikiutil.escape(url, True) )
         return link
 
     def html_head(self, d):
@@ -1299,7 +1281,6 @@ actionsMenuInit('%(label)s');
         @keyword page: the page instance that called us - using this is more efficient than using pagename..
         @keyword pagename: 'PageName'
         @keyword print_mode: 1 (or 0)
-        @keyword editor_mode: 1 (or 0)
         @keyword media: css media type, defaults to 'screen'
         @keyword allow_doubleclick: 1 (or 0)
         @keyword html_head: additional <head> code
@@ -1474,11 +1455,6 @@ actionsMenuInit('%(label)s');
                 'user_valid': request.user.valid,
                 'msg': self._status,
                 'trail': keywords.get('trail', None),
-                # Discontinued keys, keep for a while for 3rd party theme developers
-                'titlesearch': 'use self.searchform(d)',
-                'textsearch': 'use self.searchform(d)',
-                'navibar': ['use self.navibar(d)'],
-                'available_actions': ['use self.request.availableActions(page)'],
             }
 
             # add quoted versions of pagenames
@@ -1493,10 +1469,7 @@ actionsMenuInit('%(label)s');
             request.themedict = d
 
             # now call the theming code to do the rendering
-            if keywords.get('editor_mode', 0):
-                output.append(self.editorheader(d))
-            else:
-                output.append(self.header(d))
+            output.append(self.header(d))
 
         # emit it
         request.write(''.join(output))
