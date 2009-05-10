@@ -341,6 +341,27 @@ There is no help, you're doomed!
                                  )
         return content
 
+    def _render_data_diff(self, oldrev, newrev):
+        return "Can not compare binary items."
+
+    def do_diff(self, oldrev, newrev):
+        item = self.rev.item
+        rev_nos = item.list_revisions()
+        log = self._revlog(item, rev_nos)
+
+        template = self.env.get_template('diff.html')
+        content = template.render(gettext=self.request.getText,
+                                  rev=self.rev,
+                                  log=log,
+                                  first_rev_no=rev_nos[0],
+                                  last_rev_no=rev_nos[-1],
+                                  index=self.flat_index(),
+                                  oldrev=oldrev,
+                                  newrev=newrev,
+                                  data_diff_rendered=self._render_data_diff(oldrev, newrev),
+                                 )
+        return content
+
     def do_get(self):
         request = self.request
         # XXX is it ok to use rev.timestamp for tar/cache/normal?
@@ -565,6 +586,10 @@ class Text(Binary):
     
     def _render_data(self):
         return u"<pre>%s</pre>" % self.data_storage_to_internal(self.data) # XXX to_form()?
+
+    def _render_data_diff(self, oldrev, newrev):
+        from MoinMoin.util import diff_html
+        return diff_html.diff(self.request, oldrev.read(), newrev.read())
 
     def do_modify(self):
         template = self.env.get_template('modify_text.html')
