@@ -803,7 +803,7 @@ options_no_group_name = {
     ('navi_bar', [u'FindPage', u'HelpContents', ],
      'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode strings]'),
 
-    ('theme_default', 'modern',
+    ('theme_default', 'modernized',
      "the name of the theme that is used by default (see HelpOnThemes)"),
     ('theme_force', False,
      "if True, do not allow to change the theme"),
@@ -857,30 +857,6 @@ options_no_group_name = {
        '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 4.01</a>',
      ],
      'list with html fragments with logos or strings for crediting.'),
-
-    # These icons will show in this order in the iconbar, unless they
-    # are not relevant, e.g email icon when the wiki is not configured
-    # for email.
-    ('page_iconbar', ["up", "edit", "view", "diff", "info", "subscribe", "raw", "print", ],
-     'list of icons to show in iconbar, valid values are only those in page_icons_table. Available only in classic theme.'),
-
-    # Standard buttons in the iconbar
-    ('page_icons_table',
-     {
-        # key           pagekey, querystr dict, title, icon-key
-        'diff': ('page', {'action': 'diff'}, _("Diffs"), "diff"),
-        'info': ('page', {'action': 'info'}, _("Info"), "info"),
-        'edit': ('page', {'action': 'edit'}, _("Edit"), "edit"),
-        'unsubscribe': ('page', {'action': 'unsubscribe'}, _("UnSubscribe"), "unsubscribe"),
-        'subscribe': ('page', {'action': 'subscribe'}, _("Subscribe"), "subscribe"),
-        'raw': ('page', {'action': 'raw'}, _("Raw"), "raw"),
-        'xml': ('page', {'action': 'show', 'mimetype': 'text/xml'}, _("XML"), "xml"),
-        'print': ('page', {'action': 'print'}, _("Print"), "print"),
-        'view': ('page', {}, _("View"), "view"),
-        'up': ('page_parent_page', {}, _("Up"), "up"),
-     },
-     "dict of {'iconname': (url, title, icon-img-key), ...}. Available only in classic theme."),
-
   )),
   # ==========================================================================
   'editor': ('Editor related', None, (

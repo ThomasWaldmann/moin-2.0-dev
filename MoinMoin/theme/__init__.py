@@ -2,7 +2,8 @@
 """
     MoinMoin - Theme Package
 
-    @copyright: 2003-2008 MoinMoin:ThomasWaldmann
+    @copyright: 2003-2009 MoinMoin:ThomasWaldmann,
+                2008 MoinMoin:RadomirDopieralski
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -30,93 +31,68 @@ class ThemeBase:
 
     name = 'base'
 
-    # fake _ function to get gettext recognize those texts:
-    _ = lambda x: x
-
-    # TODO: remove icons that are not used any more.
+    _ = lambda x: x  # We don't have gettext at this moment, so we fake it
     icons = {
         # key         alt                        icon filename      w   h
-        # ------------------------------------------------------------------
-        # navibar
-        'help':        ("%(page_help_contents)s", "moin-help.png",   12, 11),
-        'find':        ("%(page_find_page)s",     "moin-search.png", 12, 12),
-        'diff':        (_("Diffs"),               "moin-diff.png",   15, 11),
-        'info':        (_("Info"),                "moin-info.png",   12, 11),
-        'edit':        (_("Edit"),                "moin-edit.png",   12, 12),
-        'unsubscribe': (_("Unsubscribe"),         "moin-unsubscribe.png", 14, 10),
-        'subscribe':   (_("Subscribe"),           "moin-subscribe.png", 14, 10),
-        'raw':         (_("Raw"),                 "moin-raw.png",    12, 13),
-        'xml':         (_("XML"),                 "moin-xml.png",    20, 13),
-        'print':       (_("Print"),               "moin-print.png",  16, 14),
-        'view':        (_("View"),                "moin-show.png",   12, 13),
-        'home':        (_("Home"),                "moin-home.png",   13, 12),
-        'up':          (_("Up"),                  "moin-parent.png", 15, 13),
-        'attach':     ("%(attach_count)s",       "moin-attach.png",  7, 15),
-        'attachimg':  ("",                       "attach.png",      32, 32),
+        # FileAttach
+        'attach':     ("%(attach_count)s",       "moin-attach.png",   16, 16),
+        'info':       ("[INFO]",                 "moin-info.png",     16, 16),
+        'attachimg':  (_("[ATTACH]"),            "attach.png",        32, 32),
         # RecentChanges
-        'rss':        (_("[RSS]"),               "moin-rss.png",    24, 24),
-        'deleted':    (_("[DELETED]"),           "moin-deleted.png", 60, 12),
-        'updated':    (_("[UPDATED]"),           "moin-updated.png", 60, 12),
-        'renamed':    (_("[RENAMED]"),           "moin-renamed.png", 60, 12),
-        'conflict':   (_("[CONFLICT]"),          "moin-conflict.png", 60, 12),
-        'new':        (_("[NEW]"),               "moin-new.png",    31, 12),
-        'diffrc':     (_("[DIFF]"),              "moin-diff.png",   15, 11),
+        'rss':        (_("[RSS]"),               "moin-rss.png",      16, 16),
+        'deleted':    (_("[DELETED]"),           "moin-deleted.png",  16, 16),
+        'updated':    (_("[UPDATED]"),           "moin-updated.png",  16, 16),
+        'renamed':    (_("[RENAMED]"),           "moin-renamed.png",  16, 16),
+        'conflict':   (_("[CONFLICT]"),          "moin-conflict.png", 16, 16),
+        'new':        (_("[NEW]"),               "moin-new.png",      16, 16),
+        'diffrc':     (_("[DIFF]"),              "moin-diff.png",     16, 16),
         # General
-        'bottom':     (_("[BOTTOM]"),            "moin-bottom.png", 14, 10),
-        'top':        (_("[TOP]"),               "moin-top.png",    14, 10),
-        'www':        ("[WWW]",                  "moin-www.png",    11, 11),
-        'mailto':     ("[MAILTO]",               "moin-email.png",  14, 10),
-        'news':       ("[NEWS]",                 "moin-news.png",   10, 11),
-        'telnet':     ("[TELNET]",               "moin-telnet.png", 10, 11),
-        'ftp':        ("[FTP]",                  "moin-ftp.png",    11, 11),
-        'file':       ("[FILE]",                 "moin-ftp.png",    11, 11),
+        'bottom':     (_("[BOTTOM]"),            "moin-bottom.png",   16, 16),
+        'top':        (_("[TOP]"),               "moin-top.png",      16, 16),
+        'www':        ("[WWW]",                  "moin-www.png",      16, 16),
+        'mailto':     ("[MAILTO]",               "moin-email.png",    16, 16),
+        'news':       ("[NEWS]",                 "moin-news.png",     16, 16),
+        'telnet':     ("[TELNET]",               "moin-telnet.png",   16, 16),
+        'ftp':        ("[FTP]",                  "moin-ftp.png",      16, 16),
+        'file':       ("[FILE]",                 "moin-ftp.png",      16, 16),
         # search forms
-        'searchbutton': ("[?]",                  "moin-search.png", 12, 12),
-        'interwiki':  ("[%(wikitag)s]",          "moin-inter.png",  16, 16),
+        'searchbutton': ("[?]",                  "moin-search.png",   16, 16),
+        'interwiki':  ("[%(wikitag)s]",          "moin-inter.png",    16, 16),
 
         # smileys (this is CONTENT, but good looking smileys depend on looking
         # adapted to the theme background color and theme style in general)
         #vvv    ==      vvv  this must be the same for GUI editor converter
-        'X-(':        ("X-(",                    'angry.png',       15, 15),
-        ':D':         (":D",                     'biggrin.png',     15, 15),
-        '<:(':        ("<:(",                    'frown.png',       15, 15),
-        ':o':         (":o",                     'redface.png',     15, 15),
-        ':(':         (":(",                     'sad.png',         15, 15),
-        ':)':         (":)",                     'smile.png',       15, 15),
-        'B)':         ("B)",                     'smile2.png',      15, 15),
-        ':))':        (":))",                    'smile3.png',      15, 15),
-        ';)':         (";)",                     'smile4.png',      15, 15),
-        '/!\\':       ("/!\\",                   'alert.png',       15, 15),
-        '<!>':        ("<!>",                    'attention.png',   15, 15),
-        '(!)':        ("(!)",                    'idea.png',        15, 15),
-
-        # copied 2001-11-16 from http://pikie.darktech.org/cgi/pikie.py?EmotIcon
-        ':-?':        (":-?",                    'tongue.png',      15, 15),
-        ':\\':        (":\\",                    'ohwell.png',      15, 15),
-        '>:>':        (">:>",                    'devil.png',       15, 15),
-        '|)':         ("|)",                     'tired.png',       15, 15),
-
-        # some folks use noses in their emoticons
-        ':-(':        (":-(",                    'sad.png',         15, 15),
-        ':-)':        (":-)",                    'smile.png',       15, 15),
-        'B-)':        ("B-)",                    'smile2.png',      15, 15),
-        ':-))':       (":-))",                   'smile3.png',      15, 15),
-        ';-)':        (";-)",                    'smile4.png',      15, 15),
-        '|-)':        ("|-)",                    'tired.png',       15, 15),
-
-        # version 1.0
-        '(./)':       ("(./)",                   'checkmark.png',   20, 15),
-        '{OK}':       ("{OK}",                   'thumbs-up.png',   14, 12),
-        '{X}':        ("{X}",                    'icon-error.png',  16, 16),
-        '{i}':        ("{i}",                    'icon-info.png',   16, 16),
-        '{1}':        ("{1}",                    'prio1.png',       15, 13),
-        '{2}':        ("{2}",                    'prio2.png',       15, 13),
-        '{3}':        ("{3}",                    'prio3.png',       15, 13),
-
-        # version 1.3.4 (stars)
-        # try {*}{*}{o}
-        '{*}':        ("{*}",                    'star_on.png',     15, 15),
-        '{o}':        ("{o}",                    'star_off.png',    15, 15),
+        'X-(':        ("X-(",                    'angry.png',         16, 16),
+        ':D':         (":D",                     'biggrin.png',       16, 16),
+        '<:(':        ("<:(",                    'frown.png',         16, 16),
+        ':o':         (":o",                     'redface.png',       16, 16),
+        ':(':         (":(",                     'sad.png',           16, 16),
+        ':)':         (":)",                     'smile.png',         16, 16),
+        'B)':         ("B)",                     'smile2.png',        16, 16),
+        ':))':        (":))",                    'smile3.png',        16, 16),
+        ';)':         (";)",                     'smile4.png',        16, 16),
+        '/!\\':       ("/!\\",                   'alert.png',         16, 16),
+        '<!>':        ("<!>",                    'attention.png',     16, 16),
+        '(!)':        ("(!)",                    'idea.png',          16, 16),
+        ':-?':        (":-?",                    'tongue.png',        16, 16),
+        ':\\':        (":\\",                    'ohwell.png',        16, 16),
+        '>:>':        (">:>",                    'devil.png',         16, 16),
+        '|)':         ("|)",                     'tired.png',         16, 16),
+        ':-(':        (":-(",                    'sad.png',           16, 16),
+        ':-)':        (":-)",                    'smile.png',         16, 16),
+        'B-)':        ("B-)",                    'smile2.png',        16, 16),
+        ':-))':       (":-))",                   'smile3.png',        16, 16),
+        ';-)':        (";-)",                    'smile4.png',        16, 16),
+        '|-)':        ("|-)",                    'tired.png',         16, 16),
+        '(./)':       ("(./)",                   'checkmark.png',     16, 16),
+        '{OK}':       ("{OK}",                   'thumbs-up.png',     16, 16),
+        '{X}':        ("{X}",                    'icon-error.png',    16, 16),
+        '{i}':        ("{i}",                    'icon-info.png',     16, 16),
+        '{1}':        ("{1}",                    'prio1.png',         15, 13),
+        '{2}':        ("{2}",                    'prio2.png',         15, 13),
+        '{3}':        ("{3}",                    'prio3.png',         15, 13),
+        '{*}':        ("{*}",                    'star_on.png',       16, 16),
+        '{o}':        ("{o}",                    'star_off.png',      16, 16),
     }
     del _
 
@@ -209,9 +185,9 @@ class ThemeBase:
         """
         if self.request.cfg.show_interwiki:
             page = wikiutil.getFrontPage(self.request)
-            text = self.request.cfg.interwikiname or u'Self'
+            text = self.request.cfg.interwikiname or 'Self'
             link = page.link_to(self.request, text=text, rel='nofollow')
-            html = u'<div id="interwiki"><span>%s</span></div>' % link
+            html = u'<span id="interwiki">%s<span class="sep">: </span></span>' % link
         else:
             html = u''
         return html
@@ -230,7 +206,7 @@ class ThemeBase:
             segments = d['page_name'].split('/') # was: title_text
             for s in segments[:-1]:
                 curpage += s
-                content.append("<li>%s</li>" % Page(self.request, curpage).link_to(self.request, s))
+                content.append(Page(self.request, curpage).link_to(self.request, s))
                 curpage += '/'
             link_text = segments[-1]
             link_title = _('Click to do a full-text search for this title')
@@ -241,15 +217,12 @@ class ThemeBase:
             }
             # we dont use d['title_link'] any more, but make it ourselves:
             link = d['page'].link_to(self.request, link_text, querystr=link_query, title=link_title, css_class='backlink', rel='nofollow')
-            content.append(('<li>%s</li>') % link)
+            content.append(link)
         else:
-            content.append('<li>%s</li>' % wikiutil.escape(d['title_text']))
+            content.append(wikiutil.escape(d['title_text']))
 
-        html = '''
-<ul id="pagelocation">
-%s
-</ul>
-''' % "".join(content)
+        location_html = u'<span class="sep">/</span>'.join(content)
+        html = u'<span id="pagelocation">%s</span>' % location_html
         return html
 
     def username(self, d):
@@ -295,8 +268,8 @@ class ThemeBase:
                 userlinks.append(d['page'].link_to(request, text=_("Login"),
                                                    querystr=query, id='login', rel='nofollow'))
 
-        userlinks = [u'<li>%s</li>' % link for link in userlinks]
-        html = u'<ul id="username">%s</ul>' % ''.join(userlinks)
+        userlinks_html = u'<span class="sep"> | </span>'.join(userlinks)
+        html = u'<div id="username">%s</div>' % userlinks_html
         return html
 
     def splitNavilink(self, text, localize=1):
@@ -525,41 +498,12 @@ class ThemeBase:
             vars = {}
         alt, img, w, h = self.get_icon(icon)
         try:
-            alt = vars['icon-alt-text'] # if it is possible we take the alt-text from 'page_icons_table'
+            alt = alt % vars
         except KeyError, err:
-            try:
-                alt = alt % vars # if not we just leave the  alt-text from 'icons'
-            except KeyError, err:
-                alt = 'KeyError: %s' % str(err)
+            alt = 'KeyError: %s' % str(err)
         alt = self.request.getText(alt)
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
-
-    def make_iconlink(self, which, d):
-        """
-        Make a link with an icon
-
-        @param which: icon id (dictionary key)
-        @param d: parameter dictionary
-        @rtype: string
-        @return: html link tag
-        """
-        qs = {}
-        pagekey, querystr, title, icon = self.cfg.page_icons_table[which]
-        qs.update(querystr) # do not modify the querystr dict in the cfg!
-        d['icon-alt-text'] = d['title'] = title % d
-        d['i18ntitle'] = self.request.getText(d['title'])
-        img_src = self.make_icon(icon, d)
-        rev = d['rev']
-        if rev and which in ['raw', 'print', ]:
-            qs['rev'] = str(rev)
-        attrs = {'rel': 'nofollow', 'title': d['i18ntitle'], }
-        page = d[pagekey]
-        if isinstance(page, unicode):
-            # e.g. d['page_parent_page'] is just the unicode pagename
-            # while d['page'] will give a page object
-            page = Page(self.request, page)
-        return page.link_to_raw(self.request, text=img_src, querystr=qs, **attrs)
 
     def msg(self, d):
         """ Assemble the msg display
@@ -613,7 +557,7 @@ class ThemeBase:
                             link = (self.request.formatter.interwikilink(True, interwiki, page) +
                                     self.shortenPagename(page) +
                                     self.request.formatter.interwikilink(False, interwiki, page))
-                            items.append('<li>%s</li>' % link)
+                            items.append(link)
                             continue
                         else:
                             pagename = page
@@ -624,11 +568,8 @@ class ThemeBase:
                     title = page.split_title()
                     title = self.shortenPagename(title)
                     link = page.link_to(request, title)
-                    items.append('<li>%s</li>' % link)
-                html = '''
-<ul id="pagetrail">
-%s
-</ul>''' % ''.join(items)
+                    items.append(link)
+                html = u'<div id="pagetrail">%s</div>' % u'<span class="sep"> &raquo; </span>'.join(items)
         return html
 
     def _stylesheet_link(self, theme, media, href, title=None):
@@ -698,7 +639,7 @@ class ThemeBase:
         @return: true if should show page info
         """
         if page.exists() and self.request.user.may.read(page.page_name):
-            # These  actions show the  page content.
+            # These actions show the page content.
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
             contentActions = [u'', u'show', u'refresh', u'preview', u'diff',
@@ -872,13 +813,13 @@ var search_hint = "%(search_hint)s";
     def universal_edit_button(self, d, **keywords):
         """ Generate HTML for an edit link in the header."""
         page = d['page']
-        if 'edit' in self.request.cfg.actions_excluded:
+        if 'modify' in self.request.cfg.actions_excluded:
             return ""
         if not (page.exists() and self.request.user.may.write(page.page_name)):
             return ""
         _ = self.request.getText
-        querystr = {'do': 'edit'}
-        text = _(u'Edit')
+        querystr = {'do': 'modify'}
+        text = _(u'Modify')
         url = page.url(self.request, querystr=querystr, escape=0)
         return (u'<link rel="alternate" type="application/wiki" '
                 u'title="%s" href="%s">' % (text, url))
@@ -1102,7 +1043,7 @@ actionsMenuInit('%(label)s');
             form = self.request.form
             action = self.request.action
             # Do not show editbar on edit but on save/cancel
-            return not (action == 'edit' and
+            return not (action == 'modify' and
                         not form.has_key('button_save') and
                         not form.has_key('button_cancel'))
         return False
@@ -1231,31 +1172,69 @@ actionsMenuInit('%(label)s');
     # Public functions #####################################################
 
     def header(self, d, **kw):
-        """ Assemble page header
-
-        Default behavior is to start a page div. Sub class and add
-        footer items.
+        """ Assemble wiki header
 
         @param d: parameter dictionary
-        @rtype: string
+        @rtype: unicode
         @return: page header html
         """
-        return self.startPage()
+        html = [
+            # Pre header custom html
+            self.emit_custom_html(self.cfg.page_header1),
 
-    editorheader = header
+            # Header
+            u'<div id="header">',
+            self.searchform(d),
+            self.logo(),
+            self.username(d),
+            u'<h1 id="locationline">',
+            self.interwiki(d),
+            self.title(d),
+            u'</h1>',
+            self.trail(d),
+            self.navibar(d),
+            #u'<hr id="pageline">',
+            u'<div id="pageline"><hr style="display:none;"></div>',
+            self.msg(d),
+            self.editbar(d),
+            u'</div>',
+
+            # Post header custom html (not recommended)
+            self.emit_custom_html(self.cfg.page_header2),
+
+            # Start of page
+            self.startPage(),
+        ]
+        return u'\n'.join(html)
 
     def footer(self, d, **keywords):
-        """ Assemble page footer
-
-        Default behavior is to end page div. Sub class and add
-        footer items.
+        """ Assemble wiki footer
 
         @param d: parameter dictionary
         @keyword ...:...
-        @rtype: string
+        @rtype: unicode
         @return: page footer html
         """
-        return self.endPage()
+        page = d['page']
+        html = [
+            # End of page
+            self.pageinfo(page),
+            self.endPage(),
+
+            # Pre footer custom html (not recommended!)
+            self.emit_custom_html(self.cfg.page_footer1),
+
+            # Footer
+            u'<div id="footer">',
+            self.editbar(d),
+            self.credits(d),
+            self.showversion(d, **keywords),
+            u'</div>',
+
+            # Post footer custom html
+            self.emit_custom_html(self.cfg.page_footer2),
+            ]
+        return u'\n'.join(html)
 
     # Language stuff ####################################################
 
@@ -1591,3 +1570,4 @@ def load_theme_fallback(request, theme_name=None):
             fallback = 2
             from MoinMoin.theme.modern import Theme
             request.theme = Theme(request)
+
