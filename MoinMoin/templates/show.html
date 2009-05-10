@@ -21,7 +21,7 @@ This item exists, but current revision is deleted.
     <hr>History:
         <form action="" method="GET">
         <div id="page-history">
-        <input type="hidden" name="action" value="diff">
+        <input type="hidden" name="do" value="diff">
         <table>
             <tr>
                 <th align="right">#</td>
@@ -46,11 +46,11 @@ This item exists, but current revision is deleted.
                 <td>{{ entry.mimetype|e }}</td>
                 <td>{{ entry.comment|e }}</td>
                 <td>{{ '<a href="?rev=%d">%s</a>' % (entry.rev_no, 'show') }}</td>
-                <td>{{ '<a href="?rev=%d&action=get">%s</a>' % (entry.rev_no, 'get') }}</td>
+                <td>{{ '<a href="?rev=%d&do=get">%s</a>' % (entry.rev_no, 'get') }}</td>
                 {% if entry.rev_no == last_rev_no %}
                 <td>current revision</td>
                 {% else %}
-                <td>{{ '<a href="?rev=%d&action=revert">%s</a>' % (entry.rev_no, 'revert') }}</td>
+                <td>{{ '<a href="?rev=%d&do=revert">%s</a>' % (entry.rev_no, 'revert') }}</td>
                 {% endif %}
             </tr>
             {% endfor %}

@@ -235,7 +235,7 @@ class ThemeBase:
             link_text = segments[-1]
             link_title = _('Click to do a full-text search for this title')
             link_query = {
-                'action': 'fullsearch',
+                'do': 'fullsearch',
                 'value': 'linkto:"%s"' % d['page_name'],
                 'context': '180',
             }
@@ -280,14 +280,14 @@ class ThemeBase:
             # link to userprefs action
             if 'userprefs' not in self.request.cfg.actions_excluded:
                 userlinks.append(d['page'].link_to(request, text=_('Settings'),
-                                               querystr={'action': 'userprefs'}, id='userprefs', rel='nofollow'))
+                                               querystr={'do': 'userprefs'}, id='userprefs', rel='nofollow'))
 
         if request.user.valid:
             if request.user.auth_method in request.cfg.auth_can_logout:
                 userlinks.append(d['page'].link_to(request, text=_('Logout'),
-                                                   querystr={'action': 'logout', 'logout': 'logout'}, id='logout', rel='nofollow'))
+                                                   querystr={'do': 'logout', 'logout': 'logout'}, id='logout', rel='nofollow'))
         else:
-            query = {'action': 'login'}
+            query = {'do': 'login'}
             # special direct-login link if the auth methods want no input
             if request.cfg.auth_login_inputs == ['special_no_input']:
                 query['login'] = '1'
@@ -759,7 +759,7 @@ class ThemeBase:
         html = u'''
 <form id="searchform" method="get" action="%(url)s">
 <div>
-<input type="hidden" name="action" value="fullsearch">
+<input type="hidden" name="do" value="fullsearch">
 <input type="hidden" name="context" value="180">
 <label for="searchinput">%(search_label)s</label>
 <input id="searchinput" type="text" name="value" value="%(search_value)s" size="20"
@@ -836,7 +836,7 @@ var search_hint = "%(search_hint)s";
         """
         request = self.request
         url = page.url(request, querystr={
-                'action': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0)
+                'do': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0)
         return url
 
     def rsslink(self, d):
@@ -890,7 +890,7 @@ var search_hint = "%(search_hint)s";
         if not (page.exists() and self.request.user.may.write(page.page_name)):
             return ""
         _ = self.request.getText
-        querystr = {'action': 'edit'}
+        querystr = {'do': 'edit'}
         text = _(u'Edit')
         url = page.url(self.request, querystr=querystr, escape=0)
         return (u'<link rel="alternate" type="application/wiki" '
@@ -962,7 +962,7 @@ var search_hint = "%(search_hint)s";
             }
 
         options = []
-        option = '<option value="%(action)s"%(disabled)s>%(title)s</option>'
+        option = '<option value="%(do)s"%(disabled)s>%(title)s</option>'
         # class="disabled" is a workaround for browsers that ignore
         # "disabled", e.g IE, Safari
         # for XHTML: data['disabled'] = ' disabled="disabled"'
@@ -971,7 +971,7 @@ var search_hint = "%(search_hint)s";
         # Format standard actions
         available = get_available_actions(request.cfg, page, request.user)
         for action in menu:
-            data = {'action': action, 'disabled': '', 'title': titles[action]}
+            data = {'do': action, 'disabled': '', 'title': titles[action]}
             # removes excluded actions from the more actions menu
             if action in request.cfg.actions_excluded:
                 continue
@@ -979,28 +979,28 @@ var search_hint = "%(search_hint)s";
             # Enable delete cache only if page can use caching
             if action == 'refresh':
                 if not page.canUseCache():
-                    data['action'] = 'show'
+                    data['do'] = 'show'
                     data['disabled'] = disabled
 
             # SubscribeUser action enabled only if user has admin rights
             if action == 'SubscribeUser' and not request.user.may.admin(page.page_name):
-                data['action'] = 'show'
+                data['do'] = 'show'
                 data['disabled'] = disabled
 
             # PackagePages action only if user has write rights
             if action == 'PackagePages' and not request.user.may.write(page.page_name):
-                data['action'] = 'show'
+                data['do'] = 'show'
                 data['disabled'] = disabled
 
             # Despam action enabled only for superusers
             if action == 'Despam' and not request.user.isSuperUser():
-                data['action'] = 'show'
+                data['do'] = 'show'
                 data['disabled'] = disabled
 
             # Special menu items. Without javascript, executing will
             # just return to the page.
             if action.startswith('__'):
-                data['action'] = 'show'
+                data['do'] = 'show'
 
             # Actions which are not available for this wiki, user or page
             if (action == '__separator__' or
@@ -1014,12 +1014,12 @@ var search_hint = "%(search_hint)s";
         more.sort()
         if more:
             # Add separator
-            separator = option % {'action': 'show', 'disabled': disabled,
+            separator = option % {'do': 'show', 'disabled': disabled,
                                   'title': titles['__separator__']}
             options.append(separator)
             # Add more actions (all enabled)
             for action in more:
-                data = {'action': action, 'disabled': ''}
+                data = {'do': action, 'disabled': ''}
                 # Always add spaces: LikePages -> Like Pages
                 # XXX do not create page just for using split_title -
                 # creating pages for non-existent does 2 storage lookups
@@ -1040,7 +1040,7 @@ var search_hint = "%(search_hint)s";
 <form class="actionsmenu" method="GET" action="%(url)s">
 <div>
     <label>%(label)s</label>
-    <select name="action"
+    <select name="do"
         onchange="if ((this.selectedIndex != 0) &&
                       (this.options[this.selectedIndex].disabled == false)) {
                 this.form.submit();
@@ -1162,7 +1162,7 @@ actionsMenuInit('%(label)s');
             return ('<span class="disabled">%s</span>' % _(suppl_name))
         else:
             return page.link_to(self.request, text=_(suppl_name),
-                                querystr={'action': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
+                                querystr={'do': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
 
     def modifyLink(self, page):
         """ Return a link to the modify action """
@@ -1170,7 +1170,7 @@ actionsMenuInit('%(label)s');
             return ""
 
         _ = self.request.getText
-        querystr = {'action': 'modify'}
+        querystr = {'do': 'modify'}
         text = _('Modify')
         attrs = {'rel': 'nofollow', }
         return page.link_to(self.request, text=text, querystr=querystr, **attrs)
@@ -1181,7 +1181,7 @@ actionsMenuInit('%(label)s');
             return ""
 
         _ = self.request.getText
-        querystr = {'action': 'get'}
+        querystr = {'do': 'get'}
         text = _('Download')
         attrs = {'rel': 'nofollow', }
         return page.link_to(self.request, text=text, querystr=querystr, **attrs)
@@ -1202,7 +1202,7 @@ actionsMenuInit('%(label)s');
             action, text = 'subscribe', _("Subscribe")
         if action in self.request.cfg.actions_excluded:
             return ""
-        return page.link_to(self.request, text=text, querystr={'action': action}, css_class='nbsubscribe', rel='nofollow')
+        return page.link_to(self.request, text=text, querystr={'do': action}, css_class='nbsubscribe', rel='nofollow')
 
     def quicklinkLink(self, page):
         """ Return add/remove quicklink link
@@ -1220,7 +1220,7 @@ actionsMenuInit('%(label)s');
             action, text = 'quicklink', _("Add Link")
         if action in self.request.cfg.actions_excluded:
             return ""
-        return page.link_to(self.request, text=text, querystr={'action': action}, css_class='nbquicklink', rel='nofollow')
+        return page.link_to(self.request, text=text, querystr={'do': action}, css_class='nbquicklink', rel='nofollow')
 
     def startPage(self):
         """ Start page div with page language and direction
@@ -1562,7 +1562,7 @@ actionsMenuInit('%(label)s');
             not keywords.get('print_mode', 0) and
             request.user.edit_on_doubleclick):
             if request.user.may.write(pagename): # separating this gains speed
-                url = page.url(request, {'action': 'edit'})
+                url = page.url(request, {'do': 'edit'})
                 bodyattr.append(''' ondblclick="location.href='%s'" ''' % wikiutil.escape(url, True))
 
         # Set body to the user interface language and direction

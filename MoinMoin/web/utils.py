@@ -25,7 +25,7 @@ def check_forbidden(request):
     hosts against the blacklist. Raises Forbidden if triggered.
     """
     args = request.args
-    action = args.get('action')
+    action = args.get('do')
     if ((args or request.method != 'GET') and
         action not in ['rss_rc', 'show', 'sitemap'] and
         action != 'get'):

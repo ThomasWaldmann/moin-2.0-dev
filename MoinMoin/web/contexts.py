@@ -106,7 +106,7 @@ class BaseContext(Context):
     Most attributes are lazily initialized via descriptors. """
 
     # first the trivial attributes
-    action = EnvironProxy('action', lambda o: o.request.values.get('action', 'show'))
+    action = EnvironProxy('do', lambda o: o.request.values.get('do', 'show'))
     clock = EnvironProxy('clock', lambda o: Clock())
     user = EnvironProxy('user', lambda o: user.User(o, auth_method='request:invalid'))
 
