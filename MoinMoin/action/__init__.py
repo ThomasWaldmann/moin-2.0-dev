@@ -35,9 +35,6 @@ from MoinMoin.Page import Page
 # create a list of extension actions from the package directory
 modules = pysupport.getPackageModules(__file__)
 
-# builtin-stuff (see do_<name> below):
-names = []
-
 class ActionBase:
     """ action base class with some generic stuff to inherit
 
@@ -235,59 +232,21 @@ def get_names(config):
     @return: set of known actions
     """
     if not hasattr(config.cache, 'action_names'):
-        actions = names[:]
-        actions.extend(wikiutil.getPlugins('action', config))
+        actions = wikiutil.getPlugins('action', config)
         actions = set([action for action in actions
                       if not action in config.actions_excluded])
         config.cache.action_names = actions # remember it
     return config.cache.action_names
 
 def getHandler(cfg, action, identifier="execute"):
-    """ return a handler function for a given action or None.
-
-    TODO: remove request dependency
-    """
-    # check for excluded actions
-    if action in cfg.actions_excluded:
-        return None
+    """ return a handler function for a given action.  """
+    if action not in get_names(cfg):
+        raise ValueError("excluded or unknown action")
 
     try:
         handler = wikiutil.importPlugin(cfg, "action", action, identifier)
     except wikiutil.PluginMissingError:
-        handler = globals().get('do_' + action)
+        raise ValueError("excluded or unknown action")
 
     return handler
-
-def get_available_actions(config, page, user):
-        """ Get a list of actions available on a particular page
-        for a particular user.
-
-        The set does not contain actions that starts with lower case.
-        Themes use this set to display the actions to the user.
-
-        @param config: a config object (for the per-wiki actions)
-        @param page: the page to which the actions should apply
-        @param user: the user which wants to apply an action
-        @rtype: set
-        @return: set of avaiable actions
-        """
-        if not user.may.read(page.page_name):
-            return []
-
-
-        actions = get_names(config)
-
-        # Filter non ui actions (starts with lower case letter)
-        actions = [action for action in actions if not action[0].islower()]
-
-        # Filter actions by page type, acl and user state
-        excluded = []
-        if (page.isUnderlayPage() and not page.isStandardPage()) or \
-                not user.may.write(page.page_name) or \
-                not user.may.delete(page.page_name):
-                # Prevent modification of underlay only pages, or pages
-                # the user can't write and can't delete
-                excluded = [u'rename', u'delete', ]
-        return set([action for action in actions if not action in excluded])
-
 

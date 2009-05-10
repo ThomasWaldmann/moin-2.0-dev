@@ -13,7 +13,7 @@
 """
 
 from MoinMoin import caching
-from MoinMoin.action import get_available_actions
+from MoinMoin import action
 from MoinMoin.theme import ThemeBase
 
 
@@ -184,7 +184,7 @@ class Theme(ThemeBase):
         rev = d['rev']
         html = []
         page = d['page']
-        available = get_available_actions(request.cfg, page, request.user)
+        available = action.get_names(request.cfg)
         if available:
             available = list(available)
             available.sort()
