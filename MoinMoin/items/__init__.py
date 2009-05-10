@@ -16,8 +16,6 @@ from StringIO import StringIO
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from jinja2 import Environment, PackageLoader, Template, FileSystemBytecodeCache, Markup
-
 from werkzeug import http_date
 
 from MoinMoin import wikiutil, config, user
@@ -31,9 +29,9 @@ from MoinMoin.items.sendcache import SendCache
 
 class Item(object):
     is_text = False
-    def __init__(self, request, env, item_name, rev=None):
+    def __init__(self, request, item_name, rev=None):
         self.request = request
-        self.env = env
+        self.env = request.theme.env
         self.item_name = item_name
         self.rev = rev
 
@@ -676,17 +674,6 @@ class Manager(object):
         self.item_name = item_name
         self.item_mimetype = mimetype
         self.rev_no = rev_no
-        jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
-        try:
-            os.mkdir(jinja_cachedir)
-        except:
-            pass
-        self.env = Environment(loader=PackageLoader('MoinMoin', 'templates'),
-                               bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'), 
-                               extensions=['jinja2.ext.i18n'])
-        from werkzeug import url_quote, url_encode
-        self.env.filters['urlencode'] = lambda x: url_encode(x)
-        self.env.filters['urlquote'] = lambda x: url_quote(x)
 
     def _find_item_class(self, mimetype, BaseClass=Item, best_match_len=-1):
         Class = None
@@ -719,5 +706,5 @@ class Manager(object):
             mimetype = rev.get("mimetype")
         if mimetype:
             ItemClass = self._find_item_class(mimetype)
-        return ItemClass(request, env=self.env, item_name=self.item_name, rev=rev) 
+        return ItemClass(request, item_name=self.item_name, rev=rev) 
 

@@ -7,6 +7,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import os
+
+from jinja2 import Environment, PackageLoader, Template, FileSystemBytecodeCache, Markup
+
 from MoinMoin import i18n, wikiutil, config, version, caching
 from MoinMoin import action as actionmod
 from MoinMoin.Page import Page
@@ -135,6 +139,18 @@ class ThemeBase:
         self._cache = {} # Used to cache elements that may be used several times
         self._status = []
         self._send_title_called = False
+
+        jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
+        try:
+            os.mkdir(jinja_cachedir)
+        except:
+            pass
+        self.env = Environment(loader=PackageLoader('MoinMoin', 'templates'),
+                               bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'), 
+                               extensions=['jinja2.ext.i18n'])
+        from werkzeug import url_quote, url_encode
+        self.env.filters['urlencode'] = lambda x: url_encode(x)
+        self.env.filters['urlquote'] = lambda x: url_quote(x)
 
     def img_url(self, img):
         """ Generate an image href
