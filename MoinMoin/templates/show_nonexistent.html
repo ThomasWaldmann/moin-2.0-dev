@@ -13,7 +13,7 @@ This item does not exist (yet), but you can try creating it now.
     <tr>
         <td>
         {% for tname, tlabel in templates %}
-            {{ '<a href="?action=modify&template=%s">%s</a> - ' % (tname, tlabel) }}
+            {{ '<a href="?do=modify&template=%s">%s</a> - ' % (tname, tlabel) }}
         {% endfor %}
         </td>
     </tr>
@@ -29,7 +29,7 @@ This item does not exist (yet), but you can try creating it now.
     <tr>
         <td>
         {% for mname, mlabel in mimetypes %}
-            <a href="?action=modify&mimetype={{ mname|urlquote }}">{{ mlabel|e }}</a> - 
+            <a href="?do=modify&mimetype={{ mname|urlquote }}">{{ mlabel|e }}</a> - 
         {% endfor %}
         </td>
     </tr>

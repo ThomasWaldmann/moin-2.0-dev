@@ -423,14 +423,14 @@ class Image(Binary):
     supported_mimetypes = ['image/']
 
     def _render_data(self):
-        return '<img src="?action=get&rev=%d">' % self.rev.revno
+        return '<img src="?do=get&rev=%d">' % self.rev.revno
 
 
 class TransformableImage(Image):
     supported_mimetypes = ['image/png', 'image/jpeg', 'image/gif', ]
 
     def _render_data(self):
-        return '<img src="?action=get&rev=%d">' % self.rev.revno
+        return '<img src="?do=get&rev=%d">' % self.rev.revno
 
     def _transform(self, content_type, size=None, transpose_op=None):
         """ resize to new size (optional), transpose according to exif infos,
@@ -530,7 +530,7 @@ class SvgImage(Binary):
 
     def _render_data(self):
         return """
-            <object data="?action=get&rev=%d" type="image/svg+xml">
+            <object data="?do=get&rev=%d" type="image/svg+xml">
             image needs SVG rendering capability
             </object>
         """ % self.rev.revno
