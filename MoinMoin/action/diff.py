@@ -30,7 +30,7 @@ def execute(item_name, request):
             revno2 = -1  # -1 means latest rev
 
     else:
-        # this is how we get called from RecentChanges
+        # this is how we get called from "recent changes"
         # try to find the latest rev1 before bookmark <date>
         revnos = item.list_revisions()
         revnos.reverse()  # begin with latest rev
