@@ -54,10 +54,6 @@ def execute(item_name, request):
     else:
         oldrevno, newrevno = revno1, revno2
 
-    # Use user interface language for this generated page
-    request.setContentLanguage(request.lang)
-    request.theme.send_title(item_name, pagename=item_name)
-
     oldrev = item.get_revision(oldrevno)
     newrev = item.get_revision(newrevno)
 
@@ -78,8 +74,6 @@ def execute(item_name, request):
             commonmt = ''
 
     item = Manager(request, item_name, mimetype=commonmt, rev_no=newrevno).get_item()
-    request.write(item.do_diff(oldrev, newrev))
-
-    request.theme.send_footer(item_name)
-    request.theme.send_closing_html()
+    content = item.do_diff(oldrev, newrev)
+    request.theme.render_content(item_name, content)
 

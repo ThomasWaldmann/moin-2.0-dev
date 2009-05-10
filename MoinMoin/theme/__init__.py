@@ -1514,6 +1514,23 @@ actionsMenuInit('%(label)s');
         #request.write('<!-- auth_method == %s -->' % repr(request.user.auth_method))
         request.write('</body>\n</html>\n\n')
 
+    def render_content(self, item_name, content):
+        request = self.request
+        if getattr(request.cfg, 'templating', False):
+            template = self.env.get_template('base.html')
+            html = template.render(gettext=self.request.getText,
+                                   item_name=item_name,
+                                   content=content,
+                                  )
+            request.write(html)
+        else:
+            # Use user interface language for this generated page
+            request.setContentLanguage(request.lang)
+            request.theme.send_title(item_name, pagename=item_name)
+            request.write(content)
+            request.theme.send_footer(item_name)
+            request.theme.send_closing_html()
+
 
 class ThemeNotFound(Exception):
     """ Thrown if the supplied theme could not be found anywhere """

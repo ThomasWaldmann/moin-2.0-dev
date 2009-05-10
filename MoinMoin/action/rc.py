@@ -10,10 +10,6 @@
 from MoinMoin.items import Manager
 
 def execute(item_name, request):
-    # Use user interface language for this generated page
-    request.setContentLanguage(request.lang)
-    request.theme.send_title(item_name, pagename=item_name)
-
     # just get some binary, non-existing item, so we have one:
     item = Manager(request, '$$$rc$$$', mimetype='rc').get_item()
     history = request.cfg.data_backend.history()
@@ -22,9 +18,5 @@ def execute(item_name, request):
                               item_name=item.item_name,
                               history=history,
                              )
-    request.write(content)
-    request.theme.send_footer(item_name)
-    request.theme.send_closing_html()
-
-
+    request.theme.render_content(item_name, content)
 

@@ -11,11 +11,8 @@ from MoinMoin.items import Manager
 def execute(item_name, request):
     item = Manager(request, item_name).get_item()
     if request.method == 'GET':
-        request.setContentLanguage(request.lang)
-        request.theme.send_title(item_name, pagename=item_name)
-        request.write(item.do_rename())
-        request.theme.send_footer(item_name)
-        request.theme.send_closing_html()
+        content = item.do_rename()
+        request.theme.render_content(item_name, content)
     elif request.method == 'POST':
         cancelled = 'button_cancel' in request.form
         if not cancelled:
