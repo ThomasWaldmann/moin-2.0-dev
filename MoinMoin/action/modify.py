@@ -13,11 +13,8 @@ def execute(item_name, request):
     # TODO add evaluation of template arg
     item = Manager(request, item_name, mimetype=mimetype).get_item()
     if request.method == 'GET':
-        request.setContentLanguage(request.lang)
-        request.theme.send_title(item_name, pagename=item_name)
-        request.write(item.do_modify())
-        request.theme.send_footer(item_name)
-        request.theme.send_closing_html()
+        content = item.do_modify()
+        request.theme.render_content(item_name, content)
     elif request.method == 'POST':
         cancelled = 'button_cancel' in request.form
         if not cancelled:

@@ -10,12 +10,7 @@
 from MoinMoin.items import Manager
 
 def execute(item_name, request):
-    # Use user interface language for this generated page
-    request.setContentLanguage(request.lang)
-    request.theme.send_title(item_name, pagename=item_name)
-
     item = Manager(request, item_name).get_item()
-    request.write(item.do_index())
+    content = item.do_index()
+    request.theme.render_content(item_name, content)
 
-    request.theme.send_footer(item_name)
-    request.theme.send_closing_html()
