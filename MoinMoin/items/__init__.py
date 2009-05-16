@@ -484,7 +484,7 @@ class Application(Binary):
             <param name="stop" value="1" valuetype="data">
             <param name="play" value="0" valuetype="data">
             <param name="autoplay" value="0" valuetype="data">
-            video needs %s rendering capability
+            application needs %s rendering capability
             </object>
         """ % (self.rev.revno, mimetype, minortype)
 
