@@ -7,6 +7,7 @@
     e.g. showing, editing, etc. of wiki items.
 
     @copyright: 2009 MoinMoin:ThomasWaldmann
+                     MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
 
