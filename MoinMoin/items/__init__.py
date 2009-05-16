@@ -7,6 +7,7 @@
     e.g. showing, editing, etc. of wiki items.
 
     @copyright: 2009 MoinMoin:ThomasWaldmann
+                     MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -39,7 +40,7 @@ class Item(object):
     def get_meta(self):
         return self.rev or {}
     meta = property(fget=get_meta)
-    
+
     def meta_text_to_dict(self, text):
         """ convert meta data from a text fragment to a dict """
         meta = {}
@@ -256,18 +257,18 @@ class NonExistent(Item):
     supported_mimetypes = [] # only explicitely used
     template_groups = [
         ('moin wiki text items', [
-            ('HomePageTemplate', 'home page (moin)'), 
-            ('GroupPageTemplate', 'group page (moin)'), 
+            ('HomePageTemplate', 'home page (moin)'),
+            ('GroupPageTemplate', 'group page (moin)'),
         ]),
         ('creole wiki text items', [
-            ('CreoleHomePageTemplate', 'home page (creole)'), 
-            ('CreoleGroupPageTemplate', 'group page (creole)'), 
+            ('CreoleHomePageTemplate', 'home page (creole)'),
+            ('CreoleGroupPageTemplate', 'group page (creole)'),
         ]),
     ]
     mimetype_groups = [
         ('page markup text items', [
-            ('text/moin-wiki', 'wiki (moin)'), 
-            ('text/creole-wiki', 'wiki (creole)'), 
+            ('text/moin-wiki', 'wiki (moin)'),
+            ('text/creole-wiki', 'wiki (creole)'),
             ('text/html', 'html'),
         ]),
         ('highlighted text items', [
@@ -275,17 +276,40 @@ class NonExistent(Item):
             ('text/x-python', 'python code'),
         ]),
         ('other text items', [
-            ('text/plain', 'plain text'), 
+            ('text/plain', 'plain text'),
             ('text/csv', 'csv'),
             ('text/x-irclog', 'IRC log'),
         ]),
         ('image items', [
-            ('image/jpeg', 'JPEG'), 
+            ('image/jpeg', 'JPEG'),
             ('image/png', 'PNG'),
             ('image/svg+xml', 'SVG'),
         ]),
+        ('audio items', [
+            ('audio/midi', 'MIDI'),
+            ('audio/mpeg', 'MP3'),
+            ('audio/ogg', 'OGG'),
+            ('audio/x-aiff', 'AIF'),
+            ('audio/x-ms-wma', 'WMA'),
+            ('audio/x-pn-realaudio', 'RA'),
+            ('audio/x-wav', 'WAV'),
+        ]),
+        ('video items', [
+            ('video/mpg', 'MPG'),
+            ('video/fli', 'FLI'),
+            ('video/mp4', 'MP4'),
+            ('video/quicktime', 'QuickTime'),
+            ('video/ogg', 'OGG'),
+            ('video/x-flv', 'FLV'),
+            ('video/x-ms-asf', 'ASF'),
+            ('video/x-ms-wm', 'WM'),
+            ('video/x-ms-wmv', 'WMV'),
+            ('video/x-msvideo', 'AVI'),
+        ]),
         ('other items', [
-            ('application/pdf', 'PDF'), 
+            ('application/pdf', 'PDF'),
+            ('application/x-shockwave-flash', 'SWF'),
+            ('application/x-xfig', 'FIG'),
             ('application/zip', 'ZIP'),
             ('application/x-tar', 'TAR'),
             ('application/x-gtar', 'TGZ'),
@@ -307,6 +331,7 @@ class NonExistent(Item):
 
 class Binary(Item):
     supported_mimetypes = [''] # fallback, because every mimetype starts with ''
+
     modify_help = """\
 There is no help, you're doomed!
 """
@@ -448,11 +473,66 @@ There is no help, you're doomed!
 
         if content_disposition is not None:
             request.headers.add('Content-Disposition', content_disposition)
-        
+
         request.status_code = 200
         request.content_type = content_type
         request.content_length = content_length
         request.send_file(file_to_send)
+
+
+class Application(Binary):
+    supported_mimetypes = ['application/pdf', 'application/x-shockwave-flash']
+
+    def _render_data(self):
+        r = self.rev.item.get_revision(self.rev.revno)
+        mimetype = r.get('mimetype', '')
+        minortype = mimetype.split('/')[1] or ''
+        return """
+            <object data="?do=get&rev=%d" type="%s" width="100%%" height="100%%">
+            <param name="stop" value="1" valuetype="data">
+            <param name="play" value="0" valuetype="data">
+            <param name="autoplay" value="0" valuetype="data">
+            application needs %s rendering capability
+            </object>
+        """ % (self.rev.revno, mimetype, minortype)
+
+
+class Video(Binary):
+    supported_mimetypes = ['video/mpg', 'video/fli', 'video/mp4', 'video/quicktime',
+                           'video/ogg', 'video/x-flv', 'video/x-ms-asf', 'video/x-ms-wm',
+                           'video/x-ms-wmv', 'video/x-msvideo', ]
+
+    def _render_data(self):
+        r = self.rev.item.get_revision(self.rev.revno)
+        mimetype = r.get('mimetype', '')
+        minortype = mimetype.split('/')[1] or ''
+        return """
+            <object data="?do=get&rev=%d" type="%s" height="400px" width="640px">
+            <param name="stop" value="1" valuetype="data">
+            <param name="play" value="0" valuetype="data">
+            <param name="autoplay" value="0" valuetype="data">
+            video needs %s rendering capability
+            </object>
+        """ % (self.rev.revno, mimetype, minortype)
+
+
+class Audio(Binary):
+    supported_mimetypes = ['audio/midi', 'audio/mpeg', 'audio/ogg',
+                           'audio/x-aiff', 'audio/x-ms-wma', 'audio/x-pn-realaudio',
+                           'audio/x-wav', ]
+
+    def _render_data(self):
+        r = self.rev.item.get_revision(self.rev.revno)
+        mimetype = r.get('mimetype', '')
+        minortype = mimetype.split('/')[1] or ''
+        return """
+            <object data="?do=get&rev=%d" type="%s" width="200px" height="100px">
+            <param name="stop" value="1" valuetype="data">
+            <param name="play" value="0" valuetype="data">
+            <param name="autoplay" value="0" valuetype="data">
+            audio needs %s rendering capability
+            </object>
+        """ % (self.rev.revno, mimetype, minortype)
 
 
 class Image(Binary):
@@ -560,6 +640,59 @@ class TransformableImage(Image):
         self._do_get(timestamp, from_cache=from_cache)
 
 
+class UniconvertorImage(Image):
+    supported_mimetypes = ['application/x-xfig']
+
+    def _do_convert(self):
+        """ converts data to svg cache object optional 
+            return cache key
+        """
+        request = self.request
+        data_file = request.files.get('data_file')
+        try:
+            import uniconvertor
+        except ImportError:
+            # no uniconvertor, we can't do anything
+            return self.rev.read()
+
+        import tempfile, sys
+        if not uniconvertor.__path__[0] in sys.path:
+            sys.path.insert(1, uniconvertor.__path__[0]) # XXX why is this needed?
+        from app.io import load
+        from app.plugins import plugins
+        import app
+        app.init_lib()
+        plugins.load_plugin_configuration()
+        buf_input = StringIO(self.rev.read())
+        document = load.load_drawing(buf_input) # input
+        saver = plugins.find_export_plugin('SVG')
+       
+        svgfile = tempfile.mktemp(".svg") # ToDo replace tempfile
+        saver(document, svgfile)
+        buf_input.close()
+        converted_document = open(svgfile, 'rb').read()
+
+        cache_meta = [ # we use a list to have order stability
+            ('wikiname', request.cfg.interwikiname or request.cfg.siteid),
+            ('itemname', self.item_name),
+            ('revision', self.rev.revno),
+            # XXX even better than wikiname/itemname/revision would be a content hash!
+            ]
+        cache = SendCache.from_meta(request, cache_meta)
+        if not cache.exists():
+            content_type = 'image/svg+xml'
+            cache.put(converted_document, content_type=content_type)
+
+        return cache.key
+
+    def _render_data(self):
+        cache_key = self._do_convert()
+        return """
+            <object data="?do=get&from_cache=%s" type="image/svg+xml">
+            image needs SVG rendering capability
+            </object>
+        """ % cache_key
+
 class SvgImage(Binary):
     supported_mimetypes = ['image/svg+xml']
 
@@ -570,6 +703,7 @@ class SvgImage(Binary):
             </object>
         """ % self.rev.revno
 
+
 class Text(Binary):
     supported_mimetypes = ['text/']
     is_text = True
@@ -578,19 +712,19 @@ class Text(Binary):
     def data_internal_to_form(self, text):
         """ convert data from memory format to form format """
         return text.replace(u'\n', u'\r\n')
-    
+
     def data_form_to_internal(self, data):
         """ convert data from form format to memory format """
         return data.replace(u'\r\n', u'\n')
-    
+
     def data_internal_to_storage(self, text):
         """ convert data from memory format to storage format """
         return text.replace(u'\n', u'\r\n').encode(config.charset)
-    
+
     def data_storage_to_internal(self, data):
         """ convert data from storage format to memory format """
         return data.decode(config.charset).replace(u'\r\n', u'\n')
-    
+
     def _render_data(self):
         return u"<pre>%s</pre>" % self.data_storage_to_internal(self.data) # XXX to_form()?
 
@@ -713,5 +847,5 @@ class Manager(object):
             mimetype = rev.get("mimetype")
         if mimetype:
             ItemClass = self._find_item_class(mimetype)
-        return ItemClass(request, item_name=self.item_name, rev=rev) 
+        return ItemClass(request, item_name=self.item_name, rev=rev)
 
