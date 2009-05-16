@@ -17,7 +17,7 @@ from StringIO import StringIO
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from werkzeug import http_date
+from werkzeug import http_date, quote_etag
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
@@ -413,22 +413,20 @@ There is no help, you're doomed!
 
     def do_get(self):
         request = self.request
-        # XXX is it ok to use rev.timestamp for tar/cache/normal?
-        timestamp = datetime.datetime.fromtimestamp(self.rev.timestamp)
-        if_modified = request.if_modified_since
-        # TODO: fix 304 behaviour, does not work yet! header problem?
-        if if_modified and if_modified >= timestamp:
+        hash = self.rev.get(request.cfg.hash_algorithm)
+        if_none_match = request.if_none_match
+        if if_none_match and hash in if_none_match:
             request.status_code = 304
         else:
-            self._do_get_modified(timestamp)
+            self._do_get_modified(hash)
 
-    def _do_get_modified(self, timestamp):
+    def _do_get_modified(self, hash):
         request = self.request
         from_cache = request.values.get('from_cache')
         from_tar = request.values.get('from_tar')
-        self._do_get(timestamp, from_cache, from_tar)
+        self._do_get(hash, from_cache, from_tar)
 
-    def _do_get(self, timestamp, from_cache=None, from_tar=None):
+    def _do_get(self, hash, from_cache=None, from_tar=None):
         request = self.request
         if from_cache:
             content_disposition = None
@@ -466,20 +464,14 @@ There is no help, you're doomed!
             content_length = rev.size
             file_to_send = rev
 
-        self._send(content_type, content_length, timestamp, file_to_send,
+        self._send(content_type, content_length, hash, file_to_send,
                    content_disposition=content_disposition)
 
-    def _send(self, content_type, content_length, timestamp, file_to_send,
-              filename=None, content_disposition=None, timeout=24*3600):
+    def _send(self, content_type, content_length, hash, file_to_send,
+              filename=None, content_disposition=None):
         request = self.request
-        request.headers.add('Cache-Control', 'max-age=%d, public' % timeout)
-        now = time.time()
-        request.headers.add('Expires', http_date(now + timeout))
-
-        # XXX choose:
-        request.last_modified = timestamp
-        request.headers.add('Last-Modified', http_date(timestamp))
-
+        request.headers.add('Cache-Control', 'public')
+        request.headers.add('Etag', quote_etag(hash))
         if content_disposition is not None:
             request.headers.add('Content-Disposition', content_disposition)
 
@@ -622,7 +614,7 @@ class TransformableImage(Image):
         buf.close()
         return data
 
-    def _do_get_modified(self, timestamp):
+    def _do_get_modified(self, hash):
         request = self.request
         try:
             width = int(request.values.get('w'))
@@ -656,7 +648,7 @@ class TransformableImage(Image):
             from_cache = cache.key
         else:
             from_cache = request.values.get('from_cache')
-        self._do_get(timestamp, from_cache=from_cache)
+        self._do_get(hash, from_cache=from_cache)
 
 
 class SvgImage(Binary):
