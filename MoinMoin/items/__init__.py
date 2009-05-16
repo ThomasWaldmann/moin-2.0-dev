@@ -6,7 +6,7 @@
     this module cares for more high-level, frontend items,
     e.g. showing, editing, etc. of wiki items.
 
-    @copyright: 2009 MoinMoin:ThomasWaldmann
+    @copyright: 2009 MoinMoin:ThomasWaldmann,
                      MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
@@ -31,11 +31,12 @@ from MoinMoin.items.sendcache import SendCache
 
 class Item(object):
     is_text = False
-    def __init__(self, request, item_name, rev=None):
+    def __init__(self, request, item_name, rev=None, mimetype=None):
         self.request = request
         self.env = request.theme.env
         self.item_name = item_name
         self.rev = rev
+        self.mimetype = mimetype
 
     def get_meta(self):
         return self.rev or {}
@@ -480,59 +481,72 @@ There is no help, you're doomed!
         request.send_file(file_to_send)
 
 
-class Application(Binary):
-    supported_mimetypes = ['application/pdf', 'application/x-shockwave-flash']
+class ObjectTagSupportedFormat(Binary):
+    """ This is a base class for some stuff that renders with a object tag. """
+    supported_mimetypes = []
+
+    width = "100%"
+    height = "100%"
+    alt_text = "missing rendering capability for %(mimetype)s"
+
+    object_html = """\
+<object data="?do=get&rev=%(revno)d" type="%(mimetype)s" width="%(width)s" height="%(height)s">
+<param name="stop" value="1" valuetype="data">
+<param name="play" value="0" valuetype="data">
+<param name="autoplay" value="0" valuetype="data">
+%(alt_text)s
+</object>
+"""
 
     def _render_data(self):
-        r = self.rev.item.get_revision(self.rev.revno)
-        mimetype = r.get('mimetype', '')
-        minortype = mimetype.split('/')[1] or ''
-        return """
-            <object data="?do=get&rev=%d" type="%s" width="100%%" height="100%%">
-            <param name="stop" value="1" valuetype="data">
-            <param name="play" value="0" valuetype="data">
-            <param name="autoplay" value="0" valuetype="data">
-            application needs %s rendering capability
-            </object>
-        """ % (self.rev.revno, mimetype, minortype)
+        return self.object_html % dict(
+            width=self.width,
+            height=self.height,
+            alt_text=self.alt_text % dict(mimetype=self.mimetype),
+            revno=self.rev.revno,
+            mimetype=self.mimetype,
+        )
 
 
-class Video(Binary):
+class Application(ObjectTagSupportedFormat):
+    supported_mimetypes = []
+    width = "100%"
+    height = "100%"
+
+
+class PDF(Application):
+    supported_mimetypes = ['application/pdf', ]
+
+
+class Flash(Application):
+    supported_mimetypes = ['application/x-shockwave-flash', ]
+
+
+class Video(ObjectTagSupportedFormat):
     supported_mimetypes = ['video/mpg', 'video/fli', 'video/mp4', 'video/quicktime',
                            'video/ogg', 'video/x-flv', 'video/x-ms-asf', 'video/x-ms-wm',
                            'video/x-ms-wmv', 'video/x-msvideo', ]
-
-    def _render_data(self):
-        r = self.rev.item.get_revision(self.rev.revno)
-        mimetype = r.get('mimetype', '')
-        minortype = mimetype.split('/')[1] or ''
-        return """
-            <object data="?do=get&rev=%d" type="%s" height="400px" width="640px">
-            <param name="stop" value="1" valuetype="data">
-            <param name="play" value="0" valuetype="data">
-            <param name="autoplay" value="0" valuetype="data">
-            video needs %s rendering capability
-            </object>
-        """ % (self.rev.revno, mimetype, minortype)
+    width = "640px"
+    height = "400px"
 
 
-class Audio(Binary):
-    supported_mimetypes = ['audio/midi', 'audio/mpeg', 'audio/ogg',
-                           'audio/x-aiff', 'audio/x-ms-wma', 'audio/x-pn-realaudio',
-                           'audio/x-wav', ]
+class Audio(ObjectTagSupportedFormat):
+    supported_mimetypes = ['audio/midi', 'audio/x-aiff', 'audio/x-ms-wma',
+                           'audio/x-pn-realaudio', ]
+    width = "200px"
+    height = "100px"
 
-    def _render_data(self):
-        r = self.rev.item.get_revision(self.rev.revno)
-        mimetype = r.get('mimetype', '')
-        minortype = mimetype.split('/')[1] or ''
-        return """
-            <object data="?do=get&rev=%d" type="%s" width="200px" height="100px">
-            <param name="stop" value="1" valuetype="data">
-            <param name="play" value="0" valuetype="data">
-            <param name="autoplay" value="0" valuetype="data">
-            audio needs %s rendering capability
-            </object>
-        """ % (self.rev.revno, mimetype, minortype)
+
+class WAV(Audio):
+    supported_mimetypes = ['audio/x-wav', ]
+
+
+class MP3(Audio):
+    supported_mimetypes = ['audio/mpeg', ]
+
+
+class OGG(Audio):
+    supported_mimetypes = ['audio/ogg', ]
 
 
 class Image(Binary):
@@ -847,5 +861,5 @@ class Manager(object):
             mimetype = rev.get("mimetype")
         if mimetype:
             ItemClass = self._find_item_class(mimetype)
-        return ItemClass(request, item_name=self.item_name, rev=rev)
+        return ItemClass(request, item_name=self.item_name, rev=rev, mimetype=mimetype)
 
