@@ -42,6 +42,15 @@ class Item(object):
         return self.rev or {}
     meta = property(fget=get_meta)
 
+    def url(self, _absolute=False, **kw):
+        """ return URL for this item, optionally as absolute URL """
+        href = _absolute and self.request.abs_href or self.request.href
+        return href(self.item_name, **kw)
+
+    def rev_url(self, _absolute=False, **kw):
+        """ return URL for this item and this revision, optionally as absolute URL """
+        return self.url(rev=self.rev.revno, _absolute=_absolute, **kw)
+
     def meta_text_to_dict(self, text):
         """ convert meta data from a text fragment to a dict """
         meta = {}
@@ -490,7 +499,7 @@ class ObjectTagSupportedFormat(Binary):
     alt_text = "missing rendering capability for %(mimetype)s"
 
     object_html = """\
-<object data="?do=get&rev=%(revno)d" type="%(mimetype)s" width="%(width)s" height="%(height)s">
+<object data="%(rev_get_url)s" type="%(mimetype)s" width="%(width)s" height="%(height)s">
 <param name="stop" value="1" valuetype="data">
 <param name="play" value="0" valuetype="data">
 <param name="autoplay" value="0" valuetype="data">
@@ -500,11 +509,11 @@ class ObjectTagSupportedFormat(Binary):
 
     def _render_data(self):
         return self.object_html % dict(
+            rev_get_url=self.rev_url(do='get'),
             width=self.width,
             height=self.height,
-            alt_text=self.alt_text % dict(mimetype=self.mimetype),
-            revno=self.rev.revno,
             mimetype=self.mimetype,
+            alt_text=self.alt_text % dict(mimetype=self.mimetype),
         )
 
 
@@ -553,14 +562,11 @@ class Image(Binary):
     supported_mimetypes = ['image/']
 
     def _render_data(self):
-        return '<img src="?do=get&rev=%d">' % self.rev.revno
+        return '<img src="%s">' % self.rev_url(do='get')
 
 
 class TransformableImage(Image):
     supported_mimetypes = ['image/png', 'image/jpeg', 'image/gif', ]
-
-    def _render_data(self):
-        return '<img src="?do=get&rev=%d">' % self.rev.revno
 
     def _transform(self, content_type, size=None, transpose_op=None):
         """ resize to new size (optional), transpose according to exif infos,
@@ -712,10 +718,10 @@ class SvgImage(Binary):
 
     def _render_data(self):
         return """
-            <object data="?do=get&rev=%d" type="image/svg+xml">
+            <object data="%s" type="image/svg+xml">
             image needs SVG rendering capability
             </object>
-        """ % self.rev.revno
+        """ % self.rev_url(do='get')
 
 
 class Text(Binary):
