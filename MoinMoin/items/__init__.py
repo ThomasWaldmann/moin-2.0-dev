@@ -39,7 +39,7 @@ class Item(object):
     def get_meta(self):
         return self.rev or {}
     meta = property(fget=get_meta)
-    
+
     def meta_text_to_dict(self, text):
         """ convert meta data from a text fragment to a dict """
         meta = {}
@@ -250,18 +250,18 @@ class NonExistent(Item):
     supported_mimetypes = [] # only explicitely used
     template_groups = [
         ('moin wiki text items', [
-            ('HomePageTemplate', 'home page (moin)'), 
-            ('GroupPageTemplate', 'group page (moin)'), 
+            ('HomePageTemplate', 'home page (moin)'),
+            ('GroupPageTemplate', 'group page (moin)'),
         ]),
         ('creole wiki text items', [
-            ('CreoleHomePageTemplate', 'home page (creole)'), 
-            ('CreoleGroupPageTemplate', 'group page (creole)'), 
+            ('CreoleHomePageTemplate', 'home page (creole)'),
+            ('CreoleGroupPageTemplate', 'group page (creole)'),
         ]),
     ]
     mimetype_groups = [
         ('page markup text items', [
-            ('text/moin-wiki', 'wiki (moin)'), 
-            ('text/creole-wiki', 'wiki (creole)'), 
+            ('text/moin-wiki', 'wiki (moin)'),
+            ('text/creole-wiki', 'wiki (creole)'),
             ('text/html', 'html'),
         ]),
         ('highlighted text items', [
@@ -269,12 +269,12 @@ class NonExistent(Item):
             ('text/x-python', 'python code'),
         ]),
         ('other text items', [
-            ('text/plain', 'plain text'), 
+            ('text/plain', 'plain text'),
             ('text/csv', 'csv'),
             ('text/x-irclog', 'IRC log'),
         ]),
         ('image items', [
-            ('image/jpeg', 'JPEG'), 
+            ('image/jpeg', 'JPEG'),
             ('image/png', 'PNG'),
             ('image/svg+xml', 'SVG'),
         ]),
@@ -652,19 +652,19 @@ class Text(Binary):
     def data_internal_to_form(self, text):
         """ convert data from memory format to form format """
         return text.replace(u'\n', u'\r\n')
-    
+
     def data_form_to_internal(self, data):
         """ convert data from form format to memory format """
         return data.replace(u'\r\n', u'\n')
-    
+
     def data_internal_to_storage(self, text):
         """ convert data from memory format to storage format """
         return text.replace(u'\n', u'\r\n').encode(config.charset)
-    
+
     def data_storage_to_internal(self, data):
         """ convert data from storage format to memory format """
         return data.decode(config.charset).replace(u'\r\n', u'\n')
-    
+
     def _render_data(self):
         return u"<pre>%s</pre>" % self.data_storage_to_internal(self.data) # XXX to_form()?
 
@@ -787,5 +787,5 @@ class Manager(object):
             mimetype = rev.get("mimetype")
         if mimetype:
             ItemClass = self._find_item_class(mimetype)
-        return ItemClass(request, item_name=self.item_name, rev=rev) 
+        return ItemClass(request, item_name=self.item_name, rev=rev)
 
