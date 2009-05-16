@@ -277,8 +277,30 @@ class NonExistent(Item):
             ('image/png', 'PNG'),
             ('image/svg+xml', 'SVG'),
         ]),
+        ('audio items', [
+            ('audio/midi', 'MIDI'),
+            ('audio/mpeg', 'MP3'),
+            ('audio/ogg', 'OGG'),
+            ('audio/x-aiff', 'AIF'),
+            ('audio/x-ms-wma', 'WMA'),
+            ('audio/x-pn-realaudio', 'RA'),
+            ('audio/x-wav', 'WAV'),
+        ]),
+        ('video items', [
+            ('video/mpg', 'MPG'),
+            ('video/fli', 'FLI'),
+            ('video/mp4', 'MP4'),
+            ('video/quicktime', 'QuickTime'),
+            ('video/ogg', 'OGG'),
+            ('video/x-flv', 'FLV'),
+            ('video/x-ms-asf', 'ASF'),
+            ('video/x-ms-wm', 'WM'),
+            ('video/x-ms-wmv', 'WMV'),
+            ('video/x-msvideo', 'AVI'),
+        ]),
         ('other items', [
-            ('application/pdf', 'PDF'), 
+            ('application/pdf', 'PDF'),
+            ('application/x-shockwave-flash', 'SWF'),
             ('application/zip', 'ZIP'),
             ('application/x-tar', 'TAR'),
             ('application/x-gtar', 'TGZ'),
@@ -446,6 +468,49 @@ There is no help, you're doomed!
         request.content_type = content_type
         request.content_length = content_length
         request.send_file(file_to_send)
+        
+        
+class Application(Binary):
+    supported_mimetypes = ['application/pdf', 'application/x-shockwave-flash']
+
+    def _render_data(self):
+        return """
+            <object data="?do=get&rev=%d" type="%s">
+            application needs %s rendering capability
+            </object>
+        """ % self.rev.revno
+
+
+class Video(Binary):
+    supported_mimetypes = ['video/mpg', 'video/fli', 'video/mp4', 'video/quicktime',
+                           'video/ogg', 'video/x-flv', 'video/x-ms-asf', 'video/x-ms-wm',
+                           'video/x-ms-wmv', 'video/x-msvideo', ]
+    
+    supported_controls = []
+
+    def _render_data(self):
+        r = self.rev.item.get_revision(self.rev.revno)
+        mimetype = r.get('mimetype', '')
+        return """
+            <object data="?do=get&rev=%d" type="%s">
+            video needs %s rendering capability
+            </object>
+        """ % (self.rev.revno, mimetype, mimetype.split('/')[1])
+
+
+class Audio(Binary):
+    supported_mimetypes = ['audio/midi', 'audio/mpeg', 'audio/ogg',
+                           'audio/x-aiff', 'audio/x-ms-wma', 'audio/x-pn-realaudio',
+                           'audio/x-wav', ]
+
+    def _render_data(self):
+        r = self.rev.item.get_revision(self.rev.revno)
+        mimetype = r.get('mimetype', '')
+        return """
+            <object data="?do=get&rev=%d" type="%s">
+            audio needs %s rendering capability
+            </object>
+        """ % (self.rev.revno, mimetype, mimetype.split('/')[1])
 
 
 class Image(Binary):
@@ -563,6 +628,7 @@ class SvgImage(Binary):
             image needs SVG rendering capability
             </object>
         """ % self.rev.revno
+
 
 class Text(Binary):
     supported_mimetypes = ['text/']
