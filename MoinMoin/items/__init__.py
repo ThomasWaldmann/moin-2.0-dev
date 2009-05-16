@@ -20,6 +20,7 @@ from werkzeug import http_date
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
+from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.Page import Page
 from MoinMoin.Page import DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                           EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
@@ -88,17 +89,22 @@ class Item(object):
         return self._action_query('revert', revno=self.rev.revno)
 
     def _write_stream(self, content, new_rev, bufsize=8192):
+        hash_name = self.request.cfg.hash_algorithm
+        hash = hash_new(hash_name)
         if hasattr(content, "read"):
             while True:
                 buf = content.read(bufsize)
+                hash.update(buf)
                 if not buf:
                     break
                 new_rev.write(buf)
         elif isinstance(content, str):
             new_rev.write(content)
+            hash.update(content)
         else:
             logging.error("unsupported content object: %r" % content)
             raise
+        return hash_name, hash.hexdigest()
 
     def copy(self):
         # called from copy UI/POST
@@ -189,7 +195,8 @@ class Item(object):
             # XXX unclear: do we have meta-only items that shall not be "deleted" state?
             newrev[DELETED] = True
             comment = comment or 'deleted'
-        self._write_stream(data, newrev)
+        hash_name, hash_hexdigest = self._write_stream(data, newrev)
+        newrev[hash_name] = hash_hexdigest
         timestamp = time.time()
         newrev[EDIT_LOG_COMMENT] = comment or meta.get(EDIT_LOG_COMMENT, '')
         # allow override by form- / qs-given mimetype:
@@ -533,11 +540,10 @@ class TransformableImage(Image):
             transpose = 1
         if width or height or transpose != 1:
             # resize requested, XXX check ACL behaviour! XXX
+            hash_name = request.cfg.hash_algorithm
+            hash_hexdigest = self.rev[hash_name]
             cache_meta = [ # we use a list to have order stability
-                ('wikiname', request.cfg.interwikiname or request.cfg.siteid),
-                ('itemname', self.item_name),
-                ('revision', self.rev.revno),
-                # XXX even better than wikiname/itemname/revision would be a content hash!
+                (hash_name, hash_hexdigest),
                 ('width', width),
                 ('height', height),
                 ('transpose', transpose),

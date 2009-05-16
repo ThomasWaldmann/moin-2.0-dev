@@ -722,6 +722,8 @@ options_no_group_name = {
     ('auth_methods_trusted', ['http', 'given', 'xmlrpc_applytoken'], # Note: 'http' auth method is currently just a redirect to 'given'
      'authentication methods for which users should be included in the special "Trusted" ACL group.'),
     ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes. If you don't setup own secret(s), a secret string will be auto-generated from other config settings."""),
+    # use sha512 as soon as we require python2.5 because sha1 is weak:
+    ('hash_algorithm', 'sha1', "Name of hash algorithm used to compute data hashes"),
     ('DesktopEdition',
      False,
      "if True, give all local users special powers - ''only use this for a local desktop wiki!''"),
