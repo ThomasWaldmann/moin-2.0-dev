@@ -319,7 +319,6 @@ class NonExistent(Item):
         ('other items', [
             ('application/pdf', 'PDF'),
             ('application/x-shockwave-flash', 'SWF'),
-            ('application/x-xfig', 'FIG'),
             ('application/zip', 'ZIP'),
             ('application/x-tar', 'TAR'),
             ('application/x-gtar', 'TGZ'),
@@ -659,59 +658,6 @@ class TransformableImage(Image):
             from_cache = request.values.get('from_cache')
         self._do_get(timestamp, from_cache=from_cache)
 
-
-class UniconvertorImage(Image):
-    supported_mimetypes = ['application/x-xfig']
-
-    def _do_convert(self):
-        """ converts data to svg cache object optional 
-            return cache key
-        """
-        request = self.request
-        data_file = request.files.get('data_file')
-        try:
-            import uniconvertor
-        except ImportError:
-            # no uniconvertor, we can't do anything
-            return self.rev.read()
-
-        import tempfile, sys
-        if not uniconvertor.__path__[0] in sys.path:
-            sys.path.insert(1, uniconvertor.__path__[0]) # XXX why is this needed?
-        from app.io import load
-        from app.plugins import plugins
-        import app
-        app.init_lib()
-        plugins.load_plugin_configuration()
-        buf_input = StringIO(self.rev.read())
-        document = load.load_drawing(buf_input) # input
-        saver = plugins.find_export_plugin('SVG')
-       
-        svgfile = tempfile.mktemp(".svg") # ToDo replace tempfile
-        saver(document, svgfile)
-        buf_input.close()
-        converted_document = open(svgfile, 'rb').read()
-
-        cache_meta = [ # we use a list to have order stability
-            ('wikiname', request.cfg.interwikiname or request.cfg.siteid),
-            ('itemname', self.item_name),
-            ('revision', self.rev.revno),
-            # XXX even better than wikiname/itemname/revision would be a content hash!
-            ]
-        cache = SendCache.from_meta(request, cache_meta)
-        if not cache.exists():
-            content_type = 'image/svg+xml'
-            cache.put(converted_document, content_type=content_type)
-
-        return cache.key
-
-    def _render_data(self):
-        cache_key = self._do_convert()
-        return """
-            <object data="?do=get&from_cache=%s" type="image/svg+xml">
-            image needs SVG rendering capability
-            </object>
-        """ % cache_key
 
 class SvgImage(Binary):
     supported_mimetypes = ['image/svg+xml']
