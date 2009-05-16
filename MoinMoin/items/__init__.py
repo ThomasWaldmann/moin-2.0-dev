@@ -322,6 +322,7 @@ class NonExistent(Item):
 
 class Binary(Item):
     supported_mimetypes = [''] # fallback, because every mimetype starts with ''
+
     modify_help = """\
 There is no help, you're doomed!
 """
@@ -474,28 +475,36 @@ class Application(Binary):
     supported_mimetypes = ['application/pdf', 'application/x-shockwave-flash']
 
     def _render_data(self):
+        r = self.rev.item.get_revision(self.rev.revno)
+        mimetype = r.get('mimetype', '')
+        minortype = mimetype.split('/')[1] or ''
         return """
-            <object data="?do=get&rev=%d" type="%s">
-            application needs %s rendering capability
+            <object data="?do=get&rev=%d" type="%s" width="100%%" height="100%%">
+            <param name="stop" value="1" valuetype="data">
+            <param name="play" value="0" valuetype="data">
+            <param name="autoplay" value="0" valuetype="data">
+            video needs %s rendering capability
             </object>
-        """ % self.rev.revno
+        """ % (self.rev.revno, mimetype, minortype)
 
 
 class Video(Binary):
     supported_mimetypes = ['video/mpg', 'video/fli', 'video/mp4', 'video/quicktime',
                            'video/ogg', 'video/x-flv', 'video/x-ms-asf', 'video/x-ms-wm',
                            'video/x-ms-wmv', 'video/x-msvideo', ]
-    
-    supported_controls = []
 
     def _render_data(self):
         r = self.rev.item.get_revision(self.rev.revno)
         mimetype = r.get('mimetype', '')
+        minortype = mimetype.split('/')[1] or ''
         return """
-            <object data="?do=get&rev=%d" type="%s">
+            <object data="?do=get&rev=%d" type="%s" height="400px" width="640px">
+            <param name="stop" value="1" valuetype="data">
+            <param name="play" value="0" valuetype="data">
+            <param name="autoplay" value="0" valuetype="data">
             video needs %s rendering capability
             </object>
-        """ % (self.rev.revno, mimetype, mimetype.split('/')[1])
+        """ % (self.rev.revno, mimetype, minortype)
 
 
 class Audio(Binary):
@@ -506,11 +515,15 @@ class Audio(Binary):
     def _render_data(self):
         r = self.rev.item.get_revision(self.rev.revno)
         mimetype = r.get('mimetype', '')
+        minortype = mimetype.split('/')[1] or ''
         return """
-            <object data="?do=get&rev=%d" type="%s">
+            <object data="?do=get&rev=%d" type="%s" width="200px" height="100px">
+            <param name="stop" value="1" valuetype="data">
+            <param name="play" value="0" valuetype="data">
+            <param name="autoplay" value="0" valuetype="data">
             audio needs %s rendering capability
             </object>
-        """ % (self.rev.revno, mimetype, mimetype.split('/')[1])
+        """ % (self.rev.revno, mimetype, minortype)
 
 
 class Image(Binary):
