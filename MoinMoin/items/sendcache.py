@@ -39,7 +39,7 @@ class SendCache(object):
     do_locking = False
 
     @classmethod
-    def from_meta(cls, request, cache_meta=None, content=None, secret=None):
+    def from_meta(cls, request, meta, secret=None):
         """
         Calculate a (hard-to-guess) cache key from meta data
 
@@ -54,31 +54,16 @@ class SendCache(object):
           same content again, but there could be harm if he could access a revision
           with different content.
 
-        If content is supplied, we will calculate and return a hMAC of the content.
+        We calculate the key from meta (meta contains a hash digest of the original
+        content, so it is already unique and collisions unlikely). To even improve
+        security more, we create a hmac using a server secret (it also has the side
+        effect that if the hmac is shorter than all the meta info, it will result in
+        shorter URLs).
 
-        If wikiname, itemname is given, we don't touch the content (nor do we read
-        it ourselves from the item data), but we just calculate a key from the
-        item's metadata).
-
-        Hint: if you need multiple cache objects for the same source content (e.g.
-              thumbnails of different sizes for the same image), calculate the key
-              only once and then add some different prefixes to it to get the final
-              cache keys.
-
-        @param cache_meta: object to compute cache key
-        @param content: content data as unicode object (e.g. for page content or
-                        parser section content)
+        @param meta: object to compute cache key from
         @param secret: secret for hMAC calculation (default: use secret from cfg)
         """
-        if content:
-            hmac_data = content
-        elif cache_meta is not None:
-            hmac_data = repr(cache_meta)
-        else:
-            raise ValueError('from_meta called with unsupported parameters')
-
-        if isinstance(hmac_data, unicode):
-            hmac_data = hmac_data.encode('utf-8')
+        hmac_data = repr(meta)
         if secret is None:
             secret = request.cfg.secrets['action/cache']
         key = hmac_new(secret, hmac_data).hexdigest()
