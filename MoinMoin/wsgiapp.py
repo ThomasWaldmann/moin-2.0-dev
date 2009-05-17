@@ -13,7 +13,6 @@ from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_respo
     redirect_last_visited
 from MoinMoin.Page import Page
 from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
-from MoinMoin.action import get_names, get_available_actions
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -137,38 +136,16 @@ def handle_action(context, pagename, action_name='show'):
                 url = page.url(context)
                 return context.http_redirect(url)
 
-    msg = None
-    # Complain about unknown actions
-    if not action_name in get_names(cfg):
-        msg = _("Unknown action %(action_name)s.") % {
-                'action_name': wikiutil.escape(action_name), }
-
-    # Disallow non available actions
-    elif action_name[0].isupper() and not action_name in \
-            get_available_actions(cfg, context.page, context.user):
-        msg = _("You are not allowed to do %(action_name)s on this page.") % {
-                'action_name': wikiutil.escape(action_name), }
-        if not context.user.valid:
-            # Suggest non valid user to login
-            msg += " " + _("Login and try again.")
-
-    if msg:
-        context.theme.add_msg(msg, "error")
-        context.page.send_page()
-    # Try action
-    else:
+    try:
         from MoinMoin import action
         handler = action.getHandler(cfg, action_name)
-        if handler is None:
-            msg = _("You are not allowed to do %(action_name)s on this page.") % {
-                    'action_name': wikiutil.escape(action_name), }
-            if not context.user.valid:
-                # Suggest non valid user to login
-                msg += " " + _("Login and try again.")
-            context.theme.add_msg(msg, "error")
-            context.page.send_page()
-        else:
-            handler(context.page.page_name, context)
+    except ValueError, err:
+        msg = str(err) # XXX i18n problems!
+        context.theme.add_msg(msg, "error")
+        # use a handler that should work ever:
+        handler = action.getHandler(cfg, 'show')
+
+    handler(context.page.page_name, context)
 
     return context
 
