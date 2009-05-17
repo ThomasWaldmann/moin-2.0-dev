@@ -765,7 +765,7 @@ def value_type_is_valid(value):
     value.
     @return: bool
     """
-    if isinstance(value, (str, unicode, int, long, float, complex)):
+    if isinstance(value, (bool, str, unicode, int, long, float, complex)):
         return True
     elif isinstance(value, tuple):
         for element in value:
