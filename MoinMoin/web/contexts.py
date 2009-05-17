@@ -106,7 +106,7 @@ class BaseContext(Context):
     Most attributes are lazily initialized via descriptors. """
 
     # first the trivial attributes
-    action = EnvironProxy('action', lambda o: o.request.values.get('action', 'show'))
+    action = EnvironProxy('do', lambda o: o.request.values.get('do', 'show'))
     clock = EnvironProxy('clock', lambda o: Clock())
     user = EnvironProxy('user', lambda o: user.User(o, auth_method='request:invalid'))
 
@@ -252,7 +252,7 @@ class HTTPContext(BaseContext):
         user pages meant to be seen only by another user, when both users
         share the same caching proxy.
 
-        AVOID using no-cache and no-store for attachments as it is completely broken on IE!
+        AVOID using no-cache and no-store for file downloads as it is completely broken on IE!
 
         Details: http://support.microsoft.com/support/kb/articles/Q234/0/67.ASP
         """
