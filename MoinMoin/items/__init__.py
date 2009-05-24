@@ -31,12 +31,16 @@ from MoinMoin.items.sendcache import SendCache
 
 class Item(object):
     is_text = False
-    def __init__(self, request, item_name, rev=None, mimetype=None):
+    def __init__(self, request, item_name, rev=None, mimetype=None, formatter=None):
         self.request = request
         self.env = request.theme.env
         self.item_name = item_name
         self.rev = rev
         self.mimetype = mimetype
+        if formatter is None:
+            from MoinMoin.formatter.text_html import Formatter
+            formatter = Formatter(request)
+        self.formatter = formatter
 
     def get_meta(self):
         return self.rev or {}
@@ -52,8 +56,8 @@ class Item(object):
         return self.url(rev=self.rev.revno, _absolute=_absolute, **kw)
 
     transclude_acceptable_attrs = []
-    def transclude(self, formatter, desc, tag_attrs, query_args):
-        return formatter.text('(Item %s (%s): transclusion not implemented)' % (self.item_name, self.mimetype))
+    def transclude(self, desc, tag_attrs=None, query_args=None):
+        return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.item_name, self.mimetype))
 
     def meta_text_to_dict(self, text):
         """ convert meta data from a text fragment to a dict """
@@ -342,10 +346,10 @@ class NonExistent(Item):
         self.request.status_code = 404
 
     transclude_acceptable_attrs = []
-    def transclude(self, formatter, desc, tag_attrs, query_args):
-        return (formatter.url(1, self.url(), css='nonexistent', title='click to create item') +
-                formatter.text(self.item_name) + # maybe use some "broken image" icon instead?
-                formatter.url(0))
+    def transclude(self, desc, tag_attrs=None, query_args=None):
+        return (self.formatter.url(1, self.url(), css='nonexistent', title='click to create item') +
+                self.formatter.text(self.item_name) + # maybe use some "broken image" icon instead?
+                self.formatter.url(0))
 
 
 class Binary(Item):
@@ -377,23 +381,37 @@ There is no help, you're doomed!
             ))
         return log
 
+    width = None
+    height = None
     transclude_acceptable_attrs = ['class', 'title', 'width', 'height', # no style because of JS
                                    'type', 'standby', ] # we maybe need a hack for <PARAM> here
-    def transclude(self, formatter, desc, tag_attrs, query_args):
+    transclude_params = []
+    def transclude(self, desc, tag_attrs=None, query_args=None, params=None):
+        if tag_attrs is None:
+            tag_attrs = {}
         if 'type' not in tag_attrs:
             tag_attrs['type'] = self.mimetype
+        if self.width and 'width' not in tag_attrs:
+            tag_attrs['width'] = self.width
+        if self.height and 'height' not in tag_attrs:
+            tag_attrs['height'] = self.height
+        if query_args is None:
+            query_args = {}
         if 'do' not in query_args:
-                query_args['do'] = 'get'
+            query_args['do'] = 'get'
+        if params is None:
+            params = self.transclude_params
         url = self.rev_url(**query_args)
-        return (formatter.transclusion(1, data=url, **tag_attrs) +
-                formatter.text(desc) +
-                formatter.transclusion(0))
+        return (self.formatter.transclusion(1, data=url, **tag_attrs) +
+                ''.join([self.formatter.transclusion_param(**p) for p in params]) +
+                self.formatter.text(desc) +
+                self.formatter.transclusion(0))
 
     def _render_meta(self):
         return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta)
 
     def _render_data(self):
-        return ""
+        return self.transclude('{{%s [%s]}}' % (self.item_name, self.mimetype))
 
     def do_show(self):
         item = self.rev.item
@@ -509,31 +527,15 @@ class ObjectTagSupportedFormat(Binary):
 
     width = "100%"
     height = "100%"
-    alt_text = "missing rendering capability for %(mimetype)s"
-
-    object_html = """\
-<object data="%(rev_get_url)s" type="%(mimetype)s" width="%(width)s" height="%(height)s">
-<param name="stop" value="1" valuetype="data">
-<param name="play" value="0" valuetype="data">
-<param name="autoplay" value="0" valuetype="data">
-%(alt_text)s
-</object>
-"""
-
-    def _render_data(self):
-        return self.object_html % dict(
-            rev_get_url=self.rev_url(do='get'),
-            width=self.width,
-            height=self.height,
-            mimetype=self.mimetype,
-            alt_text=self.alt_text % dict(mimetype=self.mimetype),
-        )
+    transclude_params = [
+        dict(name='stop', value='1', valuetype='data'),
+        dict(name='play', value='0', valuetype='data'),
+        dict(name='autoplay', value='0', valuetype='data'),
+    ]
 
 
 class Application(ObjectTagSupportedFormat):
     supported_mimetypes = []
-    width = "100%"
-    height = "100%"
 
 
 class PDF(Application):
@@ -575,7 +577,11 @@ class Image(Binary):
     supported_mimetypes = ['image/']
 
     transclude_acceptable_attrs = ['class', 'title', 'longdesc', 'width', 'height', 'align', ] # no style because of JS
-    def transclude(self, formatter, desc, tag_attrs, query_args):
+    def transclude(self, desc, tag_attrs=None, query_args=None):
+        if tag_attrs is None:
+            tag_attrs = {}
+        if query_args is None:
+            query_args = {}
         if 'class' not in tag_attrs:
             tag_attrs['class'] = 'image'
         if desc:
@@ -585,10 +591,10 @@ class Image(Binary):
         if 'do' not in query_args:
             query_args['do'] = 'get'
         url = self.rev_url(**query_args)
-        return formatter.image(src=url, **tag_attrs)
+        return self.formatter.image(src=url, **tag_attrs)
 
     def _render_data(self):
-        return '<img src="%s">' % self.rev_url(do='get')
+        return self.transclude(self.item_name)
 
 
 class TransformableImage(Image):
@@ -689,13 +695,6 @@ class TransformableImage(Image):
 class SvgImage(Binary):
     supported_mimetypes = ['image/svg+xml']
 
-    def _render_data(self):
-        return """
-            <object data="%s" type="image/svg+xml">
-            image needs SVG rendering capability
-            </object>
-        """ % self.rev_url(do='get')
-
 
 class Text(Binary):
     supported_mimetypes = ['text/']
@@ -720,6 +719,9 @@ class Text(Binary):
 
     def _render_data(self):
         return u"<pre>%s</pre>" % self.data_storage_to_internal(self.data) # XXX to_form()?
+
+    def transclude(self, desc, tag_attrs=None, query_args=None):
+        return self._render_data()
 
     def _render_data_diff(self, oldrev, newrev):
         from MoinMoin.util import diff_html
@@ -748,16 +750,14 @@ class MoinParserSupported(Text):
         request = self.request
         page = Page(request, self.item_name)
         pi, body = page.pi, page.data
-        from MoinMoin.formatter.text_html import Formatter
-        formatter = Formatter(request)
-        formatter.setPage(page)
+        self.formatter.setPage(page)
         #lang = pi.get('language', request.cfg.language_default)
         #request.setContentLanguage(lang)
         Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", self.format)
         parser = Parser(body, request, format_args=self.format_args)
         buffer = StringIO()
         request.redirect(buffer)
-        parser.format(formatter)
+        parser.format(self.formatter)
         content = buffer.getvalue()
         request.redirect()
         del buffer
@@ -803,11 +803,12 @@ class PythonSrc(MoinParserSupported):
 
 
 class Manager(object):
-    def __init__(self, request, item_name, mimetype='application/x-unknown', rev_no=-1):
+    def __init__(self, request, item_name, mimetype='application/x-unknown', rev_no=-1, formatter=None):
         self.request = request
         self.item_name = item_name
         self.item_mimetype = mimetype
         self.rev_no = rev_no
+        self.formatter = formatter
 
     def _find_item_class(self, mimetype, BaseClass=Item, best_match_len=-1):
         Class = None
@@ -843,5 +844,5 @@ class Manager(object):
         mimetype = rev.get("mimetype") or 'application/x-unknown' # XXX why do we need ... or ..?
         ItemClass = self._find_item_class(mimetype)
         logging.warning("ItemClass: %r" % ItemClass)
-        return ItemClass(request, item_name=self.item_name, rev=rev, mimetype=mimetype)
+        return ItemClass(request, item_name=self.item_name, rev=rev, mimetype=mimetype, formatter=self.formatter)
 
