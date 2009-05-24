@@ -19,6 +19,7 @@ from MoinMoin.support.python_compatibility import set
 
 Dependencies = ['user'] # {{{#!wiki comment ... }}} has different output depending on the user's profile settings
 
+from MoinMoin.items import Manager
 
 _ = lambda x: x
 
@@ -684,7 +685,7 @@ class Parser:
                     tag_attrs[str(key)] = val
                 elif key.startswith('&'):
                     key = key[1:]
-                    query_args[key] = val
+                    query_args[str(key)] = val
         return tag_attrs, query_args
 
     def _transclude_repl(self, word, groups):
@@ -728,17 +729,12 @@ class Parser:
                 else:
                     err = True
                 if err: # not a interwiki link / not in interwiki map
+                    item = Manager(self.request, page_name_all).get_item()
+                    desc = self._transclude_description(desc, page_name_all)
                     tag_attrs, query_args = self._get_params(params,
-                                                             tag_attrs={'type': 'text/html',
-                                                                        'width': '100%', },
-                                                             acceptable_attrs=acceptable_attrs_object)
-                    if 'action' not in query_args:
-                        query_args['action'] = 'content'
-                    url = Page(self.request, page_name_all).url(self.request, querystr=query_args)
-                    return (self.formatter.transclusion(1, data=url, **tag_attrs) +
-                            self.formatter.text(self._transclude_description(desc, page_name_all)) +
-                            self.formatter.transclusion(0))
-                    #return u"Error: <<Include(%s,%s)>> emulation missing..." % (page_name, args)
+                                                             tag_attrs={},
+                                                             acceptable_attrs=item.transclude_acceptable_attrs)
+                    return item.transclude(self.formatter, desc, tag_attrs, query_args)
                 else: # looks like a valid interwiki link
                     url = wikiutil.join_wiki(wikiurl, wikitail)
                     tag_attrs, query_args = self._get_params(params,
@@ -751,7 +747,6 @@ class Parser:
                     return (self.formatter.transclusion(1, data=url, **tag_attrs) +
                             self.formatter.text(self._transclude_description(desc, page_name)) +
                             self.formatter.transclusion(0))
-                    #return u"Error: <<RemoteInclude(%s:%s,%s)>> still missing." % (wiki_name, page_name, args)
 
             else:
                 desc = self._transclude_description(desc, target)
