@@ -236,7 +236,7 @@ def do_raw(pagename, request):
         Page(request, pagename).send_page()
     else:
         try:
-            item = request.cfg.data_backend.get_item(pagename)
+            item = request.data_backend.get_item(pagename)
             rev = item.get_revision(-1)
             mimetype = rev["mimetype"]
         except (NoSuchItemError, NoSuchRevisionError, KeyError):
@@ -256,35 +256,32 @@ def do_show(pagename, request, content_only=0, count_hit=1, cacheable=1, print_m
         if count_hit is non-zero, we count the request for statistics.
     """
     # We must check if the current page has different ACLs.
-    if not request.user.may.read(pagename):
-        Page(request, pagename).send_page()
+    try:
+        item = request.data_backend.get_item(pagename)
+        rev = item.get_revision(-1)
+        mimetype = rev["mimetype"]
+    except (NoSuchItemError, NoSuchRevisionError, KeyError):
+        pass  # TODO: Handle sanely. Must we actually handle that here or just ignore it?
     else:
-        try:
-            item = request.cfg.data_backend.get_item(pagename)
-            rev = item.get_revision(-1)
-            mimetype = rev["mimetype"]
-        except (NoSuchItemError, NoSuchRevisionError, KeyError):
-            pass  # TODO: Handle sanely. Must we actually handle that here or just ignore it?
-        else:
-            if mimetype != "text/x-unidentified-wiki-format":  # XXX Improve mimetype handling
-                pagename, filename = pagename.split("/")
-                _do_view(pagename, request, filename=filename)
-                return
+        if mimetype != "text/x-unidentified-wiki-format":  # XXX Improve mimetype handling
+            pagename, filename = pagename.split("/")
+            _do_view(pagename, request, filename=filename)
+            return
 
-        mimetype = request.values.get('mimetype', u"text/html")
+    mimetype = request.values.get('mimetype', u"text/html")
 
-        if request.rev is None:
-            rev = -1
-        else:
-            rev = request.rev
-        if rev == -1:
-            request.cacheable = cacheable
+    if request.rev is None:
+        rev = -1
+    else:
+        rev = request.rev
+    if rev == -1:
+        request.cacheable = cacheable
 
-        Page(request, pagename, rev=rev, formatter=mimetype).send_page(
-            count_hit=count_hit,
-            print_mode=print_mode,
-            content_only=content_only,
-        )
+    Page(request, pagename, rev=rev, formatter=mimetype).send_page(
+        count_hit=count_hit,
+        print_mode=print_mode,
+        content_only=content_only,
+    )
 
 def do_format(pagename, request):
     """ send a page using a specific formatter given by "mimetype=" value.
