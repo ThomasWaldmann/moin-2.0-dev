@@ -729,12 +729,12 @@ class Parser:
                 else:
                     err = True
                 if err: # not a interwiki link / not in interwiki map
-                    item = Manager(self.request, page_name_all).get_item()
+                    item = Manager(self.request, page_name_all, formatter=self.formatter).get_item()
                     desc = self._transclude_description(desc, page_name_all)
                     tag_attrs, query_args = self._get_params(params,
                                                              tag_attrs={},
                                                              acceptable_attrs=item.transclude_acceptable_attrs)
-                    return item.transclude(self.formatter, desc, tag_attrs, query_args)
+                    return item.transclude(desc, tag_attrs, query_args)
                 else: # looks like a valid interwiki link
                     url = wikiutil.join_wiki(wikiurl, wikitail)
                     tag_attrs, query_args = self._get_params(params,
