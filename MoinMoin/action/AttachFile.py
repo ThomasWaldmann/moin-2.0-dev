@@ -115,7 +115,7 @@ def getFilename(request, pagename, filename):
 def exists(request, pagename, filename):
     """ check if page <pagename> has a file <filename> attached """
     try:
-        item = request.cfg.data_backend.get_item(pagename + "/" + filename)
+        item = request.data_backend.get_item(pagename + "/" + filename)
         rev = item.get_revision(-1)
         return True
     except (NoSuchItemError, NoSuchRevisionError):
@@ -125,7 +125,7 @@ def exists(request, pagename, filename):
 def size(request, pagename, filename):
     """ return file size of file attachment """
     try:
-        item = request.cfg.data_backend.get_item(pagename + "/" + filename)
+        item = request.data_backend.get_item(pagename + "/" + filename)
         rev = item.get_revision(-1)
         return rev.size
     except (NoSuchItemError, NoSuchRevisionError):
@@ -175,7 +175,7 @@ def add_attachment(request, pagename, target, filecontent, overwrite=0):
     item_name = pagename + "/" + target  # pagenames are guaranteed to be unique in the backend,
                                          # but we want to allow equally named attachments to be
                                          # stored for different pages.
-    backend = request.cfg.data_backend
+    backend = request.data_backend
     try:
         item = backend.create_item(item_name)
     except ItemAlreadyExistsError:
@@ -288,7 +288,7 @@ def _build_filelist(request, pagename, showheader, readonly, mime_type='*'):
         html.append(fmt.bullet_list(1))
         for file in files:
             mt = wikiutil.MimeType(filename=file)
-            backend = request.cfg.data_backend
+            backend = request.data_backend
             try:
                 item = backend.get_item(pagename + "/" + file)
                 rev = item.get_revision(-1)
@@ -379,7 +379,7 @@ def _get_files(request, pagename):
     # Item-Name (in storage-backend) being constructed like: pagename + "/" + filename
     import re
     regex = re.compile('^%s/.*' % (pagename, ))
-    backend = request.cfg.data_backend
+    backend = request.data_backend
 
     # Get a list of all items (of the page matching the regex) whose latest revision
     # has a metadata-key 'mimetype' indicating that it is NOT a regular moin-page
@@ -713,7 +713,7 @@ def _do_del(pagename, request, filename):
     if not filename:
         error = _("Filename of attachment not specified!")
 
-    backend = request.cfg.data_backend
+    backend = request.data_backend
     try:
         item = backend.get_item(pagename + "/" + filename)
         current_rev = item.get_revision(-1)
@@ -759,7 +759,7 @@ def move_attachment(request, pagename, new_pagename, attachment, new_attachment)
     """
     _ = request.getText
 
-    backend = request.cfg.data_backend
+    backend = request.data_backend
     try:
         item = backend.get_item(pagename + "/" + attachment)
         item.rename(new_pagename + "/" + new_attachment)
@@ -815,7 +815,7 @@ def _do_move(pagename, request, filename):
         return _("Filename of attachment not specified!")
     else:
         try:
-            backend = request.cfg.data_backend
+            backend = request.data_backend
             item = backend.get_item(pagename + "/" + filename)
             # We need to check if there is a revision with data
             rev = item.get_revision(-1)
@@ -914,7 +914,7 @@ def _do_get(pagename, request, filename):
     if not request.user.may.read(pagename):
         return _('You are not allowed to get attachments from this page.')
 
-    backend = request.cfg.data_backend
+    backend = request.data_backend
     try:
         item = backend.get_item(pagename + "/" + filename)
         rev = item.get_revision(-1)
@@ -1106,7 +1106,7 @@ def send_viewfile(pagename, request, filename):
         ext = os.path.splitext(filename)[1]
         Parser = wikiutil.getParserForExtension(request.cfg, ext)
         try:
-            backend = request.cfg.data_backend
+            backend = request.data_backend
             item = backend.get_item(pagename + "/" + filename)
             rev = item.get_revision(-1)
         except (NoSuchItemError, NoSuchRevisionError):
@@ -1180,7 +1180,7 @@ def _do_view(pagename, request, filename):
     if not filename:
         return _("Filename of attachment not specified!")
 
-    backend = request.cfg.data_backend
+    backend = request.data_backend
     try:
         item = backend.get_item(pagename + "/" + filename)
         rev = item.get_revision(-1)

@@ -36,6 +36,10 @@ def init(request):
 
     context.user = setup_user(context, context.session)
 
+    # XXX Is it acceptable to patch the AMW onto the context here? Think so...
+    from MoinMoin.storage.backends.acl import AclWrapperBackend
+    context.data_backend = AclWrapperBackend(context)
+
     context.lang = setup_i18n_postauth(context)
 
     context.reset()

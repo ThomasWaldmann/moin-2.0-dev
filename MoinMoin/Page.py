@@ -96,7 +96,7 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        self._backend = request.cfg.data_backend
+        self._backend = request.data_backend
 
         self.reset()
 
@@ -1429,7 +1429,7 @@ class RootPage(object):
         if filterfunction:
             filter.add(term.NameFn(filterfunction))
 
-        items = self.request.cfg.data_backend.search_item(filter)
+        items = self.request.data_backend.search_item(filter)
 
         if user or return_objects:
             # Filter names
@@ -1462,7 +1462,7 @@ class RootPage(object):
         """
         self.request.clock.start('getPageCount')
 
-        items = self.request.cfg.data_backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
+        items = self.request.data_backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
 
         count = 0
         for item in items:
