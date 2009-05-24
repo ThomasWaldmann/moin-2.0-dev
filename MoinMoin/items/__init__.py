@@ -51,6 +51,10 @@ class Item(object):
         """ return URL for this item and this revision, optionally as absolute URL """
         return self.url(rev=self.rev.revno, _absolute=_absolute, **kw)
 
+    transclude_acceptable_attrs = []
+    def transclude(self, formatter, desc, tag_attrs, query_args):
+        return formatter.text('(Item %s (%s): transclusion not implemented)' % (self.item_name, self.mimetype))
+
     def meta_text_to_dict(self, text):
         """ convert meta data from a text fragment to a dict """
         meta = {}
@@ -264,7 +268,7 @@ class Item(object):
 
 
 class NonExistent(Item):
-    supported_mimetypes = [] # only explicitely used
+    supported_mimetypes = ['application/x-unknown']
     template_groups = [
         ('moin wiki text items', [
             ('HomePageTemplate', 'home page (moin)'),
@@ -337,6 +341,12 @@ class NonExistent(Item):
     def do_get(self):
         self.request.status_code = 404
 
+    transclude_acceptable_attrs = []
+    def transclude(self, formatter, desc, tag_attrs, query_args):
+        return (formatter.url(1, self.url(), css='nonexistent', title='click to create item') +
+                formatter.text(self.item_name) + # maybe use some "broken image" icon instead?
+                formatter.url(0))
+
 
 class Binary(Item):
     supported_mimetypes = [''] # fallback, because every mimetype starts with ''
@@ -366,6 +376,18 @@ There is no help, you're doomed!
                 mimetype=r.get('mimetype', ''),
             ))
         return log
+
+    transclude_acceptable_attrs = ['class', 'title', 'width', 'height', # no style because of JS
+                                   'type', 'standby', ] # we maybe need a hack for <PARAM> here
+    def transclude(self, formatter, desc, tag_attrs, query_args):
+        if 'type' not in tag_attrs:
+            tag_attrs['type'] = self.mimetype
+        if 'do' not in query_args:
+                query_args['do'] = 'get'
+        url = self.rev_url(**query_args)
+        return (formatter.transclusion(1, data=url, **tag_attrs) +
+                formatter.text(desc) +
+                formatter.transclusion(0))
 
     def _render_meta(self):
         return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta)
@@ -551,6 +573,19 @@ class OGG(Audio):
 
 class Image(Binary):
     supported_mimetypes = ['image/']
+
+    transclude_acceptable_attrs = ['class', 'title', 'longdesc', 'width', 'height', 'align', ] # no style because of JS
+    def transclude(self, formatter, desc, tag_attrs, query_args):
+        if 'class' not in tag_attrs:
+            tag_attrs['class'] = 'image'
+        if desc:
+            for attr in ['alt', 'title', ]:
+                if attr not in tag_attrs:
+                    tag_attrs[attr] = desc
+        if 'do' not in query_args:
+            query_args['do'] = 'get'
+        url = self.rev_url(**query_args)
+        return formatter.image(src=url, **tag_attrs)
 
     def _render_data(self):
         return '<img src="%s">' % self.rev_url(do='get')
@@ -768,7 +803,7 @@ class PythonSrc(MoinParserSupported):
 
 
 class Manager(object):
-    def __init__(self, request, item_name, mimetype=None, rev_no=-1):
+    def __init__(self, request, item_name, mimetype='application/x-unknown', rev_no=-1):
         self.request = request
         self.item_name = item_name
         self.item_mimetype = mimetype
@@ -793,17 +828,20 @@ class Manager(object):
         try:
             item = request.cfg.data_backend.get_item(self.item_name)
         except NoSuchItemError:
-            rev = None
-            ItemClass = NonExistent
-            mimetype = self.item_mimetype
+            class DummyRev(dict):
+                def __init__(self, mimetype):
+                    self['mimetype'] = mimetype
+                def read_data(self):
+                    return ''
+            rev = DummyRev(self.item_mimetype)
         else:
             try:
                 rev = item.get_revision(self.rev_no)
             except NoSuchRevisionError:
                 rev = item.get_revision(-1) # fall back to current revision
                 # XXX add some message about invalid revision
-            mimetype = rev.get("mimetype")
-        if mimetype:
-            ItemClass = self._find_item_class(mimetype)
+        mimetype = rev.get("mimetype") or 'application/x-unknown' # XXX why do we need ... or ..?
+        ItemClass = self._find_item_class(mimetype)
+        logging.warning("ItemClass: %r" % ItemClass)
         return ItemClass(request, item_name=self.item_name, rev=rev, mimetype=mimetype)
 
