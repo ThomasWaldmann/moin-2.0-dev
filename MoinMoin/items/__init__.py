@@ -525,7 +525,7 @@ class RenderableBinary(Binary):
 
     width = "100%"
     height = "100%"
-    transclude_params = [] 
+    transclude_params = []
     transclude_acceptable_attrs = ['class', 'title', 'width', 'height', # no style because of JS
                                    'type', 'standby', ] # we maybe need a hack for <PARAM> here
     def transclude(self, desc, tag_attrs=None, query_args=None, params=None):
