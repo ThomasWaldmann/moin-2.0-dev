@@ -1,13 +1,14 @@
 # -*- coding: iso-8859-1 -*-
 """
     MoinMoin - misc. mimetype items
-    
+
     While MoinMoin.storage cares for backend storage of items,
     this module cares for more high-level, frontend items,
     e.g. showing, editing, etc. of wiki items.
 
     @copyright: 2009 MoinMoin:ThomasWaldmann,
-                     MoinMoin:ReimarBauer
+                2009 MoinMoin:ReimarBauer,
+                2009 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -29,8 +30,9 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 from MoinMoin.items.sendcache import SendCache
 
+
 class Item(object):
-    is_text = False
+
     def __init__(self, request, item_name, rev=None, mimetype=None, formatter=None):
         self.request = request
         self.env = request.theme.env
@@ -56,6 +58,7 @@ class Item(object):
         return self.url(rev=self.rev.revno, _absolute=_absolute, **kw)
 
     transclude_acceptable_attrs = []
+
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.item_name, self.mimetype))
 
@@ -706,7 +709,6 @@ class SvgImage(Binary):
 
 class Text(Binary):
     supported_mimetypes = ['text/']
-    is_text = True
 
     # text/plain mandates crlf - but in memory, we want lf only
     def data_internal_to_form(self, text):
@@ -771,6 +773,7 @@ class MoinParserSupported(Text):
         del buffer
         return content
 
+
 class MoinWiki(MoinParserSupported):
     supported_mimetypes = ['text/x-unidentified-wiki-format',
                            'text/moin-wiki',
@@ -784,25 +787,30 @@ class CreoleWiki(MoinParserSupported):
     format = 'creole'
     format_args = ''
 
+
 class CSV(MoinParserSupported):
     supported_mimetypes = ['text/csv']
     format = 'csv'
     format_args = ''
+
 
 class HTML(MoinParserSupported):
     supported_mimetypes = ['text/html']
     format = 'html'
     format_args = ''
 
+
 class DiffPatch(MoinParserSupported):
     supported_mimetypes = ['text/x-diff']
     format = 'highlight'
     format_args = 'diff'
 
+
 class IRCLog(MoinParserSupported):
     supported_mimetypes = ['text/x-irclog']
     format = 'highlight'
     format_args = 'irc'
+
 
 class PythonSrc(MoinParserSupported):
     supported_mimetypes = ['text/x-python']
@@ -811,6 +819,7 @@ class PythonSrc(MoinParserSupported):
 
 
 class Manager(object):
+
     def __init__(self, request, item_name, mimetype='application/x-unknown', rev_no=-1, formatter=None):
         self.request = request
         self.item_name = item_name
@@ -851,6 +860,6 @@ class Manager(object):
                 # XXX add some message about invalid revision
         mimetype = rev.get("mimetype") or 'application/x-unknown' # XXX why do we need ... or ..?
         ItemClass = self._find_item_class(mimetype)
-        logging.warning("ItemClass: %r" % ItemClass)
+        logging.debug("ItemClass: %r" % ItemClass)
         return ItemClass(request, item_name=self.item_name, rev=rev, mimetype=mimetype, formatter=self.formatter)
 
