@@ -28,6 +28,7 @@ ACL = "acl"
 # special meta-data whose presence indicates that the item is deleted
 DELETED = "deleted"
 
+MIMETYPE = "mimetype"
 SIZE = "size"
 
 EDIT_LOG_ACTION = "edit_log_action"
