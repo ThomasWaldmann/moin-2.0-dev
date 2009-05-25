@@ -55,7 +55,7 @@ class Item(object):
         """ convert meta data from a text fragment to a dict """
         meta = {}
         for line in text.splitlines():
-            k, v = line.split(':')
+            k, v = line.split(':', 1)
             k, v = k.strip(), v.strip()
             meta[k] = v
         return meta
@@ -206,6 +206,10 @@ class Item(object):
             # XXX unclear: do we have meta-only items that shall not be "deleted" state?
             newrev[DELETED] = True
             comment = comment or 'deleted'
+        for k, v in meta.iteritems():
+            # TODO Put metadata into newrev here for now. There should be a safer way
+            #      of input for this.
+            newrev[k] = v
         hash_name, hash_hexdigest = self._write_stream(data, newrev)
         newrev[hash_name] = hash_hexdigest
         timestamp = time.time()
