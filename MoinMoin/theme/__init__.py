@@ -146,7 +146,7 @@ class ThemeBase:
         except:
             pass
         self.env = Environment(loader=PackageLoader('MoinMoin', 'templates'),
-                               bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'), 
+                               bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'),
                                extensions=['jinja2.ext.i18n'])
         from werkzeug import url_quote, url_encode
         self.env.filters['urlencode'] = lambda x: url_encode(x)
@@ -485,7 +485,7 @@ class ThemeBase:
                 alt, icon, w, h = self.iconsByFile[icon]
             else:
                 alt, icon, w, h = '', icon, '', ''
-        
+
         img_url = "%s/%s/img/%s" % (self.cfg.url_prefix_static, self.name, icon)
 
         return alt, img_url, w, h
@@ -650,7 +650,7 @@ class ThemeBase:
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
             contentActions = [u'', u'show', u'refresh', u'preview', u'diff',
-                              u'subscribe', u'rename', u'copy', 
+                              u'subscribe', u'rename', u'copy',
                              ]
             return self.request.action in contentActions
         return False

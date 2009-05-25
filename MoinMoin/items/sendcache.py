@@ -119,7 +119,7 @@ class SendCache(object):
         key = self.key
         import os.path
         from MoinMoin.util import timefuncs
-        
+
         if filename:
             # make sure we just have a simple filename (without path)
             filename = os.path.basename(filename)

@@ -24,7 +24,6 @@ from MoinMoin.userprefs import UserPrefBase
 #    - quick links (or leave in wiki settings?)
 ####
 
-
 _debug = 0
 
 class Settings(UserPrefBase):
