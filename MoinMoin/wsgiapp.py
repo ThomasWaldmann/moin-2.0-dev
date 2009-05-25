@@ -36,16 +36,21 @@ def init(request):
 
     context.user = setup_user(context, context.session)
 
-    # XXX Is it acceptable to patch the AMW onto the context here? Think so...
-    from MoinMoin.storage.backends.acl import AclWrapperBackend
-    context.data_backend = AclWrapperBackend(context)
-
     context.lang = setup_i18n_postauth(context)
 
     context.reset()
 
     context.clock.stop('init')
     return context
+
+def init_backend(context):
+    """ initialize the backend
+    
+        This is separate from init because the conftest request setup needs to be
+        able to create fresh data storage backends in between init and init_backend.
+    """
+    from MoinMoin.storage.backends.acl import AclWrapperBackend
+    context.data_backend = AclWrapperBackend(context)
 
 def run(context):
     """ Run a context trough the application. """
@@ -225,6 +230,7 @@ class Application(object):
         try:
             request = self.Request(environ)
             context = init(request)
+            init_backend(context)
             response = run(context)
             context.clock.stop('total')
         except HTTPException, e:
