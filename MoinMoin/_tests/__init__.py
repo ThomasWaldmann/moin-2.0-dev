@@ -11,8 +11,7 @@ import os, shutil
 
 from MoinMoin.parser.text import Parser
 from MoinMoin.formatter.text_html import Formatter
-from MoinMoin.Page import Page
-from MoinMoin.PageEditor import PageEditor
+from MoinMoin.items import Item
 from MoinMoin.util import random_string
 from MoinMoin import caching, user
 
@@ -54,25 +53,18 @@ def become_superuser(request):
 
 # Creating and destroying test pages --------------------------------
 
-def create_page(request, pagename, content, do_editor_backup=False):
+def create_page(request, itemname, content):
     """ create a page with some content """
-    # create page from scratch:
-    page = PageEditor(request, pagename, do_editor_backup=do_editor_backup)
-    try:
-        page.saveText(content, None)
-    except PageEditor.Unchanged:
-        pass
-    return page
+    item = Item.create(request, itemname)
+    item._save({}, content)
+    return item
 
-def append_page(request, pagename, content, do_editor_backup=False):
-    """ appends some conetent to an existing page """
-    # reads the raw text of the existing page
-    raw = Page(request, pagename).get_raw_body()
-    # adds the new content to the old
-    content = "%s\n%s\n"% (raw, content)
-    page = PageEditor(request, pagename, do_editor_backup=do_editor_backup)
-    page.saveText(content, None)
-    return page
+def append_page(request, itemname, content):
+    """ appends some content to an existing page """
+    item = Item.create(request, itemname)
+    content = "%s\n%s\n"% (item.data, content)
+    item._save({}, content)
+    return item
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """
