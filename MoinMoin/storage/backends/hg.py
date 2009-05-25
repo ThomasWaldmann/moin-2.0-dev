@@ -43,9 +43,9 @@ import shutil
 import random
 import errno
 import time
-import md5
 import os
 
+from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.Page import EDIT_LOG_USERID, EDIT_LOG_COMMENT
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError,\
@@ -517,7 +517,7 @@ class MercurialBackend(Backend):
         timestamp and random integer.
         """
         encoded_name = item.name.encode("utf-8")
-        m = md5.new()
+        m = hash_new('md5')
         m.update("%s%s%d" % (time.time(), encoded_name, random.randint(0, RAND_MAX)))
         item_id = m.hexdigest()
 

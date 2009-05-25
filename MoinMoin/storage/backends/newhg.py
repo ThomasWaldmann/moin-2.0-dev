@@ -26,13 +26,14 @@ import tempfile
 import weakref
 import errno
 import time
-import md5
 import os
 
 try:
     import cdb
 except ImportError:
     from MoinMoin.support import pycdb as cdb
+
+from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.Page import EDIT_LOG_USERID, EDIT_LOG_COMMENT
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import (BackendError, NoSuchItemError, NoSuchRevisionError,
@@ -364,7 +365,7 @@ class MercurialBackend(Backend):
 
     def _hash(self, itemname):
         """Compute Item ID from given name."""
-        return md5.new(itemname.encode('utf-8')).hexdigest()
+        return hash_new('md5', itemname.encode('utf-8')).hexdigest()
 
     def _name(self, itemid):
         """Resolve Item name by given ID."""
