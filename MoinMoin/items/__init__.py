@@ -877,6 +877,7 @@ class Manager(object):
         self.formatter = formatter
 
     def _find_item_class(self, mimetype, BaseClass=Item, best_match_len=-1):
+        #logging.debug("_find_item_class(%r,%r,%r)" % (mimetype, BaseClass, best_match_len))
         Class = None
         for ItemClass in BaseClass.__subclasses__():
             for supported_mimetype in ItemClass.supported_mimetypes:
@@ -885,10 +886,11 @@ class Manager(object):
                     if match_len > best_match_len:
                         best_match_len = match_len
                         Class = ItemClass
-            better_Class = self._find_item_class(mimetype, ItemClass, best_match_len)
+                        #logging.debug("_find_item_class: new best match: %r by %r)" % (supported_mimetype, ItemClass))
+            best_match_len, better_Class = self._find_item_class(mimetype, ItemClass, best_match_len)
             if better_Class:
                 Class = better_Class
-        return Class
+        return best_match_len, Class
 
     def get_item(self):
         request = self.request
@@ -908,7 +910,7 @@ class Manager(object):
                 rev = item.get_revision(-1) # fall back to current revision
                 # XXX add some message about invalid revision
         mimetype = rev.get("mimetype") or 'application/x-unknown' # XXX why do we need ... or ..?
-        ItemClass = self._find_item_class(mimetype)
-        logging.debug("ItemClass: %r" % ItemClass)
+        ItemClass = self._find_item_class(mimetype)[1]
+        logging.debug("ItemClass %r handles %r" % (ItemClass, mimetype))
         return ItemClass(request, item_name=self.item_name, rev=rev, mimetype=mimetype, formatter=self.formatter)
 
