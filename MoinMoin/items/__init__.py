@@ -435,7 +435,11 @@ There is no help, you're doomed!
         return content
 
     def _render_data_diff(self, oldrev, newrev):
-        return "Can not compare binary items."
+        hash_name = self.request.cfg.hash_algorithm
+        if oldrev[hash_name] == newrev[hash_name]:
+            return "The items have the same data hash code (that means they very likely have the same data)."
+        else:
+            return "The items have different data."
 
     def do_diff(self, oldrev, newrev):
         item = self.rev.item
