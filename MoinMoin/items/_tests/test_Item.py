@@ -8,7 +8,7 @@
 
 import py
 
-from MoinMoin.items import Item, NonExistent, \
+from MoinMoin.items import Item, NonExistent, Binary, Text, Image, TransformableBitmapImage, PythonSrc, \
                            DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                            EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
@@ -19,6 +19,17 @@ class TestItem:
         meta, data = item.meta, item.data
         assert meta == {'mimetype': 'application/x-unknown'}
         assert data == ''
+
+    def testClassFinder(self):
+        for mimetype, ExpectedClass in [
+                ('application/x-foobar', Binary),
+                ('text/plain', Text),
+                ('text/x-python', PythonSrc),
+                ('image/tiff', Image),
+                ('image/png', TransformableBitmapImage),
+            ]:
+            item = Item.create(self.request, 'foo', mimetype=mimetype)
+            assert isinstance(item, ExpectedClass)
 
     def testCRUD(self):
         name = u'NewItem'
@@ -67,6 +78,25 @@ class TestItem:
         item = Item.create(self.request, name, rev_no=1)
         assert item.data == rev1_data
 
+    def testIndex(self):
+        # create a toplevel and some sub-items
+        basename = u'Foo'
+        for name in ['', '/ab', '/cd/ef', '/gh', '/ij/kl', ]:
+            item = Item.create(self.request, basename + name)
+            item._save({}, "foo", mimetype='text/plain')
+
+        # check index
+        baseitem = Item.create(self.request, basename)
+        index = baseitem.get_index()
+        assert index == [(u'Foo/ab', u'ab', 'text/plain'),
+                         (u'Foo/cd/ef', u'cd/ef', 'text/plain'),
+                         (u'Foo/gh', u'gh', 'text/plain'),
+                         (u'Foo/ij/kl', u'ij/kl', 'text/plain'),
+                        ]
+        flat_index = baseitem.flat_index()
+        assert flat_index == [(u'Foo/ab', u'ab', 'text/plain'),
+                              (u'Foo/gh', u'gh', 'text/plain'),
+                             ]
 
 coverage_modules = ['MoinMoin.items']
 
