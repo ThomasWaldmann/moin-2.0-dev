@@ -9,10 +9,6 @@
 from MoinMoin.items import Item
 
 def execute(item_name, request):
-    if request.rev is None:
-        rev_no = -1
-    else:
-        rev_no = request.rev
+    rev_no = request.rev if request.rev is not None else -1
     item = Item.create(request, item_name, rev_no=rev_no)
     item.do_get()
-
