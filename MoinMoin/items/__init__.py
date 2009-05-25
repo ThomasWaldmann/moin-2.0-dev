@@ -131,7 +131,7 @@ class Item(object):
         comment = request.form.get('comment')
         target = request.form.get('target')
         old_item = self.rev.item
-        backend = request.cfg.data_backend
+        backend = request.data_backend
         new_item = backend.create_item(target)
         # Transfer all revisions with their data and metadata
         # Make sure the list begins with the lowest value, that is, 0.
@@ -195,7 +195,7 @@ class Item(object):
         request = self.request
         if item_name is None:
             item_name = self.item_name
-        backend = request.cfg.data_backend
+        backend = request.data_backend
         try:
             storage_item = backend.get_item(item_name)
         except NoSuchItemError:
@@ -249,7 +249,7 @@ class Item(object):
         sub_item_re = u"^%s.*" % re.escape(prefix)
         regex = re.compile(sub_item_re, re.UNICODE)
 
-        item_iterator = self.request.cfg.data_backend.search_item(
+        item_iterator = self.request.data_backend.search_item(
                             AND(NameRE(regex),
                                 NOT(LastRevisionMetaDataMatch('deleted', True))))
 
@@ -831,7 +831,7 @@ class Manager(object):
     def get_item(self):
         request = self.request
         try:
-            item = request.cfg.data_backend.get_item(self.item_name)
+            item = request.data_backend.get_item(self.item_name)
         except NoSuchItemError:
             class DummyRev(dict):
                 def __init__(self, mimetype):
