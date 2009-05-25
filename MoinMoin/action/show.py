@@ -8,7 +8,7 @@
 from MoinMoin.items import Item
 
 def execute(item_name, request):
-    rev_no = request.rev or -1
+    rev_no = request.rev if request.rev is not None else -1
     mimetype = request.values.get('mimetype')
 
     item = Item.create(request, item_name, mimetype=mimetype, rev_no=rev_no)
