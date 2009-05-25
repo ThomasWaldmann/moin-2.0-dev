@@ -7,7 +7,7 @@
     @copyright: 2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
-from MoinMoin.items import Item
+from MoinMoin.items import Item, MIMETYPE
 
 def execute(item_name, request):
     try:
@@ -57,8 +57,8 @@ def execute(item_name, request):
     oldrev = item.get_revision(oldrevno)
     newrev = item.get_revision(newrevno)
 
-    oldmt = oldrev.get("mimetype")
-    newmt = newrev.get("mimetype")
+    oldmt = oldrev.get(MIMETYPE)
+    newmt = newrev.get(MIMETYPE)
 
     if oldmt == newmt:
         # easy, exactly the same mimetype, call do_diff for it

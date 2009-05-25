@@ -9,7 +9,8 @@
 import py
 
 from MoinMoin.items import Item, NonExistent, Binary, Text, Image, TransformableBitmapImage, PythonSrc, \
-                           DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           DELETED, MIMETYPE, \
+                           EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                            EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
 class TestItem:
@@ -17,7 +18,7 @@ class TestItem:
         item = Item.create(self.request, 'DoesNotExist')
         assert isinstance(item, NonExistent)
         meta, data = item.meta, item.data
-        assert meta == {'mimetype': 'application/x-unknown'}
+        assert meta == {MIMETYPE: 'application/x-unknown'}
         assert data == ''
 
     def testClassFinder(self):
@@ -43,7 +44,7 @@ class TestItem:
         # check save result
         item = Item.create(self.request, name)
         saved_meta, saved_data = dict(item.meta), item.data
-        assert saved_meta['mimetype'] == mimetype
+        assert saved_meta[MIMETYPE] == mimetype
         assert saved_meta[EDIT_LOG_COMMENT] == comment
         assert saved_data == data
         assert item.rev.revno == 0
@@ -55,7 +56,7 @@ class TestItem:
         # check save result
         item = Item.create(self.request, name)
         saved_meta, saved_data = dict(item.meta), item.data
-        assert saved_meta['mimetype'] == mimetype
+        assert saved_meta[MIMETYPE] == mimetype
         assert saved_meta[EDIT_LOG_COMMENT] == comment
         assert saved_data == data
         assert item.rev.revno == 1
@@ -68,7 +69,7 @@ class TestItem:
         # check save result
         item = Item.create(self.request, name)
         saved_meta, saved_data = dict(item.meta), item.data
-        assert saved_meta['mimetype'] == mimetype
+        assert saved_meta[MIMETYPE] == mimetype
         assert saved_meta[EDIT_LOG_COMMENT] == comment
         assert saved_data == data
         assert item.rev.revno == 2

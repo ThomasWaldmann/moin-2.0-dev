@@ -19,7 +19,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil
 from MoinMoin.storage import Backend, Item, StoredRevision
-from MoinMoin.Page import DELETED, ACL, \
+from MoinMoin.Page import DELETED, ACL, MIMETYPE, \
                              EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                              EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
@@ -224,7 +224,7 @@ class FsPageRevision(StoredRevision):
             meta, data = wikiutil.split_body(content)
         meta.update(editlog_data)
         meta['__size'] = len(data) # needed for converter checks
-        meta['mimetype'] = "text/x-unidentified-wiki-format"
+        meta[MIMETYPE] = "text/x-unidentified-wiki-format"
         self._fs_meta = {}
         for k, v in meta.iteritems():
             if isinstance(v, list):
@@ -287,7 +287,7 @@ class FsAttachmentRevision(StoredRevision):
         # attachments in moin 1.7 were protected by their "parent" page's acl
         if item._fs_parent_acl is not None:
             meta[ACL] = item._fs_parent_acl # XXX not needed for acl_hierarchic
-        meta['mimetype'] = wikiutil.MimeType(filename=item._fs_attachname).mime_type()
+        meta[MIMETYPE] = wikiutil.MimeType(filename=item._fs_attachname).mime_type()
         self._fs_meta = meta
         self._fs_data_fname = attpath
         self._fs_data_file = None

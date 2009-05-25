@@ -22,7 +22,8 @@ from MoinMoin import config
 from MoinMoin.Page import Page
 from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
 from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError
-from MoinMoin.Page import EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
+from MoinMoin.Page import MIMETYPE, \
+                          EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, DELETED
 from MoinMoin.support import tarfile
 
@@ -105,7 +106,7 @@ class TwikiDraw(Image):
             newrev.write(data)
             timestamp = time.time()
             newrev[EDIT_LOG_COMMENT] = ''
-            newrev["mimetype"] = self.twd_mimetype
+            newrev[MIMETYPE] = self.twd_mimetype
             newrev[EDIT_LOG_ACTION] = 'SAVE'
             newrev[EDIT_LOG_ADDR] = request.remote_addr
             newrev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
