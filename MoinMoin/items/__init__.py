@@ -334,7 +334,8 @@ class NonExistent(Item):
         ('page markup text items', [
             ('text/moin-wiki', 'wiki (moin)'),
             ('text/creole-wiki', 'wiki (creole)'),
-            ('text/html', 'html'),
+            ('text/html', 'unsafe html'),
+            ('text/x-safe-html', 'safe html'),
         ]),
         ('highlighted text items', [
             ('text/x-diff', 'diff/patch'),
@@ -832,6 +833,14 @@ class Text(Binary):
         return content
 
 
+class HTML(Text):
+    """ HTML markup """
+    supported_mimetypes = ['text/html']
+
+    def _render_data(self):
+        return self.data_storage_to_internal(self.data)
+
+
 class MoinParserSupported(Text):
     """ Base class for text formats that are supported by some moin parser """
     supported_mimetypes = []
@@ -879,9 +888,9 @@ class CSV(MoinParserSupported):
     format_args = ''
 
 
-class HTML(MoinParserSupported):
+class SafeHTML(MoinParserSupported):
     """ HTML markup """
-    supported_mimetypes = ['text/html']
+    supported_mimetypes = ['text/x-safe-html']
     format = 'html'
     format_args = ''
 
