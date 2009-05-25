@@ -360,6 +360,7 @@ class NonExistent(Item):
 
 
 class Binary(Item):
+    """ An arbitrary binary item, fallback class for every item mimetype. """
     supported_mimetypes = [''] # fallback, because every mimetype starts with ''
 
     modify_help = """\
@@ -388,37 +389,23 @@ There is no help, you're doomed!
             ))
         return log
 
-    width = None
-    height = None
-    transclude_acceptable_attrs = ['class', 'title', 'width', 'height', # no style because of JS
-                                   'type', 'standby', ] # we maybe need a hack for <PARAM> here
-    transclude_params = []
-    def transclude(self, desc, tag_attrs=None, query_args=None, params=None):
+    transclude_acceptable_attrs = []
+    def transclude(self, desc, tag_attrs=None, query_args=None):
+        """ we can't transclude (render) this, thus we just link to the item """
         if tag_attrs is None:
             tag_attrs = {}
-        if 'type' not in tag_attrs:
-            tag_attrs['type'] = self.mimetype
-        if self.width and 'width' not in tag_attrs:
-            tag_attrs['width'] = self.width
-        if self.height and 'height' not in tag_attrs:
-            tag_attrs['height'] = self.height
         if query_args is None:
             query_args = {}
-        if 'do' not in query_args:
-            query_args['do'] = 'get'
-        if params is None:
-            params = self.transclude_params
         url = self.rev_url(**query_args)
-        return (self.formatter.transclusion(1, data=url, **tag_attrs) +
-                ''.join([self.formatter.transclusion_param(**p) for p in params]) +
+        return (self.formatter.url(1, url, **tag_attrs) +
                 self.formatter.text(desc) +
-                self.formatter.transclusion(0))
+                self.formatter.url(0))
 
     def _render_meta(self):
         return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta)
 
     def _render_data(self):
-        return self.transclude('{{%s [%s]}}' % (self.item_name, self.mimetype))
+        return '' # XXX we can't render the data, maybe show some "data icon" as a placeholder?
 
     def do_show(self):
         item = self.rev.item
@@ -532,12 +519,42 @@ There is no help, you're doomed!
         request.send_file(file_to_send)
 
 
-class ObjectTagSupportedFormat(Binary):
-    """ This is a base class for some stuff that renders with a object tag. """
+class RenderableBinary(Binary):
+    """ This is a base class for some binary stuff that renders with a object tag. """
     supported_mimetypes = []
 
     width = "100%"
     height = "100%"
+    transclude_params = [] 
+    transclude_acceptable_attrs = ['class', 'title', 'width', 'height', # no style because of JS
+                                   'type', 'standby', ] # we maybe need a hack for <PARAM> here
+    def transclude(self, desc, tag_attrs=None, query_args=None, params=None):
+        if tag_attrs is None:
+            tag_attrs = {}
+        if 'type' not in tag_attrs:
+            tag_attrs['type'] = self.mimetype
+        if self.width and 'width' not in tag_attrs:
+            tag_attrs['width'] = self.width
+        if self.height and 'height' not in tag_attrs:
+            tag_attrs['height'] = self.height
+        if query_args is None:
+            query_args = {}
+        if 'do' not in query_args:
+            query_args['do'] = 'get'
+        if params is None:
+            params = self.transclude_params
+        url = self.rev_url(**query_args)
+        return (self.formatter.transclusion(1, data=url, **tag_attrs) +
+                ''.join([self.formatter.transclusion_param(**p) for p in params]) +
+                self.formatter.text(desc) +
+                self.formatter.transclusion(0))
+
+    def _render_data(self):
+        return self.transclude('{{%s [%s]}}' % (self.item_name, self.mimetype))
+
+
+class PlayableBinary(RenderableBinary):
+    """ This is a base class for some binary stuff that plays with a object tag. """
     transclude_params = [
         dict(name='stop', value='1', valuetype='data'),
         dict(name='play', value='0', valuetype='data'),
@@ -545,7 +562,15 @@ class ObjectTagSupportedFormat(Binary):
     ]
 
 
-class Application(ObjectTagSupportedFormat):
+class Application(Binary):
+    supported_mimetypes = []
+
+
+class RenderableApplication(RenderableBinary):
+    supported_mimetypes = []
+
+
+class PlayableApplication(PlayableBinary):
     supported_mimetypes = []
 
 
@@ -553,39 +578,57 @@ class PDF(Application):
     supported_mimetypes = ['application/pdf', ]
 
 
-class Flash(Application):
+class Flash(PlayableApplication):
     supported_mimetypes = ['application/x-shockwave-flash', ]
 
 
-class Video(ObjectTagSupportedFormat):
+class Video(Binary):
+    supported_mimetypes = ['video/', ]
+
+
+class PlayableVideo(PlayableBinary):
     supported_mimetypes = ['video/mpg', 'video/fli', 'video/mp4', 'video/quicktime',
                            'video/ogg', 'video/x-flv', 'video/x-ms-asf', 'video/x-ms-wm',
-                           'video/x-ms-wmv', 'video/x-msvideo', ]
+                           'video/x-ms-wmv', 'video/x-msvideo',
+                          ]
     width = "640px"
     height = "400px"
 
 
-class Audio(ObjectTagSupportedFormat):
+class Audio(Binary):
+    supported_mimetypes = ['audio/', ]
+
+
+class PlayableAudio(PlayableBinary):
     supported_mimetypes = ['audio/midi', 'audio/x-aiff', 'audio/x-ms-wma',
-                           'audio/x-pn-realaudio', ]
+                           'audio/x-pn-realaudio',
+                           'audio/x-wav',
+                           'audio/mpeg',
+                           'audio/ogg',
+                          ]
     width = "200px"
     height = "100px"
 
 
-class WAV(Audio):
-    supported_mimetypes = ['audio/x-wav', ]
-
-
-class MP3(Audio):
-    supported_mimetypes = ['audio/mpeg', ]
-
-
-class OGG(Audio):
-    supported_mimetypes = ['audio/ogg', ]
-
-
 class Image(Binary):
-    supported_mimetypes = ['image/']
+    """ Any Image mimetype """
+    supported_mimetypes = ['image/', ]
+
+
+class RenderableImage(RenderableBinary):
+    """ Any Image mimetype """
+    supported_mimetypes = []
+
+
+class SvgImage(RenderableImage):
+    """ SVG images use <object> tag mechanism from RenderableBinary base class """
+    supported_mimetypes = ['image/svg+xml']
+
+
+class RenderableBitmapImage(RenderableImage):
+    """ PNG/JPEG/GIF images use <img> tag (better browser support than <object>) """
+    supported_mimetypes = [] # if mimetype is also transformable, please list
+                             # in TransformableImage ONLY!
 
     transclude_acceptable_attrs = ['class', 'title', 'longdesc', 'width', 'height', 'align', ] # no style because of JS
     def transclude(self, desc, tag_attrs=None, query_args=None):
@@ -608,7 +651,8 @@ class Image(Binary):
         return self.transclude(self.item_name)
 
 
-class TransformableImage(Image):
+class TransformableBitmapImage(RenderableBitmapImage):
+    """ We can transform (resize, rotate, mirror) some image types """
     supported_mimetypes = ['image/png', 'image/jpeg', 'image/gif', ]
 
     def _transform(self, content_type, size=None, transpose_op=None):
@@ -703,11 +747,8 @@ class TransformableImage(Image):
         self._do_get(hash, from_cache=from_cache)
 
 
-class SvgImage(Binary):
-    supported_mimetypes = ['image/svg+xml']
-
-
 class Text(Binary):
+    """ Any kind of text """
     supported_mimetypes = ['text/']
 
     # text/plain mandates crlf - but in memory, we want lf only
@@ -752,6 +793,7 @@ class Text(Binary):
 
 
 class MoinParserSupported(Text):
+    """ Base class for text formats that are supported by some moin parser """
     supported_mimetypes = []
     format = 'wiki' # override this, if needed
     format_args = ''
@@ -775,6 +817,7 @@ class MoinParserSupported(Text):
 
 
 class MoinWiki(MoinParserSupported):
+    """ MoinMoin wiki markup """
     supported_mimetypes = ['text/x-unidentified-wiki-format',
                            'text/moin-wiki',
                           ]  # XXX Improve mimetype handling
@@ -783,36 +826,42 @@ class MoinWiki(MoinParserSupported):
 
 
 class CreoleWiki(MoinParserSupported):
+    """ Creole wiki markup """
     supported_mimetypes = ['text/creole-wiki']
     format = 'creole'
     format_args = ''
 
 
 class CSV(MoinParserSupported):
+    """ Comma Separated Values format """
     supported_mimetypes = ['text/csv']
     format = 'csv'
     format_args = ''
 
 
 class HTML(MoinParserSupported):
+    """ HTML markup """
     supported_mimetypes = ['text/html']
     format = 'html'
     format_args = ''
 
 
 class DiffPatch(MoinParserSupported):
+    """ diff output / patch input format """
     supported_mimetypes = ['text/x-diff']
     format = 'highlight'
     format_args = 'diff'
 
 
 class IRCLog(MoinParserSupported):
+    """ Internet Relay Chat Log """
     supported_mimetypes = ['text/x-irclog']
     format = 'highlight'
     format_args = 'irc'
 
 
 class PythonSrc(MoinParserSupported):
+    """ Python source code """
     supported_mimetypes = ['text/x-python']
     format = 'highlight'
     format_args = 'python'
