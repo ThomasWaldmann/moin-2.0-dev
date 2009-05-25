@@ -6,12 +6,12 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.items import Manager
+from MoinMoin.items import Item
 
 def execute(item_name, request):
     mimetype = request.values.get('mimetype', 'text/plain')
     # TODO add evaluation of template arg
-    item = Manager(request, item_name, mimetype=mimetype).get_item()
+    item = Item.create(request, item_name, mimetype=mimetype)
     if request.method == 'GET':
         content = item.do_modify()
         request.theme.render_content(item_name, content)

@@ -19,7 +19,7 @@ from MoinMoin.support.python_compatibility import set
 
 Dependencies = ['user'] # {{{#!wiki comment ... }}} has different output depending on the user's profile settings
 
-from MoinMoin.items import Manager
+from MoinMoin.items import Item
 
 _ = lambda x: x
 
@@ -729,7 +729,7 @@ class Parser:
                 else:
                     err = True
                 if err: # not a interwiki link / not in interwiki map
-                    item = Manager(self.request, page_name_all, formatter=self.formatter).get_item()
+                    item = Item.create(self.request, page_name_all, formatter=self.formatter)
                     desc = self._transclude_description(desc, page_name_all)
                     tag_attrs, query_args = self._get_params(params,
                                                              tag_attrs={},
