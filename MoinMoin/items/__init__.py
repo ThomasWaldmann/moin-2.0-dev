@@ -24,7 +24,8 @@ from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
 from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.Page import Page
-from MoinMoin.Page import DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+from MoinMoin.Page import MIMETYPE, DELETED, \
+                          EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                           EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
@@ -40,7 +41,7 @@ class Item(object):
         except NoSuchItemError:
             class DummyRev(dict):
                 def __init__(self, mimetype):
-                    self['mimetype'] = mimetype
+                    self[MIMETYPE] = mimetype
                 def read_data(self):
                     return ''
             rev = DummyRev(mimetype)
@@ -50,7 +51,7 @@ class Item(object):
             except NoSuchRevisionError:
                 rev = item.get_revision(-1) # fall back to current revision
                 # XXX add some message about invalid revision
-        mimetype = rev.get("mimetype") or 'application/x-unknown' # XXX why do we need ... or ..?
+        mimetype = rev.get(MIMETYPE) or 'application/x-unknown' # XXX why do we need ... or ..?
 
         def _find_item_class(mimetype, BaseClass, best_match_len=-1):
             #logging.debug("_find_item_class(%r,%r,%r)" % (mimetype, BaseClass, best_match_len))
@@ -247,7 +248,7 @@ class Item(object):
             rev_no = currentrev.revno
             if mimetype is None:
                 # if we didn't get mimetype info, thus reusing the one from current rev:
-                mimetype = currentrev.get("mimetype")
+                mimetype = currentrev.get(MIMETYPE)
         except NoSuchRevisionError:
             rev_no = -1
         newrev = storage_item.create_revision(rev_no + 1)
@@ -267,7 +268,7 @@ class Item(object):
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
         # allow override by give metadata:
-        newrev["mimetype"] = meta.get('mimetype', mimetype)
+        newrev[MIMETYPE] = meta.get(MIMETYPE, mimetype)
         newrev[EDIT_LOG_ACTION] = action
         newrev[EDIT_LOG_ADDR] = request.remote_addr
         newrev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
@@ -297,7 +298,7 @@ class Item(object):
 
         # We only want the sub-item part of the item names, not the whole item objects.
         prefix_len = len(prefix)
-        items = [(item.name, item.name[prefix_len:], item.get_revision(-1).get("mimetype"))
+        items = [(item.name, item.name[prefix_len:], item.get_revision(-1).get(MIMETYPE))
                  for item in item_iterator]
         return sorted(items)
 
@@ -424,7 +425,7 @@ There is no help, you're doomed!
                 editor=user.get_printable_editor(self.request,
                        r[EDIT_LOG_USERID], r[EDIT_LOG_ADDR], r[EDIT_LOG_HOSTNAME]) or _("N/A"),
                 comment=r.get(EDIT_LOG_COMMENT, ''),
-                mimetype=r.get('mimetype', ''),
+                mimetype=r.get(MIMETYPE, ''),
             ))
         return log
 
@@ -532,7 +533,7 @@ There is no help, you're doomed!
         else: # content = item revision
             rev = self.rev
             try:
-                mimestr = rev["mimetype"]
+                mimestr = rev[MIMETYPE]
             except KeyError:
                 mimestr = mimetypes.guess_type(rev.item.name)[0]
             mt = wikiutil.MimeType(mimestr=mimestr)
@@ -776,7 +777,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
             ]
             cache = SendCache.from_meta(request, cache_meta)
             if not cache.exists():
-                content_type = self.rev['mimetype']
+                content_type = self.rev[MIMETYPE]
                 size = (width or 99999, height or 99999)
                 transformed_image = self._transform(content_type, size=size, transpose_op=transpose)
                 cache.put(transformed_image, content_type=content_type)
