@@ -20,7 +20,7 @@ from MoinMoin.Page import ACL
 from MoinMoin.security import AccessControlList
 
 from MoinMoin.storage import Backend
-from MoinMoin.storage.error import NoSuchItemError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 ADMIN = 'admin'
 READ = 'read'
@@ -33,8 +33,9 @@ class AccessDeniedError(Exception):
 
 
 class AclWrapperBackend(Backend):
-    def __init__(self, request, backend):
-        self.backend = backend
+    def __init__(self, request):
+        self.request = request
+        self.backend = request.cfg.data_backend
         self.username = request.user.name
         self.acl_hierarchic = request.cfg.acl_hierarchic
         self.acl_before = request.cfg.cache.acl_rights_before
@@ -101,13 +102,14 @@ class AclWrapperBackend(Backend):
 
     def _get_acl(self, itemname):
         """ get ACL strings from metadata and return ACL object """
-        item = self.backend.get_item(itemname)
-        # we always use the ACLs set on the latest revision:
-        current_rev = item.get_revision(-1)
         try:
+            item = self.backend.get_item(itemname)
+            # we always use the ACLs set on the latest revision:
+            current_rev = item.get_revision(-1)
             acls = current_rev[ACL]
-        except KeyError:
-            acls = []  # do not use default acl here
+        except (NoSuchItemError, KeyError):
+            # do not use default acl here
+            acls = []
         if not isinstance(acls, (tuple, list)):
             acls = (acls, )
         return AccessControlList(self.request.cfg, acls)
@@ -165,5 +167,3 @@ class AclWrapperBackend(Backend):
             return allowed
 
         return False
-
-
