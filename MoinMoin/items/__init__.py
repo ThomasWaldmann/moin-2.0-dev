@@ -33,6 +33,45 @@ from MoinMoin.items.sendcache import SendCache
 
 class Item(object):
 
+    @classmethod
+    def create(cls, request, item_name, mimetype='application/x-unknown', rev_no=-1, formatter=None):
+        try:
+            item = request.data_backend.get_item(item_name)
+        except NoSuchItemError:
+            class DummyRev(dict):
+                def __init__(self, mimetype):
+                    self['mimetype'] = mimetype
+                def read_data(self):
+                    return ''
+            rev = DummyRev(mimetype)
+        else:
+            try:
+                rev = item.get_revision(rev_no)
+            except NoSuchRevisionError:
+                rev = item.get_revision(-1) # fall back to current revision
+                # XXX add some message about invalid revision
+        mimetype = rev.get("mimetype") or 'application/x-unknown' # XXX why do we need ... or ..?
+
+        def _find_item_class(mimetype, BaseClass, best_match_len=-1):
+            #logging.debug("_find_item_class(%r,%r,%r)" % (mimetype, BaseClass, best_match_len))
+            Class = None
+            for ItemClass in BaseClass.__subclasses__():
+                for supported_mimetype in ItemClass.supported_mimetypes:
+                    if mimetype.startswith(supported_mimetype):
+                        match_len = len(supported_mimetype)
+                        if match_len > best_match_len:
+                            best_match_len = match_len
+                            Class = ItemClass
+                            #logging.debug("_find_item_class: new best match: %r by %r)" % (supported_mimetype, ItemClass))
+                best_match_len, better_Class = _find_item_class(mimetype, ItemClass, best_match_len)
+                if better_Class:
+                    Class = better_Class
+            return best_match_len, Class
+
+        ItemClass = _find_item_class(mimetype, cls)[1]
+        logging.debug("ItemClass %r handles %r" % (ItemClass, mimetype))
+        return ItemClass(request, item_name=item_name, rev=rev, mimetype=mimetype, formatter=formatter)
+
     def __init__(self, request, item_name, rev=None, mimetype=None, formatter=None):
         self.request = request
         self.env = request.theme.env
@@ -865,52 +904,4 @@ class PythonSrc(MoinParserSupported):
     supported_mimetypes = ['text/x-python']
     format = 'highlight'
     format_args = 'python'
-
-
-class Manager(object):
-
-    def __init__(self, request, item_name, mimetype='application/x-unknown', rev_no=-1, formatter=None):
-        self.request = request
-        self.item_name = item_name
-        self.item_mimetype = mimetype
-        self.rev_no = rev_no
-        self.formatter = formatter
-
-    def _find_item_class(self, mimetype, BaseClass=Item, best_match_len=-1):
-        #logging.debug("_find_item_class(%r,%r,%r)" % (mimetype, BaseClass, best_match_len))
-        Class = None
-        for ItemClass in BaseClass.__subclasses__():
-            for supported_mimetype in ItemClass.supported_mimetypes:
-                if mimetype.startswith(supported_mimetype):
-                    match_len = len(supported_mimetype)
-                    if match_len > best_match_len:
-                        best_match_len = match_len
-                        Class = ItemClass
-                        #logging.debug("_find_item_class: new best match: %r by %r)" % (supported_mimetype, ItemClass))
-            best_match_len, better_Class = self._find_item_class(mimetype, ItemClass, best_match_len)
-            if better_Class:
-                Class = better_Class
-        return best_match_len, Class
-
-    def get_item(self):
-        request = self.request
-        try:
-            item = request.data_backend.get_item(self.item_name)
-        except NoSuchItemError:
-            class DummyRev(dict):
-                def __init__(self, mimetype):
-                    self['mimetype'] = mimetype
-                def read_data(self):
-                    return ''
-            rev = DummyRev(self.item_mimetype)
-        else:
-            try:
-                rev = item.get_revision(self.rev_no)
-            except NoSuchRevisionError:
-                rev = item.get_revision(-1) # fall back to current revision
-                # XXX add some message about invalid revision
-        mimetype = rev.get("mimetype") or 'application/x-unknown' # XXX why do we need ... or ..?
-        ItemClass = self._find_item_class(mimetype)[1]
-        logging.debug("ItemClass %r handles %r" % (ItemClass, mimetype))
-        return ItemClass(request, item_name=self.item_name, rev=rev, mimetype=mimetype, formatter=self.formatter)
 

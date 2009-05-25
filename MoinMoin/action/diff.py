@@ -7,7 +7,7 @@
     @copyright: 2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
-from MoinMoin.items import Manager
+from MoinMoin.items import Item
 
 def execute(item_name, request):
     try:
@@ -73,7 +73,7 @@ def execute(item_name, request):
             # nothing in common
             commonmt = ''
 
-    item = Manager(request, item_name, mimetype=commonmt, rev_no=newrevno).get_item()
+    item = Item.create(request, item_name, mimetype=commonmt, rev_no=newrevno)
     content = item.do_diff(oldrev, newrev)
     request.theme.render_content(item_name, content)
 
