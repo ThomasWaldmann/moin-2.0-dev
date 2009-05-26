@@ -112,6 +112,8 @@ def url_unquote(s, want_unicode=None):
         assert want_unicode is None
     except AssertionError:
         log.exception("call with deprecated want_unicode param, please fix caller")
+    if isinstance(s, unicode):
+        s = s.encode(config.charset)
     return werkzeug.url_unquote(s, charset=config.charset, errors='fallback:iso-8859-1')
 
 
@@ -609,15 +611,15 @@ def join_wiki(wikiurl, wikitail):
 #############################################################################
 
 def isSystemPage(request, pagename):
-    """ Is this a system page? Uses AllSystemPagesGroup internally.
+    """ Is this a system page?
 
     @param request: the request object
     @param pagename: the page name
     @rtype: bool
     @return: true if page is a system page
     """
-    return (request.dicts.has_member('SystemPagesGroup', pagename) or
-        isTemplatePage(request, pagename))
+    from MoinMoin import i18n
+    return pagename in i18n.system_pages or isTemplatePage(request, pagename)
 
 
 def isTemplatePage(request, pagename):
@@ -853,6 +855,7 @@ MIMETYPES_MORE = {
  '.cfg': 'text/plain',
  '.conf': 'text/plain',
  '.irc': 'text/plain',
+ '.md5': 'text/plain',
 }
 [mimetypes.add_type(mimetype, ext, True) for ext, mimetype in MIMETYPES_MORE.items()]
 

@@ -1,23 +1,8 @@
-MoinMoin Documentation Overview
-===============================
-
-docs/INSTALL.html: generic instructions about installing MoinMoin
-
-docs/UPDATE.html: generic instructions about updating MoinMoin
-
-docs/README.migration: migration procedure for your data_dir
-
-docs/CHANGES (this file): please completely read it until you reach the version
-                          you were using until now - otherwise you might miss
-                          some important upgrading and configuration hints.
-                          Starting with 1.5.3, update installation hints are
-                          marked with HINT. They assume you are upgrading from
-                          the last release version before (e.g. from 1.5.2 to
-                          1.5.3).
-
-
 MoinMoin Version History
 ========================
+
+Please note: Starting from the MoinMoin version you used previously, you
+should read all more recent entries (or at least everything marked with HINT).
 
 This release has known bugs (see MoinMoin:MoinMoinBugs), but we think it is
 already better than the previous stable release. Our release policy is not
@@ -117,6 +102,43 @@ Version 1.9.0beta1:
       looked at REMOTE_USER environment variable and relied on the server
       doing the authentication (could be http basic auth or any other auth).
       See HelpOnAuthentication.
+
+
+Version 1.8.3:
+  Bug fixes:
+    * AttachFile XSS fixes: move escaping to error_msg / upload_form
+    * AttachFile move: add more escaping (maybe not XSS exploitable though)
+    * email attachments import with xapian indexing enabled: fix AttributeError
+    * fix wrong links in attachment notifications
+    * AttachFile do=view: quote filename and pagename params for EmbedObject
+      macro call
+    * AttachFile: fix exception when someone just clicks on upload, without
+      giving a file
+    * ldap_login: use None as default value for ssl certs/keys (using '' for
+      the pathes lets it fail with Connect Error)
+    * release edit lock if someone saves an unchanged page
+    * fix sendmail.encodeAddress (do not [QP] encode blanks, do not un-
+      necessarily use [QP] encoding for pure ascii mail addresses)
+    * Fixed docs bug: see HINT about secrets configuration at version 1.8.0
+      (1.8.0 Other changes).
+    * backup action: add 'self' dummy argument for backup_exclude function
+    * login action: fix formatting of error messages
+    * unsubscribe action: add msg types so icons get displayed
+    * fix quoting for pagehits stats (info action) - was not working for pagenames with blanks
+    * macro.TableOfContents: bug fix for MoinMoinBugs/TableOfContentsIgnoresSectionNumbersPragma
+
+  New features:
+    * added modernized_cms theme
+    * use url_prefix_fckeditor if you don't want to use the builtin FCKeditor
+      of moin, but a separate one at some specific url
+    * action.Load: added textcha feature
+    * add mumble protocol (nice and good quality F/OSS VOIP conference chat sw)
+    * ldap auth: new name_callback param to create a custom wiki username (not
+      the ldap login username).
+
+  Other changes:
+    * add compatibility code for set to xapwrap.index (fix py 2.6 warnings)
+    * wikiutil: MIMETYPES_MORE extended for .md5 as text/plain
 
 
 Version 1.8.2:
@@ -283,6 +305,21 @@ Version 1.8.0:
       parameter is no longer supported.
 
   Other Changes: =============================================================
+    * HINT: new configuration for misc. secrets, please use either:
+          secrets = "MySecretLooongString!" # one secret for everything
+      or:
+          secrets = {
+              'xmlrpc/ProcessMail': 'yourmailsecret', # for mailimport
+              'xmlrpc/RemoteScript': 'yourremotescriptsecret',
+              'action/cache': 'yourcachesecret', # unguessable cache keys
+              'wikiutil/tickets': 'yourticketsecret', # edit tickets
+              'jabberbot': 'yourjabberbotsecret', # jabberbot communication
+          }
+      Secret strings must be at least 10 chars long.
+      Note: mail_import_secret setting is gone, use
+            secrets["xmlrpc/ProcessMail"] instead of it.
+      Note: jabberbot secret setting is gone, use
+            secrets["jabberbot"] instead of it.
     * HINT: user_autocreate setting was removed from wiki configuration and
       replaced by a autocreate=<boolean> parameter of the auth objects that
       support user profile auto creation.
