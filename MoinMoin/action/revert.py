@@ -9,7 +9,10 @@
 from MoinMoin.items import Item
 
 def execute(item_name, request):
-    rev_no = request.rev or -1
+    if request.rev is None:
+        rev_no = -1
+    else:
+        rev_no = request.rev
     item = Item.create(request, item_name, rev_no=rev_no)
     if request.method == 'GET':
         content = item.do_revert()
