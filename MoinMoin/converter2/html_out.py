@@ -207,7 +207,7 @@ class ConverterBase(object):
         try:
             level = int(level)
         except ValueError:
-            raise ElementException
+            raise ElementException('page:outline-level needs to be an integer')
         if level < 1:
             level = 1
         elif level > 6:
@@ -229,7 +229,7 @@ class ConverterBase(object):
             elif generate == 'unordered':
                 ret = self.new(html.ul, attrib_new)
             else:
-                raise ValueError('List label generation not supported: ' + generate)
+                raise ElementException('page:item-label-generate does not support "%s"' % generate)
         else:
             ret = self.new(html.dl, attrib_new)
 
@@ -275,7 +275,7 @@ class ConverterBase(object):
             if item.tag.uri == moin_page.namespace and item.tag.name == 'body':
                 return self.new_copy(self.tag_html_div, item)
 
-        raise RuntimeError(repr(elem[:]))
+        raise RuntimeError('page:page need to contain exactly one page:body tag, got %r' % elem[:])
 
     def visit_moinpage_separator(self, elem):
         return self.new(html.hr)
@@ -438,14 +438,14 @@ class ConverterPage(ConverterBase):
         if f:
             return f(elem)
 
-        raise ElementException(n)
+        raise ElementException('Unable to handle page:%s' % elem.tag.name)
 
     def visit_moinpage_h(self, elem):
         level = elem.get(moin_page.outline_level, 1)
         try:
             level = int(level)
         except ValueError:
-            raise ElementException
+            raise ElementException('page:outline-level needs to be an integer')
         if level < 1:
             level = 1
         elif level > 6:
