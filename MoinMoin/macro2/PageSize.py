@@ -7,6 +7,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from MoinMoin.Page import Page
 from MoinMoin.macro2._base import MacroNumberPageLinkListBase
 
 class Macro(MacroNumberPageLinkListBase):
@@ -15,10 +16,11 @@ class Macro(MacroNumberPageLinkListBase):
             return ''
 
         # get list of pages and their objects
-        pages = self.request.rootpage.getPageDict()
+        pages = self.request.rootpage.getPageList()
 
         # get sizes and sort them
-        sizes_pagenames = [(page.size(), name) for name, page in pages.items()]
+        sizes_pagenames = [(Page(self.request, name).size(), name)
+                for name, page in pages.items()]
         sizes_pagenames.sort()
         sizes_pagenames.reverse()
 

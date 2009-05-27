@@ -12,17 +12,26 @@ work without setting them (like data_dir and underlay_dir).
 """
 
 import os
-
 from MoinMoin.config.multiconfig import DefaultConfig
-
+from MoinMoin.storage.backends import memory, flatfile, clone
 
 class Config(DefaultConfig):
     sitename = u'Developer Test Wiki'
     logo_string = sitename
 
-    _base_dir = os.path.join(os.path.dirname(__file__), '../../tests/wiki')
-    data_dir = os.path.join(_base_dir, "data")
-    data_underlay_dir = os.path.join(_base_dir, "underlay")
+    _base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
+    data_dir = os.path.join(_base_dir, "data") # needed for plugins package TODO
+    #data_underlay_dir = os.path.join(_base_dir, "underlay")
+    flat_dir = os.path.join(os.path.dirname(__file__), 'data')
+
+    # configure backends
+    data_backend = user_backend = None
+    def provide_fresh_backends(self):
+        self.data_backend = memory.MemoryBackend()
+        self.test_num_pages = len(clone(flatfile.FlatFileBackend(self.flat_dir), self.data_backend)[0])
+        self.user_backend = memory.MemoryBackend()
+
+    page_front_page = 'FrontPage'
 
     #show_hosts = 1
 
@@ -30,4 +39,3 @@ class Config(DefaultConfig):
 
     # used to check if it is really a wiki we may modify
     is_test_wiki = True
-

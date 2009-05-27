@@ -28,7 +28,7 @@ class Macro(MacroInlineBase):
         links = max(links, 1) # at least 1 link
 
         # Get full page unfiltered page list - very fast!
-        all_pages = request.rootpage.getPageList(user='', exists=0)
+        all_pages = list(request.rootpage.getPageList(user='', exists=0))
 
         # Now select random page from the full list, and if it exists and we
         # can read it, save.

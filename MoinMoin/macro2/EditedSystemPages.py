@@ -24,7 +24,7 @@ class Macro(MacroPageLinkListBase):
 
         # Get page filtered page list. We don't need to filter by
         # exists, because our filter check this already.
-        pagenames = self.request.rootpage.getPageList(filter=filterfn, exists=0)
+        pagenames = list(self.request.rootpage.getPageList(filter=filterfn, exists=0))
 
         # Format as numbered list, sorted by page name
         pagenames.sort()

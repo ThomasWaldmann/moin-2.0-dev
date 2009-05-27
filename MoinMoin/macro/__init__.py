@@ -219,7 +219,7 @@ class Macro:
                 if name == last_page:
                     continue
                 output.append(fmt.listitem(1))
-                output.append(Page(request, name).link_to(request, attachment_indicator=1))
+                output.append(Page(request, name).link_to(request))
                 output.append(fmt.listitem(0))
             output.append(fmt.bullet_list(0))
 

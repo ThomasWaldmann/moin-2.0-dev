@@ -21,11 +21,11 @@ from MoinMoin.auth import MoinAuth
 import MoinMoin.auth as authmodule
 import MoinMoin.events as events
 from MoinMoin.events import PageChangedEvent, PageRenamedEvent
-from MoinMoin.events import PageDeletedEvent, PageCopiedEvent
-from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
+from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
+from MoinMoin.Page import DELETED
 from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
@@ -150,7 +150,7 @@ This might happen if you are trying to use a pre 1.3 configuration file, or
 made a syntax or spelling error.
 
 Another reason for this could be a name clash. It is not possible to have
-config names like e.g. stats.py - because that collides with MoinMoin/stats/ -
+config names like e.g. storage.py - because that collides with MoinMoin/storage/ -
 have a look into your MoinMoin code directory what other names are NOT
 possible.
 
@@ -230,14 +230,13 @@ class ConfigFunctionality(object):
     # will be lazily loaded by interwiki code when needed (?)
     shared_intermap_files = None
 
+    # storage index configuration (used by indexed backend only)
+    indexes = ["name", "openids", "jid", "email"]
+
     def __init__(self, siteid):
         """ Init Config instance """
         self.siteid = siteid
         self.cache = CacheClass()
-
-        from MoinMoin.Page import ItemCache
-        self.cache.meta = ItemCache('meta')
-        self.cache.pagelists = ItemCache('pagelists')
 
         if self.config_check_enabled:
             self._config_check()
@@ -246,7 +245,7 @@ class ConfigFunctionality(object):
         self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ('user', 'cache', 'plugin'):
+        for dirname in ('user', 'cache', 'plugin', 'tmp', 'indexes'):
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
@@ -272,8 +271,6 @@ class ConfigFunctionality(object):
         self.cache.page_template_regexact = re.compile(u'^%s$' % self.page_template_regex, re.UNICODE)
 
         self.cache.ua_spiders = self.ua_spiders and re.compile(self.ua_spiders, re.IGNORECASE)
-
-        self._check_directories()
 
         if not isinstance(self.superuser, list):
             msg = """The superuser setting in your wiki configuration is not a list
@@ -368,6 +365,10 @@ class ConfigFunctionality(object):
 
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
+
+        assert hasattr(self, "user_backend"), "error in config: no user storage configured"
+        assert hasattr(self, "data_backend"), "error in config: no data storage configured"
+        # XXX: add defaults again
 
         if self.url_prefix_fckeditor is None:
             self.url_prefix_fckeditor = self.url_prefix_local + '/applets/FCKeditor'
@@ -721,6 +722,8 @@ options_no_group_name = {
     ('auth_methods_trusted', ['http', 'given', 'xmlrpc_applytoken'], # Note: 'http' auth method is currently just a redirect to 'given'
      'authentication methods for which users should be included in the special "Trusted" ACL group.'),
     ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes. If you don't setup own secret(s), a secret string will be auto-generated from other config settings."""),
+    # use sha512 as soon as we require python2.5 because sha1 is weak:
+    ('hash_algorithm', 'sha1', "Name of hash algorithm used to compute data hashes"),
     ('DesktopEdition',
      False,
      "if True, give all local users special powers - ''only use this for a local desktop wiki!''"),
@@ -730,7 +733,7 @@ options_no_group_name = {
     ('actions_excluded',
      ['xmlrpc',  # we do not want wiki admins unknowingly offering xmlrpc service
       'MyPages',  # only works when used with a non-default SecurityPolicy (e.g. autoadmin)
-      'CopyPage',  # has questionable behaviour regarding subpages a user can't read, but can copy
+      'copy',  # has questionable behaviour regarding subpages a user can't read, but can copy
      ],
      "Exclude unwanted actions (list of strings)"),
 
@@ -749,18 +752,17 @@ options_no_group_name = {
     ('surge_action_limits',
      {# allow max. <count> <action> requests per <dt> secs
         # action: (count, dt)
-        'all': (30, 30), # all requests (except cache/AttachFile action) count for this limit
+        'all': (30, 30), # all requests (except cache/get action) count for this limit
         'default': (30, 60), # default limit for actions without a specific limit
         'show': (30, 60),
         'recall': (10, 120),
-        'raw': (20, 40),  # some people use this for css
         'diff': (30, 60),
         'fullsearch': (10, 120),
-        'edit': (30, 300), # can be lowered after making preview different from edit
+        'modify': (30, 300), # can be lowered after making preview different from edit
         'rss_rc': (1, 60),
         # The following actions are often used for images - to avoid pages with lots of images
         # (like photo galleries) triggering surge protection, we assign rather high limits:
-        'AttachFile': (90, 60),
+        'get': (90, 60),
         'cache': (600, 30), # cache action is very cheap/efficient
      },
      "Surge protection tries to deny clients causing too much load/traffic, see /SurgeProtection."),
@@ -800,10 +802,10 @@ options_no_group_name = {
     ('interwikiname', None, "unique and stable InterWiki name (prefix, moniker) of the site [Unicode], or None"),
     ('logo_string', None, "The wiki logo top of page, HTML is allowed (`<img>` is possible as well) [Unicode]"),
     ('html_pagetitle', None, "Allows you to set a specific HTML page title (if None, it defaults to the value of `sitename`)"),
-    ('navi_bar', [u'RecentChanges', u'FindPage', u'HelpContents', ],
+    ('navi_bar', [u'FindPage', u'HelpContents', ],
      'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode strings]'),
 
-    ('theme_default', 'modern',
+    ('theme_default', 'modernized',
      "the name of the theme that is used by default (see HelpOnThemes)"),
     ('theme_force', False,
      "if True, do not allow to change the theme"),
@@ -834,7 +836,7 @@ options_no_group_name = {
     ('datetime_fmt', '%Y-%m-%d %H:%M:%S', 'Default format for dates and times (when the user has no preferences or chose the "default" date format)'),
     ('chart_options', None, "If you have gdchart, use something like chart_options = {'width': 720, 'height': 540}"),
 
-    ('edit_bar', ['Edit', 'Comments', 'Discussion', 'Info', 'Subscribe', 'Quicklink', 'Attachments', 'ActionsMenu'],
+    ('edit_bar', ['Modify', 'Download', 'Comments', 'Discussion', 'Subscribe', 'Quicklink', 'ActionsMenu'],
      'list of edit bar entries'),
     ('history_count', (100, 200), "number of revisions shown for info/history action (default_count_shown, max_count_shown)"),
 
@@ -857,30 +859,6 @@ options_no_group_name = {
        '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 4.01</a>',
      ],
      'list with html fragments with logos or strings for crediting.'),
-
-    # These icons will show in this order in the iconbar, unless they
-    # are not relevant, e.g email icon when the wiki is not configured
-    # for email.
-    ('page_iconbar', ["up", "edit", "view", "diff", "info", "subscribe", "raw", "print", ],
-     'list of icons to show in iconbar, valid values are only those in page_icons_table. Available only in classic theme.'),
-
-    # Standard buttons in the iconbar
-    ('page_icons_table',
-     {
-        # key           pagekey, querystr dict, title, icon-key
-        'diff': ('page', {'action': 'diff'}, _("Diffs"), "diff"),
-        'info': ('page', {'action': 'info'}, _("Info"), "info"),
-        'edit': ('page', {'action': 'edit'}, _("Edit"), "edit"),
-        'unsubscribe': ('page', {'action': 'unsubscribe'}, _("UnSubscribe"), "unsubscribe"),
-        'subscribe': ('page', {'action': 'subscribe'}, _("Subscribe"), "subscribe"),
-        'raw': ('page', {'action': 'raw'}, _("Raw"), "raw"),
-        'xml': ('page', {'action': 'show', 'mimetype': 'text/xml'}, _("XML"), "xml"),
-        'print': ('page', {'action': 'print'}, _("Print"), "print"),
-        'view': ('page', {}, _("View"), "view"),
-        'up': ('page_parent_page', {}, _("Up"), "up"),
-     },
-     "dict of {'iconname': (url, title, icon-img-key), ...}. Available only in classic theme."),
-
   )),
   # ==========================================================================
   'editor': ('Editor related', None, (
@@ -895,7 +873,7 @@ options_no_group_name = {
 
   )),
   # ==========================================================================
-  'paths': ('Paths', None, (
+  'data': ('Data storage', None, (
     ('data_dir', './data/', "Path to the data directory containing your (locally made) wiki pages."),
     ('data_underlay_dir', './underlay/', "Path to the underlay directory containing distribution system and help pages."),
     ('cache_dir', None, "Directory for caching, by default computed from `data_dir`/cache."),
@@ -908,6 +886,12 @@ options_no_group_name = {
      'Path to the directory with the Docbook to HTML XSLT files (optional, used by the docbook parser). The default value is correct for Debian Etch.'),
     ('shared_intermap', None,
      "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
+    ('data_backend', None,
+     'Page storage backend; the None default will make Moin construct a backend based on the `data_dir` setting.'),
+    ('user_backend', None,
+     'User storage backend; the None default will make Moin construct a backend based on the `user_dir` setting.'),
+    ('underlay_backend', None,
+     'Underlay storage backend; if None and `data_backend` is also None Moin will construct a backend based on the `underlay_data_dir` setting'),
   )),
   # ==========================================================================
   'urls': ('URLs', None, (
@@ -965,7 +949,6 @@ options_no_group_name = {
         PageDeletedEvent.__name__,
         PageCopiedEvent.__name__,
         PageRevertedEvent.__name__,
-        FileAttachedEvent.__name__,
      ], None),
     ('jabber_subscribed_events_default', [], None),
 

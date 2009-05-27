@@ -9,13 +9,13 @@
 import os, StringIO
 
 from MoinMoin import caching
-from MoinMoin.action import AttachFile, cache
+from MoinMoin.action import cache
 
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestSendCached:
     """ testing action cache """
-    pagename = u"AutoCreatedSillyPageToTestAttachments"
+    pagename = u"AutoCreatedSillyPageToTest"
 
     def test_cache_key_content(self):
         request = self.request
@@ -27,33 +27,6 @@ class TestSendCached:
         assert result3 != result2  # different for different content
         result4 = cache.key(request, content='foo'*1000, secret='baz')
         assert len(result4) == len(result3)  # same length of key for different input lengths
-
-    def test_cache_key_attachment(self):
-        request = self.request
-        pagename = self.pagename
-        attachname = 'foo.txt'
-
-        become_trusted(request)
-        create_page(request, pagename, u"Foo!")
-
-        AttachFile.add_attachment(request, pagename, attachname, "Test content1", True)
-
-        result1 = cache.key(request, itemname=pagename, attachname=attachname, secret='bar')
-        result2 = cache.key(request, itemname=pagename, attachname=attachname, secret='baz')
-        assert result1  # not empty
-        assert result1 != result2  # different for different secret
-
-        # test below does not work, because mtime is often same, inode can be same due to how add_attachment
-        # works, file size is same, attachment name is same, wikiname/pagename is same.
-        # In practice, this should rather rarely cause problems:
-        #AttachFile.add_attachment(request, pagename, attachname, "Test content2", True)
-        #result3 = cache.key(request, itemname=pagename, attachname=attachname, secret='baz')
-        #assert result3 != result2  # different for different content
-
-        AttachFile.add_attachment(request, pagename, attachname, "Test content33333", True)
-        result4 = cache.key(request, itemname=pagename, attachname=attachname, secret='baz')
-        assert len(result4) == len(result2)  # same length of key for different input lengths
-        nuke_page(request, pagename)
 
     def test_put_cache_minimal(self):
         """Test if put_cache() works"""
