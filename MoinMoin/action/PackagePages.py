@@ -161,7 +161,7 @@ class PackagePages:
 
         titles = []
         for title in pagelist.hits:
-            if not wikiutil.isSystemPage(request, title.page_name) or not title.page.getPageStatus()[0]:
+            if not wikiutil.isSystemPage(request, title.page_name) or not title.page.isUnderlayPage():
                 titles.append(title.page_name)
         return titles
 
@@ -202,7 +202,7 @@ class PackagePages:
             files = _get_files(self.request, page.page_name)
             script.append(packLine(["AddRevision", str(cnt), page.page_name, userid, "Created by the PackagePages action."]))
 
-            timestamp = wikiutil.version2timestamp(page.mtime_usecs())
+            timestamp = page.mtime()
             zi = zipfile.ZipInfo(filename=str(cnt), date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
             zi.compress_type = COMPRESSION_LEVEL
             zf.writestr(zi, page.get_raw_body().encode("utf-8"))

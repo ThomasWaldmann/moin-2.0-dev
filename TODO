@@ -1,0 +1,70 @@
+AttachFile is dead
+------------------
+
+action=get is the new way for downloading or raw viewing of an item
+
+remove AttachFile usage from packages / PackagePages refactor
+
+replace AttachList(pagename=None, mime_type='*') macro (removed) by SubItems macro (todo)
+mig script?
+
+same for AttachInfo(pagename=None) ?
+
+moin maint reducewiki / mkpagepacks / cleanpage
+moin export dump
+
+consequences on migration scripts ?
+
+ATT* in edit-log?
+
+Removed wiki xmlrpc attachment related parts. Check wikisync & co whether it
+works for any item type / fix xmlrpc accordingly.
+
+
+Page / Page*Editor is almost dead, stuff moving to new MoinMoin.items package
+-----------------------------------------------------------------------------
+
+send_page is not used any more - see MoinMoin.action.show.
+sendEditor is not used any more / action "edit" is "modify" now - see MoinMoin.action.modify.
+Both miss lots of functionality.
+
+Some actions like content/print/format were removed (all called do_show /
+send_page internally).
+
+Page / Page*Editor is deprecated, move functionality from there to MoinMoin.items.
+
+PageGraphicalEditor was removed, it contained only sending of FCKeditor and
+this currently is not used anyway. See 1.9 repo for latest code.
+
+MoinMoin.items has a Item hierarchy for highlevel items (!= storage items), like:
+Item, NonExistent, Binary, Image, Text, ...
+Currently it is all in one file, can be split later.
+
+Everything we want to be able to do with items should be implemented there.
+Stuff shall be implemented at the MOST GENERAL LEVEL of the hierarchy.
+
+"delete" ACL right: kill it, makes no sense.
+"revert" ACL right: same?
+"create" ACL right: add this?
+"move" ACL right: add this? note: includes deletion if implemented by Trash/*
+
+implement deletion as mv X Trash/X - do we still need meta[DELETED] then?
+index pages: could filter by name (thus not displaying Trash/*, except if wanted)
+
+
+templating engine jinja used now
+---------------------------------
+
+See MoinMoin.support.jinja.
+
+Used by new modify and show action.
+
+Only used for content div right now, the theme is still rendered by "old"
+MoinMoin.theme code.
+
+
+tests
+-----
+
+Don't work right now, please help debugging / fixing.
+
