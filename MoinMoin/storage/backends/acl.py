@@ -45,7 +45,15 @@ class AclWrapperBackend(Backend):
     def get_item(self, itemname):
         if not self._may(itemname, READ):
             raise AccessDeniedError()
-        return self.backend.get_item(itemname)
+        # If the backend's author relies on our predefined item class,
+        # all items retrieved from the real backend keep a reference
+        # to their original backend which is then used by the items
+        # methods. Since that bypasses acl checks, we need to replace
+        # that reference with a reference to the AMW which then again
+        # dispatches to the real backend as intended.
+        item = self.backend.get_item(itemname)
+        item._backend = self
+        return item
 
     def create_item(self, itemname):
         if not self._may(itemname, WRITE):
