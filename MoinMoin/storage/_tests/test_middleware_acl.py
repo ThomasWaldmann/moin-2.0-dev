@@ -27,6 +27,7 @@ class TestACLMiddleware(object):
         rev = item.create_revision(0)
         rev[ACL] = acl
         item.commit()
+        return item
 
     def test_noaccess(self):
         access = "noaccess"
@@ -40,4 +41,10 @@ class TestACLMiddleware(object):
         item = self.get_item(access)
 
         # Should not...
+        assert py.test.raises(AccessDeniedError, item.create_revision, 1)
+        assert py.test.raises(AccessDeniedError, item.change_metadata)
+
+    def test_write_after_create(self):
+        access = "writeaftercreate"
+        item = self.create_item_acl(access, "All:")
         assert py.test.raises(AccessDeniedError, item.create_revision, 1)
