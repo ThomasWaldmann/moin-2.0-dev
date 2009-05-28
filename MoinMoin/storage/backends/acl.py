@@ -42,6 +42,8 @@ class AclWrapperBackend(Backend):
         self.acl_default = request.cfg.cache.acl_rights_default
         self.acl_after = request.cfg.cache.acl_rights_after
 
+        self._commit_item = self.backend._commit_item
+
     def get_item(self, itemname):
         if not self._may(itemname, READ):
             raise AccessDeniedError()
