@@ -30,21 +30,21 @@ class TestACLMiddleware(object):
         return item
 
     def test_noaccess(self):
-        access = "noaccess"
-        self.create_item_acl(access, "All:")
-        assert py.test.raises(AccessDeniedError, self.get_item, access)
+        name = "noaccess"
+        self.create_item_acl(name, "All:")
+        assert py.test.raises(AccessDeniedError, self.get_item, name)
 
     def test_read_access_allowed(self):
-        access = "readaccessallowed"
-        self.create_item_acl(access, "All:read")
+        name = "readaccessallowed"
+        self.create_item_acl(name, "All:read")
         # Should simply pass...
-        item = self.get_item(access)
+        item = self.get_item(name)
 
         # Should not...
         assert py.test.raises(AccessDeniedError, item.create_revision, 1)
         assert py.test.raises(AccessDeniedError, item.change_metadata)
 
     def test_write_after_create(self):
-        access = "writeaftercreate"
-        item = self.create_item_acl(access, "All:")
+        name = "writeaftercreate"
+        item = self.create_item_acl(name, "All:")
         assert py.test.raises(AccessDeniedError, item.create_revision, 1)
