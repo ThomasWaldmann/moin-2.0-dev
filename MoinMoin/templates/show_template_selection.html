@@ -1,0 +1,18 @@
+{% extends "base_contentonly.html" %}
+{% block content %}
+<h1>Create new item?</h1>
+<p>
+You can either <a href="?do=modify&mimetype={{ mimetype|urlquote }}">create the item from scratch</a> or select a template.
+</p>
+
+<h2>Available template items</h2>
+<ul>
+    {% for template in templates %}
+    <li>
+    <a href="?do=modify&mimetype={{ mimetype|urlquote }}&template={{ template|urlquote }}">{{ template|e }}</a>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
+
