@@ -269,7 +269,7 @@ class Item(object):
             rev_no = -1
         newrev = storage_item.create_revision(rev_no + 1)
         if not data:
-            # saving empty data is same as deleting
+            # saving empty data automatically deletes the item
             # XXX unclear: do we have meta-only items that shall not be "deleted" state?
             newrev[DELETED] = True
             comment = comment or 'deleted'
@@ -277,6 +277,9 @@ class Item(object):
             # TODO Put metadata into newrev here for now. There should be a safer way
             #      of input for this.
             newrev[k] = v
+        if data:
+            # saving non-empty data automatically undeletes the item
+            newrev.pop(DELETED, False)
         hash_name, hash_hexdigest = self._write_stream(data, newrev)
         newrev[hash_name] = hash_hexdigest
         timestamp = time.time()
