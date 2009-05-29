@@ -27,7 +27,6 @@ ADMIN = 'admin'
 READ = 'read'
 WRITE = 'write'
 DELETE = 'delete'
-REVERT = 'revert'
 
 class AccessDeniedError(Exception):
     """ raised when ACLs deny access to item """
