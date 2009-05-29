@@ -42,6 +42,7 @@ class Item(object):
             class DummyRev(dict):
                 def __init__(self, mimetype):
                     self[MIMETYPE] = mimetype
+                    self.item = None
                 def read_data(self):
                     return ''
             rev = DummyRev(mimetype)
@@ -119,7 +120,8 @@ class Item(object):
         return '' # TODO create a better method for binary stuff
     data = property(fget=get_data)
 
-    def do_modify(self):
+    def do_modify(self, template_name):
+        # XXX think about and add item template support
         template = self.env.get_template('modify_binary.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.item_name,
@@ -278,10 +280,17 @@ class Item(object):
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
 
+    def search_item(self, term, include_deleted=False):
+        """ search items matching the term """
+        from MoinMoin.search.term import AND, NOT, LastRevisionMetaDataMatch
+        if not include_deleted:
+            term = AND(term, NOT(LastRevisionMetaDataMatch('deleted', True)))
+        return self.request.data_backend.search_item(term)
+
     def get_index(self):
         """ create an index of sub items of this item """
         import re
-        from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
+        from MoinMoin.search.term import NameRE
 
         if self.item_name:
             prefix = self.item_name + u'/'
@@ -292,9 +301,7 @@ class Item(object):
         sub_item_re = u"^%s.*" % re.escape(prefix)
         regex = re.compile(sub_item_re, re.UNICODE)
 
-        item_iterator = self.request.data_backend.search_item(
-                            AND(NameRE(regex),
-                                NOT(LastRevisionMetaDataMatch('deleted', True))))
+        item_iterator = self.search_item(NameRE(regex))
 
         # We only want the sub-item part of the item names, not the whole item objects.
         prefix_len = len(prefix)
@@ -320,16 +327,6 @@ class Item(object):
 
 class NonExistent(Item):
     supported_mimetypes = ['application/x-unknown']
-    template_groups = [
-        ('moin wiki text items', [
-            ('HomePageTemplate', 'home page (moin)'),
-            ('GroupPageTemplate', 'group page (moin)'),
-        ]),
-        ('creole wiki text items', [
-            ('CreoleHomePageTemplate', 'home page (creole)'),
-            ('CreoleGroupPageTemplate', 'group page (creole)'),
-        ]),
-    ]
     mimetype_groups = [
         ('page markup text items', [
             ('text/moin-wiki', 'wiki (moin)'),
@@ -383,10 +380,9 @@ class NonExistent(Item):
     ]
 
     def do_show(self):
-        template = self.env.get_template('show_nonexistent.html')
+        template = self.env.get_template('show_type_selection.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.item_name,
-                                  template_groups=self.template_groups,
                                   mimetype_groups=self.mimetype_groups, )
         return content
 
@@ -448,20 +444,53 @@ There is no help, you're doomed!
     def _render_data(self):
         return '' # XXX we can't render the data, maybe show some "data icon" as a placeholder?
 
-    def do_show(self):
-        item = self.rev.item
-        rev_nos = item.list_revisions()
-        log = self._revlog(item, rev_nos)
+    def get_templates(self, mimetype=None):
+        """ create a list of templates (for some specific mimetype) """
+        from MoinMoin.search.term import NameRE, AND, LastRevisionMetaDataMatch
+        regex = self.request.cfg.cache.page_template_regexact
+        term = NameRE(regex)
+        if mimetype:
+            term = AND(term, LastRevisionMetaDataMatch(MIMETYPE, mimetype))
+        item_iterator = self.search_item(term)
+        items = [item.name for item in item_iterator]
+        return sorted(items)
 
-        template = self.env.get_template('show.html')
+    def do_show(self):
+        show_templates = False
+        item = self.rev.item
+        if item is None:
+            # it is the dummy item -> this is a new and empty item
+            show_templates = True
+            rev_nos = log = []
+        else:
+            rev_nos = item.list_revisions()
+            log = self._revlog(item, rev_nos)
+            if self.rev.revno == rev_nos[-1] and self.rev.get(DELETED, False):
+                # last revision is deleted
+                show_templates = True
+        if show_templates:
+            item_templates = self.get_templates(self.mimetype)
+            html_template = 'show_template_selection.html'
+            meta_rendered = data_rendered = ''
+            index = []
+        else:
+            item_templates = []
+            html_template = 'show.html'
+            data_rendered=self._render_data()
+            meta_rendered=self._render_meta()
+            index = self.flat_index()
+
+        template = self.env.get_template(html_template)
         content = template.render(gettext=self.request.getText,
                                   rev=self.rev,
                                   log=log,
-                                  first_rev_no=rev_nos[0],
-                                  last_rev_no=rev_nos[-1],
-                                  data_rendered=self._render_data(),
-                                  meta_rendered=self._render_meta(),
-                                  index=self.flat_index(),
+                                  mimetype=self.mimetype,
+                                  templates=item_templates,
+                                  first_rev_no=rev_nos and rev_nos[0],
+                                  last_rev_no=rev_nos and rev_nos[-1],
+                                  data_rendered=data_rendered,
+                                  meta_rendered=meta_rendered,
+                                  index=index,
                                  )
         return content
 
@@ -819,14 +848,20 @@ class Text(Binary):
         from MoinMoin.util import diff_html
         return diff_html.diff(self.request, oldrev.read(), newrev.read())
 
-    def do_modify(self):
+    def do_modify(self, template_name):
+        if template_name:
+            item = Item.create(self.request, template_name)
+            data_text = self.data_storage_to_internal(item.data)
+        else:
+            data_text = self.data_storage_to_internal(self.data)
+        meta_text = self.meta_dict_to_text(self.meta)
         template = self.env.get_template('modify_text.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.item_name,
                                   rows_data=20, rows_meta=3, cols=80,
                                   revno=0,
-                                  data_text=self.data_storage_to_internal(self.data),
-                                  meta_text=self.meta_dict_to_text(self.meta),
+                                  data_text=data_text,
+                                  meta_text=meta_text,
                                   lang='en', direction='ltr',
                                   help=self.modify_help,
                                  )
