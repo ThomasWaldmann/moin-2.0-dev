@@ -174,23 +174,23 @@ class AclWrapperItem(object):
 
     @require_privilege(WRITE)
     def __setitem__(self, key, value):
-        self._item.__setitem__(key, value)
+        return self._item.__setitem__(key, value)
 
-    @require_privilege(WRITE)
-    def commit(self):
-        return self._item.commit()
+    @require_privilege(DELETE)
+    def __delitem__(self, key):
+        return self._item.__delitem__(key)
 
-    @require_privilege(WRITE)
-    def create_revision(self, revno):
-        return self._item.create_revision(revno)
+    @require_privilege(READ)
+    def __getitem__(self, key):
+        return self._item.__getitem__(key)
+
+    @require_privilege(READ)
+    def keys(self):
+        return self._item.keys()
 
     @require_privilege(WRITE)
     def change_metadata(self):
         return self._item.change_metadata()
-
-    @require_privilege(DELETE, WRITE)
-    def rename(self, newname):
-        return self._item.rename_item(newname)
 
     @require_privilege(WRITE)
     def publish_metadata(self):
@@ -200,3 +200,22 @@ class AclWrapperItem(object):
     def get_revision(self, revno):
         return self._item.get_revision(revno)
 
+    @require_privilege(READ)
+    def list_revisions(self):
+        return self._item.list_revisions()
+
+    @require_privilege(DELETE, WRITE)
+    def rename(self, newname):
+        return self._item.rename_item(newname)
+
+    @require_privilege(WRITE)
+    def commit(self):
+        return self._item.commit()
+
+    # XXX Does this even require a privilege?
+    def rollback(self):
+        return self._item.rollback()
+
+    @require_privilege(WRITE)
+    def create_revision(self, revno):
+        return self._item.create_revision(revno)
