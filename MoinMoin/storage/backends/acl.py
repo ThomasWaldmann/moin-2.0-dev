@@ -63,21 +63,10 @@ class AclWrapperBackend(Backend):
                 yield item
 
     def history(self, reverse=True):
-        """
-        Returns an iterator over ALL revisions of ALL items stored in the
-        backend.
-
-        If reverse is True (default), give history in reverse revision
-        timestamp order, otherwise in revision timestamp order.
-
-        Note: some functionality (e.g. completely cloning one storage into
-              another) requires that the iterator goes over really every
-              revision we have).
-        """
         revisions = []
         for revision in self.backend.history(reverse):
-            # XXX check
-            revisions.append(revision)
+            if self._may(revision.item.name, READ):
+                revisions.append(revision)
 
         # TODO: SORT THIS ACCORDINGLY!
         return iter(revisions)
@@ -177,7 +166,7 @@ class AclWrapperItem(object):
     def __setitem__(self, key, value):
         return self._item.__setitem__(key, value)
 
-    @require_privilege(DELETE)
+    @require_privilege(WRITE)
     def __delitem__(self, key):
         return self._item.__delitem__(key)
 
@@ -205,8 +194,12 @@ class AclWrapperItem(object):
     def list_revisions(self):
         return self._item.list_revisions()
 
-    @require_privilege(DELETE, WRITE)
+    @require_privilege(WRITE)
     def rename(self, newname):
+        # XXX Special case since we need to check newname as well.
+        #     Maybe find a proper solution.
+        if not self._may(newname, WRITE):
+            raise AccessDeniedError()
         return self._item.rename_item(newname)
 
     @require_privilege(WRITE)
