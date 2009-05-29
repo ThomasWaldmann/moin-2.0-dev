@@ -23,13 +23,27 @@ from werkzeug import http_date, quote_etag
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
 from MoinMoin.support.python_compatibility import hash_new
-from MoinMoin.Page import Page
-from MoinMoin.Page import MIMETYPE, DELETED, \
-                          EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
-                          EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 from MoinMoin.items.sendcache import SendCache
+
+# some metadata key constants:
+ACL = "acl"
+
+# special meta-data whose presence indicates that the item is deleted
+DELETED = "deleted"
+
+MIMETYPE = "mimetype"
+SIZE = "size"
+
+EDIT_LOG_ACTION = "edit_log_action"
+EDIT_LOG_ADDR = "edit_log_addr"
+EDIT_LOG_HOSTNAME = "edit_log_hostname"
+EDIT_LOG_USERID = "edit_log_userid"
+EDIT_LOG_EXTRA = "edit_log_extra"
+EDIT_LOG_COMMENT = "edit_log_comment"
+
+EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
 
 
 class Item(object):
@@ -883,6 +897,7 @@ class MoinParserSupported(Text):
     format_args = ''
     def _render_data(self):
         # TODO: switch from Page to Item subclass
+        from MoinMoin.Page import Page
         request = self.request
         page = Page(request, self.item_name)
         pi, body = page.pi, page.data

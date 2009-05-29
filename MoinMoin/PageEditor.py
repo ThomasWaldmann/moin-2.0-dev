@@ -24,9 +24,9 @@ from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent,
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.error import ItemAlreadyExistsError, RevisionAlreadyExistsError, NoSuchRevisionError
-from MoinMoin.Page import DELETED, MIMETYPE, \
-                          EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
-                          EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
+from MoinMoin.items import DELETED, MIMETYPE, \
+                           EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
 import MoinMoin.events.notification as notification
 

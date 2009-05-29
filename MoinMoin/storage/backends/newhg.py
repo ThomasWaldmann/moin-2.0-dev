@@ -33,7 +33,7 @@ try:
     import cdb
 except ImportError:
     from MoinMoin.support import pycdb as cdb
-from MoinMoin.Page import EDIT_LOG_USERID, EDIT_LOG_COMMENT
+from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_COMMENT
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import (BackendError, NoSuchItemError, NoSuchRevisionError,
                                    RevisionNumberMismatchError, ItemAlreadyExistsError,

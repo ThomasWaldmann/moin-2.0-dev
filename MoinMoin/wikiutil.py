@@ -2591,7 +2591,7 @@ def add_metadata_to_body(metadata, data):
     """
     Adds the processing instructions to the data.
     """
-    from MoinMoin.Page import SIZE, EDIT_LOG
+    from MoinMoin.items import SIZE, EDIT_LOG
     READONLY_METADATA = [SIZE] + list(EDIT_LOCK) + EDIT_LOG
 
     parsing_instructions = ["format", "language", "refresh", "acl",
