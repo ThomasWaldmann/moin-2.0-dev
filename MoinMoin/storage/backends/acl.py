@@ -12,7 +12,8 @@
                 2000-2004 Juergen Hermann <jh@web.de>,
                 2003 Gustavo Niemeyer,
                 2005 Oliver Graf,
-                2007 Alexander Schremmer
+                2007 Alexander Schremmer,
+                2009 Christopher Denter
     @license: GNU GPL, see COPYING for details.
 """
 
