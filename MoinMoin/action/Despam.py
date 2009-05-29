@@ -115,7 +115,7 @@ def show_pages(request, pagename, editor, timestamp):
 ''' % (request.href(pagename), wikiutil.url_quote(editor), _("Revert all!")))
 
 def revert_page(request, pagename, editor):
-    if not request.user.may.revert(pagename):
+    if not request.user.may.write(pagename):
         return
 
     llog = editlog.LocalEditLog(request, rootpagename=pagename)

@@ -192,9 +192,9 @@ class AccessControlList:
 
             SomeUser:read,write SomeGroup:read,write,admin All:read
 
-        In this example, SomeUser can read and write but can not admin,
-        revert or delete pages. Rights that are NOT specified on the
-        right list are automatically set to NO.
+        In this example, SomeUser can read and write but can not admin
+        or delete pages. Rights that are NOT specified on the right list
+        are automatically set to NO.
 
     Using Prefixes
 

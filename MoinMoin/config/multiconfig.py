@@ -1059,13 +1059,13 @@ options = {
     'ACLs control who may do what, see HelpOnAccessControlLists.',
     (
       ('hierarchic', False, 'True to use hierarchical ACLs'),
-      ('rights_default', u"Trusted:read,write,delete,revert Known:read,write,delete,revert All:read,write",
+      ('rights_default', u"Trusted:read,write,delete Known:read,write,delete All:read,write",
        "ACL used if no ACL is specified on the page"),
       ('rights_before', u"",
        "ACL that is processed before the on-page/default ACL"),
       ('rights_after', u"",
        "ACL that is processed after the on-page/default ACL"),
-      ('rights_valid', ['read', 'write', 'delete', 'revert', 'admin'],
+      ('rights_valid', ['read', 'write', 'delete', 'admin'],
        "Valid tokens for right sides of ACL entries."),
     )),
 

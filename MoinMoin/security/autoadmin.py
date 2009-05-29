@@ -94,7 +94,7 @@ class SecurityPolicy(Permissions):
                 grouppage = Page(request, grouppagename)
                 if not grouppage.exists():
                     text = """\
-#acl %(username)s:read,write,delete,revert
+#acl %(username)s:read,write,delete
  * %(username)s
 """ % locals()
                     editor = PageEditor(request, grouppagename)
