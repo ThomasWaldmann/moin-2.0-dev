@@ -160,41 +160,43 @@ class AclWrapperItem(object):
     @property
     def name(self):
         return self._item.name
+    
+    def require_privilege(*privileges):
+        def wrap(f):
+            def wrapped_f(self, *args, **kwargs):
+                for privilege in privileges:
+                    if not self._may(self.name, privilege):
+                        raise AccessDeniedError()
+                return f(self, *args, **kwargs)
+            return wrapped_f
+        return wrap
 
+
+    @require_privilege(WRITE)
     def __setitem__(self, key, value):
-        if not self._may(self.name, WRITE):
-            raise AccessDeniedError()
         self._item.__setitem__(key, value)
 
+    @require_privilege(WRITE)
     def commit(self):
-        if not self._may(self.name, WRITE):
-            raise AccessDeniedError()
         return self._item.commit()
 
+    @require_privilege(WRITE)
     def create_revision(self, revno):
-        if not self._may(self.name, WRITE):
-            raise AccessDeniedError()
         return self._item.create_revision(revno)
 
+    @require_privilege(WRITE)
     def change_metadata(self):
-        if not self._may(self.name, WRITE):
-            raise AccessDeniedError()
         return self._item.change_metadata()
 
+    @require_privilege(DELETE, WRITE)
     def rename(self, newname):
-        if not self._may(self.name, DELETE):
-            raise AccessDeniedError()
-        if not self._may(newname, WRITE):
-            raise AccessDeniedError()
         return self._item.rename_item(newname)
 
+    @require_privilege(WRITE)
     def publish_metadata(self):
-        if not self._may(self.name, WRITE):
-            raise AccessDeniedError()
         return self._item.publish_metadata()
 
+    @require_privilege(READ)
     def get_revision(self, revno):
-        if not self._may(self.name, READ):
-            raise AccessDeniedError()
         return self._item.get_revision(revno)
 
