@@ -22,7 +22,8 @@
 import re
 
 from MoinMoin import wikiutil, user
-from MoinMoin.Page import Page, ACL
+from MoinMoin.Page import Page
+from MoinMoin.items import ACL
 
 #############################################################################
 ### Basic Permissions Interface -- most features enabled by default

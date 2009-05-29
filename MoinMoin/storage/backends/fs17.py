@@ -19,9 +19,9 @@ logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil
 from MoinMoin.storage import Backend, Item, StoredRevision
-from MoinMoin.Page import DELETED, ACL, MIMETYPE, \
-                             EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                             EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+from MoinMoin.items import DELETED, ACL, MIMETYPE, \
+                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
+                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError

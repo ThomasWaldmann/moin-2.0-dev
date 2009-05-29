@@ -17,7 +17,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.Page import ACL
+from MoinMoin.items import ACL
 from MoinMoin.security import AccessControlList
 
 from MoinMoin.storage import Backend

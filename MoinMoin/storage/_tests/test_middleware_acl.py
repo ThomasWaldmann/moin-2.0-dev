@@ -7,7 +7,7 @@
     @copyright: 2009 MoinMoin:ChristopherDenter,
     @license: GNU GPL, see COPYING for details.
 """
-from MoinMoin.Page import ACL
+from MoinMoin.items import ACL
 from MoinMoin.storage.backends.acl import AccessDeniedError
 
 import py

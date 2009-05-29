@@ -25,7 +25,7 @@ from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
-from MoinMoin.Page import DELETED
+from MoinMoin.items import DELETED
 from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
