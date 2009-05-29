@@ -45,12 +45,16 @@ class AclWrapperBackend(Backend):
     def get_item(self, itemname):
         if not self._may(itemname, READ):
             raise AccessDeniedError()
-        return self.backend.get_item(itemname)
+        real_item = self.backend.get_item(itemname)
+        wrapped_item = AclWrapperItem(real_item, self)
+        return wrapped_item
 
     def create_item(self, itemname):
         if not self._may(itemname, WRITE):
             raise AccessDeniedError()
-        return self.backend.create_item(itemname)
+        real_item = self.backend.create_item(itemname)
+        wrapped_item = AclWrapperItem(real_item, self)
+        return wrapped_item
 
     def iteritems(self):
         for item in self.backend.iteritems():
@@ -76,28 +80,6 @@ class AclWrapperBackend(Backend):
 
         # TODO: SORT THIS ACCORDINGLY!
         return iter(revisions)
-
-    def _create_revision(self, item, revno):
-        if not self._may(item.name, WRITE):
-            raise AccessDeniedError()
-        return self.backend._create_revision(item, revno)
-
-    def _rename_item(self, item, newname):
-        if not self._may(item.name, DELETE):
-            raise AccessDeniedError()
-        if not self._may(newname, WRITE):
-            raise AccessDeniedError()
-        return self.backend._rename_item(item, newname)
-
-    def _change_item_metadata(self, item):
-        if not self._may(item.name, WRITE):
-            raise AccessDeniedError()
-        return self.backend._change_item_metadata(item)
-
-    def _publish_item_metadata(self, item):
-        if not self._may(item.name, WRITE):
-            raise AccessDeniedError()
-        return self.backend._publish_item_metadata(item)
 
 
     def _get_acl(self, itemname):
@@ -167,3 +149,52 @@ class AclWrapperBackend(Backend):
             return allowed
 
         return False
+
+
+class AclWrapperItem(object):
+    def __init__(self, item, aclbackend):
+        self._backend = aclbackend
+        self._item = item
+        self._may = aclbackend._may
+
+    @property
+    def name(self):
+        return self._item.name
+
+    def __setitem__(self, key, value):
+        if not self._may(self.name, WRITE):
+            raise AccessDeniedError()
+        self._item.__setitem__(key, value)
+
+    def commit(self):
+        if not self._may(self.name, WRITE):
+            raise AccessDeniedError()
+        return self._item.commit()
+
+    def create_revision(self, revno):
+        if not self._may(self.name, WRITE):
+            raise AccessDeniedError()
+        return self._item.create_revision(revno)
+
+    def change_metadata(self):
+        if not self._may(self.name, WRITE):
+            raise AccessDeniedError()
+        return self._item.change_metadata()
+
+    def rename(self, newname):
+        if not self._may(self.name, DELETE):
+            raise AccessDeniedError()
+        if not self._may(newname, WRITE):
+            raise AccessDeniedError()
+        return self._item.rename_item(newname)
+
+    def publish_metadata(self):
+        if not self._may(self.name, WRITE):
+            raise AccessDeniedError()
+        return self._item.publish_metadata()
+
+    def get_revision(self, revno):
+        if not self._may(self.name, READ):
+            raise AccessDeniedError()
+        return self._item.get_revision(revno)
+
