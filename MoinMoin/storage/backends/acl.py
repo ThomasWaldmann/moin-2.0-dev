@@ -58,9 +58,7 @@ class AclWrapperBackend(Backend):
     def create_item(self, itemname):
         if not self._may(itemname, WRITE):
             raise AccessDeniedError()
-        item = self.backend.create_item(itemname)
-        item._backend = self
-        return item
+        return self.backend.create_item(itemname)
 
     def iteritems(self):
         for item in self.backend.iteritems():
