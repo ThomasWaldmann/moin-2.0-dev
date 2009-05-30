@@ -32,7 +32,7 @@ class AccessDeniedError(Exception):
     """ raised when ACLs deny access to item """
 
 
-class AclWrapperBackend(Backend):
+class AclWrapperBackend(object):
     def __init__(self, request):
         self.request = request
         self.backend = request.cfg.data_backend
@@ -41,6 +41,9 @@ class AclWrapperBackend(Backend):
         self.acl_before = request.cfg.cache.acl_rights_before
         self.acl_default = request.cfg.cache.acl_rights_default
         self.acl_after = request.cfg.cache.acl_rights_after
+
+    def __getattr__(self, attr):
+        return getattr(self.backend, attr)
 
     def get_item(self, itemname):
         if not self._may(itemname, READ):
