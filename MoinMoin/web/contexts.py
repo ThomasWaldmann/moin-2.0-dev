@@ -151,9 +151,15 @@ class BaseContext(Context):
     isSpiderAgent = EnvironProxy(isSpiderAgent)
 
     def rootpage(self):
+        # DEPRECATED, use rootitem!
         from MoinMoin.Page import RootPage
         return RootPage(self)
     rootpage = EnvironProxy(rootpage)
+
+    def rootitem(self):
+        from MoinMoin.items import Item
+        return Item(self, u'')
+    rootitem = EnvironProxy(rootitem)
 
     def rev(self):
         try:

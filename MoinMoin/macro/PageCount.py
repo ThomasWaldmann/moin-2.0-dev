@@ -20,12 +20,12 @@ def macro_PageCount(macro, exists=None):
     request = macro.request
     exists = wikiutil.get_unicode(request, exists, 'exists')
     # Check input
-    only_existing = False
+    include_deleted = True
     if exists == u'exists':
-        only_existing = True
+        include_deleted = False
     elif exists:
         raise ValueError("Wrong argument: %r" % exists)
 
-    count = request.rootpage.getPageCount(exists=only_existing)
+    count = request.rootitem.count_items(include_deleted=include_deleted)
     return macro.formatter.text("%d" % count)
 

@@ -1308,27 +1308,14 @@ class Page(object):
             cache.remove()
 
 
-class RootPage(object):
-    """
-    These functions were removed from the Page class to remove hierarchical
-    page storage support until after we have a storage api (and really need it).
-    Currently, there is only 1 instance of this class: request.rootpage
-    """
+# compatibility hack until we refactored all code using it from here:
+from MoinMoin.items import Item
+
+class RootPage(Item):
+    supported_mimetypes = []
 
     def __init__(self, request):
-        """
-        Init the item collection.
-        """
-        self.request = request
-
-    def getPagePath(self, fname, isfile):
-        """
-        TODO: remove this hack.
-
-        Just a hack for event and edit log currently.
-        """
-        logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
-        return "/tmp/"
+        Item.__init__(self, request, item_name=u'')
 
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
         """
@@ -1361,62 +1348,27 @@ class RootPage(object):
         # XXX: better update this docstring
 
         request = self.request
-        request.clock.start('getPageList')
-
         if user is None:
             user = request.user
 
-        filterfunction = filter
-
-        filter = term.AND()
+        search_term = term.AND()
         if not include_underlay:
-            filter.add(term.FromUnderlay())
+            search_term.add(term.FromUnderlay())
 
-        if exists:
-            filter.add(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
+        if filter:
+            search_term.add(term.NameFn(filter))
 
-        if filterfunction:
-            filter.add(term.NameFn(filterfunction))
-
-        items = self.request.data_backend.search_item(filter)
+        items = self.list_items(search_term, include_deleted=not exists)
 
         if user or return_objects:
-            # Filter names
-            pages = []
             for item in items:
-                page = Page.from_item(request, item)
-                name = page.page_name
-
-                # Filter out pages user may not read.
-                if user and not user.may.read(name):
-                    continue
-
+                # XXX ACL check when user given?
                 if return_objects:
+                    page = Page.from_item(request, item)
                     yield page
                 else:
-                    yield name
+                    yield item.name
         else:
-            for i in items:
-                yield i.name
+            for item in items:
+                yield item.name
 
-        request.clock.stop('getPageList')
-
-    def getPageCount(self, exists=0):
-        """
-        Return page count.
-
-        @param exists: filter existing pages
-        @rtype: int
-        @return: number of pages
-        """
-        self.request.clock.start('getPageCount')
-
-        items = self.request.data_backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
-
-        count = 0
-        for item in items:
-            count += 1
-
-        self.request.clock.stop('getPageCount')
-
-        return count
