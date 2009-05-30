@@ -21,15 +21,12 @@ from MoinMoin.items import ACL
 from MoinMoin.security import AccessControlList
 
 from MoinMoin.storage import Backend
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 
 ADMIN = 'admin'
 READ = 'read'
 WRITE = 'write'
 DELETE = 'delete'
-
-class AccessDeniedError(Exception):
-    """ raised when ACLs deny access to item """
 
 
 class AclWrapperBackend(Backend):

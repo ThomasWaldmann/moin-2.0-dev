@@ -23,7 +23,7 @@ from werkzeug import http_date, quote_etag
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
 from MoinMoin.support.python_compatibility import hash_new
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 
 from MoinMoin.items.sendcache import SendCache
 
