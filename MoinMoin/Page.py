@@ -1372,6 +1372,3 @@ class RootPage(Item):
             for item in items:
                 yield item.name
 
-    def getPageCount(self, exists=0):
-        return self.count_items(include_deleted=not exists)
-
