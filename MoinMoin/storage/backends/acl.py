@@ -45,12 +45,26 @@ class AclWrapperBackend(object):
     def __getattr__(self, attr):
         return getattr(self.backend, attr)
 
+    def search_item(self, searchterm):
+        for item in self.backend.search_item(searchterm):
+            if self._may(item.name, READ):
+                wrapped_item = AclWrapperItem(item, self)
+                yield wrapped_item
+
     def get_item(self, itemname):
         if not self._may(itemname, READ):
             raise AccessDeniedError()
         real_item = self.backend.get_item(itemname)
         wrapped_item = AclWrapperItem(real_item, self)
         return wrapped_item
+
+    def has_item(self, itemname):
+        # XXX Do we want to hide items the user may not read from
+        # him completely? If yes, this must not raise an ADError at all,
+        # otherwise the user knows that the item exists anyway.
+        # If no, he might try to create it and fail there.
+        # Perhaps even drop has_item? Is it used/needed/necessary?
+        raise NotImplementedError("We've not decided yet... :-)")
 
     def create_item(self, itemname):
         if not self._may(itemname, WRITE):
