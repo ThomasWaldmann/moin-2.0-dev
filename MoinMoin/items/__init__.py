@@ -23,7 +23,7 @@ from werkzeug import http_date, quote_etag
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
 from MoinMoin.support.python_compatibility import hash_new
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 
 from MoinMoin.items.sendcache import SendCache
 
@@ -102,6 +102,10 @@ class Item(object):
     def get_meta(self):
         return self.rev or {}
     meta = property(fget=get_meta)
+
+    def get_is_deleted(self):
+        return self.meta.get(DELETED, False)
+    is_deleted = property(get_is_deleted)
 
     def url(self, _absolute=False, **kw):
         """ return URL for this item, optionally as absolute URL """
@@ -224,7 +228,7 @@ class Item(object):
     def revert(self):
         # called from revert UI/POST
         comment = self.request.form.get('comment')
-        self._save(self.meta, self.data, comment=comment)
+        self._save(self.meta, self.data, action='SAVE/REVERT', comment=comment)
 
     def modify(self):
         # called from modify UI/POST
@@ -297,12 +301,36 @@ class Item(object):
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
 
-    def search_item(self, term, include_deleted=False):
-        """ search items matching the term """
+    def search_item(self, term=None, include_deleted=False):
+        """ search items matching the term or,
+            if term is None, return all (or all non-deleted) items
+
+            TODO: rename this method and backend method to search_items
+        """
         from MoinMoin.search.term import AND, NOT, LastRevisionMetaDataMatch
         if not include_deleted:
-            term = AND(term, NOT(LastRevisionMetaDataMatch('deleted', True)))
-        return self.request.data_backend.search_item(term)
+            search_term = NOT(LastRevisionMetaDataMatch('deleted', True))
+            if term:
+                search_term = AND(term, search_term)
+        else:
+            if term:
+                search_term = term
+            else:
+                # special case: we just want all items
+                return self.request.data_backend.iteritems()
+        return self.request.data_backend.search_item(search_term)
+ 
+    list_items = search_item  # just for cosmetics
+
+    def count_items(self, term=None, include_deleted=False):
+        """
+        Return item count for matching items. See search_item() for details.
+        """
+        count = 0
+        # we intentionally use a loop to avoid creating a list with all item objects:
+        for item in self.list_items(term, include_deleted):
+            count += 1
+        return count
 
     def get_index(self):
         """ create an index of sub items of this item """
@@ -482,7 +510,7 @@ There is no help, you're doomed!
         else:
             rev_nos = item.list_revisions()
             log = self._revlog(item, rev_nos)
-            if self.rev.revno == rev_nos[-1] and self.rev.get(DELETED, False):
+            if self.rev.revno == rev_nos[-1] and self.is_deleted:
                 # last revision is deleted
                 show_templates = True
         if show_templates:
