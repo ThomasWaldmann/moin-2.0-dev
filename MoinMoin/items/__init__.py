@@ -224,7 +224,7 @@ class Item(object):
     def revert(self):
         # called from revert UI/POST
         comment = self.request.form.get('comment')
-        self._save(self.meta, self.data, comment=comment)
+        self._save(self.meta, self.data, action='SAVE/REVERT', comment=comment)
 
     def modify(self):
         # called from modify UI/POST
@@ -297,12 +297,36 @@ class Item(object):
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
 
-    def search_item(self, term, include_deleted=False):
-        """ search items matching the term """
+    def search_item(self, term=None, include_deleted=False):
+        """ search items matching the term or,
+            if term is None, return all (or all non-deleted) items
+
+            TODO: rename this method and backend method to search_items
+        """
         from MoinMoin.search.term import AND, NOT, LastRevisionMetaDataMatch
         if not include_deleted:
-            term = AND(term, NOT(LastRevisionMetaDataMatch('deleted', True)))
-        return self.request.data_backend.search_item(term)
+            search_term = NOT(LastRevisionMetaDataMatch('deleted', True))
+            if term:
+                search_term = AND(term, search_term)
+        else:
+            if term:
+                search_term = term
+            else:
+                # special case: we just want all items
+                return self.request.data_backend.iteritems()
+        return self.request.data_backend.search_item(search_term)
+ 
+    list_items = search_item  # just for cosmetics
+
+    def count_items(self, term=None, include_deleted=False):
+        """
+        Return item count for matching items. See search_item() for details.
+        """
+        count = 0
+        # we intentionally use a loop to avoid creating a list with all item objects:
+        for item in self.list_items(term, include_deleted):
+            count += 1
+        return count
 
     def get_index(self):
         """ create an index of sub items of this item """
