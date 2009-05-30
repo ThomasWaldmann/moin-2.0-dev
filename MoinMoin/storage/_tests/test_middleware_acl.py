@@ -8,7 +8,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 from MoinMoin.items import ACL
-from MoinMoin.storage.backends.acl import AccessDeniedError
+from MoinMoin.storage.error import AccessDeniedError
 
 import py
 

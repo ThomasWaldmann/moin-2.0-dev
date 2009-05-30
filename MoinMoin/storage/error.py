@@ -21,7 +21,7 @@ class AccessError(StorageError):
     """
     pass
 
-class ACLError(AccessError):
+class AccessDeniedError(AccessError):
     """
     Raised if the required rights are not available to commit the action.
     """
