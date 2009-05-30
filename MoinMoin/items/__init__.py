@@ -103,6 +103,10 @@ class Item(object):
         return self.rev or {}
     meta = property(fget=get_meta)
 
+    def get_is_deleted(self):
+        return self.meta.get(DELETED, False)
+    is_deleted = property(get_is_deleted)
+
     def url(self, _absolute=False, **kw):
         """ return URL for this item, optionally as absolute URL """
         href = _absolute and self.request.abs_href or self.request.href
@@ -506,7 +510,7 @@ There is no help, you're doomed!
         else:
             rev_nos = item.list_revisions()
             log = self._revlog(item, rev_nos)
-            if self.rev.revno == rev_nos[-1] and self.rev.get(DELETED, False):
+            if self.rev.revno == rev_nos[-1] and self.is_deleted:
                 # last revision is deleted
                 show_templates = True
         if show_templates:
