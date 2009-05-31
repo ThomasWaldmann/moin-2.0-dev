@@ -13,5 +13,4 @@ import MoinMoin.events as events
 from MoinMoin.widget import html
 
 # compatibility
-from MoinMoin.userform.login import getLogin
 from MoinMoin.userform.admin import do_user_browser
