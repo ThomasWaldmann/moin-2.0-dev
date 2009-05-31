@@ -1315,7 +1315,7 @@ class RootPage(Item):
     supported_mimetypes = []
 
     def __init__(self, request):
-        Item.__init__(self, request, item_name=u'')
+        Item.__init__(self, request, name=u'')
 
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
         """
