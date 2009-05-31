@@ -6,8 +6,6 @@
     control lists). It does not store any data, but uses a given backend for
     this.
 
-    TODO: needs more work, does not work yet
-
     @copyright: 2003-2008 MoinMoin:ThomasWaldmann,
                 2000-2004 Juergen Hermann <jh@web.de>,
                 2003 Gustavo Niemeyer,
@@ -16,6 +14,8 @@
                 2009 Christopher Denter
     @license: GNU GPL, see COPYING for details.
 """
+
+from UserDict import DictMixin
 
 from MoinMoin.items import ACL
 from MoinMoin.security import AccessControlList
@@ -154,7 +154,7 @@ class AclWrapperBackend(object):
         return False
 
 
-class AclWrapperItem(object):
+class AclWrapperItem(object, DictMixin):
     def __init__(self, item, aclbackend):
         self._backend = aclbackend
         self._item = item
@@ -201,6 +201,7 @@ class AclWrapperItem(object):
 
     @require_privilege(READ)
     def get_revision(self, revno):
+        # The revision returned here is immutable already.
         return self._item.get_revision(revno)
 
     @require_privilege(READ)
@@ -225,4 +226,33 @@ class AclWrapperItem(object):
 
     @require_privilege(WRITE)
     def create_revision(self, revno):
-        return self._item.create_revision(revno)
+        wrapped_revision = AclWrappedNewRevision(self._item.create_revision(revno), self)
+        return wrapped_revision
+
+
+class AclWrappedNewRevision(object, DictMixin):
+    def __init__(self, revision, item):
+        self._revision = revision
+        self._item = item
+        self._may = item._may
+
+        # It's ok to redirect here since item.commit() and item.create_revision
+        # already perform permission checks.
+        for attr in ('__delitem__', 'write'):
+            setattr(self, attr, getattr(revision, attr))
+
+        @property
+        def timestamp(self):
+            return self._revision.timestamp
+
+        @property
+        def size(self):
+            return self._revision.size
+
+    def __setitem__(self, key, value):
+        if key == ACL and not self._may(self._item.name, ADMIN):
+            raise AccessDeniedError()
+        return self._revision.__setitem__(key, value)
+
+    def __getitem__(self, key):
+        return self._revision[key]
