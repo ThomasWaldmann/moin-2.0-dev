@@ -867,7 +867,6 @@ var search_hint = "%(search_hint)s";
             'LocalSiteMap',
             'MyPages',
             'SubscribeUser',
-            'Despam',
             'PackagePages',
             'SyncPages',
             ]
@@ -885,7 +884,6 @@ var search_hint = "%(search_hint)s";
             'LocalSiteMap': _('Local Site Map'),
             'MyPages': _('My Pages'),
             'SubscribeUser': _('Subscribe User'),
-            'Despam': _('Remove Spam'),
             'PackagePages': _('Package Pages'),
             'RenderAsDocbook': _('Render as Docbook'),
             'SyncPages': _('Sync Pages'),
@@ -919,11 +917,6 @@ var search_hint = "%(search_hint)s";
 
             # PackagePages action only if user has write rights
             if action == 'PackagePages' and not request.user.may.write(page.page_name):
-                data['do'] = 'show'
-                data['disabled'] = disabled
-
-            # Despam action enabled only for superusers
-            if action == 'Despam' and not request.user.isSuperUser():
                 data['do'] = 'show'
                 data['disabled'] = disabled
 

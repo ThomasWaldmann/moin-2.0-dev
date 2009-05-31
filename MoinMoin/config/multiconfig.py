@@ -773,9 +773,6 @@ options_no_group_name = {
     ('textchas_disabled_group', None,
      "Name of a group of trusted users who do not get asked TextCha questions."),
 
-    ('antispam_master_url', "http://master.moinmo.in/?action=xmlrpc2",
-     "where antispam security policy fetches spam pattern updates (if it is enabled)"),
-
     # a regex of HTTP_USER_AGENTS that should be excluded from logging
     # and receive a FORBIDDEN for anything except viewing a page
     # list must not contain 'java' because of twikidraw wanting to save drawing uses this useragent
