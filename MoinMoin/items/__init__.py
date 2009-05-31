@@ -49,9 +49,13 @@ EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, 
 class Item(object):
 
     @classmethod
-    def create(cls, request, item_name, mimetype='application/x-unknown', rev_no=-1, formatter=None):
+    def create(cls, request, item_name=u'', mimetype='application/x-unknown', rev_no=-1,
+               formatter=None, item=None):
         try:
-            item = request.data_backend.get_item(item_name)
+            if item is None:
+                item = request.data_backend.get_item(item_name)
+            else:
+                item_name = item.name
         except NoSuchItemError:
             class DummyRev(dict):
                 def __init__(self, mimetype):
@@ -312,14 +316,17 @@ class Item(object):
             search_term = NOT(LastRevisionMetaDataMatch('deleted', True))
             if term:
                 search_term = AND(term, search_term)
+            backend_items = self.request.data_backend.search_item(search_term)
         else:
             if term:
                 search_term = term
+                backend_items = self.request.data_backend.search_item(search_term)
             else:
                 # special case: we just want all items
-                return self.request.data_backend.iteritems()
-        return self.request.data_backend.search_item(search_term)
- 
+                backend_items = self.request.data_backend.iteritems()
+        for item in backend_items:
+            yield Item.create(self.request, item=item)
+
     list_items = search_item  # just for cosmetics
 
     def count_items(self, term=None, include_deleted=False):
@@ -350,7 +357,7 @@ class Item(object):
 
         # We only want the sub-item part of the item names, not the whole item objects.
         prefix_len = len(prefix)
-        items = [(item.name, item.name[prefix_len:], item.get_revision(-1).get(MIMETYPE))
+        items = [(item.item_name, item.item_name[prefix_len:], item.meta.get(MIMETYPE))
                  for item in item_iterator]
         return sorted(items)
 
