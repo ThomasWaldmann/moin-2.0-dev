@@ -737,9 +737,6 @@ options_no_group_name = {
      ],
      "Exclude unwanted actions (list of strings)"),
 
-    ('allow_xslt', False,
-     "if True, enables XSLT processing via 4Suite (note that this enables anyone with enough know-how to insert '''arbitrary HTML''' into your wiki, which is why it defaults to `False`)"),
-
     ('password_checker', DefaultExpression('_default_password_checker'),
      'checks whether a password is acceptable (default check is length >= 6, at least 4 different chars, no keyboard sequence, not username used somehow (you can switch this off by using `None`)'),
 
@@ -879,8 +876,6 @@ options_no_group_name = {
     ('plugin_dir', None, "Plugin directory, by default computed to be `data_dir`/plugin."),
     ('plugin_dirs', [], "Additional plugin directories."),
 
-    ('docbook_html_dir', r"/usr/share/xml/docbook/stylesheet/nwalsh/html/",
-     'Path to the directory with the Docbook to HTML XSLT files (optional, used by the docbook parser). The default value is correct for Debian Etch.'),
     ('shared_intermap', None,
      "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
     ('data_backend', None,
