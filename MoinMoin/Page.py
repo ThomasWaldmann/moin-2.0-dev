@@ -670,13 +670,6 @@ class Page(object):
         pi['language'] = self.cfg.language_default or "en"
 
         body = self.body
-        # TODO: remove this hack once we have separate metadata and can use mimetype there
-        if body.startswith('<?xml'): # check for XML content
-            pi['lines'] = 0
-            pi['format'] = "xslt"
-            pi['formatargs'] = ''
-            return pi
-
         meta = self.meta
 
         # default is wiki markup
