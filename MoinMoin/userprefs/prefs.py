@@ -24,8 +24,6 @@ from MoinMoin.userprefs import UserPrefBase
 #    - quick links (or leave in wiki settings?)
 ####
 
-_debug = 0
-
 class Settings(UserPrefBase):
     def __init__(self, request):
         """ Initialize user settings form. """
@@ -218,8 +216,6 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
             request.user.valid = False
 
         result = _("User preferences saved!")
-        if _debug:
-            result = result + util.dumpFormData(form)
         return result
 
 
