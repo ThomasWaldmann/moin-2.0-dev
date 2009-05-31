@@ -49,13 +49,13 @@ EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, 
 class Item(object):
 
     @classmethod
-    def create(cls, request, item_name=u'', mimetype='application/x-unknown', rev_no=-1,
+    def create(cls, request, name=u'', mimetype='application/x-unknown', rev_no=-1,
                formatter=None, item=None):
         try:
             if item is None:
-                item = request.data_backend.get_item(item_name)
+                item = request.data_backend.get_item(name)
             else:
-                item_name = item.name
+                name = item.name
         except NoSuchItemError:
             class DummyRev(dict):
                 def __init__(self, mimetype):
@@ -90,12 +90,12 @@ class Item(object):
 
         ItemClass = _find_item_class(mimetype, cls)[1]
         logging.debug("ItemClass %r handles %r" % (ItemClass, mimetype))
-        return ItemClass(request, item_name=item_name, rev=rev, mimetype=mimetype, formatter=formatter)
+        return ItemClass(request, name=name, rev=rev, mimetype=mimetype, formatter=formatter)
 
-    def __init__(self, request, item_name, rev=None, mimetype=None, formatter=None):
+    def __init__(self, request, name, rev=None, mimetype=None, formatter=None):
         self.request = request
         self.env = request.theme.env
-        self.item_name = item_name
+        self.name = name
         self.rev = rev
         self.mimetype = mimetype
         if formatter is None:
@@ -114,7 +114,7 @@ class Item(object):
     def url(self, _absolute=False, **kw):
         """ return URL for this item, optionally as absolute URL """
         href = _absolute and self.request.abs_href or self.request.href
-        return href(self.item_name, **kw)
+        return href(self.name, **kw)
 
     def rev_url(self, _absolute=False, **kw):
         """ return URL for this item and this revision, optionally as absolute URL """
@@ -123,7 +123,7 @@ class Item(object):
     transclude_acceptable_attrs = []
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
-        return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.item_name, self.mimetype))
+        return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.name, self.mimetype))
 
     def meta_text_to_dict(self, text):
         """ convert meta data from a text fragment to a dict """
@@ -146,7 +146,7 @@ class Item(object):
         # XXX think about and add item template support
         template = self.env.get_template('modify_binary.html')
         content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
+                                  item_name=self.name,
                                   rows_meta=3, cols=80,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
@@ -159,17 +159,17 @@ class Item(object):
         content = template.render(gettext=self.request.getText,
                                   action=action,
                                   label=label or action,
-                                  item_name=self.item_name,
+                                  item_name=self.name,
                                   revno=revno,
                                   target=target,
                                  )
         return content
 
     def do_rename(self):
-        return self._action_query('rename', target=self.item_name)
+        return self._action_query('rename', target=self.name)
 
     def do_copy(self):
-        return self._action_query('copy', target=self.item_name)
+        return self._action_query('copy', target=self.name)
 
     def do_revert(self):
         return self._action_query('revert', revno=self.rev.revno)
@@ -217,17 +217,17 @@ class Item(object):
             new_item[key] = old_item[key]
         new_item.publish_metadata()
         # we just create a new revision with almost same meta/data to show up on RC
-        self._save(current_rev, current_rev, item_name=target, action='SAVE/COPY', extra=self.item_name, comment=comment)
+        self._save(current_rev, current_rev, name=target, action='SAVE/COPY', extra=self.name, comment=comment)
 
     def rename(self):
         # called from rename UI/POST
         comment = self.request.form.get('comment')
-        oldname = self.item_name
+        oldname = self.name
         newname = self.request.form.get('target')
         self.rev.item.rename(newname)
         # we just create a new revision with almost same meta/data to show up on RC
         # XXX any better way to do this?
-        self._save(self.meta, self.data, item_name=newname, action='SAVE/RENAME', extra=oldname, comment=comment)
+        self._save(self.meta, self.data, name=newname, action='SAVE/RENAME', extra=oldname, comment=comment)
 
     def revert(self):
         # called from revert UI/POST
@@ -258,15 +258,15 @@ class Item(object):
         comment = self.request.form.get('comment')
         self._save(meta, data, mimetype=mimetype, comment=comment)
 
-    def _save(self, meta, data, item_name=None, action='SAVE', mimetype=None, comment='', extra=''):
+    def _save(self, meta, data, name=None, action='SAVE', mimetype=None, comment='', extra=''):
         request = self.request
-        if item_name is None:
-            item_name = self.item_name
+        if name is None:
+            name = self.name
         backend = request.data_backend
         try:
-            storage_item = backend.get_item(item_name)
+            storage_item = backend.get_item(name)
         except NoSuchItemError:
-            storage_item = backend.create_item(item_name)
+            storage_item = backend.create_item(name)
         try:
             currentrev = storage_item.get_revision(-1)
             rev_no = currentrev.revno
@@ -344,8 +344,8 @@ class Item(object):
         import re
         from MoinMoin.search.term import NameRE
 
-        if self.item_name:
-            prefix = self.item_name + u'/'
+        if self.name:
+            prefix = self.name + u'/'
         else:
             # trick: an item of empty name can be considered as "virtual root item",
             # that has all wiki items as sub items
@@ -357,7 +357,7 @@ class Item(object):
 
         # We only want the sub-item part of the item names, not the whole item objects.
         prefix_len = len(prefix)
-        items = [(item.item_name, item.item_name[prefix_len:], item.meta.get(MIMETYPE))
+        items = [(item.name, item.name[prefix_len:], item.meta.get(MIMETYPE))
                  for item in item_iterator]
         return sorted(items)
 
@@ -371,7 +371,7 @@ class Item(object):
     def do_index(self):
         template = self.env.get_template('index.html')
         content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
+                                  item_name=self.name,
                                   index=self.flat_index(),
                                  )
         return content
@@ -434,7 +434,7 @@ class NonExistent(Item):
     def do_show(self):
         template = self.env.get_template('show_type_selection.html')
         content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
+                                  item_name=self.name,
                                   mimetype_groups=self.mimetype_groups, )
         return content
 
@@ -444,7 +444,7 @@ class NonExistent(Item):
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return (self.formatter.url(1, self.url(), css='nonexistent', title='click to create item') +
-                self.formatter.text(self.item_name) + # maybe use some "broken image" icon instead?
+                self.formatter.text(self.name) + # maybe use some "broken image" icon instead?
                 self.formatter.url(0))
 
 
@@ -610,7 +610,7 @@ There is no help, you're doomed!
             content_disposition = mt.content_disposition(request.cfg)
             content_type = mt.content_type()
             content_length = os.path.getsize(fpath) # XXX
-            ci = ContainerItem(request, self.item_name)
+            ci = ContainerItem(request, self.name)
             file_to_send = ci.get(filename)
         else: # content = item revision
             rev = self.rev
@@ -672,7 +672,7 @@ class RenderableBinary(Binary):
                 self.formatter.transclusion(0))
 
     def _render_data(self):
-        return self.transclude('{{%s [%s]}}' % (self.item_name, self.mimetype))
+        return self.transclude('{{%s [%s]}}' % (self.name, self.mimetype))
 
 
 class PlayableBinary(RenderableBinary):
@@ -770,7 +770,7 @@ class RenderableBitmapImage(RenderableImage):
         return self.formatter.image(src=url, **tag_attrs)
 
     def _render_data(self):
-        return self.transclude(self.item_name)
+        return self.transclude(self.name)
 
 
 class TransformableBitmapImage(RenderableBitmapImage):
@@ -909,7 +909,7 @@ class Text(Binary):
         meta_text = self.meta_dict_to_text(self.meta)
         template = self.env.get_template('modify_text.html')
         content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
+                                  item_name=self.name,
                                   rows_data=20, rows_meta=3, cols=80,
                                   revno=0,
                                   data_text=data_text,
@@ -937,7 +937,7 @@ class MoinParserSupported(Text):
         # TODO: switch from Page to Item subclass
         from MoinMoin.Page import Page
         request = self.request
-        page = Page(request, self.item_name)
+        page = Page(request, self.name)
         pi, body = page.pi, page.data
         self.formatter.setPage(page)
         #lang = pi.get('language', request.cfg.language_default)
