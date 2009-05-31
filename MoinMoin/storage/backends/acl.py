@@ -56,12 +56,9 @@ class AclWrapperBackend(object):
         return wrapped_item
 
     def has_item(self, itemname):
-        # XXX Do we want to hide items the user may not read from
-        # him completely? If yes, this must not raise an ADError at all,
-        # otherwise the user knows that the item exists anyway.
-        # If no, he might try to create it and fail there.
-        # Perhaps even drop has_item? Is it used/needed/necessary?
-        raise NotImplementedError("We've not decided yet... :-)")
+        # We do not hide the sheer existance of items. When trying
+        # to create an item with the same name, the user would notice anyway.
+        return self.backend.has_item(itemname)
 
     def create_item(self, itemname):
         if not self._may(itemname, WRITE):
