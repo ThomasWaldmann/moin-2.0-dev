@@ -45,7 +45,7 @@ def init(request):
 
 def init_backend(context):
     """ initialize the backend
-    
+
         This is separate from init because the conftest request setup needs to be
         able to create fresh data storage backends in between init and init_backend.
     """
