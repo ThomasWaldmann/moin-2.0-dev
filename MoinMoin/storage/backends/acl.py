@@ -160,7 +160,7 @@ class AclWrapperItem(object, DictMixin):
     @property
     def name(self):
         return self._item.name
-    
+
     def require_privilege(*privileges):
         def wrap(f):
             def wrapped_f(self, *args, **kwargs):
