@@ -23,9 +23,10 @@ class AccessError(StorageError):
 
 class AccessDeniedError(AccessError):
     """
-    Raised if the required rights are not available to commit the action.
+    Raised if the required rights are not available to perform the action.
     """
-    pass
+    def __init__(self, message='Permission denied!'):
+        AccessError.__init__(self, message)
 
 class LockingError(AccessError):
     """
