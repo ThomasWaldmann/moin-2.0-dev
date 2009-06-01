@@ -87,7 +87,7 @@ class AclWrapperBackend(object):
             # we always use the ACLs set on the latest revision:
             current_rev = item.get_revision(-1)
             acls = current_rev[ACL]
-        except (NoSuchItemError, KeyError):
+        except (NoSuchItemError, NoSuchRevisionError, KeyError):
             # do not use default acl here
             acls = []
         if not isinstance(acls, (tuple, list)):
