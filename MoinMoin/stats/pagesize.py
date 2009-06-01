@@ -57,10 +57,8 @@ def draw(pagename, request):
     style = Chart.GDC_3DBAR
 
     # get data
-    pages = request.rootpage.getPageDict()
-    sizes = []
-    for name, page in pages.items():
-        sizes.append((page.size(), name.encode('iso-8859-1', 'replace')) ) # gdchart does no utf-8
+    sizes = [(Page(request, name).size(), name.encode('iso-8859-1', 'replace'))  # gdchart does no utf-8
+             for name in request.rootpage.getPageList()]
     sizes.sort()
 
     upper_bound = sizes[-1][0]

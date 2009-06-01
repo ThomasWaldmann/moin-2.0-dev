@@ -12,7 +12,7 @@ import sys
 try:
     from MoinMoin.patchlevel import patchlevel
 except:
-    patchlevel = 'release'
+    patchlevel = 'alpha'
 
 project = "MoinMoin"
 release = '1.9.0beta2'

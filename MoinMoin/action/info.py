@@ -5,19 +5,26 @@
     Displays page history, some general page infos and statistics.
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2006-2008 MoinMoin:ThomasWaldmann
+                2006-2008 MoinMoin:ThomasWaldmann,
+                2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 
 from MoinMoin import config, wikiutil, action
 from MoinMoin.Page import Page
-from MoinMoin.logfile import editlog
+from MoinMoin import user
 from MoinMoin.widget import html
+from MoinMoin.Page import EDIT_LOG_ACTION, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                          EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
+
 
 def execute(pagename, request):
     """ show misc. infos about a page """
-    if not request.user.may.read(pagename):
-        Page(request, pagename).send_page()
+
+    page = Page(request, pagename)
+
+    if not request.user.may.read(pagename) or not page.exists(includeDeleted=True):
+        page.send_page()
         return
 
     def general(page, pagename, request):
@@ -102,15 +109,25 @@ def execute(pagename, request):
             return page.link_to(request, text, querystr=query, **kw)
 
         # read in the complete log of this page
-        log = editlog.EditLog(request, rootpagename=pagename)
+        try:
+            item = request.cfg.data_backend.get_item(pagename)
+        except NoSuchItemError:
+            request.theme.add_msg(_("The Page you requested was not found."), "error")
+
+        revs = item.list_revisions()
+        revs.reverse()
+
         count = 0
         pgactioncount = 0
-        for line in log.reverse():
-            rev = int(line.rev)
+
+        for revno in revs:
             actions = []
-            if line.action in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
-                size = page.size(rev=rev)
-                actions.append(render_action(_('view'), {'action': 'recall', 'rev': '%d' % rev}))
+            revision = item.get_revision(revno)
+
+            if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
+                size = page.size(rev=revno)
+                actions.append(render_action(_('view'), {'action': 'recall', 'rev': '%d' % revno}))
+
                 if pgactioncount == 0:
                     rchecked = ' checked="checked"'
                     lchecked = ''
@@ -119,42 +136,48 @@ def execute(pagename, request):
                     rchecked = ''
                 else:
                     lchecked = rchecked = ''
-                diff = '<input type="radio" name="rev1" value="%d"%s><input type="radio" name="rev2" value="%d"%s>' % (rev, lchecked, rev, rchecked)
-                if rev > 1:
-                    diff += render_action(' ' + _('to previous'), {'action': 'diff', 'rev1': rev-1, 'rev2': rev})
-                comment = line.comment
+                diff = '<input type="radio" name="rev1" value="%d"%s><input type="radio" name="rev2" value="%d"%s>' % (revno, lchecked, revno, rchecked)
+
+                if revno > 0:
+                    diff += render_action(' ' + _('to previous'), {'action': 'diff', 'rev1': revno-1, 'rev2': revno})
+
+                comment = revision[EDIT_LOG_COMMENT]
                 if not comment:
-                    if '/REVERT' in line.action:
-                        comment = _("Revert to revision %(rev)d.") % {'rev': int(line.extra)}
-                    elif '/RENAME' in line.action:
-                        comment = _("Renamed from '%(oldpagename)s'.") % {'oldpagename': line.extra}
+                    if '/REVERT' in revision[EDIT_LOG_ACTION]:
+                        comment = _("Revert to revision %(revno)d.") % {'revno': int(revision[EDIT_LOG_EXTRA])}
+                    elif '/RENAME' in revision[EDIT_LOG_ACTION]:
+                        comment = _("Renamed from '%(oldpagename)s'.") % {'oldpagename': revision[EDIT_LOG_EXTRA]}
+
                 pgactioncount += 1
             else: # ATT*
                 rev = '-'
                 diff = '-'
 
-                filename = wikiutil.url_unquote(line.extra)
-                comment = "%s: %s %s" % (line.action, filename, line.comment)
+                filename = wikiutil.url_unquote(revision[EDIT_LOG_EXTRA])
+                comment = "%s: %s %s" % (revision[EDIT_LOG_ACTION], filename, revision[EDIT_LOG_COMMENT], )
                 size = 0
-                if line.action != 'ATTDEL':
+                if revision[EDIT_LOG_ACTION] != 'ATTDEL':
                     from MoinMoin.action import AttachFile
                     if AttachFile.exists(request, pagename, filename):
                         size = AttachFile.size(request, pagename, filename)
-                    if line.action == 'ATTNEW':
+                    if revision[EDIT_LOG_ACTION] == 'ATTNEW':
                         actions.append(render_action(_('view'), {'action': 'AttachFile', 'do': 'view', 'target': '%s' % filename}))
-                    elif line.action == 'ATTDRW':
+                    elif revision[EDIT_LOG_ACTION] == 'ATTDRW':
                         actions.append(render_action(_('edit'), {'action': 'AttachFile', 'drawing': '%s' % filename.replace(".tdraw", "")}))
 
                     actions.append(render_action(_('get'), {'action': 'AttachFile', 'do': 'get', 'target': '%s' % filename}))
                     if request.user.may.delete(pagename):
                         actions.append(render_action(_('del'), {'action': 'AttachFile', 'do': 'del', 'target': '%s' % filename}))
 
+            userid = revision.get(EDIT_LOG_USERID, _("N/A"))
+            addr = revision.get(EDIT_LOG_ADDR, _("N/A"))
+            hostname = revision.get(EDIT_LOG_HOSTNAME, _("N/A"))
             history.addRow((
-                rev,
-                request.user.getFormattedDateTime(wikiutil.version2timestamp(line.ed_time_usecs)),
+                revno,
+                request.user.getFormattedDateTime(float(revision.timestamp)),
                 str(size),
                 diff,
-                line.getEditor(request) or _("N/A"),
+                user.get_printable_editor(request, userid, addr, hostname) or _("N/A"),
                 wikiutil.escape(comment) or '&nbsp;',
                 "&nbsp;".join(actions),
             ))
@@ -184,7 +207,7 @@ def execute(pagename, request):
 
     # main function
     _ = request.getText
-    page = Page(request, pagename)
+
     title = page.split_title()
 
     request.setContentLanguage(request.lang)

@@ -85,7 +85,7 @@ General syntax: moin [options] maint reducewiki [reducewiki-options]
         self.init_request()
         request = self.request
         destdir = self.options.target_dir
-        pagelist = list(request.rootpage.getPageList(user=''))
+        pagelist = request.rootpage.getPageList(user='')
         for pagename in pagelist:
             self.copypage(request, destdir, pagename)
 

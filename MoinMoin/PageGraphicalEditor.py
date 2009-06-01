@@ -21,15 +21,6 @@ from MoinMoin.widget.dialog import Status
 from MoinMoin.util import web
 from MoinMoin.parser.text_moin_wiki import Parser as WikiParser
 
-def execute(pagename, request):
-    if not request.user.may.write(pagename):
-        _ = request.getText
-        request.theme.add_msg_('You are not allowed to edit this page.', "error")
-        Page(request, pagename).send_page()
-        return
-
-    PageGraphicalEditor(request, pagename).sendEditor()
-
 
 class PageGraphicalEditor(PageEditor.PageEditor):
     """ Same as PageEditor, but use the GUI editor (FCKeditor) """
@@ -62,9 +53,7 @@ class PageGraphicalEditor(PageEditor.PageEditor):
         # check edit permissions
         if not request.user.may.write(self.page_name):
             msg = _('You are not allowed to edit this page.')
-        elif not self.isWritable():
-            msg = _('Page is immutable!')
-        elif self.rev:
+        elif self.rev >= 0:
             # Trying to edit an old version, this is not possible via
             # the web interface, but catch it just in case...
             msg = _('Cannot edit old revisions!')
@@ -82,7 +71,7 @@ class PageGraphicalEditor(PageEditor.PageEditor):
         # Did one of the prechecks fail?
         if msg:
             request.theme.add_msg(msg, "error")
-            self.send_page()
+            self.send_page(emit_headers=False)
             return
 
         # Emit http_headers after checks (send_page)
@@ -361,6 +350,7 @@ If you don't want that, hit '''%(cancel_button_text)s''' to cancel your changes.
         # Category selection
         filterfn = self.cfg.cache.page_category_regexact.search
         cat_pages = request.rootpage.getPageList(filter=filterfn)
+        cat_pages = list(cat_pages)
         cat_pages.sort()
         cat_pages = [wikiutil.pagelinkmarkup(p) for p in cat_pages]
         cat_pages.insert(0, ('', _('<No addition>')))
