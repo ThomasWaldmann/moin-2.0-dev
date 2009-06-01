@@ -247,8 +247,23 @@ class AclWrappedNewRevision(object, DictMixin):
             return self._revision.size
 
     def __setitem__(self, key, value):
-        if key == ACL and not self._may(self._item.name, ADMIN):
-            raise AccessDeniedError()
+        """
+        In order to store an ACL on a page you must have the ADMIN privilege.
+        We must allow storing the preceeding revision's ACL in the new revision
+        (i.e., keeping it), though.
+        """
+        if key == ACL:
+            try:
+                # This rev is not yet committed
+                last_rev = self._item.get_revision(-1)
+                last_acl = last_rev[ACL]
+            except NoSuchRevisionError:
+                last_acl = ''
+
+            acl_changed = not (value == last_acl)
+
+            if acl_changed and not self._may(self._item.name, ADMIN):
+                raise AccessDeniedError()
         return self._revision.__setitem__(key, value)
 
     def __getitem__(self, key):
