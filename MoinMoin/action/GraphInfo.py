@@ -16,8 +16,9 @@ from mercurial.templatefilters import json
 from MoinMoin import wikiutil
 from MoinMoin import user
 from MoinMoin.widget import html
-from MoinMoin.Page import Page, EDIT_LOG_ACTION, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
-                          EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
+from MoinMoin.Page import Page
+from MoinMoin.items import EDIT_LOG_ACTION, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 
 
 def execute(pagename, request):
@@ -78,22 +79,7 @@ def execute(pagename, request):
                     elif '/RENAME' in revision[EDIT_LOG_ACTION]:
                         comment = _("Renamed from '%(oldpagename)s'.") % {'oldpagename': revision[EDIT_LOG_EXTRA]}
             else:
-                rev = diff = '-'
-                filename = wikiutil.url_unquote(revision[EDIT_LOG_EXTRA])
-                comment = "%s: %s %s" % (revision[EDIT_LOG_ACTION], filename, revision[EDIT_LOG_COMMENT], )
-                size = 0
-                if revision[EDIT_LOG_ACTION] != 'ATTDEL':
-                    from MoinMoin.action import AttachFile
-                    if AttachFile.exists(request, pagename, filename):
-                        size = AttachFile.size(request, pagename, filename)
-                    if revision[EDIT_LOG_ACTION] == 'ATTNEW':
-                        actions.append(render_action(_('view'), {'action': 'AttachFile', 'do': 'view', 'target': '%s' % filename}))
-                    elif revision[EDIT_LOG_ACTION] == 'ATTDRW':
-                        actions.append(render_action(_('edit'), {'action': 'AttachFile', 'drawing': '%s' % filename.replace(".draw", "")}))
-
-                    actions.append(render_action(_('get'), {'action': 'AttachFile', 'do': 'get', 'target': '%s' % filename}))
-                    if request.user.may.delete(pagename):
-                        actions.append(render_action(_('del'), {'action': 'AttachFile', 'do': 'del', 'target': '%s' % filename}))
+                raise "ATT* in editlog?"
 
             # Compute revs and next_revs
             if revno not in revs:

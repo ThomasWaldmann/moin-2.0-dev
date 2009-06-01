@@ -197,7 +197,7 @@ class TestAcl(object):
         """ security: applying acl by user name"""
         # This acl string...
         acl_rights = [
-            "Admin1,Admin2:read,write,delete,revert,admin  "
+            "Admin1,Admin2:read,write,delete,admin  "
             "Admin3:read,write,admin  "
             "JoeDoe:read,write  "
             "name with spaces,another one:read,write  "
@@ -211,8 +211,8 @@ class TestAcl(object):
         users = (
             # user,                 rights
             # CamelCase names
-            ('Admin1', ('read', 'write', 'admin', 'revert', 'delete')),
-            ('Admin2', ('read', 'write', 'admin', 'revert', 'delete')),
+            ('Admin1', ('read', 'write', 'admin', 'delete')),
+            ('Admin2', ('read', 'write', 'admin', 'delete')),
             ('Admin3', ('read', 'write', 'admin')),
             ('JoeDoe', ('read', 'write')),
             ('SomeGuy', ('read', )),
@@ -253,7 +253,7 @@ class TestPageAcls(object):
 
     from MoinMoin._tests import wikiconfig
     class Config(wikiconfig.Config):
-        acl_rights_before = u"WikiAdmin:admin,read,write,delete,revert"
+        acl_rights_before = u"WikiAdmin:admin,read,write,delete"
         acl_rights_default = u"All:read,write"
         acl_rights_after = u"All:read"
         acl_hierarchic = False
@@ -275,16 +275,16 @@ class TestPageAcls(object):
         """ security: test page acls """
         tests = [
             # hierarchic, pagename, username, expected_rights
-            (False, self.mainpage_name, u'WikiAdmin', ['read', 'write', 'admin', 'revert', 'delete']),
-            (True,  self.mainpage_name, u'WikiAdmin', ['read', 'write', 'admin', 'revert', 'delete']),
+            (False, self.mainpage_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
+            (True,  self.mainpage_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
             (False, self.mainpage_name, u'AnyUser', ['read']), # by after acl
             (True,  self.mainpage_name, u'AnyUser', ['read']), # by after acl
             (False, self.mainpage_name, u'JaneDoe', ['read', 'write']), # by page acl
             (True,  self.mainpage_name, u'JaneDoe', ['read', 'write']), # by page acl
             (False, self.mainpage_name, u'JoeDoe', []), # by page acl
             (True,  self.mainpage_name, u'JoeDoe', []), # by page acl
-            (False, self.subpage_name, u'WikiAdmin', ['read', 'write', 'admin', 'revert', 'delete']),
-            (True,  self.subpage_name, u'WikiAdmin', ['read', 'write', 'admin', 'revert', 'delete']),
+            (False, self.subpage_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
+            (True,  self.subpage_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
             (False, self.subpage_name, u'AnyUser', ['read', 'write']), # by default acl
             (True,  self.subpage_name, u'AnyUser', ['read']), # by after acl
             (False, self.subpage_name, u'JoeDoe', ['read', 'write']), # by default acl

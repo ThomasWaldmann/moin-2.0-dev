@@ -1,0 +1,33 @@
+<form action="" name="newaccountform" method="POST" enctype="multipart/form-data">
+    <div class="userpref">
+        <input type="hidden" name="do" value="newaccount">
+        <table border="0">
+            <tr>
+                <td><b>Name</b></td>
+                <td><input type="text" size="32" name="name"></td>
+            </tr>
+            <tr>
+                <td><b>Password</b></td>
+                <td><input type="password" size="32" name="password1"></td>
+            </tr>
+            <tr>
+                <td><b>Password repeat</b></td>
+                <td><input type="password" size="32" name="password2"></td>
+            </tr>
+            <tr>
+                <td><b>EMail</b></td>
+                <td><input type="text" size="32" name="email"></td>
+            </tr>
+            {% if textcha %}
+            <tr>
+                <td><b>TextCha (required)</b></td>
+                <td>{{ textcha }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td></td>
+                <td><input type="submit" name="create" value="Create Profile"></td>
+            </tr>
+        </table>
+    </div>
+</form>

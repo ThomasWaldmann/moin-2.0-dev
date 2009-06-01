@@ -706,8 +706,8 @@ def getLocalizedPage(request, pagename): # was: getSysPage
 
     We include some special treatment for the case that <pagename> is the
     currently rendered page, as this is the case for some pages used very
-    often, like FrontPage, RecentChanges etc. - in that case we reuse the
-    already existing page object instead creating a new one.
+    often, like FrontPage, etc. - in that case we reuse the already existing
+    page object instead creating a new one.
 
     @param request: the request object
     @param pagename: the name of the page
@@ -924,7 +924,7 @@ class MimeType(object):
         self.params = {} # parameters like "charset" or others
         self.charset = None # this stays None until we know for sure!
         self.raw_mimestr = mimestr
-
+        self.filename = filename
         if mimestr:
             self.parse_mimetype(mimestr)
         elif filename:
@@ -1011,6 +1011,22 @@ class MimeType(object):
     def mime_type(self):
         """ return a string major/minor only, no params """
         return "%s/%s" % (self.major, self.minor)
+
+    def content_disposition(self, cfg):
+        # for dangerous files (like .html), when we are in danger of cross-site-scripting attacks,
+        # we just let the user store them to disk ('attachment').
+        # For safe files, we directly show them inline (this also works better for IE).
+        mime_type = self.mime_type()
+        dangerous = mime_type in cfg.mimetypes_xss_protect
+        content_disposition = dangerous and 'attachment' or 'inline'
+        filename = self.filename
+        if filename is not None:
+            # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
+            # There is no solution that is compatible to IE except stripping non-ascii chars
+            if isinstance(filename, unicode):
+                filename = filename.encode(config.charset)
+            content_disposition += '; filename="%s"' % filename
+        return content_disposition
 
     def module_name(self):
         """ convert this mimetype to a string useable as python module name,
@@ -2575,7 +2591,7 @@ def add_metadata_to_body(metadata, data):
     """
     Adds the processing instructions to the data.
     """
-    from MoinMoin.Page import SIZE, EDIT_LOG
+    from MoinMoin.items import SIZE, EDIT_LOG
     READONLY_METADATA = [SIZE] + list(EDIT_LOCK) + EDIT_LOG
 
     parsing_instructions = ["format", "language", "refresh", "acl",

@@ -103,10 +103,6 @@ class Config(multiconfig.DefaultConfig):
     # rather low security requirements, feel free to DISABLE the checker by:
     #password_checker = None # None means "don't do any password strength checks"
 
-    # Link spam protection for public wikis (Uncomment to enable)
-    # Needs a reliable internet connection.
-    #from MoinMoin.security.antispam import SecurityPolicy
-
 
     # Mail --------------------------------------------------------------
 

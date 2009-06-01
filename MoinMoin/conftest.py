@@ -31,7 +31,7 @@ sys.path.insert(0, str(moindir))
 
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.web.request import TestRequest, Client
-from MoinMoin.wsgiapp import Application, init
+from MoinMoin.wsgiapp import Application, init, init_backend
 from MoinMoin._tests import maketestwiki, wikiconfig
 
 coverage_modules = set()
@@ -71,6 +71,7 @@ def init_test_request(given_config=None, static_state=[False]):
     request = init(request)
     if not request.cfg.data_backend:
         request.cfg.provide_fresh_backends()
+    init_backend(request)
     return request
 
 

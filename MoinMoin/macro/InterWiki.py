@@ -20,7 +20,7 @@ def macro_InterWiki(macro):
     for tag, url in iwlist:
         output.append(fmt.definition_term(1))
         output.append(fmt.code(1))
-        output.append(fmt.url(1, wikiutil.join_wiki(url, 'RecentChanges')))
+        output.append(fmt.url(1, url))
         output.append(fmt.text(tag))
         output.append(fmt.url(0))
         output.append(fmt.code(0))
