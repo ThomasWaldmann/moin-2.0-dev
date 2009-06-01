@@ -10,14 +10,22 @@
 from MoinMoin.items import ACL
 from MoinMoin.storage.error import AccessDeniedError
 from MoinMoin._tests import wikiconfig
+from MoinMoin.storage._tests.test_backends import BackendTest
 
 import py
 
 
-class TestACLMiddleware(object):
-    """
-    Test the AMW
-    """
+class TestACLMiddleware(BackendTest):
+    def __init__(self):
+        BackendTest.__init__(self, None)
+
+    def create_backend(self):
+        from MoinMoin.storage.backends.acl import AclWrapperBackend
+        return AclWrapperBackend(self.request)
+
+    def kill_backend(self):
+        pass
+
 
     class Config(wikiconfig.Config):
         acl_rights_default = u"All:admin,read,write"
