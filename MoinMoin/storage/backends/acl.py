@@ -211,7 +211,7 @@ class AclWrapperItem(object, DictMixin):
         #     Maybe find a proper solution.
         if not self._may(newname, WRITE):
             raise AccessDeniedError()
-        return self._item.rename_item(newname)
+        return self._item.rename(newname)
 
     @require_privilege(WRITE)
     def commit(self):
