@@ -45,8 +45,8 @@ import errno
 import time
 import os
 
+from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_COMMENT
 from MoinMoin.support.python_compatibility import hash_new
-from MoinMoin.Page import EDIT_LOG_USERID, EDIT_LOG_COMMENT
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import BackendError, NoSuchItemError, NoSuchRevisionError,\
                                    RevisionNumberMismatchError, ItemAlreadyExistsError,\

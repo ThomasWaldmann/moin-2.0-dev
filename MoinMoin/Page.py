@@ -2,22 +2,13 @@
 """
     MoinMoin - Page class
 
-    Page is used for read-only access to a wiki page. For r/w access see PageEditor.
-    A Page object is used to access a wiki page (in general) as well as to access
-    some specific revision of a wiki page.
+    Page is used for read-only access to a wiki page.
 
     The RootPage is some virtual page located at / and is mainly used to do namespace
     operations like getting the page list.
 
-    TODO: see CHANGES.storage
-
-    @copyright: 2000-2004 by Juergen Hermann <jh@web.de>,
-                2005-2008 by MoinMoin:ThomasWaldmann,
-                2006 by MoinMoin:FlorianFesti,
-                2007 by MoinMoin:ReimarBauer,
-                2007 by MoinMoin:HeinrichWendel,
-                2008 by MoinMoin:ChristopherDenter
-    @license: GNU GPL, see COPYING for details.
+    DEPRECATED - move stuff you need out of here, to MoinMoin.items or another
+    place that makes sense.
 """
 
 import os, re, codecs
@@ -32,21 +23,10 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
-ACL = "acl"
+from MoinMoin.items import ACL, DELETED, MIMETYPE, SIZE, EDIT_LOG, \
+                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
+                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 
-# special meta-data whose presence indicates that the item is deleted
-DELETED = "deleted"
-
-SIZE = "size"
-
-EDIT_LOG_ACTION = "edit_log_action"
-EDIT_LOG_ADDR = "edit_log_addr"
-EDIT_LOG_HOSTNAME = "edit_log_hostname"
-EDIT_LOG_USERID = "edit_log_userid"
-EDIT_LOG_EXTRA = "edit_log_extra"
-EDIT_LOG_COMMENT = "edit_log_comment"
-
-EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
 
 def is_cache_exception(e):
     args = e.args
@@ -690,13 +670,6 @@ class Page(object):
         pi['language'] = self.cfg.language_default or "en"
 
         body = self.body
-        # TODO: remove this hack once we have separate metadata and can use mimetype there
-        if body.startswith('<?xml'): # check for XML content
-            pi['lines'] = 0
-            pi['format'] = "xslt"
-            pi['formatargs'] = ''
-            return pi
-
         meta = self.meta
 
         # default is wiki markup
@@ -756,34 +729,6 @@ class Page(object):
                     request.setPragma(key, val)
 
         return pi
-
-    def send_raw(self, content_disposition=None):
-        """ Output the raw page data (action=raw).
-            With no content_disposition, the browser usually just displays the
-            data on the screen, with content_disposition='attachment', it will
-            offer a dialogue to save it to disk (used by Save action).
-        """
-        request = self.request
-        request.mimetype = 'text/plain'
-        if self.exists():
-            # use the correct last-modified value from the on-disk file
-            # to ensure cacheability where supported. Because we are sending
-            # RAW (file) content, the file mtime is correct as Last-Modified header.
-            request.status_code = 200
-            request.last_modified = self.mtime()
-            text = self.encodeTextMimeType(self.body)
-            #request.setHttpHeader("Content-Length: %d" % len(text))  # XXX WRONG! text is unicode obj, but we send utf-8!
-            if content_disposition:
-                # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
-                # There is no solution that is compatible to IE except stripping non-ascii chars
-                filename_enc = "%s.txt" % self.page_name.encode(config.charset)
-                dispo_string = '%s; filename="%s"' % (content_disposition, filename_enc)
-                request.headers.add('Content-Disposition', dispo_string)
-        else:
-            request.status_code = 404
-            text = u"Page %s not found." % self.page_name
-
-        request.write(text)
 
     def send_page(self, **keywords):
         """ Output the formatted page.
@@ -1119,9 +1064,6 @@ class Page(object):
     def loadCache(self, request):
         """ Return page content cache or raises 'CacheNeedsUpdate' """
         cache = caching.CacheEntry(request, self, self.getFormatterName(), scope='item')
-
-        from MoinMoin.action.AttachFile import getAttachDir
-        attachmentsPath = getAttachDir(request, self.page_name)
         if cache.needsUpdate([self]):
             raise Exception('CacheNeedsUpdate')
 
@@ -1359,27 +1301,14 @@ class Page(object):
             cache.remove()
 
 
-class RootPage(object):
-    """
-    These functions were removed from the Page class to remove hierarchical
-    page storage support until after we have a storage api (and really need it).
-    Currently, there is only 1 instance of this class: request.rootpage
-    """
+# compatibility hack until we refactored all code using it from here:
+from MoinMoin.items import Item
+
+class RootPage(Item):
+    supported_mimetypes = []
 
     def __init__(self, request):
-        """
-        Init the item collection.
-        """
-        self.request = request
-
-    def getPagePath(self, fname, isfile):
-        """
-        TODO: remove this hack.
-
-        Just a hack for event and edit log currently.
-        """
-        logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
-        return "/tmp/"
+        Item.__init__(self, request, name=u'')
 
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
         """
@@ -1412,62 +1341,27 @@ class RootPage(object):
         # XXX: better update this docstring
 
         request = self.request
-        request.clock.start('getPageList')
-
         if user is None:
             user = request.user
 
-        filterfunction = filter
-
-        filter = term.AND()
+        search_term = term.AND()
         if not include_underlay:
-            filter.add(term.FromUnderlay())
+            search_term.add(term.FromUnderlay())
 
-        if exists:
-            filter.add(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
+        if filter:
+            search_term.add(term.NameFn(filter))
 
-        if filterfunction:
-            filter.add(term.NameFn(filterfunction))
-
-        items = self.request.data_backend.search_item(filter)
+        items = self.list_items(search_term, include_deleted=not exists)
 
         if user or return_objects:
-            # Filter names
-            pages = []
             for item in items:
-                page = Page.from_item(request, item)
-                name = page.page_name
-
-                # Filter out pages user may not read.
-                if user and not user.may.read(name):
-                    continue
-
+                # XXX ACL check when user given?
                 if return_objects:
+                    page = Page.from_item(request, item)
                     yield page
                 else:
-                    yield name
+                    yield item.name
         else:
-            for i in items:
-                yield i.name
+            for item in items:
+                yield item.name
 
-        request.clock.stop('getPageList')
-
-    def getPageCount(self, exists=0):
-        """
-        Return page count.
-
-        @param exists: filter existing pages
-        @rtype: int
-        @return: number of pages
-        """
-        self.request.clock.start('getPageCount')
-
-        items = self.request.data_backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
-
-        count = 0
-        for item in items:
-            count += 1
-
-        self.request.clock.stop('getPageCount')
-
-        return count

@@ -27,7 +27,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError
 from MoinMoin.wikiutil import add_metadata_to_body, split_body
-from MoinMoin.Page import EDIT_LOG, EDIT_LOG_ACTION
+from MoinMoin.items import EDIT_LOG, EDIT_LOG_ACTION
 
 class FlatFileBackend(Backend):
     def __init__(self, path):

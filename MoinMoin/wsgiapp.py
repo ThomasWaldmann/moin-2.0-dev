@@ -11,10 +11,9 @@ from MoinMoin.web.exceptions import HTTPException, Forbidden
 from MoinMoin.web.request import Request, MoinMoinFinish, HeaderSet
 from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_response, \
     redirect_last_visited
-from MoinMoin.storage.backends.acl import AccessDeniedError
+from MoinMoin.storage.error import AccessDeniedError
 from MoinMoin.Page import Page
 from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
-from MoinMoin.action import get_names, get_available_actions
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -37,16 +36,21 @@ def init(request):
 
     context.user = setup_user(context, context.session)
 
-    # XXX Is it acceptable to patch the AMW onto the context here? Think so...
-    from MoinMoin.storage.backends.acl import AclWrapperBackend
-    context.data_backend = AclWrapperBackend(context)
-
     context.lang = setup_i18n_postauth(context)
 
     context.reset()
 
     context.clock.stop('init')
     return context
+
+def init_backend(context):
+    """ initialize the backend
+
+        This is separate from init because the conftest request setup needs to be
+        able to create fresh data storage backends in between init and init_backend.
+    """
+    from MoinMoin.storage.backends.acl import AclWrapperBackend
+    context.data_backend = AclWrapperBackend(context)
 
 def run(context):
     """ Run a context trough the application. """
@@ -144,38 +148,16 @@ def handle_action(context, pagename, action_name='show'):
                 url = page.url(context)
                 return context.http_redirect(url)
 
-    msg = None
-    # Complain about unknown actions
-    if not action_name in get_names(cfg):
-        msg = _("Unknown action %(action_name)s.") % {
-                'action_name': wikiutil.escape(action_name), }
-
-    # Disallow non available actions
-    elif action_name[0].isupper() and not action_name in \
-            get_available_actions(cfg, context.page, context.user):
-        msg = _("You are not allowed to do %(action_name)s on this page.") % {
-                'action_name': wikiutil.escape(action_name), }
-        if not context.user.valid:
-            # Suggest non valid user to login
-            msg += " " + _("Login and try again.")
-
-    if msg:
-        context.theme.add_msg(msg, "error")
-        context.page.send_page()
-    # Try action
-    else:
+    try:
         from MoinMoin import action
         handler = action.getHandler(cfg, action_name)
-        if handler is None:
-            msg = _("You are not allowed to do %(action_name)s on this page.") % {
-                    'action_name': wikiutil.escape(action_name), }
-            if not context.user.valid:
-                # Suggest non valid user to login
-                msg += " " + _("Login and try again.")
-            context.theme.add_msg(msg, "error")
-            context.page.send_page()
-        else:
-            handler(context.page.page_name, context)
+    except ValueError, err:
+        msg = str(err) # XXX i18n problems!
+        context.theme.add_msg(msg, "error")
+        # use a handler that should work ever:
+        handler = action.getHandler(cfg, 'show')
+
+    handler(context.page.page_name, context)
 
     return context
 
@@ -248,6 +230,7 @@ class Application(object):
         try:
             request = self.Request(environ)
             context = init(request)
+            init_backend(context)
             response = run(context)
             context.clock.stop('total')
         except HTTPException, e:

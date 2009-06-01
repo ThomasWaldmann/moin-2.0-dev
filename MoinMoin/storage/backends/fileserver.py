@@ -23,9 +23,9 @@ from MoinMoin import wikiutil, config
 from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
-from MoinMoin.Page import ACL, \
-                          EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                          EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+from MoinMoin.items import ACL, MIMETYPE, \
+                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
+                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
 class FSError(Exception):
@@ -177,7 +177,7 @@ class DirRevision(FileDirRevision):
     def __init__(self, item, revno):
         FileDirRevision.__init__(self, item, revno)
         self._fs_meta.update({
-            'mimetype': 'text/x-unidentified-wiki-format',  # XXX crap
+            MIMETYPE: 'text/x-unidentified-wiki-format',  # XXX crap
             'format': 'wiki',
         })
         # create a directory "page" in wiki markup:
@@ -198,7 +198,7 @@ class FileRevision(FileDirRevision):
         # XXX item has a different mimetype than hardcoded below:
         #mimetype = wikiutil.MimeType(filename=filepath).mime_type()
         self._fs_meta.update({
-            'mimetype': 'text/x-unidentified-wiki-format', # XXX crap
+            MIMETYPE: 'text/x-unidentified-wiki-format', # XXX crap
             'format': 'plain',
         })
 

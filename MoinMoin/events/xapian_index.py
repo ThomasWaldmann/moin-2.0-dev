@@ -52,18 +52,6 @@ def handle_deleted(event):
     handle_changed(event, deleted=True)
 
 
-def handle_attached(event):
-    """Updates Xapian index when a new attachment is added"""
-
-    request = event.request
-
-    if request.cfg.xapian_search:
-        from MoinMoin.search.Xapian import Index
-        index = Index(request)
-        if index.exists():
-            index.update_page(event.pagename)
-
-
 def handle(event):
     if isinstance(event, ev.PageRenamedEvent):
         handle_renamed(event)
@@ -73,5 +61,3 @@ def handle(event):
         handle_changed(event)
     elif isinstance(event, ev.PageDeletedEvent):
         handle_deleted(event)
-    elif isinstance(event, ev.FileAttachedEvent):
-        handle_attached(event)

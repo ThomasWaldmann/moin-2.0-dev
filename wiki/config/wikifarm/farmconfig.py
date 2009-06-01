@@ -93,10 +93,6 @@ class FarmConfig(multiconfig.DefaultConfig):
     # All acl_rights_xxx options must use unicode [Unicode]
     #acl_rights_before = u"YourName:read,write,delete,revert,admin"
 
-    # Link spam protection for public wikis (uncomment to enable).
-    # Needs a reliable internet connection.
-    #from MoinMoin.security.antispam import SecurityPolicy
-
 
     # Mail --------------------------------------------------------------
 

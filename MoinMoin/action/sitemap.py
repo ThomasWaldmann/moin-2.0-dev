@@ -39,7 +39,7 @@ def sitemap_url(request, page):
         lastmod = now()
 
     # page's changefreq, priority and lastmod depends on page type / name
-    if pagename in [u"RecentChanges", u"TitleIndex", ]:
+    if pagename in [u"TitleIndex", ]:
         # important dynamic pages with macros
         changefreq = "hourly"
         priority = "0.9"

@@ -153,7 +153,7 @@ def get_multistage_continuation_url(request, auth_name, extra_fields={}):
     """
     # logically, this belongs to request, but semantically it should
     # live in auth so people do auth.get_multistage_continuation_url()
-    fields = {'action': 'login',
+    fields = {'do': 'login',
               'login': '1',
               'stage': auth_name}
     fields.update(extra_fields)
@@ -248,8 +248,8 @@ class MoinAuth(BaseAuth):
 
     def login_hint(self, request):
         _ = request.getText
-        userprefslink = request.page.url(request, querystr={'action': 'newaccount'})
-        sendmypasswordlink = request.page.url(request, querystr={'action': 'recoverpass'})
+        userprefslink = request.page.url(request, querystr={'do': 'newaccount'})
+        sendmypasswordlink = request.page.url(request, querystr={'do': 'recoverpass'})
         return _('If you do not have an account, <a href="%(userprefslink)s">you can create one now</a>. '
                  '<a href="%(sendmypasswordlink)s">Forgot your password?</a>') % {
                'userprefslink': userprefslink,
