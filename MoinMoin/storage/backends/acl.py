@@ -238,13 +238,13 @@ class AclWrappedNewRevision(object, DictMixin):
         for attr in ('__delitem__', 'write'):
             setattr(self, attr, getattr(revision, attr))
 
-        @property
-        def timestamp(self):
-            return self._revision.timestamp
+    @property
+    def timestamp(self):
+        return self._revision.timestamp
 
-        @property
-        def size(self):
-            return self._revision.size
+    @property
+    def size(self):
+        return self._revision.size
 
     def __setitem__(self, key, value):
         """
