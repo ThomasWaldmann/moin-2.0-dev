@@ -9,26 +9,28 @@
 """
 from MoinMoin.items import ACL
 from MoinMoin.storage.error import AccessDeniedError
-from MoinMoin._tests import wikiconfig
 from MoinMoin.storage._tests.test_backends import BackendTest
+from MoinMoin.storage.backends.acl import AclWrapperBackend
+from MoinMoin.conftest import init_test_request
+from MoinMoin._tests import wikiconfig
 
 import py
 
 
 class TestACLMiddleware(BackendTest):
+    class Config(wikiconfig.Config):
+        acl_rights_default = u"All:admin,read,write"
+
     def __init__(self):
         BackendTest.__init__(self, None)
 
     def create_backend(self):
-        from MoinMoin.storage.backends.acl import AclWrapperBackend
+        self.request = init_test_request(self.Config)
         return AclWrapperBackend(self.request)
 
     def kill_backend(self):
         pass
 
-
-    class Config(wikiconfig.Config):
-        acl_rights_default = u"All:admin,read,write"
 
     def get_item(self, name):
         # Just as a shortcut
