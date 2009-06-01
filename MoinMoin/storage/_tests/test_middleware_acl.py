@@ -33,6 +33,7 @@ class TestACLMiddleware(object):
         item.commit()
         return item
 
+
     def test_noaccess(self):
         name = "noaccess"
         self.create_item_acl(name, "All:")
@@ -52,3 +53,21 @@ class TestACLMiddleware(object):
         name = "writeaftercreate"
         item = self.create_item_acl(name, "All:")
         assert py.test.raises(AccessDeniedError, item.create_revision, 1)
+
+    def test_copy_without_acl_change(self):
+        name = "copy_without_acl_change"
+        acl = "All:read,write"
+        self.create_item_acl(name, acl)
+        item = self.get_item(name)
+        rev = item.create_revision(1)
+        # This should pass
+        rev[ACL] = acl
+        item.commit()
+
+    def test_copy_with_acl_change(self):
+        name = "copy_with_acl_change"
+        acl = "All:read,write"
+        self.create_item_acl(name, acl)
+        item = self.get_item(name)
+        rev = item.create_revision(1)
+        py.test.raises(AccessDeniedError, rev.__setitem__, ACL, acl + ",write")
