@@ -259,7 +259,6 @@ class Item(object):
         self._save(meta, data, mimetype=mimetype, comment=comment)
 
     def _save(self, meta, data, name=None, action='SAVE', mimetype=None, comment='', extra=''):
-        #import pdb; pdb.set_trace()
         request = self.request
         if name is None:
             name = self.name
