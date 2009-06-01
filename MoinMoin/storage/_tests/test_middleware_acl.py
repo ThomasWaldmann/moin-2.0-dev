@@ -9,6 +9,7 @@
 """
 from MoinMoin.items import ACL
 from MoinMoin.storage.error import AccessDeniedError
+from MoinMoin._tests import wikiconfig
 
 import py
 
@@ -17,6 +18,9 @@ class TestACLMiddleware(object):
     """
     Test the AMW
     """
+
+    class Config(wikiconfig.Config):
+        acl_rights_default = u"All:admin,read,write"
 
     def get_item(self, name):
         # Just as a shortcut
