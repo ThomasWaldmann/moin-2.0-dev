@@ -15,12 +15,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from UserDict import DictMixin
-
 from MoinMoin.items import ACL
 from MoinMoin.security import AccessControlList
 
-from MoinMoin.storage import Backend
+from MoinMoin.storage import Item, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 
 ADMIN = 'admin'
@@ -151,7 +149,7 @@ class AclWrapperBackend(object):
         return False
 
 
-class AclWrapperItem(object, DictMixin):
+class AclWrapperItem(Item):
     def __init__(self, item, aclbackend):
         self._backend = aclbackend
         self._item = item
@@ -227,7 +225,7 @@ class AclWrapperItem(object, DictMixin):
         return wrapped_revision
 
 
-class AclWrappedNewRevision(object, DictMixin):
+class AclWrappedNewRevision(NewRevision):
     def __init__(self, revision, item):
         self._revision = revision
         self._item = item
