@@ -23,7 +23,8 @@ from werkzeug import http_date, quote_etag
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
 from MoinMoin.support.python_compatibility import hash_new
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
+                                   StorageError
 
 from MoinMoin.items.sendcache import SendCache
 
@@ -188,8 +189,7 @@ class Item(object):
             new_rev.write(content)
             hash.update(content)
         else:
-            logging.error("unsupported content object: %r" % content)
-            raise
+            raise StorageError("unsupported content object: %r" % content)
         return hash_name, hash.hexdigest()
 
     def copy(self):
@@ -259,6 +259,7 @@ class Item(object):
         self._save(meta, data, mimetype=mimetype, comment=comment)
 
     def _save(self, meta, data, name=None, action='SAVE', mimetype=None, comment='', extra=''):
+        #import pdb; pdb.set_trace()
         request = self.request
         if name is None:
             name = self.name
