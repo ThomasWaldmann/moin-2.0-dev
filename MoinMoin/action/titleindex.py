@@ -19,7 +19,7 @@ def execute(pagename, request):
     request.mimetype = mimetype
 
     # Get list of user readable pages
-    pages = request.rootpage.getPageList()
+    pages = list(request.rootpage.getPageList())
     pages.sort()
 
     if mimetype == "text/xml":

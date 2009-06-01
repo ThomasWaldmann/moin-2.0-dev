@@ -1,0 +1,17 @@
+
+What still needs to be done in MercurialBackend 
+besides fixing KNOWN_BROKEN:
+
+- merge action along with merge integration with GraphInfo
+  (this was sacrificed to fix performance issues and traceback reports)
+
+- new iteration solving most current problems 
+  * memory commits file size limitation
+  * memory commits blocking merges (until 'hg update' runned)
+    and blocking updates (if no working copy and two heads created)
+  * getting rid of patch
+	
+	See more at 'Current problems' section:
+  http://moinmo.in/PawelPacana/MercurialBackend/DesignNotes
+
+- clone tool/migration unit tests

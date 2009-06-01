@@ -27,9 +27,8 @@ class CopyPage(ActionBase):
         self.form_trigger = 'copy'
         self.form_trigger_label = _('Copy Page')
         filterfn = re.compile(ur"^%s/.*$" % re.escape(pagename), re.U).match
-        pages = request.rootpage.getPageList(user='', exists=1, filter=filterfn)
         subpagenames = request.rootpage.getPageList(user='', exists=1, filter=filterfn)
-        self.subpages = subpagenames
+        self.subpages = list(subpagenames)
         self.users_subpages = [pagename for pagename in subpagenames if self.request.user.may.read(pagename)]
 
     def is_allowed(self):

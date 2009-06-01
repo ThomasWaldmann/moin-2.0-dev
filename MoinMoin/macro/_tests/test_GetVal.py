@@ -10,7 +10,8 @@ import os, py
 from MoinMoin import macro
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
-from MoinMoin._tests import become_trusted, create_page, make_macro, nuke_page
+
+from MoinMoin._tests import become_trusted, create_page, make_macro
 
 class TestGetVal:
     """GetVal: testing getVal macro """
@@ -19,9 +20,6 @@ class TestGetVal:
     def setup_class(self):
         become_trusted(self.request)
         self.cfg = self.request.cfg
-
-    def teardown_class(self):
-        nuke_page(self.request, self.pagename)
 
     def _test_macro(self, name, args):
         m = make_macro(self.request, self.page)
@@ -40,7 +38,6 @@ class TestGetVal:
         page.deletePage()
         page = create_page(request, self.pagename, u' VAR:: This is a brand new example')
         result = self._test_macro(u'GetVal', "%s,%s" % (self.pagename, u'VAR'))
-        nuke_page(request, u'SomeDict')
         assert result == "This is a brand new example"
 
     def testGetValACLs(self):

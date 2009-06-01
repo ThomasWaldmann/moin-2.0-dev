@@ -115,7 +115,7 @@ def _addLocalWords(request):
     # add the words to the page and save it
     if words and words[-1] != '\n':
         words = words + '\n'
-    lsw_page.saveText(words + '\n' + newwords, 0)
+    lsw_page.saveText(words + '\n' + newwords, None)
 
 
 def checkSpelling(page, request, own_form=1):

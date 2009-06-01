@@ -8,31 +8,30 @@
 
 Dependencies = ["pages"]
 
+from MoinMoin.Page import Page
+
 def macro_PageSize(macro):
-    if macro.request.isSpiderAgent: # reduce bot cpu usage
+    request = macro.request
+    if request.isSpiderAgent: # reduce bot cpu usage
         return ''
 
-    # get list of pages and their objects
-    pages = macro.request.rootpage.getPageDict()
-
-    # get sizes and sort them
-    sizes = []
-    for name, page in pages.items():
-        sizes.append((page.size(), page))
+    # get sizes of all pages and sort them
+    sizes = [(Page(request, name).size(), name)
+             for name in request.rootpage.getPageList()]
     sizes.sort()
     sizes.reverse()
 
     # format list
     result = []
     result.append(macro.formatter.number_list(1))
-    for size, page in sizes:
+    for size, pagename in sizes:
         result.append(macro.formatter.listitem(1))
         result.append(macro.formatter.code(1))
         result.append(("%6d" % size).replace(" ", "&nbsp;") + " ")
         result.append(macro.formatter.code(0))
-        result.append(macro.formatter.pagelink(1, page.page_name, generated=1))
-        result.append(macro.formatter.text(page.page_name))
-        result.append(macro.formatter.pagelink(0, page.page_name))
+        result.append(macro.formatter.pagelink(1, pagename, generated=1))
+        result.append(macro.formatter.text(pagename))
+        result.append(macro.formatter.pagelink(0, pagename))
         result.append(macro.formatter.listitem(0))
     result.append(macro.formatter.number_list(0))
 

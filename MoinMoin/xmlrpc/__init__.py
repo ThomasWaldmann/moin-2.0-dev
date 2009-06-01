@@ -331,10 +331,10 @@ class XmlRpcBase:
 
         return_items = []
 
-        edit_log = editlog.EditLog(self.request)
-        for log in edit_log.reverse():
+        glog = editlog.GlobalEditLog(self.request)
+        for log in glog:
             # get last-modified UTC (DateTime) from log
-            gmtuple = tuple(time.gmtime(wikiutil.version2timestamp(log.ed_time_usecs)))
+            gmtuple = tuple(time.gmtime(log.mtime))
             lastModified_date = xmlrpclib.DateTime(gmtuple)
 
             # skip if older than "date"
@@ -402,7 +402,7 @@ class XmlRpcBase:
         if not edit_info:
             return self.noLogEntryFault()
 
-        mtime = wikiutil.version2timestamp(long(edit_info['timestamp'])) # must be long for py 2.2.x
+        mtime = long(edit_info['timestamp']) # must be long for py 2.2.x
         gmtuple = tuple(time.gmtime(mtime))
 
         version = rev # our new rev numbers: 1,2,3,4,....
@@ -545,7 +545,7 @@ class XmlRpcBase:
                 newtext = self._instr(pagetext)
             elif self.version == 1:
                 newtext = self._inlob(pagetext)
-            msg = page.saveText(newtext, 0)
+            msg = page.saveText(newtext, None)
         except page.SaveError, msg:
             logging.error("SaveError: %s" % msg)
             return xmlrpclib.Fault(1, "%s" % msg)
@@ -896,7 +896,7 @@ class XmlRpcBase:
 
         # write page
         try:
-            currentpage.saveText(newcontents.decode("utf-8"), last_remote_rev or 0, comment=comment)
+            currentpage.saveText(newcontents.decode("utf-8"), last_remote_rev or None, comment=comment)
         except PageEditor.Unchanged: # could happen in case of both wiki's pages being equal
             pass
         except PageEditor.EditConflict:
