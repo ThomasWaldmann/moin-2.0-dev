@@ -65,7 +65,7 @@ class TestACLMiddleware(BackendTest):
         item = self.create_item_acl(name, "All:")
         assert py.test.raises(AccessDeniedError, item.create_revision, 1)
 
-    def test_copy_without_acl_change(self):
+    def test_modify_without_acl_change(self):
         name = "copy_without_acl_change"
         acl = "All:read,write"
         self.create_item_acl(name, acl)
@@ -82,3 +82,16 @@ class TestACLMiddleware(BackendTest):
         item = self.get_item(name)
         rev = item.create_revision(1)
         py.test.raises(AccessDeniedError, rev.__setitem__, ACL, acl + ",write")
+
+    def test_write_without_read(self):
+        name = "write_but_not_read"
+        acl = "All:write"
+        item = self.request.data_backend.create_item(name)
+        rev = item.create_revision(0)
+        rev[ACL] = acl
+        rev.write("My name is " + name)
+        item.commit()
+
+        py.test.raises(AccessDeniedError, item.get_revision, -1)
+        py.test.raises(AccessDeniedError, item.get_revision, 0)
+
