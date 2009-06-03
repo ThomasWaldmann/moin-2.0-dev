@@ -295,7 +295,7 @@ class Item(object):
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
         # allow override by give metadata:
-        assert mimetype is not None        
+        assert mimetype is not None
         newrev[MIMETYPE] = meta.get(MIMETYPE, mimetype)
         newrev[EDIT_LOG_ACTION] = action
         newrev[EDIT_LOG_ADDR] = request.remote_addr
