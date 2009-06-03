@@ -231,11 +231,6 @@ class AclWrappedNewRevision(NewRevision):
         self._item = item
         self._may = item._may
 
-        # It's ok to redirect here since item.commit() and item.create_revision
-        # already perform permission checks.
-        for attr in ('__delitem__', 'write'):
-            setattr(self, attr, getattr(revision, attr))
-
     @property
     def timestamp(self):
         return self._revision.timestamp
@@ -266,3 +261,9 @@ class AclWrappedNewRevision(NewRevision):
 
     def __getitem__(self, key):
         return self._revision[key]
+
+    def __delitem__(self, key):
+        del self._revision[key]
+
+    def write(self, data):
+        return self._revision.write(data)
