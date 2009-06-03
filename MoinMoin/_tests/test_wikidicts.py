@@ -9,6 +9,8 @@
 
 import shutil
 
+import py.test
+
 from MoinMoin import wikidicts
 from MoinMoin import Page
 from MoinMoin.PageEditor import PageEditor
@@ -150,6 +152,7 @@ class TestGroupDicts:
         """
          tests scalability by appending a name to a large list of group members
         """
+        py.test.skip("Fills test debug output with large crap page_content")
         # long list of users
         page_content = [u" * %s" % member for member in create_random_string_list(length=15, count=30000)]
         request = self.request

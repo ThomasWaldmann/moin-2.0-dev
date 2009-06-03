@@ -14,6 +14,7 @@ from MoinMoin.formatter.text_html import Formatter
 from MoinMoin.items import Item
 from MoinMoin.util import random_string
 from MoinMoin import caching, user
+from MoinMoin import config
 
 # Promoting the test user -------------------------------------------
 # Usually the tests run as anonymous user, but for some stuff, you
@@ -53,14 +54,18 @@ def become_superuser(request):
 
 # Creating and destroying test pages --------------------------------
 
-def create_page(request, itemname, content):
+def create_page(request, itemname, content, mimetype='text/moin-wiki'):
     """ create a page with some content """
+    if isinstance(content, unicode):
+        content = content.encode(config.charset)
     item = Item.create(request, itemname)
-    item._save({}, content)
+    item._save({}, content, mimetype=mimetype)
     return item
 
 def append_page(request, itemname, content):
     """ appends some content to an existing page """
+    if isinstance(content, unicode):
+        content = content.encode(config.charset)
     item = Item.create(request, itemname)
     content = "%s\n%s\n"% (item.data, content)
     item._save({}, content)
