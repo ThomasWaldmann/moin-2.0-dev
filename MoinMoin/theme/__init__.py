@@ -1522,6 +1522,7 @@ actionsMenuInit('%(label)s');
                                   )
             request.write(html)
         else:
+            request.headers.add('Content-Type', 'text/html; charset=utf-8')
             # Use user interface language for this generated page
             request.setContentLanguage(request.lang)
             request.theme.send_title(title, pagename=item_name)
