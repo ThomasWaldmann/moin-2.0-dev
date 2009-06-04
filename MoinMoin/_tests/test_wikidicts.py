@@ -10,6 +10,7 @@
 import shutil
 
 import py.test
+py.test.skip("work is being done on dicts/group refactoring in another repo")
 
 from MoinMoin import wikidicts
 from MoinMoin import Page
