@@ -31,10 +31,6 @@ class AclWrapperBackend(object):
     def __init__(self, request):
         self.request = request
         self.backend = request.cfg.data_backend
-        self.acl_hierarchic = request.cfg.acl_hierarchic
-        self.acl_before = request.cfg.cache.acl_rights_before
-        self.acl_default = request.cfg.cache.acl_rights_default
-        self.acl_after = request.cfg.cache.acl_rights_after
 
     def __getattr__(self, attr):
         return getattr(self.backend, attr)
@@ -96,9 +92,9 @@ class AclWrapperBackend(object):
     def _may(self, itemname, right):
         """ Check if self.username may have <right> access on item <itemname>.
 
-        For self.acl_hierarchic=False we just check the item in question.
+        For acl_hierarchic=False we just check the item in question.
 
-        For self.acl_hierarchic=True we, we check each item in the hierarchy. We
+        For acl_hierarchic=True we, we check each item in the hierarchy. We
         start with the deepest item and recurse to the top of the tree.
         If one of those permits, True is returned.
 
@@ -112,13 +108,14 @@ class AclWrapperBackend(object):
         @return: True if you have permission or False
         """
         request = self.request
+        cfg = request.cfg
         username = request.user.name
 
-        allowed = self.acl_before.may(request, username, right)
+        allowed = cfg.cache.acl_rights_before.may(request, username, right)
         if allowed is not None:
             return allowed
 
-        if self.acl_hierarchic:
+        if cfg.acl_hierarchic:
             items = itemname.split('/') # create item hierarchy list
             some_acl = False
             for i in range(len(items), 0, -1):
@@ -132,7 +129,7 @@ class AclWrapperBackend(object):
                     if allowed is not None:
                         return allowed
             if not some_acl:
-                allowed = self.acl_default.may(request, username, right)
+                allowed = cfg.cache.acl_rights_default.may(request, username, right)
                 if allowed is not None:
                     return allowed
         else:
@@ -142,11 +139,11 @@ class AclWrapperBackend(object):
                 if allowed is not None:
                     return allowed
             else:
-                allowed = self.acl_default.may(request, username, right)
+                allowed = cfg.cache.acl_rights_default.may(request, username, right)
                 if allowed is not None:
                     return allowed
 
-        allowed = self.acl_after.may(request, username, right)
+        allowed = cfg.cache.acl_rights_after.may(request, username, right)
         if allowed is not None:
             return allowed
 
