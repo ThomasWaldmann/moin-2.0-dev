@@ -124,6 +124,7 @@ def get_editor(request, userid, addr, hostname):
 def get_printable_editor(request, userid, addr, hostname):
     """ Return a HTML-safe string representing the user that did the edit.
     """
+    _ = request.getText
     if request.cfg.show_hosts and hostname and addr:
         title = " @ %s[%s]" % (hostname, addr)
     else:
