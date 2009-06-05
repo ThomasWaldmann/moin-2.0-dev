@@ -263,6 +263,12 @@ class AccessControlList:
             self.acl = None
             self.acl_lines = None
 
+    def has_acl(self):
+        """ Checks whether we have a real acl here. """
+        # self.acl == None means that there is NO acl.
+        # self.acl == [] means that there is a empty acl.
+        return self.acl is not None
+
     def _addLine(self, cfg, aclstring, remember=1):
         """ Add another ACL line
 
@@ -302,17 +308,13 @@ class AccessControlList:
     def may(self, request, name, dowhat):
         """ May <name> <dowhat>? Returns boolean answer.
 
-            Note: this check does NOT include the acl_rights_before / _after ACL,
-                  but it WILL use acl_rights_default if there is no (page) ACL.
+            Note: this just checks THIS ACL, the before/default/after ACL must
+                  be handled elsewhere, if needed.
         """
-        if self.acl is None: # no #acl used on Page
-            acl = request.cfg.cache.acl_rights_default.acl
-        else: # we have a #acl on the page (self.acl can be [] if #acl is empty!)
-            acl = self.acl
         is_group_member = request.dicts.has_member
         group_re = request.cfg.cache.page_group_regexact
         allowed = None
-        for entry, rightsdict in acl:
+        for entry, rightsdict in self.acl:
             if entry in self.special_users:
                 handler = getattr(self, "_special_"+entry, None)
                 allowed = handler(request, name, dowhat, rightsdict)

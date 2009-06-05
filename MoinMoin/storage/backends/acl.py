@@ -126,7 +126,7 @@ class AclWrapperBackend(object):
                 # starting at the leaf, going to the root
                 name = '/'.join(items[:i])
                 acl = self._get_acl(name)
-                if acl.acl:
+                if acl.has_acl():
                     some_acl = True
                     allowed = acl.may(request, username, right)
                     if allowed is not None:
@@ -137,9 +137,14 @@ class AclWrapperBackend(object):
                     return allowed
         else:
             acl = self._get_acl(itemname)
-            allowed = acl.may(request, username, right)
-            if allowed is not None:
-                return allowed
+            if acl.has_acl():
+                allowed = acl.may(request, username, right)
+                if allowed is not None:
+                    return allowed
+            else:
+                allowed = self.acl_default.may(request, username, right)
+                if allowed is not None:
+                    return allowed
 
         allowed = self.acl_after.may(request, username, right)
         if allowed is not None:
