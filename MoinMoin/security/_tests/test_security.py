@@ -246,10 +246,9 @@ class TestPageAcls(object):
     mainpage_name = u'AclTestMainPage'
     subpage_name = u'AclTestMainPage/SubPage'
     pages = [
-        # pagename, content
-        #(mainpage_name, u"#acl JoeDoe:\n#acl JaneDoe:read,write\nFoo!"),
-        (mainpage_name, 'JoeDoe: JaneDoe:read,write', u"Foo!"),
-        (subpage_name, '', u"FooFoo!"),
+        # pagename, acl, content
+        (mainpage_name, u'JoeDoe: JaneDoe:read,write', u'Foo!'),
+        (subpage_name, None, u'FooFoo!'),
     ]
 
     from MoinMoin._tests import wikiconfig
@@ -297,18 +296,12 @@ class TestPageAcls(object):
         for hierarchic, pagename, username, may in tests:
             u = User(self.request, auth_username=username)
             u.valid = True
-            assert self.request.user.name == self.request.data_backend.request.user.name == username
 
             def _have_right(u, right, pagename, hierarchic):
                 self.request.cfg.acl_hierarchic = hierarchic
+                self.request.user = u
                 can_access = getattr(u.may, right)(pagename)
-                if can_access:
-                    print "page %s: %s test if %s may %s (success)" % (
-                        pagename, ['normal', 'hierarchic'][hierarchic], username, right)
-                else:
-                    print "page %s: %s test if %s may %s (failure)" % (
-                        pagename, ['normal', 'hierarchic'][hierarchic], username, right)
-                assert can_access
+                assert can_access, "%r may %s %r (%s)" % (u.name, right, pagename, ['normal', 'hierarchic'][hierarchic])
 
             # User should have these rights...
             for right in may:
@@ -316,14 +309,9 @@ class TestPageAcls(object):
 
             def _not_have_right(u, right, pagename, hierarchic):
                 self.request.cfg.acl_hierarchic = hierarchic
+                self.request.user = u
                 can_access = getattr(u.may, right)(pagename)
-                if can_access:
-                    print "page %s: %s test if %s may not %s (failure)" % (
-                        pagename, ['normal', 'hierarchic'][hierarchic], username, right)
-                else:
-                    print "page %s: %s test if %s may not %s (success)" % (
-                        pagename, ['normal', 'hierarchic'][hierarchic], username, right)
-                assert not can_access
+                assert not can_access, "%r may not %s %r (%s)" % (u.name, right, pagename, ['normal', 'hierarchic'][hierarchic])
 
             # User should NOT have these rights:
             mayNot = [right for right in self.request.cfg.acl_rights_valid

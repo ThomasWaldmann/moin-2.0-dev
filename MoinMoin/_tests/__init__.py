@@ -54,13 +54,13 @@ def become_superuser(request):
 
 # Creating and destroying test pages --------------------------------
 
-def create_page(request, itemname, content, mimetype='text/moin-wiki', acl=''):
+def create_page(request, itemname, content, mimetype='text/moin-wiki', acl=None):
     """ create a page with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
     item = Item.create(request, itemname)
     meta = {}
-    if acl:
+    if acl is not None:
         meta[ACL] = acl
     item._save(meta, content, mimetype=mimetype)
     return item
