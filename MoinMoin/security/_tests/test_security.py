@@ -297,6 +297,7 @@ class TestPageAcls(object):
         for hierarchic, pagename, username, may in tests:
             u = User(self.request, auth_username=username)
             u.valid = True
+            assert self.request.user.name == self.request.data_backend.request.user.name == username
 
             def _have_right(u, right, pagename, hierarchic):
                 self.request.cfg.acl_hierarchic = hierarchic

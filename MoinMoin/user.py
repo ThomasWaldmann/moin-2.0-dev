@@ -319,7 +319,6 @@ class User:
 
             def lazyload(f):
                 def wrapper(self, *args):
-                    print self
                     if self.may is None:
                         self.may = request.data_backend._may
                     return f(self, *args)
