@@ -27,7 +27,7 @@ from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError
-from MoinMoin.wikiutil import add_metadata_to_body, split_body
+from MoinMoin.wikiutil import add_metadata_to_body, split_body, quoteWikinameFS, unquoteWikiname
 from MoinMoin.items import EDIT_LOG, EDIT_LOG_ACTION
 
 class FlatFileBackend(Backend):
@@ -43,23 +43,10 @@ class FlatFileBackend(Backend):
     _unquote_re = re.compile('_[a-fA-F0-9]{2}|.')
 
     def _quote(self, name):
-        name = name.encode('utf-8')
-        res = []
-        for c in name:
-            if not self._noquote_re.match(c):
-                res.append('_%.2x' % ord(c))
-            else:
-                res.append(c)
-        return ''.join(res)
+        return quoteWikinameFS(name)
 
     def _unquote(self, name):
-        res = []
-        for c in self._unquote_re.findall(name):
-            if c[0] == '_':
-                res.append('%c' % int(c[1:], 16))
-            else:
-                res.append(c)
-        return ''.join(res).decode('utf-8')
+        return unquoteWikiname(name)
 
     def _rev_path(self, name):
         return os.path.join(self._path, self._quote(name))
