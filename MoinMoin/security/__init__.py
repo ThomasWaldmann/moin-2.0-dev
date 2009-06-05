@@ -29,68 +29,6 @@ from MoinMoin.items import ACL
 ### Basic Permissions Interface -- most features enabled by default
 #############################################################################
 
-def _check(request, pagename, username, right):
-    """ Check <right> access permission for user <username> on page <pagename>
-
-    For cfg.acl_hierarchic=False we just check the page in question.
-
-    For cfg.acl_hierarchic=True we, we check each page in the hierarchy. We
-    start with the deepest page and recurse to the top of the tree.
-    If one of those permits, True is returned.
-
-    For both configurations, we check acl_rights_before before the page/default
-    acl and acl_rights_after after the page/default acl, of course.
-
-    This method should not be called by users, use __getattr__ instead.
-
-    @param request: the current request object
-    @param pagename: pagename to get permissions from
-    @param username: the user name
-    @param right: the right to check
-
-    @rtype: bool
-    @return: True if you have permission or False
-    """
-    cache = request.cfg.cache
-    allowed = cache.acl_rights_before.may(request, username, right)
-    if allowed is not None:
-        return allowed
-
-    if request.cfg.acl_hierarchic:
-        pages = pagename.split('/') # create page hierarchy list
-        some_acl = False
-        for i in range(len(pages), 0, -1):
-            # Create the next pagename in the hierarchy
-            # starting at the leaf, going to the root
-            name = '/'.join(pages[:i])
-            # Get page acl and ask for permission
-            acl = Page(request, name).getACL()
-            if acl.acl:
-                some_acl = True
-                allowed = acl.may(request, username, right)
-                if allowed is not None:
-                    return allowed
-        if not some_acl:
-            allowed = cache.acl_rights_default.may(request, username, right)
-            if allowed is not None:
-                return allowed
-    else:
-        if request.page is not None and pagename == request.page.page_name:
-            p = request.page # reuse is good
-        else:
-            p = Page(request, pagename)
-        acl = p.getACL() # this will be fast in a reused page obj
-        allowed = acl.may(request, username, right)
-        if allowed is not None:
-            return allowed
-
-    allowed = cache.acl_rights_after.may(request, username, right)
-    if allowed is not None:
-        return allowed
-
-    return False
-
-
 class Permissions:
     """ Basic interface for user permissions and system policy.
 
@@ -115,6 +53,7 @@ class Permissions:
         self.name = user.name
         self.request = user._request
 
+    # XXX Is this used? Likely needs to be thrown out
     def save(self, editor, newtext, rev, **kw):
         """ Check whether user may save a page.
 
@@ -142,9 +81,10 @@ class Permissions:
         @return: checking function for that right, accepting a pagename
         """
         request = self.request
+        may = request.data_backend._may
         if attr not in request.cfg.acl_rights_valid:
             raise AttributeError, attr
-        return lambda pagename: _check(self.request, pagename, self.name, attr)
+        return lambda itemname: may(itemname, attr)
 
 
 # make an alias for the default policy

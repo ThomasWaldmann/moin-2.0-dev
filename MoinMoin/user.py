@@ -313,37 +313,11 @@ class User:
                 self.enc_password = encodePassword(password)
 
         # "may" so we can say "if user.may.read(pagename):"
-        class May(object):
-            def __init__(self):
-                self.may = None
-
-            def lazyload(f):
-                def wrapper(self, *args):
-                    if self.may is None:
-                        self.may = request.data_backend._may
-                    return f(self, *args)
-                return wrapper
-
-            @lazyload
-            def read(self, itemname):
-                return self.may(itemname, 'read')
-
-            @lazyload
-            def write(self, itemname):
-                return self.may(itemname, 'write')
-
-            @lazyload
-            def admin(self, itemname):
-                return self.may(itemname, 'admin')
-
-            @lazyload
-            def delete(self, itemname):
-                return self.may(itemname, 'delete')
-
-            def __getattr__(self, attr):
-                raise AttributeError("Privilege %s not supported" % attr)
-
-        self.may = May()
+        if self._cfg.SecurityPolicy:
+            self.may = self._cfg.SecurityPolicy(self)
+        else:
+            from MoinMoin.security import Default
+            self.may = Default(self)
 
         if self.language and not self.language in i18n.wikiLanguages():
             self.language = 'en'
