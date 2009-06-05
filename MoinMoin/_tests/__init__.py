@@ -11,7 +11,7 @@ import os, shutil
 
 from MoinMoin.parser.text import Parser
 from MoinMoin.formatter.text_html import Formatter
-from MoinMoin.items import Item
+from MoinMoin.items import Item, ACL
 from MoinMoin.util import random_string
 from MoinMoin import caching, user
 from MoinMoin import config
@@ -54,12 +54,15 @@ def become_superuser(request):
 
 # Creating and destroying test pages --------------------------------
 
-def create_page(request, itemname, content, mimetype='text/moin-wiki'):
+def create_page(request, itemname, content, mimetype='text/moin-wiki', acl=''):
     """ create a page with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
     item = Item.create(request, itemname)
-    item._save({}, content, mimetype=mimetype)
+    meta = {}
+    if acl:
+        meta[ACL] = acl
+    item._save(meta, content, mimetype=mimetype)
     return item
 
 def append_page(request, itemname, content):

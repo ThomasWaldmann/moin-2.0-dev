@@ -247,8 +247,9 @@ class TestPageAcls(object):
     subpage_name = u'AclTestMainPage/SubPage'
     pages = [
         # pagename, content
-        (mainpage_name, u"#acl JoeDoe:\n#acl JaneDoe:read,write\nFoo!"),
-        (subpage_name, u"FooFoo!"),
+        #(mainpage_name, u"#acl JoeDoe:\n#acl JaneDoe:read,write\nFoo!"),
+        (mainpage_name, 'JoeDoe: JaneDoe:read,write', u"Foo!"),
+        (subpage_name, '', u"FooFoo!"),
     ]
 
     from MoinMoin._tests import wikiconfig
@@ -264,8 +265,8 @@ class TestPageAcls(object):
         self.request.user = User(self.request, auth_username=u'WikiAdmin')
         self.request.user.valid = True
 
-        for page_name, page_content in self.pages:
-            create_page(self.request, page_name, page_content)
+        for page_name, page_acl, page_content in self.pages:
+            create_page(self.request, page_name, page_content, acl=page_acl)
 
     def teardown_class(self):
         # Restore user
