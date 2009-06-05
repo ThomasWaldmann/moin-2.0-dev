@@ -251,7 +251,7 @@ class AclWrappedNewRevision(NewRevision):
                 # This rev is not yet committed
                 last_rev = self._item.get_revision(-1)
                 last_acl = last_rev[ACL]
-            except NoSuchRevisionError:
+            except (NoSuchRevisionError, KeyError):
                 last_acl = ''
 
             acl_changed = not (value == last_acl)
