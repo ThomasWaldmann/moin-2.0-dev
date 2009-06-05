@@ -299,7 +299,7 @@ class TestPageAcls(object):
 
             def _have_right(u, right, pagename, hierarchic):
                 self.request.cfg.acl_hierarchic = hierarchic
-                can_access = u.may.__getattr__(right)(pagename)
+                can_access = getattr(u.may, right)(pagename)
                 if can_access:
                     print "page %s: %s test if %s may %s (success)" % (
                         pagename, ['normal', 'hierarchic'][hierarchic], username, right)
@@ -314,7 +314,7 @@ class TestPageAcls(object):
 
             def _not_have_right(u, right, pagename, hierarchic):
                 self.request.cfg.acl_hierarchic = hierarchic
-                can_access = u.may.__getattr__(right)(pagename)
+                can_access = getattr(u.may, right)(pagename)
                 if can_access:
                     print "page %s: %s test if %s may not %s (failure)" % (
                         pagename, ['normal', 'hierarchic'][hierarchic], username, right)
