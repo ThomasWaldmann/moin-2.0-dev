@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    MoinMoin - fs17 read-only backend tests
+    MoinMoin - fs19 read-only backend tests
 
     @copyright: 2008 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
@@ -13,7 +13,7 @@ import py.test
 from MoinMoin import wikiutil
 from MoinMoin.storage import Item
 from MoinMoin.items import DELETED
-from MoinMoin.storage.backends.fs17 import FSPageBackend
+from MoinMoin.storage.backends.fs19 import FSPageBackend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 item_data = "Foo Bar"
@@ -52,9 +52,9 @@ items = [# name, rev, data, logline, attachments
          (deleted_item_name, 2, '', '', []), # no rev 2 data, no edit-log
         ]
 
-class TestFS17Backend(object):
+class TestFS19Backend(object):
     """
-    MoinMoin - fs17 read-only backend tests
+    MoinMoin - fs19 read-only backend tests
     """
 
     def setup_method(self, method):
@@ -166,7 +166,7 @@ class TestFS17Backend(object):
         item = self.backend.get_item(deleted_item_name)
         rev = item.get_revision(1)
         assert rev[DELETED] is True
-        assert rev['acl'] == deleted_item_acl # fs17 backend gets this from rev N-1
+        assert rev['acl'] == deleted_item_acl # fs19 backend gets this from rev N-1
 
     def test_metadata_mtime(self):
         item = self.backend.get_item(item_name)

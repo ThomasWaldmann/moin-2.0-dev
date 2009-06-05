@@ -1,5 +1,5 @@
 """
-    MoinMoin - Backend for moin 1.6/1.7 compatible filesystem data storage.
+    MoinMoin - Backend for moin 1.9 compatible filesystem data storage.
 
     This backend is needed because we need to be able to read existing data
     to convert them to the more powerful new backend(s).

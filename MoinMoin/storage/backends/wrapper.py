@@ -9,7 +9,7 @@
     is not found in the writable backend but in the read-only backend.
 
     This module was written with MoinMoins underlay in mind, which, by using
-    the appropriate backend (fs17) as read-only backend and another of the new
+    the appropriate backend (fs19) as read-only backend and another of the new
     backends as writable backend, can be used to obtain a full wiki without
     converting (i.e. copying) the underlay information to the productive backend.
 
