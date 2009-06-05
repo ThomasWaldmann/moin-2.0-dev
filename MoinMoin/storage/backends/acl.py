@@ -31,7 +31,6 @@ class AclWrapperBackend(object):
     def __init__(self, request):
         self.request = request
         self.backend = request.cfg.data_backend
-        self.username = request.user.name
         self.acl_hierarchic = request.cfg.acl_hierarchic
         self.acl_before = request.cfg.cache.acl_rights_before
         self.acl_default = request.cfg.cache.acl_rights_default
@@ -113,7 +112,7 @@ class AclWrapperBackend(object):
         @return: True if you have permission or False
         """
         request = self.request
-        username = self.username
+        username = request.user.name
 
         allowed = self.acl_before.may(request, username, right)
         if allowed is not None:
