@@ -354,7 +354,7 @@ class PageEditor(Page):
             newtext = self._expand_variables(newtext)
 
         msg = ""
-        if not request.user.may.save(self, newtext, rev, **kw):
+        if not request.user.may.write(self.page_name):
             msg = _('You are not allowed to edit this page!')
             raise self.AccessDenied, msg
         elif not newtext:

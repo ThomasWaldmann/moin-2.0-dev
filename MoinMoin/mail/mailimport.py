@@ -223,7 +223,7 @@ def import_mail_from_message(request, message):
 
     page = PageEditor(request, pagename, do_editor_backup=0)
 
-    if not request.user.may.save(page, "", 0):
+    if not request.user.may.write(pagename):
         raise ProcessingError("Access denied for page %r" % pagename)
 
     attachments = []

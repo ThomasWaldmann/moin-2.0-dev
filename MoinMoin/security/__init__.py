@@ -53,23 +53,6 @@ class Permissions:
         self.name = user.name
         self.request = user._request
 
-    # XXX Is this used? Likely needs to be thrown out
-    def save(self, editor, newtext, rev, **kw):
-        """ Check whether user may save a page.
-
-        `editor` is the PageEditor instance, the other arguments are
-        those of the `PageEditor.saveText` method.
-
-        @param editor: PageEditor instance.
-        @param newtext: new page text, you can enable of disable saving according
-            to the content of the text, e.g. prevent link spam.
-        @param rev: new revision number? XXX
-        @param kw: XXX
-        @rtype: bool
-        @return: True if you can save or False
-        """
-        return self.write(editor.page_name)
-
     def __getattr__(self, attr):
         """ Shortcut to export getPermission function for all known ACL rights
 
