@@ -29,17 +29,17 @@ class Permissions:
     just controls their behavior, not their activation.
 
     When sub classing this class, you must extend the class methods, not
-    replace them, or you might break the acl in the wiki. Correct sub
-    classing looks like this:
+    replace them, or you might break the ACLs in the wiki.
+    Correct sub classing looks like this:
 
-    def read(self, pagename):
+    def read(self, itemname):
         # Your special security rule
         if something:
-            return false
+            return False
 
-        # Do not return True or you break acl!
-        # This call will use the default acl rules
-        return Permissions.read(pagename)
+        # Do not just return True or you break (ignore) ACLs!
+        # This call will return correct permissions by checking ACLs:
+        return Permissions.read(itemname)
     """
 
     def __init__(self, user):
@@ -54,7 +54,7 @@ class Permissions:
 
         @param attr: one of ACL rights as defined in acl_rights_valid
         @rtype: function
-        @return: checking function for that right, accepting a pagename
+        @return: checking function for that right, accepting an itemname
         """
         request = self.request
         if attr not in request.cfg.acl_rights_valid:
@@ -68,26 +68,27 @@ Default = Permissions
 
 
 class AccessControlList:
-    ''' Access Control List
+    """
+    Access Control List
 
-    Control who may do what on or with a wiki page.
+    Control who may do what on or with a wiki item.
 
     Syntax of an ACL string:
 
         [+|-]User[,User,...]:[right[,right,...]] [[+|-]SomeGroup:...] ...
         ... [[+|-]Known:...] [[+|-]All:...]
 
-        "User" is a user name and triggers only if the user matches. Up
-        to version 1.2 only WikiNames were supported, as of version 1.3,
-        any name can be used in acl lines, including name with spaces
+        "User" is a user name and triggers only if the user matches.
+        Any name can be used in acl lines, including names with spaces
         using esoteric languages.
 
-        "SomeGroup" is a page name matching cfg.page_group_regex with
-         some lines in the form " * Member", defining the group members.
+        "SomeGroup" is a group name. The group defines its members somehow,
+        e.g. on a wiki page of this name as first level list with the group
+        members' names.
 
-        "Known" is a group containing all valid / known users.
+        "Known" is a special group containing all valid / known users.
 
-        "All" is a group containing all users (Known and Anonymous users).
+        "All" is a special group containing all users (Known and Anonymous users).
 
         "right" may be an arbitrary word like read, write, delete, admin.
         Only words in cfg.acl_validrights are accepted, others are
@@ -109,7 +110,7 @@ class AccessControlList:
             SomeUser:read,write SomeGroup:read,write,admin All:read
 
         In this example, SomeUser can read and write but can not admin
-        or delete pages. Rights that are NOT specified on the right list
+        or delete items. Rights that are NOT specified on the right list
         are automatically set to NO.
 
     Using Prefixes
@@ -139,36 +140,33 @@ class AccessControlList:
             +All:read -SomeUser:admin SomeGroup:read,write,admin
 
         Notice that you probably will not want to use the second and
-        third examples in ACL entries of some page. They are very
+        third examples in ACL entries of some item. They are very
         useful on the moin configuration entries though.
 
    Configuration options
 
        cfg.acl_rights_default
-           It is is ONLY used when no other ACLs are given.
+           It is is ONLY used when no item ACLs are found.
            Default: "Known:read,write,delete All:read,write",
 
        cfg.acl_rights_before
-           When the page has ACL entries, this will be inserted BEFORE
-           any page entries.
+           This will be inserted BEFORE any item/default ACL entries.
            Default: ""
 
        cfg.acl_rights_after
-           When the page has ACL entries, this will be inserted AFTER
-           any page entries.
+           This will be inserted AFTER any item/default ACL entries.
            Default: ""
 
        cfg.acl_rights_valid
            These are the acceptable (known) rights (and the place to
            extend, if necessary).
            Default: ["read", "write", "delete", "admin"]
-    '''
+    """
 
     special_users = ["All", "Known", "Trusted"] # order is important
 
     def __init__(self, cfg, lines=[]):
-        """Initialize an ACL, starting from <nothing>.
-        """
+        """ Initialize an ACL, starting from <nothing>. """
         assert isinstance(lines, (list, tuple))
         if lines:
             self.acl = [] # [ ('User', {"read": 0, ...}), ... ]
@@ -191,10 +189,9 @@ class AccessControlList:
         This can be used in multiple subsequent calls to process longer lists.
 
         @param cfg: current config
-        @param aclstring: acl string from page or cfg
+        @param aclstring: acl string from item or cfg
         @param remember: should add the line to self.acl_lines
         """
-
         # Remember lines
         if remember:
             self.acl_lines.append(aclstring)
@@ -282,8 +279,8 @@ class AccessControlList:
 class ACLStringIterator:
     """ Iterator for acl string
 
-    Parse acl string and return the next entry on each call to
-    next. Implement the Iterator protocol.
+    Parse acl string and return the next entry on each call to next.
+    Implements the Iterator protocol.
 
     Usage:
         iter = ACLStringIterator(cfg.acl_rights_valid, 'user name:right')
