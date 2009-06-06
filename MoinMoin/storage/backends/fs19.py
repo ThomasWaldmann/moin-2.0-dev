@@ -29,7 +29,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 class FSPageBackend(Backend):
     """
-    MoinMoin 1.7 compatible, read-only, "just for the migration" filesystem backend.
+    MoinMoin 1.9 compatible, read-only, "just for the migration" filesystem backend.
 
     Everything not needed for the migration will likely just raise a NotImplementedError.
     """
@@ -96,7 +96,7 @@ class FSPageBackend(Backend):
     def _list_revisions(self, item):
         # we report ALL revision numbers:
         # - zero-based (because the new storage api works zero based)
-        # - we even included deleted revisions' revnos
+        # - we even include deleted revisions' revnos
         return range(item._fs_current + 1)
 
     def _get_revision(self, item, revno):
@@ -130,7 +130,7 @@ class FSPageBackend(Backend):
 # Specialized Items/Revisions
 
 class FsPageItem(Item):
-    """ A moin 1.7 filesystem item (page) """
+    """ A moin 1.9 filesystem item (page) """
     def __init__(self, backend, itemname):
         Item.__init__(self, backend, itemname)
         currentpath = self._backend._current_path(itemname)
@@ -165,7 +165,7 @@ class FsPageItem(Item):
 
 
 class FsPageRevision(StoredRevision):
-    """ A moin 1.7 filesystem item revision (page, combines meta+data) """
+    """ A moin 1.9 filesystem item revision (page, combines meta+data) """
     def __init__(self, item, revno):
         StoredRevision.__init__(self, item, revno)
         if revno == -1: # not used by converter, but nice to try a life wiki
@@ -235,7 +235,7 @@ class FsPageRevision(StoredRevision):
 
 
 class FsAttachmentItem(Item):
-    """ A moin 1.7 filesystem item (attachment) """
+    """ A moin 1.9 filesystem item (attachment) """
     def __init__(self, backend, name):
         Item.__init__(self, backend, name)
         try:
@@ -262,7 +262,7 @@ class FsAttachmentItem(Item):
         self._fs_parent_acl = acl
 
 class FsAttachmentRevision(StoredRevision):
-    """ A moin 1.7 filesystem item revision (attachment) """
+    """ A moin 1.9 filesystem item revision (attachment) """
     def __init__(self, item, revno):
         if revno != 0:
             raise NoSuchRevisionError('Item %r has no revision %d (attachments just have revno 0)!' %
@@ -284,7 +284,7 @@ class FsAttachmentRevision(StoredRevision):
             }
         meta = editlog_data
         meta['__size'] = 0 # not needed for converter
-        # attachments in moin 1.7 were protected by their "parent" page's acl
+        # attachments in moin 1.9 were protected by their "parent" page's acl
         if item._fs_parent_acl is not None:
             meta[ACL] = item._fs_parent_acl # XXX not needed for acl_hierarchic
         meta[MIMETYPE] = wikiutil.MimeType(filename=item._fs_attachname).mime_type()
@@ -345,7 +345,7 @@ from MoinMoin import config
 
 class FSUserBackend(Backend):
     """
-    MoinMoin 1.7 compatible, read-only, "just for the migration" filesystem backend.
+    MoinMoin 1.9 compatible, read-only, "just for the migration" filesystem backend.
 
     Everything not needed for the migration will likely just raise a NotImplementedError.
     """
@@ -400,7 +400,7 @@ class FSUserBackend(Backend):
 # Specialized Items/Revisions
 
 class FsUserItem(Item):
-    """ A moin 1.7 filesystem item (user) """
+    """ A moin 1.9 filesystem item (user) """
     user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
     def __init__(self, backend, itemname):
