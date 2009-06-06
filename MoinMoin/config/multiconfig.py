@@ -3,7 +3,7 @@
     MoinMoin - Multiple configuration handler and Configuration defaults class
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2005-2008 MoinMoin:ThomasWaldmann.
+                2005-2009 MoinMoin:ThomasWaldmann,
                 2008      MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
 """
@@ -200,7 +200,7 @@ def _(text):
     return text
 
 
-class CacheClass:
+class CacheClass(object):
     """ just a container for stuff we cache """
     pass
 
@@ -289,18 +289,6 @@ class ConfigFunctionality(object):
         # Use site name as default name-logo
         if self.logo_string is None:
             self.logo_string = self.sitename
-
-        # Check for needed modules
-
-        # FIXME: maybe we should do this check later, just before a
-        # chart is needed, maybe in the chart module, instead doing it
-        # for each request. But this require a large refactoring of
-        # current code.
-        if self.chart_options:
-            try:
-                import gdchart
-            except ImportError:
-                self.chart_options = None
 
         # post process
 
@@ -828,7 +816,6 @@ options_no_group_name = {
     ('changed_time_fmt', '%H:%M', "Time format used on Recent``Changes for page edits within the last 24 hours"),
     ('date_fmt', '%Y-%m-%d', "System date format, used mostly in Recent``Changes"),
     ('datetime_fmt', '%Y-%m-%d %H:%M:%S', 'Default format for dates and times (when the user has no preferences or chose the "default" date format)'),
-    ('chart_options', None, "If you have gdchart, use something like chart_options = {'width': 720, 'height': 540}"),
 
     ('edit_bar', ['Modify', 'Download', 'Comments', 'Discussion', 'Subscribe', 'Quicklink', 'ActionsMenu'],
      'list of edit bar entries'),
