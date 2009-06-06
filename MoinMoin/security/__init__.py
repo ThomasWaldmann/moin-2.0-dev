@@ -81,9 +81,9 @@ class Permissions:
         @return: checking function for that right, accepting a pagename
         """
         request = self.request
-        may = request.data_backend._may
         if attr not in request.cfg.acl_rights_valid:
             raise AttributeError, attr
+        may = request.data_backend._may
         return lambda itemname: may(itemname, attr)
 
 
