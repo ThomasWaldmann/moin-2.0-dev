@@ -19,15 +19,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import re
+from MoinMoin import user
 
-from MoinMoin import wikiutil, user
-from MoinMoin.Page import Page
-from MoinMoin.items import ACL
-
-#############################################################################
-### Basic Permissions Interface -- most features enabled by default
-#############################################################################
 
 class Permissions:
     """ Basic interface for user permissions and system policy.
@@ -256,14 +249,6 @@ class AccessControlList:
                 return allowed
         return allowed # should be None
 
-    def getString(self, b='#acl ', e='\n'):
-        """print the acl strings we were fed with"""
-        if self.acl_lines:
-            acl_lines = ''.join(["%s%s%s" % (b, l, e) for l in self.acl_lines])
-        else:
-            acl_lines = ''
-        return acl_lines
-
     def _special_All(self, request, name, dowhat, rightsdict):
         return rightsdict.get(dowhat)
 
@@ -371,14 +356,4 @@ class ACLStringIterator:
             rights = [r for r in rights.split(',') if r in self.rights]
 
         return modifier, entries, rights
-
-
-def parseACL(request, text):
-    """ Parse acl lines from text and return ACL object """
-    pi, dummy = wikiutil.split_body(text)
-    acls = pi.get(ACL, [])
-    if not isinstance(acls, (list, tuple)):
-        # split_body only returns a list for acl key, if there were multiple acl lines!
-        acls = [acls] # make sure we have a LIST of acl lines
-    return AccessControlList(request.cfg, acls)
 

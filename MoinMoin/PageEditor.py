@@ -364,18 +364,6 @@ class PageEditor(Page):
             msg = _('You did not change the page content, not saved!')
             self.lock.release()
             raise self.Unchanged, msg
-        else:
-            from MoinMoin.security import parseACL
-            # Get current ACL and compare to new ACL from newtext. If
-            # they are not the sames, the user must have admin
-            # rights. This is a good place to update acl cache - instead
-            # of wating for next request.
-            acl = self.getACL()
-            if (not request.user.may.admin(self.page_name) and
-                parseACL(request, newtext).acl != acl.acl and
-                action != "SAVE/REVERT"):
-                msg = _("You can't change ACLs on this page since you have no admin rights on it!")
-                raise self.NoAdmin, msg
 
         presave = PagePreSaveEvent(request, self, newtext)
         results = send_event(presave)
