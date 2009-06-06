@@ -241,11 +241,19 @@ class TestItemAcls(object):
     """ security: real-life access control list on items testing
     """
     mainitem_name = u'AclTestMainItem'
-    subitem_name = u'AclTestMainItem/SubItem'
+    subitem1_name = u'AclTestMainItem/SubItem1'
+    subitem2_name = u'AclTestMainItem/SubItem2'
     items = [
         # itemname, acl, content
         (mainitem_name, u'JoeDoe: JaneDoe:read,write', u'Foo!'),
-        (subitem_name, None, u'FooFoo!'),
+        # acl None means: "no acl given in item metadata" - this will trigger
+        # usage of default acl (non-hierarchical) or usage of default acl and
+        # inheritance (hierarchical):
+        (subitem1_name, None, u'FooFoo!'),
+        # acl u'' means: "empty acl (no rights for noone) given" - this will
+        # INHIBIT usage of default acl / inheritance (we DO HAVE an item acl,
+        # it is just empty!):
+        (subitem2_name, u'', u'BarBar!'),
     ]
 
     from MoinMoin._tests import wikiconfig
@@ -280,14 +288,22 @@ class TestItemAcls(object):
             (True,  self.mainitem_name, u'JaneDoe', ['read', 'write']), # by item acl
             (False, self.mainitem_name, u'JoeDoe', []), # by item acl
             (True,  self.mainitem_name, u'JoeDoe', []), # by item acl
-            (False, self.subitem_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
-            (True,  self.subitem_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
-            (False, self.subitem_name, u'AnyUser', ['read', 'write']), # by default acl
-            (True,  self.subitem_name, u'AnyUser', ['read']), # by after acl
-            (False, self.subitem_name, u'JoeDoe', ['read', 'write']), # by default acl
-            (True,  self.subitem_name, u'JoeDoe', []), # by inherited acl from main item
-            (False, self.subitem_name, u'JaneDoe', ['read', 'write']), # by default acl
-            (True,  self.subitem_name, u'JaneDoe', ['read', 'write']), # by inherited acl from main item
+            (False, self.subitem1_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
+            (True,  self.subitem1_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
+            (False, self.subitem1_name, u'AnyUser', ['read', 'write']), # by default acl
+            (True,  self.subitem1_name, u'AnyUser', ['read']), # by after acl
+            (False, self.subitem1_name, u'JoeDoe', ['read', 'write']), # by default acl
+            (True,  self.subitem1_name, u'JoeDoe', []), # by inherited acl from main item
+            (False, self.subitem1_name, u'JaneDoe', ['read', 'write']), # by default acl
+            (True,  self.subitem1_name, u'JaneDoe', ['read', 'write']), # by inherited acl from main item
+            (False, self.subitem2_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
+            (True,  self.subitem2_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
+            (False, self.subitem2_name, u'AnyUser', ['read']), # by after acl
+            (True,  self.subitem2_name, u'AnyUser', ['read']), # by after acl
+            (False, self.subitem2_name, u'JoeDoe', ['read']), # by after acl
+            (True,  self.subitem2_name, u'JoeDoe', ['read']), # by after acl
+            (False, self.subitem2_name, u'JaneDoe', ['read']), # by after acl
+            (True,  self.subitem2_name, u'JaneDoe', ['read']), # by after acl
         ]
 
         for hierarchic, itemname, username, may in tests:
