@@ -20,6 +20,7 @@ from MoinMoin.items import Item
 from MoinMoin.Page import Page
 from MoinMoin.packages import MOIN_PACKAGE_FILE, packLine, unpackLine
 from MoinMoin.search import searchPages
+from MoinMoin.storage.error import NoSuchItemError
 
 ACTION_NAME = __name__.split('.')[-1]
 
@@ -43,7 +44,7 @@ class PackageItems:
             content = template.render(gettext=request.getText,
                           action=ACTION_NAME,
                           label='package items',
-                          item_list=self.item_name,
+                          item_name=self.item_name,
                           )
             request.theme.render_content(self.item_name, content)
             return
@@ -105,7 +106,10 @@ class PackageItems:
         for item_name in item_list:
             item_name = item_name.strip()
             cnt += 1
-            item = self.request.cfg.data_backend.get_item(item_name)
+            try:
+                item = self.request.cfg.data_backend.get_item(item_name)
+            except NoSuchItemError:
+                continue
             r = item.get_revision(rev_no)
             mimetype = r.get('mimetype') or 'application/x-unknown' # XXX why do we need ... or ..?
             contenttype = 'utf-8'
