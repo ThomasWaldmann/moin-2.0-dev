@@ -434,10 +434,14 @@ class NonExistent(Item):
 
     def do_show(self):
         template = self.env.get_template('show_type_selection.html')
-        content = template.render(gettext=self.request.getText,
+        content = []
+        content.append(template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  mimetype_groups=self.mimetype_groups, )
-        return content
+                                  mimetype_groups=self.mimetype_groups, ))
+
+        template = self.env.get_template('show_package_install.html')
+        content.append(template.render(gettext=self.request.getText, ))
+        return '<hr>'.join(content)
 
     def do_get(self):
         self.request.status_code = 404
