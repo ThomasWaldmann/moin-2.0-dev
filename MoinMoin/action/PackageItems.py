@@ -115,13 +115,8 @@ class PackageItems:
             zi.compress_type = COMPRESSION_LEVEL
             zf.writestr(zi, r.read_data().encode("utf-8"))
             if include_subitems:
-                for fullname, relname, mimetype in r.flat_index:
-                    contenttype = 'utf-8'
-                    sub_item = request.cfg.data_backend.get_item(fullname)
-                    rs = sub_item.get_revision(rev_no)
-                    cnt += 1
-                    script.append(packLine(["AddItem", str(cnt), fullname, mimetype, contenttype, userid, comment]))
-                    zf.write(rs.read_data(), str(cnt))
+                # ToDo implement subitems, currently removed
+                pass
         script += [packLine(['Print', 'Thank you for using PackageItems!'])]
         zf.writestr(MOIN_PACKAGE_FILE, u"\n".join(script).encode("utf-8"))
         zf.close()
