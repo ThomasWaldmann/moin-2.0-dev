@@ -243,6 +243,8 @@ class TestItemAcls(object):
     mainitem_name = u'AclTestMainItem'
     subitem1_name = u'AclTestMainItem/SubItem1'
     subitem2_name = u'AclTestMainItem/SubItem2'
+    item_rwforall = u'EveryoneMayReadWriteMe'
+    subitem_4boss = u'EveryoneMayReadWriteMe/OnlyTheBossMayWMe'
     items = [
         # itemname, acl, content
         (mainitem_name, u'JoeDoe: JaneDoe:read,write', u'Foo!'),
@@ -254,6 +256,8 @@ class TestItemAcls(object):
         # INHIBIT usage of default acl / inheritance (we DO HAVE an item acl,
         # it is just empty!):
         (subitem2_name, u'', u'BarBar!'),
+        (item_rwforall, u'All:read,write', u'May be read from and written to by anyone'),
+        (subitem_4boss, u'JoeDoe:read,write', u'Only JoeDoe (the boss) may write'),
     ]
 
     from MoinMoin._tests import wikiconfig
@@ -304,6 +308,8 @@ class TestItemAcls(object):
             (True,  self.subitem2_name, u'JoeDoe', ['read']), # by after acl
             (False, self.subitem2_name, u'JaneDoe', ['read']), # by after acl
             (True,  self.subitem2_name, u'JaneDoe', ['read']), # by after acl
+            (True,  self.subitem_4boss, u'AnyUser', ['read']), # by after acl
+            (True,  self.subitem_4boss, u'JoeDoe', ['read', 'write']), # by item acl
         ]
 
         for hierarchic, itemname, username, may in tests:
