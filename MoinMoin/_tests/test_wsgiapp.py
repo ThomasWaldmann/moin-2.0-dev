@@ -8,6 +8,8 @@
 from StringIO import StringIO
 
 from MoinMoin import wsgiapp
+from MoinMoin._tests import wikiconfig
+from MoinMoin.storage.backends.memory import MemoryBackend
 
 DOC_TYPE = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">'
 
@@ -18,6 +20,10 @@ class TestApplication:
     PAGES = ('FrontPage', 'RecentChanges', 'HelpContents', 'FindPage')
     # ... and these should not
     NO_PAGES = ('FooBar', 'TheNone/ExistantPage/', '%33Strange%74Codes')
+
+    class Config(wikiconfig.Config):
+        data_backend = MemoryBackend()
+        user_backend = MemoryBackend()
 
     def testWSGIAppExisting(self):
         for page in self.PAGES:
