@@ -11,9 +11,7 @@ import os, re, sys
 import zipfile
 
 from MoinMoin import config, wikiutil, caching, user
-from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
-from MoinMoin.logfile import editlog, eventlog
 
 MOIN_PACKAGE_FILE = 'MOIN_PACKAGE'
 MAX_VERSION = 1
@@ -39,25 +37,6 @@ class RuntimeScriptException(ScriptException):
 
 class ScriptExit(Exception):
     """ Raised by the script commands when the script should quit. """
-
-def event_logfile(self, pagename, pagefile):
-    # add event log entry
-    eventtype = 'SAVENEW'
-    mtime_usecs = wikiutil.timestamp2version(os.path.getmtime(pagefile))
-    elog = eventlog.EventLog(self.request)
-    elog.add(self.request, eventtype, {'pagename': pagename}, 1, mtime_usecs)
-
-def edit_logfile_append(self, pagename, pagefile, rev, action, logname='edit-log', comment=u'', author=u"Scripting Subsystem"):
-    glog = editlog.EditLog(self.request, uid_override=author)
-    pagelog = Page(self.request, pagename).getPagePath(logname, use_underlay=0, isfile=1)
-    llog = editlog.EditLog(self.request, filename=pagelog,
-                               uid_override=author)
-    mtime_usecs = wikiutil.timestamp2version(os.path.getmtime(pagefile))
-    host = '::1'
-    extra = u''
-    glog.add(self.request, mtime_usecs, rev, action, pagename, host, comment)
-    llog.add(self.request, mtime_usecs, rev, action, pagename, host, extra, comment)
-    event_logfile(self, pagename, pagefile)
 
 # Parsing and (un)quoting for script files
 def packLine(items, separator="|"):
@@ -128,20 +107,17 @@ class ScriptEngine:
         if self.request.user.may.write(pagename):
             _ = self.request.getText
 
-            attachments = Page(self.request, pagename).getPagePath("attachments", check_create=1)
+            from MoinMoin.action.AttachFile import getAttachDir
+            attachments = getAttachDir(self.request, pagename, create=1)
             filename = wikiutil.taintfilename(filename)
             zipname = wikiutil.taintfilename(zipname)
             target = os.path.join(attachments, filename)
-            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
-            rev = page.current_rev()
-            path = page.getPagePath(check_create=0)
             if not os.path.exists(target):
                 self._extractToFile(zipname, target)
                 if os.path.exists(target):
-                    os.chmod(target, config.umask )
-                    action = 'ATTNEW'
-                    edit_logfile_append(self, pagename, path, rev, action, logname='edit-log',
-                                       comment=u'%(filename)s' % {"filename": filename}, author=author)
+                    os.chmod(target, config.umask)
+                    from MoinMoin.action.AttachFile import _addLogEntry
+                    _addLogEntry(self.request, "ATTNEW", pagename, filename, uid_override=author)
                 self.msg += u"%(filename)s attached \n" % {"filename": filename}
             else:
                 self.msg += u"%(filename)s not attached \n" % {"filename": filename}
@@ -158,17 +134,14 @@ class ScriptEngine:
         if self.request.user.may.write(pagename):
             _ = self.request.getText
 
-            attachments = Page(self.request, pagename).getPagePath("attachments", check_create=1)
+            from MoinMoin.action.AttachFile import getAttachDir
+            attachments = getAttachDir(self.request, pagename, create=0)
             filename = wikiutil.taintfilename(filename)
             target = os.path.join(attachments, filename)
-            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
-            rev = page.current_rev()
-            path = page.getPagePath(check_create=0)
             if os.path.exists(target):
                 os.remove(target)
-                action = 'ATTDEL'
-                edit_logfile_append(self, pagename, path, rev, action, logname='edit-log',
-                                    comment=u'%(filename)s' % {"filename": filename}, author=author)
+                from MoinMoin.action.AttachFile import _addLogEntry
+                _addLogEntry(self.request, "ATTDEL", pagename, filename, uid_override=author)
                 self.msg += u"%(filename)s removed \n" % {"filename": filename}
             else:
                 self.msg += u"%(filename)s does not exist \n" % {"filename": filename}
@@ -273,7 +246,8 @@ class ScriptEngine:
         """
         _ = self.request.getText
 
-        attachments = Page(self.request, pagename).getPagePath("attachments", check_create=0)
+        from MoinMoin.action.AttachFile import getAttachDir
+        attachments = getAttachDir(self.request, pagename, create=0)
         package = ZipPackage(self.request, os.path.join(attachments, wikiutil.taintfilename(filename)))
 
         if package.isPackage():
@@ -299,12 +273,10 @@ class ScriptEngine:
         if self.request.user.may.write(pagename):
             page = PageEditor(self.request, pagename, do_editor_backup=0)
             try:
-                page.saveText(self.extract_file(filename).decode("utf-8"), 0, trivial=trivial, comment=comment)
+                page.saveText(self.extract_file(filename).decode("utf-8"), None, trivial=trivial, comment=comment)
+                self.msg += u"%(pagename)s added \n" % {"pagename": pagename}
             except PageEditor.Unchanged:
                 pass
-            else:
-                self.msg += u"%(pagename)s added \n" % {"pagename": pagename}
-                page.clean_acl_cache()
         else:
             self.msg += u"action add revision: not enough rights - nothing done \n"
 
@@ -321,8 +293,7 @@ class ScriptEngine:
             page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
             if not page.exists():
                 raise RuntimeScriptException(_("The page %s does not exist.") % pagename)
-            newpage = PageEditor(self.request, newpagename)
-            page.renamePage(newpage.page_name, comment=u"Renamed from '%s'" % (pagename))
+            page.renamePage(newpagename, comment=u"Renamed from '%s'" % (pagename))
             self.msg += u'%(pagename)s renamed to %(newpagename)s\n' % {
                             "pagename": pagename,
                             "newpagename": newpagename}
@@ -352,23 +323,24 @@ class ScriptEngine:
         @param filename: name of the file in the package
         @param pagename: page to be overwritten
         """
-        page = Page(self.request, pagename)
 
-        pagedir = page.getPagePath(use_underlay=1, check_create=1)
+        # only overwrite if underlay_backend is configured (it will by
+        # by default if---and only if---the data_underlay_dir config
+        # option is set and backends are not overridden)
+        if not self.request.cfg.underlay_backend:
+            return
 
-        revdir = os.path.join(pagedir, 'revisions')
-        cfn = os.path.join(pagedir, 'current')
+        if not self.request.cfg.underlay_backend.has_item(pagename):
+            self.request.cfg.underlay_backend.create_item(pagename)
 
-        revstr = '%08d' % 1
-        if not os.path.exists(revdir):
-            os.mkdir(revdir)
+        for rev in self.request.cfg.underlay_backend.list_revisions(pagename):
+            self.request.cfg.underlay_backend.remove_revision(pagename, rev)
 
-        currentf = open(cfn, 'w')
-        currentf.write(revstr + "\n")
-        currentf.close()
+        self.request.cfg.underlay_backend.create_revision(pagename, 1)
 
-        pagefile = os.path.join(revdir, revstr)
-        self._extractToFile(filename, pagefile)
+        data = self.request.cfg.underlay_backend.get_data_backend(pagename, 1)
+        data.write(self.extract_file(filename))
+        data.close()
 
         # Clear caches
         try:
@@ -377,7 +349,6 @@ class ScriptEngine:
             pass
         self.request.pages = {}
         caching.CacheEntry(self.request, 'wikidicts', 'dicts_groups', scope='wiki').remove()
-        page.clean_acl_cache()
 
     def runScript(self, commands):
         """ Runs the commands.

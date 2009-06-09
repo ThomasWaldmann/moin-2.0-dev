@@ -181,7 +181,8 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
         sort = 'weight'
 
     # search the pages
-    from MoinMoin.search import searchPages, QueryParser, QueryError
+    from MoinMoin.search.queryparser import QueryParser, QueryError
+    from MoinMoin.search import searchPages
     try:
         query = QueryParser(case=case, regex=regex,
                 titlesearch=titlesearch).parse_query(needle)

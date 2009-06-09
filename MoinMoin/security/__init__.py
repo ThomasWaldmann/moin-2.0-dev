@@ -22,7 +22,7 @@
 import re
 
 from MoinMoin import wikiutil, user
-from MoinMoin.Page import Page
+from MoinMoin.Page import Page, ACL
 
 #############################################################################
 ### Basic Permissions Interface -- most features enabled by default
@@ -63,7 +63,7 @@ def _check(request, pagename, username, right):
             # starting at the leaf, going to the root
             name = '/'.join(pages[:i])
             # Get page acl and ask for permission
-            acl = Page(request, name).getACL(request)
+            acl = Page(request, name).getACL()
             if acl.acl:
                 some_acl = True
                 allowed = acl.may(request, username, right)
@@ -82,7 +82,7 @@ def _check(request, pagename, username, right):
             p = request.page # reuse is good
         else:
             p = Page(request, pagename)
-        acl = p.getACL(request) # this will be fast in a reused page obj
+        acl = p.getACL() # this will be fast in a reused page obj
         allowed = acl.may(request, username, right)
         if allowed is not None:
             return allowed
@@ -256,6 +256,7 @@ class AccessControlList:
     def __init__(self, cfg, lines=[]):
         """Initialize an ACL, starting from <nothing>.
         """
+        assert isinstance(lines, (list, tuple))
         if lines:
             self.acl = [] # [ ('User', {"read": 0, ...}), ... ]
             self.acl_lines = []
@@ -452,7 +453,10 @@ class ACLStringIterator:
 
 def parseACL(request, text):
     """ Parse acl lines from text and return ACL object """
-    pi, dummy = wikiutil.get_processing_instructions(text)
-    acl_lines = [args for verb, args in pi if verb == 'acl']
-    return AccessControlList(request.cfg, acl_lines)
+    pi, dummy = wikiutil.split_body(text)
+    acls = pi.get(ACL, [])
+    if not isinstance(acls, (list, tuple)):
+        # split_body only returns a list for acl key, if there were multiple acl lines!
+        acls = [acls] # make sure we have a LIST of acl lines
+    return AccessControlList(request.cfg, acls)
 
