@@ -1,0 +1,19 @@
+{% extends "base_contentonly.html" %}
+{% block content %}
+<h1>Installing Package</h1>
+<form action="" method="POST" enctype="multipart/form-data">
+<fieldset style="border: none; padding: 0;">
+<input type="hidden" name="do" value="installpackage">
+<input class="button" type="submit" name="button_save" value="Install">
+<input class="button" type="submit" name="button_cancel" value="Cancel">
+
+
+{% block data_editor %}{% endblock %}
+<br>
+<label for="data_file">Upload file: <input type="file" name="data_file" size="50" value="Upload File"></label>
+
+
+</fieldset>
+</form>
+{% endblock %}
+

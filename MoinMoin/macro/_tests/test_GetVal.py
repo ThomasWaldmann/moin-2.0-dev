@@ -5,7 +5,10 @@
     @copyright: 2007 MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
-import os, py
+import os
+
+import py
+py.test.skip("Broken. Needs Page->Item refactoring.")
 
 from MoinMoin import macro
 from MoinMoin.Page import Page

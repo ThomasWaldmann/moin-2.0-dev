@@ -2,13 +2,12 @@
 """
     MoinMoin - create account action
 
-    @copyright: 2007 MoinMoin:JohannesBerg
+    @copyright: 2007 MoinMoin:JohannesBerg,
+                2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
 from MoinMoin import user, wikiutil
-from MoinMoin.Page import Page
-from MoinMoin.widget import html
 from MoinMoin.security.textcha import TextCha
 from MoinMoin.auth import MoinAuth
 
@@ -85,68 +84,9 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
     return result
 
 
-def _create_form(request):
+def execute(item_name, request):
     _ = request.getText
-    url = request.page.url(request)
-    ret = html.FORM(action=url)
-    ret.append(html.INPUT(type='hidden', name='action', value='newaccount'))
-    lang_attr = request.theme.ui_lang_attr()
-    ret.append(html.Raw('<div class="userpref"%s>' % lang_attr))
-    tbl = html.TABLE(border="0")
-    ret.append(tbl)
-    ret.append(html.Raw('</div>'))
 
-    row = html.TR()
-    tbl.append(row)
-    row.append(html.TD().append(html.STRONG().append(
-                                  html.Text(_("Name")))))
-    cell = html.TD()
-    row.append(cell)
-    cell.append(html.INPUT(type="text", size="36", name="name"))
-    cell.append(html.Text(' ' + _("(Use FirstnameLastname)")))
-
-    row = html.TR()
-    tbl.append(row)
-    row.append(html.TD().append(html.STRONG().append(
-                                  html.Text(_("Password")))))
-    row.append(html.TD().append(html.INPUT(type="password", size="36",
-                                           name="password1")))
-
-    row = html.TR()
-    tbl.append(row)
-    row.append(html.TD().append(html.STRONG().append(
-                                  html.Text(_("Password repeat")))))
-    row.append(html.TD().append(html.INPUT(type="password", size="36",
-                                           name="password2")))
-
-    row = html.TR()
-    tbl.append(row)
-    row.append(html.TD().append(html.STRONG().append(html.Text(_("Email")))))
-    row.append(html.TD().append(html.INPUT(type="text", size="36",
-                                           name="email")))
-
-    textcha = TextCha(request)
-    if textcha.is_enabled():
-        row = html.TR()
-        tbl.append(row)
-        row.append(html.TD().append(html.STRONG().append(
-                                      html.Text(_('TextCha (required)')))))
-        td = html.TD()
-        if textcha:
-            td.append(textcha.render())
-        row.append(td)
-
-    row = html.TR()
-    tbl.append(row)
-    row.append(html.TD())
-    td = html.TD()
-    row.append(td)
-    td.append(html.INPUT(type="submit", name="create",
-                         value=_('Create Profile')))
-
-    return unicode(ret)
-
-def execute(pagename, request):
     found = False
     for auth in request.cfg.auth:
         if isinstance(auth, MoinAuth):
@@ -158,25 +98,21 @@ def execute(pagename, request):
         request.makeForbidden403()
         return
 
-    page = Page(request, pagename)
-    _ = request.getText
-    form = request.form
-
-    submitted = form.has_key('create')
-
-    if submitted: # user pressed create button
-        request.theme.add_msg(_create_user(request), "dialog")
-        return page.send_page()
-    else: # show create form
-        request.theme.send_title(_("Create Account"), pagename=pagename)
-
-        request.write(request.formatter.startContent("content"))
-
-        # THIS IS A BIG HACK. IT NEEDS TO BE CLEANED UP
-        request.write(_create_form(request))
-
-        request.write(request.formatter.endContent())
-
-        request.theme.send_footer(pagename)
-        request.theme.send_closing_html()
+    title = _("Create Account")
+    if request.method == 'GET':
+        textcha = TextCha(request)
+        if textcha.is_enabled():
+            textcha = textcha and textcha.render()
+        else:
+            textcha = None
+        template = request.theme.env.get_template('newaccount.html')
+        content = template.render(gettext=request.getText,
+                                  title=title,
+                                  textcha=textcha,
+                                 )
+        request.theme.render_content(item_name, content, title=title)
+    elif request.method == 'POST':
+        if 'create' in request.form:
+            request.theme.add_msg(_create_user(request), "dialog")
+        request.theme.render_content(item_name, title=title)
 

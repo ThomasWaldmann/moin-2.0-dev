@@ -5,7 +5,7 @@
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
                 2004 by Florian Festi,
                 2006 by Mikko Virkkil,
-                2005-2008 MoinMoin:ThomasWaldmann,
+                2005-2009 MoinMoin:ThomasWaldmann,
                 2007 MoinMoin:ReimarBauer,
                 2008 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
@@ -415,11 +415,6 @@ class MetaDict(dict):
             self.wlock.release()
 
 
-# Quoting of wiki names, file names, etc. (in the wiki markup) -----------------------------------
-
-# don't ever change this - DEPRECATED, only needed for 1.5 > 1.6 migration conversion
-QUOTE_CHARS = u'"'
-
 #############################################################################
 ### Page edit locking
 #############################################################################
@@ -548,27 +543,6 @@ def load_wikimap(request):
 
     return _interwiki_list
 
-def split_wiki(wikiurl):
-    """
-    Split a wiki url.
-
-    *** DEPRECATED FUNCTION FOR OLD 1.5 SYNTAX - ONLY STILL HERE FOR THE 1.5 -> 1.6 MIGRATION ***
-    Use split_interwiki(), see below.
-
-    @param wikiurl: the url to split
-    @rtype: tuple
-    @return: (tag, tail)
-    """
-    # !!! use a regex here!
-    try:
-        wikitag, tail = wikiurl.split(":", 1)
-    except ValueError:
-        try:
-            wikitag, tail = wikiurl.split("/", 1)
-        except ValueError:
-            wikitag, tail = 'Self', wikiurl
-    return wikitag, tail
-
 def split_interwiki(wikiurl):
     """ Split a interwiki name, into wikiname and pagename, e.g:
 
@@ -590,28 +564,6 @@ def split_interwiki(wikiurl):
     except ValueError:
         wikiname, pagename = 'Self', wikiurl
     return wikiname, pagename
-
-def resolve_wiki(request, wikiurl):
-    """
-    Resolve an interwiki link.
-
-    *** DEPRECATED FUNCTION FOR OLD 1.5 SYNTAX - ONLY STILL HERE FOR THE 1.5 -> 1.6 MIGRATION ***
-    Use resolve_interwiki(), see below.
-
-    @param request: the request object
-    @param wikiurl: the InterWiki:PageName link
-    @rtype: tuple
-    @return: (wikitag, wikiurl, wikitail, err)
-    """
-    _interwiki_list = load_wikimap(request)
-    # split wiki url
-    wikiname, pagename = split_wiki(wikiurl)
-
-    # return resolved url
-    if wikiname in _interwiki_list:
-        return (wikiname, _interwiki_list[wikiname], pagename, False)
-    else:
-        return (wikiname, request.script_root, "/InterWiki", True)
 
 def resolve_interwiki(request, wikiname, pagename):
     """ Resolve an interwiki reference (wikiname:pagename).
@@ -706,8 +658,8 @@ def getLocalizedPage(request, pagename): # was: getSysPage
 
     We include some special treatment for the case that <pagename> is the
     currently rendered page, as this is the case for some pages used very
-    often, like FrontPage, RecentChanges etc. - in that case we reuse the
-    already existing page object instead creating a new one.
+    often, like FrontPage, etc. - in that case we reuse the already existing
+    page object instead creating a new one.
 
     @param request: the request object
     @param pagename: the name of the page
@@ -924,7 +876,7 @@ class MimeType(object):
         self.params = {} # parameters like "charset" or others
         self.charset = None # this stays None until we know for sure!
         self.raw_mimestr = mimestr
-
+        self.filename = filename
         if mimestr:
             self.parse_mimetype(mimestr)
         elif filename:
@@ -1011,6 +963,22 @@ class MimeType(object):
     def mime_type(self):
         """ return a string major/minor only, no params """
         return "%s/%s" % (self.major, self.minor)
+
+    def content_disposition(self, cfg):
+        # for dangerous files (like .html), when we are in danger of cross-site-scripting attacks,
+        # we just let the user store them to disk ('attachment').
+        # For safe files, we directly show them inline (this also works better for IE).
+        mime_type = self.mime_type()
+        dangerous = mime_type in cfg.mimetypes_xss_protect
+        content_disposition = dangerous and 'attachment' or 'inline'
+        filename = self.filename
+        if filename is not None:
+            # TODO: fix the encoding here, plain 8 bit is not allowed according to the RFCs
+            # There is no solution that is compatible to IE except stripping non-ascii chars
+            if isinstance(filename, unicode):
+                filename = filename.encode(config.charset)
+            content_disposition += '; filename="%s"' % filename
+        return content_disposition
 
     def module_name(self):
         """ convert this mimetype to a string useable as python module name,
@@ -2575,7 +2543,7 @@ def add_metadata_to_body(metadata, data):
     """
     Adds the processing instructions to the data.
     """
-    from MoinMoin.Page import SIZE, EDIT_LOG
+    from MoinMoin.items import SIZE, EDIT_LOG
     READONLY_METADATA = [SIZE] + list(EDIT_LOCK) + EDIT_LOG
 
     parsing_instructions = ["format", "language", "refresh", "acl",

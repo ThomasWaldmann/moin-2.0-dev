@@ -834,7 +834,7 @@ def getSearchResults(request, query, hits, start, sort, estimated_hits):
             page_name = page # for remote wikis, we have the page_name, not the page obj
             result_hits.append(FoundRemote(wikiname, page_name, attachment, matches=match, rev=rev))
     elapsed = time.time() - start
-    count = request.rootpage.getPageCount()
+    count = request.rootitem.count_items()
     return SearchResults(query, result_hits, count, elapsed, sort,
             estimated_hits)
 

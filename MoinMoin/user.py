@@ -6,7 +6,7 @@
     some specific user). User instances are used to access the user profile of
     some specific user (name, password, email, bookmark, trail, settings, ...).
 
-    Some related code is in the userform and userprefs modules.
+    Some related code is in the userprefs modules.
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
                 2003-2007 MoinMoin:ThomasWaldmann,
@@ -124,6 +124,7 @@ def get_editor(request, userid, addr, hostname):
 def get_printable_editor(request, userid, addr, hostname):
     """ Return a HTML-safe string representing the user that did the edit.
     """
+    _ = request.getText
     if request.cfg.show_hosts and hostname and addr:
         title = " @ %s[%s]" % (hostname, addr)
     else:
