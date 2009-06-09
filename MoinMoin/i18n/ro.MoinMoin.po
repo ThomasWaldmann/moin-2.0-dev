@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoinMoin 1.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-12 12:01+0200\n"
+"POT-Creation-Date: 2009-01-24 04:45+0100\n"
 "PO-Revision-Date: 2005-08-18 14:19+EET\n"
 "Last-Translator: Ovidiu Sabou <ovidiu.sabou@gmail.com>\n"
 "Language-Team: Romanian <ovidiu.sabou@gmail.com>\n"
@@ -26,70 +26,33 @@ msgstr ""
 "X-Direction: ltr\n"
 
 #, python-format
-msgid "The package needs a newer version of MoinMoin (at least %s)."
+msgid "Invalid highlighting regular expression \"%(regex)s\": %(error)s"
 msgstr ""
-
-msgid "The theme name is not set."
-msgstr ""
-
-#, python-format
-msgid "Theme files not installed! Write rights missing for %s."
-msgstr ""
-
-#, python-format
-msgid "Installation of '%(filename)s' failed."
-msgstr "Instalarea lui '%(filename)s' a eşuat."
-
-#, python-format
-msgid "The file %s is not a MoinMoin package file."
-msgstr "Fişierul %s nu este un fişier pachet MoinMoin."
-
-#, python-format
-msgid "The page %s does not exist."
-msgstr ""
-
-msgid "Invalid package file header."
-msgstr ""
-
-msgid "Package file format unsupported."
-msgstr ""
-
-#, python-format
-msgid "Unknown function %(func)s in line %(lineno)i."
-msgstr ""
-
-#, python-format
-msgid "The file %s was not found in the package."
-msgstr "Fişierul %s nu a fost găsit în pachet."
-
-msgid "<unknown>"
-msgstr "<necunoscut>"
-
-#, python-format
-msgid ""
-"Login Name: %s\n"
-"\n"
-"Password recovery token: %s\n"
-"\n"
-"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
-msgstr ""
-"Nume utilizator: %s\n"
-"\n"
-"Codul de recuperare al parolei: %s\n"
-"\n"
-"URL de reconfigurare a parolei: %s/?action=recoverpass&name=%s&token=%s\n"
 
 msgid ""
-"Somebody has requested to email you a password recovery token.\n"
-"\n"
-"If you lost your password, please go to the password reset URL below or\n"
-"go to the password recovery page again and enter your username and the\n"
-"recovery token.\n"
+"The backed up content of this page is deprecated and will not be included in "
+"search results!"
 msgstr ""
+"Copia de siguranţă a conţinutului acestei pagini este învechită şi nu va fi "
+"inclusă în rezultatele căutării!"
 
 #, python-format
-msgid "[%(sitename)s] Your wiki account data"
-msgstr "[%(sitename)s] Datele contului wiki al dumneavoastră"
+msgid "Revision %(rev)d as of %(date)s"
+msgstr "Revizia %(rev)d din %(date)s"
+
+#, python-format
+msgid "Redirected from page \"%(page)s\""
+msgstr "Redirecţionat de la pagina \"%(page)s\""
+
+#, python-format
+msgid "This page redirects to page \"%(page)s\""
+msgstr "Această pagină redirecţionează spre pagina \"%(page)s\""
+
+msgid "Create New Page"
+msgstr "Creează Pagină Nouă"
+
+msgid "You are not allowed to view this page."
+msgstr "Nu aveţi dreptul să vizionaţi această pagină."
 
 #, python-format
 msgid "Argument \"%s\" must be a boolean value, not \"%s\""
@@ -153,9 +116,6 @@ msgstr "Este necesar ca \"=\" să urmeze după \"%(token)s\""
 msgid "Expected a value for key \"%(token)s\""
 msgstr "Este necesară o valoare pentru cheia \"%(token)s\""
 
-msgid "Your changes are not saved!"
-msgstr "Modificările dumneavoastră nu sunt salvate!"
-
 msgid "You are not allowed to edit this page."
 msgstr "Nu aveţi dreptul de a edita această pagină."
 
@@ -169,9 +129,6 @@ msgid "The lock you held timed out. Be prepared for editing conflicts!"
 msgstr ""
 "Blocarea înfiinţată de dumneavoastră a expirat, pregătiţi-vă pentru "
 "conflicte de editare!"
-
-msgid "Page name is too long, try shorter name."
-msgstr "Numele paginii este prea lung, încercaţi un nume mai mic."
 
 #, python-format
 msgid "Draft of \"%(pagename)s\""
@@ -264,8 +221,8 @@ msgstr ""
 msgid "Preview"
 msgstr "Previzionare"
 
-msgid "GUI Mode"
-msgstr "Mod GUI"
+msgid "Text mode"
+msgstr ""
 
 msgid "Load Draft"
 msgstr ""
@@ -285,6 +242,80 @@ msgstr "Adăugare la: %(category)s"
 
 msgid "Remove trailing whitespace from each line"
 msgstr "Ştergere spaţii de la sfârşitul fiecărei linii"
+
+#, python-format
+msgid "The package needs a newer version of MoinMoin (at least %s)."
+msgstr ""
+
+msgid "The theme name is not set."
+msgstr ""
+
+msgid "Installing theme files is only supported for standalone type servers."
+msgstr ""
+
+#, python-format
+msgid "Installation of '%(filename)s' failed."
+msgstr "Instalarea lui '%(filename)s' a eşuat."
+
+#, python-format
+msgid "The file %s is not a MoinMoin package file."
+msgstr "Fişierul %s nu este un fişier pachet MoinMoin."
+
+#, python-format
+msgid "The page %s does not exist."
+msgstr ""
+
+msgid "Invalid package file header."
+msgstr ""
+
+msgid "Package file format unsupported."
+msgstr ""
+
+#, python-format
+msgid "Unknown function %(func)s in line %(lineno)i."
+msgstr ""
+
+#, python-format
+msgid "The file %s was not found in the package."
+msgstr "Fişierul %s nu a fost găsit în pachet."
+
+msgid "<unknown>"
+msgstr "<necunoscut>"
+
+#, python-format
+msgid ""
+"Login Name: %s\n"
+"\n"
+"Password recovery token: %s\n"
+"\n"
+"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
+msgstr ""
+"Nume utilizator: %s\n"
+"\n"
+"Codul de recuperare al parolei: %s\n"
+"\n"
+"URL de reconfigurare a parolei: %s/?action=recoverpass&name=%s&token=%s\n"
+
+msgid ""
+"Somebody has requested to email you a password recovery token.\n"
+"\n"
+"If you lost your password, please go to the password reset URL below or\n"
+"go to the password recovery page again and enter your username and the\n"
+"recovery token.\n"
+msgstr ""
+
+#, python-format
+msgid "[%(sitename)s] Your wiki account data"
+msgstr "[%(sitename)s] Datele contului wiki al dumneavoastră"
+
+msgid "Your changes are not saved!"
+msgstr "Modificările dumneavoastră nu sunt salvate!"
+
+msgid "Page name is too long, try shorter name."
+msgstr "Numele paginii este prea lung, încercaţi un nume mai mic."
+
+msgid "GUI Mode"
+msgstr "Mod GUI"
 
 msgid "Edit was cancelled."
 msgstr "Editarea a fost anulată"
@@ -426,38 +457,6 @@ msgstr ""
 "pentru a evita conflictele de editare.'''<<BR>>\n"
 "Pentru a părăsi editorul, apăsaţi butonul Cancel."
 
-#, python-format
-msgid "Invalid highlighting regular expression \"%(regex)s\": %(error)s"
-msgstr ""
-
-msgid ""
-"The backed up content of this page is deprecated and will not be included in "
-"search results!"
-msgstr ""
-"Copia de siguranţă a conţinutului acestei pagini este învechită şi nu va fi "
-"inclusă în rezultatele căutării!"
-
-#, python-format
-msgid "Revision %(rev)d as of %(date)s"
-msgstr "Revizia %(rev)d din %(date)s"
-
-#, python-format
-msgid "Redirected from page \"%(page)s\""
-msgstr "Redirecţionat de la pagina \"%(page)s\""
-
-#, python-format
-msgid "This page redirects to page \"%(page)s\""
-msgstr "Această pagină redirecţionează spre pagina \"%(page)s\""
-
-msgid "Create New Page"
-msgstr "Creează Pagină Nouă"
-
-msgid "You are not allowed to view this page."
-msgstr "Nu aveţi dreptul să vizionaţi această pagină."
-
-msgid "Text mode"
-msgstr ""
-
 msgid "The wiki is currently not reachable."
 msgstr ""
 
@@ -471,756 +470,49 @@ msgid ""
 msgstr ""
 
 #, python-format
-msgid "Unknown action %(action_name)s."
-msgstr "Acţiune necunoscută %(action_name)s."
+msgid ""
+"Results %(bs)s%(hitsFrom)d - %(hitsTo)d%(be)s of %(aboutHits)s %(bs)s%(hits)d"
+"%(be)s results out of about %(pages)d pages."
+msgstr ""
+
+msgid "seconds"
+msgstr "secunde"
+
+msgid "Previous"
+msgstr "Precedent"
+
+msgid "Next"
+msgstr "Următor"
+
+msgid "rev"
+msgstr "rev"
+
+msgid "current"
+msgstr "curent"
 
 #, python-format
-msgid "You are not allowed to do %(action_name)s on this page."
-msgstr "Nu aveţi permisiunea de %(action_name)s pe această pagină."
+msgid "last modified: %s"
+msgstr "modificat ultima oară: %s"
 
-msgid "Login and try again."
-msgstr "Înregistraţi-vă şi încercaţi din nou."
+msgid "match"
+msgstr "potrivire"
 
-msgid "RecentChanges"
-msgstr "ModificăriRecente"
+msgid "matches"
+msgstr "potriviri"
 
-msgid "WikiTipOfTheDay"
+msgid "about"
 msgstr ""
 
-msgid "TitleIndex"
-msgstr "IndexTitluri"
-
-msgid "WordIndex"
-msgstr "IndexCuvinte"
-
-msgid "FindPage"
-msgstr "CăutarePagină"
-
-msgid "MissingPage"
-msgstr "PaginăLipsă"
-
-msgid "MissingHomePage"
-msgstr "PaginaPrincipalăLipsă"
-
-#, fuzzy
-msgid "WikiHomePage"
-msgstr "PaginaPrincipalăLipsă"
-
-#, fuzzy
-msgid "WikiName"
-msgstr "Nume"
-
-msgid "WikiWikiWeb"
-msgstr ""
-
-msgid "FrontPage"
-msgstr "PaginaPrincipală"
-
-msgid "WikiSandBox"
-msgstr ""
-
-#, fuzzy
-msgid "InterWiki"
-msgstr "Wiki"
-
-msgid "AbandonedPages"
-msgstr ""
-
-#, fuzzy
-msgid "OrphanedPages"
-msgstr "Pagini Asemănătoare"
-
-#, fuzzy
-msgid "WantedPages"
-msgstr "CăutarePagină"
-
-msgid "EventStats"
-msgstr ""
-
-msgid "EventStats/HitCounts"
-msgstr ""
-
-msgid "EventStats/Languages"
-msgstr ""
-
-msgid "EventStats/UserAgents"
-msgstr ""
-
-#, fuzzy
-msgid "PageSize"
-msgstr "Dimensiune"
-
-#, fuzzy
-msgid "PageHits"
-msgstr "Pagini"
-
-#, fuzzy
-msgid "RandomPage"
-msgstr "RedenumirePagină"
-
-#, fuzzy
-msgid "XsltVersion"
-msgstr "Versiunea Python"
-
-msgid "FortuneCookies"
-msgstr ""
-
-msgid "WikiLicense"
-msgstr "LicenţăWiki"
-
-msgid "CategoryCategory"
-msgstr ""
-
-msgid "CategoryHomepage"
-msgstr ""
-
-msgid "CategoryTemplate"
-msgstr ""
-
-msgid "HomepageTemplate"
-msgstr ""
-
-msgid "HelpTemplate"
-msgstr ""
-
-msgid "HomepageReadWritePageTemplate"
-msgstr ""
-
-msgid "HomepageReadPageTemplate"
-msgstr ""
-
-msgid "HomepagePrivatePageTemplate"
-msgstr ""
-
-msgid "HomepageGroupsTemplate"
-msgstr ""
-
-msgid "SlideShowHandOutTemplate"
-msgstr ""
-
-#, fuzzy
-msgid "SlideShowTemplate"
-msgstr "Afişare succesivă"
-
-msgid "SlideTemplate"
-msgstr ""
-
-msgid "SyncJobTemplate"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnConfiguration"
-msgstr "AjutorLaFormatare"
-
-msgid "HelpOnConfiguration/EmailSupport"
-msgstr ""
-
-msgid "HelpOnConfiguration/SecurityPolicy"
-msgstr ""
-
-msgid "HelpOnConfiguration/FileAttachments"
-msgstr ""
-
-msgid "HelpOnConfiguration/SupplementationPage"
-msgstr ""
-
-msgid "HelpOnConfiguration/SurgeProtection"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnConfiguration/UserPreferences"
-msgstr "PreferinţeUtilizator"
-
-msgid "HelpOnPackageInstaller"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnUpdating"
-msgstr "AjutorLaFormatare"
-
-#, fuzzy
-msgid "HelpOnUpdatingPython"
-msgstr "AjutorLaFormatare"
-
-#, fuzzy
-msgid "HelpOnAdministration"
-msgstr "AjutorLaFormatare"
-
-msgid "HelpOnAuthentication"
-msgstr ""
-
-msgid "HelpOnAuthentication/ExternalCookie"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnMoinCommand"
-msgstr "AjutorLaFormatare"
-
-msgid "HelpOnMoinCommand/ExportDump"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnNotification"
-msgstr "AjutorLaFormatare"
-
-#, fuzzy
-msgid "HelpOnSessions"
-msgstr "Ajutor"
-
-#, fuzzy
-msgid "HelpOnUserHandling"
-msgstr "AjutorLaFormatare"
-
-#, fuzzy
-msgid "HelpOnXapian"
-msgstr "AjutorLaFormatare"
-
-msgid "HelpOnMoinWikiSyntax"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnCreoleSyntax"
-msgstr "Ajutor"
-
-msgid "HelpOnFormatting"
-msgstr "AjutorLaFormatare"
-
-#, fuzzy
-msgid "MoinMoin"
-msgstr "Versiunea MoinMoin"
-
-msgid "HelpContents"
-msgstr "Ajutor"
-
-msgid "HelpForBeginners"
-msgstr ""
-
-msgid "HelpForUsers"
-msgstr ""
-
-#, fuzzy
-msgid "HelpIndex"
-msgstr "IndexTitluri"
-
-msgid "HelpOnAccessControlLists"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnActions"
-msgstr "Ajutor"
-
-msgid "HelpOnActions/AttachFile"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnAdmonitions"
-msgstr "Ajutor"
-
-#, fuzzy
-msgid "HelpOnAutoAdmin"
-msgstr "AjutorLaFormatare"
-
-msgid "HelpOnCategories"
-msgstr ""
-
-msgid "HelpOnDictionaries"
-msgstr ""
-
-msgid "HelpOnEditLocks"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnEditing"
-msgstr "AjutorLaFormatare"
-
-msgid "HelpOnEditing/SubPages"
-msgstr ""
-
-msgid "HelpOnGraphicalEditor"
-msgstr ""
-
-msgid "HelpOnHeadlines"
-msgstr ""
-
-msgid "HelpOnLanguages"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnLinking"
-msgstr "AjutorLaFormatare"
-
-msgid "HelpOnLinking/NotesLinks"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnLists"
-msgstr "Ajutor"
-
-#, fuzzy
-msgid "HelpOnLogin"
-msgstr "AjutorLaFormatare"
-
-msgid "HelpOnMacros"
-msgstr ""
-
-msgid "HelpOnMacros/EmbedObject"
-msgstr ""
-
-msgid "HelpOnMacros/Include"
-msgstr ""
-
-msgid "HelpOnMacros/MailTo"
-msgstr ""
-
-msgid "HelpOnMacros/MonthCalendar"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnNavigation"
-msgstr "NavigareSit"
-
-msgid "HelpOnOpenIDProvider"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnPageCreation"
-msgstr "AjutorLaFormatare"
-
-msgid "HelpOnPageDeletion"
-msgstr ""
-
-msgid "HelpOnParsers"
-msgstr ""
-
-msgid "HelpOnParsers/ReStructuredText"
-msgstr ""
-
-msgid "HelpOnParsers/ReStructuredText/RstPrimer"
-msgstr ""
-
-msgid "HelpOnProcessingInstructions"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnRules"
-msgstr "Ajutor"
-
-#, fuzzy
-msgid "HelpOnSearching"
-msgstr "AjutorLaFormatare"
-
-#, fuzzy
-msgid "HelpOnSlideShows"
-msgstr "Afişare succesivă"
-
-msgid "HelpOnSlideShows/000 Introduction"
-msgstr ""
-
-msgid "HelpOnSlideShows/100 Creating the slides"
-msgstr ""
-
-msgid "HelpOnSlideShows/900 Last but not least: Running your presentation"
-msgstr ""
-
-msgid "HelpOnSmileys"
-msgstr ""
-
-msgid "HelpOnSpam"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnSpellCheck"
-msgstr "VerificareOrtografie"
-
-msgid "HelpOnSuperUser"
-msgstr ""
-
-msgid "HelpOnSynchronisation"
-msgstr ""
-
-msgid "HelpOnTables"
-msgstr ""
-
-msgid "HelpOnTemplates"
-msgstr ""
-
-msgid "HelpOnThemes"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnUserPreferences"
-msgstr "PreferinţeUtilizator"
-
-msgid "HelpOnVariables"
-msgstr ""
-
-#, fuzzy
-msgid "HelpOnXmlPages"
-msgstr "AjutorLaFormatare"
-
-#, fuzzy
-msgid "HelpOnComments"
-msgstr "Ajutor"
-
-#, fuzzy
-msgid "HelpOnSubscribing"
-msgstr "Părăsire"
-
-msgid "CamelCase"
-msgstr ""
-
-msgid "WikiCourse"
-msgstr ""
-
-msgid "WikiCourse/01 What is a MoinMoin wiki?"
-msgstr ""
-
-msgid "WikiCourse/02 Finding information"
-msgstr ""
-
-msgid "WikiCourse/03 Staying up to date"
-msgstr ""
-
-msgid "WikiCourse/04 Creating a wiki account"
-msgstr ""
-
-#, fuzzy
-msgid "WikiCourse/05 User preferences"
-msgstr "PreferinţeUtilizator"
-
-msgid "WikiCourse/06 Your own wiki homepage"
-msgstr ""
-
-msgid "WikiCourse/07 The text editor"
-msgstr ""
-
-msgid "WikiCourse/08 Hot Keys"
-msgstr ""
-
-msgid "WikiCourse/10 Text layout with wiki markup"
-msgstr ""
-
-msgid "WikiCourse/11 Paragraphs"
-msgstr ""
-
-msgid "WikiCourse/12 Headlines"
-msgstr ""
-
-msgid "WikiCourse/13 Lists"
-msgstr ""
-
-msgid "WikiCourse/14 Text styles"
-msgstr ""
-
-msgid "WikiCourse/15 Tables"
-msgstr ""
-
-msgid "WikiCourse/16 Wiki internal links"
-msgstr ""
-
-msgid "WikiCourse/17 External links"
-msgstr ""
-
-#, fuzzy
-msgid "WikiCourse/18 Attachments"
-msgstr "Ataşament Nou"
-
-msgid "WikiCourse/19 Symbols"
-msgstr ""
-
-msgid "WikiCourse/20 Dynamic content"
-msgstr ""
-
-msgid "WikiCourse/21 Macros"
-msgstr ""
-
-msgid "WikiCourse/22 Parsers"
-msgstr ""
-
-#, fuzzy
-msgid "WikiCourse/23 Actions"
-msgstr "Mai Multe Acţiuni:"
-
-msgid "WikiCourse/30 The graphical editor"
-msgstr ""
-
-msgid "WikiCourse/40 Creating more pages"
-msgstr ""
-
-msgid "WikiCourse/50 Wiki etiquette"
-msgstr ""
-
-msgid "WikiCourse/51 Applications"
-msgstr ""
-
-msgid "WikiCourse/52 Structure in the wiki"
-msgstr ""
-
-msgid "WikiCourseHandOut"
-msgstr ""
-
-msgid "Sun"
-msgstr "Dum"
-
-msgid "Mon"
-msgstr "Lun"
-
-msgid "Tue"
-msgstr "Mar"
-
-msgid "Wed"
-msgstr "Mie"
-
-msgid "Thu"
-msgstr "Joi"
-
-msgid "Fri"
-msgstr "Vin"
-
-msgid "Sat"
-msgstr "Sâm"
-
-msgid "AttachFile"
-msgstr "AtaşareFişier"
-
-msgid "DeletePage"
-msgstr "ŞtergerePagină"
-
-msgid "LikePages"
-msgstr "PaginiAsemănătoare"
-
-msgid "LocalSiteMap"
-msgstr "HartaLocalăSit"
-
-msgid "RenamePage"
-msgstr "RedenumirePagină"
-
-msgid "SpellCheck"
-msgstr "VerificareOrtografie"
-
-msgid "Discussion"
-msgstr ""
-
-#, fuzzy
-msgid "Password is too short."
-msgstr "Resetare parolă"
-
-msgid "Password has not enough different characters."
-msgstr ""
-
-#, fuzzy
-msgid ""
-"Password is too easy (password contains name or name contains password)."
-msgstr "Parola lipseşte. Introduceti nume şi parolă"
-
-msgid "Password is too easy (keyboard sequence)."
-msgstr ""
-
-msgid "Diffs"
-msgstr "Modificări"
-
-msgid "Info"
-msgstr "Info"
-
-msgid "Edit"
-msgstr "Editare"
-
-msgid "UnSubscribe"
-msgstr "Părăsire"
-
-msgid "Subscribe"
-msgstr "Înscriere"
-
-msgid "Raw"
-msgstr "Brut"
-
-msgid "XML"
-msgstr "XML"
-
-msgid "Print"
-msgstr "Listare"
-
-msgid "View"
-msgstr "Vizionare"
-
-msgid "Up"
-msgstr "Sus"
-
-msgid "Publish my email (not my wiki homepage) in author info"
-msgstr ""
-"Publicarea adresei de email(nu a paginii personale wiki) în informaţiile "
-"despre autor"
-
-msgid "Open editor on double click"
-msgstr "Deschidere editor la dublu clic"
-
-msgid "After login, jump to last visited page"
-msgstr ""
-
-msgid "Show comment sections"
-msgstr ""
-
-msgid "Show question mark for non-existing pagelinks"
-msgstr "Afişare semn de întebare pentru legăturile cu pagini inexistente"
-
-msgid "Show page trail"
-msgstr "Afişare urma navigării"
-
-msgid "Show icon toolbar"
-msgstr "Afişare bara de unelte cu pictograme"
-
-msgid "Show top/bottom links in headings"
-msgstr "Afişare legături de deasupra/dedesubt ca antete"
-
-msgid "Show fancy diffs"
-msgstr "Afişare modificări decorate"
-
-msgid "Add spaces to displayed wiki names"
-msgstr "Adăugare spaţii la afişarea numelor wiki"
-
-msgid "Remember login information"
-msgstr "Memorare informaţia de înregistrare"
-
-msgid "Disable this account forever"
-msgstr "Dezactivare cont curent pentru totdeauna"
-
-msgid "Name"
-msgstr "Nume"
-
-#, fuzzy
-msgid "(Use FirstnameLastname)"
-msgstr "(Folosiţi Primulnume''''''Ultimulnume)"
-
-msgid "Alias-Name"
-msgstr "Nume-Alias"
-
-msgid "Email"
-msgstr "Email"
-
-msgid "Jabber ID"
-msgstr ""
-
-msgid "User CSS URL"
-msgstr "URL pentru CSS al utilizatorului"
-
-msgid "(Leave it empty for disabling user CSS)"
-msgstr "(Lăsaţi gol pentru a dezactiva CSS-ul utilizatorului)"
-
-msgid "Editor size"
-msgstr "Dimensiunea editorului"
-
-msgid "Username"
-msgstr "Nume utilizator"
-
-msgid "Member of Groups"
-msgstr "Membru în grupurile"
-
-msgid "Jabber"
-msgstr ""
-
-msgid "Action"
-msgstr "Acţiune"
-
-msgid "Disable user"
-msgstr "Dezactivare utilizator"
-
-msgid "Enable user"
-msgstr "Activare utilizator"
-
-msgid "disabled"
-msgstr "dezactivat"
-
-msgid "Mail account data"
-msgstr "Datele contului de email"
-
-msgid "Password"
-msgstr "Parolă"
-
-msgid "OpenID"
-msgstr ""
-
-msgid "Login"
-msgstr "Login"
-
-msgid "Failed to connect to database."
-msgstr ""
-
-msgid "Could not contact botbouncer.com."
-msgstr ""
-
-msgid "Please log in first."
-msgstr ""
-
-msgid "Missing password. Please enter user name and password."
-msgstr "Parola lipseşte. Introduceti nume şi parolă"
-
-#, python-format
-msgid "LDAP server %(server)s failed."
-msgstr ""
-
-#, python-format
-msgid ""
-"If you do not have an account, <a href=\"%(userprefslink)s\">you can create "
-"one now</a>. <a href=\"%(sendmypasswordlink)s\">Forgot your password?</a>"
-msgstr ""
-
-msgid ""
-"Please choose an account name now.\n"
-"If you choose an existing account name you will be asked for the\n"
-"password and be able to associate the account with your OpenID."
-msgstr ""
-
-msgid "Choose this name"
-msgstr ""
-
-msgid "This is not a valid username, choose a different one."
-msgstr ""
-
-msgid ""
-"The username you have chosen is already\n"
-"taken. If it is your username, enter your password below to associate\n"
-"the username with your OpenID. Otherwise, please choose a different\n"
-"username and leave the password field blank."
-msgstr ""
-
-msgid "Associate this name"
-msgstr ""
-
-#, python-format
-msgid "OpenID error: %s."
-msgstr ""
-
-#, fuzzy
-msgid "Verification canceled."
-msgstr "Editarea a fost anulată"
-
-msgid "OpenID failure."
-msgstr ""
-
-msgid "Your account is now associated to your OpenID."
-msgstr ""
-
-msgid "The password you entered is not valid."
-msgstr ""
-
-msgid "OpenID verification requires that you click this button:"
-msgstr ""
-
-msgid "Anonymous sessions need to be enabled for OpenID login."
-msgstr ""
-
-msgid "Failed to resolve OpenID."
+msgid "[all]"
 msgstr ""
 
-msgid "OpenID discovery failure, not a valid OpenID."
+msgid "[not empty]"
 msgstr ""
 
-msgid "No OpenID."
+msgid "[empty]"
 msgstr ""
 
-msgid ""
-"If you do not have an account yet, you can still log in with your OpenID and "
-"create one during login."
+msgid "filter"
 msgstr ""
 
 #, fuzzy
@@ -1243,69 +535,11 @@ msgstr ""
 msgid "To change your password, enter a new password twice."
 msgstr ""
 
+msgid "Password"
+msgstr "Parolă"
+
 msgid "Password repeat"
 msgstr "Repetare parolă"
-
-msgid "Switch user"
-msgstr ""
-
-msgid "No user selected"
-msgstr ""
-
-msgid ""
-"You can now change the settings of the selected user account; log out to get "
-"back to your account."
-msgstr ""
-
-msgid "You are the only user."
-msgstr ""
-
-msgid ""
-"As a superuser, you can temporarily assume the identity of another user."
-msgstr ""
-
-msgid "Select User"
-msgstr ""
-
-msgid "OpenID settings"
-msgstr ""
-
-msgid "Cannot remove all OpenIDs."
-msgstr ""
-
-msgid "The selected OpenIDs have been removed."
-msgstr ""
-
-msgid "No OpenID given."
-msgstr ""
-
-msgid "OpenID is already present."
-msgstr ""
-
-#, fuzzy
-msgid "This OpenID is already used for another account."
-msgstr "Această pagină este deja ştearsă sau nu a fost creată niciodată!"
-
-msgid "OpenID added successfully."
-msgstr ""
-
-msgid "Current OpenIDs"
-msgstr ""
-
-msgid "Remove selected"
-msgstr ""
-
-msgid "Add OpenID"
-msgstr ""
-
-msgid "OpenID server"
-msgstr ""
-
-msgid "The selected websites have been removed."
-msgstr ""
-
-msgid "Trusted websites"
-msgstr ""
 
 #, fuzzy
 msgid "Preferences"
@@ -1425,35 +659,241 @@ msgstr "Înscriere"
 msgid "Subscribed wiki pages<<BR>>(one regex per line)"
 msgstr "Înscris la următoarele pagini wiki(o expresie regulară per linie)"
 
-msgid "[all]"
+msgid "Switch user"
 msgstr ""
 
-msgid "[not empty]"
+msgid "No user selected"
 msgstr ""
 
-msgid "[empty]"
+msgid ""
+"You can now change the settings of the selected user account; log out to get "
+"back to your account."
 msgstr ""
 
-msgid "filter"
+msgid "You are the only user."
 msgstr ""
 
-msgid "anonymous"
+msgid ""
+"As a superuser, you can temporarily assume the identity of another user."
 msgstr ""
 
-msgid "Options --pages and --search are mutually exclusive!"
+msgid "Select User"
 msgstr ""
 
-msgid "You must specify an output file!"
+msgid "OpenID server"
 msgstr ""
 
-msgid "No pages specified using --pages or --search, assuming full package."
+msgid "The selected websites have been removed."
 msgstr ""
 
-msgid "All attachments included into the package."
+msgid "Trusted websites"
 msgstr ""
 
-msgid "Output file already exists! Cowardly refusing to continue!"
+msgid "Remove selected"
 msgstr ""
+
+msgid "OpenID settings"
+msgstr ""
+
+msgid "Cannot remove all OpenIDs."
+msgstr ""
+
+msgid "The selected OpenIDs have been removed."
+msgstr ""
+
+msgid "No OpenID given."
+msgstr ""
+
+msgid "OpenID is already present."
+msgstr ""
+
+msgid "Failed to resolve OpenID."
+msgstr ""
+
+msgid "OpenID discovery failure, not a valid OpenID."
+msgstr ""
+
+#, python-format
+msgid "OpenID error: %s."
+msgstr ""
+
+#, fuzzy
+msgid "Verification canceled."
+msgstr "Editarea a fost anulată"
+
+#, fuzzy
+msgid "This OpenID is already used for another account."
+msgstr "Această pagină este deja ştearsă sau nu a fost creată niciodată!"
+
+msgid "OpenID added successfully."
+msgstr ""
+
+msgid "OpenID failure."
+msgstr ""
+
+msgid "Current OpenIDs"
+msgstr ""
+
+msgid "Add OpenID"
+msgstr ""
+
+msgid "OpenID verification requires that you click this button:"
+msgstr ""
+
+msgid "Username"
+msgstr "Nume utilizator"
+
+msgid "Member of Groups"
+msgstr "Membru în grupurile"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Jabber"
+msgstr ""
+
+msgid "Action"
+msgstr "Acţiune"
+
+msgid "Disable user"
+msgstr "Dezactivare utilizator"
+
+msgid "Enable user"
+msgstr "Activare utilizator"
+
+msgid "disabled"
+msgstr "dezactivat"
+
+msgid "Mail account data"
+msgstr "Datele contului de email"
+
+msgid "Name"
+msgstr "Nume"
+
+msgid "OpenID"
+msgstr ""
+
+msgid "Login"
+msgstr "Login"
+
+#, fuzzy
+msgid ""
+"Rendering of reStructured text is not possible, please install Docutils."
+msgstr ""
+"Randarea textului de tip reStructured nu este posibilă, instalaţi docutils."
+
+msgid ""
+"{{{\n"
+"Emphasis: *italic* **bold** ``monospace``\n"
+"\n"
+"Headings: Heading 1  Heading 2  Heading 3\n"
+"          =========  ---------  ~~~~~~~~~\n"
+"\n"
+"Horizontal rule: ----\n"
+"\n"
+"Links: TrailingUnderscore_ `multi word with backticks`_ external_\n"
+"\n"
+".. _external: http://external-site.example.org/foo/\n"
+"\n"
+"Lists: * bullets; 1., a. numbered items.\n"
+"}}}\n"
+"(!) For more help, see the\n"
+"[[http://docutils.sourceforge.net/docs/user/rst/quickref.html|"
+"reStructuredText Quick Reference]].\n"
+msgstr ""
+
+msgid "**Maximum number of allowed includes exceeded**"
+msgstr "**Numărul maxim de incluziuni acceptate a fost depăşit**"
+
+#, fuzzy, python-format
+msgid "**You are not allowed to read the page: %s**"
+msgstr ""
+"Nu aveţi permisiunea de a modifica această pagină la o stare anterioară"
+
+#, python-format
+msgid "**Could not find the referenced page: %s**"
+msgstr "**Pagina de referinţă %s nu a putut fi găsită**"
+
+msgid "XSLT option disabled, please look at HelpOnConfiguration."
+msgstr "Opţiunea XSLT este dezactivată, accesaţi HelpOnConfiguration."
+
+msgid "XSLT processing is not available, please install 4suite 1.x."
+msgstr "Procesarea XSLT nu este disponibilă, instalaţi 4suite 1.x."
+
+#, python-format
+msgid "%(errortype)s processing error"
+msgstr "Eroarea de procesare %(errortype)s"
+
+#, fuzzy
+msgid ""
+" Emphasis:: <<Verbatim(//)>>''italics''<<Verbatim(//)>>; <<Verbatim(**)"
+">>'''bold'''<<Verbatim(**)>>; <<Verbatim(**//)>>'''''bold "
+"italics'''''<<Verbatim(//**)>>; <<Verbatim(//)>>''mixed ''<<Verbatim(**)"
+">>'''''bold'''<<Verbatim(**)>> and italics''<<Verbatim(//)>>;\n"
+" Horizontal Rule:: <<Verbatim(----)>>\n"
+" Force Linebreak:: <<Verbatim(\\\\)>>\n"
+" Headings:: = Title 1 =; == Title 2 ==; === Title 3 ===; ==== Title 4 ====; "
+"===== Title 5 =====.\n"
+" Lists:: * bullets; ** sub-bullets; # numbered items; ## numbered sub "
+"items.\n"
+" Links:: <<Verbatim([[target]])>>; <<Verbatim([[target|linktext]])>>.\n"
+" Tables:: |= header text | cell text | more cell text |;\n"
+"\n"
+"(!) For more help, see HelpOnEditing or HelpOnCreoleSyntax.\n"
+msgstr ""
+" Accentuare:: <<Verbatim('')>>''înclinare''<<Verbatim('')>>; <<Verbatim(''')"
+">>'''îngroşare'''<<Verbatim(''')>>; <<Verbatim(''''')>>'''''îngroşare şi "
+"înclinare'''''<<Verbatim(''''')>>; <<Verbatim('')>>''înclinare şi''<<Verbatim"
+"(''')>>'''''îngroşare'''<<Verbatim(''')>> combinate''<<Verbatim('')>>; "
+"<<Verbatim(----)>> linie orizontală.\n"
+" Antete:: <<Verbatim(=)>> Titlu 1 <<Verbatim(=)>>; <<Verbatim(==)>> Titlu 2 "
+"<<Verbatim(==)>>; <<Verbatim(===)>> Titlu 3 <<Verbatim(===)>>;   <<Verbatim"
+"(====)>> Titlu 4 <<Verbatim(====)>>; <<Verbatim(=====)>> Titlu 5 <<Verbatim"
+"(=====)>>.\n"
+" Liste:: spaţiu şi unul dintre: * buline; 1., a., A., i., I. elemente "
+"numerotate; 1.#n începere numărare de la n; spaţiul singur indentează.\n"
+" Legături:: <<Verbatim(UnireCuvintecuIniţialăMare)>>; <<Verbatim"
+"([\"paranteze drepte şi ghilimele\"])>>; url; [url]; [url etichetă].\n"
+" Tabele:: || text în celulă |||| text în celulă pe 2 coloane ||;    nu se "
+"permit caractere spaţiu după tabele sau titluri.\n"
+"\n"
+"(!) Pentru mai multe informaţii vizitaţi HelpOnEditing sau SyntaxReference.\n"
+
+#, fuzzy
+msgid ""
+" Emphasis:: <<Verbatim('')>>''italics''<<Verbatim('')>>; <<Verbatim(''')"
+">>'''bold'''<<Verbatim(''')>>; <<Verbatim(''''')>>'''''bold "
+"italics'''''<<Verbatim(''''')>>; <<Verbatim('')>>''mixed ''<<Verbatim(''')"
+">>'''''bold'''<<Verbatim(''')>> and italics''<<Verbatim('')>>; <<Verbatim"
+"(----)>> horizontal rule.\n"
+" Headings:: = Title 1 =; == Title 2 ==; === Title 3 ===; ==== Title 4 ====; "
+"===== Title 5 =====.\n"
+" Lists:: space and one of: * bullets; 1., a., A., i., I. numbered items; 1."
+"#n start numbering at n; space alone indents.\n"
+" Links:: <<Verbatim(JoinCapitalizedWords)>>; <<Verbatim([[target|linktext]])"
+">>.\n"
+" Tables:: || cell text |||| cell text spanning 2 columns ||;    no trailing "
+"white space allowed after tables or titles.\n"
+"\n"
+"(!) For more help, see HelpOnEditing or SyntaxReference.\n"
+msgstr ""
+" Accentuare:: <<Verbatim('')>>''înclinare''<<Verbatim('')>>; <<Verbatim(''')"
+">>'''îngroşare'''<<Verbatim(''')>>; <<Verbatim(''''')>>'''''îngroşare şi "
+"înclinare'''''<<Verbatim(''''')>>; <<Verbatim('')>>''înclinare şi''<<Verbatim"
+"(''')>>'''''îngroşare'''<<Verbatim(''')>> combinate''<<Verbatim('')>>; "
+"<<Verbatim(----)>> linie orizontală.\n"
+" Antete:: <<Verbatim(=)>> Titlu 1 <<Verbatim(=)>>; <<Verbatim(==)>> Titlu 2 "
+"<<Verbatim(==)>>; <<Verbatim(===)>> Titlu 3 <<Verbatim(===)>>;   <<Verbatim"
+"(====)>> Titlu 4 <<Verbatim(====)>>; <<Verbatim(=====)>> Titlu 5 <<Verbatim"
+"(=====)>>.\n"
+" Liste:: spaţiu şi unul dintre: * buline; 1., a., A., i., I. elemente "
+"numerotate; 1.#n începere numărare de la n; spaţiul singur indentează.\n"
+" Legături:: <<Verbatim(UnireCuvintecuIniţialăMare)>>; <<Verbatim"
+"([\"paranteze drepte şi ghilimele\"])>>; url; [url]; [url etichetă].\n"
+" Tabele:: || text în celulă |||| text în celulă pe 2 coloane ||;    nu se "
+"permit caractere spaţiu după tabele sau titluri.\n"
+"\n"
+"(!) Pentru mai multe informaţii vizitaţi HelpOnEditing sau SyntaxReference.\n"
 
 #, python-format
 msgid "Expected \"%(wanted)s\" after \"%(key)s\", got \"%(token)s\""
@@ -1471,405 +911,133 @@ msgstr "Trebuie un întreg \"%(arg)s\" după \"%(key)s\""
 msgid "Expected a color value \"%(arg)s\" after \"%(key)s\""
 msgstr "Trebuie o valoare de tip culoare \"%(arg)s\" după \"%(key)s\""
 
-#, python-format
-msgid ""
-"Results %(bs)s%(hitsFrom)d - %(hitsTo)d%(be)s of %(aboutHits)s %(bs)s%(hits)d"
-"%(be)s results out of about %(pages)d pages."
+msgid "anonymous"
 msgstr ""
 
-msgid "seconds"
-msgstr "secunde"
-
-msgid "Previous"
-msgstr "Precedent"
-
-msgid "Next"
-msgstr "Următor"
-
-msgid "rev"
-msgstr "rev"
-
-msgid "current"
-msgstr "curent"
-
-#, python-format
-msgid "last modified: %s"
-msgstr "modificat ultima oară: %s"
-
-msgid "match"
-msgstr "potrivire"
-
-msgid "matches"
-msgstr "potriviri"
-
-msgid "about"
-msgstr ""
-
-msgid "If this account exists an email was sent."
-msgstr ""
-
-msgid ""
-"This wiki is not enabled for mail processing.\n"
-"Contact the owner of the wiki, who can enable email."
-msgstr ""
-"Acest wiki nu permite procesare poştei electronice.\n"
-"Contactaţi deţinătorul wiki-ului, care poate activa email."
-
-msgid "Please provide a valid email address or a username!"
-msgstr "Introduceţi o adresă validă de email sau un nume de utilizator!"
-
-msgid "Mail me my account data"
-msgstr "Trimitere prin email datele contului"
-
-msgid "Recovery token"
-msgstr ""
-
-msgid "New password"
-msgstr "Parolă nouă"
-
-msgid "New password (repeat)"
-msgstr "Repetare parolă nouă"
-
-msgid "Reset my password"
+#, fuzzy
+msgid "Password is too short."
 msgstr "Resetare parolă"
 
-msgid "Your password has been changed, you can log in now."
+msgid "Password has not enough different characters."
 msgstr ""
 
-msgid "Your token is invalid!"
-msgstr ""
-
-msgid "Password reset"
-msgstr "Resetare parolă"
-
+#, fuzzy
 msgid ""
-"\n"
-"== Password reset ==\n"
-"Enter a new password below."
-msgstr ""
-"\n"
-"== Resetare parolă ==\n"
-"Introduceţi noua parolă mai jos."
+"Password is too easy (password contains name or name contains password)."
+msgstr "Parola lipseşte. Introduceti nume şi parolă"
 
-msgid "Lost password"
-msgstr "Parolă pierdută"
-
-msgid ""
-"\n"
-"== Recovering a lost password ==\n"
-"If you have forgotten your password, provide your email address or\n"
-"username and click on '''Mail me my account data'''.\n"
-"You will receive an email containing a recovery token that can be\n"
-"used to change your password. The email will also contain further\n"
-"instructions."
+msgid "Password is too easy (keyboard sequence)."
 msgstr ""
 
-msgid ""
-"\n"
-"=== Password reset ===\n"
-"If you already have received the email with the recovery token, enter your\n"
-"username, the recovery token and a new password (twice) below."
+msgid "Diffs"
+msgstr "Modificări"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Edit"
+msgstr "Editare"
+
+msgid "UnSubscribe"
+msgstr "Părăsire"
+
+msgid "Subscribe"
+msgstr "Înscriere"
+
+msgid "Raw"
+msgstr "Brut"
+
+msgid "XML"
+msgstr "XML"
+
+msgid "Print"
+msgstr "Listare"
+
+msgid "View"
+msgstr "Vizionare"
+
+msgid "Up"
+msgstr "Sus"
+
+msgid "Publish my email (not my wiki homepage) in author info"
+msgstr ""
+"Publicarea adresei de email(nu a paginii personale wiki) în informaţiile "
+"despre autor"
+
+msgid "Open editor on double click"
+msgstr "Deschidere editor la dublu clic"
+
+msgid "After login, jump to last visited page"
 msgstr ""
 
-#, fuzzy, python-format
-msgid "You must login to use this action: %(action)s."
+msgid "Show comment sections"
 msgstr ""
-"Trebuie să fiţi logaţi pentru a putea folosi înregistrările(subscriptions)."
+
+msgid "Show question mark for non-existing pagelinks"
+msgstr "Afişare semn de întebare pentru legăturile cu pagini inexistente"
+
+msgid "Show page trail"
+msgstr "Afişare urma navigării"
+
+msgid "Show icon toolbar"
+msgstr "Afişare bara de unelte cu pictograme"
+
+msgid "Show top/bottom links in headings"
+msgstr "Afişare legături de deasupra/dedesubt ca antete"
+
+msgid "Show fancy diffs"
+msgstr "Afişare modificări decorate"
+
+msgid "Add spaces to displayed wiki names"
+msgstr "Adăugare spaţii la afişarea numelor wiki"
+
+msgid "Remember login information"
+msgstr "Memorare informaţia de înregistrare"
+
+msgid "Disable this account forever"
+msgstr "Dezactivare cont curent pentru totdeauna"
 
 #, fuzzy
-msgid "Your subscription to this page has been removed."
-msgstr "Nu mai sunteţi înscris(ă) pe această pagină."
+msgid "(Use FirstnameLastname)"
+msgstr "(Folosiţi Primulnume''''''Ultimulnume)"
 
-msgid "Can't remove regular expression subscription!"
-msgstr "Nu se poate şterge înregistrarea cu expresie regulară!"
+msgid "Alias-Name"
+msgstr "Nume-Alias"
 
-#, fuzzy
-msgid "Edit the subscription regular expressions in your settings."
-msgstr ""
-"Editaţi expresiile regulare pentru înregistrări(subscriptions) în pagina "
-"PreferinţeUtilizator."
-
-#, fuzzy
-msgid "You need to be subscribed to unsubscribe."
-msgstr "Aţi fost înregistrat(ă) pe această pagină."
-
-msgid "Please choose:"
+msgid "Jabber ID"
 msgstr ""
 
-msgid "Settings"
-msgstr ""
+msgid "User CSS URL"
+msgstr "URL pentru CSS al utilizatorului"
 
-msgid "Editor"
-msgstr "Editor"
+msgid "(Leave it empty for disabling user CSS)"
+msgstr "(Lăsaţi gol pentru a dezactiva CSS-ul utilizatorului)"
 
-msgid "Pages"
-msgstr "Pagini"
-
-msgid "Select Author"
-msgstr "Selectare Autor"
-
-msgid "Revert all!"
-msgstr "Revenire totală!"
-
-#, fuzzy
-msgid "You are not allowed to use this action."
-msgstr "Nu aveţi dreptul să editaţi această pagină."
-
-msgid "No older revisions available!"
-msgstr "Nici o revizie mai veche nu este disponibilă!"
+msgid "Editor size"
+msgstr "Dimensiunea editorului"
 
 #, python-format
-msgid "Diff for \"%s\""
-msgstr "Modificările pentru \"%s\""
+msgid "Upload new attachment \"%(filename)s\""
+msgstr "Trimitere ataşament nou \"%(filename)s\""
 
 #, python-format
-msgid "Differences between revisions %d and %d"
-msgstr "Diferenţele dintre reviziile %d şi %d"
-
-#, python-format
-msgid "(spanning %d versions)"
-msgstr "(desfăşurare %d versiuni)"
-
-#, fuzzy
-msgid "Revert to this revision"
-msgstr "Revenire la revizia %(rev)d."
-
-#, fuzzy
-msgid "Previous change"
-msgstr "Previzionare"
-
-#, fuzzy
-msgid "Next change"
-msgstr "Salvare modificări"
-
-msgid "No differences found!"
-msgstr "Nici o diferenţă găsită!"
-
-#, python-format
-msgid "The page was saved %(count)d times, though!"
-msgstr "Pagina a fost salvată de %(count)d ori totuşi!"
-
-msgid "(ignoring whitespace)"
-msgstr "(ignorare caractere spaţiu)"
-
-msgid "Ignore changes in the amount of whitespace"
-msgstr "Ignorare modificări în cantitatea de caractere spaţiu"
-
-msgid "You must login to add a quicklink."
-msgstr "Trebuie să vă logaţi pentru a putea adăuga o legătură rapidă"
-
-msgid "A quicklink to this page has been added for you."
-msgstr ""
-"A fost adăugată o legătură rapidă către această pagină pentru dumnveavoastră."
-
-#, fuzzy
-msgid "A quicklink to this page could not be added for you."
-msgstr ""
-"A fost adăugată o legătură rapidă către această pagină pentru dumnveavoastră."
-
-#, fuzzy
-msgid "You already have a quicklink to this page."
-msgstr "Aţi salvat deja această pagină!"
-
-#, python-format
-msgid "Full Link List for \"%s\""
-msgstr "Lista Completă de Legături pentru \"%s\""
-
-#, python-format
-msgid "(including %(localwords)d %(pagelink)s)"
-msgstr "(inclusiv %(localwords)d %(pagelink)s)"
-
-#, python-format
-msgid ""
-"The following %(badwords)d words could not be found in the dictionary of %"
-"(totalwords)d words%(localwords)s and are highlighted below:"
-msgstr ""
-"Următoarele %(badwords)d cuvinte nu au putut fi găsite în dicţionarul de %"
-"(totalwords)d cuvinte%(localwords)s şi sunt scoase în evidenţă mai jos:"
-
-msgid "Add checked words to dictionary"
-msgstr "Adăugare cuvinte verificate în dicţionar"
-
-msgid "No spelling errors found!"
-msgstr "Nu a fost găsită nici o greşeală de ortografie!"
-
-msgid "You can't save spelling words."
-msgstr ""
-"Nu aveţi permisiunea de a salva cuvinte folosite la verificarea ortografiei."
-
-msgid "You can't check spelling on a page you can't read."
-msgstr ""
-"Nu aveţi permisiunea de a verifica ortografia pe o pagină pe care nu o "
-"puteţi citi."
-
-#, fuzzy
-msgid "You must login to remove a quicklink."
-msgstr "Trebuie să vă logaţi pentru a putea adăuga o legătură rapidă"
-
-msgid "Your quicklink to this page has been removed."
-msgstr "Legătura rapidă către această pagină a fost ştearsă."
-
-#, fuzzy
-msgid "Your quicklink to this page could not be removed."
-msgstr "Legătura rapidă către această pagină a fost ştearsă."
-
-#, fuzzy
-msgid "You need to have a quicklink to this page to remove it."
-msgstr "Legătura rapidă către această pagină a fost ştearsă."
-
-msgid "Revert"
-msgstr ""
-
-msgid "You are not allowed to revert this page!"
-msgstr ""
-"Nu aveţi permisiunea de a modifica această pagină la o stare anterioară"
-
-msgid ""
-"You were viewing the current revision of this page when you called the "
-"revert action. If you want to revert to an older revision, first view that "
-"older revision and then call revert to this (older) revision again."
-msgstr ""
-
-#, fuzzy
-msgid "Optional reason for reverting this page"
-msgstr "Motiv opţional referitor la redenumire."
-
-#, fuzzy
-msgid "Really revert this page?"
-msgstr "Sigur doriţi ştergerea acestei pagini ?"
-
-#, fuzzy
-msgid "Wiki Backup"
-msgstr "Text Sursă Wiki"
-
-msgid ""
-"= Downloading a backup =\n"
-"\n"
-"Please note:\n"
-" * Store backups in a safe and secure place - they contain sensitive "
-"information.\n"
-" * Make sure your wiki configuration backup_* values are correct and "
-"complete.\n"
-" * Make sure the backup file you get contains everything you need in case of "
-"problems.\n"
-" * Make sure it is downloaded without problems.\n"
-"\n"
-"To get a backup, just click here:"
-msgstr ""
-
-#, fuzzy
-msgid "Backup"
-msgstr "Marcare"
-
-#, fuzzy
-msgid "You are not allowed to do remote backup."
-msgstr "Pe această pagină nu puteţi face %s"
-
-#, fuzzy, python-format
-msgid "Unknown backup subaction: %s."
-msgstr "Acţiune necunoscută %(action_name)s."
-
-msgid "Charts are not available!"
-msgstr "Graficele nu sunt disponibile!"
-
-msgid "You need to provide a chart type!"
-msgstr "Trebuie să specificaţi tipul graficului!"
-
-#, python-format
-msgid "Bad chart type \"%s\"!"
-msgstr "Este invalid tipul de grafic \"%s\"!"
-
-msgid "This page is already deleted or was never created!"
-msgstr "Această pagină este deja ştearsă sau nu a fost creată niciodată!"
-
-#, fuzzy, python-format
-msgid "Invalid filename \"%s\"!"
-msgstr "Argumente de includere \"%s\" sunt invalide!"
-
-#, fuzzy
-msgid "Include all attachments?"
-msgstr "[%d ataşamente]"
-
-#, fuzzy
-msgid "Package pages"
-msgstr "Pagini Asemănătoare"
-
-#, fuzzy
-msgid "Package name"
-msgstr "Pagini Asemănătoare"
-
-msgid "List of page names - separated by a comma"
+msgid "Inlined image: %(url)s"
 msgstr ""
 
 #, python-format
-msgid "No pages like \"%s\"!"
-msgstr "Nici o pagină de genul \"%s\"!"
-
-msgid "Rename Page"
-msgstr "Redenumire Pagină"
-
-msgid "Rename all /subpages too?"
-msgstr ""
-
-msgid "New name"
-msgstr "Nume nou"
-
-msgid "Optional reason for the renaming"
-msgstr "Motiv opţional referitor la redenumire."
-
-#, fuzzy
-msgid "Really rename this page?"
-msgstr "Sigur doriţi ştergerea acestei pagini ?"
-
-#, fuzzy
-msgid "Copy Page"
-msgstr "Pagină"
-
-msgid "Copy all /subpages too?"
-msgstr ""
-
-#, fuzzy
-msgid "Optional reason for the copying"
-msgstr "Motiv opţional referitor la redenumire."
-
-#, fuzzy
-msgid "Really copy this page?"
-msgstr "Sigur doriţi ştergerea acestei pagini ?"
-
-msgid "General Information"
-msgstr "Informaţii generale"
+msgid "Create new drawing \"%(filename)s (opens in new window)\""
+msgstr "Creare desen nou \"%(filename)s (se deschide în fereastră nouă)\""
 
 #, python-format
-msgid "Page size: %d"
-msgstr "Dimensiunea paginii: %d"
+msgid "Edit drawing %(filename)s (opens in new window)"
+msgstr "Editare desen %(filename)s (se deschide în fereastră nouă)"
 
-msgid "SHA digest of this page's content is:"
-msgstr "Rezumatul SHA al conţinutului acestei pagini este:"
+#, python-format
+msgid "Clickable drawing: %(filename)s"
+msgstr "Desen clicabil: %(filename)s"
 
-msgid "The following users subscribed to this page:"
-msgstr "Următorii utilizatori sunt întregistraţi la această pagină"
-
-msgid "This page links to the following pages:"
-msgstr "Această pagină face legături cu următoarele pagini:"
-
-msgid "Date"
-msgstr "Data"
-
-msgid "Size"
-msgstr "Dimensiune"
-
-msgid "Diff"
-msgstr "Modificare"
-
-msgid "Comment"
-msgstr "Comentariu"
-
-msgid "view"
-msgstr "vizionare"
-
-#, fuzzy
-msgid "to previous"
-msgstr "Previzionare"
+msgid "Toggle line numbers"
+msgstr "Comutare numerotare linii"
 
 #, python-format
 msgid "Revert to revision %(rev)d."
@@ -1879,56 +1047,27 @@ msgstr "Revenire la revizia %(rev)d."
 msgid "Renamed from '%(oldpagename)s'."
 msgstr "Ataşamente pentru \"%(pagename)s\""
 
-msgid "edit"
-msgstr "editare"
+msgid "You are now logged out."
+msgstr "Acum sunteţi neînregistrat(ă)."
 
-msgid "get"
-msgstr "obţinere"
+#, fuzzy
+msgid "You are not allowed to use this action."
+msgstr "Nu aveţi dreptul să editaţi această pagină."
 
-msgid "del"
-msgstr "ştergere"
+msgid "Delete"
+msgstr "Ştergere"
 
-msgid "N/A"
-msgstr "Indisponibil"
+msgid "This page is already deleted or was never created!"
+msgstr "Această pagină este deja ştearsă sau nu a fost creată niciodată!"
 
-msgid "Revision History"
-msgstr "Istoria Reviziilor"
-
-msgid "No log entries found."
-msgstr "Nici un jurnal nu a fost găsit"
-
-#, python-format
-msgid "Info for \"%s\""
-msgstr "Informaţii despre \"%s\""
-
-#, python-format
-msgid "Show \"%(title)s\""
-msgstr "Afişare \"%(title)s\""
-
-msgid "General Page Infos"
-msgstr "Informaţii Generale Despre Pagină"
-
-msgid "Page hits and edits"
-msgstr "Accesări şi editări ale paginii"
-
-msgid "Do it."
+msgid "Delete all /subpages too?"
 msgstr ""
 
-#, python-format
-msgid "Execute action %(actionname)s?"
-msgstr ""
+msgid "Optional reason for the deletion"
+msgstr "Motiv opţional referitor la ştergere"
 
-#, python-format
-msgid "Action %(actionname)s is excluded in this wiki!"
-msgstr ""
-
-#, fuzzy, python-format
-msgid "You are not allowed to use action %(actionname)s on this page!"
-msgstr "Nu aveţi permisiunea de a salva un desen pe această pagină."
-
-#, fuzzy, python-format
-msgid "Please use the interactive user interface to use action %(actionname)s!"
-msgstr "Folosiţi interfaţa interactivă cu utilizatorul pentru a şterge pagini!"
+msgid "Really delete this page?"
+msgstr "Sigur doriţi ştergerea acestei pagini ?"
 
 #, python-format
 msgid "[%d attachments]"
@@ -1961,8 +1100,20 @@ msgstr ""
 "'''NU''' folosiţi URL al legăturii {{{[obţinere]}}}, \n"
 "deoarece acesta se poate schimba şi poate cauza probleme foarte uşor."
 
+msgid "del"
+msgstr "ştergere"
+
 msgid "move"
 msgstr ""
+
+msgid "get"
+msgstr "obţinere"
+
+msgid "edit"
+msgstr "editare"
+
+msgid "view"
+msgstr "vizionare"
 
 msgid "unzip"
 msgstr "dezarhivare"
@@ -2009,16 +1160,16 @@ msgstr "Ataşamente pentru \"%(pagename)s\""
 msgid "TextCha: Wrong answer! Go back and try again..."
 msgstr ""
 
+msgid "You are not allowed to overwrite a file attachment of this page."
+msgstr ""
+"Nu aveţi permisiunea de a suprascrie un ataşament de pe această pagină."
+
 msgid ""
 "No file content. Delete non ASCII characters from the file name and try "
 "again."
 msgstr ""
 "Nu există conţinut. Ştergeţi caracterele non ASCII din numele fişierului şi "
 "încercaţi din nou."
-
-msgid "You are not allowed to overwrite a file attachment of this page."
-msgstr ""
-"Nu aveţi permisiunea de a suprascrie un ataşament de pe această pagină."
 
 #, python-format
 msgid ""
@@ -2165,6 +1316,9 @@ msgstr "Nume Fişier"
 msgid "Modified"
 msgstr "Modificat"
 
+msgid "Size"
+msgstr "Dimensiune"
+
 msgid "Unknown file type, cannot display this attachment inline."
 msgstr ""
 "Tip de fişier necunoscut; nu se poate afişa acest ataşament îninteriorul "
@@ -2177,17 +1331,214 @@ msgstr "Nu aveţi permisiunea de a viziona ataşamentele de pe această pagină.
 msgid "attachment:%(filename)s of %(pagename)s"
 msgstr "ataşament:%(filename)s al %(pagename)s"
 
-msgid "Delete"
-msgstr "Ştergere"
+msgid ""
+"Cannot create a new page without a page name.  Please specify a page name."
+msgstr ""
+"Nu se poate crea o pagină nouă fără numele paginii.  Specificaţi numele "
+"paginii."
 
-msgid "Delete all /subpages too?"
+#, python-format
+msgid "Full Link List for \"%s\""
+msgstr "Lista Completă de Legături pentru \"%s\""
+
+#, python-format
+msgid "No pages like \"%s\"!"
+msgstr "Nici o pagină de genul \"%s\"!"
+
+#, python-format
+msgid "Exactly one page like \"%s\" found, redirecting to page."
+msgstr ""
+"A fost găsită exact o pagină de genul \"%s\", urmează redirecţionarea spre "
+"pagină."
+
+#, python-format
+msgid "Pages like \"%s\""
+msgstr "Pagini de genul \"%s\""
+
+#, python-format
+msgid "%(matchcount)d %(matches)s for \"%(title)s\""
+msgstr "%(matchcount)d %(matches)s pentru \"%(title)s\""
+
+msgid ""
+"You need to manually go to your OpenID provider wiki\n"
+"and log in before you can use your OpenID. MoinMoin will\n"
+"never allow you to enter your password here.\n"
+"\n"
+"Once you have logged in, simply reload this page."
 msgstr ""
 
-msgid "Optional reason for the deletion"
-msgstr "Motiv opţional referitor la ştergere"
+msgid "OpenID Trust verification"
+msgstr ""
 
-msgid "Really delete this page?"
+#, python-format
+msgid "The site %s has asked for your identity."
+msgstr ""
+
+#, python-format
+msgid ""
+"\n"
+"If you approve, the site represented by the trust root below will be\n"
+"told that you control the identity URL %s. (If you are using a delegated\n"
+"identity, the site will take care of reversing the\n"
+"delegation on its own.)"
+msgstr ""
+
+msgid "Trust root"
+msgstr ""
+
+msgid "Identity URL"
+msgstr ""
+
+#, fuzzy
+msgid "Remember decision"
+msgstr "Versiunea Python"
+
+msgid "Remember this trust decision and don't ask again"
+msgstr ""
+
+msgid "Approve"
+msgstr ""
+
+msgid "Don't approve"
+msgstr ""
+
+msgid "OpenID not served"
+msgstr ""
+
+msgid ""
+"\n"
+"Unfortunately you have not created your homepage yet. Therefore,\n"
+"we cannot serve an OpenID for you. Please create your homepage first\n"
+"and then reload this page or click the button below to cancel this\n"
+"verification."
+msgstr ""
+
+#, fuzzy, python-format
+msgid "You must login to use this action: %(action)s."
+msgstr ""
+"Trebuie să fiţi logaţi pentru a putea folosi înregistrările(subscriptions)."
+
+#, fuzzy
+msgid "Your subscription to this page has been removed."
+msgstr "Nu mai sunteţi înscris(ă) pe această pagină."
+
+msgid "Can't remove regular expression subscription!"
+msgstr "Nu se poate şterge înregistrarea cu expresie regulară!"
+
+#, fuzzy
+msgid "Edit the subscription regular expressions in your settings."
+msgstr ""
+"Editaţi expresiile regulare pentru înregistrări(subscriptions) în pagina "
+"PreferinţeUtilizator."
+
+#, fuzzy
+msgid "You need to be subscribed to unsubscribe."
+msgstr "Aţi fost înregistrat(ă) pe această pagină."
+
+#, fuzzy
+msgid "Wiki Backup"
+msgstr "Text Sursă Wiki"
+
+msgid ""
+"= Downloading a backup =\n"
+"\n"
+"Please note:\n"
+" * Store backups in a safe and secure place - they contain sensitive "
+"information.\n"
+" * Make sure your wiki configuration backup_* values are correct and "
+"complete.\n"
+" * Make sure the backup file you get contains everything you need in case of "
+"problems.\n"
+" * Make sure it is downloaded without problems.\n"
+"\n"
+"To get a backup, just click here:"
+msgstr ""
+
+#, fuzzy
+msgid "Backup"
+msgstr "Marcare"
+
+#, fuzzy
+msgid "You are not allowed to do remote backup."
+msgstr "Pe această pagină nu puteţi face %s"
+
+#, fuzzy, python-format
+msgid "Unknown backup subaction: %s."
+msgstr "Acţiune necunoscută %(action_name)s."
+
+#, fuzzy, python-format
+msgid "Subscribe users to the page %s"
+msgstr "Înscriere la modificări minore"
+
+msgid "Enter user names (comma separated):"
+msgstr ""
+
+#, fuzzy, python-format
+msgid "Subscribed for %s:"
+msgstr "Înscriere"
+
+msgid "Not a user:"
+msgstr ""
+
+#, fuzzy
+msgid "You are not allowed to perform this action."
+msgstr "Nu aveţi dreptul să editaţi această pagină."
+
+msgid "Rename Page"
+msgstr "Redenumire Pagină"
+
+msgid "Rename all /subpages too?"
+msgstr ""
+
+msgid "New name"
+msgstr "Nume nou"
+
+msgid "Optional reason for the renaming"
+msgstr "Motiv opţional referitor la redenumire."
+
+#, fuzzy
+msgid "Really rename this page?"
 msgstr "Sigur doriţi ştergerea acestei pagini ?"
+
+msgid "No older revisions available!"
+msgstr "Nici o revizie mai veche nu este disponibilă!"
+
+#, python-format
+msgid "Diff for \"%s\""
+msgstr "Modificările pentru \"%s\""
+
+#, python-format
+msgid "Differences between revisions %d and %d"
+msgstr "Diferenţele dintre reviziile %d şi %d"
+
+#, python-format
+msgid "(spanning %d versions)"
+msgstr "(desfăşurare %d versiuni)"
+
+#, fuzzy
+msgid "Revert to this revision"
+msgstr "Revenire la revizia %(rev)d."
+
+#, fuzzy
+msgid "Previous change"
+msgstr "Previzionare"
+
+#, fuzzy
+msgid "Next change"
+msgstr "Salvare modificări"
+
+msgid "No differences found!"
+msgstr "Nici o diferenţă găsită!"
+
+#, python-format
+msgid "The page was saved %(count)d times, though!"
+msgstr "Pagina a fost salvată de %(count)d ori totuşi!"
+
+msgid "(ignoring whitespace)"
+msgstr "(ignorare caractere spaţiu)"
+
+msgid "Ignore changes in the amount of whitespace"
+msgstr "Ignorare modificări în cantitatea de caractere spaţiu"
 
 #, python-format
 msgid "(!) Only pages changed since '''%s''' are being displayed!"
@@ -2241,6 +1592,263 @@ msgstr ""
 msgid "Click here to perform a full-text search with your search terms!"
 msgstr "Clic aici pentru a face o căutare full-text pentru acest titlu"
 
+#, python-format
+msgid "(including %(localwords)d %(pagelink)s)"
+msgstr "(inclusiv %(localwords)d %(pagelink)s)"
+
+#, python-format
+msgid ""
+"The following %(badwords)d words could not be found in the dictionary of %"
+"(totalwords)d words%(localwords)s and are highlighted below:"
+msgstr ""
+"Următoarele %(badwords)d cuvinte nu au putut fi găsite în dicţionarul de %"
+"(totalwords)d cuvinte%(localwords)s şi sunt scoase în evidenţă mai jos:"
+
+msgid "Add checked words to dictionary"
+msgstr "Adăugare cuvinte verificate în dicţionar"
+
+msgid "No spelling errors found!"
+msgstr "Nu a fost găsită nici o greşeală de ortografie!"
+
+msgid "You can't save spelling words."
+msgstr ""
+"Nu aveţi permisiunea de a salva cuvinte folosite la verificarea ortografiei."
+
+msgid "You can't check spelling on a page you can't read."
+msgstr ""
+"Nu aveţi permisiunea de a verifica ortografia pe o pagină pe care nu o "
+"puteţi citi."
+
+#, fuzzy
+msgid "You are not allowed to create the supplementation page."
+msgstr ""
+"Nu aveţi permisiunea de a modifica această pagină la o stare anterioară"
+
+msgid "General Information"
+msgstr "Informaţii generale"
+
+#, python-format
+msgid "Page size: %d"
+msgstr "Dimensiunea paginii: %d"
+
+msgid "SHA digest of this page's content is:"
+msgstr "Rezumatul SHA al conţinutului acestei pagini este:"
+
+msgid "The following users subscribed to this page:"
+msgstr "Următorii utilizatori sunt întregistraţi la această pagină"
+
+msgid "This page links to the following pages:"
+msgstr "Această pagină face legături cu următoarele pagini:"
+
+msgid "Date"
+msgstr "Data"
+
+msgid "Diff"
+msgstr "Modificare"
+
+msgid "Editor"
+msgstr "Editor"
+
+msgid "Comment"
+msgstr "Comentariu"
+
+#, fuzzy
+msgid "to previous"
+msgstr "Previzionare"
+
+msgid "N/A"
+msgstr "Indisponibil"
+
+msgid "Revision History"
+msgstr "Istoria Reviziilor"
+
+msgid "No log entries found."
+msgstr "Nici un jurnal nu a fost găsit"
+
+#, python-format
+msgid "Info for \"%s\""
+msgstr "Informaţii despre \"%s\""
+
+#, python-format
+msgid "Show \"%(title)s\""
+msgstr "Afişare \"%(title)s\""
+
+msgid "General Page Infos"
+msgstr "Informaţii Generale Despre Pagină"
+
+msgid "Page hits and edits"
+msgstr "Accesări şi editări ale paginii"
+
+msgid "User account created! You can use this account to login now..."
+msgstr ""
+"Contul de utilizator a fost creat! Puteţi folosi acest cont pentru login "
+"acum..."
+
+msgid "TextCha (required)"
+msgstr ""
+
+msgid "Create Profile"
+msgstr "Creează profil"
+
+msgid "Create Account"
+msgstr ""
+
+#, fuzzy
+msgid "Copy Page"
+msgstr "Pagină"
+
+msgid "Copy all /subpages too?"
+msgstr ""
+
+#, fuzzy
+msgid "Optional reason for the copying"
+msgstr "Motiv opţional referitor la redenumire."
+
+#, fuzzy
+msgid "Really copy this page?"
+msgstr "Sigur doriţi ştergerea acestei pagini ?"
+
+msgid "Revert"
+msgstr ""
+
+msgid "You are not allowed to revert this page!"
+msgstr ""
+"Nu aveţi permisiunea de a modifica această pagină la o stare anterioară"
+
+msgid ""
+"You were viewing the current revision of this page when you called the "
+"revert action. If you want to revert to an older revision, first view that "
+"older revision and then call revert to this (older) revision again."
+msgstr ""
+
+#, fuzzy
+msgid "Optional reason for reverting this page"
+msgstr "Motiv opţional referitor la redenumire."
+
+#, fuzzy
+msgid "Really revert this page?"
+msgstr "Sigur doriţi ştergerea acestei pagini ?"
+
+msgid "You must login to add a quicklink."
+msgstr "Trebuie să vă logaţi pentru a putea adăuga o legătură rapidă"
+
+msgid "A quicklink to this page has been added for you."
+msgstr ""
+"A fost adăugată o legătură rapidă către această pagină pentru dumnveavoastră."
+
+#, fuzzy
+msgid "A quicklink to this page could not be added for you."
+msgstr ""
+"A fost adăugată o legătură rapidă către această pagină pentru dumnveavoastră."
+
+#, fuzzy
+msgid "You already have a quicklink to this page."
+msgstr "Aţi salvat deja această pagină!"
+
+msgid "Please choose:"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Charts are not available!"
+msgstr "Graficele nu sunt disponibile!"
+
+msgid "You need to provide a chart type!"
+msgstr "Trebuie să specificaţi tipul graficului!"
+
+#, python-format
+msgid "Bad chart type \"%s\"!"
+msgstr "Este invalid tipul de grafic \"%s\"!"
+
+#, python-format
+msgid "Local Site Map for \"%s\""
+msgstr "Harta Locală a Sitului \"%s\""
+
+#, fuzzy
+msgid "You must login to remove a quicklink."
+msgstr "Trebuie să vă logaţi pentru a putea adăuga o legătură rapidă"
+
+msgid "Your quicklink to this page has been removed."
+msgstr "Legătura rapidă către această pagină a fost ştearsă."
+
+#, fuzzy
+msgid "Your quicklink to this page could not be removed."
+msgstr "Legătura rapidă către această pagină a fost ştearsă."
+
+#, fuzzy
+msgid "You need to have a quicklink to this page to remove it."
+msgstr "Legătura rapidă către această pagină a fost ştearsă."
+
+#, fuzzy
+msgid "Load"
+msgstr "Trimitere date"
+
+#, fuzzy
+msgid "Pagename not specified!"
+msgstr "Numele fişierului ataşat nu a fost specificat!"
+
+msgid "Upload page content"
+msgstr ""
+
+msgid ""
+"You can upload content for the page named below. If you change the page "
+"name, you can also upload content for another page. If the page name is "
+"empty, we derive the page name from the file name."
+msgstr ""
+
+msgid "File to load page content from"
+msgstr ""
+
+#, fuzzy
+msgid "Page Name"
+msgstr "Pagini Asemănătoare"
+
+#, fuzzy, python-format
+msgid "Invalid filename \"%s\"!"
+msgstr "Argumente de includere \"%s\" sunt invalide!"
+
+#, python-format
+msgid "Created the package %s containing the pages %s."
+msgstr ""
+
+#, fuzzy
+msgid "Include all attachments?"
+msgstr "[%d ataşamente]"
+
+#, fuzzy
+msgid "Package pages"
+msgstr "Pagini Asemănătoare"
+
+#, fuzzy
+msgid "Package name"
+msgstr "Pagini Asemănătoare"
+
+msgid "List of page names - separated by a comma"
+msgstr ""
+
+msgid "Do it."
+msgstr ""
+
+#, python-format
+msgid "Execute action %(actionname)s?"
+msgstr ""
+
+#, python-format
+msgid "Action %(actionname)s is excluded in this wiki!"
+msgstr ""
+
+#, fuzzy, python-format
+msgid "You are not allowed to use action %(actionname)s on this page!"
+msgstr "Nu aveţi permisiunea de a salva un desen pe această pagină."
+
+#, fuzzy, python-format
+msgid "Please use the interactive user interface to use action %(actionname)s!"
+msgstr "Folosiţi interfaţa interactivă cu utilizatorul pentru a şterge pagini!"
+
+msgid "Please log in first."
+msgstr ""
+
 msgid "Please first create a homepage before creating additional pages."
 msgstr ""
 
@@ -2275,44 +1883,18 @@ msgstr ""
 msgid "MyPages management"
 msgstr ""
 
+msgid "Pages"
+msgstr "Pagini"
+
+msgid "Select Author"
+msgstr "Selectare Autor"
+
+msgid "Revert all!"
+msgstr "Revenire totală!"
+
 #, fuzzy
 msgid "Only superuser is allowed to use this action."
 msgstr "Nu aveţi dreptul să editaţi această pagină."
-
-#, fuzzy, python-format
-msgid "Subscribe users to the page %s"
-msgstr "Înscriere la modificări minore"
-
-msgid "Enter user names (comma separated):"
-msgstr ""
-
-#, fuzzy, python-format
-msgid "Subscribed for %s:"
-msgstr "Înscriere"
-
-msgid "Not a user:"
-msgstr ""
-
-#, fuzzy
-msgid "You are not allowed to perform this action."
-msgstr "Nu aveţi dreptul să editaţi această pagină."
-
-#, python-format
-msgid "Exactly one page like \"%s\" found, redirecting to page."
-msgstr ""
-"A fost găsită exact o pagină de genul \"%s\", urmează redirecţionarea spre "
-"pagină."
-
-#, python-format
-msgid "Pages like \"%s\""
-msgstr "Pagini de genul \"%s\""
-
-#, python-format
-msgid "%(matchcount)d %(matches)s for \"%(title)s\""
-msgstr "%(matchcount)d %(matches)s pentru \"%(title)s\""
-
-msgid "You are now logged out."
-msgstr "Acum sunteţi neînregistrat(ă)."
 
 msgid "You are not allowed to subscribe to a page you can't read."
 msgstr ""
@@ -2345,6 +1927,72 @@ msgstr "Aţi fost înregistrat(ă) pe această pagină."
 #, fuzzy
 msgid "You could not get subscribed to this page."
 msgstr "Aţi fost înregistrat(ă) pe această pagină."
+
+msgid "If this account exists an email was sent."
+msgstr ""
+
+msgid ""
+"This wiki is not enabled for mail processing.\n"
+"Contact the owner of the wiki, who can enable email."
+msgstr ""
+"Acest wiki nu permite procesare poştei electronice.\n"
+"Contactaţi deţinătorul wiki-ului, care poate activa email."
+
+msgid "Please provide a valid email address or a username!"
+msgstr "Introduceţi o adresă validă de email sau un nume de utilizator!"
+
+msgid "Mail me my account data"
+msgstr "Trimitere prin email datele contului"
+
+msgid "Recovery token"
+msgstr ""
+
+msgid "New password"
+msgstr "Parolă nouă"
+
+msgid "New password (repeat)"
+msgstr "Repetare parolă nouă"
+
+msgid "Reset my password"
+msgstr "Resetare parolă"
+
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+msgid "Your token is invalid!"
+msgstr ""
+
+msgid "Password reset"
+msgstr "Resetare parolă"
+
+msgid ""
+"\n"
+"== Password reset ==\n"
+"Enter a new password below."
+msgstr ""
+"\n"
+"== Resetare parolă ==\n"
+"Introduceţi noua parolă mai jos."
+
+msgid "Lost password"
+msgstr "Parolă pierdută"
+
+msgid ""
+"\n"
+"== Recovering a lost password ==\n"
+"If you have forgotten your password, provide your email address or\n"
+"username and click on '''Mail me my account data'''.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+msgid ""
+"\n"
+"=== Password reset ===\n"
+"If you already have received the email with the recovery token, enter your\n"
+"username, the recovery token and a new password (twice) below."
+msgstr ""
 
 #, fuzzy, python-format
 msgid "Rolled back changes to the page %s."
@@ -2475,156 +2123,28 @@ msgstr ""
 msgid "Page %s merged with conflicts."
 msgstr ""
 
-#, fuzzy
-msgid "Load"
-msgstr "Trimitere date"
-
-#, fuzzy
-msgid "Pagename not specified!"
-msgstr "Numele fişierului ataşat nu a fost specificat!"
-
-msgid "Upload page content"
-msgstr ""
-
-msgid ""
-"You can upload content for the page named below. If you change the page "
-"name, you can also upload content for another page. If the page name is "
-"empty, we derive the page name from the file name."
-msgstr ""
-
-msgid "File to load page content from"
-msgstr ""
-
-#, fuzzy
-msgid "Page Name"
-msgstr "Pagini Asemănătoare"
-
-msgid ""
-"Cannot create a new page without a page name.  Please specify a page name."
-msgstr ""
-"Nu se poate crea o pagină nouă fără numele paginii.  Specificaţi numele "
-"paginii."
-
 #, python-format
-msgid "Local Site Map for \"%s\""
-msgstr "Harta Locală a Sitului \"%s\""
+msgid "Connection to mailserver '%(server)s' failed: %(reason)s"
+msgstr "Conexiunea cu serverul de email '%(server)s' a eşuat: %(reason)s"
 
-#, fuzzy
-msgid "You are not allowed to create the supplementation page."
-msgstr ""
-"Nu aveţi permisiunea de a modifica această pagină la o stare anterioară"
+msgid "Mail not sent"
+msgstr "Mailul nu a fost trimis"
 
-msgid ""
-"You need to manually go to your OpenID provider wiki\n"
-"and log in before you can use your OpenID. MoinMoin will\n"
-"never allow you to enter your password here.\n"
-"\n"
-"Once you have logged in, simply reload this page."
+msgid "Mail sent OK"
+msgstr "Mail trimis cu bine"
+
+msgid "From"
 msgstr ""
 
-msgid "OpenID Trust verification"
-msgstr ""
-
-#, python-format
-msgid "The site %s has asked for your identity."
-msgstr ""
-
-#, python-format
-msgid ""
-"\n"
-"If you approve, the site represented by the trust root below will be\n"
-"told that you control the identity URL %s. (If you are using a delegated\n"
-"identity, the site will take care of reversing the\n"
-"delegation on its own.)"
-msgstr ""
-
-msgid "Trust root"
-msgstr ""
-
-msgid "Identity URL"
+msgid "To"
 msgstr ""
 
 #, fuzzy
-msgid "Remember decision"
-msgstr "Versiunea Python"
+msgid "Content"
+msgstr "Ajutor"
 
-msgid "Remember this trust decision and don't ask again"
-msgstr ""
-
-msgid "Approve"
-msgstr ""
-
-msgid "Don't approve"
-msgstr ""
-
-msgid "OpenID not served"
-msgstr ""
-
-msgid ""
-"\n"
-"Unfortunately you have not created your homepage yet. Therefore,\n"
-"we cannot serve an OpenID for you. Please create your homepage first\n"
-"and then reload this page or click the button below to cancel this\n"
-"verification."
-msgstr ""
-
-msgid "User account created! You can use this account to login now..."
-msgstr ""
-"Contul de utilizator a fost creat! Puteţi folosi acest cont pentru login "
-"acum..."
-
-msgid "TextCha (required)"
-msgstr ""
-
-msgid "Create Profile"
-msgstr "Creează profil"
-
-msgid "Create Account"
-msgstr ""
-
-msgid "Views/day"
-msgstr "Vizionări/zi"
-
-msgid "Edits/day"
-msgstr "Editări/zi"
-
-#, python-format
-msgid "%(chart_title)s for %(filterpage)s"
-msgstr "%(chart_title)s pentru %(filterpage)s"
-
-msgid ""
-"green=view\n"
-"red=edit"
-msgstr ""
-"verde=vizionare\n"
-"red=editare"
-
-msgid "date"
-msgstr "data"
-
-msgid "# of hits"
-msgstr "# de accesări"
-
-msgid "Language"
-msgstr ""
-
-msgid "Others"
-msgstr "Altele"
-
-msgid "User agent"
-msgstr "Agent utilizator"
-
-msgid "Distribution of User-Agent Types"
-msgstr "Distribuţia Tipurilor User-Agent"
-
-msgid "Page Size Distribution"
-msgstr "Distribuţia Dimensiunii Paginii"
-
-msgid "page size upper bound [bytes]"
-msgstr "limita superioară a dimensiunii paginii [octeţi]"
-
-msgid "# of pages of this size"
-msgstr "# de pagini de această dimensiune"
+msgid "Attachments"
+msgstr "Ataşamente"
 
 msgid "Line"
 msgstr "Linie"
@@ -2634,12 +2154,6 @@ msgstr "Ştergerile sunt marcate astfel."
 
 msgid "Additions are marked like this."
 msgstr "Adăugările sunt marcate astfel."
-
-#, python-format
-msgid ""
-"Sorry, can not save page because \"%(content)s\" is not allowed in this wiki."
-msgstr ""
-"Nu se poate salva deoarece \"%(content)s\" nu este permis în acest wiki."
 
 #, fuzzy
 msgid "Attachment link"
@@ -2656,20 +2170,6 @@ msgstr "Pagini Asemănătoare"
 #, fuzzy
 msgid "Page changed"
 msgstr "Salvare modificări"
-
-#, python-format
-msgid "[%(sitename)s] %(trivial)sUpdate of \"%(pagename)s\" by %(username)s"
-msgstr ""
-"[%(sitename)s] %(trivial)sActualizarea \"%(pagename)s\" de către %(username)s"
-
-msgid "Trivial "
-msgstr "Minoră"
-
-#, python-format
-msgid ""
-"Attachment link: %(attach)s\n"
-"Page link: %(page)s\n"
-msgstr ""
 
 msgid "Page has been modified"
 msgstr ""
@@ -2794,213 +2294,94 @@ msgid ""
 "Attachment size: %(attach_size)s\n"
 msgstr ""
 
-#, fuzzy
-msgid ""
-" Emphasis:: <<Verbatim(//)>>''italics''<<Verbatim(//)>>; <<Verbatim(**)"
-">>'''bold'''<<Verbatim(**)>>; <<Verbatim(**//)>>'''''bold "
-"italics'''''<<Verbatim(//**)>>; <<Verbatim(//)>>''mixed ''<<Verbatim(**)"
-">>'''''bold'''<<Verbatim(**)>> and italics''<<Verbatim(//)>>;\n"
-" Horizontal Rule:: <<Verbatim(----)>>\n"
-" Force Linebreak:: <<Verbatim(\\\\)>>\n"
-" Headings:: = Title 1 =; == Title 2 ==; === Title 3 ===; ==== Title 4 ====; "
-"===== Title 5 =====.\n"
-" Lists:: * bullets; ** sub-bullets; # numbered items; ## numbered sub "
-"items.\n"
-" Links:: <<Verbatim([[target]])>>; <<Verbatim([[target|linktext]])>>.\n"
-" Tables:: |= header text | cell text | more cell text |;\n"
-"\n"
-"(!) For more help, see HelpOnEditing or HelpOnCreoleSyntax.\n"
-msgstr ""
-" Accentuare:: <<Verbatim('')>>''înclinare''<<Verbatim('')>>; <<Verbatim(''')"
-">>'''îngroşare'''<<Verbatim(''')>>; <<Verbatim(''''')>>'''''îngroşare şi "
-"înclinare'''''<<Verbatim(''''')>>; <<Verbatim('')>>''înclinare şi''<<Verbatim"
-"(''')>>'''''îngroşare'''<<Verbatim(''')>> combinate''<<Verbatim('')>>; "
-"<<Verbatim(----)>> linie orizontală.\n"
-" Antete:: <<Verbatim(=)>> Titlu 1 <<Verbatim(=)>>; <<Verbatim(==)>> Titlu 2 "
-"<<Verbatim(==)>>; <<Verbatim(===)>> Titlu 3 <<Verbatim(===)>>;   <<Verbatim"
-"(====)>> Titlu 4 <<Verbatim(====)>>; <<Verbatim(=====)>> Titlu 5 <<Verbatim"
-"(=====)>>.\n"
-" Liste:: spaţiu şi unul dintre: * buline; 1., a., A., i., I. elemente "
-"numerotate; 1.#n începere numărare de la n; spaţiul singur indentează.\n"
-" Legături:: <<Verbatim(UnireCuvintecuIniţialăMare)>>; <<Verbatim"
-"([\"paranteze drepte şi ghilimele\"])>>; url; [url]; [url etichetă].\n"
-" Tabele:: || text în celulă |||| text în celulă pe 2 coloane ||;    nu se "
-"permit caractere spaţiu după tabele sau titluri.\n"
-"\n"
-"(!) Pentru mai multe informaţii vizitaţi HelpOnEditing sau SyntaxReference.\n"
-
-msgid "XSLT option disabled, please look at HelpOnConfiguration."
-msgstr "Opţiunea XSLT este dezactivată, accesaţi HelpOnConfiguration."
-
-msgid "XSLT processing is not available, please install 4suite 1.x."
-msgstr "Procesarea XSLT nu este disponibilă, instalaţi 4suite 1.x."
-
 #, python-format
-msgid "%(errortype)s processing error"
-msgstr "Eroarea de procesare %(errortype)s"
-
-#, fuzzy
-msgid ""
-" Emphasis:: <<Verbatim('')>>''italics''<<Verbatim('')>>; <<Verbatim(''')"
-">>'''bold'''<<Verbatim(''')>>; <<Verbatim(''''')>>'''''bold "
-"italics'''''<<Verbatim(''''')>>; <<Verbatim('')>>''mixed ''<<Verbatim(''')"
-">>'''''bold'''<<Verbatim(''')>> and italics''<<Verbatim('')>>; <<Verbatim"
-"(----)>> horizontal rule.\n"
-" Headings:: = Title 1 =; == Title 2 ==; === Title 3 ===; ==== Title 4 ====; "
-"===== Title 5 =====.\n"
-" Lists:: space and one of: * bullets; 1., a., A., i., I. numbered items; 1."
-"#n start numbering at n; space alone indents.\n"
-" Links:: <<Verbatim(JoinCapitalizedWords)>>; <<Verbatim([[target|linktext]])"
-">>.\n"
-" Tables:: || cell text |||| cell text spanning 2 columns ||;    no trailing "
-"white space allowed after tables or titles.\n"
-"\n"
-"(!) For more help, see HelpOnEditing or HelpOnMoinWikiSyntax.\n"
+msgid "[%(sitename)s] %(trivial)sUpdate of \"%(pagename)s\" by %(username)s"
 msgstr ""
-" Accentuare:: <<Verbatim('')>>''înclinare''<<Verbatim('')>>; <<Verbatim(''')"
-">>'''îngroşare'''<<Verbatim(''')>>; <<Verbatim(''''')>>'''''îngroşare şi "
-"înclinare'''''<<Verbatim(''''')>>; <<Verbatim('')>>''înclinare şi''<<Verbatim"
-"(''')>>'''''îngroşare'''<<Verbatim(''')>> combinate''<<Verbatim('')>>; "
-"<<Verbatim(----)>> linie orizontală.\n"
-" Antete:: <<Verbatim(=)>> Titlu 1 <<Verbatim(=)>>; <<Verbatim(==)>> Titlu 2 "
-"<<Verbatim(==)>>; <<Verbatim(===)>> Titlu 3 <<Verbatim(===)>>;   <<Verbatim"
-"(====)>> Titlu 4 <<Verbatim(====)>>; <<Verbatim(=====)>> Titlu 5 <<Verbatim"
-"(=====)>>.\n"
-" Liste:: spaţiu şi unul dintre: * buline; 1., a., A., i., I. elemente "
-"numerotate; 1.#n începere numărare de la n; spaţiul singur indentează.\n"
-" Legături:: <<Verbatim(UnireCuvintecuIniţialăMare)>>; <<Verbatim"
-"([\"paranteze drepte şi ghilimele\"])>>; url; [url]; [url etichetă].\n"
-" Tabele:: || text în celulă |||| text în celulă pe 2 coloane ||;    nu se "
-"permit caractere spaţiu după tabele sau titluri.\n"
-"\n"
-"(!) Pentru mai multe informaţii vizitaţi HelpOnEditing sau SyntaxReference.\n"
+"[%(sitename)s] %(trivial)sActualizarea \"%(pagename)s\" de către %(username)s"
 
-#, fuzzy
-msgid ""
-"Rendering of reStructured text is not possible, please install Docutils."
-msgstr ""
-"Randarea textului de tip reStructured nu este posibilă, instalaţi docutils."
-
-msgid ""
-"{{{\n"
-"Emphasis: *italic* **bold** ``monospace``\n"
-"\n"
-"Headings: Heading 1  Heading 2  Heading 3\n"
-"          =========  ---------  ~~~~~~~~~\n"
-"\n"
-"Horizontal rule: ----\n"
-"\n"
-"Links: TrailingUnderscore_ `multi word with backticks`_ external_\n"
-"\n"
-".. _external: http://external-site.example.org/foo/\n"
-"\n"
-"Lists: * bullets; 1., a. numbered items.\n"
-"}}}\n"
-"(!) For more help, see the\n"
-"[[http://docutils.sourceforge.net/docs/user/rst/quickref.html|"
-"reStructuredText Quick Reference]].\n"
-msgstr ""
-
-msgid "**Maximum number of allowed includes exceeded**"
-msgstr "**Numărul maxim de incluziuni acceptate a fost depăşit**"
-
-#, fuzzy, python-format
-msgid "**You are not allowed to read the page: %s**"
-msgstr ""
-"Nu aveţi permisiunea de a modifica această pagină la o stare anterioară"
-
-#, python-format
-msgid "**Could not find the referenced page: %s**"
-msgstr "**Pagina de referinţă %s nu a putut fi găsită**"
-
-#, python-format
-msgid "Upload new attachment \"%(filename)s\""
-msgstr "Trimitere ataşament nou \"%(filename)s\""
+msgid "Trivial "
+msgstr "Minoră"
 
 #, python-format
 msgid ""
-"%(extension_name)s %(extension_type)s: Required argument %(argument_name)s "
-"missing."
+"Attachment link: %(attach)s\n"
+"Page link: %(page)s\n"
 msgstr ""
 
-#, python-format
-msgid ""
-"%(extension_name)s %(extension_type)s: Invalid %(argument_name)s=%"
-"(argument_value)s!"
+msgid "FrontPage"
+msgstr "PaginaPrincipală"
+
+msgid "RecentChanges"
+msgstr "ModificăriRecente"
+
+msgid "TitleIndex"
+msgstr "IndexTitluri"
+
+msgid "WordIndex"
+msgstr "IndexCuvinte"
+
+msgid "FindPage"
+msgstr "CăutarePagină"
+
+msgid "SiteNavigation"
+msgstr "NavigareSit"
+
+msgid "HelpContents"
+msgstr "Ajutor"
+
+msgid "HelpOnFormatting"
+msgstr "AjutorLaFormatare"
+
+msgid "WikiLicense"
+msgstr "LicenţăWiki"
+
+msgid "MissingPage"
+msgstr "PaginăLipsă"
+
+msgid "MissingHomePage"
+msgstr "PaginaPrincipalăLipsă"
+
+msgid "Mon"
+msgstr "Lun"
+
+msgid "Tue"
+msgstr "Mar"
+
+msgid "Wed"
+msgstr "Mie"
+
+msgid "Thu"
+msgstr "Joi"
+
+msgid "Fri"
+msgstr "Vin"
+
+msgid "Sat"
+msgstr "Sâm"
+
+msgid "Sun"
+msgstr "Dum"
+
+msgid "AttachFile"
+msgstr "AtaşareFişier"
+
+msgid "DeletePage"
+msgstr "ŞtergerePagină"
+
+msgid "LikePages"
+msgstr "PaginiAsemănătoare"
+
+msgid "LocalSiteMap"
+msgstr "HartaLocalăSit"
+
+msgid "RenamePage"
+msgstr "RedenumirePagină"
+
+msgid "SpellCheck"
+msgstr "VerificareOrtografie"
+
+msgid "Discussion"
 msgstr ""
-
-#, python-format
-msgid ""
-"Current configuration does not allow embedding of the file %(file)s because "
-"of its mimetype %(mimetype)s."
-msgstr ""
-
-msgid "Embedded"
-msgstr ""
-
-#, fuzzy
-msgid "Search for items"
-msgstr "Căutare Titluri"
-
-msgid "containing all the following terms"
-msgstr ""
-
-msgid "containing one or more of the following terms"
-msgstr ""
-
-msgid "not containing the following terms"
-msgstr ""
-
-msgid "last modified since (e.g. last 2 weeks)"
-msgstr ""
-
-msgid "any category"
-msgstr ""
-
-#, fuzzy
-msgid "any language"
-msgstr "Limba dorită"
-
-msgid "any mimetype"
-msgstr ""
-
-msgid "Categories"
-msgstr ""
-
-#, fuzzy
-msgid "File Type"
-msgstr "Nume Fişier"
-
-#, fuzzy
-msgid "Search only in titles"
-msgstr "Căutare Titluri"
-
-#, fuzzy
-msgid "Case-sensitive search"
-msgstr "Căutare case-sensitive"
-
-msgid "Exclude underlay"
-msgstr ""
-
-#, fuzzy
-msgid "No system items"
-msgstr "Număr de pagini sistem"
-
-msgid "Search in all page revisions"
-msgstr ""
-
-msgid "Go get it!"
-msgstr ""
-
-#, fuzzy
-msgid "File attachment browser"
-msgstr "Ataşament Nou"
-
-msgid "User account browser"
-msgstr ""
-
-msgid "No orphaned pages in this wiki."
-msgstr "Nu există nici o pagină fără legături către ea în acest wiki."
 
 #, python-format
 msgid "Invalid include arguments \"%s\"!"
@@ -3010,14 +2391,34 @@ msgstr "Argumente de includere \"%s\" sunt invalide!"
 msgid "Nothing found for \"%s\"!"
 msgstr "Nimic nu a fost găsit pentru \"%s\"!"
 
-msgid "Include system pages"
-msgstr "Includere pagini sistem"
+#, python-format
+msgid "Upload of attachment '%(filename)s'."
+msgstr "Trimiterea ataşamentului '%(filename)s'."
 
-msgid "Exclude system pages"
-msgstr "Excludere pagini sistem"
+#, python-format
+msgid "Drawing '%(filename)s' saved."
+msgstr "Desenul '%(filename)s' a fost salvat."
 
-msgid "No wanted pages in this wiki."
-msgstr "Nici o pagină dorită în acest wiki."
+#, python-format
+msgid "%(mins)dm ago"
+msgstr "%(mins)dm mai devreme"
+
+msgid "(no bookmark set)"
+msgstr "(nici un semn de carte setat)"
+
+#, python-format
+msgid "(currently set to %s)"
+msgstr "(momentan setat la %s)"
+
+#, fuzzy
+msgid "Delete bookmark"
+msgstr "Ştergere Semn De Carte"
+
+msgid "Set bookmark"
+msgstr "Setare Semn De Carte"
+
+msgid "[Bookmark reached]"
+msgstr "[Semn de carte accesat]"
 
 msgid "Python Version"
 msgstr "Versiunea Python"
@@ -3098,6 +2499,25 @@ msgstr ""
 msgid "Active threads"
 msgstr "Fire(threads) active"
 
+msgid "Include system pages"
+msgstr "Includere pagini sistem"
+
+msgid "Exclude system pages"
+msgstr "Excludere pagini sistem"
+
+msgid "No wanted pages in this wiki."
+msgstr "Nici o pagină dorită în acest wiki."
+
+#, python-format
+msgid "No quotes on %(pagename)s."
+msgstr "Nu există citate la %(pagename)s."
+
+msgid "Markup"
+msgstr "Marcare"
+
+msgid "Display"
+msgstr "Afişare"
+
 msgid "Wiki configuration"
 msgstr ""
 
@@ -3115,15 +2535,84 @@ msgstr "Nume fişier"
 msgid "Setting"
 msgstr ""
 
-#, python-format
-msgid "No quotes on %(pagename)s."
-msgstr "Nu există citate la %(pagename)s."
+msgid "Search Titles"
+msgstr "Căutare Titluri"
 
-msgid "Markup"
-msgstr "Marcare"
+msgid "Display context of search results"
+msgstr "Afişează contextul rezultatelor căutării"
 
-msgid "Display"
-msgstr "Afişare"
+msgid "Case-sensitive searching"
+msgstr "Căutare case-sensitive"
+
+msgid "Search Text"
+msgstr "Căutare Text"
+
+msgid "Description"
+msgstr ""
+
+msgid "No orphaned pages in this wiki."
+msgstr "Nu există nici o pagină fără legături către ea în acest wiki."
+
+#, fuzzy
+msgid "Search for items"
+msgstr "Căutare Titluri"
+
+msgid "containing all the following terms"
+msgstr ""
+
+msgid "containing one or more of the following terms"
+msgstr ""
+
+msgid "not containing the following terms"
+msgstr ""
+
+msgid "last modified since (e.g. last 2 weeks)"
+msgstr ""
+
+msgid "any category"
+msgstr ""
+
+#, fuzzy
+msgid "any language"
+msgstr "Limba dorită"
+
+msgid "any mimetype"
+msgstr ""
+
+msgid "Categories"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+#, fuzzy
+msgid "File Type"
+msgstr "Nume Fişier"
+
+#, fuzzy
+msgid "Search only in titles"
+msgstr "Căutare Titluri"
+
+#, fuzzy
+msgid "Case-sensitive search"
+msgstr "Căutare case-sensitive"
+
+msgid "Exclude underlay"
+msgstr ""
+
+#, fuzzy
+msgid "No system items"
+msgstr "Număr de pagini sistem"
+
+msgid "Search in all page revisions"
+msgstr ""
+
+msgid "Go get it!"
+msgstr ""
+
+#, fuzzy
+msgid "Contents"
+msgstr "Ajutor"
 
 #, python-format
 msgid "Unsupported navigation scheme '%(scheme)s'!"
@@ -3145,79 +2634,170 @@ msgstr "Start"
 msgid "Slide %(pos)d of %(size)d"
 msgstr "Imaginea %(pos)d din %(size)d"
 
-#, python-format
-msgid "<<%(macro_name)s: execution failed [%(error_msg)s] (see also the log)>>"
-msgstr ""
-
 msgid "Go To Page"
 msgstr "Mergi La Pagina"
 
-msgid "Description"
-msgstr ""
-
 #, fuzzy
-msgid "Contents"
-msgstr "Ajutor"
+msgid "File attachment browser"
+msgstr "Ataşament Nou"
 
-msgid "Search Titles"
-msgstr "Căutare Titluri"
-
-msgid "Display context of search results"
-msgstr "Afişează contextul rezultatelor căutării"
-
-msgid "Case-sensitive searching"
-msgstr "Căutare case-sensitive"
-
-msgid "Search Text"
-msgstr "Căutare Text"
-
-#, python-format
-msgid "Upload of attachment '%(filename)s'."
-msgstr "Trimiterea ataşamentului '%(filename)s'."
-
-#, python-format
-msgid "Drawing '%(filename)s' saved."
-msgstr "Desenul '%(filename)s' a fost salvat."
-
-#, python-format
-msgid "%(mins)dm ago"
-msgstr "%(mins)dm mai devreme"
-
-msgid "(no bookmark set)"
-msgstr "(nici un semn de carte setat)"
-
-#, python-format
-msgid "(currently set to %s)"
-msgstr "(momentan setat la %s)"
-
-#, fuzzy
-msgid "Delete bookmark"
-msgstr "Ştergere Semn De Carte"
-
-msgid "Set bookmark"
-msgstr "Setare Semn De Carte"
-
-msgid "[Bookmark reached]"
-msgstr "[Semn de carte accesat]"
-
-#, python-format
-msgid "Inlined image: %(url)s"
+msgid "User account browser"
 msgstr ""
 
 #, python-format
-msgid "Create new drawing \"%(filename)s (opens in new window)\""
-msgstr "Creare desen nou \"%(filename)s (se deschide în fereastră nouă)\""
+msgid ""
+"%(extension_name)s %(extension_type)s: Required argument %(argument_name)s "
+"missing."
+msgstr ""
 
 #, python-format
-msgid "Edit drawing %(filename)s (opens in new window)"
-msgstr "Editare desen %(filename)s (se deschide în fereastră nouă)"
+msgid ""
+"%(extension_name)s %(extension_type)s: Invalid %(argument_name)s=%"
+"(argument_value)s!"
+msgstr ""
 
 #, python-format
-msgid "Clickable drawing: %(filename)s"
-msgstr "Desen clicabil: %(filename)s"
+msgid ""
+"Current configuration does not allow embedding of the file %(file)s because "
+"of its mimetype %(mimetype)s."
+msgstr ""
 
-msgid "Toggle line numbers"
-msgstr "Comutare numerotare linii"
+msgid "Embedded"
+msgstr ""
+
+msgid "Missing password. Please enter user name and password."
+msgstr "Parola lipseşte. Introduceti nume şi parolă"
+
+#, python-format
+msgid "LDAP server %(server)s failed."
+msgstr ""
+
+msgid "Failed to connect to database."
+msgstr ""
+
+msgid "You need to log in."
+msgstr "Trebuie să vă înregistraţi."
+
+msgid ""
+"Please choose an account name now.\n"
+"If you choose an existing account name you will be asked for the\n"
+"password and be able to associate the account with your OpenID."
+msgstr ""
+
+msgid "Choose this name"
+msgstr ""
+
+msgid "This is not a valid username, choose a different one."
+msgstr ""
+
+msgid ""
+"The username you have chosen is already\n"
+"taken. If it is your username, enter your password below to associate\n"
+"the username with your OpenID. Otherwise, please choose a different\n"
+"username and leave the password field blank."
+msgstr ""
+
+msgid "Associate this name"
+msgstr ""
+
+msgid "Your account is now associated to your OpenID."
+msgstr ""
+
+msgid "The password you entered is not valid."
+msgstr ""
+
+msgid "Anonymous sessions need to be enabled for OpenID login."
+msgstr ""
+
+msgid "No OpenID."
+msgstr ""
+
+msgid ""
+"If you do not have an account yet, you can still log in with your OpenID and "
+"create one during login."
+msgstr ""
+
+#, python-format
+msgid ""
+"If you do not have an account, <a href=\"%(userprefslink)s\">you can create "
+"one now</a>. <a href=\"%(sendmypasswordlink)s\">Forgot your password?</a>"
+msgstr ""
+
+msgid "Could not contact botbouncer.com."
+msgstr ""
+
+msgid "User agent"
+msgstr "Agent utilizator"
+
+msgid "Others"
+msgstr "Altele"
+
+msgid "Distribution of User-Agent Types"
+msgstr "Distribuţia Tipurilor User-Agent"
+
+msgid "Views/day"
+msgstr "Vizionări/zi"
+
+msgid "Edits/day"
+msgstr "Editări/zi"
+
+#, python-format
+msgid "%(chart_title)s for %(filterpage)s"
+msgstr "%(chart_title)s pentru %(filterpage)s"
+
+msgid ""
+"green=view\n"
+"red=edit"
+msgstr ""
+"verde=vizionare\n"
+"red=editare"
+
+msgid "date"
+msgstr "data"
+
+msgid "# of hits"
+msgstr "# de accesări"
+
+msgid "Page Size Distribution"
+msgstr "Distribuţia Dimensiunii Paginii"
+
+msgid "page size upper bound [bytes]"
+msgstr "limita superioară a dimensiunii paginii [octeţi]"
+
+msgid "# of pages of this size"
+msgstr "# de pagini de această dimensiune"
+
+msgid "Options --pages and --search are mutually exclusive!"
+msgstr ""
+
+msgid "You must specify an output file!"
+msgstr ""
+
+msgid "No pages specified using --pages or --search, assuming full package."
+msgstr ""
+
+msgid "All attachments included into the package."
+msgstr ""
+
+msgid "Output file already exists! Cowardly refusing to continue!"
+msgstr ""
+
+#, python-format
+msgid "Unknown action %(action_name)s."
+msgstr "Acţiune necunoscută %(action_name)s."
+
+#, python-format
+msgid "You are not allowed to do %(action_name)s on this page."
+msgstr "Nu aveţi permisiunea de %(action_name)s pe această pagină."
+
+msgid "Login and try again."
+msgstr "Înregistraţi-vă şi încercaţi din nou."
+
+#, python-format
+msgid ""
+"Sorry, can not save page because \"%(content)s\" is not allowed in this wiki."
+msgstr ""
+"Nu se poate salva deoarece \"%(content)s\" nu este permis în acest wiki."
 
 msgid "[ATTACH]"
 msgstr ""
@@ -3254,6 +2834,16 @@ msgstr "Clic aici pentru a face o căutare full-text pentru acest titlu"
 
 msgid "Logout"
 msgstr "Logout"
+
+msgid "DeleteCache"
+msgstr "ŞtergeCache"
+
+#, python-format
+msgid "(cached %s)"
+msgstr "(cached %s)"
+
+msgid "Or try one of these actions:"
+msgstr "Sau încercaţi una dintre aceste acţiuni:"
 
 msgid "Unsubscribe"
 msgstr "Părăsire"
@@ -3354,9 +2944,6 @@ msgstr "Ştergere Legătură"
 msgid "Add Link"
 msgstr "Adăugare Legătură"
 
-msgid "Attachments"
-msgstr "Ataşamente"
-
 #, python-format
 msgid "Show %s days."
 msgstr "Afişare %s zile."
@@ -3369,55 +2956,6 @@ msgstr "Pagină"
 
 msgid "User"
 msgstr "Utilizator"
-
-msgid "DeleteCache"
-msgstr "ŞtergeCache"
-
-#, python-format
-msgid "(cached %s)"
-msgstr "(cached %s)"
-
-msgid "Or try one of these actions:"
-msgstr "Sau încercaţi una dintre aceste acţiuni:"
-
-#, python-format
-msgid "Connection to mailserver '%(server)s' failed: %(reason)s"
-msgstr "Conexiunea cu serverul de email '%(server)s' a eşuat: %(reason)s"
-
-msgid "Mail not sent"
-msgstr "Mailul nu a fost trimis"
-
-msgid "Mail sent OK"
-msgstr "Mail trimis cu bine"
-
-msgid "From"
-msgstr ""
-
-msgid "To"
-msgstr ""
-
-#, fuzzy
-msgid "Content"
-msgstr "Ajutor"
-
-#, fuzzy
-#~ msgid "InterWikiMap"
-#~ msgstr "Text Sursă Wiki"
-
-#, fuzzy
-#~ msgid "BadContent"
-#~ msgstr "Ajutor"
-
-#, fuzzy
-#~ msgid "LocalBadContent"
-#~ msgstr "Ajutor"
-
-#, fuzzy
-#~ msgid "EditedSystemPages"
-#~ msgstr "Excludere pagini sistem"
-
-#~ msgid "You need to log in."
-#~ msgstr "Trebuie să vă înregistraţi."
 
 #, fuzzy
 #~ msgid "Xapian Version"
@@ -3533,6 +3071,9 @@ msgstr "Ajutor"
 
 #~ msgid "[%(lang)s] %(recipients)s: %(status)s"
 #~ msgstr "[%(lang)s] %(recipients)s: %(status)s"
+
+#~ msgid "UserPreferences"
+#~ msgstr "PreferinţeUtilizator"
 
 #~ msgid "Subscribe to trivial changes"
 #~ msgstr "Înscriere la modificări minore"

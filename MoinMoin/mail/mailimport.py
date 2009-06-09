@@ -269,7 +269,7 @@ def import_mail_from_message(request, message):
     new_content += "\n" + u"\n * ".join(attachment_links)
 
     try:
-        page.saveText(new_content, 0, comment=comment)
+        page.saveText(new_content, None, comment=comment)
     except page.AccessDenied:
         raise ProcessingError("Access denied for page %r" % pagename)
 
@@ -308,7 +308,7 @@ def import_mail_from_message(request, message):
             content = "\n".join(old_content) + table_header + new_line
 
         page = PageEditor(request, parent_page, do_editor_backup=0)
-        page.saveText(content, 0, comment=comment)
+        page.saveText(content, None, comment=comment)
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

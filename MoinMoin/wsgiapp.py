@@ -7,10 +7,11 @@
     @license: GNU GPL, see COPYING for details.
 """
 from MoinMoin.web.contexts import AllContext, Context, XMLRPCContext
-from MoinMoin.web.exceptions import HTTPException
+from MoinMoin.web.exceptions import HTTPException, Forbidden
 from MoinMoin.web.request import Request, MoinMoinFinish, HeaderSet
 from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_response, \
     redirect_last_visited
+from MoinMoin.storage.backends.acl import AccessDeniedError
 from MoinMoin.Page import Page
 from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
 from MoinMoin.action import get_names, get_available_actions
@@ -35,6 +36,10 @@ def init(request):
     context.session = context.cfg.session_service.get_session(context)
 
     context.user = setup_user(context, context.session)
+
+    # XXX Is it acceptable to patch the AMW onto the context here? Think so...
+    from MoinMoin.storage.backends.acl import AclWrapperBackend
+    context.data_backend = AclWrapperBackend(context)
 
     context.lang = setup_i18n_postauth(context)
 
@@ -67,6 +72,8 @@ def run(context):
             return response
         except MoinMoinFinish:
             return request
+        except AccessDeniedError:
+            return Forbidden()
     finally:
         context.clock.stop('run')
 
