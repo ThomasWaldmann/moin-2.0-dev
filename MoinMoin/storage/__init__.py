@@ -501,7 +501,7 @@ class Item(object, DictMixin):
 
     def publish_metadata(self):
         """
-        @see: Backend._publis_item_metadata.__doc__
+        @see: Backend._publish_item_metadata.__doc__
         """
         if not self._locked:
             raise AccessError("cannot publish without change_metadata")

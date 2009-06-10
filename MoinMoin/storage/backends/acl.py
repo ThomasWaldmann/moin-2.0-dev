@@ -79,6 +79,9 @@ class AclWrapperBackend(object):
         return getattr(self.backend, attr)
 
     def search_item(self, searchterm):
+        """
+        @see: Backend.search_item.__doc__
+        """
         for item in self.backend.search_item(searchterm):
             if self._may(item.name, READ):
                 # The item returned needs to be wrapped because otherwise the
@@ -87,6 +90,9 @@ class AclWrapperBackend(object):
                 yield wrapped_item
 
     def get_item(self, itemname):
+        """
+        @see: Backend.get_item.__doc__
+        """
         if not self._may(itemname, READ):
             raise AccessDeniedError()
         # Wrap the item here as well.
@@ -95,11 +101,17 @@ class AclWrapperBackend(object):
         return wrapped_item
 
     def has_item(self, itemname):
+        """
+        @see: Backend.has_item.__doc__
+        """
         # We do not hide the sheer existance of items. When trying
         # to create an item with the same name, the user would notice anyway.
         return self.backend.has_item(itemname)
 
     def create_item(self, itemname):
+        """
+        @see: Backend.create_item.__doc__
+        """
         if not self._may(itemname, WRITE):
             raise AccessDeniedError()
         # Wrap item.
@@ -108,12 +120,18 @@ class AclWrapperBackend(object):
         return wrapped_item
 
     def iteritems(self):
+        """
+        @see: Backend.iteritems.__doc__
+        """
         for item in self.backend.iteritems():
             if self._may(item.name, READ):
                 # TODO Wrap item!!
                 yield item
 
     def history(self, reverse=True):
+        """
+        @see: Backend.history.__doc__
+        """
         revisions = []
         for revision in self.backend.history(reverse):
             if self._may(revision.item.name, READ):
@@ -222,6 +240,9 @@ class AclWrapperItem(Item):
 
     @property
     def name(self):
+        """
+        @see: Item.name.__doc__
+        """
         return self._item.name
 
     def require_privilege(*privileges):
@@ -243,39 +264,66 @@ class AclWrapperItem(Item):
 
     @require_privilege(WRITE)
     def __setitem__(self, key, value):
+        """
+        @see: Item.__setitem__.__doc__
+        """
         return self._item.__setitem__(key, value)
 
     @require_privilege(WRITE)
     def __delitem__(self, key):
+        """
+        @see: Item.__delitem__.__doc__
+        """
         return self._item.__delitem__(key)
 
     @require_privilege(READ)
     def __getitem__(self, key):
+        """
+        @see: Item.__getitem__.__doc__
+        """
         return self._item.__getitem__(key)
 
     @require_privilege(READ)
     def keys(self):
+        """
+        @see: Item.keys.__doc__
+        """
         return self._item.keys()
 
     @require_privilege(WRITE)
     def change_metadata(self):
+        """
+        @see: Item.change_metadata.__doc__
+        """
         return self._item.change_metadata()
 
     @require_privilege(WRITE)
     def publish_metadata(self):
+        """
+        @see: Item.publish_metadata.__doc__
+        """
         return self._item.publish_metadata()
 
     @require_privilege(READ)
     def get_revision(self, revno):
+        """
+        @see: Item.get_revision.__doc__
+        """
         # The revision returned here is immutable already.
         return self._item.get_revision(revno)
 
     @require_privilege(READ)
     def list_revisions(self):
+        """
+        @see: Item.list_revisions.__doc__
+        """
         return self._item.list_revisions()
 
     @require_privilege(WRITE)
     def rename(self, newname):
+        """
+        @see: Item.rename.__doc__
+        """
         # XXX Special case since we need to check newname as well.
         #     Maybe find a proper solution.
         if not self._may(newname, WRITE):
@@ -284,14 +332,23 @@ class AclWrapperItem(Item):
 
     @require_privilege(WRITE)
     def commit(self):
+        """
+        @see: Item.commit.__doc__
+        """
         return self._item.commit()
 
     # XXX Does this even require a privilege?
     def rollback(self):
+        """
+        @see: Item.rollback.__doc__
+        """
         return self._item.rollback()
 
     @require_privilege(WRITE)
     def create_revision(self, revno):
+        """
+        @see: Item.create_revision.__doc__
+        """
         wrapped_revision = AclWrappedNewRevision(self._item.create_revision(revno), self)
         return wrapped_revision
 
@@ -308,10 +365,16 @@ class AclWrappedNewRevision(NewRevision):
 
     @property
     def timestamp(self):
+        """
+        @see: NewRevision.timestamp.__doc__
+        """
         return self._revision.timestamp
 
     @property
     def size(self):
+        """
+        @see: NewRevision.size.__doc__
+        """
         return self._revision.size
 
     def __setitem__(self, key, value):
@@ -319,6 +382,8 @@ class AclWrappedNewRevision(NewRevision):
         In order to store an ACL on a page you must have the ADMIN privilege.
         We must allow storing the preceeding revision's ACL in the new revision
         (i.e., keeping it), though.
+
+        @see: NewRevision.__setitem__.__doc__
         """
         if key == ACL:
             try:
@@ -341,4 +406,7 @@ class AclWrappedNewRevision(NewRevision):
         del self._revision[key]
 
     def write(self, data):
+        """
+        @see: Backend._write_revision_data.__doc__
+        """
         return self._revision.write(data)
