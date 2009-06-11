@@ -635,8 +635,10 @@ There is no help, you're doomed!
     def _send(self, content_type, content_length, hash, file_to_send,
               filename=None, content_disposition=None):
         request = self.request
-        request.headers.add('Cache-Control', 'public')
-        request.headers.add('Etag', quote_etag(hash))
+        if hash:
+            # if item has no hash metadata, hash is None
+            request.headers.add('Cache-Control', 'public')
+            request.headers.add('Etag', quote_etag(hash))
         if content_disposition is not None:
             request.headers.add('Content-Disposition', content_disposition)
 
