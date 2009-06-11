@@ -177,7 +177,7 @@ class DirRevision(FileDirRevision):
     def __init__(self, item, revno):
         FileDirRevision.__init__(self, item, revno)
         self._fs_meta.update({
-            MIMETYPE: 'text/x-unidentified-wiki-format',  # XXX crap
+            MIMETYPE: 'text/moin-wiki',
             'format': 'wiki',
         })
         # create a directory "page" in wiki markup:
@@ -193,12 +193,8 @@ class FileRevision(FileDirRevision):
     """ A filesystem file """
     def __init__(self, item, revno):
         FileDirRevision.__init__(self, item, revno)
-
-        # XXX some other code crashes currently, if a toplevel
-        # XXX item has a different mimetype than hardcoded below:
-        #mimetype = wikiutil.MimeType(filename=filepath).mime_type()
+        mimetype = wikiutil.MimeType(filename=self._fs_data_fname).mime_type()
         self._fs_meta.update({
-            MIMETYPE: 'text/x-unidentified-wiki-format', # XXX crap
-            'format': 'plain',
+            MIMETYPE: mimetype,
         })
 
