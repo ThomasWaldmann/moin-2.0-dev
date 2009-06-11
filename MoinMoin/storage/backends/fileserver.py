@@ -155,6 +155,8 @@ class FileDirRevision(StoredRevision):
         if revno > 0:
             raise NoSuchRevisionError('Item %r has no revision %d (filesystem items just have revno 0)!' %
                     (item.name, revno))
+        if revno == -1:
+            revno = 0
         StoredRevision.__init__(self, item, revno)
         filepath = item._fs_filepath
         st = item._fs_stat
@@ -182,9 +184,22 @@ class DirRevision(FileDirRevision):
         })
         # create a directory "page" in wiki markup:
         try:
-            files = os.listdir(self._fs_data_fname)
-            content = [u" * [[/%s]]" % f for f in files]
-            content = u'= Directory contents =\r\n' + u'\r\n'.join(content)
+            dirs = []
+            files = []
+            names = os.listdir(self._fs_data_fname)
+            for name in names:
+                filepath = os.path.join(self._fs_data_fname, name)
+                if os.path.isdir(filepath):
+                    dirs.append(name)
+                else:
+                    files.append(name)
+            content = [
+                u"= Directory contents =",
+                u" * [[../]]",
+            ]
+            content.extend(u" * [[/%s|%s/]]" % (name, name) for name in sorted(dirs))
+            content.extend(u" * [[/%s|%s]]" % (name, name) for name in sorted(files))
+            content = u'\r\n'.join(content)
         except OSError, err:
             content = unicode(err)
         self._fs_data_file = StringIO(content.encode(config.charset))
