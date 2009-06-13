@@ -52,7 +52,7 @@ class PackageItems:
         target = request.form.get('target')
         item_list = request.form.get('item_list')
         include_subitems = request.values.get('sub_items', False)
-        
+
         target = wikiutil.taintfilename(target)
 
         if not target:
@@ -124,7 +124,7 @@ class PackageItems:
         script += [packLine(['Print', 'Thank you for using PackageItems!'])]
         zf.writestr(MOIN_PACKAGE_FILE, u"\n".join(script).encode("utf-8"))
         zf.close()
-        
+
 
 def execute(item_name, request):
     """ Glue code for actions """

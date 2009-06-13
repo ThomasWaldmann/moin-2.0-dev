@@ -192,7 +192,7 @@ class ScriptEngine:
         @param filename: Filename of the attachment (just applicable for MoinMoin < 2.0)
         """
         _ = self.request.getText
-            
+
         package = ZipPackage(self.request, item_name)
         if package.isPackage():
             if not package.installPackage():
@@ -234,7 +234,7 @@ class ScriptEngine:
             item = self.request.cfg.data_backend.get_item(item_name)
             if not item.exists():
                 raise RuntimeScriptException(_("The item %s does not exist.") % item_name)
-            
+
             r = item.get_revision(-1)
             r.item.rename(newitemname)
             r._save(r.meta, r.data, name=newitemname, action='SAVE/RENAME', extra=item_name, comment=comment)

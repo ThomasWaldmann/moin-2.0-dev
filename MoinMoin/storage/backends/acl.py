@@ -8,7 +8,7 @@
     This middleware is injected between the user of the storage API and the actual
     backend used for storage. It is independent of the backend being used.
     Instances of the AMW are bound to individual request objects. The user whose
-    permissions the AMW checks is hence obtained by a look-up on the request object. 
+    permissions the AMW checks is hence obtained by a look-up on the request object.
     The backend itself (and the objects it returns) need to be wrapped in order
     to make sure that no object of the real backend is (directly or indirectly)
     made accessible to the user of the API.
