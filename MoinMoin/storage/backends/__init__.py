@@ -12,7 +12,7 @@ import shutil
 
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
 
-def clone(source, destination, verbose=False):
+def clone(source, destination, verbose=False, only_these=[]):
     """
     Create exact copy of source Backend with all its Items in the given
     destination Backend.
@@ -40,6 +40,8 @@ def clone(source, destination, verbose=False):
 
     for revision in source.history(reverse=False):
         name = revision.item.name
+        if only_these and name not in only_these:
+            continue
         try:
             new_item = destination.get_item(name)
         except NoSuchItemError:

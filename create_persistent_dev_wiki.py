@@ -26,6 +26,7 @@ from shutil import rmtree
 import tarfile
 
 from MoinMoin.storage.backends import clone, fs19, fs
+from MoinMoin.i18n.strings import all_pages
 
 
 DATA = 'data'
@@ -46,7 +47,7 @@ def untar_underlay(instance):
 def fill_instance(underlay_tmp, instance):
     fs_src = fs19.FSPageBackend(join(instance, underlay_tmp))
     fs_dst = fs.FSBackend(join(instance, DATA))
-    clone(fs_src, fs_dst, verbose=True)
+    clone(fs_src, fs_dst, verbose=True, only_these=all_pages)
 
 
 def cleanup(underlay_tmp, instance):

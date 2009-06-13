@@ -29,8 +29,10 @@ class LocalConfig(multiconfig.DefaultConfig):
 
     # For development we use a simple in-memory backend for data storage
     # TODO Change this to a sane setting later
-    data_backend = memory.MemoryBackend()
-    user_backend = memory.MemoryBackend()
+    #data_backend = memory.MemoryBackend()
+    #user_backend = memory.MemoryBackend()
+    data_backend = fs.FSBackend(os.path.join('instance', 'data'))
+    user_backend = fs.FSBackend(os.path.join('instance', 'user'))
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
