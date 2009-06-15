@@ -38,6 +38,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from xml.sax.saxutils import XMLGenerator
+import base64
+
 from UserDict import DictMixin
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
                                    NoSuchItemError
@@ -375,6 +378,15 @@ class Backend(object):
         """
         raise NotImplementedError()
 
+    def serialize(self, xmlfile):
+        xg = XMLGenerator(xmlfile, 'utf-8')
+        xg.startElement('backend', dict(namespace=''))
+        xg.startElement('items', {})
+        for item in self.iteritems():
+            item.serialize(xmlfile)
+        xg.endElement('items')
+        xg.endElement('backend')
+
 
 class Item(object, DictMixin):
     """
@@ -562,6 +574,22 @@ class Item(object, DictMixin):
             self._uncommitted_revision = self._backend._create_revision(self, revno)
             return self._uncommitted_revision
 
+    def serialize(self, xmlfile):
+        xg = XMLGenerator(xmlfile, 'utf-8')
+        xg.startElement('item', dict(name=self.name))
+        xg.startElement('meta', {})
+        for k in self.keys():
+            xg.startElement('entry', dict(key=k))
+            xg.characters(self[k])
+            xg.endElement('entry')
+        xg.endElement('meta')
+        xg.startElement('revisions', {})
+        for revno in self.list_revisions():
+            rev = self.get_revision(revno)
+            rev.serialize(xmlfile)
+        xg.endElement('revisions')
+        xg.endElement('item')
+
 
 class Revision(object, DictMixin):
     """
@@ -687,6 +715,28 @@ class StoredRevision(Revision):
         @see: StringIO.StringIO().seek.__doc__
         """
         self._backend._seek_revision_data(self, position, mode)
+
+    def serialize(self, xmlfile):
+        xg = XMLGenerator(xmlfile, 'utf-8')
+        xg.startElement('revision', dict(revno=str(self.revno)))
+        xg.startElement('meta', {})
+        for k in self.keys():
+            xg.startElement('entry', dict(key=k))
+            xg.characters(self[k])
+            xg.endElement('entry')
+        xg.endElement('meta')
+        xg.startElement('data', dict(coding='base64'))
+        chunksize = 4096
+        while True:
+            data = self.read(chunksize)
+            if not data:
+                break
+            data = base64.b64encode(data)
+            xg.startElement('chunk', {})
+            xg.characters(data)
+            xg.endElement('chunk')
+        xg.endElement('data')
+        xg.endElement('revision')
 
 
 class NewRevision(Revision):
