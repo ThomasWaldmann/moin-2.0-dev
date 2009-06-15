@@ -54,12 +54,14 @@ def cleanup(underlay_tmp, instance):
     rmtree(join(instance, underlay_tmp))
 
 
-if __name__ == '__main__':
-    instance = 'instance'
-    underlay_tmp = 'underlay'
-
+def run(instance, underlay_tmp):
+    print "Starting underlay conversion..."
     create_instance_folder(instance)
     untar_underlay(instance)
     fill_instance(underlay_tmp, instance)
     cleanup(underlay_tmp, instance)
-    print "Success! You can now start using the wiki."
+
+
+
+if __name__ == '__main__':
+    run()
