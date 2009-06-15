@@ -30,7 +30,22 @@ log.load_config('wikiserverlogging.conf')
 
 from MoinMoin.script import MoinScript
 
+from create_persistent_dev_wiki import run
+def create_if_missing():
+    instance = 'instance'
+    underlay = 'underlay'
+
+    successfile = os.path.join(instance, '.success')
+    if not os.path.isfile(successfile):
+        run(instance, underlay)
+        successfile = open(successfile, 'w').close()
+
+
 if __name__ == '__main__':
     sys.argv = ["moin.py", "server", "standalone"]
+    try:
+        create_if_missing()
+    except OSError:
+        sys.exit("Conversion of underlay failed. Please remove the instance folder and retry.")
     MoinScript().run()
 
