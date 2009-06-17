@@ -23,21 +23,10 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
-ACL = "acl"
+from MoinMoin.items import ACL, DELETED, MIMETYPE, SIZE, EDIT_LOG, \
+                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
+                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 
-# special meta-data whose presence indicates that the item is deleted
-DELETED = "deleted"
-
-SIZE = "size"
-
-EDIT_LOG_ACTION = "edit_log_action"
-EDIT_LOG_ADDR = "edit_log_addr"
-EDIT_LOG_HOSTNAME = "edit_log_hostname"
-EDIT_LOG_USERID = "edit_log_userid"
-EDIT_LOG_EXTRA = "edit_log_extra"
-EDIT_LOG_COMMENT = "edit_log_comment"
-
-EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
 
 def is_cache_exception(e):
     args = e.args
@@ -79,7 +68,7 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        self._backend = request.cfg.data_backend
+        self._backend = request.data_backend
 
         self.reset()
 
@@ -673,13 +662,6 @@ class Page(object):
         pi['language'] = self.cfg.language_default or "en"
 
         body = self.body
-        # TODO: remove this hack once we have separate metadata and can use mimetype there
-        if body.startswith('<?xml'): # check for XML content
-            pi['lines'] = 0
-            pi['format'] = "xslt"
-            pi['formatargs'] = ''
-            return pi
-
         meta = self.meta
 
         # default is wiki markup
@@ -1239,27 +1221,14 @@ class Page(object):
             cache.remove()
 
 
-class RootPage(object):
-    """
-    These functions were removed from the Page class to remove hierarchical
-    page storage support until after we have a storage api (and really need it).
-    Currently, there is only 1 instance of this class: request.rootpage
-    """
+# compatibility hack until we refactored all code using it from here:
+from MoinMoin.items import Item
+
+class RootPage(Item):
+    supported_mimetypes = []
 
     def __init__(self, request):
-        """
-        Init the item collection.
-        """
-        self.request = request
-
-    def getPagePath(self, fname, isfile):
-        """
-        TODO: remove this hack.
-
-        Just a hack for event and edit log currently.
-        """
-        logging.debug("WARNING: The use of getPagePath (MoinMoin/Page.py) is DEPRECATED!")
-        return "/tmp/"
+        Item.__init__(self, request, name=u'')
 
     def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
         """
@@ -1292,62 +1261,27 @@ class RootPage(object):
         # XXX: better update this docstring
 
         request = self.request
-        request.clock.start('getPageList')
-
         if user is None:
             user = request.user
 
-        filterfunction = filter
-
-        filter = term.AND()
+        search_term = term.AND()
         if not include_underlay:
-            filter.add(term.FromUnderlay())
+            search_term.add(term.FromUnderlay())
 
-        if exists:
-            filter.add(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
+        if filter:
+            search_term.add(term.NameFn(filter))
 
-        if filterfunction:
-            filter.add(term.NameFn(filterfunction))
-
-        items = self.request.cfg.data_backend.search_item(filter)
+        items = self.list_items(search_term, include_deleted=not exists)
 
         if user or return_objects:
-            # Filter names
-            pages = []
             for item in items:
-                page = Page.from_item(request, item)
-                name = page.page_name
-
-                # Filter out pages user may not read.
-                if user and not user.may.read(name):
-                    continue
-
+                # XXX ACL check when user given?
                 if return_objects:
+                    page = Page.from_item(request, item)
                     yield page
                 else:
-                    yield name
+                    yield item.name
         else:
-            for i in items:
-                yield i.name
+            for item in items:
+                yield item.name
 
-        request.clock.stop('getPageList')
-
-    def getPageCount(self, exists=0):
-        """
-        Return page count.
-
-        @param exists: filter existing pages
-        @rtype: int
-        @return: number of pages
-        """
-        self.request.clock.start('getPageCount')
-
-        items = self.request.cfg.data_backend.search_item(term.NOT(term.LastRevisionHasMetaDataKey(DELETED)))
-
-        count = 0
-        for item in items:
-            count += 1
-
-        self.request.clock.stop('getPageCount')
-
-        return count

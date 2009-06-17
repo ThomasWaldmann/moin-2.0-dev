@@ -83,6 +83,7 @@ def rangelist(numbers):
         return pattern[1:-1]
     return pattern[1:]
 
+
 def IsWin9x():
     """ Returns true if run on Windows 95, 98 or ME. """
     if hasattr(sys, 'getwindowsversion'):

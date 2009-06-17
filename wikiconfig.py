@@ -29,8 +29,10 @@ class LocalConfig(multiconfig.DefaultConfig):
 
     # For development we use a simple in-memory backend for data storage
     # TODO Change this to a sane setting later
-    data_backend = memory.MemoryBackend()
-    user_backend = memory.MemoryBackend()
+    #data_backend = memory.MemoryBackend()
+    #user_backend = memory.MemoryBackend()
+    data_backend = fs.FSBackend(os.path.join('instance', 'data'))
+    user_backend = fs.FSBackend(os.path.join('instance', 'user'))
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
@@ -43,8 +45,9 @@ class LocalConfig(multiconfig.DefaultConfig):
     surge_action_limits = None # no surge protection
     sitename = u'MoinMoin DesktopEdition'
     logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static
-    page_front_page = u'FrontPage' # change to some better value
     # ^^^ DON'T TOUCH THIS EXCEPT IF YOU KNOW WHAT YOU DO ^^^
+
+    #page_front_page = u'FrontPage' # change to some better value
 
     # Add your configuration items here.
     secrets = 'This string is NOT a secret, please make up your own, long, random secret string!'

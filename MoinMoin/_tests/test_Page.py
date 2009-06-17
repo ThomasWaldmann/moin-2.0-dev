@@ -7,6 +7,7 @@
 """
 
 import py
+py.test.skip("Broken. Needs Page -> Item refactoring.")
 
 from MoinMoin.Page import Page
 

@@ -22,8 +22,9 @@ from MoinMoin import config
 from MoinMoin.Page import Page
 from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
 from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError
-from MoinMoin.Page import EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
-                          EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, DELETED
+from MoinMoin.items import MIMETYPE, DELETED, \
+                           EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
+                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 from MoinMoin.support import tarfile
 
 action_name = __name__.split('.')[-1]
@@ -37,7 +38,7 @@ class TwikiDraw(Image):
 
     def do_modify(self):
         request = self.request
-        item_name = self.item_name
+        item_name = self.name
         ci = ContainerItem(request, item_name)
         base_name = item_name.replace('.tdraw', '')
         twd_params = {
@@ -52,7 +53,7 @@ class TwikiDraw(Image):
 
         template = self.env.get_template('modify_twikidraw.html')
         content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
+                                  item_name=self.name,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
@@ -62,7 +63,7 @@ class TwikiDraw(Image):
 
     def save(self):
         request = self.request
-        item_name = self.item_name
+        item_name = self.name
 
         file_upload = request.files.get('filepath')
         filename = request.form['filename']
@@ -105,7 +106,7 @@ class TwikiDraw(Image):
             newrev.write(data)
             timestamp = time.time()
             newrev[EDIT_LOG_COMMENT] = ''
-            newrev["mimetype"] = self.twd_mimetype
+            newrev[MIMETYPE] = self.twd_mimetype
             newrev[EDIT_LOG_ACTION] = 'SAVE'
             newrev[EDIT_LOG_ADDR] = request.remote_addr
             newrev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
@@ -115,7 +116,7 @@ class TwikiDraw(Image):
 
     def _render_data(self):
         request = self.request
-        item_name = self.item_name
+        item_name = self.name
         ci = ContainerItem(request, item_name)
         return '<img src="%s">' % ci.member_url(item_name.replace('.tdraw', '.png'))
 
@@ -126,14 +127,14 @@ class ContainerItem:
     # currently uses old pagename/filename combo as in AttachFile
     def __init__(self, request, item_name):
         self.request = request
-        self.item_name = item_name
+        self.name = item_name
         self.container_filename = '' # TODO how to handle?
 
     def member_url(self, member):
         """ return URL for accessing container member
             (we use same URL for get (GET) and put (POST))
         """
-        url = Item(self.request, self.item_name).url({
+        url = Item(self.request, self.name).url({
             'action': 'box', #'from_tar': member,
         })
         return url + '&from_tar=%s' % member

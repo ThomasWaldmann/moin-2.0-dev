@@ -3,7 +3,7 @@
     MoinMoin - Multiple configuration handler and Configuration defaults class
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2005-2008 MoinMoin:ThomasWaldmann.
+                2005-2009 MoinMoin:ThomasWaldmann,
                 2008      MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
 """
@@ -25,7 +25,7 @@ from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
-from MoinMoin.Page import DELETED
+from MoinMoin.items import DELETED
 from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
@@ -200,7 +200,7 @@ def _(text):
     return text
 
 
-class CacheClass:
+class CacheClass(object):
     """ just a container for stuff we cache """
     pass
 
@@ -289,18 +289,6 @@ class ConfigFunctionality(object):
         # Use site name as default name-logo
         if self.logo_string is None:
             self.logo_string = self.sitename
-
-        # Check for needed modules
-
-        # FIXME: maybe we should do this check later, just before a
-        # chart is needed, maybe in the chart module, instead doing it
-        # for each request. But this require a large refactoring of
-        # current code.
-        if self.chart_options:
-            try:
-                import gdchart
-            except ImportError:
-                self.chart_options = None
 
         # post process
 
@@ -737,9 +725,6 @@ options_no_group_name = {
      ],
      "Exclude unwanted actions (list of strings)"),
 
-    ('allow_xslt', False,
-     "if True, enables XSLT processing via 4Suite (note that this enables anyone with enough know-how to insert '''arbitrary HTML''' into your wiki, which is why it defaults to `False`)"),
-
     ('password_checker', DefaultExpression('_default_password_checker'),
      'checks whether a password is acceptable (default check is length >= 6, at least 4 different chars, no keyboard sequence, not username used somehow (you can switch this off by using `None`)'),
 
@@ -772,9 +757,6 @@ options_no_group_name = {
      "Spam protection setup using site-specific questions/answers, see HelpOnTextChas."),
     ('textchas_disabled_group', None,
      "Name of a group of trusted users who do not get asked TextCha questions."),
-
-    ('antispam_master_url', "http://master.moinmo.in/?action=xmlrpc2",
-     "where antispam security policy fetches spam pattern updates (if it is enabled)"),
 
     # a regex of HTTP_USER_AGENTS that should be excluded from logging
     # and receive a FORBIDDEN for anything except viewing a page
@@ -834,7 +816,6 @@ options_no_group_name = {
     ('changed_time_fmt', '%H:%M', "Time format used on Recent``Changes for page edits within the last 24 hours"),
     ('date_fmt', '%Y-%m-%d', "System date format, used mostly in Recent``Changes"),
     ('datetime_fmt', '%Y-%m-%d %H:%M:%S', 'Default format for dates and times (when the user has no preferences or chose the "default" date format)'),
-    ('chart_options', None, "If you have gdchart, use something like chart_options = {'width': 720, 'height': 540}"),
 
     ('edit_bar', ['Modify', 'Download', 'Comments', 'Discussion', 'Subscribe', 'Quicklink', 'ActionsMenu'],
      'list of edit bar entries'),
@@ -882,8 +863,6 @@ options_no_group_name = {
     ('plugin_dir', None, "Plugin directory, by default computed to be `data_dir`/plugin."),
     ('plugin_dirs', [], "Additional plugin directories."),
 
-    ('docbook_html_dir', r"/usr/share/xml/docbook/stylesheet/nwalsh/html/",
-     'Path to the directory with the Docbook to HTML XSLT files (optional, used by the docbook parser). The default value is correct for Debian Etch.'),
     ('shared_intermap', None,
      "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
     ('data_backend', None,
@@ -916,8 +895,8 @@ options_no_group_name = {
   )),
   # ==========================================================================
   'pages': ('Special page names', None, (
-    ('page_front_page', u'HelpOnLanguages',
-     "Name of the front page. We don't expect you to keep the default. Just read HelpOnLanguages in case you're wondering... [Unicode]"),
+    ('page_front_page', u'LanguageSetup',
+     "Name of the front page. We don't expect you to keep the default. Just read LanguageSetup in case you're wondering... [Unicode]"),
 
     # the following regexes should match the complete name when used in free text
     # the group 'all' shall match all, while the group 'key' shall match the key only
@@ -1059,13 +1038,13 @@ options = {
     'ACLs control who may do what, see HelpOnAccessControlLists.',
     (
       ('hierarchic', False, 'True to use hierarchical ACLs'),
-      ('rights_default', u"Trusted:read,write,delete,revert Known:read,write,delete,revert All:read,write",
+      ('rights_default', u"Trusted:read,write,delete Known:read,write,delete All:read,write",
        "ACL used if no ACL is specified on the page"),
       ('rights_before', u"",
        "ACL that is processed before the on-page/default ACL"),
       ('rights_after', u"",
        "ACL that is processed after the on-page/default ACL"),
-      ('rights_valid', ['read', 'write', 'delete', 'revert', 'admin'],
+      ('rights_valid', ['read', 'write', 'delete', 'admin'],
        "Valid tokens for right sides of ACL entries."),
     )),
 

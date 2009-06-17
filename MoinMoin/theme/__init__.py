@@ -13,6 +13,7 @@ from jinja2 import Environment, PackageLoader, Template, FileSystemBytecodeCache
 
 from MoinMoin import i18n, wikiutil, config, version, caching
 from MoinMoin import action as actionmod
+from MoinMoin.items import Item
 from MoinMoin.Page import Page
 from MoinMoin.util import pysupport
 
@@ -146,7 +147,7 @@ class ThemeBase:
         except:
             pass
         self.env = Environment(loader=PackageLoader('MoinMoin', 'templates'),
-                               bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'), 
+                               bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'),
                                extensions=['jinja2.ext.i18n'])
         from werkzeug import url_quote, url_encode
         self.env.filters['urlencode'] = lambda x: url_encode(x)
@@ -485,7 +486,7 @@ class ThemeBase:
                 alt, icon, w, h = self.iconsByFile[icon]
             else:
                 alt, icon, w, h = '', icon, '', ''
-        
+
         img_url = "%s/%s/img/%s" % (self.cfg.url_prefix_static, self.name, icon)
 
         return alt, img_url, w, h
@@ -621,7 +622,7 @@ class ThemeBase:
 
         msie_css = """
 <!-- css only for MS IE6/IE7 browsers -->
-<!--[if lt IE8]>
+<!--[if lt IE 8]>
    %s
 <![endif]-->
 """ % self._stylesheet_link(True, 'all', 'msie')
@@ -650,7 +651,7 @@ class ThemeBase:
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
             contentActions = [u'', u'show', u'refresh', u'preview', u'diff',
-                              u'subscribe', u'rename', u'copy', 
+                              u'subscribe', u'rename', u'copy',
                              ]
             return self.request.action in contentActions
         return False
@@ -866,7 +867,6 @@ var search_hint = "%(search_hint)s";
             'LocalSiteMap',
             'MyPages',
             'SubscribeUser',
-            'Despam',
             'PackagePages',
             'SyncPages',
             ]
@@ -884,7 +884,6 @@ var search_hint = "%(search_hint)s";
             'LocalSiteMap': _('Local Site Map'),
             'MyPages': _('My Pages'),
             'SubscribeUser': _('Subscribe User'),
-            'Despam': _('Remove Spam'),
             'PackagePages': _('Package Pages'),
             'RenderAsDocbook': _('Render as Docbook'),
             'SyncPages': _('Sync Pages'),
@@ -913,16 +912,6 @@ var search_hint = "%(search_hint)s";
 
             # SubscribeUser action enabled only if user has admin rights
             if action == 'SubscribeUser' and not request.user.may.admin(page.page_name):
-                data['do'] = 'show'
-                data['disabled'] = disabled
-
-            # PackagePages action only if user has write rights
-            if action == 'PackagePages' and not request.user.may.write(page.page_name):
-                data['do'] = 'show'
-                data['disabled'] = disabled
-
-            # Despam action enabled only for superusers
-            if action == 'Despam' and not request.user.isSuperUser():
                 data['do'] = 'show'
                 data['disabled'] = disabled
 
@@ -1514,19 +1503,29 @@ actionsMenuInit('%(label)s');
         #request.write('<!-- auth_method == %s -->' % repr(request.user.auth_method))
         request.write('</body>\n</html>\n\n')
 
-    def render_content(self, item_name, content):
+    def render_content(self, item_name, content=None, title=None):
+        """ render some content plus Theme header/footer.
+            If content is None, the normal Item content for item_name will be rendered.
+        """
         request = self.request
+        if content is None:
+            item = Item.create(request, item_name)
+            content = item.do_show()
+        if title is None:
+            title = item_name
         if getattr(request.cfg, 'templating', False):
             template = self.env.get_template('base.html')
             html = template.render(gettext=self.request.getText,
                                    item_name=item_name,
+                                   title=title,
                                    content=content,
                                   )
             request.write(html)
         else:
+            request.headers.add('Content-Type', 'text/html; charset=utf-8')
             # Use user interface language for this generated page
             request.setContentLanguage(request.lang)
-            request.theme.send_title(item_name, pagename=item_name)
+            request.theme.send_title(title, pagename=item_name)
             request.write(content)
             request.theme.send_footer(item_name)
             request.theme.send_closing_html()
