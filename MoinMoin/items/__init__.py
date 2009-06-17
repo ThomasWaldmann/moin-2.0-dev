@@ -8,6 +8,7 @@
 
     @copyright: 2009 MoinMoin:ThomasWaldmann,
                      MoinMoin:ReimarBauer
+                     MoinMoin:BastianBlank
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -754,33 +755,51 @@ class MoinParserSupported(Text):
     format = 'wiki' # override this, if needed
     format_args = ''
     def _render_data(self):
-        # TODO: switch from Page to Item subclass
+        from emeraldtree import ElementTree as ET
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.iri import Iri
+        from MoinMoin.util.tree import html
+
         request = self.request
-        page = Page(request, self.item_name)
-        pi, body = page.pi, page.data
-        self.formatter.setPage(page)
-        #lang = pi.get('language', request.cfg.language_default)
-        #request.setContentLanguage(lang)
-        Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", self.format)
-        parser = Parser(body, request, format_args=self.format_args)
-        buffer = StringIO()
-        request.redirect(buffer)
-        parser.format(self.formatter)
-        content = buffer.getvalue()
-        request.redirect()
-        del buffer
-        return content
+        InputConverter = reg.get(request, self.converter_mimetype or self.mimetype,
+                'application/x-moin-document')
+        IncludeConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-moin-document;includes=expandall')
+        MacroConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-moin-document;macros=expandall')
+        LinkConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-moin-document;links=extern')
+        # TODO: Real output format
+        HtmlConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-xhtml-moin-page')
+
+        i = Iri(scheme='wiki', authority='', path='/' + self.item_name)
+
+        doc = InputConverter(request, i)(self.data.decode(config.charset).split(u'\r\n'))
+        doc = IncludeConverter(request)(doc)
+        doc = MacroConverter(request)(doc)
+        doc = LinkConverter(request)(doc)
+        doc = HtmlConverter(request)(doc)
+
+        out = StringIO()
+        tree = ET.ElementTree(doc)
+        # TODO: Switch to xml
+        tree.write(out, encoding=config.charset,
+                default_namespace=html, method='html')
+        return out.getvalue()
 
 class MoinWiki(MoinParserSupported):
     supported_mimetypes = ['text/x-unidentified-wiki-format',
                            'text/moin-wiki',
                           ]  # XXX Improve mimetype handling
+    converter_mimetype = 'text/moin-wiki'
     format = 'wiki'
     format_args = ''
 
 
 class CreoleWiki(MoinParserSupported):
     supported_mimetypes = ['text/creole-wiki']
+    converter_mimetype = 'text/creole'
     format = 'creole'
     format_args = ''
 
