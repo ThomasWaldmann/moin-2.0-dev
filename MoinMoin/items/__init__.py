@@ -1,14 +1,15 @@
 # -*- coding: iso-8859-1 -*-
 """
     MoinMoin - misc. mimetype items
-    
+
     While MoinMoin.storage cares for backend storage of items,
     this module cares for more high-level, frontend items,
     e.g. showing, editing, etc. of wiki items.
 
     @copyright: 2009 MoinMoin:ThomasWaldmann,
-                     MoinMoin:ReimarBauer
-                     MoinMoin:BastianBlank
+                2009 MoinMoin:ReimarBauer,
+                2009 MoinMoin:ChristopherDenter
+                2009 MoinMoin:BastianBlank
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -23,19 +24,80 @@ from werkzeug import http_date, quote_etag
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
 from MoinMoin.support.python_compatibility import hash_new
-from MoinMoin.Page import Page
-from MoinMoin.Page import DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
-                          EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
+                                   StorageError
 
 from MoinMoin.items.sendcache import SendCache
 
+# some metadata key constants:
+ACL = "acl"
+
+# special meta-data whose presence indicates that the item is deleted
+DELETED = "deleted"
+
+MIMETYPE = "mimetype"
+SIZE = "size"
+
+EDIT_LOG_ACTION = "edit_log_action"
+EDIT_LOG_ADDR = "edit_log_addr"
+EDIT_LOG_HOSTNAME = "edit_log_hostname"
+EDIT_LOG_USERID = "edit_log_userid"
+EDIT_LOG_EXTRA = "edit_log_extra"
+EDIT_LOG_COMMENT = "edit_log_comment"
+
+EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
+
+
 class Item(object):
-    is_text = False
-    def __init__(self, request, item_name, rev=None, mimetype=None, formatter=None):
+
+    @classmethod
+    def create(cls, request, name=u'', mimetype='application/x-unknown', rev_no=-1,
+               formatter=None, item=None):
+        try:
+            if item is None:
+                item = request.data_backend.get_item(name)
+            else:
+                name = item.name
+        except NoSuchItemError:
+            class DummyRev(dict):
+                def __init__(self, mimetype):
+                    self[MIMETYPE] = mimetype
+                    self.item = None
+                def read_data(self):
+                    return ''
+            rev = DummyRev(mimetype)
+        else:
+            try:
+                rev = item.get_revision(rev_no)
+            except NoSuchRevisionError:
+                rev = item.get_revision(-1) # fall back to current revision
+                # XXX add some message about invalid revision
+        mimetype = rev.get(MIMETYPE) or 'application/x-unknown' # XXX why do we need ... or ..?
+
+        def _find_item_class(mimetype, BaseClass, best_match_len=-1):
+            #logging.debug("_find_item_class(%r,%r,%r)" % (mimetype, BaseClass, best_match_len))
+            Class = None
+            for ItemClass in BaseClass.__subclasses__():
+                for supported_mimetype in ItemClass.supported_mimetypes:
+                    if mimetype.startswith(supported_mimetype):
+                        match_len = len(supported_mimetype)
+                        if match_len > best_match_len:
+                            best_match_len = match_len
+                            Class = ItemClass
+                            #logging.debug("_find_item_class: new best match: %r by %r)" % (supported_mimetype, ItemClass))
+                best_match_len, better_Class = _find_item_class(mimetype, ItemClass, best_match_len)
+                if better_Class:
+                    Class = better_Class
+            return best_match_len, Class
+
+        ItemClass = _find_item_class(mimetype, cls)[1]
+        logging.debug("ItemClass %r handles %r" % (ItemClass, mimetype))
+        return ItemClass(request, name=name, rev=rev, mimetype=mimetype, formatter=formatter)
+
+    def __init__(self, request, name, rev=None, mimetype=None, formatter=None):
         self.request = request
         self.env = request.theme.env
-        self.item_name = item_name
+        self.name = name
         self.rev = rev
         self.mimetype = mimetype
         if formatter is None:
@@ -47,18 +109,23 @@ class Item(object):
         return self.rev or {}
     meta = property(fget=get_meta)
 
+    def get_is_deleted(self):
+        return self.meta.get(DELETED, False)
+    is_deleted = property(get_is_deleted)
+
     def url(self, _absolute=False, **kw):
         """ return URL for this item, optionally as absolute URL """
         href = _absolute and self.request.abs_href or self.request.href
-        return href(self.item_name, **kw)
+        return href(self.name, **kw)
 
     def rev_url(self, _absolute=False, **kw):
         """ return URL for this item and this revision, optionally as absolute URL """
         return self.url(rev=self.rev.revno, _absolute=_absolute, **kw)
 
     transclude_acceptable_attrs = []
+
     def transclude(self, desc, tag_attrs=None, query_args=None):
-        return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.item_name, self.mimetype))
+        return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.name, self.mimetype))
 
     def meta_text_to_dict(self, text):
         """ convert meta data from a text fragment to a dict """
@@ -77,10 +144,11 @@ class Item(object):
         return '' # TODO create a better method for binary stuff
     data = property(fget=get_data)
 
-    def do_modify(self):
+    def do_modify(self, template_name):
+        # XXX think about and add item template support
         template = self.env.get_template('modify_binary.html')
         content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
+                                  item_name=self.name,
                                   rows_meta=3, cols=80,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
@@ -93,17 +161,17 @@ class Item(object):
         content = template.render(gettext=self.request.getText,
                                   action=action,
                                   label=label or action,
-                                  item_name=self.item_name,
+                                  item_name=self.name,
                                   revno=revno,
                                   target=target,
                                  )
         return content
 
     def do_rename(self):
-        return self._action_query('rename', target=self.item_name)
+        return self._action_query('rename', target=self.name)
 
     def do_copy(self):
-        return self._action_query('copy', target=self.item_name)
+        return self._action_query('copy', target=self.name)
 
     def do_revert(self):
         return self._action_query('revert', revno=self.rev.revno)
@@ -122,8 +190,7 @@ class Item(object):
             new_rev.write(content)
             hash.update(content)
         else:
-            logging.error("unsupported content object: %r" % content)
-            raise
+            raise StorageError("unsupported content object: %r" % content)
         return hash_name, hash.hexdigest()
 
     def copy(self):
@@ -132,7 +199,7 @@ class Item(object):
         comment = request.form.get('comment')
         target = request.form.get('target')
         old_item = self.rev.item
-        backend = request.cfg.data_backend
+        backend = request.data_backend
         new_item = backend.create_item(target)
         # Transfer all revisions with their data and metadata
         # Make sure the list begins with the lowest value, that is, 0.
@@ -151,22 +218,22 @@ class Item(object):
             new_item[key] = old_item[key]
         new_item.publish_metadata()
         # we just create a new revision with almost same meta/data to show up on RC
-        self._save(current_rev, current_rev, item_name=target, action='SAVE/COPY', extra=self.item_name, comment=comment)
+        self._save(current_rev, current_rev, name=target, action='SAVE/COPY', extra=self.name, comment=comment)
 
     def rename(self):
         # called from rename UI/POST
         comment = self.request.form.get('comment')
-        oldname = self.item_name
+        oldname = self.name
         newname = self.request.form.get('target')
         self.rev.item.rename(newname)
         # we just create a new revision with almost same meta/data to show up on RC
         # XXX any better way to do this?
-        self._save(self.meta, self.data, item_name=newname, action='SAVE/RENAME', extra=oldname, comment=comment)
+        self._save(self.meta, self.data, name=newname, action='SAVE/RENAME', extra=oldname, comment=comment)
 
     def revert(self):
         # called from revert UI/POST
         comment = self.request.form.get('comment')
-        self._save(self.meta, self.data, comment=comment)
+        self._save(self.meta, self.data, action='SAVE/REVERT', comment=comment)
 
     def modify(self):
         # called from modify UI/POST
@@ -192,26 +259,26 @@ class Item(object):
         comment = self.request.form.get('comment')
         self._save(meta, data, mimetype=mimetype, comment=comment)
 
-    def _save(self, meta, data, item_name=None, action='SAVE', mimetype=None, comment='', extra=''):
+    def _save(self, meta, data, name=None, action='SAVE', mimetype=None, comment='', extra=''):
         request = self.request
-        if item_name is None:
-            item_name = self.item_name
-        backend = request.cfg.data_backend
+        if name is None:
+            name = self.name
+        backend = request.data_backend
         try:
-            storage_item = backend.get_item(item_name)
+            storage_item = backend.get_item(name)
         except NoSuchItemError:
-            storage_item = backend.create_item(item_name)
+            storage_item = backend.create_item(name)
         try:
             currentrev = storage_item.get_revision(-1)
             rev_no = currentrev.revno
             if mimetype is None:
                 # if we didn't get mimetype info, thus reusing the one from current rev:
-                mimetype = currentrev.get("mimetype")
+                mimetype = currentrev.get(MIMETYPE)
         except NoSuchRevisionError:
             rev_no = -1
         newrev = storage_item.create_revision(rev_no + 1)
         if not data:
-            # saving empty data is same as deleting
+            # saving empty data automatically deletes the item
             # XXX unclear: do we have meta-only items that shall not be "deleted" state?
             newrev[DELETED] = True
             comment = comment or 'deleted'
@@ -219,6 +286,9 @@ class Item(object):
             # TODO Put metadata into newrev here for now. There should be a safer way
             #      of input for this.
             newrev[k] = v
+        if data:
+            # saving non-empty data automatically undeletes the item
+            newrev.pop(DELETED, False)
         hash_name, hash_hexdigest = self._write_stream(data, newrev)
         newrev[hash_name] = hash_hexdigest
         timestamp = time.time()
@@ -226,7 +296,8 @@ class Item(object):
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
         # allow override by give metadata:
-        newrev["mimetype"] = meta.get('mimetype', mimetype)
+        assert mimetype is not None
+        newrev[MIMETYPE] = meta.get(MIMETYPE, mimetype)
         newrev[EDIT_LOG_ACTION] = action
         newrev[EDIT_LOG_ADDR] = request.remote_addr
         newrev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
@@ -236,13 +307,47 @@ class Item(object):
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
 
+    def search_item(self, term=None, include_deleted=False):
+        """ search items matching the term or,
+            if term is None, return all (or all non-deleted) items
+
+            TODO: rename this method and backend method to search_items
+        """
+        from MoinMoin.search.term import AND, NOT, LastRevisionMetaDataMatch
+        if not include_deleted:
+            search_term = NOT(LastRevisionMetaDataMatch('deleted', True))
+            if term:
+                search_term = AND(term, search_term)
+            backend_items = self.request.data_backend.search_item(search_term)
+        else:
+            if term:
+                search_term = term
+                backend_items = self.request.data_backend.search_item(search_term)
+            else:
+                # special case: we just want all items
+                backend_items = self.request.data_backend.iteritems()
+        for item in backend_items:
+            yield Item.create(self.request, item=item)
+
+    list_items = search_item  # just for cosmetics
+
+    def count_items(self, term=None, include_deleted=False):
+        """
+        Return item count for matching items. See search_item() for details.
+        """
+        count = 0
+        # we intentionally use a loop to avoid creating a list with all item objects:
+        for item in self.list_items(term, include_deleted):
+            count += 1
+        return count
+
     def get_index(self):
         """ create an index of sub items of this item """
         import re
-        from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
+        from MoinMoin.search.term import NameRE
 
-        if self.item_name:
-            prefix = self.item_name + u'/'
+        if self.name:
+            prefix = self.name + u'/'
         else:
             # trick: an item of empty name can be considered as "virtual root item",
             # that has all wiki items as sub items
@@ -250,13 +355,11 @@ class Item(object):
         sub_item_re = u"^%s.*" % re.escape(prefix)
         regex = re.compile(sub_item_re, re.UNICODE)
 
-        item_iterator = self.request.cfg.data_backend.search_item(
-                            AND(NameRE(regex),
-                                NOT(LastRevisionMetaDataMatch('deleted', True))))
+        item_iterator = self.search_item(NameRE(regex))
 
         # We only want the sub-item part of the item names, not the whole item objects.
         prefix_len = len(prefix)
-        items = [(item.name, item.name[prefix_len:], item.get_revision(-1).get("mimetype"))
+        items = [(item.name, item.name[prefix_len:], item.meta.get(MIMETYPE))
                  for item in item_iterator]
         return sorted(items)
 
@@ -270,7 +373,7 @@ class Item(object):
     def do_index(self):
         template = self.env.get_template('index.html')
         content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
+                                  item_name=self.name,
                                   index=self.flat_index(),
                                  )
         return content
@@ -278,21 +381,12 @@ class Item(object):
 
 class NonExistent(Item):
     supported_mimetypes = ['application/x-unknown']
-    template_groups = [
-        ('moin wiki text items', [
-            ('HomePageTemplate', 'home page (moin)'),
-            ('GroupPageTemplate', 'group page (moin)'),
-        ]),
-        ('creole wiki text items', [
-            ('CreoleHomePageTemplate', 'home page (creole)'),
-            ('CreoleGroupPageTemplate', 'group page (creole)'),
-        ]),
-    ]
     mimetype_groups = [
         ('page markup text items', [
             ('text/moin-wiki', 'wiki (moin)'),
             ('text/creole-wiki', 'wiki (creole)'),
-            ('text/html', 'html'),
+            ('text/html', 'unsafe html'),
+            ('text/x-safe-html', 'safe html'),
         ]),
         ('highlighted text items', [
             ('text/x-diff', 'diff/patch'),
@@ -340,12 +434,15 @@ class NonExistent(Item):
     ]
 
     def do_show(self):
-        template = self.env.get_template('show_nonexistent.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
-                                  template_groups=self.template_groups,
-                                  mimetype_groups=self.mimetype_groups, )
-        return content
+        template = self.env.get_template('show_type_selection.html')
+        content = []
+        content.append(template.render(gettext=self.request.getText,
+                                  item_name=self.name,
+                                  mimetype_groups=self.mimetype_groups, ))
+
+        template = self.env.get_template('show_package_install.html')
+        content.append(template.render(gettext=self.request.getText, ))
+        return '<hr>'.join(content)
 
     def do_get(self):
         self.request.status_code = 404
@@ -353,11 +450,12 @@ class NonExistent(Item):
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return (self.formatter.url(1, self.url(), css='nonexistent', title='click to create item') +
-                self.formatter.text(self.item_name) + # maybe use some "broken image" icon instead?
+                self.formatter.text(self.name) + # maybe use some "broken image" icon instead?
                 self.formatter.url(0))
 
 
 class Binary(Item):
+    """ An arbitrary binary item, fallback class for every item mimetype. """
     supported_mimetypes = [''] # fallback, because every mimetype starts with ''
 
     modify_help = """\
@@ -382,56 +480,75 @@ There is no help, you're doomed!
                 editor=user.get_printable_editor(self.request,
                        r[EDIT_LOG_USERID], r[EDIT_LOG_ADDR], r[EDIT_LOG_HOSTNAME]) or _("N/A"),
                 comment=r.get(EDIT_LOG_COMMENT, ''),
-                mimetype=r.get('mimetype', ''),
+                mimetype=r.get(MIMETYPE, ''),
             ))
         return log
 
-    width = None
-    height = None
-    transclude_acceptable_attrs = ['class', 'title', 'width', 'height', # no style because of JS
-                                   'type', 'standby', ] # we maybe need a hack for <PARAM> here
-    transclude_params = []
-    def transclude(self, desc, tag_attrs=None, query_args=None, params=None):
+    transclude_acceptable_attrs = []
+    def transclude(self, desc, tag_attrs=None, query_args=None):
+        """ we can't transclude (render) this, thus we just link to the item """
         if tag_attrs is None:
             tag_attrs = {}
-        if 'type' not in tag_attrs:
-            tag_attrs['type'] = self.mimetype
-        if self.width and 'width' not in tag_attrs:
-            tag_attrs['width'] = self.width
-        if self.height and 'height' not in tag_attrs:
-            tag_attrs['height'] = self.height
         if query_args is None:
             query_args = {}
-        if 'do' not in query_args:
-            query_args['do'] = 'get'
-        if params is None:
-            params = self.transclude_params
         url = self.rev_url(**query_args)
-        return (self.formatter.transclusion(1, data=url, **tag_attrs) +
-                ''.join([self.formatter.transclusion_param(**p) for p in params]) +
+        return (self.formatter.url(1, url, **tag_attrs) +
                 self.formatter.text(desc) +
-                self.formatter.transclusion(0))
+                self.formatter.url(0))
 
     def _render_meta(self):
         return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta)
 
     def _render_data(self):
-        return self.transclude('{{%s [%s]}}' % (self.item_name, self.mimetype))
+        return '' # XXX we can't render the data, maybe show some "data icon" as a placeholder?
+
+    def get_templates(self, mimetype=None):
+        """ create a list of templates (for some specific mimetype) """
+        from MoinMoin.search.term import NameRE, AND, LastRevisionMetaDataMatch
+        regex = self.request.cfg.cache.page_template_regexact
+        term = NameRE(regex)
+        if mimetype:
+            term = AND(term, LastRevisionMetaDataMatch(MIMETYPE, mimetype))
+        item_iterator = self.search_item(term)
+        items = [item.name for item in item_iterator]
+        return sorted(items)
 
     def do_show(self):
+        show_templates = False
         item = self.rev.item
-        rev_nos = item.list_revisions()
-        log = self._revlog(item, rev_nos)
+        if item is None:
+            # it is the dummy item -> this is a new and empty item
+            show_templates = True
+            rev_nos = log = []
+        else:
+            rev_nos = item.list_revisions()
+            log = self._revlog(item, rev_nos)
+            if self.rev.revno == rev_nos[-1] and self.is_deleted:
+                # last revision is deleted
+                show_templates = True
+        if show_templates:
+            item_templates = self.get_templates(self.mimetype)
+            html_template = 'show_template_selection.html'
+            meta_rendered = data_rendered = ''
+            index = []
+        else:
+            item_templates = []
+            html_template = 'show.html'
+            data_rendered=self._render_data()
+            meta_rendered=self._render_meta()
+            index = self.flat_index()
 
-        template = self.env.get_template('show.html')
+        template = self.env.get_template(html_template)
         content = template.render(gettext=self.request.getText,
                                   rev=self.rev,
                                   log=log,
-                                  first_rev_no=rev_nos[0],
-                                  last_rev_no=rev_nos[-1],
-                                  data_rendered=self._render_data(),
-                                  meta_rendered=self._render_meta(),
-                                  index=self.flat_index(),
+                                  mimetype=self.mimetype,
+                                  templates=item_templates,
+                                  first_rev_no=rev_nos and rev_nos[0],
+                                  last_rev_no=rev_nos and rev_nos[-1],
+                                  data_rendered=data_rendered,
+                                  meta_rendered=meta_rendered,
+                                  index=index,
                                  )
         return content
 
@@ -499,12 +616,12 @@ There is no help, you're doomed!
             content_disposition = mt.content_disposition(request.cfg)
             content_type = mt.content_type()
             content_length = os.path.getsize(fpath) # XXX
-            ci = ContainerItem(request, self.item_name)
+            ci = ContainerItem(request, self.name)
             file_to_send = ci.get(filename)
         else: # content = item revision
             rev = self.rev
             try:
-                mimestr = rev["mimetype"]
+                mimestr = rev[MIMETYPE]
             except KeyError:
                 mimestr = mimetypes.guess_type(rev.item.name)[0]
             mt = wikiutil.MimeType(mimestr=mimestr)
@@ -519,8 +636,10 @@ There is no help, you're doomed!
     def _send(self, content_type, content_length, hash, file_to_send,
               filename=None, content_disposition=None):
         request = self.request
-        request.headers.add('Cache-Control', 'public')
-        request.headers.add('Etag', quote_etag(hash))
+        if hash:
+            # if item has no hash metadata, hash is None
+            request.headers.add('Cache-Control', 'public')
+            request.headers.add('Etag', quote_etag(hash))
         if content_disposition is not None:
             request.headers.add('Content-Disposition', content_disposition)
 
@@ -530,12 +649,42 @@ There is no help, you're doomed!
         request.send_file(file_to_send)
 
 
-class ObjectTagSupportedFormat(Binary):
-    """ This is a base class for some stuff that renders with a object tag. """
+class RenderableBinary(Binary):
+    """ This is a base class for some binary stuff that renders with a object tag. """
     supported_mimetypes = []
 
     width = "100%"
     height = "100%"
+    transclude_params = []
+    transclude_acceptable_attrs = ['class', 'title', 'width', 'height', # no style because of JS
+                                   'type', 'standby', ] # we maybe need a hack for <PARAM> here
+    def transclude(self, desc, tag_attrs=None, query_args=None, params=None):
+        if tag_attrs is None:
+            tag_attrs = {}
+        if 'type' not in tag_attrs:
+            tag_attrs['type'] = self.mimetype
+        if self.width and 'width' not in tag_attrs:
+            tag_attrs['width'] = self.width
+        if self.height and 'height' not in tag_attrs:
+            tag_attrs['height'] = self.height
+        if query_args is None:
+            query_args = {}
+        if 'do' not in query_args:
+            query_args['do'] = 'get'
+        if params is None:
+            params = self.transclude_params
+        url = self.rev_url(**query_args)
+        return (self.formatter.transclusion(1, data=url, **tag_attrs) +
+                ''.join([self.formatter.transclusion_param(**p) for p in params]) +
+                self.formatter.text(desc) +
+                self.formatter.transclusion(0))
+
+    def _render_data(self):
+        return self.transclude('{{%s [%s]}}' % (self.name, self.mimetype))
+
+
+class PlayableBinary(RenderableBinary):
+    """ This is a base class for some binary stuff that plays with a object tag. """
     transclude_params = [
         dict(name='stop', value='1', valuetype='data'),
         dict(name='play', value='0', valuetype='data'),
@@ -543,7 +692,15 @@ class ObjectTagSupportedFormat(Binary):
     ]
 
 
-class Application(ObjectTagSupportedFormat):
+class Application(Binary):
+    supported_mimetypes = []
+
+
+class RenderableApplication(RenderableBinary):
+    supported_mimetypes = []
+
+
+class PlayableApplication(PlayableBinary):
     supported_mimetypes = []
 
 
@@ -551,39 +708,57 @@ class PDF(Application):
     supported_mimetypes = ['application/pdf', ]
 
 
-class Flash(Application):
+class Flash(PlayableApplication):
     supported_mimetypes = ['application/x-shockwave-flash', ]
 
 
-class Video(ObjectTagSupportedFormat):
+class Video(Binary):
+    supported_mimetypes = ['video/', ]
+
+
+class PlayableVideo(PlayableBinary):
     supported_mimetypes = ['video/mpg', 'video/fli', 'video/mp4', 'video/quicktime',
                            'video/ogg', 'video/x-flv', 'video/x-ms-asf', 'video/x-ms-wm',
-                           'video/x-ms-wmv', 'video/x-msvideo', ]
+                           'video/x-ms-wmv', 'video/x-msvideo',
+                          ]
     width = "640px"
     height = "400px"
 
 
-class Audio(ObjectTagSupportedFormat):
+class Audio(Binary):
+    supported_mimetypes = ['audio/', ]
+
+
+class PlayableAudio(PlayableBinary):
     supported_mimetypes = ['audio/midi', 'audio/x-aiff', 'audio/x-ms-wma',
-                           'audio/x-pn-realaudio', ]
+                           'audio/x-pn-realaudio',
+                           'audio/x-wav',
+                           'audio/mpeg',
+                           'audio/ogg',
+                          ]
     width = "200px"
     height = "100px"
 
 
-class WAV(Audio):
-    supported_mimetypes = ['audio/x-wav', ]
-
-
-class MP3(Audio):
-    supported_mimetypes = ['audio/mpeg', ]
-
-
-class OGG(Audio):
-    supported_mimetypes = ['audio/ogg', ]
-
-
 class Image(Binary):
-    supported_mimetypes = ['image/']
+    """ Any Image mimetype """
+    supported_mimetypes = ['image/', ]
+
+
+class RenderableImage(RenderableBinary):
+    """ Any Image mimetype """
+    supported_mimetypes = []
+
+
+class SvgImage(RenderableImage):
+    """ SVG images use <object> tag mechanism from RenderableBinary base class """
+    supported_mimetypes = ['image/svg+xml']
+
+
+class RenderableBitmapImage(RenderableImage):
+    """ PNG/JPEG/GIF images use <img> tag (better browser support than <object>) """
+    supported_mimetypes = [] # if mimetype is also transformable, please list
+                             # in TransformableImage ONLY!
 
     transclude_acceptable_attrs = ['class', 'title', 'longdesc', 'width', 'height', 'align', ] # no style because of JS
     def transclude(self, desc, tag_attrs=None, query_args=None):
@@ -603,10 +778,11 @@ class Image(Binary):
         return self.formatter.image(src=url, **tag_attrs)
 
     def _render_data(self):
-        return self.transclude(self.item_name)
+        return self.transclude(self.name)
 
 
-class TransformableImage(Image):
+class TransformableBitmapImage(RenderableBitmapImage):
+    """ We can transform (resize, rotate, mirror) some image types """
     supported_mimetypes = ['image/png', 'image/jpeg', 'image/gif', ]
 
     def _transform(self, content_type, size=None, transpose_op=None):
@@ -691,7 +867,7 @@ class TransformableImage(Image):
             ]
             cache = SendCache.from_meta(request, cache_meta)
             if not cache.exists():
-                content_type = self.rev['mimetype']
+                content_type = self.rev[MIMETYPE]
                 size = (width or 99999, height or 99999)
                 transformed_image = self._transform(content_type, size=size, transpose_op=transpose)
                 cache.put(transformed_image, content_type=content_type)
@@ -701,13 +877,9 @@ class TransformableImage(Image):
         self._do_get(hash, from_cache=from_cache)
 
 
-class SvgImage(Binary):
-    supported_mimetypes = ['image/svg+xml']
-
-
 class Text(Binary):
+    """ Any kind of text """
     supported_mimetypes = ['text/']
-    is_text = True
 
     # text/plain mandates crlf - but in memory, we want lf only
     def data_internal_to_form(self, text):
@@ -736,21 +908,36 @@ class Text(Binary):
         from MoinMoin.util import diff_html
         return diff_html.diff(self.request, oldrev.read(), newrev.read())
 
-    def do_modify(self):
+    def do_modify(self, template_name):
+        if template_name:
+            item = Item.create(self.request, template_name)
+            data_text = self.data_storage_to_internal(item.data)
+        else:
+            data_text = self.data_storage_to_internal(self.data)
+        meta_text = self.meta_dict_to_text(self.meta)
         template = self.env.get_template('modify_text.html')
         content = template.render(gettext=self.request.getText,
-                                  item_name=self.item_name,
+                                  item_name=self.name,
                                   rows_data=20, rows_meta=3, cols=80,
                                   revno=0,
-                                  data_text=self.data_storage_to_internal(self.data),
-                                  meta_text=self.meta_dict_to_text(self.meta),
+                                  data_text=data_text,
+                                  meta_text=meta_text,
                                   lang='en', direction='ltr',
                                   help=self.modify_help,
                                  )
         return content
 
 
+class HTML(Text):
+    """ HTML markup """
+    supported_mimetypes = ['text/html']
+
+    def _render_data(self):
+        return self.data_storage_to_internal(self.data)
+
+
 class MoinParserSupported(Text):
+    """ Base class for text formats that are supported by some moin parser """
     supported_mimetypes = []
     format = 'wiki' # override this, if needed
     format_args = ''
@@ -773,7 +960,7 @@ class MoinParserSupported(Text):
         HtmlConverter = reg.get(request, 'application/x-moin-document',
                 'application/x-xhtml-moin-page')
 
-        i = Iri(scheme='wiki', authority='', path='/' + self.item_name)
+        i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
         doc = InputConverter(request, i)(self.data.decode(config.charset).split(u'\r\n'))
         doc = IncludeConverter(request)(doc)
@@ -788,7 +975,9 @@ class MoinParserSupported(Text):
                 default_namespace=html, method='html')
         return out.getvalue()
 
+
 class MoinWiki(MoinParserSupported):
+    """ MoinMoin wiki markup """
     supported_mimetypes = ['text/x-unidentified-wiki-format',
                            'text/moin-wiki',
                           ]  # XXX Improve mimetype handling
@@ -798,78 +987,44 @@ class MoinWiki(MoinParserSupported):
 
 
 class CreoleWiki(MoinParserSupported):
+    """ Creole wiki markup """
     supported_mimetypes = ['text/creole-wiki']
     converter_mimetype = 'text/creole'
     format = 'creole'
     format_args = ''
 
+
 class CSV(MoinParserSupported):
+    """ Comma Separated Values format """
     supported_mimetypes = ['text/csv']
     format = 'csv'
     format_args = ''
 
-class HTML(MoinParserSupported):
-    supported_mimetypes = ['text/html']
+
+class SafeHTML(MoinParserSupported):
+    """ HTML markup """
+    supported_mimetypes = ['text/x-safe-html']
     format = 'html'
     format_args = ''
 
+
 class DiffPatch(MoinParserSupported):
+    """ diff output / patch input format """
     supported_mimetypes = ['text/x-diff']
     format = 'highlight'
     format_args = 'diff'
 
+
 class IRCLog(MoinParserSupported):
+    """ Internet Relay Chat Log """
     supported_mimetypes = ['text/x-irclog']
     format = 'highlight'
     format_args = 'irc'
 
+
 class PythonSrc(MoinParserSupported):
+    """ Python source code """
     supported_mimetypes = ['text/x-python']
     format = 'highlight'
     format_args = 'python'
-
-
-class Manager(object):
-    def __init__(self, request, item_name, mimetype='application/x-unknown', rev_no=-1, formatter=None):
-        self.request = request
-        self.item_name = item_name
-        self.item_mimetype = mimetype
-        self.rev_no = rev_no
-        self.formatter = formatter
-
-    def _find_item_class(self, mimetype, BaseClass=Item, best_match_len=-1):
-        Class = None
-        for ItemClass in BaseClass.__subclasses__():
-            for supported_mimetype in ItemClass.supported_mimetypes:
-                if mimetype.startswith(supported_mimetype):
-                    match_len = len(supported_mimetype)
-                    if match_len > best_match_len:
-                        best_match_len = match_len
-                        Class = ItemClass
-            better_Class = self._find_item_class(mimetype, ItemClass, best_match_len)
-            if better_Class:
-                Class = better_Class
-        return Class
-
-    def get_item(self):
-        request = self.request
-        try:
-            item = request.cfg.data_backend.get_item(self.item_name)
-        except NoSuchItemError:
-            class DummyRev(dict):
-                def __init__(self, mimetype):
-                    self['mimetype'] = mimetype
-                def read_data(self):
-                    return ''
-            rev = DummyRev(self.item_mimetype)
-        else:
-            try:
-                rev = item.get_revision(self.rev_no)
-            except NoSuchRevisionError:
-                rev = item.get_revision(-1) # fall back to current revision
-                # XXX add some message about invalid revision
-        mimetype = rev.get("mimetype") or 'application/x-unknown' # XXX why do we need ... or ..?
-        ItemClass = self._find_item_class(mimetype)
-        logging.warning("ItemClass: %r" % ItemClass)
-        return ItemClass(request, item_name=self.item_name, rev=rev, mimetype=mimetype, formatter=self.formatter)
 

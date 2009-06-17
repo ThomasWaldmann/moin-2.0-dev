@@ -24,8 +24,9 @@ from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent,
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.error import ItemAlreadyExistsError, RevisionAlreadyExistsError, NoSuchRevisionError
-from MoinMoin.Page import DELETED, EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
-                          EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
+from MoinMoin.items import DELETED, MIMETYPE, \
+                           EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
 import MoinMoin.events.notification as notification
 
@@ -314,7 +315,7 @@ class PageEditor(Page):
         newrev[EDIT_LOG_USERID] = userid
         newrev[EDIT_LOG_EXTRA] = extra
         newrev[EDIT_LOG_COMMENT] = wikiutil.clean_input(comment)
-        newrev["mimetype"] = "text/x-unidentified-wiki-format"
+        newrev[MIMETYPE] = "text/x-unidentified-wiki-format"
 
         self._item.commit()
         self.reset()
@@ -353,7 +354,7 @@ class PageEditor(Page):
             newtext = self._expand_variables(newtext)
 
         msg = ""
-        if not request.user.may.save(self, newtext, rev, **kw):
+        if not request.user.may.write(self.page_name):
             msg = _('You are not allowed to edit this page!')
             raise self.AccessDenied, msg
         elif not newtext:
@@ -363,18 +364,6 @@ class PageEditor(Page):
             msg = _('You did not change the page content, not saved!')
             self.lock.release()
             raise self.Unchanged, msg
-        else:
-            from MoinMoin.security import parseACL
-            # Get current ACL and compare to new ACL from newtext. If
-            # they are not the sames, the user must have admin
-            # rights. This is a good place to update acl cache - instead
-            # of wating for next request.
-            acl = self.getACL()
-            if (not request.user.may.admin(self.page_name) and
-                parseACL(request, newtext).acl != acl.acl and
-                action != "SAVE/REVERT"):
-                msg = _("You can't change ACLs on this page since you have no admin rights on it!")
-                raise self.NoAdmin, msg
 
         presave = PagePreSaveEvent(request, self, newtext)
         results = send_event(presave)

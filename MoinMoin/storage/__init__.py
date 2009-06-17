@@ -8,15 +8,16 @@
     A concrete backend implements the abstract methods defined by the API,
     but also uses concrete methods that have already been defined in this
     module.
-    A backend is a collection of items. (Examples for backends include SQL,
-    mercurial or filesystem. All of those are means to store data.)
+    A backend is a collection of items. Examples for backends include SQL,
+    mercurial or filesystem. All of those are means to store data.
 
     Items are the units you store within those backends. You can store content
     of arbitrary type in an item, e.g. text, images or even films.
+
     An item itself has revisions and metadata. For instance, you can use that
     to show a diff between two `versions` of a page, where the page "Foo" is
-    represented by an item and the two versions  are represented by two
-    revisions on that item.
+    represented by an item and the two versions are represented by two
+    revisions of that item.
 
     Metadata is data that describes other data. An item has metadata. Each
     revision has metadata as well. E.g. "Which user created this revision?"
@@ -36,6 +37,9 @@
                 2008 MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
 """
+
+from xml.sax.saxutils import XMLGenerator
+import base64
 
 from UserDict import DictMixin
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
@@ -57,7 +61,7 @@ class Backend(object):
     # to, you can do it as well.
     # Assuming my_item is instanceof(Item), when you call
     # my_item.create_revision(42), internally the
-    # _create_revision() method of the items backend is
+    # _create_revision() method of the item's backend is
     # invoked and the item passes itself as parameter.
     #
     def search_item(self, searchterm):
@@ -120,8 +124,8 @@ class Backend(object):
 
     def iteritems(self):
         """
-        Returns an iterator over all items available in this backend.
-        (Like the dict method).
+        Returns an iterator over all items available in this backend (like the
+        dict method).
 
         @rtype: iterator of item objects
         """
@@ -129,15 +133,14 @@ class Backend(object):
 
     def history(self, reverse=True):
         """
-        Returns an iterator over ALL revisions of ALL items stored in the
-        backend.
+        Returns an iterator over ALL revisions of ALL items stored in the backend.
 
-        If reverse is True (default), give history in reverse revision
-        timestamp order, otherwise in revision timestamp order.
+        If reverse is True (default), give history in reverse revision timestamp
+        order, otherwise in revision timestamp order.
 
         Note: some functionality (e.g. completely cloning one storage into
               another) requires that the iterator goes over really every
-              revision we have).
+              revision we have.
 
         @type reverse: bool
         @param reverse: Indicate whether the iterator should go in reverse order.
@@ -176,7 +179,7 @@ class Backend(object):
         """
         For a given item, return a list containing all revision numbers (as ints)
         of the revisions the item has. The list must be ordered, starting with
-        the oldest revision-number.
+        the oldest revision number.
         (One may decide to delete certain revisions completely at one point. For
         that case, list_revisions does not need to return subsequent revision
         numbers. _create_revision() on the other hand must only create
@@ -191,9 +194,9 @@ class Backend(object):
     def _create_revision(self, item, revno):
         """
         Takes an item object and creates a new revision. Note that you need to pass
-        a revision number for concurrency-reasons. The revno passed must be
-        greater than the revision number of the items most recent revision.
-        The newly created revision-object is returned to the caller.
+        a revision number for concurrency reasons. The revno passed must be
+        greater than the revision number of the item's most recent revision.
+        The newly created revision object is returned to the caller.
 
         @type item: Object of class Item.
         @param item: The Item on which we want to operate.
@@ -223,7 +226,7 @@ class Backend(object):
         @raises ItemAlreadyExistsError: Raised if an item with name 'newname'
         already exists.
         @raises AssertionError: Precondition not fulfilled. (Item not yet
-        committed to storage)
+        committed to storage) XXX maybe use more special exception
         @return: None
         """
         raise NotImplementedError()
@@ -233,7 +236,7 @@ class Backend(object):
         Commits the changes that have been done to a given item. That is, after you
         created a revision on that item and filled it with data you still need to
         commit() it. You need to pass the revision you want to commit. The item
-        can be looked up by the revisions 'item' property.
+        can be looked up by the revision's 'item' property.
 
         @type revision: Object of class NewRevision.
         @param revision: The revision we want to commit to  storage.
@@ -255,7 +258,8 @@ class Backend(object):
     def _change_item_metadata(self, item):
         """
         This method is used to acquire a lock on an item. This is necessary to prevent
-        side-effects caused by concurrency.
+        side effects caused by concurrency.
+
         You need to call this method before altering the metadata of the item.
         E.g.:   item.change_metadata()  # Invokes this method
                 item["metadata_key"] = "metadata_value"
@@ -275,23 +279,24 @@ class Backend(object):
         """
         This method tries to release a lock on the given item and put the newly
         added Metadata of the item to storage.
+
         You need to call this method after altering the metadata of the item.
         E.g.:   item.change_metadata()
                 item["metadata_key"] = "metadata_value"
                 item.publish_metadata()  # Invokes this method
 
-        The lock this method releases is acquired by the change_metadata method.
+        The lock this method releases is acquired by the _change_metadata method.
 
         @type item: Object of class Item.
         @param item: The Item on which we want to operate.
-        @raise AssertionError: item was not locked
+        @raise AssertionError: item was not locked XXX use more special exception
         @return: None
         """
         raise NotImplementedError()
 
     def _read_revision_data(self, revision, chunksize):
         """
-        Called to read a given amount of bytes of a revisions data. By default, all
+        Called to read a given amount of bytes of a revision's data. By default, all
         data is read.
 
         @type revision: Object of class StoredRevision.
@@ -304,7 +309,7 @@ class Backend(object):
 
     def _write_revision_data(self, revision, data):
         """
-        When this method is called, the passed data is written to the revisions data.
+        When this method is called, the passed data is written to the revision's data.
 
         @type revision: Object of class NewRevision.
         @param revision: The revision on which we want to operate.
@@ -336,9 +341,8 @@ class Backend(object):
 
     def _get_revision_timestamp(self, revision):
         """
-        Lazily load the revision's timestamp. If accessing it
-        is cheap, it can be given as a parameter to StoredRevision
-        instantiation instead.
+        Lazily load the revision's timestamp. If accessing it is cheap, it can
+        be given as a parameter to StoredRevision instantiation instead.
         Return the timestamp (a long).
 
         @type revision: Object of a subclass of Revision.
@@ -349,9 +353,9 @@ class Backend(object):
 
     def _get_revision_size(self, revision):
         """
-        Lazily access the revision's data size. This needs not be
-        implemented if all StoredRevision objects are instantiated
-        with the size= keyword parameter.
+        Lazily access the revision's data size. This needs not be implemented
+        if all StoredRevision objects are instantiated with the size= keyword
+        parameter.
 
         @type revision: Object of a subclass of Revision.
         @param revision: The revision on which we want to operate.
@@ -361,7 +365,7 @@ class Backend(object):
 
     def _seek_revision_data(self, revision, position, mode):
         """
-        Set the revisions cursor on the revisions data.
+        Set the revision's cursor on the revision's data.
 
         @type revision: Object of StoredRevision.
         @param revision: The revision on which we want to operate.
@@ -373,6 +377,15 @@ class Backend(object):
         @return: None
         """
         raise NotImplementedError()
+
+    def serialize(self, xmlfile):
+        xg = XMLGenerator(xmlfile, 'utf-8')
+        xg.startElement('backend', dict(namespace=''))
+        xg.startElement('items', {})
+        for item in self.iteritems():
+            item.serialize(xmlfile)
+        xg.endElement('items')
+        xg.endElement('backend')
 
 
 class Item(object, DictMixin):
@@ -409,22 +422,20 @@ class Item(object, DictMixin):
 
     def __setitem__(self, key, value):
         """
-        In order to access the items metadata you can use the well-known dict-like
-        semantics python-dictionaries offer. If you want to set a value,
+        In order to access the item's metadata you can use the well-known dict-like
+        semantics Python's dictionaries offer. If you want to set a value,
         my_item["key"] = "value" will do the trick. Note that keys must be of the
         type string (or unicode).
         Values must be of the type str, unicode or tuple, in which case every element
         of the tuple must be a string, unicode or tuple object.
-        You must wrap write-accesses to metadata in change_metadata/publish_metadata
-        calls.
+        You must wrap write accesses to metadata in change_metadata/publish_metadata calls.
         Keys starting with two underscores are reserved and cannot be used.
 
         @type key: str or unicode
         @param key: The keyword that is used to look up the corresponding value.
-        @type value: str, unicode, int, long float, bool, complex or a nested
-        tuple thereof.
+        @type value: str, unicode, int, long, float, bool, complex or a nested tuple thereof.
         @param value: The value that is referenced by the keyword `key` in this
-        specific items metadata-dict.
+        specific item's metadata dict.
         """
         if not self._locked:
             raise AttributeError("Cannot write to unlocked metadata")
@@ -443,8 +454,7 @@ class Item(object, DictMixin):
         Delete an item metadata key/value pair.
 
         @type key: str or unicode
-        @param key: Key identifying a unique key/value pair in this items
-        metadata.
+        @param key: Key identifying a unique key/value pair in this item's metadata.
         @postcondition: self[key] raises KeyError
         """
         if not self._locked:
@@ -458,7 +468,7 @@ class Item(object, DictMixin):
     def __getitem__(self, key):
         """
         See __setitem__.__doc__ -- You may use my_item["key"] to get the corresponding
-        metadata-value. Note however, that the key you pass must be of type str or unicode.
+        metadata value. Note however, that the key you pass must be of type str or unicode.
 
         @type key: str or unicode
         @param key: The key refering to the value we want to return.
@@ -476,8 +486,8 @@ class Item(object, DictMixin):
 
     def keys(self):
         """
-        This method returns a list of all metadata-keys of this item (i.e., a list of Strings.)
-        That allows using pythons `for mdkey in itemobj: do_something`-syntax.
+        This method returns a list of all metadata keys of this item (i.e., a list of Strings.)
+        That allows using Python's `for mdkey in itemobj: do_something` syntax.
 
         @return: list of metadata keys not starting with two leading underscores
         """
@@ -501,7 +511,7 @@ class Item(object, DictMixin):
 
     def publish_metadata(self):
         """
-        @see: Backend._publis_item_metadata.__doc__
+        @see: Backend._publish_item_metadata.__doc__
         """
         if not self._locked:
             raise AccessError("cannot publish without change_metadata")
@@ -564,13 +574,29 @@ class Item(object, DictMixin):
             self._uncommitted_revision = self._backend._create_revision(self, revno)
             return self._uncommitted_revision
 
+    def serialize(self, xmlfile):
+        xg = XMLGenerator(xmlfile, 'utf-8')
+        xg.startElement('item', dict(name=self.name))
+        xg.startElement('meta', {})
+        for k in self.keys():
+            xg.startElement('entry', dict(key=k))
+            xg.characters(self[k])
+            xg.endElement('entry')
+        xg.endElement('meta')
+        xg.startElement('revisions', {})
+        for revno in self.list_revisions():
+            rev = self.get_revision(revno)
+            rev.serialize(xmlfile)
+        xg.endElement('revisions')
+        xg.endElement('item')
+
 
 class Revision(object, DictMixin):
     """
     This class serves as superclass for StoredRevision and NewRevision.
     An object of either subclass represents a revision of an item. An item can have
     several revisions at a time, one being the most recent revision.
-    This is a principle that is similar to the concepts used in Version-Control-
+    This is a principle that is similar to the concepts used in Version Control
     Systems.
 
     Each revision object has a creation timestamp in the 'timestamp' property
@@ -586,7 +612,7 @@ class Revision(object, DictMixin):
         @type item: Object of class Item.
         @param item: The item to which this revision belongs.
         @type revno: int
-        @param revno: The unique number identifiyng this revision on the item.
+        @param revno: The unique number identifying this revision on the item.
         @type timestamp: int
         @param timestamp: int representing the UNIX time this revision was
         created. (UNIX time: seconds since the epoch, i.e. 1st of January 1970, 00:00 UTC)
@@ -604,11 +630,11 @@ class Revision(object, DictMixin):
 
     def get_revno(self):
         """
-        Getter for the read-only revno-property.
+        Getter for the read-only revno property.
         """
         return self._revno
 
-    revno = property(get_revno, doc=("This property stores the revno of the revision-object. "
+    revno = property(get_revno, doc=("This property stores the revno of the revision object. "
                                      "Only read-only access is allowed."))
 
     def _load_metadata(self):
@@ -651,7 +677,7 @@ class StoredRevision(Revision):
     """
     def __init__(self, item, revno, timestamp=None, size=None):
         """
-        Initialize the NewRevision
+        Initialize the StoredRevision
         """
         Revision.__init__(self, item, revno, timestamp)
         self._size = size
@@ -690,10 +716,32 @@ class StoredRevision(Revision):
         """
         self._backend._seek_revision_data(self, position, mode)
 
+    def serialize(self, xmlfile):
+        xg = XMLGenerator(xmlfile, 'utf-8')
+        xg.startElement('revision', dict(revno=str(self.revno)))
+        xg.startElement('meta', {})
+        for k in self.keys():
+            xg.startElement('entry', dict(key=k))
+            xg.characters(self[k])
+            xg.endElement('entry')
+        xg.endElement('meta')
+        xg.startElement('data', dict(coding='base64'))
+        chunksize = 4096
+        while True:
+            data = self.read(chunksize)
+            if not data:
+                break
+            data = base64.b64encode(data)
+            xg.startElement('chunk', {})
+            xg.characters(data)
+            xg.endElement('chunk')
+        xg.endElement('data')
+        xg.endElement('revision')
+
 
 class NewRevision(Revision):
     """
-    This is basically the same as revision but with mutable metadata and data properties.
+    This is basically the same as Revision but with mutable metadata and data properties.
     """
     def __init__(self, item, revno):
         """
@@ -724,8 +772,7 @@ class NewRevision(Revision):
 
         @type key: str or unicode
         @param key: The keyword that is used to look up the corresponding value.
-        @type value: str, unicode, int, long float, bool, complex or a nested
-        tuple thereof.
+        @type value: str, unicode, int, long, float, bool, complex or a nested tuple thereof.
         @param value: The value that is referenced by the keyword `key` in this
         specific items metadata-dict.
         """
@@ -757,12 +804,10 @@ def value_type_is_valid(value):
     """
     For metadata-values, we allow only immutable types, namely:
     str, unicode, bool, int, long, float, complex and tuple.
-    Since tuples can contain other types, we need to check the
-    types recursively.
+    Since tuples can contain other types, we need to check the types recursively.
 
     @type value: str, unicode, int, long, float, complex, tuple
-    @param value: A value of which we want to know if it is a valid metadata
-    value.
+    @param value: A value of which we want to know if it is a valid metadata value.
     @return: bool
     """
     if isinstance(value, (bool, str, unicode, int, long, float, complex)):
@@ -773,3 +818,4 @@ def value_type_is_valid(value):
                 return False
         else:
             return True
+

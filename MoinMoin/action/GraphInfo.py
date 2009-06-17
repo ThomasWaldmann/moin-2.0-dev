@@ -16,8 +16,9 @@ from mercurial.templatefilters import json
 from MoinMoin import wikiutil
 from MoinMoin import user
 from MoinMoin.widget import html
-from MoinMoin.Page import Page, EDIT_LOG_ACTION, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
-                          EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
+from MoinMoin.Page import Page
+from MoinMoin.items import EDIT_LOG_ACTION, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 
 
 def execute(pagename, request):

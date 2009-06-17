@@ -11,11 +11,11 @@
 import os
 import shutil
 import tempfile
-import sha
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin import config
 from MoinMoin.util import filesys, lock, pickle, PICKLE_PROTOCOL
 
@@ -27,7 +27,7 @@ class CacheError(Exception):
 
 def get_arena_dir(request, arena, scope):
     if scope == 'item': # arena is a Page instance
-        return os.path.join(request.cfg.cache_dir, 'page', sha.new(arena.page_name.encode('utf-8')).hexdigest())
+        return os.path.join(request.cfg.cache_dir, 'page', hash_new('sha1', arena.page_name.encode('utf-8')).hexdigest())
     elif scope == 'wiki':
         return os.path.join(request.cfg.cache_dir, request.cfg.siteid, arena)
     elif scope == 'farm':

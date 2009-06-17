@@ -8,95 +8,85 @@
 
     This backend stores no item metadata and no old revisions, as such
     you cannot use it safely for a wiki. Inside the MoinMoin source tree,
-    however, the wiki contents is additionally kept under source control,
+    however, the wiki content is additionally kept under source control,
     therefore this backend is actually useful to edit documentation that
     is part of MoinMoin.
 
     The backend _does_ store some revision metadata, namely that which
     used to traditionally be part of the page header.
 
-    @copyright: 2008 MoinMoin:JohannesBerg
+    @copyright: 2008 MoinMoin:JohannesBerg,
+                2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
 import os, re
 from cStringIO import StringIO
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError
-from MoinMoin.wikiutil import add_metadata_to_body, split_body
-from MoinMoin.Page import EDIT_LOG, EDIT_LOG_ACTION
+from MoinMoin.wikiutil import add_metadata_to_body, split_body, quoteWikinameFS, unquoteWikiname
+from MoinMoin.items import MIMETYPE, EDIT_LOG, EDIT_LOG_ACTION
 
 class FlatFileBackend(Backend):
     def __init__(self, path):
         """
-        Initialise filesystem backend, creating initial files and
-        some internal structures.
+        Initialise filesystem backend, creating initial files and some internal structures.
 
         @param path: storage path
         """
         self._path = path
 
-    _noquote_re = re.compile('[A-Za-z0-9 ()-]')
-    _unquote_re = re.compile('_[a-fA-F0-9]{2}|.')
-
     def _quote(self, name):
-        name = name.encode('utf-8')
-        res = []
-        for c in name:
-            if not self._noquote_re.match(c):
-                res.append('_%.2x' % ord(c))
-            else:
-                res.append(c)
-        return ''.join(res)
+        return quoteWikinameFS(name)
 
     def _unquote(self, name):
-        res = []
-        for c in self._unquote_re.findall(name):
-            if c[0] == '_':
-                res.append('%c' % int(c[1:], 16))
-            else:
-                res.append(c)
-        return ''.join(res).decode('utf-8')
+        return unquoteWikiname(name)
+
+    def _rev_path(self, name):
+        return os.path.join(self._path, self._quote(name))
+
+    def _exists(self, name):
+        revpath = self._rev_path(name)
+        return os.path.exists(revpath)
 
     def history(self, reverse=True):
-        list = [i.get_revision(-1) for i in self.iteritems()]
-        list.sort(lambda x, y: cmp(x.timestamp, y.timestamp))
+        rev_list = [i.get_revision(-1) for i in self.iteritems()]
+        rev_list.sort(lambda x, y: cmp(x.timestamp, y.timestamp))
         if reverse:
-            list.reverse()
-        return iter(list)
+            rev_list.reverse()
+        return iter(rev_list)
 
     def get_item(self, itemname):
-        quoted = self._quote(itemname)
-        path = os.path.join(self._path, quoted)
-
+        if not self._exists(itemname):
+            raise NoSuchItemError("No such item, %r" % (itemname))
         return Item(self, itemname)
 
     def has_item(self, itemname):
-        return self.get_item(itemname) is not None
+        return self._exists(itemname)
 
     def create_item(self, itemname):
         if not isinstance(itemname, (str, unicode)):
-            raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
+            raise TypeError("Item names must have string type, not %s" % (type(itemname)))
         elif self.has_item(itemname):
             raise ItemAlreadyExistsError("An Item with the name %r already exists!" % (itemname))
-
-        item = Item(self, itemname)
-
-        return item
+        return Item(self, itemname)
 
     def iteritems(self):
-        files = os.listdir(self._path)
-        for f in files:
-            yield Item(self, self._unquote(f))
+        filenames = os.listdir(self._path)
+        for filename in filenames:
+            yield Item(self, self._unquote(filename))
 
     def _get_revision(self, item, revno):
         if revno > 0:
             raise NoSuchRevisionError("No Revision #%d on Item %s" % (revno, item.name))
 
-        revpath = os.path.join(self._path, self._quote(item.name))
+        revpath = self._rev_path(item.name)
         if not os.path.exists(revpath):
             raise NoSuchRevisionError("No Revision #%d on Item %s" % (revno, item.name))
 
@@ -107,15 +97,16 @@ class FlatFileBackend(Backend):
         for e in EDIT_LOG:
             rev._metadata[e] = ''
         rev._metadata[EDIT_LOG_ACTION] = 'SAVE'
+        rev._metadata[MIMETYPE] = 'text/moin-wiki' # XXX get this from PI
         rev._data = StringIO(data)
         rev._data_size = len(data)
         return rev
 
     def _list_revisions(self, item):
-        p = os.path.join(self._path, self._quote(item.name))
-        if os.path.exists(p):
+        if self._exists(item.name):
             return [0]
-        return []
+        else:
+            return []
 
     def _create_revision(self, item, revno):
         assert revno <= 1
@@ -125,14 +116,13 @@ class FlatFileBackend(Backend):
 
     def _rename_item(self, item, newname):
         try:
-            os.rename(os.path.join(self._path, self._quote(item.name)),
-                      os.path.join(self._path, self._quote(newname)))
+            os.rename(self._rev_path(item.name), self._rev_path(newname))
         except OSError:
             raise ItemAlreadyExistsError('')
 
     def _commit_item(self, rev):
-        p = os.path.join(self._path, self._quote(item.name))
-        f = open(p, 'wb')
+        revpath = self._rev_path(rev.item.name)
+        f = open(revpath, 'wb')
         rev._data.seek(0)
         data = rev._data.read()
         data = add_metadata_to_body(rev, data)
@@ -158,11 +148,12 @@ class FlatFileBackend(Backend):
         return {}
 
     def _get_revision_timestamp(self, rev):
-        p = os.path.join(self._path, self._quote(rev.item.name))
-        return os.stat(p).st_ctime
+        revpath = self._rev_path(rev.item.name)
+        return os.stat(revpath).st_ctime
 
     def _get_revision_size(self, rev):
         return rev._data_size
 
     def _seek_revision_data(self, rev, position, mode):
         rev._data.seek(position, mode)
+

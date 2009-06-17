@@ -7,10 +7,11 @@
     @license: GNU GPL, see COPYING for details.
 """
 from MoinMoin.web.contexts import AllContext, Context, XMLRPCContext
-from MoinMoin.web.exceptions import HTTPException
+from MoinMoin.web.exceptions import HTTPException, Forbidden
 from MoinMoin.web.request import Request, MoinMoinFinish, HeaderSet
 from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_response, \
     redirect_last_visited
+from MoinMoin.storage.error import AccessDeniedError
 from MoinMoin.Page import Page
 from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
 
@@ -42,6 +43,15 @@ def init(request):
     context.clock.stop('init')
     return context
 
+def init_backend(context):
+    """ initialize the backend
+
+        This is separate from init because the conftest request setup needs to be
+        able to create fresh data storage backends in between init and init_backend.
+    """
+    from MoinMoin.storage.backends.acl import AclWrapperBackend
+    context.data_backend = AclWrapperBackend(context)
+
 def run(context):
     """ Run a context trough the application. """
     context.clock.start('run')
@@ -66,6 +76,8 @@ def run(context):
             return response
         except MoinMoinFinish:
             return request
+        except AccessDeniedError:
+            return Forbidden()
     finally:
         context.clock.stop('run')
 
@@ -218,6 +230,7 @@ class Application(object):
         try:
             request = self.Request(environ)
             context = init(request)
+            init_backend(context)
             response = run(context)
             context.clock.stop('total')
         except HTTPException, e:

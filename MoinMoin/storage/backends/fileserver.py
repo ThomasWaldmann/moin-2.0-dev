@@ -23,9 +23,9 @@ from MoinMoin import wikiutil, config
 from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
-from MoinMoin.Page import ACL, \
-                          EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                          EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+from MoinMoin.items import ACL, MIMETYPE, \
+                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
+                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
 class FSError(Exception):
@@ -155,6 +155,8 @@ class FileDirRevision(StoredRevision):
         if revno > 0:
             raise NoSuchRevisionError('Item %r has no revision %d (filesystem items just have revno 0)!' %
                     (item.name, revno))
+        if revno == -1:
+            revno = 0
         StoredRevision.__init__(self, item, revno)
         filepath = item._fs_filepath
         st = item._fs_stat
@@ -177,14 +179,27 @@ class DirRevision(FileDirRevision):
     def __init__(self, item, revno):
         FileDirRevision.__init__(self, item, revno)
         self._fs_meta.update({
-            'mimetype': 'text/x-unidentified-wiki-format',  # XXX crap
+            MIMETYPE: 'text/moin-wiki',
             'format': 'wiki',
         })
         # create a directory "page" in wiki markup:
         try:
-            files = os.listdir(self._fs_data_fname)
-            content = [u" * [[/%s]]" % f for f in files]
-            content = u'= Directory contents =\r\n' + u'\r\n'.join(content)
+            dirs = []
+            files = []
+            names = os.listdir(self._fs_data_fname)
+            for name in names:
+                filepath = os.path.join(self._fs_data_fname, name)
+                if os.path.isdir(filepath):
+                    dirs.append(name)
+                else:
+                    files.append(name)
+            content = [
+                u"= Directory contents =",
+                u" * [[../]]",
+            ]
+            content.extend(u" * [[/%s|%s/]]" % (name, name) for name in sorted(dirs))
+            content.extend(u" * [[/%s|%s]]" % (name, name) for name in sorted(files))
+            content = u'\r\n'.join(content)
         except OSError, err:
             content = unicode(err)
         self._fs_data_file = StringIO(content.encode(config.charset))
@@ -193,12 +208,8 @@ class FileRevision(FileDirRevision):
     """ A filesystem file """
     def __init__(self, item, revno):
         FileDirRevision.__init__(self, item, revno)
-
-        # XXX some other code crashes currently, if a toplevel
-        # XXX item has a different mimetype than hardcoded below:
-        #mimetype = wikiutil.MimeType(filename=filepath).mime_type()
+        mimetype = wikiutil.MimeType(filename=self._fs_data_fname).mime_type()
         self._fs_meta.update({
-            'mimetype': 'text/x-unidentified-wiki-format', # XXX crap
-            'format': 'plain',
+            MIMETYPE: mimetype,
         })
 
