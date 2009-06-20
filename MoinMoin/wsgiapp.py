@@ -76,8 +76,10 @@ def run(context):
             return response
         except MoinMoinFinish:
             return request
-        except AccessDeniedError:
-            return Forbidden()
+        except AccessDeniedError, ade:
+            forbidden = Forbidden()
+            forbidden.description = ade.message
+            return forbidden
     finally:
         context.clock.stop('run')
 

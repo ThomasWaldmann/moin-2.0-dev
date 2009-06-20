@@ -25,7 +25,14 @@ class AccessDeniedError(AccessError):
     """
     Raised if the required rights are not available to perform the action.
     """
-    def __init__(self, message='Permission denied!'):
+    def __init__(self, user=None, priv=None, item=None):
+        if user is None or priv is None or item is None:
+            message = "Permission denied!"
+
+        else:
+            user = user or "You"
+            message = "%s may not %s '%s'." % (user, priv, item)
+
         AccessError.__init__(self, message)
 
 class LockingError(AccessError):
