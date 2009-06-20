@@ -256,8 +256,8 @@ class AclWrapperItem(Item):
             def wrapped_f(self, *args, **kwargs):
                 for privilege in privileges:
                     if not self._may(self.name, privilege):
-                        user = self._backend.request.user.name
-                        raise AccessDeniedError(user, privilege, self.name)
+                        username = self._backend.request.user.name
+                        raise AccessDeniedError(username, privilege, self.name)
                 return f(self, *args, **kwargs)
             return wrapped_f
         return wrap
@@ -328,8 +328,8 @@ class AclWrapperItem(Item):
         # XXX Special case since we need to check newname as well.
         #     Maybe find a proper solution.
         if not self._may(newname, WRITE):
-            user = self._backend.request.user.name
-            raise AccessDeniedError(user, WRITE, newname)
+            username = self._backend.request.user.name
+            raise AccessDeniedError(username, WRITE, newname)
         return self._item.rename(newname)
 
     @require_privilege(WRITE)
@@ -398,8 +398,8 @@ class AclWrappedNewRevision(NewRevision):
             acl_changed = not (value == last_acl)
 
             if acl_changed and not self._may(self._item.name, ADMIN):
-                user = self._item._backend.request.user.name
-                raise AccessDeniedError(user, ADMIN, self._item.name)
+                username = self._item._backend.request.user.name
+                raise AccessDeniedError(username, ADMIN, self._item.name)
         return self._revision.__setitem__(key, value)
 
     def __getitem__(self, key):
