@@ -94,7 +94,7 @@ class AclWrapperBackend(object):
         @see: Backend.get_item.__doc__
         """
         if not self._may(itemname, READ):
-            raise AccessDeniedError()
+            raise AccessDeniedError(request.user.name, READ, itemname)
         # Wrap the item here as well.
         real_item = self.backend.get_item(itemname)
         wrapped_item = AclWrapperItem(real_item, self)
