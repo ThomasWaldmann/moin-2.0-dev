@@ -814,11 +814,13 @@ var search_hint = "%(search_hint)s";
         page = d['page']
         if 'modify' in self.request.cfg.actions_excluded:
             return ""
-        if not (page.exists() and self.request.user.may.write(page.page_name)):
-            return ""
+        may_write = self.request.user.may.write(page.page_name)
+        if not (page.exists() and may_write):
+            return ""  # Why ""?
         _ = self.request.getText
         querystr = {'do': 'modify'}
-        text = _(u'Modify')
+        # XXX is this actually used?
+        text = _(u'Modify') if may_write else _(u'Immutable Page')
         url = page.url(self.request, querystr=querystr, escape=0)
         return (u'<link rel="alternate" type="application/wiki" '
                 u'title="%s" href="%s">' % (text, url))
@@ -1089,8 +1091,10 @@ actionsMenuInit('%(label)s');
 
         _ = self.request.getText
         querystr = {'do': 'modify'}
-        text = _('Modify')
+        may_write = self.request.user.may.write(page.page_name)
+        text = _(u'Modify') if may_write else _(u'Immutable Page')
         attrs = {'rel': 'nofollow', }
+        # TODO: Remove link alltogether when item immutable
         return page.link_to(self.request, text=text, querystr=querystr, **attrs)
 
     def downloadLink(self, page):
