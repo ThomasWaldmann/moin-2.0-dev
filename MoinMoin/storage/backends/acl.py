@@ -398,7 +398,7 @@ class AclWrappedNewRevision(NewRevision):
             acl_changed = not (value == last_acl)
 
             if acl_changed and not self._may(self._item.name, ADMIN):
-                user = self._backend.request.user.name
+                user = self._item._backend.request.user.name
                 raise AccessDeniedError(user, ADMIN, self._item.name)
         return self._revision.__setitem__(key, value)
 
