@@ -94,7 +94,7 @@ class AclWrapperBackend(object):
         @see: Backend.get_item.__doc__
         """
         if not self._may(itemname, READ):
-            raise AccessDeniedError(request.user.name, READ, itemname)
+            raise AccessDeniedError(self.request.user.name, READ, itemname)
         # Wrap the item here as well.
         real_item = self.backend.get_item(itemname)
         wrapped_item = AclWrapperItem(real_item, self)
@@ -113,7 +113,7 @@ class AclWrapperBackend(object):
         @see: Backend.create_item.__doc__
         """
         if not self._may(itemname, WRITE):
-            raise AccessDeniedError()
+            raise AccessDeniedError(self.request.user.name, WRITE, itemname)
         # Wrap item.
         real_item = self.backend.create_item(itemname)
         wrapped_item = AclWrapperItem(real_item, self)
@@ -256,7 +256,8 @@ class AclWrapperItem(Item):
             def wrapped_f(self, *args, **kwargs):
                 for privilege in privileges:
                     if not self._may(self.name, privilege):
-                        raise AccessDeniedError()
+                        user = self._backend.request.user.name
+                        raise AccessDeniedError(user, privilege, self.name)
                 return f(self, *args, **kwargs)
             return wrapped_f
         return wrap
@@ -327,7 +328,8 @@ class AclWrapperItem(Item):
         # XXX Special case since we need to check newname as well.
         #     Maybe find a proper solution.
         if not self._may(newname, WRITE):
-            raise AccessDeniedError()
+            user = self._backend.request.user.name
+            raise AccessDeniedError(user, WRITE, newname)
         return self._item.rename(newname)
 
     @require_privilege(WRITE)
@@ -396,7 +398,8 @@ class AclWrappedNewRevision(NewRevision):
             acl_changed = not (value == last_acl)
 
             if acl_changed and not self._may(self._item.name, ADMIN):
-                raise AccessDeniedError()
+                user = self._backend.request.user.name
+                raise AccessDeniedError(user, ADMIN, self._item.name)
         return self._revision.__setitem__(key, value)
 
     def __getitem__(self, key):
