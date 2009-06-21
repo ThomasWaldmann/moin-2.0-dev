@@ -163,8 +163,18 @@ class Converter(ConverterMacro):
         (?P<macro>
             <<
             (?P<macro_name> \w+)
-            (\( (?P<macro_args> .*?) \))? \s*
-            ([|] \s* (?P<macro_text> .+?) \s* )?
+            (
+                \(
+                (?P<macro_args> .*?)
+                \)
+            )?
+            \s*
+            (
+                [|]
+                \s*
+                (?P<macro_text> .+?)
+                \s*
+            )?
             >>
         )
         \s*?
@@ -172,10 +182,12 @@ class Converter(ConverterMacro):
     """
 
     def block_macro_repl(self, _iter_content, stack, macro, macro_name,
-            macro_args=u''):
+            macro_args=None, macro_text=None):
         """Handles macros using the placeholder syntax."""
         stack.clear()
 
+        if macro_args:
+            macro_args = parse_arguments(macro_args)
         elem = self.macro(macro_name, macro_args, macro, True)
         stack.top_append_ifnotempty(elem)
 
@@ -388,15 +400,28 @@ class Converter(ConverterMacro):
         (?P<macro>
             <<
             (?P<macro_name> \w+)
-            (\( (?P<macro_args> .*?) \))? \s*
-            ([|] \s* (?P<macro_text> .+?) \s* )?
+            (?:
+                \(
+                (?P<macro_args> .*?)
+                \)
+            )?
+            \s*
+            (
+                [|]
+                \s*
+                (?P<macro_text> .+?)
+                \s*
+            )?
             >>
         )
     """
 
-    def inline_macro_repl(self, stack, macro, macro_name, macro_args=u''):
+    def inline_macro_repl(self, stack, macro, macro_name,
+            macro_args=None, macro_text=None):
         """Handles macros using the placeholder syntax."""
 
+        if macro_args:
+            macro_args = parse_arguments(macro_args)
         elem = self.macro(macro_name, macro_args, macro)
         stack.top_append(elem)
 
