@@ -127,7 +127,7 @@ class ConverterMacro(object):
             for key, value in args.items():
                 attrib = {}
                 if key:
-                    attrib['name'] = key
+                    attrib[moin_page.name] = key
                 elem_arg = moin_page.argument(attrib=attrib, children=(value, ))
                 elem_arguments.append(elem_arg)
 
