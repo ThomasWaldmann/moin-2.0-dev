@@ -245,6 +245,14 @@ class AclWrapperItem(Item):
         """
         return self._item.name
 
+    # needed by storage.serialization:
+    @property
+    def element_name(self):
+        return self._item.element_name
+    @property
+    def element_attrs(self):
+        return self._item.element_attrs
+
     def require_privilege(*privileges):
         """
         This decorator is used in order to avoid code duplication

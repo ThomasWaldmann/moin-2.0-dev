@@ -12,10 +12,9 @@ import py
 
 from StringIO import StringIO
 
-from MoinMoin.storage._tests.test_backends import BackendTest
-from MoinMoin.storage.backends.memory import MemoryBackend
 from MoinMoin.storage.error import ItemAlreadyExistsError
 from MoinMoin.conftest import init_test_request
+from MoinMoin.storage.serialization import Entry, create_value_object
 
 class TestSerializer(object):
 
@@ -40,7 +39,7 @@ class TestSerializer(object):
         xml = xmlfile.getvalue()
         assert xml == ('<revision revno="0">'
                        '<meta>'
-                       '<entry key="m1">m1</entry>'
+                       '<entry key="m1"><str>m1</str></entry>'
                        '</meta>'
                        '<data coding="base64"><chunk>YmFyMQ==</chunk></data>'
                        '</revision>')
@@ -58,16 +57,14 @@ class TestSerializer(object):
         print xml
         assert xml == ('<item name="foo2">'
                        '<meta></meta>'
-                       '<revisions>'
                        '<revision revno="0">'
-                       '<meta><entry key="m1">m1</entry></meta>'
+                       '<meta><entry key="m1"><str>m1</str></entry></meta>'
                        '<data coding="base64"><chunk>YmFyMg==</chunk></data>'
                        '</revision>'
                        '<revision revno="1">'
-                       '<meta><entry key="m2">m2</entry></meta>'
+                       '<meta><entry key="m2"><str>m2</str></entry></meta>'
                        '<data coding="base64"><chunk>YmF6Mg==</chunk></data>'
                        '</revision>'
-                       '</revisions>'
                        '</item>')
 
     def test_serialize_backend(self):
@@ -81,48 +78,71 @@ class TestSerializer(object):
         self.request.data_backend.serialize(xmlfile)
         xml = xmlfile.getvalue()
         print xml
-        assert xml == ('<backend namespace="">'
-                       '<items>'
+        assert xml == ('<backend>'
                        '<item name="bar3">'
                        '<meta></meta>'
-                       '<revisions>'
                        '<revision revno="0">'
                        '<meta></meta>'
                        '<data coding="base64"></data>'
                        '</revision>'
-                       '</revisions>'
                        '</item>'
                        '<item name="foo1">'
                        '<meta></meta>'
-                       '<revisions><revision revno="0">'
-                       '<meta><entry key="m1">m1</entry></meta>'
+                       '<revision revno="0">'
+                       '<meta><entry key="m1"><str>m1</str></entry></meta>'
                        '<data coding="base64"><chunk>YmFyMQ==</chunk></data>'
                        '</revision>'
-                       '</revisions>'
                        '</item>'
                        '<item name="foo2">'
                        '<meta></meta>'
-                       '<revisions>'
                        '<revision revno="0">'
-                       '<meta><entry key="m1">m1</entry></meta>'
+                       '<meta><entry key="m1"><str>m1</str></entry></meta>'
                        '<data coding="base64"><chunk>YmFyMg==</chunk></data>'
                        '</revision>'
                        '<revision revno="1">'
-                       '<meta><entry key="m2">m2</entry></meta>'
+                       '<meta><entry key="m2"><str>m2</str></entry></meta>'
                        '<data coding="base64"><chunk>YmF6Mg==</chunk></data>'
                        '</revision>'
-                       '</revisions>'
                        '</item>'
                        '<item name="foo3">'
                        '<meta></meta>'
-                       '<revisions>'
                        '<revision revno="0">'
                        '<meta></meta>'
                        '<data coding="base64"></data>'
                        '</revision>'
-                       '</revisions>'
                        '</item>'
-                       '</items>'
                        '</backend>')
 
+
+class TestSerializer2(object):
+    def test_Entry(self):
+        test_data = [
+            ('foo', 'bar', '<entry key="foo"><str>bar</str></entry>'),
+            (u'foo', u'bar', '<entry key="foo"><unicode>bar</unicode></entry>'),
+        ]
+        for k, v, expected_xml in test_data:
+            e = Entry(k, v)
+            xmlfile = StringIO()
+            e.serialize(xmlfile)
+            xml = xmlfile.getvalue()
+            assert xml == expected_xml
+
+    def test_Values(self):
+        test_data = [
+            ('bar', '<str>bar</str>'),
+            (u'bar', '<unicode>bar</unicode>'),
+            (42, '<int>42</int>'),
+            (True, '<bool>True</bool>'),
+            (23.42, '<float>23.42</float>'),
+            (complex(1.2,2.3), '<complex>(1.2+2.3j)</complex>'),
+            ((1, 2), '<tuple><int>1</int><int>2</int></tuple>'),
+            ((1, 'bar'), '<tuple><int>1</int><str>bar</str></tuple>'),
+            ((1, ('bar', 'baz')), '<tuple><int>1</int><tuple><str>bar</str><str>baz</str></tuple></tuple>'),
+        ]
+        for v, expected_xml in test_data:
+            v = create_value_object(v)
+            xmlfile = StringIO()
+            v.serialize(xmlfile)
+            xml = xmlfile.getvalue()
+            assert xml == expected_xml
 
