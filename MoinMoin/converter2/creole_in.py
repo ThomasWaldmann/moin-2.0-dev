@@ -102,14 +102,10 @@ class Converter(ConverterMacro):
         if input == 'text/creole' and output == 'application/x-moin-document':
             return cls
 
-    def __init__(self, request, page_url=None, _args=None):
-        super(Converter, self).__init__(request)
-        self.page_url = page_url
-
-    def __call__(self, content):
+    def __call__(self, content, page_url=None, arguments=None):
         attrib = {}
-        if self.page_url:
-            attrib[moin_page.page_href] = unicode(self.page_url)
+        if page_url:
+            attrib[moin_page.page_href] = unicode(page_url)
 
         body = moin_page.body()
         root = moin_page.page(attrib=attrib, children=[body])
@@ -260,7 +256,7 @@ class Converter(ConverterMacro):
                 mimetype = wikiutil.MimeType(name).mime_type()
                 converter = reg.get(self.request, mimetype, 'application/x-moin-document')
 
-                doc = converter(self.request, self.page_url, ' '.join(args[0]))(lines)
+                doc = converter(self.request)(lines)
                 stack.top_append(doc)
 
         else:
