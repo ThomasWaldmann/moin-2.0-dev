@@ -32,7 +32,34 @@ class TestConverter(object):
     def setup_class(self):
         self.conv = ConverterMacro(self.request)
 
-    def test(self):
+    def test_macro(self):
+        data = [
+            ('Macro', None, 'text',
+                '<page alt="text" content-type="x-moin/macro;name=Macro" %s />' % namespaces_string,
+                '<inline-part alt="text" content-type="x-moin/macro;name=Macro" %s />' % namespaces_string),
+            ('Macro', Arguments([u'arg1']), 'text',
+                '<page alt="text" content-type="x-moin/macro;name=Macro" %s><arguments><argument>arg1</argument></arguments></page>' % namespaces_string,
+                '<inline-part alt="text" content-type="x-moin/macro;name=Macro" %s><arguments><argument>arg1</argument></arguments></inline-part>' % namespaces_string),
+        ]
+        for name, args, text, output_block, output_inline in data:
+            yield (self._do, name, args, text, True, output_block)
+            yield (self._do, name, args, text, False, output_inline)
+
+    def test_macro_arguments(self):
+        data = [
+            ('Macro', None, 'text',
+                '<inline-part alt="text" content-type="x-moin/macro;name=Macro" %s />' % namespaces_string),
+            ('Macro', Arguments([u'arg1', u'arg2']), 'text',
+                '<inline-part alt="text" content-type="x-moin/macro;name=Macro" %s><arguments><argument>arg1</argument><argument>arg2</argument></arguments></inline-part>' % namespaces_string),
+            ('Macro', Arguments([], {'key': 'value'}), 'text',
+                '<inline-part alt="text" content-type="x-moin/macro;name=Macro" %s><arguments><argument name="key">value</argument></arguments></inline-part>' % namespaces_string),
+            ('Macro', Arguments([u'arg1', u'arg2'], {'key': 'value'}), 'text',
+                '<inline-part alt="text" content-type="x-moin/macro;name=Macro" %s><arguments><argument>arg1</argument><argument>arg2</argument><argument name="key">value</argument></arguments></inline-part>' % namespaces_string),
+        ]
+        for name, args, text, output in data:
+            yield (self._do, name, args, text, False, output)
+
+    def test_pseudomacro(self):
         data = [
             ('BR', None, 'text',
                 None,
