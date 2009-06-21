@@ -3,7 +3,7 @@ MoinMoin - Macro and pseudo-macro handling
 
 Base class for wiki parser with macro support.
 
-@copyright: 2008 MoinMoin:BastianBlank
+@copyright: 2008,2009 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -17,12 +17,12 @@ class ConverterMacro(object):
     def __init__(self, request):
         self.request = request
 
-    def _BR_repl(self, args, text, context):
-        if context == 'block':
+    def _BR_repl(self, args, text, context_block):
+        if context_block:
             return
         return moin_page.line_break()
 
-    def _FootNote_repl(self, args, text, context):
+    def _FootNote_repl(self, args, text, context_block):
         if args is None:
             # TODO: footnote placing
             return
@@ -33,7 +33,7 @@ class ConverterMacro(object):
         attrib = {moin_page.note_class: 'footnote'}
         elem = moin_page.note(attrib=attrib, children=[elem_body])
 
-        if context == 'block':
+        if context_block:
             return moin_page.p(children=[elem])
         return elem
 
@@ -91,14 +91,14 @@ class ConverterMacro(object):
 
         return xinclude.include(attrib=attrib)
 
-    def _Include_repl(self, args, text, context):
-        if context == 'inline':
+    def _Include_repl(self, args, text, context_block):
+        if not context_block:
             return text
 
         return wikiutil.invoke_extension_function(self.request, self._Include_macro, args)
 
-    def _TableOfContents_repl(self, args, text, context):
-        if context == 'inline':
+    def _TableOfContents_repl(self, args, text, context_block):
+        if not context_block:
             return text
 
         attrib = {}
@@ -111,16 +111,16 @@ class ConverterMacro(object):
 
         return moin_page.table_of_content(attrib=attrib)
 
-    def macro(self, name, args, text, context):
+    def macro(self, name, args, text, context_block=False):
         func = getattr(self, '_%s_repl' % name, None)
         if func is not None:
-            return func(args, text, context)
+            return func(args, text, context_block)
 
         attrib = {
             moin_page.alt: text,
             moin_page.content_type: 'x-moin/macro;name=' + name,
         }
-        if context == 'inline':
+        if not context_block:
             return moin_page.inline_part(attrib)
         return moin_page.page(attrib)
 
