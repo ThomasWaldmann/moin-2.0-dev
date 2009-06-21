@@ -15,6 +15,11 @@ def test_parse():
     assert a.positional == [u'both', u'positional']
     assert a.keyword == {u'both': u'foo', u'keyword': u'bar'}
 
+    a = parse(ur'a-b a_b a-c=foo a_c=bar')
+
+    assert a.positional == [u'a-b', u'a_b']
+    assert a.keyword == {u'a-c': u'foo', u'a_c': u'bar'}
+
     a = parse(ur''''a b\tc\nd',k="a b\tc\nd"''')
 
     assert a.positional == [u'a b\tc\nd']
@@ -27,6 +32,13 @@ def test_unparse():
     s = unparse(Arguments(positional, keyword))
 
     assert s == ur'both positional both=foo keyword=bar'
+
+    positional = [u'a-b', u'a_b']
+    keyword = {u'a-c': u'foo', u'a_c': u'bar'}
+
+    s = unparse(Arguments(positional, keyword))
+
+    assert s == ur'a-b a_b a-c=foo a_c=bar'
 
     positional = [u'a b\tc\nd']
     keyword = {u'k': u'a b\tc\nd'}

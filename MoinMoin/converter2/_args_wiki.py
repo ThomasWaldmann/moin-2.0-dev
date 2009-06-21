@@ -13,11 +13,11 @@ from ._args import Arguments
 
 _parse_rules = r'''
 (?:
-    (\w+)
+    ([-\w]+)
     =
 )?
 (?:
-    (\w+)
+    ([-\w]+)
     |
     "
     (.*?)
@@ -44,7 +44,7 @@ def parse(input):
 
     return ret
 
-_unparse_rules = r'''^\w+$'''
+_unparse_rules = r'''^[-\w]+$'''
 _unparse_re = re.compile(_unparse_rules, re.X)
 
 def unparse(args):
