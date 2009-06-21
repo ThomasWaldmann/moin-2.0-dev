@@ -68,12 +68,11 @@ class _Stack(list):
 
     def pop_name(self, *names):
         """
-        Look up the tree to the first occurence
-        of one of the listed kinds of nodes or root.
-        Start at the node node.
+        Remove anything from the stack including the given node.
         """
-        while len(self) > 1 and not self.top_check(*names):
+        while len(self) > 2 and not self.top_check(*names):
             self.pop()
+        self.pop()
 
     def push(self, elem):
         self.top_append(elem)
@@ -183,8 +182,7 @@ class Converter(ConverterMacro):
         stack.clear()
 
         elem = self.macro(macro_name, macro_args, macro, 'block')
-        if elem:
-            stack.top_append(elem)
+        stack.top_append_ifnotempty(elem)
 
     block_nowiki = r"""
         (?P<nowiki>
@@ -332,7 +330,6 @@ class Converter(ConverterMacro):
             stack.push(moin_page.emphasis())
         else:
             stack.pop_name('emphasis')
-            stack.pop()
 
     inline_strong = r'(?P<strong> \*\* )'
 
@@ -341,7 +338,6 @@ class Converter(ConverterMacro):
             stack.push(moin_page.strong())
         else:
             stack.pop_name('strong')
-            stack.pop()
 
     inline_linebreak = r'(?P<linebreak> \\\\ )'
 
@@ -549,7 +545,6 @@ class Converter(ConverterMacro):
         self.parse_inline(cell_text, stack)
 
         stack.pop_name('table-cell')
-        stack.pop()
 
     # Block elements
     block = (
