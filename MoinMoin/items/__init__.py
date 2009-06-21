@@ -62,7 +62,7 @@ class Item(object):
                 def __init__(self, mimetype):
                     self[MIMETYPE] = mimetype
                     self.item = None
-                def read_data(self):
+                def read(self):
                     return ''
             rev = DummyRev(mimetype)
         else:
@@ -463,7 +463,7 @@ There is no help, you're doomed!
     # XXX reads item rev data into memory!
     def get_data(self):
         if self.rev is not None:
-            return self.rev.read_data()
+            return self.rev.read()
         else:
             return ''
     data = property(fget=get_data)

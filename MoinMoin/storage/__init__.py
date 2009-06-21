@@ -662,12 +662,6 @@ class Revision(object, DictMixin):
 
         return [key for key in self._metadata if not key.startswith("__")]
 
-    def read_data(self, chunksize=-1):
-        """
-        @see: Backend._read_revision_data.__doc__
-        """
-        return self._backend._read_revision_data(self, chunksize)
-
 
 class StoredRevision(Revision):
     """
