@@ -9,40 +9,31 @@ import py.test
 
 from MoinMoin.converter2._args_wiki import *
 
+def test():
+    yield (do,
+        ur'both positional both=foo keyword=bar',
+        [u'both', u'positional'],
+        {u'both': u'foo', u'keyword': u'bar'})
+
+    yield (do,
+        ur'a-b a_b a-c=foo a_c=bar',
+        [u'a-b', u'a_b'],
+        {u'a-c': u'foo', u'a_c': u'bar'})
+
+    yield (do,
+        ur'''"a b\tc\nd" k="a b\tc\nd"''',
+        [u'a b\tc\nd'],
+        {u'k': u'a b\tc\nd'})
+
 def test_parse():
-    a = parse(ur'both positional both=foo keyword=bar')
-
-    assert a.positional == [u'both', u'positional']
-    assert a.keyword == {u'both': u'foo', u'keyword': u'bar'}
-
-    a = parse(ur'a-b a_b a-c=foo a_c=bar')
-
-    assert a.positional == [u'a-b', u'a_b']
-    assert a.keyword == {u'a-c': u'foo', u'a_c': u'bar'}
-
     a = parse(ur''''a b\tc\nd',k="a b\tc\nd"''')
-
     assert a.positional == [u'a b\tc\nd']
     assert a.keyword == {u'k': u'a b\tc\nd'}
 
-def test_unparse():
-    positional = [u'both', u'positional']
-    keyword = {u'both': u'foo', u'keyword': u'bar'}
+def do(wiki, positional, keyword):
+    a = parse(wiki)
+    assert a.positional == positional
+    assert a.keyword == keyword
 
     s = unparse(Arguments(positional, keyword))
-
-    assert s == ur'both positional both=foo keyword=bar'
-
-    positional = [u'a-b', u'a_b']
-    keyword = {u'a-c': u'foo', u'a_c': u'bar'}
-
-    s = unparse(Arguments(positional, keyword))
-
-    assert s == ur'a-b a_b a-c=foo a_c=bar'
-
-    positional = [u'a b\tc\nd']
-    keyword = {u'k': u'a b\tc\nd'}
-
-    s = unparse(Arguments(positional, keyword))
-
-    assert s == ur'''"a b\tc\nd" k="a b\tc\nd"'''
+    assert s == wiki
