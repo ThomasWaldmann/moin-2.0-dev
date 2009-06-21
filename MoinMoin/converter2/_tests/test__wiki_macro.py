@@ -31,7 +31,7 @@ class TestConverter(object):
         self.conv = ConverterMacro(self.request)
 
     def test(self):
-        pairs = [
+        data = [
             ('BR', None, 'text',
                 None,
                 '<line-break %s />' % namespaces_string),
@@ -60,12 +60,12 @@ class TestConverter(object):
                 '<xi:include xi:xpointer="%s page:include(pages(^^page) skipitems(5))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
         ]
-        for name, args, text, output_block, output_inline in pairs:
-            yield (self._do, name, args, text, 'block', output_block)
-            yield (self._do, name, args, text, 'inline', output_inline)
+        for name, args, text, output_block, output_inline in data:
+            yield (self._do, name, args, text, True, output_block)
+            yield (self._do, name, args, text, False, output_inline)
 
-    def _do(self, name, args, text, context, output):
-        result = self.conv.macro(name, args, text, context)
+    def _do(self, name, args, text, context_block, output):
+        result = self.conv.macro(name, args, text, context_block)
         if output is not None or result is not None:
             if isinstance(result, basestring):
                 assert result == output

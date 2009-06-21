@@ -226,7 +226,7 @@ class Converter(ConverterMacro):
         """Handles macros using the placeholder syntax."""
 
         stack.clear()
-        elem = self.macro(macro_name, macro_args, macro, 'block')
+        elem = self.macro(macro_name, macro_args, macro, True)
         stack.top_append_ifnotempty(elem)
 
     block_nowiki = r"""
@@ -555,7 +555,7 @@ class Converter(ConverterMacro):
     def inline_macro_repl(self, stack, macro, macro_name, macro_args=u''):
         """Handles macros using the placeholder syntax."""
 
-        elem = self.macro(macro_name, macro_args, macro, 'inline')
+        elem = self.macro(macro_name, macro_args, macro)
         stack.top_append(elem)
 
     inline_nowiki = r"""
