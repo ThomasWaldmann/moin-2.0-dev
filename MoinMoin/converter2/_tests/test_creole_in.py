@@ -53,6 +53,20 @@ class TestConverter(object):
         for i in pairs:
             yield (self._do, ) + i
 
+    def test_args(self):
+        from MoinMoin.converter2._args import Arguments
+        from MoinMoin.util.iri import Iri
+        data = [
+            (u'Text',
+                '<page page-href="wiki:/Test"><body><p>Text</p></body></page>',
+                {'page_url': Iri(scheme='wiki', path='/Test')}),
+            (u'Text',
+                '<page><body background-color="red"><p>Text</p></body></page>',
+                {'arguments': Arguments(keyword={'background-color': 'red'})}),
+        ]
+        for i in data:
+            yield (self._do, ) + i
+
     def test_emphasis(self):
         pairs = [
             (u'//Emphasis//',
@@ -231,7 +245,7 @@ class TestConverter(object):
         tree.write(file, namespaces=namespaces_list, **options)
         return cls.output_re.sub(u'', file.getvalue())
 
-    def _do(self, input, output):
-        out = self.conv(input.split(u'\n'))
+    def _do(self, input, output, args={}):
+        out = self.conv(input.split(u'\n'), **args)
         assert self._serialize(out) == output
 
