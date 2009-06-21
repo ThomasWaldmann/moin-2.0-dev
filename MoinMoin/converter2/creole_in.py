@@ -18,7 +18,7 @@
 
     @copyright: 2007 MoinMoin:RadomirDopieralski (creole 0.5 implementation),
                 2007 MoinMoin:ThomasWaldmann (updates)
-                2008 MoinMoin:BastianBlank
+                2008,2009 MoinMoin:BastianBlank
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -28,6 +28,7 @@ from emeraldtree import ElementTree as ET
 from MoinMoin import wikiutil
 from MoinMoin.util import iri
 from MoinMoin.util.tree import moin_page, xlink
+from MoinMoin.converter2._args_wiki import parse as parse_arguments
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
 class _Iter(object):
@@ -185,6 +186,20 @@ class Converter(ConverterMacro):
     """
     # Matches the beginning of a nowiki block
 
+    nowiki_interpret = r"""
+        ^
+        \#!
+        \s*
+        (?P<nowiki_name> [\w/]+)?
+        \s*
+        (:?
+            \(
+            (?P<nowiki_args> .*?)
+            \)
+        )?
+        \s*
+        $
+    """
     nowiki_end = r"""
         ^ (?P<escape> ~ )? (?P<rest> }}} \s* ) $
     """
@@ -220,27 +235,19 @@ class Converter(ConverterMacro):
 
         lines = _Iter(self.block_nowiki_lines(iter_content))
 
-        if firstline.startswith('#!'):
-            args = wikiutil.parse_quoted_separated(
-                    firstline[2:].strip(), separator=None)
-            name = args[0].pop(0)
+        match = self.nowiki_interpret_re.match(firstline)
+
+        if match:
+            name = match.group('nowiki_name')
+            args = match.group('nowiki_args')
+            if args:
+                args = parse_arguments(args)
 
             # Parse it directly if the type is ourself
-            if name in ('creole', ):
-                attrib = {}
-
-                for key, value in args[1].iteritems():
-                    if key in ('background-color', 'color'):
-                        attrib[moin_page(key)] = value
-
-                elem = moin_page.div(attrib)
-
+            if not name:
+                body = self.parse_block(lines, args)
+                elem = moin_page.page(children=(body, ))
                 stack.top_append(elem)
-                new_stack = _Stack([elem])
-
-                for line in lines:
-                    match = self.block_re.match(line)
-                    self._apply(match, 'block', lines, new_stack)
 
             else:
                 from MoinMoin.converter2 import default_registry as reg
@@ -581,6 +588,9 @@ class Converter(ConverterMacro):
         list_text,
     )
     list_re = re.compile('|'.join(list), re.X | re.U)
+
+    # Nowiki interpreter
+    nowiki_interpret_re = re.compile(nowiki_interpret, re.X)
 
     # Nowiki end
     nowiki_end_re = re.compile(nowiki_end, re.X)
