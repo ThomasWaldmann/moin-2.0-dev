@@ -11,6 +11,7 @@ Expands all macro elements in a internal Moin document.
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import macro, Page, wikiutil
+from MoinMoin.converter2._args import Arguments
 from MoinMoin.util import iri
 from MoinMoin.util.tree import html, moin_page
 
@@ -50,19 +51,42 @@ class Converter(object):
             return cls
 
     def handle_macro(self, elem, page):
-        name = elem.get(moin_page.macro_name)
-        args = elem.get(moin_page.macro_args)
-        context = elem.get(moin_page.macro_context)
-        alt = elem.get(moin_page.alt, None)
+        type = elem.get(moin_page.content_type)
+        alt = elem.get(moin_page.alt)
 
-        elem_body = moin_page.macro_body()
+        # TODO
+        if not type or not type.startswith('x-moin/macro;name='):
+            return
+        name = type[18:]
 
-        if not self._handle_macro_new(elem_body, page, name, args, context, alt):
-            self._handle_macro_old(elem_body, page, name, args, context, alt)
+        context_block = elem.tag == moin_page.page
+
+        for item in elem:
+            if item.tag.uri == moin_page.namespace:
+                if item.tag.name == 'body':
+                    return
+                if item.tag.name == 'arguments':
+                    args_tree = item
+
+        args = None
+        if args_tree:
+            args = Arguments()
+            for arg in args_tree:
+                key = arg.get(moin_page.name)
+                value = arg[0]
+                if key:
+                    args.keyword[key] = value
+                else:
+                    args.positional.append(value)
+
+        elem_body = moin_page.body()
+
+        if not self._handle_macro_new(elem_body, page, name, args, context_block, alt):
+            self._handle_macro_old(elem_body, page, name, args, context_block, alt)
 
         elem.append(elem_body)
 
-    def _error(self, message, context, alt):
+    def _error(self, message, context_block, alt):
         if alt:
             attrib = {html.class_: 'error', moin_page.title: message}
             children = alt
@@ -72,18 +96,18 @@ class Converter(object):
 
         elem = moin_page.strong(attrib=attrib, children=[children])
 
-        if context == 'block':
+        if context_block:
             return moin_page.p(children=[elem])
         return elem
 
-    def _handle_macro_new(self, elem_body, page, name, args, context, alt):
+    def _handle_macro_new(self, elem_body, page, name, args, context_block, alt):
         try:
             cls = wikiutil.importPlugin(self.request.cfg, 'macro2', name, function='Macro')
         except wikiutil.PluginMissingError:
             return False
 
-        macro = cls(self.request, page, alt, context, args)
-        ret = macro()
+        macro = cls(self.request)
+        ret = macro((), page, args, alt, context_block)
 
         elem_body.append(ret)
 
@@ -146,7 +170,7 @@ class Converter(object):
         if new_page_href:
             page = iri.Iri(new_page_href)
 
-        if elem.tag == moin_page.macro:
+        if elem.tag in (moin_page.page, moin_page.inline_part):
             yield elem, page
 
         for child in elem:
