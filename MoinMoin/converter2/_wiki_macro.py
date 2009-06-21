@@ -9,7 +9,6 @@ Base class for wiki parser with macro support.
 
 from emeraldtree import ElementTree as ET
 
-from MoinMoin import wikiutil
 from MoinMoin.util import iri
 from MoinMoin.util.tree import moin_page, xinclude
 
@@ -27,7 +26,7 @@ class ConverterMacro(object):
             # TODO: footnote placing
             return
 
-        text = self.macro_text(args)
+        text = self.macro_text(' '.join(args.positional))
 
         elem_body = moin_page.note_body(children=text)
         attrib = {moin_page.note_class: 'footnote'}
@@ -37,15 +36,20 @@ class ConverterMacro(object):
             return moin_page.p(children=[elem])
         return elem
 
-    def _Include_macro(self,
-            pagename=wikiutil.required_arg(unicode),
-            heading=unicode,
-            level=int,
-            sort=wikiutil.UnitArgument(None, str, ('ascending', 'descending')),
-            items=int,
-            skipitems=int,
-            titlesonly=bool,
-            editlink=bool):
+    def _Include_repl(self, args, text, context_block):
+        if not context_block:
+            return text
+
+        pagename = args[0]
+        heading = None # TODO
+        level = None # TODO
+        sort = 'sort' in args and args['sort']
+        if sort and sort not in ('ascending', 'descending'):
+            raise RuntimeError
+        items = 'items' in args and int(args['items'])
+        skipitems = 'skipitems' in args and int(args['skipitems'])
+        titlesonly = 'titlesonly' in args
+        editlink = 'editlink' in args
 
         attrib = {}
         xpointer = []
@@ -60,7 +64,7 @@ class ConverterMacro(object):
         if pagename.startswith('^'):
             add_moin_xpointer('pages', pagename)
             if sort:
-                add_moin_xpointer('sort', sort[1])
+                add_moin_xpointer('sort', sort)
             if items:
                 add_moin_xpointer('items', items)
             if skipitems:
@@ -69,8 +73,6 @@ class ConverterMacro(object):
             link = unicode(iri.Iri(scheme='wiki.local', path=pagename))
             attrib[xinclude.href] = link
 
-        if heading == 'heading':
-            heading = ''
         if heading is not None:
             add_moin_xpointer('heading', heading)
         if level:
@@ -91,23 +93,18 @@ class ConverterMacro(object):
 
         return xinclude.include(attrib=attrib)
 
-    def _Include_repl(self, args, text, context_block):
-        if not context_block:
-            return text
-
-        return wikiutil.invoke_extension_function(self.request, self._Include_macro, args)
-
     def _TableOfContents_repl(self, args, text, context_block):
         if not context_block:
             return text
 
         attrib = {}
-        try:
-            level = int(args)
-        except ValueError:
-            pass
-        else:
-            attrib[moin_page.outline_level] = str(level)
+        if args:
+            try:
+                level = int(args[0])
+            except ValueError:
+                pass
+            else:
+                attrib[moin_page.outline_level] = str(level)
 
         return moin_page.table_of_content(attrib=attrib)
 

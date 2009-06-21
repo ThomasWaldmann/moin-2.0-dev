@@ -8,6 +8,8 @@ MoinMoin - Tests for MoinMoin.converter2._wiki_macro
 from emeraldtree.ElementTree import ElementTree
 import py.test
 
+from MoinMoin.converter2._args import Arguments
+
 from MoinMoin.converter2._wiki_macro import *
 
 namespaces_string = 'xmlns="%s"' % moin_page.namespace
@@ -35,28 +37,28 @@ class TestConverter(object):
             ('BR', None, 'text',
                 None,
                 '<line-break %s />' % namespaces_string),
-            ('FootNote', 'note', 'text',
+            ('FootNote', Arguments([u'note']), 'text',
                 '<p %s><note note-class="footnote"><note-body>note</note-body></note></p>' % namespaces_string,
                 '<note note-class="footnote" %s><note-body>note</note-body></note>' % namespaces_string),
-            ('TableOfContents', '', 'text',
+            ('TableOfContents', None, 'text',
                 '<table-of-content %s />' % namespaces_string,
                 'text'),
-            ('Include', u'page', 'text',
+            ('Include', Arguments([u'page']), 'text',
                 '<xi:include xi:href="wiki.local:page" %s />' % namespaces_string_xinclude,
                 'text'),
-            ('Include', u'^page', 'text',
+            ('Include', Arguments([u'^page']), 'text',
                 '<xi:include xi:xpointer="%s page:include(pages(^^page))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
-            ('Include', u'^page, sort=ascending', 'text',
+            ('Include', Arguments([u'^page'], {u'sort': u'ascending'}), 'text',
                 '<xi:include xi:xpointer="%s page:include(pages(^^page) sort(ascending))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
-            ('Include', u'^page, sort=descending', 'text',
+            ('Include', Arguments([u'^page'], {u'sort': u'descending'}), 'text',
                 '<xi:include xi:xpointer="%s page:include(pages(^^page) sort(descending))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
-            ('Include', u'^page, items=5', 'text',
+            ('Include', Arguments([u'^page'], {u'items': u'5'}), 'text',
                 '<xi:include xi:xpointer="%s page:include(pages(^^page) items(5))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
-            ('Include', u'^page, skipitems=5', 'text',
+            ('Include', Arguments([u'^page'], {u'skipitems': u'5'}), 'text',
                 '<xi:include xi:xpointer="%s page:include(pages(^^page) skipitems(5))" %s />' % (namespaces_xpstring, namespaces_string_xinclude),
                 'text'),
         ]
