@@ -117,7 +117,7 @@ class PackageItems:
             timestamp = float(r.timestamp)
             zi = zipfile.ZipInfo(filename=str(cnt), date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
             zi.compress_type = COMPRESSION_LEVEL
-            zf.writestr(zi, r.read_data().encode("utf-8"))
+            zf.writestr(zi, r.read().encode("utf-8"))
             if include_subitems:
                 # ToDo implement subitems, currently removed
                 pass

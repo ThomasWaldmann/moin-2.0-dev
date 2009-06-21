@@ -174,7 +174,7 @@ class Page(object):
     def get_data(self):
         if self._data is None:
             if self._rev is not None:
-                data = self._rev.read_data()
+                data = self._rev.read()
                 data = data.decode(config.charset)
                 self._data = self.decodeTextMimeType(data)
         return self._data
