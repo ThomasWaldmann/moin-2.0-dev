@@ -113,13 +113,25 @@ class ConverterMacro(object):
         if func is not None:
             return func(args, text, context_block)
 
-        attrib = {
+        tag = context_block and moin_page.page or moin_page.inline_part
+
+        elem = tag(attrib={
             moin_page.alt: text,
             moin_page.content_type: 'x-moin/macro;name=' + name,
-        }
-        if not context_block:
-            return moin_page.inline_part(attrib)
-        return moin_page.page(attrib)
+        })
+
+        if args:
+            elem_arguments = moin_page.arguments()
+            elem.append(elem_arguments)
+
+            for key, value in args.items():
+                attrib = {}
+                if key:
+                    attrib['name'] = key
+                elem_arg = moin_page.argument(attrib=attrib, children=(value, ))
+                elem_arguments.append(elem_arg)
+
+        return elem
 
     def macro_text(self, text):
         """
