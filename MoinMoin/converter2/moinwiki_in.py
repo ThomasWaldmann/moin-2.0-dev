@@ -4,7 +4,7 @@ MoinMoin - Moin Wiki input converter
 @copyright: 2000-2002 Juergen Hermann <jh@web.de>
             2006-2008 MoinMoin:ThomasWaldmann
             2007 MoinMoin:ReimarBauer
-            2008 MoinMoin:BastianBlank
+            2008,2009 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -14,7 +14,9 @@ from emeraldtree import ElementTree as ET
 from MoinMoin import config, wikiutil
 from MoinMoin.util import iri
 from MoinMoin.util.tree import html, moin_page, xlink
+from MoinMoin.converter2._args_wiki import parse as parse_arguments
 from MoinMoin.converter2._wiki_macro import ConverterMacro
+
 
 class _Iter(object):
     """
@@ -233,7 +235,18 @@ class Converter(ConverterMacro):
             \s*
             (?P<nowiki_marker> \{{3,} )
             \s*
-            (?P<nowiki_data> \#!.+ )?
+            (?P<nowiki_interpret>
+                \#!
+                \s*
+                (?P<nowiki_name> [\w/-]+)?
+                \s*
+                (:?
+                    \(
+                    (?P<nowiki_args> .*?)
+                    \)
+                )?
+                \s*
+            )?
             \s*
             $
         )
@@ -256,42 +269,28 @@ class Converter(ConverterMacro):
                     return
             yield line
 
-    def block_nowiki_repl(self, iter_content, stack, nowiki, nowiki_marker, nowiki_data=u''):
+    def block_nowiki_repl(self, iter_content, stack, nowiki, nowiki_marker,
+            nowiki_interpret=None, nowiki_name=None, nowiki_args=None):
         stack.clear()
 
         nowiki_marker_len = len(nowiki_marker)
 
         lines = _Iter(self.block_nowiki_lines(iter_content, nowiki_marker_len))
 
-        if nowiki_data.startswith('#!'):
-            args = wikiutil.parse_quoted_separated(nowiki_data[2:].strip(), separator=None)
-            name = args[0].pop(0)
+        if nowiki_interpret:
+            if nowiki_args:
+                nowiki_args = parse_arguments(nowiki_args)
 
             # Parse it directly if the type is ourself
-            if name in ('wiki', ):
-                attrib = {}
-
-                if args[0]:
-                    classes = ' '.join([i.replace('/', ' ') for i in args[0]])
-                    attrib[html.class_] = classes
-
-                for key, value in args[1].iteritems():
-                    if key in ('background-color', 'color'):
-                        attrib[moin_page(key)] = value
-
-                elem = moin_page.div(attrib)
-
+            if not nowiki_name:
+                body = self.parse_block(lines, nowiki_args)
+                elem = moin_page.page(children=(body, ))
                 stack.top_append(elem)
-                new_stack = _Stack([elem])
-
-                for line in lines:
-                    match = self.block_re.match(line)
-                    self._apply(match, 'block', lines, stack)
 
             else:
                 from MoinMoin.converter2 import default_registry as reg
 
-                mimetype = wikiutil.MimeType(name).mime_type()
+                mimetype = wikiutil.MimeType(nowiki_name).mime_type()
                 converter = reg.get(self.request, mimetype, 'application/x-moin-document')
 
                 doc = converter(self.request)(lines)
