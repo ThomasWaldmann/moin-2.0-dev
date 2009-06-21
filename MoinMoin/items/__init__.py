@@ -962,7 +962,7 @@ class MoinParserSupported(Text):
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
-        doc = InputConverter(request, i)(self.data.decode(config.charset).split(u'\r\n'))
+        doc = InputConverter(request)(self.data.decode(config.charset).split(u'\r\n'), page_url=i)
         doc = IncludeConverter(request)(doc)
         doc = MacroConverter(request)(doc)
         doc = LinkConverter(request)(doc)
