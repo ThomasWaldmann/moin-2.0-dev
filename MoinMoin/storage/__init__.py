@@ -34,19 +34,23 @@
     Hence, it can only be modified under a read lock.
 
     @copyright: 2008 MoinMoin:ChristopherDenter,
-                2008 MoinMoin:JohannesBerg
+                2008 MoinMoin:JohannesBerg,
+                2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
-from xml.sax.saxutils import XMLGenerator
-import base64
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from UserDict import DictMixin
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
                                    NoSuchItemError
 
+from MoinMoin.storage.serialization import Serializable, XMLGenerator, \
+                                           Data, Meta, ItemMeta
 
-class Backend(object):
+
+class Backend(Serializable):
     """
     This class abstracts access to backends. If you want to write a specific
     backend, say a mercurial backend, you have to implement the methods below.
@@ -378,17 +382,21 @@ class Backend(object):
         """
         raise NotImplementedError()
 
-    def serialize(self, xmlfile):
-        xg = XMLGenerator(xmlfile, 'utf-8')
-        xg.startElement('backend', dict(namespace=''))
-        xg.startElement('items', {})
+    # (un)serialization support following:
+    element_name = 'backend'
+
+    def get_unserializer(self, name, attrs):
+        if name == 'item':
+            item_name = attrs['name']
+            item = self.create_item(item_name)
+            return item
+
+    def serialize_value(self, xmlfile):
         for item in self.iteritems():
             item.serialize(xmlfile)
-        xg.endElement('items')
-        xg.endElement('backend')
 
 
-class Item(object, DictMixin):
+class Item(Serializable, DictMixin):
     """
     An item object collects the information of an item (e.g. a page) that is
     stored in persistent storage. It has metadata and revisions.
@@ -411,6 +419,7 @@ class Item(object, DictMixin):
         self._read_accessed = False
         self._metadata = None  # Will be loaded lazily upon first real access.
         self._uncommitted_revision = None
+        self.element_attrs = dict(name=itemname)
 
     def get_name(self):
         """
@@ -574,24 +583,26 @@ class Item(object, DictMixin):
             self._uncommitted_revision = self._backend._create_revision(self, revno)
             return self._uncommitted_revision
 
-    def serialize(self, xmlfile):
+    # (un)serialization support following:
+    element_name = 'item'
+
+    def get_unserializer(self, name, attrs):
+        if name == 'meta':
+            return ItemMeta(attrs, self)
+        elif name == 'revision':
+            revno = int(attrs['revno'])
+            return self.create_revision(revno)
+
+    def serialize_value(self, xmlfile):
         xg = XMLGenerator(xmlfile, 'utf-8')
-        xg.startElement('item', dict(name=self.name))
-        xg.startElement('meta', {})
-        for k in self.keys():
-            xg.startElement('entry', dict(key=k))
-            xg.characters(self[k])
-            xg.endElement('entry')
-        xg.endElement('meta')
-        xg.startElement('revisions', {})
+        im = ItemMeta({}, self)
+        im.serialize(xmlfile)
         for revno in self.list_revisions():
             rev = self.get_revision(revno)
             rev.serialize(xmlfile)
-        xg.endElement('revisions')
-        xg.endElement('item')
 
 
-class Revision(object, DictMixin):
+class Revision(Serializable, DictMixin):
     """
     This class serves as superclass for StoredRevision and NewRevision.
     An object of either subclass represents a revision of an item. An item can have
@@ -622,6 +633,7 @@ class Revision(object, DictMixin):
         self._backend = item._backend
         self._metadata = None
         self._timestamp = timestamp
+        self.element_attrs = dict(revno=str(revno))
 
     def _get_item(self):
         return self._item
@@ -661,6 +673,25 @@ class Revision(object, DictMixin):
             self._load_metadata()
 
         return [key for key in self._metadata if not key.startswith("__")]
+
+    # (un)serialization support following:
+    element_name = 'revision'
+
+    def endElement(self):
+        logging.debug("Committing %r revno %r" % (self.item.name, self.revno))
+        self.item.commit()
+
+    def get_unserializer(self, name, attrs):
+        if name == 'meta':
+            return Meta(attrs, self)
+        elif name == 'data':
+            return Data(attrs, write_fn=self.write)
+
+    def serialize_value(self, xmlfile):
+        m = Meta({}, self)
+        m.serialize(xmlfile)
+        d = Data({}, read_fn=self.read)
+        d.serialize(xmlfile)
 
 
 class StoredRevision(Revision):
@@ -709,28 +740,6 @@ class StoredRevision(Revision):
         @see: StringIO.StringIO().seek.__doc__
         """
         self._backend._seek_revision_data(self, position, mode)
-
-    def serialize(self, xmlfile):
-        xg = XMLGenerator(xmlfile, 'utf-8')
-        xg.startElement('revision', dict(revno=str(self.revno)))
-        xg.startElement('meta', {})
-        for k in self.keys():
-            xg.startElement('entry', dict(key=k))
-            xg.characters(self[k])
-            xg.endElement('entry')
-        xg.endElement('meta')
-        xg.startElement('data', dict(coding='base64'))
-        chunksize = 4096
-        while True:
-            data = self.read(chunksize)
-            if not data:
-                break
-            data = base64.b64encode(data)
-            xg.startElement('chunk', {})
-            xg.characters(data)
-            xg.endElement('chunk')
-        xg.endElement('data')
-        xg.endElement('revision')
 
 
 class NewRevision(Revision):
