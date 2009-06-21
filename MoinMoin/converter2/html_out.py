@@ -214,6 +214,13 @@ class ConverterBase(object):
             level = 6
         return self.new_copy(ET.QName('h%d' % level, html.namespace), elem)
 
+    def visit_moinpage_inline_part(self, elem):
+        for item in elem:
+            if item.tag.uri == moin_page.namespace and item.tag.name == 'body':
+                return self.new_copy(html.span, item)
+
+        raise RuntimeError('page:inline-part need to contain exactly one page:body tag, got %r' % elem[:])
+
     def visit_moinpage_line_break(self, elem):
         # TODO: attributes?
         return self.new(self.tag_html_br)
