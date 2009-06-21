@@ -216,8 +216,14 @@ class TestConverter(object):
             (u'{{{nowiki}}} {{{nowiki}}}',
                 '<page><body><p><code>nowiki</code> <code>nowiki</code></p></body></page>'),
             # XXX: Is <page> correct?
-            (u'{{{\n#!creole background-color=red\nnowiki\n}}}',
-               '<page><body><page background-color="red"><body><p>nowiki</p></body></page></body></page>'),
+            (u'{{{\n#!\nwiki\n}}}',
+               '<page><body><page><body><p>nowiki</p></body></page></body></page>'),
+            (u'{{{\n#!(background-color=red)\nwiki\n}}}',
+               '<page><body><page><body background-color="red"><p>nowiki</p></body></page></body></page>'),
+            (u'{{{\n#!creole\nwiki\n}}}',
+               '<page><body><page><body><p>nowiki</p></body></page></body></page>'),
+            (u'{{{\n#!creole(background-color=red)\nwiki\n}}}',
+               '<page><body><page><body background-color="red"><p>nowiki</p></body></page></body></page>'),
         ]
         for i in pairs:
             yield (self._do, ) + i

@@ -203,6 +203,15 @@ class TestConverter(object):
                 '<page><body><p><code></code></p></body></page>'),
             ('``',
                 '<page><body><p /></body></page>'),
+            # XXX: Is <page> correct?
+            (u'{{{#!\nwiki\n}}}',
+               '<page><body><page><body><p>nowiki</p></body></page></body></page>'),
+            (u'{{{#!(background-color=red)\nwiki\n}}}',
+               '<page><body><page><body background-color="red"><p>nowiki</p></body></page></body></page>'),
+            (u'{{{#!wiki\nwiki\n}}}',
+               '<page><body><page><body><p>nowiki</p></body></page></body></page>'),
+            (u'{{{#!wiki(background-color=red)\nwiki\n}}}',
+               '<page><body><page><body background-color="red"><p>nowiki</p></body></page></body></page>'),
         ]
         for i in pairs:
             yield (self._do, ) + i
