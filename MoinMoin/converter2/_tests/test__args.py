@@ -9,7 +9,7 @@ import py.test
 
 from MoinMoin.converter2._args import *
 
-def test___init__():
+def test_Arguments___init__():
     positional = []
     keyword = {}
 
@@ -20,7 +20,7 @@ def test___init__():
     assert keyword == a.keyword
     assert keyword is not a.keyword
 
-def test___contains__():
+def test_Arguments___contains__():
     positional = ['positional', 'both']
     keyword = {'keyword': None, 'both': None}
 
@@ -31,7 +31,7 @@ def test___contains__():
     assert 'both' in a
     assert 'none' not in a
 
-def test___getitem__():
+def test_Arguments___getitem__():
     positional = ['positional', 'both']
     keyword = {'keyword': None, 'both': None}
 
@@ -46,7 +46,15 @@ def test___getitem__():
     py.test.raises(IndexError, a.__getitem__, 2)
     py.test.raises(KeyError, a.__getitem__, 'none')
 
-def test_items():
+def test_Arguments___len__():
+    positional = ['positional', 'both']
+    keyword = {'keyword': None, 'both': None}
+
+    a = Arguments(positional, keyword)
+
+    assert len(a) == 4
+
+def test_Arguments_items():
     positional = ['positional', 'both']
     keyword = {'keyword': True, 'both': False}
 
@@ -60,7 +68,7 @@ def test_items():
     assert ('keyword', True) in l
     assert ('both', False) in l
 
-def test_keys():
+def test_Arguments_keys():
     positional = ['positional', 'both']
     keyword = {'keyword': True, 'both': False}
 
@@ -72,7 +80,7 @@ def test_keys():
     assert 'keyword' in l
     assert 'both' in l
 
-def test_values():
+def test_Arguments_values():
     positional = ['positional', 'both']
     keyword = {'keyword': True, 'both': False}
 
