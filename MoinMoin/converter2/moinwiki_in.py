@@ -94,15 +94,10 @@ class Converter(ConverterMacro):
         if page_url:
             attrib[moin_page.page_href] = unicode(page_url)
 
-        body = moin_page.body()
-        root = moin_page.page(attrib=attrib, children=(body, ))
-
         iter_content = _Iter(content)
-        stack = _Stack([body])
 
-        for line in iter_content:
-            match = self.block_re.match(line)
-            self._apply(match, 'block', iter_content, stack)
+        body = self.parse_block(iter_content, arguments)
+        root = moin_page.page(attrib=attrib, children=(body, ))
 
         return root
 
@@ -792,6 +787,23 @@ class Converter(ConverterMacro):
         """
         data = dict(((str(k), v) for k, v in match.groupdict().iteritems() if v is not None))
         getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(*args, **data)
+
+    def parse_block(self, iter_content, arguments):
+        attrib = {}
+        if arguments:
+            for key, value in arguments.keyword.iteritems():
+                if key in ('background-color', 'color'):
+                    attrib[moin_page(key)] = value
+
+        body = moin_page.body(attrib=attrib)
+
+        stack = _Stack([body])
+
+        for line in iter_content:
+            match = self.block_re.match(line)
+            self._apply(match, 'block', iter_content, stack)
+
+        return body
 
     def parse_inline(self, text, stack, inline_re=inline_re):
         """Recognize inline elements within the given text"""
