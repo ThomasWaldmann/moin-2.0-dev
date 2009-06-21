@@ -29,7 +29,7 @@ class AccessDeniedError(AccessError):
         if None in (username, priv, item):
             message = "Permission denied!"
         else:
-            user = user or "You"
+            username = username or "You"
             message = "%s may not %s '%s'." % (username, priv, item)
 
         AccessError.__init__(self, message)
