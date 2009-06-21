@@ -21,6 +21,9 @@ class Arguments(object):
             return self.positional[key]
         return self.keyword[key]
 
+    def __len__(self):
+        return len(self.positional) + len(self.keyword)
+
     def items(self):
         """
         Return an iterator over all (key, value) pairs.
@@ -46,4 +49,3 @@ class Arguments(object):
             yield value
         for value in self.keyword.itervalues():
             yield value
-
