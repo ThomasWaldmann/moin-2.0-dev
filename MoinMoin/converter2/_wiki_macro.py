@@ -116,14 +116,13 @@ class ConverterMacro(object):
         if func is not None:
             return func(args, text, context)
 
-        # TODO: other namespace?
         attrib = {
             moin_page.alt: text,
-            moin_page.macro_name: name,
-            moin_page.macro_args: args,
-            moin_page.macro_context: context,
+            moin_page.content_type: 'x-moin/macro;name=' + name,
         }
-        return moin_page.macro(attrib)
+        if context == 'inline':
+            return moin_page.inline_part(attrib)
+        return moin_page.page(attrib)
 
     def macro_text(self, text):
         """
