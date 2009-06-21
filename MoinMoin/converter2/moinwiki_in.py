@@ -55,12 +55,11 @@ class _Stack(list):
 
     def pop_name(self, *names):
         """
-        Look up the tree to the first occurence
-        of one of the listed kinds of nodes or root.
-        Start at the node node.
+        Remove anything from the stack including the given node.
         """
-        while len(self) > 1 and not self.top_check(*names):
+        while len(self) > 2 and not self.top_check(*names):
             self.pop()
+        self.pop()
 
     def push(self, elem):
         self.top_append(elem)
@@ -72,11 +71,14 @@ class _Stack(list):
     def top_append(self, elem):
         self[-1].append(elem)
 
-    def top_append_iftrue(self, elem):
+    def top_append_ifnotempty(self, elem):
         if elem:
             self.top_append(elem)
 
     def top_check(self, *names):
+        """
+        Checks if the name of the top of the stack matches the parameters.
+        """
         tag = self[-1].tag
         return tag.uri == moin_page.namespace and tag.name in names
 
@@ -228,8 +230,7 @@ class Converter(ConverterMacro):
 
         stack.clear()
         elem = self.macro(macro_name, macro_args, macro, 'block')
-        if elem:
-            stack.top_append(elem)
+        stack.top_append_ifnotempty(elem)
 
     block_nowiki = r"""
         (?P<nowiki>
@@ -737,7 +738,6 @@ class Converter(ConverterMacro):
         self.parse_inline(cell_text, stack)
 
         stack.pop_name('table-cell')
-        stack.pop()
 
     # Block elements
     block = (
@@ -799,13 +799,13 @@ class Converter(ConverterMacro):
         pos = 0
         for match in inline_re.finditer(text):
             # Handle leading text
-            stack.top_append_iftrue(text[pos:match.start()])
+            stack.top_append_ifnotempty(text[pos:match.start()])
             pos = match.end()
 
             self._apply(match, 'inline', stack)
 
         # Handle trailing text
-        stack.top_append_iftrue(text[pos:])
+        stack.top_append_ifnotempty(text[pos:])
 
 from MoinMoin.converter2._registry import default_registry
 default_registry.register(Converter.factory)
