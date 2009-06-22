@@ -134,7 +134,7 @@ class TestSerializer2(object):
             (42, '<int>42</int>'),
             (True, '<bool>True</bool>'),
             (23.42, '<float>23.42</float>'),
-            (complex(1.2,2.3), '<complex>(1.2+2.3j)</complex>'),
+            (complex(1.2, 2.3), '<complex>(1.2+2.3j)</complex>'),
             ((1, 2), '<tuple><int>1</int><int>2</int></tuple>'),
             ((1, 'bar'), '<tuple><int>1</int><str>bar</str></tuple>'),
             ((1, ('bar', 'baz')), '<tuple><int>1</int><tuple><str>bar</str><str>baz</str></tuple></tuple>'),
