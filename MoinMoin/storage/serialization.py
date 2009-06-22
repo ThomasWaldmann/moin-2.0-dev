@@ -162,8 +162,8 @@ def create_value_object(v):
         raise TypeError("unsupported type %r", type(v))
 
 
-class UnicodeValue(Serializable):
-    element_name = 'unicode'
+class Value(Serializable):
+    element_name = None # override in child class
 
     def __init__(self, value=None, attrs=None, setter_fn=None):
         self.value = value
@@ -175,98 +175,66 @@ class UnicodeValue(Serializable):
         self.data += data
 
     def endElement(self):
-        value = self.data
+        value = self.element_decode(self.data)
         self.setter_fn(value)
 
     def serialize_value(self, xmlfile):
         xg = XMLGenerator(xmlfile, 'utf-8')
-        xg.characters(self.value.encode('utf-8'))
+        xg.characters(self.element_encode(self.value))
 
+    def element_decode(self, x):
+        return x # override in child class
 
-class StrValue(Serializable):
+    def element_encode(self, x):
+        return x # override in child class
+
+class UnicodeValue(Value):
+    element_name = 'unicode'
+
+class StrValue(Value):
     element_name = 'str'
 
-    def __init__(self, value=None, attrs=None, setter_fn=None):
-        self.value = value
-        self.element_attrs = attrs
-        self.setter_fn = setter_fn
-        self.data = u''
+    def element_decode(self, x):
+        return x.encode('utf-8')
 
-    def characters(self, data):
-        self.data += data
+    def element_encode(self, x):
+        return x.decode('utf-8')
 
-    def endElement(self):
-        value = self.data.encode('utf-8')
-        self.setter_fn(value)
-
-
-class IntValue(Serializable):
+class IntValue(Value):
     element_name = 'int'
 
-    def __init__(self, value=None, attrs=None, setter_fn=None):
-        self.value = value
-        self.element_attrs = attrs
-        self.setter_fn = setter_fn
-        self.data = u''
+    def element_decode(self, x):
+        return int(x)
 
-    def characters(self, data):
-        self.data += data
+    def element_encode(self, x):
+        return str(x)
 
-    def endElement(self):
-        value = int(self.data)
-        self.setter_fn(value)
-
-
-class FloatValue(Serializable):
+class FloatValue(Value):
     element_name = 'float'
 
-    def __init__(self, value=None, attrs=None, setter_fn=None):
-        self.value = value
-        self.element_attrs = attrs
-        self.setter_fn = setter_fn
-        self.data = u''
+    def element_decode(self, x):
+        return float(x)
 
-    def characters(self, data):
-        self.data += data
+    def element_encode(self, x):
+        return str(x)
 
-    def endElement(self):
-        value = float(self.data)
-        self.setter_fn(value)
-
-
-class ComplexValue(Serializable):
+class ComplexValue(Value):
     element_name = 'complex'
 
-    def __init__(self, value=None, attrs=None, setter_fn=None):
-        self.value = value
-        self.element_attrs = attrs
-        self.setter_fn = setter_fn
-        self.data = u''
+    def element_decode(self, x):
+        return complex(x)
 
-    def characters(self, data):
-        self.data += data
+    def element_encode(self, x):
+        return str(x)
 
-    def endElement(self):
-        value = complex(self.data)
-        self.setter_fn(value)
-
-
-class BoolValue(Serializable):
+class BoolValue(Value):
     element_name = 'bool'
 
-    def __init__(self, value=None, attrs=None, setter_fn=None):
-        self.value = value
-        self.element_attrs = attrs
-        self.setter_fn = setter_fn
-        self.data = u''
+    def element_decode(self, x):
+        return bool(x)
 
-    def characters(self, data):
-        self.data += data
-
-    def endElement(self):
-        self.value = bool(self.data)
-        self.setter_fn(self.value)
-
+    def element_encode(self, x):
+        return str(x)
 
 class TupleValue(Serializable):
     element_name = 'tuple'
@@ -278,16 +246,20 @@ class TupleValue(Serializable):
         self._data = []
 
     def get_unserializer(self, name, attrs):
-        if name == 'str':
-            return StrValue(attrs=attrs, setter_fn=self.setter_fn)
-        elif name == 'unicode':
-            return UnicodeValue(attrs=attrs, setter_fn=self.setter_fn)
-        elif name == 'int':
-            return IntValue(attrs=attrs, setter_fn=self.setter_fn)
-        elif name == 'bool':
-            return BoolValue(attrs=attrs, setter_fn=self.setter_fn)
-        elif name == 'tuple':
-            return TupleValue(attrs=attrs, setter_fn=self.setter_fn)
+        mapping = {
+            'str': StrValue,
+            'unicode': UnicodeValue,
+            'bool': BoolValue,
+            'int': IntValue,
+            'float': FloatValue,
+            'complex': ComplexValue,
+            'tuple': TupleValue,
+        }
+        cls = mapping.get(name)
+        if cls:
+            return cls(attrs=attrs, setter_fn=self.setter_fn)
+        else:
+            raise TypeError("unsupported element: %s", name)
 
     def setter_fn(self, value):
         self._data.append(value)
