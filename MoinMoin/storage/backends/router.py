@@ -22,6 +22,7 @@ from MoinMoin.storage import Backend
 class NoMatchingBackend(Exception):
     """ Exception raised when no backend is found for some item name """
 
+
 class RouterBackend(Backend):
     """
     Router Backend - routes requests to different backends depending
@@ -33,10 +34,10 @@ class RouterBackend(Backend):
         """
         Initialise router backend.
 
-        @type mapping: list of tuples
-        @param mapping: [(mountpoint, backend), ...]
+        @type mapping: dictionary
+        @param mapping: dictionary of mountpoint -> backend mappings
         """
-        self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
+        self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping.iteritems()]
 
     def _get_backend(self, itemname):
         for mountpoint, backend in self.mapping:
@@ -54,3 +55,15 @@ class RouterBackend(Backend):
         backend, itemname = self._get_backend(itemname)
         return backend.get_item(itemname) # XXX item does not know its full name
 
+    def create_item(self, itemname):
+        """
+        Creates an item with a given itemname. If that item already exists,
+        raise an exception.
+
+        @type itemname: unicode
+        @param itemname: Name of the item we want to create.
+        @rtype: item object
+        @raise ItemAlreadyExistsError: The item you were trying to create already exists.
+        """
+        backend, itemname = self._get_backend(itemname)
+        return backend.create_item(itemname)  # XXX item does not know it's full name
