@@ -19,9 +19,6 @@ logging = log.getLogger(__name__)
 
 from MoinMoin.storage import Backend
 
-class NoMatchingBackend(Exception):
-    """ Exception raised when no backend is found for some item name """
-
 
 class RouterBackend(Backend):
     """
@@ -46,7 +43,6 @@ class RouterBackend(Backend):
             if itemname.startswith(mountpoint):
                 lstrip = mountpoint and len(mountpoint)+1 or 0
                 return backend, itemname[lstrip:]
-#        raise NoMatchingBackend("No matching backend found for: %r" % itemname)
         # If we couldn't find a backend for the given namespace it means that that
         # namespace has no special backend, so we just return the default backend
         # and the itemname unchanged.
