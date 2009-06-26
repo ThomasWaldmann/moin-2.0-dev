@@ -51,6 +51,12 @@ class RouterBackend(Backend):
             for item in backend.iteritems():
                 yield item # XXX item does not know its full name
 
+    def has_item(self, itemname):
+        # While we could use the inherited, generic implementation
+        # it is generally advised to override this method.
+        # Thus, we pass the call down. Every map[1] is a backend.
+        return any([map[1].has_item(itemname) for map in self.mapping])
+
     def get_item(self, itemname):
         backend, itemname = self._get_backend(itemname)
         return backend.get_item(itemname) # XXX item does not know its full name
