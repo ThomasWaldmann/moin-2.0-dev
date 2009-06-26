@@ -9,7 +9,7 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 import sys, os
 
 from MoinMoin.config import multiconfig, url_prefix_static
-from MoinMoin.storage.backends import memory, fs
+from MoinMoin.storage.backends import memory, fs, router
 
 
 class LocalConfig(multiconfig.DefaultConfig):
@@ -31,7 +31,11 @@ class LocalConfig(multiconfig.DefaultConfig):
     # TODO Change this to a sane setting later
     #data_backend = memory.MemoryBackend()
     #user_backend = memory.MemoryBackend()
-    data_backend = fs.FSBackend(os.path.join('instance', 'data'))
+    persistent_content = fs.FSBackend(os.path.join('instance', 'data'))
+    ephemeral_content = memory.MemoryBackend()
+    mapping = {'/': persistent_content, 'ephemeral/': ephemeral_content}
+    data_backend = router.RouterBackend(mapping)
+
     user_backend = fs.FSBackend(os.path.join('instance', 'user'))
 
     # Where your own wiki pages are (make regular backups of this directory):
