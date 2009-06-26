@@ -36,7 +36,7 @@ class RouterBackend(Backend):
         """
         self.default = default
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping.iteritems()]
-        self.backends = [map[1] for map in self.mapping] + [default, ]
+        self.backends = list(mapping.itervalues()) + [default, ]
 
     def _get_backend(self, itemname):
         for mountpoint, backend in self.mapping:
