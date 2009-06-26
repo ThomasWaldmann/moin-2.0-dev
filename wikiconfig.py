@@ -31,10 +31,11 @@ class LocalConfig(multiconfig.DefaultConfig):
     # TODO Change this to a sane setting later
     #data_backend = memory.MemoryBackend()
     #user_backend = memory.MemoryBackend()
-    persistent_content = fs.FSBackend(os.path.join('instance', 'data'))
+    #XXXpersistent_content = fs.FSBackend(os.path.join('instance', 'data'))
+    default = memory.MemoryBackend()
     ephemeral_content = memory.MemoryBackend()
     mapping = {'/': persistent_content, 'ephemeral/': ephemeral_content}
-    data_backend = router.RouterBackend(mapping)
+    data_backend = router.RouterBackend(mapping, default)
 
     user_backend = fs.FSBackend(os.path.join('instance', 'user'))
 
