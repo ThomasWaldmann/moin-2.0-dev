@@ -20,10 +20,21 @@ class TestRouterBackend(BackendTest):
         BackendTest.__init__(self, None)
 
     def create_backend(self):
-        root = MemoryBackend()
-        child = MemoryBackend()
-        mapping = {'/': root, 'child/': child}
-        return RouterBackend(mapping)
+        self.root = MemoryBackend()
+        self.child = MemoryBackend()
+        self.mapping = {'/': self.root, 'child/': self.child}
+        return RouterBackend(self.mapping)
 
     def kill_backend(self):
         pass
+
+
+    def test_correct_backend(self):
+        mymap = {'rootitem': self.root,         # == /rootitem
+                 'child/joe': self.child,       # Direct child of namespace.
+                 'child/': self.child,          # Root of namespace itself (!= root)
+                 '': self.root,
+                }
+
+        for itemname, backend in mymap.iteritems():
+            assert self.backend._get_backend(itemname)[0] is backend
