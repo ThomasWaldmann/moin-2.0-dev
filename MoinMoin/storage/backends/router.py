@@ -65,5 +65,8 @@ class RouterBackend(Backend):
         @rtype: item object
         @raise ItemAlreadyExistsError: The item you were trying to create already exists.
         """
+        if not isinstance(itemname, (str, unicode)):
+            raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
+
         backend, itemname = self._get_backend(itemname)
         return backend.create_item(itemname)  # XXX item does not know it's full name
