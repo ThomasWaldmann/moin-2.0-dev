@@ -30,24 +30,30 @@ class RouterBackend(Backend):
 
     For method docstrings, please see the "Backend" base class.
     """
-    def __init__(self, mapping):
+    def __init__(self, mapping, default):
         """
         Initialise router backend.
 
         @type mapping: dictionary
         @param mapping: dictionary of mountpoint -> backend mappings
         """
+        self.default = default
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping.iteritems()]
+        self.backends = [map[1] for map in self.mapping] + [default, ]
 
     def _get_backend(self, itemname):
         for mountpoint, backend in self.mapping:
             if itemname.startswith(mountpoint):
                 lstrip = mountpoint and len(mountpoint)+1 or 0
                 return backend, itemname[lstrip:]
-        raise NoMatchingBackend("No matching backend found for: %r" % itemname)
+#        raise NoMatchingBackend("No matching backend found for: %r" % itemname)
+        # If we couldn't find a backend for the given namespace it means that that
+        # namespace has no special backend, so we just return the default backend
+        # and the itemname unchanged.
+        return self.default, itemname
 
     def iteritems(self):
-        for mountpoint, backend in self.mapping:
+        for backend in self.backends:
             for item in backend.iteritems():
                 yield item # XXX item does not know its full name
 
@@ -55,7 +61,7 @@ class RouterBackend(Backend):
         # While we could use the inherited, generic implementation
         # it is generally advised to override this method.
         # Thus, we pass the call down. Every map[1] is a backend.
-        return any([map[1].has_item(itemname) for map in self.mapping])
+        return any([backend.has_item(itemname) for backend in self.backends])
 
     def get_item(self, itemname):
         backend, itemname = self._get_backend(itemname)
