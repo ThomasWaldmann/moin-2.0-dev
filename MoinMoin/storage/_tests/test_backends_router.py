@@ -22,7 +22,8 @@ class TestRouterBackend(BackendTest):
     def create_backend(self):
         self.default = MemoryBackend()
         self.child = MemoryBackend()
-        self.mapping = {'child/': self.child}
+        self.other = MemoryBackend()
+        self.mapping = {'child/': self.child, 'other/': self.other}
         return RouterBackend(self.mapping, self.default)
 
     def kill_backend(self):
@@ -30,10 +31,12 @@ class TestRouterBackend(BackendTest):
 
 
     def test_correct_backend(self):
-        mymap = {'rootitem': self.default,         # == /rootitem
+        mymap = {'rootitem': self.default,      # == /rootitem
                  'child/joe': self.child,       # Direct child of namespace.
+                 'other/jane': self.other,      # Direct child of namespace.
                  'child/': self.child,          # Root of namespace itself (!= root)
-                 '': self.default,
+                 'other/': self.other,          # Root of namespace
+                 '': self.default,              # Due to lack of any namespace info
                 }
 
         for itemname, backend in mymap.iteritems():
