@@ -25,11 +25,17 @@ class Config(DefaultConfig):
     flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     # configure backends
+    # XXX XXX
+    class DummyStorage(object):
+        pass
     data_backend = user_backend = None
+    storage = DummyStorage()
+    storage.user_backend = None
     def provide_fresh_backends(self):
         self.data_backend = memory.MemoryBackend()
         self.test_num_pages = len(clone(flatfile.FlatFileBackend(self.flat_dir), self.data_backend)[0])
-        self.user_backend = memory.MemoryBackend()
+        self.storage = self.DummyStorage()
+        self.storage.user_backend = memory.MemoryBackend()
 
     page_front_page = 'FrontPage'
 

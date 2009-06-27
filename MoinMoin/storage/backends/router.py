@@ -27,7 +27,7 @@ class RouterBackend(Backend):
 
     For method docstrings, please see the "Backend" base class.
     """
-    def __init__(self, mapping, default):
+    def __init__(self, default, users, mapping={}):
         """
         Initialise router backend.
 
@@ -35,8 +35,9 @@ class RouterBackend(Backend):
         @param mapping: dictionary of mountpoint -> backend mappings
         """
         self.default = default
+        self.user_backend = users
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping.iteritems()]
-        self.backends = list(mapping.itervalues()) + [default, ]
+        self.backends = list(mapping.itervalues()) + [default, users ]
 
     def _get_backend(self, itemname):
         for mountpoint, backend in self.mapping:
