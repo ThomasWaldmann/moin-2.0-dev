@@ -40,8 +40,47 @@ class TestRouterBackend(BackendTest):
                  '': self.default,              # Due to lack of any namespace info
                 }
 
+        assert not (self.default is self.child is self.other)
         for itemname, backend in mymap.iteritems():
             assert self.backend._get_backend(itemname)[0] is backend
 
+    def test_store_and_get(self):
+        itemname = 'child/foo'
+        item = self.backend.create_item(itemname)
+        assert item._backend is self.child
+        item.change_metadata()
+        item['just'] = 'testing'
+        item.publish_metadata()
+
+        item = self.backend.get_item(itemname)
+        assert item._backend is self.child
+        assert item['just'] == 'testing'
+        assert item.name == itemname
+
     def test_traversal(self):
-        pass
+        mymap = {'rootitem': self.default,      # == /rootitem
+                 'child/joe': self.child,       # Direct child of namespace.
+                 'other/jane': self.other,      # Direct child of namespace.
+                 'child/': self.child,          # Root of namespace itself (!= root)
+                 'other/': self.other,          # Root of namespace
+                 '': self.default,              # Due to lack of any namespace info
+                }
+
+        items_in = []
+        for itemname, backend in mymap.iteritems():
+            item = self.backend.create_item(itemname)
+            assert item.name == itemname
+            rev = item.create_revision(0)
+            rev.write("This is %s" % itemname)
+            item.commit()
+            items_in.append(item)
+            assert backend.has_item(itemname)
+
+        items_out = list(self.backend.iteritems())
+
+        items_in = [item.name for item in items_in]
+        items_out = [item.name for item in items_out]
+        items_in.sort()
+        items_out.sort()
+
+        assert items_in == items_out

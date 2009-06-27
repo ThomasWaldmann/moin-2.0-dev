@@ -57,7 +57,7 @@ class RouterBackend(Backend):
     def has_item(self, itemname):
         # While we could use the inherited, generic implementation
         # it is generally advised to override this method.
-        # Thus, we pass the call down. Every map[1] is a backend.
+        # Thus, we pass the call down.
         return any([backend.has_item(itemname) for backend in self.backends])
 
     def get_item(self, itemname):
@@ -65,15 +65,6 @@ class RouterBackend(Backend):
         return backend.get_item(itemname) # XXX item does not know its full name
 
     def create_item(self, itemname):
-        """
-        Creates an item with a given itemname. If that item already exists,
-        raise an exception.
-
-        @type itemname: unicode
-        @param itemname: Name of the item we want to create.
-        @rtype: item object
-        @raise ItemAlreadyExistsError: The item you were trying to create already exists.
-        """
         if not isinstance(itemname, (str, unicode)):
             raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
 
