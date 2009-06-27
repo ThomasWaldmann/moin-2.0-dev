@@ -354,8 +354,7 @@ class ConfigFunctionality(object):
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
-        assert hasattr(self, "user_backend"), "error in config: no user storage configured"
-        assert hasattr(self, "data_backend"), "error in config: no data storage configured"
+        assert hasattr(self, "storage"), "error in config: no data/user storage configured"
         # XXX: add defaults again
 
         if self.url_prefix_fckeditor is None:

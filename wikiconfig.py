@@ -28,16 +28,21 @@ class LocalConfig(multiconfig.DefaultConfig):
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
     # For development we use a simple in-memory backend for data storage
-    # TODO Change this to a sane setting later
-    #data_backend = memory.MemoryBackend()
-    #user_backend = memory.MemoryBackend()
-    #XXXpersistent_content = fs.FSBackend(os.path.join('instance', 'data'))
-    default = memory.MemoryBackend()
+    # TODO Provide EndUserBackend that takes care of all this automatically
+    default = fs.FSBackend(os.path.join('instance', 'data'))
+    users = fs.FSBackend(os.path.join('instance', 'user'))
     ephemeral_content = memory.MemoryBackend()
-    mapping = {'/': persistent_content, 'ephemeral/': ephemeral_content}
-    data_backend = router.RouterBackend(mapping, default)
+    mapping = {'ephemeral/': ephemeral_content}
+    data_backend = router.RouterBackend(default, users, mapping)
+    # XXX Throw out data_backend
+    storage = data_backend
 
-    user_backend = fs.FSBackend(os.path.join('instance', 'user'))
+    # make user_backend part of routerbackend.backends so that it can be
+    # traversed when traversing the router backend. easiest solution is to
+    # rewrite the callers to get the user_backend from there.
+    # (rename data_backend as well)
+
+    #storage_backend = EndUserBackend('path/to/instance')
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /

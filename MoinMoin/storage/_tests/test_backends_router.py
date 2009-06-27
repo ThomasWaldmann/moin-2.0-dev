@@ -21,10 +21,11 @@ class TestRouterBackend(BackendTest):
 
     def create_backend(self):
         self.default = MemoryBackend()
+        self.users = MemoryBackend()
         self.child = MemoryBackend()
         self.other = MemoryBackend()
         self.mapping = {'child/': self.child, 'other/': self.other}
-        return RouterBackend(self.mapping, self.default)
+        return RouterBackend(self.default, self.users, self.mapping)
 
     def kill_backend(self):
         pass
@@ -41,3 +42,6 @@ class TestRouterBackend(BackendTest):
 
         for itemname, backend in mymap.iteritems():
             assert self.backend._get_backend(itemname)[0] is backend
+
+    def test_traversal(self):
+        pass
