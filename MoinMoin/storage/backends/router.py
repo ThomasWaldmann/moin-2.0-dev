@@ -65,7 +65,8 @@ class RouterBackend(Backend):
         # While we could use the inherited, generic implementation
         # it is generally advised to override this method.
         # Thus, we pass the call down.
-        return any([backend.has_item(itemname) for backend in self.backends])
+        backend, itemname = self._get_backend(itemname)
+        return backend.has_item(itemname)
 
     def get_item(self, itemname):
         backend, itemname = self._get_backend(itemname)
