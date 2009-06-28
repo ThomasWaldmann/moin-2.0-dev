@@ -51,10 +51,9 @@ class RouterBackend(Backend):
             if itemname == mountpoint or itemname.startswith(mountpoint and mountpoint + '/' or ''):
                 lstrip = mountpoint and len(mountpoint)+1 or 0
                 return backend, itemname[lstrip:]
-        # If we couldn't find a backend for the given namespace it means that that
-        # namespace has no special backend, so we just return the default backend
-        # and the itemname unchanged.
-        return self.default, itemname
+        # This point should never be reached since at least the last mountpoint, '/', should
+        # contain the item.
+        raise AssertionError('No backend found for %s. Available backends: %r' % (itemname, self.mapping))
 
     def iteritems(self):
         for backend in self.backends:
