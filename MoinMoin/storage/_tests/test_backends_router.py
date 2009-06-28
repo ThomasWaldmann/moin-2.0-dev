@@ -8,6 +8,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import py
+
+from MoinMoin.error import ConfigurationError
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.memory import MemoryBackend
 from MoinMoin.storage.backends.router import RouterBackend
@@ -30,6 +33,16 @@ class TestRouterBackend(BackendTest):
     def kill_backend(self):
         pass
 
+
+    def test_incorrect_config(self):
+        mapping = [('foo', None)]
+        users = None
+        try:
+            RouterBackend(mapping, users)
+        except ConfigurationError:
+            pass
+        else:
+            raise AssertionError()
 
     def test_correct_backend(self):
         mymap = {'rootitem': self.root,         # == /rootitem
