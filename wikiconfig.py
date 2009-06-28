@@ -29,11 +29,10 @@ class LocalConfig(multiconfig.DefaultConfig):
 
     # For development we use a simple in-memory backend for data storage
     # TODO Provide EndUserBackend that takes care of all this automatically
-    default = fs.FSBackend(os.path.join('instance', 'data'))
+    root = fs.FSBackend(os.path.join('instance', 'data'))
     users = fs.FSBackend(os.path.join('instance', 'user'))
-    ephemeral_content = memory.MemoryBackend()
-    mapping = {'ephemeral/': ephemeral_content}
-    data_backend = router.RouterBackend(default, users, mapping)
+    mapping = [('temp/', memory.MemoryBackend()), ('/', root)]
+    data_backend = router.RouterBackend(mapping, users)
     # XXX Throw out data_backend
     storage = data_backend
 
