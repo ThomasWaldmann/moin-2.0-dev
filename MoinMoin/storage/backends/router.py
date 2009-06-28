@@ -8,7 +8,8 @@
     TODO: wrap backend items in wrapper items, so we can fix item
           names, support rename between backends, etc.
 
-    @copyright: 2008 MoinMoin:ThomasWaldmann
+    @copyright: 2008 MoinMoin:ThomasWaldmann,
+                2009 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -41,7 +42,7 @@ class RouterBackend(Backend):
 
     def _get_backend(self, itemname):
         for mountpoint, backend in self.mapping:
-            if itemname.startswith(mountpoint):
+            if itemname == mountpoint or itemname.startswith(mountpoint and mountpoint + '/' or ''):
                 lstrip = mountpoint and len(mountpoint)+1 or 0
                 return backend, itemname[lstrip:]
         # If we couldn't find a backend for the given namespace it means that that
