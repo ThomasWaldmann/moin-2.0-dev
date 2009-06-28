@@ -18,6 +18,8 @@ import re
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin.error import ConfigurationError
+
 from MoinMoin.storage import Backend
 
 
@@ -28,17 +30,21 @@ class RouterBackend(Backend):
 
     For method docstrings, please see the "Backend" base class.
     """
-    def __init__(self, default, users, mapping={}):
+    def __init__(self, mapping, users):
         """
         Initialise router backend.
 
-        @type mapping: dictionary
-        @param mapping: dictionary of mountpoint -> backend mappings
+        @type mapping: list of tuples
+        @param mapping: [(mountpoint, backend), ...]
         """
-        self.default = default
+        if not mapping or not (mapping[-1][0] == '/'):
+            raise ConfigurationError("You must specify a backend for '/' as the last backend in the mapping.")
+        elif not users:
+            raise ConfigurationError("You must specify a backend for user storage.")
+
         self.user_backend = users
-        self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping.iteritems()]
-        self.backends = list(mapping.itervalues()) + [default, users ]
+        self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
+        self.backends = [backend[1] for backend in self.mapping] + [users, ]
 
     def _get_backend(self, itemname):
         for mountpoint, backend in self.mapping:
