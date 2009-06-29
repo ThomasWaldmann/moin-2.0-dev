@@ -391,9 +391,9 @@ class Backend(Serializable):
             item = self.create_item(item_name)
             return item
 
-    def serialize_value(self, xmlfile):
+    def serialize_value(self, xmlgen):
         for item in self.iteritems():
-            item.serialize(xmlfile)
+            item.serialize(xmlgen)
 
 
 class Item(Serializable, DictMixin):
@@ -593,13 +593,19 @@ class Item(Serializable, DictMixin):
             revno = int(attrs['revno'])
             return self.create_revision(revno)
 
-    def serialize_value(self, xmlfile):
-        xg = XMLGenerator(xmlfile, 'utf-8')
+    def serialize(self, xmlgen):
+        if xmlgen.shall_serialize(item=self):
+            super(Item, self).serialize(xmlgen)
+
+    def serialize_value(self, xmlgen):
         im = ItemMeta({}, self)
-        im.serialize(xmlfile)
-        for revno in self.list_revisions():
-            rev = self.get_revision(revno)
-            rev.serialize(xmlfile)
+        im.serialize(xmlgen)
+        revnos = self.list_revisions()
+        current_revno = revnos[-1]
+        for revno in revnos:
+            if xmlgen.shall_serialize(item=self, revno=revno, current_revno=current_revno):
+                rev = self.get_revision(revno)
+                rev.serialize(xmlgen)
 
 
 class Revision(Serializable, DictMixin):
@@ -687,11 +693,15 @@ class Revision(Serializable, DictMixin):
         elif name == 'data':
             return Data(attrs, write_fn=self.write)
 
-    def serialize_value(self, xmlfile):
+    def serialize(self, xmlgen):
+        if xmlgen.shall_serialize(item=self._item, rev=self):
+            super(Revision, self).serialize(xmlgen)
+
+    def serialize_value(self, xmlgen):
         m = Meta({}, self)
-        m.serialize(xmlfile)
+        m.serialize(xmlgen)
         d = Data({}, read_fn=self.read)
-        d.serialize(xmlfile)
+        d.serialize(xmlgen)
 
 
 class StoredRevision(Revision):
