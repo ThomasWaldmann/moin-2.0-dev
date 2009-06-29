@@ -231,7 +231,11 @@ class BoolValue(Value):
     element_name = 'bool'
 
     def element_decode(self, x):
-        return bool(x)
+        if x == 'False':
+            return False
+        if x == 'True':
+            return True
+        raise ValueError("boolean serialization must be 'True' or 'False', no %r" % x)
 
     def element_encode(self, x):
         return str(x)
