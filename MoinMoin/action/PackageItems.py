@@ -107,7 +107,8 @@ class PackageItems:
             item_name = item_name.strip()
             cnt += 1
             try:
-                item = self.request.cfg.data_backend.get_item(item_name)
+                # TODO ACL?
+                item = self.request.cfg.storage.get_item(item_name)
             except NoSuchItemError:
                 continue
             r = item.get_revision(rev_no)

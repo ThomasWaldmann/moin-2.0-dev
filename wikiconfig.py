@@ -27,14 +27,11 @@ class LocalConfig(multiconfig.DefaultConfig):
     #instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
-    # For development we use a simple in-memory backend for data storage
     # TODO Provide EndUserBackend that takes care of all this automatically
     root = fs.FSBackend(os.path.join('instance', 'data'))
     users = fs.FSBackend(os.path.join('instance', 'user'))
     mapping = [('temp/', memory.MemoryBackend()), ('/', root)]
-    data_backend = router.RouterBackend(mapping, users)
-    # XXX Throw out data_backend
-    storage = data_backend
+    storage = router.RouterBackend(mapping, users)
 
     # make user_backend part of routerbackend.backends so that it can be
     # traversed when traversing the router backend. easiest solution is to

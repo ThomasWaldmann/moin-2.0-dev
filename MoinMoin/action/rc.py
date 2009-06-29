@@ -9,7 +9,8 @@
 """
 
 def execute(item_name, request):
-    history = request.cfg.data_backend.history()
+    # TODO ACL
+    history = request.cfg.storage.history()
     template = request.theme.env.get_template('rc.html')
     content = template.render(gettext=request.getText,
                               history=history,

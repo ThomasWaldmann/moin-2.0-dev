@@ -231,7 +231,8 @@ class ScriptEngine:
         """
         if self.request.user.may.write(itemname):
             _ = self.request.getText
-            item = self.request.cfg.data_backend.get_item(item_name)
+            # TODO ACL?
+            item = self.request.cfg.storage.get_item(item_name)
             if not item.exists():
                 raise RuntimeScriptException(_("The item %s does not exist.") % item_name)
 
