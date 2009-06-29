@@ -69,6 +69,7 @@ class XMLSelectiveGenerator(XMLGenerator):
         # the element to decide whether it shall be serialized.
         return True
 
+
 class ItemNameList(XMLSelectiveGenerator):
     def __init__(self, out, item_names):
         self.item_names = item_names
@@ -77,6 +78,20 @@ class ItemNameList(XMLSelectiveGenerator):
     def shall_serialize(self, item=None, rev=None,
                         revno=None, current_revno=None):
         return item is not None and item.name in self.item_names
+
+
+class TermMatch(XMLSelectiveGenerator):
+    def __init__(self, out, term):
+        self.term = term  # see MoinMoin.search.term
+        XMLSelectiveGenerator.__init__(self, out)
+
+    def shall_serialize(self, item=None, rev=None,
+                        revno=None, current_revno=None):
+        if item is not None:
+            self.term.prepare()
+            return self.term.evaluate(item)
+        return False
+
 
 def serialize(obj, xmlfile, xmlgen_cls=XMLSelectiveGenerator, *args, **kwargs):
     xg = xmlgen_cls(xmlfile, *args, **kwargs)
