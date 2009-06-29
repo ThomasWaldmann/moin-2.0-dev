@@ -28,17 +28,11 @@ class LocalConfig(multiconfig.DefaultConfig):
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
     # TODO Provide EndUserBackend that takes care of all this automatically
+    # TODO: storage_backend = EndUserBackend('path/to/instance')
     root = fs.FSBackend(os.path.join('instance', 'data'))
     users = fs.FSBackend(os.path.join('instance', 'user'))
     mapping = [('temp/', memory.MemoryBackend()), ('/', root)]
     storage = router.RouterBackend(mapping, users)
-
-    # make user_backend part of routerbackend.backends so that it can be
-    # traversed when traversing the router backend. easiest solution is to
-    # rewrite the callers to get the user_backend from there.
-    # (rename data_backend as well)
-
-    #storage_backend = EndUserBackend('path/to/instance')
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
