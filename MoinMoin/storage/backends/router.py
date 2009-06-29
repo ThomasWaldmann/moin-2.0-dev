@@ -8,7 +8,8 @@
     TODO: wrap backend items in wrapper items, so we can fix item
           names, support rename between backends, etc.
 
-    @copyright: 2008 MoinMoin:ThomasWaldmann
+    @copyright: 2008 MoinMoin:ThomasWaldmann,
+                2009 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -16,6 +17,8 @@ import re
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
+
+from MoinMoin.error import ConfigurationError
 
 from MoinMoin.storage import Backend
 
@@ -27,27 +30,30 @@ class RouterBackend(Backend):
 
     For method docstrings, please see the "Backend" base class.
     """
-    def __init__(self, default, users, mapping={}):
+    def __init__(self, mapping, users):
         """
         Initialise router backend.
 
-        @type mapping: dictionary
-        @param mapping: dictionary of mountpoint -> backend mappings
+        @type mapping: list of tuples
+        @param mapping: [(mountpoint, backend), ...]
         """
-        self.default = default
+        if not mapping or not (mapping[-1][0] == '/'):
+            raise ConfigurationError("You must specify a backend for '/' as the last backend in the mapping.")
+        elif not users:
+            raise ConfigurationError("You must specify a backend for user storage.")
+
         self.user_backend = users
-        self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping.iteritems()]
-        self.backends = list(mapping.itervalues()) + [default, users ]
+        self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
+        self.backends = [backend[1] for backend in self.mapping] + [users, ]
 
     def _get_backend(self, itemname):
         for mountpoint, backend in self.mapping:
-            if itemname.startswith(mountpoint):
+            if itemname == mountpoint or itemname.startswith(mountpoint and mountpoint + '/' or ''):
                 lstrip = mountpoint and len(mountpoint)+1 or 0
                 return backend, itemname[lstrip:]
-        # If we couldn't find a backend for the given namespace it means that that
-        # namespace has no special backend, so we just return the default backend
-        # and the itemname unchanged.
-        return self.default, itemname
+        # This point should never be reached since at least the last mountpoint, '/', should
+        # contain the item.
+        raise AssertionError('No backend found for %s. Available backends: %r' % (itemname, self.mapping))
 
     def iteritems(self):
         for backend in self.backends:
@@ -58,7 +64,8 @@ class RouterBackend(Backend):
         # While we could use the inherited, generic implementation
         # it is generally advised to override this method.
         # Thus, we pass the call down.
-        return any([backend.has_item(itemname) for backend in self.backends])
+        backend, itemname = self._get_backend(itemname)
+        return backend.has_item(itemname)
 
     def get_item(self, itemname):
         backend, itemname = self._get_backend(itemname)
