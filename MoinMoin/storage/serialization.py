@@ -13,6 +13,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 import base64
 
 from xml.sax import parse as xml_parse
@@ -44,6 +47,42 @@ class MoinContentHandler(ContentHandler):
         self.unserialize('characters', data)
 
 
+class XMLSelectiveGenerator(XMLGenerator):
+    """
+    Manage xml output writing (by XMLGenerator base class)
+    and selection of output (by shall_serialize method)
+
+    You are expected to subclass this class and overwrite the shall_serialize method.
+    """
+    def __init__(self, out, encoding='utf-8'):
+        # note: we have utf-8 as default, base class has iso-8859-1
+        if out is not None and not hasattr(out, 'write'):
+            # None is OK (will become stdout by XMLGenerator.__init__)
+            # file-like is also OK
+            # for everything else (filename?), we try to open it first:
+            out = open(out, 'w')
+        XMLGenerator.__init__(self, out, encoding)
+
+    def shall_serialize(self, item=None, rev=None,
+                        revno=None, current_revno=None):
+        # shall be called by serialization code before starting to write
+        # the element to decide whether it shall be serialized.
+        return True
+
+class ItemNameList(XMLSelectiveGenerator):
+    def __init__(self, out, item_names):
+        self.item_names = item_names
+        XMLSelectiveGenerator.__init__(self, out)
+
+    def shall_serialize(self, item=None, rev=None,
+                        revno=None, current_revno=None):
+        return item is not None and item.name in self.item_names
+
+def serialize(obj, xmlfile, xmlgen_cls=XMLSelectiveGenerator, *args, **kwargs):
+    xg = xmlgen_cls(xmlfile, *args, **kwargs)
+    obj.serialize(xg)
+
+
 class Serializable(object):
     element_name = None # override with xml element name
     element_attrs = None # override with xml element attributes
@@ -53,17 +92,16 @@ class Serializable(object):
         logging.warning(text)
 
     # serialization support:
-    def serialize(self, xmlfile):
+    def serialize(self, xmlgen):
         # works for simple elements, please override for complex elements
-        xg = XMLGenerator(xmlfile, 'utf-8')
-        xg.startElement(self.element_name, self.element_attrs or {})
-        self.serialize_value(xmlfile)
-        xg.endElement(self.element_name)
+        # xmlgen.shall_serialize should be called by elements supporting selection
+        xmlgen.startElement(self.element_name, self.element_attrs or {})
+        self.serialize_value(xmlgen)
+        xmlgen.endElement(self.element_name)
 
-    def serialize_value(self, xmlfile):
+    def serialize_value(self, xmlgen):
         # works for simple values, please override for complex values
-        xg = XMLGenerator(xmlfile, 'utf-8')
-        xg.characters(str(self.value))
+        xmlgen.characters(str(self.value))
 
     # unserialization support:
     def get_unserializer(self, name, attrs):
@@ -178,9 +216,8 @@ class Value(Serializable):
         value = self.element_decode(self.data)
         self.setter_fn(value)
 
-    def serialize_value(self, xmlfile):
-        xg = XMLGenerator(xmlfile, 'utf-8')
-        xg.characters(self.element_encode(self.value))
+    def serialize_value(self, xmlgen):
+        xmlgen.characters(self.element_encode(self.value))
 
     def element_decode(self, x):
         return x # override in child class
@@ -272,10 +309,10 @@ class TupleValue(Serializable):
         value = tuple(self._data)
         self._result_fn(value)
 
-    def serialize_value(self, xmlfile):
+    def serialize_value(self, xmlgen):
         for e in self.value:
             e = create_value_object(e)
-            e.serialize(xmlfile)
+            e.serialize(xmlgen)
 
 
 class Entry(TupleValue):
@@ -309,10 +346,10 @@ class Meta(Serializable):
         if name == 'entry':
             return Entry(attrs=attrs, rev_or_item=self.target)
 
-    def serialize_value(self, xmlfile):
+    def serialize_value(self, xmlgen):
         for k in self.target.keys():
             e = Entry(k, self.target[k])
-            e.serialize(xmlfile)
+            e.serialize(xmlgen)
 
 
 class ItemMeta(Meta):
@@ -344,11 +381,10 @@ class Chunk(Serializable):
             data = base64.b64decode(self.data)
             self.setter_fn(data)
 
-    def serialize_value(self, xmlfile):
-        xg = XMLGenerator(xmlfile, 'utf-8')
+    def serialize_value(self, xmlgen):
         if self.coding == 'base64':
             data = base64.b64encode(self.value)
-            xg.characters(data)
+            xmlgen.characters(data)
 
 
 class Data(Serializable):
@@ -372,11 +408,11 @@ class Data(Serializable):
     def result_fn(self, data):
         self.write_fn(data)
 
-    def serialize_value(self, xmlfile):
+    def serialize_value(self, xmlgen):
         while True:
             data = self.read_fn(Chunk.size)
             if not data:
                 break
             ch = Chunk(data)
-            ch.serialize(xmlfile)
+            ch.serialize(xmlgen)
 

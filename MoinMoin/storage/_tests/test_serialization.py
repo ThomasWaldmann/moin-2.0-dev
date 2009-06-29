@@ -14,7 +14,7 @@ from StringIO import StringIO
 
 from MoinMoin.storage.error import ItemAlreadyExistsError
 from MoinMoin.conftest import init_test_request
-from MoinMoin.storage.serialization import Entry, create_value_object
+from MoinMoin.storage.serialization import Entry, create_value_object, serialize
 
 class TestSerializer(object):
 
@@ -35,7 +35,7 @@ class TestSerializer(object):
         item = self.update_item(*params)
         rev = item.get_revision(0)
         xmlfile = StringIO()
-        rev.serialize(xmlfile)
+        serialize(rev, xmlfile)
         xml = xmlfile.getvalue()
         assert xml == ('<revision revno="0">'
                        '<meta>'
@@ -52,7 +52,7 @@ class TestSerializer(object):
         for params in testparams:
             item = self.update_item(*params)
         xmlfile = StringIO()
-        item.serialize(xmlfile)
+        serialize(item, xmlfile)
         xml = xmlfile.getvalue()
         print xml
         assert xml == ('<item name="foo2">'
@@ -75,7 +75,7 @@ class TestSerializer(object):
         for params in testparams:
             self.update_item(*params)
         xmlfile = StringIO()
-        self.request.data_backend.serialize(xmlfile)
+        serialize(self.request.data_backend, xmlfile)
         xml = xmlfile.getvalue()
         print xml
         assert xml == ('<backend>'
@@ -123,7 +123,7 @@ class TestSerializer2(object):
         for k, v, expected_xml in test_data:
             e = Entry(k, v)
             xmlfile = StringIO()
-            e.serialize(xmlfile)
+            serialize(e, xmlfile)
             xml = xmlfile.getvalue()
             assert xml == expected_xml
 
@@ -142,7 +142,7 @@ class TestSerializer2(object):
         for v, expected_xml in test_data:
             v = create_value_object(v)
             xmlfile = StringIO()
-            v.serialize(xmlfile)
+            serialize(v, xmlfile)
             xml = xmlfile.getvalue()
             assert xml == expected_xml
 
