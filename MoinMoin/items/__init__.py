@@ -54,7 +54,7 @@ class Item(object):
                formatter=None, item=None):
         try:
             if item is None:
-                item = request.data_backend.get_item(name)
+                item = request.storage.get_item(name)
             else:
                 name = item.name
         except NoSuchItemError:
@@ -198,7 +198,7 @@ class Item(object):
         comment = request.form.get('comment')
         target = request.form.get('target')
         old_item = self.rev.item
-        backend = request.data_backend
+        backend = request.storage
         new_item = backend.create_item(target)
         # Transfer all revisions with their data and metadata
         # Make sure the list begins with the lowest value, that is, 0.
@@ -262,7 +262,7 @@ class Item(object):
         request = self.request
         if name is None:
             name = self.name
-        backend = request.data_backend
+        backend = request.storage
         try:
             storage_item = backend.get_item(name)
         except NoSuchItemError:
@@ -317,14 +317,14 @@ class Item(object):
             search_term = NOT(LastRevisionMetaDataMatch('deleted', True))
             if term:
                 search_term = AND(term, search_term)
-            backend_items = self.request.data_backend.search_item(search_term)
+            backend_items = self.request.storage.search_item(search_term)
         else:
             if term:
                 search_term = term
-                backend_items = self.request.data_backend.search_item(search_term)
+                backend_items = self.request.storage.search_item(search_term)
             else:
                 # special case: we just want all items
-                backend_items = self.request.data_backend.iteritems()
+                backend_items = self.request.storage.iteritems()
         for item in backend_items:
             yield Item.create(self.request, item=item)
 

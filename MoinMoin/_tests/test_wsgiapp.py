@@ -22,8 +22,8 @@ class TestApplication:
     NO_PAGES = ('FooBar', 'TheNone/ExistantPage/', '%33Strange%74Codes')
 
     class Config(wikiconfig.Config):
-        data_backend = MemoryBackend()
-        user_backend = MemoryBackend()
+        storage = MemoryBackend()
+        storage.user_backend = MemoryBackend()
 
     def testWSGIAppExisting(self):
         for page in self.PAGES:

@@ -441,7 +441,8 @@ class MetadataTagStore(AbstractTagStore):
         @param page: a Page object where the tags should be related to
         """
         self.page = page
-        self.item = page.request.cfg.data_backend.get_item(page.page_name)
+        # TODO ACL?
+        self.item = page.request.cfg.storage.get_item(page.page_name)
         self.item.change_metadata()
         try:
             self.load()

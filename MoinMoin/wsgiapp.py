@@ -50,7 +50,7 @@ def init_backend(context):
         able to create fresh data storage backends in between init and init_backend.
     """
     from MoinMoin.storage.backends.acl import AclWrapperBackend
-    context.data_backend = AclWrapperBackend(context)
+    context.storage = AclWrapperBackend(context)
 
 def run(context):
     """ Run a context trough the application. """

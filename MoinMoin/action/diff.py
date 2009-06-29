@@ -2,11 +2,10 @@
 """
     MoinMoin - show diff between 2 item revisions
 
-    TODO: acl checks were removed, have to be done on storage layer
-
     @copyright: 2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
+# TODO: acl checks were removed, have to be done on storage layer
 from MoinMoin.items import Item, MIMETYPE
 
 def execute(item_name, request):
@@ -16,7 +15,8 @@ def execute(item_name, request):
         date = None
 
     # get (absolute) current revision number
-    item = request.cfg.data_backend.get_item(item_name)
+    # TODO acl error handling, use aclbackend
+    item = request.cfg.storage.get_item(item_name)
     current_revno = item.get_revision(-1).revno
 
     if date is None:
