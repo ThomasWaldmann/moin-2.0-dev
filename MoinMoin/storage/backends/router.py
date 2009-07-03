@@ -20,7 +20,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin.error import ConfigurationError
 
-from MoinMoin.storage import Backend
+from MoinMoin.storage import Backend, Item
 
 
 class RouterBackend(Backend):
@@ -68,12 +68,42 @@ class RouterBackend(Backend):
         return backend.has_item(itemname)
 
     def get_item(self, itemname):
-        backend, itemname = self._get_backend(itemname)
-        return backend.get_item(itemname) # XXX item does not know its full name
+        backend, new_itemname = self._get_backend(itemname)
+        return RouterItem(backend.get_item(new_itemname), itemname)
 
     def create_item(self, itemname):
         if not isinstance(itemname, (str, unicode)):
             raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
 
-        backend, itemname = self._get_backend(itemname)
-        return backend.create_item(itemname)  # XXX item does not know it's full name
+        backend, new_itemname = self._get_backend(itemname)
+        return RouterItem(backend.create_item(new_itemname), itemname)
+
+
+class RouterItem(object):
+    """
+    http://docs.python.org/reference/datamodel.html#special-method-lookup-for-new-style-classes
+    """
+    def __init__(self, item, itemname):
+        self._item = item
+        self._itemname = itemname
+
+    @property
+    def name(self):
+        return self._itemname
+
+    def __setitem__(self, key, value):
+        return self._item.__setitem__(key, value)
+
+    def __delitem__(self, key):
+        return self._item.__delitem__(key)
+
+    def __getitem__(self, key):
+        return self._item.__getitem__(key)
+
+    def __getattr__(self, attr):
+        #!! XXX will fail if inheriting from Item
+        return getattr(self._item, attr)
+
+    def rename(self, newname):
+        # TODO How would this best work?
+        raise NotImplementedError()
