@@ -905,7 +905,9 @@ class Text(Binary):
 
     def _render_data_diff(self, oldrev, newrev):
         from MoinMoin.util import diff_html
-        return diff_html.diff(self.request, oldrev.read(), newrev.read())
+        return diff_html.diff(self.request,
+                              self.data_storage_to_internal(oldrev.read()),
+                              self.data_storage_to_internal(newrev.read()))
 
     def do_modify(self, template_name):
         if template_name:
