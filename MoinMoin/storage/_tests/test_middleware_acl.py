@@ -35,10 +35,10 @@ class TestACLMiddleware(BackendTest):
 
     def get_item(self, name):
         # Just as a shortcut
-        return self.request.data_backend.get_item(name)
+        return self.request.storage.get_item(name)
 
     def create_item_acl(self, name, acl):
-        item = self.request.data_backend.create_item(name)
+        item = self.request.storage.create_item(name)
         rev = item.create_revision(0)
         rev[ACL] = acl
         item.commit()
@@ -86,7 +86,7 @@ class TestACLMiddleware(BackendTest):
     def test_write_without_read(self):
         name = "write_but_not_read"
         acl = "All:write"
-        item = self.request.data_backend.create_item(name)
+        item = self.request.storage.create_item(name)
         rev = item.create_revision(0)
         rev[ACL] = acl
         rev.write("My name is " + name)

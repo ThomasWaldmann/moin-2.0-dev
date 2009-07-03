@@ -95,7 +95,8 @@ class TwikiDraw(Image):
         if last_POST: # after all 3 POSTs were done ...
             meta = {} # TODO how to handle metadata edits?
             data = '' # TODO get data from container item
-            backend = request.cfg.data_backend
+            # TODO ACL?
+            backend = request.cfg.storage
             try:
                 storage_item = backend.get_item(item_name)
                 rev_no = storage_item.list_revisions()[-1]

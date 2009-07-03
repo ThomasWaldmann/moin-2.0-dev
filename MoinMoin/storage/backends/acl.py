@@ -71,7 +71,7 @@ class AclWrapperBackend(object):
     """
     def __init__(self, request):
         self.request = request
-        self.backend = request.cfg.data_backend
+        self.backend = request.cfg.storage
 
     def __getattr__(self, attr):
         # Attributes that this backend does not define itself are just looked

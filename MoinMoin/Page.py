@@ -76,7 +76,7 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        self._backend = request.data_backend
+        self._backend = request.storage
 
         self.reset()
 

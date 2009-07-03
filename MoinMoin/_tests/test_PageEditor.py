@@ -123,7 +123,7 @@ class TestExpandPrivateVariables(TestExpandUserName):
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
         """
-        item = self.request.cfg.data_backend.create_item(self.name)
+        item = self.request.cfg.storage.create_item(self.name)
         rev = item.create_revision(0)
         rev.write(u' ME:: %s\n' % self.name)
         item.commit()
@@ -197,7 +197,7 @@ class TestCopyPage(object):
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
         """
-        item = self.request.cfg.data_backend.create_item(self.pagename)
+        item = self.request.cfg.storage.create_item(self.pagename)
         rev = item.create_revision(0)
         rev.write(self.text)
         item.commit()

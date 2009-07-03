@@ -45,7 +45,8 @@ def execute(pagename, request):
         max_count = min(max_count, limit_max_count)
 
         try:
-            item = request.cfg.data_backend.get_item(pagename)
+            # TODO ACL
+            item = request.cfg.storage.get_item(pagename)
         except NoSuchItemError:
             pass  # TODO: move from storage branch, when done there
 
@@ -116,7 +117,8 @@ def execute(pagename, request):
                                           revision[EDIT_LOG_HOSTNAME]) or _("N/A")
             date = request.user.getFormattedDateTime(float(revision.timestamp))
             comment = wikiutil.escape(comment) or '&nbsp;'
-            node = "%d:%s" % (revno, request.cfg.data_backend._get_revision_node(revision)[1])
+            # TODO ACL
+            node = "%d:%s" % (revno, request.cfg.storage._get_revision_node(revision)[1])
 
             history.append((url, (idx, color), edges, node, editor, date, comment, "%d B" % size, diff, "&nbsp;".join(actions)))
             if cnt >= max_count:
