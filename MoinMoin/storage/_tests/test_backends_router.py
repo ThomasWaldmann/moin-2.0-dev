@@ -87,7 +87,7 @@ class TestRouterBackend(BackendTest):
             rev.write("This is %s" % itemname)
             item.commit()
             items_in.append(item)
-            assert backend.has_item(itemname)
+            assert self.backend.has_item(itemname)
 
         items_out = list(self.backend.iteritems())
 
