@@ -34,8 +34,8 @@ class Config(DefaultConfig):
     storage = DummyStorage()
     storage.user_backend = None
     def provide_fresh_backends(self):
-        self.test_num_pages = len(clone(flatfile.FlatFileBackend(self.flat_dir), self.storage)[0])
         self.storage = memory.MemoryBackend()
+        self.test_num_pages = len(clone(flatfile.FlatFileBackend(self.flat_dir), self.storage)[0])
         self.storage.user_backend = memory.MemoryBackend()
 
     page_front_page = 'FrontPage'
