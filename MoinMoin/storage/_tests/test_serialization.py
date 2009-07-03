@@ -20,9 +20,9 @@ class TestSerializer(object):
 
     def update_item(self, name, revno, meta, data):
         try:
-            item = self.request.data_backend.create_item(name)
+            item = self.request.storage.create_item(name)
         except ItemAlreadyExistsError:
-            item = self.request.data_backend.get_item(name)
+            item = self.request.storage.get_item(name)
         rev = item.create_revision(revno)
         for k, v in meta.items():
             rev[k] = v
@@ -75,7 +75,7 @@ class TestSerializer(object):
         for params in testparams:
             self.update_item(*params)
         xmlfile = StringIO()
-        serialize(self.request.data_backend, xmlfile)
+        serialize(self.request.storage, xmlfile)
         xml = xmlfile.getvalue()
         print xml
         assert xml == ('<backend>'

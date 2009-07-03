@@ -59,7 +59,7 @@ class Permissions:
         request = self.request
         if attr not in request.cfg.acl_rights_valid:
             raise AttributeError, attr
-        may = request.data_backend._may
+        may = request.storage._may
         return lambda itemname: may(itemname, attr)
 
 
