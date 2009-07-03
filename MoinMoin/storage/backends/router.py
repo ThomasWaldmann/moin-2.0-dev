@@ -20,7 +20,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin.error import ConfigurationError
 
-from MoinMoin.storage import Backend, Item
+from MoinMoin.storage import Backend
 
 
 class RouterBackend(Backend):
@@ -81,6 +81,29 @@ class RouterBackend(Backend):
 
 class RouterItem(object):
     """
+    Router Item - Wraps 'real' storage items to make them aware of their full name.
+
+    Items that the RouterBackend stores do not know their full name since the backend
+    they belong to is looked up from a list for a given mountpoint and only the itemname
+    itself (without leading mountpoint) is given to the specific backend.
+    This is done so as to allow mounting a given backend at a different mountpoint.
+    The problem with that is, of course, that items do not know their full name if they
+    are retrieved via the specific backends directly. Thus, it is neccessary to wrap the
+    items returned from those specific backends in an instance of this RouterItem class.
+    This makes sure that an item in a specific backend only knows it's local name (as it
+    should be; this allows mounting at a different place without renaming all items) but
+    items that the RouterBackend creates or gets know their fully qualified name.
+
+    In order to achieve this, we must mimic the Item interface here. In addition to that,
+    a backend implementor may have decided to provide additional methods on his Item class.
+    We can not know that here, ahead of time. We must redirect any attribute lookup to the
+    encapsulated item, hence, and only intercept calls that are related to the item name.
+    To do this, we store the wrapped item and redirect all calls via this classes __getattr__
+    method. For this to work, RouterItem *must not* inherit from Item, because otherwise
+    the attribute would be looked up on the abstract base class, which certainly is not what
+    we want.
+    Furthermore there's a problem with __getattr__ and new-style classes' special methods
+    which can be looked up here:
     http://docs.python.org/reference/datamodel.html#special-method-lookup-for-new-style-classes
     """
     def __init__(self, item, mountpoint, itemname):
