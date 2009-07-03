@@ -8,9 +8,7 @@
             <th>Revision #</th>
             <th>Revision type</th>
             <th>Extra</th>
-            <th>User</th>
-            <th>Hostname</th>
-            <th>Address</th>
+            <th>Submitter</th>
             <th>Comment</th>
         </tr>
         {% for rev in history %}
@@ -21,9 +19,7 @@
             <td>{{ rev.revno }}</td>
             <td>{{ rev.mimetype }}</td>
             <td>{{ rev.edit_log_extra }}</td>
-            <td>{{ rev.edit_log_userid }}</td>
-            <td>{{ rev.edit_log_hostname }}</td>
-            <td>{{ rev.edit_log_addr }}</td>
+            <td>{{ rev|user_format }}</td>
             <td>{{ rev.edit_log_comment }}</td>
         </tr>
         {% endfor %}

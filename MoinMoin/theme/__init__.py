@@ -11,11 +11,12 @@ import os
 
 from jinja2 import Environment, PackageLoader, Template, FileSystemBytecodeCache, Markup
 
-from MoinMoin import i18n, wikiutil, config, version, caching
+from MoinMoin import i18n, wikiutil, config, version, caching, user
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
 from MoinMoin.Page import Page
 from MoinMoin.util import pysupport
+from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 
 modules = pysupport.getPackageModules(__file__)
 
@@ -154,6 +155,11 @@ class ThemeBase:
         self.env.filters['urlquote'] = lambda x: url_quote(x)
         self.env.filters['datetime_format'] = lambda tm, u=request.user: u.getFormattedDateTime(tm)
         self.env.filters['date_format'] = lambda tm, u=request.user: u.getFormattedDate(tm)
+        self.env.filters['user_format'] = lambda rev, request=request: \
+                                              user.get_printable_editor(request,
+                                                                        rev[EDIT_LOG_USERID],
+                                                                        rev[EDIT_LOG_ADDR],
+                                                                        rev[EDIT_LOG_HOSTNAME])
 
     def emit_custom_html(self, html):
         """
