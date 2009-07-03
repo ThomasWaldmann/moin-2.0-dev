@@ -49,7 +49,7 @@ class RouterBackend(Backend):
         for mountpoint, backend in self.mapping:
             if itemname == mountpoint or itemname.startswith(mountpoint and mountpoint + '/' or ''):
                 lstrip = mountpoint and len(mountpoint)+1 or 0
-                return backend, itemname[lstrip:]
+                return backend, itemname[lstrip:], itemname[:lstrip]
         # This point should never be reached since at least the last mountpoint, '/', should
         # contain the item.
         raise AssertionError('No backend found for %s. Available backends: %r' % (itemname, self.mapping))
@@ -58,38 +58,39 @@ class RouterBackend(Backend):
         for mountpoint, backend in self.mapping:
             mountpoint = mountpoint + "/" if mountpoint else mountpoint
             for item in backend.iteritems():
-                yield RouterItem(item, mountpoint + item.name)
+                yield RouterItem(item, mountpoint, item.name)
 
     def has_item(self, itemname):
         # While we could use the inherited, generic implementation
         # it is generally advised to override this method.
         # Thus, we pass the call down.
-        backend, itemname = self._get_backend(itemname)
+        backend, itemname, mountpoint = self._get_backend(itemname)
         return backend.has_item(itemname)
 
     def get_item(self, itemname):
-        backend, new_itemname = self._get_backend(itemname)
-        return RouterItem(backend.get_item(new_itemname), itemname)
+        backend, itemname, mountpoint = self._get_backend(itemname)
+        return RouterItem(backend.get_item(itemname), mountpoint, itemname)
 
     def create_item(self, itemname):
         if not isinstance(itemname, (str, unicode)):
             raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
 
-        backend, new_itemname = self._get_backend(itemname)
-        return RouterItem(backend.create_item(new_itemname), itemname)
+        backend, itemname, mountpoint = self._get_backend(itemname)
+        return RouterItem(backend.create_item(itemname), mountpoint, itemname)
 
 
 class RouterItem(object):
     """
     http://docs.python.org/reference/datamodel.html#special-method-lookup-for-new-style-classes
     """
-    def __init__(self, item, itemname):
+    def __init__(self, item, mountpoint, itemname):
         self._item = item
+        self._mountpoint = mountpoint
         self._itemname = itemname
 
     @property
     def name(self):
-        return self._itemname
+        return self._mountpoint + self._itemname
 
     def __setitem__(self, key, value):
         return self._item.__setitem__(key, value)
@@ -105,5 +106,6 @@ class RouterItem(object):
         return getattr(self._item, attr)
 
     def rename(self, newname):
-        # TODO How would this best work?
-        raise NotImplementedError()
+        # TODO How would this best work? Do we want to allow cross-backend renames?
+        self._item.rename(newname)
+        self._itemname = newname
