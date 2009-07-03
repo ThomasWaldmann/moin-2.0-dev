@@ -44,7 +44,6 @@ class RouterBackend(Backend):
 
         self.user_backend = users
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
-        self.backends = [backend[1] for backend in self.mapping] + [users, ]
 
     def _get_backend(self, itemname):
         for mountpoint, backend in self.mapping:
@@ -56,9 +55,10 @@ class RouterBackend(Backend):
         raise AssertionError('No backend found for %s. Available backends: %r' % (itemname, self.mapping))
 
     def iteritems(self):
-        for backend in self.backends:
+        for mountpoint, backend in self.mapping:
+            mountpoint = mountpoint + "/" if mountpoint else mountpoint
             for item in backend.iteritems():
-                yield item # XXX item does not know its full name
+                yield RouterItem(item, mountpoint + item.name)
 
     def has_item(self, itemname):
         # While we could use the inherited, generic implementation
