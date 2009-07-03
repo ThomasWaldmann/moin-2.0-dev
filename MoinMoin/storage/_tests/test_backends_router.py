@@ -60,6 +60,7 @@ class TestRouterBackend(BackendTest):
     def test_store_and_get(self):
         itemname = 'child/foo'
         item = self.backend.create_item(itemname)
+        assert item.name == itemname
         assert item._backend is self.child
         item.change_metadata()
         item['just'] = 'testing'
@@ -87,7 +88,7 @@ class TestRouterBackend(BackendTest):
             rev.write("This is %s" % itemname)
             item.commit()
             items_in.append(item)
-            assert backend.has_item(itemname)
+            assert self.backend.has_item(itemname)
 
         items_out = list(self.backend.iteritems())
 
