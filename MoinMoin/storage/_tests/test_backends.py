@@ -64,7 +64,6 @@ class BackendTest(object):
 
     def get_item_check(self, name):
         item = self.backend.get_item(name)
-        assert isinstance(item, Item)
         assert item.name == name
 
     def rename_item_check(self, old_name, new_name):
@@ -77,7 +76,6 @@ class BackendTest(object):
     def test_create_get_rename_get_rev_item(self):
         def create_rev_item(name):
             item = self.backend.create_item(name)
-            assert isinstance(item, Item)
             assert item.name == name
             item.create_revision(0)
             item.commit()
@@ -93,7 +91,6 @@ class BackendTest(object):
     def test_create_get_rename_get_meta_item(self):
         def create_meta_item(name):
             item = self.backend.create_item(name)
-            assert isinstance(item, Item)
             assert item.name == name
             item.change_metadata()
             item.publish_metadata()
@@ -178,7 +175,6 @@ class BackendTest(object):
         query_string = u"song"
         query = term.Name(query_string, True)
         for num, item in enumerate(self.backend.search_item(query)):
-            assert isinstance(item, Item)
             assert item.name.find(query_string) != -1
         assert num == 2
 
@@ -214,7 +210,6 @@ class BackendTest(object):
         self.create_rev_item_helper('abcdefghijklmn')
         count = 0
         for item in self.backend.iteritems():
-            assert isinstance(item, Item)
             count += 1
         assert count > 0
 
@@ -233,7 +228,6 @@ class BackendTest(object):
         item = self.backend.get_item("existing")
         old_rev = item.get_revision(-1)
         rev = item.create_revision(old_rev.revno + 1)
-        assert isinstance(rev, NewRevision)
         item.rollback()
         rev = item.get_revision(-1)
         assert old_rev == rev
@@ -241,7 +235,6 @@ class BackendTest(object):
     def test_new_item_create_revision(self):
         item = self.backend.create_item('internal')
         rev = item.create_revision(0)
-        assert isinstance(rev, NewRevision)
         item.rollback()
         assert not self.backend.has_item(item.name)
 
