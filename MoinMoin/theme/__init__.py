@@ -152,6 +152,8 @@ class ThemeBase:
         from werkzeug import url_quote, url_encode
         self.env.filters['urlencode'] = lambda x: url_encode(x)
         self.env.filters['urlquote'] = lambda x: url_quote(x)
+        self.env.filters['datetime_format'] = lambda tm, u=request.user: u.getFormattedDateTime(tm)
+        self.env.filters['date_format'] = lambda tm, u=request.user: u.getFormattedDate(tm)
 
     def emit_custom_html(self, html):
         """
