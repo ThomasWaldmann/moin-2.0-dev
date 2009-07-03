@@ -15,9 +15,9 @@
         </tr>
         {% for rev in history %}
         <tr>
-            <td>{{ rev.timestamp }}</td>
+            <td>{{ rev.timestamp|datetime_format }}</td>
             <td>{{ rev.edit_log_action }}</td>
-            <td><a href="/{{ rev.item.name| urlquote }}">{{ rev.item.name|e }}</a></td>
+            <td><a href="/{{ rev.item.name|urlquote }}">{{ rev.item.name|e }}</a></td>
             <td>{{ rev.revno }}</td>
             <td>{{ rev.mimetype }}</td>
             <td>{{ rev.edit_log_extra }}</td>
