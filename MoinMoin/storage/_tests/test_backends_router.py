@@ -115,7 +115,19 @@ class TestRouterBackend(BackendTest):
         item = self.backend.create_item(itemname)
         rev = item.create_revision(0)
         item.commit()
-        assert itemname in [item.name for item in list(self.root.iteritems())]
+        assert self.root.has_item(itemname)
 
-
+    def test_cross_backend_rename(self):
+        itemname = 'i_will_be_moved'
+        item = self.backend.create_item('child/' + itemname)
+        item.create_revision(0)
+        item.commit()
+        assert self.child.has_item(itemname)
+        newname = 'i_was_moved'
+        item.rename('other/' + newname)
+        print [item.name for item in self.child.iteritems()]
+        assert not self.child.has_item(itemname)
+        assert not self.child.has_item(newname)
+        assert not self.child.has_item('other/' + newname)
+        assert self.other.has_item(newname)
 
