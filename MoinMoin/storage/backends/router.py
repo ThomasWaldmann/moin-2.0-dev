@@ -46,6 +46,9 @@ class RouterBackend(Backend):
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
 
     def _get_backend(self, itemname):
+        if not isinstance(itemname, (str, unicode)):
+            raise TypeError("Item names must have string type, not %s" % (type(itemname)))
+
         for mountpoint, backend in self.mapping:
             if itemname == mountpoint or itemname.startswith(mountpoint and mountpoint + '/' or ''):
                 lstrip = mountpoint and len(mountpoint)+1 or 0
@@ -62,7 +65,7 @@ class RouterBackend(Backend):
         for mountpoint, backend in self.mapping:
             mountpoint = mountpoint + "/" if mountpoint else mountpoint
             for item in backend.iteritems():
-                yield RouterItem(item, mountpoint, item.name)
+                yield RouterItem(item, mountpoint, item.name, self)
 
     def iteritems(self):
         """
@@ -99,14 +102,11 @@ class RouterBackend(Backend):
 
     def get_item(self, itemname):
         backend, itemname, mountpoint = self._get_backend(itemname)
-        return RouterItem(backend.get_item(itemname), mountpoint, itemname)
+        return RouterItem(backend.get_item(itemname), mountpoint, itemname, self)
 
     def create_item(self, itemname):
-        if not isinstance(itemname, (str, unicode)):
-            raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
-
         backend, itemname, mountpoint = self._get_backend(itemname)
-        return RouterItem(backend.create_item(itemname), mountpoint, itemname)
+        return RouterItem(backend.create_item(itemname), mountpoint, itemname, self)
 
 
 class RouterItem(object):
@@ -136,10 +136,11 @@ class RouterItem(object):
     which can be looked up here:
     http://docs.python.org/reference/datamodel.html#special-method-lookup-for-new-style-classes
     """
-    def __init__(self, item, mountpoint, itemname):
+    def __init__(self, item, mountpoint, itemname, backend):
         self._item = item
         self._mountpoint = mountpoint
         self._itemname = itemname
+        self._get_backend = backend._get_backend
 
     @property
     def name(self):
@@ -160,5 +161,25 @@ class RouterItem(object):
 
     def rename(self, newname):
         # TODO How would this best work? Do we want to allow cross-backend renames?
-        self._item.rename(newname)
-        self._itemname = newname
+        backend, itemname, mountpoint = self._get_backend(newname)
+        if mountpoint != self._mountpoint:
+            # Mountpoint changed! That means we have to copy the item over.
+            assert not backend.has_item(itemname)  # TODO handle sanely
+            new_item = backend.create_item(itemname)
+            for revno in self._item.list_revisions():
+                oldrev = self._item.get_revision(revno)
+                newrev = new_item.create_revision(revno)
+                for key, value in oldrev:
+                    newrev[key] = value
+                newrev.write(oldrev.read())        # TODO read buffered
+                new_item.commit()
+
+            self._item = new_item
+            self._mountpoint = mountpoint
+            self._itemname = itemname
+            # TODO 'delete' old item
+
+        else:
+            # Mountpoint didn't change
+            self._item.rename(itemname)
+            self._itemname = itemname
