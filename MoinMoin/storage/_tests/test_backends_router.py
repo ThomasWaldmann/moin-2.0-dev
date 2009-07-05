@@ -110,3 +110,12 @@ class TestRouterBackend(BackendTest):
         all_items = [item.name for item in all_items]
         assert joes_name in all_items
 
+    def test_nonexisting_namespace(self):
+        itemname = 'nonexisting/namespace/somewhere/deep/below'
+        item = self.backend.create_item(itemname)
+        rev = item.create_revision(0)
+        item.commit()
+        assert itemname in [item.name for item in list(self.root.iteritems())]
+
+
+

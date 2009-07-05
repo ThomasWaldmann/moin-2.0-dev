@@ -561,14 +561,14 @@ class BackendTest(object):
             if isinstance(self.backend, RouterBackend):
                 # Revisions are created too fast for the rev's timestamp's granularity.
                 # This only affects the RouterBackend because there several different
-                # backends are used and no means for storing simultaneosly created revs
+                # backends are used and no means for storing simultaneously created revs
                 # in the correct order exists between backends.
 
                 # XXX XXX
                 # You may have realized that all the items above belong to the same backend so this shouldn't actually matter.
                 # It does matter, however, once you consider that the RouterBackend uses the generic, slow history implementation.
                 # This one uses iteritems and then sorts all the revisions itself, hence discarding any information of ordering
-                # for simultaneaosly created revisions. If we just call history of that single backend directly, it works without
+                # for simultaneously created revisions. If we just call history of that single backend directly, it works without
                 # time.sleep. For n backends, however, you'd have to somehow merge the revisions into one generator again, thus
                 # discarding that information again. Besides, that would be a costly operation. The ordering for simultaneosly
                 # created revisions remains the same since it's based on tuple ordering. Better proposals welcome.
