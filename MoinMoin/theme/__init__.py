@@ -9,8 +9,7 @@
 
 import os
 
-import jinja2
-import werkzeug
+from jinja2 import Environment, PackageLoader, Template, FileSystemBytecodeCache, Markup
 
 from MoinMoin import i18n, wikiutil, config, version, caching, user
 from MoinMoin import action as actionmod
@@ -142,42 +141,25 @@ class ThemeBase:
         self._cache = {} # Used to cache elements that may be used several times
         self._status = []
         self._send_title_called = False
-        self.init_jinja2()
 
-    def init_jinja2(self):
-        """
-        Initialize Jinja2 templating engine.
-        """
-
-        request = self.request
         jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
         try:
-            os.makedirs(jinja_cachedir)
-        except OSError:
+            os.mkdir(jinja_cachedir)
+        except:
             pass
-        bytecode_cache = jinja2.FileSystemBytecodeCache(jinja_cachedir, '%s')
-        loader = jinja2.PackageLoader('MoinMoin', 'templates'),
-        self.env = jinja2.Environment(loader=loader,
-                                      bytecode_cache=bytecode_cache,
-                                      extensions=['jinja2.ext.i18n'])
-        self.env.filters['urlencode'] = werkzeug.url_encode
-        self.env.filters['urlquote'] = werkzeug.url_quote
-
-        def datetime_format(tm, user=request.user):
-            return user.getFormattedDateTime(tm)
-
-        def date_format(tm, user=request.user):
-            return user.getFormattedDate(tm)
-
-        def user_format(rev, request=request):
-            userid = rev[EDIT_LOG_USERID]
-            addr = rev[EDIT_LOG_ADDR]
-            hostname = rev[EDIT_LOG_HOSTNAME]
-            return user.get_printable_editor(request, userid, addr, hostname)
-
-        self.env.filters['datetime_format'] = datetime_format
-        self.env.filters['date_format'] = date_format
-        self.env.filters['user_format'] = user_format
+        self.env = Environment(loader=PackageLoader('MoinMoin', 'templates'),
+                               bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'),
+                               extensions=['jinja2.ext.i18n'])
+        from werkzeug import url_quote, url_encode
+        self.env.filters['urlencode'] = lambda x: url_encode(x)
+        self.env.filters['urlquote'] = lambda x: url_quote(x)
+        self.env.filters['datetime_format'] = lambda tm, u=request.user: u.getFormattedDateTime(tm)
+        self.env.filters['date_format'] = lambda tm, u=request.user: u.getFormattedDate(tm)
+        self.env.filters['user_format'] = lambda rev, request=request: \
+                                              user.get_printable_editor(request,
+                                                                        rev[EDIT_LOG_USERID],
+                                                                        rev[EDIT_LOG_ADDR],
+                                                                        rev[EDIT_LOG_HOSTNAME])
 
     def emit_custom_html(self, html):
         """
