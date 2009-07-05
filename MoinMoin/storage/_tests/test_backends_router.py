@@ -98,3 +98,15 @@ class TestRouterBackend(BackendTest):
         items_out.sort()
 
         assert items_in == items_out
+
+    def test_user_in_traversal(self):
+        joes_name = 'joe_with_the_unique_name'
+        joe = self.backend.user_backend.create_item(joes_name)
+        joe.change_metadata()
+        joe["email"] = "joe@example.com"
+        joe.publish_metadata()
+
+        all_items = list(self.backend.iteritems())
+        all_items = [item.name for item in all_items]
+        assert joes_name in all_items
+
