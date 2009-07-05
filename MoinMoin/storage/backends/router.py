@@ -54,11 +54,41 @@ class RouterBackend(Backend):
         # contain the item.
         raise AssertionError('No backend found for %s. Available backends: %r' % (itemname, self.mapping))
 
-    def iteritems(self):
+    def _iteritems(self):
+        """
+        This only iterates over all non-user and non-trash items. We don't
+        want them to turn up in history.
+        """
         for mountpoint, backend in self.mapping:
             mountpoint = mountpoint + "/" if mountpoint else mountpoint
             for item in backend.iteritems():
                 yield RouterItem(item, mountpoint, item.name)
+
+    def iteritems(self):
+        """
+        Iterate over all items, even users. (Necessary for traversal.)
+        """
+        for item in self._iteritems():
+            yield item
+        for user in self.user_backend.iteritems():
+            yield user
+
+    def history(self, reverse=True):
+        """
+        Just the basic, slow implementation of history with the difference
+        that we don't iterate over users/trash.
+        """
+        revs = []
+        for item in self._iteritems():
+            for revno in item.list_revisions():
+                rev = item.get_revision(revno)
+                revs.append((rev.timestamp, rev.revno, item.name, ))
+        revs.sort() # from oldest to newest
+        if reverse:
+            revs.reverse()
+        for ts, revno, name in revs:
+            item = self.get_item(name)
+            yield item.get_revision(revno)
 
     def has_item(self, itemname):
         # While we could use the inherited, generic implementation
