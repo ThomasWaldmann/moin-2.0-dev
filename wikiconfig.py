@@ -9,7 +9,7 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 import sys, os
 
 from MoinMoin.config import multiconfig, url_prefix_static
-from MoinMoin.storage.backends import memory, fs, router
+from MoinMoin.storage.backends import get_enduser_backend
 
 
 class LocalConfig(multiconfig.DefaultConfig):
@@ -27,12 +27,7 @@ class LocalConfig(multiconfig.DefaultConfig):
     #instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
-    # TODO Provide EndUserBackend that takes care of all this automatically
-    # TODO: storage_backend = EndUserBackend('path/to/instance')
-    root = fs.FSBackend(os.path.join('instance', 'data'))
-    users = fs.FSBackend(os.path.join('instance', 'user'))
-    mapping = [('temp/', memory.MemoryBackend()), ('/', root)]
-    storage = router.RouterBackend(mapping, users)
+    storage = get_enduser_backend('instance/')
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
