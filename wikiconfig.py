@@ -9,7 +9,7 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 import sys, os
 
 from MoinMoin.config import multiconfig, url_prefix_static
-from MoinMoin.storage.backends import get_enduser_backend
+from MoinMoin.storage.backends.enduser import get_enduser_backend
 
 
 class LocalConfig(multiconfig.DefaultConfig):
