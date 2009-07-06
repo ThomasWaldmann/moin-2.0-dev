@@ -10,36 +10,62 @@
 """
 
 import shutil
+import sys
+import os
 from os import path
 
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
-from MoinMoin.storage.backends import fs, memory, router
 
 
-def get_enduser_backend(backend_uri='instance/', mapping=None, user=None):
-    """
-    To ease storage configuration for the user, he may provide just a backend_uri
-    or a mapping and a backend for user storage (allowing fine grained control over
-    storage configuration).
-    If he chooses to provide a backend uri, data and user backends are constructed
-    automatically and encapsulated in a RouterBackend.
-    If the user chooses to provide mapping and user backend himself, those are just
-    passed to the RouterBackend as they are.
-    If the user did not specify anything, we use a FSBackend with user/ and data/
-    subdirectories by default.
-    """
-    if mapping is user is None:
-        if path.isdir(backend_uri):
-            data = fs.FSBackend(path.join(backend_uri, 'data'))
-            user = fs.FSBackend(path.join(backend_uri, 'user'))
-        elif backend_uri == ':memory:':
-            data = memory.MemoryBackend()
-            user = memory.MemoryBackend()
+def copy_item(item, destination, verbose=False):
+    converts, skips, fails = {}, {}, {}
+    name = item.name
+    revisions = item.list_revisions()
 
-        mapping = [('/', data),]
+    for revno in revisions:
+        revision = item.get_revision(revno)
+        try:
+            new_item = destination.get_item(name)
+        except NoSuchItemError:
+            new_item = destination.create_item(name)
+            new_item.change_metadata()
+            for k, v in revision.item.iteritems():
+                new_item[k] = v
+            new_item.publish_metadata()
 
-    backend = router.RouterBackend(mapping, user)
-    return backend
+        try:
+            new_rev = new_item.create_revision(revision.revno)
+        except RevisionAlreadyExistsError:
+            existing_revision = new_item.get_revision(revision.revno)
+            if same_revision(existing_revision, revision):
+                try:
+                    skips[name].append(revision.revno)
+                except KeyError:
+                    skips[name] = [revision.revno]
+                if verbose:
+                    sys.stdout.write("s")
+            else:
+                try:
+                    fails[name].append(revision.revno)
+                except KeyError:
+                    fails[name] = [revision.revno]
+                if verbose:
+                    sys.stdout.write("F")
+        else:
+            for k, v in revision.iteritems():
+                new_rev[k] = v
+            new_rev.timestamp = revision.timestamp
+            shutil.copyfileobj(revision, new_rev)
+
+            new_item.commit()
+            try:
+                converts[name].append(revision.revno)
+            except KeyError:
+                converts[name] = [revision.revno]
+            if verbose:
+                sys.stdout.write(".")
+
+    return converts, skips, fails
 
 
 def clone(source, destination, verbose=False, only_these=[]):
@@ -60,61 +86,24 @@ def clone(source, destination, verbose=False, only_these=[]):
         return True
 
     if verbose:
-        import sys, os
         # reopen stdout file descriptor with write mode
         # and 0 as the buffer size (unbuffered)
         sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
         sys.stdout.write("[converting %s to %s]: " % (source.__class__.__name__,
                                                        destination.__class__.__name__, ))
-    converts, skips, fails = {}, {}, {}
 
-    for item in source.iteritems():
-        name = item.name
-        if only_these and name not in only_these:
-            continue
-        revisions = item.list_revisions()
-        for revno in revisions:
-            revision = item.get_revision(revno)
+    if only_these:
+        for itemname in only_these:
             try:
-                new_item = destination.get_item(name)
+                item = source.get_item(itemname)
             except NoSuchItemError:
-                new_item = destination.create_item(name)
-                new_item.change_metadata()
-                for k, v in revision.item.iteritems():
-                    new_item[k] = v
-                new_item.publish_metadata()
-
-            try:
-                new_rev = new_item.create_revision(revision.revno)
-            except RevisionAlreadyExistsError:
-                existing_revision = new_item.get_revision(revision.revno)
-                if same_revision(existing_revision, revision):
-                    try:
-                        skips[name].append(revision.revno)
-                    except KeyError:
-                        skips[name] = [revision.revno]
-                    if verbose:
-                        sys.stdout.write("s")
-                else:
-                    try:
-                        fails[name].append(revision.revno)
-                    except KeyError:
-                        fails[name] = [revision.revno]
-                    if verbose:
-                        sys.stdout.write("F")
-            else:
-                for k, v in revision.iteritems():
-                    new_rev[k] = v
-                new_rev.timestamp = revision.timestamp
-                shutil.copyfileobj(revision, new_rev)
-
-                new_item.commit()
-                try:
-                    converts[name].append(revision.revno)
-                except KeyError:
-                    converts[name] = [revision.revno]
-                if verbose:
-                    sys.stdout.write(".")
+                # TODO Find out why this fails sometimes.
+                #sys.stdout.write("Unable to copy %s\n" % itemname)
+                continue
+            converts, skips, fails = copy_item(item, destination, verbose)
+    else:
+        for item in source.iteritems():
+            converts, skips, fails = copy_item(item, destination, verbose)
 
     if verbose:
         sys.stdout.write("\n")
