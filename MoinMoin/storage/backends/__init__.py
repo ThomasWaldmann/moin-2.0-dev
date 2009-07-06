@@ -12,7 +12,6 @@
 import shutil
 import sys
 import os
-from os import path
 
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
 
