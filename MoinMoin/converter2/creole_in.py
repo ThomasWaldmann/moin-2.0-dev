@@ -117,10 +117,14 @@ class Converter(ConverterMacro):
 
     block_head = r"""
         (?P<head>
-            ^ \s*
-            (?P<head_head>=+) \s*
-            (?P<head_text> .*? ) \s*
-            =* \s*
+            ^
+            \s*
+            (?P<head_head> =+)
+            \s*
+            (?P<head_text> .*?)
+            \s*
+            =*
+            \s*
             $
         )
     """
@@ -132,19 +136,23 @@ class Converter(ConverterMacro):
         element = moin_page.h(attrib=attrib, children=(head_text, ))
         stack.top_append(element)
 
+    # Matches an empty (only whitespaces) line.
     block_line = r'(?P<line> ^ \s* $ )'
-    # empty line that separates paragraphs
 
     def block_line_repl(self, _iter_content, stack, line):
         stack.clear()
 
-    block_list = r"""
-        (?P<list>
-            ^ \s* [*\#][^*\#].* $
-        )
-    """
     # Matches the beginning of a list. All lines within a list are handled by
     # list_*.
+    block_list = r"""
+        (?P<list>
+            ^
+            \s*
+            [*\#][^*\#]
+            .*
+            $
+        )
+    """
 
     def block_list_repl(self, iter_content, stack, list):
         iter_content.push(list)
@@ -160,7 +168,7 @@ class Converter(ConverterMacro):
 
     block_macro = r"""
         ^
-        \s*?
+        \s*
         (?P<macro>
             <<
             (?P<macro_name> \w+)
@@ -178,7 +186,7 @@ class Converter(ConverterMacro):
             )?
             >>
         )
-        \s*?
+        \s*
         $
     """
 
@@ -192,13 +200,16 @@ class Converter(ConverterMacro):
         elem = self.macro(macro_name, macro_args, macro, True)
         stack.top_append_ifnotempty(elem)
 
+    # Matches the beginning of a nowiki block
     block_nowiki = r"""
         (?P<nowiki>
-            ^{{{ \s* $
+            ^{{{
+            \s*
+            $
         )
     """
-    # Matches the beginning of a nowiki block
 
+    # Matches the interpreter line of a nowiki block
     nowiki_interpret = r"""
         ^
         \#!
@@ -213,10 +224,11 @@ class Converter(ConverterMacro):
         \s*
         $
     """
+
+    # Matches the possibly escaped end of a nowiki block
     nowiki_end = r"""
         ^ (?P<escape> ~ )? (?P<rest> }}} \s* ) $
     """
-    # Matches the possibly escaped end of a nowiki block
 
     def block_nowiki_lines(self, iter_content):
         "Unescaping generator for the lines in a nowiki block"
@@ -481,6 +493,7 @@ class Converter(ConverterMacro):
             # this url is escaped, we render it as text
             stack.top_append(url_target)
 
+    # Matches a line which will end a list
     list_end = r"""
         (?P<end>
             ^
@@ -499,20 +512,21 @@ class Converter(ConverterMacro):
             )
         )
     """
-    # Matches a line which will end a list
 
     def list_end_repl(self, _iter_content, stack, end):
         stack.clear()
 
+    # Matches a single list item
     list_item = r"""
         (?P<item>
-            ^ \s*
-            (?P<item_head> [\#*]+) \s*
+            ^
+            \s*
+            (?P<item_head> [\#*]+)
+            \s*
             (?P<item_text> .*?)
             $
         )
     """
-    # Matches single list items
 
     def list_item_repl(self, _iter_content, stack, item, item_head, item_text):
         list_level = len(item_head)
