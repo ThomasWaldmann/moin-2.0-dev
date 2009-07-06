@@ -383,8 +383,8 @@ class NonExistent(Item):
     supported_mimetypes = ['application/x-unknown']
     mimetype_groups = [
         ('page markup text items', [
-            ('text/moin-wiki', 'wiki (moin)'),
-            ('text/x.moin.creole', 'wiki (Creole)'),
+            ('text/x.moin.wiki', 'Wiki (MoinMoin)'),
+            ('text/x.moin.creole', 'Wiki (Creole)'),
             ('text/html', 'unsafe html'),
             ('text/x-safe-html', 'safe html'),
         ]),
@@ -977,11 +977,9 @@ class HTML(Text):
 class MoinWiki(Text):
     """ MoinMoin wiki markup """
     supported_mimetypes = ['text/x-unidentified-wiki-format',
-                           'text/moin-wiki',
+                           'text/x.moin.wiki',
                           ]  # XXX Improve mimetype handling
-    converter_mimetype = 'text/moin-wiki'
-    format = 'wiki'
-    format_args = ''
+    converter_mimetype = 'text/x.moin.wiki'
 
 
 class CreoleWiki(Text):
