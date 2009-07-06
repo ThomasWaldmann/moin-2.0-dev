@@ -880,6 +880,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
 class Text(Binary):
     """ Any kind of text """
     supported_mimetypes = ['text/']
+    converter_mimetype = 'text/plain'
 
     # text/plain mandates crlf - but in memory, we want lf only
     def data_internal_to_form(self, text):
@@ -899,7 +900,38 @@ class Text(Binary):
         return data.decode(config.charset).replace(u'\r\n', u'\n')
 
     def _render_data(self):
-        return u"<pre>%s</pre>" % self.data_storage_to_internal(self.data) # XXX to_form()?
+        from emeraldtree import ElementTree as ET
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.iri import Iri
+        from MoinMoin.util.tree import html
+
+        request = self.request
+        InputConverter = reg.get(request, self.converter_mimetype or self.mimetype,
+                'application/x-moin-document')
+        IncludeConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-moin-document;includes=expandall')
+        MacroConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-moin-document;macros=expandall')
+        LinkConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-moin-document;links=extern')
+        # TODO: Real output format
+        HtmlConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-xhtml-moin-page')
+
+        i = Iri(scheme='wiki', authority='', path='/' + self.name)
+
+        doc = InputConverter(request)(self.data.decode(config.charset).split(u'\r\n'), page_url=i)
+        doc = IncludeConverter(request)(doc)
+        doc = MacroConverter(request)(doc)
+        doc = LinkConverter(request)(doc)
+        doc = HtmlConverter(request)(doc)
+
+        out = StringIO()
+        tree = ET.ElementTree(doc)
+        # TODO: Switch to xml
+        tree.write(out, encoding=config.charset,
+                default_namespace=html, method='html')
+        return out.getvalue()
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
@@ -936,47 +968,7 @@ class HTML(Text):
         return self.data_storage_to_internal(self.data)
 
 
-class MoinParserSupported(Text):
-    """ Base class for text formats that are supported by some moin parser """
-    supported_mimetypes = []
-    format = 'wiki' # override this, if needed
-    format_args = ''
-    def _render_data(self):
-        from emeraldtree import ElementTree as ET
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.iri import Iri
-        from MoinMoin.util.tree import html
-
-        request = self.request
-        InputConverter = reg.get(request, self.converter_mimetype or self.mimetype,
-                'application/x-moin-document')
-        IncludeConverter = reg.get(request, 'application/x-moin-document',
-                'application/x-moin-document;includes=expandall')
-        MacroConverter = reg.get(request, 'application/x-moin-document',
-                'application/x-moin-document;macros=expandall')
-        LinkConverter = reg.get(request, 'application/x-moin-document',
-                'application/x-moin-document;links=extern')
-        # TODO: Real output format
-        HtmlConverter = reg.get(request, 'application/x-moin-document',
-                'application/x-xhtml-moin-page')
-
-        i = Iri(scheme='wiki', authority='', path='/' + self.name)
-
-        doc = InputConverter(request)(self.data.decode(config.charset).split(u'\r\n'), page_url=i)
-        doc = IncludeConverter(request)(doc)
-        doc = MacroConverter(request)(doc)
-        doc = LinkConverter(request)(doc)
-        doc = HtmlConverter(request)(doc)
-
-        out = StringIO()
-        tree = ET.ElementTree(doc)
-        # TODO: Switch to xml
-        tree.write(out, encoding=config.charset,
-                default_namespace=html, method='html')
-        return out.getvalue()
-
-
-class MoinWiki(MoinParserSupported):
+class MoinWiki(Text):
     """ MoinMoin wiki markup """
     supported_mimetypes = ['text/x-unidentified-wiki-format',
                            'text/moin-wiki',
@@ -986,7 +978,7 @@ class MoinWiki(MoinParserSupported):
     format_args = ''
 
 
-class CreoleWiki(MoinParserSupported):
+class CreoleWiki(Text):
     """ Creole wiki markup """
     supported_mimetypes = ['text/creole-wiki']
     converter_mimetype = 'text/creole'
@@ -994,35 +986,35 @@ class CreoleWiki(MoinParserSupported):
     format_args = ''
 
 
-class CSV(MoinParserSupported):
+class CSV(Text):
     """ Comma Separated Values format """
     supported_mimetypes = ['text/csv']
     format = 'csv'
     format_args = ''
 
 
-class SafeHTML(MoinParserSupported):
+class SafeHTML(Text):
     """ HTML markup """
     supported_mimetypes = ['text/x-safe-html']
     format = 'html'
     format_args = ''
 
 
-class DiffPatch(MoinParserSupported):
+class DiffPatch(Text):
     """ diff output / patch input format """
     supported_mimetypes = ['text/x-diff']
     format = 'highlight'
     format_args = 'diff'
 
 
-class IRCLog(MoinParserSupported):
+class IRCLog(Text):
     """ Internet Relay Chat Log """
     supported_mimetypes = ['text/x-irclog']
     format = 'highlight'
     format_args = 'irc'
 
 
-class PythonSrc(MoinParserSupported):
+class PythonSrc(Text):
     """ Python source code """
     supported_mimetypes = ['text/x-python']
     format = 'highlight'
