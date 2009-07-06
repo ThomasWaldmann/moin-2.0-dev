@@ -384,7 +384,7 @@ class NonExistent(Item):
     mimetype_groups = [
         ('page markup text items', [
             ('text/moin-wiki', 'wiki (moin)'),
-            ('text/creole-wiki', 'wiki (creole)'),
+            ('text/x.moin.creole', 'wiki (Creole)'),
             ('text/html', 'unsafe html'),
             ('text/x-safe-html', 'safe html'),
         ]),
@@ -880,7 +880,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
 class Text(Binary):
     """ Any kind of text """
     supported_mimetypes = ['text/']
-    converter_mimetype = 'text/plain'
+    converter_mimetype = None
 
     # text/plain mandates crlf - but in memory, we want lf only
     def data_internal_to_form(self, text):
@@ -986,10 +986,7 @@ class MoinWiki(Text):
 
 class CreoleWiki(Text):
     """ Creole wiki markup """
-    supported_mimetypes = ['text/creole-wiki']
-    converter_mimetype = 'text/creole'
-    format = 'creole'
-    format_args = ''
+    supported_mimetypes = ['text/x.moin.creole']
 
 
 class CSV(Text):
