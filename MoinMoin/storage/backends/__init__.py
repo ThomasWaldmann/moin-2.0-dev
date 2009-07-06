@@ -91,6 +91,7 @@ def clone(source, destination, verbose=False, only_these=[]):
         sys.stdout.write("[converting %s to %s]: " % (source.__class__.__name__,
                                                        destination.__class__.__name__, ))
 
+    converts, skips, fails = {}, {}, {}
     if only_these:
         for itemname in only_these:
             try:

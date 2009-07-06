@@ -157,15 +157,18 @@ class RouterItem(object):
         return self._item.__getitem__(key)
 
     def __getattr__(self, attr):
-        #!! XXX will fail if inheriting from Item
+        #!! will fail if inheriting from Item
         return getattr(self._item, attr)
 
     def rename(self, newname):
-        # TODO How would this best work? Do we want to allow cross-backend renames?
+        old_name = self._item.name
         backend, itemname, mountpoint = self._get_backend(newname)
         if mountpoint != self._mountpoint:
             # Mountpoint changed! That means we have to copy the item over.
-            copy_item(self._item, backend, verbose=False)
+            converts, skips, fails = copy_item(self._item, backend, verbose=False)
+            assert len(converts) == 1
+            new_item = backend.get_item(old_name)
+            new_item.rename(itemname)
 
             self._item = new_item
             self._mountpoint = mountpoint
