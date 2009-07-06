@@ -21,6 +21,17 @@ class Type(object):
         if parameters is not None:
             self.parameters.update(parameters)
 
+    def __unicode__(self):
+        ret = [u'%s/%s' % (self.type, self.subtype)]
+
+        parameters = self.parameters.items()
+        parameters.sort()
+        for item in parameters:
+            # TODO: check if quoting is necessary
+            ret.append(u'%s="%s"' % item)
+
+        return u';'.join(ret)
+
     def _parse(self, type):
         parts = type.split(';')
 
