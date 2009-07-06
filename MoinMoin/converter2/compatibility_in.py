@@ -43,7 +43,7 @@ def _factory(request, input, output):
     if output == 'application/x-moin-document':
         try:
             parser = wikiutil.searchAndImportPlugin(
-                    request.cfg, "parser", input)
+                    request.cfg, "parser", unicode(input))
         # If the plugin is not available, ignore it
         except wikiutil.PluginMissingError:
             return
