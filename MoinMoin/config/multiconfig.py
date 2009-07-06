@@ -354,8 +354,7 @@ class ConfigFunctionality(object):
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
-        assert hasattr(self, "user_backend"), "error in config: no user storage configured"
-        assert hasattr(self, "data_backend"), "error in config: no data storage configured"
+        assert hasattr(self, "storage"), "error in config: no data/user storage configured"
         # XXX: add defaults again
 
         if self.url_prefix_fckeditor is None:
@@ -865,12 +864,10 @@ options_no_group_name = {
 
     ('shared_intermap', None,
      "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
-    ('data_backend', None,
-     'Page storage backend; the None default will make Moin construct a backend based on the `data_dir` setting.'),
-    ('user_backend', None,
-     'User storage backend; the None default will make Moin construct a backend based on the `user_dir` setting.'),
+    ('storage', None,
+     'Data/User storage backends; the None default will make Moin construct a backend.'),  # XXX Elaborate?
     ('underlay_backend', None,
-     'Underlay storage backend; if None and `data_backend` is also None Moin will construct a backend based on the `underlay_data_dir` setting'),
+     'Underlay storage backend; if None and `data_backend` is also None Moin will construct a backend based on the `underlay_data_dir` setting'),  # XXX NotImplemented?
   )),
   # ==========================================================================
   'urls': ('URLs', None, (

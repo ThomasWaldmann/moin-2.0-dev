@@ -107,7 +107,8 @@ class PackageItems:
             item_name = item_name.strip()
             cnt += 1
             try:
-                item = self.request.cfg.data_backend.get_item(item_name)
+                # TODO ACL?
+                item = self.request.cfg.storage.get_item(item_name)
             except NoSuchItemError:
                 continue
             r = item.get_revision(rev_no)
@@ -117,7 +118,7 @@ class PackageItems:
             timestamp = float(r.timestamp)
             zi = zipfile.ZipInfo(filename=str(cnt), date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
             zi.compress_type = COMPRESSION_LEVEL
-            zf.writestr(zi, r.read_data().encode("utf-8"))
+            zf.writestr(zi, r.read().encode("utf-8"))
             if include_subitems:
                 # ToDo implement subitems, currently removed
                 pass

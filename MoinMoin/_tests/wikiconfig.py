@@ -25,11 +25,18 @@ class Config(DefaultConfig):
     flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     # configure backends
-    data_backend = user_backend = None
+    class DummyStorage(object):
+        # This is neccessary so the 'if not request.cfg.storage' test in conftest.py can succeed...
+        # The config is checked whether it defines storage and storage.user_backend.
+        # XXX This could be improved...
+        def __nonzero__(self):
+            return False
+    storage = DummyStorage()
+    storage.user_backend = None
     def provide_fresh_backends(self):
-        self.data_backend = memory.MemoryBackend()
-        self.test_num_pages = len(clone(flatfile.FlatFileBackend(self.flat_dir), self.data_backend)[0])
-        self.user_backend = memory.MemoryBackend()
+        self.storage = memory.MemoryBackend()
+        self.test_num_pages = len(clone(flatfile.FlatFileBackend(self.flat_dir), self.storage)[0])
+        self.storage.user_backend = memory.MemoryBackend()
 
     page_front_page = 'FrontPage'
 
