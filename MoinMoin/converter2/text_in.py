@@ -24,15 +24,15 @@ class Converter(object):
                 type_output == 'application/x-moin-document'):
             return cls
 
-    def __init__(self, _request, page_url=None, _args=None):
-        self.page_url = page_url
+    def __init__(self, _request):
+        pass
 
-    def __call__(self, content):
+    def __call__(self, content, page_url=None, arguments=None):
         """Parse the text and return DOM tree."""
 
         attrib = {}
-        if self.page_url:
-            attrib[moin_page.page_href] = unicode(self.page_url)
+        if page_url:
+            attrib[moin_page.page_href] = unicode(page_url)
 
         blockcode = moin_page.blockcode()
 
