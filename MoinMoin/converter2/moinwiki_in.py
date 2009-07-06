@@ -88,8 +88,12 @@ class _Stack(list):
 class Converter(ConverterMacro):
     @classmethod
     def factory(cls, _request, input, output):
-        if input == 'text/moin-wiki' and output == 'application/x-moin-document':
-            return cls
+        if output.type == 'application' and output.subtype == 'x-moin-document':
+            if input.type == 'text' and input.subtype == 'x.moin.wiki':
+                return cls
+            if (input.type == 'x-moin' and input.subtype == 'format' and
+                    input.parameters.get('name') == 'wiki'):
+                return cls
 
     def __call__(self, content, page_url=None, arguments=None):
         attrib = {}
