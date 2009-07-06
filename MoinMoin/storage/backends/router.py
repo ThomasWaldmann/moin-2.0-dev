@@ -35,16 +35,27 @@ class RouterBackend(Backend):
         """
         Initialise router backend.
 
-        @type mapping: list of tuples
-        @param mapping: [(mountpoint, backend), ...]
-        """
-        if not mapping or not (mapping[-1][0] == '/'):
-            raise ConfigurationError("You must specify a backend for '/' as the last backend in the mapping.")
-        elif not users:
-            raise ConfigurationError("You must specify a backend for user storage.")
+        The mapping given must satisfy the following criteria:
+            * Order matters.
+            * There *must* be a backend with mountpoint '/' or '' at the very end of the mapping.
+              That backend is then used as root, which means that all items that don't lie in
+              the namespace of any other backend are stored there.
 
+        The user backend provided must be a regular backend.
+
+        @type mapping: list of tuples of mountpoint -> backend mappings
+        @param mapping: [(mountpoint, backend), ...]
+        @type users: subclass of MoinMoin.storage.Backend
+        @param users: The backend where users are stored.
+        """
         self.user_backend = users
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
+
+        if not mapping or self.mapping[-1][0] != '':
+            raise ConfigurationError("You must specify a backend for '/' or '' as the last backend in the mapping.")
+        if not users:
+            raise ConfigurationError("You must specify a backend for user storage.")
+
 
     def _get_backend(self, itemname):
         if not isinstance(itemname, (str, unicode)):
@@ -60,8 +71,7 @@ class RouterBackend(Backend):
 
     def _iteritems(self):
         """
-        This only iterates over all non-user and non-trash items. We don't
-        want them to turn up in history.
+        This only iterates over all non-user items. We don't want them to turn up in history.
         """
         for mountpoint, backend in self.mapping:
             mountpoint = mountpoint + "/" if mountpoint else mountpoint
@@ -80,7 +90,7 @@ class RouterBackend(Backend):
     def history(self, reverse=True):
         """
         Just the basic, slow implementation of history with the difference
-        that we don't iterate over users/trash.
+        that we don't iterate over users.
         """
         revs = []
         for item in self._iteritems():
@@ -121,7 +131,7 @@ class RouterItem(object):
     The problem with that is, of course, that items do not know their full name if they
     are retrieved via the specific backends directly. Thus, it is neccessary to wrap the
     items returned from those specific backends in an instance of this RouterItem class.
-    This makes sure that an item in a specific backend only knows it's local name (as it
+    This makes sure that an item in a specific backend only knows its local name (as it
     should be; this allows mounting at a different place without renaming all items) but
     items that the RouterBackend creates or gets know their fully qualified name.
 
