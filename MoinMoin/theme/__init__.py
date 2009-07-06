@@ -11,11 +11,12 @@ import os
 
 from jinja2 import Environment, PackageLoader, Template, FileSystemBytecodeCache, Markup
 
-from MoinMoin import i18n, wikiutil, config, version, caching
+from MoinMoin import i18n, wikiutil, config, version, caching, user
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
 from MoinMoin.Page import Page
 from MoinMoin.util import pysupport
+from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 
 modules = pysupport.getPackageModules(__file__)
 
@@ -152,6 +153,13 @@ class ThemeBase:
         from werkzeug import url_quote, url_encode
         self.env.filters['urlencode'] = lambda x: url_encode(x)
         self.env.filters['urlquote'] = lambda x: url_quote(x)
+        self.env.filters['datetime_format'] = lambda tm, u=request.user: u.getFormattedDateTime(tm)
+        self.env.filters['date_format'] = lambda tm, u=request.user: u.getFormattedDate(tm)
+        self.env.filters['user_format'] = lambda rev, request=request: \
+                                              user.get_printable_editor(request,
+                                                                        rev[EDIT_LOG_USERID],
+                                                                        rev[EDIT_LOG_ADDR],
+                                                                        rev[EDIT_LOG_HOSTNAME])
 
     def emit_custom_html(self, html):
         """
@@ -814,11 +822,13 @@ var search_hint = "%(search_hint)s";
         page = d['page']
         if 'modify' in self.request.cfg.actions_excluded:
             return ""
-        if not (page.exists() and self.request.user.may.write(page.page_name)):
-            return ""
+        may_write = self.request.user.may.write(page.page_name)
+        if not (page.exists() and may_write):
+            return ""  # Why ""?
         _ = self.request.getText
         querystr = {'do': 'modify'}
-        text = _(u'Modify')
+        # XXX is this actually used?
+        text = _(u'Modify') if may_write else _(u'Immutable Page')
         url = page.url(self.request, querystr=querystr, escape=0)
         return (u'<link rel="alternate" type="application/wiki" '
                 u'title="%s" href="%s">' % (text, url))
@@ -1089,8 +1099,10 @@ actionsMenuInit('%(label)s');
 
         _ = self.request.getText
         querystr = {'do': 'modify'}
-        text = _('Modify')
+        may_write = self.request.user.may.write(page.page_name)
+        text = _(u'Modify') if may_write else _(u'Immutable Page')
         attrs = {'rel': 'nofollow', }
+        # TODO: Remove link alltogether when item immutable
         return page.link_to(self.request, text=text, querystr=querystr, **attrs)
 
     def downloadLink(self, page):

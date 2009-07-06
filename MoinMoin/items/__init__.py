@@ -55,7 +55,7 @@ class Item(object):
                formatter=None, item=None):
         try:
             if item is None:
-                item = request.data_backend.get_item(name)
+                item = request.storage.get_item(name)
             else:
                 name = item.name
         except NoSuchItemError:
@@ -63,7 +63,7 @@ class Item(object):
                 def __init__(self, mimetype):
                     self[MIMETYPE] = mimetype
                     self.item = None
-                def read_data(self):
+                def read(self):
                     return ''
             rev = DummyRev(mimetype)
         else:
@@ -199,7 +199,7 @@ class Item(object):
         comment = request.form.get('comment')
         target = request.form.get('target')
         old_item = self.rev.item
-        backend = request.data_backend
+        backend = request.storage
         new_item = backend.create_item(target)
         # Transfer all revisions with their data and metadata
         # Make sure the list begins with the lowest value, that is, 0.
@@ -263,7 +263,7 @@ class Item(object):
         request = self.request
         if name is None:
             name = self.name
-        backend = request.data_backend
+        backend = request.storage
         try:
             storage_item = backend.get_item(name)
         except NoSuchItemError:
@@ -318,14 +318,14 @@ class Item(object):
             search_term = NOT(LastRevisionMetaDataMatch('deleted', True))
             if term:
                 search_term = AND(term, search_term)
-            backend_items = self.request.data_backend.search_item(search_term)
+            backend_items = self.request.storage.search_item(search_term)
         else:
             if term:
                 search_term = term
-                backend_items = self.request.data_backend.search_item(search_term)
+                backend_items = self.request.storage.search_item(search_term)
             else:
                 # special case: we just want all items
-                backend_items = self.request.data_backend.iteritems()
+                backend_items = self.request.storage.iteritems()
         for item in backend_items:
             yield Item.create(self.request, item=item)
 
@@ -464,7 +464,7 @@ There is no help, you're doomed!
     # XXX reads item rev data into memory!
     def get_data(self):
         if self.rev is not None:
-            return self.rev.read_data()
+            return self.rev.read()
         else:
             return ''
     data = property(fget=get_data)
@@ -938,7 +938,9 @@ class Text(Binary):
 
     def _render_data_diff(self, oldrev, newrev):
         from MoinMoin.util import diff_html
-        return diff_html.diff(self.request, oldrev.read(), newrev.read())
+        return diff_html.diff(self.request,
+                              self.data_storage_to_internal(oldrev.read()),
+                              self.data_storage_to_internal(newrev.read()))
 
     def do_modify(self, template_name):
         if template_name:

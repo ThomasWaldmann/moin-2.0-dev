@@ -19,7 +19,7 @@ logging = log.getLogger(__name__)
 from MoinMoin import config, caching, util, wikiutil, user
 from MoinMoin.logfile import eventlog
 from MoinMoin.storage import Backend
-from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
@@ -68,7 +68,7 @@ class Page(object):
         self._page_name_force = None
         self.hilite_re = None
 
-        self._backend = request.data_backend
+        self._backend = request.storage
 
         self.reset()
 
@@ -106,7 +106,7 @@ class Page(object):
             self._body = None
             self._meta = None
             self._data = None
-        except NoSuchItemError:
+        except (NoSuchItemError, AccessDeniedError):
             self.__item = None
             self.__rev = None
             self._body = u""
@@ -166,7 +166,7 @@ class Page(object):
     def get_data(self):
         if self._data is None:
             if self._rev is not None:
-                data = self._rev.read_data()
+                data = self._rev.read()
                 data = data.decode(config.charset)
                 self._data = self.decodeTextMimeType(data)
         return self._data
