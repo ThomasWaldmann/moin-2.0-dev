@@ -99,8 +99,9 @@ class _Stack(list):
 class Converter(ConverterMacro):
     @classmethod
     def factory(cls, _request, input, output):
-        if input == 'text/creole' and output == 'application/x-moin-document':
-            return cls
+        if output.type == 'application' and output.subtype == 'x-moin-document':
+            if input.type == 'text' and input.subtype == 'x.moin.creole':
+                return cls
 
     def __call__(self, content, page_url=None, arguments=None):
         attrib = {}
