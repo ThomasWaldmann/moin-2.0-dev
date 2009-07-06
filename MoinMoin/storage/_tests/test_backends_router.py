@@ -130,4 +130,3 @@ class TestRouterBackend(BackendTest):
         assert not self.child.has_item(newname)
         assert not self.child.has_item('other/' + newname)
         assert self.other.has_item(newname)
-
