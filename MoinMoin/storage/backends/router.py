@@ -21,7 +21,7 @@ logging = log.getLogger(__name__)
 from MoinMoin.error import ConfigurationError
 
 from MoinMoin.storage import Backend
-from MoinMoin.storage.backends import clone
+from MoinMoin.storage.backends import copy_item
 
 
 class RouterBackend(Backend):
@@ -165,7 +165,7 @@ class RouterItem(object):
         backend, itemname, mountpoint = self._get_backend(newname)
         if mountpoint != self._mountpoint:
             # Mountpoint changed! That means we have to copy the item over.
-            clone(self._item._backend, backend, verbose=False, only_these=[itemname])
+            copy_item(self._item, backend, verbose=False)
 
             self._item = new_item
             self._mountpoint = mountpoint
