@@ -108,7 +108,7 @@ class Converter(ConverterMacro):
                     input.parameters.get('name') == 'creole'):
                 return cls
 
-    def __call__(self, content, page_url=None, arguments=None):
+    def __call__(self, content, arguments=None, page_url=None):
         attrib = {}
         if page_url:
             attrib[moin_page.page_href] = unicode(page_url)
@@ -287,7 +287,7 @@ class Converter(ConverterMacro):
 
                 converter = default_registry.get(self.request, type, Type('application/x-moin-document'))
 
-                doc = converter(self.request)(lines)
+                doc = converter(self.request)(lines, args)
                 stack.top_append(doc)
 
         else:
@@ -693,5 +693,4 @@ class Converter(ConverterMacro):
         # Handle trailing text
         stack.top_append_ifnotempty(text[pos:])
 
-from MoinMoin.converter2._registry import default_registry
 default_registry.register(Converter.factory)
