@@ -21,6 +21,24 @@ class Type(object):
         if parameters is not None:
             self.parameters.update(parameters)
 
+    def __eq__(self, other):
+        if isinstance(other, basestring):
+            return self.__eq__(self.__class__(other))
+
+        if isinstance(other, Type):
+            if self.type != other.type: return False
+            if self.subtype != other.subtype: return False
+            if self.parameters != other.parameters: return False
+            return True
+
+        return NotImplemented
+
+    def __ne__(self, other):
+        ret = self.__eq__(other)
+        if ret is NotImplemented:
+            return ret
+        return not ret
+
     def __unicode__(self):
         ret = [u'%s/%s' % (self.type, self.subtype)]
 
