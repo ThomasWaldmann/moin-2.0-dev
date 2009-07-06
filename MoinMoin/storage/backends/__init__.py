@@ -44,8 +44,8 @@ def get_enduser_backend(backend_uri='instance/', mapping=None, user=None):
 
 def clone(source, destination, verbose=False, only_these=[]):
     """
-    Create exact copy of source Backend with all its Items in the given
-    destination Backend.
+    Create exact copy of source Backend with all the Items in the given
+    destination Backend whose names are given in the only_these list.
     Return a tuple consisting of three dictionaries (Item name:Revsion numbers list):
     converted, skipped and failed Items dictionary.
     """
@@ -68,50 +68,53 @@ def clone(source, destination, verbose=False, only_these=[]):
                                                        destination.__class__.__name__, ))
     converts, skips, fails = {}, {}, {}
 
-    for revision in source.history(reverse=False):
-        name = revision.item.name
+    for item in source.iteritems():
+        name = item.name
         if only_these and name not in only_these:
             continue
-        try:
-            new_item = destination.get_item(name)
-        except NoSuchItemError:
-            new_item = destination.create_item(name)
-            new_item.change_metadata()
-            for k, v in revision.item.iteritems():
-                new_item[k] = v
-            new_item.publish_metadata()
-
-        try:
-            new_rev = new_item.create_revision(revision.revno)
-        except RevisionAlreadyExistsError:
-            existing_revision = new_item.get_revision(revision.revno)
-            if same_revision(existing_revision, revision):
-                try:
-                    skips[name].append(revision.revno)
-                except KeyError:
-                    skips[name] = [revision.revno]
-                if verbose:
-                    sys.stdout.write("s")
-            else:
-                try:
-                    fails[name].append(revision.revno)
-                except KeyError:
-                    fails[name] = [revision.revno]
-                if verbose:
-                    sys.stdout.write("F")
-        else:
-            for k, v in revision.iteritems():
-                new_rev[k] = v
-            new_rev.timestamp = revision.timestamp
-            shutil.copyfileobj(revision, new_rev)
-
-            new_item.commit()
+        revisions = item.list_revisions()
+        for revno in revisions:
+            revision = item.get_revision(revno)
             try:
-                converts[name].append(revision.revno)
-            except KeyError:
-                converts[name] = [revision.revno]
-            if verbose:
-                sys.stdout.write(".")
+                new_item = destination.get_item(name)
+            except NoSuchItemError:
+                new_item = destination.create_item(name)
+                new_item.change_metadata()
+                for k, v in revision.item.iteritems():
+                    new_item[k] = v
+                new_item.publish_metadata()
+
+            try:
+                new_rev = new_item.create_revision(revision.revno)
+            except RevisionAlreadyExistsError:
+                existing_revision = new_item.get_revision(revision.revno)
+                if same_revision(existing_revision, revision):
+                    try:
+                        skips[name].append(revision.revno)
+                    except KeyError:
+                        skips[name] = [revision.revno]
+                    if verbose:
+                        sys.stdout.write("s")
+                else:
+                    try:
+                        fails[name].append(revision.revno)
+                    except KeyError:
+                        fails[name] = [revision.revno]
+                    if verbose:
+                        sys.stdout.write("F")
+            else:
+                for k, v in revision.iteritems():
+                    new_rev[k] = v
+                new_rev.timestamp = revision.timestamp
+                shutil.copyfileobj(revision, new_rev)
+
+                new_item.commit()
+                try:
+                    converts[name].append(revision.revno)
+                except KeyError:
+                    converts[name] = [revision.revno]
+                if verbose:
+                    sys.stdout.write(".")
 
     if verbose:
         sys.stdout.write("\n")
