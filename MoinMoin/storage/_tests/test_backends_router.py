@@ -27,7 +27,7 @@ class TestRouterBackend(BackendTest):
         self.users = MemoryBackend()
         self.child = MemoryBackend()
         self.other = MemoryBackend()
-        self.mapping = [('child/', self.child), ('other/', self.other), ('/', self.root)]
+        self.mapping = [('child', self.child), ('other/', self.other), ('/', self.root)]
         return RouterBackend(self.mapping, self.users)
 
     def kill_backend(self):
@@ -130,3 +130,10 @@ class TestRouterBackend(BackendTest):
         assert not self.child.has_item(newname)
         assert not self.child.has_item('other/' + newname)
         assert self.other.has_item(newname)
+
+    def test_itemname_equals_namespace(self):
+        itemname = 'child'
+        backend, name, mountpoint = self.backend._get_backend(itemname)
+        assert backend is self.child
+        assert name == ''
+        assert mountpoint == 'child'
