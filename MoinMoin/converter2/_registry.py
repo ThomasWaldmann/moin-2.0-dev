@@ -41,7 +41,7 @@ class Registry(object):
             if conv is not None:
                 return conv
         if default is _marker:
-            raise TypeError("Couldn't find converter for %s to %s" % (input, output))
+            raise TypeError(u"Couldn't find converter for %s to %s" % (input, output))
         return default
 
     def register(self, factory, priority=PRIORITY_MIDDLE):
