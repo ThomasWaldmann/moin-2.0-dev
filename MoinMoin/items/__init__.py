@@ -902,21 +902,25 @@ class Text(Binary):
     def _render_data(self):
         from emeraldtree import ElementTree as ET
         from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import Type
         from MoinMoin.util.iri import Iri
         from MoinMoin.util.tree import html
 
+        type_internal = Type(type='application', subtype='x-moin-document')
+
         request = self.request
-        InputConverter = reg.get(request, self.converter_mimetype or self.mimetype,
-                'application/x-moin-document')
-        IncludeConverter = reg.get(request, 'application/x-moin-document',
-                'application/x-moin-document;includes=expandall')
-        MacroConverter = reg.get(request, 'application/x-moin-document',
-                'application/x-moin-document;macros=expandall')
-        LinkConverter = reg.get(request, 'application/x-moin-document',
-                'application/x-moin-document;links=extern')
+        InputConverter = reg.get(request,
+                Type(self.converter_mimetype or self.mimetype),
+                type_internal)
+        IncludeConverter = reg.get(request, type_internal,
+                Type('application/x-moin-document;includes=expandall'))
+        MacroConverter = reg.get(request, type_internal,
+                Type('application/x-moin-document;macros=expandall'))
+        LinkConverter = reg.get(request, type_internal,
+                Type('application/x-moin-document;links=extern'))
         # TODO: Real output format
-        HtmlConverter = reg.get(request, 'application/x-moin-document',
-                'application/x-xhtml-moin-page')
+        HtmlConverter = reg.get(request, type_internal,
+                Type('application/x-xhtml-moin-page'))
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
