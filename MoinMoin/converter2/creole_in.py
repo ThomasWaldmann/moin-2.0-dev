@@ -27,7 +27,9 @@ from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
 from MoinMoin.util import iri
+from MoinMoin.util.mime import Type
 from MoinMoin.util.tree import moin_page, xlink
+from MoinMoin.converter2 import default_registry
 from MoinMoin.converter2._args_wiki import parse as parse_arguments
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
@@ -101,6 +103,9 @@ class Converter(ConverterMacro):
     def factory(cls, _request, input, output):
         if output.type == 'application' and output.subtype == 'x-moin-document':
             if input.type == 'text' and input.subtype == 'x.moin.creole':
+                return cls
+            if (input.type == 'x-moin' and input.subtype == 'format' and
+                    input.parameters.get('name') == 'creole'):
                 return cls
 
     def __call__(self, content, page_url=None, arguments=None):
@@ -275,10 +280,12 @@ class Converter(ConverterMacro):
                 stack.top_append(elem)
 
             else:
-                from MoinMoin.converter2 import default_registry as reg
+                if '/' in name:
+                    type = Type(name)
+                else:
+                    type = Type(type='x-moin', subtype='format', parameters={'name': name})
 
-                mimetype = wikiutil.MimeType(name).mime_type()
-                converter = reg.get(self.request, mimetype, 'application/x-moin-document')
+                converter = default_registry.get(self.request, type, Type('application/x-moin-document'))
 
                 doc = converter(self.request)(lines)
                 stack.top_append(doc)
