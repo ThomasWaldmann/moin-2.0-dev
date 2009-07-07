@@ -3,10 +3,12 @@
     MoinMoin - routing backend
 
     You can use this backend to route requests to different backends
-    depending on the item name.
-
-    TODO: wrap backend items in wrapper items, so we can fix item
-          names, support rename between backends, etc.
+    depending on the item name. I.e., you can specify mountpoints and
+    map them to different backends. E.g. you could route all your items
+    to an FSBackend and only items below hg/<youritemnamehere> go into
+    a MercurialBackend and similarly tmp/<youritemnamehere> is for
+    temporary items in a MemoryBackend() that are discarded when the
+    process terminates.
 
     @copyright: 2008 MoinMoin:ThomasWaldmann,
                 2009 MoinMoin:ChristopherDenter
@@ -58,6 +60,15 @@ class RouterBackend(Backend):
 
 
     def _get_backend(self, itemname):
+        """
+        For a given fully-qualified itemname (i.e. something like Company/Bosses/Mr_Joe)
+        find the backend it belongs to (given by this instance's mapping), the local
+        itemname inside that backend and the mountpoint of the backend.
+
+        @type itemname: str
+        @param itemname: fully-qualified itemname
+        @return: tuple of (backend, itemname, mountpoint)
+        """
         if not isinstance(itemname, (str, unicode)):
             raise TypeError("Item names must have string type, not %s" % (type(itemname)))
 
@@ -80,6 +91,8 @@ class RouterBackend(Backend):
     def iteritems(self):
         """
         Iterate over all items, even users. (Necessary for traversal.)
+
+        @see: Backend.iteritems.__doc__
         """
         for item in self._iteritems():
             yield item
@@ -89,7 +102,10 @@ class RouterBackend(Backend):
     def history(self, reverse=True):
         """
         Just the basic, slow implementation of history with the difference
-        that we don't iterate over users.
+        that we don't iterate over users. For traversal of the items
+        of all the backends defined in the mapping, use self.iteritems.
+
+        @see: Backend.history.__doc__
         """
         revs = []
         for item in self._iteritems():
@@ -105,6 +121,10 @@ class RouterBackend(Backend):
             yield item.get_revision(revno)
 
     def has_item(self, itemname):
+        """
+        @see: Backend.has_item.__doc__
+        """
+
         # While we could use the inherited, generic implementation
         # it is generally advised to override this method.
         # Thus, we pass the call down.
@@ -112,10 +132,16 @@ class RouterBackend(Backend):
         return backend.has_item(itemname)
 
     def get_item(self, itemname):
+        """
+        @see: Backend.get_item.__doc__
+        """
         backend, itemname, mountpoint = self._get_backend(itemname)
         return RouterItem(backend.get_item(itemname), mountpoint, itemname, self)
 
     def create_item(self, itemname):
+        """
+        @see: Backend.create_item.__doc__
+        """
         backend, itemname, mountpoint = self._get_backend(itemname)
         return RouterItem(backend.create_item(itemname), mountpoint, itemname, self)
 
@@ -155,25 +181,50 @@ class RouterItem(object):
 
     @property
     def name(self):
+        """
+        @rtype: str
+        @return: the item's fully-qualified name
+        """
         mountpoint = self._mountpoint
         if mountpoint:
             mountpoint += '/'
         return mountpoint + self._itemname
 
     def __setitem__(self, key, value):
+        """
+        @see: Item.__setitem__.__doc__
+        """
         return self._item.__setitem__(key, value)
 
     def __delitem__(self, key):
+        """
+        @see: Item.__delitem__.__doc__
+        """
         return self._item.__delitem__(key)
 
     def __getitem__(self, key):
+        """
+        @see: Item.__getitem__.__doc__
+        """
         return self._item.__getitem__(key)
 
     def __getattr__(self, attr):
+        """
+        Redirect all attribute lookups to the item that this instance proxies.
+        """
         #!! will fail if inheriting from Item
         return getattr(self._item, attr)
 
     def rename(self, newname):
+        """
+        For intra-backend renames, this is the same as the normal Item.rename
+        method.
+        For inter-backend renames, this *moves* the complete item over to the
+        new backend, possibly with a new item name.
+
+        @see: Item.rename.__doc__
+        """
+        # XXX copy first, rename later. improve
         old_name = self._item.name
         backend, itemname, mountpoint = self._get_backend(newname)
         if mountpoint != self._mountpoint:
@@ -194,32 +245,70 @@ class RouterItem(object):
             self._itemname = itemname
 
     def create_revision(self, revno):
+        """
+        In order to make item name lookups via revision.item.name work, we need
+        to wrap the revision here.
+
+        @see: Item.create_revision.__doc__
+        """
         rev = self._item.create_revision(revno)
         return RouterRevision(self, rev)
 
     def get_revision(self, revno):
+        """
+        In order to make item name lookups via revision.item.name work, we need
+        to wrap the revision here.
+
+        @see: Item.get_revision.__doc__
+        """
         rev = self._item.get_revision(revno)
         return RouterRevision(self, rev)
 
 
 class RouterRevision(object):
+    """
+    This classes sole purpose is to make item name lookups via revision.item.name
+    work return the item's fully-qualified item name.
+    """
     def __init__(self, router_item, revision):
         self._item = router_item
         self._revision = revision
 
     @property
     def item(self):
+        """
+        Here we have to return the RouterItem, which in turn wraps the real item
+        and provides it with its full name that we need for the rev.item.name lookup.
+
+        @see: Revision.item.__doc__
+        """
         assert isinstance(self._item, RouterItem)
         return self._item
 
     def __setitem__(self, key, value):
+        """
+        We only need to redirect this manually here because python doesn't do that
+        in combination with __getattr__. See RouterBackend.__doc__ for an explanation.
+
+        As this class wraps generic Revisions, this may very well result in an exception
+        being raised if the wrapped revision is a StoredRevision.
+        """
         return self._revision.__setitem__(key, value)
 
     def __delitem__(self, key):
+        """
+        @see: RouterRevision.__setitem__.__doc__
+        """
         return self._revision.__delitem__(key)
 
     def __getitem__(self, key):
+        """
+        @see: RouterRevision.__setitem__.__doc__
+        """
         return self._revision.__getitem__(key)
 
     def __getattr__(self, attr):
+        """
+        Redirect all attribute lookups to the revision that this instance proxies.
+        """
         return getattr(self._revision, attr)
