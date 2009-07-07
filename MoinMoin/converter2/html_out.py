@@ -16,11 +16,9 @@ class ElementException(RuntimeError):
     pass
 
 class Attrib(object):
-    tag_style = html.style
-
     def simple_attrib(self, key, value, out, out_style):
         """ Adds the attribute with the HTML namespace to the output. """
-        out[ET.QName(key.name, html.namespace)] = value
+        out[html(key.name)] = value
 
     visit_title = simple_attrib
 
@@ -47,7 +45,7 @@ class Attrib(object):
             self.default_uri_output = element.tag.uri
 
     def get(self, name):
-        ret = self.element.get(ET.QName(name, moin_page.namespace))
+        ret = self.element.get(moin_page(name))
         if ret:
             return ret
         if self.default_uri_input:
@@ -89,11 +87,11 @@ class Attrib(object):
             style.sort(key=lambda i: i[0])
             style = '; '.join((key + ': ' + value for key, value in style))
 
-            style_old = self.element.get(self.tag_style)
+            style_old = self.element.get(html.style)
             if style_old:
                 style += '; ' + style_old
 
-            new_default[self.tag_style] = style
+            new_default[html.style] = style
 
         return new_default
 
@@ -108,23 +106,6 @@ class Converter(object):
     namespaces_valid_output = frozenset([
         html.namespace,
     ])
-
-    tag_html_a = html.a
-    tag_html_br = html.br
-    tag_html_class = html.class_
-    tag_html_data = html.data
-    tag_html_div = html.div
-    tag_html_em = html.em
-    tag_html_href = html.href
-    tag_html_id = html.id
-    tag_html_img = html.img
-    tag_html_object = html.object
-    tag_html_p = html.p
-    tag_html_pre = html.pre
-    tag_html_src = html.src
-    tag_html_sup = html.sup
-    tag_html_tt = html.tt
-    tag_xlink_href = xlink.href
 
     def __init__(self, request):
         self.request = request
@@ -179,32 +160,32 @@ class Converter(object):
     def visit_moinpage_a(self, elem):
         attrib = {}
 
-        href = elem.get(self.tag_xlink_href, None)
+        href = elem.get(xlink.href, None)
         if href is not None:
-            attrib[self.tag_html_href] = href
+            attrib[html.href] = href
 
-        return self.new_copy(self.tag_html_a, elem, attrib)
+        return self.new_copy(html.a, elem, attrib)
 
     def visit_moinpage_blockcode(self, elem):
-        pre = self.new_copy(self.tag_html_pre, elem)
+        pre = self.new_copy(html.pre, elem)
 
         # TODO: Unify somehow
-        if elem.get(self.tag_html_class) == 'codearea':
-            attrib = {self.tag_html_class: 'codearea'}
-            div = self.new(self.tag_html_div, attrib)
+        if elem.get(html.class_) == 'codearea':
+            attrib = {html.class_: 'codearea'}
+            div = self.new(html.div, attrib)
             div.append(pre)
             return div
 
         return pre
 
     def visit_moinpage_code(self, elem):
-        return self.new_copy(self.tag_html_tt, elem)
+        return self.new_copy(html.tt, elem)
 
     def visit_moinpage_div(self, elem):
-        return self.new_copy(self.tag_html_div, elem)
+        return self.new_copy(html.div, elem)
 
     def visit_moinpage_emphasis(self, elem):
-        return self.new_copy(self.tag_html_em, elem)
+        return self.new_copy(html.em, elem)
 
     def visit_moinpage_h(self, elem):
         level = elem.get(moin_page.outline_level, 1)
@@ -227,7 +208,7 @@ class Converter(object):
 
     def visit_moinpage_line_break(self, elem):
         # TODO: attributes?
-        return self.new(self.tag_html_br)
+        return self.new(html.br)
 
     def visit_moinpage_list(self, elem):
         attrib = Attrib(elem)
@@ -264,14 +245,14 @@ class Converter(object):
         return ret
 
     def visit_moinpage_object(self, elem):
-        href = elem.get(self.tag_xlink_href, None)
+        href = elem.get(xlink.href, None)
 
         if href and wikiutil.isPicture(href):
-            out_tag = self.tag_html_img
-            out_tag_href = self.tag_html_src
+            out_tag = html.img
+            out_tag_href = html.src
         else:
-            out_tag = self.tag_html_object
-            out_tag_href = self.tag_html_data
+            out_tag = html.object
+            out_tag_href = html.data
 
         attrib = {}
         if href is not None:
@@ -279,12 +260,12 @@ class Converter(object):
         return self.new(out_tag, attrib)
 
     def visit_moinpage_p(self, elem):
-        return self.new_copy(self.tag_html_p, elem)
+        return self.new_copy(html.p, elem)
 
     def visit_moinpage_page(self, elem):
         for item in elem:
             if item.tag.uri == moin_page.namespace and item.tag.name == 'body':
-                return self.new_copy(self.tag_html_div, item)
+                return self.new_copy(html.div, item)
 
         raise RuntimeError('page:page need to contain exactly one page:body tag, got %r' % elem[:])
 
@@ -390,8 +371,8 @@ class ConverterPage(Converter):
                 special.root.append(elem)
 
             for elem, headings in special.tocs():
-                attrib_h = {self.tag_html_class: 'table-of-contents-heading'}
-                elem_h = self.tag_html_p(
+                attrib_h = {html.class_: 'table-of-contents-heading'}
+                elem_h = html.p(
                         attrib=attrib_h, children=[_('Contents')])
                 elem.append(elem_h)
 
@@ -417,9 +398,9 @@ class ConverterPage(Converter):
                         stack.pop()
                         stack_push(html.li())
 
-                    attrib = {self.tag_html_href: '#' + id}
+                    attrib = {html.href: '#' + id}
                     text = ''.join(elem.itertext())
-                    elem_a = self.tag_html_a(attrib, children=[text])
+                    elem_a = html.a(attrib, children=[text])
                     stack_top_append(elem_a)
 
         return ret
@@ -503,8 +484,8 @@ class ConverterPage(Converter):
     def visit_moinpage_table_of_content(self, elem):
         level = int(elem.get(moin_page.outline_level, 6))
 
-        attrib = {self.tag_html_class: 'table-of-contents'}
-        elem = self.new(self.tag_html_div, attrib)
+        attrib = {html.class_: 'table-of-contents'}
+        elem = self.new(html.div, attrib)
 
         self._special_stack[-1].add_toc(elem, level)
         return elem
