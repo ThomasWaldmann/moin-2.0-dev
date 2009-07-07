@@ -125,8 +125,7 @@ class AclWrapperBackend(object):
         """
         for item in self.backend.iteritems():
             if self._may(item.name, READ):
-                # TODO Wrap item!!
-                yield item
+                yield AclWrapperItem(item, self)
 
     def history(self, reverse=True):
         """
