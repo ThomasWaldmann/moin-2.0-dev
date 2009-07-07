@@ -22,7 +22,7 @@ def get_enduser_backend(backend_uri='instance/', mapping=None, user=None):
             data = memory.MemoryBackend()
             user = memory.MemoryBackend()
 
-        mapping = [('/', data),]
+        mapping = [('/', data), ]
 
     backend = router.RouterBackend(mapping, user)
     return backend

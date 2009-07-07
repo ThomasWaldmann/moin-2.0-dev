@@ -232,7 +232,8 @@ class BackendTest(object):
         rev = item.get_revision(-1)
         old_keys = old_rev.keys()
         new_keys = rev.keys()
-        old_keys.sort(); new_keys.sort()
+        old_keys.sort()
+        new_keys.sort()
         assert old_keys == new_keys
         for key, value in old_rev.iteritems():
             assert rev[key] == value
