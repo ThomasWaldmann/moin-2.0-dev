@@ -333,8 +333,8 @@ class AclWrapperItem(Item):
         """
         @see: Item.rename.__doc__
         """
-        # XXX Special case since we need to check newname as well.
-        #     Maybe find a proper solution.
+        # Special case since we need to check newname as well. Easier to special-case than
+        # adjusting the decorator.
         if not self._may(newname, WRITE):
             username = self._backend.request.user.name
             raise AccessDeniedError(username, WRITE, newname)
@@ -347,7 +347,8 @@ class AclWrapperItem(Item):
         """
         return self._item.commit()
 
-    # XXX Does this even require a privilege?
+    # This does not require a privilege as the item must have been obtained
+    # by either get_item or create_item already, which already check permissions.
     def rollback(self):
         """
         @see: Item.rollback.__doc__
