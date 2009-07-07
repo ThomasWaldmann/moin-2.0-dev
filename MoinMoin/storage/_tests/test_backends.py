@@ -548,7 +548,7 @@ class BackendTest(object):
             yield test_value, value, revno
 
     def test_history(self):
-        order = [('first', 0, ), ('second', 0, ), ('first', 1, ), ('a', 0), ]
+        order = [('first', 0, ), ('second', 0, ), ('first', 1, ), ('a', 0), ('child/my_subitem', 0) ]
         for name, revno in order:
             if revno == 0:
                 item = self.backend.create_item(name)
