@@ -43,7 +43,7 @@ class Attrib(object):
         self.default_uri_input = self.default_uri_output = None
         if element.tag.uri == moin_page.namespace:
             self.default_uri_input = element.tag.uri
-        if element.tag.uri in ConverterBase.namespaces_valid_output:
+        if element.tag.uri in Converter.namespaces_valid_output:
             self.default_uri_output = element.tag.uri
 
     def get(self, name):
@@ -68,7 +68,7 @@ class Attrib(object):
                     f = getattr(self, n, None)
                     if f is not None:
                         f(key, value, new, new_css)
-            elif key.uri in ConverterBase.namespaces_valid_output:
+            elif key.uri in Converter.namespaces_valid_output:
                 new[key] = value
             elif key.uri is None:
                 if self.default_uri_input and not '_' in key.name:
@@ -97,7 +97,11 @@ class Attrib(object):
 
         return new_default
 
-class ConverterBase(object):
+class Converter(object):
+    """
+    Converter application/x-moin-document -> application/x-moin-document
+    """
+
     namespaces_visit = {
         moin_page.namespace: 'moinpage',
     }
@@ -319,11 +323,6 @@ class ConverterBase(object):
     def visit_moinpage_table_row(self, elem):
         return self.new_copy(html.tr, elem)
 
-class Converter(ConverterBase):
-    """
-    Converter application/x-moin-document -> application/x-moin-document
-    """
-
 class SpecialPage(object):
     def __init__(self):
         self._footnotes = []
@@ -362,7 +361,7 @@ class SpecialPage(object):
         for elem, maxlevel in self._tocs:
             yield elem, self.headings(maxlevel)
 
-class ConverterPage(ConverterBase):
+class ConverterPage(Converter):
     """
     Converter application/x-moin-document -> application/x-xhtml-moin-page
     """

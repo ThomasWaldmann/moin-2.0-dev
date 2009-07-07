@@ -26,9 +26,9 @@ def serialize(elem, **options):
     tree.write(file, namespaces=n, **options)
     return file.getvalue()
 
-class TestConverterBase(object):
+class TestConverter(object):
     def setup_class(self):
-        self.conv = ConverterBase(self.request)
+        self.conv = Converter(self.request)
 
     def test_base(self):
         pairs = [
