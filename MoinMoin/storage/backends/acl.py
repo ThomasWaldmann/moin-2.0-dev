@@ -132,16 +132,11 @@ class AclWrapperBackend(object):
         """
         @see: Backend.history.__doc__
         """
-        revisions = []
         for revision in self.backend.history(reverse):
             if self._may(revision.item.name, READ):
                 # No need to wrap revisions as only StoredRevisions are
                 # exposed here.
-                revisions.append(revision)
-
-        # TODO: SORT THIS ACCORDINGLY!
-        return iter(revisions)
-
+                yield revision
 
     def _get_acl(self, itemname):
         """
