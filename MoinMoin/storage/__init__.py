@@ -733,7 +733,13 @@ class StoredRevision(Revision):
 
     size = property(_get_size, doc="Size of revision's data")
 
-    def __setitem__(self):
+    def __setitem__(self, key, value):
+        """
+        Revision metadata cannot be altered, thus, we raise an Exception.
+        """
+        raise AttributeError("Metadata of already existing revisions may not be altered.")
+
+    def __delitem__(self, key):
         """
         Revision metadata cannot be altered, thus, we raise an Exception.
         """

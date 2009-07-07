@@ -192,3 +192,34 @@ class RouterItem(object):
             # Mountpoint didn't change
             self._item.rename(itemname)
             self._itemname = itemname
+
+    def create_revision(self, revno):
+        rev = self._item.create_revision(revno)
+        return RouterRevision(self, rev)
+
+    def get_revision(self, revno):
+        rev = self._item.get_revision(revno)
+        return RouterRevision(self, rev)
+
+
+class RouterRevision(object):
+    def __init__(self, router_item, revision):
+        self._item = router_item
+        self._revision = revision
+
+    @property
+    def item(self):
+        assert isinstance(self._item, RouterItem)
+        return self._item
+
+    def __setitem__(self, key, value):
+        return self._revision.__setitem__(key, value)
+
+    def __delitem__(self, key):
+        return self._revision.__delitem__(key)
+
+    def __getitem__(self, key):
+        return self._revision.__getitem__(key)
+
+    def __getattr__(self, attr):
+        return getattr(self._revision, attr)
