@@ -64,7 +64,7 @@ class RouterBackend(Backend):
         for mountpoint, backend in self.mapping:
             if itemname == mountpoint or itemname.startswith(mountpoint and mountpoint + '/' or ''):
                 lstrip = mountpoint and len(mountpoint)+1 or 0
-                return backend, itemname[lstrip:], itemname[:lstrip]
+                return backend, itemname[lstrip:], mountpoint
         # This point should never be reached since at least the last mountpoint, '/', should
         # contain the item.
         raise AssertionError('No backend found for %s. Available backends: %r' % (itemname, self.mapping))
@@ -74,7 +74,6 @@ class RouterBackend(Backend):
         This only iterates over all non-user items. We don't want them to turn up in history.
         """
         for mountpoint, backend in self.mapping:
-            mountpoint = mountpoint + "/" if mountpoint else mountpoint
             for item in backend.iteritems():
                 yield RouterItem(item, mountpoint, item.name, self)
 
@@ -102,6 +101,7 @@ class RouterBackend(Backend):
             revs.reverse()
         for ts, revno, name in revs:
             item = self.get_item(name)
+            # XXX rev.item.name does not know its full name
             yield item.get_revision(revno)
 
     def has_item(self, itemname):
@@ -155,7 +155,10 @@ class RouterItem(object):
 
     @property
     def name(self):
-        return self._mountpoint + self._itemname
+        mountpoint = self._mountpoint
+        if mountpoint:
+            mountpoint += '/'
+        return mountpoint + self._itemname
 
     def __setitem__(self, key, value):
         return self._item.__setitem__(key, value)
