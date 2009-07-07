@@ -25,6 +25,8 @@ from MoinMoin.error import ConfigurationError
 from MoinMoin.storage import Backend
 from MoinMoin.storage.backends import copy_item
 
+from UserDict import DictMixin
+
 
 class RouterBackend(Backend):
     """
@@ -265,10 +267,15 @@ class RouterItem(object):
         return RouterRevision(self, rev)
 
 
-class RouterRevision(object):
+class RouterRevision(DictMixin):
     """
     This classes sole purpose is to make item name lookups via revision.item.name
     work return the item's fully-qualified item name.
+
+    It needs to subclass DictMixin to allow the `metadata key in rev` syntax.
+    If we'd inherit from Revision we'd need to redirect all methods manually
+    since __getattr__ wouldn't work anymore. See RouterItem.__doc__ for an
+    explanation.
     """
     def __init__(self, router_item, revision):
         self._item = router_item
