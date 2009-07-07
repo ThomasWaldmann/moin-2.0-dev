@@ -230,7 +230,13 @@ class BackendTest(object):
         rev = item.create_revision(old_rev.revno + 1)
         item.rollback()
         rev = item.get_revision(-1)
-        assert old_rev == rev
+        old_keys = old_rev.keys()
+        new_keys = rev.keys()
+        old_keys.sort(); new_keys.sort()
+        assert old_keys == new_keys
+        for key, value in old_rev.iteritems():
+            assert rev[key] == value
+        assert old_rev.read() == rev.read()
 
     def test_new_item_create_revision(self):
         item = self.backend.create_item('internal')
