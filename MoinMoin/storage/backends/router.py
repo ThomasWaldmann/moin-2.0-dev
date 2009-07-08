@@ -125,8 +125,8 @@ class RouterBackend(Backend):
             revs.reverse()
         for ts, revno, name in revs:
             item = self.get_item(name)
-            # XXX rev.item.name does not know its full name
-            yield item.get_revision(revno)
+            rev = item.get_revision(revno)
+            yield RouterRevision(item, rev)
 
     def has_item(self, itemname):
         """
