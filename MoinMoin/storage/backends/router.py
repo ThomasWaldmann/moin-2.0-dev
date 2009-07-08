@@ -70,6 +70,9 @@ class RouterBackend(Backend):
         find the backend it belongs to (given by this instance's mapping), the local
         itemname inside that backend and the mountpoint of the backend.
 
+        Note: Internally (i.e. in all Router* classes) we always use the normalized
+              item name for consistency reasons.
+
         @type itemname: str
         @param itemname: fully-qualified itemname
         @return: tuple of (backend, itemname, mountpoint)
