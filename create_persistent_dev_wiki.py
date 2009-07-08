@@ -10,6 +10,7 @@
         * remove the untared underlay files
 
     In your wikiconfig you will need to set the following options:
+    TODO obsolete
         from MoinMoin.storage.backends import fs
         from os.path import join
 
