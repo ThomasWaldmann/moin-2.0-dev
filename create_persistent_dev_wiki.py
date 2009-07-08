@@ -10,12 +10,11 @@
         * remove the untared underlay files
 
     In your wikiconfig you will need to set the following options:
-    TODO obsolete
-        from MoinMoin.storage.backends import fs
-        from os.path import join
+        from MoinMoin.storage.backends.enduser import get_enduser_backend
+        storage = get_enduser_backend('<path/to/instance>')
 
-        data_backend = fs.FSBackend(join('instance', 'data'))
-        user_backend = fs.FSBackend(join('instance', 'user'))
+    E.g.:
+        storage = get_enduser_backend('instance/')
 
     @copyright: 2009 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
