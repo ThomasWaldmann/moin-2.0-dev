@@ -1,8 +1,13 @@
 import sys
-from os import path
+from os import path, mkdir
 
 from MoinMoin.error import ConfigurationError
 from MoinMoin.storage.backends import fs, memory, router
+
+
+DATA = 'data'
+USER = 'user'
+
 
 def get_enduser_backend(backend_uri='instance/', mapping=None, user=None):
     """
@@ -18,7 +23,17 @@ def get_enduser_backend(backend_uri='instance/', mapping=None, user=None):
     """
     if mapping is user is None:
         if path.isdir(backend_uri):
-            # TODO create folders if they don't exist
+            # create folders if they don't exist yet
+            try:
+                mkdir(join(backend_uri, DATA))
+            except OSError:
+                # If the folder already exists, even better!
+                pass
+            try:
+                mkdir(join(backend_uri, USER))
+            except OSError:
+                pass
+
             data = fs.FSBackend(path.join(backend_uri, 'data'))
             user = fs.FSBackend(path.join(backend_uri, 'user'))
         elif backend_uri == ':memory:':
