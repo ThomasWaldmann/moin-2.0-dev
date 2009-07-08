@@ -1,5 +1,7 @@
+import sys
 from os import path
 
+from MoinMoin.error import ConfigurationError
 from MoinMoin.storage.backends import fs, memory, router
 
 def get_enduser_backend(backend_uri='instance/', mapping=None, user=None):
@@ -16,11 +18,14 @@ def get_enduser_backend(backend_uri='instance/', mapping=None, user=None):
     """
     if mapping is user is None:
         if path.isdir(backend_uri):
+            # TODO create folders if they don't exist
             data = fs.FSBackend(path.join(backend_uri, 'data'))
             user = fs.FSBackend(path.join(backend_uri, 'user'))
         elif backend_uri == ':memory:':
             data = memory.MemoryBackend()
             user = memory.MemoryBackend()
+        else:
+            raise ConfigurationError("No proper backend uri provided.")
 
         mapping = [('/', data), ]
 
