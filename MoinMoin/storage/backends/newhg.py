@@ -138,7 +138,7 @@ class MercurialBackend(Backend):
             meta = ctx.extra()
             revno = int(meta['_rev'])
             timestamp = ctx.date()[0]
-            item = Item(self, meta['_name'])  # XXX: innacurate after renames...
+            item = Item(self, meta['_name'])  # XXX: inaccurate after renames...
             rev = MercurialStoredRevision(item, revno, timestamp)
             rev._item_id = item._id = meta['_id']
             yield rev
@@ -315,7 +315,7 @@ class MercurialBackend(Backend):
         """
         if revision._data is None:
             if revision.revno == max(self._list_revisions(revision.item)): # latest revision, data in working copy
-                # XXX: lock this file for writng on read
+                # XXX: lock this file for writing on read
                 #      question is, when will it be unlocked?
                 revision._data = open(os.path.join(self._rev_path, revision._item_id), 'r')
                 # XXX: keeps file open as long as revision exists

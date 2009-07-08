@@ -41,9 +41,12 @@ class RouterBackend(Backend):
 
         The mapping given must satisfy the following criteria:
             * Order matters.
-            * There *must* be a backend with mountpoint '/' or '' at the very end of the mapping.
-              That backend is then used as root, which means that all items that don't lie in
-              the namespace of any other backend are stored there.
+            * Mountpoints are just item names, including the special '' (empty)
+              root item name. A trailing '/' of a mountpoint will be ignored.
+            * There *must* be a backend with mountpoint '' (or '/') at the very
+              end of the mapping. That backend is then used as root, which means
+              that all items that don't lie in the namespace of any other
+              backend are stored there.
 
         The user backend provided must be a regular backend.
 
@@ -126,7 +129,6 @@ class RouterBackend(Backend):
         """
         @see: Backend.has_item.__doc__
         """
-
         # While we could use the inherited, generic implementation
         # it is generally advised to override this method.
         # Thus, we pass the call down.
@@ -152,9 +154,10 @@ class RouterItem(object):
     """
     Router Item - Wraps 'real' storage items to make them aware of their full name.
 
-    Items that the RouterBackend stores do not know their full name since the backend
-    they belong to is looked up from a list for a given mountpoint and only the itemname
-    itself (without leading mountpoint) is given to the specific backend.
+    Items stored in the backends managed by the RouterBackend do not know their full
+    name since the backend they belong to is looked up from a list for a given
+    mountpoint and only the itemname itself (without leading mountpoint) is given to
+    the specific backend.
     This is done so as to allow mounting a given backend at a different mountpoint.
     The problem with that is, of course, that items do not know their full name if they
     are retrieved via the specific backends directly. Thus, it is neccessary to wrap the
@@ -212,9 +215,9 @@ class RouterItem(object):
 
     def __getattr__(self, attr):
         """
-        Redirect all attribute lookups to the item that this instance proxies.
+        Redirect all attribute lookups to the item that is proxied by this instance.
         """
-        #!! will fail if inheriting from Item
+        # Note: this would fail if we subclassed Item
         return getattr(self._item, attr)
 
     def rename(self, newname):
@@ -316,6 +319,7 @@ class RouterRevision(DictMixin):
 
     def __getattr__(self, attr):
         """
-        Redirect all attribute lookups to the revision that this instance proxies.
+        Redirect all attribute lookups to the revision that is proxied by this instance.
         """
         return getattr(self._revision, attr)
+
