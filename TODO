@@ -50,6 +50,8 @@ ACL TODO:
 "create" ACL right: add this?
 "move" ACL right: add this? note: includes deletion if implemented by Trash/*
 
+Show nicer error pages than what we have at the moment.
+
 DELETE TODO:
 implement deletion as mv X Trash/X - do we still need meta[DELETED] then?
 index pages: could filter by name (thus not displaying Trash/*, except if wanted)
