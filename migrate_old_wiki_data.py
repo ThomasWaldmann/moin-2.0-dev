@@ -13,7 +13,7 @@
         migrate_old_wiki_data.py wiki/data instance/
 
     After conversion is complete, you need the following in your wikiconfig:
-    
+
         from MoinMoin.storage.backends.enduser import get_enduser_backend
         storage = get_enduser_backend('<backend_uri>')
 
@@ -25,7 +25,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 # TODO: Support specifying destination user backend as well
-
 
 import sys
 from os.path import join, isdir
