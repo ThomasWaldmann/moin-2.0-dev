@@ -8,7 +8,7 @@
     This middleware is injected between the user of the storage API and the actual
     backend used for storage. It is independent of the backend being used.
     Instances of the AMW are bound to individual request objects. The user whose
-    permissions the AMW checks is hence obtained by a look-up on the request object.
+    permissions the AMW checks is hence obtained by a lookup on the request object.
     The backend itself (and the objects it returns) need to be wrapped in order
     to make sure that no object of the real backend is (directly or indirectly)
     made accessible to the user of the API.
@@ -16,8 +16,8 @@
     be used by conversion utilities or for similar tasks.
     Regular users of the storage API, such as the views that modify an item,
     *MUST NOT*, in any way, use the real backend unless the author knows *exactly*
-    what he's doing. (As this may introduce security bugs without the code actually
-    being broken.)
+    what he's doing (as this may introduce security bugs without the code actually
+    being broken).
 
     The classes wrapped are:
         * AclWrapperBackend (wraps MoinMoin.storage.Backend)
@@ -32,8 +32,8 @@
     permissions are checked prior to attribute usage. If the user may not perform
     the action he intended to perform, an AccessDeniedError is raised.
     Otherwise the action is performed on the respective attribute of the real backend.
-    (It is important to note here that the outcome of such an action may need to
-    be wrapped itself, as is the case when items or revisions are returned.)
+    It is important to note here that the outcome of such an action may need to
+    be wrapped itself, as is the case when items or revisions are returned.
 
     All wrapped classes must, of course, adhere to the normal storage API.
 
@@ -95,8 +95,8 @@ class AclWrapperBackend(object):
         """
         if not self._may(itemname, READ):
             raise AccessDeniedError(self.request.user.name, READ, itemname)
-        # Wrap the item here as well.
         real_item = self.backend.get_item(itemname)
+        # Wrap the item here as well.
         wrapped_item = AclWrapperItem(real_item, self)
         return wrapped_item
 
@@ -114,8 +114,8 @@ class AclWrapperBackend(object):
         """
         if not self._may(itemname, WRITE):
             raise AccessDeniedError(self.request.user.name, WRITE, itemname)
-        # Wrap item.
         real_item = self.backend.create_item(itemname)
+        # Wrap item.
         wrapped_item = AclWrapperItem(real_item, self)
         return wrapped_item
 
@@ -384,9 +384,9 @@ class AclWrappedNewRevision(NewRevision):
 
     def __setitem__(self, key, value):
         """
-        In order to store an ACL on a page you must have the ADMIN privilege.
-        We must allow storing the preceeding revision's ACL in the new revision
-        (i.e., keeping it), though.
+        In order to change an ACL on an item you must have the ADMIN privilege.
+        We must allow the (unchanged) preceeding revision's ACL being stored
+        into the new revision, though.
 
         @see: NewRevision.__setitem__.__doc__
         """
@@ -416,3 +416,4 @@ class AclWrappedNewRevision(NewRevision):
         @see: Backend._write_revision_data.__doc__
         """
         return self._revision.write(data)
+
