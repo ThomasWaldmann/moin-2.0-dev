@@ -87,7 +87,7 @@ def clone(source, destination, verbose=False, only_these=[]):
     if verbose:
         # reopen stdout file descriptor with write mode
         # and 0 as the buffer size (unbuffered)
-        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+        sys.stdout = os.fdopen(os.dup(sys.stdout.fileno()), 'w', 0)
         sys.stdout.write("[converting %s to %s]: " % (source.__class__.__name__,
                                                        destination.__class__.__name__, ))
 
