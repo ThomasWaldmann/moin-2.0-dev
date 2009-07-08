@@ -5,6 +5,9 @@
     @copyright: 2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
+# TODO get_item and get_revision calls may raise an AccessDeniedError.
+#      If this happens for get_item, don't show the diff at all
+#      If it happens for get_revision, we may just want to skip that rev in the list
 from MoinMoin.items import Item, MIMETYPE
 
 def execute(item_name, request):
@@ -14,8 +17,7 @@ def execute(item_name, request):
         date = None
 
     # get (absolute) current revision number
-    # TODO acl error handling, use aclbackend
-    item = request.cfg.storage.get_item(item_name)
+    item = request.storage.get_item(item_name)
     current_revno = item.get_revision(-1).revno
 
     if date is None:
