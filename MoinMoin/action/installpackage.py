@@ -2,8 +2,6 @@
 """
     MoinMoin - installpackage action
 
-    TODO: acl checks were removed, have to be done on storage layer
-
     @copyright: 2009 MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
