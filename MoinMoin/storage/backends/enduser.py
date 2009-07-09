@@ -24,15 +24,12 @@ def get_enduser_backend(backend_uri='instance/', mapping=None, user=None):
     if mapping is user is None:
         if path.isdir(backend_uri):
             # create folders if they don't exist yet
-            try:
-                mkdir(join(backend_uri, DATA))
-            except OSError:
-                # If the folder already exists, even better!
-                pass
-            try:
-                mkdir(join(backend_uri, USER))
-            except OSError:
-                pass
+            for folder in (DATA, USER):
+                try:
+                    mkdir(path.join(backend_uri, folder))
+                except OSError:
+                    # If the folder already exists, even better!
+                    pass
 
             data = fs.FSBackend(path.join(backend_uri, 'data'))
             user = fs.FSBackend(path.join(backend_uri, 'user'))
