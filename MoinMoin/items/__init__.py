@@ -946,7 +946,7 @@ class MoinParserSupported(Text):
         # TODO: switch from Page to Item subclass
         from MoinMoin.Page import Page
         request = self.request
-        page = Page(request, self.name)
+        page = Page(request, self.name, rev=request.rev)
         pi, body = page.pi, page.data
         self.formatter.setPage(page)
         #lang = pi.get('language', request.cfg.language_default)
