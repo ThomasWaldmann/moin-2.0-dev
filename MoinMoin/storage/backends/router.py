@@ -242,10 +242,11 @@ class RouterItem(object):
             new_item = backend.get_item(old_name)
             new_item.rename(itemname)
 
+            old_item = self._item
             self._item = new_item
             self._mountpoint = mountpoint
             self._itemname = itemname
-            # TODO 'delete' old item
+            old_item.erase()
 
         else:
             # Mountpoint didn't change

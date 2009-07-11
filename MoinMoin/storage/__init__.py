@@ -614,7 +614,7 @@ class Item(Serializable, DictMixin):
         """
         @see: Backend._erase_item.__doc__
         """
-        return self._backend._nuke_item(self)
+        return self._backend._erase_item(self)
 
     # (un)serialization support following:
     element_name = 'item'
