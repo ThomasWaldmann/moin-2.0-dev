@@ -246,7 +246,7 @@ class RouterItem(object):
             self._item = new_item
             self._mountpoint = mountpoint
             self._itemname = itemname
-            old_item.erase()
+            old_item.destroy()
 
         else:
             # Mountpoint didn't change
@@ -273,13 +273,13 @@ class RouterItem(object):
         rev = self._item.get_revision(revno)
         return RouterRevision(self, rev)
 
-    def erase(self):
+    def destroy(self):
         """
         I don't yet see a reason why we should expose this to the outside world.
         Hence, this raises a NotImplementedError. If the need for this dangerous
         method should arise outside of storage, it should be handled with great care.
 
-        @see: Item.erase.__doc__
+        @see: Item.destroy.__doc__
         """
         raise NotImplementedError()
 

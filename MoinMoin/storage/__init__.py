@@ -259,16 +259,16 @@ class Backend(Serializable):
         """
         raise NotImplementedError()
 
-    def _erase_item(self, item):
+    def _destroy_item(self, item):
         """
         Use this method carefully!
 
-        This method attempts to completely *erase* an item with all its revisions and
+        This method attempts to completely *destroy* an item with all its revisions and
         metadata. After that, it will be impossible to access the item again via the
         storage API. This is very different from the deletion a user can perform on
         a wiki item, as such a deletion does not really delete anything from disk but
         just hides the former existence of the item. Such a deletion is undoable, while
-        nuking an item is not.
+        having destroyed an item is not.
 
         Note: Several backends (in particular those based on VCS) do not, by their nature,
               support erasing any content that has been put into them at some point.
@@ -280,7 +280,7 @@ class Backend(Serializable):
               kind (in case disk space is limited and large items are uploaded).
 
         @type item: Object of class Item
-        @param item: The item we want to erase
+        @param item: The item we want to destroy
         @return: None
         """
         # XXX Should this perhaps return a bool indicating whether erasure was actually performed on disk or something like that?
@@ -610,11 +610,11 @@ class Item(Serializable, DictMixin):
             self._uncommitted_revision = self._backend._create_revision(self, revno)
             return self._uncommitted_revision
 
-    def erase(self):
+    def destroy(self):
         """
-        @see: Backend._erase_item.__doc__
+        @see: Backend._destroy_item.__doc__
         """
-        return self._backend._erase_item(self)
+        return self._backend._destroy_item(self)
 
     # (un)serialization support following:
     element_name = 'item'
