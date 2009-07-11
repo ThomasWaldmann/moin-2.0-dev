@@ -34,27 +34,3 @@ Notes for Developers (storage)
       the information provided by the page behind the url may be unexpected.
       Thus, "skipping" some revision numbers is necessary.
 
-
-    - The handling of zipfiles via AttachFile is not implemented. The
-      corresponding code is commented out and needs to be rewritten with the new
-      storage API in mind. See MoinMoin/action/AttachFile.py.
-
-
-    - Since revisions can be filled with contents of arbitrary types, mimetype
-      informations need to be available in order to tell what a revision
-      contains as data. In fact, this is implemented already, but not in a sane
-      way.
-      The following things need to be done:
-        - Introduce a MIMETYPE constant for usage as metadata key
-        - For all parsers supported by moin, introduce appropriate metadata.
-          This, however, is not a trivial task. E.g. you need to differentiate
-          between the usual MoinMoin parser, creole, rst, etc.
-
-
-    - Rename ROWrapperBackend to LayerBackend since that better reflects what it
-      does.
-      In addition to that, the code for that backend must be completed.
-
-    
-    - Idea: Add a NamespaceBackend that allows storing Items in different
-      Backends, dependent on the beginning of their name.
