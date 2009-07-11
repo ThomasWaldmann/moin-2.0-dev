@@ -216,6 +216,17 @@ class Backend(Serializable):
         """
         raise NotImplementedError()
 
+    def _destroy_revision(self, revision)
+        """
+        Similarly to self._destroy_item. The given revision is completely destroyed.
+        As this is an irreversible action, great care must be taken when performing it.
+
+        Note: Again, backends not capable of really erasing something should at the very
+              least ignore the existence of the revision in question. (The only hint will
+              be the gap in item.list_revisions().
+        """
+        raise NotImplementedError()
+
     def _rename_item(self, item, newname):
         """
         Renames a given item. Raises Exception if the item you are trying to rename
@@ -791,6 +802,12 @@ class StoredRevision(Revision):
         @see: StringIO.StringIO().seek.__doc__
         """
         self._backend._seek_revision_data(self, position, mode)
+
+    def destroy(self):
+        """
+        @see: Backend._destroy_revision.__doc__
+        """
+        self._backend._destroy_revision(self)
 
 
 class NewRevision(Revision):
