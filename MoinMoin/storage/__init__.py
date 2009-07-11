@@ -259,6 +259,33 @@ class Backend(Serializable):
         """
         raise NotImplementedError()
 
+    def _erase_item(self, item):
+        """
+        Use this method carefully!
+
+        This method attempts to completely *erase* an item with all its revisions and
+        metadata. After that, it will be impossible to access the item again via the
+        storage API. This is very different from the deletion a user can perform on
+        a wiki item, as such a deletion does not really delete anything from disk but
+        just hides the former existence of the item. Such a deletion is undoable, while
+        nuking an item is not.
+
+        Note: Several backends (in particular those based on VCS) do not, by their nature,
+              support erasing any content that has been put into them at some point.
+              Those backends then need to emulate erasure as best they can. They should at
+              least ignore the former existence of the item completely.
+              A wiki admin must be aware that when using such a backend, he either needs
+              to invoke an erasure (clone old, dirtied backend to new, fresh backend) script
+              from time to time to get rid of the stuff, or not choose a backend of this
+              kind (in case disk space is limited and large items are uploaded).
+
+        @type item: Object of class Item
+        @param item: The item we want to erase
+        @return: None
+        """
+        # XXX Should this perhaps return a bool indicating whether erasure was actually performed on disk or something like that?
+        raise NotImplementedError()
+
     def _change_item_metadata(self, item):
         """
         This method is used to acquire a lock on an item. This is necessary to prevent
@@ -582,6 +609,12 @@ class Item(Serializable, DictMixin):
         else:
             self._uncommitted_revision = self._backend._create_revision(self, revno)
             return self._uncommitted_revision
+
+    def erase(self):
+        """
+        @see: Backend._erase_item.__doc__
+        """
+        return self._backend._nuke_item(self)
 
     # (un)serialization support following:
     element_name = 'item'
