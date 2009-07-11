@@ -269,6 +269,8 @@ class Backend(Serializable):
         a wiki item, as such a deletion does not really delete anything from disk but
         just hides the former existence of the item. Such a deletion is undoable, while
         having destroyed an item is not.
+        This also destroys all history related to the item. In particular, this also
+        deletes all the item's revisions and they won't turn up in history any longer.
 
         Note: Several backends (in particular those based on VCS) do not, by their nature,
               support erasing any content that has been put into them at some point.
