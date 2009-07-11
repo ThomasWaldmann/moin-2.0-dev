@@ -593,7 +593,7 @@ class BackendTest(object):
             assert rev.item.name == name
             assert rev.revno == revno
 
-    def test_erasure(self):
+    def test_destroy_item(self):
         itemname = "I will be completely destroyed"
         rev_data = "I will be completely destroyed, too, hopefully"
         item = self.backend.create_item(itemname)
@@ -609,3 +609,22 @@ class BackendTest(object):
         assert not rev_data in all_rev_data
         for rev in self.backend.history():
             assert not rev.item.name == itemname
+
+    def test_destroy_revision(self):
+        itemname = "I will see my children die :-("
+        rev_data = "I will die!"
+        persistent_rev = "I will see my sibling die :-("
+        item = self.backend.create_item(itemname)
+        rev = item.create_revision(0)
+        rev.write(rev_data)
+        item.commit()
+        rev = item.create_revision(1)
+        rev.write(persistent_rev)
+        item.commit()
+        assert item.list_revisions() == range(2)
+
+        rev = item.get_revision(0)
+        rev.destroy()
+        assert item.list_revisions() == [1]
+        assert self.backend.has_item(itemname)
+        assert item.get_revision(-1).read() == persistent_rev
