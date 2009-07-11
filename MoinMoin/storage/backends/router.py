@@ -275,13 +275,13 @@ class RouterItem(object):
 
     def destroy(self):
         """
-        I don't yet see a reason why we should expose this to the outside world.
-        Hence, this raises a NotImplementedError. If the need for this dangerous
-        method should arise outside of storage, it should be handled with great care.
+        ATTENTION!
+        This method performs an irreversible operation and deletes potentially important
+        data. Use with great care.
 
         @see: Item.destroy.__doc__
         """
-        raise NotImplementedError()
+        return self._item.destroy()
 
 class RouterRevision(DictMixin):
     """
