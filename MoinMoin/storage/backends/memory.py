@@ -54,6 +54,30 @@ class MemoryBackend(Backend):
         self._item_metadata_lock = {}       # {id : Lockobject}
         self._revision_history = []
 
+    def _erase_item(self, item):
+        """
+        @see: Backend._erase_item.__doc__
+        """
+        item_map = self._itemmap
+        item_meta = self._item_metadata
+        item_revs = self._item_revisions
+        item_lock = self._item_metadata_lock
+
+        item_id = item_map[item.name]
+        del item_map[item.name]
+
+        for struct in (item_meta, item_revs, item_lock):
+            try:
+                del struct[item_id]
+            except KeyError:
+                pass
+
+        # Create a new revision_history list first and then swap that atomically with
+        # the old one (that still contains the item's revs).
+        rev_hist = [rev for rev in self._revision_history if rev.item.name != item.name]
+        self._revision_history = rev_hist
+
+
     def history(self, reverse=True):
         """
         @see: Backend.history.__doc__
