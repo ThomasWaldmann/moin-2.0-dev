@@ -336,3 +336,13 @@ class RouterRevision(DictMixin):
         """
         return getattr(self._revision, attr)
 
+    def destroy(self):
+        """
+        ATTENTION!
+        This method performs an irreversible operation and deletes potentially important
+        data. Use with great care.
+
+        @see: Revision.destroy.__doc__
+        """
+        return self._revision.destroy()
+
