@@ -273,6 +273,15 @@ class RouterItem(object):
         rev = self._item.get_revision(revno)
         return RouterRevision(self, rev)
 
+    def erase(self):
+        """
+        I don't yet see a reason why we should expose this to the outside world.
+        Hence, this raises a NotImplementedError. If the need for this dangerous
+        method should arise outside of storage, it should be handled with great care.
+
+        @see: Item.erase.__doc__
+        """
+        raise NotImplementedError()
 
 class RouterRevision(DictMixin):
     """
