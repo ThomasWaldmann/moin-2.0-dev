@@ -350,6 +350,21 @@ class AclWrapperItem(Item):
         return self._item.rollback()
 
     @require_privilege(WRITE)
+    def erase(self):
+        """
+        USE WITH GREAT CARE!
+
+        Choosing the required privileges for this one is difficult. If we'd introduce
+        a new 'erase item' privilege, everyone who, at some point, wants to perform an
+        inter-backend rename (with RouterBackend) would need to run around with the
+        'erase item' privilege. We don't want that. Hence, we ask you to use this method
+        only in very well thought-over situations.
+
+        @see: Item.erase.__doc__
+        """
+        return self._item.erase()
+
+    @require_privilege(WRITE)
     def create_revision(self, revno):
         """
         @see: Item.create_revision.__doc__
