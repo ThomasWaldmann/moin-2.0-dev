@@ -349,20 +349,21 @@ class AclWrapperItem(Item):
         """
         return self._item.rollback()
 
+    # TODO introduce 'DESTROY' privilege (not checked by rename)
     @require_privilege(WRITE)
-    def erase(self):
+    def destroy(self):
         """
         USE WITH GREAT CARE!
 
         Choosing the required privileges for this one is difficult. If we'd introduce
-        a new 'erase item' privilege, everyone who, at some point, wants to perform an
+        a new 'destroy item' privilege, everyone who, at some point, wants to perform an
         inter-backend rename (with RouterBackend) would need to run around with the
-        'erase item' privilege. We don't want that. Hence, we ask you to use this method
+        'destroy item' privilege. We don't want that. Hence, we ask you to use this method
         only in very well thought-over situations.
 
-        @see: Item.erase.__doc__
+        @see: Item.destroy.__doc__
         """
-        return self._item.erase()
+        return self._item.destroy()
 
     @require_privilege(WRITE)
     def create_revision(self, revno):

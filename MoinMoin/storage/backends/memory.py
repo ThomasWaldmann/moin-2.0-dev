@@ -54,9 +54,9 @@ class MemoryBackend(Backend):
         self._item_metadata_lock = {}       # {id : Lockobject}
         self._revision_history = []
 
-    def _erase_item(self, item):
+    def _destroy_item(self, item):
         """
-        @see: Backend._erase_item.__doc__
+        @see: Backend._destroy_item.__doc__
         """
         item_map = self._itemmap
         item_meta = self._item_metadata
