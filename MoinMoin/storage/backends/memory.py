@@ -185,6 +185,17 @@ class MemoryBackend(Backend):
         new_revision._data = StringIO.StringIO()
         return new_revision
 
+    def _destroy_revision(self, revision):
+        """
+        @see: Backend._destroy_revision.__doc__
+        """
+        item_id = self._itemmap[revision.item.name]
+        del self._item_revisions[item_id][revision.revno]
+
+        # Remove the rev from history
+        rev_history = [rev for rev in self._revision_history if (rev.item.name != revision.item.name or rev.revno != revision.revno)]
+        self._revision_history = rev_history
+
     def _rename_item(self, item, newname):
         """
         @see: Backend._rename_item.__doc__
