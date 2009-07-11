@@ -592,3 +592,20 @@ class BackendTest(object):
             name, revno = order[num]
             assert rev.item.name == name
             assert rev.revno == revno
+
+    def test_erasure(self):
+        itemname = "I will be completely erased"
+        rev_data = "I will be completely erased, too, hopefully"
+        item = self.backend.create_item(itemname)
+        rev = item.create_revision(0)
+        rev.write(rev_data)
+        item.commit()
+
+        item.erase()
+        assert not self.backend.has_item(itemname)
+        item_names = [item.name for item in self.backend.iteritems()]
+        assert not itemname in item_names
+        all_rev_data = [rev.read() for rev in self.backend.history()]
+        assert not rev_data in all_rev_data
+        for rev in self.backend.history():
+            assert not rev.item.name == itemname
