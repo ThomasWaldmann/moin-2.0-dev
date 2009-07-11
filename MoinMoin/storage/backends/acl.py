@@ -22,7 +22,7 @@
     The classes wrapped are:
         * AclWrapperBackend (wraps MoinMoin.storage.Backend)
         * AclWrapperItem (wraps MoinMoin.storage.Item)
-        * AclWrappedNewRevision (wraps MoinMoin.storage.NewRevision)
+        * AclWrappedRevision (wraps MoinMoin.storage.Revision)
 
     MoinMoin.storage.StoredRevision is not wrapped since it's read-only by design
     anyway, and an object thereof can only be obtained by the dedicated methods
@@ -49,13 +49,14 @@
 from MoinMoin.items import ACL
 from MoinMoin.security import AccessControlList
 
-from MoinMoin.storage import Item, NewRevision
+from MoinMoin.storage import Item, NewRevision, StoredRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 
 ADMIN = 'admin'
 READ = 'read'
 WRITE = 'write'
 DELETE = 'delete'
+DESTROY = 'destroy'
 
 
 class AclWrapperBackend(object):
@@ -312,8 +313,7 @@ class AclWrapperItem(Item):
         """
         @see: Item.get_revision.__doc__
         """
-        # The revision returned here is immutable already.
-        return self._item.get_revision(revno)
+        return AclWrappedRevision(self._item.get_revision(revno), self)
 
     @require_privilege(READ)
     def list_revisions(self):
@@ -349,8 +349,7 @@ class AclWrapperItem(Item):
         """
         return self._item.rollback()
 
-    # TODO introduce 'DESTROY' privilege (not checked by rename)
-    @require_privilege(WRITE)
+    @require_privilege(DESTROY)
     def destroy(self):
         """
         USE WITH GREAT CARE!
@@ -370,20 +369,26 @@ class AclWrapperItem(Item):
         """
         @see: Item.create_revision.__doc__
         """
-        wrapped_revision = AclWrappedNewRevision(self._item.create_revision(revno), self)
+        wrapped_revision = AclWrappedRevision(self._item.create_revision(revno), self)
         return wrapped_revision
 
 
-class AclWrappedNewRevision(NewRevision):
+class AclWrappedRevision(object):
     """
-    The only revision we need to wrap. This is due to the fact that this kind of
-    revisions allows altering the storage's contents.
+    Wrapper for revision classes. We need to wrap NewRevisions because they allow altering data.
+    We need to wrap StoredRevisions since they offer a destroy() method.
+    The caller should know what kind of revision he gets. Hence, we just implement the methods of
+    both, StoredRevision and NewRevision. If a method is invoked that is not defined on the
+    kind of revision we wrap, we will see an AttributeError one level deeper.
     """
     def __init__(self, revision, item):
         self._revision = revision
         self._item = item
         self._may = item._may
 
+    def __getattr__(self, attr):
+        return getattr(self._revision, attr)
+        
     @property
     def timestamp(self):
         """
@@ -426,6 +431,27 @@ class AclWrappedNewRevision(NewRevision):
 
     def __delitem__(self, key):
         del self._revision[key]
+
+    def read(self, chunksize=-1):
+        """
+        @see: Backend._read_revision_data.__doc__
+        """
+        return self._revision.read(chunksize)
+
+    def seek(self, position, mode=0):
+        """
+        @see: StringIO.StringIO().seek.__doc__
+        """
+        return self._revision.seek(position, mode)
+
+    def destroy(self):
+        """
+        @see: Backend._destroy_revision.__doc__
+        """
+        if not self._may(self._item.name, DESTROY):
+            username = self._item._backend.request.user.name
+            raise AccessDeniedError(username, DESTROY + " revisions of", self._item.name)
+        return self._revision.destroy()
 
     def write(self, data):
         """

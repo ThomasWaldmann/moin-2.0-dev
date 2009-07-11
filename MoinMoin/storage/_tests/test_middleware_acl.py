@@ -19,7 +19,7 @@ import py
 
 class TestACLMiddleware(BackendTest):
     class Config(wikiconfig.Config):
-        acl_rights_default = u"All:admin,read,write"
+        acl_rights_default = u"All:admin,read,write,destroy"
 
     def __init__(self):
         BackendTest.__init__(self, None)
