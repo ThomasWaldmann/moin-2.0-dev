@@ -216,7 +216,7 @@ class Backend(Serializable):
         """
         raise NotImplementedError()
 
-    def _destroy_revision(self, revision)
+    def _destroy_revision(self, revision):
         """
         Similarly to self._destroy_item. The given revision is completely destroyed.
         As this is an irreversible action, great care must be taken when performing it.
