@@ -10,7 +10,7 @@
 from MoinMoin.items import ACL
 from MoinMoin.storage.error import AccessDeniedError
 from MoinMoin.storage._tests.test_backends import BackendTest
-from MoinMoin.storage.backends.acl import AclWrapperBackend
+from MoinMoin.storage.backends.acl import AclWrapperBackend, AclWrapperItem, AclWrappedRevision
 from MoinMoin.conftest import init_test_request
 from MoinMoin._tests import wikiconfig
 
@@ -94,4 +94,18 @@ class TestACLMiddleware(BackendTest):
 
         py.test.raises(AccessDeniedError, item.get_revision, -1)
         py.test.raises(AccessDeniedError, item.get_revision, 0)
+
+    def test_rev_item_wrapped(self):
+        item = self.backend.create_item("foo")
+        rev = item.create_revision(0)
+        rev.write("me and my item will be wrapped")
+        item.commit()
+        stored_rev = item.get_revision(0)
+
+        assert isinstance(stored_rev, AclWrappedRevision)
+        assert isinstance(rev, AclWrappedRevision)
+        assert isinstance(item, AclWrapperItem)
+        assert isinstance(rev.item, AclWrapperItem)
+        assert isinstance(stored_rev.item, AclWrapperItem)
+
 
