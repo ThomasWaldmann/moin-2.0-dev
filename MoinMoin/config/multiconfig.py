@@ -1041,7 +1041,7 @@ options = {
        "ACL that is processed before the on-page/default ACL"),
       ('rights_after', u"",
        "ACL that is processed after the on-page/default ACL"),
-      ('rights_valid', ['read', 'write', 'delete', 'admin'],
+      ('rights_valid', ['read', 'write', 'delete', 'admin', 'destroy'],
        "Valid tokens for right sides of ACL entries."),
     )),
 
