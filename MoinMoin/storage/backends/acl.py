@@ -46,6 +46,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from UserDict import DictMixin
+
 from MoinMoin.items import ACL
 from MoinMoin.security import AccessControlList
 
@@ -373,7 +375,7 @@ class AclWrapperItem(Item):
         return wrapped_revision
 
 
-class AclWrappedRevision(object):
+class AclWrappedRevision(DictMixin):
     """
     Wrapper for revision classes. We need to wrap NewRevisions because they allow altering data.
     We need to wrap StoredRevisions since they offer a destroy() method.

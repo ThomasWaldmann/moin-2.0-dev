@@ -943,7 +943,7 @@ class MoinParserSupported(Text):
     format = 'wiki' # override this, if needed
     format_args = ''
     def _render_data(self):
-        # TODO: switch from Page to Item subclass SOON!
+        # TODO: switch from Page to Item subclass VERY SOON!
         from MoinMoin.Page import Page
         request = self.request
         rev = -1 if request.rev is None else request.rev
