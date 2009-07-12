@@ -169,7 +169,7 @@ class Page(object):
             if self._rev is not None:
                 self._meta = self._rev
         return self._meta
-    meta = property(fget=get_meta) # processing instructions, ACLs (upper part of page text)
+    meta = property(fget=get_meta) # processing instructions
 
     def get_data(self):
         if self._data is None:
