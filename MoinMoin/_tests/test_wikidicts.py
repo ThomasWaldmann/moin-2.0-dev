@@ -116,8 +116,8 @@ class TestGroupDicts:
 
         members, groups = self.request.dicts.expand_group('SystemPagesGroup')
         assert 'SystemPagesInEnglishGroup' in groups
-        assert 'RecentChanges' in members
-        assert 'HelpContents' in members
+        assert 'HelpOnMoinWikiSyntax' in members
+        assert 'HelpOnLinking' in members
 
     def testRenameGroupPage(self):
         """
