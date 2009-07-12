@@ -388,7 +388,7 @@ class AclWrappedRevision(object):
 
     def __getattr__(self, attr):
         return getattr(self._revision, attr)
-        
+
     @property
     def timestamp(self):
         """
