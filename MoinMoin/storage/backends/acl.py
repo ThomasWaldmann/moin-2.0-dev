@@ -392,6 +392,13 @@ class AclWrappedRevision(DictMixin):
         return getattr(self._revision, attr)
 
     @property
+    def item(self):
+        """
+        @see: Revision.item.__doc__
+        """
+        return self._item
+
+    @property
     def timestamp(self):
         """
         @see: NewRevision.timestamp.__doc__
