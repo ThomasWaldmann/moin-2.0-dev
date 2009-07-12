@@ -87,8 +87,8 @@ class TestInterWiki:
 
 class TestSystemPage:
     systemPages = (
-        'RecentChanges',
-        'TitleIndex',
+        'HelpOnMoinWikiSyntax',
+        'HelpOnLinking',
         )
     notSystemPages = (
         'NoSuchPageYetAndWillNeverBe',

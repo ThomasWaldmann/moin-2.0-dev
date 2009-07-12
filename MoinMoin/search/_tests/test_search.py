@@ -76,12 +76,12 @@ class TestSearch:
 
     def testTitleSearchAND(self):
         """ search: title search with AND expression """
-        result = search.searchPages(self.request, u"title:Help title:Index")
+        result = search.searchPages(self.request, u"title:Help title:Linking")
         assert len(result.hits) == 1
 
     def testTitleSearchOR(self):
         """ search: title search with OR expression """
-        result = search.searchPages(self.request, u"title:FrontPage or title:RecentChanges")
+        result = search.searchPages(self.request, u"title:FrontPage or title:HelpOnMoinWikiSyntax")
         assert len(result.hits) == 2
 
     def testTitleSearchNegatedFindAll(self):
@@ -92,7 +92,7 @@ class TestSearch:
     def testTitleSearchNegativeTerm(self):
         """ search: title search for a AND expression with a negative term """
         helpon_count = len(search.searchPages(self.request, u"title:HelpOn").hits)
-        result = search.searchPages(self.request, u"title:HelpOn -title:Acl")
+        result = search.searchPages(self.request, u"title:HelpOn -title:Linking")
         assert len(result.hits) == helpon_count - 1 # finds all HelpOn* except one
 
     def testFullSearchNegatedFindAll(self):
@@ -103,7 +103,7 @@ class TestSearch:
     def testFullSearchNegativeTerm(self):
         """ search: full search for a AND expression with a negative term """
         helpon_count = len(search.searchPages(self.request, u"HelpOn").hits)
-        result = search.searchPages(self.request, u"HelpOn -ACL")
+        result = search.searchPages(self.request, u"HelpOn -Thumbnails")
         assert 0 < len(result.hits) < helpon_count
 
 
