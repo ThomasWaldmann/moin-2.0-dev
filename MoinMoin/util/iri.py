@@ -704,30 +704,26 @@ class IriPath(object):
 
         empty = segments[0]
 
-        # Get reversed list with first (empty) element removed
-        l1 = iter(segments[:0:-1])
-        l2 = []
+        output = []
         remove = 0
-        try:
-            while True:
-                i = l1.next()
-                if i == '.':
-                    if not l2:
-                        l2.insert(0, empty)
-                elif i == '..':
-                    if not l2:
-                        l2.insert(0, empty)
-                    remove += 1
+
+        # Get reversed list with first (empty) element removed
+        for i in segments[:0:-1]:
+            if i == '.':
+                if not output:
+                    output.insert(0, empty)
+            elif i == '..':
+                if not output:
+                    output.insert(0, empty)
+                remove += 1
+            else:
+                if remove:
+                    remove -= 1
                 else:
-                    if remove:
-                        remove -= 1
-                    else:
-                        l2.insert(0, i)
+                    output.insert(0, i)
 
-        except StopIteration: pass
-
-        l2.insert(0, empty)
-        return l2
+        output.insert(0, empty)
+        return output
 
     def extend(self, value):
         self._list.extend((IriPathSegment(i) for i in value))
