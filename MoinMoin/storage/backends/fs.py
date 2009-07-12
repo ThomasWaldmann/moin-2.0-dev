@@ -20,7 +20,8 @@ from MoinMoin.util.lock import ExclusiveLock
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
-                                   RevisionAlreadyExistsError, RevisionNumberMismatchError
+                                   RevisionAlreadyExistsError, RevisionNumberMismatchError, \
+                                   CouldNotDestroyError
 
 PICKLEPROTOCOL = 1
 
@@ -236,6 +237,18 @@ class FSBackend(Backend):
 
         return rev
 
+    def _destroy_revision(self, revision):
+        if revision._fs_file is not None:
+            revision._fs_file.close()
+        try:
+            os.unlink(revision._fs_revpath)
+        except OSError, err:
+            if err.errno != errno.ENOENT:
+                raise CouldNotDestroyError("Could not destroy revision #%d of item '%r' [errno: %d]" % (
+                    revision.revno, revision.item.name, err.errno))
+            #else:
+            #    someone else already killed this revision, we silently ignore this error
+
     def _do_locked(self, lockname, fn, arg):
         l = ExclusiveLock(lockname, 30)
         l.acquire(30)
@@ -416,6 +429,29 @@ class FSBackend(Backend):
     def _rollback_item(self, rev):
         rev._fs_file.close()
         os.unlink(rev._fs_revpath)
+
+    def _destroy_item_locked(self, item):
+        c = cdb.init(self._name_db)
+        maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
+        r = c.each()
+        while r:
+            i, v = r
+            if v != item._fs_item_id:
+                maker.add(i, v)
+            r = c.each()
+        maker.finish()
+        # XXX: doesn't work on windows
+        os.rename(self._name_db + '.ndb', self._name_db)
+        path = os.path.join(self._path, item._fs_item_id)
+        try:
+            shutil.rmtree(path)
+        except OSError, err:
+            raise CouldNotDestroyError("Could not destroy item '%r' [errno: %d]" % (
+                item.name, err.errno))
+
+    def _destroy_item(self, item):
+        self._do_locked(os.path.join(self._path, 'name-mapping.lock'),
+                        self._destroy_item_locked, item)
 
     def _change_item_metadata(self, item):
         if not item._fs_item_id is None:
