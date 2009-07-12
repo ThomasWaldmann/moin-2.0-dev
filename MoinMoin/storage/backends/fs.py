@@ -151,7 +151,7 @@ class FSBackend(Backend):
     def get_item(self, itemname):
         item_id = self._get_item_id(itemname)
         if item_id is None:
-            raise NoSuchItemError("No such item, %r" % (itemname))
+            raise NoSuchItemError("No such item '%r'." % itemname)
 
         item = Item(self, itemname)
         item._fs_item_id = item_id
@@ -164,10 +164,10 @@ class FSBackend(Backend):
 
     def create_item(self, itemname):
         if not isinstance(itemname, (str, unicode)):
-            raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
+            raise TypeError("Item names must be of str/unicode type, not %s." % type(itemname))
 
         elif self.has_item(itemname):
-            raise ItemAlreadyExistsError("An Item with the name %r already exists!" % (itemname))
+            raise ItemAlreadyExistsError("An item '%r' already exists!" % itemname)
 
         item = Item(self, itemname)
         item._fs_item_id = None
@@ -190,12 +190,12 @@ class FSBackend(Backend):
         if revno == -1:
             revs = item.list_revisions()
             if not revs:
-                raise NoSuchRevisionError("Item has no revisions")
+                raise NoSuchRevisionError("Item has no revisions.")
             revno = max(revs)
 
         revpath = os.path.join(self._path, item_id, 'rev.%d' % revno)
         if not os.path.exists(revpath):
-            raise NoSuchRevisionError("No Revision #%d on Item %s" % (revno, item.name))
+            raise NoSuchRevisionError("Item '%r' has no revision #%d." % (item.name, revno))
 
         rev = StoredRevision(item, revno)
         rev._fs_revpath = revpath
@@ -221,9 +221,9 @@ class FSBackend(Backend):
         last_rev = max(-1, -1, *revs)
 
         if revno in revs:
-            raise RevisionAlreadyExistsError("A Revision with the number %d already exists on the item %r" % (revno, item.name))
+            raise RevisionAlreadyExistsError("Item '%r' already has a revision #%d." % (item.name, revno))
         elif revno != last_rev + 1:
-            raise RevisionNumberMismatchError("The latest revision of the item '%r' is %d, thus you cannot create revision number %d. \
+            raise RevisionNumberMismatchError("The latest revision of the item '%r' is #%d, thus you cannot create revision #%d. \
                                                The revision number must be latest_revision + 1." % (item.name, last_rev, revno))
 
         rev = NewRevision(item, revno)
@@ -257,7 +257,7 @@ class FSBackend(Backend):
         while r:
             i, v = r
             if i == nn:
-                raise ItemAlreadyExistsError("new name already exists!")
+                raise ItemAlreadyExistsError("Target item '%r' already exists!" % newname)
             elif v == item._fs_item_id:
                 maker.add(nn, v)
             else:
@@ -296,7 +296,7 @@ class FSBackend(Backend):
                 cntr = 0
             elif cntr > 20:
                 # XXX: UnexpectedBackendError() that propagates to user?
-                raise Exception('item space full')
+                raise Exception('Item space full!')
 
         nn = item.name.encode('utf-8')
 
@@ -312,7 +312,7 @@ class FSBackend(Backend):
                 os.rmdir(ipath)
                 if newrev is not None:
                     os.unlink(newrev)
-                raise ItemAlreadyExistsError("new name already exists!")
+                raise ItemAlreadyExistsError("Item '%r' already exists!" % item.name)
             else:
                 maker.add(i, v)
             r = c.each()
