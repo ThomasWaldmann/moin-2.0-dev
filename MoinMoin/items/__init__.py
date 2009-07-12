@@ -172,6 +172,9 @@ class Item(object):
     def do_copy(self):
         return self._action_query('copy', target=self.name)
 
+    def do_destroy(self):
+        return self._action_query('destroy', revno=self.rev.revno)
+
     def do_revert(self):
         return self._action_query('revert', revno=self.rev.revno)
 
@@ -233,6 +236,16 @@ class Item(object):
         # called from revert UI/POST
         comment = self.request.form.get('comment')
         self._save(self.meta, self.data, action='SAVE/REVERT', comment=comment)
+
+    def destroy(self):
+        # called from destroy UI/POST
+        comment = self.request.form.get('comment')
+        if comment == '0-0-0-Destruct-0': # TODO: improve this
+            # destroy complete item with all revisions, metadata, etc.
+            self.rev.item.destroy()
+        else:
+            # just destroy this revision
+            self.rev.destroy()
 
     def modify(self):
         # called from modify UI/POST
