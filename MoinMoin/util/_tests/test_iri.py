@@ -268,26 +268,46 @@ def test_Iri_add_1():
     assert u.query == 'action=raw'
     assert u.fragment == 'head'
 
-def test_Iri_quote():
-    u = Iri(scheme=u'wiki', authority=u'Näu%?#', path=u'/Näu%?#', query=u'Näu%?#', fragment=u'Näu%?#')
+def test_Iri_quote_1():
+    u = Iri(scheme=u'wiki', authority=u'authority_ä%?#', path=u'/path_ä%?#', query=u'query_ä%?#', fragment=u'fragment_ä%?#')
     assert u.scheme == u'wiki'
-    assert u.authority == u'Näu%?#'
-    assert u.authority.fullquoted == u'Näu%25%3F%23'
-    assert u.authority.quoted == u'Näu%25?#'
-    assert u.authority.urlquoted == u'N%C3%A4u%25%3F%23'
-    assert u.path == u'/Näu%?#'
-    assert u.path.fullquoted == u'/Näu%25%3F%23'
-    assert u.path.quoted == u'/Näu%25?#'
-    assert u.path.urlquoted == u'/N%C3%A4u%25%3F%23'
-    assert u.query == u'Näu%?#'
-    assert u.query.fullquoted == u'Näu%25?%23'
-    assert u.query.quoted == u'Näu%25?#'
-    assert u.query.urlquoted == u'N%C3%A4u%25?%23'
-    assert u.fragment == u'Näu%?#'
-    assert u.fragment.fullquoted == u'Näu%25?%23'
-    assert u.fragment.quoted == u'Näu%25?#'
-    assert u.fragment.urlquoted == u'N%C3%A4u%25?%23'
-    assert u == u'wiki://Näu%25%3F%23/Näu%25%3F%23?Näu%25?%23#Näu%25?%23'
+    assert u.authority == u'authority_ä%?#'
+    authority = u'authority_ä%25%3F%23'
+    assert u.authority.fullquoted == authority
+    assert u.authority.quoted == u'authority_ä%25?#'
+    assert u.authority.urlquoted == u'authority_%C3%A4%25%3F%23'
+    assert u.path == u'/path_ä%?#'
+    path = u'/path_ä%25%3F%23'
+    assert u.path.fullquoted == path
+    assert u.path.quoted == u'/path_ä%25?#'
+    assert u.path.urlquoted == u'/path_%C3%A4%25%3F%23'
+    assert u.query == u'query_ä%?#'
+    query = u'query_ä%25?%23'
+    assert u.query.fullquoted == query
+    assert u.query.quoted == u'query_ä%25?#'
+    assert u.query.urlquoted == u'query_%C3%A4%25?%23'
+    assert u.fragment == u'fragment_ä%?#'
+    fragment = u'fragment_ä%25?%23'
+    assert u.fragment.fullquoted == fragment
+    assert u.fragment.quoted == u'fragment_ä%25?#'
+    assert u.fragment.urlquoted == u'fragment_%C3%A4%25?%23'
+    assert unicode(u) == u'wiki://%s%s?%s#%s' % (authority, path, query, fragment)
+
+def test_Iri_quote_2():
+    authority = u'authority_ä%25%3F%23'
+    path = u'/path_ä%25%3F%23'
+    query = u'query_ä%25?%23'
+    fragment = u'fragment_ä%25?%23'
+    i = u'wiki://%s%s?%s#%s' % (authority, path, query, fragment)
+    u = Iri(i)
+    assert unicode(u) == i
+
+def test_Iri_quote_3():
+    i = u'wiki:///path_%92'
+    u = Iri(i)
+    assert u.path.fullquoted == u'/path_%92'
+    assert u.path.quoted == u'/path_%92'
+    assert unicode(u) == i
 
 def test_IriAuthority_parser_1():
     i = 'moinmo.in'
