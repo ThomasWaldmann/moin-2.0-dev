@@ -31,7 +31,7 @@ This item exists, but current revision is deleted.
                 <th>Editor</td>
                 <th>MimeType</td>
                 <th>Comment</td>
-                <th colspan="3">Actions</td>
+                <th colspan="4">Actions</td>
             </tr>
             {% for entry in log %}
             <tr>
@@ -52,6 +52,7 @@ This item exists, but current revision is deleted.
                 {% else %}
                 <td>{{ '<a href="?rev=%d&do=revert">%s</a>' % (entry.rev_no, 'revert') }}</td>
                 {% endif %}
+                <td>{{ '<a href="?rev=%d&do=destroy">%s</a>' % (entry.rev_no, 'destroy') }}</td>
             </tr>
             {% endfor %}
         </table>
