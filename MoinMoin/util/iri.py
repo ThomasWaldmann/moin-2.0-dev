@@ -475,12 +475,6 @@ class _Value(unicode):
             return self._quote(self._quoted, url=True, requote=True)
         return self._quote(self, url=True)
 
-class _ValueAuthority(_Value):
-    quote_rules_ascii = _Value.quote_rules_ascii + (
-        # Not correct, but we have anything in authority
-        (ord(u'@'), ord(u'@')),
-        (ord(u':'), ord(u':')),
-    )
 
 class IriAuthority(object):
     authority_rules = r"""
@@ -636,11 +630,14 @@ class IriAuthority(object):
         if self._host is not None:
             return self._host.quoted
 
-class IriAuthorityUserinfo(_ValueAuthority):
+
+class IriAuthorityUserinfo(_Value):
     pass
 
-class IriAuthorityHost(_ValueAuthority):
+
+class IriAuthorityHost(_Value):
     pass
+
 
 class IriPath(object):
     __slots__ = '_list'
