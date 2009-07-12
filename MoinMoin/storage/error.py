@@ -21,6 +21,15 @@ class AccessError(StorageError):
     """
     pass
 
+class CouldNotDestroyError(AccessError):
+    """
+    Raised if the item/revision in question could not be destroyed due to
+    an internal backend problem. NOT raised if the user does not have the
+    'destroy' privilege. This exception describes a technical deletion
+    problem, not missing ACLs.
+    """
+    pass
+
 class AccessDeniedError(AccessError):
     """
     Raised if the required rights are not available to perform the action.
