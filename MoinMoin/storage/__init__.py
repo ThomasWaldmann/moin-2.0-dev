@@ -221,9 +221,19 @@ class Backend(Serializable):
         Similarly to self._destroy_item. The given revision is completely destroyed.
         As this is an irreversible action, great care must be taken when performing it.
 
+        In case the revision has already been destroyed by someone else (e.g. another
+        process) this method should just pass silently as the job is already done.
+
+        If the revision cannot be destroyed for technical reasons (e.g. missing permissions
+        on disk), this method shall raise a CouldNotDestroyError.
+
         Note: Again, backends not capable of really erasing something should at the very
               least ignore the existence of the revision in question. (The only hint will
               be the gap in item.list_revisions().
+
+        @type revision: Object of class StoredRevision
+        @param revision: The revision we want to destroy completely.
+        @raises CouldNotDestroyError: Raised in case the revision could not be destroyed.
         """
         raise NotImplementedError()
 
@@ -283,6 +293,12 @@ class Backend(Serializable):
         This also destroys all history related to the item. In particular, this also
         deletes all the item's revisions and they won't turn up in history any longer.
 
+        In case the item has already been destroyed by someone else (e.g. another process)
+        this method should just pass silently as the job is already done.
+
+        If the item cannot be destroyed for technical reasons (e.g. missing permissions
+        on disk), this method shall raise a CouldNotDestroyError.
+
         Note: Several backends (in particular those based on VCS) do not, by their nature,
               support erasing any content that has been put into them at some point.
               Those backends then need to emulate erasure as best they can. They should at
@@ -294,6 +310,7 @@ class Backend(Serializable):
 
         @type item: Object of class Item
         @param item: The item we want to destroy
+        @raises CouldNotDestroyError: Raised in case the revision could not be destroyed.
         @return: None
         """
         # XXX Should this perhaps return a bool indicating whether erasure was actually performed on disk or something like that?
