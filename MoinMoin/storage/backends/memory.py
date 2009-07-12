@@ -112,8 +112,12 @@ class MemoryBackend(Backend):
         item_revs = self._item_revisions
         item_lock = self._item_metadata_lock
 
-        item_id = item_map[item.name]
-        del item_map[item.name]
+        try:
+            item_id = item_map[item.name]
+            del item_map[item.name]
+        except KeyError:
+            # No need to proceed further. The item has already been destroyed by someone else.
+            return
 
         for struct in (item_meta, item_revs, item_lock):
             try:
@@ -189,8 +193,12 @@ class MemoryBackend(Backend):
         """
         @see: Backend._destroy_revision.__doc__
         """
-        item_id = self._itemmap[revision.item.name]
-        del self._item_revisions[item_id][revision.revno]
+        try:
+            item_id = self._itemmap[revision.item.name]
+            del self._item_revisions[item_id][revision.revno]
+        except KeyError:
+            # The revision has already been destroyed by someone else. No need to make our hands dirty.
+            return
 
         # Remove the rev from history
         rev_history = [rev for rev in self._revision_history if (rev.item.name != revision.item.name or rev.revno != revision.revno)]
