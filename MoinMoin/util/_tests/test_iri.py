@@ -303,10 +303,10 @@ def test_Iri_quote_2():
     assert unicode(u) == i
 
 def test_Iri_quote_3():
-    i = u'wiki:///path_%92'
+    i = u'wiki:///path_%92%92'
     u = Iri(i)
-    assert u.path.fullquoted == u'/path_%92'
-    assert u.path.quoted == u'/path_%92'
+    assert u.path.fullquoted == u'/path_%92%92'
+    assert u.path.quoted == u'/path_%92%92'
     assert unicode(u) == i
 
 def test_IriAuthority_parser_1():

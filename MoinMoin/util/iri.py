@@ -7,7 +7,19 @@ Implements the generic IRI form as defined in RFC 3987.
 @license: GNU GPL, see COPYING for details.
 """
 
+import codecs
 import re
+
+
+def _iriquote_replace(exc):
+    if not isinstance(exc, UnicodeDecodeError):
+        raise exc
+
+    text = ''.join((u'%%%02X' % ord(a) for a in exc.object[exc.start:exc.end]))
+    return text, exc.end
+
+codecs.register_error('iriquote', _iriquote_replace)
+
 
 class Iri(object):
     overall_rules = r"""
@@ -437,8 +449,7 @@ class _Value(unicode):
             for item in match.group().split(u'%')[1:]:
                 part.append(chr(int(item, 16)))
             ret1.append(''.join(part).decode('utf-8', 'replace'))
-            # TODO: Reencode % and illegal sequences
-            ret2.append(''.join(part).decode('utf-8'))
+            ret2.append(''.join(part).replace('%', '%25').decode('utf-8', 'iriquote'))
 
         # Handle trailing text
         t = s[pos:]
