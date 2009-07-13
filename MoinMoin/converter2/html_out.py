@@ -12,8 +12,10 @@ from emeraldtree import ElementTree as ET
 from MoinMoin import wikiutil
 from MoinMoin.util.tree import html, moin_page, xlink
 
+
 class ElementException(RuntimeError):
     pass
+
 
 class Attrib(object):
     def simple_attrib(self, key, value, out, out_style):
@@ -53,9 +55,9 @@ class Attrib(object):
 
     def new(self):
         new = {}
-        new_css = {}
+        new_style = {}
         new_default = {}
-        new_default_css = {}
+        new_default_style = {}
 
         for key, value in self.element.attrib.iteritems():
             if key.uri == moin_page.namespace:
@@ -73,17 +75,17 @@ class Attrib(object):
                     n = 'visit_' + key.name.replace('-', '_')
                     f = getattr(self, n, None)
                     if f is not None:
-                        f(key, value, new_default, new_default_css)
+                        f(key, value, new_default, new_default_style)
                 elif self.default_uri_output:
                     new_default[ET.QName(key.name, self.default_uri_output)] = value
 
         # Attributes with namespace overrides attributes with empty namespace.
         new_default.update(new)
-        new_default_css.update(new_css)
+        new_default_style.update(new_style)
 
         # Create CSS style attribute
-        if new_default_css:
-            style = new_default_css.items()
+        if new_default_style:
+            style = new_default_style.items()
             style.sort(key=lambda i: i[0])
             style = '; '.join((key + ': ' + value for key, value in style))
 
@@ -94,6 +96,7 @@ class Attrib(object):
             new_default[html.style] = style
 
         return new_default
+
 
 class Converter(object):
     """
@@ -128,7 +131,7 @@ class Converter(object):
         return new
 
     def new(self, tag, attrib={}, children=[]):
-        return ET.Element(tag, attrib = attrib, children = children)
+        return ET.Element(tag, attrib=attrib, children=children)
 
     def new_copy(self, tag, element, attrib={}):
         attrib_new = Attrib(element).new()
@@ -304,6 +307,7 @@ class Converter(object):
     def visit_moinpage_table_row(self, elem):
         return self.new_copy(html.tr, elem)
 
+
 class SpecialPage(object):
     def __init__(self):
         self._footnotes = []
@@ -341,6 +345,7 @@ class SpecialPage(object):
     def tocs(self):
         for elem, maxlevel in self._tocs:
             yield elem, self.headings(maxlevel)
+
 
 class ConverterPage(Converter):
     """
@@ -490,10 +495,12 @@ class ConverterPage(Converter):
         self._special_stack[-1].add_toc(elem, level)
         return elem
 
+
 class ConverterDocument(ConverterPage):
     """
     Converter application/x-moin-document -> application/xhtml+xml
     """
+
 
 from _registry import default_registry
 default_registry.register(ConverterPage._factory)
