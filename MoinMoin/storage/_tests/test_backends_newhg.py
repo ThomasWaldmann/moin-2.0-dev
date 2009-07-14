@@ -13,12 +13,6 @@ import py.test
 import shutil
 import os
 
-try:
-    from mercurial.context import memctx
-    py.test.skip("Wrong version of Mercurial: please test on STABLE version.")
-except ImportError:
-    pass
-
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.newhg import MercurialBackend
 from MoinMoin.storage.error import BackendError
