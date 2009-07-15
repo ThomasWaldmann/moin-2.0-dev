@@ -26,8 +26,16 @@ class CacheError(Exception):
 
 
 def get_arena_dir(request, arena, scope):
-    if scope == 'item': # arena is a Page instance
-        return os.path.join(request.cfg.cache_dir, 'page', hash_new('sha1', arena.page_name.encode('utf-8')).hexdigest())
+    if scope == 'item':
+        from MoinMoin.Page import Page
+        from MoinMoin.storage import Item
+        if isinstance(arena, Page):
+            name = arena.page_name
+        elif isinstance(arena, Item):
+            name = arena.name
+        else:
+            raise TypeError("arena needs to be a Page or Item instance")
+        return os.path.join(request.cfg.cache_dir, 'page', hash_new('sha1', name.encode('utf-8')).hexdigest())
     elif scope == 'wiki':
         return os.path.join(request.cfg.cache_dir, request.cfg.siteid, arena)
     elif scope == 'farm':
