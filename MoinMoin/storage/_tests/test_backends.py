@@ -628,3 +628,19 @@ class BackendTest(object):
         assert item.list_revisions() == [1]
         assert self.backend.has_item(itemname)
         assert item.get_revision(-1).read() == persistent_rev
+
+        third = "3rd revision"
+        rev = item.create_revision(2)
+        rev.write(third)
+        item.commit()
+        rev = item.get_revision(2)
+        assert item.get_revision(-1).read() == third
+        assert len(item.list_revisions()) == 2
+        rev.destroy()
+        assert len(item.list_revisions()) == 1
+        last = item.get_revision(-1)
+        assert last.revno == 1
+        last_data = last.read()
+        assert last_data != third
+        assert last_data == persistent_rev
+
