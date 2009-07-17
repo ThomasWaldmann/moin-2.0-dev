@@ -57,6 +57,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessD
 ADMIN = 'admin'
 READ = 'read'
 WRITE = 'write'
+# TODO Decide how delete action should be implemented.
 DELETE = 'delete'
 DESTROY = 'destroy'
 
