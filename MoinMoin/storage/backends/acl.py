@@ -428,7 +428,7 @@ class AclWrappedRevision(DictMixin):
             except (NoSuchRevisionError, KeyError):
                 last_acl = ''
 
-            acl_changed = not (value == last_acl)
+            acl_changed = value != last_acl
 
             if acl_changed and not self._may(self._item.name, ADMIN):
                 username = self._item._backend.request.user.name
