@@ -14,10 +14,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from mercurial import hg, ui, util, cmdutil, commands, match
+from mercurial import hg, ui, util, cmdutil, commands
 from mercurial.node import short, nullid
 from mercurial.revlog import LookupError
-from mercurial.error import RepoError
 from datetime import datetime
 import cPickle as pickle
 import itertools
@@ -27,6 +26,16 @@ import weakref
 import errno
 import time
 import os
+
+try:
+    from mercurial.error import RepoError
+except ImportError:
+    from mercurial.repo import RepoError
+
+try:
+    import mercurial.match
+except ImportError:
+    pass
 
 try:
     import cdb
@@ -55,8 +64,12 @@ class MercurialBackend(Backend):
         self._rev_path = os.path.join(self._path, 'rev')
         self._meta_path = os.path.join(self._path, 'meta')
         self._meta_db = os.path.join(self._meta_path, 'name-mapping')
-        self._ui = ui.ui()
-        # TODO: move quiet, interactive to config
+        try:
+            self._ui = ui.ui(quiet=True, interactive=False)
+        except:
+            self._ui = ui.ui()
+            self._ui.setconfig('ui', 'quiet', 'true')
+            self._ui.setconfig('ui', 'interactive', 'false')
         for path in (self._path, self._rev_path, self._meta_path):
             try:
                 os.mkdir(path)
@@ -81,7 +94,7 @@ class MercurialBackend(Backend):
         """
         id = self._hash(itemname)
         try:
-            self._repo.changectx(None)[id]
+            self._repo.changectx('')[id]
         except LookupError:
             if not self._has_meta(id):
                 raise NoSuchItemError('Item does not exist: %s' % itemname)
@@ -92,7 +105,7 @@ class MercurialBackend(Backend):
     def has_item(self, itemname):
         """Return True if Item with given name exists."""
         id = self._hash(itemname)
-        return id in self._repo.changectx(None) or self._has_meta(id)
+        return id in self._repo.changectx('') or self._has_meta(id)
 
     def create_item(self, itemname):
         """
@@ -116,7 +129,7 @@ class MercurialBackend(Backend):
         def filter(id):
             return id.endswith(".rev") or self._has_meta(id)
 
-        ctx = self._repo.changectx(None)
+        ctx = self._repo.changectx('')
         for id in itertools.ifilterfalse(filter, ctx):
             item = Item(self, self._name(id))
             item._id = id
@@ -204,7 +217,7 @@ class MercurialBackend(Backend):
                 if self.has_item(newname):
                     raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
 
-                self._repo.changectx(None)[item._id]
+                self._repo.changectx('')[item._id]
                 src = os.path.join(self._rev_path, item._id)
                 dst = os.path.join(self._rev_path, newid)
 
@@ -268,9 +281,11 @@ class MercurialBackend(Backend):
             user = (revision.get(EDIT_LOG_USERID) or "anonymous").encode("utf-8")
             msg = (revision.get(EDIT_LOG_COMMENT) or "...").encode("utf-8")  # stable hg does not allow empty comments
 
-
-            file_match = match.exact(self._rev_path, '', [item._id])
-            self._repo.commit(match=file_match, text=msg, user=user, date=date, extra=meta, force=True)
+            try:
+                match = mercurial.match.exact(self._rev_path, '', [item._id])
+                self._repo.commit(match=match, text=msg, user=user, date=date, extra=meta, force=True)
+            except NameError:
+                self._repo.commit(files=[item._id], text=msg, user=user, date=date, extra=meta, force=True)
             self._add_revision(item, revision)
         finally:
             del lock
@@ -373,7 +388,7 @@ class MercurialBackend(Backend):
     def _name(self, itemid):
         """Resolve Item name by given ID."""
         try:
-            fctx = self._repo.changectx(None)[itemid].filectx(0)
+            fctx = self._repo.changectx('')[itemid].filectx(0)
             return fctx.changectx().extra()['_name']
         except LookupError:
             c = cdb.init(self._meta_db)
@@ -398,7 +413,11 @@ class MercurialBackend(Backend):
                 return False
 
         start, end = start_rev or -1, 0
-        if not len(self._repo.changelog):
+        try:
+            size = len(self._repo.changelog)
+        except TypeError:
+            size = self._repo.changelog.count()
+        if not size:
             change_revs = []
         else:
             if not reverse:
@@ -469,8 +488,11 @@ class MercurialBackend(Backend):
         revfile.write("%d %s %s %s\n" % (revision.revno, short(ctx.node()),
                                          item._id, short(ctx.filectx(item._id).filenode()), ))
         revfile.close()
-        file_match = match.exact(self._rev_path, '', ['%s.rev' % item._id])
-        self._repo.commit(match=file_match, text="(cache append)", user="storage")
+        try:
+            match = mercurial.match.exact(self._rev_path, '', ['%s.rev' % item._id])
+            self._repo.commit(match=match, text="(cache append)", user="storage")
+        except NameError:
+            self._repo.commit(files=['%s.rev' % item._id], text="(cache append)", user="storage")
 
     def _has_meta(self, itemid):
         """Return True if Item with given ID has Metadata. Otherwise return None."""
