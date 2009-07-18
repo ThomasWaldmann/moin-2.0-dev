@@ -114,6 +114,17 @@ class FlatFileBackend(Backend):
         rev._data = StringIO()
         return rev
 
+    def _destroy_revision(self, revision):
+        revpath = self._rev_path(revision.item.name)
+        try:
+            os.unlink(revpath)
+        except OSError, err:
+            if err.errno != errno.ENOENT:
+                raise CouldNotDestroyError("Could not destroy revision #%d of item '%r' [errno: %d]" % (
+                    revision.revno, revision.item.name, err.errno))
+            #else:
+            #    someone else already killed this revision, we silently ignore this error
+
     def _rename_item(self, item, newname):
         try:
             os.rename(self._rev_path(item.name), self._rev_path(newname))
@@ -128,6 +139,17 @@ class FlatFileBackend(Backend):
         data = add_metadata_to_body(rev, data)
         f.write(data)
         f.close()
+
+    def _destroy_item(self, item):
+        revpath = self._rev_path(item.name)
+        try:
+            os.unlink(revpath)
+        except OSError, err:
+            if err.errno != errno.ENOENT:
+                raise CouldNotDestroyError("Could not destroy item '%r' [errno: %d]" % (
+                    item.name, err.errno))
+            #else:
+            #    someone else already killed this item, we silently ignore this error
 
     def _rollback_item(self, rev):
         pass
