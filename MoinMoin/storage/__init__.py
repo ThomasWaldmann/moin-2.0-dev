@@ -459,6 +459,9 @@ class Item(Serializable, DictMixin):
     stored in persistent storage. It has metadata and revisions.
     An item object is just a proxy to the information stored in the backend.
     It doesn't necessarily live very long.
+
+    Do NOT create instances of this class directly, but use backend.get_item
+    or backend.create_item!
     """
     def __init__(self, backend, itemname):
         """
@@ -772,6 +775,9 @@ class StoredRevision(Revision):
     This is the brother of NewRevision. It allows reading data from a revision
     that has already been stored in storage. It doesn't allow data manipulation
     and can only be used for information retrieval.
+
+    Do NOT create instances of this class directly, but use item.get_revision or
+    one of the other methods intended for getting stored revisions.
     """
     def __init__(self, item, revno, timestamp=None, size=None):
         """
@@ -830,6 +836,8 @@ class StoredRevision(Revision):
 class NewRevision(Revision):
     """
     This is basically the same as Revision but with mutable metadata and data properties.
+
+    Do NOT create instances of this class directly, but use item.create_revision.
     """
     def __init__(self, item, revno):
         """
