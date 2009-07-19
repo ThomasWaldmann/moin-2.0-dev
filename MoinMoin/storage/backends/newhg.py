@@ -9,6 +9,8 @@
       mechanisms
     - cloning of the page database, allowing easy backup, synchronization and
       forking of wikis
+    - offline, commandline edits with support of custom mercurial extensions
+      for non-trivial tasks
 
     @copyright: 2008 MoinMoin:PawelPacana
     @license: GNU GPL, see COPYING for details.
