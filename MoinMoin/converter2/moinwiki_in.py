@@ -13,8 +13,10 @@ from emeraldtree import ElementTree as ET
 
 from MoinMoin import config, wikiutil
 from MoinMoin.util import iri
+from MoinMoin.util.mime import Type
 from MoinMoin.util.tree import html, moin_page, xlink
 from MoinMoin.converter2._args_wiki import parse as parse_arguments
+from MoinMoin.converter2._registry import default_registry
 from MoinMoin.converter2._wiki_macro import ConverterMacro
 
 
@@ -95,7 +97,7 @@ class Converter(ConverterMacro):
                     input.parameters.get('name') == 'wiki'):
                 return cls
 
-    def __call__(self, content, page_url=None, arguments=None):
+    def __call__(self, content, arguments=None, page_url=None):
         attrib = {}
         if page_url:
             attrib[moin_page.page_href] = unicode(page_url)
@@ -308,12 +310,14 @@ class Converter(ConverterMacro):
                 stack.top_append(elem)
 
             else:
-                from MoinMoin.converter2 import default_registry as reg
+                if '/' in nowiki_name:
+                    type = Type(nowiki_name)
+                else:
+                    type = Type(type='x-moin', subtype='format', parameters={'name': nowiki_name})
 
-                mimetype = wikiutil.MimeType(nowiki_name).mime_type()
-                converter = reg.get(self.request, mimetype, 'application/x-moin-document')
+                converter = default_registry.get(self.request, type, Type('application/x-moin-document'))
 
-                doc = converter(self.request)(lines)
+                doc = converter(self.request)(lines, nowiki_args)
                 stack.top_append(doc)
 
         else:
@@ -927,5 +931,5 @@ class Converter(ConverterMacro):
         # Handle trailing text
         stack.top_append_ifnotempty(text[pos:])
 
-from MoinMoin.converter2._registry import default_registry
+
 default_registry.register(Converter.factory)
