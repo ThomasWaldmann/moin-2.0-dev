@@ -1,0 +1,18 @@
+    # This is a sample configuration snippet for a wiki which uses a Mercurial
+    # based storage backend.
+    # Note that you have to install Mercurial first, if you don't have it already.
+    
+    # Import backends.
+    from MoinMoin.storage.backends import enduser, hg
+
+    # Data backend, this where wiki items are stored.
+    # Note that directory you pass here must be created beforehand.
+    data = hg.MercurialBackend('hg/data')
+    
+    # User backend, which stores only non-versioned items metadata.
+    # You can safely use FSBackend here as well.
+    # Note that directory you pass here must be created beforehand.
+    user = hg.MercurialBackend('hg/user')
+
+    # Create router backend instance and pass mercurial backend endpoints.
+    storage = enduser.get_enduser_backend(mapping=[('/', data), ], user=user)
