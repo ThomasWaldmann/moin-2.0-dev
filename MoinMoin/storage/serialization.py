@@ -5,9 +5,22 @@
     This module contains mixin classes to support xml serialization / unserialization.
     It uses the sax xml parser / xml generator from the stdlib.
 
-    Applications:
-    * wiki backup / restore
-    * wiki item packages
+    Applications include wiki backup/restore, wiki item packages, ...
+
+    Examples
+    --------
+
+    a) serialize all items of a storage backend to a file:
+    backend = ... (some storage backend)
+    serialize(backend, "items.xml")
+
+    b) unserialize all items from a file to a storage backend:
+    backend = ... (some storage backend)
+    unserialize(backend, "items.xml")
+
+    c) serialize just some items:
+    some_items = [u'FrontPage', u'HelpOnLinking', u'HelpOnMoinWikiSyntax', ]
+    serialize(backend, 'some_items.xml', ItemNameList, some_items)
 
     @copyright: 2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
@@ -94,8 +107,33 @@ class TermMatch(XMLSelectiveGenerator):
 
 
 def serialize(obj, xmlfile, xmlgen_cls=XMLSelectiveGenerator, *args, **kwargs):
+    """
+    Serialize <obj> to <xmlfile>.
+
+    The default value of <xmlgen_cls> will just serialize everything. Alternatively,
+    use some of XMLSelectiveGenerator child classes to do selective serialization,
+    e.g. of just a list of items or just of items that match some search term.
+
+    @arg obj: object to serialize (must mix in Serializable)
+    @arg xmlfile: output file (file-like or filename)
+    @arg xmlgen_cls: XMLSelectiveGenerator (sub)class instance (all args/kwargs
+                     given after this will be given to xmlgen_cls.__init__()
+    """
     xg = xmlgen_cls(xmlfile, *args, **kwargs)
     obj.serialize(xg)
+
+
+def unserialize(obj, xmlfile):
+    """
+    Unserialize <xmlfile> to <obj>.
+
+    @arg obj: object to write unserialized data to (must mix in Serializable)
+    @arg xmlfile: input file (file-like or filename)
+    """
+    if xmlfile is not None and not hasattr(xmlfile, 'read'):
+        # this is not a file-like object, we try to open it first:
+        xmlfile = open(xmlfile, 'r')
+    obj.unserialize(xmlfile)
 
 
 class Serializable(object):
