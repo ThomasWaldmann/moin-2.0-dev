@@ -27,7 +27,8 @@ class LocalConfig(multiconfig.DefaultConfig):
     #instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
-    storage = get_enduser_backend('instance/')
+    backend_uri = 'fs:instance'
+    storage = get_enduser_backend(backend_uri)
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
