@@ -17,27 +17,52 @@ class ElementException(RuntimeError):
     pass
 
 
+class AttributeSet(object):
+    __slots__ = 'real', 'style'
+
+    def __init__(self):
+        self.real = {}
+        self.style = {}
+
+    def update(self, other):
+        self.real.update(other.real)
+        self.style.update(other.style)
+
+
+class AttributeReal(object):
+    """ Adds the attribute with the HTML namespace to the output. """
+    def __init__(self, key):
+        self.key = html(key)
+
+    def __call__(self, key, value, out):
+        out.real[self.key] = value
+
+
+class AttributeRealSimple(object):
+    """ Adds the attribute with the HTML namespace to the output. """
+    def __call__(self, key, value, out):
+        out.real[html(key.name)] = value
+
+
+class AttributeStyleSimple(object):
+    """ Adds the attribute to the HTML style attribute. """
+    def __call__(self, key, value, out):
+        out.style[key.name] = value
+
+
 class Attrib(object):
     namespaces_valid_output = frozenset([
         html.namespace,
     ])
 
-    def simple_attrib(self, key, value, out, out_style):
-        """ Adds the attribute with the HTML namespace to the output. """
-        out[html(key.name)] = value
+    visit_title = AttributeRealSimple()
 
-    visit_title = simple_attrib
-
-    def simple_style(self, key, value, out, out_style):
-        """ Adds the attribute to the HTML style attribute. """
-        out_style[key.name] = value
-
-    visit_background_color = simple_style
-    visit_font_size = simple_style
-    visit_list_style_type = simple_style
-    visit_text_align = simple_style
-    visit_text_decoration = simple_style
-    visit_vertical_align = simple_style
+    visit_background_color = AttributeStyleSimple()
+    visit_font_size = AttributeStyleSimple()
+    visit_list_style_type = AttributeStyleSimple()
+    visit_text_align = AttributeStyleSimple()
+    visit_text_decoration = AttributeStyleSimple()
+    visit_vertical_align = AttributeStyleSimple()
 
     def __init__(self, element):
         self.element = element
@@ -58,10 +83,8 @@ class Attrib(object):
             return self.element.get(name)
 
     def new(self):
-        new = {}
-        new_style = {}
-        new_default = {}
-        new_default_style = {}
+        new = AttributeSet()
+        new_default = AttributeSet()
 
         for key, value in self.element.attrib.iteritems():
             if key.uri == moin_page.namespace:
@@ -71,25 +94,26 @@ class Attrib(object):
                     n = 'visit_' + key.name.replace('-', '_')
                     f = getattr(self, n, None)
                     if f is not None:
-                        f(key, value, new, new_css)
+                        f(key, value, new)
             elif key.uri in self.namespaces_valid_output:
-                new[key] = value
+                new.real[key] = value
             elif key.uri is None:
                 if self.default_uri_input and not '_' in key.name:
                     n = 'visit_' + key.name.replace('-', '_')
                     f = getattr(self, n, None)
                     if f is not None:
-                        f(key, value, new_default, new_default_style)
+                        f(key, value, new_default)
                 elif self.default_uri_output:
-                    new_default[ET.QName(key.name, self.default_uri_output)] = value
+                    new_default.real[ET.QName(key.name, self.default_uri_output)] = value
 
         # Attributes with namespace overrides attributes with empty namespace.
         new_default.update(new)
-        new_default_style.update(new_style)
+
+        ret = new_default.real
 
         # Create CSS style attribute
-        if new_default_style:
-            style = new_default_style.items()
+        if new_default.style:
+            style = new_default.style.items()
             style.sort(key=lambda i: i[0])
             style = '; '.join((key + ': ' + value for key, value in style))
 
@@ -97,9 +121,9 @@ class Attrib(object):
             if style_old:
                 style += '; ' + style_old
 
-            new_default[html.style] = style
+            ret[html.style] = style
 
-        return new_default
+        return ret
 
 
 class Converter(object):
