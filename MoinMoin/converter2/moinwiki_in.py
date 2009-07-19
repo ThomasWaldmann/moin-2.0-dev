@@ -119,10 +119,14 @@ class Converter(ConverterMacro):
 
     block_head = r"""
         (?P<head>
-            ^ \s*
-            (?P<head_head>=+) \s*
-            (?P<head_text> .*? ) \s*
-            (?P=head_head) \s*
+            ^
+            \s*
+            (?P<head_head> =+ )
+            \s*
+            (?P<head_text> .*? )
+            \s*
+            (?P=head_head)
+            \s*
             $
         )
     """
@@ -214,15 +218,25 @@ class Converter(ConverterMacro):
 
     block_macro = r"""
         ^
-        \s*?
+        \s*
         (?P<macro>
             <<
-            (?P<macro_name> \w+)
-            (\( (?P<macro_args> .*?) \))? \s*
-            ([|] \s* (?P<macro_text> .+?) \s* )?
+            (?P<macro_name> \w+ )
+            (
+                \(
+                (?P<macro_args> .*? )
+                \)
+            )?
+            \s*
+            (
+                [|]
+                \s*
+                (?P<macro_text> .+? )
+                \s*
+            )?
             >>
         )
-        \s*?
+        \s*
         $
     """
 
@@ -242,14 +256,13 @@ class Converter(ConverterMacro):
             (?P<nowiki_interpret>
                 \#!
                 \s*
-                (?P<nowiki_name> [\w/-]+)?
+                (?P<nowiki_name> [\w/-]+ )?
                 \s*
                 (:?
                     \(
-                    (?P<nowiki_args> .*?)
+                    (?P<nowiki_args> .*? )
                     \)
                 )?
-                \s*
             )?
             \s*
             $
@@ -258,7 +271,10 @@ class Converter(ConverterMacro):
     # Matches the beginning of a nowiki block
 
     nowiki_end = r"""
-        ^ (?P<marker> }{3,} ) \s* $
+        ^
+        (?P<marker> }{3,} )
+        \s*
+        $
     """
     # Matches the possibly escaped end of a nowiki block
 
@@ -392,7 +408,13 @@ class Converter(ConverterMacro):
     inline_emphstrong = r"""
         (?P<emphstrong>
             '{2,6}
-            (?=[^']+ (?P<emphstrong_follow> '{2,3} (?!') ) )?
+            (?=
+                [^']+
+                (?P<emphstrong_follow>
+                    '{2,3}
+                    (?!')
+                )
+            )?
         )
     """
 
@@ -546,8 +568,18 @@ class Converter(ConverterMacro):
                 (?P<link_page> [^|]+? )
             )
             \s*
-            ([|] \s* (?P<link_text>[^|]*?) \s*)?
-            ([|] \s* (?P<link_args>.*?) \s*)?
+            (
+                [|]
+                \s*
+                (?P<link_text> [^|]*? )
+                \s*
+            )?
+            (
+                [|]
+                \s*
+                (?P<link_args> .*? )
+                \s*
+            )?
             \]\]
         )
     """
@@ -578,9 +610,19 @@ class Converter(ConverterMacro):
     inline_macro = r"""
         (?P<macro>
             <<
-            (?P<macro_name> \w+)
-            (\( (?P<macro_args> .*?) \))? \s*
-            ([|] \s* (?P<macro_text> .+?) \s* )?
+            (?P<macro_name> \w+ )
+            (
+                \(
+                (?P<macro_args> .*? )
+                \)
+            )?
+            \s*
+            (
+                [|]
+                \s*
+                (?P<macro_text> .+? )
+                \s*
+            )?
             >>
         )
     """
@@ -598,7 +640,7 @@ class Converter(ConverterMacro):
             }}}
             |
             `
-            (?P<nowiki_text_backtick>.*?)
+            (?P<nowiki_text_backtick> .*? )
             `
         )
     """
@@ -619,8 +661,14 @@ class Converter(ConverterMacro):
     inline_object = r"""
         (?P<object>
             {{
-            (?P<object_target>.+?) \s*
-            ([|] \s* (?P<object_text>.+?) \s*)?
+            (?P<object_target> .+? )
+            \s*
+            (
+                [|]
+                \s*
+                (?P<object_text> .+? )
+                \s*
+            )?
             }}
         )
     """
@@ -729,13 +777,30 @@ class Converter(ConverterMacro):
 
     inline_url = r"""
         (?P<url>
-            (^ | (?<=\s | [.,:;!?()/=]))
+            (
+                ^
+                |
+                (?<=
+                    \s
+                    |
+                    [.,:;!?()/=]
+                )
+            )
             (?P<url_target>
                 # TODO: config.url_schemas
                 (http|https|ftp|nntp|news|mailto|telnet|file|irc):
                 \S+?
             )
-            ($ | (?=\s | [,.:;!?()] (\s | $)))
+            (
+                $
+                |
+                (?=
+                    \s
+                    |
+                    [,.:;!?()]
+                    (\s | $)
+                )
+            )
         )
     """
 
@@ -749,12 +814,22 @@ class Converter(ConverterMacro):
 
     tablerow = r"""
         (?P<cell>
-            (?P<cell_marker> (\|\|)+ )
-            ( < (?P<cell_args> .*? ) > )?
+            (?P<cell_marker>
+                (\|\|)+
+            )
+            (
+                <
+                (?P<cell_args> .*? )
+                >
+            )?
             \s*
             (?P<cell_text> .*? )
             \s*
-            (?= ( \|\| | $ ) )
+            (?=
+                \|\|
+                |
+                $
+            )
         )
     """
 
