@@ -14,7 +14,7 @@ import shutil
 import os
 
 from MoinMoin.storage._tests.test_backends import BackendTest
-from MoinMoin.storage.backends.newhg import MercurialBackend
+from MoinMoin.storage.backends.hg import MercurialBackend
 from MoinMoin.storage.error import BackendError
 
 class TestMercurialBackend(BackendTest):
