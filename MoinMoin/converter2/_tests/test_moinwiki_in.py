@@ -123,7 +123,7 @@ class TestConverter(object):
             ("--(strike through)--",
                 '<page><body><p><span text-decoration="line-through">strike through</span></p></body></page>'),
             (u'&quot;',
-                '<page><body><p>"</p></body></page>', None, 'symbolic entities unsupported'),
+                '<page><body><p>"</p></body></page>'),
             (u'&#34;',
                 '<page><body><p>"</p></body></page>'),
             (u'&#x22;',
