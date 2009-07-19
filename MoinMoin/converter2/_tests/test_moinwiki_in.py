@@ -24,31 +24,31 @@ class TestConverter(object):
 
     def test_base(self):
         data = [
-            ('Text',
+            (u'Text',
                 '<page><body><p>Text</p></body></page>'),
-            ('Text\nTest',
+            (u'Text\nTest',
                 '<page><body><p>Text\nTest</p></body></page>'),
-            ('Text\n\nTest',
+            (u'Text\n\nTest',
                 '<page><body><p>Text</p><p>Test</p></body></page>'),
-            ('MoinMoin',
+            (u'MoinMoin',
                 '<page><body><p><a xlink:href="wiki.local:MoinMoin">MoinMoin</a></p></body></page>'),
-            ('!MoinMoin',
+            (u'!MoinMoin',
                 '<page><body><p>MoinMoin</p></body></page>'),
-            ('Self:FrontPage',
+            (u'Self:FrontPage',
                 '<page><body><p><a xlink:href="wiki://Self/FrontPage">FrontPage</a></p></body></page>'),
-            ('http://moinmo.in/',
+            (u'http://moinmo.in/',
                 '<page><body><p><a xlink:href="http://moinmo.in/">http://moinmo.in/</a></p></body></page>'),
-            ('[[http://moinmo.in/]]',
+            (u'[[http://moinmo.in/]]',
                 '<page><body><p><a xlink:href="http://moinmo.in/">http://moinmo.in/</a></p></body></page>'),
-            ('[[http://moinmo.in/|MoinMoin]]',
+            (u'[[http://moinmo.in/|MoinMoin]]',
                 '<page><body><p><a xlink:href="http://moinmo.in/">MoinMoin</a></p></body></page>'),
-            ('[[MoinMoin]]',
+            (u'[[MoinMoin]]',
                 '<page><body><p><a xlink:href="wiki.local:MoinMoin">MoinMoin</a></p></body></page>'),
-            ('{{http://moinmo.in/}}',
+            (u'{{http://moinmo.in/}}',
                 '<page><body><p><object xlink:href="http://moinmo.in/" /></p></body></page>'),
-            ('{{http://moinmo.in/|MoinMoin}}',
+            (u'{{http://moinmo.in/|MoinMoin}}',
                 '<page><body><p><object alt="MoinMoin" xlink:href="http://moinmo.in/" /></p></body></page>'),
-            ('----',
+            (u'----',
                 '<page><body><separator /></body></page>'),
         ]
         for i in data:
@@ -92,17 +92,17 @@ class TestConverter(object):
 
     def test_heading(self):
         data = [
-            ('= Heading 1 =',
+            (u'= Heading 1 =',
                 '<page><body><h outline-level="1">Heading 1</h></body></page>'),
-            ('== Heading 2 ==',
+            (u'== Heading 2 ==',
                 '<page><body><h outline-level="2">Heading 2</h></body></page>'),
-            ('=== Heading 3 ===',
+            (u'=== Heading 3 ===',
                 '<page><body><h outline-level="3">Heading 3</h></body></page>'),
-            ('==== Heading 4 ====',
+            (u'==== Heading 4 ====',
                 '<page><body><h outline-level="4">Heading 4</h></body></page>'),
-            ('===== Heading 5 =====',
+            (u'===== Heading 5 =====',
                 '<page><body><h outline-level="5">Heading 5</h></body></page>'),
-            ('====== Heading 6 ======',
+            (u'====== Heading 6 ======',
                 '<page><body><h outline-level="6">Heading 6</h></body></page>'),
         ]
         for i in data:
@@ -122,11 +122,11 @@ class TestConverter(object):
                 '<page><body><p><span font-size="120%">larger</span></p></body></page>'),
             ("--(strike through)--",
                 '<page><body><p><span text-decoration="line-through">strike through</span></p></body></page>'),
-            ('&quot;',
+            (u'&quot;',
                 '<page><body><p>"</p></body></page>', None, 'symbolic entities unsupported'),
-            ('&#34;',
+            (u'&#34;',
                 '<page><body><p>"</p></body></page>'),
-            ('&#x22;',
+            (u'&#x22;',
                 '<page><body><p>"</p></body></page>'),
         ]
         for i in data:
@@ -134,19 +134,19 @@ class TestConverter(object):
 
     def test_list(self):
         data = [
-            (' * Item',
+            (u' * Item',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>'),
-            (' * Item\nItem',
+            (u' * Item\nItem',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item\nItem</list-item-body></list-item></list></body></page>'),
-            (' * Item 1\n *Item 2',
+            (u' * Item 1\n *Item 2',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>'),
-            (' * Item 1\n  * Item 1.2\n * Item 2',
+            (u' * Item 1\n  * Item 1.2\n * Item 2',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item 1<list item-label-generate="unordered"><list-item><list-item-body>Item 1.2</list-item-body></list-item></list></list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>'),
-            (' * List 1\n\n * List 2',
+            (u' * List 1\n\n * List 2',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>List 1</list-item-body></list-item></list><list item-label-generate="unordered"><list-item><list-item-body>List 2</list-item-body></list-item></list></body></page>'),
-            (' 1. Item',
+            (u' 1. Item',
                 '<page><body><list item-label-generate="ordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>'),
-            (' * List 1\n 1. List 2',
+            (u' * List 1\n 1. List 2',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>List 1</list-item-body></list-item></list><list item-label-generate="ordered"><list-item><list-item-body>List 2</list-item-body></list-item></list></body></page>'),
         ]
         for i in data:
@@ -154,21 +154,21 @@ class TestConverter(object):
 
     def test_macro(self):
         data = [
-            ('<<BR>>',
+            (u'<<BR>>',
                 '<page><body /></page>'),
-            ('Text<<BR>>Text',
+            (u'Text<<BR>>Text',
                 '<page><body><p>Text<line-break />Text</p></body></page>'),
-            ('<<Macro>>',
+            (u'<<Macro>>',
                 '<page><body><page alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
-            (' <<Macro>> ',
+            (u' <<Macro>> ',
                 '<page><body><page alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
-            ('Text <<Macro>>',
+            (u'Text <<Macro>>',
                 '<page><body><p>Text <inline-part alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></p></body></page>'),
-            ('Text\n<<Macro>>',
+            (u'Text\n<<Macro>>',
                 '<page><body><p>Text</p><page alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
-            ('Text\nText <<Macro>>',
+            (u'Text\nText <<Macro>>',
                 '<page><body><p>Text\nText <inline-part alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></p></body></page>'),
-            ('Text\n\n<<Macro>>',
+            (u'Text\n\n<<Macro>>',
                 '<page><body><p>Text</p><page alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
         ]
         for i in data:
@@ -176,13 +176,13 @@ class TestConverter(object):
 
     def test_table(self):
         data = [
-            ('||Cell||',
+            (u'||Cell||',
                 '<page><body><table><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></body></page>'),
-            ('||Cell 1||Cell 2||',
+            (u'||Cell 1||Cell 2||',
                 '<page><body><table><table-body><table-row><table-cell>Cell 1</table-cell><table-cell>Cell 2</table-cell></table-row></table-body></table></body></page>'),
-            ('||Row 1||\n||Row 2||\n',
+            (u'||Row 1||\n||Row 2||\n',
                 '<page><body><table><table-body><table-row><table-cell>Row 1</table-cell></table-row><table-row><table-cell>Row 2</table-cell></table-row></table-body></table></body></page>'),
-            ('||Cell 1.1||Cell 1.2||\n||Cell 2.1||Cell 2.2||\n',
+            (u'||Cell 1.1||Cell 1.2||\n||Cell 2.1||Cell 2.2||\n',
                 '<page><body><table><table-body><table-row><table-cell>Cell 1.1</table-cell><table-cell>Cell 1.2</table-cell></table-row><table-row><table-cell>Cell 2.1</table-cell><table-cell>Cell 2.2</table-cell></table-row></table-body></table></body></page>'),
         ]
         for i in data:
@@ -190,23 +190,23 @@ class TestConverter(object):
 
     def test_nowiki(self):
         data = [
-            ('{{{nowiki}}}',
+            (u'{{{nowiki}}}',
                 '<page><body><p><code>nowiki</code></p></body></page>'),
-            ('`nowiki`',
+            (u'`nowiki`',
                 '<page><body><p><code>nowiki</code></p></body></page>'),
-            ('{{{{nowiki}}}}',
+            (u'{{{{nowiki}}}}',
                 '<page><body><p><code>{nowiki}</code></p></body></page>'),
-            ('text: {{{nowiki}}}, text',
+            (u'text: {{{nowiki}}}, text',
                 '<page><body><p>text: <code>nowiki</code>, text</p></body></page>'),
-            ('{{{\nnowiki\n}}}',
+            (u'{{{\nnowiki\n}}}',
                 '<page><body><blockcode>nowiki</blockcode></body></page>'),
-            ('{{{\nnowiki\nno\nwiki\n}}}',
+            (u'{{{\nnowiki\nno\nwiki\n}}}',
                 '<page><body><blockcode>nowiki\nno\nwiki</blockcode></body></page>'),
-            ('{{{nowiki}}} {{{nowiki}}}',
+            (u'{{{nowiki}}} {{{nowiki}}}',
                 '<page><body><p><code>nowiki</code> <code>nowiki</code></p></body></page>'),
-            ('{{{}}}',
+            (u'{{{}}}',
                 '<page><body><p><code></code></p></body></page>'),
-            ('``',
+            (u'``',
                 '<page><body><p /></body></page>'),
             # XXX: Is <page> correct?
             (u'{{{#!\nwiki\n}}}',
@@ -223,9 +223,9 @@ class TestConverter(object):
 
     def test_composite(self):
         data = [
-            ('Text\n * Item\n\nText',
+            (u'Text\n * Item\n\nText',
                 '<page><body><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><p>Text</p></body></page>'),
-            ('Text\n||Item||\nText',
+            (u'Text\n||Item||\nText',
                 '<page><body><p>Text</p><table><table-body><table-row><table-cell>Item</table-cell></table-row></table-body></table><p>Text</p></body></page>'),
         ]
         for i in data:
