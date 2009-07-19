@@ -427,6 +427,35 @@ class Converter(ConverterMacro):
             else:
                 stack.push(moin_page.emphasis())
 
+    inline_entity = r"""
+        (?P<entity>
+            &
+            (?:
+               # symbolic entity, like &uuml;
+               [0-9a-zA-Z]{2,6}
+               |
+               # numeric decimal entities, like &#42;
+               \#\d{1,5}
+               |
+               # numeric hexadecimal entities, like &#x42;
+               \#x[0-9a-fA-F]{1,6}
+           )
+           ;
+       )
+    """
+
+    def inline_entity_repl(self, stack, entity):
+        if entity[1] == '#':
+            if entity[2] == 'x':
+                c = int(entity[3:-1], 16)
+            else:
+                c = int(entity[2:-1], 10)
+            c = unichr(c)
+        else:
+            # TODO
+            c = unichr(0xfffe)
+        stack.push(c)
+
     inline_size = r"""
         (?P<size>
            (?P<size_begin>
@@ -765,6 +794,7 @@ class Converter(ConverterMacro):
         inline_underline,
         inline_freelink,
         inline_url,
+        inline_entity,
     )
     inline_re = re.compile('|'.join(inline), re.X | re.U)
 
