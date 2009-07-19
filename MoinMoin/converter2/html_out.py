@@ -50,7 +50,7 @@ class AttributeStyleSimple(object):
         out.style[key.name] = value
 
 
-class Attrib(object):
+class Attributes(object):
     namespaces_valid_output = frozenset([
         html.namespace,
     ])
@@ -82,7 +82,7 @@ class Attrib(object):
         if self.default_uri_input:
             return self.element.get(name)
 
-    def new(self):
+    def convert(self):
         new = AttributeSet()
         new_default = AttributeSet()
 
@@ -159,7 +159,7 @@ class Converter(object):
         return ET.Element(tag, attrib=attrib, children=children)
 
     def new_copy(self, tag, element, attrib={}):
-        attrib_new = Attrib(element).new()
+        attrib_new = Attributes(element).convert()
         attrib_new.update(attrib)
         children = self.do_children(element)
         return self.new(tag, attrib_new, children)
@@ -239,8 +239,8 @@ class Converter(object):
         return self.new(html.br)
 
     def visit_moinpage_list(self, elem):
-        attrib = Attrib(elem)
-        attrib_new = attrib.new()
+        attrib = Attributes(elem)
+        attrib_new = attrib.convert()
         generate = attrib.get('item-label-generate')
 
         if generate:
@@ -308,7 +308,7 @@ class Converter(object):
         return self.new_copy(html.strong, elem)
 
     def visit_moinpage_table(self, elem):
-        attrib = Attrib(elem).new()
+        attrib = Attributes(elem).convert()
         ret = self.new(html.table, attrib)
         for item in elem:
             tag = None
