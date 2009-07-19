@@ -6,25 +6,24 @@ MoinMoin - Tests for MoinMoin.converter2.moinwiki_in
 """
 
 import py.test
-
 import re
 
 from MoinMoin.converter2.moinwiki_in import *
 
-namespaces_list = {
-    moin_page.namespace: '',
-    xlink.namespace: 'xlink',
-}
 
 class TestConverter(object):
-    output_transform = r'''\s+xmlns(:\S+)?="[^"]+"'''
-    output_re = re.compile(output_transform)
+    namespaces = {
+        moin_page.namespace: '',
+        xlink.namespace: 'xlink',
+    }
+
+    output_re = re.compile(r'\s+xmlns(:\S+)?="[^"]+"')
 
     def setup_class(self):
         self.conv = Converter(self.request)
 
     def test_base(self):
-        pairs = [
+        data = [
             ('Text',
                 '<page><body><p>Text</p></body></page>'),
             ('Text\nTest',
@@ -52,8 +51,8 @@ class TestConverter(object):
             ('----',
                 '<page><body><separator /></body></page>'),
         ]
-        for i in pairs:
-            yield (self._do, ) + i
+        for i in data:
+            yield (self.do, ) + i
 
     def test_args(self):
         from MoinMoin.converter2._args import Arguments
@@ -67,10 +66,10 @@ class TestConverter(object):
                 {'arguments': Arguments(keyword={'background-color': 'red'})}),
         ]
         for i in data:
-            yield (self._do, ) + i
+            yield (self.do, ) + i
 
     def test_emphasis(self):
-        pairs = [
+        data = [
             ("''Emphasis''",
                 '<page><body><p><emphasis>Emphasis</emphasis></p></body></page>'),
             ("'''Strong'''",
@@ -88,11 +87,11 @@ class TestConverter(object):
             ("Text''''''Text''''",
                 '<page><body><p>TextText</p></body></page>'),
         ]
-        for i in pairs:
-            yield (self._do, ) + i
+        for i in data:
+            yield (self.do, ) + i
 
     def test_heading(self):
-        pairs = [
+        data = [
             ('= Heading 1 =',
                 '<page><body><h outline-level="1">Heading 1</h></body></page>'),
             ('== Heading 2 ==',
@@ -106,8 +105,8 @@ class TestConverter(object):
             ('====== Heading 6 ======',
                 '<page><body><h outline-level="6">Heading 6</h></body></page>'),
         ]
-        for i in pairs:
-            yield (self._do, ) + i
+        for i in data:
+            yield (self.do, ) + i
 
     def test_inline(self):
         data = [
@@ -131,10 +130,10 @@ class TestConverter(object):
                 '<page><body><p>"</p></body></page>'),
         ]
         for i in data:
-            yield (self._do, ) + i
+            yield (self.do, ) + i
 
     def test_list(self):
-        pairs = [
+        data = [
             (' * Item',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>'),
             (' * Item\nItem',
@@ -150,11 +149,11 @@ class TestConverter(object):
             (' * List 1\n 1. List 2',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>List 1</list-item-body></list-item></list><list item-label-generate="ordered"><list-item><list-item-body>List 2</list-item-body></list-item></list></body></page>'),
         ]
-        for i in pairs:
-            yield (self._do, ) + i
+        for i in data:
+            yield (self.do, ) + i
 
     def test_macro(self):
-        pairs = [
+        data = [
             ('<<BR>>',
                 '<page><body /></page>'),
             ('Text<<BR>>Text',
@@ -172,11 +171,11 @@ class TestConverter(object):
             ('Text\n\n<<Macro>>',
                 '<page><body><p>Text</p><page alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
         ]
-        for i in pairs:
-            yield (self._do, ) + i
+        for i in data:
+            yield (self.do, ) + i
 
     def test_table(self):
-        pairs = [
+        data = [
             ('||Cell||',
                 '<page><body><table><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></body></page>'),
             ('||Cell 1||Cell 2||',
@@ -186,11 +185,11 @@ class TestConverter(object):
             ('||Cell 1.1||Cell 1.2||\n||Cell 2.1||Cell 2.2||\n',
                 '<page><body><table><table-body><table-row><table-cell>Cell 1.1</table-cell><table-cell>Cell 1.2</table-cell></table-row><table-row><table-cell>Cell 2.1</table-cell><table-cell>Cell 2.2</table-cell></table-row></table-body></table></body></page>'),
         ]
-        for i in pairs:
-            yield (self._do, ) + i
+        for i in data:
+            yield (self.do, ) + i
 
     def test_nowiki(self):
-        pairs = [
+        data = [
             ('{{{nowiki}}}',
                 '<page><body><p><code>nowiki</code></p></body></page>'),
             ('`nowiki`',
@@ -219,29 +218,29 @@ class TestConverter(object):
             (u'{{{#!wiki(background-color=red)\nwiki\n}}}',
                '<page><body><page><body background-color="red"><p>wiki</p></body></page></body></page>'),
         ]
-        for i in pairs:
-            yield (self._do, ) + i
+        for i in data:
+            yield (self.do, ) + i
 
     def test_composite(self):
-        pairs = [
+        data = [
             ('Text\n * Item\n\nText',
                 '<page><body><p>Text</p><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list><p>Text</p></body></page>'),
             ('Text\n||Item||\nText',
                 '<page><body><p>Text</p><table><table-body><table-row><table-cell>Item</table-cell></table-row></table-body></table><p>Text</p></body></page>'),
         ]
-        for i in pairs:
-            yield (self._do, ) + i
+        for i in data:
+            yield (self.do, ) + i
 
-    def _serialize(cls, elem, **options):
+    def serialize(self, elem, **options):
         from cStringIO import StringIO
         file = StringIO()
         tree = ET.ElementTree(elem)
-        tree.write(file, namespaces=namespaces_list, **options)
-        return cls.output_re.sub('', file.getvalue())
+        tree.write(file, namespaces=self.namespaces, **options)
+        return self.output_re.sub(u'', file.getvalue())
 
-    def _do(self, input, output, args={}, skip=None):
+    def do(self, input, output, args={}, skip=None):
         if skip:
             py.test.skip(skip)
-        out = self.conv(input.split('\n'), **args)
-        assert self._serialize(out) == output
+        out = self.conv(input.split(u'\n'), **args)
+        assert self.serialize(out) == output
 
