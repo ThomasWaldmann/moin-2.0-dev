@@ -55,7 +55,7 @@ from MoinMoin.storage.error import (BackendError, NoSuchItemError, NoSuchRevisio
                                    RevisionAlreadyExistsError)
 WINDOW_SIZE = 256
 PICKLE_ITEM_META = 1
-
+META_PREFIX = '_meta_'
 
 class MercurialBackend(Backend):
     """Implements backend storage using Mercurial VCS."""
@@ -279,7 +279,7 @@ class MercurialBackend(Backend):
                     "_id": item._id,
                     "_parents": " ".join(parents)}
             for k, v in revision.iteritems():
-                meta["_meta_%s" % k] = pickle.dumps(v)
+                meta["%s%s" % (META_PREFIX, k)] = pickle.dumps(v)
             if not revision.timestamp:
                 revision.timestamp = long(time.time())
             date = datetime.fromtimestamp(revision.timestamp).isoformat(sep=' ')
@@ -370,8 +370,8 @@ class MercurialBackend(Backend):
         extra = self._get_changectx(revision).extra()
         metadata = {}
         for k, v in extra.iteritems():
-            if k.startswith('_meta_'):
-                metadata[k[6:]] = pickle.loads(v)
+            if k.startswith(META_PREFIX):
+                metadata[k[len(META_PREFIX):]] = pickle.loads(v)
         return metadata
 
     def _get_revision_timestamp(self, revision):
