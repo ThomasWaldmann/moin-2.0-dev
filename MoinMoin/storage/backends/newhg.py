@@ -15,19 +15,22 @@
     @copyright: 2008 MoinMoin:PawelPacana
     @license: GNU GPL, see COPYING for details.
 """
+import os
+import time
+import errno
+import weakref
+import tempfile
+import StringIO
+import itertools
+import cPickle as pickle
+from datetime import datetime
+
+os.environ["HGENCODING"] = "utf-8" # must be set before importing mercurial
+os.environ["HGMERGE"] = "internal:fail"
 
 from mercurial import hg, ui, util, cmdutil, commands
 from mercurial.node import short, nullid
 from mercurial.revlog import LookupError
-from datetime import datetime
-import cPickle as pickle
-import itertools
-import StringIO
-import tempfile
-import weakref
-import errno
-import time
-import os
 
 try:
     from mercurial.error import RepoError
