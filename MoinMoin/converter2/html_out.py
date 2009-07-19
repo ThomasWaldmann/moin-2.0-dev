@@ -18,6 +18,10 @@ class ElementException(RuntimeError):
 
 
 class Attrib(object):
+    namespaces_valid_output = frozenset([
+        html.namespace,
+    ])
+
     def simple_attrib(self, key, value, out, out_style):
         """ Adds the attribute with the HTML namespace to the output. """
         out[html(key.name)] = value
@@ -43,7 +47,7 @@ class Attrib(object):
         self.default_uri_input = self.default_uri_output = None
         if element.tag.uri == moin_page.namespace:
             self.default_uri_input = element.tag.uri
-        if element.tag.uri in Converter.namespaces_valid_output:
+        if element.tag.uri in self.namespaces_valid_output:
             self.default_uri_output = element.tag.uri
 
     def get(self, name):
@@ -68,7 +72,7 @@ class Attrib(object):
                     f = getattr(self, n, None)
                     if f is not None:
                         f(key, value, new, new_css)
-            elif key.uri in Converter.namespaces_valid_output:
+            elif key.uri in self.namespaces_valid_output:
                 new[key] = value
             elif key.uri is None:
                 if self.default_uri_input and not '_' in key.name:
@@ -106,9 +110,6 @@ class Converter(object):
     namespaces_visit = {
         moin_page.namespace: 'moinpage',
     }
-    namespaces_valid_output = frozenset([
-        html.namespace,
-    ])
 
     def __init__(self, request):
         self.request = request
