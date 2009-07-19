@@ -333,6 +333,22 @@ class Converter(object):
         return self.new_copy(html.tr, elem)
 
 
+class SpecialId(object):
+    def __init__(self):
+        self._ids = {}
+
+    def gen_id(self, id):
+        nr = self._ids[id] = self._ids.get(id, 0) + 1
+        return nr
+
+    def gen_text(self, text):
+        id = wikiutil.anchor_name_from_text(text)
+        nr = self._ids[id] = self._ids.get(id, 0) + 1
+        if nr == 1:
+            return id
+        return id + u'-%d' % nr
+
+
 class SpecialPage(object):
     def __init__(self):
         self._footnotes = []
@@ -389,8 +405,7 @@ class ConverterPage(Converter):
         special_root = SpecialPage()
         self._special = [special_root]
         self._special_stack = [special_root]
-        self._note_id = 1
-        self._toc_id = 0
+        self._id = SpecialId()
 
         ret = super(ConverterPage, self).__call__(element)
 
@@ -471,9 +486,8 @@ class ConverterPage(Converter):
 
         id = elem.get(html.id)
         if not id:
-            id = 'toc-%d' % self._toc_id
+            id = self._id.gen_text(''.join(elem.itertext()))
             elem.set(html.id, id)
-            self._toc_id += 1
 
         self._special_stack[-1].add_heading(elem, level, id)
         return elem
@@ -487,18 +501,15 @@ class ConverterPage(Converter):
                 if child.tag.name == 'note-body':
                     body = self.do_children(child)
 
-        id = self._note_id
-        self._note_id += 1
-        id_note = 'note-%d' % id
-        id_ref = 'note-%d-ref' % id
+        id = self._id.gen_id('note')
 
         elem_ref = ET.XML("""
-<html:sup xmlns:html="%s" html:id="%s"><html:a html:href="#%s">%s</html:a></html:sup>
-""" % (html.namespace, id_ref, id_note, id))
+<html:sup xmlns:html="%s" html:id="note-%d-ref"><html:a html:href="#note-%d">%d</html:a></html:sup>
+""" % (html.namespace, id, id, id))
 
         elem_note = ET.XML("""
-<html:p xmlns:html="%s" html:id="%s"><html:sup><html:a html:href="#%s">%s</html:a></html:sup></html:p>
-""" % (html.namespace, id_note, id_ref, id))
+<html:p xmlns:html="%s" html:id="note-%d"><html:sup><html:a html:href="#note-%d-ref">%d</html:a></html:sup></html:p>
+""" % (html.namespace, id, id, id))
 
         elem_note.extend(body)
 
