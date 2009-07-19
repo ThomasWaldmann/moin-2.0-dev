@@ -110,7 +110,7 @@ class TestConverter(object):
             yield (self._do, ) + i
 
     def test_inline(self):
-        pairs = [
+        data = [
             ("__underline__",
                 '<page><body><p><span text-decoration="underline">underline</span></p></body></page>'),
             (",,sub,,script",
@@ -123,8 +123,14 @@ class TestConverter(object):
                 '<page><body><p><span font-size="120%">larger</span></p></body></page>'),
             ("--(strike through)--",
                 '<page><body><p><span text-decoration="line-through">strike through</span></p></body></page>'),
+            ('&quot;',
+                '<page><body><p>"</p></body></page>', None, 'symbolic entities unsupported'),
+            ('&#34;',
+                '<page><body><p>"</p></body></page>'),
+            ('&#x22;',
+                '<page><body><p>"</p></body></page>'),
         ]
-        for i in pairs:
+        for i in data:
             yield (self._do, ) + i
 
     def test_list(self):
@@ -233,7 +239,9 @@ class TestConverter(object):
         tree.write(file, namespaces=namespaces_list, **options)
         return cls.output_re.sub('', file.getvalue())
 
-    def _do(self, input, output, args={}):
+    def _do(self, input, output, args={}, skip=None):
+        if skip:
+            py.test.skip(skip)
         out = self.conv(input.split('\n'), **args)
         assert self._serialize(out) == output
 
