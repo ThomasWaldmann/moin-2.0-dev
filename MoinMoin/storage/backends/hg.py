@@ -371,7 +371,7 @@ class MercurialBackend(Backend):
         metadata = {}
         for k, v in extra.iteritems():
             if k.startswith('_meta_'):
-                metadata[k.lstrip('_meta_')] = pickle.loads(v)
+                metadata[k[6:]] = pickle.loads(v)
         return metadata
 
     def _get_revision_timestamp(self, revision):
