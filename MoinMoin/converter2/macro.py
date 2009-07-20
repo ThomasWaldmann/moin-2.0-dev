@@ -46,8 +46,8 @@ class _PseudoRequest(object):
 class Converter(object):
     @classmethod
     def _factory(cls, request, input, output):
-        if input == 'application/x-moin-document' and \
-                output == 'application/x-moin-document;macros=expandall':
+        if input == 'application/x.moin.document' and \
+                output == 'application/x.moin.document;macros=expandall':
             return cls
 
     def handle_macro(self, elem, page):

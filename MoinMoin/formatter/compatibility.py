@@ -473,7 +473,7 @@ class Formatter(ConverterMacro):
         from MoinMoin.converter2 import default_registry as reg
 
         mimetype = wikiutil.MimeType(parser_name).mime_type()
-        Converter = reg.get(self.request, mimetype, 'application/x-moin-document')
+        Converter = reg.get(self.request, mimetype, 'application/x.moin.document')
 
         elem = moin_page.div()
         self._stack_top_append(elem)

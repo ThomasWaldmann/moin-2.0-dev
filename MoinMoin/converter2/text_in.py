@@ -21,7 +21,7 @@ class Converter(object):
     @classmethod
     def factory(cls, _request, type_input, type_output):
         if (type_input.type == 'text' and
-                type_output == 'application/x-moin-document'):
+                type_output == 'application/x.moin.document'):
             return cls
 
     def __init__(self, _request):

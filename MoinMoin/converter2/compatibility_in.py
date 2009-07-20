@@ -40,7 +40,7 @@ def _factory(request, input, output):
     Creates a class dynamicaly which uses the matching old-style parser and
     compatiblity formatter.
     """
-    if output == 'application/x-moin-document':
+    if output == 'application/x.moin.document':
         try:
             parser = wikiutil.searchAndImportPlugin(
                     request.cfg, "parser", unicode(input))

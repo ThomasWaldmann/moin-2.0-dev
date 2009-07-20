@@ -101,7 +101,7 @@ class _Stack(list):
 class Converter(ConverterMacro):
     @classmethod
     def factory(cls, _request, input, output):
-        if output.type == 'application' and output.subtype == 'x-moin-document':
+        if output.type == 'application' and output.subtype == 'x.moin.document':
             if input.type == 'text' and input.subtype == 'x.moin.creole':
                 return cls
             if (input.type == 'x-moin' and input.subtype == 'format' and
@@ -285,7 +285,7 @@ class Converter(ConverterMacro):
                 else:
                     type = Type(type='x-moin', subtype='format', parameters={'name': name})
 
-                converter = default_registry.get(self.request, type, Type('application/x-moin-document'))
+                converter = default_registry.get(self.request, type, Type('application/x.moin.document'))
 
                 doc = converter(self.request)(lines, args)
                 stack.top_append(doc)

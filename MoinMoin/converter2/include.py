@@ -91,8 +91,8 @@ class Converter(object):
 
     @classmethod
     def _factory(cls, request, input, output):
-        if input == 'application/x-moin-document' and \
-                output == 'application/x-moin-document;includes=expandall':
+        if input == 'application/x.moin.document' and \
+                output == 'application/x.moin.document;includes=expandall':
             return cls
 
     def recurse(self, elem, page_href):

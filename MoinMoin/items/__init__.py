@@ -906,18 +906,18 @@ class Text(Binary):
         from MoinMoin.util.iri import Iri
         from MoinMoin.util.tree import html, moin_page
 
-        type_internal = Type(type='application', subtype='x-moin-document')
+        type_internal = Type(type='application', subtype='x.moin.document')
 
         request = self.request
         InputConverter = reg.get(request,
                 Type(self.converter_mimetype or self.mimetype),
                 type_internal)
         IncludeConverter = reg.get(request, type_internal,
-                Type('application/x-moin-document;includes=expandall'))
+                Type('application/x.moin.document;includes=expandall'))
         MacroConverter = reg.get(request, type_internal,
-                Type('application/x-moin-document;macros=expandall'))
+                Type('application/x.moin.document;macros=expandall'))
         LinkConverter = reg.get(request, type_internal,
-                Type('application/x-moin-document;links=extern'))
+                Type('application/x.moin.document;links=extern'))
         # TODO: Real output format
         HtmlConverter = reg.get(request, type_internal,
                 Type('application/x-xhtml-moin-page'))

@@ -12,8 +12,8 @@ from MoinMoin.util.tree import html, moin_page
 class Converter(object):
     @classmethod
     def _factory(cls, request, input, output):
-        if input == 'application/x-moin-document' and \
-                output == 'application/x-moin-document;highlight=regex':
+        if input == 'application/x.moin.document' and \
+                output == 'application/x.moin.document;highlight=regex':
             return cls
 
     def recurse(self, elem):
