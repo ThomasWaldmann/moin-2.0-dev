@@ -480,7 +480,7 @@ class Converter(ConverterMacro):
         else:
             from htmlentitydefs import name2codepoint
             c = unichr(name2codepoint.get(entity[1:-1], 0xfffe))
-        stack.push(c)
+        stack.top_append(c)
 
     inline_size = r"""
         (?P<size>
