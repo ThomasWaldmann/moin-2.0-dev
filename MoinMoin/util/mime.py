@@ -53,7 +53,7 @@ class Type(object):
     def _parse(self, type):
         parts = type.split(';')
 
-        self.type, self.subtype = parts[0].strip().split('/', 1)
+        self.type, self.subtype = parts[0].strip().lower().split('/', 1)
 
         for param in parts[1:]:
             key, value = param.strip().split('=', 1)
