@@ -55,8 +55,8 @@ class ConverterBase(object):
 class ConverterExternOutput(ConverterBase):
     @classmethod
     def _factory(cls, request, input, output):
-        if input == 'application/x-moin-document' and \
-                output == 'application/x-moin-document;links=extern':
+        if input == 'application/x.moin.document' and \
+                output == 'application/x.moin.document;links=extern':
             return cls
 
     # TODO: Deduplicate code
@@ -109,8 +109,8 @@ class ConverterExternOutput(ConverterBase):
 class ConverterPagelinks(ConverterBase):
     @classmethod
     def _factory(cls, request, input, output):
-        if input == 'application/x-moin-document' and \
-                output == 'application/x-moin-document;links=pagelinks':
+        if input == 'application/x.moin.document' and \
+                output == 'application/x.moin.document;links=pagelinks':
             return cls
 
     def handle_wikilocal(self, elem, input, page):

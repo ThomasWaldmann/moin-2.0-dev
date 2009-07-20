@@ -128,7 +128,7 @@ class Attributes(object):
 
 class Converter(object):
     """
-    Converter application/x-moin-document -> application/x-moin-document
+    Converter application/x.moin.document -> application/x.moin.document
     """
 
     namespaces_visit = {
@@ -390,12 +390,12 @@ class SpecialPage(object):
 
 class ConverterPage(Converter):
     """
-    Converter application/x-moin-document -> application/x-xhtml-moin-page
+    Converter application/x.moin.document -> application/x-xhtml-moin-page
     """
 
     @classmethod
     def _factory(cls, request, input, output):
-        if input == 'application/x-moin-document' and \
+        if input == 'application/x.moin.document' and \
            output == 'application/x-xhtml-moin-page':
             return cls
 
@@ -534,7 +534,7 @@ class ConverterPage(Converter):
 
 class ConverterDocument(ConverterPage):
     """
-    Converter application/x-moin-document -> application/xhtml+xml
+    Converter application/x.moin.document -> application/xhtml+xml
     """
 
 
