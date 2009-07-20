@@ -37,7 +37,7 @@ def get_target_backends(backend_uri):
     return router_backend, router_backend.user_backend
 
 
-def run(source, backend_uri):
+def run(source, backend_uri, only_these=[]):
     """
     Source must be a path to a MoinMoin wiki's data folder, i.e. something like
     'MoinMoin/wiki/data'.
@@ -48,11 +48,8 @@ def run(source, backend_uri):
     src_user = fs19.FSUserBackend(source)
     dest_data, dest_user = get_target_backends(backend_uri)
 
-    clone(src_pages, dest_data, verbose=True)
+    clone(src_pages, dest_data, verbose=True, only_these=only_these)
     clone(src_user, dest_user, verbose=True)
-
-    # Remove this once we don't need the create_persistent_dev_wiki script any longer
-    successfile = open('instance/.success', 'w').close()
 
     print "Conversion succeeded."
 

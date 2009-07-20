@@ -96,3 +96,13 @@ class TestMercurialBackend(BackendTest):
         rev = item.get_revision(1)
         assert rev.read() == "bbb"
 
+    def test_revision_metadata_key_name(self):
+        item = self.backend.create_item('metakey')
+        rev = item.create_revision(0)
+        rev['_meta_'] = "dummy"
+        item.commit()
+        item = self.backend.get_item('metakey')
+        rev = item.get_revision(-1)
+        assert rev['_meta_'] == "dummy"
+
+

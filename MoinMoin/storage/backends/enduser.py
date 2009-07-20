@@ -2,14 +2,18 @@ import sys
 from os import path, mkdir
 
 from MoinMoin.error import ConfigurationError
-from MoinMoin.storage.backends import fs, memory, router
+from MoinMoin.storage.backends import fs, hg, memory, router
 
 
 DATA = 'data'
 USER = 'user'
 
+FS_PREFIX = "fs:"
+HG_PREFIX = "hg:"
+MEMORY = "memory:"
 
-def get_enduser_backend(backend_uri='instance/', mapping=None, user=None):
+
+def get_enduser_backend(backend_uri='fs:instance', mapping=None, user=None):
     """
     To ease storage configuration for the user, he may provide just a backend_uri
     or a mapping and a backend for user storage (allowing fine grained control over
@@ -21,23 +25,38 @@ def get_enduser_backend(backend_uri='instance/', mapping=None, user=None):
     If the user did not specify anything, we use a FSBackend with user/ and data/
     subdirectories by default.
     """
-    if mapping is user is None:
-        if path.isdir(backend_uri):
-            # create folders if they don't exist yet
-            for folder in (DATA, USER):
-                try:
-                    mkdir(path.join(backend_uri, folder))
-                except OSError:
-                    # If the folder already exists, even better!
-                    pass
+    def _create_folders(instance_folder):
+        # create folders if they don't exist yet
+        inst = instance_folder
+        folders = (inst, path.join(inst, DATA), path.join(inst, USER))
+        for folder in folders:
+            try:
+                mkdir(folder)
+            except OSError:
+                # If the folder already exists, even better!
+                pass
 
-            data = fs.FSBackend(path.join(backend_uri, 'data'))
-            user = fs.FSBackend(path.join(backend_uri, 'user'))
-        elif backend_uri == ':memory:':
+    if mapping is user is None:
+        if backend_uri.startswith(FS_PREFIX):
+            # Aha! We want to use the fs backend
+            instance_folder = backend_uri[len(FS_PREFIX):]
+            _create_folders(instance_folder)
+
+            data = fs.FSBackend(path.join(instance_folder, DATA))
+            user = fs.FSBackend(path.join(instance_folder, USER))
+
+        elif backend_uri.startswith(HG_PREFIX):
+            instance_folder = backend_uri[len(HG_PREFIX):]
+            _create_folders(instance_folder)
+
+            data = hg.MercurialBackend(path.join(instance_folder, DATA))
+            user = hg.MercurialBackend(path.join(instance_folder, USER))
+
+        elif backend_uri == MEMORY:
             data = memory.MemoryBackend()
             user = memory.MemoryBackend()
         else:
-            raise ConfigurationError("No proper backend uri provided.")
+            raise ConfigurationError("No proper backend uri provided. Given: %r" % backend_uri)
 
         mapping = [('/', data), ]
 
