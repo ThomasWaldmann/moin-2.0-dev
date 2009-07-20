@@ -904,7 +904,7 @@ class Text(Binary):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type
         from MoinMoin.util.iri import Iri
-        from MoinMoin.util.tree import html
+        from MoinMoin.util.tree import html, moin_page
 
         type_internal = Type(type='application', subtype='x-moin-document')
 
@@ -924,17 +924,16 @@ class Text(Binary):
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
-        doc = InputConverter(request)(self.data.decode(config.charset).split(u'\r\n'), page_url=i)
+        doc = InputConverter(request)(self.data.decode(config.charset).split(u'\r\n'))
+        doc.set(moin_page.page_href, unicode(i))
         doc = IncludeConverter(request)(doc)
         doc = MacroConverter(request)(doc)
         doc = LinkConverter(request)(doc)
         doc = HtmlConverter(request)(doc)
 
         out = StringIO()
-        tree = ET.ElementTree(doc)
         # TODO: Switch to xml
-        tree.write(out, encoding=config.charset,
-                default_namespace=html, method='html')
+        doc.write(out.write, method='html')
         return out.getvalue()
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
