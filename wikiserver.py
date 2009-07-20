@@ -30,22 +30,37 @@ log.load_config('wikiserverlogging.conf')
 
 from MoinMoin.script import MoinScript
 
-from create_persistent_dev_wiki import run
+import tarfile
+from shutil import rmtree
+from wikiconfig import LocalConfig
+from migrate_old_wiki_data import run
+from MoinMoin.i18n.strings import all_pages as only_these
 def create_if_missing():
-    instance = 'instance'
-    underlay = 'underlay'
-
-    successfile = os.path.join(instance, '.success')
+    successfile = '.success_creating_dev_wiki'
     if not os.path.isfile(successfile):
-        run(instance, underlay)
+        print "Untaring underlay. This may take a while..."
+        wiki_folder = 'wiki'
+        tar = tarfile.open(os.path.join(wiki_folder, 'underlay.tar'))
+        tar.extractall(wiki_folder)
+        tar.close()
+
+        underlay_folder = os.path.join(wiki_folder, 'underlay')
+        # For our simple dev wiki we fool the conversion script by adding an empty user folder.
+        try:
+            os.mkdir(os.path.join(underlay_folder, 'user'))
+        except OSError:
+            pass
+        run(underlay_folder, LocalConfig.backend_uri, only_these)
         successfile = open(successfile, 'w').close()
+        rmtree(underlay_folder)
 
 
 if __name__ == '__main__':
     sys.argv = ["moin.py", "server", "standalone"]
     try:
         create_if_missing()
-    except OSError:
+    except OSError, e:
+        print e
         sys.exit("Conversion of underlay failed. Please remove the instance folder and retry.")
     MoinScript().run()
 
