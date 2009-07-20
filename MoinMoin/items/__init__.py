@@ -58,6 +58,7 @@ class Item(object):
             else:
                 name = item.name
         except NoSuchItemError:
+            logging.debug("No such item: %r" % name)
             class DummyRev(dict):
                 def __init__(self, mimetype):
                     self[MIMETYPE] = mimetype
@@ -65,13 +66,18 @@ class Item(object):
                 def read(self):
                     return ''
             rev = DummyRev(mimetype)
+            logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
         else:
+            logging.debug("Got item: %r" % name)
             try:
                 rev = item.get_revision(rev_no)
             except NoSuchRevisionError:
                 rev = item.get_revision(-1) # fall back to current revision
                 # XXX add some message about invalid revision
+            logging.debug("Got item %r, revision: %r" % (name, rev_no))
         mimetype = rev.get(MIMETYPE) or 'application/x-unknown' # XXX why do we need ... or ..?
+        logging.debug("Item %r, got mimetype %r from revision meta" % (name, mimetype))
+        logging.debug("Item %r, rev meta dict: %r" % (name, dict(rev)))
 
         def _find_item_class(mimetype, BaseClass, best_match_len=-1):
             #logging.debug("_find_item_class(%r,%r,%r)" % (mimetype, BaseClass, best_match_len))
