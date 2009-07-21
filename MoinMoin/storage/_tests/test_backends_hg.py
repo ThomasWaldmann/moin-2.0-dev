@@ -32,11 +32,13 @@ class TestMercurialBackend(BackendTest):
     def test_backend_init(self):
         emptydir, file = mkdtemp(), mkstemp()[1]
         nonexisting = os.path.join(gettempdir(), 'to-be-created')
+        nonexisting_nested = os.path.join(gettempdir(), 'second-to-be-created/and-also-nested')
         dirstruct = mkdtemp()
         os.mkdir(os.path.join(dirstruct, "meta"))
         os.mkdir(os.path.join(dirstruct, "rev"))
         try:
             assert isinstance(MercurialBackend(nonexisting), MercurialBackend)
+            assert isinstance(MercurialBackend(nonexisting_nested), MercurialBackend)
             assert isinstance(MercurialBackend(emptydir), MercurialBackend)
             assert isinstance(MercurialBackend(emptydir), MercurialBackend) # init on existing
             py.test.raises(BackendError, MercurialBackend, file)

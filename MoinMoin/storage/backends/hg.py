@@ -79,7 +79,7 @@ class MercurialBackend(Backend):
             self._ui.setconfig('ui', 'interactive', 'false')
         for path in (self._path, self._rev_path, self._meta_path):
             try:
-                os.mkdir(path)
+                os.makedirs(path)
             except OSError, err:
                 if err == errno.EACCES:
                     raise BackendError("No permissions on path: %s" % self._path)
