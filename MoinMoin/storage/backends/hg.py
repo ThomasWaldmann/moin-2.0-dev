@@ -15,6 +15,8 @@
     @copyright: 2008 MoinMoin:PawelPacana
     @license: GNU GPL, see COPYING for details.
 """
+from __future__ import with_statement
+
 import os
 import time
 import errno
@@ -186,10 +188,9 @@ class MercurialBackend(Backend):
             return []
         else:
             try:
-                revfile = open(os.path.join(self._rev_path, "%s.rev" % item._id), 'r')
-                revs = range(len(revfile.read().splitlines()))
-                revfile.close()
-                return revs
+                with open(os.path.join(self._rev_path, "%s.rev" % item._id), 'r') as revfile:
+                    revs = range(len(revfile.read().splitlines()))
+                    return revs
             except IOError:
                 return []
 
@@ -264,8 +265,7 @@ class MercurialBackend(Backend):
 
             util.rename(revision._tmp_fpath, os.path.join(self._rev_path, item._id))
             if revision.revno == 0:
-                f = open(os.path.join(self._rev_path, "%s.rev" % item._id), 'w')
-                f.close()
+                f = open(os.path.join(self._rev_path, "%s.rev" % item._id), 'w').close()
                 self._repo.add([item._id, "%s.rev" % item._id])
 
             if revision.revno > 0:
@@ -309,9 +309,8 @@ class MercurialBackend(Backend):
         """Dump Item Metadata to file and finish transaction."""
         def write_meta_item(meta_path, metadata):
             fd, fpath = tempfile.mkstemp("-meta", "tmp-", self._meta_path)
-            f = os.fdopen(fd, 'wb')
-            pickle.dump(metadata, f, protocol=PICKLE_ITEM_META)
-            f.close()
+            with os.fdopen(fd, 'wb') as f:
+                pickle.dump(metadata, f, protocol=PICKLE_ITEM_META)
             util.rename(fpath, meta_path)
 
         if item._id:
@@ -350,17 +349,17 @@ class MercurialBackend(Backend):
 
     def _write_revision_data(self, revision, data):
         """Write data to the given Revision."""
-        f = open(revision._tmp_fpath, 'a')   # we can open file in create_revision and pass it
-        f.write(data)                        # here but this would lead to problems as in FSBackend
-        f.close()                            # with too many opened files
-
+        # we can open file in create_revision and pass it here but this would lead 
+        # to problems as in FSBackend with too many opened files
+        with open(revision._tmp_fpath, 'a') as f:
+            f.write(data)
+        
     def _get_item_metadata(self, item):
         """Load Item Metadata from file. Return metadata dictionary."""
         if item._id:
             try:
-                f = open(os.path.join(self._meta_path, "%s.meta" % item._id), "rb")
-                item._metadata = pickle.load(f)
-                f.close()
+                with open(os.path.join(self._meta_path, "%s.meta" % item._id), "rb") as f:
+                    item._metadata = pickle.load(f)
             except IOError:
                 item._metadata = {}
         else:
@@ -441,9 +440,8 @@ class MercurialBackend(Backend):
         Get Filecontext object corresponding to given Revision.
         Retrieve necessary information from cache file.
         """
-        revfile = open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r')
-        revs = revfile.read().splitlines()
-        revfile.close()
+        with open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r') as revfile:
+            revs = revfile.read().splitlines()
         revs.sort()
         revno, node, id, filenode = revs[revision.revno].split()
         return self._repo.filectx(id, fileid=filenode)
@@ -453,9 +451,8 @@ class MercurialBackend(Backend):
         Get Changecontext object corresponding to given Revision.
         Retrieve necessary information from cache file.
         """
-        revfile = open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r')
-        revs = revfile.read().splitlines()
-        revfile.close()
+        with open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r') as revfile:
+            revs = revfile.read().splitlines()
         revs.sort()
         ctxrev = revs[revision.revno].split()[1]
         return self._repo.changectx(ctxrev)
@@ -487,10 +484,9 @@ class MercurialBackend(Backend):
     def _add_revision(self, item, revision):
         """Add Item Revision to cache file to speed up further lookups."""
         ctx = self._repo.changectx('')
-        revfile = open(os.path.join(self._rev_path, "%s.rev" % item._id), 'a')
-        revfile.write("%d %s %s %s\n" % (revision.revno, short(ctx.node()),
+        with open(os.path.join(self._rev_path, "%s.rev" % item._id), 'a') as revfile:
+            revfile.write("%d %s %s %s\n" % (revision.revno, short(ctx.node()),
                                          item._id, short(ctx.filectx(item._id).filenode()), ))
-        revfile.close()
         try:
             match = mercurial.match.exact(self._rev_path, '', ['%s.rev' % item._id])
             self._repo.commit(match=match, text="(cache append)", user="storage")
@@ -538,8 +534,8 @@ class MercurialBackend(Backend):
         corresponding to given Revision.
         """
         try:
-            revfile = open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r')
-            revs = revfile.read().splitlines()
+            with open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r') as revfile:
+                revs = revfile.read().splitlines()
             revs.sort()
             node = revs[revision.revno].split()[1]
             return node, short(node)
