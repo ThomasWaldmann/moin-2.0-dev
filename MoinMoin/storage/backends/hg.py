@@ -441,28 +441,24 @@ class MercurialBackend(Backend):
         Get Filecontext object corresponding to given Revision.
         Retrieve necessary information from cache file.
         """
-        try:
-            revfile = open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r')
-            revs = revfile.read().splitlines()
-            revs.sort()
-            revno, node, id, filenode = revs[revision.revno].split()
-            return self._repo.filectx(id, fileid=filenode)
-        except IOError:
-            return None
+        revfile = open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r')
+        revs = revfile.read().splitlines()
+        revfile.close()
+        revs.sort()
+        revno, node, id, filenode = revs[revision.revno].split()
+        return self._repo.filectx(id, fileid=filenode)
 
     def _get_changectx(self, revision):
         """
         Get Changecontext object corresponding to given Revision.
         Retrieve necessary information from cache file.
         """
-        try:
-            revfile = open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r')
-            revs = revfile.read().splitlines()
-            revs.sort()
-            ctxrev = revs[revision.revno].split()[1]
-            return self._repo.changectx(ctxrev)
-        except IOError:
-            return {}
+        revfile = open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r')
+        revs = revfile.read().splitlines()
+        revfile.close()
+        revs.sort()
+        ctxrev = revs[revision.revno].split()[1]
+        return self._repo.changectx(ctxrev)
 
     def _lock(self, lockpath, lockref):
         """Acquire weak reference to lock object."""
