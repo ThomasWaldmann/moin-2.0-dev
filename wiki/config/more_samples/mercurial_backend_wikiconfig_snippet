@@ -8,9 +8,8 @@
     # Import enduser backend.
     from MoinMoin.storage.backends.enduser import get_enduser_backend
    
-    # Provide `backend_uri` which consists of backend prefix (hg),
-    # destination directory where data will be placed (instance) and
-    # separated by a colon (:).
+    # Provide `backend_uri` which consists of backend prefix (hg) and destination 
+    # directory where data will be placed (instance), separated by a colon.
     storage = get_enduser_backend('hg:instance')
 
 
@@ -20,12 +19,11 @@
     from MoinMoin.storage.backends import enduser, hg
 
     # Data backend, this is where wiki items are stored.
-    # Note that directory you pass here must be created beforehand.
+    # If the directory you provide doesn't exist, it will be created at runtime.
     data = hg.MercurialBackend('instance/data')
     
     # User backend, which stores only non-versioned items metadata.
-    # You can safely use FSBackend here as well.
-    # Note that directory you pass here must be created beforehand.
+    # If the directory you provide doesn't exist, it will be created at runtime.
     user = hg.MercurialBackend('instance/user')
 
     # Create RouterBackend instance and pass MercurialBackend endpoints.
