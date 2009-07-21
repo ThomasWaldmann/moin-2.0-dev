@@ -274,12 +274,14 @@ class MercurialBackend(Backend):
                     parents.append(second_parent)
             else:
                 parents = []
+            # XXX: everything should be pickled
             meta = {"_rev": revision.revno,
                     "_name": item.name.encode("utf-8"),
                     "_id": item._id,
-                    "_parents": " ".join(parents)}
+                    "_parents": pickle.dumps(" ".join(parents))}
             for k, v in revision.iteritems():
                 meta["%s%s" % (META_PREFIX, k)] = pickle.dumps(v)
+
             if not revision.timestamp:
                 revision.timestamp = long(time.time())
             date = datetime.fromtimestamp(revision.timestamp).isoformat(sep=' ')
@@ -553,7 +555,7 @@ class MercurialBackend(Backend):
         def get_revision(node):
             return self._repo.changectx(node).extra()['_rev']
 
-        parents = self._get_changectx(revision).extra()['_parents'].split()
+        parents = pickle.loads(self._get_changectx(revision).extra()['_parents']).split()
         return [get_revision(node) for node in parents]
 
 
