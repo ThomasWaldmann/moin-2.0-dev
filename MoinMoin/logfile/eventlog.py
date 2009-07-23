@@ -7,6 +7,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import os
 import time
 
 from MoinMoin.logfile import LogFile
@@ -14,14 +15,8 @@ from MoinMoin import wikiutil
 
 class EventLog(LogFile):
     """ The global event-log is mainly used for statistics (e.g. EventStats) """
-    def __init__(self, request, filename=None, buffer_size=65536, **kw):
-        if filename is None:
-            rootpagename = kw.get('rootpagename', None)
-            if rootpagename:
-                from MoinMoin.Page import Page
-                filename = Page(request, rootpagename).getPagePath('event-log', isfile=1)
-            else:
-                filename = request.rootpage.getPagePath('event-log', isfile=1)
+    def __init__(self, request, buffer_size=65536, **kw):
+        filename = os.path.join(request.cfg.data_dir, 'event-log')
         LogFile.__init__(self, filename, buffer_size)
 
     def add(self, request, eventtype, values=None, add_http_info=1,
@@ -34,6 +29,8 @@ class EventLog(LogFile):
 
         if mtime_usecs is None:
             mtime_usecs = wikiutil.timestamp2version(time.time())
+        else:
+            mtime_usecs = wikiutil.timestamp2version(mtime_usecs)
 
         if values is None:
             values = {}
@@ -56,7 +53,7 @@ class EventLog(LogFile):
         except ValueError:
             # badly formatted line in file, skip it
             return None
-        return long(time_usecs), eventtype, wikiutil.parseQueryString(kvpairs)
+        return wikiutil.version2timestamp(float(time_usecs)), eventtype, wikiutil.parseQueryString(kvpairs)
 
     def set_filter(self, event_types=None):
         """ optionally filter log for specific event types """

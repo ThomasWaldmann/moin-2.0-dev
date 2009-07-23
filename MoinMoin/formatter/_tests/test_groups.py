@@ -8,7 +8,7 @@
 
 from  MoinMoin.formatter.groups import Formatter
 from MoinMoin.Page import Page
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 class TestGroupFormatterWikiMarkup(object):
 
@@ -20,7 +20,6 @@ class TestGroupFormatterWikiMarkup(object):
         create_page(request, u'TestPageGroup', text)
         page = Page(request, 'TestPageGroup', formatter=formatter)
         page.send_page(content_only=True)
-        nuke_page(request, u'TestPageGroup')
 
         return formatter.members
 
@@ -127,7 +126,6 @@ class TestGroupFormatterCreole(object):
         create_page(request, u'TestPageGroup', "#FORMAT creole \n" + text)
         page = Page(request, 'TestPageGroup', formatter=formatter)
         page.send_page(content_only=True)
-        nuke_page(request, u'TestPageGroup')
 
         return formatter.members
 

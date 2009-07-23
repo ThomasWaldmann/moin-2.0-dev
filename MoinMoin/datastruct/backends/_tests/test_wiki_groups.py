@@ -17,7 +17,7 @@ from MoinMoin.datastruct import WikiGroups
 from MoinMoin import Page, security
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.user import User
-from MoinMoin._tests import append_page, become_trusted, create_page, create_random_string_list, nuke_page, nuke_user, wikiconfig
+from MoinMoin._tests import append_page, become_trusted, create_page, create_random_string_list, wikiconfig
 
 
 class TestWikiGroupBackend(GroupsBackendTest):
@@ -32,12 +32,6 @@ class TestWikiGroupBackend(GroupsBackendTest):
             page_text = ' * %s' % '\n * '.join(members)
             create_page(self.request, group, page_text)
 
-    def teardown_class(self):
-        become_trusted(self.request)
-
-        for group in self.test_groups:
-            nuke_page(self.request, group)
-
     def test_rename_group_page(self):
         """
         Tests if the groups cache is refreshed after renaming a Group page.
@@ -49,7 +43,6 @@ class TestWikiGroupBackend(GroupsBackendTest):
         page.renamePage('AnotherGroup')
 
         result = u'ExampleUser' in request.groups[u'AnotherGroup']
-        nuke_page(request, u'AnotherGroup')
 
         assert result is True
 
@@ -64,9 +57,6 @@ class TestWikiGroupBackend(GroupsBackendTest):
         page.copyPage(u'SomeOtherGroup')
 
         result = u'ExampleUser' in request.groups[u'SomeOtherGroup']
-
-        nuke_page(request, u'OtherGroup')
-        nuke_page(request, u'SomeGroup')
 
         assert result is True
 
@@ -83,7 +73,6 @@ class TestWikiGroupBackend(GroupsBackendTest):
         create_page(request, u'UserGroup', "\n".join(page_content))
         append_page(request, u'UserGroup', u' * %s' % test_user)
         result = test_user in request.groups['UserGroup']
-        nuke_page(request, u'UserGroup')
 
         assert result
 
@@ -105,9 +94,6 @@ class TestWikiGroupBackend(GroupsBackendTest):
             User(request, name=new_user, password=new_user).save()
 
         result = new_user in request.groups[u'UserGroup']
-        nuke_page(request, u'UserGroup')
-        nuke_user(request, new_user)
-
         assert result
 
     def test_member_removed_from_group_page(self):
@@ -129,7 +115,6 @@ class TestWikiGroupBackend(GroupsBackendTest):
         # saves the text without test_user
         page.saveText(page_content, 0)
         result = test_user in request.groups[u'UserGroup']
-        nuke_page(request, u'UserGroup')
 
         assert not result
 
@@ -150,8 +135,6 @@ class TestWikiGroupBackend(GroupsBackendTest):
         page.saveText(member, 0, trivial=1)
 
         result = test_user in request.groups[u'UserGroup']
-
-        nuke_page(request, u'UserGroup')
 
         assert result
 
@@ -175,8 +158,6 @@ class TestWikiGroupBackend(GroupsBackendTest):
         append_page(request, u'NewGroup', u" * AnotherUser")
 
         has_rights_after = acl.may(request, u"AnotherUser", "read")
-
-        nuke_page(request, u'NewGroup')
 
         assert not has_rights_before, 'AnotherUser has no read rights because in the beginning he is not a member of a group page NewGroup'
         assert has_rights_after, 'AnotherUser must have read rights because after appendage he is member of NewGroup'

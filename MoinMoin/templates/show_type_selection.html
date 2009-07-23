@@ -1,0 +1,23 @@
+{% extends "base_contentonly.html" %}
+{% block content %}
+<h1>Create new item?</h1>
+<p>
+This item does not exist (yet), but you can try creating it now. Please select the type of the item you want to create.
+</p>
+<table>
+    {% for gname, mimetypes in mimetype_groups %}
+    <tr>
+        <td class="green">{{ gname|e }}</td>
+    </tr>
+    <tr>
+        <td>
+        {% for mname, mlabel in mimetypes %}
+            <a href="?do=show&mimetype={{ mname|urlquote }}">{{ mlabel|e }}</a> - 
+        {% endfor %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
+

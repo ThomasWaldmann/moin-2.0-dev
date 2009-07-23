@@ -5,77 +5,32 @@
     The real login is done in MoinMoin.request.
     Here is only some user notification in case something went wrong.
 
+    TODO: re-add multistage login (see moin/1.9-storage).
+
     @copyright: 2005-2006 Radomirs Cirskis <nad2000@gmail.com>,
-                2006 MoinMoin:ThomasWaldmann
+                2006,2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin import userform
-from MoinMoin.Page import Page
-from MoinMoin.widget import html
-
-def execute(pagename, request):
-    return LoginHandler(pagename, request).handle()
-
-class LoginHandler:
-    def __init__(self, pagename, request):
-        self.request = request
-        self._ = request.getText
-        self.cfg = request.cfg
-        self.pagename = pagename
-        self.page = Page(request, pagename)
-
-    def handle_multistage(self):
-        """Handle a multistage request.
-
-        If the auth handler wants a multistage request, we
-        now set up the login form for that.
-        """
-        _ = self._
-        request = self.request
-        form = html.FORM(method='POST', name='logincontinue', action=self.pagename)
-        form.append(html.INPUT(type='hidden', name='login', value='login'))
-        form.append(html.INPUT(type='hidden', name='stage',
-                               value=request._login_multistage_name))
-
-        request.theme.send_title(_("Login"), pagename=self.pagename)
-        # Start content (important for RTL support)
-        request.write(request.formatter.startContent("content"))
-
-        extra = request._login_multistage(request, form)
-        request.write(unicode(form))
-        if extra:
-            request.write(extra)
-
-        request.write(request.formatter.endContent())
-        request.theme.send_footer(self.pagename)
-        request.theme.send_closing_html()
-
-    def handle(self):
-        _ = self._
-        request = self.request
-        form = request.values
-
-        error = None
-
-        islogin = form.get('login', '')
-
-        if islogin: # user pressed login button
-            if request._login_multistage:
-                return self.handle_multistage()
+def execute(item_name, request):
+    _ = request.getText
+    title = _("Login")
+    if request.method == 'GET':
+        login_hints = []
+        for authmethod in request.cfg.auth:
+            hint = authmethod.login_hint(request)
+            if hint:
+                login_hints.append(hint)
+        template = request.theme.env.get_template('login.html')
+        content = template.render(gettext=request.getText,
+                                  login_hints=login_hints,
+                                  login_inputs=request.cfg.auth_login_inputs,
+                                 )
+        request.theme.render_content(item_name, content, title=title)
+    elif request.method == 'POST':
+        if 'login' in request.form:
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
                     request.theme.add_msg(msg, "error")
-            return self.page.send_page()
-
-        else: # show login form
-            request.theme.send_title(_("Login"), pagename=self.pagename)
-            # Start content (important for RTL support)
-            request.write(request.formatter.startContent("content"))
-
-            request.write(userform.getLogin(request))
-
-            request.write(request.formatter.endContent())
-            request.theme.send_footer(self.pagename)
-            request.theme.send_closing_html()
+        request.theme.render_content(item_name, title=title)
 

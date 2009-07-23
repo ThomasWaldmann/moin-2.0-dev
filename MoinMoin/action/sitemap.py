@@ -8,7 +8,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 import time
+
 from MoinMoin import wikiutil
+from MoinMoin.Page import Page
 
 datetime_fmt = "%Y-%m-%dT%H:%M:%S+00:00"
 
@@ -30,14 +32,14 @@ def make_url_xml(request, vars):
 
 def sitemap_url(request, page):
     """ return a sitemap <url>..</url> fragment for page object <page> """
+    page = Page(request, pagename)
     url = page.url(request)
-    pagename = page.page_name
-    lastmod = page.mtime_printable(request)
+    lastmod = page.mtime(printable=True)
     if lastmod == "0": # can happen in case of errors
         lastmod = now()
 
     # page's changefreq, priority and lastmod depends on page type / name
-    if pagename in [u"RecentChanges", u"TitleIndex", ]:
+    if pagename in [u"TitleIndex", ]:
         # important dynamic pages with macros
         changefreq = "hourly"
         priority = "0.9"
@@ -70,7 +72,7 @@ def execute(pagename, request):
     request.write("""<?xml version="1.0" encoding="UTF-8"?>\r\n""")
 
     result = []
-    result.append("""<urlset xmlns="http://www.google.com/schemas/sitemap/0.84">\n""")
+    result.append("""<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n""")
 
     # we include the root url as an important and often changed URL
     rooturl = request.script_root + '/'
@@ -86,11 +88,10 @@ def execute(pagename, request):
         underlay = int(request.values.get('underlay', 1))
     except ValueError:
         underlay = 1
-    pages = request.rootpage.getPageDict(include_underlay=underlay)
-    pagelist = pages.keys()
-    pagelist.sort()
-    for name in pagelist:
-        result.append(sitemap_url(request, pages[name]))
+    pagenames = list(request.rootpage.getPageList(include_underlay=underlay))
+    pagenames.sort()
+    for pagename in pagenames:
+        result.append(sitemap_url(request, pagename))
 
     result.append("""</urlset>\n""")
 
