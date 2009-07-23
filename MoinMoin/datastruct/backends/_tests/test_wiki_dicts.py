@@ -8,10 +8,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-
 from MoinMoin.datastruct.backends._tests import DictsBackendTest
 from MoinMoin.datastruct.backends import wiki_dicts
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_page
 
 
 class TestWikiDictsBackend(DictsBackendTest):
@@ -42,11 +41,6 @@ Next line has key with empty value
  Two:: 2
 """
         create_page(request, u'SomeOtherTestDict', text)
-
-    def teardown_class(self):
-        become_trusted(self.request)
-        nuke_page(self.request, u'SomeTestDict')
-        nuke_page(self.request, u'SomeOtherTestDict')
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.wiki_dicts']

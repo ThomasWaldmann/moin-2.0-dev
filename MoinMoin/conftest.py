@@ -31,7 +31,7 @@ sys.path.insert(0, str(moindir))
 
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.web.request import TestRequest, Client
-from MoinMoin.wsgiapp import Application, init
+from MoinMoin.wsgiapp import Application, init, init_backend
 from MoinMoin._tests import maketestwiki, wikiconfig
 
 coverage_modules = set()
@@ -66,13 +66,24 @@ except ImportError:
 
 
 def init_test_request(given_config=None, static_state=[False]):
-    if not static_state[0]:
-        maketestwiki.run(True)
-        static_state[0] = True
     request = TestRequest()
     request.given_config = given_config
     request = init(request)
+    if not request.cfg.storage:
+        request.cfg.provide_fresh_backends()
+    init_backend(request)
     return request
+
+
+def dirties_backend(func):
+    """ Decorator for methods that dirty the current backend and
+        require a fresh one after execution. """
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        finally:
+            args[0].request.cfg.provide_fresh_backends()
+    return wrapper
 
 
 # py.test customization starts here

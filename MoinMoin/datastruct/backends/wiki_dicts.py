@@ -42,7 +42,7 @@ class WikiDict(BaseDict):
             cache = caching.CacheEntry(request, arena, key, scope='wiki', use_pickle=True)
             try:
                 cache_mtime = cache.mtime()
-                page_mtime = wikiutil.version2timestamp(page.mtime_usecs())
+                page_mtime = page.mtime()
                 # TODO: fix up-to-date check mtime granularity problems
                 if cache_mtime > page_mtime:
                     # cache is uptodate
