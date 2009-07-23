@@ -439,6 +439,16 @@ class Backend(Serializable):
         """
         raise NotImplementedError()
 
+    def _tell_revision_data(self, revision):
+        """
+        Tell the revision's cursor's position on the revision's data.
+
+        @type revision: Object of type StoredRevision.
+        @param revision: The revision on which tell() was invoked.
+        @return: int indicating the cursor's position.
+        """
+        raise NotImplementedError()
+
     # (un)serialization support following:
     element_name = 'backend'
 
