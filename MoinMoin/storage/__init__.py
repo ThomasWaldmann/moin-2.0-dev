@@ -836,6 +836,12 @@ class StoredRevision(Revision):
         """
         self._backend._seek_revision_data(self, position, mode)
 
+    def tell(self):
+        """
+        @see: StringIO.StringIO().tell.__doc__
+        """
+        self._backend._tell_revision_data(self)
+
     def destroy(self):
         """
         @see: Backend._destroy_revision.__doc__
