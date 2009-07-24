@@ -489,13 +489,7 @@ class FSBackend(Backend):
 
     def _read_revision_data(self, rev, chunksize):
         if rev._fs_file is None:
-            f = open(rev._fs_revpath, 'rb')
-            datastart = f.read(4)
-            datastart = struct.unpack('!L', datastart)[0]
-            f.seek(datastart)
-            rev._fs_file = f # XXX keeps file open as long as rev exists
-            rev._datastart = datastart
-
+            self._get_revision_metadata(rev)
         return rev._fs_file.read(chunksize)
 
     def _write_revision_data(self, rev, data):
@@ -546,12 +540,7 @@ class FSBackend(Backend):
 
     def _seek_revision_data(self, rev, position, mode):
         if rev._fs_file is None:
-            f = open(rev._fs_revpath, 'rb')
-            datastart = f.read(4)
-            datastart = struct.unpack('!L', datastart)[0]
-            f.seek(datastart)
-            rev._fs_file = f # XXX keeps file open as long as rev exists
-            rev._datastart = datastart
+            self._get_revision_metadata(rev)
 
         if mode == 0:
             rev._fs_file.seek(position + rev._datastart, mode)
@@ -559,6 +548,9 @@ class FSBackend(Backend):
             rev._fs_file.seek(position, mode)
 
     def _tell_revision_data(self, revision):
+        if revision._fs_file is None:
+            self._get_revision_metadata(revision)
+
         pos = revision._fs_file.tell()
         return pos - revision._datastart
 
