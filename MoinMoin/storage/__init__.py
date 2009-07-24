@@ -89,6 +89,8 @@ class Backend(Serializable):
         """
         Returns item object or raises Exception if that item does not exist.
 
+        When implementing this, don't rely on has_item unless you've overridden it.
+
         @type itemname: unicode
         @param itemname: The name of the item we want to get.
         @rtype: item object
@@ -98,6 +100,8 @@ class Backend(Serializable):
 
     def has_item(self, itemname):
         """
+        Override this method!
+
         This method is added for convenience. With it you don't need to try get_item
         and catch an exception that may be thrown if the item doesn't exist yet.
 
@@ -105,9 +109,6 @@ class Backend(Serializable):
         @param itemname: The name of the item of which we want to know whether it exists.
         @rtype: bool
         """
-        # XXX Is there a more beautiful way to approach this?
-        # XXX This is going to cause nasty lockups if get_item itself tries to use this method. URGH!
-        # XXX Thus, you should aim to override this dummy behaviour!
         try:
             self.get_item(itemname)
             return True
