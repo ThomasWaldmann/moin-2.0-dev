@@ -387,7 +387,6 @@ class PageEditor(Page):
             trivial = kw.get('trivial', 0)
             # write the page file
             self._write_file(newtext, rev, action, comment, extra, deleted=deleted)
-
             self._save_draft(None, None) # everything fine, kill the draft for this page
             if notify:
                 # send notifications
