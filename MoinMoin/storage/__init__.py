@@ -43,11 +43,12 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from UserDict import DictMixin
+from MoinMoin.storage.backends import clone, memory
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
                                    NoSuchItemError
 
 from MoinMoin.storage.serialization import Serializable, XMLGenerator, \
-                                           Data, Meta, ItemMeta
+                                           Data, Meta, ItemMeta, unserialize
 
 
 class Backend(Serializable):
@@ -930,3 +931,16 @@ def value_type_is_valid(value):
         else:
             return True
 
+
+def upgrade_syspages(packagepath):
+    """
+    Upgrade the wiki's system pages from an XML file.
+
+    @type packagepath: basestring
+    @param packagepath: File path to the XML file containing the new system pages.
+    """
+    tmp_backend = memory.MemoryBackend()
+    unserialize(tmp_backend, packagepath)
+
+    # TODO: clone to real backend from config!
+    # clone(tmp_backend, )
