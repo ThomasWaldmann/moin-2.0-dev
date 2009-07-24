@@ -215,7 +215,7 @@ class Item(object):
         old_item = self.rev.item
         backend = request.storage
         copy_item(old_item, backend, name=target)
-        current_rev = old_item.get_revision(revno)
+        current_rev = old_item.get_revision(-1)
         # we just create a new revision with almost same meta/data to show up on RC
         self._save(current_rev, current_rev, name=target, action='SAVE/COPY', extra=self.name, comment=comment)
 
