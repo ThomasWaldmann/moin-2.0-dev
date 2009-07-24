@@ -294,8 +294,23 @@ class BackendTest(object):
         item.commit()
 
         rev = item.get_revision(0)
-        rev.seek(5)
-        assert rev.read() == data[5:]
+        offset = 5
+
+        # absolute
+        rev.seek(offset)
+        assert rev.tell() == offset
+        assert rev.read() == data[offset:]
+
+        # relative
+        rev.seek(offset)
+        rev.seek(offset, 1)
+        assert rev.tell() == 2 * offset
+        assert rev.read() == data[2*offset:]
+
+        # relative to EOF
+        rev.seek(-offset, 2)
+        assert rev.tell() == len(data) - offset
+        assert rev.read() == data[-offset:]
 
     def test_item_get_revision(self):
         item = self.backend.create_item("item#12")
