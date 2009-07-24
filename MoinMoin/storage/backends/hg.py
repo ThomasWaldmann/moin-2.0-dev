@@ -330,13 +330,7 @@ class MercurialBackend(Backend):
             if item._metadata:
                 write_meta_item(os.path.join(self._meta_path, "%s.meta" % item._id), item._metadata)
 
-    def _read_revision_data(self, revision, chunksize):
-        """
-        Read given amount of bytes of Revision data.
-        By default, all data is read.
-
-        If last revision, read from working copy.
-        """
+    def _open_revision_data(self, revision):
         if revision._data is None:
             if revision.revno == max(self._list_revisions(revision.item)): # latest revision, data in working copy
                 # XXX: lock this file for writing on read
@@ -345,6 +339,15 @@ class MercurialBackend(Backend):
                 # XXX: keeps file open as long as revision exists
             else:
                 revision._data = StringIO.StringIO(self._get_filectx(revision).data())
+
+    def _read_revision_data(self, revision, chunksize):
+        """
+        Read given amount of bytes of Revision data.
+        By default, all data is read.
+
+        If last revision, read from working copy.
+        """
+        self._open_revision_data(revision)
         return revision._data.read(chunksize)
 
     def _write_revision_data(self, revision, data):
@@ -385,7 +388,13 @@ class MercurialBackend(Backend):
 
     def _seek_revision_data(self, revision, position, mode):
         """Set the Revisions cursor on the Revisions data."""
+        self._open_revision_data(revision)
         revision._data.seek(position, mode)
+
+    def _tell_revision_data(self, revision):
+        """Tell the Revision data cursor position."""
+        self._open_revision_data(revision)
+        return revision._data.tell()
 
     def _hash(self, itemname):
         """Compute Item ID from given name."""
