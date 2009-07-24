@@ -286,6 +286,17 @@ class BackendTest(object):
         rev.seek(0)
         assert rev.read(-123) == "Alle meine Entchen" * 10
 
+    def test_seek_and_tell(self):
+        item = self.backend.create_item("seek&tell")
+        rev = item.create_revision(0)
+        data = "wilhelm tell seekfried what time it is"
+        rev.write(data)
+        item.commit()
+
+        rev = item.get_revision(0)
+        rev.seek(5)
+        assert rev.read() == data[5:]
+
     def test_item_get_revision(self):
         item = self.backend.create_item("item#12")
         rev = item.create_revision(0)

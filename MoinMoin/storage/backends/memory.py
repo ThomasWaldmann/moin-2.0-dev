@@ -339,6 +339,12 @@ class MemoryBackend(Backend):
         """
         revision._data.seek(position, mode)
 
+    def _tell_revision_data(self, revision):
+        """
+        @see: Backend._tell_revision_data.__doc__
+        """
+        return revision._data.tell()
+
 
 # ------ The tracing backend
 
