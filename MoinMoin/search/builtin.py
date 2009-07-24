@@ -409,7 +409,6 @@ class BaseIndex:
             def read(self, *args, **kw):
                 return True
         r.user.may = SecurityPolicy(r.user)
-        r.editlog = editlog.EditLog(r)
         return r
 
     def _unsign(self):
