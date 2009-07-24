@@ -839,7 +839,7 @@ class StoredRevision(Revision):
         """
         @see: StringIO.StringIO().tell.__doc__
         """
-        self._backend._tell_revision_data(self)
+        return self._backend._tell_revision_data(self)
 
     def destroy(self):
         """
