@@ -349,11 +349,11 @@ class MercurialBackend(Backend):
 
     def _write_revision_data(self, revision, data):
         """Write data to the given Revision."""
-        # we can open file in create_revision and pass it here but this would lead 
+        # we can open file in create_revision and pass it here but this would lead
         # to problems as in FSBackend with too many opened files
         with open(revision._tmp_fpath, 'a') as f:
             f.write(data)
-        
+
     def _get_item_metadata(self, item):
         """Load Item Metadata from file. Return metadata dictionary."""
         if item._id:
