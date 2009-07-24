@@ -16,8 +16,9 @@ import os
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
 
 
-def copy_item(item, destination, verbose=False):
-    name = item.name
+def copy_item(item, destination, verbose=False, name=None):
+    if name is None:
+        name = item.name
     status = dict(converts={}, skips={}, fails={})
     progress_char = dict(converts='.', skips='s', fails='F')
     revisions = item.list_revisions()
