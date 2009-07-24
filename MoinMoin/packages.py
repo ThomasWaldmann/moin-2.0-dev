@@ -220,6 +220,9 @@ class ScriptEngine:
             meta = {"mimetype": mimetype}
             item = Item.create(self.request, item_name)
             item._save(meta, self.extract_file(filename.decode(contenttype.lower())), name=item_name, action='SAVE', mimetype=mimetype, comment=comment, extra='')
+            self.msg += u"%(item_name)s added \n" % {"item_name": item_name}
+        else:
+            self.msg += u"action add revision: not enough rights - nothing done \n"
 
     def do_renameitem(self, item_name, newitemname, author=u"Scripting Subsystem", comment=u"Renamed by the scripting subsystem."):
         """ Renames a page.
@@ -269,7 +272,6 @@ class ScriptEngine:
 
         # Clear caches
         # TODO Code from MoinMoin/script/maint/cleancache.py may be used
-        page.clean_acl_cache() # It is not necessary should be removed.
 
     def runScript(self, commands):
         """ Runs the commands.
