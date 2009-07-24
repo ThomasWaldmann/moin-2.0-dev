@@ -499,6 +499,19 @@ class Item(Serializable, DictMixin):
 
     name = property(get_name, doc="This is the name of this item. This attribute is read-only.")
 
+    @property
+    def next_revno(self):
+        """
+        The revno of the most recent committed revision + 1.
+        I.e., the next revision's revno.
+        """
+        revs = self.list_revisions()
+        try:
+            return max(revs) + 1
+        except ValueError:
+            # No revisions yet (empty sequence)
+            return 0
+
     def __setitem__(self, key, value):
         """
         In order to access the item's metadata you can use the well-known dict-like
