@@ -251,8 +251,6 @@ class Backend(Serializable):
         @postcondition: self.has_item(newname) == True
         @raises ItemAlreadyExistsError: Raised if an item with name 'newname'
         already exists.
-        @raises AssertionError: Precondition not fulfilled. (Item not yet
-        committed to storage) XXX maybe use more special exception
         @return: None
         """
         raise NotImplementedError()
