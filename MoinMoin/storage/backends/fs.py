@@ -545,8 +545,20 @@ class FSBackend(Backend):
         return os.stat(rev._fs_revpath).st_size - rev._datastart
 
     def _seek_revision_data(self, rev, position, mode):
-        if mode == 2:
-            rev._fs_file.seek(position, mode)
-        else:
+        if rev._fs_file is None:
+            f = open(rev._fs_revpath, 'rb')
+            datastart = f.read(4)
+            datastart = struct.unpack('!L', datastart)[0]
+            f.seek(datastart)
+            rev._fs_file = f # XXX keeps file open as long as rev exists
+            rev._datastart = datastart
+
+        if mode == 0:
             rev._fs_file.seek(position + rev._datastart, mode)
+        else:
+            rev._fs_file.seek(position, mode)
+
+    def _tell_revision_data(self, revision):
+        pos = revision._fs_file.tell()
+        return pos - revision._datastart
 
