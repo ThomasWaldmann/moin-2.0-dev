@@ -23,6 +23,7 @@ from werkzeug import http_date, quote_etag
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
 from MoinMoin.support.python_compatibility import hash_new
+from MoinMoin.storage.backends import copy_item
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
 
@@ -213,23 +214,8 @@ class Item(object):
         target = request.form.get('target')
         old_item = self.rev.item
         backend = request.storage
-        new_item = backend.create_item(target)
-        # Transfer all revisions with their data and metadata
-        # Make sure the list begins with the lowest value, that is, 0.
-        revs = old_item.list_revisions()
-        for revno in revs:
-            old_rev = old_item.get_revision(revno)
-            new_rev = new_item.create_revision(revno)
-            shutil.copyfileobj(old_rev, new_rev, 8192)
-            for key in old_rev:
-                new_rev[key] = old_rev[key]
-            new_item.commit()
+        copy_item(old_item, backend, name=target)
         current_rev = old_item.get_revision(revno)
-        # transfer item metadata
-        new_item.change_metadata()
-        for key in old_item:
-            new_item[key] = old_item[key]
-        new_item.publish_metadata()
         # we just create a new revision with almost same meta/data to show up on RC
         self._save(current_rev, current_rev, name=target, action='SAVE/COPY', extra=self.name, comment=comment)
 
