@@ -506,8 +506,8 @@ class Item(Serializable, DictMixin):
         """
         revs = self.list_revisions()
         try:
-            return max(revs) + 1
-        except ValueError:
+            return revs[-1] + 1
+        except IndexError:
             # No revisions yet (empty sequence)
             return 0
 
