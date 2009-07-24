@@ -31,6 +31,11 @@ from MoinMoin.items.sendcache import SendCache
 # some metadata key constants:
 ACL = "acl"
 
+# This says: I am a system page
+IS_SYSPAGE = "is_syspage"
+# This says: original syspage as contained in release: <release>
+SYSPAGE_VERSION = "syspage_version"
+
 # special meta-data whose presence indicates that the item is deleted
 DELETED = "deleted"
 
