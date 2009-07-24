@@ -16,6 +16,17 @@ import os
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
 
 
+def same_revision(rev1, rev2):
+    if rev1.timestamp != rev2.timestamp:
+        return False
+    for k, v in rev1.iteritems():
+        if rev2[k] != v:
+            return False
+    if rev1.size != rev2.size:
+        return False
+    return True
+
+
 def copy_item(item, destination, verbose=False, name=None):
     if name is None:
         name = item.name
@@ -63,16 +74,6 @@ def clone(source, destination, verbose=False, only_these=[]):
     Return a tuple consisting of three dictionaries (Item name:Revision numbers list):
     converted, skipped and failed Items dictionary.
     """
-    def same_revision(rev1, rev2):
-        if rev1.timestamp != rev2.timestamp:
-            return False
-        for k, v in rev1.iteritems():
-            if rev2[k] != v:
-                return False
-        if rev1.size != rev2.size:
-            return False
-        return True
-
     def item_generator(source, only_these):
         if only_these:
             for name in only_these:
