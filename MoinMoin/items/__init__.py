@@ -308,7 +308,10 @@ class Item(object):
         for k, v in meta.iteritems():
             # TODO Put metadata into newrev here for now. There should be a safer way
             #      of input for this.
-            newrev[k] = v
+
+            # Skip this metadata key. It should not be copied when editing an item.
+            if not k == SYSPAGE_VERSION:
+                newrev[k] = v
         if data:
             # saving non-empty data automatically undeletes the item
             newrev.pop(DELETED, False)
