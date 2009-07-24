@@ -232,16 +232,14 @@ class RouterItem(object):
 
         @see: Item.rename.__doc__
         """
-        # XXX copy first, rename later. improve
         old_name = self._item.name
         backend, itemname, mountpoint = self._get_backend(newname)
         if mountpoint != self._mountpoint:
             # Mountpoint changed! That means we have to copy the item over.
-            converts, skips, fails = copy_item(self._item, backend, verbose=False)
+            converts, skips, fails = copy_item(self._item, backend, verbose=False, name=itemname)
             assert len(converts) == 1
-            new_item = backend.get_item(old_name)
-            new_item.rename(itemname)
 
+            new_item = backend.get_item(itemname)
             old_item = self._item
             self._item = new_item
             self._mountpoint = mountpoint
