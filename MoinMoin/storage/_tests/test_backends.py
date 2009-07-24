@@ -320,6 +320,13 @@ class BackendTest(object):
         another_rev = item.get_revision(0)
         assert another_rev.read() == "jefferson airplane rocks"
 
+    def test_item_next_revno(self):
+        item = self.backend.create_item("next_revno")
+        assert item.next_revno == 0
+        item.create_revision(item.next_revno).write("foo")
+        item.commit()
+        assert item.next_revno == 1
+
     def test_item_list_revisions_with_revmeta_changes(self):
         item = self.backend.create_item("item_13")
         for revno in range(0, 10):
