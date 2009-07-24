@@ -153,7 +153,7 @@ def get_multistage_continuation_url(request, auth_name, extra_fields={}):
     """
     # logically, this belongs to request, but semantically it should
     # live in auth so people do auth.get_multistage_continuation_url()
-    fields = {'action': 'login',
+    fields = {'do': 'login',
               'login': '1',
               'stage': auth_name}
     fields.update(extra_fields)
@@ -253,8 +253,8 @@ class MoinAuth(BaseAuth):
         #if request.cfg.openidrp_registration_url:
         #    userprefslink = request.cfg.openidrp_registration_url
         #else:
-        userprefslink = request.page.url(request, querystr={'action': 'newaccount'})
-        sendmypasswordlink = request.page.url(request, querystr={'action': 'recoverpass'})
+        userprefslink = request.page.url(request, querystr={'do': 'newaccount'})
+        sendmypasswordlink = request.page.url(request, querystr={'do': 'recoverpass'})
 
         msg = ''
         #if request.cfg.openidrp_allow_registration:

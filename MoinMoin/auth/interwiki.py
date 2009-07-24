@@ -40,7 +40,7 @@ class InterwikiAuth(BaseAuth):
         if err or wikitag not in self.trusted_wikis:
             return ContinueLogin(user_obj)
 
-        homewiki = xmlrpclib.ServerProxy(wikiurl + "?action=xmlrpc2")
+        homewiki = xmlrpclib.ServerProxy(wikiurl + "?do=xmlrpc2")
         auth_token = homewiki.getAuthToken(name, password)
         if not auth_token:
             logging.debug("%r wiki did not return an auth token." % wikitag)
