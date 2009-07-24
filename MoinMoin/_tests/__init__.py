@@ -11,10 +11,10 @@ import os, shutil
 
 from MoinMoin.parser.text import Parser
 from MoinMoin.formatter.text_html import Formatter
-from MoinMoin.Page import Page
-from MoinMoin.PageEditor import PageEditor
+from MoinMoin.items import Item, ACL
 from MoinMoin.util import random_string
 from MoinMoin import caching, user
+from MoinMoin import config
 
 # Promoting the test user -------------------------------------------
 # Usually the tests run as anonymous user, but for some stuff, you
@@ -52,52 +52,27 @@ def become_superuser(request):
     if su_name not in request.cfg.superuser:
         request.cfg.superuser.append(su_name)
 
-def nuke_user(request, username):
-    """ completely delete a user """
-    user_dir = request.cfg.user_dir
-    user_id = user.getUserId(request, username)
-    # really get rid of the user
-    fpath = os.path.join(user_dir, user_id)
-    os.remove(fpath)
-    # delete cache
-    arena = 'user'
-    key = 'name2id'
-    caching.CacheEntry(request, arena, key, scope='wiki').remove()
-
 # Creating and destroying test pages --------------------------------
 
-def create_page(request, pagename, content, do_editor_backup=False):
+def create_page(request, itemname, content, mimetype='text/moin-wiki', acl=None):
     """ create a page with some content """
-    # make sure there is nothing already there:
-    nuke_page(request, pagename)
-    # now create from scratch:
-    page = PageEditor(request, pagename, do_editor_backup=do_editor_backup)
-    page.saveText(content, 0)
-    return page
+    if isinstance(content, unicode):
+        content = content.encode(config.charset)
+    item = Item.create(request, itemname)
+    meta = {}
+    if acl is not None:
+        meta[ACL] = acl
+    item._save(meta, content, mimetype=mimetype)
+    return item
 
-def append_page(request, pagename, content, do_editor_backup=False):
-    """ appends some conetent to an existing page """
-    # reads the raw text of the existing page
-    raw = Page(request, pagename).get_raw_body()
-    # adds the new content to the old
-    content = "%s\n%s\n"% (raw, content)
-    page = PageEditor(request, pagename, do_editor_backup=do_editor_backup)
-    page.saveText(content, 0)
-    return page
-
-def nuke_eventlog(request):
-    """ removes event-log file """
-    fpath = request.rootpage.getPagePath('event-log', isfile=1)
-    if os.path.exists(fpath):
-        os.remove(fpath)
-
-def nuke_page(request, pagename):
-    """ completely delete a page, everything in the pagedir """
-    page = PageEditor(request, pagename, do_editor_backup=False)
-    page.deletePage()
-    # really get rid of everything there:
-    fpath = page.getPagePath(check_create=0)
-    shutil.rmtree(fpath, True)
+def append_page(request, itemname, content):
+    """ appends some content to an existing page """
+    if isinstance(content, unicode):
+        content = content.encode(config.charset)
+    item = Item.create(request, itemname)
+    content = "%s\n%s\n"% (item.data, content)
+    item._save({}, content)
+    return item
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """

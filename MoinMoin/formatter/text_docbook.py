@@ -18,7 +18,6 @@ from xml.dom.ext import Node
 from MoinMoin.formatter import FormatterBase
 from MoinMoin import wikiutil
 from MoinMoin.error import CompositeError
-from MoinMoin.action import AttachFile
 
 #For revision history
 from MoinMoin.logfile import editlog
@@ -391,56 +390,6 @@ class Formatter(FormatterBase):
             attrs.append(('linkend', name))
 
         return self._handleNode("link", on, attrs)
-
-### Attachments ######################################################
-
-    def attachment_link(self, on, url=None, **kw):
-        assert on in (0, 1, False, True) # make sure we get called the new way, not like the 1.5 api was
-        # we do not output a "upload link" when outputting docbook
-        if on:
-            pagename, filename = AttachFile.absoluteName(url, self.page.page_name)
-            fname = wikiutil.taintfilename(filename)
-            target = AttachFile.getAttachUrl(pagename, filename, self.request)
-            return self.url(1, target, title="attachment:%s" % url)
-        else:
-            return self.url(0)
-
-    def attachment_image(self, url, **kw):
-        """
-        Figures out the absolute path to the image and then hands over to
-        the image function. Any title is also handed over, and an additional
-        title suggestion is made based on filename. The image function will
-        use the suggestion if no other text alternative is found.
-
-        If the file is not found, then a simple text will replace it.
-        """
-        _ = self.request.getText
-        pagename, filename = AttachFile.absoluteName(url, self.page.page_name)
-        fname = wikiutil.taintfilename(filename)
-        fpath = AttachFile.getFilename(self.request, pagename, fname)
-        if not os.path.exists(fpath):
-            return self.text("[attachment:%s]" % url)
-        else:
-            return self.image(
-                src=AttachFile.getAttachUrl(pagename, filename,
-                                            self.request, addts=1),
-                attachment_title=url,
-                **kw)
-
-
-    def attachment_drawing(self, url, text, **kw):
-        _ = self.request.getText
-        pagename, filename = AttachFile.absoluteName(url, self.page.page_name)
-        fname = wikiutil.taintfilename(filename)
-        drawing = fname
-        fname = fname + ".png"
-        filename = filename + ".png"
-        fpath = AttachFile.getFilename(self.request, pagename, fname)
-        if not os.path.exists(fpath):
-            return self.text("[drawing:%s]" % url)
-        else:
-            src = AttachFile.getAttachUrl(pagename, filename, self.request, addts=1)
-            return self.image(alt=drawing, src=src, html_class="drawing")
 
 ### Images and Smileys ##############################################
 
