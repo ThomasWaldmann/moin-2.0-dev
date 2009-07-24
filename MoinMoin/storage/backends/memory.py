@@ -208,7 +208,7 @@ class MemoryBackend(Backend):
         """
         @see: Backend._rename_item.__doc__
         """
-        if newname in self._itemmap:
+        if self.has_item(newname):
             raise ItemAlreadyExistsError("Cannot rename Item %s to %s since there already is an Item with that name." % (item.name, newname))
 
         name = None
