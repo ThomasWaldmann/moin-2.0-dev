@@ -43,7 +43,6 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from UserDict import DictMixin
-from MoinMoin.storage.backends import clone, memory
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
                                    NoSuchItemError
 
