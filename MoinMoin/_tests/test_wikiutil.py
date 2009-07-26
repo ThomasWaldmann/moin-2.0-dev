@@ -73,7 +73,7 @@ class TestInterWiki:
                  # wrong interpretation ('MainPage/OtherPage', ('Self', 'MainPage/OtherPage')),
                 ]
         for markup, (wikiname, pagename) in tests:
-            assert wikiutil.split_wiki(markup) == (wikiname, pagename)
+            assert wikiutil.split_interwiki(markup) == (wikiname, pagename)
 
     def testJoinWiki(self):
         tests = [(('http://example.org/', u'SomePage'), 'http://example.org/SomePage'),
@@ -87,8 +87,8 @@ class TestInterWiki:
 
 class TestSystemPage:
     systemPages = (
-        'RecentChanges',
-        'TitleIndex',
+        'HelpOnMoinWikiSyntax',
+        'HelpOnLinking',
         )
     notSystemPages = (
         'NoSuchPageYetAndWillNeverBe',

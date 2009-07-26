@@ -751,7 +751,7 @@ class SearchResults:
             rev_str = '%s: %d (%s)' % (_('rev'), rev, _('current'))
         else:
             rev_str = '%s: %d' % (_('rev'), rev, )
-        lastmod_str = _('last modified: %s') % p.mtime_printable(request)
+        lastmod_str = _('last modified: %s') % p.mtime(printable=True)
 
         result = f.paragraph(1, attr={'class': 'searchhitinfobar'}) + \
                  f.text('%s - %s %s' % (size_str, rev_str, lastmod_str)) + \
@@ -836,7 +836,7 @@ def getSearchResults(request, query, hits, start, sort, estimated_hits):
             page_name = page # for remote wikis, we have the page_name, not the page obj
             result_hits.append(FoundRemote(wikiname, page_name, attachment, matches=match, rev=rev))
     elapsed = time.time() - start
-    count = request.rootpage.getPageCount()
+    count = request.rootitem.count_items()
     return SearchResults(query, result_hits, count, elapsed, sort,
             estimated_hits)
 

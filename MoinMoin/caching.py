@@ -15,6 +15,7 @@ import tempfile
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin import config
 from MoinMoin.util import filesys, lock, pickle, PICKLE_PROTOCOL
 
@@ -25,9 +26,16 @@ class CacheError(Exception):
 
 
 def get_arena_dir(request, arena, scope):
-    if scope == 'item': # arena is a Page instance
-        # we could move cache out of the page directory and store it to cache_dir
-        return arena.getPagePath('cache', check_create=1)
+    if scope == 'item':
+        from MoinMoin.Page import Page
+        from MoinMoin.storage import Item
+        if isinstance(arena, Page):
+            name = arena.page_name
+        elif isinstance(arena, Item):
+            name = arena.name
+        else:
+            raise TypeError("arena needs to be a Page or Item instance")
+        return os.path.join(request.cfg.cache_dir, 'page', hash_new('sha1', name.encode('utf-8')).hexdigest())
     elif scope == 'wiki':
         return os.path.join(request.cfg.cache_dir, request.cfg.siteid, arena)
     elif scope == 'farm':
@@ -109,28 +117,35 @@ class CacheEntry:
         """
         return filesys.fuid(self._fname)
 
-    def needsUpdate(self, filename, attachdir=None):
-        # following code is not necessary. will trigger exception and give same result
-        #if not self.exists():
-        #    return 1
+    def needsUpdate(self, items):
+        """ Checks whether cache needs to get updated
 
+        @param items: a sequence of / iterator over objects that this cache depends on -
+                      supported object classes: Page, Item, int/float (mtime)
+        @return: True if cache needs updating, False otherwise.
+        """
+        from MoinMoin.Page import Page
+        from MoinMoin.storage import Item
         try:
-            ctime = os.path.getmtime(self._fname)
-            ftime = os.path.getmtime(filename)
+            cache_mtime = os.path.getmtime(self._fname)
         except os.error:
-            return 1
+            # no cache file or other problem accessing it
+            return True
 
-        needsupdate = ftime > ctime
+        for item in items:
+            if isinstance(item, (int, float)):
+                item_mtime = item
+            elif isinstance(item, Page):
+                item_mtime = item.mtime()
+            elif isinstance(item, Item):
+                item_mtime = item.get_revision(-1).timestamp # XXX there should be a item.timestamp property
+            else:
+                raise ValueError("caching.needsUpdate: Item type not supported: %r" % type(item))
 
-        # if a page depends on the attachment dir, we check this, too:
-        if not needsupdate and attachdir:
-            try:
-                ftime2 = os.path.getmtime(attachdir)
-            except os.error:
-                ftime2 = 0
-            needsupdate = ftime2 > ctime
+            if item_mtime > cache_mtime:
+                return True
 
-        return needsupdate
+        return False
 
     def _determine_locktype(self, mode):
         """ return the correct lock object for a specific file access mode """

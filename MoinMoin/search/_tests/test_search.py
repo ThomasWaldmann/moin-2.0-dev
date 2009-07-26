@@ -9,8 +9,7 @@
 
 import py
 
-from MoinMoin.search import QueryError
-from MoinMoin.search.queryparser import QueryParser
+from MoinMoin.search.queryparser import QueryParser, QueryError
 from MoinMoin.search import Xapian
 from MoinMoin import search
 from MoinMoin._tests import nuke_xapian_index
@@ -78,34 +77,34 @@ class TestSearch:
 
     def testTitleSearchAND(self):
         """ search: title search with AND expression """
-        result = search.searchPages(self.request, u"title:Help title:Index")
+        result = search.searchPages(self.request, u"title:Help title:Linking")
         assert len(result.hits) == 1
 
     def testTitleSearchOR(self):
         """ search: title search with OR expression """
-        result = search.searchPages(self.request, u"title:FrontPage or title:RecentChanges")
+        result = search.searchPages(self.request, u"title:FrontPage or title:HelpOnMoinWikiSyntax")
         assert len(result.hits) == 2
 
     def testTitleSearchNegatedFindAll(self):
         """ search: negated title search for some pagename that does not exist results in all pagenames """
         result = search.searchPages(self.request, u"-title:%s" % self.doesnotexist)
-        assert len(result.hits) > 100 # XXX should be "all"
+        assert len(result.hits) >= self.request.cfg.test_num_pages
 
     def testTitleSearchNegativeTerm(self):
         """ search: title search for a AND expression with a negative term """
         helpon_count = len(search.searchPages(self.request, u"title:HelpOn").hits)
-        result = search.searchPages(self.request, u"title:HelpOn -title:AccessControlLists")
+        result = search.searchPages(self.request, u"title:HelpOn -title:Linking")
         assert len(result.hits) == helpon_count - 1 # finds all HelpOn* except one
 
     def testFullSearchNegatedFindAll(self):
         """ search: negated full search for some string that does not exist results in all pages """
         result = search.searchPages(self.request, u"-%s" % self.doesnotexist)
-        assert len(result.hits) > 100 # XXX should be "all"
+        assert len(result.hits) >= self.request.cfg.test_num_pages
 
     def testFullSearchNegativeTerm(self):
         """ search: full search for a AND expression with a negative term """
         helpon_count = len(search.searchPages(self.request, u"HelpOn").hits)
-        result = search.searchPages(self.request, u"HelpOn -ACL")
+        result = search.searchPages(self.request, u"HelpOn -Thumbnails")
         assert 0 < len(result.hits) < helpon_count
 
 
