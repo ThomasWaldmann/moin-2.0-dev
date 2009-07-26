@@ -105,7 +105,9 @@ class SendCache(object):
         """
         Put an object into the cache to send it with cache action later.
 
-        @param data: content data (str or open file-like obj)
+        @param data: content data (str or open file-like obj) or None.
+                     if None is given, you need to write content data directly to data_cache
+                     before invoking put() method.
         @param filename: filename for content-disposition header and for autodetecting
                          content_type (unicode, default: None)
         @param content_type: content-type header value (str, default: autodetect from filename)
@@ -135,7 +137,8 @@ class SendCache(object):
         else:
             mt = wikiutil.MimeType(mimestr=content_type)
 
-        self.data_cache.update(data)
+        if data is not None:
+            self.data_cache.update(data)
         content_length = content_length or self.data_cache.size()
         headers = [('Content-Type', content_type),
                    ('Content-Length', content_length),

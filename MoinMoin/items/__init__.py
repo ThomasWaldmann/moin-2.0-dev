@@ -797,15 +797,21 @@ class TransformableBitmapImage(RenderableBitmapImage):
     """ We can transform (resize, rotate, mirror) some image types """
     supported_mimetypes = ['image/png', 'image/jpeg', 'image/gif', ]
 
-    def _transform(self, content_type, size=None, transpose_op=None):
+    def _transform(self, content_type, cache, size=None, transpose_op=None):
         """ resize to new size (optional), transpose according to exif infos,
-            return data as content_type (default: same ct as original image)
+            write data as content_type (default: same ct as original image)
+            to the cache.
         """
         try:
             from PIL import Image as PILImage
         except ImportError:
-            # no PIL, we can't do anything
-            return self.rev.read()
+            # no PIL, we can't do anything, we just output the revision data as is
+            outfile = cache.data_cache
+            outfile.open(mode='wb')
+            shutil.copyfileobj(self.rev, outfile)
+            outfile.close()
+            cache.put(None, content_type=content_type)
+            return
 
         if content_type == 'image/jpeg':
             output_type = 'JPEG'
@@ -843,12 +849,11 @@ class TransformableBitmapImage(RenderableBitmapImage):
         }
         image = transpose_func[transpose_op](image)
 
-        buf = StringIO()
-        image.save(buf, output_type)
-        buf.flush() # XXX needed?
-        data = buf.getvalue()
-        buf.close()
-        return data
+        outfile = cache.data_cache
+        outfile.open(mode='wb')
+        image.save(outfile, output_type)
+        outfile.close()
+        cache.put(None, content_type=content_type)
 
     def _do_get_modified(self, hash):
         request = self.request
@@ -879,8 +884,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
             if not cache.exists():
                 content_type = self.rev[MIMETYPE]
                 size = (width or 99999, height or 99999)
-                transformed_image = self._transform(content_type, size=size, transpose_op=transpose)
-                cache.put(transformed_image, content_type=content_type)
+                self._transform(content_type, cache=cache, size=size, transpose_op=transpose)
             from_cache = cache.key
         else:
             from_cache = request.values.get('from_cache')
