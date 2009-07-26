@@ -71,7 +71,7 @@ General syntax: moin [options] maint globaledit [globaledit-options]
             language_line = '#language en'
         if not format_line:
             format_line = '#format wiki'
-        aclold = '#acl MoinPagesEditorGroup:read,write,delete,revert All:read'
+        aclold = '#acl MoinPagesEditorGroup:read,write,delete All:read'
         if aclold in acl_lines:
             acl_lines.remove(aclold)
         if not acl_lines and (

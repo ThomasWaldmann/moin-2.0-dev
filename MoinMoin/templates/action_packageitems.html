@@ -1,0 +1,19 @@
+{% extends "base_contentonly.html" %}
+{% block content %}
+<h1>{{ label }}</h1>
+<form action="" method="POST" enctype="multipart/form-data">
+<fieldset style="border: none; padding: 0;">
+<input type="hidden" name="action" value="{{ action }}">
+<div>
+<label for="target">Package name: </label><input type="text" name="target" size="80" maxlength="200" value="package.zip">
+</div>
+<div>
+<label for="item_list">List of item names - separated by a comma: </label><input type="text" name="item_list" size="80" maxlength="200" value="{{ item_name }}">
+</div>
+<label for="subitems">Include subitems? </label><input type="checkbox" id="sub_items" name="sub_items">
+<input class="button" type="submit" name="button_ok" value="{{ label }}">
+<input class="button" type="submit" name="button_cancel" value="Cancel">
+</fieldset>
+</form>
+{% endblock %}
+

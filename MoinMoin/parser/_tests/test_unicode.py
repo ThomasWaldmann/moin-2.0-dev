@@ -20,11 +20,9 @@ from MoinMoin.Page import Page
 class TestParserOutput(object):
     """ Parser has to generate unicode output. """
     def test_ParserOutput(self):
-        """ This method aims generally at MoinMoin.parser.text_xslt -
-            this parser should encode Unicode input to UTF8 as late as possible.
+        """ Parsers should encode Unicode input to UTF8 as late as possible.
         """
         request = self.request
-        assert not request.cfg.allow_xslt, u'allow_xslt should be disabled'
         errmsg = []
 
         # Some examples to verify with additional stuff
@@ -33,7 +31,6 @@ class TestParserOutput(object):
             u'text_irssi': u"[12:01] <RaphaelBosek> %s",
             u'text_moin_wiki': u'||<#fefefe> %s ||',
             u'text_python': u'if True: print "%s"',
-            u'text_xslt': u'<?xml version="1.0" encoding="ISO-8859-1"?><!-- %s -->',
         }
 
         # Blacklist for parsers that don't work - this list should be empty !
