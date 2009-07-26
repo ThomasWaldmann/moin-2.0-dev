@@ -816,11 +816,9 @@ class TransformableBitmapImage(RenderableBitmapImage):
         else:
             raise ValueError("content_type %r not supported" % content_type)
 
-        #image = PILImage.open(self.rev) # XXX needs: read() seek() tell()
-        buf = StringIO(self.rev.read())
-        image = PILImage.open(buf)
+        # revision obj has read() seek() tell(), thus this works:
+        image = PILImage.open(self.rev)
         image.load()
-        buf.close()
 
         try:
             # if we have EXIF data, we can transpose (e.g. rotate left),
