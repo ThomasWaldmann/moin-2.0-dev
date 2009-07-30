@@ -185,6 +185,22 @@ class TestConverter(object):
         for i in data:
             yield (self.do, ) + i
 
+    def test_table_attributes(self):
+        data = [
+            (u'||||Span||\n\n',
+                '<page><body><table><table-body><table-row><table-cell number-columns-spanned="2">Span</table-cell></table-row></table-body></table></body></page>'),
+            (u'||<-2>Span||\n\n',
+                '<page><body><table><table-body><table-row><table-cell number-columns-spanned="2">Span</table-cell></table-row></table-body></table></body></page>'),
+            (u'||<|2>Span||\n\n',
+                '<page><body><table><table-body><table-row><table-cell number-rows-spanned="2">Span</table-cell></table-row></table-body></table></body></page>'),
+            (u'||<tableclass="table" rowclass="row" class="cell">Cell||\n',
+                '<page><body><table class="table"><table-body><table-row class="row"><table-cell class="cell">Cell</table-cell></table-row></table-body></table></body></page>',),
+            (u'||<tablestyle="table" rowstyle="row" style="cell">Cell||\n',
+                '<page><body><table style="table"><table-body><table-row style="row"><table-cell style="cell">Cell</table-cell></table-row></table-body></table></body></page>',),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
     def test_nowiki(self):
         data = [
             (u'{{{nowiki}}}',
