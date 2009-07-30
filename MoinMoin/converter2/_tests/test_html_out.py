@@ -111,10 +111,10 @@ class TestConverter(Base):
 
     def test_style(self):
         data = [
-            ('<page><body><p font-size="1em">Text</p></body></page>',
+            ('<page><body><p style="font-size: 1em">Text</p></body></page>',
                 '<div><p style="font-size: 1em">Text</p></div>'),
-            ('<page><body><p html:style="color: black" font-size="1em">Text</p></body></page>',
-                '<div><p style="font-size: 1em; color: black">Text</p></div>'),
+            ('<page><body><p style="color: black; font-size: 1em">Text</p></body></page>',
+                '<div><p style="color: black; font-size: 1em">Text</p></div>'),
         ]
         for i in data:
             yield (self.do, ) + i
