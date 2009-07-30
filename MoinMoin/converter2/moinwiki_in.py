@@ -348,10 +348,9 @@ class Converter(ConverterMacro):
 
         element = moin_page.table()
         stack.push(element)
-        element = moin_page.table_body()
-        stack.push(element)
+        stack.push(moin_page.table_body())
 
-        self.block_table_row(table, stack)
+        self.block_table_row(table, stack, element)
 
         for line in iter_content:
             match = self.table_re.match(line)
@@ -360,14 +359,14 @@ class Converter(ConverterMacro):
                 iter_content.push(line)
                 break
 
-            self.block_table_row(match.group('table'), stack)
+            self.block_table_row(match.group('table'), stack, element)
 
-    def block_table_row(self, content, stack):
+    def block_table_row(self, content, stack, table):
         element = moin_page.table_row()
         stack.push(element)
 
         for match in self.tablerow_re.finditer(content):
-            self._apply(match, 'tablerow', stack)
+            self._apply(match, 'tablerow', stack, table, element)
 
         stack.pop()
 
@@ -833,9 +832,24 @@ class Converter(ConverterMacro):
         )
     """
 
-    def tablerow_cell_repl(self, stack, cell, cell_marker, cell_text, cell_args=None):
+    def tablerow_cell_repl(self, stack, table, row, cell, cell_marker, cell_text, cell_args=None):
         element = moin_page.table_cell()
         stack.push(element)
+
+        if cell_args:
+            cell_args = parse_arguments(cell_args)
+
+            for key, value in cell_args.keyword.iteritems():
+                attrib = element.attrib
+                if key.startswith('table'):
+                    key = key[5:]
+                    attrib = table.attrib
+                elif key.startswith('row'):
+                    key = key[3:]
+                    attrib = row.attrib
+
+                if key in ('class', 'style'):
+                    attrib[key] = value
 
         self.parse_inline(cell_text, stack)
 
