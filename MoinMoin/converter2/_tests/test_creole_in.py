@@ -245,10 +245,9 @@ class TestConverter(object):
             yield (self.do, ) + i
 
     def serialize(self, elem, **options):
-        from cStringIO import StringIO
+        from StringIO import StringIO
         file = StringIO()
-        tree = ET.ElementTree(elem)
-        tree.write(file, namespaces=self.namespaces, **options)
+        elem.write(file.write, namespaces=self.namespaces, **options)
         return self.output_re.sub(u'', file.getvalue())
 
     def do(self, input, output, args={}):
