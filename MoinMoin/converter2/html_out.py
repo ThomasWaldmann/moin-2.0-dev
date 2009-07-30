@@ -17,37 +17,19 @@ class ElementException(RuntimeError):
     pass
 
 
-class AttributeSet(object):
-    __slots__ = 'real', 'style'
-
-    def __init__(self):
-        self.real = {}
-        self.style = {}
-
-    def update(self, other):
-        self.real.update(other.real)
-        self.style.update(other.style)
-
-
-class AttributeReal(object):
+class Attribute(object):
     """ Adds the attribute with the HTML namespace to the output. """
     def __init__(self, key):
         self.key = html(key)
 
     def __call__(self, key, value, out):
-        out.real[self.key] = value
+        out[self.key] = value
 
 
-class AttributeRealSimple(object):
+class AttributeSimple(object):
     """ Adds the attribute with the HTML namespace to the output. """
     def __call__(self, key, value, out):
-        out.real[html(key.name)] = value
-
-
-class AttributeStyleSimple(object):
-    """ Adds the attribute to the HTML style attribute. """
-    def __call__(self, key, value, out):
-        out.style[key.name] = value
+        out[html(key.name)] = value
 
 
 class Attributes(object):
@@ -55,14 +37,8 @@ class Attributes(object):
         html.namespace,
     ])
 
-    visit_title = AttributeRealSimple()
-
-    visit_background_color = AttributeStyleSimple()
-    visit_font_size = AttributeStyleSimple()
-    visit_list_style_type = AttributeStyleSimple()
-    visit_text_align = AttributeStyleSimple()
-    visit_text_decoration = AttributeStyleSimple()
-    visit_vertical_align = AttributeStyleSimple()
+    visit_style = AttributeSimple()
+    visit_title = AttributeSimple()
 
     def __init__(self, element):
         self.element = element
@@ -83,8 +59,8 @@ class Attributes(object):
             return self.element.get(name)
 
     def convert(self):
-        new = AttributeSet()
-        new_default = AttributeSet()
+        new = {}
+        new_default = {}
 
         for key, value in self.element.attrib.iteritems():
             if key.uri == moin_page.namespace:
@@ -96,7 +72,7 @@ class Attributes(object):
                     if f is not None:
                         f(key, value, new)
             elif key.uri in self.namespaces_valid_output:
-                new.real[key] = value
+                new[key] = value
             elif key.uri is None:
                 if self.default_uri_input and not '_' in key.name:
                     n = 'visit_' + key.name.replace('-', '_')
@@ -104,26 +80,12 @@ class Attributes(object):
                     if f is not None:
                         f(key, value, new_default)
                 elif self.default_uri_output:
-                    new_default.real[ET.QName(key.name, self.default_uri_output)] = value
+                    new_default[ET.QName(key.name, self.default_uri_output)] = value
 
         # Attributes with namespace overrides attributes with empty namespace.
         new_default.update(new)
 
-        ret = new_default.real
-
-        # Create CSS style attribute
-        if new_default.style:
-            style = new_default.style.items()
-            style.sort(key=lambda i: i[0])
-            style = '; '.join((key + ': ' + value for key, value in style))
-
-            style_old = self.element.get(html.style)
-            if style_old:
-                style += '; ' + style_old
-
-            ret[html.style] = style
-
-        return ret
+        return new_default
 
 
 class Converter(object):
