@@ -26,7 +26,7 @@ from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
-from MoinMoin.storage.backends.acl import ADMIN, READ, WRITE, DELETE, DESTROY
+from MoinMoin.storage.backends.acl import ADMIN, READ, WRITE, DELETE, DESTROY, CREATE
 from MoinMoin.items import DELETED
 from MoinMoin.support.python_compatibility import set
 
@@ -1046,13 +1046,13 @@ options = {
       ('hierarchic', False, 'True to use hierarchical ACLs'),
       ('rights_default', unicode("Trusted:" + ",".join((READ, WRITE, DELETE)) + \
                                 " Known:" + ",".join((READ, WRITE, DELETE)) + \
-                                " All:" + ",".join((READ, WRITE))),
+                                " All:" + ",".join((READ, WRITE, CREATE))),
        "ACL used if no ACL is specified on the page"),
       ('rights_before', u"",
        "ACL that is processed before the on-page/default ACL"),
       ('rights_after', u"",
        "ACL that is processed after the on-page/default ACL"),
-      ('rights_valid', [READ, WRITE, DELETE, ADMIN, DESTROY],
+      ('rights_valid', [READ, WRITE, DELETE, ADMIN, DESTROY, CREATE],
        "Valid tokens for right sides of ACL entries."),
     )),
 

@@ -37,7 +37,7 @@ class LocalConfig(multiconfig.DefaultConfig):
     data_underlay_dir = os.path.join(instance_dir, 'underlay', '') # path with trailing /
 
     DesktopEdition = True # give all local users full powers
-    acl_rights_default = u"All:read,write,delete,revert,admin"
+    acl_rights_default = u"All:read,write,delete,create,admin"
     surge_action_limits = None # no surge protection
     sitename = u'MoinMoin DesktopEdition'
     logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static

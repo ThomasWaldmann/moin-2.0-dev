@@ -60,6 +60,8 @@ WRITE = 'write'
 # TODO Decide how delete action should be implemented.
 DELETE = 'delete'
 DESTROY = 'destroy'
+# One may decide that only items that have been created by a trusted user can be edited.
+CREATE = 'create'
 
 
 class AclWrapperBackend(object):
@@ -116,8 +118,8 @@ class AclWrapperBackend(object):
         """
         @see: Backend.create_item.__doc__
         """
-        if not self._may(itemname, WRITE):
-            raise AccessDeniedError(self.request.user.name, WRITE, itemname)
+        if not self._may(itemname, CREATE):
+            raise AccessDeniedError(self.request.user.name, CREATE, itemname)
         real_item = self.backend.create_item(itemname)
         # Wrap item.
         wrapped_item = AclWrapperItem(real_item, self)
