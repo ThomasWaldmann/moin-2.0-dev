@@ -50,6 +50,22 @@ class TestACLMiddleware(BackendTest):
         self.create_item_acl(name, "All:")
         assert py.test.raises(AccessDeniedError, self.get_item, name)
 
+    def test_create_item(self):
+        class Config(wikiconfig.Config):
+            # no create
+            acl_rights_default = u"All:admin,read,write,destroy"
+
+        request = init_test_request(Config)
+        backend = request.storage
+        assert py.test.raises(AccessDeniedError, backend.create_item, "I will never exist")
+
+        item = self.create_item_acl("i will exist!", "All:read,write")
+        rev = item.create_revision(0)
+        data = "my very existent data"
+        rev.write(data)
+        item.commit()
+        assert item.get_revision(0).read() == data
+
     def test_read_access_allowed(self):
         name = "readaccessallowed"
         self.create_item_acl(name, "All:read")
