@@ -836,6 +836,9 @@ class Converter(ConverterMacro):
         element = moin_page.table_cell()
         stack.push(element)
 
+        if len(cell_marker) / 2 > 1:
+            element.set(moin_page.number_columns_spanned, len(cell_marker) / 2)
+
         if cell_args:
             cell_args = parse_arguments(cell_args)
 
@@ -849,7 +852,7 @@ class Converter(ConverterMacro):
                     attrib = row.attrib
 
                 if key in ('class', 'style'):
-                    attrib[key] = value
+                    attrib[moin_page(key)] = value
 
         self.parse_inline(cell_text, stack)
 
