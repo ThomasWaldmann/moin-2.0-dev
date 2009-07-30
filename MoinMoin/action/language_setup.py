@@ -6,7 +6,7 @@
     for installation.
 
     @copyright: 2009 MoinMoin:ReimarBauer,
-                     MoinMoin:ThomasWaldmnann
+                     MoinMoin:ThomasWaldmann
 
     @license: GNU GPL, see COPYING for details.
 """

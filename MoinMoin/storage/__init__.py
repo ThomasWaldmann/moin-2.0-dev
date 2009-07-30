@@ -43,8 +43,9 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from UserDict import DictMixin
+from MoinMoin.storage.backends import clone
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
-                                   NoSuchItemError
+                                   NoSuchItemError, BackendError
 
 from MoinMoin.storage.serialization import Serializable, XMLGenerator, \
                                            Data, Meta, ItemMeta, unserialize
@@ -944,15 +945,23 @@ def value_type_is_valid(value):
             return True
 
 
-def upgrade_syspages(packagepath):
+def upgrade_syspages(request, packagepath, backend):
     """
     Upgrade the wiki's system pages from an XML file.
 
     @type packagepath: basestring
-    @param packagepath: File path to the XML file containing the new system pages.
+    @param packagepath: Name of the item containing the system pages xml as data.
     """
-    tmp_backend = memory.MemoryBackend()
-    unserialize(tmp_backend, packagepath)
+    # !! Uses ACL-free storage !!
+    storage = request.cfg.storage
+    try:
+        item = storage.get_item(packagepath)
+        rev = item.get_revision(-1)
+    except NoSuchItemError, NoSuchRevisionError:
+        raise BackendError("No such item %r." % packagepath)
 
-    # TODO: clone to real backend from config!
-    # clone(tmp_backend, )
+    tmp_backend = backend
+    unserialize(tmp_backend, rev)
+
+    # clone to real backend from config WITHOUT checking ACLs!
+    clone(tmp_backend, storage)
