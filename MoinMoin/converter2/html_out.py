@@ -37,6 +37,8 @@ class Attributes(object):
         html.namespace,
     ])
 
+    visit_number_columns_spanned = Attribute('colspan')
+    visit_number_rows_spanned = Attribute('rowspan')
     visit_style = AttributeSimple()
     visit_title = AttributeSimple()
 
