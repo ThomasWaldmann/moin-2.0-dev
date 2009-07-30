@@ -57,9 +57,6 @@ class TestConverter(object):
         from MoinMoin.util.iri import Iri
         data = [
             (u'Text',
-                '<page page-href="wiki:/Test"><body><p>Text</p></body></page>',
-                {'page_url': Iri(scheme='wiki', path='/Test')}),
-            (u'Text',
                 '<page><body style="background-color: red"><p>Text</p></body></page>',
                 {'arguments': Arguments(keyword={'style': 'background-color: red'})}),
         ]
