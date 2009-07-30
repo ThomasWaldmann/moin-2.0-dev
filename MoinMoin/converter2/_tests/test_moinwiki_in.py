@@ -62,8 +62,8 @@ class TestConverter(object):
                 '<page page-href="wiki:/Test"><body><p>Text</p></body></page>',
                 {'page_url': Iri(scheme='wiki', path='/Test')}),
             (u'Text',
-                '<page><body background-color="red"><p>Text</p></body></page>',
-                {'arguments': Arguments(keyword={'background-color': 'red'})}),
+                '<page><body style="background-color: red"><p>Text</p></body></page>',
+                {'arguments': Arguments(keyword={'style': 'background-color: red'})}),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -211,12 +211,12 @@ class TestConverter(object):
             # XXX: Is <page> correct?
             (u'{{{#!\nwiki\n}}}',
                '<page><body><page><body><p>wiki</p></body></page></body></page>'),
-            (u'{{{#!(background-color=red)\nwiki\n}}}',
-               '<page><body><page><body background-color="red"><p>wiki</p></body></page></body></page>'),
+            (u'{{{#!(style="background-color: red")\nwiki\n}}}',
+               '<page><body><page><body style="background-color: red"><p>wiki</p></body></page></body></page>'),
             (u'{{{#!wiki\nwiki\n}}}',
                '<page><body><page><body><p>wiki</p></body></page></body></page>'),
-            (u'{{{#!wiki(background-color=red)\nwiki\n}}}',
-               '<page><body><page><body background-color="red"><p>wiki</p></body></page></body></page>'),
+            (u'{{{#!wiki(style="background-color: red")\nwiki\n}}}',
+               '<page><body><page><body style="background-color: red"><p>wiki</p></body></page></body></page>'),
         ]
         for i in data:
             yield (self.do, ) + i
