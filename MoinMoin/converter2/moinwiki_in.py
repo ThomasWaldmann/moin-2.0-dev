@@ -97,15 +97,11 @@ class Converter(ConverterMacro):
                     input.parameters.get('name') == 'wiki'):
                 return cls
 
-    def __call__(self, content, arguments=None, page_url=None):
-        attrib = {}
-        if page_url:
-            attrib[moin_page.page_href] = unicode(page_url)
-
+    def __call__(self, content, arguments=None):
         iter_content = _Iter(content)
 
         body = self.parse_block(iter_content, arguments)
-        root = moin_page.page(attrib=attrib, children=(body, ))
+        root = moin_page.page(children=(body, ))
 
         return root
 
