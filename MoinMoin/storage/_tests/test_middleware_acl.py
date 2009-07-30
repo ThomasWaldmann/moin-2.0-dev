@@ -60,11 +60,11 @@ class TestACLMiddleware(BackendTest):
         assert py.test.raises(AccessDeniedError, backend.create_item, "I will never exist")
 
         item = self.create_item_acl("i will exist!", "All:read,write")
-        rev = item.create_revision(0)
+        rev = item.create_revision(1)
         data = "my very existent data"
         rev.write(data)
         item.commit()
-        assert item.get_revision(0).read() == data
+        assert item.get_revision(1).read() == data
 
     def test_read_access_allowed(self):
         name = "readaccessallowed"
