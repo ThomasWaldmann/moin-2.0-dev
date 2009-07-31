@@ -30,29 +30,26 @@ log.load_config('wikiserverlogging.conf')
 
 from MoinMoin.script import MoinScript
 
-import tarfile
-from shutil import rmtree
+import gzip
+from StringIO import StringIO
 from wikiconfig import LocalConfig
-from migrate_old_wiki_data import run
 from MoinMoin.i18n.strings import all_pages as only_these
+from MoinMoin.storage.backends import memory, clone, enduser
+from MoinMoin.storage.serialization import unserialize
 def create_if_missing():
     successfile = '.success_creating_dev_wiki'
     if not os.path.isfile(successfile):
-        print "Untaring underlay. This may take a while..."
+        print "Decompressing system pages. This may take a while..."
         wiki_folder = 'wiki'
-        tar = tarfile.open(os.path.join(wiki_folder, 'underlay.tar'))
-        tar.extractall(wiki_folder)
-        tar.close()
-
-        underlay_folder = os.path.join(wiki_folder, 'underlay')
-        # For our simple dev wiki we fool the conversion script by adding an empty user folder.
-        try:
-            os.mkdir(os.path.join(underlay_folder, 'user'))
-        except OSError:
-            pass
-        run(underlay_folder, LocalConfig.backend_uri, only_these)
+        f = gzip.open(os.path.join(wiki_folder, 'syspages.xml.gz'))
+        data = StringIO(f.read())
+        f.close()
+        backend = memory.MemoryBackend()
+        unserialize(backend, data)
+        destination_backend = enduser.get_enduser_backend(LocalConfig.backend_uri)
+        clone(backend, destination_backend, only_these=only_these)
         successfile = open(successfile, 'w').close()
-        rmtree(underlay_folder)
+        print "Conversion succeeded."
 
 
 if __name__ == '__main__':
