@@ -10,7 +10,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.storage import upgrade_syspages
+from MoinMoin.storage.backends import upgrade_syspages
 from MoinMoin.storage.error import BackendError
 
 
@@ -32,9 +32,7 @@ def execute(item_name, request):
         if not cancelled:
             syspages = request.form.get('target')
             try:
-                # XXX in order to avoid a cyclic import... improve!
-                from MoinMoin.storage.backends import memory
-                upgrade_syspages(request, syspages, memory.MemoryBackend())
+                upgrade_syspages(request, syspages)
             except BackendError, e:
                 content = _('<br> System pages upgrade failed due to the following error: %s.' % e)
             else:
