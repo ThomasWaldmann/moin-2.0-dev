@@ -372,8 +372,6 @@ class Entry(TupleValue):
     element_name = 'entry'
 
     def __init__(self, key=None, value=None, attrs=None, rev_or_item=None):
-        if key == 'acl': # XXX avoid acl problems for now XXX
-            key = 'noacl'
         self.key = key
         if value is not None:
             value = (value, ) # use a 1-tuple
