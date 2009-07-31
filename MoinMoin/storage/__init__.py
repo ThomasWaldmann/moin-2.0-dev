@@ -47,7 +47,7 @@ from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
                                    NoSuchItemError, BackendError
 
 from MoinMoin.storage.serialization import Serializable, XMLGenerator, \
-                                           Data, Meta, ItemMeta, unserialize
+                                           Data, Meta, ItemMeta
 
 
 class Backend(Serializable):
