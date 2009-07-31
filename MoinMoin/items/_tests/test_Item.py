@@ -8,6 +8,7 @@
 
 import py
 
+from MoinMoin._tests import become_trusted
 from MoinMoin.items import Item, NonExistent, Binary, Text, Image, TransformableBitmapImage, PythonSrc, \
                            DELETED, MIMETYPE, \
                            EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
@@ -38,6 +39,7 @@ class TestItem:
         data = 'foobar'
         meta = dict(foo='bar')
         comment = u'saved it'
+        become_trusted(self.request)
         item = Item.create(self.request, name)
         # save rev 0
         item._save(meta, data, mimetype=mimetype, comment=comment)

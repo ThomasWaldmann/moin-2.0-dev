@@ -11,8 +11,7 @@ import py
 import time
 
 from MoinMoin import caching
-from MoinMoin.PageEditor import PageEditor
-
+from MoinMoin._tests import become_trusted, create_page
 
 class TestCaching(object):
     """ Tests the caching module """
@@ -66,15 +65,15 @@ class TestCaching(object):
         test_data1 = u'does not matter'
         test_data2 = u'something else'
         page_name = u'Caching_TestPage'
-        page = PageEditor(self.request, page_name)
-        page._write_file(test_data1)
-        cache = caching.CacheEntry(self.request, page, 'test_key', 'item')
+        become_trusted(self.request)
+        create_page(self.request, page_name, test_data1, mimetype='text/moin-wiki', acl=None)
+        item = self.request.storage.get_item(page_name)
+        cache = caching.CacheEntry(self.request, item, 'test_key', 'item')
         cache.update(test_data1)
-        assert not cache.needsUpdate([page])
+        assert not cache.needsUpdate([item])
         time.sleep(3) # XXX fails without, due to mtime granularity
-        page = PageEditor(self.request, page_name)
-        page._write_file(test_data2)
-        assert cache.needsUpdate([page])
+        create_page(self.request, page_name, test_data2, mimetype='text/moin-wiki', acl=None)
+        assert cache.needsUpdate([item])
 
     def test_filelike_readwrite(self):
         request = self.request

@@ -47,5 +47,3 @@ class Config(DefaultConfig):
     # used to check if it is really a wiki we may modify
     is_test_wiki = True
 
-    acl_rights_before = u"All:read,write,delete,create"
-
