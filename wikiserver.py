@@ -30,34 +30,41 @@ log.load_config('wikiserverlogging.conf')
 
 from MoinMoin.script import MoinScript
 
-import gzip
-from StringIO import StringIO
 from wikiconfig import LocalConfig
-from MoinMoin.i18n.strings import all_pages as only_these
+
+from MoinMoin.i18n.strings import all_pages as item_names
+
+from MoinMoin.storage.error import StorageError
 from MoinMoin.storage.backends import memory, clone, enduser
 from MoinMoin.storage.serialization import unserialize
-def create_if_missing():
-    successfile = '.success_creating_dev_wiki'
-    if not os.path.isfile(successfile):
-        print "Decompressing system pages. This may take a while..."
-        wiki_folder = 'wiki'
-        f = gzip.open(os.path.join(wiki_folder, 'syspages.xml.gz'))
-        data = StringIO(f.read())
-        f.close()
-        backend = memory.MemoryBackend()
-        unserialize(backend, data)
-        destination_backend = enduser.get_enduser_backend(LocalConfig.backend_uri)
-        clone(backend, destination_backend, only_these=only_these)
-        successfile = open(successfile, 'w').close()
-        print "Conversion succeeded."
+
+def check_backend():
+    """
+    check if the configured backend has the system pages,
+    if it does not, unserialize them from the xml file.
+    """
+    backend = enduser.get_enduser_backend(LocalConfig.backend_uri)
+    names = item_names[:]
+    # XXX xml file is incomplete, do not check for these pages:
+    names.remove('LanguageSetup')
+    names.remove('InterWikiMap')
+    names.remove('WikiLicense')
+    try:
+        for name in names:
+            item = backend.get_item(name)
+            del item
+    except StorageError:
+        # if there is some exception, we assume that backend needs to be filled
+        print "Unserializing system pages..."
+        xmlfile = os.path.join(moinpath, 'wiki', 'syspages.xml')
+        tmp_backend = memory.MemoryBackend()
+        unserialize(tmp_backend, xmlfile)
+        clone(tmp_backend, backend, only_these=names)
+        print "Unserialization finished."
 
 
 if __name__ == '__main__':
+    check_backend()
     sys.argv = ["moin.py", "server", "standalone"]
-    try:
-        create_if_missing()
-    except OSError, e:
-        print e
-        sys.exit("Conversion of underlay failed. Please remove the instance folder and retry.")
     MoinScript().run()
 
