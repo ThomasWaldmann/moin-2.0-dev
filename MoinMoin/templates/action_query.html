@@ -10,7 +10,9 @@
 {% if target %}
 <input type="text" name="target" size="80" maxlength="200" value="{{ target }}">
 {% endif %}
+{% if not no_comment %}
 <input type="text" name="comment" size="80" maxlength="200" value="">
+{% endif %}
 <input class="button" type="submit" name="button_ok" value="{{ label }}">
 <input class="button" type="submit" name="button_cancel" value="Cancel">
 </fieldset>
