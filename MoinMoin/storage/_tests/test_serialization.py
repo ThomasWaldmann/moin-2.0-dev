@@ -12,6 +12,7 @@ import py
 
 from StringIO import StringIO
 
+from MoinMoin._tests import become_trusted
 from MoinMoin.storage.error import ItemAlreadyExistsError
 from MoinMoin.conftest import init_test_request
 from MoinMoin.storage.serialization import Entry, create_value_object, serialize
@@ -19,6 +20,7 @@ from MoinMoin.storage.serialization import Entry, create_value_object, serialize
 class TestSerializer(object):
 
     def update_item(self, name, revno, meta, data):
+        become_trusted(self.request)
         try:
             item = self.request.storage.create_item(name)
         except ItemAlreadyExistsError:
