@@ -2,7 +2,7 @@ import sys
 from os import path, mkdir
 
 from MoinMoin.error import ConfigurationError
-from MoinMoin.storage.backends import fs, hg, memory, router
+from MoinMoin.storage.backends import fs, memory, router
 
 
 DATA = 'data'
@@ -46,6 +46,8 @@ def get_enduser_backend(backend_uri='fs:instance', mapping=None, user=None):
             user = fs.FSBackend(path.join(instance_folder, USER))
 
         elif backend_uri.startswith(HG_PREFIX):
+            # Due to external dependency that may not always be present, import hg backend here:
+            from MoinMoin.storage.backends import hg
             instance_folder = backend_uri[len(HG_PREFIX):]
             _create_folders(instance_folder)
 
