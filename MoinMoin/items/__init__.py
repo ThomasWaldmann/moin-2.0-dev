@@ -184,6 +184,9 @@ class Item(object):
     def do_copy(self):
         return self._action_query('copy', target=self.name)
 
+    def do_delete(self):
+        return self._action_query('delete')
+
     def do_destroy(self):
         return self._action_query('destroy', revno=self.rev.revno)
 
@@ -218,15 +221,29 @@ class Item(object):
         # we just create a new revision with almost same meta/data to show up on RC
         self._save(current_rev, current_rev, name=name, action='SAVE/COPY', extra=self.name, comment=comment)
 
+    def _rename(self, name, comment, action, extra=None):
+        oldname = self.name
+        extra = extra is not None and extra or oldname
+        self.rev.item.rename(name)
+        # we just create a new revision with almost same meta/data to show up on RC
+        # XXX any better way to do this?
+        self._save(self.meta, self.data, name=name, action=action, extra=oldname, comment=comment)
+
     def rename(self, name, comment=u''):
         """
         rename this item to item <name>
         """
-        oldname = self.name
-        self.rev.item.rename(name)
-        # we just create a new revision with almost same meta/data to show up on RC
-        # XXX any better way to do this?
-        self._save(self.meta, self.data, name=name, action='SAVE/RENAME', extra=oldname, comment=comment)
+        return self._rename(name, comment, action='SAVE/RENAME')
+
+    def delete(self, comment=u''):
+        """
+        delete this item by moving it to the trashbin
+        """
+        trash_prefix = u'Trash/' # XXX move to config
+        now = time.strftime(self.request.cfg.datetime_fmt, timefuncs.tmtuple(time.time()))
+        # make trash name unique by including timestamp:
+        trashname = u'%s%s (%s)' % (trash_prefix, self.name, now)
+        return self._rename(trashname, comment, action='SAVE/DELETE')
 
     def revert(self):
         # called from revert UI/POST
