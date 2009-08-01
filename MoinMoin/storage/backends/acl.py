@@ -57,11 +57,9 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessD
 ADMIN = 'admin'
 READ = 'read'
 WRITE = 'write'
-# TODO Decide how delete action should be implemented.
-DELETE = 'delete'
-DESTROY = 'destroy'
 # One may decide that only items that have been created by a trusted user can be edited.
 CREATE = 'create'
+DESTROY = 'destroy'
 
 
 class AclWrapperBackend(object):

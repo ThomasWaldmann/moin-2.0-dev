@@ -261,17 +261,14 @@ class XmlRpcBase:
         @param opts: dictionary that can contain the following arguments:
                 include_system:: set it to false if you do not want to see system pages
                 include_revno:: set it to True if you want to have lists with [pagename, revno]
-                include_deleted:: set it to True if you want to include deleted pages
                 exclude_non_writable:: do not include pages that the current user may not write to
                 prefix:: the page name must begin with this prefix to be included
-                mark_deleted:: returns the revision number -rev_no if the page was deleted.
-                    Makes only sense if you enable include_revno and include_deleted.
         @rtype: list
         @return: a list of all pages.
         """
         from MoinMoin.wikisync import normalise_pagename
-        options = {"include_system": True, "include_revno": False, "include_deleted": False,
-                   "exclude_non_writable": False, "prefix": "", "pagelist": None, "mark_deleted": False}
+        options = {"include_system": True, "include_revno": False,
+                   "exclude_non_writable": False, "prefix": "", "pagelist": None}
         if opts is not None:
             options.update(opts)
 
@@ -294,15 +291,12 @@ class XmlRpcBase:
                     return True
                 return n_name in pagelist
 
-        pagelist = self.request.rootpage.getPageList(filter=p_filter, exists=not options["include_deleted"],
-                                                     return_objects=options["include_revno"])
+        pagelist = self.request.rootpage.getPageList(filter=p_filter, return_objects=options["include_revno"])
 
         if options['include_revno']:
             pages = []
             for page in pagelist:
                 revno = page.get_real_rev()
-                if options["mark_deleted"] and not page.exists():
-                    revno = -revno
                 pages.append([self._outstr(page.page_name), revno])
             return pages
         else:
@@ -838,7 +832,6 @@ class XmlRpcBase:
 
             @param pagename: The pagename that is currently dealt with.
             @param diff: The diff that can be applied to the version specified by delta_remote_rev.
-                If it is None, the page is deleted.
             @param local_rev: The revno of the page on the other wiki system, used for the tag.
             @param delta_remote_rev: The revno that the diff is taken against.
             @param last_remote_rev: The last revno of the page `pagename` that is known by the other wiki site.
