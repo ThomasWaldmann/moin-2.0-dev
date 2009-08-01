@@ -258,10 +258,13 @@ class Item(object):
                 mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
             else:
                 # take text from textarea
-                data_text = request.form.get('data_text', '')
-                data = self.data_form_to_internal(data_text)
-                data = self.data_internal_to_storage(data)
-                mimetype = 'text/plain'
+                data = request.form.get('data_text', '')
+                if data:
+                    data = self.data_form_to_internal(data_text)
+                    data = self.data_internal_to_storage(data)
+                    mimetype = 'text/plain'
+                else:
+                    mimetype = None
         meta_text = request.form.get('meta_text', '')
         meta = self.meta_text_to_dict(meta_text)
         comment = self.request.form.get('comment')
