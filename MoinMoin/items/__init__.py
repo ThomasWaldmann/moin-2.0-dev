@@ -207,27 +207,26 @@ class Item(object):
             raise StorageError("unsupported content object: %r" % content)
         return hash_name, hash.hexdigest()
 
-    def copy(self):
-        # called from copy UI/POST
-        request = self.request
-        comment = request.form.get('comment')
-        target = request.form.get('target')
+    def copy(self, name, comment=u''):
+        """
+        copy this item to item <name>
+        """
         old_item = self.rev.item
-        backend = request.storage
-        copy_item(old_item, backend, name=target)
+        backend = self.request.storage
+        copy_item(old_item, backend, name=name)
         current_rev = old_item.get_revision(-1)
         # we just create a new revision with almost same meta/data to show up on RC
-        self._save(current_rev, current_rev, name=target, action='SAVE/COPY', extra=self.name, comment=comment)
+        self._save(current_rev, current_rev, name=name, action='SAVE/COPY', extra=self.name, comment=comment)
 
-    def rename(self):
-        # called from rename UI/POST
-        comment = self.request.form.get('comment')
+    def rename(self, name, comment=u''):
+        """
+        rename this item to item <name>
+        """
         oldname = self.name
-        newname = self.request.form.get('target')
-        self.rev.item.rename(newname)
+        self.rev.item.rename(name)
         # we just create a new revision with almost same meta/data to show up on RC
         # XXX any better way to do this?
-        self._save(self.meta, self.data, name=newname, action='SAVE/RENAME', extra=oldname, comment=comment)
+        self._save(self.meta, self.data, name=name, action='SAVE/RENAME', extra=oldname, comment=comment)
 
     def revert(self):
         # called from revert UI/POST
