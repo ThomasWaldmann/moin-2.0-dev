@@ -462,7 +462,7 @@ class Search:
             hits = self._moinSearch()
             logging.debug("_moinSearch found %d hits" % len(hits))
 
-        # important - filter deleted pages or pages the user may not read!
+        # important - filter pages the user may not read!
         if not self.filtered:
             hits = self._filter(hits)
             logging.debug("after filtering: %d hits" % len(hits))
@@ -599,7 +599,7 @@ class Search:
         """ Search pages using moin's built-in full text search
 
         Return list of tuples (page, match). The list may contain
-        deleted pages or pages the user may not read.
+        pages the user may not read.
 
         @keyword pages: optional list of pages to search in
         """
@@ -692,10 +692,10 @@ class Search:
             self.filtered = True
             return self.request.rootpage.getPageList(filter=filter_)
         else:
-            return self.request.rootpage.getPageList(user='', exists=0)
+            return self.request.rootpage.getPageList(user='')
 
     def _filter(self, hits):
-        """ Filter out deleted or acl protected pages
+        """ Filter out acl protected pages
 
         @param hits: list of hits
         """

@@ -194,7 +194,7 @@ class TestAcl(object):
         """ security: applying acl by user name"""
         # This acl string...
         acl_rights = [
-            "Admin1,Admin2:read,write,delete,admin  "
+            "Admin1,Admin2:read,write,admin  "
             "Admin3:read,write,admin  "
             "JoeDoe:read,write  "
             "name with spaces,another one:read,write  "
@@ -208,8 +208,8 @@ class TestAcl(object):
         users = (
             # user,                 rights
             # CamelCase names
-            ('Admin1', ('read', 'write', 'admin', 'delete')),
-            ('Admin2', ('read', 'write', 'admin', 'delete')),
+            ('Admin1', ('read', 'write', 'admin')),
+            ('Admin2', ('read', 'write', 'admin')),
             ('Admin3', ('read', 'write', 'admin')),
             ('JoeDoe', ('read', 'write')),
             ('SomeGuy', ('read', )),
@@ -262,7 +262,7 @@ class TestItemAcls(object):
 
     from MoinMoin._tests import wikiconfig
     class Config(wikiconfig.Config):
-        acl_rights_before = u"WikiAdmin:admin,read,write,create,delete"
+        acl_rights_before = u"WikiAdmin:admin,read,write,create,destroy"
         acl_rights_default = u"All:read,write"
         acl_rights_after = u"All:read"
         acl_hierarchic = False
@@ -284,24 +284,24 @@ class TestItemAcls(object):
         """ security: test item acls """
         tests = [
             # hierarchic, itemname, username, expected_rights
-            (False, self.mainitem_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'delete']),
-            (True,  self.mainitem_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'delete']),
+            (False, self.mainitem_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
+            (True,  self.mainitem_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
             (False, self.mainitem_name, u'AnyUser', ['read']), # by after acl
             (True,  self.mainitem_name, u'AnyUser', ['read']), # by after acl
             (False, self.mainitem_name, u'JaneDoe', ['read', 'write']), # by item acl
             (True,  self.mainitem_name, u'JaneDoe', ['read', 'write']), # by item acl
             (False, self.mainitem_name, u'JoeDoe', []), # by item acl
             (True,  self.mainitem_name, u'JoeDoe', []), # by item acl
-            (False, self.subitem1_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'delete']),
-            (True,  self.subitem1_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'delete']),
+            (False, self.subitem1_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
+            (True,  self.subitem1_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
             (False, self.subitem1_name, u'AnyUser', ['read', 'write']), # by default acl
             (True,  self.subitem1_name, u'AnyUser', ['read']), # by after acl
             (False, self.subitem1_name, u'JoeDoe', ['read', 'write']), # by default acl
             (True,  self.subitem1_name, u'JoeDoe', []), # by inherited acl from main item
             (False, self.subitem1_name, u'JaneDoe', ['read', 'write']), # by default acl
             (True,  self.subitem1_name, u'JaneDoe', ['read', 'write']), # by inherited acl from main item
-            (False, self.subitem2_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'delete']),
-            (True,  self.subitem2_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'delete']),
+            (False, self.subitem2_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
+            (True,  self.subitem2_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
             (False, self.subitem2_name, u'AnyUser', ['read']), # by after acl
             (True,  self.subitem2_name, u'AnyUser', ['read']), # by after acl
             (False, self.subitem2_name, u'JoeDoe', ['read']), # by after acl

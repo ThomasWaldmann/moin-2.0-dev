@@ -638,7 +638,7 @@ class Index(BaseIndex):
             self.touch()
             writer = xapidx.Index(self.dir, True)
             writer.configure(self.prefixMap, self.indexValueMap)
-            pages = request.rootpage.getPageList(user='', exists=1)
+            pages = request.rootpage.getPageList(user='')
             logging.debug("indexing all pages...")
             for pagename in pages:
                 self._index_page(request, writer, pagename, mode=mode)

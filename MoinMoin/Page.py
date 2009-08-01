@@ -23,7 +23,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessD
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
-from MoinMoin.items import ACL, DELETED, MIMETYPE, SIZE, EDIT_LOG, \
+from MoinMoin.items import ACL, MIMETYPE, SIZE, EDIT_LOG, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 
@@ -344,9 +344,6 @@ class Page(object):
     def edit_info(self):
         """ Return timestamp/editor info for this Page object (can be an old revision).
 
-            Note: if you ask about a deleted revision, it will report timestamp and editor
-                  for the delete action (in the edit-log, this is just a SAVE).
-
         This is used by MoinMoin/xmlrpc/__init__.py.
 
         @rtype: dict
@@ -405,39 +402,28 @@ class Page(object):
             return timestamp
         return 0
 
-    def isStandardPage(self, includeDeleted=True):
+    def isStandardPage(self):
         """
         Does this page live in the data dir?
 
-        @param includeDeleted: include deleted pages
         @rtype: bool
         @return: true if page lives in the data dir
         """
-        if not includeDeleted and DELETED in self._rev:
-            return False
-        elif not self._item:
+        if not self._item:
             return False
         return not hasattr(self._item._backend, '_layer_marked_underlay')
 
-    def exists(self, domain=None, includeDeleted=False):
+    def exists(self, domain=None):
         """
         Does this page exist?
 
         @param domain: OBSOLETE. Just for caller non-breakage.
-        @param includeDeleted: include deleted pages?
         @rtype: bool
         @return: true if page exists otherwise false
         """
         if self._item is None or self._rev is None:
             return False
-
-        try:
-            if not includeDeleted and self._rev[DELETED]:
-                return False
-        except KeyError:
-            pass
-
-	return True
+        return True
 
     def size(self, rev=-1):
         """
@@ -1286,7 +1272,7 @@ class RootPage(Item):
     def __init__(self, request):
         Item.__init__(self, request, name=u'')
 
-    def getPageList(self, user=None, exists=1, filter=None, return_objects=False):
+    def getPageList(self, user=None, filter=None, return_objects=False):
         """
         List user readable pages under current page.
 
@@ -1308,7 +1294,6 @@ class RootPage(Item):
 
         @param user: the user requesting the pages (MoinMoin.user.User)
         @param filter: filter function
-        @param exists: filter existing pages
         @param return_objects: lets it return a list of Page objects instead of
                                names
         @rtype: list of unicode strings
@@ -1324,7 +1309,7 @@ class RootPage(Item):
         if filter:
             search_term.add(term.NameFn(filter))
 
-        items = self.list_items(search_term, include_deleted=not exists)
+        items = self.list_items(search_term)
 
         if user or return_objects:
             for item in items:
