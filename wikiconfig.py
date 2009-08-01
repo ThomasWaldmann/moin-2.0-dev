@@ -21,9 +21,9 @@ class LocalConfig(multiconfig.DefaultConfig):
     # wikiconfig.py
     # wiki/
     #      data/
-    #      underlay/
+    #      syspages.xml
     # If that's not true, feel free to just set instance_dir to the real path
-    # where data/ and underlay/ is located:
+    # where data/ and syspages.xml is located:
     #instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
@@ -32,9 +32,6 @@ class LocalConfig(multiconfig.DefaultConfig):
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
-
-    # Where system and help pages are (you may exclude this from backup):
-    data_underlay_dir = os.path.join(instance_dir, 'underlay', '') # path with trailing /
 
     DesktopEdition = True # give all local users full powers
     acl_rights_default = u"All:read,write,delete,create,admin"

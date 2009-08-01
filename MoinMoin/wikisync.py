@@ -274,7 +274,6 @@ class MoinRemoteWiki(RemoteWiki):
         options = {"include_revno": True,
                    "include_deleted": True,
                    "exclude_non_writable": kwargs["exclude_non_writable"],
-                   "include_underlay": False,
                    "prefix": self.prefix,
                    "pagelist": self.pagelist,
                    "mark_deleted": True}
@@ -353,7 +352,7 @@ class MoinLocalWiki(RemoteWiki):
         else:
             page_filter = lambda x: True
         pages = []
-        for x in self.request.rootpage.getPageList(exists=False, include_underlay=False, filter=page_filter):
+        for x in self.request.rootpage.getPageList(exists=False, filter=page_filter):
             sp = self.createSyncPage(x)
             if sp:
                 pages.append(sp)

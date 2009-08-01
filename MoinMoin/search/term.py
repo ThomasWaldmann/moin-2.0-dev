@@ -456,12 +456,3 @@ class LastRevisionHasMetaDataKey(Term):
     def copy(self):
         return LastRevisionHasMetaDataKey(self.key)
 
-class FromUnderlay(Term):
-    """
-    Requires that an item comes from a layered backend
-    marked as 'underlay'.
-    """
-    _cost = 1 # trivial
-    def _evaluate(self, item):
-        return hasattr(item._backend, '_layer_marked_underlay')
-

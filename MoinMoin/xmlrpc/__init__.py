@@ -263,7 +263,6 @@ class XmlRpcBase:
                 include_revno:: set it to True if you want to have lists with [pagename, revno]
                 include_deleted:: set it to True if you want to include deleted pages
                 exclude_non_writable:: do not include pages that the current user may not write to
-                include_underlay:: return underlay pagenames as well
                 prefix:: the page name must begin with this prefix to be included
                 mark_deleted:: returns the revision number -rev_no if the page was deleted.
                     Makes only sense if you enable include_revno and include_deleted.
@@ -272,8 +271,7 @@ class XmlRpcBase:
         """
         from MoinMoin.wikisync import normalise_pagename
         options = {"include_system": True, "include_revno": False, "include_deleted": False,
-                   "exclude_non_writable": False, "include_underlay": True, "prefix": "",
-                   "pagelist": None, "mark_deleted": False}
+                   "exclude_non_writable": False, "prefix": "", "pagelist": None, "mark_deleted": False}
         if opts is not None:
             options.update(opts)
 
@@ -297,7 +295,6 @@ class XmlRpcBase:
                 return n_name in pagelist
 
         pagelist = self.request.rootpage.getPageList(filter=p_filter, exists=not options["include_deleted"],
-                                                     include_underlay=options["include_underlay"],
                                                      return_objects=options["include_revno"])
 
         if options['include_revno']:

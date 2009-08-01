@@ -58,3 +58,4 @@ if __name__ == '__main__':
     if len(sys.argv) != 3:
         sys.exit("You need to specify both:\n\t* The path to the old wiki data\n\t* The new backend_uri\nAbort!")
     run(sys.argv[1], sys.argv[2])
+

@@ -5,7 +5,7 @@ MoinMoin - test wiki configuration
 Do not change any values without good reason.
 
 We mostly want to have default values here, except for stuff that doesn't
-work without setting them (like data_dir and underlay_dir).
+work without setting them (like data_dir).
 
 @copyright: 2000-2004 by Juergen Hermann <jh@web.de>
 @license: GNU GPL, see COPYING for details.
@@ -21,7 +21,6 @@ class Config(DefaultConfig):
 
     _base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
     data_dir = os.path.join(_base_dir, "data") # needed for plugins package TODO
-    #data_underlay_dir = os.path.join(_base_dir, "underlay")
     flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     # configure backends

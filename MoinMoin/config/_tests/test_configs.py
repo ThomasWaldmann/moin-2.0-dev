@@ -2,10 +2,7 @@ from MoinMoin.config.multiconfig import DefaultConfig
 from MoinMoin.storage.backends.memory import MemoryBackend
 
 
-class NoUnderlay(DefaultConfig):
-    data_underlay_dir = None
-
-_tests = [NoUnderlay, ]
+_tests = [DefaultConfig, ]
 
 class TestConfigs:
     def testConfigs(self):
