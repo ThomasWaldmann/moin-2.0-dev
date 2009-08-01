@@ -37,9 +37,6 @@ IS_SYSPAGE = "is_syspage"
 # This says: original syspage as contained in release: <release>
 SYSPAGE_VERSION = "syspage_version"
 
-# special meta-data whose presence indicates that the item is deleted
-DELETED = "deleted"
-
 MIMETYPE = "mimetype"
 SIZE = "size"
 
@@ -119,10 +116,6 @@ class Item(object):
     def get_meta(self):
         return self.rev or {}
     meta = property(fget=get_meta)
-
-    def get_is_deleted(self):
-        return self.meta.get(DELETED, False)
-    is_deleted = property(get_is_deleted)
 
     def url(self, _absolute=False, **kw):
         """ return URL for this item, optionally as absolute URL """
@@ -242,7 +235,7 @@ class Item(object):
         trash_prefix = u'Trash/' # XXX move to config
         now = time.strftime(self.request.cfg.datetime_fmt, timefuncs.tmtuple(time.time()))
         # make trash name unique by including timestamp:
-        trashname = u'%s%s (%s)' % (trash_prefix, self.name, now)
+        trashname = u'%s%s (%s UTC)' % (trash_prefix, self.name, now)
         return self._rename(trashname, comment, action='SAVE/DELETE')
 
     def revert(self):
@@ -263,26 +256,21 @@ class Item(object):
     def modify(self):
         # called from modify UI/POST
         request = self.request
-        delete = request.form.get('delete')
-        if delete:
-            data = ''
-            mimetype = None
+        data_file = request.files.get('data_file')
+        if data_file.filename:
+            # user selected a file to upload
+            data = data_file.stream
+            mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
         else:
-            data_file = request.files.get('data_file')
-            if data_file.filename:
-                # user selected a file to upload
-                data = data_file.stream
-                mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
+            # take text from textarea
+            data = request.form.get('data_text', '')
+            if data:
+                data = self.data_form_to_internal(data)
+                data = self.data_internal_to_storage(data)
+                mimetype = 'text/plain'
             else:
-                # take text from textarea
-                data = request.form.get('data_text', '')
-                if data:
-                    data = self.data_form_to_internal(data)
-                    data = self.data_internal_to_storage(data)
-                    mimetype = 'text/plain'
-                else:
-                    data = '' # could've been u'' also!
-                    mimetype = None
+                data = '' # could've been u'' also!
+                mimetype = None
         meta_text = request.form.get('meta_text', '')
         meta = self.meta_text_to_dict(meta_text)
         comment = self.request.form.get('comment')
@@ -306,11 +294,6 @@ class Item(object):
         except NoSuchRevisionError:
             rev_no = -1
         newrev = storage_item.create_revision(rev_no + 1)
-        if not data:
-            # saving empty data automatically deletes the item
-            # XXX unclear: do we have meta-only items that shall not be "deleted" state?
-            newrev[DELETED] = True
-            comment = comment or 'deleted'
         for k, v in meta.iteritems():
             # TODO Put metadata into newrev here for now. There should be a safer way
             #      of input for this.
@@ -318,9 +301,6 @@ class Item(object):
             # Skip this metadata key. It should not be copied when editing an item.
             if not k == SYSPAGE_VERSION:
                 newrev[k] = v
-        if data:
-            # saving non-empty data automatically undeletes the item
-            newrev.pop(DELETED, False)
         hash_name, hash_hexdigest = self._write_stream(data, newrev)
         newrev[hash_name] = hash_hexdigest
         timestamp = time.time()
@@ -339,37 +319,29 @@ class Item(object):
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
 
-    def search_item(self, term=None, include_deleted=False):
+    def search_item(self, term=None):
         """ search items matching the term or,
-            if term is None, return all (or all non-deleted) items
+            if term is None, return all items
 
             TODO: rename this method and backend method to search_items
         """
-        from MoinMoin.search.term import AND, NOT, LastRevisionMetaDataMatch
-        if not include_deleted:
-            search_term = NOT(LastRevisionMetaDataMatch('deleted', True))
-            if term:
-                search_term = AND(term, search_term)
-            backend_items = self.request.storage.search_item(search_term)
+        if term:
+            backend_items = self.request.storage.search_item(term)
         else:
-            if term:
-                search_term = term
-                backend_items = self.request.storage.search_item(search_term)
-            else:
-                # special case: we just want all items
-                backend_items = self.request.storage.iteritems()
+            # special case: we just want all items
+            backend_items = self.request.storage.iteritems()
         for item in backend_items:
             yield Item.create(self.request, item=item)
 
     list_items = search_item  # just for cosmetics
 
-    def count_items(self, term=None, include_deleted=False):
+    def count_items(self, term=None):
         """
         Return item count for matching items. See search_item() for details.
         """
         count = 0
         # we intentionally use a loop to avoid creating a list with all item objects:
-        for item in self.list_items(term, include_deleted):
+        for item in self.list_items(term):
             count += 1
         return count
 
@@ -546,18 +518,15 @@ There is no help, you're doomed!
         return sorted(items)
 
     def do_show(self):
-        show_templates = False
         item = self.rev.item
         if item is None:
             # it is the dummy item -> this is a new and empty item
             show_templates = True
             rev_nos = log = []
         else:
+            show_templates = False
             rev_nos = item.list_revisions()
             log = self._revlog(item, rev_nos)
-            if self.rev.revno == rev_nos[-1] and self.is_deleted:
-                # last revision is deleted
-                show_templates = True
         if show_templates:
             item_templates = self.get_templates(self.mimetype)
             html_template = 'show_template_selection.html'
