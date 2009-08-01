@@ -868,6 +868,7 @@ var search_hint = "%(search_hint)s";
         menu = [
             'rc',
             '__separator__',
+            'delete',
             'rename',
             'copy',
             '__separator__',
@@ -888,6 +889,7 @@ var search_hint = "%(search_hint)s";
             '__separator__': _('------------------------'),
             'refresh': _('Delete Cache'),
             'rename': _('Rename Item'),
+            'delete': _('Delete Item'),
             'rc': _('Recent Changes'),
             'copy': _('Copy Item'),
             'LikePages': _('Like Pages'),
