@@ -204,7 +204,7 @@ class Index(BaseIndex):
         'stem_lang': 'XSTEMLANG', # ISO Language code this document was stemmed in
         'category': 'XCAT',       # category this document belongs to
         'fulltitle': 'XFT',       # full title
-        'domain': 'XDOMAIN',      # standard
+        'domain': 'XDOMAIN',      # standard or syspages
         'revision': 'XREV',       # revision of page
                                   #Y   year (four digits)
     }
