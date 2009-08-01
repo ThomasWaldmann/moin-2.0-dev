@@ -13,7 +13,7 @@ from py.test import raises
 import re, shutil
 
 from MoinMoin.datastruct.backends._tests import GroupsBackendTest
-from MoinMoin.datastruct import WikiGroups
+from MoinMoin.datastruct import WikiGroups, GroupDoesNotExistError
 from MoinMoin import Page, security
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.user import User
@@ -40,11 +40,12 @@ class TestWikiGroupBackend(GroupsBackendTest):
         become_trusted(request)
 
         page = create_page(request, u'SomeGroup', u" * ExampleUser")
-        page.renamePage('AnotherGroup')
+        page.rename('AnotherGroup')
 
         result = u'ExampleUser' in request.groups[u'AnotherGroup']
+        assert result
 
-        assert result is True
+        raises(GroupDoesNotExistError, lambda: request.groups[u'SomeGroup'])
 
     def test_copy_group_page(self):
         """
@@ -54,11 +55,13 @@ class TestWikiGroupBackend(GroupsBackendTest):
         become_trusted(request)
 
         page = create_page(request, u'SomeGroup', u" * ExampleUser")
-        page.copyPage(u'SomeOtherGroup')
+        page.copy(u'SomeOtherGroup')
 
         result = u'ExampleUser' in request.groups[u'SomeOtherGroup']
+        assert result
 
-        assert result is True
+        result = u'ExampleUser' in request.groups[u'SomeGroup']
+        assert result
 
     def test_appending_group_page(self):
         """
