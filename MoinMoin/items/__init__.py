@@ -260,7 +260,7 @@ class Item(object):
                 # take text from textarea
                 data = request.form.get('data_text', '')
                 if data:
-                    data = self.data_form_to_internal(data_text)
+                    data = self.data_form_to_internal(data)
                     data = self.data_internal_to_storage(data)
                     mimetype = 'text/plain'
                 else:
