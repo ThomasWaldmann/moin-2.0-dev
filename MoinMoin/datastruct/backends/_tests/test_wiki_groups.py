@@ -3,7 +3,7 @@
 MoinMoin - MoinMoin.backends.wiki_group tests
 
 @copyright: 2003-2004 by Juergen Hermann <jh@web.de>,
-            2007 by MoinMoin:ThomasWaldmann
+            2007,2009 by MoinMoin:ThomasWaldmann
             2008 by MoinMoin:MelitaMihaljevic
             2009 by MoinMoin:DmitrijsMilajevs
 @license: GNU GPL, see COPYING for details.
@@ -109,13 +109,15 @@ class TestWikiGroupBackend(GroupsBackendTest):
         page_content = "\n".join(page_content)
         create_page(request, u'UserGroup', page_content)
 
+        # updates the text with the text_user
         test_user = create_random_string_list(length=15, count=1)[0]
-        page = append_page(request, u'UserGroup', u' * %s' % test_user)
-
-        # saves the text without test_user
-        page.saveText(page_content, 0)
+        create_page(request, u'UserGroup', page_content + '\n * %s' % test_user)
         result = test_user in request.groups[u'UserGroup']
+        assert result
 
+        # updates the text without test_user
+        create_page(request, u'UserGroup', page_content)
+        result = test_user in request.groups[u'UserGroup']
         assert not result
 
     def test_group_page_user_addition_trivial_change(self):
@@ -132,7 +134,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         # next member saved  as trivial change
         test_user = create_random_string_list(length=15, count=1)[0]
         member = u" * %s\n" % test_user
-        page.saveText(member, 0, trivial=1)
+        page = create_page(request, u'UserGroup', member)
 
         result = test_user in request.groups[u'UserGroup']
 
