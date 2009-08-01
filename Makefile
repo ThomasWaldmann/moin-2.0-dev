@@ -41,21 +41,9 @@ check-tabs:
 epydoc: patchlevel
 	@epydoc -o ../html-1.9 --name=MoinMoin --url=http://moinmo.in/ --graph=all --graph-font=Arial MoinMoin
 
-# Create new underlay directory from MoinMaster
-# Should be used only on TW machine
-underlay:
-	rm -rf $(share)/underlay
-	MoinMoin/script/moin.py --config-dir=/srv/moin/cfg/1.9 --wiki-url=http://master19.moinmo.in/ maint globaledit
-	MoinMoin/script/moin.py --config-dir=/srv/moin/cfg/1.9 --wiki-url=http://master19.moinmo.in/ maint reducewiki --target-dir=$(share)/underlay
-	rm -rf $(share)/underlay/pages/InterWikiMap
-	rm -rf $(share)/underlay/pages/MoinPagesEditorGroup
-	cd $(share); rm -f underlay.tar; tar cf underlay.tar underlay
-
 pagepacks:
 	@python MoinMoin/_tests/maketestwiki.py
 	@MoinMoin/script/moin.py --config-dir=MoinMoin/_tests --wiki-url=http://localhost/ maint mkpagepacks
-	cd $(share) ; rm -rf underlay
-	cp -a $(testwiki)/underlay $(share)/
 	
 dist:
 	-rm MANIFEST
@@ -79,10 +67,6 @@ update:
 	hg pull -u
 	$(MAKE) patchlevel
 
-# Update underlay directory from the tarball
-update-underlay:
-	cd $(share); rm -rf underlay; tar xf underlay.tar
-
 test:
 	@echo Testing is now done using \`py.test\`. py.test can be installed by downloading from http://codespeak.net/py/dist/download.html
 	@echo Writing tests is explained on http://codespeak.net/py/dist/test.html
@@ -103,7 +87,7 @@ clean-testwiki:
 clean-pyc:
 	find . -name "*.pyc" -exec rm -rf "{}" \; 
 
-.PHONY: all dist install-docs check-tabs epydoc underlay patchlevel \
-	check-i18n update update-underlay test testwiki clean \
+.PHONY: all dist install-docs check-tabs epydoc patchlevel \
+	check-i18n update test testwiki clean \
 	clean-testwiki clean-pyc
 
