@@ -1286,7 +1286,7 @@ class RootPage(Item):
     def __init__(self, request):
         Item.__init__(self, request, name=u'')
 
-    def getPageList(self, user=None, exists=1, filter=None, return_objects=False):
+    def getPageList(self, user=None, exists=1, filter=None, include_syspages=True, return_objects=False):
         """
         List user readable pages under current page.
 
@@ -1328,6 +1328,15 @@ class RootPage(Item):
 
         if user or return_objects:
             for item in items:
+                if not include_syspages:
+                    try:
+                        rev = item.get_revision(-1)
+                        if rev[IS_SYSPAGE]:
+                            continue
+                    except KeyError:
+                        # No syspage. Go on.
+                        pass
+
                 # XXX ACL check when user given?
                 if return_objects:
                     page = Page.from_item(request, item)

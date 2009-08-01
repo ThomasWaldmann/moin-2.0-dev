@@ -869,7 +869,9 @@ options_no_group_name = {
     ('shared_intermap', None,
      "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
     ('backend_uri', None,
-     'Locates storage backends; Backends are automatically set up depending on the backend_uri provided.'),
+     'Locates storage backends; Backends are automatically set up depending on the backend_uri provided. May be omitted if storage is constructed manually'),
+    ('storage', None,
+     'Data/User storage backends; Constructed automatically with get_enduser_backend(backend_uri). Otherwise, this needs to point something that implements the storage API and has a user_backend attribute.'),
   )),
   # ==========================================================================
   'urls': ('URLs', None, (

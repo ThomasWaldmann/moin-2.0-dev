@@ -84,7 +84,11 @@ def execute(pagename, request):
     }))
 
     # Get page dict readable by current user
-    pagenames = list(request.rootpage.getPageList())
+    try:
+        syspages = int(request.values.get('underlay', True))
+    except ValueError:
+        syspages = True
+    pagenames = list(request.rootpage.getPageList(include_syspages=syspages))
     pagenames.sort()
     for pagename in pagenames:
         result.append(sitemap_url(request, pagename))
