@@ -12,7 +12,6 @@ import py.test
 
 from MoinMoin import wikiutil
 from MoinMoin.storage import Item
-from MoinMoin.items import DELETED
 from MoinMoin.storage.backends.fs19 import FSPageBackend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
@@ -156,17 +155,6 @@ class TestFS19Backend(object):
     def test_metadata_that_doesnt_exist(self):
         item = self.backend.get_item(item_name)
         py.test.raises(KeyError, item.__getitem__, 'asdf')
-
-    def test_metadata_not_deleted(self):
-        item = self.backend.get_item(item_name)
-        rev = item.get_revision(0)
-        py.test.raises(KeyError, rev.__getitem__, DELETED)
-
-    def test_metadata_deleted(self):
-        item = self.backend.get_item(deleted_item_name)
-        rev = item.get_revision(1)
-        assert rev[DELETED] is True
-        assert rev['acl'] == deleted_item_acl # fs19 backend gets this from rev N-1
 
     def test_metadata_mtime(self):
         item = self.backend.get_item(item_name)

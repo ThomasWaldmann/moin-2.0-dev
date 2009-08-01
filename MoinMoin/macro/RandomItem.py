@@ -21,7 +21,7 @@ def macro_RandomItem(macro, links=1):
     item_count = max(links, 1) # at least 1 link
 
     # Get full page list - very fast!
-    all_item_names = [i.name for i in request.rootitem.list_items(include_deleted=True)]
+    all_item_names = [i.name for i in request.rootitem.list_items()]
 
     # Now select random page from the full list, and if it exists and we
     # can read it, save.
@@ -32,16 +32,13 @@ def macro_RandomItem(macro, links=1):
         item_name = random.choice(all_item_names)
         all_item_names.remove(item_name)
 
-        # Filter out deleted pages or pages the user may not read.
+        # Filter out pages the user may not read.
         try:
             item = Item.create(request, item_name)
-            deleted = item.is_deleted # accesses item metadata
+            random_item_names.append(item_name)
+            found += 1
         except AccessDeniedError:
             pass
-        else:
-            if not deleted:
-                random_item_names.append(item_name)
-                found += 1
 
     if not random_item_names:
         return ''
