@@ -264,6 +264,7 @@ class Item(object):
                     data = self.data_internal_to_storage(data)
                     mimetype = 'text/plain'
                 else:
+                    data = '' # could've been u'' also!
                     mimetype = None
         meta_text = request.form.get('meta_text', '')
         meta = self.meta_text_to_dict(meta_text)
