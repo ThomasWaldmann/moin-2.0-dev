@@ -204,7 +204,7 @@ class Index(BaseIndex):
         'stem_lang': 'XSTEMLANG', # ISO Language code this document was stemmed in
         'category': 'XCAT',       # category this document belongs to
         'fulltitle': 'XFT',       # full title
-        'domain': 'XDOMAIN',      # standard or underlay
+        'domain': 'XDOMAIN',      # standard
         'revision': 'XREV',       # revision of page
                                   #Y   year (four digits)
     }
@@ -420,8 +420,6 @@ class Index(BaseIndex):
 
         @param page: page
         """
-        if page.isUnderlayPage():
-            yield 'underlay'
         if page.isStandardPage():
             yield 'standard'
         if wikiutil.isSystemPage(self.request, page.page_name):

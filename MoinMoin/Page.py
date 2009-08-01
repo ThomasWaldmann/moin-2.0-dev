@@ -405,20 +405,6 @@ class Page(object):
             return timestamp
         return 0
 
-    def isUnderlayPage(self, includeDeleted=True):
-        """
-        Does this page live in the underlay dir?
-
-        @param includeDeleted: include deleted pages
-        @rtype: bool
-        @return: true if page lives in the underlay dir
-        """
-        if not includeDeleted and DELETED in self._rev:
-            return False
-        elif not self._item:
-            return False
-        return hasattr(self._item._backend, '_layer_marked_underlay')
-
     def isStandardPage(self, includeDeleted=True):
         """
         Does this page live in the data dir?
@@ -437,8 +423,7 @@ class Page(object):
         """
         Does this page exist?
 
-        @param domain: where to look for the page. Default: look in all,
-                       available values: 'underlay', 'standard'
+        @param domain: OBSOLETE. Just for caller non-breakage.
         @param includeDeleted: include deleted pages?
         @rtype: bool
         @return: true if page exists otherwise false
@@ -452,12 +437,7 @@ class Page(object):
         except KeyError:
             pass
 
-        if domain is None:
-            return True
-        elif domain == 'underlay':
-            return hasattr(self._item._backend, '_layer_marked_underlay')
-        else:
-            return not hasattr(self._item._backend, '_layer_marked_underlay')
+	return True
 
     def size(self, rev=-1):
         """
@@ -1123,8 +1103,7 @@ class Page(object):
             page.lazy_load()
         else:
             page.body = alternative_text
-            logging.warn('The page "%s" could not be found. Check your'
-                         ' underlay directory setting.' % page.page_name)
+            logging.warn('The page "%s" could not be found.' % page.page_name)
 
         page._page_name_force = page.page_name
         page.page_name = self.page_name
@@ -1307,7 +1286,7 @@ class RootPage(Item):
     def __init__(self, request):
         Item.__init__(self, request, name=u'')
 
-    def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
+    def getPageList(self, user=None, exists=1, filter=None, return_objects=False):
         """
         List user readable pages under current page.
 
@@ -1342,9 +1321,6 @@ class RootPage(Item):
             user = request.user
 
         search_term = term.AND()
-        if not include_underlay:
-            search_term.add(term.FromUnderlay())
-
         if filter:
             search_term.add(term.NameFn(filter))
 

@@ -84,11 +84,7 @@ def execute(pagename, request):
     }))
 
     # Get page dict readable by current user
-    try:
-        underlay = int(request.values.get('underlay', 1))
-    except ValueError:
-        underlay = 1
-    pagenames = list(request.rootpage.getPageList(include_underlay=underlay))
+    pagenames = list(request.rootpage.getPageList())
     pagenames.sort()
     for pagename in pagenames:
         result.append(sitemap_url(request, pagename))

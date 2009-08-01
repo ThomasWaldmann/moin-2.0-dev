@@ -41,17 +41,13 @@ class Config(multiconfig.DefaultConfig):
     # instance_dir/
     #              wikiconfig.py
     #              data/
-    #              underlay/
     # If that's not true, feel free to just set instance_dir to the real path
-    # where data/ and underlay/ is located:
+    # where data/
     #instance_dir = '/where/ever/your/instance/is'
     instance_dir = wikiconfig_dir
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
-
-    # Where system and help pages are (you may exclude this from backup):
-    data_underlay_dir = os.path.join(instance_dir, 'underlay', '') # path with trailing /
 
     # The URL prefix we use to access the static stuff (img, css, js).
     # Note: moin runs a static file server at url_prefix_static path (relative

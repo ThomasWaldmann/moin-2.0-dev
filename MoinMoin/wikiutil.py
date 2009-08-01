@@ -611,8 +611,14 @@ def isSystemPage(request, pagename):
     @rtype: bool
     @return: true if page is a system page
     """
-    from MoinMoin import i18n
-    return pagename in i18n.system_pages or isTemplatePage(request, pagename)
+    from MoinMoin.items import IS_SYSPAGE
+    item = request.storage.get_item(pagename)
+    try:
+        return item.get_revision(-1)[IS_SYSPAGE]
+    except KeyError:
+        pass
+
+    return isTemplatePage(request, pagename)
 
 
 def isTemplatePage(request, pagename):

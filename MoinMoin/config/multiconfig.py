@@ -392,7 +392,7 @@ class ConfigFunctionality(object):
 
     def calc_secrets(self):
         """ make up some 'secret' using some config values """
-        varnames = ['data_dir', 'data_underlay_dir', 'language_default',
+        varnames = ['data_dir', 'language_default',
                     'mail_smarthost', 'mail_from', 'page_front_page',
                     'theme_default', 'sitename', 'logo_string',
                     'interwikiname', 'user_homewiki', 'acl_rights_before', ]
@@ -532,20 +532,16 @@ file. It should match the actual charset of the configuration file.
     def _check_directories(self):
         """ Make sure directories are accessible
 
-        Both data and underlay should exists and allow read, write and
+        data/ should exists and allow read, write and
         execute.
         """
         mode = os.F_OK | os.R_OK | os.W_OK | os.X_OK
-        for attr in ('data_dir', 'data_underlay_dir'):
-            path = getattr(self, attr)
+        attr = 'data_dir'
+        path = getattr(self, attr)
 
-            # allow an empty underlay path or None
-            if attr == 'data_underlay_dir' and not path:
-                continue
-
-            path_pages = os.path.join(path, "pages")
-            if not (os.path.isdir(path_pages) and os.access(path_pages, mode)):
-                msg = """
+        path_pages = os.path.join(path, "pages")
+        if not (os.path.isdir(path_pages) and os.access(path_pages, mode)):
+            msg = """
 %(attr)s "%(path)s" does not exist, or has incorrect ownership or
 permissions.
 
@@ -556,7 +552,7 @@ and group.
 It is recommended to use absolute paths and not relative paths. Check
 also the spelling of the directory name.
 """ % {'attr': attr, 'path': path, }
-                raise error.ConfigurationError(msg)
+            raise error.ConfigurationError(msg)
 
     def _loadPluginModule(self):
         """
@@ -864,7 +860,6 @@ options_no_group_name = {
   # ==========================================================================
   'data': ('Data storage', None, (
     ('data_dir', './data/', "Path to the data directory containing your (locally made) wiki pages."),
-    ('data_underlay_dir', './underlay/', "Path to the underlay directory containing distribution system and help pages."),
     ('cache_dir', None, "Directory for caching, by default computed from `data_dir`/cache."),
     ('session_dir', None, "Directory for session storage, by default computed to be `cache_dir`/__session__."),
     ('user_dir', None, "Directory for user storage, by default computed to be `data_dir`/user."),
@@ -873,10 +868,8 @@ options_no_group_name = {
 
     ('shared_intermap', None,
      "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
-    ('storage', None,
-     'Data/User storage backends; the None default will make Moin construct a backend.'),  # XXX Elaborate?
-    ('underlay_backend', None,
-     'Underlay storage backend; if None and `data_backend` is also None Moin will construct a backend based on the `underlay_data_dir` setting'),  # XXX NotImplemented?
+    ('backend_uri', None,
+     'Locates storage backends; Backends are automatically set up depending on the backend_uri provided.'),
   )),
   # ==========================================================================
   'urls': ('URLs', None, (
