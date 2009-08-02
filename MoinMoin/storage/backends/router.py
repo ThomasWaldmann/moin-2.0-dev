@@ -35,7 +35,7 @@ class RouterBackend(Backend):
 
     For method docstrings, please see the "Backend" base class.
     """
-    def __init__(self, mapping, users):
+    def __init__(self, mapping):
         """
         Initialise router backend.
 
@@ -48,21 +48,13 @@ class RouterBackend(Backend):
               that all items that don't lie in the namespace of any other
               backend are stored there.
 
-        The user backend provided must be a regular backend.
-
         @type mapping: list of tuples of mountpoint -> backend mappings
         @param mapping: [(mountpoint, backend), ...]
-        @type users: subclass of MoinMoin.storage.Backend
-        @param users: The backend where users are stored.
         """
-        self.user_backend = users
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
 
         if not mapping or self.mapping[-1][0] != '':
             raise ConfigurationError("You must specify a backend for '/' or '' as the last backend in the mapping.")
-        if not users:
-            raise ConfigurationError("You must specify a backend for user storage.")
-
 
     def _get_backend(self, itemname):
         """
@@ -88,45 +80,15 @@ class RouterBackend(Backend):
         # contain the item.
         raise AssertionError('No backend found for %s. Available backends: %r' % (itemname, self.mapping))
 
-    def _iteritems(self):
+    def iteritems(self):
         """
-        This only iterates over all non-user items. We don't want them to turn up in history.
+        Iterate over all items. Necessary for traversal.
+
+        @see: Backend.iteritems.__doc__
         """
         for mountpoint, backend in self.mapping:
             for item in backend.iteritems():
                 yield RouterItem(item, mountpoint, item.name, self)
-
-    def iteritems(self):
-        """
-        Iterate over all items, even users. (Necessary for traversal.)
-
-        @see: Backend.iteritems.__doc__
-        """
-        for item in self._iteritems():
-            yield item
-        for user in self.user_backend.iteritems():
-            yield user
-
-    def history(self, reverse=True):
-        """
-        Just the basic, slow implementation of history with the difference
-        that we don't iterate over users. For traversal of the items
-        of all the backends defined in the mapping, use self.iteritems.
-
-        @see: Backend.history.__doc__
-        """
-        revs = []
-        for item in self._iteritems():
-            for revno in item.list_revisions():
-                rev = item.get_revision(revno)
-                revs.append((rev.timestamp, rev.revno, item.name, ))
-        revs.sort() # from oldest to newest
-        if reverse:
-            revs.reverse()
-        for ts, revno, name in revs:
-            item = self.get_item(name)
-            rev = item.get_revision(revno)
-            yield RouterRevision(item, rev)
 
     def has_item(self, itemname):
         """
