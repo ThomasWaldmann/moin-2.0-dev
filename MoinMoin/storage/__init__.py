@@ -689,11 +689,12 @@ class Item(Serializable, DictMixin):
         im = ItemMeta({}, self)
         im.serialize(xmlgen)
         revnos = self.list_revisions()
-        current_revno = revnos[-1]
-        for revno in revnos:
-            if xmlgen.shall_serialize(item=self, revno=revno, current_revno=current_revno):
-                rev = self.get_revision(revno)
-                rev.serialize(xmlgen)
+        if revnos:
+            current_revno = revnos[-1]
+            for revno in revnos:
+                if xmlgen.shall_serialize(item=self, revno=revno, current_revno=current_revno):
+                    rev = self.get_revision(revno)
+                    rev.serialize(xmlgen)
 
 
 class Revision(Serializable, DictMixin):
