@@ -52,9 +52,8 @@ class RouterBackend(Backend):
         @param mapping: [(mountpoint, backend), ...]
         """
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
+        # TODO check for content/user/trash being present and raise config errors otherwise
 
-        if not mapping or self.mapping[-1][0] != '':
-            raise ConfigurationError("You must specify a backend for '/' or '' as the last backend in the mapping.")
 
     def _get_backend(self, itemname):
         """
@@ -79,6 +78,9 @@ class RouterBackend(Backend):
         # This point should never be reached since at least the last mountpoint, '/', should
         # contain the item.
         raise AssertionError('No backend found for %s. Available backends: %r' % (itemname, self.mapping))
+
+    def get_backend(self, namespace):
+        return self._get_backend(namespace)[0]
 
     def iteritems(self):
         """
