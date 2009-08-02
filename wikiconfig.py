@@ -27,8 +27,8 @@ class LocalConfig(multiconfig.DefaultConfig):
     #instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
-    USER_PREFIX = 'Users/'
-    DATA_PREFIX = '/'
+    user_ns = 'UserProfiles/'
+    content_ns = '/'
     backend_uri = 'fs:instance'
     storage = get_enduser_backend(backend_uri)
 

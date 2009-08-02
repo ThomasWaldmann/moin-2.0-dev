@@ -31,7 +31,7 @@ def get_user_backend(request):
     Just a shorthand that makes the rest of the code easier
     by returning the proper user backend.
     """
-    user_prefix = request.cfg.USER_PREFIX
+    user_prefix = request.cfg.user_ns
     return request.cfg.storage.get_backend(user_prefix)
 
 
@@ -257,7 +257,7 @@ class User:
                                First tuple element was used for authentication.
         """
 
-        user_prefix = request.cfg.USER_PREFIX
+        user_prefix = request.cfg.user_ns
         self._user_backend = request.cfg.storage.get_backend(user_prefix)
         self._user = None
 
