@@ -56,7 +56,7 @@ class TestSerializer(object):
         xmlfile = StringIO()
         serialize(item, xmlfile)
         xml = xmlfile.getvalue()
-        print xml
+        #print xml
         assert xml == ('<item name="foo2">'
                        '<meta></meta>'
                        '<revision revno="0">'
@@ -79,7 +79,7 @@ class TestSerializer(object):
         xmlfile = StringIO()
         serialize(self.request.storage, xmlfile)
         xml = xmlfile.getvalue()
-        print xml
+        #print xml
         assert xml == ('<backend>'
                        '<item name="bar3">'
                        '<meta></meta>'
