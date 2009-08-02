@@ -5,8 +5,6 @@
     "delete" means that the complete item will be moved to the trashbin part
     of the wiki namespace (trashbin action lets you view and manage the
     trashbin).
-    The storage layer checks for the 'delete' permission before moving stuff
-    to the trashbin.
 
     @copyright: 2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.

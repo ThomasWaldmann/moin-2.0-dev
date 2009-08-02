@@ -231,7 +231,7 @@ class TestCopyPage(object):
         Tests copying a page without write rights
         """
         py.test.skip("No use is being made of ACLs right now. Fix after SoC.")
-        self.text = u'#acl SomeUser:read,write,delete All:read\n'
+        self.text = u'#acl SomeUser:read,write All:read\n'
         self.createTestPage()
         result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
         revision = Page(self.request, self.copy_pagename).current_rev()
@@ -242,7 +242,7 @@ class TestCopyPage(object):
         Tests copying a page without read rights
         """
         py.test.skip("No use is being made of ACLs right now. Fix after SoC.")
-        self.text = u'#acl SomeUser:read,write,delete All:\n'
+        self.text = u'#acl SomeUser:read,write All:\n'
         self.createTestPage()
         result, msg = PageEditor(self.request, self.pagename).copyPage(self.copy_pagename)
         revision = Page(self.request, self.copy_pagename).current_rev()

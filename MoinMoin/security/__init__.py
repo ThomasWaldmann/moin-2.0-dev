@@ -80,7 +80,7 @@ class AccessControlList:
 
         "User" is a user name and triggers only if the user matches.
         Any name can be used in acl lines, including names with spaces
-        using esoteric languages.
+        using exotic languages.
 
         "SomeGroup" is a group name. The group defines its members somehow,
         e.g. on a wiki page of this name as first level list with the group
@@ -90,10 +90,9 @@ class AccessControlList:
 
         "All" is a special group containing all users (Known and Anonymous users).
 
-        "right" may be an arbitrary word like read, write, delete, admin.
-        Only words in cfg.acl_validrights are accepted, others are
-        ignored. It is allowed to specify no rights, which means that no
-        rights are given.
+        "right" may be an arbitrary word like read, write or admin.
+        Only words in cfg.acl_rights_valid are accepted, others are ignored.
+        It is allowed to specify no rights, which means that no rights are given.
 
     How ACL is processed
 
@@ -110,8 +109,8 @@ class AccessControlList:
             SomeUser:read,write SomeGroup:read,write,admin All:read
 
         In this example, SomeUser can read and write but can not admin
-        or delete items. Rights that are NOT specified on the right list
-        are automatically set to NO.
+        items. Rights that are NOT specified on the right list are
+        automatically set to NO.
 
     Using Prefixes
 
@@ -122,10 +121,10 @@ class AccessControlList:
 
         The acl line above will grant SomeUser read right, and OtherUser
         write right, but will NOT block automatically all other rights
-        for these users. For example, if SomeUser ask to write, the
+        for these users. For example, if SomeUser asks to write, the
         above acl line does not define if he can or can not write. He
         will be able to write if acl_rights_before or acl_rights_after
-        allow this (see configuration options).
+        allows this (see configuration options).
 
         Using prefixes, this acl line:
 
@@ -139,15 +138,15 @@ class AccessControlList:
 
             +All:read -SomeUser:admin SomeGroup:read,write,admin
 
-        Notice that you probably will not want to use the second and
+        Note that you probably would not want to use the second and
         third examples in ACL entries of some item. They are very
-        useful on the moin configuration entries though.
+        useful in the wiki configuration though.
 
    Configuration options
 
        cfg.acl_rights_default
            It is is ONLY used when no item ACLs are found.
-           Default: "Known:read,write,delete All:read,write",
+           Default: "Known:read,write,create All:read,write",
 
        cfg.acl_rights_before
            This will be inserted BEFORE any item/default ACL entries.
@@ -160,7 +159,7 @@ class AccessControlList:
        cfg.acl_rights_valid
            These are the acceptable (known) rights (and the place to
            extend, if necessary).
-           Default: ["read", "write", "delete", "admin"]
+           Default: ["read", "write", "create", "admin", "destroy"]
     """
 
     special_users = ["All", "Known", "Trusted"] # order is important
@@ -208,7 +207,7 @@ class AccessControlList:
                     rightsdict = {}
                     if modifier:
                         # Only user rights are added to the right dict.
-                        # + add rights with value of 1
+                        # + add right with value of 1
                         # - add right with value of 0
                         for right in rights:
                             rightsdict[right] = (modifier == '+')
@@ -307,7 +306,7 @@ class ACLStringIterator:
         """ Return the next values from the acl string
 
         When the iterator is finished and you try to call next, it
-        raises a StopIteration. The iterator finish as soon as the
+        raises a StopIteration. The iterator finishes as soon as the
         string is fully parsed or can not be parsed any more.
 
         @rtype: 3 tuple - (modifier, [entry, ...], [right, ...])

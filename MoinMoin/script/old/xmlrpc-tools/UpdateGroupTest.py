@@ -73,7 +73,7 @@ if __name__ == "__main__":
     groupname = u"TestGroup"
     groupdesc = u"Just a test group"
     groupmembers = [u'JoeDoe', u'JaneDoe', ]
-    acl = "All:read,write,delete" # optional, can be empty
+    acl = "All:read,write" # optional, can be empty
 
     updateGroup(server_url, username, password, groupname, groupdesc, groupmembers, acl)
 
