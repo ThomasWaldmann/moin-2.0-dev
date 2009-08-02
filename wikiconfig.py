@@ -28,7 +28,7 @@ class LocalConfig(multiconfig.DefaultConfig):
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
     USER_PREFIX = 'Users/'
-    DATA_PREFIX = 'Content/'
+    DATA_PREFIX = '/'
     mapping = [(DATA_PREFIX, memory.MemoryBackend()), (USER_PREFIX, memory.MemoryBackend())]
     storage = router.RouterBackend(mapping, default=DATA_PREFIX)
 

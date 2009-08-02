@@ -24,7 +24,7 @@ class Config(DefaultConfig):
     flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     USER_PREFIX = 'Users/'
-    DATA_PREFIX = 'Content/'
+    DATA_PREFIX = '/'
     mapping = [(DATA_PREFIX, memory.MemoryBackend()), (USER_PREFIX, memory.MemoryBackend())]
     storage = router.RouterBackend(mapping, default=DATA_PREFIX)
     def provide_fresh_backends(self):
