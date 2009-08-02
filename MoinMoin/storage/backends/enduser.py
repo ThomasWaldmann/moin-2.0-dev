@@ -13,7 +13,7 @@ HG_PREFIX = "hg:"
 MEMORY = "memory:"
 
 
-def get_enduser_backend(backend_uri='fs:instance', mapping=None, user=None):
+def get_enduser_backend(backend_uri='fs:instance', mapping=None, default=None):
     """
     To ease storage configuration for the user, he may provide just a backend_uri
     or a mapping and a backend for user storage (allowing fine grained control over
@@ -36,7 +36,7 @@ def get_enduser_backend(backend_uri='fs:instance', mapping=None, user=None):
                 # If the folder already exists, even better!
                 pass
 
-    if mapping is user is None:
+    if mapping is default is None:
         if backend_uri.startswith(FS_PREFIX):
             # Aha! We want to use the fs backend
             instance_folder = backend_uri[len(FS_PREFIX):]
@@ -60,7 +60,8 @@ def get_enduser_backend(backend_uri='fs:instance', mapping=None, user=None):
         else:
             raise ConfigurationError("No proper backend uri provided. Given: %r" % backend_uri)
 
-        mapping = [('/', data), ]
+        mapping = [('UserProfiles/', user), ('/', data), ]
+        default = '/'
 
-    backend = router.RouterBackend(mapping, user)
+    backend = router.RouterBackend(mapping, default)
     return backend
