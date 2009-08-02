@@ -8,6 +8,8 @@ MoinMoin - Moin Wiki input converter
 @license: GNU GPL, see COPYING for details.
 """
 
+from __future__ import absolute_import
+
 import re
 from emeraldtree import ElementTree as ET
 
@@ -15,6 +17,7 @@ from MoinMoin import config, wikiutil
 from MoinMoin.util import iri
 from MoinMoin.util.mime import Type
 from MoinMoin.util.tree import html, moin_page, xlink
+from ._args import Arguments
 from MoinMoin.converter2._args_wiki import parse as parse_arguments
 from MoinMoin.converter2._registry import default_registry
 from MoinMoin.converter2._wiki_macro import ConverterMacro
@@ -85,6 +88,66 @@ class _Stack(list):
         """
         tag = self[-1].tag
         return tag.uri == moin_page.namespace and tag.name in names
+
+
+class _TableArguments(object):
+    rules = r'''
+    (?:
+        -
+        (?P<number_columns_spanned> \d+)
+        |
+        \|
+        (?P<number_rows_spanned> \d+)
+        |
+        (?P<arg>
+            (?:
+                (?P<key> [-\w]+)
+                =
+            )?
+            (?:
+                (?P<value_u> [-\w]+)
+                |
+                "
+                (?P<value_q1> .*?)
+                (?<!\\)"
+                |
+                '
+                (?P<value_q2> .*?)
+                (?<!\\)'
+            )
+        )
+    )
+    '''
+    _re = re.compile(rules, re.X)
+
+    map_keys = {
+        'colspan': 'number-columns-spanned',
+        'rowspan': 'number-rows-spanned',
+    }
+
+    def arg_repl(self, args, arg, key=None, value_u=None, value_q1=None, value_q2=None):
+        key = self.map_keys.get(key, key)
+        value = (value_u or value_q1 or value_q2).decode('unicode-escape')
+
+        if key:
+            args.keyword[key] = value
+        else:
+            args.positional.append(value)
+
+    def number_columns_spanned_repl(self, args, number_columns_spanned):
+        args.keyword['number-columns-spanned'] = int(number_columns_spanned)
+
+    def number_rows_spanned_repl(self, args, number_rows_spanned):
+        args.keyword['number-rows-spanned'] = int(number_rows_spanned)
+
+    def __call__(self, input):
+        args = Arguments()
+
+        for match in self._re.finditer(input):
+            data = dict(((str(k), v) for k, v in match.groupdict().iteritems() if v is not None))
+            getattr(self, '%s_repl' % match.lastgroup)(args, **data)
+
+        return args
 
 
 class Converter(ConverterMacro):
@@ -840,7 +903,7 @@ class Converter(ConverterMacro):
             element.set(moin_page.number_columns_spanned, len(cell_marker) / 2)
 
         if cell_args:
-            cell_args = parse_arguments(cell_args)
+            cell_args = _TableArguments()(cell_args)
 
             for key, value in cell_args.keyword.iteritems():
                 attrib = element.attrib
@@ -851,7 +914,7 @@ class Converter(ConverterMacro):
                     key = key[3:]
                     attrib = row.attrib
 
-                if key in ('class', 'style'):
+                if key in ('class', 'style', 'number-columns-spanned', 'number-rows-spanned'):
                     attrib[moin_page(key)] = value
 
         self.parse_inline(cell_text, stack)
