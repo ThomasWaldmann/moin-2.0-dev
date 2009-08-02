@@ -43,7 +43,7 @@ def check_backend():
     check if the configured backend has the system pages,
     if it does not, unserialize them from the xml file.
     """
-    backend = enduser.get_enduser_backend(LocalConfig.backend_uri)
+    backend = LocalConfig.storage.get_backend(LocalConfig.DATA_PREFIX)
     names = item_names[:]
     # XXX xml file is incomplete, do not check for these pages:
     names.remove('LanguageSetup')
