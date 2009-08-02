@@ -55,6 +55,13 @@ class Item(object):
     @classmethod
     def create(cls, request, name=u'', mimetype='application/x-unknown', rev_no=-1,
                formatter=None, item=None):
+        class DummyRev(dict):
+            def __init__(self, mimetype):
+                self[MIMETYPE] = mimetype
+                self.item = None
+            def read(self):
+                return ''
+
         try:
             if item is None:
                 item = request.storage.get_item(name)
@@ -62,12 +69,6 @@ class Item(object):
                 name = item.name
         except NoSuchItemError:
             logging.debug("No such item: %r" % name)
-            class DummyRev(dict):
-                def __init__(self, mimetype):
-                    self[MIMETYPE] = mimetype
-                    self.item = None
-                def read(self):
-                    return ''
             rev = DummyRev(mimetype)
             logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
         else:
@@ -75,8 +76,13 @@ class Item(object):
             try:
                 rev = item.get_revision(rev_no)
             except NoSuchRevisionError:
-                rev = item.get_revision(-1) # fall back to current revision
-                # XXX add some message about invalid revision
+                try:
+                    rev = item.get_revision(-1) # fall back to current revision
+                    # XXX add some message about invalid revision
+                except NoSuchRevisionError:
+                    logging.debug("Item %r has no revisions." % name)
+                    rev = DummyRev(mimetype)
+                    logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
             logging.debug("Got item %r, revision: %r" % (name, rev_no))
         mimetype = rev.get(MIMETYPE) or 'application/x-unknown' # XXX why do we need ... or ..?
         logging.debug("Item %r, got mimetype %r from revision meta" % (name, mimetype))
