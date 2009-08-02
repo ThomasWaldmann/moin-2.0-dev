@@ -30,7 +30,7 @@ log.load_config('wikiserverlogging.conf')
 
 from MoinMoin.script import MoinScript
 
-from wikiconfig import LocalConfig
+from wikiconfig import Config
 
 from MoinMoin.i18n.strings import all_pages as item_names
 
@@ -43,7 +43,7 @@ def check_backend():
     check if the configured backend has the system pages,
     if it does not, unserialize them from the xml file.
     """
-    backend = LocalConfig.storage.get_backend(LocalConfig.DATA_PREFIX)
+    backend = Config.storage.get_backend(Config.content_ns)
     names = item_names[:]
     # XXX xml file is incomplete, do not check for these pages:
     names.remove('LanguageSetup')
