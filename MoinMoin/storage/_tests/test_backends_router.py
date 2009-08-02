@@ -27,8 +27,8 @@ class TestRouterBackend(BackendTest):
         self.users = MemoryBackend()
         self.child = MemoryBackend()
         self.other = MemoryBackend()
-        self.mapping = [('child', self.child), ('other/', self.other), ('Users/', self.users), ('Content/', self.root)]
-        self.default = "Content"
+        self.mapping = [('child', self.child), ('other/', self.other), ('Users/', self.users), ('/', self.root)]
+        self.default = "/"
         rb = RouterBackend(self.mapping, self.default)
         rb.user_backend = self.users
         return rb
