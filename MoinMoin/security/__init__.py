@@ -167,12 +167,15 @@ class AccessControlList:
 
     def __init__(self, cfg, lines=[]):
         """ Initialize an ACL, starting from <nothing>. """
+        self.acl_rights_valid = cfg.acl_rights_valid
+        self.acl_rights_default = cfg.acl_rights_default
+        self.auth_methods_trusted = cfg.auth_methods_trusted
         assert isinstance(lines, (list, tuple))
         if lines:
             self.acl = [] # [ ('User', {"read": 0, ...}), ... ]
             self.acl_lines = []
             for line in lines:
-                self._addLine(cfg, line)
+                self._addLine(line)
         else:
             self.acl = None
             self.acl_lines = None
@@ -183,13 +186,12 @@ class AccessControlList:
         # self.acl == [] means that there is a empty acl.
         return self.acl is not None
 
-    def _addLine(self, cfg, aclstring, remember=1):
+    def _addLine(self, aclstring, remember=1):
         """ Add another ACL line
 
         This can be used in multiple subsequent calls to process longer lists.
 
-        @param cfg: current config
-        @param aclstring: acl string from item or cfg
+        @param aclstring: acl string from item or configuration
         @param remember: should add the line to self.acl_lines
         """
         # Remember lines
@@ -197,10 +199,10 @@ class AccessControlList:
             self.acl_lines.append(aclstring)
 
         # Iterate over entries and rights, parsed by acl string iterator
-        acliter = ACLStringIterator(cfg.acl_rights_valid, aclstring)
+        acliter = ACLStringIterator(self.acl_rights_valid, aclstring)
         for modifier, entries, rights in acliter:
             if entries == ['Default']:
-                self._addLine(cfg, cfg.acl_rights_default, remember=0)
+                self._addLine(self.acl_rights_default, remember=0)
             else:
                 for entry in entries:
                     rightsdict = {}
@@ -214,7 +216,7 @@ class AccessControlList:
                         # All rights from acl_rights_valid are added to the
                         # dict, user rights with value of 1, and other with
                         # value of 0
-                        for right in cfg.acl_rights_valid:
+                        for right in self.acl_rights_valid:
                             rightsdict[right] = (right in rights)
                     self.acl.append((entry, rightsdict))
 
@@ -264,7 +266,7 @@ class AccessControlList:
             as he is not logged in in that case.
         """
         if (request.user.name == name and
-            request.user.auth_method in request.cfg.auth_methods_trusted):
+            request.user.auth_method in self.auth_methods_trusted):
             return rightsdict.get(dowhat)
         return None
 
