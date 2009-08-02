@@ -27,8 +27,11 @@ class TestRouterBackend(BackendTest):
         self.users = MemoryBackend()
         self.child = MemoryBackend()
         self.other = MemoryBackend()
-        self.mapping = [('child', self.child), ('other/', self.other), ('/', self.root)]
-        return RouterBackend(self.mapping, self.users)
+        self.mapping = [('child', self.child), ('other/', self.other), ('Users/', self.users), ('Content/', self.root)]
+        self.default = "Content"
+        rb = RouterBackend(self.mapping, self.default)
+        rb.user_backend = self.users
+        return rb
 
     def kill_backend(self):
         pass
