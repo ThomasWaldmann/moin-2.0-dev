@@ -30,7 +30,7 @@ class LocalConfig(multiconfig.DefaultConfig):
     USER_PREFIX = 'Users/'
     DATA_PREFIX = 'Content/'
     mapping = [(DATA_PREFIX, memory.MemoryBackend()), (USER_PREFIX, memory.MemoryBackend())]
-    storage = router.RouterBackend(mapping)
+    storage = router.RouterBackend(mapping, default=DATA_PREFIX)
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
