@@ -344,10 +344,6 @@ class ConfigFunctionality(object):
         # Cache variables for the properties below
         self._iwid = self._iwid_full = self._meta_dict = None
 
-        self.cache.acl_rights_before = AccessControlList(self, [self.acl_rights_before])
-        self.cache.acl_rights_default = AccessControlList(self, [self.acl_rights_default])
-        self.cache.acl_rights_after = AccessControlList(self, [self.acl_rights_after])
-
         action_prefix = self.url_prefix_action
         if action_prefix is not None and action_prefix.endswith('/'): # make sure there is no trailing '/'
             self.url_prefix_action = action_prefix[:-1]
