@@ -143,6 +143,8 @@ class TestConverter(object):
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>List 1</list-item-body></list-item></list><list item-label-generate="unordered"><list-item><list-item-body>List 2</list-item-body></list-item></list></body></page>'),
             (u' 1. Item',
                 '<page><body><list item-label-generate="ordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>'),
+            (u' Key:: Item',
+                '<page><body><list><list-item><list-item-label>Key</list-item-label><list-item-body>Item</list-item-body></list-item></list></body></page>'),
             (u' * List 1\n 1. List 2',
                 '<page><body><list item-label-generate="unordered"><list-item><list-item-body>List 1</list-item-body></list-item></list><list item-label-generate="ordered"><list-item><list-item-body>List 2</list-item-body></list-item></list></body></page>'),
         ]

@@ -210,6 +210,12 @@ class Converter(ConverterMacro):
             ^
             (?P<list_indent> \s+ )
             (
+                (?P<list_definition>
+                    (?P<list_definition_text> .*? )
+                    ::
+                    \s
+                )
+                |
                 (?P<list_numbers> [0-9]+\.\s )
                 |
                 (?P<list_alpha> [aA]\.\s )
@@ -227,15 +233,17 @@ class Converter(ConverterMacro):
     """
 
     def block_list_repl(self, _iter_content, stack,
-            list, list_indent, list_numbers=None,
+            list, list_indent, list_definition=None,
+            list_definition_text=None, list_numbers=None,
             list_alpha=None, list_roman=None, list_bullet=None,
             list_none=None, list_text=None):
 
         level = len(list_indent)
 
-        type = 'unordered'
         style_type = None
-        if list_numbers:
+        if list_definition:
+            type = 'definition'
+        elif list_numbers:
             type = 'ordered'
         elif list_alpha:
             type = 'ordered'
@@ -243,7 +251,10 @@ class Converter(ConverterMacro):
         elif list_roman:
             type = 'ordered'
             style_type = 'upper-roman'
+        elif list_bullet:
+            type = 'unordered'
         elif list_none:
+            type = 'unordered'
             style_type = 'none'
 
         while True:
@@ -260,7 +271,9 @@ class Converter(ConverterMacro):
             stack.pop()
 
         if cur.tag.name != 'list':
-            attrib = {moin_page.item_label_generate: type}
+            attrib = {}
+            if not list_definition:
+                attrib[moin_page.item_label_generate] = type
             if style_type:
                 attrib[moin_page.list_style_type] = style_type
             element = moin_page.list(attrib=attrib)
@@ -268,11 +281,18 @@ class Converter(ConverterMacro):
             element.style_type = style_type
             stack.push(element)
 
-        element = moin_page.list_item()
+        stack.push(moin_page.list_item())
+
+        if list_definition_text:
+            stack.push(moin_page.list_item_label())
+
+            self.parse_inline(list_definition_text, stack)
+
+            stack.pop_name('list-item-label')
+
         element_body = moin_page.list_item_body()
         element_body.level, element_body.type = level, type
 
-        stack.push(element)
         stack.push(element_body)
 
         self.parse_inline(list_text, stack)
