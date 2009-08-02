@@ -245,12 +245,14 @@ def create_value_object(v):
         return BoolValue(v)
     elif isinstance(v, int):
         return IntValue(v)
+    elif isinstance(v, long):
+        return LongValue(v)
     elif isinstance(v, float):
         return FloatValue(v)
     elif isinstance(v, complex):
         return ComplexValue(v)
     else:
-        raise TypeError("unsupported type %r", type(v))
+        raise TypeError("unsupported type %r (value: %r)" % (type(v), v))
 
 
 class Value(Serializable):
@@ -295,6 +297,15 @@ class IntValue(Value):
 
     def element_decode(self, x):
         return int(x)
+
+    def element_encode(self, x):
+        return str(x)
+
+class LongValue(Value):
+    element_name = 'long'
+
+    def element_decode(self, x):
+        return long(x)
 
     def element_encode(self, x):
         return str(x)
@@ -345,6 +356,7 @@ class TupleValue(Serializable):
             'unicode': UnicodeValue,
             'bool': BoolValue,
             'int': IntValue,
+            'long': LongValue,
             'float': FloatValue,
             'complex': ComplexValue,
             'tuple': TupleValue,
