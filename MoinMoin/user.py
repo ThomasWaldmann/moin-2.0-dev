@@ -25,12 +25,13 @@ from MoinMoin.util import timefuncs
 from MoinMoin.search import term
 from MoinMoin.wikiutil import url_quote_plus
 
+
 def get_user_backend(request):
     """
     Just a shorthand that makes the rest of the code easier
     by returning the proper user backend.
     """
-    user_prefix = request.cfg.storage.USER_PREFIX
+    user_prefix = request.cfg.USER_PREFIX
     return request.cfg.storage.get_backend(user_prefix)
 
 
