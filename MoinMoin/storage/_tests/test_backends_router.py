@@ -37,16 +37,6 @@ class TestRouterBackend(BackendTest):
         pass
 
 
-    def test_incorrect_config(self):
-        mapping = [('foo', None)]
-        users = None
-        try:
-            RouterBackend(mapping, users)
-        except ConfigurationError:
-            pass
-        else:
-            raise AssertionError()
-
     def test_correct_backend(self):
         mymap = {'rootitem': self.root,         # == /rootitem
                  'child/joe': self.child,       # Direct child of namespace.
