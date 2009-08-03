@@ -27,6 +27,8 @@ class LocalConfig(multiconfig.DefaultConfig):
     #instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
+    preloaded_xml = "wiki/syspages.xml"
+
     #backend_uri = 'fs:instance'
     content_backend = fs.FSBackend('instance/data')
     user_profile_backend = fs.FSBackend('instance/user')

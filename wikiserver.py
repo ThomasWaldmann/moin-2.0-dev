@@ -30,42 +30,7 @@ log.load_config('wikiserverlogging.conf')
 
 from MoinMoin.script import MoinScript
 
-from wikiconfig import Config
-
-from MoinMoin.i18n.strings import all_pages as item_names
-
-from MoinMoin.storage.error import StorageError
-from MoinMoin.storage.backends import memory, clone, enduser
-from MoinMoin.storage.serialization import unserialize
-
-def check_backend():
-    """
-    check if the configured backend has the system pages,
-    if it does not, unserialize them from the xml file.
-    """
-    # XXX
-    backend = Config.content_backend
-    names = item_names[:]
-    # XXX xml file is incomplete, do not check for these pages:
-    names.remove('LanguageSetup')
-    names.remove('InterWikiMap')
-    names.remove('WikiLicense')
-    try:
-        for name in names:
-            item = backend.get_item(name)
-            del item
-    except StorageError:
-        # if there is some exception, we assume that backend needs to be filled
-        print "Unserializing system pages..."
-        xmlfile = os.path.join(moinpath, 'wiki', 'syspages.xml')
-        tmp_backend = memory.MemoryBackend()
-        unserialize(tmp_backend, xmlfile)
-        clone(tmp_backend, backend, only_these=names)
-        print "Unserialization finished."
-
-
 if __name__ == '__main__':
-    check_backend()
     sys.argv = ["moin.py", "server", "standalone"]
     MoinScript().run()
 
