@@ -1046,6 +1046,16 @@ options = {
        "Valid tokens for right sides of ACL entries."),
     )),
 
+    'ns': ('Storage Namespaces',
+    "Storage namespaces can be defined for all sorts of data. All items sharing a common namespace as prefix" + \
+    "are then stored within the same backend. The common prefix for all data is ''.",
+    (
+      ('content', '/', "All content is by default stored below /, hence the prefix is ''."),  # Not really necessary. Just for completeness.
+      ('user_profile', 'UserProfile/', 'User profiles (i.e. user data, not their homepage) are stored in this namespace.'),
+      ('user_homepage', 'User/', 'All user homepages are stored below this namespace.'),
+      ('trash', 'Trash/', 'This is the namespace in which an item ends up when it is deleted.')
+    )),
+
     'xapian': ('Xapian search', "Configuration of the Xapian based indexed search, see HelpOnXapian.", (
       ('search', False,
        "True to enable the fast, indexed search (based on the Xapian search library)"),

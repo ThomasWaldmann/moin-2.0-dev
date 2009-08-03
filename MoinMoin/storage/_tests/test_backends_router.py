@@ -24,11 +24,11 @@ class TestRouterBackend(BackendTest):
 
     def create_backend(self):
         self.root = MemoryBackend()
-        self.ns_user_profiles = 'UserProfiles/'
+        self.ns_user_profile = self.request.cfg.ns_user_profile
         self.users = MemoryBackend()
         self.child = MemoryBackend()
         self.other = MemoryBackend()
-        self.mapping = [('child', self.child), ('other/', self.other), (self.ns_user_profiles, self.users), ('/', self.root)]
+        self.mapping = [('child', self.child), ('other/', self.other), (self.ns_user_profile, self.users), ('/', self.root)]
         return RouterBackend(self.mapping)
 
     def kill_backend(self):
@@ -92,15 +92,15 @@ class TestRouterBackend(BackendTest):
 
     def test_user_in_traversal(self):
         userid = '1249291178.45.20407'
-        user = self.backend.create_item(self.ns_user_profiles + userid)
+        user = self.backend.create_item(self.ns_user_profile + userid)
         user.change_metadata()
         user["name"] = "joe"
         user.publish_metadata()
 
         all_items = list(self.backend.iteritems())
         all_items = [item.name for item in all_items]
-        assert (self.ns_user_profiles + userid) in all_items
-        assert self.backend.has_item(self.ns_user_profiles + userid)
+        assert (self.ns_user_profile + userid) in all_items
+        assert self.backend.has_item(self.ns_user_profile + userid)
 
     def test_nonexisting_namespace(self):
         itemname = 'nonexisting/namespace/somewhere/deep/below'
