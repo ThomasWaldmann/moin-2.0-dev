@@ -2,6 +2,8 @@
 """
     MoinMoin - User Accounts
 
+    TODO: Currently works on unprotected user backend
+
     This module contains functions to access user accounts (list all users, get
     some specific user). User instances are used to access the user profile of
     some specific user (name, password, email, bookmark, trail, settings, ...).
@@ -32,7 +34,11 @@ def get_user_backend(request):
     by returning the proper user backend.
     """
     ns_user_profile = request.cfg.ns_user_profile
-    return request.storage.get_backend(ns_user_profile)
+    
+    for line in request.cfg.namespace_mapping:
+        # line is: (mountpoint, unprotected backend, protection to apply)
+        if line[0].rstrip('/') == ns_user_profile.rstrip('/'):
+            return line[1]
 
 
 def getUserList(request):
@@ -256,9 +262,7 @@ class User:
                                changeable by preferences, default: ().
                                First tuple element was used for authentication.
         """
-
-        ns_user_profile = request.cfg.ns_user_profile
-        self._user_backend = request.storage.get_backend(ns_user_profile)
+        self._user_backend = get_user_backend(request)
         self._user = None
 
         self._cfg = request.cfg
