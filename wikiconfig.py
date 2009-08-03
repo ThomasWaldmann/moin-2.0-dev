@@ -9,7 +9,7 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 import sys, os
 
 from MoinMoin.config import multiconfig, url_prefix_static
-from MoinMoin.storage.backends.enduser import get_enduser_backend
+from MoinMoin.storage.backends import router, fs, acl
 
 
 class LocalConfig(multiconfig.DefaultConfig):
@@ -28,7 +28,32 @@ class LocalConfig(multiconfig.DefaultConfig):
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
     backend_uri = 'fs:instance'
-    storage = get_enduser_backend(backend_uri)
+
+    content_backend = fs.FSBackend('instance/data')
+    user_profile_backend = fs.FSBackend('instance/user')
+    def storage(self, request):
+        content_acl = dict(
+            hierarchic=False,
+            before="TheAdmin:read,write,admin,destroy,create",
+            default="All:read,write,create",
+            after=""
+        )
+        user_profile_acl = dict(
+            hierarchic=False,
+            before="TheAdmin:read,write,admin,destroy,create",
+            default="All:",
+            after=""
+        )
+        amw = acl.AclWrapperBackend
+        return router.RouterBackend([
+            # (prefix, unprotected backend, protected backend), order of list entries is important
+
+            # User profiles: noone except superuser and moin internally should be able to access:
+            ('UserProfile/', amw(request, self.user_profile_backend, **user_profile_acl)),
+
+            # IMPORTANT: the default content_backend needs to be mapped to '' and be the LAST ENTRY, use the usual content_acl for it:
+            ('/', amw(request, self.content_backend, **content_acl)),
+        ])
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
@@ -44,6 +69,8 @@ class LocalConfig(multiconfig.DefaultConfig):
 
     # Add your configuration items here.
     secrets = 'This string is NOT a secret, please make up your own, long, random secret string!'
+
+
 
 
 # DEVELOPERS! Do not add your configuration items there,

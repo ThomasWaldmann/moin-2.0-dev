@@ -30,6 +30,8 @@ def init(request):
     context.clock.start('total')
     context.clock.start('init')
 
+    init_backend(context)
+
     context.lang = setup_i18n_preauth(context)
 
     context.session = context.cfg.session_service.get_session(context)
@@ -55,7 +57,7 @@ def init_backend(context):
         able to create fresh data storage backends in between init and init_backend.
     """
     from MoinMoin.storage.backends.acl import AclWrapperBackend
-    context.storage = AclWrapperBackend(context)
+    context.storage = context.cfg.storage(context)
 
 def run(context):
     """ Run a context trough the application. """
@@ -238,7 +240,6 @@ class Application(object):
         try:
             request = self.Request(environ)
             context = init(request)
-            init_backend(context)
             response = run(context)
             context.clock.stop('total')
         except HTTPException, e:
