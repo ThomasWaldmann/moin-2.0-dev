@@ -27,7 +27,6 @@ class TestACLMiddleware(BackendTest):
     def create_backend(self):
         # Called before *each* testcase. Provides fresh backends every time.
         self.request = init_test_request(self.Config)
-        self.request.cfg.provide_fresh_backends()
         return AclWrapperBackend(self.request)
 
     def kill_backend(self):
