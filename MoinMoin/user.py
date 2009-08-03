@@ -32,7 +32,7 @@ def get_user_backend(request):
     by returning the proper user backend.
     """
     ns_user_profile = request.cfg.ns_user_profile
-    return request.cfg.storage.get_backend(ns_user_profile)
+    return request.storage.get_backend(ns_user_profile)
 
 
 def getUserList(request):
@@ -258,7 +258,7 @@ class User:
         """
 
         ns_user_profile = request.cfg.ns_user_profile
-        self._user_backend = request.cfg.storage.get_backend(ns_user_profile)
+        self._user_backend = request.storage.get_backend(ns_user_profile)
         self._user = None
 
         self._cfg = request.cfg

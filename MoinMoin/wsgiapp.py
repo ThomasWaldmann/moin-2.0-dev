@@ -34,6 +34,7 @@ def init(request):
 
     context.session = context.cfg.session_service.get_session(context)
 
+    init_unprotected_backends(context)
     context.user = setup_user(context, context.session)
 
     context.lang = setup_i18n_postauth(context)
@@ -48,14 +49,16 @@ def init(request):
     context.clock.stop('init')
     return context
 
-def init_backend(context):
+def init_unprotected_backends(context):
     """ initialize the backend
 
         This is separate from init because the conftest request setup needs to be
         able to create fresh data storage backends in between init and init_backend.
     """
-    from MoinMoin.storage.backends.acl import AclWrapperBackend
-    context.storage = AclWrapperBackend(context)
+    context.storage = context.cfg.unprotected_storage(context)
+
+def protect_backends(context):
+    context.storage = context.cfg.protected_storage(context)
 
 def run(context):
     """ Run a context trough the application. """
@@ -238,7 +241,7 @@ class Application(object):
         try:
             request = self.Request(environ)
             context = init(request)
-            init_backend(context)
+            protect_backends(context)
             response = run(context)
             context.clock.stop('total')
         except HTTPException, e:
