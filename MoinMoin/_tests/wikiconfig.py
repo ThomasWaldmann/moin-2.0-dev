@@ -23,7 +23,7 @@ class Config(DefaultConfig):
     data_dir = os.path.join(_base_dir, "data") # needed for plugins package TODO
     flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
-    user_ns = 'UserProfiles/'
+    ns_user = 'UserProfiles/'
 
     # configure backends
     class DummyStorage(object):
