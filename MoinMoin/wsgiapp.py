@@ -12,6 +12,7 @@ from MoinMoin.web.request import Request, MoinMoinFinish, HeaderSet
 from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_response, \
     redirect_last_visited
 from MoinMoin.storage.error import AccessDeniedError
+from MoinMoin.storage.backends import router, acl
 from MoinMoin.Page import Page
 from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
 
@@ -55,10 +56,20 @@ def init_unprotected_backends(context):
         This is separate from init because the conftest request setup needs to be
         able to create fresh data storage backends in between init and init_backend.
     """
-    context.storage = context.cfg.unprotected_storage(context)
+    # TODO: Find a better term than 'line'
+    # A mapping consists of several lines, where each line is made up like this:
+    # mountpoint, unprotected backend, protection to apply
+    mapping = context.cfg.namespace_mapping
+    # Just initialize with unprotected backends.
+    mapping = [(line[0], line[1]) for line in mapping]
+    context.storage = router.RouterBackend(mapping)
 
 def protect_backends(context):
-    context.storage = context.cfg.protected_storage(context)
+    amw = acl.AclWrapperBackend
+    mapping = context.cfg.namespace_mapping
+    # Protect each backend with the acls provided for it in the mapping
+    mapping = [(line[0], amw(context, line[1], **line[2])) for line in mapping]
+    context.storage = router.RouterBackend(mapping)
 
 def run(context):
     """ Run a context trough the application. """
