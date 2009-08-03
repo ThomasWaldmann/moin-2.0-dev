@@ -69,8 +69,6 @@ def init_test_request(given_config=None, static_state=[False]):
     request = TestRequest()
     request.given_config = given_config
     request = init(request)
-    if not request.cfg.storage:
-        request.cfg.provide_fresh_backends()
     init_backend(request)
     return request
 
