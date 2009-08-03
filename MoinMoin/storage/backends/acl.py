@@ -73,14 +73,14 @@ class AclWrapperBackend(object):
     implementor may decide to use his own helper functions which the items and revisions
     will still try to call).
     """
-    def __init__(self, request):
+    def __init__(self, request, backend, hierarchic, before, default, after):
         self.request = request
         cfg = request.cfg
         self.backend = cfg.storage
-        self.acl_hierarchic = cfg.acl_hierarchic
-        self.acl_rights_before = AccessControlList(cfg, [cfg.acl_rights_before])
-        self.acl_rights_default = AccessControlList(cfg, [cfg.acl_rights_default])
-        self.acl_rights_after = AccessControlList(cfg, [cfg.acl_rights_after])
+        self.hierarchic = hierarchic
+        self.before = AccessControlList(cfg, [before])
+        self.default = AccessControlList(cfg, [default])
+        self.after = AccessControlList(cfg, [after])
 
     def __getattr__(self, attr):
         # Attributes that this backend does not define itself are just looked
@@ -165,18 +165,18 @@ class AclWrapperBackend(object):
     def _may(self, itemname, right):
         """ Check if self.username may have <right> access on item <itemname>.
 
-        For acl_hierarchic=False we just check the item in question.
+        For hierarchic=False we just check the item in question.
 
-        For acl_hierarchic=True we, we check each item in the hierarchy. We
+        For hierarchic=True we, we check each item in the hierarchy. We
         start with the deepest item and recurse to the top of the tree.
         If one of those permits, True is returned.
         This is done *only* if there is *no ACL at all* (not even an empty one)
         on the items we 'recurse over'.
 
-        For both configurations, we check acl_rights_before before the item/default
-        acl and acl_rights_after after the item/default acl, of course.
+        For both configurations, we check `before` before the item/default
+        acl and `after` after the item/default acl, of course.
 
-        acl_rights_default are only used if there is no ACL on the item (and none on
+        `default` is only used if there is no ACL on the item (and none on
         any of the item's parents when using hierarchic.)
 
         @param itemname: item to get permissions from
@@ -188,11 +188,11 @@ class AclWrapperBackend(object):
         request = self.request
         username = request.user.name
 
-        allowed = self.acl_rights_before.may(request, username, right)
+        allowed = self.before.may(request, username, right)
         if allowed is not None:
             return allowed
 
-        if self.acl_hierarchic:
+        if self.hierarchic:
             items = itemname.split('/') # create item hierarchy list
             some_acl = False
             for i in range(len(items), 0, -1):
@@ -210,7 +210,7 @@ class AclWrapperBackend(object):
                     # the item at all.
                     break
             if not some_acl:
-                allowed = self.acl_rights_default.may(request, username, right)
+                allowed = self.default.may(request, username, right)
                 if allowed is not None:
                     return allowed
         else:
@@ -220,11 +220,11 @@ class AclWrapperBackend(object):
                 if allowed is not None:
                     return allowed
             else:
-                allowed = self.acl_rights_default.may(request, username, right)
+                allowed = self.default.may(request, username, right)
                 if allowed is not None:
                     return allowed
 
-        allowed = self.acl_rights_after.may(request, username, right)
+        allowed = self.after.may(request, username, right)
         if allowed is not None:
             return allowed
 
