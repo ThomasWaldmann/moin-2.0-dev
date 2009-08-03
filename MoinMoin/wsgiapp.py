@@ -6,6 +6,8 @@
                 2008-2008 MoinMoin:FlorianKrupicka
     @license: GNU GPL, see COPYING for details.
 """
+import threading
+
 from MoinMoin.web.contexts import AllContext, Context, XMLRPCContext
 from MoinMoin.web.exceptions import HTTPException, Forbidden
 from MoinMoin.web.request import Request, MoinMoinFinish, HeaderSet
@@ -64,15 +66,19 @@ def init_unprotected_backends(context):
     mapping = context.cfg.namespace_mapping
     # Just initialize with unprotected backends.
     mapping = [(line[0], line[1]) for line in mapping]
-    context.storage = router.RouterBackend(mapping)
+    context.unprotected_storage = router.RouterBackend(mapping)
 
-    # TODO use a thread
+    # Preload xml in a seperate thread since this may be a very long-running operation
+    threading.Thread(target=preload_xml, args=(context,)).start()
+
+
+def preload_xml(context):
     # This makes the first request after server restart potentially slower.
     xmlfile = context.cfg.preloaded_xml
     if xmlfile:
         context.cfg.preloaded_xml = None
         try:
-            backend = context.storage
+            backend = context.unprotected_storage
             tmp_backend = memory.MemoryBackend()
             unserialize(tmp_backend, xmlfile)
             for item in tmp_backend.iteritems():
