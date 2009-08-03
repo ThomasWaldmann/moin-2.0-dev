@@ -595,12 +595,13 @@ class BackendTest(object):
             item.create_revision(revno)
             item.commit()
 
-            from MoinMoin.storage.backends.router import RouterBackend
-            if isinstance(self.backend, RouterBackend):
+            from MoinMoin.storage.backends import router, acl
+            if isinstance(self.backend, (router.RouterBackend, acl.AclWrapperBackend)):
                 # Revisions are created too fast for the rev's timestamp's granularity.
                 # This only affects the RouterBackend because there several different
                 # backends are used and no means for storing simultaneously created revs
-                # in the correct order exists between backends.
+                # in the correct order exists between backends. It affects AclWrapperBackend
+                # tests as well because those use a RouterBackend internally for real-world-likeness.
 
                 # XXX XXX
                 # You may have realized that all the items above belong to the same backend so this shouldn't actually matter.

@@ -24,7 +24,15 @@ class Config(DefaultConfig):
     flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     user_ns = 'UserProfiles/'
-    storage = enduser.get_enduser_backend('memory:')
+
+    # configure backends
+    class DummyStorage(object):
+        # This is neccessary so the 'if not request.cfg.storage' test in conftest.py can succeed...
+        def __nonzero__(self):
+            return False
+        def get_backend(self, prefix):
+            return None
+    storage = DummyStorage()
     def provide_fresh_backends(self):
         self.storage = enduser.get_enduser_backend('memory:')
         self.test_num_pages = len(clone(flatfile.FlatFileBackend(self.flat_dir), self.storage)[0])
