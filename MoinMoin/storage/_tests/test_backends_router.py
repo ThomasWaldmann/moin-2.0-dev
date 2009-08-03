@@ -24,14 +24,12 @@ class TestRouterBackend(BackendTest):
 
     def create_backend(self):
         self.root = MemoryBackend()
+        self.ns_user = 'UserProfiles/'
         self.users = MemoryBackend()
         self.child = MemoryBackend()
         self.other = MemoryBackend()
-        self.mapping = [('child', self.child), ('other/', self.other), ('Users/', self.users), ('/', self.root)]
-        self.default = "/"
-        rb = RouterBackend(self.mapping, self.default)
-        rb.user_backend = self.users
-        return rb
+        self.mapping = [('child', self.child), ('other/', self.other), (self.ns_user, self.users), ('/', self.root)]
+        return RouterBackend(self.mapping)
 
     def kill_backend(self):
         pass
@@ -94,7 +92,8 @@ class TestRouterBackend(BackendTest):
 
     def test_user_in_traversal(self):
         joes_name = 'joe_with_the_unique_name'
-        joe = self.backend.user_backend.create_item(joes_name)
+        user_backend = self.backend.get_backend(self.ns_user)
+        joe = user_backend.create_item(joes_name)
         joe.change_metadata()
         joe["email"] = "joe@example.com"
         joe.publish_metadata()
