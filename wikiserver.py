@@ -43,8 +43,7 @@ def check_backend():
     check if the configured backend has the system pages,
     if it does not, unserialize them from the xml file.
     """
-    # XXX
-    backend = Config.content_backend
+    backend = Config.storage
     names = item_names[:]
     # XXX xml file is incomplete, do not check for these pages:
     names.remove('LanguageSetup')

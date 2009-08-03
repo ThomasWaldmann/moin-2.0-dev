@@ -76,7 +76,7 @@ class AclWrapperBackend(object):
     def __init__(self, request, backend, hierarchic, before, default, after):
         self.request = request
         cfg = request.cfg
-        self.backend = backend
+        self.backend = cfg.storage
         self.hierarchic = hierarchic
         self.before = AccessControlList(cfg, [before])
         self.default = AccessControlList(cfg, [default])
