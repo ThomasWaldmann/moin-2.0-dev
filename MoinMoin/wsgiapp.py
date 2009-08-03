@@ -72,7 +72,7 @@ def init_unprotected_backends(context):
     xmlfile = context.cfg.preloaded_xml
     if xmlfile:
         # ... hence we perform this operation in a seperate thread if necessary.
-        threading.Thread(target=preload_xml, args=(context,)).start()
+        threading.Thread(target=preload_xml, args=(context, )).start()
 
 
 def preload_xml(context):
