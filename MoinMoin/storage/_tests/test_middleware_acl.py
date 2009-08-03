@@ -8,6 +8,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 from MoinMoin.items import ACL
+from MoinMoin.wsgiapp import protect_backends
 from MoinMoin.storage.error import AccessDeniedError
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.acl import AclWrapperBackend, AclWrapperItem, AclWrappedRevision
@@ -19,7 +20,7 @@ import py
 
 class TestACLMiddleware(BackendTest):
     class Config(wikiconfig.Config):
-        acl_rights_default = u"All:admin,read,write,destroy,create"
+        default = u"All:admin,read,write,destroy,create"
 
     def __init__(self):
         BackendTest.__init__(self, None)
@@ -28,7 +29,7 @@ class TestACLMiddleware(BackendTest):
         # Called before *each* testcase. Provides fresh backends every time.
         self.request = init_test_request(self.Config)
         self.request.cfg.provide_fresh_backends()
-        return AclWrapperBackend(self.request)
+        return self.request.storage
 
     def kill_backend(self):
         pass
@@ -54,9 +55,11 @@ class TestACLMiddleware(BackendTest):
     def test_create_item(self):
         class Config(wikiconfig.Config):
             # no create
-            acl_rights_default = u"All:admin,read,write,destroy"
+            default = u"All:admin,read,write,destroy"
 
         request = init_test_request(Config)
+        request.cfg.provide_fresh_backends()
+        protect_backends(request)
         backend = request.storage
         assert py.test.raises(AccessDeniedError, backend.create_item, "I will never exist")
 
@@ -111,18 +114,4 @@ class TestACLMiddleware(BackendTest):
 
         py.test.raises(AccessDeniedError, item.get_revision, -1)
         py.test.raises(AccessDeniedError, item.get_revision, 0)
-
-    def test_rev_item_wrapped(self):
-        item = self.backend.create_item("foo")
-        rev = item.create_revision(0)
-        rev.write("me and my item will be wrapped")
-        item.commit()
-        stored_rev = item.get_revision(0)
-
-        assert isinstance(stored_rev, AclWrappedRevision)
-        assert isinstance(rev, AclWrappedRevision)
-        assert isinstance(item, AclWrapperItem)
-        assert isinstance(rev.item, AclWrapperItem)
-        assert isinstance(stored_rev.item, AclWrapperItem)
-
 

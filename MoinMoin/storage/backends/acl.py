@@ -73,7 +73,7 @@ class AclWrapperBackend(object):
     implementor may decide to use his own helper functions which the items and revisions
     will still try to call).
     """
-    def __init__(self, request, backend, hierarchic, before, default, after):
+    def __init__(self, request, backend, hierarchic=False, before="", default="", after=""):
         self.request = request
         cfg = request.cfg
         self.backend = backend
