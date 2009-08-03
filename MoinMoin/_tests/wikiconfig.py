@@ -13,7 +13,7 @@ work without setting them (like data_dir).
 
 import os
 from MoinMoin.config.multiconfig import DefaultConfig
-from MoinMoin.storage.backends import flatfile, clone, memory
+from MoinMoin.storage.backends import flatfile, clone, enduser
 
 class Config(DefaultConfig):
     sitename = u'Developer Test Wiki'
@@ -24,22 +24,10 @@ class Config(DefaultConfig):
     flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     user_ns = 'UserProfiles/'
-
-    @property
-    def storage(self):
-        # Don't return a RouterBackend here! Otherwise non-router tests will rely
-        # on it as well and our tests are less atomic.
-        def get_backend(prefix):
-            return memory.MemoryBackend()
-
-        # fresh backend...
-        memb = memory.MemoryBackend()
-        memb.get_backend = get_backend
-        return memb
-
-    @property
-    def test_num_pages(self):
-        return len(clone(flatfile.FlatFileBackend(self.flat_dir), self.storage)[0])
+    storage = enduser.get_enduser_backend('memory:')
+    def provide_fresh_backends(self):
+        self.storage = enduser.get_enduser_backend('memory:')
+        self.test_num_pages = len(clone(flatfile.FlatFileBackend(self.flat_dir), self.storage)[0])
 
     page_front_page = 'FrontPage'
 
