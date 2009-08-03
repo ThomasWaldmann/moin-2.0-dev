@@ -34,11 +34,7 @@ def get_user_backend(request):
     by returning the proper user backend.
     """
     ns_user_profile = request.cfg.ns_user_profile
-    
-    for line in request.cfg.namespace_mapping:
-        # line is: (mountpoint, unprotected backend, protection to apply)
-        if line[0].rstrip('/') == ns_user_profile.rstrip('/'):
-            return line[1]
+    return request.unprotected_storage.get_backend(ns_user_profile)
 
 
 def getUserList(request):
