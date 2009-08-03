@@ -31,8 +31,8 @@ def get_user_backend(request):
     Just a shorthand that makes the rest of the code easier
     by returning the proper user backend.
     """
-    ns_user = request.cfg.ns_user
-    return request.cfg.storage.get_backend(ns_user)
+    ns_user_profiles = request.cfg.ns_user_profiles
+    return request.cfg.storage.get_backend(ns_user_profiles)
 
 
 def getUserList(request):
@@ -257,8 +257,8 @@ class User:
                                First tuple element was used for authentication.
         """
 
-        ns_user = request.cfg.ns_user
-        self._user_backend = request.cfg.storage.get_backend(ns_user)
+        ns_user_profiles = request.cfg.ns_user_profiles
+        self._user_backend = request.cfg.storage.get_backend(ns_user_profiles)
         self._user = None
 
         self._cfg = request.cfg
