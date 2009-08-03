@@ -98,8 +98,9 @@ class TestRouterBackend(BackendTest):
         user.publish_metadata()
 
         all_items = list(self.backend.iteritems())
-        all_items = [item.name.lstrip(self.ns_user_profiles) for item in all_items]
-        assert userid in all_items
+        all_items = [item.name for item in all_items]
+        assert (self.ns_user_profiles + userid) in all_items
+        assert self.backend.has_item(self.ns_user_profiles + userid)
 
     def test_nonexisting_namespace(self):
         itemname = 'nonexisting/namespace/somewhere/deep/below'
