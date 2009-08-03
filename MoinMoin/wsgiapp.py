@@ -11,8 +11,9 @@ from MoinMoin.web.exceptions import HTTPException, Forbidden
 from MoinMoin.web.request import Request, MoinMoinFinish, HeaderSet
 from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_response, \
     redirect_last_visited
-from MoinMoin.storage.error import AccessDeniedError
-from MoinMoin.storage.backends import router, acl
+from MoinMoin.storage.error import AccessDeniedError, StorageError
+from MoinMoin.storage.serialization import unserialize
+from MoinMoin.storage.backends import router, acl, memory, clone
 from MoinMoin.Page import Page
 from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
 
@@ -50,6 +51,7 @@ def init(request):
     context.clock.stop('init')
     return context
 
+
 def init_unprotected_backends(context):
     """ initialize the backend
 
@@ -64,12 +66,29 @@ def init_unprotected_backends(context):
     mapping = [(line[0], line[1]) for line in mapping]
     context.storage = router.RouterBackend(mapping)
 
+    # TODO use a thread
+    # This makes the first request after server restart potentially slower.
+    xmlfile = context.cfg.preloaded_xml
+    if xmlfile:
+        context.cfg.preloaded_xml = None
+        try:
+            backend = context.storage
+            tmp_backend = memory.MemoryBackend()
+            unserialize(tmp_backend, xmlfile)
+            for item in tmp_backend.iteritems():
+                item = backend.get_item(item.name)
+        except StorageError:
+            # if there is some exception, we assume that backend needs to be filled
+            clone(tmp_backend, backend)
+
+
 def protect_backends(context):
     amw = acl.AclWrapperBackend
     mapping = context.cfg.namespace_mapping
     # Protect each backend with the acls provided for it in the mapping
     mapping = [(line[0], amw(context, line[1], **line[2])) for line in mapping]
     context.storage = router.RouterBackend(mapping)
+
 
 def run(context):
     """ Run a context trough the application. """
