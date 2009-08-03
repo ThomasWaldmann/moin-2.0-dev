@@ -35,7 +35,7 @@ class RouterBackend(Backend):
 
     For method docstrings, please see the "Backend" base class.
     """
-    def __init__(self, mapping, default):
+    def __init__(self, mapping):
         """
         Initialise router backend.
 
@@ -52,7 +52,6 @@ class RouterBackend(Backend):
         @param mapping: [(mountpoint, backend), ...]
         """
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
-        self.default = default.rstrip('/')
 
     def _get_backend(self, itemname):
         """
@@ -74,8 +73,7 @@ class RouterBackend(Backend):
             if itemname == mountpoint or itemname.startswith(mountpoint and mountpoint + '/' or ''):
                 lstrip = mountpoint and len(mountpoint)+1 or 0
                 return backend, itemname[lstrip:], mountpoint
-
-        return self._get_backend(self.default + '/' + itemname)
+        raise AssertionError("No backend found for %r. Available backends: %r" % (itemname, self.mapping))
 
     def get_backend(self, namespace):
         return self._get_backend(namespace)[0]
