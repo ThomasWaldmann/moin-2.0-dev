@@ -27,44 +27,41 @@ class LocalConfig(multiconfig.DefaultConfig):
     #instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
-    backend_uri = 'fs:instance'
+    #backend_uri = 'fs:instance'
     content_backend = fs.FSBackend('instance/data')
     user_profile_backend = fs.FSBackend('instance/user')
-    def unprotected_storage(self, request):
-        return router.RouterBackend([
-            # (prefix, unprotected backend, protected backend), order of list entries is important
+    content_acl = dict(
+        hierarchic=False,
+        before="TheAdmin:read,write,destroy,create,admin",
+        default="All:read,write,create",
+        after=""
+    )
+    user_profile_acl = dict(
+        hierarchic=False,
+        before="TheAdmin:read,write,destroy,create,admin",
+        default="All:",
+        after="",
+    )
+    namespace_mapping = ([
+            # (prefix, unprotected backend, protection to be applied), order of list entries is important
+
+            # talk/discussion/supplementation pages, use e.g. content_acl for it:
+            #('Talk', talk_backend, acl(request, talk_backend, **content_acl)),
+            # trashed pages, use e.g. content_acl for it:
+            #('Trash', trash_backend, acl(request, trash_backend, **content_acl)),
+
+            # User homepages, use a relaxed acl (secpol!?) for them, giving special
+            # powers when username == pagename:
+            #('User', user_homepage_backend, acl(request, user_homepage_backend, **user_homepage_acl)),
 
             # User profiles: noone except superuser and moin internally should be able to access:
-            ('UserProfile', self.user_profile_backend),
+            ('UserProfile', user_profile_backend, user_profile_acl),
 
+            # the fileserver backend is just read-only, we use a simple fs_acl to enforce that:
+            #('FS', fileserver_backend, acl(request, fileserver_backend, before="All:read")),
             # IMPORTANT: the default content_backend needs to be mapped to '' and be the LAST ENTRY, use the usual content_acl for it:
-            ('', self.content_backend)
+            ('', content_backend, content_acl),
         ])
-
-    def protected_storage(self, request):
-        content_acl = dict(
-            hierarchic=False,
-            before="TheAdmin:read,write,destroy,create,admin",
-            default="All:read,write,create",
-            after=""
-        )
-        user_profile_acl = dict(
-            hierarchic=False,
-            before="TheAdmin:read,write,destroy,create,admin",
-            default="All:",
-            after="",
-        )
-        amw = acl.AclWrapperBackend
-        return router.RouterBackend([
-            # (prefix, unprotected backend, protected backend), order of list entries is important
-
-            # User profiles: noone except superuser and moin internally should be able to access:
-            ('UserProfile', amw(request, self.user_profile_backend, **user_profile_acl)),
-
-            # IMPORTANT: the default content_backend needs to be mapped to '' and be the LAST ENTRY, use the usual content_acl for it:
-            ('', amw(request, self.content_backend, **content_acl)),
-        ])
-
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
