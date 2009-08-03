@@ -23,8 +23,6 @@ class Config(DefaultConfig):
     data_dir = os.path.join(_base_dir, "data") # needed for plugins package TODO
     flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
-    ns_user_profiles = 'UserProfiles/'
-
     # configure backends
     class DummyStorage(object):
         # This is neccessary so the 'if not request.cfg.storage' test in conftest.py can succeed...
