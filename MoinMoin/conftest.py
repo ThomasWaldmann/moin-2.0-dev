@@ -73,9 +73,9 @@ def init_test_request(given_config=None, static_state=[False]):
         self.cfg.provide_fresh_backends()
         init_unprotected_backends(self)
         protect_backends(self)
+    protect_backends(request)
     request.provide_fresh_backends = provide_fresh_backends
 
-    request.provide_fresh_backends(request)
     return request
 
 
@@ -123,6 +123,7 @@ class Module(py.test.collect.Module):
     Function = MoinTestFunction
 
     def __init__(self, *args, **kwargs):
+        # TODO Always uses the default wiki config? Is that correct?
         self.request = init_test_request(given_config=wikiconfig.Config)
         super(Module, self).__init__(*args, **kwargs)
 

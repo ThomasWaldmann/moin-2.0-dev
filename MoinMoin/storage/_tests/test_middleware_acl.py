@@ -28,6 +28,7 @@ class TestACLMiddleware(BackendTest):
     def create_backend(self):
         # Called before *each* testcase. Provides fresh backends every time.
         self.request = init_test_request(self.Config)
+        self.request.provide_fresh_backends(self.request)
         return self.request.storage
 
     def kill_backend(self):
@@ -57,6 +58,7 @@ class TestACLMiddleware(BackendTest):
             content_acl = dict(default=u"All:admin,read,write,destroy")
 
         request = init_test_request(Config)
+        request.provide_fresh_backends(self.request)
         backend = request.storage
         assert py.test.raises(AccessDeniedError, backend.create_item, "I will never exist")
 
