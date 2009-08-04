@@ -13,11 +13,15 @@ import shutil
 import os
 import py
 
+try:
+    import mercurial
+except ImportError:
+    py.test.skip('Cannot test without Mercurial installed.')
+
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.hg import MercurialBackend
 from MoinMoin.storage.error import BackendError
 
-py.test.importorskip('mercurial')
 class TestMercurialBackend(BackendTest):
 
     def __init__(self):
@@ -108,12 +112,10 @@ class TestMercurialBackend(BackendTest):
         rev = item.get_revision(-1)
         assert rev['_meta_'] == "dummy"
 
-    @py.test.mark.xfail
     def test_destroy_item(self):
-        super(TestMercurialBackend, self).test_destroy_item()
+        py.test.skip('expected to fail')
 
-    @py.test.mark.xfail
     def test_destroy_revision(self):
-        super(TestMercurialBackend, self).test_destroy_revision()
+        py.test.skip('expected to fail')
 
 
