@@ -9,7 +9,7 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 import sys, os
 
 from MoinMoin.config import multiconfig, url_prefix_static
-from MoinMoin.storage.backends import fs, router, acl
+from MoinMoin.storage.backends import fs
 
 
 class LocalConfig(multiconfig.DefaultConfig):
@@ -27,50 +27,35 @@ class LocalConfig(multiconfig.DefaultConfig):
     #instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
 
-    preloaded_xml = "wiki/syspages.xml"
+    preloaded_xml = os.path.join(instance_dir, 'syspages.xml')
+
+    data_dir = os.path.join(instance_dir, 'data') # Note: this used to have a trailing / in the past
 
     #backend_uri = 'fs:instance'
-    content_backend = fs.FSBackend('instance/data')
-    user_profile_backend = fs.FSBackend('instance/user')
-    trash_backend = fs.FSBackend('instance/trash')
+    content_backend = fs.FSBackend(os.path.join(data_dir, 'content'))
+    user_profile_backend = fs.FSBackend(os.path.join(data_dir, 'userprofiles'))
+    trash_backend = fs.FSBackend(os.path.join(data_dir, 'trash'))
     content_acl = dict(
+        before="",
+        default="All:read,write,admin,create,destroy", # MMDE -> superpowers by default
+        after="",
         hierarchic=False,
-        before="TheAdmin:read,write,destroy,create,admin",
-        default="All:read,write,create",
-        after=""
     )
     user_profile_acl = dict(
-        hierarchic=False,
-        before="TheAdmin:read,write,destroy,create,admin",
-        default="All:",
+        before="All:read,write,admin,create,destroy", # TODO: change this before release, just for development
+        default="",
         after="",
+        hierarchic=False,
     )
-    namespace_mapping = ([
-            # (prefix, unprotected backend, protection to be applied as dict), order of list entries is important
-
-            # talk/discussion/supplementation pages, use e.g. content_acl for it:
-            #('Talk', talk_backend, content_acl),
-            # trashed pages, use e.g. content_acl for it:
-            ('Trash', trash_backend, content_acl),
-
-            # User homepages, use a relaxed acl (secpol!?) for them, giving special
-            # powers when username == pagename:
-            #('User', user_homepage_backend, user_homepage_acl),
-
-            # User profiles: noone except superuser and moin internally should be able to access:
-            ('UserProfile', user_profile_backend, user_profile_acl),
-
-            # the fileserver backend is just read-only, we use a simple fs_acl to enforce that:
-            #('FS', fileserver_backend, dict(before="All:read")),
-            # IMPORTANT: the default content_backend needs to be mapped to '' or '/' and be the LAST ENTRY, use the usual content_acl for it:
-            ('', content_backend, content_acl),
-        ])
-
-    # Where your own wiki pages are (make regular backups of this directory):
-    data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
+    namespace_mapping = [
+            # order of list entries is important, first prefix match wins
+            # (prefix, unprotected backend, protection to be applied as dict)
+            ('Trash', trash_backend, content_acl),  # trash bin for "deleted" items
+            ('UserProfile', user_profile_backend, user_profile_acl),  # user profiles / accounts
+            ('', content_backend, content_acl),  # '' (wiki content) - must be LAST entry!
+    ]
 
     DesktopEdition = True # give all local users full powers
-    acl_rights_default = u"All:read,write,delete,create,admin"
     surge_action_limits = None # no surge protection
     sitename = u'MoinMoin DesktopEdition'
     logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static
