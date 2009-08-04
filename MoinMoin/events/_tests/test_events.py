@@ -7,6 +7,7 @@
 """
 
 import py
+py.test.skip("Needs Page -> Item refactoring. MoinMoin.items needs to call event code.")
 
 import MoinMoin.events as events
 import MoinMoin.events.notification as notification
