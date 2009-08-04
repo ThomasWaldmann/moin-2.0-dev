@@ -263,10 +263,10 @@ class TestItemAcls(object):
     from MoinMoin._tests import wikiconfig
     class Config(wikiconfig.Config):
         content_acl = dict(
-                hierarchic = False,
+                hierarchic=False,
                 before=u"WikiAdmin:admin,read,write,create,destroy",
-                default = u"All:read,write",
-                after = u"All:read",
+                default=u"All:read,write",
+                after=u"All:read",
         )
 
     def setup_class(self):
@@ -351,10 +351,10 @@ class TestItemHierachicalAcls(object):
     from MoinMoin._tests import wikiconfig
     class Config(wikiconfig.Config):
         content_acl = dict(
-                       hierarchic = True,
-                       before = u"WikiAdmin:admin,read,write,create,destroy",
-                       default = u"All:read,write",
-                       after = u"All:read",
+                       hierarchic=True,
+                       before=u"WikiAdmin:admin,read,write,create,destroy",
+                       default=u"All:read,write",
+                       after=u"All:read",
         )
 
     def setup_class(self):
