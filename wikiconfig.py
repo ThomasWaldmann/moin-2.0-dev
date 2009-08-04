@@ -32,6 +32,7 @@ class LocalConfig(multiconfig.DefaultConfig):
     #backend_uri = 'fs:instance'
     content_backend = fs.FSBackend('instance/data')
     user_profile_backend = fs.FSBackend('instance/user')
+    trash_backend = fs.FSBackend('instance/trash')
     content_acl = dict(
         hierarchic=False,
         before="TheAdmin:read,write,destroy,create,admin",
@@ -50,7 +51,7 @@ class LocalConfig(multiconfig.DefaultConfig):
             # talk/discussion/supplementation pages, use e.g. content_acl for it:
             #('Talk', talk_backend, acl(request, talk_backend, **content_acl)),
             # trashed pages, use e.g. content_acl for it:
-            #('Trash', trash_backend, acl(request, trash_backend, **content_acl)),
+            ('Trash', trash_backend, content_acl),
 
             # User homepages, use a relaxed acl (secpol!?) for them, giving special
             # powers when username == pagename:
