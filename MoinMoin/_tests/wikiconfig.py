@@ -24,7 +24,7 @@ class Config(DefaultConfig):
     flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     # configure backends
-    content_acl = dict(default='All:read,write,create,destroy')
+    content_acl = dict(default='All:read,write,create,destroy,admin')
     namespace_mapping = [('/', memory.MemoryBackend(), content_acl), ]
     def provide_fresh_backends(self):
         self.namespace_mapping = [('/', memory.MemoryBackend(), self.content_acl), ]
