@@ -7,9 +7,12 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from os.path import abspath, dirname, join
+
 import py
 
 from MoinMoin import config, wikiutil
+from MoinMoin._tests import wikiconfig
 
 from werkzeug import MultiDict
 
@@ -94,12 +97,15 @@ class TestSystemPage:
         'NoSuchPageYetAndWillNeverBe',
         )
 
+    class Config(wikiconfig.Config):
+        preloaded_xml = join(abspath(dirname(__file__)), 'testitems.xml')
+
     def testSystemPage(self):
         """wikiutil: good system page names accepted, bad rejected"""
         for name in self.systemPages:
             assert wikiutil.isSystemPage(self.request, name)
         for name in self.notSystemPages:
-            assert not  wikiutil.isSystemPage(self.request, name)
+            assert not wikiutil.isSystemPage(self.request, name)
 
 
 class TestTemplatePage:

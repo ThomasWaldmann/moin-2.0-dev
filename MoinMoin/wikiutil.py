@@ -23,6 +23,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.support.python_compatibility import rsplit
 from inspect import getargspec, isfunction, isclass, ismethod
 
@@ -612,10 +613,10 @@ def isSystemPage(request, pagename):
     @return: true if page is a system page
     """
     from MoinMoin.items import IS_SYSPAGE
-    item = request.storage.get_item(pagename)
     try:
+        item = request.storage.get_item(pagename)
         return item.get_revision(-1)[IS_SYSPAGE]
-    except KeyError:
+    except (NoSuchItemError, NoSuchRevisionError, KeyError):
         pass
 
     return isTemplatePage(request, pagename)
