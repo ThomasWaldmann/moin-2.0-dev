@@ -232,7 +232,7 @@ class MercurialBackend(Backend):
                 self._repo.commit(user='storage', text='(renamed %s to %s)' %
                                   (item.name.encode('utf-8'), newname.encode('utf-8')))
             finally:
-                del lock
+                lock.release()
         except LookupError:
             pass
         if self._has_meta(item._id):
@@ -246,7 +246,7 @@ class MercurialBackend(Backend):
                     pass
                 self._add_to_cdb(newid, newname, replace=item._id)
             finally:
-                del lock
+                lock.release()
         item._id = newid
 
     def _commit_item(self, revision, second_parent=None):
@@ -295,7 +295,7 @@ class MercurialBackend(Backend):
                 self._repo.commit(files=[item._id], text=msg, user=user, date=date, extra=meta, force=True)
             self._add_revision(item, revision)
         finally:
-            del lock
+            lock.release()
 
     def _rollback_item(self, revision):
         pass
@@ -323,7 +323,7 @@ class MercurialBackend(Backend):
                     pass
             else:
                 write_meta_item(os.path.join(self._meta_path, "%s.meta" % item._id), item._metadata)
-            del item._lock
+            item._lock.release()
         else:
             self._add_item(item)
             self._add_to_cdb(item._id, item.name)
