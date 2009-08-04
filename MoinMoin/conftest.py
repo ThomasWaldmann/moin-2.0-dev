@@ -123,6 +123,7 @@ class Module(py.test.collect.Module):
     Function = MoinTestFunction
 
     def __init__(self, *args, **kwargs):
+        # TODO Always uses the default wiki config? Is that correct?
         self.request = init_test_request(given_config=wikiconfig.Config)
         super(Module, self).__init__(*args, **kwargs)
 
