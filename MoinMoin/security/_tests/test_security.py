@@ -350,10 +350,12 @@ class TestItemHierachicalAcls(object):
 
     from MoinMoin._tests import wikiconfig
     class Config(wikiconfig.Config):
-        acl_rights_before = u"WikiAdmin:admin,read,write,create,destroy"
-        acl_rights_default = u"All:read,write"
-        acl_rights_after = u"All:read"
-        acl_hierarchic = True
+        content_acl = dict(
+                       hierarchic = True,
+                       before = u"WikiAdmin:admin,read,write,create,destroy",
+                       default = u"All:read,write",
+                       after = u"All:read",
+        )
 
     def setup_class(self):
         # Backup user
