@@ -69,10 +69,13 @@ def init_test_request(given_config=None, static_state=[False]):
     request = TestRequest()
     request.given_config = given_config
     request = init(request)
-    if not request.cfg.storage:
-        request.cfg.provide_fresh_backends()
-    init_unprotected_backends(request)
-    protect_backends(request)
+    def provide_fresh_backends(self):
+        self.cfg.provide_fresh_backends()
+        init_unprotected_backends(self)
+        protect_backends(self)
+    request.provide_fresh_backends = provide_fresh_backends
+
+    request.provide_fresh_backends(request)
     return request
 
 
