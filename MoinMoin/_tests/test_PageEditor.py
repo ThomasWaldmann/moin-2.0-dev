@@ -123,7 +123,8 @@ class TestExpandPrivateVariables(TestExpandUserName):
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
         """
-        item = self.request.cfg.storage.create_item(self.name)
+        # As this test is not acl related, we operate on the unprotected storage
+        item = self.request.unprotected_storage.create_item(self.name)
         rev = item.create_revision(0)
         rev.write(u' ME:: %s\n' % self.name)
         item.commit()
@@ -197,7 +198,7 @@ class TestCopyPage(object):
     def createTestPage(self):
         """ Create temporary page, bypass logs, notification and backups
         """
-        item = self.request.cfg.storage.create_item(self.pagename)
+        item = self.request.unprotected_storage.create_item(self.pagename)
         rev = item.create_revision(0)
         rev.write(self.text)
         item.commit()

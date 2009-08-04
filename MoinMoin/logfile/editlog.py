@@ -151,7 +151,7 @@ class GlobalEditLog(object):
         Init stuff.
         """
         self.request = request
-        self.backend = request.cfg.storage
+        self.backend = request.storage
         self.items = self.backend.history()
         self.pos = 0
 

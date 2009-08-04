@@ -115,7 +115,7 @@ def upgrade_syspages(request, packagepath):
     @param packagepath: Name of the item containing the system pages xml as data.
     """
     # !! Uses ACL-free storage !!
-    storage = request.cfg.storage
+    storage = request.unprotected_storage
     try:
         item = storage.get_item(packagepath)
         rev = item.get_revision(-1)
