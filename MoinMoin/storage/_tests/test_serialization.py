@@ -2,7 +2,7 @@
 """
     MoinMoin - Test - XML (de)serialization
 
-    TODO: provide fresh backend per test method.
+    TODO: provide fresh backend per test class (or even per test method?).
 
     @copyright: 2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
@@ -17,24 +17,26 @@ from MoinMoin.storage.error import ItemAlreadyExistsError
 from MoinMoin.conftest import init_test_request
 from MoinMoin.storage.serialization import Entry, create_value_object, serialize
 
-class TestSerializer(object):
 
-    def update_item(self, name, revno, meta, data):
-        become_trusted(self.request)
-        try:
-            item = self.request.storage.create_item(name)
-        except ItemAlreadyExistsError:
-            item = self.request.storage.get_item(name)
-        rev = item.create_revision(revno)
-        for k, v in meta.items():
-            rev[k] = v
-        rev.write(data)
-        item.commit()
-        return item
+def update_item(request, name, revno, meta, data):
+    become_trusted(request)
+    try:
+        item = request.storage.create_item(name)
+    except ItemAlreadyExistsError:
+        item = request.storage.get_item(name)
+    rev = item.create_revision(revno)
+    for k, v in meta.items():
+        rev[k] = v
+    rev.write(data)
+    item.commit()
+    return item
+
+
+class TestSerializeRev(object):
 
     def test_serialize_rev(self):
         params = ('foo1', 0, dict(m1="m1"), 'bar1')
-        item = self.update_item(*params)
+        item = update_item(self.request, *params)
         rev = item.get_revision(0)
         xmlfile = StringIO()
         serialize(rev, xmlfile)
@@ -46,17 +48,19 @@ class TestSerializer(object):
                        '<data coding="base64"><chunk>YmFyMQ==</chunk></data>'
                        '</revision>')
 
+
+class TestSerializeItem(object):
+
     def test_serialize_item(self):
         testparams = [
             ('foo2', 0, dict(m1="m1"), 'bar2'),
             ('foo2', 1, dict(m2="m2"), 'baz2'),
         ]
         for params in testparams:
-            item = self.update_item(*params)
+            item = update_item(self.request, *params)
         xmlfile = StringIO()
         serialize(item, xmlfile)
         xml = xmlfile.getvalue()
-        #print xml
         assert xml == ('<item name="foo2">'
                        '<meta></meta>'
                        '<revision revno="0">'
@@ -69,51 +73,40 @@ class TestSerializer(object):
                        '</revision>'
                        '</item>')
 
+
+class TestSerializeBackend(object):
+
     def test_serialize_backend(self):
         testparams = [
-            ('foo3', 0, dict(), ''),
-            ('bar3', 0, dict(), ''),
+            ('foo3', 0, dict(m3="m3"), 'bar1'),
+            ('foo4', 0, dict(m4="m4"), 'bar2'),
+            ('foo4', 1, dict(m4="m4"), 'baz2'),
         ]
         for params in testparams:
-            self.update_item(*params)
+            update_item(self.request, *params)
         xmlfile = StringIO()
         serialize(self.request.storage, xmlfile)
         xml = xmlfile.getvalue()
-        #print xml
-        assert xml == ('<backend>'
-                       '<item name="bar3">'
-                       '<meta></meta>'
-                       '<revision revno="0">'
-                       '<meta></meta>'
-                       '<data coding="base64"></data>'
-                       '</revision>'
-                       '</item>'
-                       '<item name="foo1">'
-                       '<meta></meta>'
-                       '<revision revno="0">'
-                       '<meta><entry key="m1"><str>m1</str></entry></meta>'
-                       '<data coding="base64"><chunk>YmFyMQ==</chunk></data>'
-                       '</revision>'
-                       '</item>'
-                       '<item name="foo2">'
-                       '<meta></meta>'
-                       '<revision revno="0">'
-                       '<meta><entry key="m1"><str>m1</str></entry></meta>'
-                       '<data coding="base64"><chunk>YmFyMg==</chunk></data>'
-                       '</revision>'
-                       '<revision revno="1">'
-                       '<meta><entry key="m2"><str>m2</str></entry></meta>'
-                       '<data coding="base64"><chunk>YmF6Mg==</chunk></data>'
-                       '</revision>'
-                       '</item>'
-                       '<item name="foo3">'
-                       '<meta></meta>'
-                       '<revision revno="0">'
-                       '<meta></meta>'
-                       '<data coding="base64"></data>'
-                       '</revision>'
-                       '</item>'
-                       '</backend>')
+        assert xml.startswith('<backend>')
+        assert xml.endswith('</backend>')
+        assert ('<item name="foo3">'
+                '<meta></meta>'
+                '<revision revno="0">'
+                '<meta><entry key="m3"><str>m3</str></entry></meta>'
+                '<data coding="base64"><chunk>YmFyMQ==</chunk></data>'
+                '</revision>'
+                '</item>') in xml
+        assert ('<item name="foo4">'
+                '<meta></meta>'
+                '<revision revno="0">'
+                '<meta><entry key="m4"><str>m4</str></entry></meta>'
+                '<data coding="base64"><chunk>YmFyMg==</chunk></data>'
+                '</revision>'
+                '<revision revno="1">'
+                '<meta><entry key="m4"><str>m4</str></entry></meta>'
+                '<data coding="base64"><chunk>YmF6Mg==</chunk></data>'
+                '</revision>'
+                '</item>') in xml
 
 
 class TestSerializer2(object):
