@@ -86,6 +86,11 @@ class TestInterWiki:
             assert wikiutil.join_wiki(baseurl, pagename) == url
 
 
+    def testResolveInterWiki(self):
+        result = wikiutil.resolve_interwiki(self.request, 'MoinMoin', 'SomePage')
+        assert result == ('MoinMoin', u'http://moinmo.in/', 'SomePage', False)
+
+
 class TestSystemPage:
     systemPages = (
         'HelpOnMoinWikiSyntax',
