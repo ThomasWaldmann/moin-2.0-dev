@@ -924,8 +924,8 @@ class Page(object):
 
         # cache the pagelinks
         if do_cache and self.default_formatter and page_exists:
-            cache = caching.CacheEntry(request, self, 'pagelinks', scope='item', use_pickle=True)
-            if cache.needsUpdate([self]):
+            cache = caching.CacheEntry(request, self.page_name, 'pagelinks', scope='item', use_pickle=True)
+            if cache.needsUpdate(self.mtime()):
                 links = self.formatter.pagelinks
                 cache.update(links)
 
@@ -1026,8 +1026,8 @@ class Page(object):
 
     def loadCache(self, request):
         """ Return page content cache or raises 'CacheNeedsUpdate' """
-        cache = caching.CacheEntry(request, self, self.getFormatterName(), scope='item')
-        if cache.needsUpdate([self]):
+        cache = caching.CacheEntry(request, self.page_name, self.getFormatterName(), scope='item')
+        if cache.needsUpdate(self.mtime()):
             raise Exception('CacheNeedsUpdate')
 
         import marshal
@@ -1058,7 +1058,7 @@ class Page(object):
         src = formatter.assemble_code(text)
         code = compile(src.encode(config.charset),
                        self.page_name.encode(config.charset), 'exec')
-        cache = caching.CacheEntry(request, self, self.getFormatterName(), scope='item')
+        cache = caching.CacheEntry(request, self.page_name, self.getFormatterName(), scope='item')
         cache.update(marshal.dumps(code))
         return code
 
@@ -1131,8 +1131,8 @@ class Page(object):
         @return: page names this page links to
         """
         if self.exists():
-            cache = caching.CacheEntry(request, self, 'pagelinks', scope='item', do_locking=False, use_pickle=True)
-            if cache.needsUpdate([self]):
+            cache = caching.CacheEntry(request, self.page_name, 'pagelinks', scope='item', do_locking=False, use_pickle=True)
+            if cache.needsUpdate(self.mtime()):
                 links = self.parsePageLinks(request)
                 cache.update(links)
             else:
@@ -1248,7 +1248,7 @@ class Page(object):
         @return: true if there is a known conflict.
         """
 
-        cache = caching.CacheEntry(self.request, self, 'conflict', scope='item')
+        cache = caching.CacheEntry(self.request, self.page_name, 'conflict', scope='item')
         return cache.exists()
 
     def setConflict(self, state):
@@ -1256,7 +1256,7 @@ class Page(object):
 
         @param state: bool, true if there is a conflict.
         """
-        cache = caching.CacheEntry(self.request, self, 'conflict', scope='item')
+        cache = caching.CacheEntry(self.request, self.page_name, 'conflict', scope='item')
         if state:
             cache.update("") # touch it!
         else:

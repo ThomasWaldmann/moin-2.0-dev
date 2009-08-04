@@ -26,21 +26,26 @@ class CacheError(Exception):
 
 
 def get_arena_dir(request, arena, scope):
+    """ Get a cache storage directory for some specific scope and arena.
+
+        scope     arena
+        ---------------------------------------------------------------------
+        'item'    should be the item name (is stored in a per-wiki cache arena)
+                  [unicode]
+        'wiki'    some unique name for a per-wiki cache arena
+                  [ascii str]
+        'farm'    some unique name for a common farm-global cache arena
+                  [ascii str]
+    """
     if scope == 'item':
-        from MoinMoin.Page import Page
-        from MoinMoin.storage import Item
-        if isinstance(arena, Page):
-            name = arena.page_name
-        elif isinstance(arena, Item):
-            name = arena.name
-        else:
-            raise TypeError("arena needs to be a Page or Item instance")
-        return os.path.join(request.cfg.cache_dir, request.cfg.siteid, 'item', hash_new('sha1', name.encode('utf-8')).hexdigest())
+        path = request.cfg.siteid, 'item', hash_new('sha1', arena.encode('utf-8')).hexdigest()
     elif scope == 'wiki':
-        return os.path.join(request.cfg.cache_dir, request.cfg.siteid, arena)
+        path = request.cfg.siteid, arena
     elif scope == 'farm':
-        return os.path.join(request.cfg.cache_dir, '__common__', arena)
-    return None
+        path = '__common__', arena
+    else:
+        raise ValueError('Unsupported scope: %r' % scope)
+    return os.path.join(request.cfg.cache_dir, *path)
 
 
 def get_cache_list(request, arena, scope):
@@ -56,13 +61,9 @@ class CacheEntry:
                  use_pickle=False, use_encode=False):
         """ init a cache entry
             @param request: the request object
-            @param arena: either a string or a page object, when we want to use
-                          page local cache area
-            @param key: under which key we access the cache content
-            @param scope: the scope where we are caching:
-                          'item' - an item local cache
-                          'wiki' - a wiki local cache
-                          'farm' - a cache for the whole farm
+            @param scope: see get_arena_dir()
+            @param arena: see get_arena_dir()
+            @param key: under which key we access the cache content [str, ascii]
             @param do_locking: if there should be a lock, normally True
             @param use_pickle: if data should be pickled/unpickled (nice for arbitrary cache content)
             @param use_encode: if data should be encoded/decoded (nice for readable cache files)
@@ -117,32 +118,24 @@ class CacheEntry:
         """
         return filesys.fuid(self._fname)
 
-    def needsUpdate(self, items):
-        """ Checks whether cache needs to get updated
+    def needsUpdate(self, *timestamps):
+        """ Checks whether cache needs to get updated because some
+            timestamp is newer than the cache contents. The list of
+            timestamps can be built from objects that the cache contents
+            are built from / depends on.
 
-        @param items: a sequence of / iterator over objects that this cache depends on -
-                      supported object classes: Page, Item, int/float (mtime)
+        @param timestamps: UNIX timestamps (int or float)
         @return: True if cache needs updating, False otherwise.
         """
-        from MoinMoin.Page import Page
-        from MoinMoin.storage import Item
         try:
             cache_mtime = os.path.getmtime(self._fname)
         except os.error:
             # no cache file or other problem accessing it
             return True
 
-        for item in items:
-            if isinstance(item, (int, float)):
-                item_mtime = item
-            elif isinstance(item, Page):
-                item_mtime = item.mtime()
-            elif isinstance(item, Item):
-                item_mtime = item.get_revision(-1).timestamp # XXX there should be a item.timestamp property
-            else:
-                raise ValueError("caching.needsUpdate: Item type not supported: %r" % type(item))
-
-            if item_mtime > cache_mtime:
+        for timestamp in timestamps:
+            assert isinstance(timestamp, (int, long, float))
+            if timestamp > cache_mtime:
                 return True
 
         return False
