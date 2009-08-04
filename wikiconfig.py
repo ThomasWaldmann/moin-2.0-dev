@@ -46,23 +46,23 @@ class LocalConfig(multiconfig.DefaultConfig):
         after="",
     )
     namespace_mapping = ([
-            # (prefix, unprotected backend, protection to be applied), order of list entries is important
+            # (prefix, unprotected backend, protection to be applied as dict), order of list entries is important
 
             # talk/discussion/supplementation pages, use e.g. content_acl for it:
-            #('Talk', talk_backend, acl(request, talk_backend, **content_acl)),
+            #('Talk', talk_backend, content_acl),
             # trashed pages, use e.g. content_acl for it:
             ('Trash', trash_backend, content_acl),
 
             # User homepages, use a relaxed acl (secpol!?) for them, giving special
             # powers when username == pagename:
-            #('User', user_homepage_backend, acl(request, user_homepage_backend, **user_homepage_acl)),
+            #('User', user_homepage_backend, user_homepage_acl),
 
             # User profiles: noone except superuser and moin internally should be able to access:
             ('UserProfile', user_profile_backend, user_profile_acl),
 
             # the fileserver backend is just read-only, we use a simple fs_acl to enforce that:
-            #('FS', fileserver_backend, acl(request, fileserver_backend, before="All:read")),
-            # IMPORTANT: the default content_backend needs to be mapped to '' and be the LAST ENTRY, use the usual content_acl for it:
+            #('FS', fileserver_backend, dict(before="All:read")),
+            # IMPORTANT: the default content_backend needs to be mapped to '' or '/' and be the LAST ENTRY, use the usual content_acl for it:
             ('', content_backend, content_acl),
         ])
 
