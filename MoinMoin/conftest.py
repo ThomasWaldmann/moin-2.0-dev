@@ -108,13 +108,11 @@ class MoinClassCollector(py.test.collect.Class):
     def setup(self):
         cls = self.obj
         if hasattr(cls, 'Config'):
-            cls.request = init_test_request(given_config=cls.Config)
-            cls.client = Client(Application(cls.Config))
+            given_config = cls.Config
         else:
-            cls.request = self.parent.request
-            #XXX: this is the extremely messy way to configure the wsgi app
-            #     with the correct testing config
-            cls.client = Client(Application(self.parent.request.cfg.__class__))
+            given_config = wikiconfig.Config
+        cls.request = init_test_request(given_config=given_config)
+        cls.client = Client(Application(given_config))
         super(MoinClassCollector, self).setup()
 
 
@@ -123,11 +121,12 @@ class Module(py.test.collect.Module):
     Function = MoinTestFunction
 
     def __init__(self, *args, **kwargs):
-        # TODO Always uses the default wiki config? Is that correct?
-        self.request = init_test_request(given_config=wikiconfig.Config)
+        given_config = wikiconfig.Config
+        self.request = init_test_request(given_config=given_config)
         super(Module, self).__init__(*args, **kwargs)
 
     def run(self, *args, **kwargs):
         if coverage is not None:
             coverage_modules.update(getattr(self.obj, 'coverage_modules', []))
         return super(Module, self).run(*args, **kwargs)
+
