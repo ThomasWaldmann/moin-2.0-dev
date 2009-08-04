@@ -21,7 +21,6 @@ class Config(DefaultConfig):
 
     _base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
     data_dir = os.path.join(_base_dir, "data") # needed for plugins package TODO
-    flat_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     # configure backends
     content_acl = dict(default='All:read,write,create,destroy,admin')
