@@ -66,14 +66,15 @@ class TestCaching(object):
         test_data2 = u'something else'
         page_name = u'Caching_TestPage'
         become_trusted(self.request)
-        create_page(self.request, page_name, test_data1, mimetype='text/moin-wiki', acl=None)
-        item = self.request.storage.get_item(page_name)
-        cache = caching.CacheEntry(self.request, item, 'test_key', 'item')
+        item = create_page(self.request, page_name, test_data1, mimetype='text/moin-wiki', acl=None)
+        mtime = item.rev.timestamp
+        cache = caching.CacheEntry(self.request, item.name, 'test_key', 'item')
         cache.update(test_data1)
-        assert not cache.needsUpdate([item])
+        assert not cache.needsUpdate(mtime)
         time.sleep(3) # XXX fails without, due to mtime granularity
-        create_page(self.request, page_name, test_data2, mimetype='text/moin-wiki', acl=None)
-        assert cache.needsUpdate([item])
+        item = create_page(self.request, page_name, test_data2, mimetype='text/moin-wiki', acl=None)
+        mtime = item.rev.timestamp
+        assert cache.needsUpdate(mtime)
 
     def test_filelike_readwrite(self):
         request = self.request
