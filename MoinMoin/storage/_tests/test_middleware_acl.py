@@ -20,7 +20,7 @@ import py
 
 class TestACLMiddleware(BackendTest):
     class Config(wikiconfig.Config):
-        default = u"All:admin,read,write,destroy,create"
+        content_acl = dict(default=u"All:admin,read,write,destroy,create")
 
     def __init__(self):
         BackendTest.__init__(self, None)
@@ -28,7 +28,6 @@ class TestACLMiddleware(BackendTest):
     def create_backend(self):
         # Called before *each* testcase. Provides fresh backends every time.
         self.request = init_test_request(self.Config)
-        self.request.cfg.provide_fresh_backends()
         return self.request.storage
 
     def kill_backend(self):
@@ -55,11 +54,9 @@ class TestACLMiddleware(BackendTest):
     def test_create_item(self):
         class Config(wikiconfig.Config):
             # no create
-            default = u"All:admin,read,write,destroy"
+            content_acl = dict(default=u"All:admin,read,write,destroy")
 
         request = init_test_request(Config)
-        request.cfg.provide_fresh_backends()
-        protect_backends(request)
         backend = request.storage
         assert py.test.raises(AccessDeniedError, backend.create_item, "I will never exist")
 
