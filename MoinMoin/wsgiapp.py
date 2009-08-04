@@ -64,7 +64,7 @@ def init_unprotected_backends(context):
     # We don't consider the protection here. That is done in protect_backends.
     ns_mapping = context.cfg.namespace_mapping
     # Just initialize with unprotected backends.
-    unprotected_mapping = [(ns, backend) for ns, backend, acls in [mapping for mapping in ns_mapping]]
+    unprotected_mapping = [(ns, backend) for ns, backend, acls in ns_mapping]
     context.unprotected_storage = router.RouterBackend(unprotected_mapping)
 
     # This makes the first request after server restart potentially much slower...
@@ -101,7 +101,7 @@ def protect_backends(context):
     amw = acl.AclWrapperBackend
     ns_mapping = context.cfg.namespace_mapping
     # Protect each backend with the acls provided for it in the mapping at position 2
-    protected_mapping = [(ns, amw(context, backend, **acls)) for ns, backend, acls in [mapping for mapping in ns_mapping]]
+    protected_mapping = [(ns, amw(context, backend, **acls)) for ns, backend, acls in ns_mapping]
     context.storage = router.RouterBackend(protected_mapping)
 
 
