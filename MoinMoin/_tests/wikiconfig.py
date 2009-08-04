@@ -24,6 +24,9 @@ class Config(DefaultConfig):
     data_dir = os.path.join(_base_dir, "data") # needed for plugins package TODO
     _test_items_xml = join(abspath(dirname(__file__)), 'testitems.xml')
 
+    shared_intermap_files = [os.path.join(os.path.dirname(__file__), '..', '..',
+                                          'wiki', 'data', 'intermap.txt'), ]
+
     # configure backends
     content_acl = dict(default='All:read,write,create,destroy,admin')
     namespace_mapping = [('/', memory.MemoryBackend(), content_acl), ]
