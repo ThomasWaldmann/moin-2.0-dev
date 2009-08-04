@@ -9,14 +9,15 @@
     @license: GNU GPL, see COPYING for details.
 """
 from tempfile import mkdtemp, mkstemp, gettempdir
-import py.test
 import shutil
 import os
+import py
 
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.hg import MercurialBackend
 from MoinMoin.storage.error import BackendError
 
+py.test.importorskip('mercurial')
 class TestMercurialBackend(BackendTest):
 
     def __init__(self):
@@ -106,5 +107,13 @@ class TestMercurialBackend(BackendTest):
         item = self.backend.get_item('metakey')
         rev = item.get_revision(-1)
         assert rev['_meta_'] == "dummy"
+
+    @py.test.mark.xfail
+    def test_destroy_item(self):
+        super(TestMercurialBackend, self).test_destroy_item()
+
+    @py.test.mark.xfail
+    def test_destroy_revision(self):
+        super(TestMercurialBackend, self).test_destroy_revision()
 
 
