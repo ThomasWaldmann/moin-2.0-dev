@@ -12,7 +12,7 @@ import py
 from MoinMoin.search.queryparser import QueryParser, QueryError
 from MoinMoin.search import Xapian
 from MoinMoin import search
-from MoinMoin._tests import nuke_xapian_index
+from MoinMoin._tests import nuke_xapian_index, wikiconfig
 
 class TestQueryParsing:
     """ search: query parser tests """
@@ -69,6 +69,9 @@ class TestQueryParsing:
 class TestSearch:
     """ search: test search """
     doesnotexist = u'jfhsdaASDLASKDJ'
+
+    class Config(wikiconfig.Config):
+        preloaded_xml = wikiconfig.Config._test_items_xml
 
     def testTitleSearchFrontPage(self):
         """ search: title search for FrontPage """

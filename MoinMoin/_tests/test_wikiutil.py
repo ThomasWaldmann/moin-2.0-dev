@@ -7,8 +7,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-from os.path import abspath, dirname, join
-
 import py
 
 from MoinMoin import config, wikiutil
@@ -98,7 +96,7 @@ class TestSystemPage:
         )
 
     class Config(wikiconfig.Config):
-        preloaded_xml = join(abspath(dirname(__file__)), 'testitems.xml')
+        preloaded_xml = wikiconfig.Config._test_items_xml
 
     def testSystemPage(self):
         """wikiutil: good system page names accepted, bad rejected"""
