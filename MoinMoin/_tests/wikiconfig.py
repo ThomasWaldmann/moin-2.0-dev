@@ -12,6 +12,7 @@ work without setting them (like data_dir).
 """
 
 import os
+from os.path import abspath, dirname, join
 from MoinMoin.config.multiconfig import DefaultConfig
 from MoinMoin.storage.backends import flatfile, clone, enduser, memory
 
@@ -21,6 +22,7 @@ class Config(DefaultConfig):
 
     _base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
     data_dir = os.path.join(_base_dir, "data") # needed for plugins package TODO
+    _test_items_xml = join(abspath(dirname(__file__)), 'testitems.xml')
 
     # configure backends
     content_acl = dict(default='All:read,write,create,destroy,admin')
