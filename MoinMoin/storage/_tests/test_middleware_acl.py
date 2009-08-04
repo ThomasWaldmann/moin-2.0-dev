@@ -58,7 +58,7 @@ class TestACLMiddleware(BackendTest):
             content_acl = dict(default=u"All:admin,read,write,destroy")
 
         request = init_test_request(Config)
-        request.provide_fresh_backends(self.request)
+        request.provide_fresh_backends(request)
         backend = request.storage
         assert py.test.raises(AccessDeniedError, backend.create_item, "I will never exist")
 
