@@ -1353,7 +1353,7 @@ class Parser:
             strings, outputting verbatim any intervening text.
         """
         self.formatter = formatter
-        self.hilite_re = self.formatter.page.hilite_re
+        #self.hilite_re = self.formatter.page.hilite_re
 
         # get text and replace TABs
         rawtext = self.raw.expandtabs()
