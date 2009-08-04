@@ -6,7 +6,6 @@
                 2008-2008 MoinMoin:FlorianKrupicka
     @license: GNU GPL, see COPYING for details.
 """
-import threading
 
 from MoinMoin.web.contexts import AllContext, Context, XMLRPCContext
 from MoinMoin.web.exceptions import HTTPException, Forbidden
@@ -68,30 +67,28 @@ def init_unprotected_backends(context):
     mapping = [(line[0], line[1]) for line in mapping]
     context.unprotected_storage = router.RouterBackend(mapping)
 
-    # This makes the first request after server restart potentially slower...
-    xmlfile = context.cfg.preloaded_xml
-    if xmlfile:
-        # ... hence we perform this operation in a seperate thread if necessary.
-        threading.Thread(target=preload_xml, args=(context, )).start()
+    # This makes the first request after server restart potentially much slower...
+    preload_xml(context)
 
 
 def preload_xml(context):
     # If the content was already pumped into the backend, we don't want
     # to do that again. (Works only until the server is restarted.)
     xmlfile = context.cfg.preloaded_xml
-    context.cfg.preloaded_xml = None
-    try:
-        # In case the server was restarted we cannot know whether
-        # the xml data already exists in the target backend.
-        # Hence we check the existence of the items before we copy them.
-        backend = context.unprotected_storage
-        tmp_backend = memory.MemoryBackend()
-        unserialize(tmp_backend, xmlfile)
-        for item in tmp_backend.iteritems():
-            item = backend.get_item(item.name)
-    except StorageError:
-        # if there is some exception, we assume that backend needs to be filled
-        clone(tmp_backend, backend)
+    if xmlfile:
+        context.cfg.preloaded_xml = None
+        try:
+            # In case the server was restarted we cannot know whether
+            # the xml data already exists in the target backend.
+            # Hence we check the existence of the items before we copy them.
+            backend = context.unprotected_storage
+            tmp_backend = memory.MemoryBackend()
+            unserialize(tmp_backend, xmlfile)
+            for item in tmp_backend.iteritems():
+                item = backend.get_item(item.name)
+        except StorageError:
+            # if there is some exception, we assume that backend needs to be filled
+            clone(tmp_backend, backend)
 
 
 def protect_backends(context):
