@@ -59,13 +59,13 @@ def init_unprotected_backends(context):
         This is separate from init because the conftest request setup needs to be
         able to create fresh data storage backends in between init and init_backend.
     """
-    # TODO: Find a better term than 'line'
-    # A mapping consists of several lines, where each line is made up like this:
-    # mountpoint, unprotected backend, protection to apply
-    mapping = context.cfg.namespace_mapping
+    # A ns_mapping consists of several lines, where each line is made up like this:
+    # mountpoint, unprotected backend, protection to apply as a dict
+    # We don't consider the protection here. That is done in protect_backends.
+    ns_mapping = context.cfg.namespace_mapping
     # Just initialize with unprotected backends.
-    mapping = [(line[0], line[1]) for line in mapping]
-    context.unprotected_storage = router.RouterBackend(mapping)
+    unprotected_mapping = [(mapping[0], mapping[1]) for mapping in ns_mapping]
+    context.unprotected_storage = router.RouterBackend(unprotected_mapping)
 
     # This makes the first request after server restart potentially much slower...
     preload_xml(context)
@@ -92,11 +92,17 @@ def preload_xml(context):
 
 
 def protect_backends(context):
+    """
+    This function is invoked after the user has been set up. setup_user needs access to
+    storage and the ACL middleware needs access to the user's name. Hence we first
+    init the unprotected backends so setup_user can access storage, and protect the
+    backends after the user has been set up.
+    """
     amw = acl.AclWrapperBackend
-    mapping = context.cfg.namespace_mapping
-    # Protect each backend with the acls provided for it in the mapping
-    mapping = [(line[0], amw(context, line[1], **line[2])) for line in mapping]
-    context.storage = router.RouterBackend(mapping)
+    ns_mapping = context.cfg.namespace_mapping
+    # Protect each backend with the acls provided for it in the mapping at position 2
+    protected_mapping = [(mapping[0], amw(context, mapping[1], **mapping[2])) for mapping in ns_mapping]
+    context.storage = router.RouterBackend(protected_mapping)
 
 
 def run(context):
