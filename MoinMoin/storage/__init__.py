@@ -39,6 +39,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import shutil
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -460,6 +462,111 @@ class Backend(Serializable):
     def serialize_value(self, xmlgen):
         for item in self.iteritems():
             item.serialize(xmlgen)
+
+    # item copying
+    def _copy_item_progress(self, verbose, st):
+        if verbose:
+            progress_char = dict(converts='.', skips='s', fails='F')
+            sys.stdout.write(progress_char[st])
+
+    def copy_item(self, item, verbose=False, name=None):
+        def same_revision(rev1, rev2):
+            if rev1.timestamp != rev2.timestamp:
+                return False
+            for k, v in rev1.iteritems():
+                if rev2[k] != v:
+                    return False
+            if rev1.size != rev2.size:
+                return False
+            return True
+
+        if name is None:
+            name = item.name
+
+        status = dict(converts={}, skips={}, fails={})
+        revisions = item.list_revisions()
+
+        for revno in revisions:
+            revision = item.get_revision(revno)
+            try:
+                new_item = self.get_item(name)
+            except NoSuchItemError:
+                new_item = self.create_item(name)
+                new_item.change_metadata()
+                for k, v in revision.item.iteritems():
+                    new_item[k] = v
+                new_item.publish_metadata()
+
+            try:
+                new_rev = new_item.create_revision(revision.revno)
+            except RevisionAlreadyExistsError:
+                existing_revision = new_item.get_revision(revision.revno)
+                st = same_revision(existing_revision, revision) and 'skips' or 'fails'
+            else:
+                for k, v in revision.iteritems():
+                    new_rev[k] = v
+                new_rev.timestamp = revision.timestamp
+                shutil.copyfileobj(revision, new_rev)
+                new_item.commit()
+                st = 'converts'
+            try:
+                status[st][name].append(revision.revno)
+            except KeyError:
+                status[st][name] = [revision.revno]
+            self._copy_item_progress(verbose, st)
+
+        return status['converts'], status['skips'], status['fails']
+
+    # cloning support
+    def _clone_before(self, source, verbose):
+        if verbose:
+            # reopen stdout file descriptor with write mode
+            # and 0 as the buffer size (unbuffered)
+            sys.stdout = os.fdopen(os.dup(sys.stdout.fileno()), 'w', 0)
+            sys.stdout.write("[converting %s to %s]: " % (source.__class__.__name__,
+                                                          self.__class__.__name__, ))
+
+    def _clone_after(self, source, verbose):
+        if verbose:
+            sys.stdout.write("\n")
+
+    def clone(self, source, verbose=False, only_these=[]):
+        """
+        Create exact copy of source Backend with all the Items into THIS
+        backend. If you don't want all items, you can give an item name list
+        in only_these.
+
+        Note: this is a generic implementation, you can maybe specialize it to
+              make it faster in your backend implementation (esp. if creating
+              new items is expensive).
+
+        Return a tuple consisting of three dictionaries (Item name:Revision
+        numbers list): converted, skipped and failed Items dictionary.
+        """
+        def item_generator(source, only_these):
+            if only_these:
+                for name in only_these:
+                    try:
+                        yield source.get_item(name)
+                    except NoSuchItemError:
+                        # TODO Find out why this fails sometimes.
+                        #sys.stdout.write("Unable to copy %s\n" % itemname)
+                        pass
+            else:
+                for item in source.iteritems():
+                    yield item
+
+        self._clone_before(source, verbose)
+
+        converts, skips, fails = {}, {}, {}
+        for item in item_generator(source, only_these):
+            c, s, f = self.copy_item(item, verbose)
+            converts.update(c)
+            skips.update(s)
+            fails.update(f)
+
+        self._clone_after(source, verbose)
+        return converts, skips, fails
 
 
 class Item(Serializable, DictMixin):
