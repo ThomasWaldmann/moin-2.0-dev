@@ -86,7 +86,6 @@ contains correct paths for:
 
  * `url_prefix_static` (static stuff like css/img/js)
  * `data_dir` (the instance data directory) and
- * `data_underlay_dir` (the instance underlay directory).
 
 /!\ You could use relative paths for those directories (relative to the
 location of `moin.cgi`), but to save yourself some headaches just use
