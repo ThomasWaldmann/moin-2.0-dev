@@ -267,7 +267,7 @@ class TestBlock(ParserTestCase):
         ('----\n', '<hr'),
         ('= Heading =\n', '<h1'),
         ('{{{\nPre\n}}}\n', '<pre'),
-        ('{{{\n#!python\nPre\n}}}\n', '<div'),
+        ('{{{\n#!highlight python\nPre\n}}}\n', '<div'),
         ('| Table |\n', '<div'),
         (' * unordered list\n', '<ul'),
         (' # ordered list\n', '<ol'),
