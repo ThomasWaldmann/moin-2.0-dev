@@ -11,7 +11,12 @@ import py
 from MoinMoin.storage.error import NoSuchItemError
 
 class TestStorageEnviron(object):
+    def setup_method(self, method):
+        self.class_level_value = 123
+
     def test_fresh_backends(self):
+        assert self.class_level_value == 123
+
         storage = self.request.storage
         assert storage
         assert hasattr(storage, 'get_item')
