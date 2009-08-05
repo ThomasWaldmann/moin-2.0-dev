@@ -408,10 +408,12 @@ class Page(object):
 
         @rtype: bool
         @return: true if page lives in the data dir
+
+        DEPRECATED
+        Get rid of this.
         """
         if not self._item:
             return False
-        return not hasattr(self._item._backend, '_layer_marked_underlay')
 
     def exists(self, domain=None):
         """
