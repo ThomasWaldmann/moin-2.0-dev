@@ -75,6 +75,7 @@ def preload_xml(context):
     # If the content was already pumped into the backend, we don't want
     # to do that again. (Works only until the server is restarted.)
     xmlfile = context.cfg.preloaded_xml
+    conv = {}
     if xmlfile:
         context.cfg.preloaded_xml = None
         try:
@@ -88,7 +89,9 @@ def preload_xml(context):
                 item = backend.get_item(item.name)
         except StorageError:
             # if there is some exception, we assume that backend needs to be filled
-            clone(tmp_backend, backend)
+            conv, skip, fail = clone(tmp_backend, backend)
+    # To make some tests happy
+    context.cfg.test_num_pages = len(conv)
 
 
 def protect_backends(context):
