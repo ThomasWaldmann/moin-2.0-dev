@@ -57,7 +57,8 @@ from MoinMoin.storage.error import (BackendError, NoSuchItemError, NoSuchRevisio
                                    RevisionAlreadyExistsError)
 WINDOW_SIZE = 256
 PICKLE_ITEM_META = 1
-META_PREFIX = '_meta_'
+WIKI_METADATA_PREFIX = '_meta_'
+BACKEND_METADATA_PREFIX = '_backend_'
 
 class MercurialBackend(Backend):
     """Implements backend storage using Mercurial VCS."""
@@ -156,12 +157,12 @@ class MercurialBackend(Backend):
         Yields MercurialStoredRevision objects.
         """
         for ctx in self._iter_changelog(reverse=reverse):
-            meta = ctx.extra()
-            revno = int(meta['_rev'])
+            meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
+            revno = int(meta['rev'])
             timestamp = ctx.date()[0]
-            item = Item(self, meta['_name'])  # XXX: inaccurate after renames...
+            item = Item(self, meta['name'])  # XXX: inaccurate after renames?
             rev = MercurialStoredRevision(item, revno, timestamp)
-            rev._item_id = item._id = meta['_id']
+            rev._item_id = item._id = meta['id']
             yield rev
 
     def _get_revision(self, item, revno):
@@ -249,6 +250,19 @@ class MercurialBackend(Backend):
                 lock.release()
         item._id = newid
 
+    def _encode_metadata(self, dict, prefix):
+        meta = {}
+        for k, v in dict.iteritems():
+            meta["%s%s" % (prefix, k)] = pickle.dumps(v)
+        return meta
+
+    def _decode_metadata(self, dict, prefix):
+        meta = {}
+        for k, v in dict.iteritems():
+            if k.startswith(prefix):
+                meta[k[len(prefix):]] = pickle.loads(v)
+        return meta
+
     def _commit_item(self, revision, second_parent=None):
         """
         Commit given Item Revision to repository.
@@ -274,13 +288,12 @@ class MercurialBackend(Backend):
                     parents.append(second_parent)
             else:
                 parents = []
-            # XXX: everything should be pickled
-            meta = {"_rev": revision.revno,
-                    "_name": item.name.encode("utf-8"),
-                    "_id": item._id,
-                    "_parents": pickle.dumps(" ".join(parents))}
-            for k, v in revision.iteritems():
-                meta["%s%s" % (META_PREFIX, k)] = pickle.dumps(v)
+            internal_meta = {'rev': revision.revno,
+                             'name': item.name,
+                             'id': item._id,
+                             'parents': " ".join(parents)}
+            meta = self._encode_metadata(internal_meta, BACKEND_METADATA_PREFIX)
+            meta.update(self._encode_metadata(revision, WIKI_METADATA_PREFIX))
 
             if not revision.timestamp:
                 revision.timestamp = long(time.time())
@@ -372,11 +385,7 @@ class MercurialBackend(Backend):
     def _get_revision_metadata(self, revision):
         """Return given Revision Metadata dictionary."""
         extra = self._get_changectx(revision).extra()
-        metadata = {}
-        for k, v in extra.iteritems():
-            if k.startswith(META_PREFIX):
-                metadata[k[len(META_PREFIX):]] = pickle.loads(v)
-        return metadata
+        return self._decode_metadata(extra, WIKI_METADATA_PREFIX)
 
     def _get_revision_timestamp(self, revision):
         """Return given Revision timestamp"""
@@ -404,7 +413,8 @@ class MercurialBackend(Backend):
         """Resolve Item name by given ID."""
         try:
             fctx = self._repo.changectx('')[itemid].filectx(0)
-            return fctx.changectx().extra()['_name']
+            meta = fctx.changectx().extra()
+            return self._decode_metadata(meta, BACKEND_METADATA_PREFIX)['name']
         except LookupError:
             c = cdb.init(self._meta_db)
             return c.get(itemid)
@@ -422,7 +432,7 @@ class MercurialBackend(Backend):
         def wanted(changerev):
             ctx = self._repo.changectx(changerev)
             try:
-                ctxid = ctx.extra()['_id']
+                ctxid = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)['id']
                 return not id or ctxid == id
             except KeyError:
                 return False
@@ -554,9 +564,11 @@ class MercurialBackend(Backend):
     def _get_revision_parents(self, revision):
         """Return parent revision numbers of Revision."""
         def get_revision(node):
-            return self._repo.changectx(node).extra()['_rev']
+            meta = self._repo.changectx(node).extra()
+            return self._decode_metadata(meta, BACKEND_METADATA_PREFIX)['rev']
 
-        parents = pickle.loads(self._get_changectx(revision).extra()['_parents']).split()
+        meta = self._get_changectx(revision).extra()
+        parents = self._decode_metadata(meta, BACKEND_METADATA_PREFIX)['parents'].split()
         return [get_revision(node) for node in parents]
 
 
