@@ -113,6 +113,21 @@ class MoinClassCollector(py.test.collect.Class):
             given_config = wikiconfig.Config
         cls.request = init_test_request(given_config=given_config)
         cls.client = Client(Application(given_config))
+        
+        def setup_method(f):
+            def wrapper(self, *args, **kwargs):
+                self.request.provide_fresh_backends(self.request)
+                return f(self, *args, **kwargs)
+            return wrapper
+
+        try:
+            old_setup = cls.setup_method
+            cls.setup_method = setup_method(cls.setup_method)
+        except AttributeError:
+            def no_setup(self, method):
+                self.request.provide_fresh_backends(self.request)
+            cls.setup_method = no_setup
+
         super(MoinClassCollector, self).setup()
 
 
