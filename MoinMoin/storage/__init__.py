@@ -46,7 +46,7 @@ logging = log.getLogger(__name__)
 
 from UserDict import DictMixin
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
-                                   NoSuchItemError, BackendError
+                                   NoSuchItemError, RevisionAlreadyExistsError, BackendError
 
 from MoinMoin.storage.serialization import Serializable, XMLGenerator, \
                                            Data, Meta, ItemMeta
