@@ -16,14 +16,6 @@ from MoinMoin.storage.serialization import unserialize
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
 
 
-def copy_item(item, destination, verbose=False, name=None):
-    return destination.copy_item(item, verbose, name)
-
-
-def clone(source, destination, verbose=False, only_these=[]):
-    return destination.clone(source, verbose, only_these)
-
-
 def upgrade_syspages(request, packagepath):
     """
     Upgrade the wiki's system pages from an XML file.
@@ -43,4 +35,5 @@ def upgrade_syspages(request, packagepath):
     unserialize(tmp_backend, rev)
 
     # clone to real backend from config WITHOUT checking ACLs!
-    clone(tmp_backend, storage)
+    storage.clone(tmp_backend)
+
