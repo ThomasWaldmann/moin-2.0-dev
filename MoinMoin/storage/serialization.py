@@ -454,7 +454,7 @@ class Data(Serializable):
     element_name = 'data'
 
     def __init__(self, attrs, read_fn=None, write_fn=None):
-        if 'coding' not in attrs:
+        if not attrs.has_key('coding'):
             attrs['coding'] = 'base64'
         self.element_attrs = attrs
         self.read_fn = read_fn
