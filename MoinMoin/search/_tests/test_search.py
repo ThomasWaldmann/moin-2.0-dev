@@ -116,6 +116,7 @@ class TestXapianIndex:
 
     def testIndex(self):
         """ search: kicks off indexing for a single pages in Xapian """
+        py.test.skip("Won't work before Xapian code is refactored and adjusted to work with new storage")
         # This only tests that the call to indexing doesn't raise.
         nuke_xapian_index(self.request)
         idx = Xapian.Index(self.request)
