@@ -23,7 +23,6 @@ from werkzeug import http_date, quote_etag
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
 from MoinMoin.support.python_compatibility import hash_new
-from MoinMoin.storage.backends import copy_item
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
 
@@ -215,7 +214,7 @@ class Item(object):
         """
         old_item = self.rev.item
         backend = self.request.storage
-        copy_item(old_item, backend, name=name)
+        backend.copy_item(old_item, name=name)
         current_rev = old_item.get_revision(-1)
         # we just create a new revision with almost same meta/data to show up on RC
         self._save(current_rev, current_rev, name=name, action='SAVE/COPY', extra=self.name, comment=comment)

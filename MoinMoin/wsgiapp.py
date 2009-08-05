@@ -14,7 +14,7 @@ from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_respo
     redirect_last_visited
 from MoinMoin.storage.error import AccessDeniedError, StorageError
 from MoinMoin.storage.serialization import unserialize
-from MoinMoin.storage.backends import router, acl, memory, clone
+from MoinMoin.storage.backends import router, acl, memory
 from MoinMoin.Page import Page
 from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
 
@@ -89,7 +89,7 @@ def preload_xml(context):
                 item = backend.get_item(item.name)
         except StorageError:
             # if there is some exception, we assume that backend needs to be filled
-            conv, skip, fail = clone(tmp_backend, backend)
+            conv, skip, fail = backend.clone(tmp_backend)
     # To make some tests happy
     context.cfg.test_num_pages = len(conv)
 
