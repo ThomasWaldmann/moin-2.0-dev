@@ -15,7 +15,6 @@
 import shutil, sys
 
 from MoinMoin.script import MoinScript, fatal
-from MoinMoin.storage.backends import clone
 
 class PluginScript(MoinScript):
     """Backend migration class."""
@@ -50,7 +49,7 @@ class PluginScript(MoinScript):
             fatal("Please, configure your %(user)s_backend and %(user)s_backend_source in wikiconfig.py." %
                   {'user': self.options.backend_type})
 
-        converts, skips, fails = clone(src_backend, dst_backend, self.options.verbose)
+        converts, skips, fails = dst_backend.clone(src_backend, self.options.verbose)
         cnt = [0, 0, 0]
         for num, dict in enumerate((converts, skips, fails)):
             cnt[num] = sum([len(v) for v in dict.itervalues()])

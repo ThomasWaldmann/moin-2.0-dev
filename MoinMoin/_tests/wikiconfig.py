@@ -14,7 +14,7 @@ work without setting them (like data_dir).
 import os
 from os.path import abspath, dirname, join
 from MoinMoin.config.multiconfig import DefaultConfig
-from MoinMoin.storage.backends import flatfile, clone, enduser, memory
+from MoinMoin.storage.backends import flatfile, enduser, memory
 
 class Config(DefaultConfig):
     sitename = u'Developer Test Wiki'
