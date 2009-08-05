@@ -113,17 +113,25 @@ class MoinClassCollector(py.test.collect.Class):
             given_config = wikiconfig.Config
         cls.request = init_test_request(given_config=given_config)
         cls.client = Client(Application(given_config))
-        
+
+        # In order to provide fresh backends for each and every testcase,
+        # we wrap the setup_method in a decorator that performs the freshening
+        # operation. setup_method is invoked by py.test automatically prior to
+        # executing any testcase.
         def setup_method(f):
             def wrapper(self, *args, **kwargs):
                 self.request.provide_fresh_backends(self.request)
+                # Don't forget to call the class' setup_method if it has one.
                 return f(self, *args, **kwargs)
             return wrapper
 
         try:
-            old_setup = cls.setup_method
+            # Wrap the actual setup_method in our refresher-decorator.
             cls.setup_method = setup_method(cls.setup_method)
         except AttributeError:
+            # Perhaps the test class did not define a setup_method.
+            # We want to provide fresh backends nevertheless, so we
+            # provide a setup_method ourselves.
             def no_setup(self, method):
                 self.request.provide_fresh_backends(self.request)
             cls.setup_method = no_setup
