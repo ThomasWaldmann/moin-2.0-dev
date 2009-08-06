@@ -30,8 +30,6 @@ class Config(DefaultConfig):
     # configure backends
     content_acl = dict(default='All:read,write,create,destroy,admin')
     namespace_mapping = [('/', memory.MemoryBackend(), content_acl), ]
-    def provide_fresh_backends(self):
-        self.namespace_mapping = [('/', memory.MemoryBackend(), self.content_acl), ]
 
     page_front_page = 'FrontPage'
 
