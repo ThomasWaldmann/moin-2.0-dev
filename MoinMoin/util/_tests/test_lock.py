@@ -110,7 +110,7 @@ class TestExclusiveLock(object):
 
         Lock with one lock, try to acquire another after timeout.
         """
-        timeout = 3.0 # minimal timout is 2.0
+        timeout = 3.0 # minimal timeout is 2.0
         first = ExclusiveLock(self.lock_dir, timeout)
         second = ExclusiveLock(self.lock_dir, timeout)
         if not first.acquire(0.1):
