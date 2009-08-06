@@ -9,7 +9,7 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 import sys, os
 
 from MoinMoin.config import multiconfig, url_prefix_static
-from MoinMoin.storage.backends import fs
+from MoinMoin.storage.backends import create_simple_mapping
 
 
 class LocalConfig(multiconfig.DefaultConfig):
@@ -31,29 +31,8 @@ class LocalConfig(multiconfig.DefaultConfig):
 
     data_dir = os.path.join(instance_dir, 'data') # Note: this used to have a trailing / in the past
 
-    #backend_uri = 'fs:instance'
-    content_backend = fs.FSBackend(os.path.join(data_dir, 'content'))
-    user_profile_backend = fs.FSBackend(os.path.join(data_dir, 'userprofiles'))
-    trash_backend = fs.FSBackend(os.path.join(data_dir, 'trash'))
-    content_acl = dict(
-        before="",
-        default="All:read,write,admin,create,destroy", # MMDE -> superpowers by default
-        after="",
-        hierarchic=False,
-    )
-    user_profile_acl = dict(
-        before="All:read,write,admin,create,destroy", # TODO: change this before release, just for development
-        default="",
-        after="",
-        hierarchic=False,
-    )
-    namespace_mapping = [
-            # order of list entries is important, first prefix match wins
-            # (prefix, unprotected backend, protection to be applied as dict)
-            ('Trash', trash_backend, content_acl),  # trash bin for "deleted" items
-            ('UserProfile', user_profile_backend, user_profile_acl),  # user profiles / accounts
-            ('', content_backend, content_acl),  # '' (wiki content) - must be LAST entry!
-    ]
+    backend_uri = 'fs:instance'
+    namespace_mapping = create_simple_mapping(backend_uri)
 
     DesktopEdition = True # give all local users full powers
     surge_action_limits = None # no surge protection
