@@ -14,7 +14,6 @@ work without setting them (like data_dir).
 import os
 from os.path import abspath, dirname, join
 from MoinMoin.config.multiconfig import DefaultConfig
-from MoinMoin.storage.backends import create_simple_mapping
 
 class Config(DefaultConfig):
     sitename = u'Developer Test Wiki'
@@ -26,6 +25,8 @@ class Config(DefaultConfig):
 
     shared_intermap_files = [os.path.join(os.path.dirname(__file__), '..', '..',
                                           'wiki', 'data', 'intermap.txt'), ]
+
+    content_acl = None
 
     page_front_page = 'FrontPage'
 
