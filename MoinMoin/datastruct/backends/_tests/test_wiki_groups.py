@@ -25,9 +25,8 @@ class TestWikiGroupBackend(GroupsBackendTest):
     # Suppose that default configuration for the groups is used which
     # is WikiGroups backend.
 
-    def setup_class(self):
+    def setup_method(self, method):
         become_trusted(self.request)
-
         for group, members in self.test_groups.iteritems():
             page_text = ' * %s' % '\n * '.join(members)
             create_page(self.request, group, page_text)
