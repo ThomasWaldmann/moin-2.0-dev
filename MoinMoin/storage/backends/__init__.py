@@ -27,7 +27,7 @@ HG_PREFIX = "hg:"
 MEMORY = "memory:"
 
 
-def create_simple_mapping(backend_uri='fs:instance'):
+def create_simple_mapping(backend_uri='fs:instance', content_acl=None):
     """
     When configuring storage, the admin needs to provide a namespace_mapping.
     To ease creation of such a mapping, this function provides sane defaults
@@ -81,12 +81,13 @@ def create_simple_mapping(backend_uri='fs:instance'):
     ns_content = '/'
     ns_user_profile = 'UserProfile/'
     ns_trash = 'Trash/'
-    content_acl = dict(
-        before="",
-        default="All:read,write,admin,create,destroy", # MMDE -> superpowers by default
-        after="",
-        hierarchic=False,
-    )
+    if not content_acl:
+        content_acl = dict(
+            before="",
+            default="All:read,write,admin,create,destroy", # MMDE -> superpowers by default
+            after="",
+            hierarchic=False,
+        )
     user_profile_acl = dict(
         before="All:read,write,admin,create,destroy", # TODO: change this before release, just for development
         default="",

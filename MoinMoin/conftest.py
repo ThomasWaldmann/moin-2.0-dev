@@ -33,6 +33,7 @@ from MoinMoin.support.python_compatibility import set
 from MoinMoin.web.request import TestRequest, Client
 from MoinMoin.wsgiapp import Application, init, init_unprotected_backends, protect_backends
 from MoinMoin._tests import maketestwiki, wikiconfig
+from MoinMoin.storage.backends import create_simple_mapping
 
 coverage_modules = set()
 
@@ -65,10 +66,10 @@ except ImportError:
     coverage = None
 
 
-from MoinMoin.storage.backends import create_simple_mapping
 def init_test_request(given_config=None, static_state=[False]):
     request = TestRequest()
-    given_config.namespace_mapping = create_simple_mapping('memory:')
+    content_acl = given_config.content_acl
+    given_config.namespace_mapping = create_simple_mapping("memory:", content_acl)
     request.given_config = given_config
     request = init(request)
     protect_backends(request)
