@@ -65,8 +65,10 @@ except ImportError:
     coverage = None
 
 
+from MoinMoin.storage.backends import create_simple_mapping
 def init_test_request(given_config=None, static_state=[False]):
     request = TestRequest()
+    given_config.namespace_mapping = create_simple_mapping('memory:')
     request.given_config = given_config
     request = init(request)
     protect_backends(request)
