@@ -17,6 +17,7 @@ AccessControlList = security.AccessControlList
 from MoinMoin.user import User
 
 from MoinMoin._tests import create_page as create_item
+from MoinMoin._tests import become_trusted
 
 class TestACLStringIterator(object):
 
@@ -269,18 +270,10 @@ class TestItemAcls(object):
                 after=u"All:read",
         )
 
-    def setup_class(self):
-        # Backup user
-        self.savedUser = self.request.user.name
-        self.request.user = User(self.request, auth_username=u'WikiAdmin')
-        self.request.user.valid = True
-
+    def setup_method(self, method):
+        become_trusted(self.request, username=u'WikiAdmin')
         for item_name, item_acl, item_content in self.items:
             create_item(self.request, item_name, item_content, acl=item_acl)
-
-    def teardown_class(self):
-        # Restore user
-        self.request.user.name = self.savedUser
 
     def testItemACLs(self):
         """ security: test item acls """
@@ -357,18 +350,10 @@ class TestItemHierachicalAcls(object):
                        after=u"All:read",
         )
 
-    def setup_class(self):
-        # Backup user
-        self.savedUser = self.request.user.name
-        self.request.user = User(self.request, auth_username=u'WikiAdmin')
-        self.request.user.valid = True
-
+    def setup_method(self, method):
+        become_trusted(self.request, username=u'WikiAdmin')
         for item_name, item_acl, item_content in self.items:
             create_item(self.request, item_name, item_content, acl=item_acl)
-
-    def teardown_class(self):
-        # Restore user
-        self.request.user.name = self.savedUser
 
     def testItemACLs(self):
         """ security: test item acls """
