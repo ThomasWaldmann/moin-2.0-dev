@@ -274,7 +274,6 @@ class TestItemAcls(object):
         self.savedUser = self.request.user.name
         self.request.user = User(self.request, auth_username=u'WikiAdmin')
         self.request.user.valid = True
-        self.request.provide_fresh_backends(self.request)
 
         for item_name, item_acl, item_content in self.items:
             create_item(self.request, item_name, item_content, acl=item_acl)
@@ -363,7 +362,6 @@ class TestItemHierachicalAcls(object):
         self.savedUser = self.request.user.name
         self.request.user = User(self.request, auth_username=u'WikiAdmin')
         self.request.user.valid = True
-        self.request.provide_fresh_backends(self.request)
 
         for item_name, item_acl, item_content in self.items:
             create_item(self.request, item_name, item_content, acl=item_acl)
