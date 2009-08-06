@@ -74,17 +74,6 @@ def init_test_request(given_config=None, static_state=[False]):
     return request
 
 
-def dirties_backend(func):
-    """ Decorator for methods that dirty the current backend and
-        require a fresh one after execution. """
-    def wrapper(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        finally:
-            args[0].request.cfg.provide_fresh_backends()
-    return wrapper
-
-
 # py.test customization starts here
 
 class MoinTestFunction(py.test.collect.Function):
