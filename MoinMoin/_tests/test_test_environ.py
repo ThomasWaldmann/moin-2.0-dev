@@ -23,11 +23,12 @@ class TestStorageEnviron(object):
         assert hasattr(storage, 'history')
         assert not list(storage.iteritems())
         assert not list(storage.history())
-        assert py.test.raises(NoSuchItemError, storage.get_item, 'FrontPage')
-        item = storage.create_item("FrontPage")
+        itemname = "this item shouldn't exist yet"
+        assert py.test.raises(NoSuchItemError, storage.get_item, itemname)
+        item = storage.create_item(itemname)
         rev = item.create_revision(0)
         item.commit()
-        assert storage.has_item("FrontPage")
+        assert storage.has_item(itemname)
 
     # Run this test twice to see if something's changed
     test_twice = test_fresh_backends
