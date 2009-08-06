@@ -136,7 +136,7 @@ class MercurialBackend(Backend):
         in repository.
         """
         def filter(id):
-            return id.endswith(".rev") or self._has_meta(id)
+            return id.endswith(".rev")
 
         ctx = self._repo.changectx('')
         for id in itertools.ifilterfalse(filter, ctx):
