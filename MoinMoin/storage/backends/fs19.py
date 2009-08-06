@@ -232,6 +232,18 @@ class FsPageRevision(StoredRevision):
         self._fs_data_fname = None # "file" is already opened here:
         self._fs_data_file = StringIO(data)
 
+        # Small hack to make migration to 2.0 clean. This removes any occurrences of
+        # the pre-2.0 ACL capabilities 'revert' and 'delete'. (They have been killed
+        # in 2.0.
+        acl_line = self._fs_meta.get(ACL)
+        if acl_line:
+            for old_priv in ('revert', 'delete'):
+                # possible occurrences:
+                acl_line = acl_line.replace(old_priv + ',', '')  # All:old_priv,read
+                acl_line = acl_line.replace(',' + old_priv, '')  # All:read,old_priv
+                acl_line = acl_line.replace(old_priv, '')  # All:old_priv
+            self._fs_meta[ACL] = acl_line
+
 
 class FsAttachmentItem(Item):
     """ A moin 1.9 filesystem item (attachment) """
