@@ -62,7 +62,7 @@ class TestStorageEnvironWithConfig(object):
         itemname = "OnlyForThisTest"
         assert not storage.has_item(itemname)
         new_item = storage.create_item(itemname)
-        storage.create_revision(0)
+        new_item.create_revision(0)
         new_item.commit()
         assert storage.has_item(itemname)
 
