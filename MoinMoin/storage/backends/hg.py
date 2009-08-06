@@ -113,8 +113,10 @@ class MercurialBackend(Backend):
 
     def has_item(self, itemname):
         """Return True if Item with given name exists."""
+        # XXX: destroy item should delete metadata also
         id = self._hash(itemname)
         return id in self._repo.changectx('') or self._has_meta(id)
+        # XXX: read backend metadata and check if deleted = True
 
     def create_item(self, itemname):
         """
@@ -172,6 +174,10 @@ class MercurialBackend(Backend):
         if Revision does not exist.
         Return MercurialStoredRevision object.
         """
+        # XXX: read last line from index file (.rev)
+        # on revno == -1
+        # if revno == -1:
+        #    self._open_index_file(item).
         revs = self._list_revisions(item)
         if revs and revno == -1:
             revno = max(revs)
@@ -184,15 +190,18 @@ class MercurialBackend(Backend):
         revision._data = None
         return revision
 
+    def _open_item_index(self, item, mode='r'):
+        return open(os.path.join(self._rev_path, "%s.rev" % item._id), mode)
+
     def _list_revisions(self, item):
         """Return a list of Item Revision numbers."""
         if not item._id:
             return []
         else:
             try:
-                with open(os.path.join(self._rev_path, "%s.rev" % item._id), 'r') as revfile:
-                    revs = range(len(revfile.read().splitlines()))
-                    return revs
+                with self._open_item_index(item) as revfile:
+                    revs = [int(line.split()[0]) for line in revfile]
+                return revs
             except IOError:
                 return []
 
@@ -216,7 +225,7 @@ class MercurialBackend(Backend):
         Rename given Item name to newname.
         Raise ItemAlreadyExistsError if destination exists.
 
-        Also rename versioned cache file to follow new item name.
+        Also rename versioned index file to follow new item name.
         """
         newid = self._hash(newname)
         try:
@@ -245,7 +254,7 @@ class MercurialBackend(Backend):
                 try:
                     util.rename(src, dst)
                 except OSError:
-                    pass
+                    pass # XXX: wtf?
                 self._add_to_cdb(newid, newname, replace=item._id)
             finally:
                 lock.release()
@@ -266,12 +275,11 @@ class MercurialBackend(Backend):
 
     def _commit_item(self, revision, second_parent=None):
         """
-        Commit given Item Revision to repository.
+        Commit given Item Revision to repository. Update and commit Item index file.
         If Revision already exists, raise RevisionAlreadyExistsError.
-        Update Item cache file.
         """
         item = revision.item
-        lock = self._lock_repo()
+        lock = self._lock_repo() #XXX: lock item only!
         try:
             if not item._id:
                 self._add_item(item)
@@ -279,15 +287,13 @@ class MercurialBackend(Backend):
                 raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revision.revno)
 
             util.rename(revision._tmp_fpath, os.path.join(self._rev_path, item._id))
-            if revision.revno == 0:
-                f = open(os.path.join(self._rev_path, "%s.rev" % item._id), 'w').close()
-                self._repo.add([item._id, "%s.rev" % item._id])
-
             if revision.revno > 0:
                 parents = [self._get_changectx(self._get_revision(item, revision.revno - 1)).node()]
                 if second_parent:
                     parents.append(second_parent)
             else:
+                self._open_item_index(item, 'wb').close()
+                self._repo.add([item._id, "%s.rev" % item._id])
                 parents = []
             internal_meta = {'rev': revision.revno,
                              'name': item.name,
@@ -306,7 +312,7 @@ class MercurialBackend(Backend):
                 self._repo.commit(match=match, text=msg, user=user, date=date, extra=meta, force=True)
             except NameError:
                 self._repo.commit(files=[item._id], text=msg, user=user, date=date, extra=meta, force=True)
-            self._add_revision(item, revision)
+            self._append_revision(item, revision)
         finally:
             lock.release()
 
@@ -454,22 +460,20 @@ class MercurialBackend(Backend):
     def _get_filectx(self, revision):
         """
         Get Filecontext object corresponding to given Revision.
-        Retrieve necessary information from cache file.
+        Retrieve necessary information from index file.
         """
-        with open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r') as revfile:
+        with self._open_item_index(revision.item) as revfile:
             revs = revfile.read().splitlines()
-        revs.sort()
         revno, node, id, filenode = revs[revision.revno].split()
         return self._repo.filectx(id, fileid=filenode)
 
     def _get_changectx(self, revision):
         """
         Get Changecontext object corresponding to given Revision.
-        Retrieve necessary information from cache file.
+        Retrieve necessary information from index file.
         """
-        with open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r') as revfile:
+        with self._open_item_index(revision.item) as revfile:
             revs = revfile.read().splitlines()
-        revs.sort()
         ctxrev = revs[revision.revno].split()[1]
         return self._repo.changectx(ctxrev)
 
@@ -497,17 +501,17 @@ class MercurialBackend(Backend):
             raise ItemAlreadyExistsError("Destination item already exists: %s" % item.name)
         item._id = self._hash(item.name)
 
-    def _add_revision(self, item, revision):
-        """Add Item Revision to cache file to speed up further lookups."""
-        ctx = self._repo.changectx('')
-        with open(os.path.join(self._rev_path, "%s.rev" % item._id), 'a') as revfile:
-            revfile.write("%d %s %s %s\n" % (revision.revno, short(ctx.node()),
-                                         item._id, short(ctx.filectx(item._id).filenode()), ))
+    def _append_revision(self, item, revision):
+        """Add Item Revision to index file to speed up further lookups."""
+        fctx = self._repo.changectx('')[item._id]
+        with self._open_item_index(item, 'a') as revfile:
+            revfile.write("%d %s %s %s\n" % (revision.revno, short(fctx.node()),
+                                         item._id, short(fctx.filenode()), ))
         try:
             match = mercurial.match.exact(self._rev_path, '', ['%s.rev' % item._id])
-            self._repo.commit(match=match, text="(cache append)", user="storage")
+            self._repo.commit(match=match, text="(index append)", user="storage")
         except NameError:
-            self._repo.commit(files=['%s.rev' % item._id], text="(cache append)", user="storage")
+            self._repo.commit(files=['%s.rev' % item._id], text="(index append)", user="storage")
 
     def _has_meta(self, itemid):
         """Return True if Item with given ID has Metadata. Otherwise return None."""
@@ -550,9 +554,8 @@ class MercurialBackend(Backend):
         corresponding to given Revision.
         """
         try:
-            with open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r') as revfile:
+            with self._open_item_index(revision.item) as revfile:
                 revs = revfile.read().splitlines()
-            revs.sort()
             node = revs[revision.revno].split()[1]
             return node, short(node)
         except IOError:
