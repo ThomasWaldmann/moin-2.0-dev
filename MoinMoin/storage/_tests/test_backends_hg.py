@@ -112,9 +112,6 @@ class TestMercurialBackend(BackendTest):
         rev = item.get_revision(-1)
         assert rev['_meta_'] == "dummy"
 
-    def test_destroy_item(self):
-        py.test.skip('expected to fail')
-
     def test_destroy_revision(self):
         py.test.skip('expected to fail')
 
