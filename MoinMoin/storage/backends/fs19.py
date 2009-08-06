@@ -241,7 +241,7 @@ class FsPageRevision(StoredRevision):
                 # possible occurrences:
                 acl_line = acl_line.replace(old_priv + ',', '')  # All:old_priv,read
                 acl_line = acl_line.replace(',' + old_priv, '')  # All:read,old_priv
-                acl_line = acl_line.replace(old_priv, '')  # All:old_priv
+                acl_line = acl_line.replace(':' + old_priv, '')  # JoePrevert:old_priv
             self._fs_meta[ACL] = acl_line
 
 
