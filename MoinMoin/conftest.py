@@ -69,12 +69,7 @@ def init_test_request(given_config=None, static_state=[False]):
     request = TestRequest()
     request.given_config = given_config
     request = init(request)
-    def provide_fresh_backends(self):
-        self.cfg.provide_fresh_backends()
-        init_unprotected_backends(self)
-        protect_backends(self)
     protect_backends(request)
-    request.provide_fresh_backends = provide_fresh_backends
 
     return request
 
@@ -120,7 +115,7 @@ class MoinClassCollector(py.test.collect.Class):
         # executing any testcase.
         def setup_method(f):
             def wrapper(self, *args, **kwargs):
-                self.request.provide_fresh_backends(self.request)
+                self.request = init_test_request(given_config=given_config)
                 # Don't forget to call the class' setup_method if it has one.
                 return f(self, *args, **kwargs)
             return wrapper
@@ -133,7 +128,7 @@ class MoinClassCollector(py.test.collect.Class):
             # We want to provide fresh backends nevertheless, so we
             # provide a setup_method ourselves.
             def no_setup(self, method):
-                self.request.provide_fresh_backends(self.request)
+                self.request = init_test_request(given_config=given_config)
             cls.setup_method = no_setup
 
         super(MoinClassCollector, self).setup()
