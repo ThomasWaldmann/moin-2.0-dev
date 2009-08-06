@@ -20,6 +20,8 @@ class TestStorageEnvironWithoutConfig(object):
     def test_fresh_backends(self):
         assert self.class_level_value == 123
 
+        assert isinstance(self.request.cfg, wikiconfig.Config)
+
         storage = self.request.storage
         assert storage
         assert hasattr(storage, 'get_item')
@@ -42,6 +44,8 @@ class TestStorageEnvironWithConfig(object):
         preloaded_xml = wikiconfig.Config._test_items_xml
 
     def test_fresh_backends_with_content(self):
+        assert isinstance(self.request.cfg, wikiconfig.Config)
+
         storage = self.request.storage
         should_be_there = ("FrontPage", "HelpOnLinking", "HelpOnMoinWikiSyntax", )
         for pagename in should_be_there:
