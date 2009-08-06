@@ -306,7 +306,7 @@ class MercurialBackend(Backend):
                 revision.timestamp = long(time.time())
             date = datetime.fromtimestamp(revision.timestamp).isoformat(sep=' ')
             user = revision.get(EDIT_LOG_USERID, DEFAULT_USER).encode("utf-8")
-            msg = revision.get(EDIT_LOG_COMMENT, '').encode("utf-8") 
+            msg = revision.get(EDIT_LOG_COMMENT, '').encode("utf-8")
             try:
                 match = mercurial.match.exact(self._rev_path, '', [item._id])
                 self._repo.commit(match=match, text=msg, user=user, date=date, extra=meta, force=True)
@@ -354,8 +354,8 @@ class MercurialBackend(Backend):
             revision._data = StringIO.StringIO(self._get_filectx(revision).data())
             # More effective would be to read revision data from working copy if this is last revision,
             # however this involves locking file: there may be read on write operation (_write_revision_data).
-            # 
-            # if revision.revno == self._list_revisions(revision.item)[-1]: 
+            #
+            # if revision.revno == self._list_revisions(revision.item)[-1]:
             #   revision._data = open(os.path.join(self._rev_path, revision._item_id))
 
     def _read_revision_data(self, revision, chunksize):
