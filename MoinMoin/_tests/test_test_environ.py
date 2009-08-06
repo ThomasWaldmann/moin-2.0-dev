@@ -8,9 +8,12 @@
 
 import py
 
+from MoinMoin.items import IS_SYSPAGE, SYSPAGE_VERSION
 from MoinMoin.storage.error import NoSuchItemError
 
-class TestStorageEnviron(object):
+from MoinMoin._tests import wikiconfig
+
+class TestStorageEnvironWithoutConfig(object):
     def setup_method(self, method):
         self.class_level_value = 123
 
@@ -29,6 +32,36 @@ class TestStorageEnviron(object):
         rev = item.create_revision(0)
         item.commit()
         assert storage.has_item(itemname)
+        assert not storage.has_item("FrontPage")
 
     # Run this test twice to see if something's changed
     test_twice = test_fresh_backends
+
+class TestStorageEnvironWithConfig(object):
+    class Config(wikiconfig.Config):
+        preloaded_xml = wikiconfig.Config._test_items_xml
+
+    def test_fresh_backends_with_content(self):
+        storage = self.request.storage
+        should_be_there = ("FrontPage", "HelpOnLinking", "HelpOnMoinWikiSyntax", )
+        for pagename in should_be_there:
+            assert storage.has_item(pagename)
+            item = storage.get_item(pagename)
+            rev = item.get_revision(-1)
+            assert rev.revno == 0
+            assert rev[IS_SYSPAGE]
+            assert rev[SYSPAGE_VERSION] == 1
+            # check whether this dirties the backend for the second iteration of the test
+            new_rev = item.create_revision(1)
+            item.commit()
+
+        itemname = "OnlyForThisTest"
+        assert not storage.has_item(itemname)
+        new_item = storage.create_item(itemname)
+        storage.create_revision(0)
+        new_item.commit()
+        assert storage.has_item(itemname)
+
+    # Run this test twice to see if something's changed
+    test_twice = test_fresh_backends_with_content
+
