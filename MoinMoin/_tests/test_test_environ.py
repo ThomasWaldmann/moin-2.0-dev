@@ -42,6 +42,7 @@ class TestStorageEnvironWithoutConfig(object):
 class TestStorageEnvironWithConfig(object):
     class Config(wikiconfig.Config):
         preloaded_xml = wikiconfig.Config._test_items_xml
+        content_acl = dict(before = "Me:create", )
 
     def test_fresh_backends_with_content(self):
         assert isinstance(self.request.cfg, wikiconfig.Config)
@@ -65,6 +66,8 @@ class TestStorageEnvironWithConfig(object):
         new_item.create_revision(0)
         new_item.commit()
         assert storage.has_item(itemname)
+
+        assert storage.get_backend("/").before.acl_lines[0] == "Me:create"
 
     # Run this test twice to see if something's changed
     test_twice = test_fresh_backends_with_content
