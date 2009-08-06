@@ -39,6 +39,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import os
+import sys
 import shutil
 
 from MoinMoin import log
