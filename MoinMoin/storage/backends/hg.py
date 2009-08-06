@@ -113,10 +113,8 @@ class MercurialBackend(Backend):
 
     def has_item(self, itemname):
         """Return True if Item with given name exists."""
-        # XXX: destroy item should delete metadata also
         id = self._hash(itemname)
         return id in self._repo.changectx('') or self._has_meta(id)
-        # XXX: read backend metadata and check if deleted = True
 
     def create_item(self, itemname):
         """
@@ -131,6 +129,20 @@ class MercurialBackend(Backend):
         item = Item(self, itemname)
         item._id = None
         return item
+
+    def _destroy_item(self, item):
+        # TODO: This is just hiding. Real item destroy may use `mq` extension
+        # to rip off all Item revisions from repository.
+        self._repo.remove(['%s.rev' % item._id, item._id], unlink=True)
+        try:
+            match = mercurial.match.exact(self._rev_path, '', ['%s.rev' % item._id, item._id])
+            self._repo.commit(match=match, text="(item destroy)", user="storage")
+        except NameError:
+            self._repo.commit(files=['%s.rev' % item._id, item._id], text="(item destroy)", user="storage")
+        try:
+            os.remove(os.path.join(self._meta_path, "%s.meta" % item._id))
+        except OSError:
+            pass
 
     def iteritems(self):
         """
@@ -161,12 +173,13 @@ class MercurialBackend(Backend):
         """
         for ctx in self._iter_changelog(reverse=reverse):
             meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
-            revno = int(meta['rev'])
-            timestamp = ctx.date()[0]
-            item = Item(self, meta['name'])  # XXX: inaccurate after renames?
-            rev = MercurialStoredRevision(item, revno, timestamp)
-            rev._item_id = item._id = meta['id']
-            yield rev
+            if meta['id'] in self._repo.changectx(''): # yield revision only if item is in manifest
+                revno = int(meta['rev'])
+                timestamp = ctx.date()[0]
+                item = Item(self, meta['name'])  # XXX: inaccurate after renames?
+                rev = MercurialStoredRevision(item, revno, timestamp)
+                rev._item_id = item._id = meta['id']
+                yield rev
 
     def _get_revision(self, item, revno):
         """
@@ -576,6 +589,7 @@ class MercurialStoredRevision(StoredRevision):
 
     def __init__(self, item, revno, timestamp=None, size=None):
         StoredRevision.__init__(self, item, revno, timestamp, size)
+        self._data = None
 
     def get_parents(self):
         return self._backend._get_revision_parents(self)
