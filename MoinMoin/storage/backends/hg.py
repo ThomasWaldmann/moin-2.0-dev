@@ -56,7 +56,8 @@ from MoinMoin.storage.error import (BackendError, NoSuchItemError, NoSuchRevisio
                                    RevisionNumberMismatchError, ItemAlreadyExistsError,
                                    RevisionAlreadyExistsError)
 WINDOW_SIZE = 256
-PICKLE_ITEM_META = 1
+PICKLE_PROTOCOL = 1
+DEFAULT_USER = 'nobody'
 WIKI_METADATA_PREFIX = '_meta_'
 BACKEND_METADATA_PREFIX = '_backend_'
 
@@ -298,9 +299,8 @@ class MercurialBackend(Backend):
             if not revision.timestamp:
                 revision.timestamp = long(time.time())
             date = datetime.fromtimestamp(revision.timestamp).isoformat(sep=' ')
-            user = (revision.get(EDIT_LOG_USERID) or "anonymous").encode("utf-8")
-            msg = (revision.get(EDIT_LOG_COMMENT) or "...").encode("utf-8")  # stable hg does not allow empty comments
-
+            user = revision.get(EDIT_LOG_USERID, DEFAULT_USER).encode("utf-8")
+            msg = revision.get(EDIT_LOG_COMMENT, '').encode("utf-8") 
             try:
                 match = mercurial.match.exact(self._rev_path, '', [item._id])
                 self._repo.commit(match=match, text=msg, user=user, date=date, extra=meta, force=True)
@@ -323,7 +323,7 @@ class MercurialBackend(Backend):
         def write_meta_item(meta_path, metadata):
             fd, fpath = tempfile.mkstemp("-meta", "tmp-", self._meta_path)
             with os.fdopen(fd, 'wb') as f:
-                pickle.dump(metadata, f, protocol=PICKLE_ITEM_META)
+                pickle.dump(metadata, f, protocol=PICKLE_PROTOCOL)
             util.rename(fpath, meta_path)
 
         if item._id:
@@ -345,28 +345,25 @@ class MercurialBackend(Backend):
 
     def _open_revision_data(self, revision):
         if revision._data is None:
-            if revision.revno == max(self._list_revisions(revision.item)): # latest revision, data in working copy
-                # XXX: lock this file for writing on read
-                #      question is, when will it be unlocked?
-                revision._data = open(os.path.join(self._rev_path, revision._item_id), 'r')
-                # XXX: keeps file open as long as revision exists
-            else:
-                revision._data = StringIO.StringIO(self._get_filectx(revision).data())
+            revision._data = StringIO.StringIO(self._get_filectx(revision).data())
+            # More effective would be to read revision data from working copy if this is last revision,
+            # however this involves locking file: there may be read on write operation (_write_revision_data).
+            # 
+            # if revision.revno == self._list_revisions(revision.item)[-1]: 
+            #   revision._data = open(os.path.join(self._rev_path, revision._item_id))
 
     def _read_revision_data(self, revision, chunksize):
         """
         Read given amount of bytes of Revision data.
         By default, all data is read.
-
-        If last revision, read from working copy.
         """
         self._open_revision_data(revision)
         return revision._data.read(chunksize)
 
     def _write_revision_data(self, revision, data):
         """Write data to the given Revision."""
-        # we can open file in create_revision and pass it here but this would lead
-        # to problems as in FSBackend with too many opened files
+        # We can open file in create_revision and pass it here but this would lead
+        # to problems as in FSBackend with too many opened files.
         with open(revision._tmp_fpath, 'a') as f:
             f.write(data)
 
