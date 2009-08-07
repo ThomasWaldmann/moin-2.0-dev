@@ -488,16 +488,17 @@ class Backend(Serializable):
         status = dict(converts={}, skips={}, fails={})
         revisions = item.list_revisions()
 
+        try:
+            new_item = self.get_item(name)
+        except NoSuchItemError:
+            new_item = self.create_item(name)
+            new_item.change_metadata()
+            for k, v in item.iteritems():
+                new_item[k] = v
+            new_item.publish_metadata()
+
         for revno in revisions:
             revision = item.get_revision(revno)
-            try:
-                new_item = self.get_item(name)
-            except NoSuchItemError:
-                new_item = self.create_item(name)
-                new_item.change_metadata()
-                for k, v in revision.item.iteritems():
-                    new_item[k] = v
-                new_item.publish_metadata()
 
             try:
                 new_rev = new_item.create_revision(revision.revno)
