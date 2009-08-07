@@ -190,7 +190,7 @@ class Backend(Serializable):
         of the revisions the item has. The list must be ordered, starting with
         the oldest revision number.
         Since we allow to totally destroy certain revisions, list_revisions does
-        not need to return subsequent, but only monotonous revision numbers.
+        not need to return subsequent, but only monotone revision numbers.
         _create_revision() on the other hand must only create subsequent revision numbers.
 
         @type item: Object of class Item.
@@ -821,7 +821,7 @@ class Revision(Serializable, DictMixin):
     Each revision object has a creation timestamp in the 'timestamp' property
     that defaults to None for newly created revisions in which case it will be
     assigned at commit() time. It is writable for use by converter backends, but
-    care must be taken in that case to create monotonous timestamps!
+    care must be taken in that case to create monotone timestamps!
     This timestamp is also retrieved via the backend's history() method.
     """
     def __init__(self, item, revno, timestamp):

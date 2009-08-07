@@ -33,8 +33,12 @@ class PluginScript(MoinScript):
             help="The system page version you would like to create."
         )
         self.parser.add_option(
+            "-r", "--remove", dest="remove", action="store_true", default=False,
+            help="If you want to delete the key given, add this flag."
+        )
+        self.parser.add_option(
             "-p", "--pattern", dest="pattern", action="store", type='string', default=".*",
-            help="Only set the metadata on items whose names match the pattern."
+            help="Only perform the operation on items whose names match the pattern."
         )
 
     def mainloop(self):
@@ -45,8 +49,10 @@ class PluginScript(MoinScript):
 
         key = self.options.key
         val = self.options.value
-        if not (key and val):
-            fatal("You need to specify a proper key/value pair! Given: key:%r, value:%r" % (key, val))
+        remove = self.options.remove
+        if not ((key and val) or (key and remove)) or (key and val and remove):
+            fatal("You need to either specify a proper key/value pair or " + \
+                  "only a key you want to delete (with -r set).")
 
         pattern = self.options.pattern
         query = term.NameRE(compile(pattern))
@@ -63,9 +69,12 @@ class PluginScript(MoinScript):
                 copyfileobj(last_rev, next_rev)
                 # Copy metadata:
                 for k, v in last_rev.iteritems():
+                    if remove and k == key:
+                        continue
                     next_rev[k] = v
 
-            # Set or overwrite given metadata key with value
-            next_rev[key] = eval(val)
+            if not remove:
+                # Set or overwrite given metadata key with value
+                next_rev[key] = eval(val)
             item.commit()
 
