@@ -643,8 +643,7 @@ class Item(Serializable, DictMixin):
             raise TypeError("Key must be string type")
         if key.startswith('__'):
             raise TypeError("Key must not begin with two underscores")
-        if not value_type_is_valid(value):
-            raise TypeError("Value must be string, unicode, int, long, float, bool, complex or a nested tuple thereof.")
+        check_value_type_is_valid(value)
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
         self._metadata[key] = value
@@ -1014,8 +1013,7 @@ class NewRevision(Revision):
             raise TypeError("Key must be string type")
         if key.startswith('__'):
             raise TypeError("Key must not begin with two underscores")
-        if not value_type_is_valid(value):
-            raise TypeError("Value must be string, int, long, float, bool, complex or a nested tuple of the former")
+        check_value_type_is_valid(value)
 
         self._metadata[key] = value
 
@@ -1034,7 +1032,7 @@ class NewRevision(Revision):
 
 
 # Little helper function:
-def value_type_is_valid(value):
+def check_value_type_is_valid(value):
     """
     For metadata-values, we allow only immutable types, namely:
     str, unicode, bool, int, long, float, complex and tuple.
@@ -1044,12 +1042,13 @@ def value_type_is_valid(value):
     @param value: A value of which we want to know if it is a valid metadata value.
     @return: bool
     """
-    if isinstance(value, (bool, str, unicode, int, long, float, complex)):
+    accepted = (bool, str, unicode, int, long, float, complex)
+    if isinstance(value, accepted):
         return True
     elif isinstance(value, tuple):
         for element in value:
-            if not value_type_is_valid(element):
-                return False
+            if not check_value_type_is_valid(element):
+                raise TypeError("Value must be one of %s or a nested tuple thereof. Not %r" % (accepted, type(value)))
         else:
             return True
 
