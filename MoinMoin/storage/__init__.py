@@ -491,10 +491,15 @@ class Backend(Serializable):
             new_item = self.get_item(name)
         except NoSuchItemError:
             new_item = self.create_item(name)
-            new_item.change_metadata()
-            for k, v in item.iteritems():
-                new_item[k] = v
-            new_item.publish_metadata()
+
+        # This only uses the metadata of the item that we clone.
+        # Arguments for doing this:
+        #   * If old stuff ends up in item after clone, that'd be counter intuitive
+        #   * When caching some data from the latest rev in the item, we don't want the old stuff.
+        new_item.change_metadata()
+        for k, v in item.iteritems():
+            new_item[k] = v
+        new_item.publish_metadata()
 
         for revno in revisions:
             revision = item.get_revision(revno)
