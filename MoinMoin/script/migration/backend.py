@@ -64,5 +64,5 @@ class PluginScript(MoinScript):
                 sys.stdout.write("%r: %s\n" % (name, content_fails[name]))
             for name in user_fails.iterkeys():
                 sys.stdout.write("%r: %s\n" % (name, user_fails[name]))
-        
+
         sys.stdout.write("Backend migration finished!\n")
