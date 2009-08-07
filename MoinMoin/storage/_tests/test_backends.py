@@ -18,6 +18,7 @@
 import py.test, re
 
 from MoinMoin.storage import Item, NewRevision
+from MoinMoin.storage.backends import memory
 from MoinMoin.storage.error import NoSuchItemError, ItemAlreadyExistsError, NoSuchRevisionError, RevisionAlreadyExistsError
 from MoinMoin.search import term
 
@@ -675,4 +676,34 @@ class BackendTest(object):
         last_data = last.read()
         assert last_data != third
         assert last_data == persistent_rev
+
+    def test_clone_backend(self):
+        src = self.request.storage
+        dst = memory.MemoryBackend()
+
+        dollys_name = "Dolly The Sheep"
+        item = src.create_item(dollys_name)
+        rev = item.create_revision(0)
+        rev.write("maeh")
+        rev['origin'] = 'reagenzglas'
+        item.commit()
+
+        brothers_name = "Dolly's brother"
+        item = src.create_item(brothers_name)
+        item.change_metadata()
+        item['no revisions'] = True
+        item.publish_metadata()
+
+        dst.clone(src, verbose=False)
+
+        assert len(list(dst.iteritems())) == 2
+        assert len(list(dst.history())) == 1
+        assert dst.has_item(dollys_name)
+        rev = dst.get_item(dollys_name).get_revision(0)
+        assert rev.read() == "maeh"
+        assert {'origin': 'reagenzglas'} == dict(rev.iteritems())
+
+        assert dst.has_item(brothers_name)
+        item = dst.get_item(brothers_name)
+        assert {'no revisions': True} == dict(item.iteritems())
 
