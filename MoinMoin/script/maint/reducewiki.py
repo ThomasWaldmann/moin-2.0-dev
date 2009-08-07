@@ -36,7 +36,7 @@ class PluginScript(MoinScript):
         query = term.NameRE(compile(pattern))
         # If no pattern is given, the default regex will match every item.
         for item in storage.search_item(query):
-            current_revno = item.next_revno - 1 
+            current_revno = item.next_revno - 1
             for revno in item.list_revisions():
                 if revno < current_revno:
                     rev = item.get_revision(revno)
