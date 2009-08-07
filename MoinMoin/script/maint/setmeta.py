@@ -12,10 +12,12 @@
 
 from shutil import copyfileobj
 from os.path import splitext
+from re import compile
 
 from MoinMoin.wsgiapp import init_unprotected_backends
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.items import IS_SYSPAGE, SYSPAGE_VERSION
+from MoinMoin.search import term
 from MoinMoin.storage.error import NoSuchRevisionError
 
 class PluginScript(MoinScript):
@@ -30,11 +32,10 @@ class PluginScript(MoinScript):
             "-v", "--value", dest="value", action="store", type='string',
             help="The system page version you would like to create."
         )
-        # TODO: Support
-#        self.parser.add_option(
-#            "-p", "--pattern", dest="pattern", action="store", type='string',
-#            help="Only set the metadata on items whose names match the pattern."
-#        )
+        self.parser.add_option(
+            "-p", "--pattern", dest="pattern", action="store", type='string', default=".*",
+            help="Only set the metadata on items whose names match the pattern."
+        )
 
     def mainloop(self):
         self.init_request()
@@ -47,8 +48,9 @@ class PluginScript(MoinScript):
         if not (key and val):
             fatal("You need to specify a proper key/value pair! Given: key:%r, value:%r" % (key, val))
 
-        # TODO only iterate over matching items via backend.search_item
-        for item in storage.iteritems():
+        pattern = self.options.pattern
+        query = term.NameRE(compile(pattern))
+        for item in storage.search_item(query):
             try:
                 last_rev = item.get_revision(-1)
             except NoSuchRevisionError:
