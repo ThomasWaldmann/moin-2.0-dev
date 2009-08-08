@@ -48,7 +48,8 @@ logging = log.getLogger(__name__)
 
 from UserDict import DictMixin
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
-                                   NoSuchItemError, RevisionAlreadyExistsError, BackendError
+                                   BackendError, NoSuchItemError, \
+                                   RevisionAlreadyExistsError, ItemAlreadyExistsError
 
 from MoinMoin.storage.serialization import Serializable, XMLGenerator, \
                                            Data, Meta, ItemMeta
@@ -457,7 +458,10 @@ class Backend(Serializable):
     def get_unserializer(self, name, attrs):
         if name == 'item':
             item_name = attrs['name']
-            item = self.create_item(item_name)
+            try:
+                item = self.create_item(item_name)
+            except ItemAlreadyExistsError:
+                item = self.get_item(item_name)
             return item
 
     def serialize_value(self, xmlgen):
@@ -788,10 +792,20 @@ class Item(Serializable, DictMixin):
     element_name = 'item'
 
     def get_unserializer(self, name, attrs):
+        MODE_AS_IS, MODE_UPDATE = 0, 1  # XXX move somewhere else
+        mode = MODE_UPDATE  # XXX we need a context / environment to provide mode settings
         if name == 'meta':
-            return ItemMeta(attrs, self)
+            if mode == MODE_AS_IS:
+                # do not touch item meta data
+                return None # XXX give a dummy unserializer
+            elif mode == MODE_UPDATE:
+                # replace item meta data
+                return ItemMeta(attrs, self)
         elif name == 'revision':
-            revno = int(attrs['revno'])
+            if mode == MODE_AS_IS:
+                revno = int(attrs['revno'])
+            elif mode == MODE_UPDATE:
+                revno = self.next_revno
             return self.create_revision(revno)
 
     def serialize(self, xmlgen):
