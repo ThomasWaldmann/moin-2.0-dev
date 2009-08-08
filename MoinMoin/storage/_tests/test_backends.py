@@ -677,6 +677,9 @@ class BackendTest(object):
         assert last_data != third
         assert last_data == persistent_rev
 
+        for rev in self.backend.history():
+            assert not (rev.item.name == itemname and rev.revno == 2)
+
     def test_clone_backend(self):
         src = self.request.storage
         dst = memory.MemoryBackend()
