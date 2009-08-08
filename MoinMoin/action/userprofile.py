@@ -2,13 +2,13 @@
 """
     MoinMoin - set values in user profile
 
-    @copyright: 2008 MoinMoin:ThomasWaldmann
+    @copyright: 2008-2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
-from MoinMoin.Page import Page
+
 from MoinMoin import user
 
-def execute(pagename, request):
+def execute(item_name, request):
     """ set values in user profile """
     _ = request.getText
     cfg = request.cfg
@@ -29,5 +29,5 @@ def execute(pagename, request):
         theuser.save()
         request.theme.add_msg('%s.%s: %s -> %s' % (user_name, key, oldval, val), "info")
 
-    Page(request, pagename).send_page()
+    request.theme.render_content(request, item_name)
 

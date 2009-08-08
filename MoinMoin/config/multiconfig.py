@@ -3,7 +3,7 @@
     MoinMoin - Multiple configuration handler and Configuration defaults class
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2005-2008 MoinMoin:ThomasWaldmann.
+                2005-2009 MoinMoin:ThomasWaldmann,
                 2008      MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
 """
@@ -22,11 +22,11 @@ from MoinMoin.auth import MoinAuth
 import MoinMoin.auth as authmodule
 import MoinMoin.events as events
 from MoinMoin.events import PageChangedEvent, PageRenamedEvent
-from MoinMoin.events import PageDeletedEvent, PageCopiedEvent
-from MoinMoin.events import PageRevertedEvent, FileAttachedEvent
+from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
+from MoinMoin.storage.backends.acl import ADMIN, READ, WRITE, CREATE, DESTROY
 from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
@@ -151,7 +151,7 @@ This might happen if you are trying to use a pre 1.3 configuration file, or
 made a syntax or spelling error.
 
 Another reason for this could be a name clash. It is not possible to have
-config names like e.g. stats.py - because that collides with MoinMoin/stats/ -
+config names like e.g. storage.py - because that collides with MoinMoin/storage/ -
 have a look into your MoinMoin code directory what other names are NOT
 possible.
 
@@ -201,7 +201,7 @@ def _(text):
     return text
 
 
-class CacheClass:
+class CacheClass(object):
     """ just a container for stuff we cache """
     pass
 
@@ -231,14 +231,13 @@ class ConfigFunctionality(object):
     # will be lazily loaded by interwiki code when needed (?)
     shared_intermap_files = None
 
+    # storage index configuration (used by indexed backend only)
+    indexes = ["name", "openids", "jid", "email"]
+
     def __init__(self, siteid):
         """ Init Config instance """
         self.siteid = siteid
         self.cache = CacheClass()
-
-        from MoinMoin.Page import ItemCache
-        self.cache.meta = ItemCache('meta')
-        self.cache.pagelists = ItemCache('pagelists')
 
         if self.config_check_enabled:
             self._config_check()
@@ -247,7 +246,7 @@ class ConfigFunctionality(object):
         self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ('user', 'cache', 'plugin'):
+        for dirname in ('user', 'cache', 'plugin', 'tmp', 'indexes'):
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
@@ -274,8 +273,6 @@ class ConfigFunctionality(object):
 
         self.cache.ua_spiders = self.ua_spiders and re.compile(self.ua_spiders, re.IGNORECASE)
 
-        self._check_directories()
-
         if not isinstance(self.superuser, list):
             msg = """The superuser setting in your wiki configuration is not a list
                      (e.g. ['Sample User', 'AnotherUser']).
@@ -293,18 +290,6 @@ class ConfigFunctionality(object):
         # Use site name as default name-logo
         if self.logo_string is None:
             self.logo_string = self.sitename
-
-        # Check for needed modules
-
-        # FIXME: maybe we should do this check later, just before a
-        # chart is needed, maybe in the chart module, instead doing it
-        # for each request. But this require a large refactoring of
-        # current code.
-        if self.chart_options:
-            try:
-                import gdchart
-            except ImportError:
-                self.chart_options = None
 
         # post process
 
@@ -359,16 +344,15 @@ class ConfigFunctionality(object):
         # Cache variables for the properties below
         self._iwid = self._iwid_full = self._meta_dict = None
 
-        self.cache.acl_rights_before = AccessControlList(self, [self.acl_rights_before])
-        self.cache.acl_rights_default = AccessControlList(self, [self.acl_rights_default])
-        self.cache.acl_rights_after = AccessControlList(self, [self.acl_rights_after])
-
         action_prefix = self.url_prefix_action
         if action_prefix is not None and action_prefix.endswith('/'): # make sure there is no trailing '/'
             self.url_prefix_action = action_prefix[:-1]
 
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
+
+        assert hasattr(self, "storage"), "error in config: no data/user storage configured"
+        # XXX: add defaults again
 
         if self.url_prefix_fckeditor is None:
             self.url_prefix_fckeditor = self.url_prefix_local + '/applets/FCKeditor'
@@ -403,7 +387,7 @@ class ConfigFunctionality(object):
 
     def calc_secrets(self):
         """ make up some 'secret' using some config values """
-        varnames = ['data_dir', 'data_underlay_dir', 'language_default',
+        varnames = ['data_dir', 'language_default',
                     'mail_smarthost', 'mail_from', 'page_front_page',
                     'theme_default', 'sitename', 'logo_string',
                     'interwikiname', 'user_homewiki', 'acl_rights_before', ]
@@ -543,20 +527,16 @@ file. It should match the actual charset of the configuration file.
     def _check_directories(self):
         """ Make sure directories are accessible
 
-        Both data and underlay should exists and allow read, write and
+        data/ should exists and allow read, write and
         execute.
         """
         mode = os.F_OK | os.R_OK | os.W_OK | os.X_OK
-        for attr in ('data_dir', 'data_underlay_dir'):
-            path = getattr(self, attr)
+        attr = 'data_dir'
+        path = getattr(self, attr)
 
-            # allow an empty underlay path or None
-            if attr == 'data_underlay_dir' and not path:
-                continue
-
-            path_pages = os.path.join(path, "pages")
-            if not (os.path.isdir(path_pages) and os.access(path_pages, mode)):
-                msg = """
+        path_pages = os.path.join(path, "pages")
+        if not (os.path.isdir(path_pages) and os.access(path_pages, mode)):
+            msg = """
 %(attr)s "%(path)s" does not exist, or has incorrect ownership or
 permissions.
 
@@ -567,7 +547,7 @@ and group.
 It is recommended to use absolute paths and not relative paths. Check
 also the spelling of the directory name.
 """ % {'attr': attr, 'path': path, }
-                raise error.ConfigurationError(msg)
+            raise error.ConfigurationError(msg)
 
     def _loadPluginModule(self):
         """
@@ -729,6 +709,8 @@ options_no_group_name = {
     ('auth_methods_trusted', ['http', 'given', 'xmlrpc_applytoken'], # Note: 'http' auth method is currently just a redirect to 'given'
      'authentication methods for which users should be included in the special "Trusted" ACL group.'),
     ('secrets', None, """Either a long shared secret string used for multiple purposes or a dict {"purpose": "longsecretstring", ...} for setting up different shared secrets for different purposes. If you don't setup own secret(s), a secret string will be auto-generated from other config settings."""),
+    # use sha512 as soon as we require python2.5 because sha1 is weak:
+    ('hash_algorithm', 'sha1', "Name of hash algorithm used to compute data hashes"),
     ('DesktopEdition',
      False,
      "if True, give all local users special powers - ''only use this for a local desktop wiki!''"),
@@ -738,12 +720,9 @@ options_no_group_name = {
     ('actions_excluded',
      ['xmlrpc',  # we do not want wiki admins unknowingly offering xmlrpc service
       'MyPages',  # only works when used with a non-default SecurityPolicy (e.g. autoadmin)
-      'CopyPage',  # has questionable behaviour regarding subpages a user can't read, but can copy
+      'copy',  # has questionable behaviour regarding subpages a user can't read, but can copy
      ],
      "Exclude unwanted actions (list of strings)"),
-
-    ('allow_xslt', False,
-     "if True, enables XSLT processing via 4Suite (note that this enables anyone with enough know-how to insert '''arbitrary HTML''' into your wiki, which is why it defaults to `False`)"),
 
     ('password_checker', DefaultExpression('_default_password_checker'),
      'checks whether a password is acceptable (default check is length >= 6, at least 4 different chars, no keyboard sequence, not username used somehow (you can switch this off by using `None`)'),
@@ -757,18 +736,17 @@ options_no_group_name = {
     ('surge_action_limits',
      {# allow max. <count> <action> requests per <dt> secs
         # action: (count, dt)
-        'all': (30, 30), # all requests (except cache/AttachFile action) count for this limit
+        'all': (30, 30), # all requests (except cache/get action) count for this limit
         'default': (30, 60), # default limit for actions without a specific limit
         'show': (30, 60),
         'recall': (10, 120),
-        'raw': (20, 40),  # some people use this for css
         'diff': (30, 60),
         'fullsearch': (10, 120),
-        'edit': (30, 300), # can be lowered after making preview different from edit
+        'modify': (30, 300), # can be lowered after making preview different from edit
         'rss_rc': (1, 60),
         # The following actions are often used for images - to avoid pages with lots of images
         # (like photo galleries) triggering surge protection, we assign rather high limits:
-        'AttachFile': (90, 60),
+        'get': (90, 60),
         'cache': (600, 30), # cache action is very cheap/efficient
      },
      "Surge protection tries to deny clients causing too much load/traffic, see /SurgeProtection."),
@@ -778,9 +756,6 @@ options_no_group_name = {
      "Spam protection setup using site-specific questions/answers, see HelpOnTextChas."),
     ('textchas_disabled_group', None,
      "Name of a group of trusted users who do not get asked TextCha questions."),
-
-    ('antispam_master_url', "http://master.moinmo.in/?action=xmlrpc2",
-     "where antispam security policy fetches spam pattern updates (if it is enabled)"),
 
     # a regex of HTTP_USER_AGENTS that should be excluded from logging
     # and receive a FORBIDDEN for anything except viewing a page
@@ -808,10 +783,10 @@ options_no_group_name = {
     ('interwikiname', None, "unique and stable InterWiki name (prefix, moniker) of the site [Unicode], or None"),
     ('logo_string', None, "The wiki logo top of page, HTML is allowed (`<img>` is possible as well) [Unicode]"),
     ('html_pagetitle', None, "Allows you to set a specific HTML page title (if None, it defaults to the value of `sitename`)"),
-    ('navi_bar', [u'RecentChanges', u'FindPage', u'HelpContents', ],
+    ('navi_bar', [u'FindPage', u'HelpContents', ],
      'Most important page names. Users can add more names in their quick links in user preferences. To link to URL, use `u"[[url|link title]]"`, to use a shortened name for long page name, use `u"[[LongLongPageName|title]]"`. [list of Unicode strings]'),
 
-    ('theme_default', 'modern',
+    ('theme_default', 'modernized',
      "the name of the theme that is used by default (see HelpOnThemes)"),
     ('theme_force', False,
      "if True, do not allow to change the theme"),
@@ -840,9 +815,8 @@ options_no_group_name = {
     ('changed_time_fmt', '%H:%M', "Time format used on Recent``Changes for page edits within the last 24 hours"),
     ('date_fmt', '%Y-%m-%d', "System date format, used mostly in Recent``Changes"),
     ('datetime_fmt', '%Y-%m-%d %H:%M:%S', 'Default format for dates and times (when the user has no preferences or chose the "default" date format)'),
-    ('chart_options', None, "If you have gdchart, use something like chart_options = {'width': 720, 'height': 540}"),
 
-    ('edit_bar', ['Edit', 'Comments', 'Discussion', 'Info', 'Subscribe', 'Quicklink', 'Attachments', 'ActionsMenu'],
+    ('edit_bar', ['Modify', 'Download', 'Comments', 'Discussion', 'Subscribe', 'Quicklink', 'ActionsMenu'],
      'list of edit bar entries'),
     ('history_count', (100, 200), "number of revisions shown for info/history action (default_count_shown, max_count_shown)"),
 
@@ -865,30 +839,6 @@ options_no_group_name = {
        '<a href="http://validator.w3.org/check?uri=referer" title="Click here to validate this page.">Valid HTML 4.01</a>',
      ],
      'list with html fragments with logos or strings for crediting.'),
-
-    # These icons will show in this order in the iconbar, unless they
-    # are not relevant, e.g email icon when the wiki is not configured
-    # for email.
-    ('page_iconbar', ["up", "edit", "view", "diff", "info", "subscribe", "raw", "print", ],
-     'list of icons to show in iconbar, valid values are only those in page_icons_table. Available only in classic theme.'),
-
-    # Standard buttons in the iconbar
-    ('page_icons_table',
-     {
-        # key           pagekey, querystr dict, title, icon-key
-        'diff': ('page', {'action': 'diff'}, _("Diffs"), "diff"),
-        'info': ('page', {'action': 'info'}, _("Info"), "info"),
-        'edit': ('page', {'action': 'edit'}, _("Edit"), "edit"),
-        'unsubscribe': ('page', {'action': 'unsubscribe'}, _("UnSubscribe"), "unsubscribe"),
-        'subscribe': ('page', {'action': 'subscribe'}, _("Subscribe"), "subscribe"),
-        'raw': ('page', {'action': 'raw'}, _("Raw"), "raw"),
-        'xml': ('page', {'action': 'show', 'mimetype': 'text/xml'}, _("XML"), "xml"),
-        'print': ('page', {'action': 'print'}, _("Print"), "print"),
-        'view': ('page', {}, _("View"), "view"),
-        'up': ('page_parent_page', {}, _("Up"), "up"),
-     },
-     "dict of {'iconname': (url, title, icon-img-key), ...}. Available only in classic theme."),
-
   )),
   # ==========================================================================
   'editor': ('Editor related', None, (
@@ -903,19 +853,22 @@ options_no_group_name = {
 
   )),
   # ==========================================================================
-  'paths': ('Paths', None, (
+  'data': ('Data storage', None, (
     ('data_dir', './data/', "Path to the data directory containing your (locally made) wiki pages."),
-    ('data_underlay_dir', './underlay/', "Path to the underlay directory containing distribution system and help pages."),
     ('cache_dir', None, "Directory for caching, by default computed from `data_dir`/cache."),
     ('session_dir', None, "Directory for session storage, by default computed to be `cache_dir`/__session__."),
     ('user_dir', None, "Directory for user storage, by default computed to be `data_dir`/user."),
     ('plugin_dir', None, "Plugin directory, by default computed to be `data_dir`/plugin."),
     ('plugin_dirs', [], "Additional plugin directories."),
 
-    ('docbook_html_dir', r"/usr/share/xml/docbook/stylesheet/nwalsh/html/",
-     'Path to the directory with the Docbook to HTML XSLT files (optional, used by the docbook parser). The default value is correct for Debian Etch.'),
     ('shared_intermap', None,
      "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
+    ('backend_uri', None,
+     'Locates storage backends; Backends are automatically set up depending on the backend_uri provided. May be omitted if storage is constructed manually'),
+    ('storage', None,
+     'Data/User storage backends; Constructed automatically with get_enduser_backend(backend_uri). Otherwise, this needs to point something that implements the storage API and has a user_backend attribute.'),
+    ('preloaded_xml', None,
+     'If this points to a serialized backend (an xml file), the file is loaded into the content backend upon first request.'),
   )),
   # ==========================================================================
   'urls': ('URLs', None, (
@@ -973,7 +926,6 @@ options_no_group_name = {
         PageDeletedEvent.__name__,
         PageCopiedEvent.__name__,
         PageRevertedEvent.__name__,
-        FileAttachedEvent.__name__,
      ], None),
     ('jabber_subscribed_events_default', [], None),
 
@@ -1084,14 +1036,26 @@ options = {
     'ACLs control who may do what, see HelpOnAccessControlLists.',
     (
       ('hierarchic', False, 'True to use hierarchical ACLs'),
-      ('rights_default', u"Trusted:read,write,delete,revert Known:read,write,delete,revert All:read,write",
+      ('rights_default', unicode("Trusted:" + ",".join((READ, WRITE, CREATE)) + \
+                                " Known:" + ",".join((READ, WRITE, CREATE)) + \
+                                " All:" + ",".join((READ, WRITE))),
        "ACL used if no ACL is specified on the page"),
       ('rights_before', u"",
        "ACL that is processed before the on-page/default ACL"),
       ('rights_after', u"",
        "ACL that is processed after the on-page/default ACL"),
-      ('rights_valid', ['read', 'write', 'delete', 'revert', 'admin'],
+      ('rights_valid', [READ, WRITE, CREATE, ADMIN, DESTROY],
        "Valid tokens for right sides of ACL entries."),
+    )),
+
+    'ns': ('Storage Namespaces',
+    "Storage namespaces can be defined for all sorts of data. All items sharing a common namespace as prefix" + \
+    "are then stored within the same backend. The common prefix for all data is ''.",
+    (
+      ('content', '/', "All content is by default stored below /, hence the prefix is ''."),  # Not really necessary. Just for completeness.
+      ('user_profile', 'UserProfile/', 'User profiles (i.e. user data, not their homepage) are stored in this namespace.'),
+      ('user_homepage', 'User/', 'All user homepages are stored below this namespace.'),
+      ('trash', 'Trash/', 'This is the namespace in which an item ends up when it is deleted.')
     )),
 
     'xapian': ('Xapian search', "Configuration of the Xapian based indexed search, see HelpOnXapian.", (

@@ -8,7 +8,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-min_req_exc = Exception("Minimum requirement for MoinMoin is Python 2.4.")
+min_req_exc = Exception("Minimum requirement for MoinMoin is Python 2.5.")
 
 try:
     import string
@@ -27,23 +27,10 @@ try:
 except NameError:
     raise min_req_exc
 
-
 try:
     from functools import partial # Python >= 2.5 needed
 except (NameError, ImportError):
-    class partial(object):
-        def __init__(*args, **kw):
-            self = args[0]
-            self.fn, self.args, self.kw = (args[1], args[2:], kw)
-
-        def __call__(self, *args, **kw):
-            if kw and self.kw:
-                d = self.kw.copy()
-                d.update(kw)
-            else:
-                d = kw or self.kw
-            return self.fn(*(self.args + args), **d)
-
+    raise min_req_exc
 
 try:
     import hashlib, hmac # Python >= 2.5 needed
@@ -52,16 +39,5 @@ try:
         return hmac.new(key, msg, digestmod)
 
 except (NameError, ImportError):
-    import sha
-    def hash_new(name, string=''):
-        if name in ('SHA1', 'sha1'):
-            return sha.new(string)
-        elif name in ('MD5', 'md5'):
-            import md5
-            return md5.new(string)
-        raise ValueError("unsupported hash type")
-
-    def hmac_new(key, msg, digestmod=sha):
-        import hmac
-        return hmac.new(key, msg, digestmod)
+    raise min_req_exc
 

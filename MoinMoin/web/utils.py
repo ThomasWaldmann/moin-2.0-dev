@@ -25,10 +25,10 @@ def check_forbidden(request):
     hosts against the blacklist. Raises Forbidden if triggered.
     """
     args = request.args
-    action = args.get('action')
+    action = args.get('do')
     if ((args or request.method != 'GET') and
         action not in ['rss_rc', 'show', 'sitemap'] and
-        not (action == 'AttachFile' and args.get('do') == 'get')):
+        action != 'get'):
         if request.isSpiderAgent:
             raise Forbidden()
     if request.cfg.hosts_deny:
@@ -96,7 +96,7 @@ def check_surge_protect(request, kick=False):
             if len(timestamps) < maxnum * 2:
                 timestamps.append((now + request.cfg.surge_lockout_time, surge_indicator)) # continue like that and get locked out
 
-        if current_action not in ('cache', 'AttachFile', ): # don't add cache/AttachFile accesses to all or picture galleries will trigger SP
+        if current_action not in ('cache', 'get', ): # don't add cache/get accesses to all or picture galleries will trigger SP
             current_action = 'all' # put a total limit on user's requests
             maxnum, dt = limits.get(current_action, default_limit)
             events = surgedict.setdefault(current_id, {})

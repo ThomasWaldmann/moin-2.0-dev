@@ -1,0 +1,36 @@
+Notes for Developers (storage)
+==============================
+
+ This document contains information about things that are broken and must be
+ fixed. Additionally, it also contains information on things that need to be
+ done before the storage code can be used productively.
+    
+    - In some scenarios, the FSBackend keeps too many files open, which causes
+      an exception to be shown. See http://tinyurl.com/5paw95 for a traceback.
+
+
+    - In order to allow future versions of the storage API to act in a
+      "delete" friendly way (i.e., not disallowing deletion of items / revisions
+      by design), changes must be made to the create_revision and list_revision
+      methods.
+      Status quo:   Revisions must be created with subsequent revision numbers.
+                    This, however, is a limitation of the Backends as they are
+                    implemented right now. This will be changed. The API already
+                    mentions that this will be changed at the appropriate spots.
+      What we want: Allow revisions to be created with monotonic, but not
+                    necessarily subsequent revision numbers.
+
+      The idea is to use some "purge" script. The script in fact is a clone
+      script, but while cloning, it leaves out revisions and items flagged as
+      "purged" or "truly deleted". (This differs from normal wiki page deletion
+      in that not only a new, empty revision with a DELETED metadata key is
+      created.)
+      One could assume that, while cloning, the current semantics of
+      list_revisions and create_revision with respect to revision numbers is
+      preserved and all revisions in the new backend (target of clone) are
+      simply renumbered. That, however, is a bad idea, since you already exposed
+      your wiki to the internet and some people may already be using specific
+      revision numbers to refer to specific versions of a page. In those cases,
+      the information provided by the page behind the url may be unexpected.
+      Thus, "skipping" some revision numbers is necessary.
+

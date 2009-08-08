@@ -9,7 +9,6 @@ MoinMoin - makecache script
 from MoinMoin import caching
 from MoinMoin.Page import Page
 from MoinMoin.script import MoinScript
-from MoinMoin.stats import hitcounts
 
 class PluginScript(MoinScript):
     """\

@@ -106,7 +106,7 @@ class BaseContext(Context):
     Most attributes are lazily initialized via descriptors. """
 
     # first the trivial attributes
-    action = EnvironProxy('action', lambda o: o.request.values.get('action', 'show'))
+    action = EnvironProxy('do', lambda o: o.request.values.get('do', 'show'))
     clock = EnvironProxy('clock', lambda o: Clock())
     user = EnvironProxy('user', lambda o: user.User(o, auth_method='request:invalid'))
 
@@ -151,9 +151,15 @@ class BaseContext(Context):
     isSpiderAgent = EnvironProxy(isSpiderAgent)
 
     def rootpage(self):
+        # DEPRECATED, use rootitem!
         from MoinMoin.Page import RootPage
         return RootPage(self)
     rootpage = EnvironProxy(rootpage)
+
+    def rootitem(self):
+        from MoinMoin.items import Item
+        return Item(self, u'')
+    rootitem = EnvironProxy(rootitem)
 
     def rev(self):
         try:
@@ -252,7 +258,7 @@ class HTTPContext(BaseContext):
         user pages meant to be seen only by another user, when both users
         share the same caching proxy.
 
-        AVOID using no-cache and no-store for attachments as it is completely broken on IE!
+        AVOID using no-cache and no-store for file downloads as it is completely broken on IE!
 
         Details: http://support.microsoft.com/support/kb/articles/Q234/0/67.ASP
         """
@@ -417,7 +423,7 @@ class ScriptContext(AllContext):
     def __init__(self, url=None, pagename=''):
         if url is None:
             url = 'http://localhost:0/' # just some somehow valid dummy URL
-        environ = create_environ(base_url=url) # XXX not sure about base_url, but makes "make underlay" work
+        environ = create_environ(base_url=url) # XXX is base_url correct? (was necessary for make underlay which is now gone)
         environ['HTTP_USER_AGENT'] = 'CLI/Script'
         environ['wsgi.input'] = sys.stdin
         request = Request(environ)

@@ -1,6 +1,6 @@
 %define name moin
-%define version 1.9.0
-%define release 0.3.beta3
+%define version 2.0.0
+%define release 0.0.alpha
 #Upgrade Path Example:
 #     moin-1.3-0.1.beta1
 #         Patched
@@ -33,7 +33,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArchitectures: noarch
 BuildRequires:  python-devel
-Requires:       python >= 2.4
+Requires:       python >= 2.5
 
 %description
 
@@ -64,6 +64,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc  README docs/CHANGES docs/INSTALL.html docs/UPDATE.html docs/licenses/COPYING
 
 %changelog
+* Sun May 31 2009 Thomas Waldmann
+- Raised requirement to Python 2.5 (for MoinMoin 2.0.0alpha).
+
 * Sun Feb 15 2009 Thomas Waldmann
 - Raised requirement to Python 2.4
 - Removed references to Python 1.5

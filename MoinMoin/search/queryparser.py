@@ -870,8 +870,7 @@ class DomainSearch(BaseExpression):
 
     def search(self, page):
         logging.debug("DomainSearch searching page %r for (negated = %r) %r" % (page.page_name, self.negated, self._pattern))
-        checks = {'underlay': page.isUnderlayPage,
-                  'standard': page.isStandardPage,
+        checks = {'standard': page.isStandardPage,
                   'system': lambda page=page: wikiutil.isSystemPage(page.request, page.page_name),
                  }
 
