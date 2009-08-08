@@ -229,15 +229,13 @@ class MercurialBackend(Backend):
             try:
                 if self.has_item(newname):
                     raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
-
                 self._repo.changectx('')[item._id]
-                src = os.path.join(self._rev_path, item._id)
-                dst = os.path.join(self._rev_path, newid)
 
+                src, dst = os.path.join(self._rev_path, item._id), os.path.join(self._rev_path, newid)
                 commands.rename(self._ui, self._repo, src, dst)
                 commands.rename(self._ui, self._repo, "%s.rev" % src, "%s.rev" % dst)
-                self._repo.commit(user='storage', text='(renamed %s to %s)' %
-                                  (item.name.encode('utf-8'), newname.encode('utf-8')))
+                self._commit_files(['%s.rev' % item._id, '%s.rev' % newid, item._id, newid], 
+                        message='(renamed %s to %s)' % (item.name.encode('utf-8'), newname.encode('utf-8')))
             finally:
                 lock.release()
         except LookupError:
@@ -290,11 +288,8 @@ class MercurialBackend(Backend):
             date = datetime.fromtimestamp(revision.timestamp).isoformat(sep=' ')
             user = revision.get(EDIT_LOG_USERID, DEFAULT_USER).encode("utf-8")
             msg = revision.get(EDIT_LOG_COMMENT, '').encode("utf-8")
-            try:
-                match = mercurial.match.exact(self._rev_path, '', [item._id])
-                self._repo.commit(match=match, text=msg, user=user, date=date, extra=meta, force=True)
-            except NameError:
-                self._repo.commit(files=[item._id], text=msg, user=user, date=date, extra=meta, force=True)
+
+            self._commit_files([item._id], message=msg, user=user, extra=meta, date=date)
             self._append_revision(item, revision)
         finally:
             lock.release()
@@ -306,11 +301,7 @@ class MercurialBackend(Backend):
         # TODO: This is just hiding. Real item destroy may use `mq` extension
         # to rip off all Item revisions from repository.
         self._repo.remove(['%s.rev' % item._id, item._id], unlink=True)
-        try:
-            match = mercurial.match.exact(self._rev_path, '', ['%s.rev' % item._id, item._id])
-            self._repo.commit(match=match, text="(item destroy)", user="storage")
-        except NameError:
-            self._repo.commit(files=['%s.rev' % item._id, item._id], text="(item destroy)", user="storage")
+        self._commit_files(['%s.rev' % item._id, item._id], message='(item destroy)')
         try:
             os.remove(os.path.join(self._meta_path, "%s.meta" % item._id))
         except OSError:
@@ -507,13 +498,16 @@ class MercurialBackend(Backend):
         """Add Item Revision to index file to speed up further lookups."""
         fctx = self._repo.changectx('')[item._id]
         with self._open_item_index(item, 'a') as revfile:
-            revfile.write("%d %s %s %s\n" % (revision.revno, short(fctx.node()),
-                                         item._id, short(fctx.filenode()), ))
+            revfile.write("%d %s %s %s\n" % (revision.revno, short(fctx.node()), 
+                item._id, short(fctx.filenode()), ))
+        self._commit_files(['%s.rev' % item._id], message='(revision append)')
+
+    def _commit_files(self, files, message='', user='storage', extra=None, date=None, force=True):
         try:
-            match = mercurial.match.exact(self._rev_path, '', ['%s.rev' % item._id])
-            self._repo.commit(match=match, text="(index append)", user="storage")
+            match = mercurial.match.exact(self._rev_path, '', files)
+            self._repo.commit(match=match, text=message, user=user, extra=extra, date=date, force=force)
         except NameError:
-            self._repo.commit(files=['%s.rev' % item._id], text="(index append)", user="storage")
+            self._repo.commit(files=files, text=message, user=user, extra=extra, date=date, force=force)
 
     def _encode_metadata(self, dict, prefix):
         meta = {}
