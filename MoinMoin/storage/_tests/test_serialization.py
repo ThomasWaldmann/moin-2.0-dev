@@ -43,10 +43,10 @@ class TestSerializeRev(object):
         xml = xmlfile.getvalue()
         assert xml == ('<revision revno="0">'
                        '<meta>'
-                       '<entry key="m1"><str>m1</str></entry>'
-                       '</meta>'
-                       '<data coding="base64"><chunk>YmFyMQ==</chunk></data>'
-                       '</revision>')
+                       '<entry key="m1"><str>m1</str>\n</entry>\n'
+                       '</meta>\n'
+                       '<data coding="base64"><chunk>YmFyMQ==</chunk>\n</data>\n'
+                       '</revision>\n')
 
 
 class TestSerializeItem(object):
@@ -62,16 +62,16 @@ class TestSerializeItem(object):
         serialize(item, xmlfile)
         xml = xmlfile.getvalue()
         assert xml == ('<item name="foo2">'
-                       '<meta></meta>'
+                       '<meta></meta>\n'
                        '<revision revno="0">'
-                       '<meta><entry key="m1"><str>m1</str></entry></meta>'
-                       '<data coding="base64"><chunk>YmFyMg==</chunk></data>'
-                       '</revision>'
+                       '<meta><entry key="m1"><str>m1</str>\n</entry>\n</meta>\n'
+                       '<data coding="base64"><chunk>YmFyMg==</chunk>\n</data>\n'
+                       '</revision>\n'
                        '<revision revno="1">'
-                       '<meta><entry key="m2"><str>m2</str></entry></meta>'
-                       '<data coding="base64"><chunk>YmF6Mg==</chunk></data>'
-                       '</revision>'
-                       '</item>')
+                       '<meta><entry key="m2"><str>m2</str>\n</entry>\n</meta>\n'
+                       '<data coding="base64"><chunk>YmF6Mg==</chunk>\n</data>\n'
+                       '</revision>\n'
+                       '</item>\n')
 
 
 class TestSerializeBackend(object):
@@ -88,32 +88,32 @@ class TestSerializeBackend(object):
         serialize(self.request.storage, xmlfile)
         xml = xmlfile.getvalue()
         assert xml.startswith('<backend>')
-        assert xml.endswith('</backend>')
+        assert xml.endswith('</backend>\n')
         assert ('<item name="foo3">'
-                '<meta></meta>'
+                '<meta></meta>\n'
                 '<revision revno="0">'
-                '<meta><entry key="m3"><str>m3</str></entry></meta>'
-                '<data coding="base64"><chunk>YmFyMQ==</chunk></data>'
-                '</revision>'
+                '<meta><entry key="m3"><str>m3</str>\n</entry>\n</meta>\n'
+                '<data coding="base64"><chunk>YmFyMQ==</chunk>\n</data>\n'
+                '</revision>\n'
                 '</item>') in xml
         assert ('<item name="foo4">'
-                '<meta></meta>'
+                '<meta></meta>\n'
                 '<revision revno="0">'
-                '<meta><entry key="m4"><str>m4</str></entry></meta>'
-                '<data coding="base64"><chunk>YmFyMg==</chunk></data>'
-                '</revision>'
+                '<meta><entry key="m4"><str>m4</str>\n</entry>\n</meta>\n'
+                '<data coding="base64"><chunk>YmFyMg==</chunk>\n</data>\n'
+                '</revision>\n'
                 '<revision revno="1">'
-                '<meta><entry key="m4"><str>m4</str></entry></meta>'
-                '<data coding="base64"><chunk>YmF6Mg==</chunk></data>'
-                '</revision>'
+                '<meta><entry key="m4"><str>m4</str>\n</entry>\n</meta>\n'
+                '<data coding="base64"><chunk>YmF6Mg==</chunk>\n</data>\n'
+                '</revision>\n'
                 '</item>') in xml
 
 
 class TestSerializer2(object):
     def test_Entry(self):
         test_data = [
-            ('foo', 'bar', '<entry key="foo"><str>bar</str></entry>'),
-            (u'foo', u'bar', '<entry key="foo"><unicode>bar</unicode></entry>'),
+            ('foo', 'bar', '<entry key="foo"><str>bar</str>\n</entry>\n'),
+            (u'foo', u'bar', '<entry key="foo"><unicode>bar</unicode>\n</entry>\n'),
         ]
         for k, v, expected_xml in test_data:
             e = Entry(k, v)
@@ -124,15 +124,15 @@ class TestSerializer2(object):
 
     def test_Values(self):
         test_data = [
-            ('bar', '<str>bar</str>'),
-            (u'bar', '<unicode>bar</unicode>'),
-            (42, '<int>42</int>'),
-            (True, '<bool>True</bool>'),
-            (23.42, '<float>23.42</float>'),
-            (complex(1.2, 2.3), '<complex>(1.2+2.3j)</complex>'),
-            ((1, 2), '<tuple><int>1</int><int>2</int></tuple>'),
-            ((1, 'bar'), '<tuple><int>1</int><str>bar</str></tuple>'),
-            ((1, ('bar', 'baz')), '<tuple><int>1</int><tuple><str>bar</str><str>baz</str></tuple></tuple>'),
+            ('bar', '<str>bar</str>\n'),
+            (u'bar', '<unicode>bar</unicode>\n'),
+            (42, '<int>42</int>\n'),
+            (True, '<bool>True</bool>\n'),
+            (23.42, '<float>23.42</float>\n'),
+            (complex(1.2, 2.3), '<complex>(1.2+2.3j)</complex>\n'),
+            ((1, 2), '<tuple><int>1</int>\n<int>2</int>\n</tuple>\n'),
+            ((1, 'bar'), '<tuple><int>1</int>\n<str>bar</str>\n</tuple>\n'),
+            ((1, ('bar', 'baz')), '<tuple><int>1</int>\n<tuple><str>bar</str>\n<str>baz</str>\n</tuple>\n</tuple>\n'),
         ]
         for v, expected_xml in test_data:
             v = create_value_object(v)
