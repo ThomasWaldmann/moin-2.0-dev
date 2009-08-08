@@ -452,9 +452,12 @@ class MercurialBackend(Backend):
         Retrieve necessary information from index file.
         """
         with self._open_item_index(revision.item) as revfile:
-            revs = revfile.read().splitlines()
-        revno, node, id, filenode = revs[revision.revno].split()
-        return self._repo.filectx(id, fileid=filenode)
+            for line in revfile:
+                revno, node, id, filenode = line.split()
+                if revision.revno == int(revno):
+                    fctx = self._repo.filectx(id, fileid=filenode)
+                    break
+        return fctx 
 
     def _get_changectx(self, revision):
         """
@@ -462,9 +465,12 @@ class MercurialBackend(Backend):
         Retrieve necessary information from index file.
         """
         with self._open_item_index(revision.item) as revfile:
-            revs = revfile.read().splitlines()
-        ctxrev = revs[revision.revno].split()[1]
-        return self._repo.changectx(ctxrev)
+            for line in revfile:
+                revno, node, id, filenode = line.split()
+                if revision.revno == int(revno):
+                    ctx = self._repo.changectx(node)
+                    break
+        return ctx
 
     def _lock(self, lockpath, lockref):
         """Acquire weak reference to lock object."""
