@@ -309,6 +309,8 @@ class Item(object):
         hash_name, hash_hexdigest = self._write_stream(data, newrev)
         newrev[hash_name] = hash_hexdigest
         timestamp = time.time()
+        # XXX if meta is from old revision, and user did not give a non-empty
+        # XXX comment, re-using the old rev's comment is wrong behaviour:
         newrev[EDIT_LOG_COMMENT] = comment or meta.get(EDIT_LOG_COMMENT, '')
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
