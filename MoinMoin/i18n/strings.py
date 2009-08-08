@@ -34,8 +34,6 @@ not_translated_system_pages = [
 ]
 
 essential_system_pages = [
-    _('RecentChanges'),
-    _('WikiTipOfTheDay'), # used by RecentChanges
     _('TitleIndex'),
     _('WordIndex'),
     _('FindPage'),
@@ -284,12 +282,8 @@ pagesets = [
 weekdays = [_('Sun'), _('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')]
 
 actions = [
-    _('AttachFile'),
-    _('DeletePage'),
     _('LikePages'),
     _('LocalSiteMap'),
-    _('RenamePage'),
-    _('SpellCheck'),
 ]
 
 misc = [

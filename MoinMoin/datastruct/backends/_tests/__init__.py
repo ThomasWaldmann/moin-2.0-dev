@@ -117,22 +117,22 @@ class GroupsBackendTest(object):
     def test_backend_acl_with_all(self):
         request = self.request
 
-        acl_rights = ["EditorGroup:read,write,delete,admin All:read"]
+        acl_rights = ["EditorGroup:read,write,admin All:read"]
         acl = security.AccessControlList(request.cfg, acl_rights)
 
         for member in self.expanded_groups[u'EditorGroup']:
-            for permission in ["read", "write", "delete", "admin"]:
+            for permission in ["read", "write", "admin"]:
                 assert acl.may(request, member, permission)
 
         assert acl.may(request, u"Someone", "read")
-        for permission in ["write", "delete", "admin"]:
+        for permission in ["write", "admin"]:
             assert not acl.may(request, u"Someone", permission)
 
     def test_backend_acl_not_existing_group(self):
         request = self.request
         assert u'NotExistingGroup' not in request.groups
 
-        acl_rights = ["NotExistingGroup:read,write,delete,admin All:read"]
+        acl_rights = ["NotExistingGroup:read,write,admin All:read"]
         acl = security.AccessControlList(request.cfg, acl_rights)
 
         assert not acl.may(request, u"Someone", "write")

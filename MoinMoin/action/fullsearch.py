@@ -95,7 +95,6 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
         timeframe = form.get('time', '').strip()
         language = form.getlist('language') or ['']
         mimetype = form.getlist('mimetype') or [0]
-        excludeunderlay = form.get('excludeunderlay', 0)
         nosystemitems = form.get('nosystemitems', 0)
         historysearch = form.get('historysearch', 0)
 
@@ -149,8 +148,6 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
             needle += 'language:%s ' % ','.join(language)
         if mimetype[0]:
             needle += 'mimetype:%s ' % ','.join(mimetype)
-        if excludeunderlay:
-            needle += '-domain:underlay '
         if nosystemitems:
             needle += '-domain:system '
         if and_terms:
@@ -181,7 +178,8 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
         sort = 'weight'
 
     # search the pages
-    from MoinMoin.search import searchPages, QueryParser, QueryError
+    from MoinMoin.search.queryparser import QueryParser, QueryError
+    from MoinMoin.search import searchPages
     try:
         query = QueryParser(case=case, regex=regex,
                 titlesearch=titlesearch).parse_query(needle)

@@ -6,14 +6,17 @@
                 2008-2008 MoinMoin:FlorianKrupicka
     @license: GNU GPL, see COPYING for details.
 """
+
 from MoinMoin.web.contexts import AllContext, Context, XMLRPCContext
-from MoinMoin.web.exceptions import HTTPException
+from MoinMoin.web.exceptions import HTTPException, Forbidden
 from MoinMoin.web.request import Request, MoinMoinFinish, HeaderSet
 from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_response, \
     redirect_last_visited
+from MoinMoin.storage.error import AccessDeniedError, StorageError
+from MoinMoin.storage.serialization import unserialize
+from MoinMoin.storage.backends import router, acl, memory
 from MoinMoin.Page import Page
 from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
-from MoinMoin.action import get_names, get_available_actions
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -34,6 +37,7 @@ def init(request):
 
     context.session = context.cfg.session_service.get_session(context)
 
+    init_unprotected_backends(context)
     context.user = setup_user(context, context.session)
 
     context.lang = setup_i18n_postauth(context)
@@ -47,6 +51,74 @@ def init(request):
 
     context.clock.stop('init')
     return context
+
+
+def init_unprotected_backends(context):
+    """ initialize the backend
+
+        This is separate from init because the conftest request setup needs to be
+        able to create fresh data storage backends in between init and init_backend.
+    """
+    # A ns_mapping consists of several lines, where each line is made up like this:
+    # mountpoint, unprotected backend, protection to apply as a dict
+    # We don't consider the protection here. That is done in protect_backends.
+    ns_mapping = context.cfg.namespace_mapping
+    # Just initialize with unprotected backends.
+    unprotected_mapping = [(ns, backend) for ns, backend, acls in ns_mapping]
+    context.unprotected_storage = router.RouterBackend(unprotected_mapping)
+
+    # This makes the first request after server restart potentially much slower...
+    preload_xml(context)
+
+
+def preload_xml(context):
+    # If the content was already pumped into the backend, we don't want
+    # to do that again. (Works only until the server is restarted.)
+    xmlfile = context.cfg.preloaded_xml
+    if xmlfile:
+        context.cfg.preloaded_xml = None
+        try:
+            # In case the server was restarted we cannot know whether
+            # the xml data already exists in the target backend.
+            # Hence we check the existence of the items before we unserialize
+            # them to the backend.
+            backend = context.unprotected_storage
+            tmp_backend = memory.MemoryBackend()
+            unserialize(tmp_backend, xmlfile)
+            item_count = 0
+            for item in tmp_backend.iteritems():
+                item = backend.get_item(item.name)
+                item_count += 1
+        except StorageError:
+            # if there is some exception, we assume that backend needs to be filled
+            unserialize(backend, xmlfile)
+            # TODO optimize this, maybe unserialize could count items it processed
+            tmp_backend = memory.MemoryBackend()
+            unserialize(tmp_backend, xmlfile)
+            item_count = 0
+            for item in tmp_backend.iteritems():
+                item_count += 1
+    else:
+        item_count = 0
+
+    # XXX wrong place / name - this is a generic preload functionality, not just for tests
+    # To make some tests happy
+    context.cfg.test_num_pages = item_count
+
+
+def protect_backends(context):
+    """
+    This function is invoked after the user has been set up. setup_user needs access to
+    storage and the ACL middleware needs access to the user's name. Hence we first
+    init the unprotected backends so setup_user can access storage, and protect the
+    backends after the user has been set up.
+    """
+    amw = acl.AclWrapperBackend
+    ns_mapping = context.cfg.namespace_mapping
+    # Protect each backend with the acls provided for it in the mapping at position 2
+    protected_mapping = [(ns, amw(context, backend, **acls)) for ns, backend, acls in ns_mapping]
+    context.storage = router.RouterBackend(protected_mapping)
+
 
 def run(context):
     """ Run a context trough the application. """
@@ -72,6 +144,10 @@ def run(context):
             return response
         except MoinMoinFinish:
             return request
+        except AccessDeniedError, ade:
+            forbidden = Forbidden()
+            forbidden.description = ade.message
+            return forbidden
     finally:
         context.finish()
         context.clock.stop('run')
@@ -143,38 +219,16 @@ def handle_action(context, pagename, action_name='show'):
                 url = page.url(context)
                 return context.http_redirect(url)
 
-    msg = None
-    # Complain about unknown actions
-    if not action_name in get_names(cfg):
-        msg = _("Unknown action %(action_name)s.") % {
-                'action_name': wikiutil.escape(action_name), }
-
-    # Disallow non available actions
-    elif action_name[0].isupper() and not action_name in \
-            get_available_actions(cfg, context.page, context.user):
-        msg = _("You are not allowed to do %(action_name)s on this page.") % {
-                'action_name': wikiutil.escape(action_name), }
-        if not context.user.valid:
-            # Suggest non valid user to login
-            msg += " " + _("Login and try again.")
-
-    if msg:
-        context.theme.add_msg(msg, "error")
-        context.page.send_page()
-    # Try action
-    else:
+    try:
         from MoinMoin import action
         handler = action.getHandler(cfg, action_name)
-        if handler is None:
-            msg = _("You are not allowed to do %(action_name)s on this page.") % {
-                    'action_name': wikiutil.escape(action_name), }
-            if not context.user.valid:
-                # Suggest non valid user to login
-                msg += " " + _("Login and try again.")
-            context.theme.add_msg(msg, "error")
-            context.page.send_page()
-        else:
-            handler(context.page.page_name, context)
+    except ValueError, err:
+        msg = str(err) # XXX i18n problems!
+        context.theme.add_msg(msg, "error")
+        # use a handler that should work ever:
+        handler = action.getHandler(cfg, 'show')
+
+    handler(context.page.page_name, context)
 
     return context
 
@@ -247,6 +301,7 @@ class Application(object):
         try:
             request = self.Request(environ)
             context = init(request)
+            protect_backends(context)
             response = run(context)
             context.clock.stop('total')
         except HTTPException, e:

@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-15 -*-
 """
-    MoinMoin - GetText .po parser for moin 1.3.x
+    MoinMoin - GetText .po parser
 
     Usage:
     ======
@@ -20,7 +20,7 @@
     Requirements:
     =============
 
-    * requires Python 2.4 and installed "gettext" package (msgfmt)
+    * requires installed "gettext" package (msgfmt)
     * requires wiki page content to be in config.charset, so do not put non-
       utf-8 content into a utf-8 wiki or it will crash.
 

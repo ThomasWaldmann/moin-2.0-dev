@@ -409,7 +409,6 @@ class BaseIndex:
             def read(self, *args, **kw):
                 return True
         r.user.may = SecurityPolicy(r.user)
-        r.editlog = editlog.EditLog(r)
         return r
 
     def _unsign(self):
@@ -463,7 +462,7 @@ class Search:
             hits = self._moinSearch()
             logging.debug("_moinSearch found %d hits" % len(hits))
 
-        # important - filter deleted pages or pages the user may not read!
+        # important - filter pages the user may not read!
         if not self.filtered:
             hits = self._filter(hits)
             logging.debug("after filtering: %d hits" % len(hits))
@@ -600,7 +599,7 @@ class Search:
         """ Search pages using moin's built-in full text search
 
         Return list of tuples (page, match). The list may contain
-        deleted pages or pages the user may not read.
+        pages the user may not read.
 
         @keyword pages: optional list of pages to search in
         """
@@ -608,6 +607,7 @@ class Search:
         if pages is None:
             # if we are not called from _xapianSearch, we make a full pagelist,
             # but don't search attachments (thus attachment name = '')
+            # XXX: Could iterate pages instead of building a list
             pages = [{'pagename': p, 'attachment': '', 'wikiname': 'Self', } for p in self._getPageList()]
         hits = self._getHits(pages, self._moinMatch)
         self.request.clock.stop('_moinSearch')
@@ -692,10 +692,10 @@ class Search:
             self.filtered = True
             return self.request.rootpage.getPageList(filter=filter_)
         else:
-            return self.request.rootpage.getPageList(user='', exists=0)
+            return self.request.rootpage.getPageList(user='')
 
     def _filter(self, hits):
-        """ Filter out deleted or acl protected pages
+        """ Filter out acl protected pages
 
         @param hits: list of hits
         """
@@ -707,6 +707,6 @@ class Search:
                     if (not wikiname in thiswiki or
                        page.exists() and userMayRead(page.page_name) or
                        page.page_name.startswith(fs_rootpage)) and
-                       (not self.mtime or self.mtime <= page.mtime_usecs()/1000000)]
+                       (not self.mtime or self.mtime <= page.mtime())]
         return filtered
 

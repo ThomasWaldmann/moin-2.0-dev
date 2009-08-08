@@ -1,0 +1,17 @@
+Version 1.8-storage-cdenter:
+
+  Removed Features:
+    * Old-style storage of wiki contents as used in MoinMoin up to Version 1.7.
+
+  New Features:
+    * Possibility to choose between (potentially) many forms of data storage.
+    * Possibility to easily write new backends. (SQL, Usage of Googles
+    * appengine, etc.)
+    * New-style filesystem backend to store data on disk.
+    * Mercurial backend, that allows storing a wikis contents with the mercurial
+      dcvs.
+    * Pages, attachments and users are now uniformly stored within those
+      backends.
+    * Attachments are accessible via wiki.example.com/mypage/myattachment.png
+    * Possibility to easily switch between different backends (clone script).
+

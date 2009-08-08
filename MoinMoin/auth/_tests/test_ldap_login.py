@@ -11,7 +11,7 @@ py.test.skip("Broken due to test Config refactoring")
 
 from MoinMoin._tests.ldap_testbase import LDAPTstBase, LdapEnvironment, check_environ, SLAPD_EXECUTABLE
 from MoinMoin._tests.ldap_testdata import *
-from MoinMoin._tests import nuke_user, wikiconfig
+from MoinMoin._tests import wikiconfig
 from MoinMoin.auth import handle_login
 
 # first check if we have python 2.4, python-ldap and slapd:
@@ -109,9 +109,6 @@ class TestBugDefaultPasswd(LDAPTstBase):
             a default password there), then try logging in via moin login using
             that default password or an empty password.
         """
-
-        nuke_user(self.request, u'usera')
-
         # do a LDAPAuth login (as a side effect, this autocreates the user profile):
         u1 = handle_login(self.request, None, username='usera', password='usera')
         assert u1 is not None
