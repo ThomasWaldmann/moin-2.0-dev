@@ -398,7 +398,6 @@ class FSBackend(Backend):
             shutil.copyfileobj(oldf, f)
             oldf.close()
             os.unlink(oldrp)
-            # XXX f.close() missing? (see also below)
         else:
             if not hasdata:
                 rev._fs_file.seek(0)
@@ -406,7 +405,7 @@ class FSBackend(Backend):
             else:
                 rev._fs_file.seek(4)
             rev._fs_file.write(md)
-            rev._fs_file.close() # XXX this GETS closed!
+        rev._fs_file.close()
 
         if item._fs_item_id is None:
             self._add_item_internally(item, newrev=rev._fs_revpath)
