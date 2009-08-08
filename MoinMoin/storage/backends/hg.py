@@ -130,20 +130,6 @@ class MercurialBackend(Backend):
         item._id = None
         return item
 
-    def _destroy_item(self, item):
-        # TODO: This is just hiding. Real item destroy may use `mq` extension
-        # to rip off all Item revisions from repository.
-        self._repo.remove(['%s.rev' % item._id, item._id], unlink=True)
-        try:
-            match = mercurial.match.exact(self._rev_path, '', ['%s.rev' % item._id, item._id])
-            self._repo.commit(match=match, text="(item destroy)", user="storage")
-        except NameError:
-            self._repo.commit(files=['%s.rev' % item._id, item._id], text="(item destroy)", user="storage")
-        try:
-            os.remove(os.path.join(self._meta_path, "%s.meta" % item._id))
-        except OSError:
-            pass
-
     def iteritems(self):
         """
         Return generator for iterating through collection of Items
@@ -202,9 +188,6 @@ class MercurialBackend(Backend):
         revision._metadata = None
         revision._data = None
         return revision
-
-    def _open_item_index(self, item, mode='r'):
-        return open(os.path.join(self._rev_path, "%s.rev" % item._id), mode)
 
     def _list_revisions(self, item):
         """Return a list of Item Revision numbers."""
@@ -273,19 +256,6 @@ class MercurialBackend(Backend):
                 lock.release()
         item._id = newid
 
-    def _encode_metadata(self, dict, prefix):
-        meta = {}
-        for k, v in dict.iteritems():
-            meta["%s%s" % (prefix, k)] = pickle.dumps(v)
-        return meta
-
-    def _decode_metadata(self, dict, prefix):
-        meta = {}
-        for k, v in dict.iteritems():
-            if k.startswith(prefix):
-                meta[k[len(prefix):]] = pickle.loads(v)
-        return meta
-
     def _commit_item(self, revision, second_parent=None):
         """
         Commit given Item Revision to repository. Update and commit Item index file.
@@ -331,6 +301,20 @@ class MercurialBackend(Backend):
 
     def _rollback_item(self, revision):
         pass
+
+    def _destroy_item(self, item):
+        # TODO: This is just hiding. Real item destroy may use `mq` extension
+        # to rip off all Item revisions from repository.
+        self._repo.remove(['%s.rev' % item._id, item._id], unlink=True)
+        try:
+            match = mercurial.match.exact(self._rev_path, '', ['%s.rev' % item._id, item._id])
+            self._repo.commit(match=match, text="(item destroy)", user="storage")
+        except NameError:
+            self._repo.commit(files=['%s.rev' % item._id, item._id], text="(item destroy)", user="storage")
+        try:
+            os.remove(os.path.join(self._meta_path, "%s.meta" % item._id))
+        except OSError:
+            pass
 
     def _change_item_metadata(self, item):
         """Start Item Metadata transaction."""
@@ -514,6 +498,9 @@ class MercurialBackend(Backend):
             raise ItemAlreadyExistsError("Destination item already exists: %s" % item.name)
         item._id = self._hash(item.name)
 
+    def _open_item_index(self, item, mode='r'):
+        return open(os.path.join(self._rev_path, "%s.rev" % item._id), mode)
+
     def _append_revision(self, item, revision):
         """Add Item Revision to index file to speed up further lookups."""
         fctx = self._repo.changectx('')[item._id]
@@ -525,6 +512,19 @@ class MercurialBackend(Backend):
             self._repo.commit(match=match, text="(index append)", user="storage")
         except NameError:
             self._repo.commit(files=['%s.rev' % item._id], text="(index append)", user="storage")
+
+    def _encode_metadata(self, dict, prefix):
+        meta = {}
+        for k, v in dict.iteritems():
+            meta["%s%s" % (prefix, k)] = pickle.dumps(v)
+        return meta
+
+    def _decode_metadata(self, dict, prefix):
+        meta = {}
+        for k, v in dict.iteritems():
+            if k.startswith(prefix):
+                meta[k[len(prefix):]] = pickle.loads(v)
+        return meta
 
     def _has_meta(self, itemid):
         """Return True if Item with given ID has Metadata. Otherwise return None."""
@@ -557,10 +557,7 @@ class MercurialBackend(Backend):
             maker = cdb.cdbmake(self._meta_db, "%s.tmp" % self._meta_db)
             maker.finish()
 
-    #
     # extended API below - needed for drawing revision graph
-    #
-
     def _get_revision_node(self, revision):
         """
         Return tuple consisting of (SHA1, short SHA1) changeset (node) IDs
@@ -596,4 +593,5 @@ class MercurialStoredRevision(StoredRevision):
 
     def get_node(self):
         return self._backend._get_revision_node(self)
+
 
