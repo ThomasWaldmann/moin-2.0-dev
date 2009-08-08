@@ -304,8 +304,9 @@ class MercurialBackend(Backend):
         self._commit_files(['%s.rev' % item._id, item._id], message='(item destroy)')
         try:
             os.remove(os.path.join(self._meta_path, "%s.meta" % item._id))
-        except OSError:
-            pass
+        except OSError, err:
+            if err.errno == errno.EACCES:
+                raise CouldNotDestroyError
 
     def _change_item_metadata(self, item):
         """Start Item Metadata transaction."""
