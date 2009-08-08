@@ -142,8 +142,12 @@ class AclWrapperBackend(object):
         """
         for revision in self.backend.history(reverse):
             if self._may(revision.item.name, READ):
-                # No need to wrap revisions as only StoredRevisions are
-                # exposed here.
+                # The revisions returned here should only be StoredRevisions.
+                # We wrap them nevertheless to be sure. Esp. revision.item
+                # would otherwise give access to an unwrapped item.
+                item = revision.item
+                item = AclWrapperItem(item, self)
+                revision = AclWrappedRevision(revision, item)
                 yield revision
 
     def _get_acl(self, itemname):
