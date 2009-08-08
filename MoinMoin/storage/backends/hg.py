@@ -92,8 +92,8 @@ class MercurialBackend(Backend):
         except RepoError:
             self._repo = hg.repository(self._ui, self._rev_path, create=True)
 
-        self._repo_lockref = None   # global repository lock reference
-        self._item_lockrefs = {}    # item lock references
+        self._rev_item_lockrefs = {}    # versioned items lock references
+        self._meta_item_lockrefs = {}   # non-versioned items lock references
         self._create_cdb()
 
     def get_item(self, itemname):
@@ -225,7 +225,7 @@ class MercurialBackend(Backend):
         """
         newid = self._hash(newname)
         try:
-            lock = self._lock_repo()
+            lock = self._lock_rev_item(item)
             try:
                 if self.has_item(newname):
                     raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
@@ -243,7 +243,7 @@ class MercurialBackend(Backend):
         except LookupError:
             pass
         if self._has_meta(item._id):
-            lock = self._lock_item(item)
+            lock = self._lock_meta_item(item)
             try:
                 src = os.path.join(self._meta_path, "%s.meta" % item._id)
                 dst = os.path.join(self._meta_path, "%s.meta" % newid)
@@ -262,7 +262,7 @@ class MercurialBackend(Backend):
         If Revision already exists, raise RevisionAlreadyExistsError.
         """
         item = revision.item
-        lock = self._lock_repo() #XXX: lock item only!
+        lock = self._lock_rev_item(item)
         try:
             if not item._id:
                 self._add_item(item)
@@ -319,7 +319,7 @@ class MercurialBackend(Backend):
     def _change_item_metadata(self, item):
         """Start Item Metadata transaction."""
         if item._id:
-            item._lock = self._lock_item(item)
+            item._lock = self._lock_meta_item(item)
 
     def _publish_item_metadata(self, item):
         """Dump Item Metadata to file and finish transaction."""
@@ -482,15 +482,17 @@ class MercurialBackend(Backend):
         lockref = weakref.ref(lock)
         return lock
 
-    def _lock_repo(self):
-        """Acquire global repository lock."""
-        path = os.path.join(self._rev_path, "repo.lock")
-        return self._lock(path, self._repo_lockref)
-
-    def _lock_item(self, item):
+    def _lock_meta_item(self, item):
         """Acquire Item Metadata lock."""
-        path = os.path.join(self._rev_path, "%s.lock" % item._id)
-        return self._lock(path, self._item_lockrefs.setdefault(item._id, None))
+        return self._lock_item(item, self._meta_path, self._meta_item_lockrefs)
+
+    def _lock_rev_item(self, item):
+        """Acquire versioned Item lock."""
+        return self._lock_item(item, self._rev_path, self._rev_item_lockrefs)
+
+    def _lock_item(self, item, root_path, lock_dict):
+        path = os.path.join(root_path, "%s.lock" % item._id)
+        return self._lock(path, lock_dict.setdefault(item._id, None))
 
     def _add_item(self, item):
         """Assign ID to given Item. Raise ItemAlreadyExistsError if Item exists."""
