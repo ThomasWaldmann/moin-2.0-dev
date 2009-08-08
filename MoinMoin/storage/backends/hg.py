@@ -157,15 +157,27 @@ class MercurialBackend(Backend):
         with timestamp order preserved.
         Yields MercurialStoredRevision objects.
         """
+        revisions = {}
+        def cached_revisions(item):
+            try:
+                return revisions[item]
+            except KeyError:
+                revisions[item] = item.list_revisions()
+                return revisions[item]
+
         for ctx in self._iter_changelog(reverse=reverse):
             meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
-            if meta['id'] in self._repo.changectx(''): # yield revision only if item is in manifest
+            # check if item is in manifest (not destroyed)
+            if meta['id'] in self._repo.changectx(''): 
                 revno = int(meta['rev'])
-                timestamp = ctx.date()[0]
-                item = Item(self, meta['name'])  # XXX: inaccurate after renames?
-                rev = MercurialStoredRevision(item, revno, timestamp)
-                rev._item_id = item._id = meta['id']
-                yield rev
+                item = Item(self, meta['name']) # XXX: should return historic or actual name?
+                item._id = meta['id'] 
+                # check if revno is in item index (not destroyed)
+                if revno in cached_revisions(item): 
+                    timestamp = ctx.date()[0]
+                    rev = MercurialStoredRevision(item, revno, timestamp)
+                    rev._item_id = item._id = meta['id']
+                    yield rev
 
     def _get_revision(self, item, revno):
         """
@@ -215,6 +227,21 @@ class MercurialBackend(Backend):
         rev._item_id = item._id
         rev._tmp_fpath = tempfile.mkstemp("-rev", "tmp-", dir=self._rev_path)[1]
         return rev
+
+    def _destroy_revision(self, revision):
+        item = revision.item
+        lock = self._lock_rev_item(item)
+        try:
+            with self._open_item_index(item) as revfile:
+                tmp_fd, tmp_path = tempfile.mkstemp("-index", "tmp-", self._rev_path)
+                with os.fdopen(tmp_fd, 'w') as tmp_index:
+                    for line in revfile:
+                        if int(line.split()[0]) != revision.revno:
+                            tmp_index.write(line)
+            util.rename(tmp_path, os.path.join(self._rev_path, "%s.rev" % item._id))
+            self._commit_files(['%s.rev' % item._id], message='(revision destroy)')
+        finally:
+            lock.release()
 
     def _rename_item(self, item, newname):
         """
