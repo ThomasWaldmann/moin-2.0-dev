@@ -24,15 +24,20 @@ class LocalConfig(multiconfig.DefaultConfig):
     #      syspages.xml
     # If that's not true, feel free to just set instance_dir to the real path
     # where data/ and syspages.xml is located:
-    #instance_dir = '/where/ever/your/instance/is'
+    # instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
-
-    preloaded_xml = os.path.join(instance_dir, 'syspages.xml')
-
     data_dir = os.path.join(instance_dir, 'data') # Note: this used to have a trailing / in the past
 
-    backend_uri = 'fs:instance'
-    namespace_mapping = create_simple_mapping(backend_uri)
+    # This puts the contents from the specified xml file (a serialized backend) into your
+    # backend(s). You can remove this after the first request to your wiki or
+    # from the beginning if you don't want to use this feature at all.
+    preloaded_xml = os.path.join(instance_dir, 'syspages.xml')
+
+    # This provides a simple default setup for your backend configuration.
+    # 'fs:' indicates that you want to use the filesystem backend. You can also use
+    # 'hg:' instead to indicate that you want to use the mercurial backend.
+    # Alternatively you can set up the mapping yourself (see HelpOnStorageConfiguration).
+    namespace_mapping = create_simple_mapping('fs:' + data_dir)
 
     DesktopEdition = True # give all local users full powers
     surge_action_limits = None # no surge protection
