@@ -75,23 +75,35 @@ def preload_xml(context):
     # If the content was already pumped into the backend, we don't want
     # to do that again. (Works only until the server is restarted.)
     xmlfile = context.cfg.preloaded_xml
-    conv = {}
     if xmlfile:
         context.cfg.preloaded_xml = None
         try:
             # In case the server was restarted we cannot know whether
             # the xml data already exists in the target backend.
-            # Hence we check the existence of the items before we copy them.
+            # Hence we check the existence of the items before we unserialize
+            # them to the backend.
             backend = context.unprotected_storage
             tmp_backend = memory.MemoryBackend()
             unserialize(tmp_backend, xmlfile)
+            item_count = 0
             for item in tmp_backend.iteritems():
                 item = backend.get_item(item.name)
+                item_count += 1
         except StorageError:
             # if there is some exception, we assume that backend needs to be filled
-            conv, skip, fail = backend.clone(tmp_backend)
+            unserialize(backend, xmlfile)
+            # TODO optimize this, maybe unserialize could count items it processed
+            tmp_backend = memory.MemoryBackend()
+            unserialize(tmp_backend, xmlfile)
+            item_count = 0
+            for item in tmp_backend.iteritems():
+                item_count += 1
+    else:
+        item_count = 0
+
+    # XXX wrong place / name - this is a generic preload functionality, not just for tests
     # To make some tests happy
-    context.cfg.test_num_pages = len(conv)
+    context.cfg.test_num_pages = item_count
 
 
 def protect_backends(context):
