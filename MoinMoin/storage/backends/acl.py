@@ -329,15 +329,30 @@ class AclWrapperItem(Item):
         """
         return self._item.list_revisions()
 
-    @require_privilege(WRITE)
+    @require_privilege(READ, WRITE)
     def rename(self, newname):
         """
+        Rename item from name (src) to newname (dst).
+        Note that there is no special rename privilege. By taking other
+        privileges into account, we implicitly perform the permission check here.
+        This checks R/W at src and W/C at dst. This combination was chosen for
+        the following reasons:
+         * It is the most intuitive of the possible solutions.
+         * If we'd only check for R at src, everybody would be able to rename even
+           ImmutablePages if there is a writable/creatable name somewhere else
+           (e.g., Trash/).
+         * 'delete' aka 'rename to trashbin' can be controlled with 'create':
+           Just don't provide create for the trash namespace.
+         * Someone without create in the target namespace cannot rename.
+
         @see: Item.rename.__doc__
         """
         # Special case since we need to check newname as well. Easier to special-case than
         # adjusting the decorator.
+        username = self._backend.request.user.name
+        if not self._may(newname, CREATE):
+            raise AccessDeniedError(username, CREATE, newname)
         if not self._may(newname, WRITE):
-            username = self._backend.request.user.name
             raise AccessDeniedError(username, WRITE, newname)
         return self._item.rename(newname)
 
