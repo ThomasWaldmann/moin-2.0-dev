@@ -151,6 +151,7 @@ class Serializable(object):
         xmlgen.startElement(self.element_name, self.element_attrs or {})
         self.serialize_value(xmlgen)
         xmlgen.endElement(self.element_name)
+        xmlgen.ignorableWhitespace('\n')
 
     def serialize_value(self, xmlgen):
         # works for simple values, please override for complex values
