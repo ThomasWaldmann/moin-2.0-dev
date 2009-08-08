@@ -499,8 +499,11 @@ class MercurialBackend(Backend):
         """Add Item Revision to index file to speed up further lookups."""
         fctx = self._repo.changectx('')[item._id]
         with self._open_item_index(item, 'a') as revfile:
-            revfile.write("%d %s %s %s\n" % (revision.revno, short(fctx.node()), 
-                item._id, short(fctx.filenode()), ))
+            revfile.write("%(revno)d %(node)s %(name)s %(filenode)s\n" % 
+                    {'revno': revision.revno, 
+                     'node': short(fctx.node()), 
+                     'name': item._id, 
+                     'filenode': short(fctx.filenode()), })
         self._commit_files(['%s.rev' % item._id], message='(revision append)')
 
     def _commit_files(self, files, message='', user='storage', extra=None, date=None, force=True):
