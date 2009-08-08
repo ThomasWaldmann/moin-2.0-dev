@@ -723,7 +723,7 @@ class Formatter(FormatterBase):
 
         # read in the complete log of this page
         for line in log.reverse():
-            if not line.action in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
+            if not line.action in ('SAVE', 'SAVE/REVERT', 'SAVE/RENAME', ):
                 #Let's ignore adding of attachments
                 continue
             revision = self.doc.createElement("revision")

@@ -372,9 +372,6 @@ class PageEditor(Page):
             # set success msg
             msg = _("Thank you for your changes. Your attention to detail is appreciated.")
 
-            # determine action for edit log
-            if action == 'SAVE' and not self.exists():
-                action = 'SAVENEW'
             comment = kw.get('comment', u'')
             extra = kw.get('extra', u'')
             trivial = kw.get('trivial', 0)
