@@ -176,6 +176,7 @@ class FsPageRevision(StoredRevision):
         try:
             content = open(revpath, 'r').read()
         except (IOError, OSError):
+            # XXX TODO: trashbin-like deletion needs different approach XXX
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
             meta = {}
             # if this page revision is deleted, we have no on-page metadata.
@@ -286,7 +287,7 @@ class FsAttachmentRevision(StoredRevision):
         except KeyError:
             editlog_data = { # make something up
                 EDIT_LOG_MTIME: os.path.getmtime(attpath),
-                EDIT_LOG_ACTION: 'ATTNEW',
+                EDIT_LOG_ACTION: 'SAVE',
                 EDIT_LOG_ADDR: '0.0.0.0',
                 EDIT_LOG_HOSTNAME: '0.0.0.0',
                 EDIT_LOG_USERID: '',
@@ -348,6 +349,7 @@ class EditLog(LogFile):
         else:
             raise KeyError
         del meta['__rev']
+        meta[EDIT_LOG_ACTION] =='SAVE'
         return meta
 
 

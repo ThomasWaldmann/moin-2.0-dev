@@ -14,7 +14,6 @@ TODO: moin maint mkpagepacks
 TODO: moin export dump
 
 TODO: do migration steps needed for 1.9 -> 2.0 in fs19 backend.
- * ATT* in edit-log?
 
 Removed wiki xmlrpc attachment related parts.
 TODO: Check wikisync & co whether it works for any item type / fix xmlrpc accordingly.

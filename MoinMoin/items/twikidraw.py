@@ -74,7 +74,6 @@ class TwikiDraw(Image):
         filecontent = file_upload.stream
         content_length = None
         if ext == '.draw': # TWikiDraw POSTs this first
-            #_addLogEntry(request, 'ATTDRW', pagename, basename + '.tdraw')
             ci.truncate()
             filecontent = filecontent.read() # read file completely into memory
             filecontent = filecontent.replace("\r", "")
