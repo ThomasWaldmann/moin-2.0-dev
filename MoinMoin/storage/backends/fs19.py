@@ -341,7 +341,7 @@ class EditLog(LogFile):
 
     def find_attach(self, attachname):
         """ Find metadata for some attachment name in the edit-log. """
-        for meta in self:
+        for meta in self.reverse(): # use reverse iteration to get the latest upload's data
             if (meta['__rev'] == 99999998 and  # 99999999-1 because of 0-based
                 meta[EDIT_LOG_ACTION] =='ATTNEW' and
                 meta[EDIT_LOG_EXTRA] == attachname):
