@@ -77,27 +77,25 @@ def preload_xml(context):
     xmlfile = context.cfg.preloaded_xml
     if xmlfile:
         context.cfg.preloaded_xml = None
+        tmp_backend = memory.MemoryBackend()
+        unserialize(tmp_backend, xmlfile)
+        # TODO optimize this, maybe unserialize could count items it processed
+        item_count = 0
+        for item in tmp_backend.iteritems():
+            item_count += 1
         try:
             # In case the server was restarted we cannot know whether
             # the xml data already exists in the target backend.
             # Hence we check the existence of the items before we unserialize
             # them to the backend.
             backend = context.unprotected_storage
-            tmp_backend = memory.MemoryBackend()
-            unserialize(tmp_backend, xmlfile)
-            item_count = 0
             for item in tmp_backend.iteritems():
                 item = backend.get_item(item.name)
-                item_count += 1
         except StorageError:
             # if there is some exception, we assume that backend needs to be filled
+            # we need to use it as unserialization target so that update mode of
+            # unserialization creates the correct item revisions
             unserialize(backend, xmlfile)
-            # TODO optimize this, maybe unserialize could count items it processed
-            tmp_backend = memory.MemoryBackend()
-            unserialize(tmp_backend, xmlfile)
-            item_count = 0
-            for item in tmp_backend.iteritems():
-                item_count += 1
     else:
         item_count = 0
 
