@@ -19,7 +19,8 @@ import sys
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.wsgiapp import init_unprotected_backends
 
-from MoinMoin.storage.serialization import unserialize, serialize
+from MoinMoin.storage.serialization import unserialize, serialize, \
+                                           NLastRevs, ExceptNLastRevs
 
 
 class PluginScript(MoinScript):
@@ -38,11 +39,22 @@ class PluginScript(MoinScript):
             "-f", "--file", dest="xml_file", action="store", type="string",
             help="Filename of xml file to use [Default: use stdin/stdout]."
         )
+        self.parser.add_option(
+            "--nlast", dest="nlast", action="store", type="int", default=0,
+            help="Serialize only the last n revisions of each item [Default: all revisions]."
+        )
+        self.parser.add_option(
+            "--exceptnlast", dest="exceptnlast", action="store", type="int", default=0,
+            help="Serialize everything except the last n revisions of each item [Default: all revisions]."
+        )
 
     def mainloop(self):
         load = self.options.load
         save = self.options.save
         xml_file = self.options.xml_file
+        nlast = self.options.nlast
+        exceptnlast = self.options.exceptnlast
+
         if load == save: # either both True or both False
             fatal("You need to give either --load or --save!")
         if not xml_file:
@@ -59,5 +71,10 @@ class PluginScript(MoinScript):
         if load:
             unserialize(storage, xml_file)
         elif save:
-            serialize(storage, xml_file)
+            if nlast:
+                serialize(storage, xml_file, NLastRevs, nlast)
+            elif exceptnlast:
+                serialize(storage, xml_file, ExceptNLastRevs, exceptnlast)
+            else:
+                serialize(storage, xml_file)
 
