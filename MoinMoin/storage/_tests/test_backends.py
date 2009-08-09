@@ -626,6 +626,15 @@ class BackendTest(object):
             assert rev.item.name == name
             assert rev.revno == revno
 
+    def test_history_size_after_rename(self):
+        item = self.backend.create_item('first')
+        item.create_revision(0)
+        item.commit()
+        item.rename('second')
+        item.create_revision(1)
+        item.commit()
+        assert len([rev for rev in self.backend.history()]) == 2
+
     def test_destroy_item(self):
         itemname = "I will be completely destroyed"
         rev_data = "I will be completely destroyed, too, hopefully"
@@ -640,8 +649,12 @@ class BackendTest(object):
         assert not itemname in item_names
         all_rev_data = [rev.read() for rev in self.backend.history()]
         assert not rev_data in all_rev_data
+ 
         for rev in self.backend.history():
             assert not rev.item.name == itemname
+        for rev in self.backend.history(reverse=False):
+            assert not rev.item.name == itemname
+
 
     def test_destroy_revision(self):
         itemname = "I will see my children die :-("
