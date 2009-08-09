@@ -258,7 +258,7 @@ class RouterItem(Serializable):
     def element_attrs(self):
         """
         For xml serialization <item name="...">
-        
+
         Note: must not be delegated to self._item or we won't get the FULL name.
         """
         return dict(name=self.name)
