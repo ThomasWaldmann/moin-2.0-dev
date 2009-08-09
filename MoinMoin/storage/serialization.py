@@ -83,6 +83,32 @@ class XMLSelectiveGenerator(XMLGenerator):
         return True
 
 
+class NLastRevs(XMLSelectiveGenerator):
+    def __init__(self, out, nlast):
+        self.nlast = nlast
+        XMLSelectiveGenerator.__init__(self, out)
+
+    def shall_serialize(self, item=None, rev=None,
+                        revno=None, current_revno=None):
+        if revno is None:
+            return True
+        else:
+            return revno > current_revno - self.nlast
+
+
+class ExceptNLastRevs(XMLSelectiveGenerator):
+    def __init__(self, out, nlast):
+        self.nlast = nlast
+        XMLSelectiveGenerator.__init__(self, out)
+
+    def shall_serialize(self, item=None, rev=None,
+                        revno=None, current_revno=None):
+        if revno is None:
+            return True
+        else:
+            return revno <= current_revno - self.nlast
+
+
 class ItemNameList(XMLSelectiveGenerator):
     def __init__(self, out, item_names):
         self.item_names = item_names
