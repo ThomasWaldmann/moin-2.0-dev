@@ -48,6 +48,8 @@ EDIT_LOG_COMMENT = "edit_log_comment"
 
 EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
 
+# dummy getText function until we have a real one:
+_ = lambda x: x
 
 class Item(object):
 
@@ -703,6 +705,37 @@ class PlayableBinary(RenderableBinary):
 
 class Application(Binary):
     supported_mimetypes = []
+
+
+class ApplicationZip(Application):
+    supported_mimetypes = ['application/zip']
+
+    def _render_data(self):
+        import zipfile
+        try:
+            content = []
+            fmt = u"%-60s %-19s %12s %12s"
+            headline = fmt % (_("File Name"), _("Modified"), _("Size"), _("Zipped Size"))
+            content.append(headline)
+            content.append(u"-" * len(headline))
+            zf = zipfile.ZipFile(self.rev, mode='r')
+            for zinfo in zf.filelist:
+                content.append(wikiutil.escape(fmt % (
+                    zinfo.filename,
+                    u"%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time,
+                    str(zinfo.file_size),
+                    str(zinfo.compress_size),
+                )))
+        except (RuntimeError, zipfile.BadZipfile), err:
+            # RuntimeError is raised by zipfile stdlib module in case of
+            # problems (like inconsistent slash and backslash usage in the
+            # archive or a defective zip file).
+            logging.exception("An exception within zip file handling occurred:")
+            content = [str(err)]
+        return u"<pre>%s</pre>" % "\n".join(content)
+
+    def transclude(self, desc, tag_attrs=None, query_args=None):
+        return self._render_data()
 
 
 class RenderableApplication(RenderableBinary):
