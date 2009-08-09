@@ -455,7 +455,7 @@ class Backend(Serializable):
     # (un)serialization support following:
     element_name = 'backend'
 
-    def get_unserializer(self, name, attrs):
+    def get_unserializer(self, context, name, attrs):
         if name == 'item':
             item_name = attrs['name']
             try:
@@ -791,20 +791,19 @@ class Item(Serializable, DictMixin):
     # (un)serialization support following:
     element_name = 'item'
 
-    def get_unserializer(self, name, attrs):
-        MODE_AS_IS, MODE_UPDATE = 0, 1  # XXX move somewhere else
-        mode = MODE_UPDATE  # XXX we need a context / environment to provide mode settings
+    def get_unserializer(self, context, name, attrs):
+        mode = context.revno_mode
         if name == 'meta':
-            if mode == MODE_AS_IS:
+            if mode == 'as_is':
                 # do not touch item meta data
                 return None # XXX give a dummy unserializer
-            elif mode == MODE_UPDATE:
+            elif mode == 'next':
                 # replace item meta data
                 return ItemMeta(attrs, self)
         elif name == 'revision':
-            if mode == MODE_AS_IS:
+            if mode == 'as_is':
                 revno = int(attrs['revno'])
-            elif mode == MODE_UPDATE:
+            elif mode == 'next':
                 revno = self.next_revno
             return self.create_revision(revno)
 
@@ -903,7 +902,7 @@ class Revision(Serializable, DictMixin):
         logging.debug("Committing %r revno %r" % (self.item.name, self.revno))
         self.item.commit()
 
-    def get_unserializer(self, name, attrs):
+    def get_unserializer(self, context, name, attrs):
         if name == 'meta':
             return Meta(attrs, self)
         elif name == 'data':

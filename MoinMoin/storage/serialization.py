@@ -40,9 +40,9 @@ class MoinContentHandler(ContentHandler):
     ContentHandler that handles sax parse events and feeds them into the
     unserializer stack.
     """
-    def __init__(self, handler):
+    def __init__(self, handler, context):
         ContentHandler.__init__(self)
-        self.unserializer = handler.make_unserializer()
+        self.unserializer = handler.make_unserializer(context)
 
     def unserialize(self, *args):
         try:
@@ -123,17 +123,27 @@ def serialize(obj, xmlfile, xmlgen_cls=XMLSelectiveGenerator, *args, **kwargs):
     obj.serialize(xg)
 
 
-def unserialize(obj, xmlfile):
+class XMLUnserializationContext(object):
+    """
+    Provides context information for xml unserialization.
+    """
+    def __init__(self, xmlfile, encoding='utf-8', revno_mode='next'):
+        if xmlfile is not None and not hasattr(xmlfile, 'read'):
+            # for everything not file-like (filename?), we try to open it first:
+            xmlfile = open(xmlfile, 'r')
+        self.xmlfile = xmlfile
+        self.revno_mode = revno_mode
+
+
+def unserialize(obj, xmlfile, context_cls=XMLUnserializationContext, *args, **kwargs):
     """
     Unserialize <xmlfile> to <obj>.
 
     @arg obj: object to write unserialized data to (must mix in Serializable)
     @arg xmlfile: input file (file-like or filename)
     """
-    if xmlfile is not None and not hasattr(xmlfile, 'read'):
-        # this is not a file-like object, we try to open it first:
-        xmlfile = open(xmlfile, 'r')
-    obj.unserialize(xmlfile)
+    context = context_cls(xmlfile, *args, **kwargs)
+    obj.unserialize(context)
 
 
 class Serializable(object):
@@ -158,7 +168,7 @@ class Serializable(object):
         xmlgen.characters(str(self.value))
 
     # unserialization support:
-    def get_unserializer(self, name, attrs):
+    def get_unserializer(self, context, name, attrs):
         """
         returns a unserializer instance for child element <name>, usually
         a instance of some other class derived from UnserializerBase
@@ -182,16 +192,16 @@ class Serializable(object):
         self._log("Unexpected end element: %s (expected: %s)" % (
                   name, self.element_name))
 
-    def make_unserializer(self):
+    def make_unserializer(self, context):
         """
         convenience wrapper that creates the unserializing generator and
         automatically does the first "nop" generator call.
         """
-        gen = self._unserialize()
+        gen = self._unserialize(context)
         gen.next()
         return gen
 
-    def _unserialize(self):
+    def _unserialize(self, context):
         """
         Generator that gets fed with event data from the sax parser, e.g.:
             ('startElement', name, attrs)
@@ -209,9 +219,9 @@ class Serializable(object):
                 if name == self.element_name:
                     self.startElement(attrs)
                 else:
-                    unserializer_instance = self.get_unserializer(name, attrs)
+                    unserializer_instance = self.get_unserializer(context, name, attrs)
                     if unserializer_instance is not None:
-                        unserializer = unserializer_instance.make_unserializer()
+                        unserializer = unserializer_instance.make_unserializer(context)
                         try:
                             while True:
                                 d = yield unserializer.send(d)
@@ -231,8 +241,8 @@ class Serializable(object):
             elif fn == 'characters':
                 self.characters(d[1])
 
-    def unserialize(self, xmlfile):
-        xml_parse(xmlfile, MoinContentHandler(self))
+    def unserialize(self, context):
+        xml_parse(context.xmlfile, MoinContentHandler(self, context))
 
 
 def create_value_object(v):
@@ -351,7 +361,7 @@ class TupleValue(Serializable):
         self._result_fn = setter_fn
         self._data = []
 
-    def get_unserializer(self, name, attrs):
+    def get_unserializer(self, context, name, attrs):
         mapping = {
             'str': StrValue,
             'unicode': UnicodeValue,
@@ -406,7 +416,7 @@ class Meta(Serializable):
         self.element_attrs = attrs
         self.target = rev_or_item
 
-    def get_unserializer(self, name, attrs):
+    def get_unserializer(self, context, name, attrs):
         if name == 'entry':
             return Entry(attrs=attrs, rev_or_item=self.target)
 
@@ -462,7 +472,7 @@ class Data(Serializable):
         self.write_fn = write_fn
         self.coding = attrs.get('coding')
 
-    def get_unserializer(self, name, attrs):
+    def get_unserializer(self, context, name, attrs):
         if name == 'chunk':
             attrs = dict(attrs)
             if self.coding and 'coding' not in attrs:
