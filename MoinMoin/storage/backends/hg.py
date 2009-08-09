@@ -161,7 +161,7 @@ class MercurialBackend(Backend):
             meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
             revno = int(meta['rev'])
             item = Item(self, meta['name']) # XXX: should return historic or actual name?
-            item._id = meta['id'] 
+            item._id = meta['id']
             timestamp = ctx.date()[0]
             rev = MercurialStoredRevision(item, revno, timestamp)
             rev._item_id = item._id = meta['id']
@@ -252,7 +252,7 @@ class MercurialBackend(Backend):
                 src, dst = os.path.join(self._rev_path, item._id), os.path.join(self._rev_path, newid)
                 commands.rename(self._ui, self._repo, src, dst)
                 commands.rename(self._ui, self._repo, "%s.rev" % src, "%s.rev" % dst)
-                self._commit_files(['%s.rev' % item._id, '%s.rev' % newid, item._id, newid], 
+                self._commit_files(['%s.rev' % item._id, '%s.rev' % newid, item._id, newid],
                         message='(renamed %s to %s)' % (item.name.encode('utf-8'), newname.encode('utf-8')))
             finally:
                 lock.release()
@@ -450,7 +450,7 @@ class MercurialBackend(Backend):
                 try:
                     with open(os.path.join(self._rev_path, "%s.rip" % backend_meta['id'])) as destroyfile:
                         revs = [int(revno) for revno in destroyfile]
-                    if not revs or ctxrev in revs: 
+                    if not revs or ctxrev in revs:
                         return False
                     else:
                         return not id or ctxid == id
@@ -487,7 +487,7 @@ class MercurialBackend(Backend):
                 if revision.revno == int(revno):
                     fctx = self._repo.filectx(id, fileid=filenode)
                     break
-        return fctx 
+        return fctx
 
     def _get_changectx(self, revision):
         """
@@ -530,7 +530,7 @@ class MercurialBackend(Backend):
 
     def _open_item_index(self, item, mode='r'):
         return open(os.path.join(self._rev_path, "%s.rev" % item._id), mode)
-    
+
     def _open_destroy_index(self, item, mode='a'):
         return open(os.path.join(self._rev_path, "%s.rip" % item._id), mode)
 
@@ -538,10 +538,10 @@ class MercurialBackend(Backend):
         """Add Item Revision to index file to speed up further lookups."""
         fctx = self._repo.changectx('')[item._id]
         with self._open_item_index(item, 'a') as revfile:
-            revfile.write("%(revno)d %(node)s %(name)s %(filenode)s\n" % 
-                    {'revno': revision.revno, 
-                     'node': short(fctx.node()), 
-                     'name': item._id, 
+            revfile.write("%(revno)d %(node)s %(name)s %(filenode)s\n" %
+                    {'revno': revision.revno,
+                     'node': short(fctx.node()),
+                     'name': item._id,
                      'filenode': short(fctx.filenode()), })
         self._commit_files(['%s.rev' % item._id], message='(revision append)')
 
@@ -632,5 +632,4 @@ class MercurialStoredRevision(StoredRevision):
 
     def get_node(self):
         return self._backend._get_revision_node(self)
-
 
