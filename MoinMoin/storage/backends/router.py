@@ -24,6 +24,7 @@ from MoinMoin.error import ConfigurationError
 from MoinMoin.storage.error import AccessDeniedError
 
 from MoinMoin.storage import Backend
+from MoinMoin.storage.serialization import Serializable
 
 from UserDict import DictMixin
 
@@ -113,7 +114,7 @@ class RouterBackend(Backend):
         return RouterItem(backend.create_item(itemname), mountpoint, itemname, self)
 
 
-class RouterItem(object):
+class RouterItem(Serializable):
     """
     Router Item - Wraps 'real' storage items to make them aware of their full name.
 
@@ -249,6 +250,31 @@ class RouterItem(object):
         @see: Item.destroy.__doc__
         """
         return self._item.destroy()
+
+    # serialization support
+    element_name = 'item'
+
+    @property
+    def element_attrs(self):
+        """
+        For xml serialization <item name="...">
+        
+        Note: must not be delegated to self._item or we won't get the FULL name.
+        """
+        return dict(name=self.name)
+
+    def serialize(self, xmlgen):
+        if xmlgen.shall_serialize(item=self):
+            super(RouterItem, self).serialize(xmlgen)
+
+    def get_unserializer(self, name, attrs):
+        # Note: without this, we would inherit the default implementation from Serializable!
+        return self._item.get_unserializer(name, attrs)
+
+    def serialize_value(self, xmlgen):
+        # Note: without this, we would inherit the default implementation from Serializable!
+        return self._item.serialize_value(xmlgen)
+
 
 class RouterRevision(DictMixin):
     """
