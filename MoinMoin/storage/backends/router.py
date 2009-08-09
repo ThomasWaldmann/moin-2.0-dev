@@ -267,9 +267,9 @@ class RouterItem(Serializable):
         if xmlgen.shall_serialize(item=self):
             super(RouterItem, self).serialize(xmlgen)
 
-    def get_unserializer(self, name, attrs):
+    def get_unserializer(self, context, name, attrs):
         # Note: without this, we would inherit the default implementation from Serializable!
-        return self._item.get_unserializer(name, attrs)
+        return self._item.get_unserializer(context, name, attrs)
 
     def serialize_value(self, xmlgen):
         # Note: without this, we would inherit the default implementation from Serializable!
