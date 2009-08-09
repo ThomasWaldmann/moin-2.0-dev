@@ -1,17 +1,20 @@
 # -*- coding: iso-8859-1 -*-
 """
-    MoinMoin - Clone Backend From/To Serialized Data
+    MoinMoin - XML (un)serialization of storage contents.
 
-    If you have a serialized xml version of some backend,
-    you can invoke this script to pump the data into your
-    storage backends.
-    Analogously, if you have a backend you would like to
-    serialize, you can use this script to get an xml file
-    containing the entire data stored in the backend.
+    Using --save you can serialize your storage contents to an xml file.
+    Using --load you can load such a file into your storage.
 
-    @copyright: 2009 MoinMoin:ChristopherDenter
+    Note that before unserializing stuff, you should first create an
+    appropriate namespace_mapping in your wiki configuration so that the
+    items get written to the backend where you want them.
+
+    @copyright: 2009 MoinMoin:ChristopherDenter,
+                2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
+
+import sys
 
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.wsgiapp import init_unprotected_backends
@@ -25,25 +28,28 @@ class PluginScript(MoinScript):
         MoinScript.__init__(self, argv, def_values)
         self.parser.add_option(
             "-s", "--save", dest="save", action="store_true",
-            help="Indicate whether you want to save all your backend data to the xml file specified."
+            help="Save (serialize) storage contents to a xml file."
         )
         self.parser.add_option(
             "-l", "--load", dest="load", action="store_true",
-            help="Indicate whether you want to load all your backend data from the xml file specified."
+            help="Load (unserialize) storage contents from a xml file."
         )
         self.parser.add_option(
             "-f", "--file", dest="xml_file", action="store", type="string",
-            help="The xml file you want to load the data from/store the data to."
+            help="Filename of xml file to use [Default: use stdin/stdout]."
         )
 
     def mainloop(self):
         load = self.options.load
         save = self.options.save
         xml_file = self.options.xml_file
-        if load and save:
-            fatal("You cannot load and save at the same time!")
+        if load == save: # either both True or both False
+            fatal("You need to give either --load or --save!")
         if not xml_file:
-            fatal("You need to specify a file for the load/save operation.")
+            if load:
+                xml_file = sys.stdin
+            elif save:
+                xml_file = sys.stdout
 
         self.init_request()
         request = self.request
@@ -52,12 +58,6 @@ class PluginScript(MoinScript):
 
         if load:
             unserialize(storage, xml_file)
-            print "The contents of %s have been loaded into your backend." % (xml_file)
-
         elif save:
             serialize(storage, xml_file)
-            print "The contents of your backend have been saved to %s." % (xml_file)
-
-        else:
-            fatal("You need to specify whether you want to either load or save.")
 
