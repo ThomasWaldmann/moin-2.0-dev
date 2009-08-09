@@ -40,29 +40,37 @@ class PluginScript(MoinScript):
         cfg = request.cfg
 
         try:
-            old_instance_path = cfg.old_instance_path
+            data_dir_old = cfg.data_dir_old
+            user_dir_old = cfg.user_dir_old
         except AttributeError:
-            fatal("Please, configure old_instance_path in wikiconfig.py. " + \
-                  "This should be the path to your old instance folder (it must contain a data/pages and data/user subfolder).")
+            fatal("""
+The backend migration did not find your old wiki data.
 
-        data_path = join(old_instance_path, 'data')
-        page_backend = fs19.FSPageBackend(data_path)
-        user_backend = fs19.FSUserBackend(data_path)
+Please, configure in your wiki config:
+    data_dir_old = '.../data' # must be the path of your old data directory
+                              # (it must contain the pages/ subdirectory)
+    user_dir_old = '.../data/user' # must be the path of your old user profile directory
+                                   # or None (no conversion of user profiles)
+""")
 
+        page_backend = fs19.FSPageBackend(data_dir_old)
         dest_content = request.unprotected_storage.get_backend(cfg.ns_content)
-        dest_userprofile = request.unprotected_storage.get_backend(cfg.ns_user_profile)
-
         sys.stdout.write("Starting backend migration.\nConverting data.\n")
         content_fails = dest_content.clone(page_backend, self.options.verbose)[2]
-
-        sys.stdout.write("Converting users.\n")
-        user_fails = dest_userprofile.clone(user_backend, self.options.verbose)[2]
-
-        if self.options.show_failed and (len(content_fails) or len(user_fails)):
+        if self.options.show_failed and len(content_fails):
             sys.stdout.write("\nFailed report\n-------------\n")
             for name in content_fails.iterkeys():
                 sys.stdout.write("%r: %s\n" % (name, content_fails[name]))
-            for name in user_fails.iterkeys():
-                sys.stdout.write("%r: %s\n" % (name, user_fails[name]))
+        sys.stdout.write("Content migration finished!\n")
 
-        sys.stdout.write("Backend migration finished!\n")
+        if user_dir_old:
+            user_backend = fs19.FSUserBackend(user_dir_old)
+            dest_userprofile = request.unprotected_storage.get_backend(cfg.ns_user_profile)
+            sys.stdout.write("Converting users.\n")
+            user_fails = dest_userprofile.clone(user_backend, self.options.verbose)[2]
+            if self.options.show_failed and len(user_fails):
+                sys.stdout.write("\nFailed report\n-------------\n")
+                for name in user_fails.iterkeys():
+                    sys.stdout.write("%r: %s\n" % (name, user_fails[name]))
+            sys.stdout.write("User profile migration finished!\n")
+
