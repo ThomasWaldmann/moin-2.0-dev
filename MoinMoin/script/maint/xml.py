@@ -14,13 +14,14 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import sys
+import sys, time
 
 from MoinMoin.script import MoinScript, fatal
 from MoinMoin.wsgiapp import init_unprotected_backends
 
 from MoinMoin.storage.serialization import unserialize, serialize, \
-                                           NLastRevs, ExceptNLastRevs
+                                           NLastRevs, ExceptNLastRevs, \
+                                           SinceTime, BeforeTime
 
 
 class PluginScript(MoinScript):
@@ -40,20 +41,36 @@ class PluginScript(MoinScript):
             help="Filename of xml file to use [Default: use stdin/stdout]."
         )
         self.parser.add_option(
-            "--nlast", dest="nlast", action="store", type="int", default=0,
-            help="Serialize only the last n revisions of each item [Default: all revisions]."
+            "--nrevs", dest="nrevs", action="store", type="int", default=0,
+            help="Serialize only the last n revisions of each item [Default: all everything]."
         )
         self.parser.add_option(
-            "--exceptnlast", dest="exceptnlast", action="store", type="int", default=0,
-            help="Serialize everything except the last n revisions of each item [Default: all revisions]."
+            "--exceptnrevs", dest="exceptnrevs", action="store", type="int", default=0,
+            help="Serialize everything except the last n revisions of each item [Default: everything]."
+        )
+        self.parser.add_option(
+            "--ndays", dest="ndays", action="store", type="int", default=0,
+            help="Serialize only the last n days of each item [Default: everything]."
+        )
+        self.parser.add_option(
+            "--exceptndays", dest="exceptndays", action="store", type="int", default=0,
+            help="Serialize everything except the last n days of each item [Default: everything]."
+        )
+        self.parser.add_option(
+            "--nhours", dest="nhours", action="store", type="int", default=0,
+            help="Serialize only the last n hours of each item [Default: everything]."
+        )
+        self.parser.add_option(
+            "--exceptnhours", dest="exceptnhours", action="store", type="int", default=0,
+            help="Serialize everything except the last n hours of each item [Default: everything]."
         )
 
     def mainloop(self):
         load = self.options.load
         save = self.options.save
         xml_file = self.options.xml_file
-        nlast = self.options.nlast
-        exceptnlast = self.options.exceptnlast
+        nrevs = self.options.nrevs
+        exceptnrevs = self.options.exceptnrevs
 
         if load == save: # either both True or both False
             fatal("You need to give either --load or --save!")
@@ -68,13 +85,35 @@ class PluginScript(MoinScript):
         init_unprotected_backends(request)
         storage = request.unprotected_storage
 
+        ndays = self.options.ndays
+        exceptndays = self.options.exceptndays
+        nhours = self.options.nhours
+        exceptnhours = self.options.exceptnhours
+        now = time.time()
+
+        sincetime = 0
+        if ndays:
+            sincetime = now - ndays * 24*3600
+        elif nhours:
+            sincetime = now - nhours * 3600
+
+        beforetime = 0
+        if exceptndays:
+            beforetime = now - exceptndays * 24*3600
+        elif exceptnhours:
+            beforetime = now - exceptnhours * 3600
+
         if load:
             unserialize(storage, xml_file)
         elif save:
-            if nlast:
+            if nrevs:
                 serialize(storage, xml_file, NLastRevs, nlast)
-            elif exceptnlast:
+            elif exceptnrevs:
                 serialize(storage, xml_file, ExceptNLastRevs, exceptnlast)
+            elif sincetime:
+                serialize(storage, xml_file, SinceTime, sincetime)
+            elif beforetime:
+                serialize(storage, xml_file, BeforeTime, beforetime)
             else:
                 serialize(storage, xml_file)
 
