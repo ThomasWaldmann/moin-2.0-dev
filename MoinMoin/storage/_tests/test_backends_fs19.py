@@ -27,14 +27,16 @@ deleted_item_name = "deleted_page"
 
 attachment_name = u"test.txt"
 attachment_data = "attachment"
-attachment_mtime = 12340000
+attachment_mtime1 = 12340000
+attachment_mtime2 = 12345000
 attachment_comment = "saved test attachment"
 
 logentry = lambda *items: "\t".join(items)
 item_editlog = "\r\n".join([
     logentry(str(item_mtime * 1000000), '00000001', 'SAVE', item_name, '', '', '', '', item_comment),
-    logentry(str(attachment_mtime * 1000000), '99999999', 'ATTNEW', item_name, '', '', '', attachment_name, attachment_comment),
+    logentry(str(attachment_mtime1 * 1000000), '99999999', 'ATTNEW', item_name, '', '', '', attachment_name, attachment_comment),
     logentry(str(item_mtime * 1000000 + 1), '00000002', 'SAVE', item_name, '', '', '', '', item_comment),
+    logentry(str(attachment_mtime2 * 1000000), '99999999', 'ATTNEW', item_name, '', '', '', attachment_name, attachment_comment),
 ])
 
 deleted_item_editlog = "\r\n".join([
@@ -165,7 +167,8 @@ class TestFS19Backend(object):
         name = item_name + '/' + attachment_name
         item = self.backend.get_item(name)
         rev = item.get_revision(0)
-        assert rev.timestamp == attachment_mtime
+        rev_timestamp = rev.timestamp
+        assert rev_timestamp == attachment_mtime2
 
     def test_item_revision_count(self):
         item = self.backend.get_item(item_name)

@@ -176,6 +176,7 @@ class FsPageRevision(StoredRevision):
         try:
             content = open(revpath, 'r').read()
         except (IOError, OSError):
+            # XXX TODO: trashbin-like deletion needs different approach XXX
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
             meta = {}
             # if this page revision is deleted, we have no on-page metadata.
@@ -286,7 +287,7 @@ class FsAttachmentRevision(StoredRevision):
         except KeyError:
             editlog_data = { # make something up
                 EDIT_LOG_MTIME: os.path.getmtime(attpath),
-                EDIT_LOG_ACTION: 'ATTNEW',
+                EDIT_LOG_ACTION: 'SAVE',
                 EDIT_LOG_ADDR: '0.0.0.0',
                 EDIT_LOG_HOSTNAME: '0.0.0.0',
                 EDIT_LOG_USERID: '',
@@ -340,7 +341,7 @@ class EditLog(LogFile):
 
     def find_attach(self, attachname):
         """ Find metadata for some attachment name in the edit-log. """
-        for meta in self:
+        for meta in self.reverse(): # use reverse iteration to get the latest upload's data
             if (meta['__rev'] == 99999998 and  # 99999999-1 because of 0-based
                 meta[EDIT_LOG_ACTION] =='ATTNEW' and
                 meta[EDIT_LOG_EXTRA] == attachname):
@@ -348,6 +349,7 @@ class EditLog(LogFile):
         else:
             raise KeyError
         del meta['__rev']
+        meta[EDIT_LOG_ACTION] =='SAVE'
         return meta
 
 
