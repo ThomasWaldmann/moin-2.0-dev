@@ -10,12 +10,10 @@ mig script?
 
 TODO: same for AttachInfo(pagename=None) ?
 
-TODO: moin maint reducewiki / mkpagepacks / cleanpage
+TODO: moin maint mkpagepacks
 TODO: moin export dump
 
-consequences on migration scripts ?
-
-ATT* in edit-log?
+TODO: do migration steps needed for 1.9 -> 2.0 in fs19 backend.
 
 Removed wiki xmlrpc attachment related parts.
 TODO: Check wikisync & co whether it works for any item type / fix xmlrpc accordingly.
@@ -44,16 +42,8 @@ Currently it is all in one file, can be split later.
 Everything we want to be able to do with items should be implemented there.
 Stuff shall be implemented at the MOST GENERAL LEVEL of the hierarchy.
 
-ACL TODO:
-"delete" ACL right: kill it, makes no sense.
-"revert" ACL right: same?
-"create" ACL right: add this?
-"move" ACL right: add this? note: includes deletion if implemented by Trash/*
-
 Show nicer error pages than what we have at the moment.
 
-DELETE TODO:
-implement deletion as mv X Trash/X - do we still need meta[DELETED] then?
 index pages: could filter by name (thus not displaying Trash/*, except if wanted)
 
 
@@ -70,8 +60,4 @@ MoinMoin.theme code.
 Removed all theme code except "modernized" theme.
 TODO: create a jinja2 based theme.
 
-tests
------
-
-Don't work right now, please help debugging / fixing.
 

@@ -18,8 +18,8 @@ from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
 from MoinMoin.storage.backends import fs, memory
 
 
-DATA = 'data'
-USER = 'user'
+CONTENT = 'content'
+USERPROFILES = 'userprofiles'
 TRASH = 'trash'
 
 FS_PREFIX = "fs:"
@@ -40,7 +40,7 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None):
     def _create_folders(instance_folder):
         # create folders if they don't exist yet
         inst = instance_folder
-        folders = (join(inst, DATA), join(inst, USER), join(inst, TRASH))
+        folders = (join(inst, CONTENT), join(inst, USERPROFILES), join(inst, TRASH))
         for folder in folders:
             try:
                 makedirs(folder)

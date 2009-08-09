@@ -5,7 +5,6 @@
 # location for the wikiconfig.py we use for testing:
 export PYTHONPATH=$(PWD)
 
-testwiki := ./tests/wiki
 share := ./wiki
 
 all:
@@ -45,12 +44,8 @@ pagepacks:
 	@python MoinMoin/_tests/maketestwiki.py
 	@MoinMoin/script/moin.py --config-dir=MoinMoin/_tests --wiki-url=http://localhost/ maint mkpagepacks
 	
-dist:
+dist: clean-testwiki clean-devwiki
 	-rm MANIFEST
-	-rm -rf tests/wiki
-	-rm -rf wiki/data/cache/{__metalock__,__session__,wikiconfig}
-	->wiki/data/event-log
-	->wiki/data/edit-log
 	python setup.py sdist
 
 # Create patchlevel module
@@ -81,13 +76,23 @@ pylint:
 clean: clean-testwiki clean-pyc
 	rm -rf build
 
+clean-devwiki:
+	-rm -rf wiki/data/cache/__session__
+	-rm -rf wiki/data/cache/jinja
+	-rm -rf wiki/data/cache/wikiconfig
+	-rm -rf wiki/data/content
+	-rm -rf wiki/data/userprofiles
+	-rm -rf wiki/data/trash
+	->wiki/data/event-log
+
 clean-testwiki:
-	rm -rf $(testwiki)/*
+	-rm -rf MoinMoin/_tests/wiki/data/cache/*
+	-rm MoinMoin/_tests/wiki/data/event-log
 
 clean-pyc:
 	find . -name "*.pyc" -exec rm -rf "{}" \; 
 
 .PHONY: all dist install-docs check-tabs epydoc patchlevel \
 	check-i18n update test testwiki clean \
-	clean-testwiki clean-pyc
+	clean-testwiki clean-devwiki clean-pyc
 
