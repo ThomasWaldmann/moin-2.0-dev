@@ -545,7 +545,7 @@ class MercurialBackend(Backend):
                      'filenode': short(fctx.filenode()), })
         self._commit_files(['%s.rev' % item._id], message='(revision append)')
 
-    def _commit_files(self, files, message='', user='storage', extra=None, date=None, force=True):
+    def _commit_files(self, files, message='...', user='storage', extra=None, date=None, force=True):
         try:
             match = mercurial.match.exact(self._rev_path, '', files)
             self._repo.commit(match=match, text=message, user=user, extra=extra, date=date, force=force)
