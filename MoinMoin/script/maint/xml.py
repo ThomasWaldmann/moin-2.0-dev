@@ -20,8 +20,7 @@ from MoinMoin.script import MoinScript, fatal
 from MoinMoin.wsgiapp import init_unprotected_backends
 
 from MoinMoin.storage.serialization import unserialize, serialize, \
-                                           NLastRevs, ExceptNLastRevs, \
-                                           SinceTime, BeforeTime
+                                           NLastRevs, SinceTime
 
 
 class PluginScript(MoinScript):
@@ -69,8 +68,6 @@ class PluginScript(MoinScript):
         load = self.options.load
         save = self.options.save
         xml_file = self.options.xml_file
-        nrevs = self.options.nrevs
-        exceptnrevs = self.options.exceptnrevs
 
         if load == save: # either both True or both False
             fatal("You need to give either --load or --save!")
@@ -92,28 +89,32 @@ class PluginScript(MoinScript):
         now = time.time()
 
         sincetime = 0
+        sincetime_invert = False
         if ndays:
             sincetime = now - ndays * 24*3600
         elif nhours:
             sincetime = now - nhours * 3600
-
-        beforetime = 0
-        if exceptndays:
-            beforetime = now - exceptndays * 24*3600
+        elif exceptndays:
+            sincetime = now - exceptndays * 24*3600
+            sincetime_invert = True
         elif exceptnhours:
-            beforetime = now - exceptnhours * 3600
+            sincetime = now - exceptnhours * 3600
+            sincetime_invert = True
+
+        nrevs = self.options.nrevs
+        nrevs_invert = False
+        exceptnrevs = self.options.exceptnrevs
+        if exceptnrevs:
+            nrevs = exceptnrevs
+            nrevs_invert = True
 
         if load:
             unserialize(storage, xml_file)
         elif save:
             if nrevs:
-                serialize(storage, xml_file, NLastRevs, nlast)
-            elif exceptnrevs:
-                serialize(storage, xml_file, ExceptNLastRevs, exceptnlast)
+                serialize(storage, xml_file, NLastRevs, nrevs, nrevs_invert)
             elif sincetime:
-                serialize(storage, xml_file, SinceTime, sincetime)
-            elif beforetime:
-                serialize(storage, xml_file, BeforeTime, beforetime)
+                serialize(storage, xml_file, SinceTime, sincetime, sincetime_invert)
             else:
                 serialize(storage, xml_file)
 
