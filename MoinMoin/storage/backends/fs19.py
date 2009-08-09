@@ -366,7 +366,7 @@ class FSUserBackend(Backend):
         """
         Initialise filesystem backend.
 
-        @param path: storage path (data_dir)
+        @param path: storage path (user_dir)
         """
         self._path = path
         if kill_save:
@@ -377,17 +377,16 @@ class FSUserBackend(Backend):
 
     def _get_item_path(self, name, *args):
         """
-        Returns the full path to the page directory.
+        Returns the full path to the user profile.
         """
-        path = os.path.join(self._path, 'user', name, *args)
+        path = os.path.join(self._path, name, *args)
         return path
 
     def has_item(self, itemname):
         return os.path.isfile(self._get_item_path(itemname))
 
     def iteritems(self):
-        user_dir = os.path.join(self._path, 'user')
-        for itemname in os.listdir(user_dir):
+        for itemname in os.listdir(self._path):
             try:
                 item = FsUserItem(self, itemname)
             except NoSuchItemError:
