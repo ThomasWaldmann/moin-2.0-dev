@@ -738,6 +738,33 @@ class ApplicationZip(Application):
         return self._render_data()
 
 
+class ApplicationXTar(Application):
+    supported_mimetypes = ['application/x-tar', 'application/x-gtar']
+
+    def _render_data(self):
+        import tarfile
+        try:
+            content = []
+            fmt = u"%-72s %-19s %12s"
+            headline = fmt % (_("File Name"), _("Modified"), _("Size"))
+            content.append(headline)
+            content.append(u"-" * len(headline))
+            tf = tarfile.open(fileobj=self.rev, mode='r')
+            for tinfo in tf.getmembers():
+                content.append(wikiutil.escape(fmt % (
+                    tinfo.name,
+                    time.strftime("%Y-%02m-%02d %02H:%02M:%02S", time.gmtime(tinfo.mtime)),
+                    str(tinfo.size),
+                )))
+        except tarfile.TarError, err:
+            logging.exception("An exception within tar file handling occurred:")
+            content = [str(err)]
+        return u"<pre>%s</pre>" % "\n".join(content)
+
+    def transclude(self, desc, tag_attrs=None, query_args=None):
+        return self._render_data()
+
+
 class RenderableApplication(RenderableBinary):
     supported_mimetypes = []
 
