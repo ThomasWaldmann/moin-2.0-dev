@@ -1,5 +1,5 @@
 from MoinMoin.config.multiconfig import DefaultConfig
-from MoinMoin.storage.backends.memory import MemoryBackend
+from MoinMoin.storage.backends import create_simple_mapping
 
 
 _tests = [DefaultConfig, ]
@@ -9,8 +9,7 @@ class TestConfigs:
         for cls in _tests:
             cls.data_dir = self.request.cfg.data_dir
             cls.secrets = self.request.cfg.secrets
-            cls.storage = MemoryBackend()
-            cls.storage.user_backend = MemoryBackend()
+            cls.namespace_mapping = create_simple_mapping('memory:')
 
             # quite a bad hack to make _importPlugin succeed
             cls('MoinMoin')
