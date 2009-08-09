@@ -714,17 +714,16 @@ class ApplicationZip(Application):
         import zipfile
         try:
             content = []
-            fmt = u"%-60s %-19s %12s %12s"
-            headline = fmt % (_("File Name"), _("Modified"), _("Size"), _("Zipped Size"))
+            fmt = u"%12s  %-19s  %-60s"
+            headline = fmt % (_("Size"), _("Modified"), _("File Name"))
             content.append(headline)
             content.append(u"-" * len(headline))
             zf = zipfile.ZipFile(self.rev, mode='r')
             for zinfo in zf.filelist:
                 content.append(wikiutil.escape(fmt % (
-                    zinfo.filename,
-                    u"%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time,
                     str(zinfo.file_size),
-                    str(zinfo.compress_size),
+                    u"%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time,
+                    zinfo.filename,
                 )))
         except (RuntimeError, zipfile.BadZipfile), err:
             # RuntimeError is raised by zipfile stdlib module in case of
@@ -745,16 +744,16 @@ class ApplicationXTar(Application):
         import tarfile
         try:
             content = []
-            fmt = u"%-72s %-19s %12s"
-            headline = fmt % (_("File Name"), _("Modified"), _("Size"))
+            fmt = u"%12s  %-19s  %-60s"
+            headline = fmt % (_("Size"), _("Modified"), _("File Name"))
             content.append(headline)
             content.append(u"-" * len(headline))
             tf = tarfile.open(fileobj=self.rev, mode='r')
             for tinfo in tf.getmembers():
                 content.append(wikiutil.escape(fmt % (
-                    tinfo.name,
-                    time.strftime("%Y-%02m-%02d %02H:%02M:%02S", time.gmtime(tinfo.mtime)),
                     str(tinfo.size),
+                    time.strftime("%Y-%02m-%02d %02H:%02M:%02S", time.gmtime(tinfo.mtime)),
+                    tinfo.name,
                 )))
         except tarfile.TarError, err:
             logging.exception("An exception within tar file handling occurred:")
