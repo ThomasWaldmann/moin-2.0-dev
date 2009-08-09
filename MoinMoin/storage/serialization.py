@@ -84,8 +84,9 @@ class XMLSelectiveGenerator(XMLGenerator):
 
 
 class NLastRevs(XMLSelectiveGenerator):
-    def __init__(self, out, nlast):
-        self.nlast = nlast
+    def __init__(self, out, nrevs, invert):
+        self.nrevs = nrevs
+        self.invert = invert
         XMLSelectiveGenerator.__init__(self, out)
 
     def shall_serialize(self, item=None, rev=None,
@@ -93,25 +94,13 @@ class NLastRevs(XMLSelectiveGenerator):
         if revno is None:
             return True
         else:
-            return revno > current_revno - self.nlast
-
-
-class ExceptNLastRevs(XMLSelectiveGenerator):
-    def __init__(self, out, nlast):
-        self.nlast = nlast
-        XMLSelectiveGenerator.__init__(self, out)
-
-    def shall_serialize(self, item=None, rev=None,
-                        revno=None, current_revno=None):
-        if revno is None:
-            return True
-        else:
-            return revno <= current_revno - self.nlast
+            return self.invert ^ (revno > current_revno - self.nrevs)
 
 
 class SinceTime(XMLSelectiveGenerator):
-    def __init__(self, out, ts):
+    def __init__(self, out, ts, invert):
         self.ts = ts
+        self.invert = invert
         XMLSelectiveGenerator.__init__(self, out)
 
     def shall_serialize(self, item=None, rev=None,
@@ -119,20 +108,39 @@ class SinceTime(XMLSelectiveGenerator):
         if rev is None:
             return True
         else:
-            return rev.timestamp >= self.ts
+            return self.invert ^ (rev.timestamp >= self.ts)
 
 
-class BeforeTime(XMLSelectiveGenerator):
-    def __init__(self, out, ts):
+class NRevsOrSinceTime(XMLSelectiveGenerator):
+    def __init__(self, out, nrevs, ts, invert):
+        self.nrevs = nrevs
         self.ts = ts
+        self.invert = invert
         XMLSelectiveGenerator.__init__(self, out)
 
     def shall_serialize(self, item=None, rev=None,
                         revno=None, current_revno=None):
-        if rev is None:
+        if revno is None:
             return True
         else:
-            return rev.timestamp < self.ts
+            return self.invert ^ (
+                   (revno > current_revno - self.nrevs) | (rev.timestamp >= self.ts))
+
+
+class NRevsAndSinceTime(XMLSelectiveGenerator):
+    def __init__(self, out, nrevs, ts, invert):
+        self.nrevs = nrevs
+        self.ts = ts
+        self.invert = invert
+        XMLSelectiveGenerator.__init__(self, out)
+
+    def shall_serialize(self, item=None, rev=None,
+                        revno=None, current_revno=None):
+        if revno is None:
+            return True
+        else:
+            return self.invert ^ (
+                   (revno > current_revno - self.nrevs) & (rev.timestamp >= self.ts))
 
 
 class ItemNameList(XMLSelectiveGenerator):
