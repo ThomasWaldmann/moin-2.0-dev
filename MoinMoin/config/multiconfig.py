@@ -351,8 +351,9 @@ class ConfigFunctionality(object):
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
-        assert hasattr(self, "storage"), "error in config: no data/user storage configured"
-        # XXX: add defaults again
+        if self.namespace_mapping is None:
+            raise error.ConfigurationError("No storage configuration specified! You need to define a namespace_mapping. " + \
+                                           "For further reference, please see HelpOnStorageConfiguration.")
 
         if self.url_prefix_fckeditor is None:
             self.url_prefix_fckeditor = self.url_prefix_local + '/applets/FCKeditor'
@@ -863,12 +864,11 @@ options_no_group_name = {
 
     ('shared_intermap', None,
      "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
-    ('backend_uri', None,
-     'Locates storage backends; Backends are automatically set up depending on the backend_uri provided. May be omitted if storage is constructed manually'),
-    ('storage', None,
-     'Data/User storage backends; Constructed automatically with get_enduser_backend(backend_uri). Otherwise, this needs to point something that implements the storage API and has a user_backend attribute.'),
+    ('namespace_mapping', None,
+    "This needs to point to a (correctly ordered!) list of tuples, each tuple containing: Namespace identifier, backend, acl protection to be applied to that backend. " + \
+    "E.g.: [('/', FSBackend('wiki/data'), dict(default='All:read,write,create')), ]. Please see HelpOnStorageConfiguration for further reference."),
     ('preloaded_xml', None,
-     'If this points to a serialized backend (an xml file), the file is loaded into the content backend upon first request.'),
+     'If this points to a serialized backend (an xml file), the file is loaded into the storage backend(s) upon first request.'),
   )),
   # ==========================================================================
   'urls': ('URLs', None, (
