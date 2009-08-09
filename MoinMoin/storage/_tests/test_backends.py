@@ -649,7 +649,7 @@ class BackendTest(object):
         assert not itemname in item_names
         all_rev_data = [rev.read() for rev in self.backend.history()]
         assert not rev_data in all_rev_data
- 
+
         for rev in self.backend.history():
             assert not rev.item.name == itemname
         for rev in self.backend.history(reverse=False):
