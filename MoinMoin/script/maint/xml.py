@@ -91,11 +91,11 @@ class PluginScript(MoinScript):
         sincetime = 0
         sincetime_invert = False
         if ndays:
-            sincetime = now - ndays * 24*3600
+            sincetime = now - ndays * 24 * 3600
         elif nhours:
             sincetime = now - nhours * 3600
         elif exceptndays:
-            sincetime = now - exceptndays * 24*3600
+            sincetime = now - exceptndays * 24 * 3600
             sincetime_invert = True
         elif exceptnhours:
             sincetime = now - exceptnhours * 3600
