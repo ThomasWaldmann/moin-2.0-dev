@@ -157,27 +157,15 @@ class MercurialBackend(Backend):
         with timestamp order preserved.
         Yields MercurialStoredRevision objects.
         """
-        revisions = {}
-        def cached_revisions(item):
-            try:
-                return revisions[item]
-            except KeyError:
-                revisions[item] = item.list_revisions()
-                return revisions[item]
-
         for ctx in self._iter_changelog(reverse=reverse):
             meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
-            # check if item is in manifest (not destroyed)
-            if meta['id'] in self._repo.changectx(''): 
-                revno = int(meta['rev'])
-                item = Item(self, meta['name']) # XXX: should return historic or actual name?
-                item._id = meta['id'] 
-                # check if revno is in item index (not destroyed)
-                if revno in cached_revisions(item): 
-                    timestamp = ctx.date()[0]
-                    rev = MercurialStoredRevision(item, revno, timestamp)
-                    rev._item_id = item._id = meta['id']
-                    yield rev
+            revno = int(meta['rev'])
+            item = Item(self, meta['name']) # XXX: should return historic or actual name?
+            item._id = meta['id'] 
+            timestamp = ctx.date()[0]
+            rev = MercurialStoredRevision(item, revno, timestamp)
+            rev._item_id = item._id = meta['id']
+            yield rev
 
     def _get_revision(self, item, revno):
         """
@@ -233,13 +221,16 @@ class MercurialBackend(Backend):
         lock = self._lock_rev_item(item)
         try:
             with self._open_item_index(item) as revfile:
-                tmp_fd, tmp_path = tempfile.mkstemp("-index", "tmp-", self._rev_path)
-                with os.fdopen(tmp_fd, 'w') as tmp_index:
-                    for line in revfile:
-                        if int(line.split()[0]) != revision.revno:
-                            tmp_index.write(line)
+                with self._open_destroy_index(item) as destroyfile:
+                    tmp_fd, tmp_path = tempfile.mkstemp("-index", "tmp-", self._rev_path)
+                    with os.fdopen(tmp_fd, 'w') as tmp_index:
+                        for line in revfile:
+                            if int(line.split()[0]) != revision.revno:
+                                tmp_index.write(line)
+                            else:
+                                destroyfile.write(line.split()[0])
             util.rename(tmp_path, os.path.join(self._rev_path, "%s.rev" % item._id))
-            self._commit_files(['%s.rev' % item._id], message='(revision destroy)')
+            self._commit_files(['%s.rev' % item._id, '%s.rip' % item._id], message='(revision destroy)')
         finally:
             lock.release()
 
@@ -328,7 +319,10 @@ class MercurialBackend(Backend):
         # TODO: This is just hiding. Real item destroy may use `mq` extension
         # to rip off all Item revisions from repository.
         self._repo.remove(['%s.rev' % item._id, item._id], unlink=True)
-        self._commit_files(['%s.rev' % item._id, item._id], message='(item destroy)')
+        with self._open_destroy_index(item) as destroyfile:
+            destroyfile.seek(0)
+            destroyfile.truncate()
+        self._commit_files(['%s.rev' % item._id, '%s.rip' % item._id, item._id], message='(item destroy)')
         try:
             os.remove(os.path.join(self._meta_path, "%s.meta" % item._id))
         except OSError, err:
@@ -451,8 +445,17 @@ class MercurialBackend(Backend):
         def wanted(changerev):
             ctx = self._repo.changectx(changerev)
             try:
-                ctxid = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)['id']
-                return not id or ctxid == id
+                backend_meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
+                ctxid, ctxrev = backend_meta['id'], backend_meta['rev']
+                try:
+                    with open(os.path.join(self._rev_path, "%s.rip" % backend_meta['id'])) as destroyfile:
+                        revs = [int(revno) for revno in destroyfile]
+                    if not revs or ctxrev in revs: 
+                        return False
+                    else:
+                        return not id or ctxid == id
+                except IOError:
+                    return not id or ctxid == id
             except KeyError:
                 return False
 
@@ -527,6 +530,9 @@ class MercurialBackend(Backend):
 
     def _open_item_index(self, item, mode='r'):
         return open(os.path.join(self._rev_path, "%s.rev" % item._id), mode)
+    
+    def _open_destroy_index(self, item, mode='a'):
+        return open(os.path.join(self._rev_path, "%s.rip" % item._id), mode)
 
     def _append_revision(self, item, revision):
         """Add Item Revision to index file to speed up further lookups."""
