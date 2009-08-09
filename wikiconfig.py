@@ -37,9 +37,18 @@ class LocalConfig(multiconfig.DefaultConfig):
     # 'fs:' indicates that you want to use the filesystem backend. You can also use
     # 'hg:' instead to indicate that you want to use the mercurial backend.
     # Alternatively you can set up the mapping yourself (see HelpOnStorageConfiguration).
-    namespace_mapping = create_simple_mapping('fs:' + data_dir)
+    namespace_mapping = create_simple_mapping(
+                            backend_uri='fs:' + data_dir,
+                            # XXX we use rather relaxed ACLs for the development wiki:
+                            content_acl=dict(before=u'',
+                                             default=u'All:read,write,create,destroy,admin',
+                                             after=u'', ),
+                            user_profile_acl=dict(before=u'',
+                                                  default=u'All:read,write,create,destroy,admin',
+                                                  after=u'', ),
+                        )
 
-    DesktopEdition = True # give all local users full powers
+    DesktopEdition = True # treat all local users like superuser
     surge_action_limits = None # no surge protection
     sitename = u'MoinMoin DesktopEdition'
     logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static

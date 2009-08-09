@@ -27,7 +27,7 @@ HG_PREFIX = "hg:"
 MEMORY = "memory:"
 
 
-def create_simple_mapping(backend_uri='fs:instance', content_acl=None):
+def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_profile_acl=None):
     """
     When configuring storage, the admin needs to provide a namespace_mapping.
     To ease creation of such a mapping, this function provides sane defaults
@@ -77,23 +77,26 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None):
     else:
         raise ConfigurationError("No proper backend uri provided. Given: %r" % backend_uri)
 
-    # XXX How to properly get these values from the users config?
-    ns_content = '/'
-    ns_user_profile = 'UserProfile/'
-    ns_trash = 'Trash/'
     if not content_acl:
         content_acl = dict(
-            before="",
-            default="All:read,write,admin,create,destroy", # MMDE -> superpowers by default
-            after="",
+            before=u'',
+            default=u'All:read,write,create', # mostly harmless by default
+            after=u'',
             hierarchic=False,
         )
-    user_profile_acl = dict(
-        before="All:read,write,admin,create,destroy", # TODO: change this before release, just for development
-        default="",
-        after="",
-        hierarchic=False,
-    )
+
+    if not user_profile_acl:
+        user_profile_acl = dict(
+            before=u'All:', # harmless by default
+            default=u'',
+            after=u'',
+            hierarchic=False,
+        )
+
+    # XXX How to properly get these values from the users config?
+    ns_content = u'/'
+    ns_user_profile = u'UserProfile/'
+    ns_trash = u'Trash/'
 
     namespace_mapping = [
                     (ns_trash, trash, content_acl),
