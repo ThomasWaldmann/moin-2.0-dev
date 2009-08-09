@@ -203,7 +203,10 @@ class RouterItem(object):
             self._item = new_item
             self._mountpoint = mountpoint
             self._itemname = itemname
-            old_item.destroy()
+            # Use the unwrapped item here. No ACL protection needs to be applied because
+            # destroy doesn't irreversibly kill the item but at this point it is already
+            # guaranteed that it lives on at another place.
+            old_item._item.destroy()
 
         else:
             # Mountpoint didn't change
