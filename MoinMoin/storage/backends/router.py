@@ -21,6 +21,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin.error import ConfigurationError
+from MoinMoin.storage.error import AccessDeniedError
 
 from MoinMoin.storage import Backend
 
@@ -203,10 +204,16 @@ class RouterItem(object):
             self._item = new_item
             self._mountpoint = mountpoint
             self._itemname = itemname
-            # Use the unwrapped item here. No ACL protection needs to be applied because
-            # destroy doesn't irreversibly kill the item but at this point it is already
-            # guaranteed that it lives on at another place.
-            old_item._item.destroy()
+            # We destroy the old item in order not to duplicate data.
+            # It may be the case that the item we want to destroy is ACL protected. In that case,
+            # the destroy() below doesn't irreversibly kill the item because at this point it is already
+            # guaranteed that it lives on at another place and we do not require 'destroy' hence.
+            try:
+                # Perhaps we don't deal with acl protected items anyway.
+                old_item.destroy()
+            except AccessDeniedError:
+                # OK, we're indeed routing to an ACL protected backend. Use unprotected item.
+                old_item._item.destroy()
 
         else:
             # Mountpoint didn't change
