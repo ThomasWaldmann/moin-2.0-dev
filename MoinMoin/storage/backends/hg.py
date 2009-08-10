@@ -206,8 +206,8 @@ class MercurialBackend(Backend):
         try:
             with self._revisions_index(item) as index:
                 if revno in index:
-                    raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)            
-                if revno != index.last_key + 1: 
+                    raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
+                if revno != index.last_key + 1:
                     raise RevisionNumberMismatchError("Unable to create revision number %d. "
                         "New Revision number must be next to latest Revision number." % revno)
         except IOError:
@@ -228,7 +228,7 @@ class MercurialBackend(Backend):
         try:
             with self._revisions_index(item) as revisions:
                 with self._destroyed_index(item, create=True) as destroyed:
-                    destroyed[revision.revno] = revisions[revision.revno] 
+                    destroyed[revision.revno] = revisions[revision.revno]
                     del revisions[revision.revno]
             self._commit_files(["%s.rev" % item._id, "%s.rip" % item._id], message='(revision destroy)')
         finally:
@@ -633,7 +633,7 @@ class Index(object):
     """
     RECORD_SAMPLE = '000001 cdfea0c03df2d58eeb8e509ffeab1c94 abfa65835085 b80de5d13875\n'
 
-    def __init__(self, fpath, create=False):       
+    def __init__(self, fpath, create=False):
         if create:
             self._file = open(fpath, 'a+')
         else:
