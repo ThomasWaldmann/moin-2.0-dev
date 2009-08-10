@@ -57,7 +57,8 @@ from MoinMoin.storage.error import (BackendError, NoSuchItemError, NoSuchRevisio
                                    RevisionAlreadyExistsError)
 WINDOW_SIZE = 256
 PICKLE_PROTOCOL = 1
-DEFAULT_USER = 'nobody'
+DEFAULT_USER = 'storage'
+DEFAULT_COMMIT_MESSAGE = '...'
 WIKI_METADATA_PREFIX = '_meta_'
 BACKEND_METADATA_PREFIX = '_backend_'
 
@@ -173,14 +174,13 @@ class MercurialBackend(Backend):
         if Revision does not exist.
         Return MercurialStoredRevision object.
         """
-        # XXX: read last line from index file (.rev)
-        # on revno == -1
-        # if revno == -1:
-        #    self._open_index_file(item).
-        revs = self._list_revisions(item)
-        if revs and revno == -1:
-            revno = max(revs)
-        if revno not in revs:
+        try:
+            with self._revisions_index(item) as index:
+                if revno == -1:
+                    revno = index.last_key
+                if revno not in index:
+                    raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
+        except IOError:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
 
         revision = MercurialStoredRevision(item, revno)
@@ -195,20 +195,26 @@ class MercurialBackend(Backend):
             return []
         else:
             try:
-                with self._open_item_index(item) as revfile:
-                    revs = [int(line.split()[0]) for line in revfile]
+                with self._revisions_index(item) as index:
+                    revs = [key for key in index]
                 return revs
             except IOError:
                 return []
 
     def _create_revision(self, item, revno):
         """Create new Item Revision. Return NewRevision object."""
-        revs = self._list_revisions(item)
-        if revno in revs:
-                raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
-        if revs and revno != revs[-1] + 1 or not revs and revno != 0:
+        try:
+            with self._revisions_index(item) as index:
+                if revno in index:
+                    raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)            
+                if revno != index.last_key + 1: 
+                    raise RevisionNumberMismatchError("Unable to create revision number %d. "
+                        "New Revision number must be next to latest Revision number." % revno)
+        except IOError:
+            if revno != 0:
                 raise RevisionNumberMismatchError("Unable to create revision number %d. "
-                    "New Revision number must be next to latest Revision number." % revno)
+                        "New Revision number must be next to latest Revision number." % revno)
+
         rev = NewRevision(item, revno)
         rev._data = None
         rev._revno = revno
@@ -220,17 +226,11 @@ class MercurialBackend(Backend):
         item = revision.item
         lock = self._lock_rev_item(item)
         try:
-            with self._open_item_index(item) as revfile:
-                with self._open_destroy_index(item) as destroyfile:
-                    tmp_fd, tmp_path = tempfile.mkstemp("-index", "tmp-", self._rev_path)
-                    with os.fdopen(tmp_fd, 'w') as tmp_index:
-                        for line in revfile:
-                            if int(line.split()[0]) != revision.revno:
-                                tmp_index.write(line)
-                            else:
-                                destroyfile.write(line.split()[0])
-            util.rename(tmp_path, os.path.join(self._rev_path, "%s.rev" % item._id))
-            self._commit_files(['%s.rev' % item._id, '%s.rip' % item._id], message='(revision destroy)')
+            with self._revisions_index(item) as revisions:
+                with self._destroyed_index(item, create=True) as destroyed:
+                    destroyed[revision.revno] = revisions[revision.revno] 
+                    del revisions[revision.revno]
+            self._commit_files(["%s.rev" % item._id, "%s.rip" % item._id], message='(revision destroy)')
         finally:
             lock.release()
 
@@ -291,7 +291,7 @@ class MercurialBackend(Backend):
                 if second_parent:
                     parents.append(second_parent)
             else:
-                self._open_item_index(item, 'wb').close()
+                self._revisions_index(item, create=True).close()
                 self._repo.add([item._id, "%s.rev" % item._id])
                 parents = []
             internal_meta = {'rev': revision.revno,
@@ -305,7 +305,7 @@ class MercurialBackend(Backend):
                 revision.timestamp = long(time.time())
             date = datetime.fromtimestamp(revision.timestamp).isoformat(sep=' ')
             user = revision.get(EDIT_LOG_USERID, DEFAULT_USER).encode("utf-8")
-            msg = revision.get(EDIT_LOG_COMMENT, '').encode("utf-8")
+            msg = revision.get(EDIT_LOG_COMMENT, DEFAULT_COMMIT_MESSAGE).encode("utf-8")
 
             self._commit_files([item._id], message=msg, user=user, extra=meta, date=date)
             self._append_revision(item, revision)
@@ -316,12 +316,9 @@ class MercurialBackend(Backend):
         pass
 
     def _destroy_item(self, item):
-        # TODO: This is just hiding. Real item destroy may use `mq` extension
-        # to rip off all Item revisions from repository.
         self._repo.remove(['%s.rev' % item._id, item._id], unlink=True)
-        with self._open_destroy_index(item) as destroyfile:
-            destroyfile.seek(0)
-            destroyfile.truncate()
+        with self._destroyed_index(item, create=True) as index:
+            index.truncate()
         self._commit_files(['%s.rev' % item._id, '%s.rip' % item._id, item._id], message='(item destroy)')
         try:
             os.remove(os.path.join(self._meta_path, "%s.meta" % item._id))
@@ -445,17 +442,20 @@ class MercurialBackend(Backend):
         def wanted(changerev):
             ctx = self._repo.changectx(changerev)
             try:
-                backend_meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
-                ctxid, ctxrev = backend_meta['id'], backend_meta['rev']
+                meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
+                item_id, item_rev, item_name = meta['id'], meta['rev'], meta['name']
                 try:
-                    with open(os.path.join(self._rev_path, "%s.rip" % backend_meta['id'])) as destroyfile:
-                        revs = [int(revno) for revno in destroyfile]
-                    if not revs or ctxrev in revs:
-                        return False
-                    else:
-                        return not id or ctxid == id
+                    item = Item(self, item_name)
+                    item._id = item_id
+                    with self._destroyed_index(item) as destroyed:
+                        # item is destroyed when destroyed index exists, but is empty
+                        if destroyed.empty or item_rev in destroyed:
+                            check = False
+                        else:
+                            check = not id or item_id == id
+                    return check
                 except IOError:
-                    return not id or ctxid == id
+                    return not id or item_id == id
             except KeyError:
                 return False
 
@@ -481,12 +481,9 @@ class MercurialBackend(Backend):
         Get Filecontext object corresponding to given Revision.
         Retrieve necessary information from index file.
         """
-        with self._open_item_index(revision.item) as revfile:
-            for line in revfile:
-                revno, node, id, filenode = line.split()
-                if revision.revno == int(revno):
-                    fctx = self._repo.filectx(id, fileid=filenode)
-                    break
+        with self._revisions_index(revision.item) as index:
+            data = index[revision.revno]
+            fctx = self._repo.filectx(data['id'], fileid=data['filenode'])
         return fctx
 
     def _get_changectx(self, revision):
@@ -494,12 +491,8 @@ class MercurialBackend(Backend):
         Get Changecontext object corresponding to given Revision.
         Retrieve necessary information from index file.
         """
-        with self._open_item_index(revision.item) as revfile:
-            for line in revfile:
-                revno, node, id, filenode = line.split()
-                if revision.revno == int(revno):
-                    ctx = self._repo.changectx(node)
-                    break
+        with self._revisions_index(revision.item) as index:
+            ctx = self._repo.changectx(index[revision.revno]['node'])
         return ctx
 
     def _lock(self, lockpath, lockref):
@@ -528,24 +521,14 @@ class MercurialBackend(Backend):
             raise ItemAlreadyExistsError("Destination item already exists: %s" % item.name)
         item._id = self._hash(item.name)
 
-    def _open_item_index(self, item, mode='r'):
-        return open(os.path.join(self._rev_path, "%s.rev" % item._id), mode)
-
-    def _open_destroy_index(self, item, mode='a'):
-        return open(os.path.join(self._rev_path, "%s.rip" % item._id), mode)
-
     def _append_revision(self, item, revision):
         """Add Item Revision to index file to speed up further lookups."""
         fctx = self._repo.changectx('')[item._id]
-        with self._open_item_index(item, 'a') as revfile:
-            revfile.write("%(revno)d %(node)s %(name)s %(filenode)s\n" %
-                    {'revno': revision.revno,
-                     'node': short(fctx.node()),
-                     'name': item._id,
-                     'filenode': short(fctx.filenode()), })
+        with self._revisions_index(item, create=True) as index:
+            index[revision.revno] = {'node': short(fctx.node()), 'id': item._id, 'filenode': short(fctx.filenode())}
         self._commit_files(['%s.rev' % item._id], message='(revision append)')
 
-    def _commit_files(self, files, message='...', user='storage', extra=None, date=None, force=True):
+    def _commit_files(self, files, message=DEFAULT_COMMIT_MESSAGE, user=DEFAULT_USER, extra={}, date=None, force=True):
         try:
             match = mercurial.match.exact(self._rev_path, '', files)
             self._repo.commit(match=match, text=message, user=user, extra=extra, date=date, force=force)
@@ -596,6 +579,13 @@ class MercurialBackend(Backend):
             maker = cdb.cdbmake(self._meta_db, "%s.tmp" % self._meta_db)
             maker.finish()
 
+    def _destroyed_index(self, item, create=False):
+        return Index(os.path.join(self._rev_path, "%s.rip" % item._id), create)
+
+    def _revisions_index(self, item, create=False):
+        return Index(os.path.join(self._rev_path, "%s.rev" % item._id), create)
+
+
     # extended API below - needed for drawing revision graph
     def _get_revision_node(self, revision):
         """
@@ -632,4 +622,95 @@ class MercurialStoredRevision(StoredRevision):
 
     def get_node(self):
         return self._backend._get_revision_node(self)
+
+
+class Index(object):
+    """
+    Keys are int, values are dictionaries with keys: 'id', 'node', 'filenode'.
+    Fixed record size to ease reverse file lookups. Record consists of (in order):
+    revno(6 chars), id(32 chars), node(12 chars), filenode(12 chars) separated by
+    whitespace.
+    """
+    RECORD_SAMPLE = '000001 cdfea0c03df2d58eeb8e509ffeab1c94 abfa65835085 b80de5d13875\n'
+
+    def __init__(self, fpath, create=False):       
+        if create:
+            self._file = open(fpath, 'a+')
+        else:
+            self._file = open(fpath)
+        self._fpath = fpath
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __getitem__(self, key):
+        for record in self._iter_record():
+            if int(record[0]) == key:
+                return {'id': record[1], 'node': record[2], 'filenode': record[3]}
+        raise KeyError
+
+    def __setitem__(self, key, value):
+        record = "%s %s %s %s\n" % (str(key).zfill(6), value['id'], value['node'], value['filenode'])
+        self._file.write(record)
+        pass
+
+    def __delitem__(self, key):
+        tmp_fd, tmp_path = tempfile.mkstemp("-index", "tmp-", os.path.dirname(self._fpath))
+        with open(tmp_path, 'w') as tmp:
+            for record in self._iter_record(reverse=False):
+                if key != int(record[0]):
+                    tmp.write(' '.join(record) + os.linesep)
+        util.rename(tmp_path, self._fpath)
+
+    def __iter__(self):
+        for record in self._iter_record(reverse=False):
+            yield int(record[0])
+
+    def __contains__(self, key):
+        if self.empty:
+            return False
+        for record in self._iter_record():
+            if int(record[0]) == key:
+                return True
+        return False
+
+    @property
+    def last_key(self):
+        try:
+            last_record = self._iter_record().next()
+            return int(last_record[0])
+        except StopIteration:
+            return -1
+
+    @property
+    def empty(self):
+        return os.path.getsize(self._fpath) == 0
+
+    def close(self):
+        self._file.close()
+
+    def truncate(self):
+        self._file.seek(0)
+        self._file.truncate()
+
+    def _iter_record(self, reverse=True):
+        """Iterates forwards/backwards on file yielding records."""
+        record_size = len(self.RECORD_SAMPLE)
+        if reverse:
+            self._file.seek(0, 2)
+            pointer = self._file.tell()
+            pointer -= record_size
+            while pointer >= 0:
+                self._file.seek(pointer)
+                pointer -= record_size
+                line = self._file.read(record_size)
+                yield line.strip().split()
+        else:
+            self._file.seek(0)
+            for line in self._file:
+                yield line.split()
+
 
