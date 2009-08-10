@@ -1403,11 +1403,8 @@ def parse(request, text):
         return xml.dom.minidom.parseString(text)
     except xml.parsers.expat.ExpatError, msg:
         # this sometimes crashes when it should not, so save the stuff to analyze it:
-        logname = os.path.join(request.cfg.data_dir, "expaterror.log")
-        f = file(logname, "w")
-        f.write(text)
-        f.write("\n" + "-"*80 + "\n" + str(msg))
-        f.close()
+        logging.exception("ExpatError in GUI converter: %r" % msg)
+        logging.debug(text)
         raise ConvertError('ExpatError: %s (see dump in %s)' % (msg, logname))
 
 def convert(request, pagename, text):

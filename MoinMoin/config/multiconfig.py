@@ -246,7 +246,7 @@ class ConfigFunctionality(object):
         self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ('user', 'cache', 'plugin', 'tmp', 'indexes'):
+        for dirname in ('cache', 'plugin', 'tmp', 'indexes'):
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
@@ -855,10 +855,9 @@ options_no_group_name = {
   )),
   # ==========================================================================
   'data': ('Data storage', None, (
-    ('data_dir', './data/', "Path to the data directory containing your (locally made) wiki pages."),
+    ('data_dir', './data/', "Path to the data directory."),
     ('cache_dir', None, "Directory for caching, by default computed from `data_dir`/cache."),
     ('session_dir', None, "Directory for session storage, by default computed to be `cache_dir`/__session__."),
-    ('user_dir', None, "Directory for user storage, by default computed to be `data_dir`/user."),
     ('plugin_dir', None, "Plugin directory, by default computed to be `data_dir`/plugin."),
     ('plugin_dirs', [], "Additional plugin directories."),
 

@@ -466,15 +466,13 @@ INTERWIKI_PAGE = "InterWikiMap"
 def generate_file_list(request):
     """ generates a list of all files. for internal use. """
 
-    # order is important here, the local intermap file takes
-    # precedence over the shared one, and is thus read AFTER
-    # the shared one
+    # order is important here, intermap files read later overwrite
+    # data from files read earlier!
     intermap_files = request.cfg.shared_intermap
     if not isinstance(intermap_files, list):
         intermap_files = [intermap_files]
     else:
         intermap_files = intermap_files[:]
-    intermap_files.append(os.path.join(request.cfg.data_dir, "intermap.txt"))
     request.cfg.shared_intermap_files = [filename for filename in intermap_files
                                          if filename and os.path.isfile(filename)]
 
