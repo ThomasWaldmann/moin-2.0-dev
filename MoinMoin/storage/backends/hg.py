@@ -57,7 +57,8 @@ from MoinMoin.storage.error import (BackendError, NoSuchItemError, NoSuchRevisio
                                    RevisionAlreadyExistsError)
 WINDOW_SIZE = 256
 PICKLE_PROTOCOL = 1
-DEFAULT_USER = 'nobody'
+DEFAULT_USER = 'storage'
+DEFAULT_COMMIT_MESSAGE = '...'
 WIKI_METADATA_PREFIX = '_meta_'
 BACKEND_METADATA_PREFIX = '_backend_'
 
@@ -305,7 +306,7 @@ class MercurialBackend(Backend):
                 revision.timestamp = long(time.time())
             date = datetime.fromtimestamp(revision.timestamp).isoformat(sep=' ')
             user = revision.get(EDIT_LOG_USERID, DEFAULT_USER).encode("utf-8")
-            msg = revision.get(EDIT_LOG_COMMENT, '').encode("utf-8")
+            msg = revision.get(EDIT_LOG_COMMENT, DEFAULT_COMMIT_MESSAGE).encode("utf-8")
 
             self._commit_files([item._id], message=msg, user=user, extra=meta, date=date)
             self._append_revision(item, revision)
@@ -545,7 +546,7 @@ class MercurialBackend(Backend):
                      'filenode': short(fctx.filenode()), })
         self._commit_files(['%s.rev' % item._id], message='(revision append)')
 
-    def _commit_files(self, files, message='...', user='storage', extra=None, date=None, force=True):
+    def _commit_files(self, files, message=DEFAULT_COMMIT_MESSAGE, user=DEFAULT_USER, extra={}, date=None, force=True):
         try:
             match = mercurial.match.exact(self._rev_path, '', files)
             self._repo.commit(match=match, text=message, user=user, extra=extra, date=date, force=force)
