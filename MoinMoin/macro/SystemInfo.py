@@ -98,14 +98,6 @@ class SystemInfo:
             row(_('Number of system pages'), str(len(systemPages)))
 
             row(_('Accumulated page sizes'), self.formatInReadableUnits(totalsize))
-            data_dir = request.cfg.data_dir
-            row(_('Disk usage of %(data_dir)s/pages/') % {'data_dir': data_dir},
-                self.formatInReadableUnits(self.getDirectorySize(os.path.join(data_dir, 'pages'))))
-            row(_('Disk usage of %(data_dir)s/') % {'data_dir': data_dir},
-            self.formatInReadableUnits(self.getDirectorySize(data_dir)))
-
-            glog = editlog.GlobalEditLog(request)
-            row(_('Entries in edit log'), "%s" % glog.lines())
 
             # This puts a heavy load on the server when the log is large
             eventlogger = eventlog.EventLog(request)
