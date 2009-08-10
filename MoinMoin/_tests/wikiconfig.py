@@ -24,7 +24,7 @@ class Config(DefaultConfig):
     _test_items_xml = join(abspath(dirname(__file__)), 'testitems.xml')
 
     shared_intermap_files = [os.path.join(os.path.dirname(__file__), '..', '..',
-                                          'wiki', 'data', 'intermap.txt'), ]
+                                          'contrib', 'interwiki', 'intermap.txt'), ]
 
     content_acl = None
 

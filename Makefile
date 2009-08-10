@@ -30,8 +30,8 @@ install-docs:
 	-rmdir build
 
 interwiki:
-	wget -U MoinMoin/Makefile -O $(share)/data/intermap.txt "http://master19.moinmo.in/InterWikiMap?action=raw"
-	chmod 664 $(share)/data/intermap.txt
+	wget -U MoinMoin/Makefile -O contrib/interwiki/intermap.txt "http://master19.moinmo.in/InterWikiMap?action=raw"
+	chmod 664 contrib/interwiki/intermap.txt
 
 check-tabs:
 	@python -c 'import tabnanny ; tabnanny.check("MoinMoin")'
