@@ -124,8 +124,8 @@ class AccessControlList:
         write right, but will NOT block automatically all other rights
         for these users. For example, if SomeUser asks to write, the
         above acl line does not define if he can or can not write. He
-        will be able to write if acl_rights_before or acl_rights_after
-        allows this (see configuration options).
+        will be able to write if the acls checked before or afterwards
+        allow this (see configuration options).
 
         Using prefixes, this acl line:
 
@@ -144,31 +144,33 @@ class AccessControlList:
         useful in the wiki configuration though.
 
    Configuration options
+       For each backend in the namespace, you can configure the following
+       ACL presets:
 
-       cfg.acl_rights_default
-           It is is ONLY used when no item ACLs are found.
+        default acls:
+           These are ONLY used when no item ACLs are found.
            Default: "Known:read,write,create All:read,write",
 
-       cfg.acl_rights_before
+       before acls:
            This will be inserted BEFORE any item/default ACL entries.
            Default: ""
 
-       cfg.acl_rights_after
+       after acls:
            This will be inserted AFTER any item/default ACL entries.
            Default: ""
 
        cfg.acl_rights_valid
            These are the acceptable (known) rights (and the place to
            extend, if necessary).
-           Default: ["read", "write", "create", "admin", "destroy"]
+           Default: ["read", "write", "create", "destroy", "admin"]
     """
 
     special_users = ["All", "Known", "Trusted"] # order is important
 
-    def __init__(self, cfg, lines=[]):
+    def __init__(self, cfg, default, lines=[]):
         """ Initialize an ACL, starting from <nothing>. """
         self.acl_rights_valid = cfg.acl_rights_valid
-        self.acl_rights_default = cfg.acl_rights_default
+        self.default = default
         self.auth_methods_trusted = cfg.auth_methods_trusted
         assert isinstance(lines, (list, tuple))
         if lines:
@@ -202,7 +204,7 @@ class AccessControlList:
         acliter = ACLStringIterator(self.acl_rights_valid, aclstring)
         for modifier, entries, rights in acliter:
             if entries == ['Default']:
-                self._addLine(self.acl_rights_default, remember=0)
+                self._addLine(self.default, remember=0)
             else:
                 for entry in entries:
                     rightsdict = {}

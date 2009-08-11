@@ -391,7 +391,7 @@ class ConfigFunctionality(object):
         varnames = ['data_dir', 'language_default',
                     'mail_smarthost', 'mail_from', 'page_front_page',
                     'theme_default', 'sitename', 'logo_string',
-                    'interwikiname', 'user_homewiki', 'acl_rights_before', ]
+                    'interwikiname', 'user_homewiki', ]
         secret = ''
         for varname in varnames:
             var = getattr(self, varname, None)
@@ -500,8 +500,7 @@ file. It should match the actual charset of the configuration file.
             'sitename', 'interwikiname', 'user_homewiki', 'logo_string', 'navi_bar',
             'page_front_page', 'page_category_regex', 'page_dict_regex',
             'page_group_regex', 'page_template_regex', 'page_license_page',
-            'page_local_spelling_words', 'acl_rights_default',
-            'acl_rights_before', 'acl_rights_after', 'mail_from'
+            'page_local_spelling_words', 'mail_from'
             )
 
         for name in decode_names:
@@ -1034,15 +1033,6 @@ options = {
     'acl': ('Access control lists',
     'ACLs control who may do what, see HelpOnAccessControlLists.',
     (
-      ('hierarchic', False, 'True to use hierarchical ACLs'),
-      ('rights_default', unicode("Trusted:" + ",".join((READ, WRITE, CREATE)) + \
-                                " Known:" + ",".join((READ, WRITE, CREATE)) + \
-                                " All:" + ",".join((READ, WRITE))),
-       "ACL used if no ACL is specified on the page"),
-      ('rights_before', u"",
-       "ACL that is processed before the on-page/default ACL"),
-      ('rights_after', u"",
-       "ACL that is processed after the on-page/default ACL"),
       ('rights_valid', [READ, WRITE, CREATE, ADMIN, DESTROY],
        "Valid tokens for right sides of ACL entries."),
     )),
