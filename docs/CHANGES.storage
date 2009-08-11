@@ -1,139 +1,36 @@
 MoinMoin Storage Version History
 ========================
 
-Version 1.7.current:
+Version 2.0:
 
-  Known issues:
-    * In the filesystem storage backends itemnames are limited due to the
-      maximum filename length of filesystems. NTFS, FAT, EXT3, REISER, XFS are
-      limited to a maximum of 255 characters.
+  Removed Features:
+  * Old-style storage of wiki contents as used in MoinMoin up to Version 1.9.
+  * Page and PageEditor are deprecated.
+  * AttachFile (and special-casing of attachments in general) is gone.
+  * The 'revert' and 'delete' ACL privileges are gone.
+  * Old-style deletion of pages and attachments is gone.
+  * Underlay is gone.
 
   New Features:
-    * Storage engine, see external.py for the interface.
-    * Search interface implemented throughout, done within storage,
-      so that queries can be optimised
-
-  Other Notes:
-    * If changing an underlay page it will no longer be copied to the standard
-      pages directory, but edited right in the underlay. Copy-on-write support
-      should be reimplemented.
-    * Refactored Page.py, PageEditor.py, editlog.py, user.py and some other
-      things to make use of it.
-
-  Admin Notes:
-    * See HelpOnConfiguration/Storage
+  * HINT: We now require Python 2.5. If you only have Python 2.4, please use MoinMoin 1.9.x.
+  * Possibility to choose between (potentially) many forms of data storage.
+  * Possibility to mount different kinds of backends at arbitrary points in the namespace.
+  * Possibility to protect each backend's content with different ACLs.
+  * Possibility to easily write new backends. (SQL, Usage of Googles appengine, etc.)
+  * New-style filesystem backend to store data on disk.
+  * Mercurial backend, that allows storing a wiki's contents with the mercurial dvcs.
+  * Pages, attachments and users are now uniformly stored within those backends as 'items'.
+  * Attachments are accessible via wiki.example.com/mypage/myattachment
+  * Possibility to easily switch between different backends (clone script).
+  * Possibility to serialize and unserialize a complete wiki with XML.
+  * Instead of underlay, we now use serialized items and load them into the storage backend directly.
+  * 'create' ACL privilege, granting permission to create a new item.
+  * 'destroy' ACL privilege, granting permission to completely erase an item (irreversibly) from storage. 
+  * A new trashbin with an own namespace like 'Trash/' where all deleted items end up.
+  * Common mimetype-based UI for all kinds of items.
 
   Developer notes:
-    * logfile/editlog.py:
-      * removed EditLog
-      * added GlobalEditLog
-      * added LocalEditLog
-      * timestamps in the logfile classes are now seconds as float (former usecs)
-      * entries from the logfile classes are now always given in reverse order
+  * All test cases (not only classes) now have their own request object with a fresh in-memory storage backend.
+    If your tests need content to be present in the backend already, you can provide a config at class level and
+    preload your data from an XML file (preloading is done per testcase).
 
-    * Page.py:
-      * RootPage no longer inherits from Page
-      * removed RootPage.getPagePath
-      * removed RootPage._listPages
-      * removed RootPage._listPageInPath
-      * removed ItemCache
-      * removed Page.__txt_filename_force
-      * added Page._page_name_force
-      * added Page._item_items_standard
-      * added Page._item_items_underlay
-      * added Page._item_items_all
-      * added Page._item
-      * added Page._rev
-      * Page.meta is now a dict instead of a list of tuples
-      * removed Page.get_current_from_pagedir
-      * removed Page.get_rev_dir
-      * removed Page.get_rev
-      * removed Page._setRealPagename
-      * removed Page.getPageBasePath
-      * removed Page.getPageStatus
-      * removed Page.olderrevision
-      * removed Page._last_edited
-      * changed Page.last_edit(self, request) to Page.last_edit(self, printable)
-      * removed Page.lastEditInfo
-      * removed Page.isWritable
-      * removed Page.mtime_usecs
-      * removed Page.mtime_printable
-      * added Page.mtime(self, printable)
-      * added Page.last_editor(self, printable)
-      * removed Page.parseACL
-      * changed Page.getACL(self, request) to Page.getACL(self)
-
-    * PageEditor.py:
-      * removed PageEditor.execute
-      * removed PageEditor.copyUnderlayPage
-      * removed PageLock.__filename
-
-    * user.py:
-      * removed _getUserIdByKey (use ItemCollection.keys(...) now)
-      * added get_editor
-      * added get_printable_editor
-      * removed User.__filename
-      * moved encodeList, decodeList, encodeDict, decodeDict to storage.backends.moin16
-
-    * wikiutil.py:
-      * renamed get_processing_instructions to split_body
-      * added add_metadata_to_body
-      * added get_hostnam
-
-    * Other changes:
-      * removed action.AttachFile.getBasePath
-      * removed request.editlog
-      * removed packages.edit_logfile_append
-
-  TODO:
-    * fix bugs, see BUGS file
-    * convert caching to the new storage and separate it out of Page.py
-    * convert attachments to the new storage
-    * remove logfile.editlog.LocalEditLog.add which is only used by
-      attachments now
-    * remove RootPage.getPagePath, Page.getPagePath, page.__text_filename
-    * automatically check ACLs in the storage layer (ItemCollection level)
-      and raise exception on violation so user.may.read(secretpage) is not
-      needed anymore
-    * add methods like "find oldest item rev newer than <timestamp>" or
-      "find newest page from <editor>" to LocalEditLog
-    * implement mimetypes
-    * implement a new and better storage backend
-    * re-implemented copy-on-write semantics in the layered backend
-    * implement Xapian search as a layered backend
-    * remove wikiutil.quoteWikinameFS and put it right into backend(s)
-    * remove wikiutil.unquoteWikiname and put it right into backend(s)
-    * rewrite MoinMoin/script/export/dump.py to use backend
-    * rewrite MoinMoin/script/maint/reducewiki.py to use backend
-    * revisit metadata-in-page handling, for display and editing, Page.py
-      and PageEditor.py should only be adding/accepting metadata that
-      belongs into the page body, i.e. that which was in there in the
-      past, rather than unconditionally adding all keys.
-      That way arbitrary metadata can be stored with each page even in
-      the moin16 backend and will still not be visible to the user and
-      hence the UI can be incrementally improved, e.g. an item's mimetype
-      can be saved within the 'metadata header' of an item even for the
-      moin16 backend and even for arbitrary data without having a
-      #mimetype pragma "pollute" the user-visible representation of
-      existing metadata.
-      Also, it might be worth thinking about introducing, even in the
-      moin16 backend, a second file to store metadata for a revision
-      that isn't put into the page header by the page editor/the moin16
-      backend. Currently, the moin16 backend is unable to store data
-      for a revision that has DELETED metadata although other backends
-      would actually do that as of now; the expectation seems to be that
-      it is possible.
-    * remove caching on user.py level (e.g. name2id cache) since that
-      ought to be done by the backend (if necessary a layered indexing
-      backend)
-    * remove indexing backend from filesystem backends and only add
-      it in the default config, make cfg.indexes a parameter to it
-      rather than a global setting to allow different indexes for
-      the different backends (user vs. page)
-    * Make user-storage use item metadata rather than revision metadata
-      to leave the assumption that all revision data is immutable in
-      place, item metadata needs to be mutable anyway for edit-locks.
-      This of course means that item metadata must be read/written
-      atomically which may need further locks in the backend code
-      (especially in the SQL backend) at the storage layer, the filesystem
-      user storage won't need any such locks, it can rename a new file over.
