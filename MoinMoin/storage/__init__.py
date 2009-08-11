@@ -192,7 +192,6 @@ class Backend(Serializable):
         the oldest revision number.
         Since we allow to totally destroy certain revisions, list_revisions does
         not need to return subsequent, but only monotone revision numbers.
-        _create_revision() on the other hand must only create subsequent revision numbers.
 
         @type item: Object of class Item.
         @param item: The Item on which we want to operate.
@@ -216,8 +215,7 @@ class Backend(Serializable):
         @raise RevisionAlreadyExistsError: Raised if a revision with that number
         already exists on item.
         @raise RevisionNumberMismatchError: Raised if precondition is not
-        fulfilled. Note: This behavior will be changed, allowing monotonic
-        revnos and not requiring revnos to be subsequent as well.
+        fulfilled.
         """
         raise NotImplementedError()
 
@@ -767,10 +765,20 @@ class Item(Serializable, DictMixin):
     def create_revision(self, revno):
         """
         @see: Backend._create_revision.__doc__
+
+        Please note that we do not require the revnos to be subsequent, but they
+        need to be monotonic. I.e., a sequence like 0, 1, 5, 9, 10 is ok, but
+        neither 0, 1, 1, 2, 3 nor 0, 1, 3, 2, 9 are.
+        This is done so as to allow functionality like unserializing a backend
+        whose item's revisions have been subject to destroy().
         """
         if self._locked:
             raise RuntimeError(("You tried to create revision #%d on the item %r, but there "
-                               "is unpublished metadata on that item. Publish first.") % (revno, self.name))
+                                "is unpublished metadata on that item. Publish first.") % (revno, self.name))
+        current_revno = self.next_revno - 1
+        if current_revno >= revno:
+            raise RevisionNumberMismatchError("You cannot create a revision with revno %s. Your revno must be greater than " + \
+                                              "the item's last revision, which is %s." % (revno, current_revno))
         if self._uncommitted_revision is not None:
             return self._uncommitted_revision
         else:
