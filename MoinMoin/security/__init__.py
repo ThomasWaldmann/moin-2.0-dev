@@ -167,9 +167,12 @@ class AccessControlList:
 
     special_users = ["All", "Known", "Trusted"] # order is important
 
-    def __init__(self, cfg, lines=[], default=''):
+    def __init__(self, cfg, lines=[], default='', valid=None):
         """ Initialize an ACL, starting from <nothing>. """
-        self.acl_rights_valid = cfg.acl_rights_valid
+        if valid is None:
+            self.acl_rights_valid = cfg.acl_rights_valid
+        else:
+            self.acl_rights_valod = valid
         self.default = default
         self.auth_methods_trusted = cfg.auth_methods_trusted
         assert isinstance(lines, (list, tuple))
