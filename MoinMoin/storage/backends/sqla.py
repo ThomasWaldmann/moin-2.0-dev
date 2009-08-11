@@ -25,7 +25,6 @@ class SQLAlchemyBackend(Backend):
     """
     The actual SQLAlchemyBackend.
     """
-    # TODO find some good default for the db_uri that is NOT in-memory
     def __init__(self, db_uri='sqlite:///:memory:', verbose=False):
 
         ## TODO DEVELOPMENT SETTINGS --- Remove when in-memory sqlite database is not needed anymore
@@ -173,7 +172,23 @@ class SQLAlchemyBackend(Backend):
         committed to storage)
         @return: None
         """
-        raise NotImplementedError()
+        session = self.Session()
+        itemname = item.name
+        try:
+            item = session.query(SQLAItem).filter_by(_name=itemname).one()
+        except NoResultFound:
+            raise NoSuchItemError("There is no item %s." % item.name)
+        try:
+            new_item = session.query(SQLAItem).filter_by(_name=newname).one()
+        except NoResultFound:
+            # Target item should not already exist.
+            pass
+        else:
+            raise ItemAlreadyExistsError("There already is an item with the name %s." % newname)
+
+        item._name = newname
+        # not necessary? session.add(item)
+        session.commit()
 
     def _commit_item(self, revision):
         """
