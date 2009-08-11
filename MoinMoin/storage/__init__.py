@@ -772,12 +772,7 @@ class Item(Serializable, DictMixin):
             raise RuntimeError(("You tried to create revision #%d on the item %r, but there "
                                "is unpublished metadata on that item. Publish first.") % (revno, self.name))
         if self._uncommitted_revision is not None:
-            if self._uncommitted_revision.revno != revno:
-                raise RevisionNumberMismatchError(("There already is an uncommitted revision #%d on this item that doesn't match the "
-                                                   "revno %d you specified. The Storage API does not yet allow non-contiguous revnos") %
-                                                   (self._uncommitted_revision.revno, revno))
-            else:
-                return self._uncommitted_revision
+            return self._uncommitted_revision
         else:
             self._uncommitted_revision = self._backend._create_revision(self, revno)
             return self._uncommitted_revision
