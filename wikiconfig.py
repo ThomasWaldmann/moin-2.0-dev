@@ -44,9 +44,9 @@ class LocalConfig(multiconfig.DefaultConfig):
                                              default=u'All:read,write,create,destroy,admin',
                                              after=u'', ),
                             user_profile_acl=dict(before=u'',
-                                                  default=u'All:read,write,create,destroy,admin',
-                                                  after=u'', ),
-                        )
+                                             default=u'All:read,write,create,destroy,admin',
+                                             after=u'', ),
+                            )
 
     DesktopEdition = True # treat all local users like superuser
     surge_action_limits = None # no surge protection
