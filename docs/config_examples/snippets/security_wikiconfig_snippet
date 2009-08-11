@@ -6,11 +6,13 @@
     #superuser = [u"YourName", ]
 
     # IMPORTANT: grant yourself admin rights! replace YourName with
-    # your user name. See HelpOnAccessControlLists for more help.
-    #acl_rights_before = u"YourName:read,write,delete,revert,admin"
-    #acl_rights_default = u"Trusted:read,write,delete,revert Known:read,write,delete,revert All:read,write"
-    #acl_rights_after = u"" # most users don't need this
-    #acl_hierarchic = False # True to use hierarchical ACLs
+    # your user name. You need to apply the ACL specified below to the
+    # backends you would like to use them for! See HelpOnAccessControlLists for more help.
+    # content_acls = dict(hierarchic=False,  # True to use hierarchical ACLs
+    #                     before=u"YourName:read,write,delete,revert,admin",
+    #                     default=u"Trusted:read,write,delete,revert Known:read,write,delete,revert All:read,write",
+    #                     after=u"", # most users don't need this
+    # )
 
     #actions_excluded = ['xmlrpc'] # change this if you need xmlrpc or to forbid other actions
 

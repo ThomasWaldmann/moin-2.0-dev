@@ -28,6 +28,7 @@
 import os
 
 from MoinMoin.config import multiconfig, url_prefix_static
+from MoinMoin.storage.backends import create_simple_mapping
 
 
 class Config(multiconfig.DefaultConfig):
@@ -48,6 +49,15 @@ class Config(multiconfig.DefaultConfig):
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
+
+    # This provides a simple default setup for your storage backend configuration.
+    # 'fs:' indicates that you want to use the filesystem backend. You can also use
+    # 'hg:' instead to indicate that you want to use the mercurial backend.
+    # Alternatively you can set up the mapping yourself (see HelpOnStorageConfiguration).
+    #
+    # IMPORTANT: This is also the place to set up your own ACL settings if you don't want
+    #            to use the default (see HelpOnAccessControlLists).
+    namespace_mapping = create_simple_mapping('fs:' + data_dir)
 
     # The URL prefix we use to access the static stuff (img, css, js).
     # Note: moin runs a static file server at url_prefix_static path (relative
@@ -88,11 +98,6 @@ class Config(multiconfig.DefaultConfig):
     # This is checked by some rather critical and potentially harmful actions,
     # like despam or PackageInstaller action:
     #superuser = [u"YourName", ]
-
-    # IMPORTANT: grant yourself admin rights! replace YourName with
-    # your user name. See HelpOnAccessControlLists for more help.
-    # All acl_rights_xxx options must use unicode [Unicode]
-    #acl_rights_before = u"YourName:read,write,delete,revert,admin"
 
     # The default (ENABLED) password_checker will keep users from choosing too
     # short or too easy passwords. If you don't like this and your site has

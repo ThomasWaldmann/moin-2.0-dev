@@ -88,11 +88,7 @@ class FarmConfig(multiconfig.DefaultConfig):
     # like despam or PackageInstaller action:
     #superuser = [u"YourName", ]
 
-    # IMPORTANT: grant yourself admin rights! replace YourName with
-    # your user name. See HelpOnAccessControlLists for more help.
-    # All acl_rights_xxx options must use unicode [Unicode]
-    #acl_rights_before = u"YourName:read,write,delete,revert,admin"
-
+    # IMPORTANT: grant yourself admin rights! See HelpOnAccessControlLists for more help.
 
     # Mail --------------------------------------------------------------
 
