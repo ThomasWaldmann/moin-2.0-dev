@@ -78,9 +78,9 @@ class AclWrapperBackend(object):
         cfg = request.cfg
         self.backend = backend
         self.hierarchic = hierarchic
-        self.before = AccessControlList(cfg, default, [before])
-        self.default = AccessControlList(cfg, default, [default])
-        self.after = AccessControlList(cfg, default, [after])
+        self.before = AccessControlList(cfg, [before], default=default)
+        self.default = AccessControlList(cfg, [default], default=default)
+        self.after = AccessControlList(cfg, [after], default=default)
 
     def __getattr__(self, attr):
         # Attributes that this backend does not define itself are just looked
@@ -164,7 +164,8 @@ class AclWrapperBackend(object):
             acls = []
         if not isinstance(acls, (tuple, list)):
             acls = (acls, )
-        return AccessControlList(self.request.cfg, self.default.default, acls)
+        default = self.default.default
+        return AccessControlList(self.request.cfg, acls, default=default)
 
     def _may(self, itemname, right):
         """ Check if self.username may have <right> access on item <itemname>.

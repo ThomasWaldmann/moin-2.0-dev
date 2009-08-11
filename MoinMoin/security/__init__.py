@@ -167,7 +167,7 @@ class AccessControlList:
 
     special_users = ["All", "Known", "Trusted"] # order is important
 
-    def __init__(self, cfg, default, lines=[]):
+    def __init__(self, cfg, lines=[], default=''):
         """ Initialize an ACL, starting from <nothing>. """
         self.acl_rights_valid = cfg.acl_rights_valid
         self.default = default
