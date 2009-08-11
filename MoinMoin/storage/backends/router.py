@@ -38,7 +38,7 @@ class RouterBackend(Backend):
     """
     def __init__(self, mapping):
         """
-        Initialise router backend.
+        Initialize router backend.
 
         The mapping given must satisfy the following criteria:
             * Order matters.
@@ -77,6 +77,12 @@ class RouterBackend(Backend):
         raise AssertionError("No backend found for %r. Available backends: %r" % (itemname, self.mapping))
 
     def get_backend(self, namespace):
+        """
+        Given a namespace, return the backend mounted there.
+
+        @type namespace: basestring
+        @param namespace: The namespace of which we look the backend up.
+        """
         return self._get_backend(namespace)[0]
 
     def iteritems(self):
@@ -143,6 +149,16 @@ class RouterItem(Serializable):
     http://docs.python.org/reference/datamodel.html#special-method-lookup-for-new-style-classes
     """
     def __init__(self, item, mountpoint, itemname, backend):
+        """
+        @type item: Object adhering to the storage item API.
+        @param item: The item we want to wrap.
+        @type mountpoint: basestring.
+        @param mountpoint: The mountpoint where this item is located.
+        @type itemname: basestring.
+        @param basestring: The name of the item (not the FQIN).
+        @type backend: Object adhering to the storage API.
+        @param backend: The backend this item belongs to.
+        """
         self._item = item
         self._mountpoint = mountpoint
         self._itemname = itemname
@@ -190,6 +206,8 @@ class RouterItem(Serializable):
         method.
         For inter-backend renames, this *moves* the complete item over to the
         new backend, possibly with a new item name.
+        In order to avoid content duplication, the old item is destroyed after
+        having been copied (in inter-backend scenarios only, of course).
 
         @see: Item.rename.__doc__
         """

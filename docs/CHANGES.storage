@@ -8,25 +8,30 @@ Version 2.0:
   * Page and PageEditor are deprecated.
   * AttachFile (and special-casing of attachments in general) is gone.
   * The 'revert' and 'delete' ACL privileges are gone.
-  * Old-style deletion of pages and attachments is gone.
   * Underlay is gone.
 
   New Features:
-  * HINT: We now require Python 2.5. If you only have Python 2.4, please use MoinMoin 1.9.x.
-  * Possibility to choose between (potentially) many forms of data storage.
-  * Possibility to mount different kinds of backends at arbitrary points in the namespace.
-  * Possibility to protect each backend's content with different ACLs.
-  * Possibility to easily write new backends. (SQL, Usage of Googles appengine, etc.)
-  * New-style filesystem backend to store data on disk.
-  * Mercurial backend, that allows storing a wiki's contents with the mercurial dvcs.
-  * Pages, attachments and users are now uniformly stored within those backends as 'items'.
-  * Attachments are accessible via wiki.example.com/mypage/myattachment
-  * Possibility to easily switch between different backends (clone script).
-  * Possibility to serialize and unserialize a complete wiki with XML.
-  * Instead of underlay, we now use serialized items and load them into the storage backend directly.
-  * 'create' ACL privilege, granting permission to create a new item.
-  * 'destroy' ACL privilege, granting permission to completely erase an item (irreversibly) from storage. 
-  * A new trashbin with an own namespace like 'Trash/' where all deleted items end up.
+  * New storage API with storage backends:
+    * You can choose between many forms of data storage, like filesystem or mercurial.
+      * New-style filesystem backend to store data on disk.
+      * Mercurial backend, that allows storing a wiki's contents with the mercurial dvcs.
+    * You can use different backends at arbitrary points in the namespace, like 'Fruit/Banana'
+      and 'FastFood/Burgers' which can be stored in separate backends.
+    * You can protect each of these backends' contents with different ACLs. E.g. everybody can
+      create new fruits, but nobody may change the existing vegetables.
+    * The list of storage backends can be easily extended by developers. (SQL, Usage of Googles appengine, etc.)
+    * Pages, attachments and users are now uniformly stored within those backends as 'items'.
+    * Attachments are accessible via wiki.example.com/mypage/myattachment
+    * Should your requirements change, you can easily switch between different backends (clone script).
+    * Possibility to serialize and unserialize a complete wiki with XML, e.g. to transport it to a different host.
+    * Instead of underlay, we now use serialized items and load them into the storage backend directly.
+    * A new trashbin with its own namespace like 'Trash/' where all deleted items end up. You can mount that
+      namespace to a different backend to wipe your wiki clean from time to time.
+
+  * ACL changes:
+      * 'create' ACL privilege, granting permission to create a new item.
+      * 'destroy' ACL privilege, granting permission to completely erase an item (irreversibly) from storage. 
+
   * Common mimetype-based UI for all kinds of items.
 
   Developer notes:

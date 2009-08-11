@@ -12,8 +12,8 @@
     The backend itself (and the objects it returns) need to be wrapped in order
     to make sure that no object of the real backend is (directly or indirectly)
     made accessible to the user of the API.
-    The real backend is still available as an attribute of request.cfg and can
-    be used by conversion utilities or for similar tasks.
+    The real backend is still available as an attribute of the request and can
+    be used by conversion utilities or for similar tasks (request.unprotected_storage).
     Regular users of the storage API, such as the views that modify an item,
     *MUST NOT*, in any way, use the real backend unless the author knows *exactly*
     what he's doing (as this may introduce security bugs without the code actually
@@ -22,11 +22,7 @@
     The classes wrapped are:
         * AclWrapperBackend (wraps MoinMoin.storage.Backend)
         * AclWrapperItem (wraps MoinMoin.storage.Item)
-        * AclWrappedRevision (wraps MoinMoin.storage.Revision)
-
-    MoinMoin.storage.StoredRevision is not wrapped since it's read-only by design
-    anyway, and an object thereof can only be obtained by the dedicated methods
-    of the Item class which are, of course, wrapped.
+        * AclWrapperRevision (wraps MoinMoin.storage.Revision)
 
     When an attribute is 'wrapped' it means that, in this context, the user's
     permissions are checked prior to attribute usage. If the user may not perform
@@ -65,15 +61,32 @@ DESTROY = 'destroy'
 class AclWrapperBackend(object):
     """
     The AMW is bound to a specific request. The actual backend is retrieved
-    from the request. Any method that is in some way relevant to security needs
-    to be wrapped in order to ensure the user has the permissions necessary to
-    perform the desired action.
+    from the config upon request initialization. Any method that is in some
+    way relevant to security needs to be wrapped in order to ensure the user
+    has the permissions necessary to perform the desired action.
     Note: This may *not* inherit from MoinMoin.storage.Backend because that would
     break our __getattr__ attribute 'redirects' (which are necessary because a backend
     implementor may decide to use his own helper functions which the items and revisions
     will still try to call).
     """
-    def __init__(self, request, backend, hierarchic=False, before="", default="", after="", valid=None):
+    def __init__(self, request, backend, hierarchic=False, before=u"", default=u"", after=u"", valid=None):
+        """
+        @type request: MoinMoin request object. hasattr(request, 'cfg')
+        @param request: The request that the user issued.
+        @type backend: Some object that implements the storage API.
+        @param backend: The unprotected backend that we want to protect.
+        @type hierarchic: bool
+        @param hierarchic: Indicate whether we want to process ACLs in hierarchic mode.
+        @type before: unicode
+        @param before: ACL to be applied before all the other ACLs.
+        @type default: unicode
+        @param default: If no ACL information is given on the item in question, use this default.
+        @type after: unicode
+        @param after: ACL to be applied after all the other ACLs.
+        @type valid: list of strings or None
+        @param valid: If a list is given, only strings in the list are treated as valid acl privilege descriptors.
+                      If None is give, the global wiki default is used.
+        """
         self.request = request
         cfg = request.cfg
         self.backend = backend
@@ -148,7 +161,7 @@ class AclWrapperBackend(object):
                 # would otherwise give access to an unwrapped item.
                 item = revision.item
                 item = AclWrapperItem(item, self)
-                revision = AclWrappedRevision(revision, item)
+                revision = AclWrapperRevision(revision, item)
                 yield revision
 
     def _get_acl(self, itemname):
@@ -173,7 +186,7 @@ class AclWrapperBackend(object):
 
         For hierarchic=False we just check the item in question.
 
-        For hierarchic=True we, we check each item in the hierarchy. We
+        For hierarchic=True, we check each item in the hierarchy. We
         start with the deepest item and recurse to the top of the tree.
         If one of those permits, True is returned.
         This is done *only* if there is *no ACL at all* (not even an empty one)
@@ -239,9 +252,17 @@ class AclWrapperBackend(object):
 
 class AclWrapperItem(Item):
     """
-    Similar to AclWrapperBackend.
+    Similar to AclWrapperBackend. Wrap a storage item and protect its
+    attributes by performing permission checks prior to performing the
+    action and raising AccessDeniedErrors if appropriate.
     """
     def __init__(self, item, aclbackend):
+        """
+        @type item: Object adhering to the storage item API.
+        @param item: The unprotected item we want to wrap.
+        @type aclbackend: Instance of AclWrapperBackend.
+        @param aclbackend: The AMW this item belongs to.
+        """
         self._backend = aclbackend
         self._item = item
         self._may = aclbackend._may
@@ -267,6 +288,9 @@ class AclWrapperItem(Item):
         when checking a user's permissions. It allows providing arguments
         that represent the permissions to check, such as READ and WRITE
         (see module level constants; don't pass strings, please).
+
+        @type privileges: List of strings.
+        @param privileges: Represent the privileges to check.
         """
         def wrap(f):
             def wrapped_f(self, *args, **kwargs):
@@ -326,7 +350,7 @@ class AclWrapperItem(Item):
         """
         @see: Item.get_revision.__doc__
         """
-        return AclWrappedRevision(self._item.get_revision(revno), self)
+        return AclWrapperRevision(self._item.get_revision(revno), self)
 
     @require_privilege(READ)
     def list_revisions(self):
@@ -382,12 +406,6 @@ class AclWrapperItem(Item):
         """
         USE WITH GREAT CARE!
 
-        Choosing the required privileges for this one is difficult. If we'd introduce
-        a new 'destroy item' privilege, everyone who, at some point, wants to perform an
-        inter-backend rename (with RouterBackend) would need to run around with the
-        'destroy item' privilege. We don't want that. Hence, we ask you to use this method
-        only in very well thought-over situations.
-
         @see: Item.destroy.__doc__
         """
         return self._item.destroy()
@@ -397,24 +415,31 @@ class AclWrapperItem(Item):
         """
         @see: Item.create_revision.__doc__
         """
-        wrapped_revision = AclWrappedRevision(self._item.create_revision(revno), self)
+        wrapped_revision = AclWrapperRevision(self._item.create_revision(revno), self)
         return wrapped_revision
 
 
-class AclWrappedRevision(DictMixin):
+class AclWrapperRevision(DictMixin):
     """
     Wrapper for revision classes. We need to wrap NewRevisions because they allow altering data.
-    We need to wrap StoredRevisions since they offer a destroy() method.
+    We need to wrap StoredRevisions since they offer a destroy() method and access to their item.
     The caller should know what kind of revision he gets. Hence, we just implement the methods of
     both, StoredRevision and NewRevision. If a method is invoked that is not defined on the
-    kind of revision we wrap, we will see an AttributeError one level deeper.
+    kind of revision we wrap, we will see an AttributeError one level deeper anyway, so this is ok.
     """
     def __init__(self, revision, item):
+        """
+        @type revision: Object adhering to the storage revision API.
+        @param revision: The revision we want to protect.
+        @type item: Object adhering to the storage item API.
+        @param item: The item this revision belongs to
+        """
         self._revision = revision
         self._item = item
         self._may = item._may
 
     def __getattr__(self, attr):
+        # Pass through any call that is not subject to ACL protection (e.g. serialize)
         return getattr(self._revision, attr)
 
     @property
@@ -462,9 +487,15 @@ class AclWrappedRevision(DictMixin):
         return self._revision.__setitem__(key, value)
 
     def __getitem__(self, key):
+        """
+        @see: NewRevision.__getitem__.__doc__
+        """
         return self._revision[key]
 
     def __delitem__(self, key):
+        """
+        @see: NewRevision.__delitem__.__doc__
+        """
         del self._revision[key]
 
     def read(self, chunksize=-1):
