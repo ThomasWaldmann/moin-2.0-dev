@@ -252,7 +252,10 @@ class MercurialBackend(Backend):
                 src, dst = os.path.join(self._rev_path, item._id), os.path.join(self._rev_path, newid)
                 commands.rename(self._ui, self._repo, src, dst)
                 commands.rename(self._ui, self._repo, "%s.rev" % src, "%s.rev" % dst)
-                self._commit_files(['%s.rev' % item._id, '%s.rev' % newid, item._id, newid],
+                # this commit will update items filelog in repository
+                # we provide 'name' metadata to be able to use self._name from this internal revision too
+                meta = self._encode_metadata({'name': newname}, BACKEND_METADATA_PREFIX)
+                self._commit_files(['%s.rev' % item._id, '%s.rev' % newid, item._id, newid], extra=meta,
                         message='(renamed %s to %s)' % (item.name.encode('utf-8'), newname.encode('utf-8')))
             finally:
                 lock.release()
@@ -423,6 +426,8 @@ class MercurialBackend(Backend):
     def _name(self, itemid):
         """Resolve Item name by given ID."""
         try:
+            # there is accurate link between fctx and ctx only if there was some change
+            # so therefore we take first filelog entry 
             fctx = self._repo.changectx('')[itemid].filectx(0)
             meta = fctx.changectx().extra()
             return self._decode_metadata(meta, BACKEND_METADATA_PREFIX)['name']
