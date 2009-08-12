@@ -172,7 +172,7 @@ class AccessControlList:
         if valid is None:
             self.acl_rights_valid = cfg.acl_rights_valid
         else:
-            self.acl_rights_valod = valid
+            self.acl_rights_valid = valid
         self.default = default
         self.auth_methods_trusted = cfg.auth_methods_trusted
         assert isinstance(lines, (list, tuple))
