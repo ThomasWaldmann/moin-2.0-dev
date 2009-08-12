@@ -752,4 +752,17 @@ class BackendTest(object):
         item.destroy()
         assert len([item for item in self.backend.iteritems()]) == 0
 
+    def test_history_item_names(self):
+        item = self.backend.create_item('first')
+        item.create_revision(0)
+        item.commit()
+        item.rename('second')
+        item.create_revision(1)
+        item.commit()
+        revs_in_create_order = [rev for rev in self.backend.history(reverse=False)]
+        assert revs_in_create_order[0].revno == 0
+        assert revs_in_create_order[0].item.name == 'second'
+        assert revs_in_create_order[1].revno == 1
+        assert revs_in_create_order[1].item.name == 'second'
+
 
