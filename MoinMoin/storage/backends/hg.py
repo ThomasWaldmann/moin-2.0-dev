@@ -137,7 +137,7 @@ class MercurialBackend(Backend):
         in repository.
         """
         def filter(id):
-            return id.endswith(".rev")
+            return id.endswith(".rev") or id.endswith(".rip")
 
         ctx = self._repo.changectx('')
         for id in itertools.ifilterfalse(filter, ctx):
@@ -324,9 +324,9 @@ class MercurialBackend(Backend):
     def _destroy_item(self, item):
         self._repo.remove(['%s.rev' % item._id, item._id], unlink=True)
         with self._destroyed_index(item, create=True) as index:
-            index.truncate()
             if index.empty:
                 self._repo.add(["%s.rip" % item._id])
+            index.truncate()
         self._commit_files(['%s.rev' % item._id, '%s.rip' % item._id, item._id], message='(item destroy)')
         try:
             os.remove(os.path.join(self._meta_path, "%s.meta" % item._id))

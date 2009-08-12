@@ -739,4 +739,17 @@ class BackendTest(object):
         rev1 = items[0].get_revision(1)
         assert rev1.item.name == 'second'
 
+    def test_iteritems_after_destroy(self):
+        item = self.backend.create_item('first')
+        item.create_revision(0)
+        item.commit()
+        item.create_revision(1)
+        item.commit()
+        assert len([item for item in self.backend.iteritems()]) == 1
+        rev = item.get_revision(-1)
+        rev.destroy()
+        assert len([item for item in self.backend.iteritems()]) == 1
+        item.destroy()
+        assert len([item for item in self.backend.iteritems()]) == 0
+
 
