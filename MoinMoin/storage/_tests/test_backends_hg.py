@@ -112,4 +112,21 @@ class TestMercurialBackend(BackendTest):
         rev = item.get_revision(-1)
         assert rev['_meta_'] == "dummy"
 
+    def test_index_files_in_repository(self):
+        item = self.backend.create_item('indexed')
+        rev = item.create_revision(0)
+        item.commit()
+        repo_items = [i for i in self.backend._repo['']]
+        assert len(repo_items) == 2        
+        assert item._id in repo_items
+        assert "%s.rev" % (item._id) in repo_items
+        rev = item.get_revision(-1)
+        rev.destroy()
+        repo_items = [i for i in self.backend._repo['']]
+        assert len(repo_items) == 3
+        assert "%s.rip" % (item._id) in repo_items
+        item.destroy()
+        repo_items = [i for i in self.backend._repo['']]
+        assert len(repo_items) == 1
+        assert "%s.rip" % (item._id) in repo_items
 
