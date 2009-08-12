@@ -12,8 +12,14 @@
 
 import py
 
+try:
+    import sqlalchemy
+except ImportError:
+    py.test.skip('Cannot test without sqlalchemy installed.')
+
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.sqla import SQLAlchemyBackend
+
 
 class TestSQLABackend(BackendTest):
     def __init__(self):
@@ -24,6 +30,7 @@ class TestSQLABackend(BackendTest):
 
     def kill_backend(self):
         pass
+
 
     def test_item_reading_chunks(self):
         py.test.skip("Makes all tests hang. Find out why.")
