@@ -230,6 +230,8 @@ class MercurialBackend(Backend):
                 with self._destroyed_index(item, create=True) as destroyed:
                     destroyed[revision.revno] = revisions[revision.revno]
                     del revisions[revision.revno]
+                    if destroyed.empty:
+                        self._repo.add(["%s.rip" % item._id])
             self._commit_files(["%s.rev" % item._id, "%s.rip" % item._id], message='(revision destroy)')
         finally:
             lock.release()
@@ -323,6 +325,8 @@ class MercurialBackend(Backend):
         self._repo.remove(['%s.rev' % item._id, item._id], unlink=True)
         with self._destroyed_index(item, create=True) as index:
             index.truncate()
+            if index.empty:
+                self._repo.add(["%s.rip" % item._id])
         self._commit_files(['%s.rev' % item._id, '%s.rip' % item._id, item._id], message='(item destroy)')
         try:
             os.remove(os.path.join(self._meta_path, "%s.meta" % item._id))
