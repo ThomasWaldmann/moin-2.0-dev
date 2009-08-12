@@ -117,7 +117,7 @@ class TestMercurialBackend(BackendTest):
         rev = item.create_revision(0)
         item.commit()
         repo_items = [i for i in self.backend._repo['']]
-        assert len(repo_items) == 2        
+        assert len(repo_items) == 2
         assert item._id in repo_items
         assert "%s.rev" % (item._id) in repo_items
         rev = item.get_revision(-1)
