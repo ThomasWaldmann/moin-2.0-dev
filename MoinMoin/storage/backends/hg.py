@@ -166,7 +166,7 @@ class MercurialBackend(Backend):
             return rev
 
         # this is costly operation, but no better idea now how to do it and not
-        # break pull/merge stuff 
+        # break pull/merge stuff
         renamed_items = {}
         for ctx in self._iter_changelog(filter_meta='renamed_to'):
             meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
@@ -179,7 +179,7 @@ class MercurialBackend(Backend):
             try:
                 for (id, name) in renamed_items[oldid]:
                     # consider you have backend merged from two instances,
-                    # where there was item A renamed to B in first, and the same A 
+                    # where there was item A renamed to B in first, and the same A
                     # renamed to C in second
                     yield restore_revision(name, id)
             except KeyError:
@@ -273,7 +273,7 @@ class MercurialBackend(Backend):
                 commands.rename(self._ui, self._repo, "%s.rev" % src, "%s.rev" % dst)
                 # this commit will update items filelog in repository
                 # we provide 'name' metadata to be able to use self._name from this internal revision too
-                meta = self._encode_metadata({'name': newname, 
+                meta = self._encode_metadata({'name': newname,
                                               'renamed_to': (newid, newname),
                                               'renamed_id': item._id}, BACKEND_METADATA_PREFIX)
                 self._commit_files(['%s.rev' % item._id, '%s.rev' % newid, item._id, newid], extra=meta,
@@ -450,7 +450,7 @@ class MercurialBackend(Backend):
         """Resolve Item name by given ID."""
         try:
             # there is accurate link between fctx and ctx only if there was some change
-            # so therefore we take first filelog entry 
+            # so therefore we take first filelog entry
             fctx = self._repo.changectx('')[itemid].filectx(0)
             meta = fctx.changectx().extra()
             return self._decode_metadata(meta, BACKEND_METADATA_PREFIX)['name']
