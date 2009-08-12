@@ -723,3 +723,33 @@ class BackendTest(object):
         item = dst.get_item(brothers_name)
         assert {'no revisions': True} == dict(item.iteritems())
 
+    def test_iteritems_item_names_after_rename(self):
+        item = self.backend.create_item('first')
+        item.create_revision(0)
+        item.commit()
+        item.rename('second')
+        item.create_revision(1)
+        item.commit()
+        # iteritems provides actual name
+        items = [item for item in self.backend.iteritems()]
+        assert len(items) == 1
+        assert items[0].name == 'second'
+        rev0 = items[0].get_revision(0)
+        assert rev0.item.name == 'second'
+        rev1 = items[0].get_revision(1)
+        assert rev1.item.name == 'second'
+
+    def test_iteritems_after_destroy(self):
+        item = self.backend.create_item('first')
+        item.create_revision(0)
+        item.commit()
+        item.create_revision(1)
+        item.commit()
+        assert len([item for item in self.backend.iteritems()]) == 1
+        rev = item.get_revision(-1)
+        rev.destroy()
+        assert len([item for item in self.backend.iteritems()]) == 1
+        item.destroy()
+        assert len([item for item in self.backend.iteritems()]) == 0
+
+

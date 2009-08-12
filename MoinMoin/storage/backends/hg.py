@@ -137,7 +137,7 @@ class MercurialBackend(Backend):
         in repository.
         """
         def filter(id):
-            return id.endswith(".rev")
+            return id.endswith(".rev") or id.endswith(".rip")
 
         ctx = self._repo.changectx('')
         for id in itertools.ifilterfalse(filter, ctx):
@@ -230,6 +230,8 @@ class MercurialBackend(Backend):
                 with self._destroyed_index(item, create=True) as destroyed:
                     destroyed[revision.revno] = revisions[revision.revno]
                     del revisions[revision.revno]
+                    if destroyed.empty:
+                        self._repo.add(["%s.rip" % item._id])
             self._commit_files(["%s.rev" % item._id, "%s.rip" % item._id], message='(revision destroy)')
         finally:
             lock.release()
@@ -252,7 +254,10 @@ class MercurialBackend(Backend):
                 src, dst = os.path.join(self._rev_path, item._id), os.path.join(self._rev_path, newid)
                 commands.rename(self._ui, self._repo, src, dst)
                 commands.rename(self._ui, self._repo, "%s.rev" % src, "%s.rev" % dst)
-                self._commit_files(['%s.rev' % item._id, '%s.rev' % newid, item._id, newid],
+                # this commit will update items filelog in repository
+                # we provide 'name' metadata to be able to use self._name from this internal revision too
+                meta = self._encode_metadata({'name': newname}, BACKEND_METADATA_PREFIX)
+                self._commit_files(['%s.rev' % item._id, '%s.rev' % newid, item._id, newid], extra=meta,
                         message='(renamed %s to %s)' % (item.name.encode('utf-8'), newname.encode('utf-8')))
             finally:
                 lock.release()
@@ -265,8 +270,9 @@ class MercurialBackend(Backend):
                 dst = os.path.join(self._meta_path, "%s.meta" % newid)
                 try:
                     util.rename(src, dst)
-                except OSError:
-                    pass # XXX: wtf?
+                except OSError, err:
+                    if err == errno.EEXIST:
+                       pass  # if metadata is empty, there is no file, only entry in cdb
                 self._add_to_cdb(newid, newname, replace=item._id)
             finally:
                 lock.release()
@@ -318,6 +324,8 @@ class MercurialBackend(Backend):
     def _destroy_item(self, item):
         self._repo.remove(['%s.rev' % item._id, item._id], unlink=True)
         with self._destroyed_index(item, create=True) as index:
+            if index.empty:
+                self._repo.add(["%s.rip" % item._id])
             index.truncate()
         self._commit_files(['%s.rev' % item._id, '%s.rip' % item._id, item._id], message='(item destroy)')
         try:
@@ -422,6 +430,8 @@ class MercurialBackend(Backend):
     def _name(self, itemid):
         """Resolve Item name by given ID."""
         try:
+            # there is accurate link between fctx and ctx only if there was some change
+            # so therefore we take first filelog entry 
             fctx = self._repo.changectx('')[itemid].filectx(0)
             meta = fctx.changectx().extra()
             return self._decode_metadata(meta, BACKEND_METADATA_PREFIX)['name']
