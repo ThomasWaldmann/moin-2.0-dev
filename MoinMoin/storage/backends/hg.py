@@ -265,8 +265,9 @@ class MercurialBackend(Backend):
                 dst = os.path.join(self._meta_path, "%s.meta" % newid)
                 try:
                     util.rename(src, dst)
-                except OSError:
-                    pass # XXX: wtf?
+                except OSError, err:
+                    if err == errno.EEXIST:
+                       pass  # if metadata is empty, there is no file, only entry in cdb
                 self._add_to_cdb(newid, newname, replace=item._id)
             finally:
                 lock.release()
