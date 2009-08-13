@@ -301,10 +301,13 @@ class SQLAItem(Item, Base):
     def get_revision(self, revno):
         try:
             session = Session()
-            rev = session.query(SQLARevision).filter(SQLARevision._revno==revno).one()
-            rev.__init__(self, revno)
+            if revno == -1:
+                revno = self.list_revisions()[-1]
+                rev = session.query(SQLARevision).filter(SQLARevision._revno==last_revno)
+            else:
+                rev = session.query(SQLARevision).filter(SQLARevision._revno==revno).one()
             return rev
-        except NoResultFound:
+        except (NoResultFound, IndexError):
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
         finally:
             session.close()
