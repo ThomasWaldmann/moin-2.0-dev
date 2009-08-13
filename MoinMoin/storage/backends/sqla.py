@@ -301,7 +301,7 @@ class SQLAItem(Item, Base):
             session = Session()
             if revno == -1:
                 revno = self.list_revisions()[-1]
-            rev = session.query(SQLARevision).filter(SQLARevision._revno==revno).one()
+            rev = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).filter(SQLARevision._revno==revno).one()
             rev.__init__(self, revno)
             return rev
         except (NoResultFound, IndexError):
