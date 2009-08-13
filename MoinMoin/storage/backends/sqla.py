@@ -134,7 +134,7 @@ class SQLAlchemyBackend(Backend):
         @param item: The Item on which we want to operate.
         @return: list of ints (possibly empty)
         """
-        return [rev.revno for rev in item._revisions.all()]
+        return [rev.revno for rev in item._revisions.all() if rev.id is not None]
 
     def _create_revision(self, item, revno):
         """
