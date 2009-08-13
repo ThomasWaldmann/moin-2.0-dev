@@ -400,18 +400,20 @@ class Data(Base):
             try:
                 begin = self._chunks[first].data[skip:]
             except IndexError:
+                # first depends on cursor_pos which may have been seek()ed to a value far
+                # larger than our size. This is allowed, but then read() returns '' (because there's nothing left to read).
                 begin = ''
 
             remaining_chunks = self._chunks[first+1:]
-            end = "".join([chunk.data for chunk in remaining_chunks])
             # We've read to the end, now set the cursor on the last+1
             self.cursor_pos = self.size
+            end = "".join([chunk.data for chunk in remaining_chunks])
             return begin + end
 
         # Otherwise we need all chunks up to last
-        last = first + amount / self.chunksize + 1
+        last = first + amount / self.chunksize
         # Get all those chunks
-        chunks = self._chunks[first:last]
+        chunks = self._chunks[first:last+1]
         begin = chunks[0].data[skip:skip+amount]
         # We just concatenate the contents of all but the first and last chunks
         mid = "".join([chunk.data for chunk in chunks[1:-1]])
