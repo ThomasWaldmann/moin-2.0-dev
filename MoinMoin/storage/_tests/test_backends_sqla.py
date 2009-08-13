@@ -32,7 +32,7 @@ class TestSQLABackend(BackendTest):
         pass
 
 
-raw_data = "Dies ist ein sehr langer Satz denn ich moechte mein Programm testen. Ich moechte gerne wissen ob es auch funktioniert."
+raw_data = "This is a very long sentence so I can properly test my program. I hope it works."
 
 class TestChunkedRevDataStorage(object):
     def setup_method(self, meth):
