@@ -777,8 +777,8 @@ class Item(Serializable, DictMixin):
                                 "is unpublished metadata on that item. Publish first.") % (revno, self.name))
         current_revno = self.next_revno - 1
         if current_revno >= revno:
-            raise RevisionNumberMismatchError("You cannot create a revision with revno %s. Your revno must be greater than " + \
-                                              "the item's last revision, which is %s." % (revno, current_revno))
+            raise RevisionNumberMismatchError("You cannot create a revision with revno %s. Your revno must be greater than " % revno + \
+                                              "the item's last revision, which is %s." % current_revno)
         if self._uncommitted_revision is not None:
             return self._uncommitted_revision
         else:
