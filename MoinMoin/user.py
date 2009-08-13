@@ -2,6 +2,8 @@
 """
     MoinMoin - User Accounts
 
+    TODO: Currently works on unprotected user backend
+
     This module contains functions to access user accounts (list all users, get
     some specific user). User instances are used to access the user profile of
     some specific user (name, password, email, bookmark, trail, settings, ...).
@@ -26,6 +28,15 @@ from MoinMoin.search import term
 from MoinMoin.wikiutil import url_quote_plus
 
 
+def get_user_backend(request):
+    """
+    Just a shorthand that makes the rest of the code easier
+    by returning the proper user backend.
+    """
+    ns_user_profile = request.cfg.ns_user_profile
+    return request.unprotected_storage.get_backend(ns_user_profile)
+
+
 def getUserList(request):
     """ Get a list of all (numerical) user IDs.
 
@@ -33,13 +44,14 @@ def getUserList(request):
     @rtype: list
     @return: all user IDs
     """
-    all_users = request.cfg.storage.user_backend.iteritems()
+    all_users = get_user_backend(request).iteritems()
     return [item.name for item in all_users]
+
 
 def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
     filter = term.ItemMetaDataMatch(key, value)
-    items = request.cfg.storage.user_backend.search_item(filter)
+    items = get_user_backend(request).search_item(filter)
     users = [User(request, item.name) for item in items]
     return users
 
@@ -61,7 +73,7 @@ def get_by_jabber_id(request, jabber_id):
 def getUserIdByOpenId(request, openid):
     """ Searches for an user with a particular openid id and returns it. """
     filter = term.ItemHasMetaDataValue('openids', openid)
-    identifier = request.cfg.storage.user_backend.search_item(filter)
+    identifier = get_user_backend(request).search_item(filter)
 
     users = []
     for user in identifier:
@@ -77,7 +89,7 @@ def getUserId(request, searchName):
     @return: the corresponding user ID or None
     """
     try:
-        backend = request.cfg.storage.user_backend
+        backend = get_user_backend(request)
         for user in backend.search_item(term.ItemMetaDataMatch('name', searchName)):
             return user.name
         return None
@@ -246,8 +258,7 @@ class User:
                                changeable by preferences, default: ().
                                First tuple element was used for authentication.
         """
-
-        self._user_backend = request.cfg.storage.user_backend
+        self._user_backend = get_user_backend(request)
         self._user = None
 
         self._cfg = request.cfg

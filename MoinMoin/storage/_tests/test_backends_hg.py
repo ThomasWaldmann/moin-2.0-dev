@@ -9,9 +9,14 @@
     @license: GNU GPL, see COPYING for details.
 """
 from tempfile import mkdtemp, mkstemp, gettempdir
-import py.test
 import shutil
 import os
+import py
+
+try:
+    import mercurial
+except ImportError:
+    py.test.skip('Cannot test without Mercurial installed.')
 
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.hg import MercurialBackend
@@ -107,4 +112,21 @@ class TestMercurialBackend(BackendTest):
         rev = item.get_revision(-1)
         assert rev['_meta_'] == "dummy"
 
+    def test_index_files_in_repository(self):
+        item = self.backend.create_item('indexed')
+        rev = item.create_revision(0)
+        item.commit()
+        repo_items = [i for i in self.backend._repo['']]
+        assert len(repo_items) == 2
+        assert item._id in repo_items
+        assert "%s.rev" % (item._id) in repo_items
+        rev = item.get_revision(-1)
+        rev.destroy()
+        repo_items = [i for i in self.backend._repo['']]
+        assert len(repo_items) == 3
+        assert "%s.rip" % (item._id) in repo_items
+        item.destroy()
+        repo_items = [i for i in self.backend._repo['']]
+        assert len(repo_items) == 1
+        assert "%s.rip" % (item._id) in repo_items
 

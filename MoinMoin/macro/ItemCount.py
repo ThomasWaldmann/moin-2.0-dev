@@ -8,11 +8,10 @@
 
 Dependencies = ['namespace']
 
-def macro_ItemCount(macro, include_deleted=False):
-    """ Return number of items readable by current user
-
-    Return either an exact count (slow!) or fast count including deleted items.
+def macro_ItemCount(macro):
     """
-    count = macro.request.rootitem.count_items(include_deleted=include_deleted)
+    Return number of items readable by current user.
+    """
+    count = macro.request.rootitem.count_items()
     return macro.formatter.text("%d" % count)
 

@@ -24,7 +24,7 @@ from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent,
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
 from MoinMoin.wikiutil import EDIT_LOCK_TIMESTAMP, EDIT_LOCK_ADDR, EDIT_LOCK_HOSTNAME, EDIT_LOCK_USERID
 from MoinMoin.storage.error import ItemAlreadyExistsError, RevisionAlreadyExistsError, NoSuchRevisionError
-from MoinMoin.items import DELETED, MIMETYPE, \
+from MoinMoin.items import MIMETYPE, \
                            EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                            EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
@@ -256,11 +256,10 @@ class PageEditor(Page):
         except caching.CacheError:
             return None
 
-    def _write_file(self, text, old_revno=None, action='SAVE', comment=u'', extra=u'', deleted=False):
+    def _write_file(self, text, old_revno=None, action='SAVE', comment=u'', extra=u''):
         """ Write the text to the page item (and make a backup of old page).
 
         @param text: text to save for this page
-        @param deleted: if True, then don't write page content (used by deletePage)
         @rtype: int
         @return: mtime_usec of new page
         """
@@ -285,15 +284,11 @@ class PageEditor(Page):
             except RevisionAlreadyExistsError:
                 raise PageEditor.EditConflict(_("Someone else saved this page while you were editing!"))
 
-        if not deleted:
-            metadata, data = wikiutil.split_body(text)
-            newrev.write(data.encode(config.charset))
+        metadata, data = wikiutil.split_body(text)
+        newrev.write(data.encode(config.charset))
 
-            for key, value in metadata.iteritems():
-                newrev[key] = value
-        else:
-            newrev.write("")
-            newrev[DELETED] = True
+        for key, value in metadata.iteritems():
+            newrev[key] = value
 
         if self.uid_override is not None:
             addr, userid = "", ""
@@ -334,7 +329,6 @@ class PageEditor(Page):
         @keyword comment: comment field (when preview is true)
         @keyword action: action for editlog (default: SAVE)
         @keyword index: needs indexing, not already handled (default: 1)
-        @keyword deleted: if True, then don't save page content (used by DeletePage, default: False)
         @keyword notify: if False (default: True), don't send a PageChangedEvent
         @rtype: unicode
         @return: error msg
@@ -343,7 +337,6 @@ class PageEditor(Page):
         _ = self._
         self._save_draft(newtext, rev, **kw)
         action = kw.get('action', 'SAVE')
-        deleted = kw.get('deleted', False)
         notify = kw.get('notify', True)
 
         #!!! need to check if we still retain the lock here
@@ -379,14 +372,11 @@ class PageEditor(Page):
             # set success msg
             msg = _("Thank you for your changes. Your attention to detail is appreciated.")
 
-            # determine action for edit log
-            if action == 'SAVE' and not self.exists():
-                action = 'SAVENEW'
             comment = kw.get('comment', u'')
             extra = kw.get('extra', u'')
             trivial = kw.get('trivial', 0)
             # write the page file
-            self._write_file(newtext, rev, action, comment, extra, deleted=deleted)
+            self._write_file(newtext, rev, action, comment, extra)
             self._save_draft(None, None) # everything fine, kill the draft for this page
             if notify:
                 # send notifications

@@ -5,15 +5,15 @@ MoinMoin - test wiki configuration
 Do not change any values without good reason.
 
 We mostly want to have default values here, except for stuff that doesn't
-work without setting them (like data_dir and underlay_dir).
+work without setting them (like data_dir).
 
 @copyright: 2000-2004 by Juergen Hermann <jh@web.de>
 @license: GNU GPL, see COPYING for details.
 """
 
 import os
+from os.path import abspath, dirname, join
 from MoinMoin.config.multiconfig import DefaultConfig
-from MoinMoin.storage.backends import memory, flatfile, clone
 
 class Config(DefaultConfig):
     sitename = u'Developer Test Wiki'
@@ -21,22 +21,12 @@ class Config(DefaultConfig):
 
     _base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
     data_dir = os.path.join(_base_dir, "data") # needed for plugins package TODO
-    #data_underlay_dir = os.path.join(_base_dir, "underlay")
-    flat_dir = os.path.join(os.path.dirname(__file__), 'data')
+    _test_items_xml = join(abspath(dirname(__file__)), 'testitems.xml')
 
-    # configure backends
-    class DummyStorage(object):
-        # This is neccessary so the 'if not request.cfg.storage' test in conftest.py can succeed...
-        # The config is checked whether it defines storage and storage.user_backend.
-        # XXX This could be improved...
-        def __nonzero__(self):
-            return False
-    storage = DummyStorage()
-    storage.user_backend = None
-    def provide_fresh_backends(self):
-        self.storage = memory.MemoryBackend()
-        self.test_num_pages = len(clone(flatfile.FlatFileBackend(self.flat_dir), self.storage)[0])
-        self.storage.user_backend = memory.MemoryBackend()
+    shared_intermap_files = [os.path.join(os.path.dirname(__file__), '..', '..',
+                                          'contrib', 'interwiki', 'intermap.txt'), ]
+
+    content_acl = None
 
     page_front_page = 'FrontPage'
 
@@ -46,3 +36,4 @@ class Config(DefaultConfig):
 
     # used to check if it is really a wiki we may modify
     is_test_wiki = True
+

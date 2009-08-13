@@ -21,9 +21,10 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin.error import ConfigurationError
+from MoinMoin.storage.error import AccessDeniedError
 
 from MoinMoin.storage import Backend
-from MoinMoin.storage.backends import copy_item
+from MoinMoin.storage.serialization import Serializable
 
 from UserDict import DictMixin
 
@@ -35,9 +36,9 @@ class RouterBackend(Backend):
 
     For method docstrings, please see the "Backend" base class.
     """
-    def __init__(self, mapping, users):
+    def __init__(self, mapping):
         """
-        Initialise router backend.
+        Initialize router backend.
 
         The mapping given must satisfy the following criteria:
             * Order matters.
@@ -48,21 +49,10 @@ class RouterBackend(Backend):
               that all items that don't lie in the namespace of any other
               backend are stored there.
 
-        The user backend provided must be a regular backend.
-
         @type mapping: list of tuples of mountpoint -> backend mappings
         @param mapping: [(mountpoint, backend), ...]
-        @type users: subclass of MoinMoin.storage.Backend
-        @param users: The backend where users are stored.
         """
-        self.user_backend = users
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
-
-        if not mapping or self.mapping[-1][0] != '':
-            raise ConfigurationError("You must specify a backend for '/' or '' as the last backend in the mapping.")
-        if not users:
-            raise ConfigurationError("You must specify a backend for user storage.")
-
 
     def _get_backend(self, itemname):
         """
@@ -84,49 +74,26 @@ class RouterBackend(Backend):
             if itemname == mountpoint or itemname.startswith(mountpoint and mountpoint + '/' or ''):
                 lstrip = mountpoint and len(mountpoint)+1 or 0
                 return backend, itemname[lstrip:], mountpoint
-        # This point should never be reached since at least the last mountpoint, '/', should
-        # contain the item.
-        raise AssertionError('No backend found for %s. Available backends: %r' % (itemname, self.mapping))
+        raise AssertionError("No backend found for %r. Available backends: %r" % (itemname, self.mapping))
 
-    def _iteritems(self):
+    def get_backend(self, namespace):
         """
-        This only iterates over all non-user items. We don't want them to turn up in history.
+        Given a namespace, return the backend mounted there.
+
+        @type namespace: basestring
+        @param namespace: The namespace of which we look the backend up.
+        """
+        return self._get_backend(namespace)[0]
+
+    def iteritems(self):
+        """
+        Iterate over all items. Necessary for traversal.
+
+        @see: Backend.iteritems.__doc__
         """
         for mountpoint, backend in self.mapping:
             for item in backend.iteritems():
                 yield RouterItem(item, mountpoint, item.name, self)
-
-    def iteritems(self):
-        """
-        Iterate over all items, even users. (Necessary for traversal.)
-
-        @see: Backend.iteritems.__doc__
-        """
-        for item in self._iteritems():
-            yield item
-        for user in self.user_backend.iteritems():
-            yield user
-
-    def history(self, reverse=True):
-        """
-        Just the basic, slow implementation of history with the difference
-        that we don't iterate over users. For traversal of the items
-        of all the backends defined in the mapping, use self.iteritems.
-
-        @see: Backend.history.__doc__
-        """
-        revs = []
-        for item in self._iteritems():
-            for revno in item.list_revisions():
-                rev = item.get_revision(revno)
-                revs.append((rev.timestamp, rev.revno, item.name, ))
-        revs.sort() # from oldest to newest
-        if reverse:
-            revs.reverse()
-        for ts, revno, name in revs:
-            item = self.get_item(name)
-            rev = item.get_revision(revno)
-            yield RouterRevision(item, rev)
 
     def has_item(self, itemname):
         """
@@ -153,7 +120,7 @@ class RouterBackend(Backend):
         return RouterItem(backend.create_item(itemname), mountpoint, itemname, self)
 
 
-class RouterItem(object):
+class RouterItem(Serializable):
     """
     Router Item - Wraps 'real' storage items to make them aware of their full name.
 
@@ -182,6 +149,16 @@ class RouterItem(object):
     http://docs.python.org/reference/datamodel.html#special-method-lookup-for-new-style-classes
     """
     def __init__(self, item, mountpoint, itemname, backend):
+        """
+        @type item: Object adhering to the storage item API.
+        @param item: The item we want to wrap.
+        @type mountpoint: basestring.
+        @param mountpoint: The mountpoint where this item is located.
+        @type itemname: basestring.
+        @param basestring: The name of the item (not the FQIN).
+        @type backend: Object adhering to the storage API.
+        @param backend: The backend this item belongs to.
+        """
         self._item = item
         self._mountpoint = mountpoint
         self._itemname = itemname
@@ -229,6 +206,8 @@ class RouterItem(object):
         method.
         For inter-backend renames, this *moves* the complete item over to the
         new backend, possibly with a new item name.
+        In order to avoid content duplication, the old item is destroyed after
+        having been copied (in inter-backend scenarios only, of course).
 
         @see: Item.rename.__doc__
         """
@@ -236,7 +215,7 @@ class RouterItem(object):
         backend, itemname, mountpoint = self._get_backend(newname)
         if mountpoint != self._mountpoint:
             # Mountpoint changed! That means we have to copy the item over.
-            converts, skips, fails = copy_item(self._item, backend, verbose=False, name=itemname)
+            converts, skips, fails = backend.copy_item(self._item, verbose=False, name=itemname)
             assert len(converts) == 1
 
             new_item = backend.get_item(itemname)
@@ -244,7 +223,16 @@ class RouterItem(object):
             self._item = new_item
             self._mountpoint = mountpoint
             self._itemname = itemname
-            old_item.destroy()
+            # We destroy the old item in order not to duplicate data.
+            # It may be the case that the item we want to destroy is ACL protected. In that case,
+            # the destroy() below doesn't irreversibly kill the item because at this point it is already
+            # guaranteed that it lives on at another place and we do not require 'destroy' hence.
+            try:
+                # Perhaps we don't deal with acl protected items anyway.
+                old_item.destroy()
+            except AccessDeniedError:
+                # OK, we're indeed routing to an ACL protected backend. Use unprotected item.
+                old_item._item.destroy()
 
         else:
             # Mountpoint didn't change
@@ -280,6 +268,31 @@ class RouterItem(object):
         @see: Item.destroy.__doc__
         """
         return self._item.destroy()
+
+    # serialization support
+    element_name = 'item'
+
+    @property
+    def element_attrs(self):
+        """
+        For xml serialization <item name="...">
+
+        Note: must not be delegated to self._item or we won't get the FULL name.
+        """
+        return dict(name=self.name)
+
+    def serialize(self, xmlgen):
+        if xmlgen.shall_serialize(item=self):
+            super(RouterItem, self).serialize(xmlgen)
+
+    def get_unserializer(self, context, name, attrs):
+        # Note: without this, we would inherit the default implementation from Serializable!
+        return self._item.get_unserializer(context, name, attrs)
+
+    def serialize_value(self, xmlgen):
+        # Note: without this, we would inherit the default implementation from Serializable!
+        return self._item.serialize_value(xmlgen)
+
 
 class RouterRevision(DictMixin):
     """

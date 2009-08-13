@@ -17,6 +17,7 @@ AccessControlList = security.AccessControlList
 from MoinMoin.user import User
 
 from MoinMoin._tests import create_page as create_item
+from MoinMoin._tests import become_trusted
 
 class TestACLStringIterator(object):
 
@@ -194,7 +195,7 @@ class TestAcl(object):
         """ security: applying acl by user name"""
         # This acl string...
         acl_rights = [
-            "Admin1,Admin2:read,write,delete,admin  "
+            "Admin1,Admin2:read,write,admin  "
             "Admin3:read,write,admin  "
             "JoeDoe:read,write  "
             "name with spaces,another one:read,write  "
@@ -208,8 +209,8 @@ class TestAcl(object):
         users = (
             # user,                 rights
             # CamelCase names
-            ('Admin1', ('read', 'write', 'admin', 'delete')),
-            ('Admin2', ('read', 'write', 'admin', 'delete')),
+            ('Admin1', ('read', 'write', 'admin')),
+            ('Admin2', ('read', 'write', 'admin')),
             ('Admin3', ('read', 'write', 'admin')),
             ('JoeDoe', ('read', 'write')),
             ('SomeGuy', ('read', )),
@@ -262,80 +263,142 @@ class TestItemAcls(object):
 
     from MoinMoin._tests import wikiconfig
     class Config(wikiconfig.Config):
-        acl_rights_before = u"WikiAdmin:admin,read,write,delete"
-        acl_rights_default = u"All:read,write"
-        acl_rights_after = u"All:read"
-        acl_hierarchic = False
+        content_acl = dict(
+                hierarchic=False,
+                before=u"WikiAdmin:admin,read,write,create,destroy",
+                default=u"All:read,write",
+                after=u"All:read",
+        )
 
-    def setup_class(self):
-        # Backup user
-        self.savedUser = self.request.user.name
-        self.request.user = User(self.request, auth_username=u'WikiAdmin')
-        self.request.user.valid = True
-
+    def setup_method(self, method):
+        become_trusted(self.request, username=u'WikiAdmin')
         for item_name, item_acl, item_content in self.items:
             create_item(self.request, item_name, item_content, acl=item_acl)
-
-    def teardown_class(self):
-        # Restore user
-        self.request.user.name = self.savedUser
 
     def testItemACLs(self):
         """ security: test item acls """
         tests = [
-            # hierarchic, itemname, username, expected_rights
-            (False, self.mainitem_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
-            (True,  self.mainitem_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
-            (False, self.mainitem_name, u'AnyUser', ['read']), # by after acl
-            (True,  self.mainitem_name, u'AnyUser', ['read']), # by after acl
-            (False, self.mainitem_name, u'JaneDoe', ['read', 'write']), # by item acl
-            (True,  self.mainitem_name, u'JaneDoe', ['read', 'write']), # by item acl
-            (False, self.mainitem_name, u'JoeDoe', []), # by item acl
-            (True,  self.mainitem_name, u'JoeDoe', []), # by item acl
-            (False, self.subitem1_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
-            (True,  self.subitem1_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
-            (False, self.subitem1_name, u'AnyUser', ['read', 'write']), # by default acl
-            (True,  self.subitem1_name, u'AnyUser', ['read']), # by after acl
-            (False, self.subitem1_name, u'JoeDoe', ['read', 'write']), # by default acl
-            (True,  self.subitem1_name, u'JoeDoe', []), # by inherited acl from main item
-            (False, self.subitem1_name, u'JaneDoe', ['read', 'write']), # by default acl
-            (True,  self.subitem1_name, u'JaneDoe', ['read', 'write']), # by inherited acl from main item
-            (False, self.subitem2_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
-            (True,  self.subitem2_name, u'WikiAdmin', ['read', 'write', 'admin', 'delete']),
-            (False, self.subitem2_name, u'AnyUser', ['read']), # by after acl
-            (True,  self.subitem2_name, u'AnyUser', ['read']), # by after acl
-            (False, self.subitem2_name, u'JoeDoe', ['read']), # by after acl
-            (True,  self.subitem2_name, u'JoeDoe', ['read']), # by after acl
-            (False, self.subitem2_name, u'JaneDoe', ['read']), # by after acl
-            (True,  self.subitem2_name, u'JaneDoe', ['read']), # by after acl
-            (True,  self.subitem_4boss, u'AnyUser', ['read']), # by after acl
-            (True,  self.subitem_4boss, u'JoeDoe', ['read', 'write']), # by item acl
+            # itemname, username, expected_rights
+            (self.mainitem_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
+            (self.mainitem_name, u'AnyUser', ['read']), # by after acl
+            (self.mainitem_name, u'JaneDoe', ['read', 'write']), # by item acl
+            (self.mainitem_name, u'JoeDoe', []), # by item acl
+            (self.subitem1_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
+            (self.subitem1_name, u'AnyUser', ['read', 'write']), # by default acl
+            (self.subitem1_name, u'JoeDoe', ['read', 'write']), # by default acl
+            (self.subitem1_name, u'JaneDoe', ['read', 'write']), # by default acl
+            (self.subitem2_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
+            (self.subitem2_name, u'AnyUser', ['read']), # by after acl
+            (self.subitem2_name, u'JoeDoe', ['read']), # by after acl
+            (self.subitem2_name, u'JaneDoe', ['read']), # by after acl
         ]
 
-        for hierarchic, itemname, username, may in tests:
+        for itemname, username, may in tests:
             u = User(self.request, auth_username=username)
             u.valid = True
 
-            def _have_right(u, right, itemname, hierarchic):
-                self.request.cfg.acl_hierarchic = hierarchic
+            def _have_right(u, right, itemname):
                 self.request.user = u
                 can_access = getattr(u.may, right)(itemname)
-                assert can_access, "%r may %s %r (%s)" % (u.name, right, itemname, ['normal', 'hierarchic'][hierarchic])
+                assert can_access, "%r may %s %r (normal)" % (u.name, right, itemname)
 
             # User should have these rights...
             for right in may:
-                yield _have_right, u, right, itemname, hierarchic
+                yield _have_right, u, right, itemname
 
-            def _not_have_right(u, right, itemname, hierarchic):
-                self.request.cfg.acl_hierarchic = hierarchic
+            def _not_have_right(u, right, itemname):
                 self.request.user = u
                 can_access = getattr(u.may, right)(itemname)
-                assert not can_access, "%r may not %s %r (%s)" % (u.name, right, itemname, ['normal', 'hierarchic'][hierarchic])
+                assert not can_access, "%r may not %s %r (normal)" % (u.name, right, itemname)
 
             # User should NOT have these rights:
             mayNot = [right for right in self.request.cfg.acl_rights_valid
                       if right not in may]
             for right in mayNot:
-                yield _not_have_right, u, right, itemname, hierarchic
+                yield _not_have_right, u, right, itemname
+
+
+class TestItemHierachicalAcls(object):
+    """ security: real-life access control list on items testing
+    """
+    mainitem_name = u'AclTestMainItem'
+    subitem1_name = u'AclTestMainItem/SubItem1'
+    subitem2_name = u'AclTestMainItem/SubItem2'
+    item_rwforall = u'EveryoneMayReadWriteMe'
+    subitem_4boss = u'EveryoneMayReadWriteMe/OnlyTheBossMayWMe'
+    items = [
+        # itemname, acl, content
+        (mainitem_name, u'JoeDoe: JaneDoe:read,write', u'Foo!'),
+        # acl None means: "no acl given in item metadata" - this will trigger
+        # usage of default acl (non-hierarchical) or usage of default acl and
+        # inheritance (hierarchical):
+        (subitem1_name, None, u'FooFoo!'),
+        # acl u'' means: "empty acl (no rights for noone) given" - this will
+        # INHIBIT usage of default acl / inheritance (we DO HAVE an item acl,
+        # it is just empty!):
+        (subitem2_name, u'', u'BarBar!'),
+        (item_rwforall, u'All:read,write', u'May be read from and written to by anyone'),
+        (subitem_4boss, u'JoeDoe:read,write', u'Only JoeDoe (the boss) may write'),
+    ]
+
+    from MoinMoin._tests import wikiconfig
+    class Config(wikiconfig.Config):
+        content_acl = dict(
+                       hierarchic=True,
+                       before=u"WikiAdmin:admin,read,write,create,destroy",
+                       default=u"All:read,write",
+                       after=u"All:read",
+        )
+
+    def setup_method(self, method):
+        become_trusted(self.request, username=u'WikiAdmin')
+        for item_name, item_acl, item_content in self.items:
+            create_item(self.request, item_name, item_content, acl=item_acl)
+
+    def testItemACLs(self):
+        """ security: test item acls """
+        tests = [
+            # itemname, username, expected_rights
+            (self.mainitem_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
+            (self.mainitem_name, u'AnyUser', ['read']), # by after acl
+            (self.mainitem_name, u'JaneDoe', ['read', 'write']), # by item acl
+            (self.mainitem_name, u'JoeDoe', []), # by item acl
+            (self.subitem1_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
+            (self.subitem1_name, u'AnyUser', ['read']), # by after acl
+            (self.subitem1_name, u'JoeDoe', []), # by inherited acl from main item
+            (self.subitem1_name, u'JaneDoe', ['read', 'write']), # by inherited acl from main item
+            (self.subitem2_name, u'WikiAdmin', ['read', 'write', 'admin', 'create', 'destroy']),
+            (self.subitem2_name, u'AnyUser', ['read']), # by after acl
+            (self.subitem2_name, u'JoeDoe', ['read']), # by after acl
+            (self.subitem2_name, u'JaneDoe', ['read']), # by after acl
+            (self.subitem_4boss, u'AnyUser', ['read']), # by after acl
+            (self.subitem_4boss, u'JoeDoe', ['read', 'write']), # by item acl
+        ]
+
+        for itemname, username, may in tests:
+            u = User(self.request, auth_username=username)
+            u.valid = True
+
+            def _have_right(u, right, itemname):
+                self.request.user = u
+                can_access = getattr(u.may, right)(itemname)
+                assert can_access, "%r may %s %r (hierarchic)" % (u.name, right, itemname)
+
+            # User should have these rights...
+            for right in may:
+                yield _have_right, u, right, itemname
+
+            def _not_have_right(u, right, itemname):
+                self.request.user = u
+                can_access = getattr(u.may, right)(itemname)
+                assert not can_access, "%r may not %s %r (hierarchic)" % (u.name, right, itemname)
+
+            # User should NOT have these rights:
+            mayNot = [right for right in self.request.cfg.acl_rights_valid
+                      if right not in may]
+            for right in mayNot:
+                yield _not_have_right, u, right, itemname
+
 
 coverage_modules = ['MoinMoin.security']
+

@@ -10,12 +10,10 @@ mig script?
 
 TODO: same for AttachInfo(pagename=None) ?
 
-TODO: moin maint reducewiki / mkpagepacks / cleanpage
+TODO: moin maint mkpagepacks
 TODO: moin export dump
 
-consequences on migration scripts ?
-
-ATT* in edit-log?
+TODO: do migration steps needed for 1.9 -> 2.0 in fs19 backend.
 
 Removed wiki xmlrpc attachment related parts.
 TODO: Check wikisync & co whether it works for any item type / fix xmlrpc accordingly.
@@ -44,16 +42,8 @@ Currently it is all in one file, can be split later.
 Everything we want to be able to do with items should be implemented there.
 Stuff shall be implemented at the MOST GENERAL LEVEL of the hierarchy.
 
-ACL TODO:
-"delete" ACL right: kill it, makes no sense.
-"revert" ACL right: same?
-"create" ACL right: add this?
-"move" ACL right: add this? note: includes deletion if implemented by Trash/*
-
 Show nicer error pages than what we have at the moment.
 
-DELETE TODO:
-implement deletion as mv X Trash/X - do we still need meta[DELETED] then?
 index pages: could filter by name (thus not displaying Trash/*, except if wanted)
 
 
@@ -70,8 +60,24 @@ MoinMoin.theme code.
 Removed all theme code except "modernized" theme.
 TODO: create a jinja2 based theme.
 
-tests
------
 
-Don't work right now, please help debugging / fixing.
+MercurialBackend
+----------------
+
+Wiki instance pull which leads to merge invalidates Item index files (current revisions 
+index and destroyed revisions index). This files should be recreated from changelog after merge.
+
+Merge does not yet care about merged revisions metadata.
+
+Last API changes (destroy_revision) made storing revision parents in revision metadata invalid.
+Links to parents should be stored now in mutable collection. Index (revisions index) is suitable
+for this task and its record format can be extended to store this values.
+
+GraphInfo action showing revisions history as DAG has to be fixed.
+
+UI lacks actions for serving backend directly (hg serve), pulling data from other instances (hg pull)
+and merging (hg merge). This stuff is rather low-priority, as it can be done in command line very well.
+
+Handy mercurial extensions to ease commit and rename operations from command line  are still missing.
+
 

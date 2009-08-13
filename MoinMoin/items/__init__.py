@@ -24,7 +24,6 @@ from werkzeug import http_date, quote_etag
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
 from MoinMoin.support.python_compatibility import hash_new
-from MoinMoin.storage.backends import copy_item
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
 
@@ -38,9 +37,6 @@ IS_SYSPAGE = "is_syspage"
 # This says: original syspage as contained in release: <release>
 SYSPAGE_VERSION = "syspage_version"
 
-# special meta-data whose presence indicates that the item is deleted
-DELETED = "deleted"
-
 MIMETYPE = "mimetype"
 SIZE = "size"
 
@@ -53,12 +49,21 @@ EDIT_LOG_COMMENT = "edit_log_comment"
 
 EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
 
+# dummy getText function until we have a real one:
+_ = lambda x: x
 
 class Item(object):
 
     @classmethod
     def create(cls, request, name=u'', mimetype='application/x-unknown', rev_no=-1,
                formatter=None, item=None):
+        class DummyRev(dict):
+            def __init__(self, mimetype):
+                self[MIMETYPE] = mimetype
+                self.item = None
+            def read(self):
+                return ''
+
         try:
             if item is None:
                 item = request.storage.get_item(name)
@@ -66,12 +71,6 @@ class Item(object):
                 name = item.name
         except NoSuchItemError:
             logging.debug("No such item: %r" % name)
-            class DummyRev(dict):
-                def __init__(self, mimetype):
-                    self[MIMETYPE] = mimetype
-                    self.item = None
-                def read(self):
-                    return ''
             rev = DummyRev(mimetype)
             logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
         else:
@@ -79,8 +78,13 @@ class Item(object):
             try:
                 rev = item.get_revision(rev_no)
             except NoSuchRevisionError:
-                rev = item.get_revision(-1) # fall back to current revision
-                # XXX add some message about invalid revision
+                try:
+                    rev = item.get_revision(-1) # fall back to current revision
+                    # XXX add some message about invalid revision
+                except NoSuchRevisionError:
+                    logging.debug("Item %r has no revisions." % name)
+                    rev = DummyRev(mimetype)
+                    logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
             logging.debug("Got item %r, revision: %r" % (name, rev_no))
         mimetype = rev.get(MIMETYPE) or 'application/x-unknown' # XXX why do we need ... or ..?
         logging.debug("Item %r, got mimetype %r from revision meta" % (name, mimetype))
@@ -120,10 +124,6 @@ class Item(object):
     def get_meta(self):
         return self.rev or {}
     meta = property(fget=get_meta)
-
-    def get_is_deleted(self):
-        return self.meta.get(DELETED, False)
-    is_deleted = property(get_is_deleted)
 
     def url(self, _absolute=False, **kw):
         """ return URL for this item, optionally as absolute URL """
@@ -185,6 +185,9 @@ class Item(object):
     def do_copy(self):
         return self._action_query('copy', target=self.name)
 
+    def do_delete(self):
+        return self._action_query('delete')
+
     def do_destroy(self):
         return self._action_query('destroy', revno=self.rev.revno)
 
@@ -208,27 +211,40 @@ class Item(object):
             raise StorageError("unsupported content object: %r" % content)
         return hash_name, hash.hexdigest()
 
-    def copy(self):
-        # called from copy UI/POST
-        request = self.request
-        comment = request.form.get('comment')
-        target = request.form.get('target')
+    def copy(self, name, comment=u''):
+        """
+        copy this item to item <name>
+        """
         old_item = self.rev.item
-        backend = request.storage
-        copy_item(old_item, backend, name=target)
+        backend = self.request.storage
+        backend.copy_item(old_item, name=name)
         current_rev = old_item.get_revision(-1)
         # we just create a new revision with almost same meta/data to show up on RC
-        self._save(current_rev, current_rev, name=target, action='SAVE/COPY', extra=self.name, comment=comment)
+        self._save(current_rev, current_rev, name=name, action='SAVE/COPY', extra=self.name, comment=comment)
 
-    def rename(self):
-        # called from rename UI/POST
-        comment = self.request.form.get('comment')
+    def _rename(self, name, comment, action, extra=None):
         oldname = self.name
-        newname = self.request.form.get('target')
-        self.rev.item.rename(newname)
+        extra = extra is not None and extra or oldname
+        self.rev.item.rename(name)
         # we just create a new revision with almost same meta/data to show up on RC
         # XXX any better way to do this?
-        self._save(self.meta, self.data, name=newname, action='SAVE/RENAME', extra=oldname, comment=comment)
+        self._save(self.meta, self.data, name=name, action=action, extra=oldname, comment=comment)
+
+    def rename(self, name, comment=u''):
+        """
+        rename this item to item <name>
+        """
+        return self._rename(name, comment, action='SAVE/RENAME')
+
+    def delete(self, comment=u''):
+        """
+        delete this item by moving it to the trashbin
+        """
+        trash_prefix = u'Trash/' # XXX move to config
+        now = time.strftime(self.request.cfg.datetime_fmt, timefuncs.tmtuple(time.time()))
+        # make trash name unique by including timestamp:
+        trashname = u'%s%s (%s UTC)' % (trash_prefix, self.name, now)
+        return self._rename(trashname, comment, action='SAVE/DELETE')
 
     def revert(self):
         # called from revert UI/POST
@@ -248,22 +264,21 @@ class Item(object):
     def modify(self):
         # called from modify UI/POST
         request = self.request
-        delete = request.form.get('delete')
-        if delete:
-            data = ''
-            mimetype = None
+        data_file = request.files.get('data_file')
+        if data_file.filename:
+            # user selected a file to upload
+            data = data_file.stream
+            mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
         else:
-            data_file = request.files.get('data_file')
-            if data_file.filename:
-                # user selected a file to upload
-                data = data_file.stream
-                mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
-            else:
-                # take text from textarea
-                data_text = request.form.get('data_text', '')
-                data = self.data_form_to_internal(data_text)
+            # take text from textarea
+            data = request.form.get('data_text', '')
+            if data:
+                data = self.data_form_to_internal(data)
                 data = self.data_internal_to_storage(data)
                 mimetype = 'text/plain'
+            else:
+                data = '' # could've been u'' also!
+                mimetype = None
         meta_text = request.form.get('meta_text', '')
         meta = self.meta_text_to_dict(meta_text)
         comment = self.request.form.get('comment')
@@ -287,11 +302,6 @@ class Item(object):
         except NoSuchRevisionError:
             rev_no = -1
         newrev = storage_item.create_revision(rev_no + 1)
-        if not data:
-            # saving empty data automatically deletes the item
-            # XXX unclear: do we have meta-only items that shall not be "deleted" state?
-            newrev[DELETED] = True
-            comment = comment or 'deleted'
         for k, v in meta.iteritems():
             # TODO Put metadata into newrev here for now. There should be a safer way
             #      of input for this.
@@ -299,12 +309,11 @@ class Item(object):
             # Skip this metadata key. It should not be copied when editing an item.
             if not k == SYSPAGE_VERSION:
                 newrev[k] = v
-        if data:
-            # saving non-empty data automatically undeletes the item
-            newrev.pop(DELETED, False)
         hash_name, hash_hexdigest = self._write_stream(data, newrev)
         newrev[hash_name] = hash_hexdigest
         timestamp = time.time()
+        # XXX if meta is from old revision, and user did not give a non-empty
+        # XXX comment, re-using the old rev's comment is wrong behaviour:
         newrev[EDIT_LOG_COMMENT] = comment or meta.get(EDIT_LOG_COMMENT, '')
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
@@ -320,37 +329,29 @@ class Item(object):
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
 
-    def search_item(self, term=None, include_deleted=False):
+    def search_item(self, term=None):
         """ search items matching the term or,
-            if term is None, return all (or all non-deleted) items
+            if term is None, return all items
 
             TODO: rename this method and backend method to search_items
         """
-        from MoinMoin.search.term import AND, NOT, LastRevisionMetaDataMatch
-        if not include_deleted:
-            search_term = NOT(LastRevisionMetaDataMatch('deleted', True))
-            if term:
-                search_term = AND(term, search_term)
-            backend_items = self.request.storage.search_item(search_term)
+        if term:
+            backend_items = self.request.storage.search_item(term)
         else:
-            if term:
-                search_term = term
-                backend_items = self.request.storage.search_item(search_term)
-            else:
-                # special case: we just want all items
-                backend_items = self.request.storage.iteritems()
+            # special case: we just want all items
+            backend_items = self.request.storage.iteritems()
         for item in backend_items:
             yield Item.create(self.request, item=item)
 
     list_items = search_item  # just for cosmetics
 
-    def count_items(self, term=None, include_deleted=False):
+    def count_items(self, term=None):
         """
         Return item count for matching items. See search_item() for details.
         """
         count = 0
         # we intentionally use a loop to avoid creating a list with all item objects:
-        for item in self.list_items(term, include_deleted):
+        for item in self.list_items(term):
             count += 1
         return count
 
@@ -447,6 +448,7 @@ class NonExistent(Item):
     ]
 
     def do_show(self):
+        self.request.status_code = 404
         template = self.env.get_template('show_type_selection.html')
         content = []
         content.append(template.render(gettext=self.request.getText,
@@ -527,18 +529,15 @@ There is no help, you're doomed!
         return sorted(items)
 
     def do_show(self):
-        show_templates = False
         item = self.rev.item
         if item is None:
             # it is the dummy item -> this is a new and empty item
             show_templates = True
             rev_nos = log = []
         else:
+            show_templates = False
             rev_nos = item.list_revisions()
             log = self._revlog(item, rev_nos)
-            if self.rev.revno == rev_nos[-1] and self.is_deleted:
-                # last revision is deleted
-                show_templates = True
         if show_templates:
             item_templates = self.get_templates(self.mimetype)
             html_template = 'show_template_selection.html'
@@ -707,6 +706,63 @@ class PlayableBinary(RenderableBinary):
 
 class Application(Binary):
     supported_mimetypes = []
+
+
+class ApplicationZip(Application):
+    supported_mimetypes = ['application/zip']
+
+    def _render_data(self):
+        import zipfile
+        try:
+            content = []
+            fmt = u"%12s  %-19s  %-60s"
+            headline = fmt % (_("Size"), _("Modified"), _("File Name"))
+            content.append(headline)
+            content.append(u"-" * len(headline))
+            zf = zipfile.ZipFile(self.rev, mode='r')
+            for zinfo in zf.filelist:
+                content.append(wikiutil.escape(fmt % (
+                    str(zinfo.file_size),
+                    u"%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time,
+                    zinfo.filename,
+                )))
+        except (RuntimeError, zipfile.BadZipfile), err:
+            # RuntimeError is raised by zipfile stdlib module in case of
+            # problems (like inconsistent slash and backslash usage in the
+            # archive or a defective zip file).
+            logging.exception("An exception within zip file handling occurred:")
+            content = [str(err)]
+        return u"<pre>%s</pre>" % "\n".join(content)
+
+    def transclude(self, desc, tag_attrs=None, query_args=None):
+        return self._render_data()
+
+
+class ApplicationXTar(Application):
+    supported_mimetypes = ['application/x-tar', 'application/x-gtar']
+
+    def _render_data(self):
+        import tarfile
+        try:
+            content = []
+            fmt = u"%12s  %-19s  %-60s"
+            headline = fmt % (_("Size"), _("Modified"), _("File Name"))
+            content.append(headline)
+            content.append(u"-" * len(headline))
+            tf = tarfile.open(fileobj=self.rev, mode='r')
+            for tinfo in tf.getmembers():
+                content.append(wikiutil.escape(fmt % (
+                    str(tinfo.size),
+                    time.strftime("%Y-%02m-%02d %02H:%02M:%02S", time.gmtime(tinfo.mtime)),
+                    tinfo.name,
+                )))
+        except tarfile.TarError, err:
+            logging.exception("An exception within tar file handling occurred:")
+            content = [str(err)]
+        return u"<pre>%s</pre>" % "\n".join(content)
+
+    def transclude(self, desc, tag_attrs=None, query_args=None):
+        return self._render_data()
 
 
 class RenderableApplication(RenderableBinary):

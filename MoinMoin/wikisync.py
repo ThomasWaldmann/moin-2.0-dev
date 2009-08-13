@@ -272,12 +272,10 @@ class MoinRemoteWiki(RemoteWiki):
 
     def get_pages(self, **kwargs):
         options = {"include_revno": True,
-                   "include_deleted": True,
                    "exclude_non_writable": kwargs["exclude_non_writable"],
-                   "include_underlay": False,
                    "prefix": self.prefix,
                    "pagelist": self.pagelist,
-                   "mark_deleted": True}
+                  }
         if self.token:
             m = xmlrpclib.MultiCall(self.connection)
             m.applyAuthToken(self.token)
@@ -318,7 +316,7 @@ class MoinLocalWiki(RemoteWiki):
         if normalised_name is None:
             return None
         page = Page(self.request, page_name)
-        if not page.exists(includeDeleted=True):
+        if not page.exists():
             return None
         revno = page.get_real_rev()
         return SyncPage(normalised_name, local_rev=revno, local_name=page_name, local_deleted=not page.exists())
@@ -353,7 +351,7 @@ class MoinLocalWiki(RemoteWiki):
         else:
             page_filter = lambda x: True
         pages = []
-        for x in self.request.rootpage.getPageList(exists=False, include_underlay=False, filter=page_filter):
+        for x in self.request.rootpage.getPageList(exists=False, filter=page_filter):
             sp = self.createSyncPage(x)
             if sp:
                 pages.append(sp)

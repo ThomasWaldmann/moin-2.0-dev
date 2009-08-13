@@ -12,7 +12,7 @@ import py
 from MoinMoin.search.queryparser import QueryParser, QueryError
 from MoinMoin.search import Xapian
 from MoinMoin import search
-from MoinMoin._tests import nuke_xapian_index
+from MoinMoin._tests import nuke_xapian_index, wikiconfig
 
 class TestQueryParsing:
     """ search: query parser tests """
@@ -70,6 +70,9 @@ class TestSearch:
     """ search: test search """
     doesnotexist = u'jfhsdaASDLASKDJ'
 
+    class Config(wikiconfig.Config):
+        preloaded_xml = wikiconfig.Config._test_items_xml
+
     def testTitleSearchFrontPage(self):
         """ search: title search for FrontPage """
         result = search.searchPages(self.request, u"title:FrontPage")
@@ -113,6 +116,7 @@ class TestXapianIndex:
 
     def testIndex(self):
         """ search: kicks off indexing for a single pages in Xapian """
+        py.test.skip("Won't work before Xapian code is refactored and adjusted to work with new storage")
         # This only tests that the call to indexing doesn't raise.
         nuke_xapian_index(self.request)
         idx = Xapian.Index(self.request)

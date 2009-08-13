@@ -56,8 +56,11 @@ from MoinMoin.storage.error import (BackendError, NoSuchItemError, NoSuchRevisio
                                    RevisionNumberMismatchError, ItemAlreadyExistsError,
                                    RevisionAlreadyExistsError)
 WINDOW_SIZE = 256
-PICKLE_ITEM_META = 1
-META_PREFIX = '_meta_'
+PICKLE_PROTOCOL = 1
+DEFAULT_USER = 'storage'
+DEFAULT_COMMIT_MESSAGE = '...'
+WIKI_METADATA_PREFIX = '_meta_'
+BACKEND_METADATA_PREFIX = '_backend_'
 
 class MercurialBackend(Backend):
     """Implements backend storage using Mercurial VCS."""
@@ -90,8 +93,8 @@ class MercurialBackend(Backend):
         except RepoError:
             self._repo = hg.repository(self._ui, self._rev_path, create=True)
 
-        self._repo_lockref = None   # global repository lock reference
-        self._item_lockrefs = {}    # item lock references
+        self._rev_item_lockrefs = {}    # versioned items lock references
+        self._meta_item_lockrefs = {}   # non-versioned items lock references
         self._create_cdb()
 
     def get_item(self, itemname):
@@ -134,7 +137,7 @@ class MercurialBackend(Backend):
         in repository.
         """
         def filter(id):
-            return id.endswith(".rev") or self._has_meta(id)
+            return id.endswith(".rev") or id.endswith(".rip")
 
         ctx = self._repo.changectx('')
         for id in itertools.ifilterfalse(filter, ctx):
@@ -155,14 +158,32 @@ class MercurialBackend(Backend):
         with timestamp order preserved.
         Yields MercurialStoredRevision objects.
         """
-        for ctx in self._iter_changelog(reverse=reverse):
-            meta = ctx.extra()
-            revno = int(meta['_rev'])
-            timestamp = ctx.date()[0]
-            item = Item(self, meta['_name'])  # XXX: inaccurate after renames...
+        def restore_revision(name, id):
+            item = Item(self, name)
+            item._id = id
             rev = MercurialStoredRevision(item, revno, timestamp)
-            rev._item_id = item._id = meta['_id']
-            yield rev
+            rev._item_id = item._id
+            return rev
+
+        # this is costly operation, but no better idea now how to do it and not
+        # break pull/merge stuff
+        renamed_items = {}
+        for ctx in self._iter_changelog(filter_meta='renamed_to'):
+            meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
+            oldid, renamed_to = meta['renamed_id'], meta['renamed_to']
+            renamed_items.setdefault(oldid, []).append(renamed_to)
+
+        for ctx in self._iter_changelog(reverse=reverse):
+            meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
+            revno, oldid, oldname, timestamp = meta['rev'], meta['id'], meta['name'], ctx.date()[0]
+            try:
+                for (id, name) in renamed_items[oldid]:
+                    # consider you have backend merged from two instances,
+                    # where there was item A renamed to B in first, and the same A
+                    # renamed to C in second
+                    yield restore_revision(name, id)
+            except KeyError:
+                yield restore_revision(oldname, oldid)
 
     def _get_revision(self, item, revno):
         """
@@ -170,10 +191,13 @@ class MercurialBackend(Backend):
         if Revision does not exist.
         Return MercurialStoredRevision object.
         """
-        revs = self._list_revisions(item)
-        if revs and revno == -1:
-            revno = max(revs)
-        if revno not in revs:
+        try:
+            with self._revisions_index(item) as index:
+                if revno == -1:
+                    revno = index.last_key
+                if revno not in index:
+                    raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
+        except IOError:
             raise NoSuchRevisionError("Item Revision does not exist: %s" % revno)
 
         revision = MercurialStoredRevision(item, revno)
@@ -188,20 +212,26 @@ class MercurialBackend(Backend):
             return []
         else:
             try:
-                with open(os.path.join(self._rev_path, "%s.rev" % item._id), 'r') as revfile:
-                    revs = range(len(revfile.read().splitlines()))
-                    return revs
+                with self._revisions_index(item) as index:
+                    revs = [key for key in index]
+                return revs
             except IOError:
                 return []
 
     def _create_revision(self, item, revno):
         """Create new Item Revision. Return NewRevision object."""
-        revs = self._list_revisions(item)
-        if revno in revs:
-                raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
-        if revs and revno != revs[-1] + 1 or not revs and revno != 0:
+        try:
+            with self._revisions_index(item) as index:
+                if revno in index:
+                    raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revno)
+                if revno != index.last_key + 1:
+                    raise RevisionNumberMismatchError("Unable to create revision number %d. "
+                        "New Revision number must be next to latest Revision number." % revno)
+        except IOError:
+            if revno != 0:
                 raise RevisionNumberMismatchError("Unable to create revision number %d. "
-                    "New Revision number must be next to latest Revision number." % revno)
+                        "New Revision number must be next to latest Revision number." % revno)
+
         rev = NewRevision(item, revno)
         rev._data = None
         rev._revno = revno
@@ -209,54 +239,71 @@ class MercurialBackend(Backend):
         rev._tmp_fpath = tempfile.mkstemp("-rev", "tmp-", dir=self._rev_path)[1]
         return rev
 
+    def _destroy_revision(self, revision):
+        item = revision.item
+        lock = self._lock_rev_item(item)
+        try:
+            with self._revisions_index(item) as revisions:
+                with self._destroyed_index(item, create=True) as destroyed:
+                    destroyed[revision.revno] = revisions[revision.revno]
+                    del revisions[revision.revno]
+                    if destroyed.empty:
+                        self._repo.add(["%s.rip" % item._id])
+            self._commit_files(["%s.rev" % item._id, "%s.rip" % item._id], message='(revision destroy)')
+        finally:
+            lock.release()
+
     def _rename_item(self, item, newname):
         """
         Rename given Item name to newname.
         Raise ItemAlreadyExistsError if destination exists.
 
-        Also rename versioned cache file to follow new item name.
+        Also rename versioned index file to follow new item name.
         """
         newid = self._hash(newname)
         try:
-            lock = self._lock_repo()
+            lock = self._lock_rev_item(item)
             try:
                 if self.has_item(newname):
                     raise ItemAlreadyExistsError("Destination item already exists: %s" % newname)
-
                 self._repo.changectx('')[item._id]
-                src = os.path.join(self._rev_path, item._id)
-                dst = os.path.join(self._rev_path, newid)
 
+                src, dst = os.path.join(self._rev_path, item._id), os.path.join(self._rev_path, newid)
                 commands.rename(self._ui, self._repo, src, dst)
                 commands.rename(self._ui, self._repo, "%s.rev" % src, "%s.rev" % dst)
-                self._repo.commit(user='storage', text='(renamed %s to %s)' %
-                                  (item.name.encode('utf-8'), newname.encode('utf-8')))
+                # this commit will update items filelog in repository
+                # we provide 'name' metadata to be able to use self._name from this internal revision too
+                meta = self._encode_metadata({'name': newname,
+                                              'renamed_to': (newid, newname),
+                                              'renamed_id': item._id}, BACKEND_METADATA_PREFIX)
+                self._commit_files(['%s.rev' % item._id, '%s.rev' % newid, item._id, newid], extra=meta,
+                        message='(renamed %s to %s)' % (item.name.encode('utf-8'), newname.encode('utf-8')))
             finally:
-                del lock
+                lock.release()
         except LookupError:
             pass
         if self._has_meta(item._id):
-            lock = self._lock_item(item)
+            lock = self._lock_meta_item(item)
             try:
                 src = os.path.join(self._meta_path, "%s.meta" % item._id)
                 dst = os.path.join(self._meta_path, "%s.meta" % newid)
                 try:
                     util.rename(src, dst)
-                except OSError:
-                    pass
+                except OSError, err:
+                    if err == errno.EEXIST:
+                       pass  # if metadata is empty, there is no file, only entry in cdb
                 self._add_to_cdb(newid, newname, replace=item._id)
             finally:
-                del lock
+                lock.release()
         item._id = newid
 
     def _commit_item(self, revision, second_parent=None):
         """
-        Commit given Item Revision to repository.
+        Commit given Item Revision to repository. Update and commit Item index file.
         If Revision already exists, raise RevisionAlreadyExistsError.
-        Update Item cache file.
         """
         item = revision.item
-        lock = self._lock_repo()
+        lock = self._lock_rev_item(item)
         try:
             if not item._id:
                 self._add_item(item)
@@ -264,53 +311,59 @@ class MercurialBackend(Backend):
                 raise RevisionAlreadyExistsError("Item Revision already exists: %s" % revision.revno)
 
             util.rename(revision._tmp_fpath, os.path.join(self._rev_path, item._id))
-            if revision.revno == 0:
-                f = open(os.path.join(self._rev_path, "%s.rev" % item._id), 'w').close()
-                self._repo.add([item._id, "%s.rev" % item._id])
-
             if revision.revno > 0:
                 parents = [self._get_changectx(self._get_revision(item, revision.revno - 1)).node()]
                 if second_parent:
                     parents.append(second_parent)
             else:
+                self._revisions_index(item, create=True).close()
+                self._repo.add([item._id, "%s.rev" % item._id])
                 parents = []
-            # XXX: everything should be pickled
-            meta = {"_rev": revision.revno,
-                    "_name": item.name.encode("utf-8"),
-                    "_id": item._id,
-                    "_parents": pickle.dumps(" ".join(parents))}
-            for k, v in revision.iteritems():
-                meta["%s%s" % (META_PREFIX, k)] = pickle.dumps(v)
+            internal_meta = {'rev': revision.revno,
+                             'name': item.name,
+                             'id': item._id,
+                             'parents': " ".join(parents)}
+            meta = self._encode_metadata(internal_meta, BACKEND_METADATA_PREFIX)
+            meta.update(self._encode_metadata(revision, WIKI_METADATA_PREFIX))
 
             if not revision.timestamp:
                 revision.timestamp = long(time.time())
             date = datetime.fromtimestamp(revision.timestamp).isoformat(sep=' ')
-            user = (revision.get(EDIT_LOG_USERID) or "anonymous").encode("utf-8")
-            msg = (revision.get(EDIT_LOG_COMMENT) or "...").encode("utf-8")  # stable hg does not allow empty comments
+            user = revision.get(EDIT_LOG_USERID, DEFAULT_USER).encode("utf-8")
+            msg = revision.get(EDIT_LOG_COMMENT, DEFAULT_COMMIT_MESSAGE).encode("utf-8")
 
-            try:
-                match = mercurial.match.exact(self._rev_path, '', [item._id])
-                self._repo.commit(match=match, text=msg, user=user, date=date, extra=meta, force=True)
-            except NameError:
-                self._repo.commit(files=[item._id], text=msg, user=user, date=date, extra=meta, force=True)
-            self._add_revision(item, revision)
+            self._commit_files([item._id], message=msg, user=user, extra=meta, date=date)
+            self._append_revision(item, revision)
         finally:
-            del lock
+            lock.release()
 
     def _rollback_item(self, revision):
         pass
 
+    def _destroy_item(self, item):
+        self._repo.remove(['%s.rev' % item._id, item._id], unlink=True)
+        with self._destroyed_index(item, create=True) as index:
+            if index.empty:
+                self._repo.add(["%s.rip" % item._id])
+            index.truncate()
+        self._commit_files(['%s.rev' % item._id, '%s.rip' % item._id, item._id], message='(item destroy)')
+        try:
+            os.remove(os.path.join(self._meta_path, "%s.meta" % item._id))
+        except OSError, err:
+            if err.errno == errno.EACCES:
+                raise CouldNotDestroyError
+
     def _change_item_metadata(self, item):
         """Start Item Metadata transaction."""
         if item._id:
-            item._lock = self._lock_item(item)
+            item._lock = self._lock_meta_item(item)
 
     def _publish_item_metadata(self, item):
         """Dump Item Metadata to file and finish transaction."""
         def write_meta_item(meta_path, metadata):
             fd, fpath = tempfile.mkstemp("-meta", "tmp-", self._meta_path)
             with os.fdopen(fd, 'wb') as f:
-                pickle.dump(metadata, f, protocol=PICKLE_ITEM_META)
+                pickle.dump(metadata, f, protocol=PICKLE_PROTOCOL)
             util.rename(fpath, meta_path)
 
         if item._id:
@@ -323,7 +376,7 @@ class MercurialBackend(Backend):
                     pass
             else:
                 write_meta_item(os.path.join(self._meta_path, "%s.meta" % item._id), item._metadata)
-            del item._lock
+            item._lock.release()
         else:
             self._add_item(item)
             self._add_to_cdb(item._id, item.name)
@@ -332,28 +385,25 @@ class MercurialBackend(Backend):
 
     def _open_revision_data(self, revision):
         if revision._data is None:
-            if revision.revno == max(self._list_revisions(revision.item)): # latest revision, data in working copy
-                # XXX: lock this file for writing on read
-                #      question is, when will it be unlocked?
-                revision._data = open(os.path.join(self._rev_path, revision._item_id), 'r')
-                # XXX: keeps file open as long as revision exists
-            else:
-                revision._data = StringIO.StringIO(self._get_filectx(revision).data())
+            revision._data = StringIO.StringIO(self._get_filectx(revision).data())
+            # More effective would be to read revision data from working copy if this is last revision,
+            # however this involves locking file: there may be read on write operation (_write_revision_data).
+            #
+            # if revision.revno == self._list_revisions(revision.item)[-1]:
+            #   revision._data = open(os.path.join(self._rev_path, revision._item_id))
 
     def _read_revision_data(self, revision, chunksize):
         """
         Read given amount of bytes of Revision data.
         By default, all data is read.
-
-        If last revision, read from working copy.
         """
         self._open_revision_data(revision)
         return revision._data.read(chunksize)
 
     def _write_revision_data(self, revision, data):
         """Write data to the given Revision."""
-        # we can open file in create_revision and pass it here but this would lead
-        # to problems as in FSBackend with too many opened files
+        # We can open file in create_revision and pass it here but this would lead
+        # to problems as in FSBackend with too many opened files.
         with open(revision._tmp_fpath, 'a') as f:
             f.write(data)
 
@@ -372,11 +422,7 @@ class MercurialBackend(Backend):
     def _get_revision_metadata(self, revision):
         """Return given Revision Metadata dictionary."""
         extra = self._get_changectx(revision).extra()
-        metadata = {}
-        for k, v in extra.iteritems():
-            if k.startswith(META_PREFIX):
-                metadata[k[len(META_PREFIX):]] = pickle.loads(v)
-        return metadata
+        return self._decode_metadata(extra, WIKI_METADATA_PREFIX)
 
     def _get_revision_timestamp(self, revision):
         """Return given Revision timestamp"""
@@ -403,13 +449,16 @@ class MercurialBackend(Backend):
     def _name(self, itemid):
         """Resolve Item name by given ID."""
         try:
+            # there is accurate link between fctx and ctx only if there was some change
+            # so therefore we take first filelog entry
             fctx = self._repo.changectx('')[itemid].filectx(0)
-            return fctx.changectx().extra()['_name']
+            meta = fctx.changectx().extra()
+            return self._decode_metadata(meta, BACKEND_METADATA_PREFIX)['name']
         except LookupError:
             c = cdb.init(self._meta_db)
             return c.get(itemid)
 
-    def _iter_changelog(self, reverse=True, id=None, start_rev=None):
+    def _iter_changelog(self, reverse=True, filter_id=None, start_rev=None, filter_meta=None):
         """
         Return generator fo iterating over repository changelog.
         Yields Changecontext object.
@@ -422,8 +471,23 @@ class MercurialBackend(Backend):
         def wanted(changerev):
             ctx = self._repo.changectx(changerev)
             try:
-                ctxid = ctx.extra()['_id']
-                return not id or ctxid == id
+                meta = self._decode_metadata(ctx.extra(), BACKEND_METADATA_PREFIX)
+                if filter_meta is None:
+                    item_id, item_rev, item_name = meta['id'], meta['rev'], meta['name']
+                    try:
+                        item = Item(self, item_name)
+                        item._id = item_id
+                        with self._destroyed_index(item) as destroyed:
+                            # item is destroyed when destroyed index exists, but is empty
+                            if destroyed.empty or item_rev in destroyed:
+                                check = False
+                            else:
+                                check = not filter_id or item_id == filter_id
+                        return check
+                    except IOError:
+                        return not filter_id or item_id == filter_id
+                else:
+                    return filter_meta in meta
             except KeyError:
                 return False
 
@@ -447,24 +511,21 @@ class MercurialBackend(Backend):
     def _get_filectx(self, revision):
         """
         Get Filecontext object corresponding to given Revision.
-        Retrieve necessary information from cache file.
+        Retrieve necessary information from index file.
         """
-        with open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r') as revfile:
-            revs = revfile.read().splitlines()
-        revs.sort()
-        revno, node, id, filenode = revs[revision.revno].split()
-        return self._repo.filectx(id, fileid=filenode)
+        with self._revisions_index(revision.item) as index:
+            data = index[revision.revno]
+            fctx = self._repo.filectx(data['id'], fileid=data['filenode'])
+        return fctx
 
     def _get_changectx(self, revision):
         """
         Get Changecontext object corresponding to given Revision.
-        Retrieve necessary information from cache file.
+        Retrieve necessary information from index file.
         """
-        with open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r') as revfile:
-            revs = revfile.read().splitlines()
-        revs.sort()
-        ctxrev = revs[revision.revno].split()[1]
-        return self._repo.changectx(ctxrev)
+        with self._revisions_index(revision.item) as index:
+            ctx = self._repo.changectx(index[revision.revno]['node'])
+        return ctx
 
     def _lock(self, lockpath, lockref):
         """Acquire weak reference to lock object."""
@@ -474,15 +535,17 @@ class MercurialBackend(Backend):
         lockref = weakref.ref(lock)
         return lock
 
-    def _lock_repo(self):
-        """Acquire global repository lock."""
-        path = os.path.join(self._rev_path, "repo.lock")
-        return self._lock(path, self._repo_lockref)
-
-    def _lock_item(self, item):
+    def _lock_meta_item(self, item):
         """Acquire Item Metadata lock."""
-        path = os.path.join(self._rev_path, "%s.lock" % item._id)
-        return self._lock(path, self._item_lockrefs.setdefault(item._id, None))
+        return self._lock_item(item, self._meta_path, self._meta_item_lockrefs)
+
+    def _lock_rev_item(self, item):
+        """Acquire versioned Item lock."""
+        return self._lock_item(item, self._rev_path, self._rev_item_lockrefs)
+
+    def _lock_item(self, item, root_path, lock_dict):
+        path = os.path.join(root_path, "%s.lock" % item._id)
+        return self._lock(path, lock_dict.setdefault(item._id, None))
 
     def _add_item(self, item):
         """Assign ID to given Item. Raise ItemAlreadyExistsError if Item exists."""
@@ -490,17 +553,32 @@ class MercurialBackend(Backend):
             raise ItemAlreadyExistsError("Destination item already exists: %s" % item.name)
         item._id = self._hash(item.name)
 
-    def _add_revision(self, item, revision):
-        """Add Item Revision to cache file to speed up further lookups."""
-        ctx = self._repo.changectx('')
-        with open(os.path.join(self._rev_path, "%s.rev" % item._id), 'a') as revfile:
-            revfile.write("%d %s %s %s\n" % (revision.revno, short(ctx.node()),
-                                         item._id, short(ctx.filectx(item._id).filenode()), ))
+    def _append_revision(self, item, revision):
+        """Add Item Revision to index file to speed up further lookups."""
+        fctx = self._repo.changectx('')[item._id]
+        with self._revisions_index(item, create=True) as index:
+            index[revision.revno] = {'node': short(fctx.node()), 'id': item._id, 'filenode': short(fctx.filenode())}
+        self._commit_files(['%s.rev' % item._id], message='(revision append)')
+
+    def _commit_files(self, files, message=DEFAULT_COMMIT_MESSAGE, user=DEFAULT_USER, extra={}, date=None, force=True):
         try:
-            match = mercurial.match.exact(self._rev_path, '', ['%s.rev' % item._id])
-            self._repo.commit(match=match, text="(cache append)", user="storage")
+            match = mercurial.match.exact(self._rev_path, '', files)
+            self._repo.commit(match=match, text=message, user=user, extra=extra, date=date, force=force)
         except NameError:
-            self._repo.commit(files=['%s.rev' % item._id], text="(cache append)", user="storage")
+            self._repo.commit(files=files, text=message, user=user, extra=extra, date=date, force=force)
+
+    def _encode_metadata(self, dict, prefix):
+        meta = {}
+        for k, v in dict.iteritems():
+            meta["%s%s" % (prefix, k)] = pickle.dumps(v)
+        return meta
+
+    def _decode_metadata(self, dict, prefix):
+        meta = {}
+        for k, v in dict.iteritems():
+            if k.startswith(prefix):
+                meta[k[len(prefix):]] = pickle.loads(v)
+        return meta
 
     def _has_meta(self, itemid):
         """Return True if Item with given ID has Metadata. Otherwise return None."""
@@ -533,19 +611,22 @@ class MercurialBackend(Backend):
             maker = cdb.cdbmake(self._meta_db, "%s.tmp" % self._meta_db)
             maker.finish()
 
-    #
-    # extended API below - needed for drawing revision graph
-    #
+    def _destroyed_index(self, item, create=False):
+        return Index(os.path.join(self._rev_path, "%s.rip" % item._id), create)
 
+    def _revisions_index(self, item, create=False):
+        return Index(os.path.join(self._rev_path, "%s.rev" % item._id), create)
+
+
+    # extended API below - needed for drawing revision graph
     def _get_revision_node(self, revision):
         """
         Return tuple consisting of (SHA1, short SHA1) changeset (node) IDs
         corresponding to given Revision.
         """
         try:
-            with open(os.path.join(self._rev_path, "%s.rev" % revision._item_id), 'r') as revfile:
+            with self._open_item_index(revision.item) as revfile:
                 revs = revfile.read().splitlines()
-            revs.sort()
             node = revs[revision.revno].split()[1]
             return node, short(node)
         except IOError:
@@ -554,9 +635,11 @@ class MercurialBackend(Backend):
     def _get_revision_parents(self, revision):
         """Return parent revision numbers of Revision."""
         def get_revision(node):
-            return self._repo.changectx(node).extra()['_rev']
+            meta = self._repo.changectx(node).extra()
+            return self._decode_metadata(meta, BACKEND_METADATA_PREFIX)['rev']
 
-        parents = pickle.loads(self._get_changectx(revision).extra()['_parents']).split()
+        meta = self._get_changectx(revision).extra()
+        parents = self._decode_metadata(meta, BACKEND_METADATA_PREFIX)['parents'].split()
         return [get_revision(node) for node in parents]
 
 
@@ -564,10 +647,102 @@ class MercurialStoredRevision(StoredRevision):
 
     def __init__(self, item, revno, timestamp=None, size=None):
         StoredRevision.__init__(self, item, revno, timestamp, size)
+        self._data = None
 
     def get_parents(self):
         return self._backend._get_revision_parents(self)
 
     def get_node(self):
         return self._backend._get_revision_node(self)
+
+
+class Index(object):
+    """
+    Keys are int, values are dictionaries with keys: 'id', 'node', 'filenode'.
+    Fixed record size to ease reverse file lookups. Record consists of (in order):
+    revno(6 chars), id(32 chars), node(12 chars), filenode(12 chars) separated by
+    whitespace.
+    """
+    RECORD_SAMPLE = '000001 cdfea0c03df2d58eeb8e509ffeab1c94 abfa65835085 b80de5d13875\n'
+
+    def __init__(self, fpath, create=False):
+        if create:
+            self._file = open(fpath, 'a+')
+        else:
+            self._file = open(fpath)
+        self._fpath = fpath
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __getitem__(self, key):
+        for record in self._iter_record():
+            if int(record[0]) == key:
+                return {'id': record[1], 'node': record[2], 'filenode': record[3]}
+        raise KeyError
+
+    def __setitem__(self, key, value):
+        record = "%s %s %s %s\n" % (str(key).zfill(6), value['id'], value['node'], value['filenode'])
+        self._file.write(record)
+        pass
+
+    def __delitem__(self, key):
+        tmp_fd, tmp_path = tempfile.mkstemp("-index", "tmp-", os.path.dirname(self._fpath))
+        with open(tmp_path, 'w') as tmp:
+            for record in self._iter_record(reverse=False):
+                if key != int(record[0]):
+                    tmp.write(' '.join(record) + os.linesep)
+        util.rename(tmp_path, self._fpath)
+
+    def __iter__(self):
+        for record in self._iter_record(reverse=False):
+            yield int(record[0])
+
+    def __contains__(self, key):
+        if self.empty:
+            return False
+        for record in self._iter_record():
+            if int(record[0]) == key:
+                return True
+        return False
+
+    @property
+    def last_key(self):
+        try:
+            last_record = self._iter_record().next()
+            return int(last_record[0])
+        except StopIteration:
+            return -1
+
+    @property
+    def empty(self):
+        return os.path.getsize(self._fpath) == 0
+
+    def close(self):
+        self._file.close()
+
+    def truncate(self):
+        self._file.seek(0)
+        self._file.truncate()
+
+    def _iter_record(self, reverse=True):
+        """Iterates forwards/backwards on file yielding records."""
+        record_size = len(self.RECORD_SAMPLE)
+        if reverse:
+            self._file.seek(0, 2)
+            pointer = self._file.tell()
+            pointer -= record_size
+            while pointer >= 0:
+                self._file.seek(pointer)
+                pointer -= record_size
+                line = self._file.read(record_size)
+                yield line.strip().split()
+        else:
+            self._file.seek(0)
+            for line in self._file:
+                yield line.split()
+
 

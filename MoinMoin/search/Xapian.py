@@ -204,7 +204,7 @@ class Index(BaseIndex):
         'stem_lang': 'XSTEMLANG', # ISO Language code this document was stemmed in
         'category': 'XCAT',       # category this document belongs to
         'fulltitle': 'XFT',       # full title
-        'domain': 'XDOMAIN',      # standard or underlay
+        'domain': 'XDOMAIN',      # standard or syspages
         'revision': 'XREV',       # revision of page
                                   #Y   year (four digits)
     }
@@ -420,8 +420,6 @@ class Index(BaseIndex):
 
         @param page: page
         """
-        if page.isUnderlayPage():
-            yield 'underlay'
         if page.isStandardPage():
             yield 'standard'
         if wikiutil.isSystemPage(self.request, page.page_name):
@@ -640,7 +638,7 @@ class Index(BaseIndex):
             self.touch()
             writer = xapidx.Index(self.dir, True)
             writer.configure(self.prefixMap, self.indexValueMap)
-            pages = request.rootpage.getPageList(user='', exists=1)
+            pages = request.rootpage.getPageList(user='')
             logging.debug("indexing all pages...")
             for pagename in pages:
                 self._index_page(request, writer, pagename, mode=mode)

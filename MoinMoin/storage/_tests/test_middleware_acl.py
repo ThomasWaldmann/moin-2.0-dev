@@ -8,9 +8,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 from MoinMoin.items import ACL
+from MoinMoin.wsgiapp import protect_backends
 from MoinMoin.storage.error import AccessDeniedError
 from MoinMoin.storage._tests.test_backends import BackendTest
-from MoinMoin.storage.backends.acl import AclWrapperBackend, AclWrapperItem, AclWrappedRevision
 from MoinMoin.conftest import init_test_request
 from MoinMoin._tests import wikiconfig
 
@@ -19,15 +19,14 @@ import py
 
 class TestACLMiddleware(BackendTest):
     class Config(wikiconfig.Config):
-        acl_rights_default = u"All:admin,read,write,destroy"
+        content_acl = dict(default=u"All:admin,read,write,destroy,create")
 
     def __init__(self):
         BackendTest.__init__(self, None)
 
     def create_backend(self):
         # Called before *each* testcase. Provides fresh backends every time.
-        self.request = init_test_request(self.Config)
-        return AclWrapperBackend(self.request)
+        return self.request.storage
 
     def kill_backend(self):
         pass
@@ -49,6 +48,22 @@ class TestACLMiddleware(BackendTest):
         name = "noaccess"
         self.create_item_acl(name, "All:")
         assert py.test.raises(AccessDeniedError, self.get_item, name)
+
+    def test_create_item(self):
+        class Config(wikiconfig.Config):
+            # no create
+            content_acl = dict(default=u"All:admin,read,write,destroy")
+
+        request = init_test_request(Config)
+        backend = request.storage
+        assert py.test.raises(AccessDeniedError, backend.create_item, "I will never exist")
+
+        item = self.create_item_acl("i will exist!", "All:read,write")
+        rev = item.create_revision(1)
+        data = "my very existent data"
+        rev.write(data)
+        item.commit()
+        assert item.get_revision(1).read() == data
 
     def test_read_access_allowed(self):
         name = "readaccessallowed"
@@ -94,18 +109,4 @@ class TestACLMiddleware(BackendTest):
 
         py.test.raises(AccessDeniedError, item.get_revision, -1)
         py.test.raises(AccessDeniedError, item.get_revision, 0)
-
-    def test_rev_item_wrapped(self):
-        item = self.backend.create_item("foo")
-        rev = item.create_revision(0)
-        rev.write("me and my item will be wrapped")
-        item.commit()
-        stored_rev = item.get_revision(0)
-
-        assert isinstance(stored_rev, AclWrappedRevision)
-        assert isinstance(rev, AclWrappedRevision)
-        assert isinstance(item, AclWrapperItem)
-        assert isinstance(rev.item, AclWrapperItem)
-        assert isinstance(stored_rev.item, AclWrapperItem)
-
 

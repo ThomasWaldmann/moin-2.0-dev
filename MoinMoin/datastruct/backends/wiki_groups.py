@@ -39,8 +39,11 @@ class WikiGroup(GreedyGroup):
             try:
                 cache_mtime = cache.mtime()
                 page_mtime = page.mtime()
-                # TODO: fix up-to-date check mtime granularity problems
-                if cache_mtime > page_mtime:
+                # TODO: fix up-to-date check mtime granularity problems.
+                #
+                # cache_mtime is float while page_mtime is integer
+                # The comparision needs to be done on the lowest type of both
+                if int(cache_mtime) > int(page_mtime):
                     # cache is uptodate
                     return cache.content()
                 else:

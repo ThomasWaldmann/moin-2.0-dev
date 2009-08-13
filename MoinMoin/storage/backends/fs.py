@@ -1,10 +1,11 @@
 """
-    MoinMoin - FS backend
+    MoinMoin - FS (filesystem) backend
 
     XXX: Does NOT work on win32. some problems are documented below (see XXX),
          some are maybe NOT.
 
-    @copyright: 2008 MoinMoin:JohannesBerg
+    @copyright: 2008 MoinMoin:JohannesBerg,
+                2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -388,7 +389,7 @@ class FSBackend(Backend):
             oldrp = rev._fs_revpath
             oldf = rev._fs_file
             fd, rev._fs_revpath = tempfile.mkstemp('-rev', 'tmp-', self._path)
-            rev._fs_file = os.fdopen(fd, 'wb') # XXX keeps file open as long as rev exists (see also below)
+            rev._fs_file = os.fdopen(fd, 'wb')
             f = rev._fs_file
             f.write(struct.pack('!I', len(md) + 4))
             # write metadata
@@ -398,7 +399,6 @@ class FSBackend(Backend):
             shutil.copyfileobj(oldf, f)
             oldf.close()
             os.unlink(oldrp)
-            # XXX f.close() missing? (see also below)
         else:
             if not hasdata:
                 rev._fs_file.seek(0)
@@ -406,7 +406,7 @@ class FSBackend(Backend):
             else:
                 rev._fs_file.seek(4)
             rev._fs_file.write(md)
-            rev._fs_file.close() # XXX this GETS closed!
+        rev._fs_file.close()
 
         if item._fs_item_id is None:
             self._add_item_internally(item, newrev=rev._fs_revpath)
@@ -470,7 +470,6 @@ class FSBackend(Backend):
                 pass
             elif not md:
                 # metadata now empty, just rm the metadata file
-                # XXX: might not work on windows
                 try:
                     os.unlink(os.path.join(self._path, item._fs_item_id, 'meta'))
                 except OSError, err:

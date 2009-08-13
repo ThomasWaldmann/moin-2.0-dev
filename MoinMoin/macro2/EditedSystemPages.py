@@ -15,12 +15,17 @@ class Macro(MacroPageLinkListBase):
         if self.request.isSpiderAgent: # reduce bot cpu usage
             return ''
 
+        from MoinMoin.Page import Page
+        from MoinMoin.items import IS_SYSPAGE
+
         # Get page list for current user (use this as admin), filter
-        # pages that are both underlay and standard pages.
+        # pages that are syspages
         def filterfn(name):
-            page = Page(self.request, name)
-            return (page.isStandardPage(includeDeleted=0) and
-                    page.isUnderlayPage(includeDeleted=0))
+            item = self.request.storage.get_item(name)
+            try:
+                return item.get_revision(-1)[IS_SYSPAGE]
+            except KeyError:
+                return False
 
         # Get page filtered page list. We don't need to filter by
         # exists, because our filter check this already.

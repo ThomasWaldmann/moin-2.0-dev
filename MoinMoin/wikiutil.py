@@ -23,6 +23,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
+from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.support.python_compatibility import rsplit
 from inspect import getargspec, isfunction, isclass, ismethod
 
@@ -465,15 +466,13 @@ INTERWIKI_PAGE = "InterWikiMap"
 def generate_file_list(request):
     """ generates a list of all files. for internal use. """
 
-    # order is important here, the local intermap file takes
-    # precedence over the shared one, and is thus read AFTER
-    # the shared one
+    # order is important here, intermap files read later overwrite
+    # data from files read earlier!
     intermap_files = request.cfg.shared_intermap
     if not isinstance(intermap_files, list):
         intermap_files = [intermap_files]
     else:
         intermap_files = intermap_files[:]
-    intermap_files.append(os.path.join(request.cfg.data_dir, "intermap.txt"))
     request.cfg.shared_intermap_files = [filename for filename in intermap_files
                                          if filename and os.path.isfile(filename)]
 
@@ -611,8 +610,14 @@ def isSystemPage(request, pagename):
     @rtype: bool
     @return: true if page is a system page
     """
-    from MoinMoin import i18n
-    return pagename in i18n.system_pages or isTemplatePage(request, pagename)
+    from MoinMoin.items import IS_SYSPAGE
+    try:
+        item = request.storage.get_item(pagename)
+        return item.get_revision(-1)[IS_SYSPAGE]
+    except (NoSuchItemError, NoSuchRevisionError, KeyError):
+        pass
+
+    return isTemplatePage(request, pagename)
 
 
 def isTemplatePage(request, pagename):

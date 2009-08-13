@@ -68,20 +68,18 @@ class PackageItems:
 
     def searchpackage(self, request, searchkey):
         """ Search MoinMoin for the string specified and return a list of
-        matching pages, provided they are not system pages and not
-        present in the underlay.
+        matching pages, provided they are not system pages.
 
         @param request: current request
         @param searchkey: string to search for
         @rtype: list
         @return: list of pages matching searchkey
         """
-
         pagelist = searchPages(request, searchkey)
 
         titles = []
         for title in pagelist.hits:
-            if not wikiutil.isSystemPage(request, title.page_name) or not title.page.isUnderlayPage():
+            if not wikiutil.isSystemPage(request, title.page_name):
                 titles.append(title.page_name)
         return titles
 
