@@ -349,7 +349,7 @@ class SQLAlchemyBackend(Backend):
 class SQLAItem(Item, Base):
     __tablename__ = 'items'
 
-    _id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     _name = Column(String)
     _metadata = Column(PickleType)
 
@@ -470,8 +470,8 @@ class SQLARevision(Revision, Base):
 
     id = Column(Integer, primary_key=True)
     _data = relation(Data, uselist=False)
-    _item_id = Column(Integer, ForeignKey('items._id'))
-    _item = relation(SQLAItem, backref=backref('_revisions', order_by=_id, lazy='dynamic', cascade=''), cascade='')
+    _item_id = Column(Integer, ForeignKey('items.id'))
+    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy='dynamic', cascade=''), cascade='')
     _revno = Column(Integer)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
