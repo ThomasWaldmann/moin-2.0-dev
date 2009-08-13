@@ -67,7 +67,7 @@ class SQLAlchemyBackend(Backend):
             # The _backend attribute is not stored in the database. Restore it manually.
             #
             # SQLA doesn't call __init__, so we need to take care of that.
-            item.__init__(self, itemname)
+            item.__init__(self, itemname, session)
             return item
         except NoResultFound:
             raise NoSuchItemError("The item '%s' could not be found." % itemname)
@@ -85,13 +85,9 @@ class SQLAlchemyBackend(Backend):
         if not isinstance(itemname, (str, unicode)):
             raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
 
-        session = Session()
-        found = session.query(SQLAItem).filter_by(_name=itemname).all()
-        if found:
+        if self.has_item(itemname):
             raise ItemAlreadyExistsError("An item with the name %s already exists." % itemname)
         item = SQLAItem(self, itemname)
-        session.add(item)
-        session.commit()
         return item
 
     def iteritems(self):
@@ -103,22 +99,7 @@ class SQLAlchemyBackend(Backend):
         """
         session = Session()
         return session.query(SQLAItem).all()
-
-    def _get_revision(self, item, revno):
-        """
-        For a given item and revision number, return the corresponding revision
-        of that item.
-        Note: If you pass -1 as revno, this shall return the latest revision of the item.
-
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
-        @type revno: int
-        @param revno: Indicate which revision is wanted precisely. If revno is
-        -1, return the most recent revision.
-        @rtype: Object of class Revision
-        @raise NoSuchRevisionError: No revision with that revno was found on item.
-        """
-        raise NotImplementedError()
+        session.close()
 
     def _create_revision(self, item, revno):
         """
@@ -188,9 +169,7 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to commit to  storage.
         @return: None
         """
-        session = Session()
-        session.add(revision)
-        session.commit()
+        revision.session.commit()
 
     def _rollback_item(self, revision):
         """
@@ -295,13 +274,17 @@ class SQLAItem(Item, Base):
     _name = Column(String)
     _metadata = Column(PickleType)
 
-    def __init__(self, backend, itemname):
+    def __init__(self, backend, itemname, session=None):
         self._backend = backend
         self._name = itemname
         self._locked = False
         self._read_accessed = False
         self._uncommitted_revision = None
         self.element_attrs = dict(name=itemname)
+        if session is None:
+            session = Session()
+        self.session = session
+        self.session.add(self)
 
     def list_revisions(self):
         return [rev.revno for rev in self._revisions.all() if rev.id is not None]
@@ -351,12 +334,12 @@ class Data(Base):
 
     chunksize = 4
 
-    def __init__(self):
+    def __init__(self, session):
         self.chunkno = 0
         self._last_chunk = Chunk(self.chunkno)
-        self.session = Session()
         self.cursor_pos = 0
         self.size = 0
+        self.session = session
         self.session.add(self)
 
     def write(self, data):
@@ -435,7 +418,13 @@ class SQLARevision(Revision, Base):
     _timestamp = Column(Integer)
 
     def __init__(self, item, revno, timestamp=None):
-        Revision.__init__(self, item, revno, timestamp)
+        self._revno = revno
+        self._item = item
+        self._backend = item._backend
+        self._timestamp = timestamp
+        self.element_attrs = dict(revno=str(revno))
+        self.session = item.session
+        self.session.add(self)
 
     def write(self, data):
         if self._data is None:
