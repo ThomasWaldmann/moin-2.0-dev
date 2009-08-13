@@ -39,15 +39,20 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import os
+import sys
+import shutil
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from UserDict import DictMixin
 from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
-                                   NoSuchItemError
+                                   BackendError, NoSuchItemError, \
+                                   RevisionAlreadyExistsError, ItemAlreadyExistsError
 
 from MoinMoin.storage.serialization import Serializable, XMLGenerator, \
-                                           Data, Meta, ItemMeta, unserialize
+                                           Data, Meta, ItemMeta
 
 
 class Backend(Serializable):
@@ -185,10 +190,8 @@ class Backend(Serializable):
         For a given item, return a list containing all revision numbers (as ints)
         of the revisions the item has. The list must be ordered, starting with
         the oldest revision number.
-        (One may decide to delete certain revisions completely at one point. For
-        that case, list_revisions does not need to return subsequent revision
-        numbers. _create_revision() on the other hand must only create
-        subsequent revision numbers.)
+        Since we allow to totally destroy certain revisions, list_revisions does
+        not need to return subsequent, but only monotone revision numbers.
 
         @type item: Object of class Item.
         @param item: The Item on which we want to operate.
@@ -212,8 +215,7 @@ class Backend(Serializable):
         @raise RevisionAlreadyExistsError: Raised if a revision with that number
         already exists on item.
         @raise RevisionNumberMismatchError: Raised if precondition is not
-        fulfilled. Note: This behavior will be changed, allowing monotonic
-        revnos and not requiring revnos to be subsequent as well.
+        fulfilled.
         """
         raise NotImplementedError()
 
@@ -451,15 +453,129 @@ class Backend(Serializable):
     # (un)serialization support following:
     element_name = 'backend'
 
-    def get_unserializer(self, name, attrs):
+    def get_unserializer(self, context, name, attrs):
         if name == 'item':
             item_name = attrs['name']
-            item = self.create_item(item_name)
+            try:
+                item = self.create_item(item_name)
+            except ItemAlreadyExistsError:
+                item = self.get_item(item_name)
             return item
 
     def serialize_value(self, xmlgen):
         for item in self.iteritems():
             item.serialize(xmlgen)
+
+    # item copying
+    def _copy_item_progress(self, verbose, st):
+        if verbose:
+            progress_char = dict(converts='.', skips='s', fails='F')
+            sys.stdout.write(progress_char[st])
+
+    def copy_item(self, item, verbose=False, name=None):
+        def same_revision(rev1, rev2):
+            if rev1.timestamp != rev2.timestamp:
+                return False
+            for k, v in rev1.iteritems():
+                if rev2[k] != v:
+                    return False
+            if rev1.size != rev2.size:
+                return False
+            return True
+
+        if name is None:
+            name = item.name
+
+        status = dict(converts={}, skips={}, fails={})
+        revisions = item.list_revisions()
+
+        try:
+            new_item = self.get_item(name)
+        except NoSuchItemError:
+            new_item = self.create_item(name)
+
+        # This only uses the metadata of the item that we clone.
+        # Arguments for doing this:
+        #   * If old stuff ends up in item after clone, that'd be counter intuitive
+        #   * When caching some data from the latest rev in the item, we don't want the old stuff.
+        new_item.change_metadata()
+        for k, v in item.iteritems():
+            new_item[k] = v
+        new_item.publish_metadata()
+
+        for revno in revisions:
+            revision = item.get_revision(revno)
+
+            try:
+                new_rev = new_item.create_revision(revision.revno)
+            except RevisionAlreadyExistsError:
+                existing_revision = new_item.get_revision(revision.revno)
+                st = same_revision(existing_revision, revision) and 'skips' or 'fails'
+            else:
+                for k, v in revision.iteritems():
+                    new_rev[k] = v
+                new_rev.timestamp = revision.timestamp
+                shutil.copyfileobj(revision, new_rev)
+                new_item.commit()
+                st = 'converts'
+            try:
+                status[st][name].append(revision.revno)
+            except KeyError:
+                status[st][name] = [revision.revno]
+            self._copy_item_progress(verbose, st)
+
+        return status['converts'], status['skips'], status['fails']
+
+    # cloning support
+    def _clone_before(self, source, verbose):
+        if verbose:
+            # reopen stdout file descriptor with write mode
+            # and 0 as the buffer size (unbuffered)
+            sys.stdout = os.fdopen(os.dup(sys.stdout.fileno()), 'w', 0)
+            sys.stdout.write("[converting %s to %s]: " % (source.__class__.__name__,
+                                                          self.__class__.__name__, ))
+
+    def _clone_after(self, source, verbose):
+        if verbose:
+            sys.stdout.write("\n")
+
+    def clone(self, source, verbose=False, only_these=[]):
+        """
+        Create exact copy of source Backend with all the Items into THIS
+        backend. If you don't want all items, you can give an item name list
+        in only_these.
+
+        Note: this is a generic implementation, you can maybe specialize it to
+              make it faster in your backend implementation (esp. if creating
+              new items is expensive).
+
+        Return a tuple consisting of three dictionaries (Item name:Revision
+        numbers list): converted, skipped and failed Items dictionary.
+        """
+        def item_generator(source, only_these):
+            if only_these:
+                for name in only_these:
+                    try:
+                        yield source.get_item(name)
+                    except NoSuchItemError:
+                        # TODO Find out why this fails sometimes.
+                        #sys.stdout.write("Unable to copy %s\n" % itemname)
+                        pass
+            else:
+                for item in source.iteritems():
+                    yield item
+
+        self._clone_before(source, verbose)
+
+        converts, skips, fails = {}, {}, {}
+        for item in item_generator(source, only_these):
+            c, s, f = self.copy_item(item, verbose)
+            converts.update(c)
+            skips.update(s)
+            fails.update(f)
+
+        self._clone_after(source, verbose)
+        return converts, skips, fails
 
 
 class Item(Serializable, DictMixin):
@@ -534,8 +650,7 @@ class Item(Serializable, DictMixin):
             raise TypeError("Key must be string type")
         if key.startswith('__'):
             raise TypeError("Key must not begin with two underscores")
-        if not value_type_is_valid(value):
-            raise TypeError("Value must be string, unicode, int, long, float, bool, complex or a nested tuple thereof.")
+        check_value_type_is_valid(value)
         if self._metadata is None:
             self._metadata = self._backend._get_item_metadata(self)
         self._metadata[key] = value
@@ -650,17 +765,22 @@ class Item(Serializable, DictMixin):
     def create_revision(self, revno):
         """
         @see: Backend._create_revision.__doc__
+
+        Please note that we do not require the revnos to be subsequent, but they
+        need to be monotonic. I.e., a sequence like 0, 1, 5, 9, 10 is ok, but
+        neither 0, 1, 1, 2, 3 nor 0, 1, 3, 2, 9 are.
+        This is done so as to allow functionality like unserializing a backend
+        whose item's revisions have been subject to destroy().
         """
         if self._locked:
             raise RuntimeError(("You tried to create revision #%d on the item %r, but there "
-                               "is unpublished metadata on that item. Publish first.") % (revno, self.name))
+                                "is unpublished metadata on that item. Publish first.") % (revno, self.name))
+        current_revno = self.next_revno - 1
+        if current_revno >= revno:
+            raise RevisionNumberMismatchError("You cannot create a revision with revno %s. Your revno must be greater than " % revno + \
+                                              "the item's last revision, which is %s." % current_revno)
         if self._uncommitted_revision is not None:
-            if self._uncommitted_revision.revno != revno:
-                raise RevisionNumberMismatchError(("There already is an uncommitted revision #%d on this item that doesn't match the "
-                                                   "revno %d you specified. The Storage API does not yet allow non-contiguous revnos") %
-                                                   (self._uncommitted_revision.revno, revno))
-            else:
-                return self._uncommitted_revision
+            return self._uncommitted_revision
         else:
             self._uncommitted_revision = self._backend._create_revision(self, revno)
             return self._uncommitted_revision
@@ -674,11 +794,20 @@ class Item(Serializable, DictMixin):
     # (un)serialization support following:
     element_name = 'item'
 
-    def get_unserializer(self, name, attrs):
+    def get_unserializer(self, context, name, attrs):
+        mode = context.revno_mode
         if name == 'meta':
-            return ItemMeta(attrs, self)
+            if mode == 'as_is':
+                # do not touch item meta data
+                return None # XXX give a dummy unserializer
+            elif mode == 'next':
+                # replace item meta data
+                return ItemMeta(attrs, self)
         elif name == 'revision':
-            revno = int(attrs['revno'])
+            if mode == 'as_is':
+                revno = int(attrs['revno'])
+            elif mode == 'next':
+                revno = self.next_revno
             return self.create_revision(revno)
 
     def serialize(self, xmlgen):
@@ -689,11 +818,12 @@ class Item(Serializable, DictMixin):
         im = ItemMeta({}, self)
         im.serialize(xmlgen)
         revnos = self.list_revisions()
-        current_revno = revnos[-1]
-        for revno in revnos:
-            if xmlgen.shall_serialize(item=self, revno=revno, current_revno=current_revno):
-                rev = self.get_revision(revno)
-                rev.serialize(xmlgen)
+        if revnos:
+            current_revno = revnos[-1]
+            for revno in revnos:
+                if xmlgen.shall_serialize(item=self, revno=revno, current_revno=current_revno):
+                    rev = self.get_revision(revno)
+                    rev.serialize(xmlgen)
 
 
 class Revision(Serializable, DictMixin):
@@ -707,7 +837,7 @@ class Revision(Serializable, DictMixin):
     Each revision object has a creation timestamp in the 'timestamp' property
     that defaults to None for newly created revisions in which case it will be
     assigned at commit() time. It is writable for use by converter backends, but
-    care must be taken in that case to create monotonous timestamps!
+    care must be taken in that case to create monotone timestamps!
     This timestamp is also retrieved via the backend's history() method.
     """
     def __init__(self, item, revno, timestamp):
@@ -775,7 +905,7 @@ class Revision(Serializable, DictMixin):
         logging.debug("Committing %r revno %r" % (self.item.name, self.revno))
         self.item.commit()
 
-    def get_unserializer(self, name, attrs):
+    def get_unserializer(self, context, name, attrs):
         if name == 'meta':
             return Meta(attrs, self)
         elif name == 'data':
@@ -904,8 +1034,7 @@ class NewRevision(Revision):
             raise TypeError("Key must be string type")
         if key.startswith('__'):
             raise TypeError("Key must not begin with two underscores")
-        if not value_type_is_valid(value):
-            raise TypeError("Value must be string, int, long, float, bool, complex or a nested tuple of the former")
+        check_value_type_is_valid(value)
 
         self._metadata[key] = value
 
@@ -924,7 +1053,7 @@ class NewRevision(Revision):
 
 
 # Little helper function:
-def value_type_is_valid(value):
+def check_value_type_is_valid(value):
     """
     For metadata-values, we allow only immutable types, namely:
     str, unicode, bool, int, long, float, complex and tuple.
@@ -934,25 +1063,13 @@ def value_type_is_valid(value):
     @param value: A value of which we want to know if it is a valid metadata value.
     @return: bool
     """
-    if isinstance(value, (bool, str, unicode, int, long, float, complex)):
+    accepted = (bool, str, unicode, int, long, float, complex)
+    if isinstance(value, accepted):
         return True
     elif isinstance(value, tuple):
         for element in value:
-            if not value_type_is_valid(element):
-                return False
+            if not check_value_type_is_valid(element):
+                raise TypeError("Value must be one of %s or a nested tuple thereof. Not %r" % (accepted, type(value)))
         else:
             return True
 
-
-def upgrade_syspages(packagepath):
-    """
-    Upgrade the wiki's system pages from an XML file.
-
-    @type packagepath: basestring
-    @param packagepath: File path to the XML file containing the new system pages.
-    """
-    tmp_backend = memory.MemoryBackend()
-    unserialize(tmp_backend, packagepath)
-
-    # TODO: clone to real backend from config!
-    # clone(tmp_backend, )

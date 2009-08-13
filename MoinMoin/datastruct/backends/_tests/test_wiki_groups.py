@@ -3,7 +3,7 @@
 MoinMoin - MoinMoin.backends.wiki_group tests
 
 @copyright: 2003-2004 by Juergen Hermann <jh@web.de>,
-            2007 by MoinMoin:ThomasWaldmann
+            2007,2009 by MoinMoin:ThomasWaldmann
             2008 by MoinMoin:MelitaMihaljevic
             2009 by MoinMoin:DmitrijsMilajevs
 @license: GNU GPL, see COPYING for details.
@@ -13,7 +13,7 @@ from py.test import raises
 import re, shutil
 
 from MoinMoin.datastruct.backends._tests import GroupsBackendTest
-from MoinMoin.datastruct import WikiGroups
+from MoinMoin.datastruct import WikiGroups, GroupDoesNotExistError
 from MoinMoin import Page, security
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.user import User
@@ -25,9 +25,8 @@ class TestWikiGroupBackend(GroupsBackendTest):
     # Suppose that default configuration for the groups is used which
     # is WikiGroups backend.
 
-    def setup_class(self):
+    def setup_method(self, method):
         become_trusted(self.request)
-
         for group, members in self.test_groups.iteritems():
             page_text = ' * %s' % '\n * '.join(members)
             create_page(self.request, group, page_text)
@@ -40,11 +39,12 @@ class TestWikiGroupBackend(GroupsBackendTest):
         become_trusted(request)
 
         page = create_page(request, u'SomeGroup', u" * ExampleUser")
-        page.renamePage('AnotherGroup')
+        page.rename('AnotherGroup')
 
         result = u'ExampleUser' in request.groups[u'AnotherGroup']
+        assert result
 
-        assert result is True
+        raises(GroupDoesNotExistError, lambda: request.groups[u'SomeGroup'])
 
     def test_copy_group_page(self):
         """
@@ -54,11 +54,13 @@ class TestWikiGroupBackend(GroupsBackendTest):
         become_trusted(request)
 
         page = create_page(request, u'SomeGroup', u" * ExampleUser")
-        page.copyPage(u'SomeOtherGroup')
+        page.copy(u'SomeOtherGroup')
 
         result = u'ExampleUser' in request.groups[u'SomeOtherGroup']
+        assert result
 
-        assert result is True
+        result = u'ExampleUser' in request.groups[u'SomeGroup']
+        assert result
 
     def test_appending_group_page(self):
         """
@@ -109,13 +111,15 @@ class TestWikiGroupBackend(GroupsBackendTest):
         page_content = "\n".join(page_content)
         create_page(request, u'UserGroup', page_content)
 
+        # updates the text with the text_user
         test_user = create_random_string_list(length=15, count=1)[0]
-        page = append_page(request, u'UserGroup', u' * %s' % test_user)
-
-        # saves the text without test_user
-        page.saveText(page_content, 0)
+        create_page(request, u'UserGroup', page_content + '\n * %s' % test_user)
         result = test_user in request.groups[u'UserGroup']
+        assert result
 
+        # updates the text without test_user
+        create_page(request, u'UserGroup', page_content)
+        result = test_user in request.groups[u'UserGroup']
         assert not result
 
     def test_group_page_user_addition_trivial_change(self):
@@ -132,7 +136,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         # next member saved  as trivial change
         test_user = create_random_string_list(length=15, count=1)[0]
         member = u" * %s\n" % test_user
-        page.saveText(member, 0, trivial=1)
+        page = create_page(request, u'UserGroup', member)
 
         result = test_user in request.groups[u'UserGroup']
 

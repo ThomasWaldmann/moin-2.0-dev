@@ -6,12 +6,15 @@
                 2008-2008 MoinMoin:FlorianKrupicka
     @license: GNU GPL, see COPYING for details.
 """
+
 from MoinMoin.web.contexts import AllContext, Context, XMLRPCContext
 from MoinMoin.web.exceptions import HTTPException, Forbidden
 from MoinMoin.web.request import Request, MoinMoinFinish, HeaderSet
 from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_response, \
     redirect_last_visited
-from MoinMoin.storage.error import AccessDeniedError
+from MoinMoin.storage.error import AccessDeniedError, StorageError
+from MoinMoin.storage.serialization import unserialize
+from MoinMoin.storage.backends import router, acl, memory
 from MoinMoin.Page import Page
 from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
 
@@ -34,6 +37,7 @@ def init(request):
 
     context.session = context.cfg.session_service.get_session(context)
 
+    init_unprotected_backends(context)
     context.user = setup_user(context, context.session)
 
     context.lang = setup_i18n_postauth(context)
@@ -48,14 +52,71 @@ def init(request):
     context.clock.stop('init')
     return context
 
-def init_backend(context):
+
+def init_unprotected_backends(context):
     """ initialize the backend
 
         This is separate from init because the conftest request setup needs to be
         able to create fresh data storage backends in between init and init_backend.
     """
-    from MoinMoin.storage.backends.acl import AclWrapperBackend
-    context.storage = AclWrapperBackend(context)
+    # A ns_mapping consists of several lines, where each line is made up like this:
+    # mountpoint, unprotected backend, protection to apply as a dict
+    # We don't consider the protection here. That is done in protect_backends.
+    ns_mapping = context.cfg.namespace_mapping
+    # Just initialize with unprotected backends.
+    unprotected_mapping = [(ns, backend) for ns, backend, acls in ns_mapping]
+    context.unprotected_storage = router.RouterBackend(unprotected_mapping)
+
+    # This makes the first request after server restart potentially much slower...
+    preload_xml(context)
+
+
+def preload_xml(context):
+    # If the content was already pumped into the backend, we don't want
+    # to do that again. (Works only until the server is restarted.)
+    xmlfile = context.cfg.preloaded_xml
+    if xmlfile:
+        context.cfg.preloaded_xml = None
+        tmp_backend = memory.MemoryBackend()
+        unserialize(tmp_backend, xmlfile)
+        # TODO optimize this, maybe unserialize could count items it processed
+        item_count = 0
+        for item in tmp_backend.iteritems():
+            item_count += 1
+        try:
+            # In case the server was restarted we cannot know whether
+            # the xml data already exists in the target backend.
+            # Hence we check the existence of the items before we unserialize
+            # them to the backend.
+            backend = context.unprotected_storage
+            for item in tmp_backend.iteritems():
+                item = backend.get_item(item.name)
+        except StorageError:
+            # if there is some exception, we assume that backend needs to be filled
+            # we need to use it as unserialization target so that update mode of
+            # unserialization creates the correct item revisions
+            unserialize(backend, xmlfile)
+    else:
+        item_count = 0
+
+    # XXX wrong place / name - this is a generic preload functionality, not just for tests
+    # To make some tests happy
+    context.cfg.test_num_pages = item_count
+
+
+def protect_backends(context):
+    """
+    This function is invoked after the user has been set up. setup_user needs access to
+    storage and the ACL middleware needs access to the user's name. Hence we first
+    init the unprotected backends so setup_user can access storage, and protect the
+    backends after the user has been set up.
+    """
+    amw = acl.AclWrapperBackend
+    ns_mapping = context.cfg.namespace_mapping
+    # Protect each backend with the acls provided for it in the mapping at position 2
+    protected_mapping = [(ns, amw(context, backend, **acls)) for ns, backend, acls in ns_mapping]
+    context.storage = router.RouterBackend(protected_mapping)
+
 
 def run(context):
     """ Run a context trough the application. """
@@ -238,7 +299,7 @@ class Application(object):
         try:
             request = self.Request(environ)
             context = init(request)
-            init_backend(context)
+            protect_backends(context)
             response = run(context)
             context.clock.stop('total')
         except HTTPException, e:

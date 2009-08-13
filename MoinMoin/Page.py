@@ -23,7 +23,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessD
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.search import term
 
-from MoinMoin.items import ACL, DELETED, MIMETYPE, SIZE, EDIT_LOG, \
+from MoinMoin.items import ACL, MIMETYPE, SIZE, EDIT_LOG, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 
@@ -336,9 +336,6 @@ class Page(object):
     def edit_info(self):
         """ Return timestamp/editor info for this Page object (can be an old revision).
 
-            Note: if you ask about a deleted revision, it will report timestamp and editor
-                  for the delete action (in the edit-log, this is just a SAVE).
-
         This is used by MoinMoin/xmlrpc/__init__.py.
 
         @rtype: dict
@@ -397,59 +394,30 @@ class Page(object):
             return timestamp
         return 0
 
-    def isUnderlayPage(self, includeDeleted=True):
-        """
-        Does this page live in the underlay dir?
-
-        @param includeDeleted: include deleted pages
-        @rtype: bool
-        @return: true if page lives in the underlay dir
-        """
-        if not includeDeleted and DELETED in self._rev:
-            return False
-        elif not self._item:
-            return False
-        return hasattr(self._item._backend, '_layer_marked_underlay')
-
-    def isStandardPage(self, includeDeleted=True):
+    def isStandardPage(self):
         """
         Does this page live in the data dir?
 
-        @param includeDeleted: include deleted pages
         @rtype: bool
         @return: true if page lives in the data dir
-        """
-        if not includeDeleted and DELETED in self._rev:
-            return False
-        elif not self._item:
-            return False
-        return not hasattr(self._item._backend, '_layer_marked_underlay')
 
-    def exists(self, domain=None, includeDeleted=False):
+        DEPRECATED
+        Get rid of this.
+        """
+        if not self._item:
+            return False
+
+    def exists(self, domain=None):
         """
         Does this page exist?
 
-        @param domain: where to look for the page. Default: look in all,
-                       available values: 'underlay', 'standard'
-        @param includeDeleted: include deleted pages?
+        @param domain: OBSOLETE. Just for caller non-breakage.
         @rtype: bool
         @return: true if page exists otherwise false
         """
         if self._item is None or self._rev is None:
             return False
-
-        try:
-            if not includeDeleted and self._rev[DELETED]:
-                return False
-        except KeyError:
-            pass
-
-        if domain is None:
-            return True
-        elif domain == 'underlay':
-            return hasattr(self._item._backend, '_layer_marked_underlay')
-        else:
-            return not hasattr(self._item._backend, '_layer_marked_underlay')
+        return True
 
     def size(self, rev=-1):
         """
@@ -1099,8 +1067,7 @@ class Page(object):
             page.lazy_load()
         else:
             page.body = alternative_text
-            logging.warn('The page "%s" could not be found. Check your'
-                         ' underlay directory setting.' % page.page_name)
+            logging.warn('The page "%s" could not be found.' % page.page_name)
 
         page._page_name_force = page.page_name
         page.page_name = self.page_name
@@ -1203,7 +1170,7 @@ class Page(object):
         @return: true if there is a known conflict.
         """
 
-        cache = caching.CacheEntry(self.request, self, 'conflict', scope='item')
+        cache = caching.CacheEntry(self.request, self.page_name, 'conflict', scope='item')
         return cache.exists()
 
     def setConflict(self, state):
@@ -1211,7 +1178,7 @@ class Page(object):
 
         @param state: bool, true if there is a conflict.
         """
-        cache = caching.CacheEntry(self.request, self, 'conflict', scope='item')
+        cache = caching.CacheEntry(self.request, self.page_name, 'conflict', scope='item')
         if state:
             cache.update("") # touch it!
         else:
@@ -1227,7 +1194,7 @@ class RootPage(Item):
     def __init__(self, request):
         Item.__init__(self, request, name=u'')
 
-    def getPageList(self, user=None, exists=1, filter=None, include_underlay=True, return_objects=False):
+    def getPageList(self, user=None, filter=None, include_syspages=True, return_objects=False):
         """
         List user readable pages under current page.
 
@@ -1249,7 +1216,6 @@ class RootPage(Item):
 
         @param user: the user requesting the pages (MoinMoin.user.User)
         @param filter: filter function
-        @param exists: filter existing pages
         @param return_objects: lets it return a list of Page objects instead of
                                names
         @rtype: list of unicode strings
@@ -1262,16 +1228,22 @@ class RootPage(Item):
             user = request.user
 
         search_term = term.AND()
-        if not include_underlay:
-            search_term.add(term.FromUnderlay())
-
         if filter:
             search_term.add(term.NameFn(filter))
 
-        items = self.list_items(search_term, include_deleted=not exists)
+        items = self.list_items(search_term)
 
         if user or return_objects:
             for item in items:
+                if not include_syspages:
+                    try:
+                        rev = item.get_revision(-1)
+                        if rev[IS_SYSPAGE]:
+                            continue
+                    except KeyError:
+                        # No syspage. Go on.
+                        pass
+
                 # XXX ACL check when user given?
                 if return_objects:
                     page = Page.from_item(request, item)

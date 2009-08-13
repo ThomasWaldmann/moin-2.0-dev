@@ -9,7 +9,9 @@
     @copyright: 2009 MoinMoin:ChristopherDenter,
     @license: GNU GPL, see COPYING for details.
 """
-from sqlalchemy import create_engine, Column, Integer, String, PickleType, ForeignKey
+from StringIO import StringIO
+
+from sqlalchemy import create_engine, Column, Integer, Binary, String, PickleType, ForeignKey
 from sqlalchemy.orm import sessionmaker, relation, backref
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
@@ -19,13 +21,14 @@ from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSu
 
 
 Base = declarative_base()
+# Our factory for sessions:
+Session = sessionmaker()
 
 
 class SQLAlchemyBackend(Backend):
     """
     The actual SQLAlchemyBackend.
     """
-    # TODO find some good default for the db_uri that is NOT in-memory
     def __init__(self, db_uri='sqlite:///:memory:', verbose=False):
 
         ## TODO DEVELOPMENT SETTINGS --- Remove when in-memory sqlite database is not needed anymore
@@ -33,17 +36,13 @@ class SQLAlchemyBackend(Backend):
         self.engine = create_engine('sqlite:///:memory:', poolclass=StaticPool, connect_args={'check_same_thread': False})
         ## TODO </development settings>
 
-        # TODO comment in: self.engine = create_engine(db_uri, echo=verbose)
-        # Our factory for sessions:
-        self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
-
-        # XXX below
+        # Create the database schema
         SQLAItem.metadata.bind = self.engine
         SQLAItem.metadata.create_all()
 
     def has_item(self, itemname):
         try:
-            session = self.Session()
+            session = Session()
             session.query(SQLAItem).filter_by(_name=itemname).one()
             return True
         except NoResultFound:
@@ -58,7 +57,7 @@ class SQLAlchemyBackend(Backend):
         @rtype: item object
         @raise NoSuchItemError: No item with name 'itemname' is known to this backend.
         """
-        session = self.Session()
+        session = Session()
         # The following fails if not EXACTLY one column is found, i.e., it also fails
         # if MORE than one item is found, which should not happen since names should be
         # unique
@@ -83,7 +82,10 @@ class SQLAlchemyBackend(Backend):
         @rtype: item object
         @raise ItemAlreadyExistsError: The item you were trying to create already exists.
         """
-        session = self.Session()
+        if not isinstance(itemname, (str, unicode)):
+            raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
+
+        session = Session()
         found = session.query(SQLAItem).filter_by(_name=itemname).all()
         if found:
             raise ItemAlreadyExistsError("An item with the name %s already exists." % itemname)
@@ -99,7 +101,7 @@ class SQLAlchemyBackend(Backend):
 
         @rtype: iterator of item objects
         """
-        session = self.Session()
+        session = Session()
         return session.query(SQLAItem).all()
 
     def _get_revision(self, item, revno):
@@ -132,7 +134,7 @@ class SQLAlchemyBackend(Backend):
         @param item: The Item on which we want to operate.
         @return: list of ints (possibly empty)
         """
-        return [rev.revno for rev in item._revisions.all()]
+        return [rev.revno for rev in item._revisions.all() if rev.id is not None]
 
     def _create_revision(self, item, revno):
         """
@@ -153,7 +155,7 @@ class SQLAlchemyBackend(Backend):
         fulfilled. Note: This behavior will be changed, allowing monotonic
         revnos and not requiring revnos to be subsequent as well.
         """
-        rev = SQLANewRevision(item, revno)
+        rev = SQLARevision(item, revno)
         return rev
 
     def _rename_item(self, item, newname):
@@ -173,7 +175,23 @@ class SQLAlchemyBackend(Backend):
         committed to storage)
         @return: None
         """
-        raise NotImplementedError()
+        session = Session()
+        itemname = item.name
+        try:
+            item = session.query(SQLAItem).filter_by(_name=itemname).one()
+        except NoResultFound:
+            raise NoSuchItemError("There is no item %s." % item.name)
+        try:
+            new_item = session.query(SQLAItem).filter_by(_name=newname).one()
+        except NoResultFound:
+            # Target item should not already exist.
+            pass
+        else:
+            raise ItemAlreadyExistsError("There already is an item with the name %s." % newname)
+
+        item._name = newname
+        # not necessary? session.add(item)
+        session.commit()
 
     def _commit_item(self, revision):
         """
@@ -186,7 +204,7 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to commit to  storage.
         @return: None
         """
-        session = self.Session()
+        session = Session()
         session.add(revision)
         session.commit()
 
@@ -238,33 +256,6 @@ class SQLAlchemyBackend(Backend):
         """
         raise NotImplementedError()
 
-    def _read_revision_data(self, revision, chunksize):
-        """
-        Called to read a given amount of bytes of a revisions data. By default, all
-        data is read.
-
-        @type revision: Object of class StoredRevision.
-        @param revision: The revision on which we want to operate.
-        @type chunksize: int
-        @param chunksize: amount of bytes to be read at a time
-        @return: string
-        """
-        # TODO honor chunksize
-        return revision._data
-
-    def _write_revision_data(self, revision, data):
-        """
-        When this method is called, the passed data is written to the revisions data.
-
-        @type revision: Object of class NewRevision.
-        @param revision: The revision on which we want to operate.
-        @type data: str
-        @param data: The data to be written on the revision.
-        @return: None
-        """
-        # TODO "Stream" this
-        revision._data = data
-
     def _get_item_metadata(self, item):
         """
         Load metadata for a given item, return dict.
@@ -312,62 +303,151 @@ class SQLAlchemyBackend(Backend):
         """
         raise NotImplementedError()
 
-    def _seek_revision_data(self, revision, position, mode):
-        """
-        Set the revisions cursor on the revisions data.
-
-        @type revision: Object of StoredRevision.
-        @param revision: The revision on which we want to operate.
-        @type position: int
-        @param position: Indicates where to position the cursor
-        @type mode: int
-        @param mode: 0 for 'absolute positioning', 1 to seek 'relatively to the
-        current position', 2 to seek 'relative to the files end'.
-        @return: None
-        """
-        raise NotImplementedError()
-
 
 class SQLAItem(Item, Base):
     __tablename__ = 'items'
 
-    _id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     _name = Column(String)
     _metadata = Column(PickleType)
 
     def get_revision(self, revno):
         try:
-            session = self._backend.Session()
-            rev = session.query(SQLAStoredRevision).filter(SQLARevision._revno==revno).one()
+            session = Session()
+            rev = session.query(SQLARevision).filter(SQLARevision._revno==revno).one()
             rev.__init__(self, revno)
             return rev
         except NoResultFound:
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
+        finally:
+            session.close()
+
+
+class Chunk(Base):
+    """
+    A chunk of data.
+    """
+    __tablename__ = 'rev_data_chunks'
+
+    id = Column(Integer, primary_key=True)
+    chunkno = Column(Integer)
+    data = Column(String)
+    _container_id = Column(Integer, ForeignKey('rev_data.id'))
+
+    def __init__(self, chunkno):
+        self.chunkno = chunkno
+        self.data = ""
+
+
+class Data(Base):
+    """
+    Data that is assembled from smaller chunks.
+    Bookkeeping is done here.
+    """
+    __tablename__ = 'rev_data'
+
+    id = Column(Integer, primary_key=True)
+    _chunks = relation(Chunk, order_by=Chunk.id)
+    _revision_id = Column(Integer, ForeignKey('revisions.id'))
+    size = Column(Integer)
+
+    chunksize = 4
+
+    def __init__(self):
+        self.chunkno = 0
+        self._last_chunk = Chunk(self.chunkno)
+        self.session = Session()
+        self.cursor_pos = 0
+        self.size = 0
+        self.session.add(self)
+
+    def write(self, data):
+        while data:
+            # How much space is left in the current chunk?
+            chunk_space_left = self.chunksize - len(self._last_chunk.data)
+            # If there's no space left, create a new chunk
+            if chunk_space_left == 0:
+                self._last_chunk = Chunk(self.chunkno)
+                chunk_space_left = self.chunksize
+            data_chunk = data[:chunk_space_left]
+            self.size += len(data_chunk)
+            self._last_chunk.data += data_chunk
+            self._chunks.append(self._last_chunk)
+            self.session.add(self._last_chunk)
+            self.session.commit()
+            self.chunkno += 1
+            data = data[chunk_space_left:]
+
+    def tell(self):
+        return self.cursor_pos
+
+    def seek(self, pos, mode=0):
+        if mode == 0:
+            self.cursor_pos = pos
+        elif mode == 1:
+            self.cursor_pos += pos
+        elif mode == 2:
+            self.cursor_pos = self.size + pos
+
+    def read(self, amount=None):
+        # The first chunk that contains the data we want to read
+        # Perhaps we have already read a part of the first chunk before. We want to skip that.
+        first, skip = divmod(self.cursor_pos, self.chunksize)
+
+        # No amount given means: Read all that remains (from viewpoint of cursor_pos)
+        if amount is None or amount > self.size:
+            # From the first chunk we read everything after skip
+            try:
+                begin = self._chunks[first].data[skip:]
+            except IndexError:
+                begin = ''
+
+            remaining_chunks = self._chunks[first+1:]
+            end = "".join([chunk.data for chunk in remaining_chunks])
+            # We've read to the end, now set the cursor on the last+1
+            self.cursor_pos = self.size
+            return begin + end
+
+        # Otherwise we need all chunks up to last
+        last = first + amount / self.chunksize + 1
+        # Get all those chunks
+        chunks = self._chunks[first:last]
+        begin = chunks[0].data[skip:skip+amount]
+        # We just concatenate the contents of all but the first and last chunks
+        mid = "".join([chunk.data for chunk in chunks[1:-1]])
+        # And from the last chunk, we only take what is remaining to get `amount` bytes in total.
+        remaining = (amount - len(begin+mid)) % self.chunksize
+        end = chunks[-1].data[:remaining]
+        self.cursor_pos += amount
+        assert len(begin+mid+end) == amount
+        return begin + mid + end
 
 
 class SQLARevision(Revision, Base):
     __tablename__ = 'revisions'
 
-    _id = Column(Integer, primary_key=True)
-    _item_id = Column(Integer, ForeignKey('items._id'))
-    _item = relation(SQLAItem, backref=backref('_revisions', order_by=_id, lazy='dynamic', cascade=''), cascade='')
+    id = Column(Integer, primary_key=True)
+    _data = relation(Data, uselist=False)
+    _item_id = Column(Integer, ForeignKey('items.id'))
+    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy='dynamic', cascade=''), cascade='', uselist=False)
     _revno = Column(Integer)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
-    # TODO Find correct type for _data
-    _data = Column(String)
 
+    def __init__(self, item, revno, timestamp=None):
+        Revision.__init__(self, item, revno, timestamp)
 
-class SQLAStoredRevision(SQLARevision, StoredRevision):
-    # XXX
-    def __init__(self, item, revno, timestamp=None, size=None):
-        SQLARevision.__init__(self, item, revno, timestamp)
-        self._size = size
+    def write(self, data):
+        if self._data is None:
+            self._data = Data()
+        self._data.write(data)
 
+    def read(self, amount=None):
+        return self._data.read(amount)
 
-class SQLANewRevision(SQLARevision, NewRevision):
-    # XXX
-    def __init__(self, item, revno):
-        SQLARevision.__init__(self, item, revno, None)
-        self._metadata = {}
-        self._size = 0
+    def seek(self, pos, mode=0):
+        self._data.seek(pos, mode)
+
+    def tell(self):
+        return self._data.tell()
+

@@ -423,7 +423,7 @@ class ScriptContext(AllContext):
     def __init__(self, url=None, pagename=''):
         if url is None:
             url = 'http://localhost:0/' # just some somehow valid dummy URL
-        environ = create_environ(base_url=url) # XXX not sure about base_url, but makes "make underlay" work
+        environ = create_environ(base_url=url) # XXX is base_url correct? (was necessary for make underlay which is now gone)
         environ['HTTP_USER_AGENT'] = 'CLI/Script'
         environ['wsgi.input'] = sys.stdin
         request = Request(environ)

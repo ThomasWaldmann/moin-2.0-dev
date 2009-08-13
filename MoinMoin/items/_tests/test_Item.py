@@ -8,8 +8,9 @@
 
 import py
 
+from MoinMoin._tests import become_trusted
 from MoinMoin.items import Item, NonExistent, Binary, Text, Image, TransformableBitmapImage, PythonSrc, \
-                           DELETED, MIMETYPE, \
+                           MIMETYPE, \
                            EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                            EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
@@ -38,6 +39,7 @@ class TestItem:
         data = 'foobar'
         meta = dict(foo='bar')
         comment = u'saved it'
+        become_trusted(self.request)
         item = Item.create(self.request, name)
         # save rev 0
         item._save(meta, data, mimetype=mimetype, comment=comment)
@@ -60,7 +62,6 @@ class TestItem:
         assert saved_meta[EDIT_LOG_COMMENT] == comment
         assert saved_data == data
         assert item.rev.revno == 1
-        assert not saved_meta.get(DELETED)
 
         data = ''
         comment = 'saved empty data'
@@ -73,7 +74,6 @@ class TestItem:
         assert saved_meta[EDIT_LOG_COMMENT] == comment
         assert saved_data == data
         assert item.rev.revno == 2
-        assert saved_meta[DELETED]
 
         # access old revision
         item = Item.create(self.request, name, rev_no=1)

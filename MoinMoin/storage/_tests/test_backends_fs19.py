@@ -12,7 +12,6 @@ import py.test
 
 from MoinMoin import wikiutil
 from MoinMoin.storage import Item
-from MoinMoin.items import DELETED
 from MoinMoin.storage.backends.fs19 import FSPageBackend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
@@ -28,14 +27,16 @@ deleted_item_name = "deleted_page"
 
 attachment_name = u"test.txt"
 attachment_data = "attachment"
-attachment_mtime = 12340000
+attachment_mtime1 = 12340000
+attachment_mtime2 = 12345000
 attachment_comment = "saved test attachment"
 
 logentry = lambda *items: "\t".join(items)
 item_editlog = "\r\n".join([
     logentry(str(item_mtime * 1000000), '00000001', 'SAVE', item_name, '', '', '', '', item_comment),
-    logentry(str(attachment_mtime * 1000000), '99999999', 'ATTNEW', item_name, '', '', '', attachment_name, attachment_comment),
+    logentry(str(attachment_mtime1 * 1000000), '99999999', 'ATTNEW', item_name, '', '', '', attachment_name, attachment_comment),
     logentry(str(item_mtime * 1000000 + 1), '00000002', 'SAVE', item_name, '', '', '', '', item_comment),
+    logentry(str(attachment_mtime2 * 1000000), '99999999', 'ATTNEW', item_name, '', '', '', attachment_name, attachment_comment),
 ])
 
 deleted_item_editlog = "\r\n".join([
@@ -157,17 +158,6 @@ class TestFS19Backend(object):
         item = self.backend.get_item(item_name)
         py.test.raises(KeyError, item.__getitem__, 'asdf')
 
-    def test_metadata_not_deleted(self):
-        item = self.backend.get_item(item_name)
-        rev = item.get_revision(0)
-        py.test.raises(KeyError, rev.__getitem__, DELETED)
-
-    def test_metadata_deleted(self):
-        item = self.backend.get_item(deleted_item_name)
-        rev = item.get_revision(1)
-        assert rev[DELETED] is True
-        assert rev['acl'] == deleted_item_acl # fs19 backend gets this from rev N-1
-
     def test_metadata_mtime(self):
         item = self.backend.get_item(item_name)
         rev = item.get_revision(0)
@@ -177,7 +167,8 @@ class TestFS19Backend(object):
         name = item_name + '/' + attachment_name
         item = self.backend.get_item(name)
         rev = item.get_revision(0)
-        assert rev.timestamp == attachment_mtime
+        rev_timestamp = rev.timestamp
+        assert rev_timestamp == attachment_mtime2
 
     def test_item_revision_count(self):
         item = self.backend.get_item(item_name)

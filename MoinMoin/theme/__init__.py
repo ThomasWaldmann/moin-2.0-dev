@@ -868,6 +868,7 @@ var search_hint = "%(search_hint)s";
         menu = [
             'rc',
             '__separator__',
+            'delete',
             'rename',
             'copy',
             '__separator__',
@@ -888,6 +889,7 @@ var search_hint = "%(search_hint)s";
             '__separator__': _('------------------------'),
             'refresh': _('Delete Cache'),
             'rename': _('Rename Item'),
+            'delete': _('Delete Item'),
             'rc': _('Recent Changes'),
             'copy': _('Copy Item'),
             'LikePages': _('Like Pages'),
@@ -1032,11 +1034,9 @@ actionsMenuInit('%(label)s');
         @rtype: bool
         @return: true if editbar should show
         """
-        # Show editbar only for existing pages, including deleted pages,
-        # that the user may read. If you may not read, you can't edit,
-        # so you don't need editbar.
-        if (page.exists(includeDeleted=1) and
-            self.request.user.may.read(page.page_name)):
+        # Show editbar only for existing pages, that the user may read.
+        # If you may not read, you can't edit, so you don't need editbar.
+        if (page.exists() and self.request.user.may.read(page.page_name)):
             form = self.request.form
             action = self.request.action
             # Do not show editbar on edit but on save/cancel
@@ -1430,7 +1430,7 @@ actionsMenuInit('%(label)s');
 
         # In standard mode, emit theme.header
         else:
-            exists = pagename and page.exists(includeDeleted=True)
+            exists = pagename and page.exists()
             # prepare dict for theme code:
             d = {
                 'theme': self.name,

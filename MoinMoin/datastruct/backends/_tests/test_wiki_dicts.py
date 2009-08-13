@@ -18,7 +18,7 @@ class TestWikiDictsBackend(DictsBackendTest):
     # Suppose that default configuration for the dicts is used which
     # is WikiDicts backend.
 
-    def setup_class(self):
+    def setup_method(self, method):
         request = self.request
         become_trusted(request)
 

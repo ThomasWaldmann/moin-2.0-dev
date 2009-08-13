@@ -62,7 +62,7 @@ def create_page(request, itemname, content, mimetype='text/moin-wiki', acl=None)
     if acl is not None:
         meta[ACL] = acl
     item._save(meta, content, mimetype=mimetype)
-    return item
+    return Item.create(request, itemname)
 
 def append_page(request, itemname, content):
     """ appends some content to an existing page """
@@ -71,7 +71,7 @@ def append_page(request, itemname, content):
     item = Item.create(request, itemname)
     content = "%s\n%s\n"% (item.data, content)
     item._save({}, content)
-    return item
+    return Item.create(request, itemname)
 
 def create_random_string_list(length=14, count=10):
     """ creates a list of random strings """

@@ -18,6 +18,7 @@
 import py.test, re
 
 from MoinMoin.storage import Item, NewRevision
+from MoinMoin.storage.backends import memory
 from MoinMoin.storage.error import NoSuchItemError, ItemAlreadyExistsError, NoSuchRevisionError, RevisionAlreadyExistsError
 from MoinMoin.search import term
 
@@ -540,8 +541,6 @@ class BackendTest(object):
         assert rev.timestamp is None
         item.commit()
         assert rev.timestamp is not None
-        for nrev in self.backend.history():
-            assert nrev.timestamp == rev.timestamp
         item = self.backend.get_item('ts1')
         assert item.get_revision(0).timestamp == rev.timestamp
 
@@ -597,12 +596,13 @@ class BackendTest(object):
             item.create_revision(revno)
             item.commit()
 
-            from MoinMoin.storage.backends.router import RouterBackend
-            if isinstance(self.backend, RouterBackend):
+            from MoinMoin.storage.backends import router, acl
+            if isinstance(self.backend, (router.RouterBackend, acl.AclWrapperBackend)):
                 # Revisions are created too fast for the rev's timestamp's granularity.
                 # This only affects the RouterBackend because there several different
                 # backends are used and no means for storing simultaneously created revs
-                # in the correct order exists between backends.
+                # in the correct order exists between backends. It affects AclWrapperBackend
+                # tests as well because those use a RouterBackend internally for real-world-likeness.
 
                 # XXX XXX
                 # You may have realized that all the items above belong to the same backend so this shouldn't actually matter.
@@ -626,6 +626,15 @@ class BackendTest(object):
             assert rev.item.name == name
             assert rev.revno == revno
 
+    def test_history_size_after_rename(self):
+        item = self.backend.create_item('first')
+        item.create_revision(0)
+        item.commit()
+        item.rename('second')
+        item.create_revision(1)
+        item.commit()
+        assert len([rev for rev in self.backend.history()]) == 2
+
     def test_destroy_item(self):
         itemname = "I will be completely destroyed"
         rev_data = "I will be completely destroyed, too, hopefully"
@@ -640,8 +649,12 @@ class BackendTest(object):
         assert not itemname in item_names
         all_rev_data = [rev.read() for rev in self.backend.history()]
         assert not rev_data in all_rev_data
+
         for rev in self.backend.history():
             assert not rev.item.name == itemname
+        for rev in self.backend.history(reverse=False):
+            assert not rev.item.name == itemname
+
 
     def test_destroy_revision(self):
         itemname = "I will see my children die :-("
@@ -676,4 +689,80 @@ class BackendTest(object):
         last_data = last.read()
         assert last_data != third
         assert last_data == persistent_rev
+
+        for rev in self.backend.history():
+            assert not (rev.item.name == itemname and rev.revno == 2)
+
+    def test_clone_backend(self):
+        src = self.request.storage
+        dst = memory.MemoryBackend()
+
+        dollys_name = "Dolly The Sheep"
+        item = src.create_item(dollys_name)
+        rev = item.create_revision(0)
+        rev.write("maeh")
+        rev['origin'] = 'reagenzglas'
+        item.commit()
+
+        brothers_name = "Dolly's brother"
+        item = src.create_item(brothers_name)
+        item.change_metadata()
+        item['no revisions'] = True
+        item.publish_metadata()
+
+        dst.clone(src, verbose=False)
+
+        assert len(list(dst.iteritems())) == 2
+        assert len(list(dst.history())) == 1
+        assert dst.has_item(dollys_name)
+        rev = dst.get_item(dollys_name).get_revision(0)
+        assert rev.read() == "maeh"
+        assert {'origin': 'reagenzglas'} == dict(rev.iteritems())
+
+        assert dst.has_item(brothers_name)
+        item = dst.get_item(brothers_name)
+        assert {'no revisions': True} == dict(item.iteritems())
+
+    def test_iteritems_item_names_after_rename(self):
+        item = self.backend.create_item('first')
+        item.create_revision(0)
+        item.commit()
+        item.rename('second')
+        item.create_revision(1)
+        item.commit()
+        # iteritems provides actual name
+        items = [item for item in self.backend.iteritems()]
+        assert len(items) == 1
+        assert items[0].name == 'second'
+        rev0 = items[0].get_revision(0)
+        assert rev0.item.name == 'second'
+        rev1 = items[0].get_revision(1)
+        assert rev1.item.name == 'second'
+
+    def test_iteritems_after_destroy(self):
+        item = self.backend.create_item('first')
+        item.create_revision(0)
+        item.commit()
+        item.create_revision(1)
+        item.commit()
+        assert len([item for item in self.backend.iteritems()]) == 1
+        rev = item.get_revision(-1)
+        rev.destroy()
+        assert len([item for item in self.backend.iteritems()]) == 1
+        item.destroy()
+        assert len([item for item in self.backend.iteritems()]) == 0
+
+    def test_history_item_names(self):
+        item = self.backend.create_item('first')
+        item.create_revision(0)
+        item.commit()
+        item.rename('second')
+        item.create_revision(1)
+        item.commit()
+        revs_in_create_order = [rev for rev in self.backend.history(reverse=False)]
+        assert revs_in_create_order[0].revno == 0
+        assert revs_in_create_order[0].item.name == 'second'
+        assert revs_in_create_order[1].revno == 1
+        assert revs_in_create_order[1].item.name == 'second'
+
 

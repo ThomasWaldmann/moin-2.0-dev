@@ -260,6 +260,7 @@ class MemoryBackend(Backend):
             revision._metadata = {}
         revision._metadata['__timestamp'] = revision.timestamp
         self._item_revisions[item._item_id][revision.revno] = (revision._data.getvalue(), revision._metadata.copy())
+        revision = item.get_revision(revision.revno)
         self._revision_history.append(revision)
 
     def _rollback_item(self, rev):

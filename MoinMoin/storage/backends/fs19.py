@@ -19,7 +19,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil
 from MoinMoin.storage import Backend, Item, StoredRevision
-from MoinMoin.items import DELETED, ACL, MIMETYPE, \
+from MoinMoin.items import ACL, MIMETYPE, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
@@ -176,6 +176,7 @@ class FsPageRevision(StoredRevision):
         try:
             content = open(revpath, 'r').read()
         except (IOError, OSError):
+            # XXX TODO: trashbin-like deletion needs different approach XXX
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
             meta = {}
             # if this page revision is deleted, we have no on-page metadata.
@@ -185,7 +186,6 @@ class FsPageRevision(StoredRevision):
                 meta.update(previous_rev._fs_meta) # XXX do we want all metadata?
             except NoSuchRevisionError:
                 pass # should not happen
-            meta[DELETED] = True
             data = ''
             try:
                 editlog_data = editlog.find_rev(revno)
@@ -233,6 +233,18 @@ class FsPageRevision(StoredRevision):
         self._fs_data_fname = None # "file" is already opened here:
         self._fs_data_file = StringIO(data)
 
+        # Small hack to make migration to 2.0 clean. This removes any occurrences of
+        # the pre-2.0 ACL capabilities 'revert' and 'delete'. (They have been killed
+        # in 2.0.
+        acl_line = self._fs_meta.get(ACL)
+        if acl_line:
+            for old_priv in ('revert', 'delete'):
+                # possible occurrences:
+                acl_line = acl_line.replace(old_priv + ',', '')  # All:old_priv,read
+                acl_line = acl_line.replace(',' + old_priv, '')  # All:read,old_priv
+                acl_line = acl_line.replace(':' + old_priv, '')  # JoePrevert:old_priv
+            self._fs_meta[ACL] = acl_line
+
 
 class FsAttachmentItem(Item):
     """ A moin 1.9 filesystem item (attachment) """
@@ -275,7 +287,7 @@ class FsAttachmentRevision(StoredRevision):
         except KeyError:
             editlog_data = { # make something up
                 EDIT_LOG_MTIME: os.path.getmtime(attpath),
-                EDIT_LOG_ACTION: 'ATTNEW',
+                EDIT_LOG_ACTION: 'SAVE',
                 EDIT_LOG_ADDR: '0.0.0.0',
                 EDIT_LOG_HOSTNAME: '0.0.0.0',
                 EDIT_LOG_USERID: '',
@@ -329,7 +341,7 @@ class EditLog(LogFile):
 
     def find_attach(self, attachname):
         """ Find metadata for some attachment name in the edit-log. """
-        for meta in self:
+        for meta in self.reverse(): # use reverse iteration to get the latest upload's data
             if (meta['__rev'] == 99999998 and  # 99999999-1 because of 0-based
                 meta[EDIT_LOG_ACTION] =='ATTNEW' and
                 meta[EDIT_LOG_EXTRA] == attachname):
@@ -337,6 +349,7 @@ class EditLog(LogFile):
         else:
             raise KeyError
         del meta['__rev']
+        meta[EDIT_LOG_ACTION] =='SAVE'
         return meta
 
 
@@ -353,7 +366,7 @@ class FSUserBackend(Backend):
         """
         Initialise filesystem backend.
 
-        @param path: storage path (data_dir)
+        @param path: storage path (user_dir)
         """
         self._path = path
         if kill_save:
@@ -364,17 +377,16 @@ class FSUserBackend(Backend):
 
     def _get_item_path(self, name, *args):
         """
-        Returns the full path to the page directory.
+        Returns the full path to the user profile.
         """
-        path = os.path.join(self._path, 'user', name, *args)
+        path = os.path.join(self._path, name, *args)
         return path
 
     def has_item(self, itemname):
         return os.path.isfile(self._get_item_path(itemname))
 
     def iteritems(self):
-        user_dir = os.path.join(self._path, 'user')
-        for itemname in os.listdir(user_dir):
+        for itemname in os.listdir(self._path):
             try:
                 item = FsUserItem(self, itemname)
             except NoSuchItemError:

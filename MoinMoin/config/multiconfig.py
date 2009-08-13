@@ -26,8 +26,7 @@ from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
-from MoinMoin.storage.backends.acl import ADMIN, READ, WRITE, DELETE, DESTROY
-from MoinMoin.items import DELETED
+from MoinMoin.storage.backends.acl import ADMIN, READ, WRITE, CREATE, DESTROY
 from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
@@ -247,7 +246,7 @@ class ConfigFunctionality(object):
         self.moinmoin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
         data_dir = os.path.normpath(self.data_dir)
         self.data_dir = data_dir
-        for dirname in ('user', 'cache', 'plugin', 'tmp', 'indexes'):
+        for dirname in ('cache', 'plugin', 'tmp', 'indexes'):
             name = dirname + '_dir'
             if not getattr(self, name, None):
                 setattr(self, name, os.path.abspath(os.path.join(data_dir, dirname)))
@@ -345,10 +344,6 @@ class ConfigFunctionality(object):
         # Cache variables for the properties below
         self._iwid = self._iwid_full = self._meta_dict = None
 
-        self.cache.acl_rights_before = AccessControlList(self, [self.acl_rights_before])
-        self.cache.acl_rights_default = AccessControlList(self, [self.acl_rights_default])
-        self.cache.acl_rights_after = AccessControlList(self, [self.acl_rights_after])
-
         action_prefix = self.url_prefix_action
         if action_prefix is not None and action_prefix.endswith('/'): # make sure there is no trailing '/'
             self.url_prefix_action = action_prefix[:-1]
@@ -356,8 +351,9 @@ class ConfigFunctionality(object):
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
-        assert hasattr(self, "storage"), "error in config: no data/user storage configured"
-        # XXX: add defaults again
+        if self.namespace_mapping is None:
+            raise error.ConfigurationError("No storage configuration specified! You need to define a namespace_mapping. " + \
+                                           "For further reference, please see HelpOnStorageConfiguration.")
 
         if self.url_prefix_fckeditor is None:
             self.url_prefix_fckeditor = self.url_prefix_local + '/applets/FCKeditor'
@@ -392,10 +388,10 @@ class ConfigFunctionality(object):
 
     def calc_secrets(self):
         """ make up some 'secret' using some config values """
-        varnames = ['data_dir', 'data_underlay_dir', 'language_default',
+        varnames = ['data_dir', 'language_default',
                     'mail_smarthost', 'mail_from', 'page_front_page',
                     'theme_default', 'sitename', 'logo_string',
-                    'interwikiname', 'user_homewiki', 'acl_rights_before', ]
+                    'interwikiname', 'user_homewiki', ]
         secret = ''
         for varname in varnames:
             var = getattr(self, varname, None)
@@ -504,8 +500,7 @@ file. It should match the actual charset of the configuration file.
             'sitename', 'interwikiname', 'user_homewiki', 'logo_string', 'navi_bar',
             'page_front_page', 'page_category_regex', 'page_dict_regex',
             'page_group_regex', 'page_template_regex', 'page_license_page',
-            'page_local_spelling_words', 'acl_rights_default',
-            'acl_rights_before', 'acl_rights_after', 'mail_from'
+            'page_local_spelling_words', 'mail_from'
             )
 
         for name in decode_names:
@@ -532,20 +527,16 @@ file. It should match the actual charset of the configuration file.
     def _check_directories(self):
         """ Make sure directories are accessible
 
-        Both data and underlay should exists and allow read, write and
+        data/ should exists and allow read, write and
         execute.
         """
         mode = os.F_OK | os.R_OK | os.W_OK | os.X_OK
-        for attr in ('data_dir', 'data_underlay_dir'):
-            path = getattr(self, attr)
+        attr = 'data_dir'
+        path = getattr(self, attr)
 
-            # allow an empty underlay path or None
-            if attr == 'data_underlay_dir' and not path:
-                continue
-
-            path_pages = os.path.join(path, "pages")
-            if not (os.path.isdir(path_pages) and os.access(path_pages, mode)):
-                msg = """
+        path_pages = os.path.join(path, "pages")
+        if not (os.path.isdir(path_pages) and os.access(path_pages, mode)):
+            msg = """
 %(attr)s "%(path)s" does not exist, or has incorrect ownership or
 permissions.
 
@@ -556,7 +547,7 @@ and group.
 It is recommended to use absolute paths and not relative paths. Check
 also the spelling of the directory name.
 """ % {'attr': attr, 'path': path, }
-                raise error.ConfigurationError(msg)
+            raise error.ConfigurationError(msg)
 
     def _loadPluginModule(self):
         """
@@ -863,20 +854,19 @@ options_no_group_name = {
   )),
   # ==========================================================================
   'data': ('Data storage', None, (
-    ('data_dir', './data/', "Path to the data directory containing your (locally made) wiki pages."),
-    ('data_underlay_dir', './underlay/', "Path to the underlay directory containing distribution system and help pages."),
+    ('data_dir', './data/', "Path to the data directory."),
     ('cache_dir', None, "Directory for caching, by default computed from `data_dir`/cache."),
     ('session_dir', None, "Directory for session storage, by default computed to be `cache_dir`/__session__."),
-    ('user_dir', None, "Directory for user storage, by default computed to be `data_dir`/user."),
     ('plugin_dir', None, "Plugin directory, by default computed to be `data_dir`/plugin."),
     ('plugin_dirs', [], "Additional plugin directories."),
 
     ('shared_intermap', None,
      "Path to a file containing global InterWiki definitions (or a list of such filenames)"),
-    ('storage', None,
-     'Data/User storage backends; the None default will make Moin construct a backend.'),  # XXX Elaborate?
-    ('underlay_backend', None,
-     'Underlay storage backend; if None and `data_backend` is also None Moin will construct a backend based on the `underlay_data_dir` setting'),  # XXX NotImplemented?
+    ('namespace_mapping', None,
+    "This needs to point to a (correctly ordered!) list of tuples, each tuple containing: Namespace identifier, backend, acl protection to be applied to that backend. " + \
+    "E.g.: [('/', FSBackend('wiki/data'), dict(default='All:read,write,create')), ]. Please see HelpOnStorageConfiguration for further reference."),
+    ('preloaded_xml', None,
+     'If this points to a serialized backend (an xml file), the file is loaded into the storage backend(s) upon first request.'),
   )),
   # ==========================================================================
   'urls': ('URLs', None, (
@@ -1043,17 +1033,18 @@ options = {
     'acl': ('Access control lists',
     'ACLs control who may do what, see HelpOnAccessControlLists.',
     (
-      ('hierarchic', False, 'True to use hierarchical ACLs'),
-      ('rights_default', unicode("Trusted:" + ",".join((READ, WRITE, DELETE)) + \
-                                " Known:" + ",".join((READ, WRITE, DELETE)) + \
-                                " All:" + ",".join((READ, WRITE))),
-       "ACL used if no ACL is specified on the page"),
-      ('rights_before', u"",
-       "ACL that is processed before the on-page/default ACL"),
-      ('rights_after', u"",
-       "ACL that is processed after the on-page/default ACL"),
-      ('rights_valid', [READ, WRITE, DELETE, ADMIN, DESTROY],
+      ('rights_valid', [READ, WRITE, CREATE, ADMIN, DESTROY],
        "Valid tokens for right sides of ACL entries."),
+    )),
+
+    'ns': ('Storage Namespaces',
+    "Storage namespaces can be defined for all sorts of data. All items sharing a common namespace as prefix" + \
+    "are then stored within the same backend. The common prefix for all data is ''.",
+    (
+      ('content', '/', "All content is by default stored below /, hence the prefix is ''."),  # Not really necessary. Just for completeness.
+      ('user_profile', 'UserProfile/', 'User profiles (i.e. user data, not their homepage) are stored in this namespace.'),
+      ('user_homepage', 'User/', 'All user homepages are stored below this namespace.'),
+      ('trash', 'Trash/', 'This is the namespace in which an item ends up when it is deleted.')
     )),
 
     'xapian': ('Xapian search', "Configuration of the Xapian based indexed search, see HelpOnXapian.", (

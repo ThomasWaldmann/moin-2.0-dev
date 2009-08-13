@@ -243,36 +243,6 @@ class ScriptEngine:
             r.item.rename(newitemname)
             r._save(r.meta, r.data, name=newitemname, action='SAVE/RENAME', extra=item_name, comment=comment)
 
-    def do_replaceunderlay(self, filename, itemname):
-        """
-        Overwrites underlay pages. Implementational detail: This needs to be
-        kept in sync with the page class.
-
-        @param filename: name of the file in the package
-        @param itemname: item to be overwritten
-        """
-
-        # only overwrite if underlay_backend is configured (it will by
-        # by default if---and only if---the data_underlay_dir config
-        # option is set and backends are not overridden)
-        if not self.request.cfg.underlay_backend:
-            return
-
-        if not self.request.cfg.underlay_backend.has_item(itemname):
-            self.request.cfg.underlay_backend.create_item(itemname)
-
-        for rev in self.request.cfg.underlay_backend.list_revisions(itemname):
-            self.request.cfg.underlay_backend.remove_revision(itemname, rev)
-
-        self.request.cfg.underlay_backend.create_revision(itemname, 1)
-
-        data = self.request.cfg.underlay_backend.get_data_backend(itemname, 1)
-        data.write(self.extract_file(filename))
-        data.close()
-
-        # Clear caches
-        # TODO Code from MoinMoin/script/maint/cleancache.py may be used
-
     def runScript(self, commands):
         """ Runs the commands.
 

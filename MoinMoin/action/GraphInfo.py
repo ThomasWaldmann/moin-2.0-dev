@@ -25,7 +25,7 @@ def execute(pagename, request):
     """Show page history drawing revision graph."""
     page = Page(request, pagename)
 
-    if not request.user.may.read(pagename) or not page.exists(includeDeleted=True):
+    if not request.user.may.read(pagename) or not page.exists():
         page.send_page()
         return
 
@@ -60,7 +60,7 @@ def execute(pagename, request):
             except NoSuchRevisionError:
                 pass  # TODO: move from storage branch, when done there
 
-            if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVENEW', 'SAVE/REVERT', 'SAVE/RENAME', ):
+            if revision[EDIT_LOG_ACTION] in ('SAVE', 'SAVE/REVERT', 'SAVE/RENAME', ):
                 size = revision.size
 
                 if cnt == 0:
@@ -79,7 +79,7 @@ def execute(pagename, request):
                     elif '/RENAME' in revision[EDIT_LOG_ACTION]:
                         comment = _("Renamed from '%(oldpagename)s'.") % {'oldpagename': revision[EDIT_LOG_EXTRA]}
             else:
-                raise "ATT* in editlog?"
+                raise Exception("Unexpected EDIT_LOG_ACTION: %s" % revision[EDIT_LOG_ACTION])
 
             # Compute revs and next_revs
             if revno not in revs:

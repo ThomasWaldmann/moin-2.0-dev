@@ -24,25 +24,16 @@ class TestRouterBackend(BackendTest):
 
     def create_backend(self):
         self.root = MemoryBackend()
+        self.ns_user_profile = self.request.cfg.ns_user_profile
         self.users = MemoryBackend()
         self.child = MemoryBackend()
         self.other = MemoryBackend()
-        self.mapping = [('child', self.child), ('other/', self.other), ('/', self.root)]
-        return RouterBackend(self.mapping, self.users)
+        self.mapping = [('child', self.child), ('other/', self.other), (self.ns_user_profile, self.users), ('/', self.root)]
+        return RouterBackend(self.mapping)
 
     def kill_backend(self):
         pass
 
-
-    def test_incorrect_config(self):
-        mapping = [('foo', None)]
-        users = None
-        try:
-            RouterBackend(mapping, users)
-        except ConfigurationError:
-            pass
-        else:
-            raise AssertionError()
 
     def test_correct_backend(self):
         mymap = {'rootitem': self.root,         # == /rootitem
@@ -100,15 +91,16 @@ class TestRouterBackend(BackendTest):
         assert items_in == items_out
 
     def test_user_in_traversal(self):
-        joes_name = 'joe_with_the_unique_name'
-        joe = self.backend.user_backend.create_item(joes_name)
-        joe.change_metadata()
-        joe["email"] = "joe@example.com"
-        joe.publish_metadata()
+        userid = '1249291178.45.20407'
+        user = self.backend.create_item(self.ns_user_profile + userid)
+        user.change_metadata()
+        user["name"] = "joe"
+        user.publish_metadata()
 
         all_items = list(self.backend.iteritems())
         all_items = [item.name for item in all_items]
-        assert joes_name in all_items
+        assert (self.ns_user_profile + userid) in all_items
+        assert self.backend.has_item(self.ns_user_profile + userid)
 
     def test_nonexisting_namespace(self):
         itemname = 'nonexisting/namespace/somewhere/deep/below'

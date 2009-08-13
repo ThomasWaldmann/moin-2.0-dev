@@ -20,7 +20,7 @@ def run():
 ## information, please see MoinMaster:MoinPagesEditorGroup.
 ##master-page:None
 ##master-date:None
-#acl MoinPagesEditorGroup:read,write,delete All:read
+#acl MoinPagesEditorGroup:read,write All:read
 #format gettext
 #language %s
 

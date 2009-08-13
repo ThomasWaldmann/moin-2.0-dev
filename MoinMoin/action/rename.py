@@ -16,6 +16,11 @@ def execute(item_name, request):
     elif request.method == 'POST':
         cancelled = 'button_cancel' in request.form
         if not cancelled:
-            item.rename()
-        new_name = request.form.get('target')
-        request.http_redirect(request.href(new_name)) # show new item
+            target = request.form.get('target')
+            comment = request.form.get('comment')
+            item.rename(target, comment)
+            redirect_to = target
+        else:
+            redirect_to = item_name
+        request.http_redirect(request.href(redirect_to))
+

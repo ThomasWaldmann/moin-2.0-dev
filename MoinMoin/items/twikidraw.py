@@ -22,7 +22,7 @@ from MoinMoin import config
 from MoinMoin.Page import Page
 from MoinMoin.search.term import AND, NOT, NameRE, LastRevisionMetaDataMatch
 from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError
-from MoinMoin.items import MIMETYPE, DELETED, \
+from MoinMoin.items import MIMETYPE, \
                            EDIT_LOG_ACTION, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
 from MoinMoin.support import tarfile
@@ -74,7 +74,6 @@ class TwikiDraw(Image):
         filecontent = file_upload.stream
         content_length = None
         if ext == '.draw': # TWikiDraw POSTs this first
-            #_addLogEntry(request, 'ATTDRW', pagename, basename + '.tdraw')
             ci.truncate()
             filecontent = filecontent.read() # read file completely into memory
             filecontent = filecontent.replace("\r", "")
