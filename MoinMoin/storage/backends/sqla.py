@@ -180,7 +180,7 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to roll back.
         @return: None
         """
-        raise NotImplementedError()
+        revision.session.rollback()
 
     def _change_item_metadata(self, item):
         """
@@ -294,7 +294,7 @@ class SQLAItem(Item, Base):
             session = Session()
             if revno == -1:
                 revno = self.list_revisions()[-1]
-                rev = session.query(SQLARevision).filter(SQLARevision._revno==last_revno)
+                rev = session.query(SQLARevision).filter(SQLARevision._revno==revno)
             else:
                 rev = session.query(SQLARevision).filter(SQLARevision._revno==revno).one()
             return rev
@@ -428,7 +428,7 @@ class SQLARevision(Revision, Base):
 
     def write(self, data):
         if self._data is None:
-            self._data = Data()
+            self._data = Data(self.session)
         self._data.write(data)
 
     def read(self, amount=None):
