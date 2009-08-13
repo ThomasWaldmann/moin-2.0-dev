@@ -120,22 +120,6 @@ class SQLAlchemyBackend(Backend):
         """
         raise NotImplementedError()
 
-    def _list_revisions(self, item):
-        """
-        For a given item, return a list containing all revision numbers (as ints)
-        of the revisions the item has. The list must be ordered, starting with
-        the oldest revision-number.
-        (One may decide to delete certain revisions completely at one point. For
-        that case, list_revisions does not need to return subsequent revision
-        numbers. _create_revision() on the other hand must only create
-        subsequent revision numbers.)
-
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
-        @return: list of ints (possibly empty)
-        """
-        return [rev.revno for rev in item._revisions.all() if rev.id is not None]
-
     def _create_revision(self, item, revno):
         """
         Takes an item object and creates a new revision. Note that you need to pass
@@ -310,6 +294,9 @@ class SQLAItem(Item, Base):
     id = Column(Integer, primary_key=True)
     _name = Column(String)
     _metadata = Column(PickleType)
+
+    def list_revisions(self):
+        return [rev.revno for rev in self._revisions.all() if rev.id is not None]
 
     def get_revision(self, revno):
         try:
