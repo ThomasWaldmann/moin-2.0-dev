@@ -295,6 +295,14 @@ class SQLAItem(Item, Base):
     _name = Column(String)
     _metadata = Column(PickleType)
 
+    def __init__(self, backend, itemname):
+        self._backend = backend
+        self._name = itemname
+        self._locked = False
+        self._read_accessed = False
+        self._uncommitted_revision = None
+        self.element_attrs = dict(name=itemname)
+
     def list_revisions(self):
         return [rev.revno for rev in self._revisions.all() if rev.id is not None]
 
