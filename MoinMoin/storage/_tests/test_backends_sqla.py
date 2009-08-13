@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-    MoinMoin - Test - MemoryBackend
+    MoinMoin - Test - SQLAlchemyBackend
 
-    This defines tests for the MemoryBackend.
+    This defines tests for the SQLAlchemyBackend.
 
-    @copyright: 2008 MoinMoin:ChristopherDenter,
-                2008 MoinMoin:JohannesBerg,
-                2008 MoinMoin:AlexanderSchremmer
+    @copyright: 2009 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -30,8 +28,4 @@ class TestSQLABackend(BackendTest):
 
     def kill_backend(self):
         pass
-
-
-    def test_item_reading_chunks(self):
-        py.test.skip("Makes all tests hang. Find out why.")
 
