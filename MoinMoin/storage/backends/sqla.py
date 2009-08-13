@@ -155,7 +155,7 @@ class SQLAlchemyBackend(Backend):
         fulfilled. Note: This behavior will be changed, allowing monotonic
         revnos and not requiring revnos to be subsequent as well.
         """
-        rev = SQLANewRevision(item, revno)
+        rev = SQLARevision(item, revno)
         return rev
 
     def _rename_item(self, item, newname):
@@ -356,7 +356,7 @@ class SQLAItem(Item, Base):
     def get_revision(self, revno):
         try:
             session = Session()
-            rev = session.query(SQLAStoredRevision).filter(SQLARevision._revno==revno).one()
+            rev = session.query(SQLARevision).filter(SQLARevision._revno==revno).one()
             rev.__init__(self, revno)
             return rev
         except NoResultFound:
@@ -471,10 +471,13 @@ class SQLARevision(Revision, Base):
     id = Column(Integer, primary_key=True)
     _data = relation(Data, uselist=False)
     _item_id = Column(Integer, ForeignKey('items.id'))
-    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy='dynamic', cascade=''), cascade='')
+    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy='dynamic', cascade=''), cascade='', uselist=False)
     _revno = Column(Integer)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
+
+    def __init__(self, item, revno, timestamp=None):
+        Revision.__init__(self, item, revno, timestamp)
 
     def write(self, data):
         if self._data is None:
