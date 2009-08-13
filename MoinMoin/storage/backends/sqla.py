@@ -10,6 +10,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 from StringIO import StringIO
+from threading import Lock
 
 from sqlalchemy import create_engine, Column, Integer, Binary, String, PickleType, ForeignKey
 from sqlalchemy.orm import sessionmaker, relation, backref
@@ -39,6 +40,8 @@ class SQLAlchemyBackend(Backend):
         # Create the database schema
         SQLAItem.metadata.bind = self.engine
         SQLAItem.metadata.create_all()
+
+        self._item_metadata_lock = {}       # {id : Lockobject}
 
     def has_item(self, itemname):
         try:
@@ -87,7 +90,11 @@ class SQLAlchemyBackend(Backend):
 
         if self.has_item(itemname):
             raise ItemAlreadyExistsError("An item with the name %s already exists." % itemname)
+
         item = SQLAItem(self, itemname)
+        # Maybe somebody already got an instance of this Item and thus there already is a Lock for that Item.
+        if not item.id in self._item_metadata_lock:
+            self._item_metadata_lock[item.id] = Lock()
         return item
 
     def iteritems(self):
@@ -169,6 +176,7 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to commit to  storage.
         @return: None
         """
+        self._item_metadata_lock[revision.item.id] = Lock()
         revision.session.commit()
 
     def _rollback_item(self, revision):
@@ -184,22 +192,14 @@ class SQLAlchemyBackend(Backend):
 
     def _change_item_metadata(self, item):
         """
-        This method is used to acquire a lock on an item. This is necessary to prevent
-        side-effects caused by concurrency.
-        You need to call this method before altering the metadata of the item.
-        E.g.:   item.change_metadata()  # Invokes this method
-                item["metadata_key"] = "metadata_value"
-                item.publish_metadata()
-
-        As you can see, the lock acquired by this method is released by calling
-        the publish_metadata() method on the item.
-
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
-        @precondition: item not already locked
-        @return: None
+        @see: Backend._change_item_metadata.__doc__
         """
-        raise NotImplementedError()
+        if item.id is None:
+            # If this is the case it means that we operate on an Item that has not been
+            # committed yet and thus we should not use a Lock in persistant storage.
+            pass
+        else:
+            self._item_metadata_lock[item.id].acquire()
 
     def _publish_item_metadata(self, item):
         """
@@ -217,7 +217,14 @@ class SQLAlchemyBackend(Backend):
         @raise AssertionError: item was not locked
         @return: None
         """
-        raise NotImplementedError()
+        if item.id is None and self.has_item(item.name):
+            raise  ItemAlreadyExistsError, "The Item whose metadata you tried to publish already exists."
+        item.session.commit()
+        try:
+            self._item_metadata_lock[item.id].release()
+        except KeyError:
+            # Item hasn't been committed before publish, hence no lock.
+            pass
 
     def _get_item_metadata(self, item):
         """
@@ -294,9 +301,8 @@ class SQLAItem(Item, Base):
             session = Session()
             if revno == -1:
                 revno = self.list_revisions()[-1]
-                rev = session.query(SQLARevision).filter(SQLARevision._revno==revno)
-            else:
-                rev = session.query(SQLARevision).filter(SQLARevision._revno==revno).one()
+            rev = session.query(SQLARevision).filter(SQLARevision._revno==revno).one()
+            rev.__init__(self, revno)
             return rev
         except (NoResultFound, IndexError):
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
