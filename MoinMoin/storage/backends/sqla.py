@@ -365,30 +365,122 @@ class SQLAItem(Item, Base):
             session.close()
 
 
+class Chunk(Base):
+    """
+    A chunk of data.
+    """
+    __tablename__ = 'rev_data_chunks'
+
+    id = Column(Integer, primary_key=True)
+    chunkno = Column(Integer)
+    data = Column(String)
+    _container_id = Column(Integer, ForeignKey('rev_data.id'))
+
+    def __init__(self, chunkno):
+        self.chunkno = chunkno
+        self.data = ""
+
+
+class Data(Base):
+    """
+    Data that is assembled from smaller chunks.
+    Bookkeeping is done here.
+    """
+    __tablename__ = 'rev_data'
+
+    id = Column(Integer, primary_key=True)
+    _chunks = relation(Chunk, order_by=Chunk.id)
+    _revision_id = Column(Integer, ForeignKey('revisions.id'))
+    size = Column(Integer)
+
+    chunksize = 4
+
+    def __init__(self):
+        self.chunkno = 0
+        self._last_chunk = Chunk(self.chunkno)
+        self.session = Session()
+        self.cursor_pos = 0
+        self.size = 0
+        self.session.add(self)
+
+    def write(self, data):
+        while data:
+            # How much space is left in the current chunk?
+            chunk_space_left = self.chunksize - len(self._last_chunk.data)
+            # If there's no space left, create a new chunk
+            if chunk_space_left == 0:
+                self._last_chunk = Chunk(self.chunkno)
+                chunk_space_left = self.chunksize
+            data_chunk = data[:chunk_space_left]
+            self.size += len(data_chunk)
+            self._last_chunk.data += data_chunk
+            self._chunks.append(self._last_chunk)
+            self.session.add(self._last_chunk)
+            self.session.commit()
+            self.chunkno += 1
+            data = data[chunk_space_left:]
+
+    def tell(self):
+        return self.cursor_pos
+
+    def seek(self, pos, mode=0):
+        if mode == 0:
+            self.cursor_pos = pos
+        elif mode == 1:
+            self.cursor_pos += pos
+        elif mode == 2:
+            self.cursor_pos = self.size + pos
+
+    def read(self, amount=None):
+        # The first chunk that contains the data we want to read
+        # Perhaps we have already read a part of the first chunk before. We want to skip that.
+        first, skip = divmod(self.cursor_pos, self.chunksize)
+
+        # No amount given means: Read all that remains (from viewpoint of cursor_pos)
+        if amount is None or amount > self.size:
+            # From the first chunk we read everything after skip
+            try:
+                begin = self._chunks[first].data[skip:]
+            except IndexError:
+                begin = ''
+
+            remaining_chunks = self._chunks[first+1:]
+            end = "".join([chunk.data for chunk in remaining_chunks])
+            # We've read to the end, now set the cursor on the last+1
+            self.cursor_pos = self.size
+            return begin + end
+
+        # Otherwise we need all chunks up to last
+        last = first + amount / self.chunksize + 1
+        # Get all those chunks
+        chunks = self._chunks[first:last]
+        begin = chunks[0].data[skip:skip+amount]
+        # We just concatenate the contents of all but the first and last chunks
+        mid = "".join([chunk.data for chunk in chunks[1:-1]])
+        # And from the last chunk, we only take what is remaining to get `amount` bytes in total.
+        remaining = (amount - len(begin+mid)) % self.chunksize
+        end = chunks[-1].data[:remaining]
+        self.cursor_pos += amount
+        assert len(begin+mid+end) == amount
+        return begin + mid + end
+
+
 class SQLARevision(Revision, Base):
     __tablename__ = 'revisions'
 
-    _id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    _data = relation(Data, uselist=False)
     _item_id = Column(Integer, ForeignKey('items._id'))
     _item = relation(SQLAItem, backref=backref('_revisions', order_by=_id, lazy='dynamic', cascade=''), cascade='')
     _revno = Column(Integer)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
-    # TODO Find correct type for _data
-    _data = Column(String)
 
+    def write(self, data):
+        if self._data is None:
+            self._data = Data()
+        self._data.write(data)
 
-class SQLAStoredRevision(SQLARevision, StoredRevision):
-    # XXX
-    def __init__(self, item, revno, timestamp=None, size=None):
-        SQLARevision.__init__(self, item, revno, timestamp)
-        self._size = size
-
-
-class SQLANewRevision(SQLARevision, NewRevision):
-    # XXX
-    def __init__(self, item, revno):
-        SQLARevision.__init__(self, item, revno, None)
-        self._metadata = {}
-        self._size = 0
+    def read(self, amount=None):
+        return self._data.read(amount)
 
