@@ -21,6 +21,8 @@ from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSu
 
 
 Base = declarative_base()
+# Our factory for sessions:
+Session = sessionmaker()
 
 
 class SQLAlchemyBackend(Backend):
@@ -34,17 +36,13 @@ class SQLAlchemyBackend(Backend):
         self.engine = create_engine('sqlite:///:memory:', poolclass=StaticPool, connect_args={'check_same_thread': False})
         ## TODO </development settings>
 
-        # TODO comment in: self.engine = create_engine(db_uri, echo=verbose)
-        # Our factory for sessions:
-        self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
-
-        # XXX below
+        # Create the database schema
         SQLAItem.metadata.bind = self.engine
         SQLAItem.metadata.create_all()
 
     def has_item(self, itemname):
         try:
-            session = self.Session()
+            session = Session()
             session.query(SQLAItem).filter_by(_name=itemname).one()
             return True
         except NoResultFound:
@@ -59,7 +57,7 @@ class SQLAlchemyBackend(Backend):
         @rtype: item object
         @raise NoSuchItemError: No item with name 'itemname' is known to this backend.
         """
-        session = self.Session()
+        session = Session()
         # The following fails if not EXACTLY one column is found, i.e., it also fails
         # if MORE than one item is found, which should not happen since names should be
         # unique
@@ -87,7 +85,7 @@ class SQLAlchemyBackend(Backend):
         if not isinstance(itemname, (str, unicode)):
             raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
 
-        session = self.Session()
+        session = Session()
         found = session.query(SQLAItem).filter_by(_name=itemname).all()
         if found:
             raise ItemAlreadyExistsError("An item with the name %s already exists." % itemname)
@@ -103,7 +101,7 @@ class SQLAlchemyBackend(Backend):
 
         @rtype: iterator of item objects
         """
-        session = self.Session()
+        session = Session()
         return session.query(SQLAItem).all()
 
     def _get_revision(self, item, revno):
@@ -177,7 +175,7 @@ class SQLAlchemyBackend(Backend):
         committed to storage)
         @return: None
         """
-        session = self.Session()
+        session = Session()
         itemname = item.name
         try:
             item = session.query(SQLAItem).filter_by(_name=itemname).one()
@@ -206,7 +204,7 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to commit to  storage.
         @return: None
         """
-        session = self.Session()
+        session = Session()
         session.add(revision)
         session.commit()
 
@@ -357,12 +355,14 @@ class SQLAItem(Item, Base):
 
     def get_revision(self, revno):
         try:
-            session = self._backend.Session()
+            session = Session()
             rev = session.query(SQLAStoredRevision).filter(SQLARevision._revno==revno).one()
             rev.__init__(self, revno)
             return rev
         except NoResultFound:
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
+        finally:
+            session.close()
 
 
 class SQLARevision(Revision, Base):
@@ -375,7 +375,7 @@ class SQLARevision(Revision, Base):
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
     # TODO Find correct type for _data
-    _data = relation(Data)
+    _data = Column(String)
 
 
 class SQLAStoredRevision(SQLARevision, StoredRevision):
@@ -391,101 +391,4 @@ class SQLANewRevision(SQLARevision, NewRevision):
         SQLARevision.__init__(self, item, revno, None)
         self._metadata = {}
         self._size = 0
-
-
-class Chunk(Base):
-    """
-    A chunk of data.
-    """
-    __tablename__ = 'rev_data_chunks'
-
-    id = Column(Integer, primary_key=True)
-    _chunkno = Column(Integer)
-    _data = Column(Binary)
-    _container_id = Column(Integer, ForeignKey('rev_data.id'))
-
-    def __init__(self, chunkno):
-        self._chunkno = chunkno
-
-    def fill(self, data):
-        self._data = data
-
-    @property
-    def data(self):
-        return self._data
-
-
-class Data(Base):
-    """
-    Data that is assembled from smaller chunks.
-    Bookkeeping is done here.
-    """
-    __tablename__ = 'rev_data'
-
-    id = Column(Integer, primary_key=True)
-    _chunks = relation(Chunk, order_by=Chunk.id)
-    _rev_id = Column(Integer, ForeignKey('revisions._id'))
-
-    # XXX Does this know it should only operate on its own chunks?
-    #_chunks = dynamic_loader(Chunk)
-
-    chunksize = 4096
-    flush_after = chunksize * 16
-
-    def __init__(self, session):
-        self._last_chunk = Chunk(0)
-        self.session = session
-        self.cursor_pos = 0
-
-        # XXX remove this hack:
-        self._data = None
-
-    def write(self, data):
-        read_bytes = 0
-        data_chunk = data.read(self.chunksize)
-        chunkno = 0
-        while data_chunk:
-            print chunkno
-            chunkno += 1
-            read_bytes += self.chunksize
-            self._last_chunk.fill(data_chunk)
-            self._chunks.append(self._last_chunk)
-            if read_bytes > self.flush_after:
-                # flush.
-                print "flush"
-                self.session.add(self._last_chunk)
-                self.session.flush()
-                self.session.expunge_all()
-                read_bytes = 0
-
-            self._last_chunk = Chunk(chunkno)
-            data_chunk = data.read(self.chunksize)
-        self.session.commit()
-
-    def tell():
-        return self.cursor_pos
-
-    def read(self, amount):
-       # broken, fix it:
-       # # We need all chunks up to up_to.
-       # first = self.cursor_pos / self.chunksize
-       # last = first + amount / self.chunksize + 1
-       # # Get all those chunks
-       # chunks = self._chunks[first:last]
-       # # Perhaps we have already read a part of the first chunk before. We want to skip that.
-       # skip = self.cursor_pos % self.chunksize
-       # # From the first chunk we read everything after skip
-       # begin = chunks[0].data[skip:]
-       # # We just concatenate the contents of all but the first and last chunks
-       # mid = "".join([chunk.data for chunk in chunks[1:-1]])
-       # # And from the last chunk, we only take what is remaining to get `amount` bytes in total.
-       # remaining = amount % self.chunksize + skip
-       # end = chunks[-1].data[:remaining]
-        self.cursor_pos += amount
-       # return begin + mid + end
-        # XXX Quick hack just to make read() functionality available
-        if self._data is None:
-           self._data = StringIO("".join([chunk.data for chunk in self._chunks]))
-
-        return self._data.read(amount)
 
