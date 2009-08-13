@@ -256,33 +256,6 @@ class SQLAlchemyBackend(Backend):
         """
         raise NotImplementedError()
 
-    def _read_revision_data(self, revision, chunksize):
-        """
-        Called to read a given amount of bytes of a revisions data. By default, all
-        data is read.
-
-        @type revision: Object of class StoredRevision.
-        @param revision: The revision on which we want to operate.
-        @type chunksize: int
-        @param chunksize: amount of bytes to be read at a time
-        @return: string
-        """
-        return revision._data.read(chunksize)
-
-    def _write_revision_data(self, revision, data):
-        """
-        When this method is called, the passed data is written to the revisions data.
-
-        @type revision: Object of class NewRevision.
-        @param revision: The revision on which we want to operate.
-        @type data: str
-        @param data: The data to be written on the revision.
-        @return: None
-        """
-        # XXX remove this hack
-        data = StringIO(data)
-        revision._data.write(data)
-
     def _get_item_metadata(self, item):
         """
         Load metadata for a given item, return dict.
@@ -327,21 +300,6 @@ class SQLAlchemyBackend(Backend):
         @type revision: Object of a subclass of Revision.
         @param revision: The revision on which we want to operate.
         @return: int
-        """
-        raise NotImplementedError()
-
-    def _seek_revision_data(self, revision, position, mode):
-        """
-        Set the revisions cursor on the revisions data.
-
-        @type revision: Object of StoredRevision.
-        @param revision: The revision on which we want to operate.
-        @type position: int
-        @param position: Indicates where to position the cursor
-        @type mode: int
-        @param mode: 0 for 'absolute positioning', 1 to seek 'relatively to the
-        current position', 2 to seek 'relative to the files end'.
-        @return: None
         """
         raise NotImplementedError()
 
@@ -486,4 +444,10 @@ class SQLARevision(Revision, Base):
 
     def read(self, amount=None):
         return self._data.read(amount)
+
+    def seek(self, pos, mode=0):
+        self._data.seek(pos, mode)
+
+    def tell(self):
+        return self._data.tell()
 
