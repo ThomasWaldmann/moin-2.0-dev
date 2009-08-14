@@ -38,6 +38,8 @@ class TestSQLABackend(BackendTest):
         pass
 
 
+# We also perform a few tests on the underlying chunked Data classes and need
+# a Session for them.
 engine = create_engine('sqlite:///:memory:')
 Session = sessionmaker(bind=engine)
 Data.metadata.bind = engine
@@ -48,7 +50,6 @@ class TestChunkedRevDataStorage(object):
     def setup_method(self, meth):
         self.sqlabackend = SQLAlchemyBackend()
         self.item = self.sqlabackend.create_item("test_item")
-        #import pdb; pdb.set_trace()
         self.rev = self.item.create_revision(0)
         self.rev.write(raw_data)
 
