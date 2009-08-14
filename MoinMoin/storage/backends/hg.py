@@ -291,7 +291,7 @@ class MercurialBackend(Backend):
                     util.rename(src, dst)
                 except OSError, err:
                     if err == errno.EEXIST:
-                       pass  # if metadata is empty, there is no file, only entry in cdb
+                        pass  # if metadata is empty, there is no file, only entry in cdb
                 self._add_to_cdb(newid, newname, replace=item._id)
             finally:
                 lock.release()
