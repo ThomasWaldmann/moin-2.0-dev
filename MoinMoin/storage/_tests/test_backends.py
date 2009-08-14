@@ -575,7 +575,7 @@ class BackendTest(object):
 
     def test_various_revision_metadata_values(self):
         def test_value(value, revno):
-            item = self.backend.create_item('valid_values_%s' % revno)
+            item = self.backend.create_item(u'valid_values_%s' % revno)
             rev = item.create_revision(0)
             rev["key"] = value
             item.commit()
