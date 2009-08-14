@@ -68,7 +68,7 @@ class SQLAlchemyBackend(Backend):
         try:
             item = session.query(SQLAItem).filter_by(_name=itemname).one()
             # SQLA doesn't call __init__, so we need to take care of that.
-            item.__init__(self, itemname, session)
+            item.setup(self, session)
             # Maybe somebody already got an instance of this Item and thus there already is a Lock for that Item.
             if not item.id in self._item_metadata_lock:
                 self._item_metadata_lock[item.id] = Lock()
@@ -107,8 +107,10 @@ class SQLAlchemyBackend(Backend):
         @rtype: iterator of item objects
         """
         session = Session()
-        return session.query(SQLAItem).all()
-        session.close()
+        all_items = session.query(SQLAItem).all()
+        for item in all_items:
+            item.setup(self, session)
+        return all_items
 
     def _create_revision(self, item, revno):
         """
@@ -284,16 +286,24 @@ class SQLAItem(Item, Base):
     _name = Column(String, unique=True, index=True)
     _metadata = Column(PickleType)
 
-    def __init__(self, backend, itemname, session=None):
-        self._backend = backend
+    def __init__(self, backend, itemname):
         self._name = itemname
+        self.session = Session()
+        self.setup(backend)
+
+    def setup(self, backend, session=None):
+        self._backend = backend
         self._locked = False
         self._read_accessed = False
         self._uncommitted_revision = None
-        self.element_attrs = dict(name=itemname)
-        if session is None:
-            session = Session()
-        self.session = session
+        self.element_attrs = dict(name=self._name)
+        if session is not None:
+            try:
+                self.session.close()
+            except AttributeError:
+                # Item has been loaded from DB and setup() manually. There is no self.session yet.
+                pass
+            self.session = session
         self.session.add(self)
 
     def list_revisions(self):
@@ -344,6 +354,14 @@ class Data(Base):
     chunksize = 4
 
     def __init__(self, session):
+        self.setup(session)
+
+    def setup(self, session):
+        """
+        This is different from __init__ as it may be also invoked explicitly
+        when the object is returned from the database. We may as well call
+        __init__ directly, but having a separate method for that makes it clearer.
+        """
         self.chunkno = 0
         self._last_chunk = Chunk(self.chunkno)
         self.cursor_pos = 0
