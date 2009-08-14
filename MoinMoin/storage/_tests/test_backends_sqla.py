@@ -14,8 +14,14 @@ import py
 
 try:
     import sqlalchemy
+    if sqlalchemy.__version__ < '0.5.4':
+        raise AssertionError
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
 except ImportError:
     py.test.skip('Cannot test without sqlalchemy installed.')
+except AssertionError:
+    py.test.skip('You need at least version 0.5.4 of sqlalchemy.')
 
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.sqla import SQLAlchemyBackend, SQLARevision, Data
@@ -32,21 +38,35 @@ class TestSQLABackend(BackendTest):
         pass
 
 
+engine = create_engine('sqlite:///:memory:')
+Session = sessionmaker(bind=engine)
+Data.metadata.bind = engine
+Data.metadata.create_all()
 raw_data = "This is a very long sentence so I can properly test my program. I hope it works."
 
 class TestChunkedRevDataStorage(object):
     def setup_method(self, meth):
         self.sqlabackend = SQLAlchemyBackend()
         self.item = self.sqlabackend.create_item("test_item")
+        #import pdb; pdb.set_trace()
         self.rev = self.item.create_revision(0)
         self.rev.write(raw_data)
 
+    def test_read_empty(self):
+        item = self.sqlabackend.create_item("empty_item")
+        rev = item.create_revision(0)
+        assert rev.read() == ''
+        item.commit()
+        assert rev.read() == ''
+
     def test_write_many_times(self):
-        self.rev._data = Data()
-        self.rev._data.chunksize = 4
-        self.rev.write("foo")
-        self.rev.write("baaaaaaar")
-        assert [chunk.data for chunk in self.rev._data._chunks] == ["foob", "aaaa", "aaar"]
+        item = self.sqlabackend.create_item("test_write_many_times")
+        rev = item.create_revision(0)
+        rev._data.chunksize = 4
+        rev.write("foo")
+        rev.write("baaaaaaar")
+        item.commit()
+        assert [chunk.data for chunk in rev._data._chunks] == ["foob", "aaaa", "aaar"]
 
     def test_read_more_than_is_there(self):
         assert self.rev.read(len(raw_data) + 1) == raw_data
@@ -68,7 +88,7 @@ class TestChunkedRevDataStorage(object):
         length = len(raw_data)
         chunksizes = range(length)
         for chunksize in chunksizes:
-            data = Data()
+            data = Data(Session())
             # Don't test with chunksize == 0 but test with a chunksize larger than input data
             data.chunksize = chunksize + 1
             data.write(raw_data)
@@ -77,7 +97,7 @@ class TestChunkedRevDataStorage(object):
     def test_with_different_offsets(self):
         offsets = range(self.rev._data.chunksize)
         for offset in offsets:
-            data = Data()
+            data = Data(Session())
             data.write(raw_data)
             assert data.read(offset) == raw_data[:offset]
             assert data.read() == raw_data[offset:]
