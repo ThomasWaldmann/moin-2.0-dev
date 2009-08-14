@@ -280,7 +280,7 @@ class SQLAItem(Item, Base):
     __tablename__ = 'items'
 
     id = Column(Integer, primary_key=True)
-    _name = Column(String, unique=True)
+    _name = Column(String, unique=True, index=True)
     _metadata = Column(PickleType)
 
     def __init__(self, backend, itemname, session=None):
@@ -420,9 +420,9 @@ class SQLARevision(Revision, Base):
 
     id = Column(Integer, primary_key=True)
     _data = relation(Data, uselist=False)
-    _item_id = Column(Integer, ForeignKey('items.id'))
+    _item_id = Column(Integer, ForeignKey('items.id'), index=True)
     _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy='dynamic', cascade=''), cascade='', uselist=False)
-    _revno = Column(Integer)
+    _revno = Column(Integer, index=True)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
 
