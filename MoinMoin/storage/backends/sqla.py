@@ -471,4 +471,6 @@ class SQLARevision(NewRevision, Base):
     def __setitem__(self, key, value):
         NewRevision.__setitem__(self, key, value)
 
-
+    @property
+    def size(self):
+        return self._data.size
