@@ -52,6 +52,8 @@ class SQLAlchemyBackend(Backend):
             return True
         except NoResultFound:
             return False
+        finally:
+            session.close()
 
     def get_item(self, itemname):
         """
@@ -69,7 +71,7 @@ class SQLAlchemyBackend(Backend):
         try:
             item = session.query(SQLAItem).filter_by(_name=itemname).one()
             # SQLA doesn't call __init__, so we need to take care of that.
-            item.setup(self, session)
+            item.setup(self)
             # Maybe somebody already got an instance of this Item and thus there already is a Lock for that Item.
             if not item.id in self._item_metadata_lock:
                 self._item_metadata_lock[item.id] = Lock()
@@ -109,7 +111,7 @@ class SQLAlchemyBackend(Backend):
         """
         session = Session()
         for item in session.query(SQLAItem):
-            item.setup(self, session)
+            item.setup(self)
             yield item
 
     def _create_revision(self, item, revno):
@@ -180,10 +182,14 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to commit to  storage.
         @return: None
         """
+        session = Session.object_session(revision.item)
+        if session is None:
+            session = Session()
         self._item_metadata_lock[revision.item.id] = Lock()
-        revision.session.add(revision)
+        session.add(revision)
+        session.add(revision.item)
         try:
-            revision.session.commit()
+            session.commit()
         except IntegrityError:
             raise RevisionAlreadyExistsError("A revision with revno %d already exists on item '%s'." \
                                               % (revision.revno, revision.item.name))
@@ -197,7 +203,9 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to roll back.
         @return: None
         """
-        revision.session.rollback()
+        session = Session.object_session(revision.item)
+        session.rollback()
+        session.close()
 
     def _change_item_metadata(self, item):
         """
@@ -228,7 +236,9 @@ class SQLAlchemyBackend(Backend):
         """
         if item.id is None and self.has_item(item.name):
             raise ItemAlreadyExistsError("The Item whose metadata you tried to publish already exists.")
-        item.session.commit()
+        session = Session()
+        session.add(item)
+        session.commit()
         try:
             self._item_metadata_lock[item.id].release()
         except KeyError:
@@ -292,23 +302,14 @@ class SQLAItem(Item, Base):
 
     def __init__(self, backend, itemname):
         self._name = itemname
-        self.session = Session()
         self.setup(backend)
 
-    def setup(self, backend, session=None):
+    def setup(self, backend):
         self._backend = backend
         self._locked = False
         self._read_accessed = False
         self._uncommitted_revision = None
         self.element_attrs = dict(name=self._name)
-        if session is not None:
-            try:
-                self.session.close()
-            except AttributeError:
-                # Item has been loaded from DB and setup() manually. There is no self.session yet.
-                pass
-            self.session = session
-        self.session.add(self)
 
     def list_revisions(self):
         return [rev.revno for rev in self._revisions.all() if rev.id is not None]
@@ -357,10 +358,8 @@ class Data(Base):
 
     chunksize = 4
 
-    def __init__(self, session):
+    def __init__(self):
         self.setup()
-        self.session = session
-        self.session.add(self)
 
     def setup(self):
         """
@@ -385,8 +384,6 @@ class Data(Base):
             self.size += len(data_chunk)
             self._last_chunk.data += data_chunk
             self._chunks.append(self._last_chunk)
-            self.session.add(self._last_chunk)
-            self.session.flush()
             self.chunkno += 1
             data = data[chunk_space_left:]
 
@@ -444,7 +441,7 @@ class SQLARevision(NewRevision, Base):
     id = Column(Integer, primary_key=True)
     _data = relation(Data, uselist=False)
     _item_id = Column(Integer, ForeignKey('items.id'), index=True)
-    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy='dynamic', cascade=''), cascade='', uselist=False)
+    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy='dynamic', cascade='delete, delete-orphan'), cascade='', uselist=False)
     _revno = Column(Integer, index=True)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
@@ -455,9 +452,8 @@ class SQLARevision(NewRevision, Base):
         self._backend = item._backend
         self._timestamp = timestamp
         self.element_attrs = dict(revno=str(revno))
-        self.session = item.session
         if self._data is None:
-            self._data = Data(self.session)
+            self._data = Data()
         if self._metadata is None:
             self._metadata = {}
         self._data.setup()
@@ -480,3 +476,8 @@ class SQLARevision(NewRevision, Base):
     @property
     def size(self):
         return self._data.size
+
+    def destroy(self):
+        session = Session()
+        session.delete(self)
+        session.commit()

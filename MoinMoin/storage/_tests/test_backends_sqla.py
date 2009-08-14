@@ -38,12 +38,6 @@ class TestSQLABackend(BackendTest):
         pass
 
 
-# We also perform a few tests on the underlying chunked Data classes and need
-# a Session for them.
-engine = create_engine('sqlite:///:memory:')
-Session = sessionmaker(bind=engine)
-Data.metadata.bind = engine
-Data.metadata.create_all()
 raw_data = "This is a very long sentence so I can properly test my program. I hope it works."
 
 class TestChunkedRevDataStorage(object):
@@ -89,7 +83,7 @@ class TestChunkedRevDataStorage(object):
         length = len(raw_data)
         chunksizes = range(length)
         for chunksize in chunksizes:
-            data = Data(Session())
+            data = Data()
             # Don't test with chunksize == 0 but test with a chunksize larger than input data
             data.chunksize = chunksize + 1
             data.write(raw_data)
@@ -98,7 +92,7 @@ class TestChunkedRevDataStorage(object):
     def test_with_different_offsets(self):
         offsets = range(self.rev._data.chunksize)
         for offset in offsets:
-            data = Data(Session())
+            data = Data()
             data.write(raw_data)
             assert data.read(offset) == raw_data[:offset]
             assert data.read() == raw_data[offset:]
