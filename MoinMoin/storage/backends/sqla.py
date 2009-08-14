@@ -12,20 +12,24 @@
 from StringIO import StringIO
 from threading import Lock
 
-from sqlalchemy import create_engine, Column, Integer, Binary, String, PickleType, ForeignKey
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import create_engine, Column, Unicode, Integer, Binary, String, PickleType, ForeignKey
+from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.orm import sessionmaker, relation, backref
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision, StoredRevision
-from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError, RevisionAlreadyExistsError
+from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError, \
+                                   RevisionAlreadyExistsError, StorageError
 
 
 Base = declarative_base()
 # Our factory for sessions:
 Session = sessionmaker()
+
+
+NAME_LEN = 512
 
 
 class SQLAlchemyBackend(Backend):
@@ -187,6 +191,8 @@ class SQLAlchemyBackend(Backend):
         except IntegrityError:
             raise RevisionAlreadyExistsError("A revision with revno %d already exists on item '%s'." \
                                               % (revision.revno, revision.item.name))
+        except DataError:
+            raise StorageError("The item's name is too long for this backend. It must be less than %s." % NAME_LEN)
 
     def _rollback_item(self, revision):
         """
@@ -290,7 +296,7 @@ class SQLAItem(Item, Base):
     __tablename__ = 'items'
 
     id = Column(Integer, primary_key=True)
-    _name = Column(String, unique=True, index=True)
+    _name = Column(Unicode(NAME_LEN), unique=True, index=True)
     _metadata = Column(PickleType)
 
     def __init__(self, backend, itemname):
