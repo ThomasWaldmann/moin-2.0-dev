@@ -179,6 +179,7 @@ class SQLAlchemyBackend(Backend):
         @return: None
         """
         self._item_metadata_lock[revision.item.id] = Lock()
+        revision.session.add(revision)
         revision.session.commit()
 
     def _rollback_item(self, revision):
@@ -414,7 +415,7 @@ class Data(Base):
         return begin + mid + end
 
 
-class SQLARevision(Revision, Base):
+class SQLARevision(NewRevision, Base):
     __tablename__ = 'revisions'
     __table_args__ = (UniqueConstraint('_item_id', '_revno'), {})
 
@@ -433,9 +434,10 @@ class SQLARevision(Revision, Base):
         self._timestamp = timestamp
         self.element_attrs = dict(revno=str(revno))
         self.session = item.session
-        self.session.add(self)
         if self._data is None:
             self._data = Data(self.session)
+        if self._metadata is None:
+            self._metadata = {}
 
     def write(self, data):
         self._data.write(data)
@@ -448,4 +450,8 @@ class SQLARevision(Revision, Base):
 
     def tell(self):
         return self._data.tell()
+
+    def __setitem__(self, key, value):
+        NewRevision.__setitem__(self, key, value)
+
 
