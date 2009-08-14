@@ -14,7 +14,7 @@ from threading import Lock
 
 from sqlalchemy import create_engine, Column, Integer, Binary, String, PickleType, ForeignKey
 from sqlalchemy.orm import sessionmaker, relation, backref
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.ext.declarative import declarative_base
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision, StoredRevision
@@ -66,14 +66,18 @@ class SQLAlchemyBackend(Backend):
         # unique
         try:
             item = session.query(SQLAItem).filter_by(_name=itemname).one()
-            # XXX Can you make this more beautiful?
-            # The _backend attribute is not stored in the database. Restore it manually.
-            #
             # SQLA doesn't call __init__, so we need to take care of that.
             item.__init__(self, itemname, session)
+            # Maybe somebody already got an instance of this Item and thus there already is a Lock for that Item.
+            if not item.id in self._item_metadata_lock:
+                self._item_metadata_lock[item.id] = Lock()
             return item
         except NoResultFound:
             raise NoSuchItemError("The item '%s' could not be found." % itemname)
+        except MultipleResultsFound:
+            raise AssertionError("Multiple items found for supposedly unique itemname %s!" % itemname)
+        finally:
+            session.close()
 
     def create_item(self, itemname):
         """
@@ -92,9 +96,6 @@ class SQLAlchemyBackend(Backend):
             raise ItemAlreadyExistsError("An item with the name %s already exists." % itemname)
 
         item = SQLAItem(self, itemname)
-        # Maybe somebody already got an instance of this Item and thus there already is a Lock for that Item.
-        if not item.id in self._item_metadata_lock:
-            self._item_metadata_lock[item.id] = Lock()
         return item
 
     def iteritems(self):
@@ -218,7 +219,7 @@ class SQLAlchemyBackend(Backend):
         @return: None
         """
         if item.id is None and self.has_item(item.name):
-            raise  ItemAlreadyExistsError, "The Item whose metadata you tried to publish already exists."
+            raise ItemAlreadyExistsError("The Item whose metadata you tried to publish already exists.")
         item.session.commit()
         try:
             self._item_metadata_lock[item.id].release()
