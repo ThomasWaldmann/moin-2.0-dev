@@ -13,13 +13,14 @@ from StringIO import StringIO
 from threading import Lock
 
 from sqlalchemy import create_engine, Column, Integer, Binary, String, PickleType, ForeignKey
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, relation, backref
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision, StoredRevision
-from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError, RevisionAlreadyExistsError
 
 
 Base = declarative_base()
@@ -181,7 +182,11 @@ class SQLAlchemyBackend(Backend):
         """
         self._item_metadata_lock[revision.item.id] = Lock()
         revision.session.add(revision)
-        revision.session.commit()
+        try:
+            revision.session.commit()
+        except IntegrityError:
+            raise RevisionAlreadyExistsError("A revision with revno %d already exists on item '%s'." \
+                                              % (revision.revno, revision.item.name))
 
     def _rollback_item(self, revision):
         """
