@@ -107,10 +107,9 @@ class SQLAlchemyBackend(Backend):
         @rtype: iterator of item objects
         """
         session = Session()
-        all_items = session.query(SQLAItem).all()
-        for item in all_items:
+        for item in session.query(SQLAItem):
             item.setup(self, session)
-        return all_items
+            yield item
 
     def _create_revision(self, item, revno):
         """
