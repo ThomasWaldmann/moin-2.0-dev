@@ -362,7 +362,7 @@ class Data(Base):
             self._last_chunk.data += data_chunk
             self._chunks.append(self._last_chunk)
             self.session.add(self._last_chunk)
-            self.session.commit()
+            self.session.flush()
             self.chunkno += 1
             data = data[chunk_space_left:]
 
