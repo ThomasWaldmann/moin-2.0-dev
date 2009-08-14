@@ -15,6 +15,7 @@ from threading import Lock
 from sqlalchemy import create_engine, Column, Integer, Binary, String, PickleType, ForeignKey
 from sqlalchemy.orm import sessionmaker, relation, backref
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision, StoredRevision
@@ -279,7 +280,7 @@ class SQLAItem(Item, Base):
     __tablename__ = 'items'
 
     id = Column(Integer, primary_key=True)
-    _name = Column(String)
+    _name = Column(String, unique=True)
     _metadata = Column(PickleType)
 
     def __init__(self, backend, itemname, session=None):
@@ -415,6 +416,7 @@ class Data(Base):
 
 class SQLARevision(Revision, Base):
     __tablename__ = 'revisions'
+    __table_args__ = (UniqueConstraint('_item_id', '_revno'), {})
 
     id = Column(Integer, primary_key=True)
     _data = relation(Data, uselist=False)
