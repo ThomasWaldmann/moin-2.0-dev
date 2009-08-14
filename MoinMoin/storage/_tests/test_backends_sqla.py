@@ -40,14 +40,23 @@ class TestChunkedRevDataStorage(object):
         self.item = self.sqlabackend.create_item("test_item")
         #import pdb; pdb.set_trace()
         self.rev = self.item.create_revision(0)
-        #self.rev.write(raw_data)
+        self.rev.write(raw_data)
+
+    def test_read_empty(self):
+        item = self.sqlabackend.create_item("empty_item")
+        rev = item.create_revision(0)
+        assert rev.read() == ''
+        item.commit()
+        assert rev.read() == ''
 
     def test_write_many_times(self):
-        self.rev = self.item.create_revision(0)
-        self.rev._data.chunksize = 4
-        self.rev.write("foo")
-        self.rev.write("baaaaaaar")
-        assert [chunk.data for chunk in self.rev._data._chunks] == ["foob", "aaaa", "aaar"]
+        item = self.sqlabackend.create_item("test_write_many_times")
+        rev = item.create_revision(0)
+        rev._data.chunksize = 4
+        rev.write("foo")
+        rev.write("baaaaaaar")
+        item.commit()
+        assert [chunk.data for chunk in rev._data._chunks] == ["foob", "aaaa", "aaar"]
 
     def test_read_more_than_is_there(self):
         assert self.rev.read(len(raw_data) + 1) == raw_data

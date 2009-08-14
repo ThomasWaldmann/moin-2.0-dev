@@ -434,10 +434,10 @@ class SQLARevision(Revision, Base):
         self.element_attrs = dict(revno=str(revno))
         self.session = item.session
         self.session.add(self)
-
-    def write(self, data):
         if self._data is None:
             self._data = Data(self.session)
+
+    def write(self, data):
         self._data.write(data)
 
     def read(self, amount=None):
