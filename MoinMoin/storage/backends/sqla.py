@@ -353,9 +353,11 @@ class Data(Base):
     chunksize = 4
 
     def __init__(self, session):
-        self.setup(session)
+        self.setup()
+        self.session = session
+        self.session.add(self)
 
-    def setup(self, session):
+    def setup(self):
         """
         This is different from __init__ as it may be also invoked explicitly
         when the object is returned from the database. We may as well call
@@ -365,8 +367,6 @@ class Data(Base):
         self._last_chunk = Chunk(self.chunkno)
         self.cursor_pos = 0
         self.size = 0
-        self.session = session
-        self.session.add(self)
 
     def write(self, data):
         while data:
@@ -455,6 +455,7 @@ class SQLARevision(NewRevision, Base):
             self._data = Data(self.session)
         if self._metadata is None:
             self._metadata = {}
+        self._data.setup()
 
     def write(self, data):
         self._data.write(data)
