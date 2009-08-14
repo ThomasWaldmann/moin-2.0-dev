@@ -38,11 +38,12 @@ class TestChunkedRevDataStorage(object):
     def setup_method(self, meth):
         self.sqlabackend = SQLAlchemyBackend()
         self.item = self.sqlabackend.create_item("test_item")
+        #import pdb; pdb.set_trace()
         self.rev = self.item.create_revision(0)
-        self.rev.write(raw_data)
+        #self.rev.write(raw_data)
 
     def test_write_many_times(self):
-        self.rev._data = Data()
+        self.rev = self.item.create_revision(0)
         self.rev._data.chunksize = 4
         self.rev.write("foo")
         self.rev.write("baaaaaaar")
