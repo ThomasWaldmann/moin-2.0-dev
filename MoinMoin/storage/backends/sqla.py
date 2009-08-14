@@ -153,22 +153,16 @@ class SQLAlchemyBackend(Backend):
         committed to storage)
         @return: None
         """
-        session = Session()
+        session = Session.object_session(item)
+        if session is None:
+            session = Session()
+            session.add(item)
+
         itemname = item.name
-        try:
-            item = session.query(SQLAItem).filter_by(_name=itemname).one()
-        except NoResultFound:
-            raise NoSuchItemError("There is no item %s." % item.name)
-        try:
-            new_item = session.query(SQLAItem).filter_by(_name=newname).one()
-        except NoResultFound:
-            # Target item should not already exist.
-            pass
-        else:
+        if self.has_item(newname):
             raise ItemAlreadyExistsError("There already is an item with the name %s." % newname)
 
         item._name = newname
-        # not necessary? session.add(item)
         session.commit()
 
     def _commit_item(self, revision):
@@ -205,7 +199,6 @@ class SQLAlchemyBackend(Backend):
         """
         session = Session.object_session(revision.item)
         session.rollback()
-        session.close()
 
     def _change_item_metadata(self, item):
         """
@@ -316,7 +309,9 @@ class SQLAItem(Item, Base):
 
     def get_revision(self, revno):
         try:
-            session = Session()
+            session = Session.object_session(self)
+            if session is None:
+                session = Session()
             if revno == -1:
                 revno = self.list_revisions()[-1]
             rev = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).filter(SQLARevision._revno==revno).one()
