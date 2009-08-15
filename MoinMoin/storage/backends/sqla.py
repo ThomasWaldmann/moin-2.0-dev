@@ -321,12 +321,10 @@ class SQLAItem(Item, Base):
             if revno == -1:
                 revno = self.list_revisions()[-1]
             rev = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).filter(SQLARevision._revno==revno).one()
-            rev.__init__(self, revno)
+            rev.setup()
             return rev
         except (NoResultFound, IndexError):
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
-        finally:
-            session.close()
 
 
 class Chunk(Base):
@@ -450,9 +448,12 @@ class SQLARevision(NewRevision, Base):
     def __init__(self, item, revno, timestamp=None):
         self._revno = revno
         self._item = item
-        self._backend = item._backend
+        self._backend = self._item._backend
         self._timestamp = timestamp
         self.element_attrs = dict(revno=str(revno))
+        self.setup()
+
+    def setup(self):
         if self._data is None:
             self._data = Data()
         if self._metadata is None:
