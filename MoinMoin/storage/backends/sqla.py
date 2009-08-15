@@ -248,8 +248,7 @@ class SQLAlchemyBackend(Backend):
         """
         if item.id is None and self.has_item(item.name):
             raise ItemAlreadyExistsError("The Item whose metadata you tried to publish already exists.")
-        session = Session()
-        session.add(item)
+        session = Session.object_session(item)
         session.commit()
         try:
             self._item_metadata_lock[item.id].release()
@@ -314,6 +313,8 @@ class SQLAItem(Item, Base):
 
     def __init__(self, backend, itemname):
         self._name = itemname
+        self._session = Session()
+        self._session.add(self)
         self.setup(backend)
 
     def setup(self, backend):
