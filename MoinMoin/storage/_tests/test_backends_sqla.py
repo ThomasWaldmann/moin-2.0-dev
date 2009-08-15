@@ -42,7 +42,7 @@ raw_data = "This is a very long sentence so I can properly test my program. I ho
 
 class TestChunkedRevDataStorage(object):
     def setup_method(self, meth):
-        self.sqlabackend = SQLAlchemyBackend()
+        self.sqlabackend = SQLAlchemyBackend('sqlite:///:memory:')
         self.item = self.sqlabackend.create_item(u"test_item")
         self.rev = self.item.create_revision(0)
         self.rev.write(raw_data)
