@@ -412,17 +412,12 @@ class FSBackend(Backend):
             self._add_item_internally(item, newrev=rev._fs_revpath)
         else:
             rp = os.path.join(self._path, item._fs_item_id, 'rev.%d' % rev.revno)
-
             try:
-                try:
-                    # XXX: doesn't work on windows
-                    os.link(rev._fs_revpath, rp)
-                except OSError, err:
-                    if err.errno != errno.EEXIST:
-                        raise
-                    raise RevisionAlreadyExistsError("")
-            finally:
-                os.unlink(rev._fs_revpath)
+                filesys.rename_no_overwrite(rev._fs_revpath, rp, delete_old=True)
+            except OSError, err:
+                if err.errno != errno.EEXIST:
+                    raise
+                raise RevisionAlreadyExistsError("")
 
         self._addhistory(item._fs_item_id, rev.revno, rev.timestamp)
 
