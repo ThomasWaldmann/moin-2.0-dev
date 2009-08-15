@@ -43,19 +43,19 @@ raw_data = "This is a very long sentence so I can properly test my program. I ho
 class TestChunkedRevDataStorage(object):
     def setup_method(self, meth):
         self.sqlabackend = SQLAlchemyBackend()
-        self.item = self.sqlabackend.create_item("test_item")
+        self.item = self.sqlabackend.create_item(u"test_item")
         self.rev = self.item.create_revision(0)
         self.rev.write(raw_data)
 
     def test_read_empty(self):
-        item = self.sqlabackend.create_item("empty_item")
+        item = self.sqlabackend.create_item(u"empty_item")
         rev = item.create_revision(0)
         assert rev.read() == ''
         item.commit()
         assert rev.read() == ''
 
     def test_write_many_times(self):
-        item = self.sqlabackend.create_item("test_write_many_times")
+        item = self.sqlabackend.create_item(u"test_write_many_times")
         rev = item.create_revision(0)
         rev._data.chunksize = 4
         rev.write("foo")
