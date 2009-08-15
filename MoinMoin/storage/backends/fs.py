@@ -18,6 +18,7 @@ except ImportError:
     from MoinMoin.support import pycdb as cdb
 
 from MoinMoin.util.lock import ExclusiveLock
+from MoinMoin.util import filesys
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
@@ -278,8 +279,8 @@ class FSBackend(Backend):
                 maker.add(i, v)
             r = c.each()
         maker.finish()
-        # XXX: doesn't work on windows
-        os.rename(self._name_db + '.ndb', self._name_db)
+
+        filesys.rename(self._name_db + '.ndb', self._name_db)
         nf = open(npath, mode='wb')
         nf.write(nn)
         nf.close()
@@ -335,7 +336,7 @@ class FSBackend(Backend):
 
         if newrev is not None:
             rp = os.path.join(self._path, itemid, 'rev.0')
-            os.rename(newrev, rp)
+            filesys.rename(newrev, rp)
 
         if metadata:
             # only write metadata file if we have any
@@ -351,8 +352,7 @@ class FSBackend(Backend):
         nf.close()
 
         # make item retrievable (by putting the name-mapping in place)
-        # XXX: doesn't work on windows
-        os.rename(self._name_db + '.ndb', self._name_db)
+        filesys.rename(self._name_db + '.ndb', self._name_db)
 
         item._fs_item_id = itemid
 
@@ -440,8 +440,8 @@ class FSBackend(Backend):
                 maker.add(i, v)
             r = c.each()
         maker.finish()
-        # XXX: doesn't work on windows
-        os.rename(self._name_db + '.ndb', self._name_db)
+
+        filesys.rename(self._name_db + '.ndb', self._name_db)
         path = os.path.join(self._path, item._fs_item_id)
         try:
             shutil.rmtree(path)
@@ -481,8 +481,8 @@ class FSBackend(Backend):
                 f = open(tmp, 'wb')
                 pickle.dump(md, f, protocol=PICKLEPROTOCOL)
                 f.close()
-                # XXX: doesn't work on windows
-                os.rename(tmp, os.path.join(self._path, item._fs_item_id, 'meta'))
+
+                filesys.rename(tmp, os.path.join(self._path, item._fs_item_id, 'meta'))
             item._fs_metadata_lock.release()
             del item._fs_metadata_lock
 
