@@ -330,7 +330,7 @@ class SQLAItem(Item, Base):
         self.element_attrs = dict(name=self._name)
 
     def list_revisions(self):
-        return [rev.revno for rev in self._revisions.all() if rev.id is not None]
+        return [rev.revno for rev in self._revisions if rev.id is not None]
 
     def get_revision(self, revno):
         try:
@@ -477,7 +477,7 @@ class SQLARevision(NewRevision, Base):
     id = Column(Integer, primary_key=True)
     _data = relation(Data, uselist=False)
     _item_id = Column(Integer, ForeignKey('items.id'), index=True)
-    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy='dynamic', cascade='delete, delete-orphan'), cascade='', uselist=False)
+    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy=False, cascade='delete, delete-orphan'), cascade='', uselist=False)
     _revno = Column(Integer, index=True)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
