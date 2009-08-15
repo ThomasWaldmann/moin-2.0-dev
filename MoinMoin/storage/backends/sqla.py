@@ -180,19 +180,36 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to commit to  storage.
         @return: None
         """
-        session = Session.object_session(revision.item)
+        item = revision.item
+        session = Session.object_session(item)
         if session is None:
             session = Session()
-        self._item_metadata_lock[revision.item.id] = Lock()
+        self._item_metadata_lock[item.id] = Lock()
+
+        # Try to flush item first if it's not already persisted
+        if item.id is None:
+            session.add(item)
+            try:
+                session.flush()
+            except IntegrityError:
+                # XXX If this error message would look up the item name it would fail due to the subtransaction
+                #     having been rolled back.
+                raise ItemAlreadyExistsError("An item with that name already exists.")
+            except DataError:
+                raise StorageError("The item's name is too long for this backend. It must be less than %s." % NAME_LEN)
+
+        # Try to flush revision
         session.add(revision)
-        session.add(revision.item)
         try:
-            session.commit()
+            session.flush()
         except IntegrityError:
-            raise RevisionAlreadyExistsError("A revision with revno %d already exists on item '%s'." \
-                                              % (revision.revno, revision.item.name))
-        except DataError:
-            raise StorageError("The item's name is too long for this backend. It must be less than %s." % NAME_LEN)
+            raise RevisionAlreadyExistsError("A revision with revno %d already exists on the item." \
+                                              % (revision.revno))
+
+        # We still need to commit() because we only flushed before
+        session.commit()
+
+
 
     def _rollback_item(self, revision):
         """
