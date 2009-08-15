@@ -52,36 +52,36 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
 
     def _create_backends(BackendClass, instance_folder):
         # creates the actual backends
-        datadir, userdir, trashdir = _create_folders(instance_folder)
-        data = BackendClass(datadir)
-        user = BackendClass(userdir)
+        contentdir, userprofiledir, trashdir = _create_folders(instance_folder)
+        content = BackendClass(contentdir)
+        userprofile = BackendClass(userprofiledir)
         trash = BackendClass(trashdir)
-        return data, user, trash
+        return content, userprofile, trash
 
 
     if backend_uri.startswith(FS_PREFIX):
         # Aha! We want to use the fs backend
         instance_folder = backend_uri[len(FS_PREFIX):]
-        data, user, trash = _create_backends(fs.FSBackend, instance_folder)
+        content, userprofile, trash = _create_backends(fs.FSBackend, instance_folder)
 
     elif backend_uri.startswith(HG_PREFIX):
         # Due to external dependency that may not always be present, import hg backend here:
         from MoinMoin.storage.backends import hg
         instance_folder = backend_uri[len(HG_PREFIX):]
-        data, user, trash = _create_backends(hg.MercurialBackend, instance_folder)
+        content, userprofile, trash = _create_backends(hg.MercurialBackend, instance_folder)
 
     elif backend_uri.startswith(SQLA_PREFIX):
         # XXX Move this import to the module level once sqlalchemy is in MoinMoin.support
         from MoinMoin.storage.backends.sqla import SQLAlchemyBackend
         db_uri = backend_uri[len(SQLA_PREFIX):]
 
-        data = SQLAlchemyBackend(db_uri % dict(nsname='content'))
-        user = SQLAlchemyBackend(db_uri % dict(nsname='userprofile'))
+        content = SQLAlchemyBackend(db_uri % dict(nsname='content'))
+        userprofile = SQLAlchemyBackend(db_uri % dict(nsname='userprofile'))
         trash = SQLAlchemyBackend(db_uri % dict(nsname='trash'))
 
     elif backend_uri == MEMORY_PREFIX:
-        data = memory.MemoryBackend()
-        user = memory.MemoryBackend()
+        content = memory.MemoryBackend()
+        userprofile = memory.MemoryBackend()
         trash = memory.MemoryBackend()
 
     else:
@@ -110,8 +110,8 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
 
     namespace_mapping = [
                     (ns_trash, trash, content_acl),
-                    (ns_user_profile, user, user_profile_acl),
-                    (ns_content, data, content_acl),
+                    (ns_user_profile, userprofile, user_profile_acl),
+                    (ns_content, content, content_acl),
     ]
 
     return namespace_mapping
