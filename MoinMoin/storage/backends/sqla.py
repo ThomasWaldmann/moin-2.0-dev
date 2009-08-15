@@ -383,6 +383,7 @@ class Data(Base):
 
     def __init__(self):
         self.setup()
+        self.size = 0
 
     def setup(self):
         """
@@ -393,7 +394,6 @@ class Data(Base):
         self.chunkno = 0
         self._last_chunk = Chunk(self.chunkno)
         self.cursor_pos = 0
-        self.size = 0
 
     def write(self, data):
         while data:
