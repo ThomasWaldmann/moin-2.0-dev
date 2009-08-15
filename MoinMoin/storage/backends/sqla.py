@@ -109,6 +109,15 @@ class SQLAlchemyBackend(Backend):
         item = SQLAItem(self, itemname)
         return item
 
+    def history(self, reverse=True):
+        session = Session()
+        col = SQLArevision.id
+        if reverse:
+            col = col.desc()
+        for rev in session.query(SQLARevision).order_by(col).yield_per(1):
+            rev.setup()
+            yield rev
+
     def iteritems(self):
         """
         Returns an iterator over all items available in this backend.
@@ -440,7 +449,7 @@ class Data(Base):
         first, skip = divmod(self.cursor_pos, chunksize)
 
         # No amount given means: Read all that remains (from viewpoint of cursor_pos)
-        if amount is None or amount >= (self.size - self.cursor_pos) or amount < 0:
+        if amount is None or amount < 0 or amount >= (self.size - self.cursor_pos):
             # From the first chunk we read everything after skip
             try:
                 begin = self._chunks[first].data[skip:]
