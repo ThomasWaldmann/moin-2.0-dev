@@ -180,19 +180,34 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to commit to  storage.
         @return: None
         """
-        session = Session.object_session(revision.item)
+        item = revision.item
+        session = Session.object_session(item)
         if session is None:
             session = Session()
-        self._item_metadata_lock[revision.item.id] = Lock()
+        self._item_metadata_lock[item.id] = Lock()
+
+        # Try to flush item first if it's not already persisted
+        if item.id is None:
+            session.add(item)
+            try:
+                session.flush()
+            except IntegrityError:
+                # XXX If this error message would look up the item name it would fail due to the subtransaction
+                #     having been rolled back.
+                raise ItemAlreadyExistsError("An item with that name already exists.")
+            except DataError:
+                raise StorageError("The item's name is too long for this backend. It must be less than %s." % NAME_LEN)
+
+        # Try to flush revision
         session.add(revision)
-        session.add(revision.item)
         try:
-            session.commit()
+            session.flush()
         except IntegrityError:
-            raise RevisionAlreadyExistsError("A revision with revno %d already exists on item '%s'." \
-                                              % (revision.revno, revision.item.name))
-        except DataError:
-            raise StorageError("The item's name is too long for this backend. It must be less than %s." % NAME_LEN)
+            raise RevisionAlreadyExistsError("A revision with revno %d already exists on the item." \
+                                              % (revision.revno))
+
+        # We still need to commit() because we only flushed before
+        session.commit()
 
     def _rollback_item(self, revision):
         """
@@ -321,12 +336,17 @@ class SQLAItem(Item, Base):
             if revno == -1:
                 revno = self.list_revisions()[-1]
             rev = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).filter(SQLARevision._revno==revno).one()
-            rev.__init__(self, revno)
+            rev.setup()
             return rev
         except (NoResultFound, IndexError):
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
-        finally:
-            session.close()
+
+    def destroy(self):
+        session = Session.object_session(self)
+        if session is None:
+            session = Session()
+        session.delete(self)
+        session.commit()
 
 
 class Chunk(Base):
@@ -337,13 +357,24 @@ class Chunk(Base):
 
     id = Column(Integer, primary_key=True)
     chunkno = Column(Integer)
-    data = Column(String)
     _container_id = Column(Integer, ForeignKey('rev_data.id'))
 
-    def __init__(self, chunkno):
-        self.chunkno = chunkno
-        self.data = ""
+    chunksize = 4
+    _data = Column(Binary(chunksize))
 
+    def __init__(self, chunkno, data=''):
+        self.chunkno = chunkno
+        assert len(data) <= self.chunksize
+        self._data = data
+
+    @property
+    def data(self):
+        """
+        Since we store the chunk's data internally as Binary type, we
+        get buffer objects back from the DB. We need to convert them
+        to str in order to work with them.
+        """
+        return str(self._data)
 
 class Data(Base):
     """
@@ -357,10 +388,9 @@ class Data(Base):
     _revision_id = Column(Integer, ForeignKey('revisions.id'))
     size = Column(Integer)
 
-    chunksize = 4
-
     def __init__(self):
         self.setup()
+        self.size = 0
 
     def setup(self):
         """
@@ -371,19 +401,19 @@ class Data(Base):
         self.chunkno = 0
         self._last_chunk = Chunk(self.chunkno)
         self.cursor_pos = 0
-        self.size = 0
 
     def write(self, data):
+        chunksize = self._last_chunk.chunksize
         while data:
             # How much space is left in the current chunk?
-            chunk_space_left = self.chunksize - len(self._last_chunk.data)
+            chunk_space_left = chunksize - len(self._last_chunk.data)
             # If there's no space left, create a new chunk
             if chunk_space_left == 0:
                 self._last_chunk = Chunk(self.chunkno)
-                chunk_space_left = self.chunksize
+                chunk_space_left = chunksize
             data_chunk = data[:chunk_space_left]
             self.size += len(data_chunk)
-            self._last_chunk.data += data_chunk
+            self._last_chunk._data += data_chunk
             self._chunks.append(self._last_chunk)
             self.chunkno += 1
             data = data[chunk_space_left:]
@@ -400,9 +430,10 @@ class Data(Base):
             self.cursor_pos = self.size + pos
 
     def read(self, amount=None):
+        chunksize = self._last_chunk.chunksize
         # The first chunk that contains the data we want to read
         # Perhaps we have already read a part of the first chunk before. We want to skip that.
-        first, skip = divmod(self.cursor_pos, self.chunksize)
+        first, skip = divmod(self.cursor_pos, chunksize)
 
         # No amount given means: Read all that remains (from viewpoint of cursor_pos)
         if amount is None or amount > self.size:
@@ -421,14 +452,14 @@ class Data(Base):
             return begin + end
 
         # Otherwise we need all chunks up to last
-        last = first + amount / self.chunksize
+        last = first + amount / chunksize
         # Get all those chunks
         chunks = self._chunks[first:last+1]
         begin = chunks[0].data[skip:skip+amount]
         # We just concatenate the contents of all but the first and last chunks
         mid = "".join([chunk.data for chunk in chunks[1:-1]])
         # And from the last chunk, we only take what is remaining to get `amount` bytes in total.
-        remaining = (amount - len(begin+mid)) % self.chunksize
+        remaining = (amount - len(begin+mid)) % chunksize
         end = chunks[-1].data[:remaining]
         self.cursor_pos += amount
         assert len(begin+mid+end) == amount
@@ -450,9 +481,12 @@ class SQLARevision(NewRevision, Base):
     def __init__(self, item, revno, timestamp=None):
         self._revno = revno
         self._item = item
-        self._backend = item._backend
+        self._backend = self._item._backend
         self._timestamp = timestamp
         self.element_attrs = dict(revno=str(revno))
+        self.setup()
+
+    def setup(self):
         if self._data is None:
             self._data = Data()
         if self._metadata is None:
@@ -479,6 +513,8 @@ class SQLARevision(NewRevision, Base):
         return self._data.size
 
     def destroy(self):
-        session = Session()
+        session = Session.object_session(self)
+        if session is None:
+            session = Session()
         session.delete(self)
         session.commit()
