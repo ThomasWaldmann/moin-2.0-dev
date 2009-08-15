@@ -363,7 +363,7 @@ class Chunk(Base):
     chunkno = Column(Integer)
     _container_id = Column(Integer, ForeignKey('rev_data.id'))
 
-    chunksize = 4
+    chunksize = 64 * 1024
     _data = Column(Binary(chunksize))
 
     def __init__(self, chunkno, data=''):
