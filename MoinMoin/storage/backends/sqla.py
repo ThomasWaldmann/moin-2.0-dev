@@ -440,7 +440,7 @@ class Data(Base):
         first, skip = divmod(self.cursor_pos, chunksize)
 
         # No amount given means: Read all that remains (from viewpoint of cursor_pos)
-        if amount is None or amount > self.size:
+        if amount is None or amount >= (self.size - self.cursor_pos):
             # From the first chunk we read everything after skip
             try:
                 begin = self._chunks[first].data[skip:]
