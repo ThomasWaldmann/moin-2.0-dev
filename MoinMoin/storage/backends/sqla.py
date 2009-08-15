@@ -18,6 +18,8 @@ from sqlalchemy.orm import sessionmaker, relation, backref
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
+# Only used/needed for development/testing:
+from sqlalchemy.pool import StaticPool
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision, StoredRevision
 from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError, \
@@ -36,18 +38,21 @@ class SQLAlchemyBackend(Backend):
     """
     The actual SQLAlchemyBackend.
     """
-    def __init__(self, db_uri='sqlite:///:memory:', verbose=False):
+    def __init__(self, db_uri=None, verbose=False):
+        if db_uri is None:
+            # These are settings that apply only for development / testing.
+            db_uri = 'sqlite:///:memory:'
+            self.engine = create_engine(db_uri, poolclass=StaticPool, connect_args={'check_same_thread': False})
+        else:
+            self.engine = create_engine(db_uri)
 
-        ## TODO DEVELOPMENT SETTINGS --- Remove when in-memory sqlite database is not needed anymore
-        from sqlalchemy.pool import StaticPool
-        self.engine = create_engine('sqlite:///:memory:', poolclass=StaticPool, connect_args={'check_same_thread': False})
-        ## TODO </development settings>
-
-        # Create the database schema
+        # Bind the module level Session to the engine
+        Session.configure(bind=self.engine)
+        # Create the database schema (for all tables)
         SQLAItem.metadata.bind = self.engine
         SQLAItem.metadata.create_all()
-
-        self._item_metadata_lock = {}       # {id : Lockobject}
+        # {id : Lockobject} -- lock registry for item metadata locks
+        self._item_metadata_lock = {}
 
     def has_item(self, itemname):
         try:
