@@ -326,6 +326,13 @@ class SQLAItem(Item, Base):
         except (NoResultFound, IndexError):
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
 
+    def destroy(self):
+        session = Session.object_session(self)
+        if session is None:
+            session = Session()
+        session.delete(self)
+        session.commit()
+
 
 class Chunk(Base):
     """
@@ -480,6 +487,8 @@ class SQLARevision(NewRevision, Base):
         return self._data.size
 
     def destroy(self):
-        session = Session()
+        session = Session.object_session(self)
+        if session is None:
+            session = Session()
         session.delete(self)
         session.commit()
