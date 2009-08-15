@@ -84,8 +84,6 @@ class SQLAlchemyBackend(Backend):
             raise NoSuchItemError("The item '%s' could not be found." % itemname)
         except MultipleResultsFound:
             raise AssertionError("Multiple items found for supposedly unique itemname %s!" % itemname)
-        finally:
-            session.close()
 
     def create_item(self, itemname):
         """
