@@ -9,6 +9,7 @@
     @copyright: 2009 MoinMoin:ChristopherDenter,
     @license: GNU GPL, see COPYING for details.
 """
+import time
 from StringIO import StringIO
 from threading import Lock
 
@@ -210,6 +211,9 @@ class SQLAlchemyBackend(Backend):
             except DataError:
                 raise StorageError("The item's name is too long for this backend. It must be less than %s." % NAME_LEN)
 
+        if revision.timestamp is None:
+            revision.timestamp = long(time.time())
+
         # Try to flush revision
         session.add(revision)
         try:
@@ -289,19 +293,6 @@ class SQLAlchemyBackend(Backend):
         @type revision: Object of a subclass of Revision.
         @param revision: The revision on which we want to operate.
         @return: dict of metadata key / value pairs.
-        """
-        raise NotImplementedError()
-
-    def _get_revision_timestamp(self, revision):
-        """
-        Lazily load the revision's timestamp. If accessing it
-        is cheap, it can be given as a parameter to StoredRevision
-        instantiation instead.
-        Return the timestamp (a long).
-
-        @type revision: Object of a subclass of Revision.
-        @param revision: The revision on which we want to operate.
-        @return: long
         """
         raise NotImplementedError()
 
