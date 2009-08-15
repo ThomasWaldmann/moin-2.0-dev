@@ -22,12 +22,12 @@ from MoinMoin.storage.backends import memory
 from MoinMoin.storage.error import NoSuchItemError, ItemAlreadyExistsError, NoSuchRevisionError, RevisionAlreadyExistsError
 from MoinMoin.search import term
 
-item_names = ("quite_normal",
+item_names = (u"quite_normal",
               u"äöüßłóąćółąńśćżź",
-              "with space",
-              "name#special(characters?.\,",
-              "very_long_name_" * 100 + "ending_1",
-              "very_long_name_" * 100 + "ending_2", )
+              u"with space",
+              u"name#special(characters?.\,",
+              u"very_long_name_" * 100 + u"ending_1",
+              u"very_long_name_" * 100 + u"ending_2", )
 
 invalid_names = (42, {}, (1, ), [1], )
 
@@ -85,7 +85,7 @@ class BackendTest(object):
         for num, item_name in enumerate(self.valid_names):
             yield create_rev_item, item_name
             yield self.get_item_check, item_name
-            new_name = "renamed_revitem_%d" % num
+            new_name = u"renamed_revitem_%d" % num
             yield self.rename_item_check, item_name, new_name
             yield self.get_item_check, new_name
 
@@ -100,13 +100,13 @@ class BackendTest(object):
         for num, item_name in enumerate(self.valid_names):
             yield create_meta_item, item_name
             yield self.get_item_check, item_name
-            new_name = "renamed_revitem_%d" % num
+            new_name = u"renamed_revitem_%d" % num
             yield self.rename_item_check, item_name, new_name
             yield self.get_item_check, new_name
 
     def test_item_rename_to_existing(self):
-        item1 = self.create_rev_item_helper("fresh_item")
-        item2 = self.create_rev_item_helper("try to rename")
+        item1 = self.create_rev_item_helper(u"fresh_item")
+        item2 = self.create_rev_item_helper(u"try to rename")
         py.test.raises(ItemAlreadyExistsError, item1.rename, item2.name)
 
     def rename_item_invalid_name(self, name, newname):
@@ -115,15 +115,15 @@ class BackendTest(object):
 
     def test_item_rename_to_invalid(self):
         for num, invalid_name in enumerate(self.invalid_names):
-            yield self.rename_item_invalid_name, "item_%s" % num, invalid_name
+            yield self.rename_item_invalid_name, u"item_%s" % num, invalid_name
 
     def test_item_rename_threesome(self):
-        item1 = self.create_rev_item_helper("item1")
-        item2 = self.create_rev_item_helper("item2")
+        item1 = self.create_rev_item_helper(u"item1")
+        item2 = self.create_rev_item_helper(u"item2")
         item1.create_revision(1)
         item1.commit()
-        item2.rename("item3")
-        item1.rename("item2")
+        item2.rename(u"item3")
+        item1.rename(u"item2")
         assert len(item1.list_revisions()) == 2
 
     def create_item_invalid_name(self, name):
@@ -134,45 +134,45 @@ class BackendTest(object):
             yield self.create_item_invalid_name, item_name
 
     def test_create_order(self):
-        item1 = self.backend.create_item('1')
-        item2 = self.backend.create_item('2')
+        item1 = self.backend.create_item(u'1')
+        item2 = self.backend.create_item(u'2')
         revision1 = item1.create_revision(0)
         revision2 = item2.create_revision(0)
         revision1.write('1')
         revision2.write('2')
         item2.commit()
         item1.commit()
-        item1 = self.backend.get_item('1')
-        item2 = self.backend.get_item('2')
+        item1 = self.backend.get_item(u'1')
+        item2 = self.backend.get_item(u'2')
         revision1 = item1.get_revision(0)
         revision2 = item2.get_revision(0)
         assert revision1.read() == '1'
         assert revision2.read() == '2'
 
     def test_create_rev_item_again(self):
-        self.create_rev_item_helper("item1")
-        py.test.raises(ItemAlreadyExistsError, self.backend.create_item, "item1")
+        self.create_rev_item_helper(u"item1")
+        py.test.raises(ItemAlreadyExistsError, self.backend.create_item, u"item1")
 
     def test_create_meta_item_again(self):
-        self.create_meta_item_helper("item2")
-        py.test.raises(ItemAlreadyExistsError, self.backend.create_item, "item2")
+        self.create_meta_item_helper(u"item2")
+        py.test.raises(ItemAlreadyExistsError, self.backend.create_item, u"item2")
 
     def test_get_item_that_doesnt_exist(self):
-        py.test.raises(NoSuchItemError, self.backend.get_item, "i_do_not_exist")
+        py.test.raises(NoSuchItemError, self.backend.get_item, u"i_do_not_exist")
 
     def test_has_item(self):
-        self.create_rev_item_helper("versioned")
-        self.create_meta_item_helper("unversioned")
-        assert self.backend.has_item("versioned")
-        assert self.backend.has_item("unversioned")
+        self.create_rev_item_helper(u"versioned")
+        self.create_meta_item_helper(u"unversioned")
+        assert self.backend.has_item(u"versioned")
+        assert self.backend.has_item(u"unversioned")
 
     def test_has_item_that_doesnt_exist(self):
-        assert not self.backend.has_item("i_do_not_exist")
+        assert not self.backend.has_item(u"i_do_not_exist")
 
     def test_search_simple(self):
-        for name in ["songlist", "song lyric", "odd_SONG_item"]:
+        for name in [u"songlist", u"song lyric", u"odd_SONG_item"]:
             self.create_rev_item_helper(name)
-        self.create_meta_item_helper("new_song_player")
+        self.create_meta_item_helper(u"new_song_player")
         query_string = u"song"
         query = term.Name(query_string, True)
         for num, item in enumerate(self.backend.search_item(query)):
@@ -180,10 +180,10 @@ class BackendTest(object):
         assert num == 2
 
     def test_search_better(self):
-        self.create_rev_item_helper('abcde')
-        self.create_rev_item_helper('abcdef')
-        self.create_rev_item_helper('abcdefg')
-        self.create_rev_item_helper('abcdefgh')
+        self.create_rev_item_helper(u'abcde')
+        self.create_rev_item_helper(u'abcdef')
+        self.create_rev_item_helper(u'abcdefg')
+        self.create_rev_item_helper(u'abcdefgh')
 
         def _test_search(term, expected):
             found = list(self.backend.search_item(term))
@@ -194,30 +194,30 @@ class BackendTest(object):
         yield _test_search, term.Name(u'AbCdEf', True), 0
         yield _test_search, term.Name(u'abcdef', True), 3
         yield _test_search, term.NameRE(re.compile(u'abcde.*')), 4
-        yield _test_search, term.NameFn(lambda n: n == 'abcdef'), 1
+        yield _test_search, term.NameFn(lambda n: n == u'abcdef'), 1
 
     def test_iteritems_1(self):
         for num in range(10, 20):
-            self.create_rev_item_helper("item_" + str(num).zfill(2))
+            self.create_rev_item_helper(u"item_" + str(num).zfill(2))
         for num in range(10):
-            self.create_meta_item_helper("item_" + str(num).zfill(2))
+            self.create_meta_item_helper(u"item_" + str(num).zfill(2))
         itemlist = [item.name for item in self.backend.iteritems()]
         itemlist.sort()
         for num, itemname in enumerate(itemlist):
-            assert itemname == "item_" + str(num).zfill(2)
+            assert itemname == u"item_" + str(num).zfill(2)
         assert len(itemlist) == 20
 
     def test_iteritems_2(self):
-        self.create_rev_item_helper('abcdefghijklmn')
+        self.create_rev_item_helper(u'abcdefghijklmn')
         count = 0
         for item in self.backend.iteritems():
             count += 1
         assert count > 0
 
     def test_iteritems_3(self):
-        self.create_rev_item_helper("without_meta")
-        self.create_rev_item_helper("with_meta")
-        item = self.backend.get_item("with_meta")
+        self.create_rev_item_helper(u"without_meta")
+        self.create_rev_item_helper(u"with_meta")
+        item = self.backend.get_item(u"with_meta")
         item.change_metadata()
         item["meta"] = "data"
         item.publish_metadata()
@@ -225,8 +225,8 @@ class BackendTest(object):
         assert len(itemlist) == 2
 
     def test_existing_item_create_revision(self):
-        self.create_rev_item_helper("existing")
-        item = self.backend.get_item("existing")
+        self.create_rev_item_helper(u"existing")
+        item = self.backend.get_item(u"existing")
         old_rev = item.get_revision(-1)
         rev = item.create_revision(old_rev.revno + 1)
         item.rollback()
@@ -241,13 +241,13 @@ class BackendTest(object):
         assert old_rev.read() == rev.read()
 
     def test_new_item_create_revision(self):
-        item = self.backend.create_item('internal')
+        item = self.backend.create_item(u'internal')
         rev = item.create_revision(0)
         item.rollback()
         assert not self.backend.has_item(item.name)
 
     def test_item_commit_revision(self):
-        item = self.backend.create_item("item#11")
+        item = self.backend.create_item(u"item#11")
         rev = item.create_revision(0)
         rev.write("python rocks")
         item.commit()
@@ -255,7 +255,7 @@ class BackendTest(object):
         assert rev.read() == "python rocks"
 
     def test_item_writing_data_multiple_times(self):
-        item = self.backend.create_item("multiple")
+        item = self.backend.create_item(u"multiple")
         rev = item.create_revision(0)
         rev.write("Alle ")
         rev.write("meine ")
@@ -266,7 +266,7 @@ class BackendTest(object):
 
     def test_item_reading_chunks(self):
         py.test.skip("broken")
-        item = self.backend.create_item("slices")
+        item = self.backend.create_item(u"slices")
         rev = item.create_revision(0)
         rev.write("Alle meine Entchen")
         item.commit()
@@ -279,7 +279,7 @@ class BackendTest(object):
         assert data == "Alle meine Entchen"
 
     def test_item_reading_negative_chunk(self):
-        item = self.backend.create_item("negative_chunk")
+        item = self.backend.create_item(u"negative_chunk")
         rev = item.create_revision(0)
         rev.write("Alle meine Entchen" * 10)
         item.commit()
@@ -289,7 +289,7 @@ class BackendTest(object):
         assert rev.read(-123) == "Alle meine Entchen" * 10
 
     def test_seek_and_tell(self):
-        item = self.backend.create_item("seek&tell")
+        item = self.backend.create_item(u"seek&tell")
         rev = item.create_revision(0)
         data = "wilhelm tell seekfried what time it is"
         rev.write(data)
@@ -315,7 +315,7 @@ class BackendTest(object):
         assert rev.read() == data[-offset:]
 
     def test_item_get_revision(self):
-        item = self.backend.create_item("item#12")
+        item = self.backend.create_item(u"item#12")
         rev = item.create_revision(0)
         rev.write("jefferson airplane rocks")
         item.commit()
@@ -323,14 +323,14 @@ class BackendTest(object):
         assert another_rev.read() == "jefferson airplane rocks"
 
     def test_item_next_revno(self):
-        item = self.backend.create_item("next_revno")
+        item = self.backend.create_item(u"next_revno")
         assert item.next_revno == 0
         item.create_revision(item.next_revno).write("foo")
         item.commit()
         assert item.next_revno == 1
 
     def test_item_list_revisions_with_revmeta_changes(self):
-        item = self.backend.create_item("item_13")
+        item = self.backend.create_item(u"item_13")
         for revno in range(0, 10):
             rev = item.create_revision(revno)
             rev["revno"] = "%s" % revno
@@ -338,7 +338,7 @@ class BackendTest(object):
         assert item.list_revisions() == range(0, 10)
 
     def test_item_list_revisions_with_revdata_changes(self):
-        item = self.backend.create_item("item_13")
+        item = self.backend.create_item(u"item_13")
         for revno in range(0, 10):
             rev = item.create_revision(revno)
             rev.write("%s" % revno)
@@ -346,21 +346,21 @@ class BackendTest(object):
         assert item.list_revisions() == range(0, 10)
 
     def test_item_list_revisions_without_changes(self):
-        item = self.backend.create_item("item_13")
+        item = self.backend.create_item(u"item_13")
         for revno in range(0, 10):
             item.create_revision(revno)
             item.commit()
         assert item.list_revisions() == range(0, 10)
 
     def test_item_list_revisions_equality(self):
-        item = self.backend.create_item("new_item_15")
+        item = self.backend.create_item(u"new_item_15")
         revs_before = item.list_revisions()
         rev = item.create_revision(0)
         assert item.list_revisions() == revs_before
         item.rollback()
 
     def test_item_list_revisions_equality_nonempty_revlist(self):
-        item = self.backend.create_item("new_item_16")
+        item = self.backend.create_item(u"new_item_16")
         rev = item.create_revision(0)
         rev.write("something interesting")
         item.commit()
@@ -370,30 +370,30 @@ class BackendTest(object):
         item.rollback()
 
     def test_item_list_revisions_without_committing(self):
-        item = self.backend.create_item("new_item_14")
+        item = self.backend.create_item(u"new_item_14")
         assert item.list_revisions() == []
 
     def test_mixed_commit_metadata1(self):
-        item = self.backend.create_item('mixed1')
+        item = self.backend.create_item(u'mixed1')
         item.create_revision(0)
         py.test.raises(RuntimeError, item.change_metadata)
         item.rollback()
 
     def test_mixed_commit_metadata2(self):
-        item = self.backend.create_item('mixed2')
+        item = self.backend.create_item(u'mixed2')
         item.change_metadata()
         py.test.raises(RuntimeError, item.create_revision, 0)
 
     def test_item_metadata_change_and_publish(self):
-        item = self.backend.create_item("test item metadata change")
+        item = self.backend.create_item(u"test item metadata change")
         item.change_metadata()
         item["creator"] = "Vincent van Gogh"
         item.publish_metadata()
-        item2 = self.backend.get_item("test item metadata change")
+        item2 = self.backend.get_item(u"test item metadata change")
         assert item2["creator"] == "Vincent van Gogh"
 
     def test_item_metadata_invalid_change(self):
-        item = self.backend.create_item("test item metadata invalid change")
+        item = self.backend.create_item(u"test item metadata invalid change")
         try:
             item["this should"] = "FAIL!"
             assert False
@@ -401,23 +401,23 @@ class BackendTest(object):
             pass
 
     def test_item_metadata_without_publish(self):
-        item = self.backend.create_item("test item metadata invalid change")
+        item = self.backend.create_item(u"test item metadata invalid change")
         item.change_metadata()
         item["change but"] = "don't publish"
         py.test.raises(NoSuchItemError, self.backend.get_item, "test item metadata invalid change")
 
     def test_item_create_existing_mixed_1(self):
-        item1 = self.backend.create_item('existing now 0')
+        item1 = self.backend.create_item(u'existing now 0')
         item1.change_metadata()
-        item2 = self.backend.create_item('existing now 0')
+        item2 = self.backend.create_item(u'existing now 0')
         item1.publish_metadata()
         item2.create_revision(0)
         py.test.raises(ItemAlreadyExistsError, item2.commit)
 
     def test_item_create_existing_mixed_2(self):
-        item1 = self.backend.create_item('existing now 0')
+        item1 = self.backend.create_item(u'existing now 0')
         item1.change_metadata()
-        item2 = self.backend.create_item('existing now 0')
+        item2 = self.backend.create_item(u'existing now 0')
         item2.create_revision(0)
         item2.commit()
         py.test.raises(ItemAlreadyExistsError, item1.publish_metadata)
@@ -436,117 +436,117 @@ class BackendTest(object):
         assert item["a"] == "a"
 
     def test_existing_item_change_metadata(self):
-        self.create_meta_item_helper("existing now 2")
-        item = self.backend.get_item('existing now 2')
+        self.create_meta_item_helper(u"existing now 2")
+        item = self.backend.get_item(u'existing now 2')
         item.change_metadata()
         item['asdf'] = 'b'
         item.publish_metadata()
-        item = self.backend.get_item('existing now 2')
+        item = self.backend.get_item(u'existing now 2')
         assert item['asdf'] == 'b'
 
     def test_metadata(self):
-        self.create_rev_item_helper('no metadata')
-        item = self.backend.get_item('no metadata')
+        self.create_rev_item_helper(u'no metadata')
+        item = self.backend.get_item(u'no metadata')
         py.test.raises(KeyError, item.__getitem__, 'asdf')
 
     def test_revision(self):
-        self.create_meta_item_helper('no revision')
-        item = self.backend.get_item('no revision')
+        self.create_meta_item_helper(u'no revision')
+        item = self.backend.get_item(u'no revision')
         py.test.raises(NoSuchRevisionError, item.get_revision, -1)
 
     def test_create_revision_change_meta(self):
-        item = self.backend.create_item("double")
+        item = self.backend.create_item(u"double")
         rev = item.create_revision(0)
         rev["revno"] = "0"
         item.commit()
         item.change_metadata()
         item["meta"] = "data"
         item.publish_metadata()
-        item = self.backend.get_item("double")
+        item = self.backend.get_item(u"double")
         assert item["meta"] == "data"
         rev = item.get_revision(0)
         assert rev["revno"] == "0"
 
     def test_create_revision_change_empty_meta(self):
-        item = self.backend.create_item("double")
+        item = self.backend.create_item(u"double")
         rev = item.create_revision(0)
         rev["revno"] = "0"
         item.commit()
         item.change_metadata()
         item.publish_metadata()
-        item = self.backend.get_item("double")
+        item = self.backend.get_item(u"double")
         rev = item.get_revision(0)
         assert rev["revno"] == "0"
 
     def test_change_meta_create_revision(self):
-        item = self.backend.create_item("double")
+        item = self.backend.create_item(u"double")
         item.change_metadata()
         item["meta"] = "data"
         item.publish_metadata()
         rev = item.create_revision(0)
         rev["revno"] = "0"
         item.commit()
-        item = self.backend.get_item("double")
+        item = self.backend.get_item(u"double")
         assert item["meta"] == "data"
         rev = item.get_revision(0)
         assert rev["revno"] == "0"
 
     def test_meta_after_rename(self):
-        item = self.backend.create_item("re")
+        item = self.backend.create_item(u"re")
         item.change_metadata()
         item["previous_name"] = "re"
         item.publish_metadata()
-        item.rename("er")
+        item.rename(u"er")
         assert item["previous_name"] == "re"
 
     def test_long_names_back_and_forth(self):
-        item = self.backend.create_item("long_name_" * 100 + "with_happy_end")
+        item = self.backend.create_item(u"long_name_" * 100 + u"with_happy_end")
         item.create_revision(0)
         item.commit()
-        assert self.backend.has_item("long_name_" * 100 + "with_happy_end")
+        assert self.backend.has_item(u"long_name_" * 100 + u"with_happy_end")
         item = self.backend.iteritems().next()
-        assert item.name == "long_name_" * 100 + "with_happy_end"
+        assert item.name == u"long_name_" * 100 + u"with_happy_end"
 
     def test_revisions_after_rename(self):
-        item = self.backend.create_item("first one")
+        item = self.backend.create_item(u"first one")
         for revno in xrange(10):
             rev = item.create_revision(revno)
             rev["revno"] = str(revno)
             item.commit()
         assert item.list_revisions() == range(10)
-        item.rename("second one")
-        assert not self.backend.has_item("first one")
-        assert self.backend.has_item("second one")
-        item1 = self.backend.create_item("first_one")
+        item.rename(u"second one")
+        assert not self.backend.has_item(u"first one")
+        assert self.backend.has_item(u"second one")
+        item1 = self.backend.create_item(u"first_one")
         item1.create_revision(0)
         item1.commit()
         assert len(item1.list_revisions()) == 1
-        item2 = self.backend.get_item("second one")
+        item2 = self.backend.get_item(u"second one")
         assert item2.list_revisions() == range(10)
         for revno in xrange(10):
             rev = item2.get_revision(revno)
             assert rev["revno"] == str(revno)
 
     def test_concurrent_create_revision(self):
-        self.create_rev_item_helper("concurrent")
-        item1 = self.backend.get_item("concurrent")
-        item2 = self.backend.get_item("concurrent")
+        self.create_rev_item_helper(u"concurrent")
+        item1 = self.backend.get_item(u"concurrent")
+        item2 = self.backend.get_item(u"concurrent")
         item1.create_revision(1)
         item2.create_revision(1)
         item1.commit()
         py.test.raises(RevisionAlreadyExistsError, item2.commit)
 
     def test_timestamp(self):
-        item = self.backend.create_item('ts1')
+        item = self.backend.create_item(u'ts1')
         rev = item.create_revision(0)
         assert rev.timestamp is None
         item.commit()
         assert rev.timestamp is not None
-        item = self.backend.get_item('ts1')
+        item = self.backend.get_item(u'ts1')
         assert item.get_revision(0).timestamp == rev.timestamp
 
     def test_size(self):
-        item = self.backend.create_item('size1')
+        item = self.backend.create_item(u'size1')
         rev = item.create_revision(0)
         rev.write('asdf')
         assert rev.size == 4
@@ -560,7 +560,7 @@ class BackendTest(object):
             assert nrev.size == 8
 
     def test_size_2(self):
-        item = self.backend.create_item('size2')
+        item = self.backend.create_item(u'size2')
         rev = item.create_revision(0)
         rev.write('asdf')
         assert rev.size == 4
@@ -588,7 +588,7 @@ class BackendTest(object):
             yield test_value, value, revno
 
     def test_history(self):
-        order = [('first', 0, ), ('second', 0, ), ('first', 1, ), ('a', 0), ('child/my_subitem', 0) ]
+        order = [(u'first', 0, ), (u'second', 0, ), (u'first', 1, ), (u'a', 0), (u'child/my_subitem', 0) ]
         for name, revno in order:
             if revno == 0:
                 item = self.backend.create_item(name)
@@ -628,10 +628,10 @@ class BackendTest(object):
             assert rev.revno == revno
 
     def test_history_size_after_rename(self):
-        item = self.backend.create_item('first')
+        item = self.backend.create_item(u'first')
         item.create_revision(0)
         item.commit()
-        item.rename('second')
+        item.rename(u'second')
         item.create_revision(1)
         item.commit()
         assert len([rev for rev in self.backend.history()]) == 2
@@ -725,10 +725,10 @@ class BackendTest(object):
         assert {'no revisions': True} == dict(item.iteritems())
 
     def test_iteritems_item_names_after_rename(self):
-        item = self.backend.create_item('first')
+        item = self.backend.create_item(u'first')
         item.create_revision(0)
         item.commit()
-        item.rename('second')
+        item.rename(u'second')
         item.create_revision(1)
         item.commit()
         # iteritems provides actual name
@@ -741,7 +741,7 @@ class BackendTest(object):
         assert rev1.item.name == 'second'
 
     def test_iteritems_after_destroy(self):
-        item = self.backend.create_item('first')
+        item = self.backend.create_item(u'first')
         item.create_revision(0)
         item.commit()
         item.create_revision(1)
@@ -754,10 +754,10 @@ class BackendTest(object):
         assert len([item for item in self.backend.iteritems()]) == 0
 
     def test_history_item_names(self):
-        item = self.backend.create_item('first')
+        item = self.backend.create_item(u'first')
         item.create_revision(0)
         item.commit()
-        item.rename('second')
+        item.rename(u'second')
         item.create_revision(1)
         item.commit()
         revs_in_create_order = [rev for rev in self.backend.history(reverse=False)]
