@@ -197,7 +197,6 @@ class SQLAlchemyBackend(Backend):
         session = self.Session.object_session(item)
         if session is None:
             session = self.Session()
-        self._item_metadata_lock[item.id] = Lock()
 
         # Try to flush item first if it's not already persisted
         if item.id is None:
@@ -224,6 +223,9 @@ class SQLAlchemyBackend(Backend):
 
         # We still need to commit() because we only flushed before
         session.commit()
+
+        # After committing, the Item has an id and we can create a metadata lock for it
+        self._item_metadata_lock[item.id] = Lock()
 
     def _rollback_item(self, revision):
         """
