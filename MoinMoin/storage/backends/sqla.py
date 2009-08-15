@@ -27,9 +27,6 @@ from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSu
 
 
 Base = declarative_base()
-# Our factory for sessions:
-Session = sessionmaker()
-
 
 NAME_LEN = 512
 
@@ -46,8 +43,11 @@ class SQLAlchemyBackend(Backend):
         else:
             self.engine = create_engine(db_uri)
 
-        # Bind the module level Session to the engine
-        Session.configure(bind=self.engine)
+        # Our factory for sessions. Note: We do NOT define this module-level because then different SQLABackends
+        # using different engines (potentially different databases) would all use the same Session object with the
+        # same engine that the backend instance that was created last bound it to.
+        self.Session = sessionmaker(bind=self.engine)
+
         # Create the database schema (for all tables)
         SQLAItem.metadata.bind = self.engine
         SQLAItem.metadata.create_all()
@@ -56,7 +56,7 @@ class SQLAlchemyBackend(Backend):
 
     def has_item(self, itemname):
         try:
-            session = Session()
+            session = self.Session()
             session.query(SQLAItem).filter_by(_name=itemname).one()
             return True
         except NoResultFound:
@@ -73,7 +73,7 @@ class SQLAlchemyBackend(Backend):
         @rtype: item object
         @raise NoSuchItemError: No item with name 'itemname' is known to this backend.
         """
-        session = Session()
+        session = self.Session()
         # The following fails if not EXACTLY one column is found, i.e., it also fails
         # if MORE than one item is found, which should not happen since names should be
         # unique
@@ -110,12 +110,12 @@ class SQLAlchemyBackend(Backend):
         return item
 
     def history(self, reverse=True):
-        session = Session()
-        col = SQLArevision.id
+        session = self.Session()
+        col = SQLARevision.id
         if reverse:
             col = col.desc()
         for rev in session.query(SQLARevision).order_by(col).yield_per(1):
-            rev.setup()
+            rev.setup(self)
             yield rev
 
     def iteritems(self):
@@ -125,7 +125,7 @@ class SQLAlchemyBackend(Backend):
 
         @rtype: iterator of item objects
         """
-        session = Session()
+        session = self.Session()
         for item in session.query(SQLAItem):
             item.setup(self)
             yield item
@@ -169,9 +169,9 @@ class SQLAlchemyBackend(Backend):
         committed to storage)
         @return: None
         """
-        session = Session.object_session(item)
+        session = self.Session.object_session(item)
         if session is None:
-            session = Session()
+            session = self.Session()
             session.add(item)
 
         itemname = item.name
@@ -193,9 +193,9 @@ class SQLAlchemyBackend(Backend):
         @return: None
         """
         item = revision.item
-        session = Session.object_session(item)
+        session = self.Session.object_session(item)
         if session is None:
-            session = Session()
+            session = self.Session()
         self._item_metadata_lock[item.id] = Lock()
 
         # Try to flush item first if it's not already persisted
@@ -230,7 +230,7 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to roll back.
         @return: None
         """
-        session = Session.object_session(revision.item)
+        session = self.Session.object_session(revision.item)
         session.rollback()
 
     def _change_item_metadata(self, item):
@@ -262,7 +262,7 @@ class SQLAlchemyBackend(Backend):
         """
         if item.id is None and self.has_item(item.name):
             raise ItemAlreadyExistsError("The Item whose metadata you tried to publish already exists.")
-        session = Session.object_session(item)
+        session = self.Session.object_session(item)
         session.commit()
         try:
             self._item_metadata_lock[item.id].release()
@@ -327,7 +327,7 @@ class SQLAItem(Item, Base):
 
     def __init__(self, backend, itemname):
         self._name = itemname
-        self._session = Session()
+        self._session = backend.Session()
         self._session.add(self)
         self.setup(backend)
 
@@ -343,21 +343,21 @@ class SQLAItem(Item, Base):
 
     def get_revision(self, revno):
         try:
-            session = Session.object_session(self)
+            session = self._backend.Session.object_session(self)
             if session is None:
-                session = Session()
+                session = self._backend.Session()
             if revno == -1:
                 revno = self.list_revisions()[-1]
             rev = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).filter(SQLARevision._revno==revno).one()
-            rev.setup()
+            rev.setup(self._backend)
             return rev
         except (NoResultFound, IndexError):
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
 
     def destroy(self):
-        session = Session.object_session(self)
+        session = self._backend.Session.object_session(self)
         if session is None:
-            session = Session()
+            session = self._backend.Session()
         session.delete(self)
         session.commit()
 
@@ -494,17 +494,17 @@ class SQLARevision(NewRevision, Base):
     def __init__(self, item, revno, timestamp=None):
         self._revno = revno
         self._item = item
-        self._backend = self._item._backend
         self._timestamp = timestamp
         self.element_attrs = dict(revno=str(revno))
-        self.setup()
+        self.setup(item._backend)
 
-    def setup(self):
+    def setup(self, backend):
         if self._data is None:
             self._data = Data()
         if self._metadata is None:
             self._metadata = {}
         self._data.setup()
+        self._backend = backend
 
     def write(self, data):
         self._data.write(data)
@@ -526,8 +526,8 @@ class SQLARevision(NewRevision, Base):
         return self._data.size
 
     def destroy(self):
-        session = Session.object_session(self)
+        session = self._backend.Session.object_session(self)
         if session is None:
-            session = Session()
+            session = self._backend.Session()
         session.delete(self)
         session.commit()
