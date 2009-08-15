@@ -57,7 +57,7 @@ class TestChunkedRevDataStorage(object):
     def test_write_many_times(self):
         item = self.sqlabackend.create_item(u"test_write_many_times")
         rev = item.create_revision(0)
-        rev._data.chunksize = 4
+        rev._data._last_chunk.chunksize = 4
         rev.write("foo")
         rev.write("baaaaaaar")
         item.commit()
