@@ -170,17 +170,18 @@ class SQLAlchemyBackend(Backend):
         committed to storage)
         @return: None
         """
-        session = self.Session.object_session(item)
-        if session is None:
-            session = self.Session()
-            session.add(item)
-
-        itemname = item.name
-        if self.has_item(newname):
-            raise ItemAlreadyExistsError("There already is an item with the name %s." % newname)
-
+        session = self.Session()
+        if item.id is None:
+            raise AssertionError("Item not yet committed to storage. Cannot be renamed.")
+        item = session.query(SQLAItem).get(item.id)
         item._name = newname
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError:
+            raise ItemAlreadyExistsError("Rename operation failed. There already is " + \
+                                         "an item named '%s'." % newname)
+        finally:
+            session.close()
 
     def _commit_item(self, revision):
         """
