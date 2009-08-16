@@ -276,7 +276,9 @@ class SQLAlchemyBackend(Backend):
         """
         if item.id is None and self.has_item(item.name):
             raise ItemAlreadyExistsError("The Item whose metadata you tried to publish already exists.")
-        session = self.Session.object_session(item)
+        session = self.Session()
+        # XXX can item really already be in another session?
+        session.add(item)
         session.commit()
         try:
             self._item_metadata_lock[item.id].release()
@@ -295,28 +297,6 @@ class SQLAlchemyBackend(Backend):
         # When the item is restored from the db, it's _metadata should already
         # be populated. If not, it means there isn't any.
         return {}
-
-    def _get_revision_metadata(self, revision):
-        """
-        Load metadata for a given revision, returns dict.
-
-        @type revision: Object of a subclass of Revision.
-        @param revision: The revision on which we want to operate.
-        @return: dict of metadata key / value pairs.
-        """
-        raise NotImplementedError()
-
-    def _get_revision_size(self, revision):
-        """
-        Lazily access the revision's data size. This needs not be
-        implemented if all StoredRevision objects are instantiated
-        with the size= keyword parameter.
-
-        @type revision: Object of a subclass of Revision.
-        @param revision: The revision on which we want to operate.
-        @return: int
-        """
-        raise NotImplementedError()
 
 
 class SQLAItem(Item, Base):
