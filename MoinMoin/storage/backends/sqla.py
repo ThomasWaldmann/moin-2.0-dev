@@ -392,11 +392,12 @@ class Data(Base):
     _revision_id = Column(Integer, ForeignKey('revisions.id'))
     size = Column(Integer)
 
-    def __init__(self, backend):
-        self.setup(backend)
+    def __init__(self):
+        self.setup()
         self.size = 0
 
-    def setup(self, backend):
+    # XXX use reconstructor
+    def setup(self):
         """
         This is different from __init__ as it may be also invoked explicitly
         when the object is returned from the database. We may as well call
@@ -405,7 +406,6 @@ class Data(Base):
         self.chunkno = 0
         self._last_chunk = Chunk(self.chunkno)
         self.cursor_pos = 0
-        self._backend = backend
 
     def write(self, data):
         while data:
@@ -490,10 +490,10 @@ class SQLARevision(NewRevision, Base):
 
     def setup(self, backend):
         if self._data is None:
-            self._data = Data(backend)
+            self._data = Data()
         if self._metadata is None:
             self._metadata = {}
-        self._data.setup(backend)
+        self._data.setup()
         self._backend = backend
 
     def write(self, data):
