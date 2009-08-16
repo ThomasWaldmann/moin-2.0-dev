@@ -305,6 +305,7 @@ class SQLAItem(Item, Base):
     id = Column(Integer, primary_key=True)
     _name = Column(Unicode(NAME_LEN), unique=True, index=True)
     _metadata = Column(PickleType)
+    # TODO move revisions relation here
 
     def __init__(self, backend, itemname):
         self._name = itemname
@@ -322,21 +323,20 @@ class SQLAItem(Item, Base):
 
     def get_revision(self, revno):
         try:
-            session = self._backend.Session.object_session(self)
-            if session is None:
-                session = self._backend.Session()
+            session = self._backend.Session()
             if revno == -1:
                 revno = self.list_revisions()[-1]
             rev = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).filter(SQLARevision._revno==revno).one()
             rev.setup(self._backend)
             return rev
         except (NoResultFound, IndexError):
+            # IndexError occurrs if there are no revisions at all.
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
+        finally:
+            session.close()
 
     def destroy(self):
-        session = self._backend.Session.object_session(self)
-        if session is None:
-            session = self._backend.Session()
+        session = self._backend.Session()
         session.delete(self)
         session.commit()
 
@@ -383,15 +383,15 @@ class Data(Base):
     __tablename__ = 'rev_data'
 
     id = Column(Integer, primary_key=True)
-    _chunks = relation(Chunk, order_by=Chunk.id)
+    _chunks = relation(Chunk, order_by=Chunk.id, cascade='save-update')
     _revision_id = Column(Integer, ForeignKey('revisions.id'))
     size = Column(Integer)
 
-    def __init__(self):
-        self.setup()
+    def __init__(self, backend):
+        self.setup(backend)
         self.size = 0
 
-    def setup(self):
+    def setup(self, backend):
         """
         This is different from __init__ as it may be also invoked explicitly
         when the object is returned from the database. We may as well call
@@ -400,6 +400,7 @@ class Data(Base):
         self.chunkno = 0
         self._last_chunk = Chunk(self.chunkno)
         self.cursor_pos = 0
+        self._backend = backend
 
     def write(self, data):
         while data:
@@ -484,10 +485,10 @@ class SQLARevision(NewRevision, Base):
 
     def setup(self, backend):
         if self._data is None:
-            self._data = Data()
+            self._data = Data(backend)
         if self._metadata is None:
             self._metadata = {}
-        self._data.setup()
+        self._data.setup(backend)
         self._backend = backend
 
     def write(self, data):
