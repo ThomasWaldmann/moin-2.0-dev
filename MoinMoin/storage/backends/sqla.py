@@ -216,6 +216,7 @@ class SQLAlchemyBackend(Backend):
         # Try to flush revision
         session.add(revision)
         try:
+            revision._data.close()
             session.flush()
         except IntegrityError:
             raise RevisionAlreadyExistsError("A revision with revno %d already exists on the item." \
@@ -515,9 +516,6 @@ class SQLARevision(NewRevision, Base):
 
     def tell(self):
         return self._data.tell()
-
-    def close(self):
-        self._data.close()
 
     def __setitem__(self, key, value):
         NewRevision.__setitem__(self, key, value)

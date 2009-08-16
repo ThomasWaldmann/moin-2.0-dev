@@ -38,20 +38,23 @@ class TestSQLABackend(BackendTest):
         pass
 
 
-raw_data = "This is a very long sentence so I can properly test my program. I hope it works."
-
 class TestChunkedRevDataStorage(object):
+    raw_data = "This is a very long sentence so I can properly test my program. I hope it works."
+
     def setup_method(self, meth):
         self.sqlabackend = SQLAlchemyBackend('sqlite:///:memory:')
         self.item = self.sqlabackend.create_item(u"test_item")
         self.rev = self.item.create_revision(0)
-        self.rev.write(raw_data)
+        self.rev.write(self.raw_data)
+        self.item.commit()
+        self.rev = self.item.get_revision(0)
 
     def test_read_empty(self):
         item = self.sqlabackend.create_item(u"empty_item")
         rev = item.create_revision(0)
         assert rev.read() == ''
         item.commit()
+        rev = item.get_revision(0)
         assert rev.read() == ''
 
     def test_write_many_times(self):
@@ -59,48 +62,52 @@ class TestChunkedRevDataStorage(object):
         rev = item.create_revision(0)
         rev._data._last_chunk.chunksize = 4
         rev.write("foo")
-        rev.write("baaaaaaar")
+        rev.write("b")
+        rev._data._last_chunk.chunksize = 4
+        rev.write("aaar")
         item.commit()
-        assert [chunk.data for chunk in rev._data._chunks] == ["foob", "aaaa", "aaar"]
+        assert [chunk.data for chunk in rev._data._chunks] == ["foob", "aaar"]
 
     def test_read_more_than_is_there(self):
-        assert self.rev.read(len(raw_data) + 1) == raw_data
+        assert self.rev.read(len(self.raw_data) + 1) == self.raw_data
 
     def test_full_read(self):
-        assert self.rev.read() == raw_data
+        assert self.rev.read() == self.raw_data
 
     def test_read_first_bytes(self):
-        assert self.rev.read(5) == raw_data[:5]
+        assert self.rev.read(5) == self.raw_data[:5]
 
     def test_read_successive(self):
-        assert self.rev.read(5) == raw_data[:5]
-        assert self.rev.read(5) == raw_data[5:10]
-        assert self.rev.read(5) == raw_data[10:15]
-        assert self.rev.read() == raw_data[15:]
+        assert self.rev.read(5) == self.raw_data[:5]
+        assert self.rev.read(5) == self.raw_data[5:10]
+        assert self.rev.read(5) == self.raw_data[10:15]
+        assert self.rev.read() == self.raw_data[15:]
 
     def test_with_different_chunksizes(self):
         # mainly a write() test
-        length = len(raw_data)
+        length = len(self.raw_data)
         chunksizes = range(length)
         for chunksize in chunksizes:
             data = Data()
             # Don't test with chunksize == 0 but test with a chunksize larger than input data
             data._last_chunk.chunksize = chunksize + 1
-            data.write(raw_data)
-            assert data.read() == raw_data
+            data.write(self.raw_data)
+            data.close()
+            assert data.read() == self.raw_data
 
     def test_with_different_offsets(self):
         offsets = range(self.rev._data._last_chunk.chunksize)
         for offset in offsets:
             data = Data()
-            data.write(raw_data)
-            assert data.read(offset) == raw_data[:offset]
-            assert data.read() == raw_data[offset:]
+            data.write(self.raw_data)
+            data.close()
+            assert data.read(offset) == self.raw_data[:offset]
+            assert data.read() == self.raw_data[offset:]
 
     def test_seek_and_tell(self):
-        sio = StringIO(raw_data)
+        sio = StringIO(self.raw_data)
         for mode in (0, 1, 2):
-            for pos in xrange(2 * len(raw_data)):
+            for pos in xrange(2 * len(self.raw_data)):
                 sio.seek(pos, mode)
                 self.rev._data.seek(pos, mode)
                 assert sio.tell() == self.rev._data.tell()
