@@ -118,6 +118,7 @@ class SQLAlchemyBackend(Backend):
         for rev in session.query(SQLARevision).order_by(col).yield_per(1):
             rev.setup(self)
             yield rev
+        session.close()
 
     def iteritems(self):
         """
@@ -127,9 +128,11 @@ class SQLAlchemyBackend(Backend):
         @rtype: iterator of item objects
         """
         session = self.Session()
+        # TODO perhaps use .yield_per(1). That, however, causes strange test failures.
         for item in session.query(SQLAItem):
             item.setup(self)
             yield item
+        session.close()
 
     def _create_revision(self, item, revno):
         """
