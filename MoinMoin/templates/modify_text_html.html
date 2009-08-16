@@ -1,0 +1,14 @@
+{% extends "modify_binary.html" %}
+{% block data_editor %}
+
+<script type="text/javascript" src="/moin_static200/applets/ckeditor/ckeditor.js"></script>
+<link href="/moin_static200/applets/ckeditor/content.css" rel="stylesheet" type="text/css"/>
+
+        <!-- lang="{{ lang }}" dir="{{ direction }}" -->
+        <p>
+        <textarea class="ckeditor" id="data_text" name="data_text" rows="{{ rows_data }}" cols="{{ cols }}">{{ data_text|e }}</textarea>
+        </p>
+
+<br>
+{% endblock %}
+
