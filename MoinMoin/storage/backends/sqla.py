@@ -305,7 +305,6 @@ class SQLAItem(Item, Base):
     id = Column(Integer, primary_key=True)
     _name = Column(Unicode(NAME_LEN), unique=True, index=True)
     _metadata = Column(PickleType)
-    # TODO move revisions relation here
 
     def __init__(self, backend, itemname):
         self._name = itemname
@@ -319,7 +318,13 @@ class SQLAItem(Item, Base):
         self.element_attrs = dict(name=self._name)
 
     def list_revisions(self):
-        return [rev.revno for rev in self._revisions if rev.id is not None]
+        # XXX Why does this not work?
+        # return [rev.revno for rev in self._revisions if rev.id is not None]
+        session = self._backend.Session()
+        revisions = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).all()
+        revnos = [rev.revno for rev in revisions if rev.id is not None]
+        session.close()
+        return revnos
 
     def get_revision(self, revno):
         try:
