@@ -42,7 +42,7 @@ class SQLAlchemyBackend(Backend):
             db_uri = 'sqlite:///:memory:'
             self.engine = create_engine(db_uri, poolclass=StaticPool, connect_args={'check_same_thread': False})
         else:
-            self.engine = create_engine(db_uri)
+            self.engine = create_engine(db_uri, echo=verbose)
 
         # Our factory for sessions. Note: We do NOT define this module-level because then different SQLABackends
         # using different engines (potentially different databases) would all use the same Session object with the
