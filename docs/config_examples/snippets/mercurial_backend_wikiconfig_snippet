@@ -6,25 +6,10 @@
     # Basic configuration.
  
     # Import enduser backend.
-    from MoinMoin.storage.backends.enduser import get_enduser_backend
+    from MoinMoin.storage.backends import create_simple_mapping
    
-    # Provide `backend_uri` which consists of backend prefix (hg) and destination 
+    # Provide a string which consists of backend prefix (hg) and destination 
     # directory where data will be placed (instance), separated by a colon.
-    storage = get_enduser_backend('hg:instance')
+    namespace_mapping = create_simple_mapping('hg:instance')
 
-
-    # Advanced configuration. Use this as a reference.
-
-    # Import backends.
-    from MoinMoin.storage.backends import enduser, hg
-
-    # Data backend, this is where wiki items are stored.
-    # If the directory you provide doesn't exist, it will be created at runtime.
-    data = hg.MercurialBackend('instance/data')
-    
-    # User backend, which stores only non-versioned items metadata.
-    # If the directory you provide doesn't exist, it will be created at runtime.
-    user = hg.MercurialBackend('instance/user')
-
-    # Create RouterBackend instance and pass MercurialBackend endpoints.
-    storage = enduser.get_enduser_backend(mapping=[('/', data), ], user=user)
+    # If you want to use a more advanced config, please refer to HelpOnStorageConfiguration.

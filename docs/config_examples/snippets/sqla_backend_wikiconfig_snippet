@@ -1,0 +1,27 @@
+    # This is a sample configuration snippet for a wiki which uses SQLAlchemy
+    # based storage backends.
+    # Note that you may need to install additional database adapters if you want
+    # to use something more complex then sqlite, like mysql or postgresql. (You'll
+    # need those databases themselves then, too, obviously.)
+
+    # Basic configuration.
+ 
+    # Import mapping creator
+    from MoinMoin.storage.backends import create_simple_mapping
+   
+    # Provide a string which consists of backend prefix (sqla) and the database
+    # uri to the databases where data shall be placed, separated by a colon.
+    # create_simple_mapping relies on finding the following in the string where
+    # your database name is set up: %(nsname)s. If you want to use a simple database
+    # like SQLite, the following will suffice:
+    namespace_mapping = create_simple_mapping("sqla:sqlite:///mywiki_%(nsname)s.db")
+
+    # In case you use some DBMS that does not allow creation of new databases
+    # on an as-needed basis, you need to create the database you specify yourself,
+    # and in place of the abovely mentioned %(nsname)s you need to put 'content',
+    # 'userprofile' and 'trash'. So if you want to use mysql, you would first create
+    # three databases 'mywiki_content', 'mywiki_trash' and 'mywiki_userprofile' and
+    # grant one of your users full access to them. You would then configure them like this:
+    # namespace_mapping = create_simple_mapping("sqla:mysql:///myuser:mypassword@localhost/mywiki_%(nsname)s")
+
+    # If you want to use a more advanced config, please refer to HelpOnStorageConfiguration.
