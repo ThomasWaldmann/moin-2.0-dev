@@ -477,7 +477,7 @@ class SQLARevision(NewRevision, Base):
     __table_args__ = (UniqueConstraint('_item_id', '_revno'), {})
 
     id = Column(Integer, primary_key=True)
-    _data = relation(Data, uselist=False)
+    _data = relation(Data, uselist=False, lazy=False)
     _item_id = Column(Integer, ForeignKey('items.id'), index=True)
     _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy=False, cascade='delete, delete-orphan'), cascade='', uselist=False)
     _revno = Column(Integer, index=True)
