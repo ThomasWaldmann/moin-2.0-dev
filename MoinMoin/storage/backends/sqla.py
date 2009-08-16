@@ -90,6 +90,8 @@ class SQLAlchemyBackend(Backend):
             raise NoSuchItemError("The item '%s' could not be found." % itemname)
         except MultipleResultsFound:
             raise AssertionError("Multiple items found for supposedly unique itemname %s!" % itemname)
+        finally:
+            session.close()
 
     def create_item(self, itemname):
         """
@@ -173,9 +175,10 @@ class SQLAlchemyBackend(Backend):
         committed to storage)
         @return: None
         """
-        session = self.Session()
         if item.id is None:
             raise AssertionError("Item not yet committed to storage. Cannot be renamed.")
+
+        session = self.Session()
         item = session.query(SQLAItem).get(item.id)
         item._name = newname
         try:
@@ -198,39 +201,39 @@ class SQLAlchemyBackend(Backend):
         @return: None
         """
         item = revision.item
-        session = self.Session.object_session(item)
-        if session is None:
-            session = self.Session()
+        session = self.Session()
 
-        # Try to flush item first if it's not already persisted
-        if item.id is None:
-            session.add(item)
+        try:
+            # flush item
+            if item.id is None:
+                session.add(item)
+            else:
+                # XXX correct?
+                item = session.merge(item)
+            session.flush()
+        except IntegrityError:
+            raise ItemAlreadyExistsError("An item with that name already exists.")
+        except DataError:
+            raise StorageError("The item's name is too long for this backend. It must be less than %s." % NAME_LEN)
+        else:
+            # Flushing of item succeeded. That means we can try to flush the revision.
+            if revision.timestamp is None:
+                revision.timestamp = long(time.time())
+            session.add(revision)
+            revision._data.close()
             try:
                 session.flush()
             except IntegrityError:
-                # XXX If this error message would look up the item name it would fail due to the subtransaction
-                #     having been rolled back.
-                raise ItemAlreadyExistsError("An item with that name already exists.")
-            except DataError:
-                raise StorageError("The item's name is too long for this backend. It must be less than %s." % NAME_LEN)
+                raise RevisionAlreadyExistsError("A revision with revno %d already exists on the item." \
+                                                  % (revision.revno))
+            else:
+                # Flushing of revision succeeded as well. All is fine. We can now commit()
+                session.commit()
+                # After committing, the Item has an id and we can create a metadata lock for it
+                self._item_metadata_lock[item.id] = Lock()
+        finally:
+            session.close()
 
-        if revision.timestamp is None:
-            revision.timestamp = long(time.time())
-
-        # Try to flush revision
-        session.add(revision)
-        try:
-            revision._data.close()
-            session.flush()
-        except IntegrityError:
-            raise RevisionAlreadyExistsError("A revision with revno %d already exists on the item." \
-                                              % (revision.revno))
-
-        # We still need to commit() because we only flushed before
-        session.commit()
-
-        # After committing, the Item has an id and we can create a metadata lock for it
-        self._item_metadata_lock[item.id] = Lock()
 
     def _rollback_item(self, revision):
         """
@@ -325,8 +328,6 @@ class SQLAItem(Item, Base):
 
     def __init__(self, backend, itemname):
         self._name = itemname
-        self._session = backend.Session()
-        self._session.add(self)
         self.setup(backend)
 
     def setup(self, backend):
