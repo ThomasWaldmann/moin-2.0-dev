@@ -382,6 +382,13 @@ class Chunk(Base):
         """
         return str(self._data)
 
+    def write(self, data):
+        remaining = self.chunksize - len(self.data)
+        write_data = data[:remaining]
+        self._data += write_data
+        return len(write_data)
+
+
 class Data(Base):
     """
     Data that is assembled from smaller chunks.
@@ -409,31 +416,15 @@ class Data(Base):
         self.cursor_pos = 0
 
     def write(self, data):
-        chunksize = self._last_chunk.chunksize
         while data:
-            # How much space is left in the current chunk?
-            chunk_space_left = chunksize - len(self._last_chunk.data)
-            # If there's no space left, create a new chunk
-            if chunk_space_left == 0:
+            written = self._last_chunk.write(data)
+            if written:
+                self.size += written
+                data = data[written:]
+            else:
+                self.chunkno += 1
+                self._chunks.append(self._last_chunk)
                 self._last_chunk = Chunk(self.chunkno)
-                chunk_space_left = chunksize
-            data_chunk = data[:chunk_space_left]
-            self.size += len(data_chunk)
-            self._last_chunk._data += data_chunk
-            self._chunks.append(self._last_chunk)
-            self.chunkno += 1
-            data = data[chunk_space_left:]
-
-    def tell(self):
-        return self.cursor_pos
-
-    def seek(self, pos, mode=0):
-        if mode == 0:
-            self.cursor_pos = pos
-        elif mode == 1:
-            self.cursor_pos += pos
-        elif mode == 2:
-            self.cursor_pos = self.size + pos
 
     def read(self, amount=None):
         chunksize = self._last_chunk.chunksize
@@ -470,6 +461,20 @@ class Data(Base):
         self.cursor_pos += amount
         assert len(begin+mid+end) == amount
         return begin + mid + end
+
+    def seek(self, pos, mode=0):
+        if mode == 0:
+            self.cursor_pos = pos
+        elif mode == 1:
+            self.cursor_pos += pos
+        elif mode == 2:
+            self.cursor_pos = self.size + pos
+
+    def tell(self):
+        return self.cursor_pos
+
+    def close(self):
+        self._chunks.append(self._last_chunk)
 
 
 class SQLARevision(NewRevision, Base):
@@ -510,6 +515,9 @@ class SQLARevision(NewRevision, Base):
 
     def tell(self):
         return self._data.tell()
+
+    def close(self):
+        self._data.close()
 
     def __setitem__(self, key, value):
         NewRevision.__setitem__(self, key, value)
