@@ -102,6 +102,7 @@ class RouterBackend(Backend):
         # While we could use the inherited, generic implementation
         # it is generally advised to override this method.
         # Thus, we pass the call down.
+        logging.debug("has_item: %r" % itemname)
         backend, itemname, mountpoint = self._get_backend(itemname)
         return backend.has_item(itemname)
 
@@ -109,6 +110,7 @@ class RouterBackend(Backend):
         """
         @see: Backend.get_item.__doc__
         """
+        logging.debug("get_item: %r" % itemname)
         backend, itemname, mountpoint = self._get_backend(itemname)
         return RouterItem(backend.get_item(itemname), mountpoint, itemname, self)
 
@@ -116,6 +118,7 @@ class RouterBackend(Backend):
         """
         @see: Backend.create_item.__doc__
         """
+        logging.debug("create_item: %r" % itemname)
         backend, itemname, mountpoint = self._get_backend(itemname)
         return RouterItem(backend.create_item(itemname), mountpoint, itemname, self)
 
