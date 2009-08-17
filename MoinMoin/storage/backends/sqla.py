@@ -16,7 +16,7 @@ from threading import Lock
 from sqlalchemy import create_engine, Column, Unicode, Integer, Binary, String, PickleType, ForeignKey
 from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.orm import sessionmaker, relation, backref, deferred
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 # Only used/needed for development/testing:
@@ -38,7 +38,8 @@ class SQLAlchemyBackend(Backend):
     """
     def __init__(self, db_uri=None, verbose=True):
         if db_uri is None:
-            # These are settings that apply only for development / testing.
+            # These are settings that apply only for development / testing only. The additional args are necessary
+            # due to some limitations of the in-memory sqlite database.
             db_uri = 'sqlite:///:memory:'
             self.engine = create_engine(db_uri, poolclass=StaticPool, connect_args={'check_same_thread': False})
         else:
@@ -88,8 +89,6 @@ class SQLAlchemyBackend(Backend):
             return item
         except NoResultFound:
             raise NoSuchItemError("The item '%s' could not be found." % itemname)
-        except MultipleResultsFound:
-            raise AssertionError("Multiple items found for supposedly unique itemname %s!" % itemname)
         finally:
             session.close()
 
@@ -218,8 +217,8 @@ class SQLAlchemyBackend(Backend):
             # Flushing of item succeeded. That means we can try to flush the revision.
             if revision.timestamp is None:
                 revision.timestamp = long(time.time())
-            session.add(revision)
             revision._data.close()
+            session.add(revision)
             try:
                 session.flush()
             except IntegrityError:
@@ -273,6 +272,7 @@ class SQLAlchemyBackend(Backend):
         @raise AssertionError: item was not locked
         @return: None
         """
+        # XXX This should just be tried and the exception be caught
         if item.id is None and self.has_item(item.name):
             raise ItemAlreadyExistsError("The Item whose metadata you tried to publish already exists.")
         session = self.Session()
@@ -280,10 +280,12 @@ class SQLAlchemyBackend(Backend):
         session.add(item)
         session.commit()
         try:
-            self._item_metadata_lock[item.id].release()
+            lock = self._item_metadata_lock[item.id]
         except KeyError:
             # Item hasn't been committed before publish, hence no lock.
             pass
+        else:
+            lock.release()
 
     def _get_item_metadata(self, item):
         """
@@ -321,7 +323,7 @@ class SQLAItem(Item, Base):
         # return [rev.revno for rev in self._revisions if rev.id is not None]
         session = self._backend.Session()
         revisions = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).all()
-        revnos = [rev.revno for rev in revisions if rev.id is not None]
+        revnos = [rev.revno for rev in revisions]
         session.close()
         return revnos
 
@@ -329,14 +331,17 @@ class SQLAItem(Item, Base):
         try:
             session = self._backend.Session()
             if revno == -1:
-                revno = self.list_revisions()[-1]
+                revnos = self.list_revisions()
+                try:
+                    revno = revnos[-1]
+                except IndexError:
+                    raise NoResultFound
             rev = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).filter(SQLARevision._revno==revno).one()
             rev.setup(self._backend)
             rev.session = session
             rev.session.add(rev)
             return rev
-        except (NoResultFound, IndexError):
-            # IndexError occurrs if there are no revisions at all.
+        except NoResultFound:
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
 
     def destroy(self):
@@ -489,7 +494,6 @@ class SQLARevision(NewRevision, Base):
 
     def __del__(self):
         # XXX XXX XXX DO NOT RELY ON THIS
-        print "Session %s force-closed by __del__!" % repr(self.session)
         self.session.close()
 
     def setup(self, backend):
