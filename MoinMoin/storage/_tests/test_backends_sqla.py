@@ -12,17 +12,6 @@ from StringIO import StringIO
 
 import py
 
-try:
-    import sqlalchemy
-    if sqlalchemy.__version__ < '0.5.4':
-        raise AssertionError
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-except ImportError:
-    py.test.skip('Cannot test without sqlalchemy installed.')
-except AssertionError:
-    py.test.skip('You need at least version 0.5.4 of sqlalchemy.')
-
 from MoinMoin.storage._tests.test_backends import BackendTest
 from MoinMoin.storage.backends.sqla import SQLAlchemyBackend, SQLARevision, Data
 
