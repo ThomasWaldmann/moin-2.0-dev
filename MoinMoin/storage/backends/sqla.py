@@ -125,15 +125,20 @@ class SQLAlchemyBackend(Backend):
         """
         Returns an iterator over all items available in this backend.
         (Like the dict method).
+        As iteritems() is used rather often while accessing *all* items in most cases,
+        we preload them all at once and then just iterate over them, yielding each
+        item individually to conform with the storage API.
+        The benefit is that we do not issue a query for each individual item, but
+        only a single query.
 
-        @rtype: iterator of item objects
+        @see: Backend.history.__doc__
         """
         session = self.Session()
-        # TODO perhaps use .yield_per(1). That, however, causes strange test failures.
-        for item in session.query(SQLAItem):
+        all_items = session.query(SQLAItem).all()
+        session.close()
+        for item in all_items:
             item.setup(self)
             yield item
-        session.close()
 
     def _create_revision(self, item, revno):
         """
