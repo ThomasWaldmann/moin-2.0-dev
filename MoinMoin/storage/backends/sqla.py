@@ -417,6 +417,18 @@ class Data(Base):
         self.cursor_pos = 0
 
     def write(self, data):
+        """
+        The given data is split into chunks and stored in Chunk objects.
+        Each chunk is 'filled' until it is full (i.e., Chunk.chunksize == len(Chunk.data)).
+        Only the last chunk may not be filled completely.
+        This does *only* support sequential writing of data, because otherwise
+        we'd need to re-order potentially all chunks after the cursor position.
+
+        @type data: str
+        @param data: The data we want to split and write to the DB in chunks.
+        """
+        # XXX This currently relies on the autoflush feature of the session. It should ideally
+        #     flush after every chunk.
         while data:
             written = self._last_chunk.write(data)
             if written:
