@@ -36,14 +36,14 @@ class SQLAlchemyBackend(Backend):
     """
     The actual SQLAlchemyBackend.
     """
-    def __init__(self, db_uri=None, verbose=True):
+    def __init__(self, db_uri=None, verbose=False):
         if db_uri is None:
             # These are settings that apply only for development / testing only. The additional args are necessary
             # due to some limitations of the in-memory sqlite database.
             db_uri = 'sqlite:///:memory:'
             self.engine = create_engine(db_uri, poolclass=StaticPool, connect_args={'check_same_thread': False})
         else:
-            self.engine = create_engine(db_uri, echo=verbose, echo_pool=True)
+            self.engine = create_engine(db_uri, echo=verbose, echo_pool=verbose)
 
         # Our factory for sessions. Note: We do NOT define this module-level because then different SQLABackends
         # using different engines (potentially different databases) would all use the same Session object with the
@@ -504,14 +504,17 @@ class SQLARevision(NewRevision, Base):
 
     def __init__(self, item, revno, timestamp=None):
         self._revno = revno
-        self._item = item
         self._timestamp = timestamp
         self.element_attrs = dict(revno=str(revno))
         self.setup(item._backend)
+        self._item = item
 
     def __del__(self):
         # XXX XXX XXX DO NOT RELY ON THIS
-        self.session.close()
+        try:
+            self.session.close()
+        except AttributeError:
+            pass
 
     def setup(self, backend):
         if self._data is None:
