@@ -216,7 +216,7 @@ class SQLAlchemyBackend(Backend):
         else:
             # Flushing of item succeeded. That means we can try to flush the revision.
             if revision.timestamp is None:
-                revision.timestamp = long(time.time())
+                revision.timestamp = int(time.time())
             revision._data.close()
             session.add(revision)
             try:
