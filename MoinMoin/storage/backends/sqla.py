@@ -15,7 +15,7 @@ from threading import Lock
 
 from sqlalchemy import create_engine, Column, Unicode, Integer, Binary, String, PickleType, ForeignKey
 from sqlalchemy.exc import IntegrityError, DataError
-from sqlalchemy.orm import sessionmaker, relation, backref
+from sqlalchemy.orm import sessionmaker, relation, backref, deferred
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
@@ -303,7 +303,7 @@ class SQLAItem(Item, Base):
 
     id = Column(Integer, primary_key=True)
     _name = Column(Unicode(NAME_LEN), unique=True, index=True)
-    _metadata = Column(PickleType)
+    _metadata = deferred(Column(PickleType))
 
     def __init__(self, backend, itemname):
         self._name = itemname
@@ -473,9 +473,9 @@ class SQLARevision(NewRevision, Base):
     __table_args__ = (UniqueConstraint('_item_id', '_revno'), {})
 
     id = Column(Integer, primary_key=True)
-    _data = relation(Data, uselist=False, lazy=False)
+    _data = relation(Data, uselist=False, lazy=True)
     _item_id = Column(Integer, ForeignKey('items.id'), index=True)
-    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy=False, cascade='delete, delete-orphan'), cascade='', uselist=False, lazy=False)
+    _item = relation(SQLAItem, cascade='', uselist=False, lazy=True)
     _revno = Column(Integer, index=True)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
