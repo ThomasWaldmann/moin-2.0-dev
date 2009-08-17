@@ -441,47 +441,44 @@ class Data(Base):
 
     def read(self, amount=None):
         chunksize = self._last_chunk.chunksize
-        # The first chunk that contains the data we want to read
-        # Perhaps we have already read a part of the first chunk before. We want to skip that.
-        first, skip = divmod(self.cursor_pos, chunksize)
 
-        # No amount given means: Read all that remains (from viewpoint of cursor_pos)
-        if amount is None or amount < 0 or amount >= (self.size - self.cursor_pos):
-            # From the first chunk we read everything after skip
-            try:
-                begin = self._chunks[first].data[skip:]
-            except IndexError:
-                # first depends on cursor_pos which may have been seek()ed to a value far
-                # larger than our size. This is allowed, but then read() returns '' (because there's nothing left to read).
-                begin = ''
+        available = self.size - self.cursor_pos
+        if available < 0:
+            # cursor might be far beyond EOF, but that still just means 0
+            available = 0
 
-            remaining_chunks = self._chunks[first+1:]
-            # We've read to the end, now set the cursor on the last+1
-            self.cursor_pos = self.size
-            end = "".join([chunk.data for chunk in remaining_chunks])
-            return begin + end
+        if amount is None or amount < 0 or amount > available:
+            amount = available
 
-        # Otherwise we need all chunks up to last
-        last = first + amount / chunksize
-        # Get all those chunks
-        chunks = self._chunks[first:last+1]
-        begin = chunks[0].data[skip:skip+amount]
-        # We just concatenate the contents of all but the first and last chunks
-        mid = "".join([chunk.data for chunk in chunks[1:-1]])
-        # And from the last chunk, we only take what is remaining to get `amount` bytes in total.
-        remaining = (amount - len(begin+mid)) % chunksize
-        end = chunks[-1].data[:remaining]
+        chunkno_first, head_offset = divmod(self.cursor_pos, chunksize)
+        chunkno_last, tail_offset = divmod(self.cursor_pos + amount, chunksize)
+
+        chunks = [chunk.data for chunk in self._chunks[chunkno_first:chunkno_last+1]]
+        if chunks:
+            # make sure that there is at least one chunk to operate on
+            # if there is no chunk at all, we have empty data
+            if chunkno_first != chunkno_last:
+                # more than 1 chunk, head and tail in different chunks
+                chunks[0] = chunks[0][head_offset:]
+                chunks[-1] = chunks[-1][:tail_offset]
+            else:
+                # only 1 chunk with head and tail inside it
+                chunks[0] = chunks[0][head_offset:tail_offset]
+        data = "".join(chunks)
+        assert len(data) == amount
         self.cursor_pos += amount
-        assert len(begin+mid+end) == amount
-        return begin + mid + end
+        return data
 
     def seek(self, pos, mode=0):
         if mode == 0:
-            self.cursor_pos = pos
+            if pos < 0:
+                raise IOError("invalid argument")
+            cursor = pos
         elif mode == 1:
-            self.cursor_pos += pos
+            cursor = max(0, self.cursor_pos + pos)
         elif mode == 2:
-            self.cursor_pos = self.size + pos
+            cursor = max(0, self.size + pos)
+        self.cursor_pos = cursor
 
     def tell(self):
         return self.cursor_pos

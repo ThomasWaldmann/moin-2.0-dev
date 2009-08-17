@@ -95,11 +95,31 @@ class TestChunkedRevDataStorage(object):
             assert data.read() == self.raw_data[offset:]
 
     def test_seek_and_tell(self):
+        data_len = len(self.raw_data)
+        half = data_len / 2
+        tests = [
+            (0, 0),
+            (0, 1),
+            (0, data_len-1),
+            (0, data_len),
+            (0, data_len+1), # beyond EOF
+            (0, half),
+            (1, 0),
+            (1, half),
+            (1, -half),
+            (1, 0),
+            (2, 0),
+            (2, -1),
+            (2, -data_len+1),
+            (2, -data_len),
+        ]
         sio = StringIO(self.raw_data)
-        for mode in (0, 1, 2):
-            for pos in xrange(2 * len(self.raw_data)):
-                sio.seek(pos, mode)
-                self.rev._data.seek(pos, mode)
-                assert sio.tell() == self.rev._data.tell()
-                assert sio.read() == self.rev._data.read()
+        for mode, pos in tests:
+            if mode == 1: # relative
+                sio.seek(half, 0)
+                self.rev._data.seek(half, 0)
+            sio.seek(pos, mode)
+            self.rev._data.seek(pos, mode)
+            assert sio.tell() == self.rev._data.tell()
+            assert sio.read() == self.rev._data.read()
 
