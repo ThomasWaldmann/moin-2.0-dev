@@ -75,12 +75,9 @@ class TestChunkedRevDataStorage(object):
 
     def test_with_different_chunksizes(self):
         # mainly a write() test
-        length = len(self.raw_data)
-        chunksizes = range(length)
-        for chunksize in chunksizes:
+        for chunksize in range(1, len(self.raw_data) + 2):
+            Data.chunksize = chunksize
             data = Data()
-            # Don't test with chunksize == 0 but test with a chunksize larger than input data
-            data._last_chunk.chunksize = chunksize + 1
             data.write(self.raw_data)
             data.close()
             assert data.read() == self.raw_data
