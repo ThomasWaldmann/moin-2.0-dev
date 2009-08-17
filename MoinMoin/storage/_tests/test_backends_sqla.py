@@ -66,6 +66,7 @@ class TestChunkedRevDataStorage(object):
         rev._data._last_chunk.chunksize = 4
         rev.write("aaar")
         item.commit()
+        rev = item.get_revision(0)
         assert [chunk.data for chunk in rev._data._chunks] == ["foob", "aaar"]
 
     def test_read_more_than_is_there(self):

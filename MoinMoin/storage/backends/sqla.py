@@ -36,18 +36,18 @@ class SQLAlchemyBackend(Backend):
     """
     The actual SQLAlchemyBackend.
     """
-    def __init__(self, db_uri=None, verbose=False):
+    def __init__(self, db_uri=None, verbose=True):
         if db_uri is None:
             # These are settings that apply only for development / testing.
             db_uri = 'sqlite:///:memory:'
             self.engine = create_engine(db_uri, poolclass=StaticPool, connect_args={'check_same_thread': False})
         else:
-            self.engine = create_engine(db_uri, echo=verbose)
+            self.engine = create_engine(db_uri, echo=verbose, echo_pool=True)
 
         # Our factory for sessions. Note: We do NOT define this module-level because then different SQLABackends
         # using different engines (potentially different databases) would all use the same Session object with the
         # same engine that the backend instance that was created last bound it to.
-        self.Session = sessionmaker(bind=self.engine)
+        self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
 
         # Create the database schema (for all tables)
         SQLAItem.metadata.bind = self.engine
@@ -156,6 +156,8 @@ class SQLAlchemyBackend(Backend):
         revnos and not requiring revnos to be subsequent as well.
         """
         rev = SQLARevision(item, revno)
+        rev.session = self.Session()
+        rev.session.add(rev)
         return rev
 
     def _rename_item(self, item, newname):
@@ -201,16 +203,13 @@ class SQLAlchemyBackend(Backend):
         @return: None
         """
         item = revision.item
-        session = self.Session()
+        session = revision.session
 
         try:
             # flush item
             if item.id is None:
                 session.add(item)
-            else:
-                # XXX correct?
-                item = session.merge(item)
-            session.flush()
+                session.flush()
         except IntegrityError:
             raise ItemAlreadyExistsError("An item with that name already exists.")
         except DataError:
@@ -244,7 +243,7 @@ class SQLAlchemyBackend(Backend):
         @param revision: The revision we want to roll back.
         @return: None
         """
-        session = self.Session.object_session(revision.item)
+        session = revision.session
         session.rollback()
 
     def _change_item_metadata(self, item):
@@ -333,12 +332,12 @@ class SQLAItem(Item, Base):
                 revno = self.list_revisions()[-1]
             rev = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).filter(SQLARevision._revno==revno).one()
             rev.setup(self._backend)
+            rev.session = session
+            rev.session.add(rev)
             return rev
         except (NoResultFound, IndexError):
             # IndexError occurrs if there are no revisions at all.
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
-        finally:
-            session.close()
 
     def destroy(self):
         session = self._backend.Session()
@@ -476,7 +475,7 @@ class SQLARevision(NewRevision, Base):
     id = Column(Integer, primary_key=True)
     _data = relation(Data, uselist=False, lazy=False)
     _item_id = Column(Integer, ForeignKey('items.id'), index=True)
-    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy=False, cascade='delete, delete-orphan'), cascade='', uselist=False)
+    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy=False, cascade='delete, delete-orphan'), cascade='', uselist=False, lazy=False)
     _revno = Column(Integer, index=True)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
@@ -487,6 +486,11 @@ class SQLARevision(NewRevision, Base):
         self._timestamp = timestamp
         self.element_attrs = dict(revno=str(revno))
         self.setup(item._backend)
+
+    def __del__(self):
+        # XXX XXX XXX DO NOT RELY ON THIS
+        print "Session %s force-closed by __del__!" % repr(self.session)
+        self.session.close()
 
     def setup(self, backend):
         if self._data is None:
@@ -507,6 +511,9 @@ class SQLARevision(NewRevision, Base):
 
     def tell(self):
         return self._data.tell()
+
+    def close(self):
+        self.session.close()
 
     def __setitem__(self, key, value):
         NewRevision.__setitem__(self, key, value)
