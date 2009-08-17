@@ -397,7 +397,7 @@ class Data(Base):
     __tablename__ = 'rev_data'
 
     id = Column(Integer, primary_key=True)
-    _chunks = relation(Chunk, order_by=Chunk.id, cascade='save-update')
+    _chunks = relation(Chunk, order_by=Chunk.id, cascade='save-update, delete, delete-orphan')
     _revision_id = Column(Integer, ForeignKey('revisions.id'))
     size = Column(Integer)
 
@@ -495,7 +495,7 @@ class SQLARevision(NewRevision, Base):
     __table_args__ = (UniqueConstraint('_item_id', '_revno'), {})
 
     id = Column(Integer, primary_key=True)
-    _data = relation(Data, uselist=False, lazy=False)
+    _data = relation(Data, uselist=False, lazy=False, cascade='save-update, delete, delete-orphan')
     _item_id = Column(Integer, ForeignKey('items.id'), index=True)
     _item = relation(SQLAItem, backref=backref('_revisions', cascade='delete, delete-orphan', lazy=True), cascade='', uselist=False, lazy=False)
     _revno = Column(Integer, index=True)
