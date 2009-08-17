@@ -4,7 +4,7 @@
 
     This backend utilizes the power of SQLAlchemy.
     You can use it to store your wiki contents using any database supported by
-    SQLAlchemy. This includes SQLite, Postgres and MySQL.
+    SQLAlchemy. This includes SQLite, PostgreSQL and MySQL.
 
     @copyright: 2009 MoinMoin:ChristopherDenter,
     @license: GNU GPL, see COPYING for details.
@@ -485,7 +485,7 @@ class SQLARevision(NewRevision, Base):
     id = Column(Integer, primary_key=True)
     _data = relation(Data, uselist=False, lazy=True)
     _item_id = Column(Integer, ForeignKey('items.id'), index=True)
-    _item = relation(SQLAItem, cascade='', uselist=False, lazy=True)
+    _item = relation(SQLAItem, backref=backref('_revisions', cascade='delete, delete-orphan', lazy=True), uselist=False, lazy=True)
     _revno = Column(Integer, index=True)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
