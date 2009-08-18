@@ -946,6 +946,45 @@ class TransformableBitmapImage(RenderableBitmapImage):
             from_cache = request.values.get('from_cache')
         self._do_get(hash, from_cache=from_cache)
 
+    def _render_data_diff(self, oldrev, newrev):
+        try:
+            from PIL import Image as PILImage
+            from PIL.ImageChops import difference as PILdiff
+        except ImportError:
+            # no PIL, we can't do anything, we just call the base class method
+            return super(TransformableBitmapImage, self)._render_data_diff(oldrev, newrev)
+
+        content_type = newrev[MIMETYPE] 
+        if content_type == 'image/jpeg':
+            output_type = 'JPEG'
+        elif content_type == 'image/png':
+            output_type = 'PNG'
+        elif content_type == 'image/gif':
+            output_type = 'GIF'
+        else:
+            raise ValueError("content_type %r not supported" % content_type)
+
+        oldimage = PILImage.open(oldrev)
+        newimage = PILImage.open(newrev)
+        oldimage.load()
+        newimage.load()
+
+        diffimage = PILdiff(newimage, oldimage)
+
+        request = self.request
+        hash_name = request.cfg.hash_algorithm
+        cache_meta = [ # we use a list to have order stability
+            (hash_name, oldrev[hash_name], newrev[hash_name]),
+        ]
+        cache = SendCache.from_meta(request, cache_meta)
+        if not cache.exists():
+            outfile = cache.data_cache
+            outfile.open(mode='wb')
+            diffimage.save(outfile, output_type)
+            outfile.close()
+            cache.put(None, content_type=content_type)
+        return self.transclude(desc='diff', query_args=dict(from_cache=cache.key))
+
 
 class Text(Binary):
     """ Any kind of text """
