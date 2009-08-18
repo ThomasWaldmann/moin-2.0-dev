@@ -58,6 +58,41 @@ class TestChunkedRevDataStorage(object):
         rev = item.get_revision(0)
         assert [chunk.data for chunk in rev._data._chunks] == ["foob", "aaar"]
 
+    def test_write_chunksize_special(self):
+        item = self.sqlabackend.create_item(u"test_write_chunksize_special")
+        rev = item.create_revision(0)
+        CHUNKSIZE = rev._data._last_chunk.chunksize
+        data = "x" * CHUNKSIZE
+        rev.write(data)
+        item.commit()
+        rev = item.get_revision(0)
+        # there should be exactly one chunk (if write() works correctly)
+        assert len(rev._data._chunks) == 1
+        # read all we have
+        read_data = rev.read()
+        assert read_data == data
+        # read CHUNKSIZE bytes
+        rev.seek(0, 0)
+        read_data = rev.read(CHUNKSIZE)
+        assert read_data == data
+        # start in middle and read up to CHUNK end
+        rev.seek(CHUNKSIZE/2, 0)
+        read_data = rev.read(CHUNKSIZE/2)
+        assert read_data == data[CHUNKSIZE/2:]
+        # create another, empty rev
+        rev = item.create_revision(1)
+        CHUNKSIZE = rev._data._last_chunk.chunksize
+        data = ""
+        rev.write(data)
+        item.commit()
+        # read 0 bytes at pos 0
+        rev = item.get_revision(1)
+        # there should be no chunks (if write() works correctly)
+        #assert len(rev._data._chunks) == 0
+        # read all we have (== nothing)
+        read_data = rev.read()
+        assert read_data == data
+
     def test_read_more_than_is_there(self):
         assert self.rev.read(len(self.raw_data) + 1) == self.raw_data
 
