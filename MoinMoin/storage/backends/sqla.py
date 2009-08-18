@@ -432,10 +432,14 @@ class Chunk(Base):
         what we can store (perhaps we were already filled a bit or it's
         just too much data), we return the amount of bytes written.
         """
-        remaining = self.chunksize - len(self.data)
-        write_data = data[:remaining]
-        self._data += write_data
-        return len(write_data)
+        if data:
+            remaining = self.chunksize - len(self.data)
+            data = data[:remaining]
+            self._data += data
+        #else:
+        #   # if data is empty, we do not need to do anything!
+        #   pass
+        return len(data)
 
 
 class Data(Base):
@@ -510,6 +514,19 @@ class Data(Base):
 
         chunkno_first, head_offset = divmod(self.cursor_pos, chunksize)
         chunkno_last, tail_offset = divmod(self.cursor_pos + amount, chunksize)
+
+        if tail_offset == 0:
+            # This handles multiple special cases:
+            # any read that ends on a CHUNK boundary - we do not need to read
+            # chunkno_last because there is no data in it that we need to read.
+            # this includes the very special case of a 0 byte read at pos 0.
+            # this includes also the special case of a read ending at EOF and
+            # EOF being on a CHUNK boundary.
+            # We optimize that to not read the unneeded chunk (for the EOF case
+            # this chunk does not even exist),  but use all bytes up to the end
+            # of the previous chunk (if there is a previous chunk).
+            chunkno_last -= 1
+            tail_offset = chunksize
 
         chunks = [chunk.data for chunk in self._chunks[chunkno_first:chunkno_last+1]]
         if chunks:
