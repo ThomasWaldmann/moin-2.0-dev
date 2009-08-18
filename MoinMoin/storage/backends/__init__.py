@@ -75,9 +75,9 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
         from MoinMoin.storage.backends.sqla import SQLAlchemyBackend
         db_uri = backend_uri[len(SQLA_PREFIX):]
 
-        content = SQLAlchemyBackend(db_uri % dict(nsname='content'))
-        userprofile = SQLAlchemyBackend(db_uri % dict(nsname='userprofile'))
-        trash = SQLAlchemyBackend(db_uri % dict(nsname='trash'))
+        content = SQLAlchemyBackend(db_uri % dict(nsname=CONTENT))
+        userprofile = SQLAlchemyBackend(db_uri % dict(nsname=USERPROFILES))
+        trash = SQLAlchemyBackend(db_uri % dict(nsname=TRASH))
 
     elif backend_uri == MEMORY_PREFIX:
         content = memory.MemoryBackend()
