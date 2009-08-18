@@ -264,7 +264,7 @@ class Item(object):
         # called from modify UI/POST
         request = self.request
         data_file = request.files.get('data_file')
-        if data_file.filename:
+        if data_file and data_file.filename:
             # user selected a file to upload
             data = data_file.stream
             mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
