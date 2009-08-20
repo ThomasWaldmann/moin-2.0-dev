@@ -31,7 +31,7 @@ General syntax: moin [options] export package [package-options]
     0. You must run this script as owner of the wiki files, usually this is the
        web server user.
 
-    1. To package all non-system and non-underlay pages on a wiki to the file '~/mywiki.zip'
+    1. To package all non-system pages on a wiki to the file '~/mywiki.zip'
        moin ... export package --output ~/mywiki.zip
 
     2. To package the pages 'FooBar' and 'TestPage' on a wiki to the file '~/mywiki.zip'
@@ -112,9 +112,8 @@ General syntax: moin [options] export package [package-options]
         elif self.options.pages:
             packagedata = package.collectpackage(self.options.pages.split(","), packageoutput, include_attachments=include_attachments)
         else:
-            packagedata = package.collectpackage(request.rootpage.getPageList(
-                                include_underlay=False,
-                                filter=lambda name: not wikiutil.isSystemPage(request, name)),
+            packagedata = package.collectpackage(list(request.rootpage.getPageList(
+                                filter=lambda name: not wikiutil.isSystemPage(request, name))),
                                 packageoutput, include_attachments=include_attachments)
         if packagedata:
             script.fatal(packagedata)

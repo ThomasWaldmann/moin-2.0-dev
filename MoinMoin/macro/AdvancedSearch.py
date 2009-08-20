@@ -34,6 +34,7 @@ def getCategories(request):
     # This will return all pages with "Category" in the title
     cat_filter = request.cfg.cache.page_category_regexact.search
     pages = request.rootpage.getPageList(filter=cat_filter)
+    pages = list(pages)
     pages.sort()
     return pages
 
@@ -147,10 +148,6 @@ def advanced_ui(macro):
                     checked=form_get(request, 'case', escaped=True),
                     id='case'),
                     '<label for="case">%s</label>' % _('Case-sensitive search')),
-                ('', html.INPUT(type='checkbox', name='excludeunderlay',
-                    value='1', checked=form_get(request, 'excludeunderlay', escaped=True),
-                    id='excludeunderlay'),
-                    '<label for="excludeunderlay">%s</label>' % _('Exclude underlay')),
                 ('', html.INPUT(type='checkbox', name='nosystemitems',
                     value='1', checked=form_get(request, 'nosystemitems', escaped=True),
                     id='nosystempages'),

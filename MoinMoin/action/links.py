@@ -8,6 +8,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 from MoinMoin import config, wikiutil
+from MoinMoin.Page import Page
 
 def execute(pagename, request):
     _ = request.getText
@@ -19,21 +20,24 @@ def execute(pagename, request):
         request.theme.send_title(_('Full Link List for "%s"') % request.cfg.sitename)
         request.write('<pre>')
 
-    # Get page dict readable by current user
-    pages = request.rootpage.getPageDict()
-    pagelist = pages.keys()
-    pagelist.sort()
+    # Get page list readable by current user, use a dict for faster "in" checks
+    pagenames = dict([(pagename, None)
+                      for pagename in request.rootpage.getPageList()])
 
-    for name in pagelist:
+    pagenames_sorted = pagenames.keys()
+    pagenames_sorted.sort()
+
+    for name in pagenames_sorted:
+        page = Page(request, name)
         if mimetype == "text/html":
-            request.write(pages[name].link_to(request))
+            request.write(page.link_to(request))
         else:
             _emit(request, name)
-        for link in pages[name].getPageLinks(request):
+        for link in page.getPageLinks(request):
             request.write(" ")
             if mimetype == "text/html":
-                if link in pages:
-                    request.write(pages[link].link_to(request))
+                if link in pagenames:
+                    request.write(Page(request, link).link_to(request))
                 else:
                     _emit(request, link)
             else:

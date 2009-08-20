@@ -13,7 +13,7 @@ def execute(pagename, request):
     # Without arguments, refresh action will refresh the page text_html cache.
     arena = request.values.get('arena', 'Page.py')
     if arena == 'Page.py':
-        arena = Page(request, pagename)
+        arena = pagename
     key = request.values.get('key', 'text_html')
 
     # Remove cache entry (if exists), and send the page

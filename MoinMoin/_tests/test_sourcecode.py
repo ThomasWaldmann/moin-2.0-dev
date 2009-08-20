@@ -19,11 +19,9 @@ ROOT = str(moindir)
 EXCLUDE = [
     '/contrib/DesktopEdition/setup_py2exe.py', # has crlf
     '/contrib/TWikiDrawPlugin', # 3rd party java stuff
-    '/contrib/flup-server', # 3rd party WSGI adapters
     '/MoinMoin/support', # 3rd party libs or non-broken stdlib stuff
     '/MoinMoin/web/static/htdocs', # this is our dist static stuff
-    '/tests/wiki', # this is our test wiki
-    '/wiki/data/pages', # wiki pages, there may be .py attachments
+    '/MoinMoin/_tests/wiki', # this is our test wiki
 ]
 
 TRAILING_SPACES = 'nochange' # 'nochange' or 'fix'

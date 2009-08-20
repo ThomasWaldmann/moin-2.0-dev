@@ -15,6 +15,7 @@ import tempfile
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
+from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin import config
 from MoinMoin.util import filesys, lock, pickle, PICKLE_PROTOCOL
 
@@ -25,14 +26,26 @@ class CacheError(Exception):
 
 
 def get_arena_dir(request, arena, scope):
-    if scope == 'item': # arena is a Page instance
-        # we could move cache out of the page directory and store it to cache_dir
-        return arena.getPagePath('cache', check_create=1)
+    """ Get a cache storage directory for some specific scope and arena.
+
+        scope     arena
+        ---------------------------------------------------------------------
+        'item'    should be the item name (is stored in a per-wiki cache arena)
+                  [unicode]
+        'wiki'    some unique name for a per-wiki cache arena
+                  [ascii str]
+        'farm'    some unique name for a common farm-global cache arena
+                  [ascii str]
+    """
+    if scope == 'item':
+        path = request.cfg.siteid, 'item', hash_new('sha1', arena.encode('utf-8')).hexdigest()
     elif scope == 'wiki':
-        return os.path.join(request.cfg.cache_dir, request.cfg.siteid, arena)
+        path = request.cfg.siteid, arena
     elif scope == 'farm':
-        return os.path.join(request.cfg.cache_dir, '__common__', arena)
-    return None
+        path = '__common__', arena
+    else:
+        raise ValueError('Unsupported scope: %r' % scope)
+    return os.path.join(request.cfg.cache_dir, *path)
 
 
 def get_cache_list(request, arena, scope):
@@ -48,13 +61,9 @@ class CacheEntry:
                  use_pickle=False, use_encode=False):
         """ init a cache entry
             @param request: the request object
-            @param arena: either a string or a page object, when we want to use
-                          page local cache area
-            @param key: under which key we access the cache content
-            @param scope: the scope where we are caching:
-                          'item' - an item local cache
-                          'wiki' - a wiki local cache
-                          'farm' - a cache for the whole farm
+            @param scope: see get_arena_dir()
+            @param arena: see get_arena_dir()
+            @param key: under which key we access the cache content [str, ascii]
             @param do_locking: if there should be a lock, normally True
             @param use_pickle: if data should be pickled/unpickled (nice for arbitrary cache content)
             @param use_encode: if data should be encoded/decoded (nice for readable cache files)
@@ -109,28 +118,27 @@ class CacheEntry:
         """
         return filesys.fuid(self._fname)
 
-    def needsUpdate(self, filename, attachdir=None):
-        # following code is not necessary. will trigger exception and give same result
-        #if not self.exists():
-        #    return 1
+    def needsUpdate(self, *timestamps):
+        """ Checks whether cache needs to get updated because some
+            timestamp is newer than the cache contents. The list of
+            timestamps can be built from objects that the cache contents
+            are built from / depends on.
 
+        @param timestamps: UNIX timestamps (int or float)
+        @return: True if cache needs updating, False otherwise.
+        """
         try:
-            ctime = os.path.getmtime(self._fname)
-            ftime = os.path.getmtime(filename)
+            cache_mtime = os.path.getmtime(self._fname)
         except os.error:
-            return 1
+            # no cache file or other problem accessing it
+            return True
 
-        needsupdate = ftime > ctime
+        for timestamp in timestamps:
+            assert isinstance(timestamp, (int, long, float))
+            if timestamp > cache_mtime:
+                return True
 
-        # if a page depends on the attachment dir, we check this, too:
-        if not needsupdate and attachdir:
-            try:
-                ftime2 = os.path.getmtime(attachdir)
-            except os.error:
-                ftime2 = 0
-            needsupdate = ftime2 > ctime
-
-        return needsupdate
+        return False
 
     def _determine_locktype(self, mode):
         """ return the correct lock object for a specific file access mode """

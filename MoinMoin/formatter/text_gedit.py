@@ -12,7 +12,6 @@ logging = log.getLogger(__name__)
 from MoinMoin.formatter import FormatterBase, text_html
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
-from MoinMoin.action import AttachFile
 
 class Formatter(text_html.Formatter):
     """ Send HTML data for the GUI editor """
@@ -58,54 +57,6 @@ class Formatter(text_html.Formatter):
         href = wikiutil.quoteWikinameURL(pagename) or "/" # FCKeditor behaves strange on empty href
         title = kw.get('title', interwiki)
         return self.url(1, href, title=title, css=html_class) # interwiki links with pages with umlauts
-
-    def attachment_inlined(self, url, text, **kw):
-        url = wikiutil.escape(url)
-        text = wikiutil.escape(text)
-        if url == text:
-            return '<span style="background-color:#ffff11">{{attachment:%s}}</span>' % url
-        else:
-            return '<span style="background-color:#ffff11">{{attachment:%s|%s}}</span>' % (url, text)
-
-    def attachment_link(self, on, url=None, **kw):
-        assert on in (0, 1, False, True) # make sure we get called the new way, not like the 1.5 api was
-        _ = self.request.getText
-        querystr = kw.get('querystr', {})
-        assert isinstance(querystr, dict) # new in 1.6, only support dicts
-        if 'do' not in querystr:
-            querystr['do'] = 'view'
-        if on:
-            pagename = self.page.page_name
-            target = AttachFile.getAttachUrl(pagename, url, self.request, do=querystr['do'])
-            return self.url(on, target, title="attachment:%s" % wikiutil.quoteWikinameURL(url))
-        else:
-            return self.url(on)
-
-    def attachment_image(self, url, **kw):
-        _ = self.request.getText
-        # we force the title here, needed later for html>wiki converter
-        kw['title'] = "attachment:%s" % wikiutil.quoteWikinameURL(url)
-        pagename = self.page.page_name
-        if '/' in url:
-            pagename, target = AttachFile.absoluteName(url, pagename)
-            url = url.split('/')[-1]
-        kw['src'] = AttachFile.getAttachUrl(pagename, url, self.request, addts=1)
-        return self.image(**kw)
-
-    def attachment_drawing(self, url, text, **kw):
-        _ = self.request.getText
-        # TODO: this 'text' argument is kind of superfluous, replace by using alt=... kw arg
-        if 'alt' not in kw or not kw['alt']:
-            kw['alt'] = text
-        # we force the title here, needed later for html>wiki converter
-        kw['title'] = "drawing:%s" % wikiutil.quoteWikinameURL(url)
-        pagename = self.page.page_name
-        if '/' in url:
-            pagename, target = AttachFile.absoluteName(url, pagename)
-            url = url.split('/')[-1]
-        url += '.png'
-        kw['src'] = AttachFile.getAttachUrl(pagename, url, self.request, addts=1)
-        return self.image(**kw)
 
     def icon(self, type):
         return self.request.theme.make_icon(type, title='smiley:%s' % type)

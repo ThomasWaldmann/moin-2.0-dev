@@ -9,6 +9,7 @@ This is NOT intended for internet or server or multiuser use due to relaxed secu
 import sys, os
 
 from MoinMoin.config import multiconfig, url_prefix_static
+from MoinMoin.storage.backends import create_simple_mapping
 
 
 class LocalConfig(multiconfig.DefaultConfig):
@@ -20,20 +21,34 @@ class LocalConfig(multiconfig.DefaultConfig):
     # wikiconfig.py
     # wiki/
     #      data/
-    #      underlay/
+    #      syspages.xml
     # If that's not true, feel free to just set instance_dir to the real path
-    # where data/ and underlay/ is located:
-    #instance_dir = '/where/ever/your/instance/is'
+    # where data/ and syspages.xml is located:
+    # instance_dir = '/where/ever/your/instance/is'
     instance_dir = os.path.join(wikiconfig_dir, 'wiki')
+    data_dir = os.path.join(instance_dir, 'data') # Note: this used to have a trailing / in the past
 
-    # Where your own wiki pages are (make regular backups of this directory):
-    data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
+    # This puts the contents from the specified xml file (a serialized backend) into your
+    # backend(s). You can remove this after the first request to your wiki or
+    # from the beginning if you don't want to use this feature at all.
+    preloaded_xml = os.path.join(instance_dir, 'syspages.xml')
 
-    # Where system and help pages are (you may exclude this from backup):
-    data_underlay_dir = os.path.join(instance_dir, 'underlay', '') # path with trailing /
+    # This provides a simple default setup for your backend configuration.
+    # 'fs:' indicates that you want to use the filesystem backend. You can also use
+    # 'hg:' instead to indicate that you want to use the mercurial backend.
+    # Alternatively you can set up the mapping yourself (see HelpOnStorageConfiguration).
+    namespace_mapping = create_simple_mapping(
+                            backend_uri='fs:' + data_dir,
+                            # XXX we use rather relaxed ACLs for the development wiki:
+                            content_acl=dict(before=u'',
+                                             default=u'All:read,write,create,destroy,admin',
+                                             after=u'', ),
+                            user_profile_acl=dict(before=u'',
+                                             default=u'All:read,write,create,destroy,admin',
+                                             after=u'', ),
+                            )
 
-    DesktopEdition = True # give all local users full powers
-    acl_rights_default = u"All:read,write,delete,revert,admin"
+    DesktopEdition = True # treat all local users like superuser
     surge_action_limits = None # no surge protection
     sitename = u'MoinMoin DesktopEdition'
     logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static

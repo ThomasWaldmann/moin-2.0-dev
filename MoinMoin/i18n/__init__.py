@@ -33,6 +33,8 @@ logging = log.getLogger(__name__)
 from MoinMoin import caching
 from MoinMoin.i18n import strings
 
+SUPPORT_DICT_PAGES = False
+
 # This is a global for a reason: in persistent environments all languages in
 # use will be cached; Note: you have to restart if you update language data.
 
@@ -71,7 +73,8 @@ def i18n_init(request):
         # wiki in the farm (confusing and maybe not even readable due to ACLs):
         meta_cache = caching.CacheEntry(request, 'i18n', 'meta', scope='wiki', use_pickle=True)
         i18n_dir = os.path.join(request.cfg.moinmoin_dir, 'i18n')
-        if meta_cache.needsUpdate(i18n_dir):
+        i18n_dir_mtime = os.path.getmtime(i18n_dir)
+        if meta_cache.needsUpdate(i18n_dir_mtime):
             logging.debug("cache needs update")
             _languages = {}
             _system_pages = {}
@@ -224,7 +227,8 @@ class Translation(object):
         # see comment about per-wiki scope above
         cache = caching.CacheEntry(request, arena='i18n', key=self.language, scope='wiki', use_pickle=True)
         langfilename = po_filename(request, self.language, self.domain, i18n_dir=trans_dir)
-        needsupdate = cache.needsUpdate(langfilename)
+        langfile_mtime = os.path.getmtime(langfilename)
+        needsupdate = cache.needsUpdate(langfile_mtime)
         if not needsupdate:
             try:
                 unformatted = cache.content()
@@ -301,12 +305,15 @@ def getText(original, request, lang, **kw):
                 translation.formatted[key] = translated # remember it
     else:
         try:
-            language = languages[lang]['x-language-in-english']
-            dictpagename = "%sDict" % language.replace(' ', '')
-            dicts = request.dicts
-            if dictpagename in dicts:
-                userdict = dicts[dictpagename]
-                translated = userdict[original]
+            if SUPPORT_DICT_PAGES:
+                language = languages[lang]['x-language-in-english']
+                dictpagename = "%sDict" % language.replace(' ', '')
+                dicts = request.dicts
+                if dictpagename in dicts:
+                    userdict = dicts[dictpagename]
+                    translated = userdict[original]
+                else:
+                    raise KeyError
             else:
                 raise KeyError
         except KeyError:

@@ -1,6 +1,18 @@
 Converting your DATA when upgrading MoinMoin
 ============================================
 
+Migration to MoinMoin 2.0.0
+===========================
+
+You have to first upgrade to some MoinMoin 1.9.x release (using the 1.9.x
+code), there is no support for upgrading a <1.9.x version directly to 2.0.0
+or later.
+
+After you have 1.9.x running, do this:
+
+... TBD ...
+
+
 Post 1.5.3 new style migration
 ==============================
 
