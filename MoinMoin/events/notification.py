@@ -5,11 +5,15 @@
     Code for building messages informing about events (changes)
     happening in the wiki.
 
+    TODO check usage of user.getUserIdentification(request) vs. page.last_editor()
+
     @copyright: 2007 by Karol Nowak <grywacz@gmail.com>
     @license: GNU GPL, see COPYING for details.
 """
 
+import MoinMoin.user
 from MoinMoin import user, wikiutil
+from MoinMoin.Page import Page
 from MoinMoin.events import EventResult
 
 class Result(EventResult):
@@ -76,7 +80,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
         'You have subscribed to a wiki page or wiki category on "%(sitename)s" for change notification.\n\n'
         'The "%(pagename)s" page has been changed by %(editor)s:\n') % {
             'pagename': page.page_name,
-            'editor': page.uid_override or user.getUserIdentification(request),
+            'editor': page.last_editor(),
             'sitename': page.cfg.sitename or request.url_root,
         }
 
@@ -96,7 +100,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
             'You have subscribed to a wiki page "%(sitename)s" for change notification.\n\n'
             'The page "%(pagename)s" has been deleted by %(editor)s:\n\n') % {
                 'pagename': page.page_name,
-                'editor': page.uid_override or user.getUserIdentification(request),
+                'editor': page.last_editor(),
                 'sitename': page.cfg.sitename or request.url_root,
         }
 
@@ -104,7 +108,7 @@ def page_change_message(msgtype, request, page, lang, **kwargs):
         changes['text'] = _("Dear wiki user,\n\n"
             'You have subscribed to a wiki page "%(sitename)s" for change notification.\n\n'
             'The page "%(pagename)s" has been renamed from "%(oldname)s" by %(editor)s:\n') % {
-                'editor': page.uid_override or user.getUserIdentification(request),
+                'editor': page.last_editor(),
                 'pagename': page.page_name,
                 'sitename': page.cfg.sitename or request.url_root,
                 'oldname': kwargs['old_name']
@@ -137,40 +141,6 @@ def user_created_message(request, _, sitename, username, email):
          }
 
     return {'subject': subject, 'text': text}
-
-def attachment_added(request, _, page_name, attach_name, attach_size):
-    """Formats a message used to notify about new attachments
-
-    @param _: a gettext function
-    @return: a dict with notification data
-
-    """
-    data = {}
-
-    data['subject'] = _("New attachment added to page %(pagename)s on %(sitename)s") % {
-                'pagename': page_name,
-                'sitename': request.cfg.sitename or request.url_root,
-                }
-
-    data['text'] = _("Dear Wiki user,\n\n"
-    'You have subscribed to a wiki page "%(page_name)s" for change notification. '
-    "An attachment has been added to that page by %(editor)s. "
-    "Following detailed information is available:\n\n"
-    "Attachment name: %(attach_name)s\n"
-    "Attachment size: %(attach_size)s\n") % {
-        'editor': user.getUserIdentification(request),
-        'page_name': page_name,
-        'attach_name': attach_name,
-        'attach_size': attach_size,
-    }
-
-    data['editor'] = user.getUserIdentification(request)
-    data['page_name'] = page_name
-    data['attach_size'] = attach_size
-    data['attach_name'] = attach_name
-
-    return data
-
 
 # XXX: clean up this method to take a notification type instead of bool for_jabber
 def filter_subscriber_list(event, subscribers, for_jabber):

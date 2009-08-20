@@ -1,0 +1,49 @@
+.parity0 { background-color: #dddddd; }
+.parity1 { background-color: #eeeeee; }
+
+/* Graph */
+div#wrapper {
+	position: relative;
+	margin: 0;
+	padding: 0;
+}
+
+canvas {
+	position: absolute;
+	z-index: 5;
+	top: -0.6em;
+	margin: 0;
+}
+
+ul#nodebgs {
+	list-style: none inside none;
+	padding: 0;
+	margin: 0;
+	top: -0.7em;
+}
+ 
+ul#graphnodes li, ul#nodebgs li {
+	height: 39px;
+}
+
+ul#graphnodes {
+	position: absolute;
+	z-index: 10;
+	top: -0.85em;
+	list-style: none inside none;
+	padding: 0;
+}
+
+ul#graphnodes li .desc_ {
+  display: block;
+}
+
+ul#graphnodes li .info_ {
+  color: grey;
+  padding-left: 7px;
+}
+
+ul#graphnodes li .size_ {
+  color: grey;
+  width: 100px;
+}

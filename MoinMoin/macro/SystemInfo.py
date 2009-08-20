@@ -88,23 +88,16 @@ class SystemInfo:
             pagelist = request.rootpage.getPageList(user='')
             systemPages = []
             totalsize = 0
-            for page in pagelist:
+            for num, page in enumerate(pagelist):
                 if wikiutil.isSystemPage(request, page):
                     systemPages.append(page)
                 totalsize += Page(request, page).size()
+            pagecount = num + 1
 
-            row(_('Number of pages'), str(len(pagelist)-len(systemPages)))
+            row(_('Number of pages'), str(pagecount - len(systemPages)))
             row(_('Number of system pages'), str(len(systemPages)))
 
             row(_('Accumulated page sizes'), self.formatInReadableUnits(totalsize))
-            data_dir = request.cfg.data_dir
-            row(_('Disk usage of %(data_dir)s/pages/') % {'data_dir': data_dir},
-                self.formatInReadableUnits(self.getDirectorySize(os.path.join(data_dir, 'pages'))))
-            row(_('Disk usage of %(data_dir)s/') % {'data_dir': data_dir},
-            self.formatInReadableUnits(self.getDirectorySize(data_dir)))
-
-            edlog = editlog.EditLog(request)
-            row(_('Entries in edit log'), "%s (%s)" % (edlog.lines(), self.formatInReadableUnits(edlog.size())))
 
             # This puts a heavy load on the server when the log is large
             eventlogger = eventlog.EventLog(request)

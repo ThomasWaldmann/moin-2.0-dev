@@ -5,7 +5,6 @@
 # location for the wikiconfig.py we use for testing:
 export PYTHONPATH=$(PWD)
 
-testwiki := ./tests/wiki
 share := ./wiki
 
 all:
@@ -31,8 +30,8 @@ install-docs:
 	-rmdir build
 
 interwiki:
-	wget -U MoinMoin/Makefile -O $(share)/data/intermap.txt "http://master19.moinmo.in/InterWikiMap?action=raw"
-	chmod 664 $(share)/data/intermap.txt
+	wget -U MoinMoin/Makefile -O contrib/interwiki/intermap.txt "http://master19.moinmo.in/InterWikiMap?action=raw"
+	chmod 664 contrib/interwiki/intermap.txt
 
 check-tabs:
 	@python -c 'import tabnanny ; tabnanny.check("MoinMoin")'
@@ -41,28 +40,12 @@ check-tabs:
 epydoc: patchlevel
 	@epydoc -o ../html-1.9 --name=MoinMoin --url=http://moinmo.in/ --graph=all --graph-font=Arial MoinMoin
 
-# Create new underlay directory from MoinMaster
-# Should be used only on TW machine
-underlay:
-	rm -rf $(share)/underlay
-	MoinMoin/script/moin.py --config-dir=/srv/moin/cfg/1.9 --wiki-url=http://master19.moinmo.in/ maint globaledit
-	MoinMoin/script/moin.py --config-dir=/srv/moin/cfg/1.9 --wiki-url=http://master19.moinmo.in/ maint reducewiki --target-dir=$(share)/underlay
-	rm -rf $(share)/underlay/pages/InterWikiMap
-	rm -rf $(share)/underlay/pages/MoinPagesEditorGroup
-	cd $(share); rm -f underlay.tar; tar cf underlay.tar underlay
-
 pagepacks:
 	@python MoinMoin/_tests/maketestwiki.py
 	@MoinMoin/script/moin.py --config-dir=MoinMoin/_tests --wiki-url=http://localhost/ maint mkpagepacks
-	cd $(share) ; rm -rf underlay
-	cp -a $(testwiki)/underlay $(share)/
 	
-dist:
+dist: clean-testwiki clean-devwiki
 	-rm MANIFEST
-	-rm -rf tests/wiki
-	-rm -rf wiki/data/cache/{__metalock__,__session__,wikiconfig}
-	->wiki/data/event-log
-	->wiki/data/edit-log
 	python setup.py sdist
 
 # Create patchlevel module
@@ -79,10 +62,6 @@ update:
 	hg pull -u
 	$(MAKE) patchlevel
 
-# Update underlay directory from the tarball
-update-underlay:
-	cd $(share); rm -rf underlay; tar xf underlay.tar
-
 test:
 	@echo Testing is now done using \`py.test\`. py.test can be installed by downloading from http://codespeak.net/py/dist/download.html
 	@echo Writing tests is explained on http://codespeak.net/py/dist/test.html
@@ -97,13 +76,23 @@ pylint:
 clean: clean-testwiki clean-pyc
 	rm -rf build
 
+clean-devwiki:
+	-rm -rf wiki/data/cache/__session__
+	-rm -rf wiki/data/cache/jinja
+	-rm -rf wiki/data/cache/wikiconfig
+	-rm -rf wiki/data/content
+	-rm -rf wiki/data/userprofiles
+	-rm -rf wiki/data/trash
+	->wiki/data/event-log
+
 clean-testwiki:
-	rm -rf $(testwiki)/*
+	-rm -rf MoinMoin/_tests/wiki/data/cache/*
+	-rm MoinMoin/_tests/wiki/data/event-log
 
 clean-pyc:
 	find . -name "*.pyc" -exec rm -rf "{}" \; 
 
-.PHONY: all dist install-docs check-tabs epydoc underlay patchlevel \
-	check-i18n update update-underlay test testwiki clean \
-	clean-testwiki clean-pyc
+.PHONY: all dist install-docs check-tabs epydoc patchlevel \
+	check-i18n update test testwiki clean \
+	clean-testwiki clean-devwiki clean-pyc
 
