@@ -807,6 +807,7 @@ var search_hint = "%(search_hint)s";
                 'title': wikiutil.escape(d['title']),
                 'sitename': wikiutil.escape(d['sitename']),
             },
+            self.externalScript('svg', 'data-path="%(jspath)s"'),
             self.externalScript('common'),
             self.headscript(d), # Should move to separate .js file
             self.html_stylesheets(d),
@@ -815,10 +816,11 @@ var search_hint = "%(search_hint)s";
             ]
         return '\n'.join(html)
 
-    def externalScript(self, name):
+    def externalScript(self, name, attrs=''):
         """ Format external script html """
-        src = '%s/common/js/%s.js' % (self.request.cfg.url_prefix_static, name)
-        return '<script type="text/javascript" src="%s"></script>' % src
+        jspath = '%s/common/js' % self.request.cfg.url_prefix_local
+        attrs = attrs % locals()
+        return '<script type="text/javascript" src="%(jspath)s/%(name)s.js" %(attrs)s></script>' % locals()
 
     def universal_edit_button(self, d, **keywords):
         """ Generate HTML for an edit link in the header."""
