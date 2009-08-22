@@ -265,7 +265,7 @@ class Item(object):
         # called from modify UI/POST
         request = self.request
         data_file = request.files.get('data_file')
-        if data_file.filename:
+        if data_file and data_file.filename:
             # user selected a file to upload
             data = data_file.stream
             mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
@@ -947,6 +947,45 @@ class TransformableBitmapImage(RenderableBitmapImage):
             from_cache = request.values.get('from_cache')
         self._do_get(hash, from_cache=from_cache)
 
+    def _render_data_diff(self, oldrev, newrev):
+        try:
+            from PIL import Image as PILImage
+            from PIL.ImageChops import difference as PILdiff
+        except ImportError:
+            # no PIL, we can't do anything, we just call the base class method
+            return super(TransformableBitmapImage, self)._render_data_diff(oldrev, newrev)
+
+        content_type = newrev[MIMETYPE]
+        if content_type == 'image/jpeg':
+            output_type = 'JPEG'
+        elif content_type == 'image/png':
+            output_type = 'PNG'
+        elif content_type == 'image/gif':
+            output_type = 'GIF'
+        else:
+            raise ValueError("content_type %r not supported" % content_type)
+
+        oldimage = PILImage.open(oldrev)
+        newimage = PILImage.open(newrev)
+        oldimage.load()
+        newimage.load()
+
+        diffimage = PILdiff(newimage, oldimage)
+
+        request = self.request
+        hash_name = request.cfg.hash_algorithm
+        cache_meta = [ # we use a list to have order stability
+            (hash_name, oldrev[hash_name], newrev[hash_name]),
+        ]
+        cache = SendCache.from_meta(request, cache_meta)
+        if not cache.exists():
+            outfile = cache.data_cache
+            outfile.open(mode='wb')
+            diffimage.save(outfile, output_type)
+            outfile.close()
+            cache.put(None, content_type=content_type)
+        return self.transclude(desc='diff', query_args=dict(from_cache=cache.key))
+
 
 class Text(Binary):
     """ Any kind of text """
@@ -1043,6 +1082,26 @@ class HTML(Text):
     def _render_data(self):
         return self.data_storage_to_internal(self.data)
 
+    def do_modify(self, template_name):
+        if template_name:
+            item = Item.create(self.request, template_name)
+            data_text = self.data_storage_to_internal(item.data)
+        else:
+            data_text = self.data_storage_to_internal(self.data)
+        meta_text = self.meta_dict_to_text(self.meta)
+        template = self.env.get_template('modify_text_html.html')
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.name,
+                                  rows_data=20, rows_meta=3, cols=80,
+                                  revno=0,
+                                  data_text=data_text,
+                                  meta_text=meta_text,
+                                  lang='en', direction='ltr',
+                                  help=self.modify_help,
+                                 )
+        return content
+
+
 
 class MoinWiki(Text):
     """ MoinMoin wiki markup """
@@ -1069,6 +1128,26 @@ class SafeHTML(Text):
     supported_mimetypes = ['text/x-safe-html']
     format = 'html'
     format_args = ''
+
+    # XXX duplicated from HTML class
+    def do_modify(self, template_name):
+        if template_name:
+            item = Item.create(self.request, template_name)
+            data_text = self.data_storage_to_internal(item.data)
+        else:
+            data_text = self.data_storage_to_internal(self.data)
+        meta_text = self.meta_dict_to_text(self.meta)
+        template = self.env.get_template('modify_text_html.html')
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.name,
+                                  rows_data=20, rows_meta=3, cols=80,
+                                  revno=0,
+                                  data_text=data_text,
+                                  meta_text=meta_text,
+                                  lang='en', direction='ltr',
+                                  help=self.modify_help,
+                                 )
+        return content
 
 
 class DiffPatch(Text):
