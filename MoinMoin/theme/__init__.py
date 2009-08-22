@@ -9,7 +9,7 @@
 
 import os
 
-from jinja2 import Environment, PackageLoader, Template, FileSystemBytecodeCache, Markup
+from jinja2 import Environment, FileSystemLoader, Template, FileSystemBytecodeCache, Markup
 
 from MoinMoin import i18n, wikiutil, config, version, caching, user
 from MoinMoin import action as actionmod
@@ -147,7 +147,10 @@ class ThemeBase:
             os.mkdir(jinja_cachedir)
         except:
             pass
-        self.env = Environment(loader=PackageLoader('MoinMoin', 'templates'),
+
+        jinja_templatedir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+
+        self.env = Environment(loader=FileSystemLoader(jinja_templatedir),
                                bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'),
                                extensions=['jinja2.ext.i18n'])
         from werkzeug import url_quote, url_encode

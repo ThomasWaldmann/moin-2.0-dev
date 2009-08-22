@@ -4,339 +4,442 @@
 
     This backend utilizes the power of SQLAlchemy.
     You can use it to store your wiki contents using any database supported by
-    SQLAlchemy. This includes SQLite, Postgres and MySQL.
+    SQLAlchemy. This includes SQLite, PostgreSQL and MySQL.
+
+    XXX Note that this backend is not currently ready for use! See the TODOs. XXX
+
+
+    Talking to the DB
+    =================
+
+    In order to communicate with the database, we need to establish a connection
+    by requesting a 'session'. `Session` is a class that was bound to the backend object.
+    When we create an instance of it, we can persist our objects, modify or delete them.
+    (Note that the SA docs suggest keeping the session class in the module scope. That
+    does not work for us as we need to to be able to create multiple backend objects,
+    each potentially bound to a different database. If the session was global in the module,
+    all backends would maintain a connection to the database whose backend was created last.)
+    Usually a session is created at the beginning of a request and disposed after the request
+    has been processed. This is a bit difficult to realize as we are completely unaware of
+    requests on the storage layer.
+    Furthermore the backend may be used to store large amounts of data. In order to properly
+    deal with such BLOBs, we split them manually into smaller chunks that we can 'stream'
+    sequentially from and to the database. (Note that there is no such thing as a file-like
+    read(n) API for our DBMSs and we don't want to read a large BLOB into memory all at once).
+    It is also very important that we dispose of all sessions that we create properly and in
+    a 'timely' manner, because the number of concurrent connections that are allowed for
+    a database may be very limited (e.g., 5). A session is properly ended by invoking one of
+    the following methods: session.commit(), session.rollback() or session.close().
+    As some attributes on our mapped objects are loaded lazily, a the mapped object must
+    be bound to a session obviously for the load operation to succeed. In order to accomplish
+    that, we currently add the mapped objects to a session and close that session after the object
+    has gone out of scope. This is a HACK, because we use __del__, which is very unreliable.
+    The proper way to deal with this would be adding revision.close() (and perhaps even item.close?)
+    to the storage API and free all resources that were acquired in that method. That of course
+    means that we need to adjust all storage-related code and add the close() calls.
+
+
+    TODO
+    ====
+    The following is a list of things that need to be done before this backend can be used productively
+    (not including beta tests):
+        * Data.read must be changed to operate on dynamically loaded chunks. I.e., the data._chunks must
+          be set to lazy='dynamic', which will then be a query instead of a collection.
+        * Find a proper solution for methods that issue many SQL queries. Especially search_item is
+          difficult, as we cannot know what data will be needed in the subsequent processing of the items
+          returned, which will result in more queries being issued. Eager loading is only a partial solution.
+        * MetaData should definitely NOT simply be stored as a dict in a PickleType Column. Store that properly,
+          perhaps in (a) seperate table(s).
+        * Find out why RC lists an item that was just written below Trash/ as well. (Likely a UI bug.)
+        * Add revision.close() (and perhaps item.close()?) to the storage API and make use of it.
+          With the help of __del__, find all places that do not properly close connections. Do NOT rely on
+          __del__. Use it only as a last resort to close connections.
+        * Perhaps restructure the code. (Move methods that don't have to be on the Item/Revision classes
+          into the backend, for example.)
+        * Make sure the sketched approach is threadsafe for our purposes. Perhaps use the contextual session
+          instead.
+        * Currently there only is SQLARevision. Make sure that operations that are not allowed (such as modifying
+          the data of an already stored revision) raise the appropriate exceptions.
+
 
     @copyright: 2009 MoinMoin:ChristopherDenter,
     @license: GNU GPL, see COPYING for details.
 """
-from StringIO import StringIO
 
-from sqlalchemy import create_engine, Column, Integer, Binary, String, PickleType, ForeignKey
+import time
+from threading import Lock
+
+from sqlalchemy import create_engine, Column, Unicode, Integer, Binary, PickleType, ForeignKey
+from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.orm import sessionmaker, relation, backref
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
+# Only used/needed for development/testing:
+from sqlalchemy.pool import StaticPool
 
 from MoinMoin.storage import Backend, Item, Revision, NewRevision, StoredRevision
-from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError
+from MoinMoin.storage.error import ItemAlreadyExistsError, NoSuchItemError, NoSuchRevisionError, \
+                                   RevisionAlreadyExistsError, StorageError
 
 
 Base = declarative_base()
-# Our factory for sessions:
-Session = sessionmaker()
+
+NAME_LEN = 512
 
 
 class SQLAlchemyBackend(Backend):
     """
-    The actual SQLAlchemyBackend.
+    The actual SQLAlchemyBackend. Take note that the session class is bound to
+    the individual backend it belongs to.
     """
-    def __init__(self, db_uri='sqlite:///:memory:', verbose=False):
+    def __init__(self, db_uri=None, verbose=False):
+        """
+        @type db_uri: str
+        @param db_uri: The database uri that we pass on to SQLAlchemy.
+                       May contain user/password/host/port/etc.
+        @type verbose: bool
+        @param verbose: Verbosity setting. If set to True this will print all SQL queries
+                        to the console.
+        """
+        if db_uri is None:
+            # These are settings that apply only for development / testing only. The additional args are necessary
+            # due to some limitations of the in-memory sqlite database.
+            db_uri = 'sqlite:///:memory:'
+            self.engine = create_engine(db_uri, poolclass=StaticPool, connect_args={'check_same_thread': False})
+        else:
+            self.engine = create_engine(db_uri, echo=verbose, echo_pool=verbose)
 
-        ## TODO DEVELOPMENT SETTINGS --- Remove when in-memory sqlite database is not needed anymore
-        from sqlalchemy.pool import StaticPool
-        self.engine = create_engine('sqlite:///:memory:', poolclass=StaticPool, connect_args={'check_same_thread': False})
-        ## TODO </development settings>
+        # Our factory for sessions. Note: We do NOT define this module-level because then different SQLABackends
+        # using different engines (potentially different databases) would all use the same Session object with the
+        # same engine that the backend instance that was created last bound it to.
+        # XXX Should this perhaps use the scoped/contextual session instead?
+        self.Session = sessionmaker(bind=self.engine, expire_on_commit=False)
 
-        # Create the database schema
+        # Create the database schema (for all tables)
         SQLAItem.metadata.bind = self.engine
         SQLAItem.metadata.create_all()
+        # {id : Lockobject} -- lock registry for item metadata locks
+        self._item_metadata_lock = {}
 
     def has_item(self, itemname):
+        """
+        @see: Backend.has_item.__doc__
+        """
         try:
-            session = Session()
+            session = self.Session()
             session.query(SQLAItem).filter_by(_name=itemname).one()
             return True
         except NoResultFound:
             return False
+        finally:
+            # Since we simply return a bool, we can (and must) close the session here without problems.
+            session.close()
 
     def get_item(self, itemname):
         """
-        Returns item object or raises Exception if that item does not exist.
-
-        @type itemname: unicode
-        @param itemname: The name of the item we want to get.
-        @rtype: item object
-        @raise NoSuchItemError: No item with name 'itemname' is known to this backend.
+        @see: Backend.get_item.__doc__
         """
-        session = Session()
+        session = self.Session()
         # The following fails if not EXACTLY one column is found, i.e., it also fails
         # if MORE than one item is found, which should not happen since names should be
-        # unique
+        # unique.
         try:
+            # Query for the item that matches the given itemname.
             item = session.query(SQLAItem).filter_by(_name=itemname).one()
-            # XXX Can you make this more beautiful?
-            # The _backend attribute is not stored in the database. Restore it manually.
-            #
             # SQLA doesn't call __init__, so we need to take care of that.
-            item.__init__(self, itemname)
+            item.setup(self)
+            # Maybe somebody already got an instance of this Item and thus there already is a Lock for that Item.
+            if not item.id in self._item_metadata_lock:
+                self._item_metadata_lock[item.id] = Lock()
             return item
         except NoResultFound:
             raise NoSuchItemError("The item '%s' could not be found." % itemname)
+        finally:
+            session.close()
 
     def create_item(self, itemname):
         """
-        Creates an item with a given itemname. If that item already exists,
-        raise an exception.
-
-        @type itemname: unicode
-        @param itemname: Name of the item we want to create.
-        @rtype: item object
-        @raise ItemAlreadyExistsError: The item you were trying to create already exists.
+        @see: Backend.create_item.__doc__
         """
         if not isinstance(itemname, (str, unicode)):
             raise TypeError("Itemnames must have string type, not %s" % (type(itemname)))
 
-        session = Session()
-        found = session.query(SQLAItem).filter_by(_name=itemname).all()
-        if found:
+        # This 'premature' check is ok since it may take some time until item.commit()
+        # is invoked and only there can the database raise an IntegrityError if the
+        # uniqueness-constraint for the item name is violated.
+        if self.has_item(itemname):
             raise ItemAlreadyExistsError("An item with the name %s already exists." % itemname)
+
         item = SQLAItem(self, itemname)
-        session.add(item)
-        session.commit()
         return item
+
+    def history(self, reverse=True):
+        """
+        @see: Backend.history.__doc__
+        """
+        session = self.Session()
+        col = SQLARevision.id
+        if reverse:
+            col = col.desc()
+        for rev in session.query(SQLARevision).order_by(col).yield_per(1):
+            # yield_per(1) says: Don't load them into memory all at once.
+            rev.setup(self)
+            yield rev
+        session.close()
 
     def iteritems(self):
         """
         Returns an iterator over all items available in this backend.
         (Like the dict method).
+        As iteritems() is used rather often while accessing *all* items in most cases,
+        we preload them all at once and then just iterate over them, yielding each
+        item individually to conform with the storage API.
+        The benefit is that we do not issue a query for each individual item, but
+        only a single query.
 
-        @rtype: iterator of item objects
+        @see: Backend.history.__doc__
         """
-        session = Session()
-        return session.query(SQLAItem).all()
-
-    def _get_revision(self, item, revno):
-        """
-        For a given item and revision number, return the corresponding revision
-        of that item.
-        Note: If you pass -1 as revno, this shall return the latest revision of the item.
-
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
-        @type revno: int
-        @param revno: Indicate which revision is wanted precisely. If revno is
-        -1, return the most recent revision.
-        @rtype: Object of class Revision
-        @raise NoSuchRevisionError: No revision with that revno was found on item.
-        """
-        raise NotImplementedError()
-
-    def _list_revisions(self, item):
-        """
-        For a given item, return a list containing all revision numbers (as ints)
-        of the revisions the item has. The list must be ordered, starting with
-        the oldest revision-number.
-        (One may decide to delete certain revisions completely at one point. For
-        that case, list_revisions does not need to return subsequent revision
-        numbers. _create_revision() on the other hand must only create
-        subsequent revision numbers.)
-
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
-        @return: list of ints (possibly empty)
-        """
-        return [rev.revno for rev in item._revisions.all() if rev.id is not None]
+        session = self.Session()
+        all_items = session.query(SQLAItem).all()
+        session.close()
+        for item in all_items:
+            item.setup(self)
+            yield item
 
     def _create_revision(self, item, revno):
         """
-        Takes an item object and creates a new revision. Note that you need to pass
-        a revision number for concurrency-reasons. The revno passed must be
-        greater than the revision number of the items most recent revision.
-        The newly created revision-object is returned to the caller.
-
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
-        @type revno: int
-        @param revno: Indicate which revision we want to create.
-        @precondition: item.get_revision(-1).revno < revno
-        @return: Object of class Revision.
-        @raise RevisionAlreadyExistsError: Raised if a revision with that number
-        already exists on item.
-        @raise RevisionNumberMismatchError: Raised if precondition is not
-        fulfilled. Note: This behavior will be changed, allowing monotonic
-        revnos and not requiring revnos to be subsequent as well.
+        @see: Backend._create_revision.__doc__
         """
         rev = SQLARevision(item, revno)
+        # Add a session to the object here so it can flush the written data to the
+        # database chunkwise. This is somewhat ugly.
+        rev.session = self.Session()
+        rev.session.add(rev)
         return rev
 
     def _rename_item(self, item, newname):
         """
-        Renames a given item. Raises Exception if the item you are trying to rename
-        does not exist or if the newname is already chosen by another item.
-
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
-        @type newname: string
-        @param newname: Name of item after this operation has succeeded.
-        @precondition: self.has_item(newname) == False
-        @postcondition: self.has_item(newname) == True
-        @raises ItemAlreadyExistsError: Raised if an item with name 'newname'
-        already exists.
-        @raises AssertionError: Precondition not fulfilled. (Item not yet
-        committed to storage)
-        @return: None
+        @see: Backend._rename_item.__doc__
         """
-        session = Session()
-        itemname = item.name
-        try:
-            item = session.query(SQLAItem).filter_by(_name=itemname).one()
-        except NoResultFound:
-            raise NoSuchItemError("There is no item %s." % item.name)
-        try:
-            new_item = session.query(SQLAItem).filter_by(_name=newname).one()
-        except NoResultFound:
-            # Target item should not already exist.
-            pass
-        else:
-            raise ItemAlreadyExistsError("There already is an item with the name %s." % newname)
+        if item.id is None:
+            raise AssertionError("Item not yet committed to storage. Cannot be renamed.")
 
+        session = self.Session()
+        item = session.query(SQLAItem).get(item.id)
         item._name = newname
-        # not necessary? session.add(item)
-        session.commit()
+        # No need to add the item since the session took note that its name was changed
+        # and so it's in session.dirty and will be changed when committed.
+        try:
+            session.commit()
+        except IntegrityError:
+            raise ItemAlreadyExistsError("Rename operation failed. There already is " + \
+                                         "an item named '%s'." % newname)
+        finally:
+            session.close()
 
     def _commit_item(self, revision):
         """
-        Commits the changes that have been done to a given item. That is, after you
-        created a revision on that item and filled it with data you still need to
-        commit() it. You need to pass the revision you want to commit. The item
-        can be looked up by the revisions 'item' property.
-
-        @type revision: Object of class NewRevision.
-        @param revision: The revision we want to commit to  storage.
-        @return: None
+        @see: Backend._commit_item.__doc__
         """
-        session = Session()
-        session.add(revision)
-        session.commit()
+        item = revision.item
+        session = revision.session
+
+        # We need to distinguish between different types of uniqueness constraint violations.
+        # That is why we flush the item first, then we flush the revision and finally we commit.
+        # Flush would have failed if either of the two was already present (item with the same name
+        # or revision with the same revno on that item.)
+        try:
+            # try to flush item if it's not already persisted
+            if item.id is None:
+                session.add(item)
+                session.flush()
+        except IntegrityError:
+            raise ItemAlreadyExistsError("An item with that name already exists.")
+        except DataError:
+            raise StorageError("The item's name is too long for this backend. It must be less than %s." % NAME_LEN)
+        else:
+            # Flushing of item succeeded. That means we can try to flush the revision.
+            if revision.timestamp is None:
+                revision.timestamp = int(time.time())
+            # Close the item's data container and add potentially pending chunks.
+            revision._data.close()
+            session.add(revision)
+            try:
+                session.flush()
+            except IntegrityError:
+                raise RevisionAlreadyExistsError("A revision with revno %d already exists on the item." \
+                                                  % (revision.revno))
+            else:
+                # Flushing of revision succeeded as well. All is fine. We can now commit()
+                session.commit()
+                # After committing, the Item has an id and we can create a metadata lock for it
+                self._item_metadata_lock[item.id] = Lock()
+        finally:
+            session.close()
+
 
     def _rollback_item(self, revision):
         """
-        This method is invoked when external events happen that cannot be handled in a
-        sane way and thus the changes that have been made must be rolled back.
-
-        @type revision: Object of class NewRevision.
-        @param revision: The revision we want to roll back.
-        @return: None
+        @see: Backend._rollback_item.__doc__
         """
-        raise NotImplementedError()
+        session = revision.session
+        session.rollback()
 
     def _change_item_metadata(self, item):
         """
-        This method is used to acquire a lock on an item. This is necessary to prevent
-        side-effects caused by concurrency.
-        You need to call this method before altering the metadata of the item.
-        E.g.:   item.change_metadata()  # Invokes this method
-                item["metadata_key"] = "metadata_value"
-                item.publish_metadata()
-
-        As you can see, the lock acquired by this method is released by calling
-        the publish_metadata() method on the item.
-
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
-        @precondition: item not already locked
-        @return: None
+        @see: Backend._change_item_metadata.__doc__
         """
-        raise NotImplementedError()
+        if item.id is None:
+            # If this is the case it means that we operate on an Item that has not been
+            # committed yet and thus we should not use a Lock in persistant storage.
+            pass
+        else:
+            self._item_metadata_lock[item.id].acquire()
 
     def _publish_item_metadata(self, item):
         """
-        This method tries to release a lock on the given item and put the newly
-        added Metadata of the item to storage.
-        You need to call this method after altering the metadata of the item.
-        E.g.:   item.change_metadata()
-                item["metadata_key"] = "metadata_value"
-                item.publish_metadata()  # Invokes this method
-
-        The lock this method releases is acquired by the change_metadata method.
-
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
-        @raise AssertionError: item was not locked
-        @return: None
+        @see: Backend._publish_item_metadata.__doc__
         """
-        raise NotImplementedError()
+        # XXX This should just be tried and the exception be caught
+        if item.id is None and self.has_item(item.name):
+            raise ItemAlreadyExistsError("The Item whose metadata you tried to publish already exists.")
+        session = self.Session()
+        session.add(item)
+        session.commit()
+        try:
+            lock = self._item_metadata_lock[item.id]
+        except KeyError:
+            # Item hasn't been committed before publish, hence no lock.
+            pass
+        else:
+            lock.release()
 
     def _get_item_metadata(self, item):
         """
-        Load metadata for a given item, return dict.
-
-        @type item: Object of class Item.
-        @param item: The Item on which we want to operate.
-        @return: dict of metadata key / value pairs.
+        @see: Backend._get_item_metadata.__doc__
         """
         # When the item is restored from the db, it's _metadata should already
         # be populated. If not, it means there isn't any.
         return {}
-
-    def _get_revision_metadata(self, revision):
-        """
-        Load metadata for a given revision, returns dict.
-
-        @type revision: Object of a subclass of Revision.
-        @param revision: The revision on which we want to operate.
-        @return: dict of metadata key / value pairs.
-        """
-        raise NotImplementedError()
-
-    def _get_revision_timestamp(self, revision):
-        """
-        Lazily load the revision's timestamp. If accessing it
-        is cheap, it can be given as a parameter to StoredRevision
-        instantiation instead.
-        Return the timestamp (a long).
-
-        @type revision: Object of a subclass of Revision.
-        @param revision: The revision on which we want to operate.
-        @return: long
-        """
-        raise NotImplementedError()
-
-    def _get_revision_size(self, revision):
-        """
-        Lazily access the revision's data size. This needs not be
-        implemented if all StoredRevision objects are instantiated
-        with the size= keyword parameter.
-
-        @type revision: Object of a subclass of Revision.
-        @param revision: The revision on which we want to operate.
-        @return: int
-        """
-        raise NotImplementedError()
 
 
 class SQLAItem(Item, Base):
     __tablename__ = 'items'
 
     id = Column(Integer, primary_key=True)
-    _name = Column(String)
+    # Since not all DBMSs support arbitrarily long item names, we must
+    # impose a limit. SQLite will ignore it, PostgreSQL will raise DataError
+    # and MySQL will simply truncate. Sweet.
+    # For faster lookup, index the item name.
+    _name = Column(Unicode(NAME_LEN), unique=True, index=True)
     _metadata = Column(PickleType)
 
+    def __init__(self, backend, itemname):
+        self._name = itemname
+        self.setup(backend)
+
+    def setup(self, backend):
+        """
+        This is different from __init__ as it may be also invoked explicitly
+        when the object is returned from the database. We may as well call
+        __init__ directly, but having a separate method for that makes it clearer.
+        """
+        self._backend = backend
+        self._locked = False
+        self._read_accessed = False
+        self._uncommitted_revision = None
+        self.element_attrs = dict(name=self._name)
+
+    def list_revisions(self):
+        """
+        @see: Item.list_revisions.__doc__
+        """
+        # XXX Why does this not work?
+        # return [rev.revno for rev in self._revisions if rev.id is not None]
+        session = self._backend.Session()
+        revisions = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).all()
+        revnos = [rev.revno for rev in revisions]
+        session.close()
+        return revnos
+
     def get_revision(self, revno):
+        """
+        @see: Item.get_revision.__doc__
+        """
         try:
-            session = Session()
-            rev = session.query(SQLARevision).filter(SQLARevision._revno==revno).one()
-            rev.__init__(self, revno)
+            session = self._backend.Session()
+            if revno == -1:
+                revnos = self.list_revisions()
+                try:
+                    # If there are no revisions we can list, then obviously we can't get the desired revision.
+                    revno = revnos[-1]
+                except IndexError:
+                    raise NoResultFound
+            rev = session.query(SQLARevision).filter(SQLARevision._item_id==self.id).filter(SQLARevision._revno==revno).one()
+            rev.setup(self._backend)
+            # Don't close the session here as it is needed for the revision to read the Data and access its attributes.
+            # This should be changed.
+            rev.session = session
+            rev.session.add(rev)
             return rev
         except NoResultFound:
             raise NoSuchRevisionError("Item %s has no revision %d." % (self.name, revno))
-        finally:
-            session.close()
+
+    def destroy(self):
+        """
+        @see: Item.destroy.__doc__
+        """
+        session = self._backend.Session()
+        session.delete(self)
+        session.commit()
 
 
 class Chunk(Base):
     """
-    A chunk of data.
+    A chunk of data. This represents a piece of the BLOB we tried to save.
+    It is stored in one row in the database and can hence be retrieved independently
+    from the other chunks of the BLOB.
     """
     __tablename__ = 'rev_data_chunks'
 
     id = Column(Integer, primary_key=True)
     chunkno = Column(Integer)
-    data = Column(String)
     _container_id = Column(Integer, ForeignKey('rev_data.id'))
 
-    def __init__(self, chunkno):
+    # Maximum chunk size.
+    chunksize = 64 * 1024
+    _data = Column(Binary(chunksize))
+
+    def __init__(self, chunkno, data=''):
+        # We enumerate the chunks so as to keep track of their order.
         self.chunkno = chunkno
-        self.data = ""
+        assert len(data) <= self.chunksize
+        self._data = data
+
+    @property
+    def data(self):
+        """
+        Since we store the chunk's data internally as Binary type, we
+        get buffer objects back from the DB. We need to convert them
+        to str in order to work with them.
+        """
+        return str(self._data)
+
+    def write(self, data):
+        """
+        Write the given data to this chunk. If the data is longer than
+        what we can store (perhaps we were already filled a bit or it's
+        just too much data), we return the amount of bytes written.
+        """
+        if data:
+            remaining = self.chunksize - len(self.data)
+            data = data[:remaining]
+            self._data += data
+        #else:
+        #   # if data is empty, we do not need to do anything!
+        #   pass
+        return len(data)
 
 
 class Data(Base):
@@ -347,107 +450,211 @@ class Data(Base):
     __tablename__ = 'rev_data'
 
     id = Column(Integer, primary_key=True)
-    _chunks = relation(Chunk, order_by=Chunk.id)
+    # We need to use the following cascade to add/delete the chunks from the database, if
+    # Data is added/deleted.
+    _chunks = relation(Chunk, order_by=Chunk.id, cascade='save-update, delete, delete-orphan')
     _revision_id = Column(Integer, ForeignKey('revisions.id'))
     size = Column(Integer)
 
-    chunksize = 4
-
     def __init__(self):
+        self.setup()
+        self.size = 0
+
+    # XXX use sqla reconstructor
+    def setup(self):
+        """
+        @see: SQLAItem.setup.__doc__
+        """
         self.chunkno = 0
         self._last_chunk = Chunk(self.chunkno)
-        self.session = Session()
         self.cursor_pos = 0
-        self.size = 0
-        self.session.add(self)
 
     def write(self, data):
+        """
+        The given data is split into chunks and stored in Chunk objects.
+        Each chunk is 'filled' until it is full (i.e., Chunk.chunksize == len(Chunk.data)).
+        Only the last chunk may not be filled completely.
+        This does *only* support sequential writing of data, because otherwise
+        we'd need to re-order potentially all chunks after the cursor position.
+
+        @type data: str
+        @param data: The data we want to split and write to the DB in chunks.
+        """
+        # XXX This currently relies on the autoflush feature of the session. It should ideally
+        #     flush after every chunk.
         while data:
-            # How much space is left in the current chunk?
-            chunk_space_left = self.chunksize - len(self._last_chunk.data)
-            # If there's no space left, create a new chunk
-            if chunk_space_left == 0:
+            written = self._last_chunk.write(data)
+            if written:
+                self.size += written
+                data = data[written:]
+            else:
+                self.chunkno += 1
+                self._chunks.append(self._last_chunk)
                 self._last_chunk = Chunk(self.chunkno)
-                chunk_space_left = self.chunksize
-            data_chunk = data[:chunk_space_left]
-            self.size += len(data_chunk)
-            self._last_chunk.data += data_chunk
-            self._chunks.append(self._last_chunk)
-            self.session.add(self._last_chunk)
-            self.session.commit()
-            self.chunkno += 1
-            data = data[chunk_space_left:]
-
-    def tell(self):
-        return self.cursor_pos
-
-    def seek(self, pos, mode=0):
-        if mode == 0:
-            self.cursor_pos = pos
-        elif mode == 1:
-            self.cursor_pos += pos
-        elif mode == 2:
-            self.cursor_pos = self.size + pos
 
     def read(self, amount=None):
-        # The first chunk that contains the data we want to read
-        # Perhaps we have already read a part of the first chunk before. We want to skip that.
-        first, skip = divmod(self.cursor_pos, self.chunksize)
+        """
+        The given amount of data is read from the smaller chunks that are contained in this
+        Data container. The caller is completely unaware of the existence of those chunks.
 
-        # No amount given means: Read all that remains (from viewpoint of cursor_pos)
-        if amount is None or amount > self.size:
-            # From the first chunk we read everything after skip
-            try:
-                begin = self._chunks[first].data[skip:]
-            except IndexError:
-                begin = ''
+        Behaves like file-API's read().
 
-            remaining_chunks = self._chunks[first+1:]
-            end = "".join([chunk.data for chunk in remaining_chunks])
-            # We've read to the end, now set the cursor on the last+1
-            self.cursor_pos = self.size
-            return begin + end
+        @type amount: int
+        @param amount: amount of bytes we want to read.
+        """
+        chunksize = self._last_chunk.chunksize
 
-        # Otherwise we need all chunks up to last
-        last = first + amount / self.chunksize + 1
-        # Get all those chunks
-        chunks = self._chunks[first:last]
-        begin = chunks[0].data[skip:skip+amount]
-        # We just concatenate the contents of all but the first and last chunks
-        mid = "".join([chunk.data for chunk in chunks[1:-1]])
-        # And from the last chunk, we only take what is remaining to get `amount` bytes in total.
-        remaining = (amount - len(begin+mid)) % self.chunksize
-        end = chunks[-1].data[:remaining]
+        available = self.size - self.cursor_pos
+        if available < 0:
+            # cursor might be far beyond EOF, but that still just means 0
+            available = 0
+
+        if amount is None or amount < 0 or amount > available:
+            amount = available
+
+        chunkno_first, head_offset = divmod(self.cursor_pos, chunksize)
+        chunkno_last, tail_offset = divmod(self.cursor_pos + amount, chunksize)
+
+        if tail_offset == 0:
+            # This handles multiple special cases:
+            # any read that ends on a CHUNK boundary - we do not need to read
+            # chunkno_last because there is no data in it that we need to read.
+            # this includes the very special case of a 0 byte read at pos 0.
+            # this includes also the special case of a read ending at EOF and
+            # EOF being on a CHUNK boundary.
+            # We optimize that to not read the unneeded chunk (for the EOF case
+            # this chunk does not even exist),  but use all bytes up to the end
+            # of the previous chunk (if there is a previous chunk).
+            chunkno_last -= 1
+            tail_offset = chunksize
+
+        chunks = [chunk.data for chunk in self._chunks[chunkno_first:chunkno_last+1]]
+        if chunks:
+            # make sure that there is at least one chunk to operate on
+            # if there is no chunk at all, we have empty data
+            if chunkno_first != chunkno_last:
+                # more than 1 chunk, head and tail in different chunks
+                chunks[0] = chunks[0][head_offset:]
+                chunks[-1] = chunks[-1][:tail_offset]
+            else:
+                # only 1 chunk with head and tail inside it
+                chunks[0] = chunks[0][head_offset:tail_offset]
+        data = "".join(chunks)
+        assert len(data) == amount
         self.cursor_pos += amount
-        assert len(begin+mid+end) == amount
-        return begin + mid + end
+        return data
+
+    def seek(self, pos, mode=0):
+        """
+        @see: StringIO.seek.__doc__
+        """
+        if mode == 0:
+            if pos < 0:
+                raise IOError("invalid argument")
+            cursor = pos
+        elif mode == 1:
+            cursor = max(0, self.cursor_pos + pos)
+        elif mode == 2:
+            cursor = max(0, self.size + pos)
+        self.cursor_pos = cursor
+
+    def tell(self):
+        """
+        @see: StringIO.tell.__doc__
+        """
+        return self.cursor_pos
+
+    def close(self):
+        """
+        Close the Data container. Append the last chunk.
+        """
+        self._chunks.append(self._last_chunk)
 
 
-class SQLARevision(Revision, Base):
+class SQLARevision(NewRevision, Base):
+    """
+    The SQLARevision. This is currently only based on NewRevision.
+    It does NOT currently check whether the operation performed is valid.
+    """
     __tablename__ = 'revisions'
+    # Impose a UniqueConstraint so only one revision with a specific revno may exist on one item
+    __table_args__ = (UniqueConstraint('_item_id', '_revno'), {})
 
     id = Column(Integer, primary_key=True)
-    _data = relation(Data, uselist=False)
-    _item_id = Column(Integer, ForeignKey('items.id'))
-    _item = relation(SQLAItem, backref=backref('_revisions', order_by=id, lazy='dynamic', cascade=''), cascade='', uselist=False)
-    _revno = Column(Integer)
+    # We need to add/delete the Data container of this revision when the revision is added/deleted
+    _data = relation(Data, uselist=False, lazy=False, cascade='save-update, delete, delete-orphan')
+    _item_id = Column(Integer, ForeignKey('items.id'), index=True)
+    # If the item is deleted, delete this revision as well.
+    _item = relation(SQLAItem, backref=backref('_revisions', cascade='delete, delete-orphan', lazy=True), cascade='', uselist=False, lazy=False)
+    _revno = Column(Integer, index=True)
     _metadata = Column(PickleType)
     _timestamp = Column(Integer)
 
     def __init__(self, item, revno, timestamp=None):
-        Revision.__init__(self, item, revno, timestamp)
+        self._revno = revno
+        self._timestamp = timestamp
+        self.element_attrs = dict(revno=str(revno))
+        self.setup(item._backend)
+        self._item = item
 
-    def write(self, data):
+    def __del__(self):
+        # XXX XXX XXX DO NOT RELY ON THIS
+        try:
+            self.session.close()
+        except AttributeError:
+            pass
+
+    def setup(self, backend):
         if self._data is None:
             self._data = Data()
+        if self._metadata is None:
+            self._metadata = {}
+        self._data.setup()
+        self._backend = backend
+
+    def write(self, data):
+        """
+        Write the given amount of data.
+        """
         self._data.write(data)
 
     def read(self, amount=None):
+        """
+        Read the given amount of data.
+        """
         return self._data.read(amount)
 
     def seek(self, pos, mode=0):
+        """
+        Seek to the given pos.
+        """
         self._data.seek(pos, mode)
 
     def tell(self):
+        """
+        Return the current cursor pos.
+        """
         return self._data.tell()
 
+    def close(self):
+        """
+        Close all open sessions.
+        """
+        self.session.close()
+
+    def __setitem__(self, key, value):
+        NewRevision.__setitem__(self, key, value)
+
+    @property
+    def size(self):
+        return self._data.size
+
+    def destroy(self):
+        """
+        @see: Backend.Revision.destroy.__doc__
+        """
+        session = self._backend.Session.object_session(self)
+        if session is None:
+            session = self._backend.Session()
+        session.delete(self)
+        session.commit()

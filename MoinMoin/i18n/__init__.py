@@ -33,6 +33,8 @@ logging = log.getLogger(__name__)
 from MoinMoin import caching
 from MoinMoin.i18n import strings
 
+SUPPORT_DICT_PAGES = False
+
 # This is a global for a reason: in persistent environments all languages in
 # use will be cached; Note: you have to restart if you update language data.
 
@@ -303,12 +305,15 @@ def getText(original, request, lang, **kw):
                 translation.formatted[key] = translated # remember it
     else:
         try:
-            language = languages[lang]['x-language-in-english']
-            dictpagename = "%sDict" % language.replace(' ', '')
-            dicts = request.dicts
-            if dictpagename in dicts:
-                userdict = dicts[dictpagename]
-                translated = userdict[original]
+            if SUPPORT_DICT_PAGES:
+                language = languages[lang]['x-language-in-english']
+                dictpagename = "%sDict" % language.replace(' ', '')
+                dicts = request.dicts
+                if dictpagename in dicts:
+                    userdict = dicts[dictpagename]
+                    translated = userdict[original]
+                else:
+                    raise KeyError
             else:
                 raise KeyError
         except KeyError:
