@@ -1,8 +1,8 @@
 /*
 Copyright (c) 2009 Google Inc. (Brad Neuberg, http://codinginparadise.org)
 
-Portions Copyright (c) 2008 Rick Masters
-Portions Copyright (c) 2008 Others (see COPYING.txt for details on
+Portions Copyright (c) 2009 Rick Masters
+Portions Copyright (c) 2009 Others (see COPYING.txt for details on
 third party code)
 
 Permission is hereby granted, free of charge, to any person
@@ -147,6 +147,14 @@ function _detectBrowsers() {
   if (document.all && !isOpera) {
     isIE = parseFloat(dav.split('MSIE ')[1]) || undefined;
   }
+
+  // compatMode deprecated on IE8 in favor of documentMode
+  if (document.documentMode) {
+    isStandardsMode = (document.documentMode > 5);
+  } else {
+    isStandardsMode = (document.compatMode == 'CSS1Compat');
+  }
+
 }
 
 _detectBrowsers();
@@ -160,7 +168,7 @@ function doDebugging() {
   var debug = false;
   var scripts = document.getElementsByTagName('script');
   for (var i = 0; i < scripts.length; i++) {
-    if (scripts[i].src.indexOf('svg.js') != -1) {
+    if (/svg(?:\-uncompressed)?\.js/.test(scripts[i].src)) {
       var debugSetting = scripts[i].getAttribute('data-debug');
       debug = (debugSetting === 'true' || debugSetting === true) ? true : false;
     }
@@ -472,14 +480,6 @@ function xhrObj() {
   }
 }
 
-// GUID generation from blog post at
-// http://note19.com/2007/05/27/javascript-guid-generator/
-// We simply use randomly generated numbers, which is fine since we only
-// need these to be locally unique during a single session
-function S4() {
-   return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
-}
-
 // we just use an autoincrement counter to ensure uniqueness, which is fine
 // for our situation and produces much smaller GUIDs
 var guidCounter = 0;
@@ -494,6 +494,9 @@ function guid() {
 */
 function SVGWeb() {
   //start('SVGWeb_constructor');
+  // is SVG Web being hosted cross-domain?
+  this._setXDomain();
+  
   // grab any configuration that might exist on where our library resources
   // are
   this.libraryPath = this._getLibraryPath();
@@ -594,8 +597,8 @@ extend(SVGWeb, {
   
   /** Appends a dynamically created SVG OBJECT or SVG root to the page.
       See the section "Dynamically Creating and Removing SVG OBJECTs and 
-      SVG Roots" for details. NOTE: Only appending SVG OBJECTs is supported
-      for now.
+      SVG Roots" in the User Guide for details. NOTE: Only appending 
+      SVG OBJECTs is supported for now.
       
       @node Either an 'object' created with 
       document.createElement('object', true) or an SVG root created with
@@ -620,16 +623,24 @@ extend(SVGWeb, {
           node.addEventListener('load', node.onload, false);
         }
         
-        // turn our OBJECT into a place-holder DIV attached to the DOM, 
+        // Turn our OBJECT into a place-holder DIV attached to the DOM, 
         // copying over our properties; this will get replaced by the 
-        // Flash OBJECT
+        // Flash OBJECT. We need to do this because we need a real element
+        // to 'replace' later on for IE which uses outerHTML, and the DIV
+        // will act as that place-holder element.
         var div = document._createElement('div');
         for (var j = 0; j < node.attributes.length; j++) {
           var attr = node.attributes[j];
+          // trim out 'empty' attributes with no value
+          if (!attr.nodeValue && attr.nodeValue !== 'true') {
+            continue;
+          }
+
           div.setAttribute(attr.nodeName, attr.nodeValue);
-        } 
+        }
+
         parent.appendChild(div);
-      
+
         // copy over internal event listener info
         div._listeners = node._listeners;
         
@@ -657,8 +668,8 @@ extend(SVGWeb, {
   removeChild: function(node, parent) {
     if (node.nodeName.toLowerCase() == 'object' 
         || node.nodeName.toLowerCase() == 'embed') {
-      this.totalSVG--;
-      this.totalLoaded--;
+      this.totalSVG = this.totalSVG == 0 ? 0 : this.totalSVG - 1;
+      this.totalLoaded = this.totalLoaded == 0 ? 0 : this.totalLoaded - 1;
       
       // remove from our list of handlers
       var objID = node.getAttribute('id');
@@ -673,7 +684,14 @@ extend(SVGWeb, {
       }
       this.handlers = newHandlers;
       
-      if (this.getHandlerType() == 'flash') {
+      // ObjHandler might not have a fake 'document' object; this can happen
+      // if loading of the SVG OBJECT is 'interrupted' by a rapid removeChild
+      // before it ever had a chance to even finish loading. If there is no
+      // fake document then skip trying to remove timing functions and event
+      // handlers below
+      if (this.getHandlerType() == 'flash' 
+          && objHandler.document
+          && objHandler.document.defaultView) {
         // remove any setTimeout or setInterval functions that might have
         // been registered inside this object; see _SVGWindow.setTimeout
         // for details
@@ -708,10 +726,10 @@ extend(SVGWeb, {
           break;
         }
       }
-              
+      
       // remove from the page
       node.parentNode.removeChild(node);
-      
+
       if (this.getHandlerType() == 'flash') {
         // delete the HTC container and all HTC nodes that belong to this
         // SVG OBJECT
@@ -720,17 +738,18 @@ extend(SVGWeb, {
           for (var i = 0; i < container.childNodes.length; i++) {
             var child = container.childNodes[i];
             if (typeof child.ownerDocument != 'undefined'
-                && child.ownerDocument === objHandler._svgObject.document) {
+                && child.ownerDocument == objHandler._svgObject.document) {
               if (typeof child._fakeNode != 'undefined'
                   && typeof child._fakeNode._htcNode != 'undefined') {
                 child._fakeNode._htcNode = null;
               }
               child._fakeNode = null;
               child._handler = null;
+              container.removeChild(child);
             }
           }
         }
-      
+
         // clear out the guidLookup table for nodes that belong to this
         // SVG OBJECT
         for (var guid in svgweb._guidLookup) {
@@ -739,15 +758,19 @@ extend(SVGWeb, {
             delete svgweb._guidLookup[guid];
           }
         }
-      
+
         // remove various properties to prevent IE memory leaks
         objHandler._finishedCallback = null;
         objHandler.flash.contentDocument = null;
         objHandler.flash = null;
         objHandler._xml = null;
-        objHandler.window._scope = null;
-        objHandler.window = null;
-      
+        // objHandler.window might not be present if this SVG OBJECT is being
+        // removed before it was even finished loading
+        if (objHandler.window) {
+          objHandler.window._scope = null;
+          objHandler.window = null;
+        }
+
         var svgObj = objHandler._svgObject;
         var svgDoc = svgObj.document;
         svgDoc._nodeById = null;
@@ -759,12 +782,14 @@ extend(SVGWeb, {
         svgDoc = null;  
         svgObj._svgNode = null;
         svgObj._handler = null;
-      
-        iframeWin._setTimeout = null;
-        iframeWin.setTimeout = null;
-        iframeWin._setInterval = null;
-        iframeWin.setInterval = null;
-      
+
+        if (iframeWin) {
+          iframeWin._setTimeout = null;
+          iframeWin.setTimeout = null;
+          iframeWin._setInterval = null;
+          iframeWin.setInterval = null;
+        }
+
         objHandler._svgObject = null;
         svgObj = null;
         objHandler = null;
@@ -821,15 +846,47 @@ extend(SVGWeb, {
     }
   },
   
+  /** Determines whether SVG Web is being hosted cross-domain (Issue 285,
+      "For Wikipedia: Be able to host bulk of SVG Web on a different domain",
+      http://code.google.com/p/svgweb/issues/detail?id=285). We determine
+      this by seeing if the svg.js or svg-uncompressed.js files are being
+      hosted on a different domain than the current page. */
+  _setXDomain: function() {
+    var scripts = document.getElementsByTagName('script');
+    for (var i = 0; i < scripts.length; i++) {
+      if (/svg(?:\-uncompressed)?\.js/.test(scripts[i].src)
+          && /^https?/.test(scripts[i].src)) {
+        // strip out svg.js filename
+        var url = scripts[i].src.replace(/svg(?:\-uncompressed)?\.js/, '');
+        
+        // get just protocol/hostname/port portion
+        var loc = url.match(/https?\:\/\/[^\/]*/)[0];
+        
+        // get the protocol/hostname/port portion of our current web page
+        var ourLoc = window.location.protocol.replace(/:|\//g, '') + '://' 
+                     + window.location.host;
+      
+        // are they different?
+        if (loc != ourLoc) {
+          this.xDomainURL = url;
+          this._isXDomain = true;
+          return;
+        }
+      }
+    }
+    
+    this._isXDomain = false;
+  },
+  
   /** Gets any data-path value that might exist on the SCRIPT tag
-      that pulls in our svg.js library to configure where to find
-      library resources like SWF files, HTC files, etc. */
+      that pulls in our svg.js or svg-uncompressed.js library to configure 
+      where to find library resources like SWF files, HTC files, etc. */
   _getLibraryPath: function() {
     // determine the path to our HTC and Flash files
     var libraryPath = './';
     var scripts = document.getElementsByTagName('script');
     for (var i = 0; i < scripts.length; i++) {
-      if (scripts[i].src.indexOf('svg.js') != -1 
+      if (/svg(?:\-uncompressed)?\.js/.test(scripts[i].src)
           && scripts[i].getAttribute('data-path')) {
         libraryPath = scripts[i].getAttribute('data-path');
         break;
@@ -866,7 +923,7 @@ extend(SVGWeb, {
     
     var scripts = document.getElementsByTagName('script');
     for (var i = 0; i < scripts.length; i++) {
-      if (scripts[i].src.indexOf('svg.js') != -1 
+      if (/svg(?:\-uncompressed)?\.js/.test(scripts[i].src)
           && scripts[i].getAttribute('data-htc-filename')) {
         htcFilename = scripts[i].getAttribute('data-htc-filename');
         break;
@@ -942,6 +999,14 @@ extend(SVGWeb, {
     // patch the document and style objects with bug fixes for the 
     // NativeHandler and actual implementations for the FlashHandler
     this.renderer._patchBrowserObjects(window, document);
+
+    // There may be objects added later. Add the listener before
+    // checking for whether there is any svg content.
+    if (this.config.use == 'flash') {
+      // Attach window resize listener to adjust svg size when % is used.
+      this._createResizeListener();
+      this._attachResizeListener();
+    }
     
     // no SVG - we're done
     if (this.totalSVG === 0) {
@@ -967,6 +1032,59 @@ extend(SVGWeb, {
     //end('DOMContentLoaded');
     
     // wait until all of them have done their work, then fire onload
+  },
+
+  _createResizeListener: function() {
+    var self = this;
+    if (isIE) {
+      this._resizeFunc =
+          (function(self) {
+            return function() {
+              self._onWindowResize();
+            };
+          })(this); // prevent IE memory leaks
+    } else {
+      this._resizeFunc = hitch(this, function() {
+          this._onWindowResize();
+      });
+    }
+  },
+
+  _attachResizeListener: function() {
+    if (isIE) {
+      window.attachEvent('onresize', this._resizeFunc);
+    } else {
+      window.addEventListener('resize', this._resizeFunc, false);
+    }
+  },
+
+  _detachResizeListener: function() {
+    if (isIE) {
+      window.detachEvent('onresize', this._resizeFunc);
+    } else {
+      window.removeEventListener('resize', this._resizeFunc, false);
+    }  
+  },
+
+  _onWindowResize: function() {
+    if (!this.pageLoaded) {
+      return;
+    }
+    this._detachResizeListener();
+    for (var i = 0; i < this.handlers.length; i++) {
+      var handler = this.handlers[i];
+
+      var size = handler._inserter._determineSize();
+      //console.log("svg #"+i+": flash resize: " 
+      //            + size.width + "," + size.height + " "
+      //            + size.pixelsWidth + "," + size.pixelsHeight);
+      handler.flash.width = size.width;
+      handler.flash.height = size.height;
+      handler.sendToFlash('jsHandleResize',
+                          [ /* objectWidth */ size.pixelsWidth,
+                            /* objectHeight */ size.pixelsHeight ]);
+    }
+    this._attachResizeListener();
   },
   
   /** Gets any SVG SCRIPT blocks on the page. */
@@ -1052,6 +1170,7 @@ extend(SVGWeb, {
   
   /** Fires any addOnLoad() listeners that were registered by a developer. */
   _fireOnLoad: function() {
+    //console.log('svgweb._fireOnLoad');
     // see if all SVG OBJECTs are done loading; if so, fire final onload
     // event for any externally registered SVG
     if (this.handlers.length < this._svgObjects.length) {
@@ -1062,7 +1181,7 @@ extend(SVGWeb, {
     var allLoaded = true;
     for (var i = 0; i < this.handlers.length; i++) {
       var h = this.handlers[i];
-      if (h.type == 'object' && !h._loaded) {
+      if (!h._loaded) {
         allLoaded = false;
         break;
       }
@@ -1081,28 +1200,31 @@ extend(SVGWeb, {
     //console.log('Total JS plus Flash startup time: ' 
     //                + (this._endTime - this._startTime) + 'ms');
     
-    // we do a slight timeout so that if exceptions get thrown inside the
-    // developers onload methods they will correctly show up and get reported
-    // to the developer; otherwise since the fireOnLoad method is called 
-    // from Flash and an exception gets called it can get 'squelched'
-    var self = this;
-    window.setTimeout(function() {
-      // make a copy of our listeners and then clear them out _before_ looping
-      // and calling each one; this is to handle the following edge condition: 
-      // one of the listeners might dynamically create an SVG OBJECT _inside_ 
-      // of it, which would then add a new listener, and we would then 
-      // incorrectly get it in our list of listeners as we loop below!
-      var listeners = self._loadListeners;
-      self._loadListeners = [];
-      this.totalLoaded = 0;
-      for (var i = 0; i < listeners.length; i++) {
-        try {
-          listeners[i]();
-        } catch (exp) {
-          console.log('Error while firing onload: ' + (exp.message || exp));
+    if (this._loadListeners.length) {
+      // we do a slight timeout so that if exceptions get thrown inside the
+      // developers onload methods they will correctly show up and get reported
+      // to the developer; otherwise since the fireOnLoad method is called 
+      // from Flash and an exception gets called it can get 'squelched'
+      var self = this;
+      window.setTimeout(function() {
+        //console.log('svgweb._fireOnLoad timeout');
+        // make a copy of our listeners and then clear them out _before_ looping
+        // and calling each one; this is to handle the following edge condition: 
+        // one of the listeners might dynamically create an SVG OBJECT _inside_ 
+        // of it, which would then add a new listener, and we would then 
+        // incorrectly get it in our list of listeners as we loop below!
+        var listeners = self._loadListeners;
+        self._loadListeners = [];
+        this.totalLoaded = 0;
+        for (var i = 0; i < listeners.length; i++) {
+          try {
+            listeners[i]();
+          } catch (exp) {
+            console.log('Error while firing onload: ' + (exp.message || exp));
+          }
         }
-      }
-    }, 1);
+      }, 1);
+    }
   },
   
   /** Cleans up some SVG in various ways (adding IDs, etc.)
@@ -1314,7 +1436,13 @@ extend(SVGWeb, {
     var rootOnload = xml.documentElement.getAttribute('onload');
     if (rootOnload) {
       // turn the textual onload handler into a real function
-      rootOnload = new Function(rootOnload);
+      var defineEvtCode =
+        'var evt = { target: document.getElementById("' + rootID + '") ,' +
+                    'currentTarget: document.getElementById("' + rootID + '") ,' +
+                    'preventDefault: function() { this.returnValue=false; }' +
+                  '};';
+      rootOnload = new Function(defineEvtCode + rootOnload);
+
       
       // return a function that makes the 'this' keyword apply to
       // the SVG root; wrap in another anonymous closure as well to prevent
@@ -1383,6 +1511,7 @@ extend(SVGWeb, {
     // create the correct handler
     var finishedCallback = (function(self) {
       return function(id, type) {
+        //console.log('anonymous inner finishedCallback, id='+id+', type='+type);
         self._handleDone(id, type);
       };
     })(this); // prevent IE memory leaks
@@ -1561,28 +1690,17 @@ extend(SVGWeb, {
       return;
     }
 
-    // clean up svg:svg root tags
-    for (var i = 0; i < svgweb.handlers.length; i++) {
-      var root = svgweb.handlers[i].document.documentElement;
-      
-      if (svgweb.handlers[i].type == 'script') {
-        root = root._htcNode;
+    // clean up SVG OBJECTs
+    for (var i = 0; i < svgweb.handlers.length; i++) {      
+      if (svgweb.handlers[i].type == 'object') {
+        var removeMe = svgweb.handlers[i].flash;
+        if (removeMe.parentNode) { // attachment may have been interrupted
+          svgweb.removeChild(removeMe, removeMe.parentNode);
+        }
+      } else {
+        // null out reference to root
+        svgweb.handlers[i].document.documentElement = null;
       }
-      
-      // remove anything we added to the HTC's style object as well as our
-      // property change listener
-      root.detachEvent('onpropertychange', 
-                       root._fakeNode.style._changeListener);
-      root.style.item = null;
-      root.style.setProperty = null;
-      root.style.getPropertyValue = null;
-      
-      // delete object references
-      root._fakeNode._htcNode = null;
-      root._fakeNode = null;
-      root._handler = null;
-      
-      root = null;
     }
 
     // delete the HTC container and all HTC nodes
@@ -1590,7 +1708,19 @@ extend(SVGWeb, {
     if (container) {
       for (var i = 0; i < container.childNodes.length; i++) {
         var child = container.childNodes[i];
-        child._fakeNode._htcNode = null;
+        // remove style handling
+        if (child.nodeType == 1 && child.namespaceURI == svgns) {
+          child.detachEvent('onpropertychange', 
+                           child._fakeNode.style._changeListener);
+          child.style.item = null;
+          child.style.setProperty = null;
+          child.style.getPropertyValue = null;
+        }
+        
+        // remove other references
+        if (child._fakeNode) {
+            child._fakeNode._htcNode = null;
+        }
         child._fakeNode = null;
         child._handler = null;
       }
@@ -2494,6 +2624,7 @@ extend(FlashHandler, {
       @param type The type of element that is finished loading,
       either 'script' or 'object'. */
   fireOnLoad: function(id, type) {
+    //console.log('FlashHandler.fireOnLoad');
     this._finishedCallback(id, type);
   },
   
@@ -2594,30 +2725,44 @@ extend(FlashHandler, {
     }
     if (msg.scriptCode != null) {
       if (this.type == 'object') {
-        this._svgObject._executeScript(msg.scriptCode);
-      } 
-      else {
+        var defineEvtCode = 
+        'var evt = { target: document.getElementById("' + 
+                      target._getProxyNode().getAttribute('id') + '") ,\n' +
+                    'currentTarget:document.getElementById("' +
+                      currentTarget._getProxyNode().getAttribute('id') + '") ,\n' +
+                    'clientX: ' + new Number(msg.stageX) + ',\n' +
+                    'clientY: ' + new Number(msg.stageY) + ',\n' +
+                    'screenX: ' + new Number(msg.stageX) + ',\n' +
+                    'screenY: ' + new Number(msg.stageY) + ',\n' +
+                    'altKey: ' + msg.altKey + ',\n' +
+                    'ctrlKey: ' + msg.ctrlKey + ',\n' +
+                    'shiftKey: ' + msg.shiftKey + ',\n' +
+                    'preventDefault: function() { this.returnValue=false; }\n' +
+                  '};\n';
+
+        // Prepare the code for the correct object context.
+        var executeInContext = ';(function (evt) { ' + msg.scriptCode + '; }' +
+                                    ').call(evt.target, evt);\n';
+        // Execute the code within the correct window context.
+        this.sandbox_eval(this._svgObject._sandboxedScript(defineEvtCode + executeInContext));
+      } else {
         // TODO
       }
     }
   },
 
-  _onWindowResize: function() {
-    var size = this._inserter._determineSize();
-    this.flash.width = size.width;
-    this.flash.height = size.height;
-    this.sendToFlash('jsHandleResize',
-                       [ /* objectWidth */ size.pixelsWidth,
-                         /* objectHeight */ size.pixelsHeight ]);
-  },
-  
   _getElementByGuid: function(guid) {
     var node = svgweb._guidLookup['_' + guid];
     if (node) {
         return node;
     }
     
-    var results = xpath(this._xml, null, '//*[@__guid="' + guid + '"]');
+    var results;
+    if (this.type == 'script') {
+      results = xpath(this._xml, null, '//*[@__guid="' + guid + '"]');
+    } else if (this.type == 'object') {
+      results = xpath(this._svgObject._xml, null, '//*[@__guid="' + guid + '"]');
+    }
 
     var nodeXML, node;
     
@@ -2921,6 +3066,7 @@ extend(NativeHandler, {
     this._processSVGScript(this._xml, this._svgString, this._scriptNode);
     
     // indicate that we are done
+    this._loaded = true;
     this._finishedCallback(this.id, 'script');
   },
   
@@ -3875,6 +4021,10 @@ extend(_Node, {
     return new _SVGMatrix(new Number(msg.a), new Number(msg.b), new Number(msg.c),
                           new Number(msg.d), new Number(msg.e), new Number(msg.f),
                           this._handler);
+  },
+
+  getCTM: function() {
+    return this.getScreenCTM();
   },
 
   toString: function() {
@@ -4993,6 +5143,14 @@ extend(_Element, {
     var value = this._trimMeasurement(this.getAttribute('height'));
     return new _SVGAnimatedLength(new _SVGLength(new Number(value)));
   },
+
+  _getCurrentScale: function() { /* float */
+    return 1;
+  },
+
+  _getCurrentTranslate: function() { /* SVGPoint */
+    return new _SVGPoint(0, 0);
+  },
   
   /** Extracts the unit value and trims off the measurement type. For example, 
       if you pass in 14px, this method will return 14. Null will return null. */
@@ -5570,6 +5728,7 @@ function _SVGObject(svgNode, handler) {
     // OBJECT rather than the global window object
     var wrappedListener = (function(handler, listener) {
       return function() {
+        //console.log('_SVGObject, wrappedListener, handler='+handler+', listener='+listener);
         listener.apply(handler.flash);
       };
     })(this._handler, this._svgNode._listeners[i]); // pass values into function
@@ -5604,6 +5763,7 @@ function _SVGObject(svgNode, handler) {
 
       // create our document objects
       this.document = new _Document(this._xml, this._handler);
+      this._handler.document = this.document;
 
       // insert our Flash and replace the SVG OBJECT tag
       var nodeXML = this._xml.documentElement;
@@ -5619,7 +5779,7 @@ function _SVGObject(svgNode, handler) {
       // for further execution after the Flash asynchronous process is done
     }),
     // failure function
-    hitch(this, this.fallback)
+    hitch(this, this._fallback)
   );
 }
 
@@ -5627,12 +5787,36 @@ extend(_SVGObject, {
   /** An array of strings, where each string is an SVG SCRIPT tag embedded
       in an external SVG file. This is when SVG is embedded with an OBJECT. */
   _scriptsToExec: null,
+ 
+  /**
+   * UTF-8 data encode / decode
+   * http://www.webtoolkit.info/
+   **/
+  _utf8encode : function (string) {
+    string = string.replace(/\r\n/g,"\n");
+    var utftext = "";
+    for (var n = 0; n < string.length; n++) {
+      var c = string.charCodeAt(n);
+      if (c < 128) {
+        utftext += String.fromCharCode(c);
+      } else if ((c > 127) && (c < 2048)) {
+        utftext += escape(String.fromCharCode((c >> 6) | 192));
+        utftext += escape(String.fromCharCode((c & 63) | 128));
+      } else {
+        utftext += escape(String.fromCharCode((c >> 12) | 224));
+        utftext += escape(String.fromCharCode(((c >> 6) & 63) | 128));
+        utftext += escape(String.fromCharCode((c & 63) | 128));
+      }
+    }
+    return utftext;
+  },
   
   _fetchURL: function(url, onSuccess, onFailure) {
     var req = xhrObj();
     
     // bust the cache for IE since IE's XHR GET requests are wonky
     if (isIE) {
+      url = this._utf8encode(url);
       url += (url.indexOf('?') == -1) ? '?' : '&';
       url += new Date().getTime();
     }
@@ -5687,7 +5871,7 @@ extend(_SVGObject, {
     
   _onFlashLoaded: function(msg) {
     //console.log('_SVGObject, onFlashLoaded, msg='+this._handler.debugMsg(msg));
-    
+
     // store a reference to our Flash object
     this._handler.flash = document.getElementById(this._handler.flashID);
 
@@ -5747,25 +5931,7 @@ extend(_SVGObject, {
   _onEverythingLoaded: function() {
     //console.log('_SVGObject, onEverythingLoaded');
 
-    // Attach window resize listener to adjust
-    // object size when % is used.
-    var self = this;
-    // FIXME: Need to remove these event handlers on unload.
-    if (isIE) {
-      window.attachEvent('onresize', function() {
-        if (self._handler) {
-          self._handler._onWindowResize();
-        }
-      });
-    } else {
-      window.addEventListener('resize', function() {
-        if (self._handler) {
-          self._handler._onWindowResize();
-        }
-      }, false);
-    }
-
-    var size = self._handler._inserter._determineSize();
+    var size = this._handler._inserter._determineSize();
     this._handler.sendToFlash('jsHandleLoad',
                               [ /* objectURL */ this._getRelativeTo('object'),
                                 /* pageURL */ this._getRelativeTo('page'),
@@ -5778,13 +5944,10 @@ extend(_SVGObject, {
   _onRenderingFinished: function(msg) {
     //console.log('_SVGObject, onRenderingFinished, id='+this._handler.id
     //            + ', msg='+this._handler.debugMsg(msg));
-
+    
     // we made the SVG hidden before to avoid scrollbars on IE; make visible
     // now
     this._handler.flash.style.visibility = 'visible';
-
-    // create the document object
-    this._handler.document = new _Document(this._xml, this._handler);
 
     // create the documentElement and rootElement and set them to our SVG 
     // root element
@@ -5801,6 +5964,15 @@ extend(_SVGObject, {
     // TODO: This should be doc._getProxyNode(), but Issue 227 needs to be
     // addressed first:
     // http://code.google.com/p/svgweb/issues/detail?id=227
+    
+    if (isIE) {
+      // this workaround will prevent Issue 140:
+      // "SVG OBJECT.contentDocument does not work when DOCTYPE specified 
+      // inside of HTML file itself"
+      // http://code.google.com/p/svgweb/issues/detail?id=140
+      this._handler.flash.setAttribute('contentDocument', null);
+    }
+    
     this._handler.flash.contentDocument = doc;
     
     // FIXME: NOTE: unfortunately we can't support the getSVGDocument() method; 
@@ -5823,7 +5995,12 @@ extend(_SVGObject, {
       // we want 'this' inside of the onload handler to point to our
       // SVG root; the 'document.documentElement' will get rewritten later by
       // the _executeScript() method to point to our fake SVG root instead
-      onload = '(function(){' + onload + '}).apply(document.documentElement);';
+      var defineEvtCode = 
+        'var evt = { target: document.getElementById("' + root.getAttribute('id') + '") ,' +
+                    'currentTarget: document.getElementById("' + root.getAttribute('id') + '") ,' +
+                    'preventDefault: function() { this.returnValue=false; }' +
+                  '};';
+      onload = '(function(){' + defineEvtCode + onload + '}).apply(document.documentElement);';
       this._scriptsToExec.push(onload);
     }
     
@@ -5876,6 +6053,50 @@ extend(_SVGObject, {
       
       @param script String with script to execute. */
   _executeScript: function(script) {
+    // Create an iframe that we will use to 'silo' and execute our
+    // code, which will act as a place for globals to be defined without
+    // clobbering globals on the HTML document's window or from other
+    // embedded SVG files. This is necessary so that setTimeouts and
+    // setIntervals will work later on, for example.
+                
+    // create an iframe and attach it offscreen
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('src', 'about:blank');
+    iframe.style.position = 'absolute';
+    iframe.style.top = '-1000px';
+    iframe.style.left = '-1000px';
+    var body = document.getElementsByTagName('body')[0];
+    body.appendChild(iframe);
+    
+    // get the iframes document object; IE differs on how to get this
+    var iframeDoc = (iframe.contentDocument) ? 
+                iframe.contentDocument : iframe.contentWindow.document;
+
+    // set the document.defaultView to the iframe's real Window object;
+    // note that IE doesn't support defaultView
+    var iframeWin = iframe.contentWindow;
+    this._handler.document.defaultView = iframeWin;
+
+    // Create a script with the proper environment.
+    script = this._sandboxedScript(script);
+
+    // Add code to set back an eval function we can use for further execution.
+    // Code adapted from blog post by YuppY:
+    // http://dean.edwards.name/weblog/2006/11/sandbox/
+    script = script + ';__svgHandler.sandbox_eval = ' +
+             (isIE ? 'window.eval;'
+                   : 'function(scriptCode) { return window.eval(scriptCode) };');
+
+    // now insert the script into the iframe to execute it in a siloed way
+    iframeDoc.write('<script>' + script + '</script>');
+    iframeDoc.close();
+    
+    // execute any addEventListener(onloads) that might have been
+    // registered
+    this._handler.window._fireOnload();
+  },
+
+  _sandboxedScript: function(script) {
     // expose the handler as a global object at the top of the script; 
     // expose the svgns and xlinkns variables; and override the setTimeout
     // and setInterval functions for the iframe where we will execute things
@@ -5938,39 +6159,10 @@ extend(_SVGObject, {
     // wouldn't incorrectly transform them)
     script = script.replace(/top\.DOCUMENT/g, 'top.document');
     script = script.replace(/top\.WINDOW/g, 'top.window');
-                
-    // Now create an iframe that we will use to 'silo' and execute our
-    // code, which will act as a place for globals to be defined without
-    // clobbering globals on the HTML document's window or from other
-    // embedded SVG files. This is necessary so that setTimeouts and
-    // setIntervals will work later on, for example.
-                
-    // create an iframe and attach it offscreen
-    var iframe = document.createElement('iframe');
-    iframe.setAttribute('src', 'about:blank');
-    iframe.style.position = 'absolute';
-    iframe.style.top = '-1000px';
-    iframe.style.left = '-1000px';
-    var body = document.getElementsByTagName('body')[0];
-    body.appendChild(iframe);
-    
-    // get the iframes document object; IE differs on how to get this
-    var iframeDoc = (iframe.contentDocument) ? 
-                iframe.contentDocument : iframe.contentWindow.document;
 
-    // set the document.defaultView to the iframe's real Window object;
-    // note that IE doesn't support defaultView
-    var iframeWin = iframe.contentWindow;
-    this._handler.document.defaultView = iframeWin;
-
-    // now insert the script into the iframe to execute it in a siloed way
-    iframeDoc.write('<script>' + script + '</script>');
-    iframeDoc.close();
-    
-    // execute any addEventListener(onloads) that might have been
-    // registered
-    this._handler.window._fireOnload();
+    return script;
   },
+
   
   /** Developers can nest custom PARAM tags inside our SVG OBJECT in order
       to pass parameters into their SVG file. This function gets these,
@@ -6019,6 +6211,7 @@ extend(_SVGWindow, {
   },
   
   _fireOnload: function() {
+    //console.log('_SVGWindow._fireOnLoad');
     for (var i = 0; i < this._onloadListeners.length; i++) {
       try {
         this._onloadListeners[i]();
@@ -6182,7 +6375,7 @@ extend(FlashInserter, {
     var background = this._determineBackground();
     var style = this._determineStyle();
     var className = this._determineClassName();
-    //console.log("js: _setupFlash: Using size: " + size.width + "," + size.height);
+    var customAttrs = this._determineCustomAttrs();
     
     // setup our ID; if we are embedded with a SCRIPT tag, we use the ID from 
     // the SVG ROOT tag; if we are embedded with an OBJECT tag, then we 
@@ -6199,7 +6392,7 @@ extend(FlashInserter, {
     
     // get a Flash object and insert it into our document
     var flash = this._createFlash(size, elementID, background, style, 
-                                  className);
+                                  className, customAttrs);
     this._insertFlash(flash);
     
     // wait for the Flash file to finish loading
@@ -6269,15 +6462,76 @@ extend(FlashInserter, {
       if necessary).
     */
   _determineSize: function() {
+
+    var parentWidth = this._parentNode.clientWidth;
+    var parentHeight = this._parentNode.clientHeight;
+
+    // If parentHeight is zero, then the object was sized with a %
+    // object height and the parent height is not known.
+    // We should use aspect ratio for sizing the object height.
+    // Subsequent resizing of the object may result in a valid
+    // parent height, but in this case, we should stick to our earlier
+    // determination that the image should rely on aspect ratio to size
+    // the object height.
+    if (parentHeight == 0) {
+      this.invalidParentHeight = true;
+    }
+    /* IE7 quirk */
+    if (parentWidth == 0) {
+        parentWidth = this._parentNode.offsetWidth;
+    }
+
+    if (!isSafari) {
+      parentWidth -= this._getMargin(this._parentNode, 'margin-left');
+      parentWidth -= this._getMargin(this._parentNode, 'margin-right');
+      parentHeight -= this._getMargin(this._parentNode, 'margin-top');
+      parentHeight -= this._getMargin(this._parentNode, 'margin-bottom');
+    }
+
+    if (isStandardsMode) {
+      return this._getStandardsSize(parentWidth, parentHeight);
+    }
+    else {
+      return this._getQuirksSize(parentWidth, parentHeight);
+    }
+  },
+
+  _getQuirksSize: function(parentWidth, parentHeight) {
     var pixelsWidth, pixelsHeight;
 
-    var parentWidth = this._parentNode.clientWidth
-                               - this._getMargin(this._parentNode, 'margin-left')
-                               - this._getMargin(this._parentNode, 'margin-right');
-
-    var parentHeight = this._parentNode.clientHeight
-                               - this._getMargin(this._parentNode, 'margin-top')
-                               - this._getMargin(this._parentNode, 'margin-bottom');
+    /** In the case of script or where an svg object has a height percent
+        and the svg image has a height percent, then the height of the parent
+        is not used and the viewBox aspect resolution is used.
+        However, in certain circumstances, the % of the parent height
+        is used. That circumstance is when the embed type is script
+        and parentHeight is > 0 and if it is in a div with height.
+        Here, we look for a parent div, and if we do not find one,
+        then we default to clientHeight.
+    */
+    if (this._embedType == 'script') {
+      var grandParent = this._parentNode;
+      while (grandParent && grandParent.style) {
+        // If a grandparent is a div, the parent height is ok.
+        if (grandParent.nodeName.toLowerCase() == 'div') {
+          // ?? may need to check for valid height
+          break;
+        }
+        // If we get to the body without div, ignore parent height.
+        if (grandParent.nodeName.toLowerCase() == 'body') {
+          if (window.innerHeight && window.innerHeight > 0) {
+            parentHeight = window.innerHeight;
+          } else if (document.documentElement &&
+                     document.documentElement.clientHeight &&
+                     document.documentElement.clientHeight > 0) {
+            parentHeight = document.documentElement.clientHeight;
+          } else {
+            parentHeight = document.body.clientHeight;
+          }
+          break;
+        }
+        grandParent = grandParent.parentNode;
+      }
+    }
 
     // Calculate the object width and size starting with
     // the width and height from the object tag.
@@ -6288,7 +6542,9 @@ extend(FlashInserter, {
     var objWidth = this._explicitWidth;
     var objHeight = this._explicitHeight;
 
-    //console.log("js: _determineSize: obj size: "+ objWidth + "," + objHeight);
+    var xmlWidth = this._nodeXML.getAttribute('width');
+    var xmlHeight = this._nodeXML.getAttribute('height');
+
     if (objWidth && objHeight) {
       // calculate width in pixels
       if (objWidth.indexOf('%') != -1) {
@@ -6296,26 +6552,23 @@ extend(FlashInserter, {
       } else {
         pixelsWidth = objWidth;
       }
+
       // calculate height in pixels
       if (objHeight.indexOf('%') != -1) {
-        pixelsHeight = parentHeight * parseInt(objHeight) / 100;
+        if (parentHeight > 0) {
+          pixelsHeight = parentHeight * parseInt(objHeight) / 100;
+        }
+        else {
+          console.log('SVGWeb: unhandled resize scenario.');
+          parentHeight = 200;
+        }
       } else {
         pixelsHeight = objHeight;
       }
-      if (this._nodeXML.getAttribute('viewBox')) {
-        return {width: objWidth, height: objHeight,
-                pixelsWidth: pixelsWidth, pixelsHeight: pixelsHeight, clipMode: 'neither'};
-      } else {
-        return {width: objWidth, height: objHeight,
-                pixelsWidth: pixelsWidth, pixelsHeight: pixelsHeight, clipMode: 'both'};
-      }
+      return {width: objWidth, height: pixelsHeight,
+              pixelsWidth: pixelsWidth, pixelsHeight: pixelsHeight,
+              clipMode: this._nodeXML.getAttribute('viewBox') ? 'neither' : 'both'};
     }
-
-    var xmlWidth = this._nodeXML.getAttribute('width');
-    var xmlHeight = this._nodeXML.getAttribute('height');
-
-    //console.log("js: _determineSize: xml size: "+ xmlWidth + "," + xmlHeight);
-    //console.log("js: _determineSize: parent size: "+ parentWidth+ "," + parentHeight);
 
     var viewBox, boxWidth, boxHeight;
     if (objWidth) {
@@ -6355,13 +6608,13 @@ extend(FlashInserter, {
             objHeight = 150;
           }
         }
+        return {width: objWidth, height: objHeight,
+                pixelsWidth: pixelsWidth, pixelsHeight: objHeight, clipMode: 'both'};
       }
-      return {width: objWidth, height: objHeight,
-              pixelsWidth: pixelsWidth, pixelsHeight: objHeight, clipMode: 'both'};
     }
 
     if (objHeight) {
-      // estimate the height that will be used for percents
+
       if (objHeight.indexOf('%') != -1) {
         pixelsHeight = parentHeight * parseInt(objHeight) / 100;
       } else {
@@ -6420,39 +6673,181 @@ extend(FlashInserter, {
       objWidth = "100%";
     }
 
-    // estimate the width that will be used for percents
+    // Calculate the width that will be used for percents.
     if (objWidth.indexOf('%') != -1) {
       pixelsWidth = parentWidth * parseInt(objWidth) / 100;
     } else {
       pixelsWidth = objWidth;
     }
 
-    if (xmlHeight) {
-      // height pixels are used directly
-      if (xmlHeight.indexOf('%') == -1) {
-        objHeight = xmlHeight;
+    // Height pixels are used directly.
+    if (xmlHeight && xmlHeight.indexOf('%') == -1) {
+      objHeight = xmlHeight;
+      return {width: objWidth, height: objHeight,
+              pixelsWidth: pixelsWidth, pixelsHeight: objHeight,
+              clipMode: this._nodeXML.getAttribute('viewBox') ? 'neither' : 'both'};
+    } else {
+      // The height is a % or missing. Check for viewBox.
+      if (this._nodeXML.getAttribute('viewBox')) {
+        if (this._embedType == 'script'
+            && (xmlHeight == null || xmlHeight.indexOf('%') != -1) && !this.invalidParentHeight) {
+          if (xmlHeight == null) {
+            xmlHeight = "100%";
+          }
+          if (objHeight == null) {
+            objHeight = "100%";
+          }
+          pixelsHeight = parentHeight * parseInt(xmlHeight) / 100;
+          return {width: objWidth, height: objHeight,
+                  pixelsWidth: pixelsWidth, pixelsHeight: pixelsHeight, clipMode: 'neither'};
+        }
+        var viewBox = this._nodeXML.getAttribute('viewBox').split(/\s+|,/);
+        var boxWidth = viewBox[2];
+        var boxHeight = viewBox[3];
+        objHeight = pixelsWidth * (boxHeight / boxWidth);
         return {width: objWidth, height: objHeight,
-                pixelsWidth: pixelsWidth, pixelsHeight: objHeight, clipMode: 'height'};
+                pixelsWidth: pixelsWidth, pixelsHeight: objHeight, clipMode: 'neither'};
+      } else {
+        objHeight = 150;
+        return {width: objWidth, height: objHeight,
+                pixelsWidth: pixelsWidth, pixelsHeight: objHeight, clipMode: 'both'};
       }
-    } else {
-      xmlHeight = '100%';
     }
 
+  },
 
-    // the height is a %. Check for viewBox
-    if (this._nodeXML.getAttribute('viewBox')) {
-      var viewBox = this._nodeXML.getAttribute('viewBox').split(/\s+|,/);
-      var boxWidth = viewBox[2];
-      var boxHeight = viewBox[3];
+  _getStandardsSize: function(parentWidth, parentHeight) {
+    var pixelsWidth, pixelsHeight;
 
-      objHeight = pixelsWidth * (boxHeight / boxWidth);
-      return {width: objWidth, height: objHeight,
-              pixelsWidth: pixelsWidth, pixelsHeight: objHeight, clipMode: 'neither'};
-    } else {
-      objHeight = 150;
-      return {width: objWidth, height: objHeight,
-              pixelsWidth: pixelsWidth, pixelsHeight: objHeight, clipMode: 'height'};
+    // Calculate the object width and size starting with
+    // the width and height from the object tag.
+    // 
+    // If this is script embed type, the algorithm will perform as
+    // an object tag with neither width nor height specified.
+    // 
+    var objWidth = this._explicitWidth;
+    var objHeight = this._explicitHeight;
+
+    var xmlWidth = this._nodeXML.getAttribute('width');
+    var xmlHeight = this._nodeXML.getAttribute('height');
+
+    if (objWidth && !objHeight) {
+      return this._getQuirksSize(parentWidth, parentHeight);
     }
+
+    if (!objWidth && !objHeight) {
+      return this._getQuirksSize(parentWidth, parentHeight);
+    }
+
+    if (!objWidth && objHeight) {
+      if (xmlWidth) {
+         objWidth = xmlWidth;
+      } else {
+         objWidth = '100%';
+      }
+
+      // calculate width in pixels
+      if (objWidth.indexOf('%') != -1) {
+        pixelsWidth = parentWidth * parseInt(objWidth) / 100;
+      } else {
+        pixelsWidth = objWidth;
+      }
+
+      // Use object height pixels, if specified.
+      if (objHeight.indexOf('%') == -1) {
+        pixelsHeight = objHeight;
+        // If width and height are both specified on the SVG file in pixels,
+        // then the object width is calculated based on the object height and the
+        // aspect ratio between the svg height and width.
+        if (xmlWidth && xmlWidth.indexOf('%') == -1 &&
+          xmlHeight && xmlHeight.indexOf('%') == -1) {
+          objWidth = objHeight * (xmlWidth / xmlHeight);
+          pixelsWidth = objWidth;
+        } else {
+          if (this._nodeXML.getAttribute('viewBox')) {
+            viewBox = this._nodeXML.getAttribute('viewBox').split(/\s+|,/);
+            boxWidth = viewBox[2];
+            boxHeight = viewBox[3];
+            objWidth = pixelsHeight * (boxWidth / boxHeight);
+            pixelsWidth = objWidth;
+          }
+        }
+        return {width: objWidth, height: objHeight,
+                pixelsWidth: pixelsWidth, pixelsHeight: objHeight,
+                clipMode: this._nodeXML.getAttribute('viewBox') ? 'neither' : 'both'};
+      } else {
+        if (xmlHeight && xmlHeight.indexOf('%') == -1) {
+          pixelsHeight = xmlHeight;
+        } else {
+          if (this._nodeXML.getAttribute('viewBox')) {
+            viewBox = this._nodeXML.getAttribute('viewBox').split(/\s+|,/);
+            boxWidth = viewBox[2];
+            boxHeight = viewBox[3];
+            pixelsHeight = pixelsWidth * (boxHeight / boxWidth);
+          }
+          else {
+            pixelsHeight = 150;
+          }
+        }
+        return {width: objWidth, height: pixelsHeight,
+                pixelsWidth: pixelsWidth, pixelsHeight: pixelsHeight,
+                clipMode: this._nodeXML.getAttribute('viewBox') ? 'neither' : 'both'};
+      }
+    }
+
+    if (objWidth && objHeight) {
+      // calculate width in pixels
+      if (objWidth.indexOf('%') != -1) {
+        pixelsWidth = parentWidth * parseInt(objWidth) / 100;
+      } else {
+        pixelsWidth = objWidth;
+      }
+
+      // Use object height pixels, if specified.
+      if (objHeight.indexOf('%') == -1) {
+        return {width: objWidth, height: objHeight,
+                pixelsWidth: pixelsWidth, pixelsHeight: objHeight,
+                clipMode: this._nodeXML.getAttribute('viewBox') ? 'neither' : 'both'};
+      }
+      else {
+        if (xmlWidth && xmlWidth.indexOf('%') == -1 &&
+          // If width and height are both specified on the SVG file in pixels,
+          // then the height is calculated based on the object width and the
+          // aspect ratio between the svg height and width.
+          xmlHeight && xmlHeight.indexOf('%') == -1) {
+          pixelsHeight = pixelsWidth * (xmlHeight / xmlWidth);
+          return {width: objWidth, height: pixelsHeight,
+                  pixelsWidth: pixelsWidth, pixelsHeight: pixelsHeight, clipMode: 'neither'};
+        } else {
+          if (!this.invalidParentHeight) {
+            // If parent height is "valid", use it.
+            pixelsHeight = parentHeight * parseInt(objHeight) / 100;
+            return {width: objWidth, height: pixelsHeight,
+                    pixelsWidth: pixelsWidth, pixelsHeight: pixelsHeight, clipMode: 'neither'};
+          }
+          else {
+            // Default to viewbox aspect resolution
+            if (this._nodeXML.getAttribute('viewBox')) {
+              viewBox = this._nodeXML.getAttribute('viewBox').split(/\s+|,/);
+              boxWidth = viewBox[2];
+              boxHeight = viewBox[3];
+              objHeight = pixelsWidth * (boxHeight / boxWidth);
+              return {width: objWidth, height: objHeight,
+                      pixelsWidth: pixelsWidth, pixelsHeight: objHeight, clipMode: 'neither'};
+            } else {
+              if (xmlHeight && xmlHeight.indexOf('%') == -1) {
+                pixelsHeight = xmlHeight;
+              } else {
+                pixelsHeight = 150;
+              }
+              return {width: objWidth, height: pixelsHeight,
+                      pixelsWidth: pixelsWidth, pixelsHeight: pixelsHeight, clipMode: 'both'};
+            }
+          }
+        }
+      }
+    }
+
 
   },
 
@@ -6505,10 +6900,19 @@ extend(FlashInserter, {
       @returns Style string ready to copy over to Flash object. */
   _determineStyle: function() {
     var style = this._nodeXML.getAttribute('style');
+    if (!style && this._embedType == 'object') {
+      style = this._replaceMe.getAttribute('style');
+    }
+    
     if (!style) {
       style = '';
     }
     
+    // IE sometimes leaves off trailing semicolon of style values
+    if (style.length > 0 && style.charAt(style.length - 1) != ';') {
+      style += ';';
+    }
+        
     // SVG spec says default display value for SVG root element is 
     // inline
     if (this._embedType == 'script' && style.indexOf('display:') == -1) {
@@ -6536,6 +6940,47 @@ extend(FlashInserter, {
     }
   },
   
+  /** The developer might have added custom attributes on to the place holder
+      we are replacing for SVG OBJECTs; copy those over and make sure they
+      show up on the Flash OBJECT as well. */
+  _determineCustomAttrs: function() {
+    var results = [];
+    if (this._embedType == 'object') {
+      var node = this._replaceMe;
+      // we use a fake object to determine potential default attributes that
+      // we don't want to copy over to our Flash object
+      var commonObj = document._createElement('object');
+      for (var j = 0; j < node.attributes.length; j++) {
+        var attr = node.attributes[j];
+        var attrName = attr.nodeName;
+        var attrValue = attr.nodeValue;
+                 
+        // trim out 'empty' attributes with no value
+        if (!attrValue && attrValue !== 'true') {
+          continue;
+        }
+        
+        // trim out anything that is on a common OBJECT so we don't have
+        // overlap
+        if (commonObj.getAttribute(attrName)) {
+          continue;
+        }
+        
+        // trim out other OBJECT overrides as well as some custom attributes
+        // we might have added earlier in the OBJECT creation process 
+        // (_listeners, addEventListener, etc.)
+        if (/^(id|name|width|height|data|class|style|codebase|type|_listeners|addEventListener|onload)$/.test(attrName)) {
+          continue;
+        }
+        
+        results.push({attrName: attrName.toString(), 
+                      attrValue: attrValue.toString()});
+      }
+    }
+    
+    return results;
+  },
+  
   /** Creates a Flash object that embeds the Flash SVG Viewer.
 
       @param size Object literal with width and height.
@@ -6545,19 +6990,35 @@ extend(FlashInserter, {
       transparent boolean.
       @param style Style string to copy onto Flash object.
       @param className The class name to copy into the Flash object.
+      @param customAttrs Array of custom attributes that the developer might
+      have put on their SVG OBJECT; each entry in the array is an object
+      literal with attrName and attrValue as the keys.
       
       @returns Flash object as HTML string. */ 
-  _createFlash: function(size, elementID, background, style, className) {
+  _createFlash: function(size, elementID, background, style, className,
+                         customAttrs) {
     var flashVars = 
           'uniqueId=' + encodeURIComponent(elementID)
         + '&sourceType=string'
         + '&clipMode=' + size.clipMode
         + '&debug=true'
         + '&svgId=' + encodeURIComponent(elementID);
-    var src = svgweb.libraryPath + 'svg.swf';
+    var src;
+    if (this._isXDomain) {
+      src = svgweb.xDomainURL + 'svg.swf';
+    } else {
+      src = svgweb.libraryPath + 'svg.swf';
+    }
+
     var protocol = window.location.protocol;
     if (protocol.charAt(protocol.length - 1) == ':') {
       protocol = protocol.substring(0, protocol.length - 1);
+    }
+    
+    var customAttrStr = '';
+    for (var i = 0; i < customAttrs.length; i++) {
+      customAttrStr += ' ' + customAttrs[i].attrName + '="'
+                            + customAttrs[i].attrValue + '"';
     }
 
     var flash =
@@ -6573,6 +7034,7 @@ extend(FlashInserter, {
             + 'name="' + this._handler.flashID + '"\n '
             + 'style="' + style + '"\n '
             + 'class="' + className + '"\n '
+            + customAttrStr + '\n'
             + '>\n '
             + '<param name="allowScriptAccess" value="always"></param>\n '
             + '<param name="movie" value="' + src + '"></param>\n '
@@ -6602,6 +7064,7 @@ extend(FlashInserter, {
               + '://www.macromedia.com/go/getflashplayer" '
               + 'style="' + style + '"\n '
               + 'class="' + className + '"\n '
+              + customAttrStr + '\n'
               + ' />'
           + '</object>';
 
@@ -6715,7 +7178,6 @@ extend(_SVGSVGElement, {
   // TODO: Implement the following methods
   
   getBBox: function() /* SVGRect */ {},
-  getCTM: function() /* SVGMatrix */ {},
   getTransformToElement: function(element /* SVGElement */) /* SVGMatrix */ {
     /* throws SVGException */
   },
@@ -6774,25 +7236,7 @@ extend(_SVGSVGElement, {
     //start('firstSendToFlash');
     //start('jsHandleLoad');
 
-    // Attach window resize listener to adjust
-    // object size when % is used.
-    // FIXME: Need to remove these event handlers on unload.
-    var self = this;
-    if (isIE) {
-      window.attachEvent('onresize', function() {
-        if (self._handler) {
-          self._handler._handleResize();
-        }
-      });
-    } else {
-      window.addEventListener('resize', function(evt) {
-        if (self._handler) {
-          self._handler._onWindowResize();
-        }
-      }, false);
-    }
-
-    var size = self._handler._inserter._determineSize();
+    var size = this._handler._inserter._determineSize();
     this._handler.sendToFlash('jsHandleLoad',
                               [ /* objectURL */ this._getRelativeTo('object'),
                                 /* pageURL */ this._getRelativeTo('page'),
@@ -6818,6 +7262,7 @@ extend(_SVGSVGElement, {
     }
     
     var elementId = this._nodeXML.getAttribute('id');
+    this._handler._loaded = true;
     //end('onRenderingFinished');
     this._handler.fireOnLoad(elementId, 'script');
   },
