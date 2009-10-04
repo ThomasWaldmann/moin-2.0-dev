@@ -88,6 +88,11 @@ class TestRequest(Request):
 
         super(TestRequest, self).__init__(environ)
 
+    # werkzeug thinks this comes via http
+    @property
+    def url_root(self):
+        return './'
+
 def evaluate_request(request):
     """ Evaluate a request and returns a tuple of application iterator,
     status code and list of headers. This method is meant for testing
