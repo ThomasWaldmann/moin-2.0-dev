@@ -11,7 +11,7 @@ representation.
 """
 
 from emeraldtree import ElementTree as ET
-from emeraldtree.HTMLTreeBuilder import HTMLParser
+from emeraldtree.html import HTMLParser
 
 from MoinMoin import wikiutil
 from MoinMoin.converter2._wiki_macro import ConverterMacro
