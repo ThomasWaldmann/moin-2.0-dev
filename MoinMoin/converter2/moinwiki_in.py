@@ -65,10 +65,10 @@ class _Stack(object):
             else:
                 self.name = None
 
-    def __init__(self, list=[]):
+    def __init__(self, bottom=None):
         self._list = []
-        for i in list:
-            self._list.append(self.Item(i))
+        if bottom:
+            self._list.append(self.Item(bottom))
 
     def clear(self):
         del self._list[1:]
@@ -1020,7 +1020,7 @@ class Converter(ConverterMacro):
 
         body = moin_page.body(attrib=attrib)
 
-        stack = _Stack([body])
+        stack = _Stack(body)
 
         for line in iter_content:
             match = self.block_re.match(line)
