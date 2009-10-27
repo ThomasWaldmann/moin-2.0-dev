@@ -56,27 +56,43 @@ class _Iter(object):
         self.__prepend.append(item)
 
 
-class _Stack(list):
+class _Stack(object):
+    class Item(object):
+        def __init__(self, elem):
+            self.elem = elem
+            if elem.tag.uri == moin_page.namespace:
+                self.name = elem.tag.name
+            else:
+                self.name = None
+
+    def __init__(self, list=[]):
+        self._list = []
+        for i in list:
+            self._list.append(self.Item(i))
+
     def clear(self):
-        del self[1:]
+        del self._list[1:]
+
+    def pop(self):
+        self._list.pop()
 
     def pop_name(self, *names):
         """
         Remove anything from the stack including the given node.
         """
-        while len(self) > 2 and not self.top_check(*names):
+        while len(self._list) > 2 and not self.top_check(*names):
             self.pop()
         self.pop()
 
     def push(self, elem):
         self.top_append(elem)
-        self.append(elem)
+        self._list.append(self.Item(elem))
 
     def top(self):
-        return self[-1]
+        return self._list[-1].elem
 
     def top_append(self, elem):
-        self[-1].append(elem)
+        self.top().append(elem)
 
     def top_append_ifnotempty(self, elem):
         if elem:
@@ -86,8 +102,7 @@ class _Stack(list):
         """
         Checks if the name of the top of the stack matches the parameters.
         """
-        tag = self[-1].tag
-        return tag.uri == moin_page.namespace and tag.name in names
+        return self._list[-1].name in names
 
 
 class _TableArguments(object):
