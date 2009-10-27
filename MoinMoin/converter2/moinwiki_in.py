@@ -478,7 +478,7 @@ class Converter(ConverterMacro):
         if not element_use:
             element_use = stack.top()
 
-        if list_begin:
+        if indent:
             if element_use.tag.name != 'list':
                 attrib = {}
                 if not list_definition:
