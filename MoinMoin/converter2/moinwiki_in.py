@@ -70,6 +70,9 @@ class _Stack(object):
         if bottom:
             self._list.append(self.Item(bottom))
 
+    def __len__(self):
+        return len(self._list)
+
     def clear(self):
         del self._list[1:]
 
@@ -219,98 +222,6 @@ class Converter(ConverterMacro):
 
     def block_line_repl(self, _iter_content, stack, line):
         stack.clear()
-
-    block_list = r"""
-        (?P<list>
-            ^
-            (?P<list_indent> \s+ )
-            (
-                (?P<list_definition>
-                    (?P<list_definition_text> .*? )
-                    ::
-                    \s
-                )
-                |
-                (?P<list_numbers> [0-9]+\.\s )
-                |
-                (?P<list_alpha> [aA]\.\s )
-                |
-                (?P<list_roman> [iI]\.\s )
-                |
-                (?P<list_bullet> \* )
-                |
-                (?P<list_none> \. )
-            )
-            \s*
-            (?P<list_text> .*? )
-            $
-        )
-    """
-
-    def block_list_repl(self, _iter_content, stack,
-            list, list_indent, list_definition=None,
-            list_definition_text=None, list_numbers=None,
-            list_alpha=None, list_roman=None, list_bullet=None,
-            list_none=None, list_text=None):
-
-        level = len(list_indent)
-
-        style_type = None
-        if list_definition:
-            type = 'definition'
-        elif list_numbers:
-            type = 'ordered'
-        elif list_alpha:
-            type = 'ordered'
-            style_type = 'upper-alpha'
-        elif list_roman:
-            type = 'ordered'
-            style_type = 'upper-roman'
-        elif list_bullet:
-            type = 'unordered'
-        elif list_none:
-            type = 'unordered'
-            style_type = 'none'
-
-        while True:
-            cur = stack.top()
-            if cur.tag.name in ('body', 'blockquote'):
-                break
-            if cur.tag.name == 'list-item-body':
-                if level > cur.level:
-                    break
-            if cur.tag.name == 'list':
-                if (level >= cur.level and type == cur.type and
-                        style_type == cur.style_type):
-                    break
-            stack.pop()
-
-        if cur.tag.name != 'list':
-            attrib = {}
-            if not list_definition:
-                attrib[moin_page.item_label_generate] = type
-            if style_type:
-                attrib[moin_page.list_style_type] = style_type
-            element = moin_page.list(attrib=attrib)
-            element.level, element.type = level, type
-            element.style_type = style_type
-            stack.push(element)
-
-        stack.push(moin_page.list_item())
-
-        if list_definition_text:
-            stack.push(moin_page.list_item_label())
-
-            self.parse_inline(list_definition_text, stack)
-
-            stack.pop_name('list-item-label')
-
-        element_body = moin_page.list_item_body()
-        element_body.level, element_body.type = level, type
-
-        stack.push(element_body)
-
-        self.parse_inline(list_text, stack)
 
     block_macro = r"""
         ^
@@ -474,13 +385,131 @@ class Converter(ConverterMacro):
         if stack.top_check('table', 'table-body', 'list'):
             stack.clear()
 
-        if stack.top_check('body'):
+        if stack.top_check('body', 'list-item-body'):
             element = moin_page.p()
             stack.push(element)
         # If we are in a paragraph already, don't loose the whitespace
         else:
             stack.top_append('\n')
         self.parse_inline(text, stack)
+
+    indent = r"""
+        ^
+        (?P<indent> \s* )
+        (?P<list_begin>
+            (?P<list_definition>
+                (?P<list_definition_text> .*? )
+                ::
+            )
+            \s+
+            |
+            (?P<list_numbers> [0-9]+\. )
+            \s+
+            |
+            (?P<list_alpha> [aA]\. )
+            \s+
+            |
+            (?P<list_roman> [iI]\. )
+            \s+
+            |
+            (?P<list_bullet> \* )
+            \s*
+            |
+            (?P<list_none> \. )
+            \s*
+        )?
+        (?P<text> .*? )
+        $
+    """
+
+    def indent_iter(self, iter_content, line, level):
+        yield line
+
+        while True:
+            line = iter_content.next()
+
+            match = self.indent_re.match(line)
+
+            new_level = 0
+            if match.group('indent'):
+                new_level = len(match.group('indent'))
+
+            if match.group('list_begin') or level != new_level:
+                iter_content.push(line)
+                return
+
+            yield match.group('text')
+
+    def indent_repl(self, iter_content, stack, line,
+            indent, text, list_begin=None, list_definition=None,
+            list_definition_text=None, list_numbers=None,
+            list_alpha=None, list_roman=None, list_bullet=None,
+            list_none=None):
+
+        level = len(indent)
+
+        list_type = 'unordered', 'none'
+
+        if list_begin:
+            if list_definition:
+                list_type = 'definition', None
+            elif list_numbers:
+                list_type = 'ordered', None
+            elif list_alpha:
+                list_type = 'ordered', 'upper-alpha'
+            elif list_roman:
+                list_type = 'ordered', 'upper-roman'
+            elif list_bullet:
+                list_type = 'unordered', None
+
+        element_use = None
+        while len(stack) > 1:
+            cur = stack.top()
+            if cur.tag.name == 'list-item-body':
+                if level > cur.level:
+                    element_use = cur
+                    break
+            if cur.tag.name == 'list':
+                if level >= cur.level and list_type == cur.list_type:
+                    element_use = cur
+                    break
+            stack.pop()
+
+        if not element_use:
+            element_use = stack.top()
+
+        if list_begin:
+            if element_use.tag.name != 'list':
+                attrib = {}
+                if not list_definition:
+                    attrib[moin_page.item_label_generate] = list_type[0]
+                if list_type[1]:
+                    attrib[moin_page.list_style_type] = list_type[1]
+                element = moin_page.list(attrib=attrib)
+                element.level, element.list_type = level, list_type
+                stack.push(element)
+
+            stack.push(moin_page.list_item())
+
+            if list_definition_text:
+                element_label = moin_page.list_item_label()
+                stack.top_append(element_label)
+                new_stack = _Stack(element_label)
+
+                self.parse_inline(list_definition_text, new_stack)
+
+            element_body = moin_page.list_item_body()
+            element_body.level, element_body.type = level, type
+
+            stack.push(element_body)
+            new_stack = _Stack(element_body)
+        else:
+            new_stack = stack
+
+        iter = _Iter(self.indent_iter(iter_content, text, level))
+        for line in iter:
+            match = self.block_re.match(line)
+            self._apply(match, 'block', iter, new_stack)
 
     inline_comment = r"""
         (?P<comment>
@@ -964,11 +993,12 @@ class Converter(ConverterMacro):
         block_separator,
         block_macro,
         block_nowiki,
-        block_list,
         block_table,
         block_text,
     )
     block_re = re.compile('|'.join(block), re.X | re.U | re.M)
+
+    indent_re = re.compile(indent, re.X)
 
     inline = (
         inline_link,
@@ -1023,8 +1053,8 @@ class Converter(ConverterMacro):
         stack = _Stack(body)
 
         for line in iter_content:
-            match = self.block_re.match(line)
-            self._apply(match, 'block', iter_content, stack)
+            data = dict(((str(k), v) for k, v in self.indent_re.match(line).groupdict().iteritems() if v is not None))
+            self.indent_repl(iter_content, stack, line, **data)
 
         return body
 
