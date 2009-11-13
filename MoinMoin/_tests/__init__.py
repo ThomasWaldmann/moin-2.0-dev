@@ -14,7 +14,7 @@ from MoinMoin.formatter.text_html import Formatter
 from MoinMoin.items import Item, ACL
 from MoinMoin.util import random_string
 from MoinMoin import caching, user
-from MoinMoin import config
+from MoinMoin import config, security
 
 # Promoting the test user -------------------------------------------
 # Usually the tests run as anonymous user, but for some stuff, you
@@ -96,3 +96,8 @@ def nuke_xapian_index(request):
     fpath = os.path.join(request.cfg.cache_dir, 'xapian')
     if os.path.exists(fpath):
         shutil.rmtree(fpath, True)
+
+def nuke_item(request, item_name):
+    """ complete destroys an item """
+    item = Item.create(request, item_name)
+    item.destroy()
