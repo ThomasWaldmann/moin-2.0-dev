@@ -16,7 +16,7 @@ AccessControlList = security.AccessControlList
 
 from MoinMoin.user import User
 
-from MoinMoin._tests import create_page as create_item
+from MoinMoin._tests import create_item
 from MoinMoin._tests import become_trusted
 
 class TestACLStringIterator(object):

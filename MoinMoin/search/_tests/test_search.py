@@ -13,7 +13,7 @@ import py, os, time
 from MoinMoin.search import QueryError, _get_searcher
 from MoinMoin.search.queryparser import QueryParser
 from MoinMoin.search.builtin import MoinSearch
-from MoinMoin._tests import nuke_xapian_index, wikiconfig, become_trusted, create_page, nuke_item
+from MoinMoin._tests import nuke_xapian_index, wikiconfig, become_trusted, create_item, nuke_item
 from MoinMoin.wikiutil import Version
 
 PY_MIN_VERSION = '1.0.0'
@@ -105,7 +105,7 @@ class BaseSearchTest(object):
 
         for page, text in self.pages.iteritems():
             if text:
-                create_page(self.request, page, text)
+                create_item(self.request, page, text)
 
     def teardown_class(self):
         for item_name, text in self.pages.iteritems():
@@ -279,10 +279,10 @@ class BaseSearchTest(object):
         result = self.search(query)
         assert len(result.hits) == 1
 
-    def test_create_page(self):
+    def test_create_item(self):
         self.pages['TestCreatePage'] = 'some text' # Moin serarch must search this page
 
-        create_page(self.request, 'TestCreatePage', self.pages['TestCreatePage'])
+        create_item(self.request, 'TestCreatePage', self.pages['TestCreatePage'])
         time.sleep(1) # Wait while created pages are being indexed in other thread.
 
         result = self.search(u'TestCreatePage')

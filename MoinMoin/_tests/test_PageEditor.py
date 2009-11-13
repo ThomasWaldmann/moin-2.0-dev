@@ -15,7 +15,7 @@ from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 
 # TODO: check if and where we can use the helpers:
-from MoinMoin._tests import become_trusted, create_page
+from MoinMoin._tests import become_trusted, create_item
 
 class TestExpandVars(object):
     """PageEditor: testing page editor"""

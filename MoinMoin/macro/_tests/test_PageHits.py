@@ -12,7 +12,7 @@ from MoinMoin.logfile import eventlog
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.Page import Page
 
-from MoinMoin._tests import become_trusted, create_page, make_macro
+from MoinMoin._tests import become_trusted, create_item, make_macro
 
 
 class TestHits:
@@ -22,7 +22,7 @@ class TestHits:
     def setup_class(self):
         request = self.request
         become_trusted(request)
-        self.page = create_page(request, self.pagename, u"Foo!")
+        self.page = create_item(request, self.pagename, u"Foo!")
         # for that test eventlog needs to be empty
         fpath = os.path.join(self.request.cfg.data_dir, 'event-log')
         if os.path.exists(fpath):
