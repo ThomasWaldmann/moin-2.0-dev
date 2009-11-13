@@ -13,7 +13,7 @@ import py, os, time
 from MoinMoin.search import QueryError, _get_searcher
 from MoinMoin.search.queryparser import QueryParser
 from MoinMoin.search.builtin import MoinSearch
-from MoinMoin._tests import nuke_xapian_index, wikiconfig, become_trusted, create_page, nuke_page
+from MoinMoin._tests import nuke_xapian_index, wikiconfig, become_trusted, create_page, nuke_item
 from MoinMoin.wikiutil import Version
 
 PY_MIN_VERSION = '1.0.0'
@@ -108,9 +108,9 @@ class BaseSearchTest(object):
                 create_page(self.request, page, text)
 
     def teardown_class(self):
-        for page, text in self.pages.iteritems():
+        for item_name, text in self.pages.iteritems():
             if text:
-                nuke_page(self.request, page)
+                nuke_item(self.request, item_name)
 
     def get_searcher(self, query):
         raise NotImplementedError
@@ -287,7 +287,7 @@ class BaseSearchTest(object):
 
         result = self.search(u'TestCreatePage')
 
-        nuke_page(self.request, 'TestCreatePage')
+        nuke_item(self.request, 'TestCreatePage')
         time.sleep(1) # Wait while the xapian index is being updated.
 
         del self.pages['TestCreatePage']
