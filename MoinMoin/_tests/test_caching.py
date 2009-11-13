@@ -11,7 +11,7 @@ import py
 import time
 
 from MoinMoin import caching
-from MoinMoin._tests import become_trusted, create_page
+from MoinMoin._tests import become_trusted, create_item
 
 class TestCaching(object):
     """ Tests the caching module """
@@ -66,13 +66,13 @@ class TestCaching(object):
         test_data2 = u'something else'
         page_name = u'Caching_TestPage'
         become_trusted(self.request)
-        item = create_page(self.request, page_name, test_data1, mimetype='text/moin-wiki', acl=None)
+        item = create_item(self.request, page_name, test_data1, mimetype='text/moin-wiki', acl=None)
         mtime = item.rev.timestamp
         cache = caching.CacheEntry(self.request, item.name, 'test_key', 'item')
         cache.update(test_data1)
         assert not cache.needsUpdate(mtime)
         time.sleep(3) # XXX fails without, due to mtime granularity
-        item = create_page(self.request, page_name, test_data2, mimetype='text/moin-wiki', acl=None)
+        item = create_item(self.request, page_name, test_data2, mimetype='text/moin-wiki', acl=None)
         mtime = item.rev.timestamp
         assert cache.needsUpdate(mtime)
 

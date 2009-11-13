@@ -10,7 +10,7 @@
 from MoinMoin import macro
 from MoinMoin.parser.text import Parser
 from MoinMoin.formatter.text_html import Formatter
-from MoinMoin._tests import become_trusted, create_page, make_macro
+from MoinMoin._tests import become_trusted, create_item, make_macro
 
 class TestMacro:
     pagename = u'AutoCreatedMoinMoinTemporaryTestPageForTestMacro'
@@ -18,7 +18,7 @@ class TestMacro:
     def setup_class(self):
         request = self.request
         become_trusted(request)
-        self.page = create_page(request, self.pagename, u"Foo!")
+        self.page = create_item(request, self.pagename, u"Foo!")
 
     def testTrivialMacro(self):
         """macro: trivial macro works"""

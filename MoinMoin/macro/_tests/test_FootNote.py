@@ -10,7 +10,7 @@ from MoinMoin import macro
 from MoinMoin.macro import FootNote
 from MoinMoin.PageEditor import PageEditor
 
-from MoinMoin._tests import become_trusted, create_page, make_macro
+from MoinMoin._tests import become_trusted, create_item, make_macro
 
 class TestFootNote:
     """ testing macro Action calling action raw """
@@ -18,7 +18,7 @@ class TestFootNote:
 
     def setup_class(self):
         become_trusted(self.request)
-        self.page = create_page(self.request, self.pagename, u"Foo!")
+        self.page = create_item(self.request, self.pagename, u"Foo!")
 
     def test_enumbering(self):
         """ module_tested: enumbering of Footnotes"""

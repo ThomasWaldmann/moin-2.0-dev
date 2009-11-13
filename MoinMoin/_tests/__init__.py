@@ -54,7 +54,7 @@ def become_superuser(request):
 
 # Creating and destroying test pages --------------------------------
 
-def create_page(request, itemname, content, mimetype='text/moin-wiki', acl=None):
+def create_item(request, itemname, content, mimetype='text/moin-wiki', acl=None):
     """ create a page with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
@@ -65,7 +65,7 @@ def create_page(request, itemname, content, mimetype='text/moin-wiki', acl=None)
     item._save(meta, content, mimetype=mimetype)
     return Item.create(request, itemname)
 
-def append_page(request, itemname, content):
+def append_item(request, itemname, content):
     """ appends some content to an existing page """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
