@@ -321,30 +321,30 @@ class Converter(ConverterMacro):
                 body = self.parse_block(lines, args)
                 elem = moin_page.page(children=(body, ))
                 stack.top_append(elem)
+                return
 
+            if '/' in nowiki_name:
+                type = Type(nowiki_name)
             else:
-                if '/' in nowiki_name:
-                    type = Type(nowiki_name)
-                else:
-                    type = Type(type='x-moin', subtype='format', parameters={'name': nowiki_name})
+                type = Type(type='x-moin', subtype='format', parameters={'name': nowiki_name})
 
-                try:
-                    converter = default_registry.get(self.request, type, Type('application/x.moin.document'))
-                except TypeError:
-                    # XXX
-                    pass
-                else:
-                    doc = converter(self.request)(lines, args)
-                    stack.top_append(doc)
+            try:
+                converter = default_registry.get(self.request, type, Type('application/x.moin.document'))
+            except TypeError:
+                # XXX
+                pass
+            else:
+                doc = converter(self.request)(lines, args)
+                stack.top_append(doc)
+                return
 
-        else:
-            elem = moin_page.blockcode()
-            stack.top_append(elem)
+        elem = moin_page.blockcode()
+        stack.top_append(elem)
 
-            for line in lines:
-                if len(elem):
-                    elem.append('\n')
-                elem.append(line)
+        for line in lines:
+            if len(elem):
+                elem.append('\n')
+            elem.append(line)
 
     block_separator = r'(?P<separator> ^ \s* -{4,} \s* $ )'
 
