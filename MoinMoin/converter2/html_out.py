@@ -201,26 +201,23 @@ class Converter(object):
                 elif item.tag.name == 'error':
                     error = item
 
-        if not body and not error:
-            raise RuntimeError('page:inline-part need to contain at least a page:inline-body or a page:error tag, got %r' % elem[:])
-
         if body:
-            ret = self.new_copy(html.span, item)
-        else:
-            # XXX: Move handling of namespace-less attributes into emeraldtree
-            alt = elem.get(moin_page.alt, elem.get('alt'))
-            if alt:
-                ret = html.span(children=(alt, ))
-            elif error and len(error):
+            return self.new_copy(html.span, item)
+
+        if error:
+            if len(error):
                 ret = html.span(children=error)
             else:
                 ret = html.span(children=('Error', ))
-
-        if error:
             # XXX: Mark as error
-            pass
+            return ret
 
-        return ret
+        # XXX: Move handling of namespace-less attributes into emeraldtree
+        alt = elem.get(moin_page.alt, elem.get('alt'))
+        if alt:
+            return html.span(children=(alt, ))
+
+        return html.span()
 
     def visit_moinpage_line_break(self, elem):
         # TODO: attributes?
@@ -295,26 +292,23 @@ class Converter(object):
                 elif item.tag.name == 'error':
                     error = item
 
-        if not body and not error:
-            raise RuntimeError('page:part need to contain at least a page:body or a page:error tag, got %r' % elem[:])
-
         if body:
-            ret = self.new_copy(html.div, item)
-        else:
-            # XXX: Move handling of namespace-less attributes into emeraldtree
-            alt = elem.get(moin_page.alt, elem.get('alt'))
-            if alt:
-                ret = html.p(children=(alt, ))
-            elif error and len(error):
+            return self.new_copy(html.div, item)
+
+        elif error:
+            if len(error):
                 ret = html.p(children=error)
             else:
                 ret = html.p(children=('Error', ))
-
-        if error:
             # XXX: Mark as error
-            pass
+            return ret
 
-        return ret
+        # XXX: Move handling of namespace-less attributes into emeraldtree
+        alt = elem.get(moin_page.alt, elem.get('alt'))
+        if alt:
+            return html.p(children=(alt, ))
+
+        return html.p()
 
     def visit_moinpage_separator(self, elem):
         return self.new(html.hr)
