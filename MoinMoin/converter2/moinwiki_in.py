@@ -273,7 +273,7 @@ class Converter(ConverterMacro):
                     (?P<nowiki_args> .*? )
                     \)
                     |
-                    (?P<nowiki_args_old> [\w/-]+ )
+                    (?P<nowiki_args_old> .+ )
                 )?
             )?
             \s*
