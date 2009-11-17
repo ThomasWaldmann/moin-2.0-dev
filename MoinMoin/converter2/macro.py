@@ -61,9 +61,10 @@ class Converter(object):
 
         context_block = elem.tag == moin_page.part
 
+        args_tree = None
         for item in elem:
             if item.tag.uri == moin_page.namespace:
-                if item.tag.name == 'body':
+                if item.tag.name in ('body', 'inline-body'):
                     return
                 if item.tag.name == 'arguments':
                     args_tree = item
@@ -106,10 +107,13 @@ class Converter(object):
         except wikiutil.PluginMissingError:
             return False
 
-        macro = cls(self.request)
-        ret = macro((), args, page, alt, context_block)
+        try:
+            macro = cls(self.request)
+            ret = macro((), args, page, alt, context_block)
 
-        elem_body.append(ret)
+            elem_body.append(ret)
+        except Exception, e:
+            elem_body.append(self._error(unicode(e), context_block, alt))
 
         return True
 
