@@ -18,6 +18,7 @@ from MoinMoin.util import iri
 from MoinMoin.util.mime import Type, type_moin_document, type_moin_wiki
 from MoinMoin.util.tree import html, moin_page, xlink
 from ._args import Arguments
+from MoinMoin.converter2._args import Arguments
 from MoinMoin.converter2._args_wiki import parse as parse_arguments
 from MoinMoin.converter2._registry import default_registry
 from MoinMoin.converter2._wiki_macro import ConverterMacro
@@ -269,6 +270,8 @@ class Converter(ConverterMacro):
                     \(
                     (?P<nowiki_args> .*? )
                     \)
+                    |
+                    (?P<nowiki_args_old> [\w/-]+ )
                 )?
             )?
             \s*
@@ -297,7 +300,8 @@ class Converter(ConverterMacro):
             yield line
 
     def block_nowiki_repl(self, iter_content, stack, nowiki, nowiki_marker,
-            nowiki_interpret=None, nowiki_name=None, nowiki_args=None):
+            nowiki_interpret=None, nowiki_name=None, nowiki_args=None,
+            nowiki_args_old=None):
         stack.clear()
 
         nowiki_marker_len = len(nowiki_marker)
@@ -306,11 +310,15 @@ class Converter(ConverterMacro):
 
         if nowiki_interpret:
             if nowiki_args:
-                nowiki_args = parse_arguments(nowiki_args)
+                args = parse_arguments(nowiki_args)
+            elif nowiki_args_old:
+                args = Arguments(keyword={'_old': nowiki_args_old})
+            else:
+                args = None
 
             # Parse it directly if the type is ourself
-            if not nowiki_name:
-                body = self.parse_block(lines, nowiki_args)
+            if not nowiki_name or nowiki_name == 'wiki':
+                body = self.parse_block(lines, args)
                 elem = moin_page.page(children=(body, ))
                 stack.top_append(elem)
 
@@ -320,10 +328,14 @@ class Converter(ConverterMacro):
                 else:
                     type = Type(type='x-moin', subtype='format', parameters={'name': nowiki_name})
 
-                converter = default_registry.get(self.request, type, Type('application/x.moin.document'))
-
-                doc = converter(self.request)(lines, nowiki_args)
-                stack.top_append(doc)
+                try:
+                    converter = default_registry.get(self.request, type, Type('application/x.moin.document'))
+                except TypeError:
+                    # XXX
+                    pass
+                else:
+                    doc = converter(self.request)(lines, args)
+                    stack.top_append(doc)
 
         else:
             elem = moin_page.blockcode()
@@ -1053,6 +1065,8 @@ class Converter(ConverterMacro):
             for key, value in arguments.keyword.iteritems():
                 if key in ('style', ):
                     attrib[moin_page(key)] = value
+                elif key == '_old':
+                    attrib[moin_page.class_] = value.replace('/', ' ')
 
         body = moin_page.body(attrib=attrib)
 
