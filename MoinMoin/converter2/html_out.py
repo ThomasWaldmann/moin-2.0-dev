@@ -481,11 +481,6 @@ class ConverterPage(Converter):
 
         return elem_ref
 
-    def visit_moinpage_macro(self, elem):
-        for body in elem:
-            if body.tag.uri == moin_page.namespace and body.tag.name == 'macro-body':
-                return self.do_children(body)
-
     def visit_moinpage_table_of_content(self, elem):
         level = int(elem.get(moin_page.outline_level, 6))
 
