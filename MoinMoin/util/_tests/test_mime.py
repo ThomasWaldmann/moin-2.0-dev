@@ -40,3 +40,24 @@ def test_Type_unicode():
     i = 'text/plain;encoding="utf-8";foo="bar"'
     t = Type(i)
     assert unicode(t) == i
+
+def test_Type_compare():
+    t1 = Type(type='text', subtype='plain')
+
+    assert t1 == t1
+    assert t1.issupertype(t1)
+
+    t2 = Type(type='text')
+    assert t1 != t2
+    assert t2.issupertype(t1)
+
+    t2 = Type(type='text', subtype='plain', parameters={'encoding': 'iso8859-1'})
+
+    assert t1 != t2
+    assert t1.issupertype(t2)
+
+    t2 = Type(type='text', subtype='html')
+
+    assert t1 != t2
+    assert not t1.issupertype(t2)
+

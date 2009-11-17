@@ -61,3 +61,29 @@ class Type(object):
             if value[0] == '"' and value[-1] == '"':
                 value = value[1:-1]
             self.parameters[key.lower()] = value
+
+    def issupertype(self, other):
+        """
+        Check if this object is a super type of the other
+
+        A super type is defined as
+        - the other type matches this (possibly wildcard) type,
+        - the other subtype matches this (possibly wildcard) subtype and
+        - the parameters are a subset of the others.
+        """
+        if isinstance(other, Type):
+            if self.type and self.type != other.type: return False
+            if self.subtype and self.subtype != other.subtype: return False
+            self_set = set(self.parameters.iteritems())
+            other_set = set(other.parameters.iteritems())
+            return self_set <= other_set
+
+        raise ValueError
+
+
+# Own types, application type
+type_moin_document = Type(type='application', subtype='x.moin.document')
+
+# Own types, text type
+type_moin_creole = Type(type='text', subtype='x.moin.creole')
+type_moin_wiki = Type(type='text', subtype='x.moin.wiki')
