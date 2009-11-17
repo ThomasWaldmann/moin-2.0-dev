@@ -107,7 +107,7 @@ class Converter(object):
             return False
 
         macro = cls(self.request)
-        ret = macro((), page, args, alt, context_block)
+        ret = macro((), args, page, alt, context_block)
 
         elem_body.append(ret)
 
