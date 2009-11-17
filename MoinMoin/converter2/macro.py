@@ -105,8 +105,16 @@ class Converter(object):
 
             elem_body.append(ret)
         except Exception, e:
+            # we do not want that a faulty macro aborts rendering of the page
+            # and makes the wiki UI unusable (by emitting a Server Error),
+            # thus, in case of exceptions, we just log the problem and return
+            # some standard text.
             logger.exception("Macro %s raised an exception:" % name)
-            elem_error.append('<<%s: execution failed [%s]>>' % (name, unicode(e)))
+            _ = self.request.getText
+            elem_error.append(_('<<%(macro_name)s: execution failed [%(error_msg)s] (see also the log)>>') % {
+                    'macro_name': name,
+                    'error_msg': unicode(e),
+                })
 
         return True
 
@@ -142,6 +150,18 @@ class Converter(object):
                 message += ': ' + e.args[0]
             warn(message, DeprecationWarning)
             ret = True
+        except Exception, e:
+            # we do not want that a faulty macro aborts rendering of the page
+            # and makes the wiki UI unusable (by emitting a Server Error),
+            # thus, in case of exceptions, we just log the problem and return
+            # some standard text.
+            logger.exception("Macro %s raised an exception:" % name)
+            _ = self.request.getText
+            elem_error.append(_('<<%(macro_name)s: execution failed [%(error_msg)s] (see also the log)>>') % {
+                    'macro_name': name,
+                    'error_msg': unicode(e),
+                })
+            return
 
         if request.written:
             message = 'Macro ' + name + ' used request.write'

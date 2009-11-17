@@ -113,19 +113,7 @@ class Macro:
                     execute = self.__class__._m_lang
                 else:
                     raise ImportError("Cannot load macro %s" % macro_name)
-        try:
-            return execute(self, args)
-        except Exception, err:
-            # we do not want that a faulty macro aborts rendering of the page
-            # and makes the wiki UI unusable (by emitting a Server Error),
-            # thus, in case of exceptions, we just log the problem and return
-            # some standard text.
-            logging.exception("Macro %s raised an exception:" % self.name)
-            _ = self.request.getText
-            return self.formatter.text(_('<<%(macro_name)s: execution failed [%(error_msg)s] (see also the log)>>') % {
-                   'macro_name': self.name,
-                   'error_msg': err.args[0], # note: str(err) or unicode(err) does not work for py2.4/5/6
-                 })
+        return execute(self, args)
 
     def _m_lang(self, text):
         """ Set the current language for page content.
