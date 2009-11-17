@@ -164,15 +164,15 @@ class TestConverter(object):
             (u'Text<<BR>>Text',
                 '<page><body><p>Text<line-break />Text</p></body></page>'),
             (u'<<Macro>>',
-                '<page><body><page alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
+                '<page><body><part alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
             (u'Text <<Macro>>',
                 '<page><body><p>Text <inline-part alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></p></body></page>'),
             (u'Text\n<<Macro>>',
-                '<page><body><p>Text</p><page alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
+                '<page><body><p>Text</p><part alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
             (u'Text\nText <<Macro>>',
                 '<page><body><p>Text\nText <inline-part alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></p></body></page>'),
             (u'Text\n\n<<Macro>>',
-                '<page><body><p>Text</p><page alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
+                '<page><body><p>Text</p><part alt="&lt;&lt;Macro&gt;&gt;" content-type="x-moin/macro;name=Macro" /></body></page>'),
         ]
         for i in data:
             yield (self.do, ) + i
