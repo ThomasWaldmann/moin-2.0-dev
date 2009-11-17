@@ -81,27 +81,17 @@ class Converter(object):
                     args.positional.append(value)
 
         elem_body = context_block and moin_page.body() or moin_page.inline_body()
+        elem_error = moin_page.error()
 
-        if not self._handle_macro_new(elem_body, page, name, args, context_block, alt):
-            self._handle_macro_old(elem_body, page, name, args, context_block, alt)
+        if not self._handle_macro_new(elem_body, elem_error, page, name, args, context_block, alt):
+            self._handle_macro_old(elem_body, elem_error, page, name, args, context_block, alt)
 
-        elem.append(elem_body)
+        if len(elem_body):
+            elem.append(elem_body)
+        if len(elem_error):
+            elem.append(elem_error)
 
-    def _error(self, message, context_block, alt):
-        if alt:
-            attrib = {html.class_: 'error', moin_page.title: message}
-            children = alt
-        else:
-            attrib = {}
-            children = message
-
-        elem = moin_page.strong(attrib=attrib, children=[children])
-
-        if context_block:
-            return moin_page.p(children=[elem])
-        return elem
-
-    def _handle_macro_new(self, elem_body, page, name, args, context_block, alt):
+    def _handle_macro_new(self, elem_body, elem_error, page, name, args, context_block, alt):
         try:
             cls = wikiutil.importPlugin(self.request.cfg, 'macro2', name, function='Macro')
         except wikiutil.PluginMissingError:
@@ -113,11 +103,11 @@ class Converter(object):
 
             elem_body.append(ret)
         except Exception, e:
-            elem_body.append(self._error(unicode(e), context_block, alt))
+            elem_error.append(unicode(e))
 
         return True
 
-    def _handle_macro_old(self, elem_body, page, name, args, context, alt):
+    def _handle_macro_old(self, elem_body, elem_error, page, name, args, context, alt):
         Formatter = wikiutil.searchAndImportPlugin(self.request.cfg, "formatter", 'compatibility')
 
         request = _PseudoRequest(self.request, name)
@@ -132,7 +122,7 @@ class Converter(object):
             message = unicode(err)
             if not name in message:
                 raise
-            elem_body.append(self._error(message, context, alt))
+            elem_error.append(message)
             return
         except AssertionError, e:
             from warnings import warn
@@ -152,7 +142,7 @@ class Converter(object):
 
         if request.written:
             message = 'Macro ' + name + ' used request.write'
-            elem_body.append(self._error(message, context, alt))
+            elem_error.append(message)
             return
 
         if ret:
