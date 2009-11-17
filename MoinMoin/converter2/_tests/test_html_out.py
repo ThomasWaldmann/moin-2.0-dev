@@ -94,11 +94,9 @@ class TestConverter(Base):
             ('<page><body><p><inline-part alt="Alt" /></p></body></page>',
                 '<div><p><span>Alt</span></p></div>'),
             ('<page><body><p><inline-part><error /></inline-part></p></body></page>',
-                # XXX
-                '<div><p><span>Error</span></p></div>'),
+                '<div><p><span class="error">Error</span></p></div>'),
             ('<page><body><p><inline-part><error>Text</error></inline-part></p></body></page>',
-                # XXX
-                '<div><p><span>Text</span></p></div>'),
+                '<div><p><span class="error">Text</span></p></div>'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -132,11 +130,9 @@ class TestConverter(Base):
             ('<page><body><part alt="Alt" /></body></page>',
                 '<div><p>Alt</p></div>'),
             ('<page><body><part><error /></part></body></page>',
-                # XXX
-                '<div><p>Error</p></div>'),
+                '<div><p class="error">Error</p></div>'),
             ('<page><body><part><error>Error</error></part></body></page>',
-                # XXX
-                '<div><p>Error</p></div>'),
+                '<div><p class="error">Error</p></div>'),
         ]
         for i in data:
             yield (self.do, ) + i
