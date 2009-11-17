@@ -113,7 +113,7 @@ class ConverterMacro(object):
         if func is not None:
             return func(args, text, context_block)
 
-        tag = context_block and moin_page.page or moin_page.inline_part
+        tag = context_block and moin_page.part or moin_page.inline_part
 
         elem = tag(attrib={
             moin_page.alt: text,
