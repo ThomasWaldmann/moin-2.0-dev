@@ -1034,7 +1034,7 @@ class Text(Binary):
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
-        doc = InputConverter(request)(self.data.decode(config.charset).split(u'\r\n'))
+        doc = InputConverter(request)(self.data_storage_to_internal(self.data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
         doc = IncludeConverter(request)(doc)
         doc = MacroConverter(request)(doc)
