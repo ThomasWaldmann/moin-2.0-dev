@@ -252,6 +252,8 @@ class Converter(ConverterMacro):
         """Handles macros using the placeholder syntax."""
 
         stack.clear()
+        if macro_args:
+            macro_args = parse_arguments(macro_args)
         elem = self.macro(macro_name, macro_args, macro, True)
         stack.top_append_ifnotempty(elem)
 
