@@ -79,6 +79,16 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_body(self):
+        data = [
+            ('<page><body /></page>',
+                '<div />'),
+            ('<page><body class="red" /></page>',
+                '<div class="red" />'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
     def test_html(self):
         data = [
             ('<html:div html:id="a" id="b"><html:p id="c">Test</html:p></html:div>',
