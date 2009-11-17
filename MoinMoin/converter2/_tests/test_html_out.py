@@ -88,7 +88,24 @@ class TestConverter(Base):
             yield (self.do, ) + i
 
     def test_inline_part(self):
-        pass
+        data = [
+            ('<page><body><p><inline-part><inline-body>Test</inline-body></inline-part></p></body></page>',
+                '<div><p><span>Test</span></p></div>'),
+            ('<page><body><p><inline-part><error /></inline-part></p></body></page>',
+                # XXX
+                '<div><p><span>Error</span></p></div>'),
+            ('<page><body><p><inline-part><error>Error</error></inline-part></p></body></page>',
+                # XXX
+                '<div><p><span>Error</span></p></div>'),
+            ('<page><body><p><inline-part alt="Alt"><error /></inline-part></p></body></page>',
+                # XXX
+                '<div><p><span>Alt</span></p></div>'),
+            ('<page><body><p><inline-part alt="Alt"><error>Error</error></inline-part></p></body></page>',
+                # XXX
+                '<div><p><span>Alt</span></p></div>'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
 
     def test_list(self):
         data = [
@@ -112,8 +129,25 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
-    def test_page(self):
-        pass
+    def test_part(self):
+        data = [
+            ('<page><body><part><body><p>Test</p></body></part></body></page>',
+                '<div><div><p>Test</p></div></div>'),
+            ('<page><body><part><error /></part></body></page>',
+                # XXX
+                '<div><p>Error</p></div>'),
+            ('<page><body><part><error>Error</error></part></body></page>',
+                # XXX
+                '<div><p>Error</p></div>'),
+            ('<page><body><part alt="Alt"><error /></part></body></page>',
+                # XXX
+                '<div><p>Alt</p></div>'),
+            ('<page><body><part alt="Alt"><error>Error</error></part></body></page>',
+                # XXX
+                '<div><p>Alt</p></div>'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
 
     def test_style(self):
         data = [

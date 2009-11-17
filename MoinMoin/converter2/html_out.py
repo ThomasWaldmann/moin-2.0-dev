@@ -192,11 +192,35 @@ class Converter(object):
         return self.new_copy(ET.QName('h%d' % level, html.namespace), elem)
 
     def visit_moinpage_inline_part(self, elem):
-        for item in elem:
-            if item.tag.uri == moin_page.namespace and item.tag.name == 'body':
-                return self.new_copy(html.span, item)
+        body = error = None
 
-        raise RuntimeError('page:inline-part need to contain exactly one page:body tag, got %r' % elem[:])
+        for item in elem:
+            if item.tag.uri == moin_page.namespace:
+                if item.tag.name == 'inline-body':
+                    body = item
+                elif item.tag.name == 'error':
+                    error = item
+
+        if not body and not error:
+            raise RuntimeError('page:inline-part need to contain at least a page:inline-body or a page:error tag, got %r' % elem[:])
+
+        if body:
+            ret = self.new_copy(html.span, item)
+        else:
+            # XXX: Move handling of namespace-less attributes into emeraldtree
+            alt = elem.get(moin_page.alt, elem.get('alt'))
+            if alt:
+                ret = html.span(children=(alt, ))
+            elif error and len(error):
+                ret = html.span(children=error)
+            else:
+                ret = html.span(children=('Error', ))
+
+        if error:
+            # XXX: Mark as error
+            pass
+
+        return ret
 
     def visit_moinpage_line_break(self, elem):
         # TODO: attributes?
@@ -260,6 +284,37 @@ class Converter(object):
                 return self.new_copy(html.div, item)
 
         raise RuntimeError('page:page need to contain exactly one page:body tag, got %r' % elem[:])
+
+    def visit_moinpage_part(self, elem):
+        body = error = None
+
+        for item in elem:
+            if item.tag.uri == moin_page.namespace:
+                if item.tag.name == 'body':
+                    body = item
+                elif item.tag.name == 'error':
+                    error = item
+
+        if not body and not error:
+            raise RuntimeError('page:part need to contain at least a page:body or a page:error tag, got %r' % elem[:])
+
+        if body:
+            ret = self.new_copy(html.div, item)
+        else:
+            # XXX: Move handling of namespace-less attributes into emeraldtree
+            alt = elem.get(moin_page.alt, elem.get('alt'))
+            if alt:
+                ret = html.p(children=(alt, ))
+            elif error and len(error):
+                ret = html.p(children=error)
+            else:
+                ret = html.p(children=('Error', ))
+
+        if error:
+            # XXX: Mark as error
+            pass
+
+        return ret
 
     def visit_moinpage_separator(self, elem):
         return self.new(html.hr)
