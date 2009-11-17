@@ -59,7 +59,7 @@ class Converter(object):
             return
         name = type[18:]
 
-        context_block = elem.tag == moin_page.page
+        context_block = elem.tag == moin_page.part
 
         for item in elem:
             if item.tag.uri == moin_page.namespace:
@@ -170,7 +170,7 @@ class Converter(object):
         if new_page_href:
             page = iri.Iri(new_page_href)
 
-        if elem.tag in (moin_page.page, moin_page.inline_part):
+        if elem.tag in (moin_page.part, moin_page.inline_part):
             yield elem, page
 
         for child in elem:
