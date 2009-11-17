@@ -209,7 +209,7 @@ class Converter(object):
                 ret = html.span(children=error)
             else:
                 ret = html.span(children=('Error', ))
-            # XXX: Mark as error
+            ret.set(html.class_, 'error')
             return ret
 
         # XXX: Move handling of namespace-less attributes into emeraldtree
@@ -300,7 +300,7 @@ class Converter(object):
                 ret = html.p(children=error)
             else:
                 ret = html.p(children=('Error', ))
-            # XXX: Mark as error
+            ret.set(html.class_, 'error')
             return ret
 
         # XXX: Move handling of namespace-less attributes into emeraldtree
