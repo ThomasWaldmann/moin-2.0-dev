@@ -9,6 +9,8 @@ Expands all macro elements in a internal Moin document.
 """
 
 from emeraldtree import ElementTree as ET
+import logging
+logger = logging.getLogger(__name__)
 
 from MoinMoin import macro, Page, wikiutil
 from MoinMoin.converter2._args import Arguments
@@ -103,7 +105,8 @@ class Converter(object):
 
             elem_body.append(ret)
         except Exception, e:
-            elem_error.append(unicode(e))
+            logger.exception("Macro %s raised an exception:" % name)
+            elem_error.append('<<%s: execution failed [%s]>>' % (name, unicode(e)))
 
         return True
 
