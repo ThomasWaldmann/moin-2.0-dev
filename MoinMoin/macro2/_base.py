@@ -30,9 +30,9 @@ class MacroBlockBase(MacroBase):
     The macro gets only expanded in block context. In inline context the
     alternative text is used instead.
     """
-    def __call__(self, content, page_url, args, alt, context_block):
+    def __call__(self, content, arguments, page_url, alternative, context_block):
         if context_block:
-            return self.macro(content, page_url, args, alt)
+            return self.macro(content, arguments, page_url, alternative)
         return self.alt
 
     def macro(self, content, page_url, args, alt):
@@ -44,8 +44,8 @@ class MacroInlineBase(MacroBase):
 
     The macro is wrapped into a paragraph in block context.
     """
-    def __call__(self, content, page_url, args, alt, context_block):
-        ret = self.macro(content, page_url, args, alt)
+    def __call__(self, content, arguments, page_url, alternative, context_block):
+        ret = self.macro(content, arguments, page_url, alternative)
         if context_block:
             return moin_page.p(children=(ret, ))
         return ret
@@ -57,9 +57,9 @@ class MacroInlineOnlyBase(MacroBase):
     The macro is only expanded in inline context. In block context it expands
     to nothing.
     """
-    def __call__(self, content, page_url, args, alt, context_block):
+    def __call__(self, content, arguments, page_url, alternative, context_block):
         if not content_block:
-            return self.macro(content, page_url, args, alt)
+            return self.macro(content, arguments, page_url, alternative)
 
 class MacroPageLinkListBase(MacroBlockBase):
     def create_pagelink_list(self, pagenames, ordered=False):
