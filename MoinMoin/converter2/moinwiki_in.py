@@ -15,7 +15,7 @@ from emeraldtree import ElementTree as ET
 
 from MoinMoin import config, wikiutil
 from MoinMoin.util import iri
-from MoinMoin.util.mime import Type
+from MoinMoin.util.mime import Type, type_moin_document, type_moin_wiki
 from MoinMoin.util.tree import html, moin_page, xlink
 from ._args import Arguments
 from MoinMoin.converter2._args_wiki import parse as parse_arguments
@@ -171,8 +171,8 @@ class _TableArguments(object):
 class Converter(ConverterMacro):
     @classmethod
     def factory(cls, _request, input, output):
-        if output.type == 'application' and output.subtype == 'x.moin.document':
-            if input.type == 'text' and input.subtype == 'x.moin.wiki':
+        if type_moin_document.issupertype(output):
+            if type_moin_wiki.issupertype(input):
                 return cls
             if (input.type == 'x-moin' and input.subtype == 'format' and
                     input.parameters.get('name') == 'wiki'):
