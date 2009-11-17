@@ -29,10 +29,10 @@ class TestConverter(object):
     def test_macro(self):
         data = [
             ('Macro', None, 'text',
-                '<page alt="text" content-type="x-moin/macro;name=Macro" />',
+                '<part alt="text" content-type="x-moin/macro;name=Macro" />',
                 '<inline-part alt="text" content-type="x-moin/macro;name=Macro" />'),
             ('Macro', Arguments([u'arg1']), 'text',
-                '<page alt="text" content-type="x-moin/macro;name=Macro"><arguments><argument>arg1</argument></arguments></page>',
+                '<part alt="text" content-type="x-moin/macro;name=Macro"><arguments><argument>arg1</argument></arguments></part>',
                 '<inline-part alt="text" content-type="x-moin/macro;name=Macro"><arguments><argument>arg1</argument></arguments></inline-part>'),
         ]
         for name, args, text, output_block, output_inline in data:
