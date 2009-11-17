@@ -509,7 +509,11 @@ class Converter(ConverterMacro):
         iter = _Iter(self.indent_iter(iter_content, text, level))
         for line in iter:
             match = self.block_re.match(line)
-            self._apply(match, 'block', iter, new_stack)
+            it = iter
+            # XXX: Hack to allow nowiki to ignore the list identation
+            if match.lastgroup == 'nowiki':
+                it = iter_content
+            self._apply(match, 'block', it, new_stack)
 
     inline_comment = r"""
         (?P<comment>
