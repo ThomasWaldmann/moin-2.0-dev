@@ -87,6 +87,9 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_inline_part(self):
+        pass
+
     def test_list(self):
         data = [
             ('<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
@@ -108,6 +111,9 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_page(self):
+        pass
 
     def test_style(self):
         data = [
@@ -135,14 +141,6 @@ class TestConverter(Base):
 class TestConverterPage(Base):
     def setup_class(self):
         self.conv = ConverterPage(self.request)
-
-    def test_macro(self):
-        data = [
-            ('<page:page><page:body><page:macro><page:macro-body><page:p>Test</page:p></page:macro-body></page:macro></page:body></page:page>',
-                '<div><p>Test</p></div>'),
-        ]
-        for i in data:
-            yield (self.do, ) + i
 
     def test_note(self):
         data = [
