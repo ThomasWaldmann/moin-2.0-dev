@@ -79,7 +79,7 @@ class Converter(object):
                 else:
                     args.positional.append(value)
 
-        elem_body = moin_page.body()
+        elem_body = context_block and moin_page.body() or moin_page.inline_body()
 
         if not self._handle_macro_new(elem_body, page, name, args, context_block, alt):
             self._handle_macro_old(elem_body, page, name, args, context_block, alt)
