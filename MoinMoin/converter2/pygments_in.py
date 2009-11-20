@@ -18,8 +18,23 @@ from MoinMoin.util.tree import moin_page
 
 class TreeFormatter(pygments.formatter.Formatter):
     classes = {
+            Token.Comment: 'Comment',
+            Token.Comment.Preproc: 'Preprc',
+            Token.Generic.Deleted: 'DiffRemoved',
+            Token.Generic.Heading: 'Comment',
+            Token.Generic.Inserted: 'DiffAdded',
+            Token.Generic.Strong: 'DiffChanged',
+            Token.Generic.Subheading: 'DiffSeparator',
             Token.Keyword: 'ResWord',
+            Token.Keyword.Constant: 'ConsWord',
+            Token.Name.Builtin: 'ResWord',
+            Token.Name.Constant: 'ConsWord',
             Token.Name: 'ID',
+            Token.Number: 'Number',
+            Token.Operator.Word: 'ResWord',
+            Token.String: 'String',
+            Token.String.Char: 'Char',
+            Token.String.Escape: 'SPChar',
     }
 
     def _append(self, type, value, element):
