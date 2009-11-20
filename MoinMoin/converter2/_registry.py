@@ -7,7 +7,7 @@ MoinMoin - Converter registry
 
 _marker = object()
 
-class Registry(object):
+class RegistryBase(object):
     PRIORITY_REALLY_FIRST = -20
     PRIORITY_FIRST = -10
     PRIORITY_MIDDLE = 0
@@ -26,23 +26,17 @@ class Registry(object):
     def __init__(self):
         self._converters = []
 
+    def _get(self, *args, **kw):
+        for entry in self._converters:
+            conv = entry.factory(*args, **kw)
+            if conv is not None:
+                return conv
+
     def _sort(self):
         self._converters.sort(key=lambda a: a.priority)
 
-    def get(self, request, input, output, default=_marker):
-        """
-        @param input Input MIME-Type
-        @param output Input MIME-Type
-        @param default Default value
-        @return A converter or default value
-        """
-        for entry in self._converters:
-            conv = entry.factory(request, input, output)
-            if conv is not None:
-                return conv
-        if default is _marker:
-            raise TypeError(u"Couldn't find converter for %s to %s" % (input, output))
-        return default
+    def get(self, *args, **kw):
+        raise NotImplementedError
 
     def register(self, factory, priority=PRIORITY_MIDDLE):
         if factory not in self._converters:
@@ -52,5 +46,17 @@ class Registry(object):
     def unregister(self, factory):
         self._converters.remove(factory)
         self._sort()
+
+class Registry(RegistryBase):
+    def get(self, request, input, output):
+        """
+        @param input Input MIME-Type
+        @param output Input MIME-Type
+        @return A converter or default value
+        """
+        ret = self._get(request, input, output)
+        if ret:
+            return ret
+        raise TypeError(u"Couldn't find converter for %s to %s" % (input, output))
 
 default_registry = Registry()
