@@ -29,12 +29,8 @@ class Converter(object):
     def __init__(self, _request):
         pass
 
-    def __call__(self, content, page_url=None, arguments=None):
+    def __call__(self, content, arguments=None):
         """Parse the text and return DOM tree."""
-
-        attrib = {}
-        if page_url:
-            attrib[moin_page.page_href] = unicode(page_url)
 
         blockcode = moin_page.blockcode()
 
@@ -44,7 +40,7 @@ class Converter(object):
             blockcode.append(line.expandtabs())
 
         body = moin_page.body(children=(blockcode, ))
-        return moin_page.page(attrib=attrib, children=(body, ))
+        return moin_page.page(children=(body, ))
 
 from . import default_registry
 # Register wildcards behind anything else
