@@ -165,7 +165,7 @@ class Converter(object):
         pre = self.new_copy(html.pre, elem)
 
         # TODO: Unify somehow
-        if elem.get(html.class_) == 'codearea':
+        if elem.get(moin_page.class_) == 'codearea':
             attrib = {html.class_: 'codearea'}
             div = self.new(html.div, attrib)
             div.append(pre)
