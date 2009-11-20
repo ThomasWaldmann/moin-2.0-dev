@@ -8,6 +8,8 @@ Expands all macro elements in a internal Moin document.
 @license: GNU GPL, see COPYING for details.
 """
 
+from __future__ import absolute_import
+
 from emeraldtree import ElementTree as ET
 import logging
 logger = logging.getLogger(__name__)
@@ -204,5 +206,5 @@ class Converter(object):
 
         return tree
 
-from _registry import default_registry
+from . import default_registry
 default_registry.register(Converter._factory)

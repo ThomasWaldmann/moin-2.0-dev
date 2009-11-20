@@ -8,6 +8,8 @@ special wiki links.
 @license: GNU GPL, see COPYING for details.
 """
 
+from __future__ import absolute_import
+
 from emeraldtree import ElementTree as ET
 import urllib
 
@@ -133,6 +135,6 @@ class ConverterPagelinks(ConverterBase):
 
         return self.links
 
-from _registry import default_registry
+from . import default_registry
 default_registry.register(ConverterExternOutput._factory)
 default_registry.register(ConverterPagelinks._factory)

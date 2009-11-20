@@ -7,6 +7,8 @@ Converts an internal document tree into a HTML tree.
 @license: GNU GPL, see COPYING for details.
 """
 
+from __future__ import absolute_import
+
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
@@ -547,5 +549,5 @@ class ConverterDocument(ConverterPage):
     """
 
 
-from _registry import default_registry
+from . import default_registry
 default_registry.register(ConverterPage._factory)

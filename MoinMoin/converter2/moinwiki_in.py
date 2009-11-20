@@ -17,11 +17,11 @@ from MoinMoin import config, wikiutil
 from MoinMoin.util import iri
 from MoinMoin.util.mime import Type, type_moin_document, type_moin_wiki
 from MoinMoin.util.tree import html, moin_page, xlink
+
+from . import default_registry
 from ._args import Arguments
-from MoinMoin.converter2._args import Arguments
-from MoinMoin.converter2._args_wiki import parse as parse_arguments
-from MoinMoin.converter2._registry import default_registry
-from MoinMoin.converter2._wiki_macro import ConverterMacro
+from ._args_wiki import parse as parse_arguments
+from ._wiki_macro import ConverterMacro
 
 
 class _Iter(object):

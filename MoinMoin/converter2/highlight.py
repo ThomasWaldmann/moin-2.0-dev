@@ -5,6 +5,8 @@ MoinMoin - Text highlighting converter
 @license: GNU GPL, see COPYING for details.
 """
 
+from __future__ import absolute_import
+
 from MoinMoin import wikiutil
 from MoinMoin.util.tree import html, moin_page
 
@@ -52,5 +54,5 @@ class Converter(object):
         self.recurse(tree)
         return tree
 
-from _registry import default_registry
+from . import default_registry
 default_registry.register(Converter._factory)
