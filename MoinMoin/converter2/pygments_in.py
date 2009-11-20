@@ -7,8 +7,44 @@ MoinMoin - Pygments driven syntax highlighting input converter
 
 from __future__ import absolute_import
 
+import pygments
+import pygments.formatter
+import pygments.lexers
+from pygments.token import Token
+
 from MoinMoin.util.mime import Type, type_moin_document
 from MoinMoin.util.tree import moin_page
+
+
+class TreeFormatter(pygments.formatter.Formatter):
+    classes = {
+            Token.Keyword: 'ResWord',
+            Token.Name: 'ID',
+    }
+
+    def _append(self, type, value, element):
+        class_ = self.classes.get(type)
+        if class_:
+            value = moin_page.span(attrib={moin_page.class_: class_}, children=(value, ))
+        element.append(value)
+
+    def format(self, tokensource, element):
+        lastval = ''
+        lasttype = None
+
+        for ttype, value in tokensource:
+            while ttype and ttype not in self.classes:
+                ttype = ttype.parent
+            if ttype == lasttype:
+                lastval += value
+            else:
+                if lastval:
+                    self._append(lasttype, lastval, element)
+                lastval = value
+                lasttype = ttype
+
+        if lastval:
+            self._append(lasttype, lastval, element)
 
 
 class Converter(object):
@@ -16,13 +52,11 @@ class Converter(object):
         self.request, self.type = request, type
 
     def __call__(self, content, arguments=None):
-        # XXX
-        blockcode = moin_page.blockcode(children=('Pygments highlighter: %s\n' % self.type))
+        blockcode = moin_page.blockcode(attrib={moin_page.class_: 'codearea'})
 
-        for line in content:
-            if len(blockcode):
-                blockcode.append('\n')
-            blockcode.append(line.expandtabs())
+        content = u'\n'.join(content)
+        lexer = pygments.lexers.get_lexer_by_name(self.type)
+        pygments.highlight(content, lexer, TreeFormatter(), blockcode)
 
         body = moin_page.body(children=(blockcode, ))
         return moin_page.page(children=(body, ))
