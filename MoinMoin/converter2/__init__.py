@@ -39,7 +39,7 @@ def _load():
                     except Exception, e:
                         import MoinMoin.log as logging
                         logger = logging.getLogger(__name__)
-                        logger.warn("Failed to import converter package %s: %s" % (module, e))
+                        logger.exception("Failed to import converter package %s: %s" % (module, e))
                 finally:
                     info[0].close()
 
