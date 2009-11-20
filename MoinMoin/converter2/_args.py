@@ -24,6 +24,10 @@ class Arguments(object):
     def __len__(self):
         return len(self.positional) + len(self.keyword)
 
+    def __repr__(self):
+        return '<%s(%r, %r)>' % (self.__class__.__name__,
+                self.positional, self.keyword)
+
     def items(self):
         """
         Return an iterator over all (key, value) pairs.
