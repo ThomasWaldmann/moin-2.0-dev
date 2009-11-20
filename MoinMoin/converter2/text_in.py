@@ -10,6 +10,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from __future__ import absolute_import
+
 from MoinMoin.util.tree import moin_page
 
 class Converter(object):
@@ -44,6 +46,6 @@ class Converter(object):
         body = moin_page.body(children=(blockcode, ))
         return moin_page.page(attrib=attrib, children=(body, ))
 
-from MoinMoin.converter2._registry import default_registry
+from . import default_registry
 # Register wildcards behind anything else
 default_registry.register(Converter.factory, default_registry.PRIORITY_LAST)

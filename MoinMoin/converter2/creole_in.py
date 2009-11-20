@@ -22,6 +22,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from __future__ import absolute_import
+
 import re
 from emeraldtree import ElementTree as ET
 
@@ -29,9 +31,10 @@ from MoinMoin import wikiutil
 from MoinMoin.util import iri
 from MoinMoin.util.mime import Type
 from MoinMoin.util.tree import moin_page, xlink
-from MoinMoin.converter2 import default_registry
-from MoinMoin.converter2._args_wiki import parse as parse_arguments
-from MoinMoin.converter2._wiki_macro import ConverterMacro
+
+from . import default_registry
+from ._args_wiki import parse as parse_arguments
+from ._wiki_macro import ConverterMacro
 
 class _Iter(object):
     """

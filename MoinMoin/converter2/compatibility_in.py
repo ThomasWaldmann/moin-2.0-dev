@@ -8,6 +8,8 @@ compatibility formatter to create a converter.
 @license: GNU GPL, see COPYING for details.
 """
 
+from __future__ import absolute_import
+
 from MoinMoin import wikiutil
 from MoinMoin.formatter.compatibility import Formatter
 from MoinMoin.util.tree import moin_page
@@ -55,6 +57,6 @@ def _factory(request, input, output):
 
         return cls
 
-from MoinMoin.converter2._registry import default_registry
+from . import default_registry
 # Need to register ourself after all normal parsers but before the wildcard
 default_registry.register(_factory, default_registry.PRIORITY_MIDDLE + 1)
