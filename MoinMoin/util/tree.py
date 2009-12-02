@@ -18,7 +18,7 @@ class Name(ET.QName):
 
 class Namespace(unicode):
     """
-    Represents a namespace
+    Represents a namespace and factory for Names within this namespace
     """
     def __call__(self, name):
         """
