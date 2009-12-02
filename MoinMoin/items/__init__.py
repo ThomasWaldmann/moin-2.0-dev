@@ -1021,11 +1021,11 @@ class Text(Binary):
                 Type(self.converter_mimetype or self.mimetype),
                 type_moin_document)
         IncludeConverter = reg.get(request, type_moin_document,
-                Type('application/x.moin.document;includes=expandall'))
+                type_moin_document, includes='expandall')
         MacroConverter = reg.get(request, type_moin_document,
-                Type('application/x.moin.document;macros=expandall'))
+                type_moin_document, macros='expandall')
         LinkConverter = reg.get(request, type_moin_document,
-                Type('application/x.moin.document;links=extern'))
+                type_moin_document, links='extern')
         # TODO: Real output format
         HtmlConverter = reg.get(request, type_moin_document,
                 Type('application/x-xhtml-moin-page'))

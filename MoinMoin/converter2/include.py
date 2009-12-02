@@ -14,6 +14,7 @@ import re
 
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
+from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page, xinclude, xlink
 
 class XPointer(list):
@@ -92,9 +93,10 @@ class Converter(object):
     tag_xi_xpointer = xinclude.xpointer
 
     @classmethod
-    def _factory(cls, _request, input, output, **kw):
-        if input == 'application/x.moin.document' and \
-                output == 'application/x.moin.document;includes=expandall':
+    def _factory(cls, _request, input, output, includes=None, **kw):
+        if (type_moin_document.issupertype(input) and
+                type_moin_document.issupertype(output) and
+                includes == 'expandall'):
             return cls
 
     def recurse(self, elem, page_href):

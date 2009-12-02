@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 from MoinMoin import macro, Page, wikiutil
 from MoinMoin.converter2._args import Arguments
 from MoinMoin.util import iri
+from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page
 
 class _PseudoParser(object):
@@ -49,9 +50,10 @@ class _PseudoRequest(object):
 
 class Converter(object):
     @classmethod
-    def _factory(cls, _request, input, output, **kw):
-        if input == 'application/x.moin.document' and \
-                output == 'application/x.moin.document;macros=expandall':
+    def _factory(cls, _request, input, output, macros=None, **kw):
+        if (type_moin_document.issupertype(input) and
+                type_moin_document.issupertype(output) and
+                macros == 'expandall'):
             return cls
 
     def handle_macro(self, elem, page):
