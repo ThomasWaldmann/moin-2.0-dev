@@ -77,7 +77,7 @@ class Converter(object):
         return moin_page.page(children=(body, ))
 
 
-def _factory(_request, type_input, type_output):
+def _factory(_request, type_input, type_output, **kw):
     if type_moin_document.issupertype(type_output):
         if Type('text/x-diff').issupertype(type_input):
             pygments_type = 'diff'

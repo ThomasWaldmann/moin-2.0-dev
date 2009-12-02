@@ -92,7 +92,7 @@ class Converter(object):
     tag_xi_xpointer = xinclude.xpointer
 
     @classmethod
-    def _factory(cls, request, input, output):
+    def _factory(cls, _request, input, output, **kw):
         if input == 'application/x.moin.document' and \
                 output == 'application/x.moin.document;includes=expandall':
             return cls

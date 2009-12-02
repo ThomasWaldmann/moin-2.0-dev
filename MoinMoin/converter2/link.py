@@ -56,7 +56,7 @@ class ConverterBase(object):
 
 class ConverterExternOutput(ConverterBase):
     @classmethod
-    def _factory(cls, request, input, output):
+    def _factory(cls, _request, input, output, **kw):
         if input == 'application/x.moin.document' and \
                 output == 'application/x.moin.document;links=extern':
             return cls

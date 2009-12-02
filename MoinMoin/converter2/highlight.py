@@ -13,7 +13,7 @@ from MoinMoin.util.tree import html, moin_page
 
 class Converter(object):
     @classmethod
-    def _factory(cls, request, input, output):
+    def _factory(cls, _request, input, output, **kw):
         if input == 'application/x.moin.document' and \
                 output == 'application/x.moin.document;highlight=regex':
             return cls

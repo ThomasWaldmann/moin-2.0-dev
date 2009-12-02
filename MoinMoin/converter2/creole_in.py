@@ -103,7 +103,7 @@ class _Stack(list):
 
 class Converter(ConverterMacro):
     @classmethod
-    def factory(cls, _request, input, output):
+    def factory(cls, _request, input, output, **kw):
         if output.type == 'application' and output.subtype == 'x.moin.document':
             if input.type == 'text' and input.subtype == 'x.moin.creole':
                 return cls

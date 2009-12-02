@@ -37,7 +37,7 @@ class Converter(object):
 
         return root
 
-def _factory(request, input, output):
+def _factory(request, input, output, **kw):
     """
     Creates a class dynamicaly which uses the matching old-style parser and
     compatiblity formatter.
