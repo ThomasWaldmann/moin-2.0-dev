@@ -1,13 +1,13 @@
 """
-MoinMoin - Tests for MoinMoin.converter2._registry
+MoinMoin - Tests for MoinMoin.util.registry
 
-@copyright: 2008 MoinMoin:BastianBlank
+@copyright: 2008,2009 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
 
 import py.test
 
-from MoinMoin.converter2._registry import *
+from MoinMoin.util.registry import *
 
 def factory_all(request, input, output):
     return 1
@@ -23,7 +23,7 @@ def factory_special(request, input, output):
         return 2
 
 def test_get():
-    r = Registry()
+    r = RegistryBase()
 
     r.register(factory_none)
     r.register(factory_special)
@@ -39,7 +39,7 @@ def test_get():
     assert r.get(object(), 'a', None) == 3
 
 def test_register():
-    r = Registry()
+    r = RegistryBase()
     assert len(r._converters) == 0
     r.register(factory_all)
     assert len(r._converters) == 1
@@ -49,7 +49,7 @@ def test_register():
     assert len(r._converters) == 2
 
 def test_unregister():
-    r = Registry()
+    r = RegistryBase()
     r.register(factory_all)
     r.register(factory_none)
 
