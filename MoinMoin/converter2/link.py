@@ -16,6 +16,7 @@ import urllib
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.util import iri
+from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page, xlink
 
 class ConverterBase(object):
@@ -56,9 +57,10 @@ class ConverterBase(object):
 
 class ConverterExternOutput(ConverterBase):
     @classmethod
-    def _factory(cls, _request, input, output, **kw):
-        if input == 'application/x.moin.document' and \
-                output == 'application/x.moin.document;links=extern':
+    def _factory(cls, _request, input, output, links=None, **kw):
+        if (type_moin_document.issupertype(input) and 
+                type_moin_document.issupertype(output) and
+                links == 'extern'):
             return cls
 
     # TODO: Deduplicate code
@@ -110,9 +112,10 @@ class ConverterExternOutput(ConverterBase):
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
-    def _factory(cls, request, input, output):
-        if input == 'application/x.moin.document' and \
-                output == 'application/x.moin.document;links=pagelinks':
+    def _factory(cls, _request, input, output, links=None, **kw):
+        if (type_moin_document.issupertype(input) and 
+                type_moin_document.issupertype(output) and
+                links == 'pagelinks'):
             return cls
 
     def handle_wikilocal(self, elem, input, page):
