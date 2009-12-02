@@ -41,4 +41,3 @@ class Registry(object):
 
     def unregister(self, factory):
         self._converters.remove(factory)
-        self._sort()
