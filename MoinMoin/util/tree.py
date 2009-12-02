@@ -16,13 +16,10 @@ class Name(ET.QName):
         return ET.Element(self, attrib=attrib, children=children, **extra)
 
 
-class Namespace(object):
+class Namespace(unicode):
     """
     Represents a namespace
     """
-    def __init__(self, namespace):
-        self.namespace = namespace
-
     def __call__(self, name):
         """
         Create a Name within this namespace
@@ -30,7 +27,7 @@ class Namespace(object):
         @param name: The name within this namespace.
         @return: A Name
         """
-        return Name(name, self.namespace)
+        return Name(name, self)
 
     def __getattr__(self, key):
         """
@@ -43,18 +40,18 @@ class Namespace(object):
 
         @return: A Name
         """
+        if key.startswith('_'):
+            raise AttributeError(key)
         if key.endswith('_'):
             key = key[:-1]
-        return Name(key.replace('_', '-'), self.namespace)
+        return Name(key.replace('_', '-'), self)
 
     def __repr__(self):
-        return '<%s(%r)>' % (self.__class__.__name__, self.namespace)
+        return '<%s(%r)>' % (self.__class__.__name__, unicode(self))
 
-    def __str__(self):
-        return self.namespace
-
-    def __unicode__(self):
-        return self.namespace
+    @property
+    def namespace(self):
+        return self
 
 
 # MoinMoin namespaces
