@@ -6,7 +6,7 @@ MoinMoin - Module registry
 """
 
 
-class RegistryBase(object):
+class Registry(object):
     PRIORITY_REALLY_FIRST = -20
     PRIORITY_FIRST = -10
     PRIORITY_MIDDLE = 0

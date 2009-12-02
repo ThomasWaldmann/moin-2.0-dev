@@ -5,7 +5,7 @@ MoinMoin - Converter registry
 @license: GNU GPL, see COPYING for details.
 """
 
-from MoinMoin.util.registry import RegistryBase
+from MoinMoin.util.registry import Registry as RegistryBase
 
 class Registry(RegistryBase):
     def get(self, request, input, output):
@@ -14,7 +14,7 @@ class Registry(RegistryBase):
         @param output Input MIME-Type
         @return A converter or default value
         """
-        ret = self._get(request, input, output)
+        ret = super(Registry, self).get(request, input, output)
         if ret:
             return ret
         raise TypeError(u"Couldn't find converter for %s to %s" % (input, output))
