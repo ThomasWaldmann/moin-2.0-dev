@@ -7,21 +7,42 @@ MoinMoin - Tree name and element generator
 
 from emeraldtree import ElementTree as ET
 
+
 class Name(ET.QName):
     """
-    QName and factory for elements with this QName
+    Represents a QName and factory for elements with this QName
     """
     def __call__(self, attrib=None, children=(), **extra):
         return ET.Element(self, attrib=attrib, children=children, **extra)
 
+
 class Namespace(object):
+    """
+    Represents a namespace
+    """
     def __init__(self, namespace):
         self.namespace = namespace
 
     def __call__(self, name):
+        """
+        Create a Name within this namespace
+
+        @param name: The name within this namespace.
+        @return: A Name
+        """
         return Name(name, self.namespace)
 
     def __getattr__(self, key):
+        """
+        Create a Name within this namespace
+
+        The given key is used to generate a QName within the represented
+        namespace.  Two modifications are applied to the key:
+         - a trailing "_" (underline) is removed and
+         - all included "_" (underline) are replaced by "-" (minus).
+
+        @return: A Name
+        """
         if key.endswith('_'):
             key = key[:-1]
         return Name(key.replace('_', '-'), self.namespace)
@@ -35,7 +56,8 @@ class Namespace(object):
     def __unicode__(self):
         return self.namespace
 
-# Own namespaces
+
+# MoinMoin namespaces
 moin_page = Namespace('http://moinmo.in/namespaces/page')
 
 # Well-known namespaces
