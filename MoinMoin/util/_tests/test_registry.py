@@ -23,7 +23,7 @@ def factory_special(request, input, output):
         return 2
 
 def test_get():
-    r = RegistryBase()
+    r = Registry()
 
     r.register(factory_none)
     r.register(factory_special)
@@ -39,7 +39,7 @@ def test_get():
     assert r.get(object(), 'a', None) == 3
 
 def test_register():
-    r = RegistryBase()
+    r = Registry()
     assert len(r._converters) == 0
     r.register(factory_all)
     assert len(r._converters) == 1
@@ -49,7 +49,7 @@ def test_register():
     assert len(r._converters) == 2
 
 def test_unregister():
-    r = RegistryBase()
+    r = Registry()
     r.register(factory_all)
     r.register(factory_none)
 
