@@ -171,7 +171,7 @@ class _TableArguments(object):
 
 class Converter(ConverterMacro):
     @classmethod
-    def factory(cls, _request, input, output):
+    def factory(cls, _request, input, output, **kw):
         if type_moin_document.issupertype(output):
             if type_moin_wiki.issupertype(input):
                 return cls

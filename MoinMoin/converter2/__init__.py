@@ -21,13 +21,13 @@ from MoinMoin.util.registry import Registry as _RegistryBase
 
 
 class Registry(_RegistryBase):
-    def get(self, request, input, output):
+    def get(self, request, input, output, **kw):
         """
         @param input Input MIME-Type
         @param output Input MIME-Type
         @return A converter or default value
         """
-        ret = super(Registry, self).get(request, input, output)
+        ret = super(Registry, self).get(request, input, output, **kw)
         if ret:
             return ret
         raise TypeError(u"Couldn't find converter for %s to %s" % (input, output))
