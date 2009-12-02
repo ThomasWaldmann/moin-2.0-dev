@@ -25,17 +25,14 @@ class RegistryBase(object):
     def __init__(self):
         self._converters = []
 
-    def _get(self, *args, **kw):
-        for entry in self._converters:
-            conv = entry.factory(*args, **kw)
-            if conv is not None:
-                return conv
-
     def _sort(self):
         self._converters.sort(key=lambda a: a.priority)
 
     def get(self, *args, **kw):
-        raise NotImplementedError
+        for entry in self._converters:
+            conv = entry.factory(*args, **kw)
+            if conv is not None:
+                return conv
 
     def register(self, factory, priority=PRIORITY_MIDDLE):
         if factory not in self._converters:
