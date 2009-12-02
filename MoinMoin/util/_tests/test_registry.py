@@ -9,17 +9,17 @@ import py.test
 
 from MoinMoin.util.registry import *
 
-def factory_all(request, input, output):
+def factory_all(arg):
     return 1
 
-def factory_all2(request, input, output):
+def factory_all2(arg):
     return 3
 
-def factory_none(request, input, output):
+def factory_none(arg):
     pass
 
-def factory_special(request, input, output):
-    if input == 'a':
+def factory_special(arg):
+    if arg == 'a':
         return 2
 
 def test_get():
@@ -27,16 +27,15 @@ def test_get():
 
     r.register(factory_none)
     r.register(factory_special)
-    assert r.get(object(), 'a', None) == 2
-    py.test.raises(TypeError, r.get, None, None)
+    assert r.get('a') == 2
 
     r.register(factory_all)
-    assert r.get(object(), None, None) == 1
-    assert r.get(object(), 'a', None) == 2
+    assert r.get(None) == 1
+    assert r.get('a') == 2
 
     r.register(factory_all2, r.PRIORITY_FIRST)
-    assert r.get(object(), None, None) == 3
-    assert r.get(object(), 'a', None) == 3
+    assert r.get(None) == 3
+    assert r.get('a') == 3
 
 def test_register():
     r = Registry()
