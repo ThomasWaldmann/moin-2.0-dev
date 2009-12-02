@@ -39,24 +39,24 @@ def test_get():
 
 def test_register():
     r = Registry()
-    assert len(r._converters) == 0
+    assert len(r._entries) == 0
     r.register(factory_all)
-    assert len(r._converters) == 1
+    assert len(r._entries) == 1
     r.register(factory_none)
-    assert len(r._converters) == 2
+    assert len(r._entries) == 2
     r.register(factory_none)
-    assert len(r._converters) == 2
+    assert len(r._entries) == 2
 
 def test_unregister():
     r = Registry()
     r.register(factory_all)
     r.register(factory_none)
 
-    assert len(r._converters) == 2
+    assert len(r._entries) == 2
     r.unregister(factory_all)
-    assert len(r._converters) == 1
+    assert len(r._entries) == 1
     r.unregister(factory_none)
-    assert len(r._converters) == 0
+    assert len(r._entries) == 0
     py.test.raises(ValueError, r.unregister, factory_none)
-    assert len(r._converters) == 0
+    assert len(r._entries) == 0
 

@@ -1,7 +1,11 @@
 """
 MoinMoin - Module registry
 
-@copyright: 2008-2009 MoinMoin:BastianBlank
+Every module registers a factory for itself at the registry with a given
+priority.  During the lookup each factory is called with the given arguments and
+can return a callable to consider itself as a match.
+
+@copyright: 2008,2009 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -23,21 +27,37 @@ class Registry(object):
             return cmp(self.factory, other)
 
     def __init__(self):
-        self._converters = []
+        self._entries = []
 
     def _sort(self):
-        self._converters.sort(key=lambda a: a.priority)
+        self._entries.sort(key=lambda a: a.priority)
 
     def get(self, *args, **kw):
-        for entry in self._converters:
+        """
+        Lookup a matching module
+
+        Each registered factory is called with the given arguments and
+        the first matching wins.
+        """
+        for entry in self._entries:
             conv = entry.factory(*args, **kw)
             if conv is not None:
                 return conv
 
     def register(self, factory, priority=PRIORITY_MIDDLE):
-        if factory not in self._converters:
-            self._converters.append(self._Entry(factory, priority))
+        """
+        Register a factory
+
+        @param factory: Factory to register. Callable, have to return a class
+        """
+        if factory not in self._entries:
+            self._entries.append(self._Entry(factory, priority))
             self._sort()
 
     def unregister(self, factory):
-        self._converters.remove(factory)
+        """
+        Unregister a factory
+
+        @param: factory: Factory to unregister
+        """
+        self._entries.remove(factory)
