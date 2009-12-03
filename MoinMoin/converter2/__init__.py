@@ -30,7 +30,7 @@ class Registry(_RegistryBase):
         ret = super(Registry, self).get(request, input, output, **kw)
         if ret:
             return ret
-        raise TypeError(u"Couldn't find converter for %s to %s" % (input, output))
+        raise TypeError(u"Couldn't find converter for %s to %s with %r" % (input, output, kw))
 
 
 # TODO: Move somewhere else. Also how to do that for per-wiki modules?
