@@ -38,18 +38,14 @@ def _factory(request, input, output, **kw):
     Creates a class dynamicaly which uses the matching old-style parser and
     compatiblity formatter.
     """
-    import logging
-    logging.warn("compatibility %r %r", input, output)
     if (type_moin_document.issupertype(output) and
             Type('x-moin/format').issupertype(input)):
         try:
             name = input.parameters.get('name')
-            logging.warn("name %r", name)
             parser = wikiutil.searchAndImportPlugin(
                     request.cfg, "parser", name)
         # If the plugin is not available, ignore it
         except wikiutil.PluginMissingError:
-            logging.warn("not found")
             return
 
         return type('Converter.%s' % str(name), (Converter, ), {'parser': parser})
