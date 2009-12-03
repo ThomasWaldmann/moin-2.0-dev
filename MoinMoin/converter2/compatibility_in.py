@@ -20,18 +20,18 @@ class Converter(object):
         self.request = request
 
     def __call__(self, content):
-        root = moin_page.page()
-
         text = '\n'.join(content)
 
-        parser = self.parser(text, self.request, format_args='')
-        formatter = Formatter(self.request)
+        formatter = Formatter(self.request, 'Parser ' + self.name)
+        parser = self.parser(text, formatter.request, format_args='')
 
         parser.format(formatter)
 
-        root.extend(formatter.root)
+        body = moin_page.body()
 
-        return root
+        body.extend(formatter.root)
+
+        return moin_page.page(children=(body, ))
 
 def _factory(request, input, output, **kw):
     """
@@ -48,7 +48,7 @@ def _factory(request, input, output, **kw):
         except wikiutil.PluginMissingError:
             return
 
-        return type('Converter.%s' % str(name), (Converter, ), {'parser': parser})
+        return type('Converter.%s' % str(name), (Converter, ), {'name': name, 'parser': parser})
 
 from . import default_registry
 # Need to register ourself after all normal parsers but before the wildcard

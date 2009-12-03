@@ -19,6 +19,27 @@ from MoinMoin.util import iri
 from MoinMoin.util.tree import html, moin_page, xlink
 
 
+class CheckRequest(object):
+    def __init__(self, request, name):
+        self.__request, self.__name = request, name
+        self.written = []
+
+    def __getattr__(self, name):
+        return getattr(self.__request, name)
+
+    def write(self, *text):
+        if not self.written:
+            text_warn = ''.join((i.encode('ascii', 'replace') for i in text))
+            if text_warn:
+                text_warn.replace('\n', ' ')
+                if len(text_warn) > 100:
+                    text_warn = text_warn[:100] + '...'
+                from warnings import warn
+                message = self.__name + ' used request.write: ' + text_warn
+                warn(message, DeprecationWarning, stacklevel=2)
+        self.written.extend(text)
+
+
 class Formatter(ConverterMacro):
     hardspace = ' '
 
@@ -53,8 +74,8 @@ class Formatter(ConverterMacro):
 
     tag_html_class = html.class_
 
-    def __init__(self, request, page=None, **kw):
-        self.request, self.page = request, page
+    def __init__(self, request, name, **kw):
+        self.request = CheckRequest(request, name)
         self._ = request.getText
 
         self._store_pagelinks = kw.get('store_pagelinks', 0)
@@ -63,8 +84,13 @@ class Formatter(ConverterMacro):
         self.in_pre = 0
         self._base_depth = 0
 
-        self.root = moin_page.div()
-        self._stack = [self.root]
+        self._root = moin_page.body()
+        self._stack = [self._root]
+
+    @property
+    def root(self):
+        self._check()
+        return self._root
 
     def handle_on(self, on, tag, attrib={}):
         if on:
@@ -103,6 +129,7 @@ class Formatter(ConverterMacro):
     # Links ##############################################################
 
     def pagelink(self, on, pagename='', page=None, **kw):
+        self._check()
         if on:
             if not pagename and page:
                 pagename = page.page_name
@@ -114,6 +141,7 @@ class Formatter(ConverterMacro):
         return ''
 
     def interwikilink(self, on, interwiki='', pagename='', **kw):
+        self._check()
         if on:
             link = unicode(iri.Iri(scheme='wiki',
                 authority=interwiki,
@@ -133,18 +161,22 @@ class Formatter(ConverterMacro):
     # Attachments ######################################################
 
     def attachment_link(self, on, url=None, **kw):
+        self._check()
         # TODO
         return ''
 
     def attachment_image(self, url, **kw):
+        self._check()
         # TODO
         return ''
 
     def attachment_drawing(self, url, text, **kw):
+        self._check()
         # TODO
         return ''
 
     def attachment_inlined(self, url, text, **kw):
+        self._check()
         # TODO
         return ''
 
@@ -152,6 +184,7 @@ class Formatter(ConverterMacro):
         raise NotImplementedError('anchordef')
 
     def line_anchordef(self, lineno):
+        self._check()
         # TODO
         #id = 'line-%d' % lineno
         #self._stack_top_append(ET.Element(self.tag_span, attrib={self.tag_id: id}))
@@ -170,6 +203,7 @@ class Formatter(ConverterMacro):
         In particular an 'alt' or 'title' argument should give a description
         of the image.
         """
+        self._check()
         # TODO
         return ''
         title = src
@@ -191,16 +225,19 @@ class Formatter(ConverterMacro):
         raise NotImplementedError('transclusion_param')
 
     def smiley(self, text):
+        self._check()
         # TODO
         return ''
 
     def nowikiword(self, text):
+        self._check()
         self._stack_top_append(text)
         return ''
 
     # Text and Text Attributes ###########################################
 
     def text(self, text, **kw):
+        self._check()
         self._stack_top_append(unicode(text))
         return ''
 
@@ -208,12 +245,15 @@ class Formatter(ConverterMacro):
         raise NotImplementedError('_text')
 
     def strong(self, on, **kw):
+        self._check()
         return self.handle_on(on, self.tag_strong)
 
     def emphasis(self, on, **kw):
+        self._check()
         return self.handle_on(on, self.tag_emphasis)
 
     def underline(self, on, **kw):
+        self._check()
         # TODO
         return ''
 
@@ -221,18 +261,22 @@ class Formatter(ConverterMacro):
         raise NotImplementedError('highlight')
 
     def sup(self, on, **kw):
+        self._check()
         # TODO
         return ''
 
     def sub(self, on, **kw):
+        self._check()
         # TODO
         return ''
 
     def strike(self, on, **kw):
+        self._check()
         # TODO
         return ''
 
     def code(self, on, **kw):
+        self._check()
         if on:
             self._stack_push(moin_page.code())
         else:
@@ -240,25 +284,30 @@ class Formatter(ConverterMacro):
         return ''
 
     def preformatted(self, on, **kw):
+        self._check()
         self.in_pre = on != 0
         return self.handle_on(on, self.tag_blockcode)
 
     def small(self, on, **kw):
+        self._check()
         attrib = {self.tag_font_size: '85%'}
         return self.handle_on(on, self.tag_span, attrib)
 
     def big(self, on, **kw):
+        self._check()
         attrib = {self.tag_font_size: '120%'}
         return self.handle_on(on, self.tag_span, attrib)
 
     # special markup for syntax highlighting #############################
 
     def code_area(self, on, code_id, code_type='code', show=0, start=-1, step=-1):
+        self._check()
         # TODO
         attrib = {self.tag_html_class: 'codearea'}
         return self.handle_on(on, self.tag_blockcode, attrib)
 
     def code_line(self, on):
+        self._check()
         # TODO
         if on:
             self._stack_push(self.tag_span())
@@ -268,6 +317,7 @@ class Formatter(ConverterMacro):
         return ''
 
     def code_token(self, on, tok_type):
+        self._check()
         # TODO
         attrib = {self.tag_html_class: tok_type}
         return self.handle_on(on, self.tag_span, attrib)
@@ -275,14 +325,17 @@ class Formatter(ConverterMacro):
     # Paragraphs, Lines, Rules ###########################################
 
     def linebreak(self, preformatted=1):
+        self._check()
         self._stack_top_append(moin_page.line_break())
         return ''
 
     def paragraph(self, on, **kw):
+        self._check()
         self.in_p = on != 0
         return self.handle_on(on, self.tag_p)
 
     def rule(self, size=0, **kw):
+        self._check()
         self._stack_top_append(moin_page.separator())
         return ''
 
@@ -293,14 +346,17 @@ class Formatter(ConverterMacro):
     # Lists ##############################################################
 
     def number_list(self, on, type=None, start=None, **kw):
+        self._check()
         attrib = {self.tag_item_label_generate: 'ordered'}
         return self.handle_on(on, self.tag_list, attrib)
 
     def bullet_list(self, on, **kw):
+        self._check()
         attrib = {self.tag_item_label_generate: 'unordered'}
         return self.handle_on(on, self.tag_list, attrib)
 
     def listitem(self, on, **kw):
+        self._check()
         if on:
             elem_item_body = self.tag_list_item_body()
             elem_item = self.tag_list_item(children=[elem_item_body])
@@ -316,6 +372,7 @@ class Formatter(ConverterMacro):
         return ''
 
     def definition_list(self, on, **kw):
+        self._check()
         if on:
             self._stack_push(ET.Element(None))
         else:
@@ -358,12 +415,15 @@ class Formatter(ConverterMacro):
         return ''
 
     def definition_term(self, on, compact=0, **kw):
+        self._check()
         return self.handle_on(on, self.tag_list_item_label)
 
     def definition_desc(self, on, **kw):
+        self._check()
         return self.handle_on(on, self.tag_list_item_body)
 
     def heading(self, on, depth, **kw):
+        self._check()
         attrib = {self.tag_outline_level: str(depth)}
         return self.handle_on(on, self.tag_h, attrib)
 
@@ -412,6 +472,7 @@ class Formatter(ConverterMacro):
         return ret
 
     def table(self, on, attrib={}, **kw):
+        self._check()
         if on:
             elem_body = self.tag_table_body()
             attrib = self._checkTableAttr(attrib, 'table')
@@ -423,10 +484,12 @@ class Formatter(ConverterMacro):
         return ''
 
     def table_row(self, on, attrib={}, **kw):
+        self._check()
         attrib = self._checkTableAttr(attrib, 'row')
         return self.handle_on(on, self.tag_table_row, attrib)
 
     def table_cell(self, on, attrib={}, **kw):
+        self._check()
         attrib = self._checkTableAttr(attrib, '')
         return self.handle_on(on, self.tag_table_cell, attrib)
 
@@ -487,10 +550,12 @@ class Formatter(ConverterMacro):
 
     def div(self, on, **kw):
         """ open/close a blocklevel division """
+        self._check()
         return self.handle_on(on, self.tag_div)
 
     def span(self, on, **kw):
         """ open/close a inline span """
+        self._check()
         return self.handle_on(on, self.tag_span)
 
     def rawHTML(self, markup):
@@ -501,6 +566,8 @@ class Formatter(ConverterMacro):
             effects, like loss of markup or insertion of CDATA sections
             when output goes to XML formats.
         """
+        self._check()
+
         if not markup:
             return ''
 
@@ -514,10 +581,12 @@ class Formatter(ConverterMacro):
         return ''
 
     def escapedText(self, text, **kw):
+        self._check()
         self._stack_top_append(text)
         return ''
 
     def comment(self, text, **kw):
+        self._check()
         return ""
 
     # ID handling #################################################
@@ -559,6 +628,12 @@ class Formatter(ConverterMacro):
         return id
 
     # Internal
+
+    def _check(self):
+        if self.request.written:
+            written = self.request.written
+            self.request.written = []
+            self.rawHTML(''.join(written))
 
     def _stack_pop(self):
         # Don't remve the last object
