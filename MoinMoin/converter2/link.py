@@ -20,10 +20,6 @@ from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page, xlink
 
 class ConverterBase(object):
-    tag_class = html.class_
-    tag_href = xlink.href
-    tag_page_href = moin_page.page_href
-
     def handle_wiki(self, elem, link):
         pass
 
@@ -31,11 +27,11 @@ class ConverterBase(object):
         pass
 
     def recurse(self, elem, page):
-        new_page_href = elem.get(self.tag_page_href)
+        new_page_href = elem.get(moin_page.page_href)
         if new_page_href:
             page = iri.Iri(new_page_href)
 
-        href = elem.get(self.tag_href)
+        href = elem.get(xlink.href)
         if href:
             yield elem, iri.Iri(href), page
 
@@ -73,7 +69,7 @@ class ConverterExternOutput(ConverterBase):
             if not err:
                 output = iri.Iri(wikiutil.join_wiki(wikiurl, wikitail)) + link
 
-                elem.set(self.tag_class, 'interwiki')
+                elem.set(html.class_, 'interwiki')
             else:
                 # TODO
                 link.path = input.path[1:]
@@ -83,7 +79,7 @@ class ConverterExternOutput(ConverterBase):
             link.path = input.path[1:]
             output = iri.Iri(self.request.url_root) + link
 
-        elem.set(self.tag_href, unicode(output))
+        elem.set(xlink.href, unicode(output))
 
     def handle_wikilocal(self, elem, input, page):
         link = iri.Iri(query=input.query, fragment=input.fragment)
@@ -102,13 +98,13 @@ class ConverterExternOutput(ConverterBase):
 
             page = Page(self.request, unicode(link.path), None)
             if not page.exists():
-                elem.set(self.tag_class, 'nonexistent')
+                elem.set(html.class_, 'nonexistent')
         else:
             link.path = page.path[1:]
 
         output = iri.Iri(self.request.url_root) + link
 
-        elem.set(self.tag_href, unicode(output))
+        elem.set(xlink.href, unicode(output))
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
