@@ -12,24 +12,20 @@ from __future__ import absolute_import
 
 from MoinMoin import wikiutil
 from MoinMoin.formatter.compatibility import Formatter
+from MoinMoin.util.mime import Type, type_moin_document
 from MoinMoin.util.tree import moin_page
 
 class Converter(object):
-    def __init__(self, request, page, args, parser):
-        self.request, self.page, self.args = request, page, args
-        self.parser = parser
+    def __init__(self, request):
+        self.request = request
 
     def __call__(self, content):
-        attrib = {}
-        if self.page is not None:
-            attrib[moin_page.page_href] = unicode(self.page)
-
-        root = moin_page.page(attrib=attrib)
+        root = moin_page.page()
 
         text = '\n'.join(content)
 
-        parser = self.parser(text, self.request, format_args=self.args or '')
-        formatter = Formatter(self.request, self.page)
+        parser = self.parser(text, self.request, format_args='')
+        formatter = Formatter(self.request)
 
         parser.format(formatter)
 
@@ -42,20 +38,21 @@ def _factory(request, input, output, **kw):
     Creates a class dynamicaly which uses the matching old-style parser and
     compatiblity formatter.
     """
-    if output == 'application/x.moin.document':
+    import logging
+    logging.warn("compatibility %r %r", input, output)
+    if (type_moin_document.issupertype(output) and
+            Type('x-moin/format').issupertype(input)):
         try:
+            name = input.parameters.get('name')
+            logging.warn("name %r", name)
             parser = wikiutil.searchAndImportPlugin(
-                    request.cfg, "parser", unicode(input))
+                    request.cfg, "parser", name)
         # If the plugin is not available, ignore it
         except wikiutil.PluginMissingError:
+            logging.warn("not found")
             return
 
-        cls = type('Converter.%s' % str(input), (Converter, ), {})
-        def init(self, request, page=None, args=None):
-            super(cls, self).__init__(request, page, args, parser)
-        cls.__init__ = init
-
-        return cls
+        return type('Converter.%s' % str(name), (Converter, ), {'parser': parser})
 
 from . import default_registry
 # Need to register ourself after all normal parsers but before the wildcard
