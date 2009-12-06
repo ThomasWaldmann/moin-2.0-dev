@@ -139,7 +139,6 @@ optional_help_pages = [
     _('HelpIndex'),
     _('HelpOnAccessControlLists'),
     _('HelpOnActions'),
-    _('HelpOnActions/AttachFile'),
     _('HelpOnAdmonitions'),
     _('HelpOnAutoAdmin'),
     _('HelpOnCategories'),

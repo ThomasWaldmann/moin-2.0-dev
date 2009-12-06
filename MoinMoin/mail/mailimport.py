@@ -15,7 +15,6 @@ from email.Utils import getaddresses, parsedate_tz, mktime_tz
 from email.header import decode_header
 
 from MoinMoin import user
-from MoinMoin.action.AttachFile import add_attachment, AttachmentAlreadyExists
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 
@@ -228,7 +227,9 @@ def import_mail_from_message(request, message):
 
     attachments = []
 
-    for att in msg['attachments']:
+    if False:
+        # was: for att in msg['attachments']:
+        # TODO reimplement this with items
         i = 0
         while i < 1000: # do not create a gazillion attachments if something
                         # strange happens, give up after 1000.
