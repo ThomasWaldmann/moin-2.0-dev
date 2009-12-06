@@ -577,8 +577,7 @@ class DomainSearch(BaseFieldSearch):
         super(DomainSearch, self).__init__(pattern.lower(), use_re, case=False)
 
     def _get_matches(self, page):
-        checks = {'underlay': page.isUnderlayPage,
-                  'standard': page.isStandardPage,
+        checks = {'standard': page.isStandardPage,
                   'system': lambda page=page: wikiutil.isSystemPage(page.request, page.page_name),
                  }
 
