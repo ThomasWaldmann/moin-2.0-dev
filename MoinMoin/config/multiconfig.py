@@ -524,31 +524,6 @@ file. It should match the actual charset of the configuration file.
                                 raise error.ConfigurationError(message %
                                                                {'name': name})
 
-    def _check_directories(self):
-        """ Make sure directories are accessible
-
-        data/ should exists and allow read, write and
-        execute.
-        """
-        mode = os.F_OK | os.R_OK | os.W_OK | os.X_OK
-        attr = 'data_dir'
-        path = getattr(self, attr)
-
-        path_pages = os.path.join(path, "pages")
-        if not (os.path.isdir(path_pages) and os.access(path_pages, mode)):
-            msg = """
-%(attr)s "%(path)s" does not exist, or has incorrect ownership or
-permissions.
-
-Make sure the directory and the subdirectory "pages" are owned by the web
-server and are readable, writable and executable by the web server user
-and group.
-
-It is recommended to use absolute paths and not relative paths. Check
-also the spelling of the directory name.
-""" % {'attr': attr, 'path': path, }
-            raise error.ConfigurationError(msg)
-
     def _loadPluginModule(self):
         """
         import all plugin modules
