@@ -83,6 +83,7 @@ def preload_xml(context):
         item_count = 0
         for item in tmp_backend.iteritems():
             item_count += 1
+        logging.debug("preloaded xml into tmp_backend: %s, %d items" % (xmlfile, item_count))
         try:
             # In case the server was restarted we cannot know whether
             # the xml data already exists in the target backend.
@@ -95,6 +96,7 @@ def preload_xml(context):
             # if there is some exception, we assume that backend needs to be filled
             # we need to use it as unserialization target so that update mode of
             # unserialization creates the correct item revisions
+            logging.debug("unserialize xml file %s into %r" % (xmlfile, backend))
             unserialize(backend, xmlfile)
     else:
         item_count = 0
