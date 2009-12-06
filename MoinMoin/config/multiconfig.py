@@ -678,14 +678,6 @@ class DefaultExpression(object):
 # information on the layout of this structure.
 #
 options_no_group_name = {
-  # =========================================================================
-  'attachment_extension': ("Mapping of attachment extensions to actions", None,
-  (
-   ('extensions_mapping',
-       {'.tdraw': {'modify': 'twikidraw'},
-        '.adraw': {'modify': 'anywikidraw'},
-       }, "file extension -> do -> action"),
-  )),
   # ==========================================================================
   'datastruct': ('Datastruct settings', None, (
     ('dicts', lambda cfg, request: datastruct.WikiDicts(request),
@@ -774,13 +766,6 @@ options_no_group_name = {
       'microsoft.url.control|mirror| mj12bot|msnbot|msrbot|neomo|nutbot|omniexplorer|puf|robot|scooter|seekbot|'
       'sherlock|slurp|sitecheck|snoopy|spider|teleport|twiceler|voilabot|voyager|webreaper|wget|yeti'),
      "A regex of HTTP_USER_AGENTs that should be excluded from logging and are not allowed to use actions."),
-
-    ('unzip_single_file_size', 2.0 * 1000 ** 2,
-     "max. size of a single file in the archive which will be extracted [bytes]"),
-    ('unzip_attachments_space', 200.0 * 1000 ** 2,
-     "max. total amount of bytes can be used to unzip files [bytes]"),
-    ('unzip_attachments_count', 101,
-     "max. number of files which are extracted from the zip file"),
   )),
   # ==========================================================================
   'style': ('Style / Theme / UI related',
@@ -971,7 +956,7 @@ options_no_group_name = {
      "if True, add timing infos to the log output to analyse load conditions"),
 
     # some dangerous mimetypes (we don't use "content-disposition: inline" for them when a user
-    # downloads such attachments, because the browser might execute e.g. Javascript contained
+    # downloads such data, because the browser might execute e.g. Javascript contained
     # in the HTML and steal your moin session cookie or do other nasty stuff)
     ('mimetypes_xss_protect',
      [
@@ -979,7 +964,7 @@ options_no_group_name = {
        'application/x-shockwave-flash',
        'application/xhtml+xml',
      ],
-     '"content-disposition: inline" isn\'t used for them when a user downloads such attachments'),
+     '"content-disposition: inline" is not used for downloads of such data'),
 
     ('mimetypes_embed',
      [

@@ -416,7 +416,7 @@ class Formatter(FormatterBase):
 
         # Look for any suitable title, order is important.
         title = ''
-        for a in ('title', 'html_title', 'alt', 'html_alt', 'attachment_title'):
+        for a in ('title', 'html_title', 'alt', 'html_alt', ):
             if kw.has_key(a):
                 title = kw[a]
                 break
