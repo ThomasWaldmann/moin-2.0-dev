@@ -66,7 +66,7 @@ except ImportError:
     coverage = None
 
 
-def init_test_request(given_config=None, static_state=[False]):
+def init_test_request(given_config):
     request = TestRequest()
     content_acl = given_config.content_acl
     given_config.namespace_mapping = create_simple_mapping("memory:", content_acl)
@@ -105,7 +105,7 @@ class MoinClassCollector(py.test.collect.Class):
             given_config = cls.Config
         else:
             given_config = wikiconfig.Config
-        cls.request = init_test_request(given_config=given_config)
+        cls.request = init_test_request(given_config)
         cls.client = Client(Application(given_config))
 
         # In order to provide fresh backends for each and every testcase,
@@ -114,7 +114,7 @@ class MoinClassCollector(py.test.collect.Class):
         # executing any testcase.
         def setup_method(f):
             def wrapper(self, *args, **kwargs):
-                self.request = init_test_request(given_config=given_config)
+                self.request = init_test_request(given_config)
                 # Don't forget to call the class' setup_method if it has one.
                 return f(self, *args, **kwargs)
             return wrapper
@@ -127,7 +127,7 @@ class MoinClassCollector(py.test.collect.Class):
             # We want to provide fresh backends nevertheless, so we
             # provide a setup_method ourselves.
             def no_setup(self, method):
-                self.request = init_test_request(given_config=given_config)
+                self.request = init_test_request(given_config)
             cls.setup_method = no_setup
 
         super(MoinClassCollector, self).setup()
@@ -139,7 +139,7 @@ class Module(py.test.collect.Module):
 
     def __init__(self, *args, **kwargs):
         given_config = wikiconfig.Config
-        self.request = init_test_request(given_config=given_config)
+        self.request = init_test_request(given_config)
         super(Module, self).__init__(*args, **kwargs)
 
     def run(self, *args, **kwargs):
