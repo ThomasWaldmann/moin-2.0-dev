@@ -7,6 +7,7 @@
 """
 
 from MoinMoin import wikiutil
+from MoinMoin.Page import Page
 
 Dependencies = ["pages"]
 
@@ -31,25 +32,27 @@ def macro_WantedPages(macro):
                  page.link_to(request, label, querystr={'allpages': '%s' % (allpages and '0' or '1')}) + \
                  macro.formatter.div(0)
 
-    # Get page dict readable by current user
-    pages = request.rootpage.getPageDict()
+    # List of pages readable by current user, use a dict for better "in" performance
+    pagenames = dict([(pagename, None)
+                      for pagename in request.rootpage.getPageList()])
 
     # build a dict of wanted pages
     wanted = {}
     deprecated_links = []
-    for name, page in pages.items():
+    for name in pagenames:
         # Skip system pages, because missing translations are not wanted pages,
         # unless you are a translator and clicked "Include system pages"
         if not allpages and wikiutil.isSystemPage(request, name):
             continue
 
+        page = Page(request, name)
+
         # Add links to pages which do not exist in pages dict
         links = page.getPageLinks(request)
-        is_deprecated = page.parse_processing_instructions(
-                ).get('deprecated', False)
+        is_deprecated = page.parse_processing_instructions().get('deprecated', False)
 
         for link in links:
-            if not link in pages and request.user.may.read(link):
+            if not link in pagenames and request.user.may.read(link):
                 if is_deprecated:
                     deprecated_links.append(link)
                 if link in wanted:
@@ -85,7 +88,7 @@ def macro_WantedPages(macro):
         where.sort()
         if macro.formatter.page.page_name in where:
             where.remove(macro.formatter.page.page_name)
-        wherelinks = [pages[pagename].link_to(request, querystr={'highlight': name}, rel='nofollow')
+        wherelinks = [Page(request, pagename).link_to(request, querystr={'highlight': name}, rel='nofollow')
                       for pagename in where]
         result.append(": " + ', '.join(wherelinks))
         result.append(macro.formatter.listitem(0))

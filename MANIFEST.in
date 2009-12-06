@@ -13,6 +13,9 @@ recursive-include docs *
 # include stuff for translators
 recursive-include   MoinMoin/i18n *
 
+# include html templates
+recursive-include   MoinMoin/templates *
+
 # include static htdocs
 recursive-include   MoinMoin/web/static/htdocs *
 
@@ -32,10 +35,4 @@ recursive-include   wiki *
 # omit revision control, python bytecode
 global-exclude *.pyc
 global-exclude *.pyo
-global-exclude */CVS/*
-global-exclude */.cvsignore
-
-# we distribute a uncompressed version, no need for that:
-global-exclude underlay.tar
-global-exclude README.underlay
 

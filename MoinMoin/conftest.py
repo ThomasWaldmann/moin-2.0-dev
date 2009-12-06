@@ -31,8 +31,9 @@ sys.path.insert(0, str(moindir))
 
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.web.request import TestRequest, Client
-from MoinMoin.wsgiapp import Application, init
+from MoinMoin.wsgiapp import Application, init, init_unprotected_backends, protect_backends
 from MoinMoin._tests import maketestwiki, wikiconfig
+from MoinMoin.storage.backends import create_simple_mapping
 
 coverage_modules = set()
 
@@ -66,12 +67,13 @@ except ImportError:
 
 
 def init_test_request(given_config=None, static_state=[False]):
-    if not static_state[0]:
-        maketestwiki.run(True)
-        static_state[0] = True
     request = TestRequest()
+    content_acl = given_config.content_acl
+    given_config.namespace_mapping = create_simple_mapping("memory:", content_acl)
     request.given_config = given_config
     request = init(request)
+    protect_backends(request)
+
     return request
 
 
@@ -100,13 +102,34 @@ class MoinClassCollector(py.test.collect.Class):
     def setup(self):
         cls = self.obj
         if hasattr(cls, 'Config'):
-            cls.request = init_test_request(given_config=cls.Config)
-            cls.client = Client(Application(cls.Config))
+            given_config = cls.Config
         else:
-            cls.request = self.parent.request
-            #XXX: this is the extremely messy way to configure the wsgi app
-            #     with the correct testing config
-            cls.client = Client(Application(self.parent.request.cfg.__class__))
+            given_config = wikiconfig.Config
+        cls.request = init_test_request(given_config=given_config)
+        cls.client = Client(Application(given_config))
+
+        # In order to provide fresh backends for each and every testcase,
+        # we wrap the setup_method in a decorator that performs the freshening
+        # operation. setup_method is invoked by py.test automatically prior to
+        # executing any testcase.
+        def setup_method(f):
+            def wrapper(self, *args, **kwargs):
+                self.request = init_test_request(given_config=given_config)
+                # Don't forget to call the class' setup_method if it has one.
+                return f(self, *args, **kwargs)
+            return wrapper
+
+        try:
+            # Wrap the actual setup_method in our refresher-decorator.
+            cls.setup_method = setup_method(cls.setup_method)
+        except AttributeError:
+            # Perhaps the test class did not define a setup_method.
+            # We want to provide fresh backends nevertheless, so we
+            # provide a setup_method ourselves.
+            def no_setup(self, method):
+                self.request = init_test_request(given_config=given_config)
+            cls.setup_method = no_setup
+
         super(MoinClassCollector, self).setup()
 
 
@@ -115,10 +138,12 @@ class Module(py.test.collect.Module):
     Function = MoinTestFunction
 
     def __init__(self, *args, **kwargs):
-        self.request = init_test_request(given_config=wikiconfig.Config)
+        given_config = wikiconfig.Config
+        self.request = init_test_request(given_config=given_config)
         super(Module, self).__init__(*args, **kwargs)
 
     def run(self, *args, **kwargs):
         if coverage is not None:
             coverage_modules.update(getattr(self.obj, 'coverage_modules', []))
         return super(Module, self).run(*args, **kwargs)
+

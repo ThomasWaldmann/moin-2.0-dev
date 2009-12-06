@@ -69,22 +69,6 @@ class Formatter(FormatterBase):
                 self._text = None
                 return u' [%s]' % (self._url)
 
-    def attachment_link(self, on, url=None, **kw):
-        if on:
-            return "["
-        else:
-            return "]"
-
-    def attachment_image(self, url, **kw):
-        title = ''
-        for a in (u'title', u'html__title', u'alt', u'html_alt'):
-            if a in kw:
-                title = ':' + kw[a]
-        return "[image:%s%s]" % (url, title)
-
-    def attachment_drawing(self, url, text, **kw):
-        return "[drawing:%s]" % text
-
     def text(self, text, **kw):
         self._did_para = 0
         if self._text is not None:

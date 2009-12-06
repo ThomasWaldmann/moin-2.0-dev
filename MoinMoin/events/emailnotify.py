@@ -14,7 +14,6 @@ from MoinMoin.Page import Page
 from MoinMoin.mail import sendmail
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.user import User, getUserList
-from MoinMoin.action.AttachFile import getAttachUrl
 
 import MoinMoin.events as ev
 import MoinMoin.events.notification as notification
@@ -48,7 +47,7 @@ def prep_page_changed_mail(request, page, comment, email_lang, revisions, trivia
             'trivial': (trivial and _("Trivial ")) or "",
             'sitename': page.cfg.sitename or "Wiki",
             'pagename': page.page_name,
-            'username': page.uid_override or user.getUserIdentification(request),
+            'username': page.last_editor(),
         }
 
     if change.has_key('comment'):
@@ -126,78 +125,6 @@ def handle_user_created(event):
             send_notification(request, from_address, [usr.email], data)
 
 
-def handle_file_attached(event):
-    """Sends an email to users that have subscribed to this event type"""
-
-    names = set()
-    from_address = event.request.cfg.mail_from
-    request = event.request
-    page = Page(request, event.pagename)
-
-    subscribers = page.getSubscribers(request, return_users=1)
-    notification.filter_subscriber_list(event, subscribers, False)
-    recipients = []
-
-    for lang in subscribers:
-        recipients.extend(subscribers[lang])
-
-    attachlink = request.getQualifiedURL(getAttachUrl(event.pagename, event.filename, request))
-    pagelink = request.getQualifiedURL(page.url(request, {}))
-
-    for lang in subscribers:
-        emails = []
-        _ = lambda text: request.getText(text, lang=lang)
-
-        links = _("Attachment link: %(attach)s\n" \
-                  "Page link: %(page)s\n") % {'attach': attachlink, 'page': pagelink}
-
-        data = notification.attachment_added(request, _, event.pagename, event.filename, event.size)
-        data['text'] = data['text'] + links
-
-        emails = [usr.email for usr in subscribers[lang]]
-
-        if send_notification(request, from_address, emails, data):
-            names.update(recipients)
-
-    return notification.Success(names)
-
-
-def handle_file_removed(event):
-    """Sends an email to users that have subscribed to this event type"""
-
-    names = set()
-    from_address = event.request.cfg.mail_from
-    request = event.request
-    page = Page(request, event.pagename)
-
-    subscribers = page.getSubscribers(request, return_users=1)
-    notification.filter_subscriber_list(event, subscribers, False)
-    recipients = []
-
-    for lang in subscribers:
-        recipients.extend(subscribers[lang])
-
-    attachlink = request.getQualifiedURL(getAttachUrl(event.pagename, event.filename, request))
-    pagelink = request.getQualifiedURL(page.url(request, {}))
-
-    for lang in subscribers:
-        emails = []
-        _ = lambda text: request.getText(text, lang=lang)
-
-        links = _("Attachment link: %(attach)s\n" \
-                  "Page link: %(page)s\n") % {'attach': attachlink, 'page': pagelink}
-
-        data = notification.attachment_removed(request, _, event.pagename, event.filename, event.size)
-        data['text'] = data['text'] + links
-
-        emails = [usr.email for usr in subscribers[lang]]
-
-        if send_notification(request, from_address, emails, data):
-            names.update(recipients)
-
-    return notification.Success(names)
-
-
 def handle(event):
     """An event handler"""
 
@@ -208,8 +135,4 @@ def handle(event):
         return handle_page_change(event)
     elif isinstance(event, ev.UserCreatedEvent):
         return handle_user_created(event)
-    elif isinstance(event, ev.FileAttachedEvent):
-        return handle_file_attached(event)
-    elif isinstance(event, ev.FileRemovedEvent):
-        return handle_file_removed(event)
 

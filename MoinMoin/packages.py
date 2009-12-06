@@ -9,11 +9,8 @@
 
 import os, re, sys
 import zipfile
-
 from MoinMoin import config, wikiutil, caching, user
-from MoinMoin.Page import Page
-from MoinMoin.PageEditor import PageEditor
-from MoinMoin.logfile import editlog, eventlog
+from MoinMoin.items import Item
 
 MOIN_PACKAGE_FILE = 'MOIN_PACKAGE'
 MAX_VERSION = 1
@@ -39,25 +36,6 @@ class RuntimeScriptException(ScriptException):
 
 class ScriptExit(Exception):
     """ Raised by the script commands when the script should quit. """
-
-def event_logfile(self, pagename, pagefile):
-    # add event log entry
-    eventtype = 'SAVENEW'
-    mtime_usecs = wikiutil.timestamp2version(os.path.getmtime(pagefile))
-    elog = eventlog.EventLog(self.request)
-    elog.add(self.request, eventtype, {'pagename': pagename}, 1, mtime_usecs)
-
-def edit_logfile_append(self, pagename, pagefile, rev, action, logname='edit-log', comment=u'', author=u"Scripting Subsystem"):
-    glog = editlog.EditLog(self.request, uid_override=author)
-    pagelog = Page(self.request, pagename).getPagePath(logname, use_underlay=0, isfile=1)
-    llog = editlog.EditLog(self.request, filename=pagelog,
-                               uid_override=author)
-    mtime_usecs = wikiutil.timestamp2version(os.path.getmtime(pagefile))
-    host = '::1'
-    extra = u''
-    glog.add(self.request, mtime_usecs, rev, action, pagename, host, comment)
-    llog.add(self.request, mtime_usecs, rev, action, pagename, host, extra, comment)
-    event_logfile(self, pagename, pagefile)
 
 # Parsing and (un)quoting for script files
 def packLine(items, separator="|"):
@@ -116,64 +94,6 @@ class ScriptEngine:
         #Satisfy pylint
         self.msg = getattr(self, "msg", "")
         self.request = getattr(self, "request", None)
-
-    def do_addattachment(self, zipname, filename, pagename, author=u"Scripting Subsystem", comment=u""):
-        """
-        Installs an attachment
-
-        @param pagename: Page where the file is attached. Or in 2.0, the file itself.
-        @param zipname: Filename of the attachment from the zip file
-        @param filename: Filename of the attachment (just applicable for MoinMoin < 2.0)
-        """
-        if self.request.user.may.write(pagename):
-            _ = self.request.getText
-
-            attachments = Page(self.request, pagename).getPagePath("attachments", check_create=1)
-            filename = wikiutil.taintfilename(filename)
-            zipname = wikiutil.taintfilename(zipname)
-            target = os.path.join(attachments, filename)
-            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
-            rev = page.current_rev()
-            path = page.getPagePath(check_create=0)
-            if not os.path.exists(target):
-                self._extractToFile(zipname, target)
-                if os.path.exists(target):
-                    os.chmod(target, config.umask )
-                    action = 'ATTNEW'
-                    edit_logfile_append(self, pagename, path, rev, action, logname='edit-log',
-                                       comment=u'%(filename)s' % {"filename": filename}, author=author)
-                self.msg += u"%(filename)s attached \n" % {"filename": filename}
-            else:
-                self.msg += u"%(filename)s not attached \n" % {"filename": filename}
-        else:
-            self.msg += u"action add attachment: not enough rights - nothing done \n"
-
-    def do_delattachment(self, filename, pagename, author=u"Scripting Subsystem", comment=u""):
-        """
-        Removes an attachment
-
-        @param pagename: Page where the file is attached. Or in 2.0, the file itself.
-        @param filename: Filename of the attachment (just applicable for MoinMoin < 2.0)
-        """
-        if self.request.user.may.write(pagename):
-            _ = self.request.getText
-
-            attachments = Page(self.request, pagename).getPagePath("attachments", check_create=1)
-            filename = wikiutil.taintfilename(filename)
-            target = os.path.join(attachments, filename)
-            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
-            rev = page.current_rev()
-            path = page.getPagePath(check_create=0)
-            if os.path.exists(target):
-                os.remove(target)
-                action = 'ATTDEL'
-                edit_logfile_append(self, pagename, path, rev, action, logname='edit-log',
-                                    comment=u'%(filename)s' % {"filename": filename}, author=author)
-                self.msg += u"%(filename)s removed \n" % {"filename": filename}
-            else:
-                self.msg += u"%(filename)s does not exist \n" % {"filename": filename}
-        else:
-            self.msg += u"action delete attachment: not enough rights - nothing done \n"
 
     def do_print(self, *param):
         """ Prints the parameters into output of the script. """
@@ -264,18 +184,16 @@ class ScriptEngine:
         self._extractToFile(filename, target)
         wikiutil._wiki_plugins = {}
 
-    def do_installpackage(self, pagename, filename):
+    def do_installpackage(self, itemename, filename):
         """
         Installs a package.
 
-        @param pagename: Page where the file is attached. Or in 2.0, the file itself.
+        @param itemname: item where the file is attached. Or in 2.0, the file itself.
         @param filename: Filename of the attachment (just applicable for MoinMoin < 2.0)
         """
         _ = self.request.getText
 
-        attachments = Page(self.request, pagename).getPagePath("attachments", check_create=0)
-        package = ZipPackage(self.request, os.path.join(attachments, wikiutil.taintfilename(filename)))
-
+        package = ZipPackage(self.request, item_name)
         if package.isPackage():
             if not package.installPackage():
                 raise RuntimeScriptException(_("Installation of '%(filename)s' failed.") % {
@@ -285,115 +203,45 @@ class ScriptEngine:
 
         self.msg += package.msg
 
-    def do_addrevision(self, filename, pagename, author=u"Scripting Subsystem", comment=u"", trivial=u"No"):
+    def do_additem(self, filename, item_name, mimetype='application/x-unknown', contenttype="utf-8", author=u"Scripting Subsystem", comment=u"", trivial=u"No"):
         """ Adds a revision to a page.
 
         @param filename: name of the file in this package
-        @param pagename: name of the target page
+        @param item_name: name of the target
+        @param mimetype: mimetype of the target default text/moin-wiki
+        @param contentype: contentype default UTF-8
         @param author:   user name of the editor (optional)
         @param comment:  comment related to this revision (optional)
         @param trivial:  boolean, if it is a trivial edit
         """
         _ = self.request.getText
         trivial = str2boolean(trivial)
-        if self.request.user.may.write(pagename):
-            page = PageEditor(self.request, pagename, do_editor_backup=0)
-            try:
-                page.saveText(self.extract_file(filename).decode("utf-8"), 0, trivial=trivial, comment=comment)
-            except PageEditor.Unchanged:
-                pass
-            else:
-                self.msg += u"%(pagename)s added \n" % {"pagename": pagename}
+        if self.request.user.may.write(item_name):
+            meta = {"mimetype": mimetype}
+            item = Item.create(self.request, item_name)
+            item._save(meta, self.extract_file(filename.decode(contenttype.lower())), name=item_name, action='SAVE', mimetype=mimetype, comment=comment, extra='')
+            self.msg += u"%(item_name)s added \n" % {"item_name": item_name}
         else:
             self.msg += u"action add revision: not enough rights - nothing done \n"
 
-    def do_renamepage(self, pagename, newpagename, author=u"Scripting Subsystem", comment=u"Renamed by the scripting subsystem."):
+    def do_renameitem(self, item_name, newitemname, author=u"Scripting Subsystem", comment=u"Renamed by the scripting subsystem."):
         """ Renames a page.
 
-        @param pagename: name of the target page
-        @param newpagename: name of the new page
+        @param item_name: name of the target item
+        @param newitemname: name of the new item
         @param author:   user name of the editor (optional)
         @param comment:  comment related to this revision (optional)
         """
-        if self.request.user.may.write(pagename):
+        if self.request.user.may.write(itemname):
             _ = self.request.getText
-            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
-            if not page.exists():
-                raise RuntimeScriptException(_("The page %s does not exist.") % pagename)
-            newpage = PageEditor(self.request, newpagename)
-            page.renamePage(newpage.page_name, comment=u"Renamed from '%s'" % (pagename))
-            self.msg += u'%(pagename)s renamed to %(newpagename)s\n' % {
-                            "pagename": pagename,
-                            "newpagename": newpagename}
-        else:
-            self.msg += u"action rename page: not enough rights - nothing done \n"
+            # TODO ACL?
+            item = self.request.cfg.storage.get_item(item_name)
+            if not item.exists():
+                raise RuntimeScriptException(_("The item %s does not exist.") % item_name)
 
-    def do_deletepage(self, pagename, comment="Deleted by the scripting subsystem."):
-        """ Marks a page as deleted (like the DeletePage action).
-
-        @param pagename: page to delete
-        @param comment:  the related comment (optional)
-        """
-        if self.request.user.may.write(pagename):
-            _ = self.request.getText
-            page = PageEditor(self.request, pagename, do_editor_backup=0)
-            if not page.exists():
-                raise RuntimeScriptException(_("The page %s does not exist.") % pagename)
-            page.deletePage(comment)
-        else:
-            self.msg += u"action delete page: not enough rights - nothing done \n"
-
-    def do_replaceunderlayattachment(self, zipname, filename, pagename, author=u"Scripting Subsystem", comment=u""):
-        """
-        overwrite underlay attachments
-
-        @param pagename: Page where the file is attached. Or in 2.0, the file itself.
-        @param zipname: Filename of the attachment from the zip file
-        @param filename: Filename of the attachment (just applicable for MoinMoin < 2.0)
-        """
-        if self.request.user.may.write(pagename):
-            _ = self.request.getText
-            filename = wikiutil.taintfilename(filename)
-            zipname = wikiutil.taintfilename(zipname)
-            page = PageEditor(self.request, pagename, do_editor_backup=0, uid_override=author)
-            pagedir = page.getPagePath(use_underlay=1, check_create=1)
-            attachments = os.path.join(pagedir, 'attachments')
-            if not os.path.exists(attachments):
-                os.mkdir(attachments)
-            target = os.path.join(attachments, filename)
-            self._extractToFile(zipname, target)
-            if os.path.exists(target):
-                os.chmod(target, config.umask )
-        else:
-            self.msg += u"action replace underlay attachment: not enough rights - nothing done \n"
-
-    def do_replaceunderlay(self, filename, pagename):
-        """
-        Overwrites underlay pages. Implementational detail: This needs to be
-        kept in sync with the page class.
-
-        @param filename: name of the file in the package
-        @param pagename: page to be overwritten
-        """
-        page = Page(self.request, pagename)
-
-        pagedir = page.getPagePath(use_underlay=1, check_create=1)
-
-        revdir = os.path.join(pagedir, 'revisions')
-        cfn = os.path.join(pagedir, 'current')
-
-        revstr = '%08d' % 1
-        if not os.path.exists(revdir):
-            os.mkdir(revdir)
-
-        currentf = open(cfn, 'w')
-        currentf.write(revstr + "\n")
-        currentf.close()
-
-        pagefile = os.path.join(revdir, revstr)
-        self._extractToFile(filename, pagefile)
-        # Clear caches
-        # TODO Code from MoinMoin/script/maint/cleancache.py may be used
+            r = item.get_revision(-1)
+            r.item.rename(newitemname)
+            r._save(r.meta, r.data, name=newitemname, action='SAVE/RENAME', extra=item_name, comment=comment)
 
     def runScript(self, commands):
         """ Runs the commands.
@@ -498,8 +346,9 @@ class ZipPackage(Package, ScriptEngine):
         Package.__init__(self, request)
         ScriptEngine.__init__(self)
         self.filename = filename
-
-        self._isZipfile = zipfile.is_zipfile(filename)
+        # ToDo get status from the zipfile object
+        self._isZipfile = True
+        #self._isZipfile = zipfile.is_zipfile(filename)
         if self._isZipfile:
             self.zipfile = zipfile.ZipFile(filename)
         # self.zipfile.getinfo(name)
