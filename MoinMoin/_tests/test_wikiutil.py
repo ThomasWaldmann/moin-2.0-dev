@@ -10,6 +10,7 @@
 import py
 
 from MoinMoin import config, wikiutil
+from MoinMoin._tests import wikiconfig
 
 from werkzeug import MultiDict
 
@@ -73,7 +74,7 @@ class TestInterWiki:
                  # wrong interpretation ('MainPage/OtherPage', ('Self', 'MainPage/OtherPage')),
                 ]
         for markup, (wikiname, pagename) in tests:
-            assert wikiutil.split_wiki(markup) == (wikiname, pagename)
+            assert wikiutil.split_interwiki(markup) == (wikiname, pagename)
 
     def testJoinWiki(self):
         tests = [(('http://example.org/', u'SomePage'), 'http://example.org/SomePage'),
@@ -85,21 +86,29 @@ class TestInterWiki:
             assert wikiutil.join_wiki(baseurl, pagename) == url
 
 
+    def testResolveInterWiki(self):
+        result = wikiutil.resolve_interwiki(self.request, 'MoinMoin', 'SomePage')
+        assert result == ('MoinMoin', u'http://moinmo.in/', 'SomePage', False)
+
+
 class TestSystemPage:
     systemPages = (
-        'RecentChanges',
-        'TitleIndex',
+        'HelpOnMoinWikiSyntax',
+        'HelpOnLinking',
         )
     notSystemPages = (
         'NoSuchPageYetAndWillNeverBe',
         )
+
+    class Config(wikiconfig.Config):
+        preloaded_xml = wikiconfig.Config._test_items_xml
 
     def testSystemPage(self):
         """wikiutil: good system page names accepted, bad rejected"""
         for name in self.systemPages:
             assert wikiutil.isSystemPage(self.request, name)
         for name in self.notSystemPages:
-            assert not  wikiutil.isSystemPage(self.request, name)
+            assert not wikiutil.isSystemPage(self.request, name)
 
 
 class TestTemplatePage:

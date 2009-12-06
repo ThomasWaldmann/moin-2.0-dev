@@ -85,10 +85,6 @@ class TOCFormatter(FormatterBase):
     pagelink = _anything_return_empty
     interwikilink = _anything_return_empty
     url = _anything_return_empty
-    attachment_link = _anything_return_empty
-    attachment_image = _anything_return_empty
-    attachment_drawing = _anything_return_empty
-    attachment_inlined = _anything_return_empty
     anchordef = _anything_return_empty
     line_anchordef = _anything_return_empty
     anchorlink = _anything_return_empty

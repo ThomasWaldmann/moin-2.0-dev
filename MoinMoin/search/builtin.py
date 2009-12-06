@@ -16,7 +16,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil, config, caching
-from MoinMoin.Page import Page
+from MoinMoin.util import lock, filesys
 from MoinMoin.search.results import getSearchResults, Match, TextMatch, TitleMatch, getSearchResults
 
 ##############################################################################
@@ -227,7 +227,6 @@ class BaseIndex(object):
 
         r = copy.copy(request)
         r.user.may = SecurityPolicy(r.user)
-        r.editlog = editlog.EditLog(r)
         return r
 
 
@@ -261,7 +260,7 @@ class BaseSearch(object):
         start = time.time()
         hits, estimated_hits = self._search()
 
-        # important - filter deleted pages or pages the user may not read!
+        # important - filter pages the user may not read!
         if not self.filtered:
             hits = self._filter(hits)
             logging.debug("after filtering: %d hits" % len(hits))
@@ -312,6 +311,7 @@ class BaseSearch(object):
     def _getHits(self, pages):
         """ Get the hit tuples in pages through _get_match """
         logging.debug("_getHits searching in %d pages ..." % len(pages))
+        from MoinMoin.Page import Page
         hits = []
         revisionCache = {}
         fs_rootpage = self.fs_rootpage
@@ -401,5 +401,5 @@ class MoinSearch(BaseSearch):
             self.filtered = True
             return self.request.rootpage.getPageList(filter=filter_)
         else:
-            return self.request.rootpage.getPageList(user='', exists=0)
+            return self.request.rootpage.getPageList(user='')
 

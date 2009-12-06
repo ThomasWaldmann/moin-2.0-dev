@@ -57,17 +57,6 @@ def handle_deleted(event):
     handle_changed(event)
 
 
-def handle_attachment_change(event):
-    """Updates Xapian index when attachment is added or removed"""
-
-    request = event.request
-
-    if request.cfg.xapian_search:
-        index = _get_index(request)
-        if index and index.exists():
-            index.update_item(event.pagename, event.filename)
-
-
 def handle(event):
     if isinstance(event, ev.PageRenamedEvent):
         handle_renamed(event)
@@ -77,6 +66,4 @@ def handle(event):
         handle_changed(event)
     elif isinstance(event, ev.PageDeletedEvent):
         handle_deleted(event)
-    elif isinstance(event, (ev.FileAttachedEvent, ev.FileRemovedEvent)):
-        handle_attachment_change(event)
 

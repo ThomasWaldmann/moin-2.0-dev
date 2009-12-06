@@ -1,10 +1,11 @@
 .*\.py[co]$
 ^dist/
-^tests/wiki/
-^wiki/underlay/
-^wiki/data/edit-log
+^MoinMoin/_tests/wiki/data/cache/
+^MoinMoin/_tests/wiki/data/event-log
 ^wiki/data/event-log
-^wiki/data/user/
+^wiki/data/content/
+^wiki/data/userprofiles/
+^wiki/data/trash/
 ^wiki/data/cache/
 ^wikiconfig_local.*
 ^wikiserverconfig_local.*

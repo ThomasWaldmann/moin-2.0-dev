@@ -31,6 +31,7 @@ def _getPages(request, filter_regex=None):
     if filter_regex:
         filterfn = re.compile(filter_regex).match
     pages = request.rootpage.getPageList(filter=filterfn)
+    pages = list(pages)
     pages.sort()
     return pages
 

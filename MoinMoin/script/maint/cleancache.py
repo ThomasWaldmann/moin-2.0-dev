@@ -43,9 +43,8 @@ General syntax: moin [options] maint cleancache
         keys = ['text_html', 'pagelinks', 'hitcounts', ]
         pages = request.rootpage.getPageList(user='')
         for pagename in pages:
-            arena = Page(request, pagename)
             for key in keys:
-                caching.CacheEntry(request, arena, key, scope='item').remove()
+                caching.CacheEntry(request, pagename, key, scope='item').remove()
 
         # clean wiki scope cache entries
         arena_key_list = [

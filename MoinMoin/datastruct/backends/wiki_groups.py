@@ -38,7 +38,7 @@ class WikiGroup(GreedyGroup):
             cache = caching.CacheEntry(request, arena, key, scope='wiki', use_pickle=True)
             try:
                 cache_mtime = cache.mtime()
-                page_mtime = wikiutil.version2timestamp(page.mtime_usecs())
+                page_mtime = page.mtime()
                 # TODO: fix up-to-date check mtime granularity problems.
                 #
                 # cache_mtime is float while page_mtime is integer

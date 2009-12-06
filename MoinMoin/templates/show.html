@@ -1,0 +1,67 @@
+{% extends "base_contentonly.html" %}
+{% block content %}
+{% if not rev %}
+This item exists, but not this revision.
+{% else %}
+{% block headline %}
+<h1>Item: {{ rev.item.name }} {% if rev.revno != last_rev_no %}(Revision {{ rev.revno }}){% endif %}</h1>
+{% endblock %}
+Data:
+{{ data_rendered }}
+<hr>Meta:
+{{ meta_rendered }}
+{% endif %}
+{% endblock %}
+{% block history %}
+    {% if log %}
+    <hr>History:
+        <form action="" method="GET">
+        <div id="page-history">
+        <input type="hidden" name="do" value="diff">
+        <table>
+            <tr>
+                <th align="right">#</td>
+                <th>Date</td>
+                <th align="right">Size</td>
+                <th align="right"><input type="submit" value="Diff"></th>
+                <th>Editor</td>
+                <th>MimeType</td>
+                <th>Comment</td>
+                <th colspan="4">Actions</td>
+            </tr>
+            {% for entry in log %}
+            <tr>
+                <td align="right">{{ entry.rev_no }}</td>
+                <td>{{ entry.mtime }}</td>
+                <td align="right">{{ entry.size }}</td>
+                <td>
+                    <input type="radio" name="rev1" value="{{ entry.rev_no }}">
+                    <input type="radio" name="rev2" value="{{ entry.rev_no }}">
+                </td>
+                <td>{{ entry.editor }}</td>
+                <td>{{ entry.mimetype|e }}</td>
+                <td>{{ entry.comment|e }}</td>
+                <td>{{ '<a href="?rev=%d">%s</a>' % (entry.rev_no, 'show') }}</td>
+                <td>{{ '<a href="?rev=%d&do=get">%s</a>' % (entry.rev_no, 'get') }}</td>
+                {% if entry.rev_no == last_rev_no %}
+                <td>current revision</td>
+                {% else %}
+                <td>{{ '<a href="?rev=%d&do=revert">%s</a>' % (entry.rev_no, 'revert') }}</td>
+                {% endif %}
+                <td>{{ '<a href="?rev=%d&do=destroy">%s</a>' % (entry.rev_no, 'destroy') }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+        </form>
+    {% endif %}
+{% endblock %}
+{% block index %}
+    {% if index %}
+        <hr>Index of sub items:
+        {% for fullname, relname, mimetype in index %}
+            <a href="/{{ fullname|urlquote }}">{{ relname|e }} ({{ mimetype|e }})</a> 
+        {% endfor %}
+    {% endif %}
+{% endblock %}
+

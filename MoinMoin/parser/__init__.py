@@ -14,7 +14,6 @@ from MoinMoin import wikiutil
 
 modules = pysupport.getPackageModules(__file__)
 
-
 def parse_start_step(request, args):
     """
     Parses common Colorizer parameters start, step, numbers.

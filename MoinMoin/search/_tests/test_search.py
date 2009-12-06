@@ -15,9 +15,8 @@ import py
 from MoinMoin.search import QueryError, _get_searcher
 from MoinMoin.search.queryparser import QueryParser
 from MoinMoin.search.builtin import MoinSearch
-from MoinMoin._tests import nuke_xapian_index, wikiconfig, become_trusted, create_page, nuke_page, append_page
+from MoinMoin._tests import nuke_xapian_index, wikiconfig, become_trusted, create_item, nuke_item
 from MoinMoin.wikiutil import Version
-from MoinMoin.action import AttachFile
 
 PY_MIN_VERSION = '1.0.0'
 if Version(version=py.version) < Version(version=PY_MIN_VERSION):
@@ -84,6 +83,9 @@ class BaseSearchTest(object):
     """ search: test search """
     doesnotexist = u'jfhsdaASDLASKDJ'
 
+    class Config(wikiconfig.Config):
+        preloaded_xml = wikiconfig.Config._test_items_xml
+
     # key - page name, value - page content. If value is None page
     # will not be created but will be used for a search. None should
     # be used for pages which already exist.
@@ -113,12 +115,12 @@ class BaseSearchTest(object):
 
         for page, text in cls.pages.iteritems():
             if text:
-                create_page(request, page, text)
+                create_item(request, page, text)
 
     def teardown_class(self):
-        for page, text in self.pages.iteritems():
+        for item_name, text in self.pages.iteritems():
             if text:
-                nuke_page(self.request, page)
+                nuke_item(self.request, item_name)
 
     def get_searcher(self, query):
         raise NotImplementedError
@@ -255,7 +257,7 @@ class BaseSearchTest(object):
 
     def testTitleSearchOR(self):
         """ search: title search with OR expression """
-        result = self.search(u"title:FrontPage or title:RecentChanges")
+        result = self.search(u"title:FrontPage or title:HelpOnMoinWikiSyntax")
         assert len(result.hits) == 2
 
     def testTitleSearchNegatedFindAll(self):
@@ -276,48 +278,30 @@ class BaseSearchTest(object):
         result = self.search(u"-%s" % self.doesnotexist)
         assert len(result.hits) == len(self.pages)
 
+    def testFullSearchNegativeTerm(self):
+        """ search: full search for a AND expression with a negative term """
+        helpon_count = len(self.search(u"HelpOn").hits)
+        result = self.search(u"HelpOn -Thumbnails")
+        assert 0 < len(result.hits) < helpon_count
+
     def test_title_search(self):
         query = QueryParser(titlesearch=True).parse_query('FrontPage')
         result = self.search(query)
         assert len(result.hits) == 1
 
-    def test_create_page(self):
+    def test_create_item(self):
         self.pages['TestCreatePage'] = 'some text' # Moin search must search this page
+
         try:
-            create_page(self.request, 'TestCreatePage', self.pages['TestCreatePage'])
+            create_item(self.request, 'TestCreatePage', self.pages['TestCreatePage'])
             self._index_update()
             result = self.search(u'TestCreatePage')
             assert len(result.hits) == 1
         finally:
-            nuke_page(self.request, 'TestCreatePage')
+            nuke_item(self.request, 'TestCreatePage')
             self._index_update()
             del self.pages['TestCreatePage']
             result = self.search(u'TestCreatePage')
-            assert len(result.hits) == 0
-
-    def test_attachment(self):
-        page_name = u'TestAttachment'
-        self.pages[page_name] = 'some text' # Moin search must search this page
-
-        filename = "AutoCreatedSillyAttachmentForSearching.png"
-        data = "Test content"
-        filecontent = StringIO.StringIO(data)
-
-        result = self.search(filename)
-        assert len(result.hits) == 0
-
-        try:
-            create_page(self.request, page_name, self.pages[page_name])
-            AttachFile.add_attachment(self.request, page_name, filename, filecontent, True)
-            append_page(self.request, page_name, '[[attachment:%s]]' % filename)
-            self._index_update()
-            result = self.search(filename)
-            assert len(result.hits) > 0
-        finally:
-            nuke_page(self.request, page_name)
-            del self.pages[page_name]
-            self._index_update()
-            result = self.search(filename)
             assert len(result.hits) == 0
 
     def test_get_searcher(self):

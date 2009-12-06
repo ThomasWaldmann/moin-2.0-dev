@@ -142,18 +142,6 @@ if moincode_timestamp > %d or cfg_mtime is None or cfg_mtime > %d:
             return self.__insert_code('request.write(%s.pagelink(%r, page=page, **%r))' %
                                       (self.__formatter, on, kw))
 
-    def attachment_link(self, on, url=None, **kw):
-        return self.__insert_fmt_call('attachment_link', on, url, **kw)
-
-    def attachment_image(self, url, **kw):
-        return self.__insert_fmt_call('attachment_image', url, **kw)
-
-    def attachment_drawing(self, url, text, **kw):
-        return self.__insert_fmt_call('attachment_drawing', url, text, **kw)
-
-    def attachment_inlined(self, url, text, **kw):
-        return self.__insert_fmt_call('attachment_inlined', url, text, **kw)
-
     def heading(self, on, depth, **kw):
         if on:
             code = [

@@ -39,10 +39,12 @@
 SLAPD_EXECUTABLE = 'slapd'  # filename of LDAP server executable - if it is not
                             # in your PATH, you have to give full path/filename.
 
-import os, shutil, tempfile, time, base64, md5
+import os, shutil, tempfile, time, base64
 from StringIO import StringIO
 import signal
 import subprocess
+
+from MoinMoin.support.python_compatibility import hash_new
 
 try:
     import ldap, ldif, ldap.modlist  # needs python-ldap
@@ -179,7 +181,7 @@ class LdapEnvironment(object):
         f.write(db_config)
         f.close()
 
-        rootpw = '{MD5}' + base64.b64encode(md5.new(self.rootpw).digest())
+        rootpw = '{MD5}' + base64.b64encode(hash_new('md5', self.rootpw).digest())
 
         # create slapd.conf from content template in slapd_config
         slapd_config = slapd_config % {

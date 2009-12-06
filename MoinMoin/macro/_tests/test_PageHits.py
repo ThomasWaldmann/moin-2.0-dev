@@ -12,7 +12,8 @@ from MoinMoin.logfile import eventlog
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.Page import Page
 
-from MoinMoin._tests import become_trusted, create_page, make_macro, nuke_eventlog, nuke_page
+from MoinMoin._tests import become_trusted, create_item, make_macro
+
 
 class TestHits:
     """Hits: testing Hits macro """
@@ -21,15 +22,14 @@ class TestHits:
     def setup_class(self):
         request = self.request
         become_trusted(request)
-        self.page = create_page(request, self.pagename, u"Foo!")
+        self.page = create_item(request, self.pagename, u"Foo!")
         # for that test eventlog needs to be empty
-        nuke_eventlog(self.request)
+        fpath = os.path.join(self.request.cfg.data_dir, 'event-log')
+        if os.path.exists(fpath):
+            os.remove(fpath)
         # hits is based on hitcounts which reads the cache
         caching.CacheEntry(request, 'charts', 'pagehits', scope='wiki').remove()
         caching.CacheEntry(request, 'charts', 'hitcounts', scope='wiki').remove()
-
-    def teardown_class(self):
-        nuke_page(self.request, self.pagename)
 
     def _test_macro(self, name, args):
         m = make_macro(self.request, self.page)

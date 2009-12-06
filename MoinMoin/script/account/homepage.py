@@ -31,7 +31,7 @@ To create the homepage of one user use the --name argument. For adding homepages
 give the --group page argument. Or with --all-users you create homepages for ALL users.
 2. To respect ACLs  give the --user argument.
 3. Optionally you may want to use a template page by the --template_page argument.
-With e.g. #acl @ME@:read,write,delete,revert Default on the template page you can define
+With e.g. #acl @ME@:read,write Default on the template page you can define
 acl rights for the user. @EMAIL@ becomes expanded to the users obfuscated mail address.
 """
 
@@ -89,7 +89,7 @@ acl rights for the user. @EMAIL@ becomes expanded to the users obfuscated mail a
             homepage_default_text = homepage_default_text.replace('@ME@', "%(username)s")
             homepage_default_text = homepage_default_text.replace('@EMAIL@', "<<MailTo(%(obfuscated_mail)s)>>")
         else:
-            homepage_default_text = '''#acl %(username)s:read,write,delete,revert Default
+            homepage_default_text = '''#acl %(username)s:read,write Default
 
 == %(username)s ==
 
