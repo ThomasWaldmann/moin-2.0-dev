@@ -14,8 +14,7 @@
 
     The main difference between v1 and v2 is that v2 relies on utf-8
     as transport encoding. No url-encoding and no base64 anymore, except
-    when really necessary (like for transferring binary files like
-    attachments maybe).
+    when really necessary (like for transferring binary data).
 
     @copyright: 2003-2008 MoinMoin:ThomasWaldmann,
                 2004-2006 MoinMoin:AlexanderSchremmer

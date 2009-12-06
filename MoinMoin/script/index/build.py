@@ -33,7 +33,7 @@ General syntax: moin [options] index build [build-options]
       also consider the filesystem filenames contained in that file (one
       filename per line). Search results from these files will be "found"
       under a special pseudo page called FS (like File System).
-      Without this option, the indexer will just consider pages and attachments.
+      Without this option, the indexer will just consider wiki items.
 
     1. Conditionally (considering modification time) update the index:
        moin ... index build --mode=update

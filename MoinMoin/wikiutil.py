@@ -46,7 +46,7 @@ CHILD_PREFIX_LEN = len(CHILD_PREFIX)
 #############################################################################
 
 def decodeUnknownInput(text):
-    """ Decode unknown input, like text attachments
+    """ Decode input in unknown encoding
 
     First we try utf-8 because it has special format, and it will decode
     only utf-8 files. Then we try config.charset, then iso-8859-1 using
@@ -553,10 +553,6 @@ def split_interwiki(wikiurl):
     'FrontPage' -> "Self", "FrontPage"
     'MoinMoin:Page with blanks' -> "MoinMoin", "Page with blanks"
     'MoinMoin:' -> "MoinMoin", ""
-
-    can also be used for:
-
-    'attachment:filename with blanks.txt' -> "attachment", "filename with blanks.txt"
 
     @param wikiurl: the url to split
     @rtype: tuple
