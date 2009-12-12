@@ -12,6 +12,9 @@ import re
 
 
 def _iriquote_replace(exc):
+    """
+    Special replace function that implements the IRI quoting rules
+    """
     if not isinstance(exc, UnicodeDecodeError):
         raise exc
 
@@ -55,7 +58,7 @@ class Iri(object):
 
     _overall_re = re.compile(overall_rules, re.X)
 
-    def __init__(self, iri=None, quoted=True,
+    def __init__(self, iri=None, _quoted=True,
             scheme=None, authority=None, path=None, query=None, fragment=None):
         """
         @param iri A full IRI in unicode
@@ -69,7 +72,7 @@ class Iri(object):
         self.scheme = self._authority = self._path = self._query = self._fragment = None
 
         if iri:
-            self._parse(iri, quoted)
+            self._parse(iri, _quoted)
 
         if scheme is not None:
             self.scheme = scheme
@@ -378,18 +381,18 @@ class _Value(unicode):
     unquote_rules = r"(%[0-9a-fA-F]{2})+"
     _unquote_re = re.compile(unquote_rules)
 
-    def __new__(cls, input, quoted=True):
+    def __new__(cls, input, _quoted=True):
         # This object is immutable, no need to copy it
         if isinstance(input, cls):
             return input
 
-        if quoted:
+        if _quoted:
             input, input_quoted = cls._unquote(input)
         else:
             input_quoted = None
 
         ret = unicode.__new__(cls, input)
-        unicode.__setattr__(ret, '_quoted', input_quoted)
+        ret._quoted = input_quoted
         return ret
 
     @classmethod
@@ -499,7 +502,7 @@ class IriAuthority(object):
 
     _authority_re = re.compile(authority_rules, re.X)
 
-    def __init__(self, iri_authority=None, quoted=True,
+    def __init__(self, iri_authority=None, _quoted=True,
             userinfo=None, host=None, port=None):
         self._userinfo = self._host = self.port = None
 
@@ -509,7 +512,7 @@ class IriAuthority(object):
                 self._host = iri_authority._host
                 self.port = iri_authority.port
             else:
-                self._parse(iri_authority, quoted)
+                self._parse(iri_authority, _quoted)
 
         if userinfo is not None:
             self.userinfo = userinfo
@@ -642,7 +645,7 @@ class IriAuthorityHost(_Value):
 class IriPath(object):
     __slots__ = '_list'
 
-    def __init__(self, iri_path=None, quoted=True):
+    def __init__(self, iri_path=None, _quoted=True):
         self._list = []
 
         if iri_path:
@@ -651,7 +654,7 @@ class IriPath(object):
             elif isinstance(iri_path, (tuple, list)):
                 self._list = [IriPathSegment(i, False) for i in iri_path]
             else:
-                l = [IriPathSegment(i, quoted) for i in iri_path.split(u'/')]
+                l = [IriPathSegment(i, _quoted) for i in iri_path.split(u'/')]
                 self._list = self._remove_dots(l)
 
     def __eq__(self, other):
