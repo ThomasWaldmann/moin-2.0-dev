@@ -175,8 +175,7 @@ class Converter(ConverterMacro):
         if type_moin_document.issupertype(output):
             if type_moin_wiki.issupertype(input):
                 return cls
-            if (input.type == 'x-moin' and input.subtype == 'format' and
-                    input.parameters.get('name') == 'wiki'):
+            if Type('x-moin/format?name=wiki').issupertype(input):
                 return cls
 
     def __call__(self, content, arguments=None):
@@ -831,6 +830,153 @@ class Converter(ConverterMacro):
         element = moin_page.object(attrib)
         stack.top_append(element)
 
+    table = block_table
+
+    tablerow = r"""
+        (?P<cell>
+            (?P<cell_marker>
+                (\|\|)+
+            )
+            (
+                <
+                (?P<cell_args> .*? )
+                >
+            )?
+            \s*
+            (?P<cell_text> .*? )
+            \s*
+            (?=
+                \|\|
+                |
+                $
+            )
+        )
+    """
+
+    def tablerow_cell_repl(self, stack, table, row, cell, cell_marker, cell_text, cell_args=None):
+        element = moin_page.table_cell()
+        stack.push(element)
+
+        if len(cell_marker) / 2 > 1:
+            element.set(moin_page.number_columns_spanned, len(cell_marker) / 2)
+
+        if cell_args:
+            cell_args = _TableArguments()(cell_args)
+
+            for key, value in cell_args.keyword.iteritems():
+                attrib = element.attrib
+                if key.startswith('table'):
+                    key = key[5:]
+                    attrib = table.attrib
+                elif key.startswith('row'):
+                    key = key[3:]
+                    attrib = row.attrib
+
+                if key in ('class', 'style', 'number-columns-spanned', 'number-rows-spanned'):
+                    attrib[moin_page(key)] = value
+
+        self.parse_inline(cell_text, stack)
+
+        stack.pop_name('table-cell')
+
+    # Block elements
+    block = (
+        block_line,
+        block_comment,
+        block_head,
+        block_separator,
+        block_macro,
+        block_nowiki,
+        block_table,
+        block_text,
+    )
+    block_re = re.compile('|'.join(block), re.X | re.U | re.M)
+
+    indent_re = re.compile(indent, re.X)
+
+    inline = (
+        inline_link,
+        inline_macro,
+        inline_nowiki,
+        inline_object,
+        inline_emphstrong,
+        inline_comment,
+        inline_size,
+        inline_strike,
+        inline_subscript,
+        inline_superscript,
+        inline_underline,
+        inline_entity,
+    )
+    inline_re = re.compile('|'.join(inline), re.X | re.U)
+
+    inlinedesc = (
+        inline_macro,
+        inline_nowiki,
+        inline_emphstrong,
+    )
+    inlinedesc_re = re.compile('|'.join(inlinedesc), re.X | re.U)
+
+    # Nowiki end
+    nowiki_end_re = re.compile(nowiki_end, re.X)
+
+    # Table
+    table_re = re.compile(table, re.X | re.U)
+
+    # Table row
+    tablerow_re = re.compile(tablerow, re.X | re.U)
+
+    def _apply(self, match, prefix, *args):
+        """
+        Call the _repl method for the last matched group with the given prefix.
+        """
+        data = dict(((str(k), v) for k, v in match.groupdict().iteritems() if v is not None))
+        getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(*args, **data)
+
+    def parse_block(self, iter_content, arguments):
+        attrib = {}
+        if arguments:
+            for key, value in arguments.keyword.iteritems():
+                if key in ('style', ):
+                    attrib[moin_page(key)] = value
+                elif key == '_old':
+                    attrib[moin_page.class_] = value.replace('/', ' ')
+
+        body = moin_page.body(attrib=attrib)
+
+        stack = _Stack(body)
+
+        for line in iter_content:
+            data = dict(((str(k), v) for k, v in self.indent_re.match(line).groupdict().iteritems() if v is not None))
+            self.indent_repl(iter_content, stack, line, **data)
+
+        return body
+
+    def parse_inline(self, text, stack, inline_re=inline_re):
+        """Recognize inline elements within the given text"""
+
+        pos = 0
+        for match in inline_re.finditer(text):
+            # Handle leading text
+            stack.top_append_ifnotempty(text[pos:match.start()])
+            pos = match.end()
+
+            self._apply(match, 'inline', stack)
+
+        # Handle trailing text
+        stack.top_append_ifnotempty(text[pos:])
+
+
+class ConverterFormat19(Converter):
+    @classmethod
+    def factory(cls, _request, input, output, **kw):
+        if type_moin_document.issupertype(output):
+            if (type_moin_wiki.issupertype(input)
+                    and input.parameters.get('format') == '1.9'):
+                return cls
+            if Type('x-moin/format;name=wiki;format=1.9').issupertype(input):
+                return cls
+
     inline_freelink = r"""
          (?:
           (?<![%(u)s%(l)s/])  # require anything not upper/lower/slash before
@@ -956,143 +1102,12 @@ class Converter(ConverterMacro):
         element = moin_page.a(attrib=attrib, children=[url_target])
         stack.top_append(element)
 
-    table = block_table
-
-    tablerow = r"""
-        (?P<cell>
-            (?P<cell_marker>
-                (\|\|)+
-            )
-            (
-                <
-                (?P<cell_args> .*? )
-                >
-            )?
-            \s*
-            (?P<cell_text> .*? )
-            \s*
-            (?=
-                \|\|
-                |
-                $
-            )
-        )
-    """
-
-    def tablerow_cell_repl(self, stack, table, row, cell, cell_marker, cell_text, cell_args=None):
-        element = moin_page.table_cell()
-        stack.push(element)
-
-        if len(cell_marker) / 2 > 1:
-            element.set(moin_page.number_columns_spanned, len(cell_marker) / 2)
-
-        if cell_args:
-            cell_args = _TableArguments()(cell_args)
-
-            for key, value in cell_args.keyword.iteritems():
-                attrib = element.attrib
-                if key.startswith('table'):
-                    key = key[5:]
-                    attrib = table.attrib
-                elif key.startswith('row'):
-                    key = key[3:]
-                    attrib = row.attrib
-
-                if key in ('class', 'style', 'number-columns-spanned', 'number-rows-spanned'):
-                    attrib[moin_page(key)] = value
-
-        self.parse_inline(cell_text, stack)
-
-        stack.pop_name('table-cell')
-
-    # Block elements
-    block = (
-        block_line,
-        block_comment,
-        block_head,
-        block_separator,
-        block_macro,
-        block_nowiki,
-        block_table,
-        block_text,
-    )
-    block_re = re.compile('|'.join(block), re.X | re.U | re.M)
-
-    indent_re = re.compile(indent, re.X)
-
-    inline = (
-        inline_link,
-        inline_macro,
-        inline_nowiki,
-        inline_object,
-        inline_emphstrong,
-        inline_comment,
-        inline_size,
-        inline_strike,
-        inline_subscript,
-        inline_superscript,
-        inline_underline,
+    inline = Converter.inline + (
         inline_freelink,
         inline_url,
-        inline_entity,
     )
     inline_re = re.compile('|'.join(inline), re.X | re.U)
 
-    inlinedesc = (
-        inline_macro,
-        inline_nowiki,
-        inline_emphstrong,
-    )
-    inlinedesc_re = re.compile('|'.join(inlinedesc), re.X | re.U)
 
-    # Nowiki end
-    nowiki_end_re = re.compile(nowiki_end, re.X)
-
-    # Table
-    table_re = re.compile(table, re.X | re.U)
-
-    # Table row
-    tablerow_re = re.compile(tablerow, re.X | re.U)
-
-    def _apply(self, match, prefix, *args):
-        """
-        Call the _repl method for the last matched group with the given prefix.
-        """
-        data = dict(((str(k), v) for k, v in match.groupdict().iteritems() if v is not None))
-        getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(*args, **data)
-
-    def parse_block(self, iter_content, arguments):
-        attrib = {}
-        if arguments:
-            for key, value in arguments.keyword.iteritems():
-                if key in ('style', ):
-                    attrib[moin_page(key)] = value
-                elif key == '_old':
-                    attrib[moin_page.class_] = value.replace('/', ' ')
-
-        body = moin_page.body(attrib=attrib)
-
-        stack = _Stack(body)
-
-        for line in iter_content:
-            data = dict(((str(k), v) for k, v in self.indent_re.match(line).groupdict().iteritems() if v is not None))
-            self.indent_repl(iter_content, stack, line, **data)
-
-        return body
-
-    def parse_inline(self, text, stack, inline_re=inline_re):
-        """Recognize inline elements within the given text"""
-
-        pos = 0
-        for match in inline_re.finditer(text):
-            # Handle leading text
-            stack.top_append_ifnotempty(text[pos:match.start()])
-            pos = match.end()
-
-            self._apply(match, 'inline', stack)
-
-        # Handle trailing text
-        stack.top_append_ifnotempty(text[pos:])
-
-
+default_registry.register(ConverterFormat19.factory)
 default_registry.register(Converter.factory)
