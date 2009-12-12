@@ -7,7 +7,22 @@ MoinMoin - MIME helpers
 
 
 class Type(object):
+    """
+    @ivar type: Type part
+    @type type: unicode
+    @ivar subtype: Subtype part
+    @type subtype: unicode
+    @ivar parameters: Parameters part
+    @type parameters: dict
+    """
+
     def __init__(self, _type=None, type=None, subtype=None, parameters=None):
+        """
+        @param _type: Textual type, is split into the parts
+        @keyword type: Type part
+        @keyword subtype: Subtype part
+        @keyword parameters: Parameters part
+        """
         self.type = self.subtype = None
         self.parameters = {}
 
@@ -39,6 +54,14 @@ class Type(object):
             return ret
         return not ret
 
+    def __repr__(self):
+        return '<%s object: type: %r; subtype: %r; parameters: %r>' % (
+                self.__class__.__name__,
+                self.type,
+                self.subtype,
+                self.parameters,
+                )
+
     def __unicode__(self):
         ret = [u'%s/%s' % (self.type, self.subtype)]
 
@@ -69,14 +92,14 @@ class Type(object):
         A super type is defined as
         - the other type matches this (possibly wildcard) type,
         - the other subtype matches this (possibly wildcard) subtype and
-        - the parameters are a subset of the others.
+        - the other parameters are a supperset of this one.
         """
         if isinstance(other, Type):
             if self.type and self.type != other.type: return False
             if self.subtype and self.subtype != other.subtype: return False
-            self_set = set(self.parameters.iteritems())
-            other_set = set(other.parameters.iteritems())
-            return self_set <= other_set
+            self_params = set(self.parameters.iteritems())
+            other_params = set(other.parameters.iteritems())
+            return self_params <= other_params
 
         raise ValueError
 
