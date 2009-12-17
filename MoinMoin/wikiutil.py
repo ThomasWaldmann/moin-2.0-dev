@@ -2275,17 +2275,6 @@ def getUnicodeIndexGroup(name):
         return c.upper() # we put lower and upper case words into the same index group
 
 
-def isStrictWikiname(name, word_re=re.compile(ur"^(?:[%(u)s][%(l)s]+){2,}$" % {'u': config.chars_upper, 'l': config.chars_lower})):
-    """
-    Check whether this is NOT an extended name.
-
-    @param name: the wikiname in question
-    @rtype: bool
-    @return: true if name matches the word_re
-    """
-    return word_re.match(name)
-
-
 def is_URL(arg, schemas=config.url_schemas):
     """ Return True if arg is a URL (with a schema given in the schemas list).
 
