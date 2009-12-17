@@ -19,7 +19,17 @@ magicpages = [
 import os, sys
 
 from MoinMoin.script import MoinScript
-from MoinMoin import user, wikiutil
+from MoinMoin import config, user
+
+def isStrictWikiname(name, word_re=re.compile(ur"^(?:[%(u)s][%(l)s]+){2,}$" % {'u': config.chars_upper, 'l': config.chars_lower})):
+    """
+    Check whether this is NOT an extended name.
+
+    @param name: the wikiname in question
+    @rtype: bool
+    @return: true if name matches the word_re
+    """
+    return word_re.match(name)
 
 class PluginScript(MoinScript):
     """\
@@ -179,9 +189,9 @@ General syntax: moin [options] account check [check-options]
         for uid, u in self.users.items():
             if u.disabled:
                 continue
-            if not wikiutil.isStrictWikiname(u.name):
+            if not isStrictWikiname(u.name):
                 newname = u.name.capwords().replace(" ", "").replace("-", "")
-                if not wikiutil.isStrictWikiname(newname):
+                if not isStrictWikiname(newname):
                     print " %-20s %-30r - no WikiName, giving up" % (uid, u.name)
                 else:
                     print " %-20s %-30r - no WikiName -> %r" % (uid, u.name, newname)
