@@ -6,6 +6,10 @@
                 2008-2008 MoinMoin:FlorianKrupicka
     @license: GNU GPL, see COPYING for details.
 """
+import os
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin.web.contexts import AllContext, Context, XMLRPCContext
 from MoinMoin.web.exceptions import HTTPException, Forbidden
@@ -16,16 +20,29 @@ from MoinMoin.storage.error import AccessDeniedError, StorageError
 from MoinMoin.storage.serialization import unserialize
 from MoinMoin.storage.backends import router, acl, memory
 from MoinMoin.Page import Page
-from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
+from MoinMoin import auth, config, i18n, user, wikiutil, xmlrpc, error
 
-from MoinMoin import log
-logging = log.getLogger(__name__)
+
+def set_umask(new_mask=0777^config.umask):
+    """ Set the OS umask value (and ignore potential failures on OSes where
+        this is not supported).
+        Default: the bitwise inverted value of config.umask
+    """
+    try:
+        old_mask = os.umask(new_mask)
+    except:
+        # maybe we are on win32?
+        pass
+
 
 def init(request):
     """
     Wraps an incoming WSGI request in a Context object and initializes
     several important attributes.
     """
+    set_umask() # do it once per request because maybe some server
+                # software sets own umask
+
     if isinstance(request, Context):
         context, request = request, request.request
     else:
@@ -268,26 +285,38 @@ def setup_i18n_preauth(context):
     if i18n.languages is None:
         i18n.i18n_init(context)
 
-    cfg = context.cfg
     lang = None
-    if i18n.languages and not cfg.language_ignore_browser:
-        for l in context.request.accept_languages:
-            if l in i18n.languages:
-                lang = l
-                break
-    if lang is None and cfg.language_default in i18n.languages:
-        lang = cfg.language_default
-    else:
+    if i18n.languages:
+        cfg = context.cfg
+        if not cfg.language_ignore_browser:
+            for l, w in context.request.accept_languages:
+                logging.debug("client accepts language %r, weight %r" % (l, w))
+                if l in i18n.languages:
+                    logging.debug("moin supports language %r" % l)
+                    lang = l
+                    break
+            else:
+                logging.debug("moin does not support any language client accepts")
+                if cfg.language_default in i18n.languages:
+                    lang = cfg.language_default
+                    logging.debug("fall back to cfg.language_default (%r)" % lang)
+    if not lang:
         lang = 'en'
+        logging.debug("emergency fallback to 'en'")
+    logging.debug("setup_i18n_preauth returns %r" % lang)
     return lang
 
 def setup_i18n_postauth(context):
     """ Determine language for the request after user-id is established. """
     user = context.user
     if user and user.valid and user.language:
-        return user.language
+        logging.debug("valid user that has configured some specific language to use in his user profile")
+        lang = user.language
     else:
-        return context.lang
+        logging.debug("either no valid user or no specific language configured in user profile, using lang setup by setup_i18n_preauth")
+        lang = context.lang
+    logging.debug("setup_i18n_postauth returns %r" % lang)
+    return lang
 
 class Application(object):
     def __init__(self, app_config=None):
