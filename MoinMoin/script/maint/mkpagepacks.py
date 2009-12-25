@@ -3,7 +3,8 @@
 MoinMoin - Package Generator
 
 @copyright: 2005 Alexander Schremmer,
-            2006-2009 MoinMoin:ThomasWaldmann
+            2006-2009 MoinMoin:ThomasWaldmann,
+            2009 MoinMoin:ReimarBauer
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -70,7 +71,7 @@ General syntax: moin [options] maint mkpagepacks [mkpagepacks-options]
             for pageset_name in pageset_names:
                 pageset_orig = set(getattr(i18n.strings, pageset_name))
                 pageset_trans = set([trans(pn) for pn in pageset_orig])
-                key = u"%s_%s" % (lang_long, pageset_name)
+                key = u"%s--%s" % (lang_long, pageset_name)
                 pageset = pageset_trans
                 if lang != 'en':
                     pageset -= pageset_orig

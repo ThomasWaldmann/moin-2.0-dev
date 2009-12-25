@@ -154,6 +154,7 @@ class PageEditor(Page):
         signature = u.signature()
         variables = {
             'PAGE': self.page_name,
+            'TIMESTAMP': now,
             'TIME': "<<DateTime(%s)>>" % now,
             'DATE': "<<Date(%s)>>" % now,
             'ME': u.name,
