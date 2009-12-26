@@ -25,7 +25,6 @@ from MoinMoin import config
 from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.support.python_compatibility import rsplit
-from inspect import getargspec, isfunction, isclass, ismethod
 
 from MoinMoin import web # needed so that next line works:
 import werkzeug
@@ -1776,6 +1775,7 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
     @param fixed_args: fixed arguments to pass as the first arguments
     @returns: the return value from the function called
     """
+    from inspect import getargspec, isfunction, isclass, ismethod
 
     def _convert_arg(request, value, default, name=None):
         """
