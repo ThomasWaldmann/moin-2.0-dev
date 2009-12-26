@@ -1046,7 +1046,6 @@ options = {
         ('show_toolbar', lambda _: _('Show icon toolbar')),
         ('show_topbottom', lambda _: _('Show top/bottom links in headings')),
         ('show_fancy_diff', lambda _: _('Show fancy diffs')),
-        ('wikiname_add_spaces', lambda _: _('Add spaces to displayed wiki names')),
         ('remember_me', lambda _: _('Remember login information')),
 
         ('disabled', lambda _: _('Disable this account forever')),
