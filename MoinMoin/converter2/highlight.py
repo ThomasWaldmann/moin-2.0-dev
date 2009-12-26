@@ -7,7 +7,6 @@ MoinMoin - Text highlighting converter
 
 from __future__ import absolute_import
 
-from MoinMoin import wikiutil
 from MoinMoin.util.tree import html, moin_page
 
 
