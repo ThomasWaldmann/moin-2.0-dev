@@ -462,22 +462,6 @@ class Page(object):
             acls = (acls, )
         return AccessControlList(self.request.cfg, acls)
 
-    def split_title(self, force=0):
-        """ Return a string with the page name split by spaces, if the user wants that.
-
-        @param force: if != 0, then force splitting the page_name
-        @rtype: unicode
-        @return: pagename of this page, splitted into space separated words
-        """
-        request = self.request
-        if not force and not request.user.wikiname_add_spaces:
-            return self.page_name
-
-        # look for the end of words and the start of a new word,
-        # and insert a space there
-        splitted = config.split_regex.sub(r'\1 \2', self.page_name)
-        return splitted
-
     def url(self, request, querystr=None, anchor=None, relative=False, **kw):
         """ Return complete URL for this page, including scriptname.
             The URL is NOT escaped, if you write it to HTML, use wikiutil.escape
@@ -543,7 +527,7 @@ class Page(object):
         @return: formatted link
         """
         if not text:
-            text = self.split_title()
+            text = self.page_name
         text = wikiutil.escape(text)
 
         # Add css class for non existing page
@@ -810,7 +794,7 @@ class Page(object):
                     request.user.addTrail(self)
                     trail = request.user.getTrail()
 
-                title = self.split_title()
+                title = self.page_name
 
                 html_head = ''
                 if request.cfg.openid_server_enabled:
