@@ -10,10 +10,9 @@
 """
 
 from MoinMoin.util import pysupport
+from MoinMoin import wikiutil
 
 modules = pysupport.getPackageModules(__file__)
-
-from MoinMoin import wikiutil
 
 def parse_start_step(request, args):
     """
@@ -49,5 +48,4 @@ def parse_start_step(request, args):
         elif attrs.get('numbers', '"on"')[1:-1].lower() in ('none', 'disable'):
             nums = -1
     return nums, start, step, attrs
-
 

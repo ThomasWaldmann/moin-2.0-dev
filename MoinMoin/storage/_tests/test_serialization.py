@@ -14,7 +14,6 @@ from StringIO import StringIO
 
 from MoinMoin._tests import become_trusted
 from MoinMoin.storage.error import ItemAlreadyExistsError
-from MoinMoin.conftest import init_test_request
 from MoinMoin.storage.serialization import Entry, create_value_object, serialize
 
 

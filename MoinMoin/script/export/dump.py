@@ -11,7 +11,6 @@ import sys, os, time, codecs, shutil, re, errno
 
 from MoinMoin import config, wikiutil, Page, user
 from MoinMoin import script
-from MoinMoin.action import AttachFile
 
 url_prefix_static = "."
 logo_html = '<img src="logo.png">'

@@ -12,6 +12,7 @@ import re, time
 from MoinMoin.Page import Page
 from MoinMoin import wikiutil
 from MoinMoin.support.parsedatetime.parsedatetime import Calendar
+from MoinMoin.web.utils import check_surge_protect
 
 def checkTitleSearch(request):
     """ Return 1 for title search, 0 for full text search, -1 for idiot spammer
@@ -60,8 +61,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
     _ = request.getText
     titlesearch = checkTitleSearch(request)
     if titlesearch < 0:
-        request.makeForbidden403()
-        request.surge_protect(kick_him=True) # get rid of spammer
+        check_surge_protect(request, kick=True) # get rid of spammer
         return
 
     advancedsearch = isAdvancedSearch(request)
@@ -118,12 +118,12 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
             else:
                 # didn't work, let's try parsedatetime
                 cal = Calendar()
-                mtime_parsed, invalid_flag = cal.parse(mtime)
+                mtime_parsed, parsed_what = cal.parse(mtime)
                 # XXX it is unclear if usage of localtime here and in parsedatetime module is correct.
                 # time.localtime is the SERVER's local time and of no relevance to the user (being
                 # somewhere in the world)
                 # mktime is reverse function for localtime, so this maybe fixes it again!?
-                if not invalid_flag and mtime_parsed <= time.localtime():
+                if parsed_what > 0 and mtime_parsed <= time.localtime():
                     mtime = time.mktime(mtime_parsed)
                 else:
                     mtime_parsed = None # we don't use invalid stuff
@@ -208,7 +208,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
             return
     if not results.hits: # no hits?
         f = request.formatter
-        querydict = wikiutil.parseQueryString(request.query_string)
+        querydict = dict(wikiutil.parseQueryString(request.query_string))
         querydict.update({'titlesearch': 0})
 
         request.theme.add_msg(_('Your search query {{{"%s"}}} didn\'t return any results. '
@@ -237,7 +237,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
     hints = []
 
     if titlesearch:
-        querydict = wikiutil.parseQueryString(request.query_string)
+        querydict = dict(wikiutil.parseQueryString(request.query_string))
         querydict.update({'titlesearch': 0})
 
         hints.append(''.join([

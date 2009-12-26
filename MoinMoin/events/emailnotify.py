@@ -50,7 +50,12 @@ def prep_page_changed_mail(request, page, comment, email_lang, revisions, trivia
             'username': page.last_editor(),
         }
 
-    return {'subject': subject, 'text': change['text'] + pagelink + change['diff']}
+    if change.has_key('comment'):
+        comment = _("Comment:") + "\n" + change['comment'] + "\n\n"
+    else:
+        comment = ''
+
+    return {'subject': subject, 'text': change['text'] + pagelink + comment + change['diff']}
 
 
 def send_notification(request, from_address, emails, data):
@@ -130,3 +135,4 @@ def handle(event):
         return handle_page_change(event)
     elif isinstance(event, ev.UserCreatedEvent):
         return handle_user_created(event)
+

@@ -38,7 +38,7 @@ check-tabs:
 
 # Create documentation
 epydoc: patchlevel
-	@epydoc -o ../html-1.9 --name=MoinMoin --url=http://moinmo.in/ --graph=all --graph-font=Arial MoinMoin
+	@epydoc --parse-only -o ../html-2.0 --name=MoinMoin --url=http://moinmo.in/ MoinMoin
 
 pagepacks:
 	@python MoinMoin/_tests/maketestwiki.py

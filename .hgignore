@@ -15,4 +15,5 @@
 ^.pydevproject
 ^.settings
 ^MANIFEST
+.DS_Store
 

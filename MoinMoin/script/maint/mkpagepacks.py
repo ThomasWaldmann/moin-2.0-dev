@@ -3,7 +3,8 @@
 MoinMoin - Package Generator
 
 @copyright: 2005 Alexander Schremmer,
-            2006-2009 MoinMoin:ThomasWaldmann
+            2006-2009 MoinMoin:ThomasWaldmann,
+            2009 MoinMoin:ReimarBauer
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -13,12 +14,15 @@ from datetime import datetime
 
 from MoinMoin.support.python_compatibility import set
 from MoinMoin import wikiutil
+from MoinMoin.action.AttachFile import _get_files
 from MoinMoin.Page import Page
+from MoinMoin.action import AttachFile
 from MoinMoin.packages import packLine, MOIN_PACKAGE_FILE
 from MoinMoin.script import MoinScript
 from MoinMoin import i18n
 from MoinMoin.i18n import strings
 i18n.strings = strings
+
 
 COMPRESSION_LEVEL = zipfile.ZIP_STORED
 
@@ -67,7 +71,7 @@ General syntax: moin [options] maint mkpagepacks [mkpagepacks-options]
             for pageset_name in pageset_names:
                 pageset_orig = set(getattr(i18n.strings, pageset_name))
                 pageset_trans = set([trans(pn) for pn in pageset_orig])
-                key = u"%s_%s" % (lang_long, pageset_name)
+                key = u"%s--%s" % (lang_long, pageset_name)
                 pageset = pageset_trans
                 if lang != 'en':
                     pageset -= pageset_orig
@@ -87,8 +91,8 @@ General syntax: moin [options] maint mkpagepacks [mkpagepacks-options]
             os.remove(filename)
         except OSError:
             pass
-
-        existing_pages = [pagename for pagename in pagelist if Page(request, pagename).exists()]
+        # page LanguageSetup needs no packing!
+        existing_pages = [pagename for pagename in pagelist if Page(request, pagename).exists() and pagename != 'LanguageSetup']
         if not existing_pages:
             return
 
@@ -100,10 +104,19 @@ General syntax: moin [options] maint mkpagepacks [mkpagepacks-options]
         for pagename in existing_pages:
             pagename = pagename.strip()
             page = Page(request, pagename)
+            files = _get_files(request, pagename)
+            for attname in files:
+                cnt += 1
+                zipname = "%d" % cnt
+                script.append(packLine(["ReplaceUnderlayAttachment", zipname, attname, pagename]))
+                attpath = AttachFile.getFilename(request, pagename, attname)
+                zf.write(attpath, zipname)
+
             cnt += 1
-            script.append(packLine([function, str(cnt), pagename]))
+            zipname = "%d" % cnt
+            script.append(packLine([function, zipname, pagename]))
             timestamp = page.mtime()
-            zi = zipfile.ZipInfo(filename=str(cnt), date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
+            zi = zipfile.ZipInfo(filename=zipname, date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
             zi.compress_type = COMPRESSION_LEVEL
             zf.writestr(zi, page.get_raw_body().encode("utf-8"))
 

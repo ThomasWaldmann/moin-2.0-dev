@@ -5,7 +5,7 @@
     @copyright: 2005 MoinMoin:FlorianFesti,
                 2005 MoinMoin:NirSoffer,
                 2005 MoinMoin:AlexanderSchremmer,
-                2006-2008 MoinMoin:ThomasWaldmann,
+                2006-2009 MoinMoin:ThomasWaldmann,
                 2006 MoinMoin:FranzPletz
     @license: GNU GPL, see COPYING for details
 """
@@ -15,7 +15,7 @@ import sys, os, time, errno, codecs
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import wikiutil, config
+from MoinMoin import wikiutil, config, caching
 from MoinMoin.util import lock, filesys
 from MoinMoin.search.results import getSearchResults, Match, TextMatch, TitleMatch, getSearchResults
 
@@ -24,189 +24,104 @@ from MoinMoin.search.results import getSearchResults, Match, TextMatch, TitleMat
 ##############################################################################
 
 
-class UpdateQueue:
-    """ Represents a locked page queue on the disk
+class IndexerQueue(object):
+    """
+    Represents a locked on-disk queue with jobs for the xapian indexer
 
-        XXX: check whether we just can use the caching module
+    Each job is a tuple like: (PAGENAME, ATTACHMENTNAME, REVNO)
+    PAGENAME: page name (unicode)
+    ATTACHMENTNAME: attachment name (unicode) or None (for pages)
+    REVNO: revision number (int) - meaning "look at that revision",
+           or None - meaning "look at all revisions"
     """
 
-    def __init__(self, f, lock_dir):
+    def __init__(self, request, xapian_dir, queuename, timeout=10.0):
         """
-        @param f: file to write to
-        @param lock_dir: directory to save the lock files
+        @param request: request object
+        @param xapian_dir: the xapian main directory
+        @param queuename: name of the queue (used for caching key)
+        @param timeout: lock acquire timeout
         """
-        self.file = f
-        self.writeLock = lock.WriteLock(lock_dir, timeout=10.0)
-        self.readLock = lock.ReadLock(lock_dir, timeout=10.0)
+        self.request = request
+        self.xapian_dir = xapian_dir
+        self.queuename = queuename
+        self.timeout = timeout
 
-    def exists(self):
-        """ Checks if the queue exists on the filesystem """
-        return os.path.exists(self.file)
+    def get_cache(self, locking):
+        return caching.CacheEntry(self.request, self.xapian_dir, self.queuename,
+                                  scope='dir', use_pickle=True, do_locking=locking)
 
-    def append(self, pagename):
-        """ Append a page to queue
-
-        @param pagename: string to save
-        """
-        if not self.writeLock.acquire(60.0):
-            logging.warning("can't add %r to xapian update queue: can't lock queue" % pagename)
-            return
+    def _queue(self, cache):
         try:
-            f = codecs.open(self.file, 'a', config.charset)
-            try:
-                f.write(pagename + "\n")
-            finally:
-                f.close()
+            queue = cache.content()
+        except caching.CacheError:
+            # likely nothing there yet
+            queue = []
+        return queue
+
+    def put(self, pagename, attachmentname=None, revno=None):
+        """ Put an entry into the queue (append at end)
+
+        @param pagename: page name [unicode]
+        @param attachmentname: attachment name [unicode]
+        @param revno: revision number (int) or None (all revs)
+        """
+        cache = self.get_cache(locking=False) # we lock manually
+        cache.lock('w', 60.0)
+        try:
+            queue = self._queue(cache)
+            entry = (pagename, attachmentname, revno)
+            queue.append(entry)
+            cache.update(queue)
         finally:
-            self.writeLock.release()
+            cache.unlock()
 
-    def pages(self):
-        """ Return list of pages in the queue """
-        if self.readLock.acquire(1.0):
-            try:
-                return self._decode(self._read())
-            finally:
-                self.readLock.release()
-        return []
+    def get(self):
+        """ Get (and remove) first entry from the queue
 
-    def remove(self, pages):
-        """ Remove pages from the queue
-
-        When the queue is empty, the queue file is removed, so exists()
-        can tell if there is something waiting in the queue.
-
-        @param pages: list of pagenames to remove
+        Raises IndexError if queue was empty when calling get().
         """
-        if self.writeLock.acquire(30.0):
-            try:
-                queue = self._decode(self._read())
-                for page in pages:
-                    try:
-                        queue.remove(page)
-                    except ValueError:
-                        pass
-                if queue:
-                    self._write(queue)
-                else:
-                    self._removeFile()
-                return True
-            finally:
-                self.writeLock.release()
-        return False
-
-    # Private -------------------------------------------------------
-
-    def _decode(self, data):
-        """ Decode queue data
-
-        @param data: the data to decode
-        """
-        pages = data.splitlines()
-        return self._filterDuplicates(pages)
-
-    def _filterDuplicates(self, pages):
-        """ Filter duplicates in page list, keeping the order
-
-        @param pages: list of pages to filter
-        """
-        unique = []
-        seen = {}
-        for name in pages:
-            if not name in seen:
-                unique.append(name)
-                seen[name] = 1
-        return unique
-
-    def _read(self):
-        """ Read and return queue data
-
-        This does not do anything with the data so we can release the
-        lock as soon as possible, enabling others to update the queue.
-        """
+        cache = self.get_cache(locking=False) # we lock manually
+        cache.lock('w', 60.0)
         try:
-            f = codecs.open(self.file, 'r', config.charset)
-            try:
-                return f.read()
-            finally:
-                f.close()
-        except (OSError, IOError), err:
-            if err.errno != errno.ENOENT:
-                raise
-            return ''
-
-    def _write(self, pages):
-        """ Write pages to queue file
-
-        Requires queue write locking.
-
-        @param pages: list of pages to write
-        """
-        # XXX use tmpfile/move for atomic replace on real operating systems
-        data = '\n'.join(pages) + '\n'
-        f = codecs.open(self.file, 'w', config.charset)
-        try:
-            f.write(data)
+            queue = self._queue(cache)
+            entry = queue.pop(0)
+            cache.update(queue)
         finally:
-            f.close()
-
-    def _removeFile(self):
-        """ Remove queue file
-
-        Requires queue write locking.
-        """
-        try:
-            os.remove(self.file)
-        except OSError, err:
-            if err.errno != errno.ENOENT:
-                raise
+            cache.unlock()
+        return entry
 
 
-class BaseIndex:
+class BaseIndex(object):
     """ Represents a search engine index """
-
-    class LockedException(Exception):
-        pass
 
     def __init__(self, request):
         """
         @param request: current request
         """
         self.request = request
-        main_dir = self._main_dir()
-        self.dir = os.path.join(main_dir, 'index')
-        if not os.path.exists(self.dir):
-            os.makedirs(self.dir)
-        self.sig_file = os.path.join(main_dir, 'complete')
-        lock_dir = os.path.join(main_dir, 'index-lock')
-        self.lock = lock.WriteLock(lock_dir, timeout=3600.0, readlocktimeout=60.0)
-        #self.read_lock = lock.ReadLock(lock_dir, timeout=3600.0)
-        self.update_queue = UpdateQueue(os.path.join(main_dir, 'update-queue'),
-                                os.path.join(main_dir, 'update-queue-lock'))
-        self.remove_queue = UpdateQueue(os.path.join(main_dir, 'remove-queue'),
-                                os.path.join(main_dir, 'remove-queue-lock'))
-
-        # Disabled until we have a sane way to build the index with a
-        # queue in small steps.
-        ## if not self.exists():
-        ##    self.indexPagesInNewThread(request)
+        self.main_dir = self._main_dir()
+        if not os.path.exists(self.main_dir):
+            os.makedirs(self.main_dir)
+        self.update_queue = IndexerQueue(request, self.main_dir, 'indexer-queue')
 
     def _main_dir(self):
         raise NotImplemented('...')
 
     def exists(self):
         """ Check if index exists """
-        return os.path.exists(self.sig_file)
+        raise NotImplemented('...')
 
     def mtime(self):
         """ Modification time of the index """
-        return os.path.getmtime(self.dir)
+        raise NotImplemented('...')
 
     def touch(self):
         """ Touch the index """
-        filesys.touch(self.dir)
+        raise NotImplemented('...')
 
     def _search(self, query):
-        """ Actually perfom the search (read-lock acquired)
+        """ Actually perfom the search
 
         @param query: the search query objects tree
         """
@@ -217,154 +132,51 @@ class BaseIndex:
 
         @param query: the search query objects to pass to the index
         """
-        #if not self.read_lock.acquire(1.0):
-        #    raise self.LockedException
-        #try:
-        hits = self._search(query, **kw)
-        #finally:
-        #    self.read_lock.release()
-        return hits
+        return self._search(query, **kw)
 
-    def update_page(self, pagename, now=1):
-        """ Update a single page in the index
+    def update_item(self, pagename, attachmentname=None, revno=None, now=True):
+        """ Update a single item (page or attachment) in the index
 
         @param pagename: the name of the page to update
-        @keyword now: do all updates now (default: 1)
+        @param attachmentname: the name of the attachment to update
+        @param revno: a specific revision number (int) or None (all revs)
+        @param now: do all updates now (default: True)
         """
-        self.update_queue.append(pagename)
+        self.update_queue.put(pagename, attachmentname, revno)
         if now:
-            self._do_queued_updates_InNewThread()
-
-    def remove_item(self, pagename, attachment=None, now=1):
-        """ Removes a page and all its revisions or a single attachment
-
-        @param pagename: name of the page to be removed
-        @keyword attachment: optional, only remove this attachment of the page
-        @keyword now: do all updates now (default: 1)
-        """
-        self.remove_queue.append('%s//%s' % (pagename, attachment or ''))
-        if now:
-            self._do_queued_updates_InNewThread()
+            self.do_queued_updates()
 
     def indexPages(self, files=None, mode='update', pages=None):
         """ Index pages (and files, if given)
 
-        Can be called only from a script. To index pages during a user
-        request, use indexPagesInNewThread.
-
         @param files: iterator or list of files to index additionally
-        @param mode: set the mode of indexing the pages, either 'update', 'add' or 'rebuild'
+        @param mode: set the mode of indexing the pages, either 'update' or 'add'
         @param pages: list of pages to index, if not given, all pages are indexed
         """
-        if not self.lock.acquire(1.0):
-            logging.warning("can't index: can't acquire lock")
-            return
-        try:
-            self._unsign()
-            start = time.time()
-            request = self._indexingRequest(self.request)
-            self._index_pages(request, files, mode, pages=pages)
-            logging.info("indexing completed successfully in %0.2f seconds." %
-                        (time.time() - start))
-            self._sign()
-        finally:
-            self.lock.release()
-
-    def indexPagesInNewThread(self, files=None, mode='update', pages=None):
-        """ Index pages in a new thread
-
-        Should be called from a user request. From a script, use indexPages.
-        """
-        # Prevent rebuilding the index just after it was finished
-        if self.exists():
-            return
-
-        from threading import Thread
-        indexThread = Thread(target=self._index_pages, args=(self.request, files, mode, pages))
-        indexThread.setDaemon(True)
-
-        # Join the index thread after current request finish, prevent
-        # Apache CGI from killing the process.
-        def joinDecorator(finish):
-            def func():
-                finish()
-                indexThread.join()
-            return func
-
-        self.request.finish = joinDecorator(self.request.finish)
-        indexThread.start()
+        start = time.time()
+        request = self._indexingRequest(self.request)
+        self._index_pages(request, files, mode, pages=pages)
+        logging.info("indexing completed successfully in %0.2f seconds." %
+                    (time.time() - start))
 
     def _index_pages(self, request, files=None, mode='update', pages=None):
         """ Index all pages (and all given files)
 
-        This should be called from indexPages or indexPagesInNewThread only!
-
-        This may take some time, depending on the size of the wiki and speed
-        of the machine.
-
-        When called in a new thread, lock is acquired before the call,
-        and this method must release it when it finishes or fails.
+        This should be called from indexPages only!
 
         @param request: current request
         @param files: iterator or list of files to index additionally
-        @param mode: set the mode of indexing the pages, either 'update',
-        'add' or 'rebuild'
+        @param mode: set the mode of indexing the pages, either 'update' or 'add'
         @param pages: list of pages to index, if not given, all pages are indexed
 
         """
         raise NotImplemented('...')
 
-    def _remove_item(self, writer, page, attachment=None):
-        """ Remove a page and all its revisions from the index or just
-            an attachment of that page
-
-        @param pagename: name of the page to remove
-        @keyword attachment: optionally, just remove this attachment
-        """
-        raise NotImplemented('...')
-
-    def _do_queued_updates_InNewThread(self):
-        """ do queued index updates in a new thread
-
-        Should be called from a user request. From a script, use indexPages.
-        """
-        if not self.lock.acquire(1.0):
-            logging.warning("can't index: can't acquire lock")
-            return
-        try:
-            def lockedDecorator(f):
-                def func(*args, **kwargs):
-                    try:
-                        return f(*args, **kwargs)
-                    finally:
-                        self.lock.release()
-                return func
-
-            from threading import Thread
-            indexThread = Thread(
-                    target=lockedDecorator(self._do_queued_updates),
-                    args=(self._indexingRequest(self.request), ))
-            indexThread.setDaemon(True)
-
-            # Join the index thread after current request finish, prevent
-            # Apache CGI from killing the process.
-            def joinDecorator(finish):
-                def func():
-                    finish()
-                    indexThread.join()
-                return func
-
-            self.request.finish = joinDecorator(self.request.finish)
-            indexThread.start()
-        except:
-            self.lock.release()
-            raise
-
-    def _do_queued_updates(self, request, amount=5):
-        """ Perform updates in the queues (read-lock acquired)
+    def do_queued_updates(self, amount=-1):
+        """ Perform updates in the queues
 
         @param request: the current request
-        @keyword amount: how many updates to perform at once (default: 5)
+        @keyword amount: how many updates to perform at once (default: -1 == all)
         """
         raise NotImplemented('...')
 
@@ -417,22 +229,6 @@ class BaseIndex:
         r.user.may = SecurityPolicy(r.user)
         return r
 
-    def _unsign(self):
-        """ Remove sig file - assume write lock acquired """
-        try:
-            os.remove(self.sig_file)
-        except OSError, err:
-            if err.errno != errno.ENOENT:
-                raise
-
-    def _sign(self):
-        """ Add sig file - assume write lock acquired """
-        f = file(self.sig_file, 'w')
-        try:
-            f.write('')
-        finally:
-            f.close()
-
 
 ##############################################################################
 ### Searching
@@ -476,7 +272,7 @@ class BaseSearch(object):
         Search pages.
 
         Return list of tuples (wikiname, page object, attachment,
-        matches, revision) and estimated number of search results (If
+        matches, revision) and estimated number of search results (if
         there is no estimate, None should be returned).
 
         The list may contain deleted pages or pages the user may not read.

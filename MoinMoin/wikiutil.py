@@ -46,7 +46,7 @@ CHILD_PREFIX_LEN = len(CHILD_PREFIX)
 #############################################################################
 
 def decodeUnknownInput(text):
-    """ Decode unknown input, like text attachments
+    """ Decode input in unknown encoding
 
     First we try utf-8 because it has special format, and it will decode
     only utf-8 files. Then we try config.charset, then iso-8859-1 using
@@ -120,7 +120,11 @@ def url_unquote(s, want_unicode=None):
 
 
 def parseQueryString(qstr, want_unicode=None):
-    """ see werkzeug.url_decode """
+    """ see werkzeug.url_decode
+
+        Please note: this returns a MultiDict, you might need to use dict() on
+                     the result if your code expects a "normal" dict.
+    """
     try:
         assert want_unicode is None
     except AssertionError:
@@ -550,10 +554,6 @@ def split_interwiki(wikiurl):
     'MoinMoin:Page with blanks' -> "MoinMoin", "Page with blanks"
     'MoinMoin:' -> "MoinMoin", ""
 
-    can also be used for:
-
-    'attachment:filename with blanks.txt' -> "attachment", "filename with blanks.txt"
-
     @param wikiurl: the url to split
     @rtype: tuple
     @return: (wikiname, pagename)
@@ -854,6 +854,10 @@ MIMETYPES_MORE = {
  '.conf': 'text/plain',
  '.irc': 'text/plain',
  '.md5': 'text/plain',
+ '.csv': 'text/csv',
+ '.flv': 'video/x-flv',
+ '.wmv': 'video/x-ms-wmv',
+ '.swf': 'application/x-shockwave-flash',
 }
 [mimetypes.add_type(mimetype, ext, True) for ext, mimetype in MIMETYPES_MORE.items()]
 
@@ -1168,7 +1172,7 @@ def searchAndImportPlugin(cfg, type, name, what=None):
         except PluginMissingError:
             pass
     else:
-        raise PluginMissingError("Plugin not found!")
+        raise PluginMissingError("Plugin not found! (%r %r %r)" % (type, name, what))
     return plugin
 
 
@@ -2237,6 +2241,20 @@ def taintfilename(basename):
         basename = basename.replace(x, '_')
 
     return basename
+
+
+def drawing2fname(drawing):
+    config.drawing_extensions = ['.tdraw', '.adraw',
+                                 '.svg',
+                                 '.png', '.jpg', '.jpeg', '.gif',
+                                ]
+    fname, ext = os.path.splitext(drawing)
+    # note: do not just check for empty extension or stuff like drawing:foo.bar
+    # will fail, instead of being expanded to foo.bar.tdraw
+    if ext not in config.drawing_extensions:
+        # for backwards compatibility, twikidraw is the default:
+        drawing += '.tdraw'
+    return drawing
 
 
 def mapURL(request, url):

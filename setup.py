@@ -275,6 +275,7 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'MoinMoin',
         'MoinMoin.action',
         'MoinMoin.auth',
+        'MoinMoin.auth.openidrp_ext',
         'MoinMoin.config',
         'MoinMoin.datastruct',
         'MoinMoin.datastruct.backends',
@@ -301,6 +302,8 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'MoinMoin.script.server',
         'MoinMoin.script.xmlrpc',
         'MoinMoin.search',
+        'MoinMoin.search.Xapian',
+        'MoinMoin.search.queryparser',
         'MoinMoin.security',
         'MoinMoin.support',
         'MoinMoin.support.flup',
@@ -315,7 +318,7 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'MoinMoin.support.werkzeug',
         'MoinMoin.support.werkzeug.contrib',
         'MoinMoin.support.werkzeug.debug',
-        'MoinMoin.support.xapwrap',
+        'MoinMoin.support.xappy',
         'MoinMoin.support.parsedatetime',
         'MoinMoin.storage',
         'MoinMoin.storage.backends',
@@ -384,5 +387,5 @@ called "python%d.%d-dev(el)".
 
 Please contact the system administrator to have it installed.
 """ % sys.version_info[:2]
-    sys.exit(1)
+        sys.exit(1)
 

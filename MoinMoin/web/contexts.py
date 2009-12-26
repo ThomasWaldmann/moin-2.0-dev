@@ -266,15 +266,15 @@ class HTTPContext(BaseContext):
             return
 
         if level == 1:
-            self.headers.set('Cache-Control', 'private, must-revalidate, mag-age=10')
+            self.headers.set('Cache-Control', 'private, must-revalidate, max-age=10')
         elif level == 2:
             self.headers.set('Cache-Control', 'no-cache')
             self.headers.set('Pragma', 'no-cache')
         self.request.expires = time.time() - 3600 * 24 * 365
 
-    def http_redirect(self, url):
+    def http_redirect(self, url, code=302):
         """ Raise a simple redirect exception. """
-        abort(redirect(url))
+        abort(redirect(url, code=code))
 
     # the output related methods
     def write(self, *data):

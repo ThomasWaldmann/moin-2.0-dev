@@ -6,6 +6,10 @@
                 2008-2008 MoinMoin:FlorianKrupicka
     @license: GNU GPL, see COPYING for details.
 """
+import os
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin.web.contexts import AllContext, Context, XMLRPCContext
 from MoinMoin.web.exceptions import HTTPException, Forbidden
@@ -16,16 +20,29 @@ from MoinMoin.storage.error import AccessDeniedError, StorageError
 from MoinMoin.storage.serialization import unserialize
 from MoinMoin.storage.backends import router, acl, memory
 from MoinMoin.Page import Page
-from MoinMoin import auth, i18n, user, wikiutil, xmlrpc, error
+from MoinMoin import auth, config, i18n, user, wikiutil, xmlrpc, error
 
-from MoinMoin import log
-logging = log.getLogger(__name__)
+
+def set_umask(new_mask=0777^config.umask):
+    """ Set the OS umask value (and ignore potential failures on OSes where
+        this is not supported).
+        Default: the bitwise inverted value of config.umask
+    """
+    try:
+        old_mask = os.umask(new_mask)
+    except:
+        # maybe we are on win32?
+        pass
+
 
 def init(request):
     """
     Wraps an incoming WSGI request in a Context object and initializes
     several important attributes.
     """
+    set_umask() # do it once per request because maybe some server
+                # software sets own umask
+
     if isinstance(request, Context):
         context, request = request, request.request
     else:
@@ -83,6 +100,7 @@ def preload_xml(context):
         item_count = 0
         for item in tmp_backend.iteritems():
             item_count += 1
+        logging.debug("preloaded xml into tmp_backend: %s, %d items" % (xmlfile, item_count))
         try:
             # In case the server was restarted we cannot know whether
             # the xml data already exists in the target backend.
@@ -95,6 +113,7 @@ def preload_xml(context):
             # if there is some exception, we assume that backend needs to be filled
             # we need to use it as unserialization target so that update mode of
             # unserialization creates the correct item revisions
+            logging.debug("unserialize xml file %s into %r" % (xmlfile, backend))
             unserialize(backend, xmlfile)
     else:
         item_count = 0
@@ -266,26 +285,38 @@ def setup_i18n_preauth(context):
     if i18n.languages is None:
         i18n.i18n_init(context)
 
-    cfg = context.cfg
     lang = None
-    if i18n.languages and not cfg.language_ignore_browser:
-        for l in context.request.accept_languages:
-            if l in i18n.languages:
-                lang = l
-                break
-    if lang is None and cfg.language_default in i18n.languages:
-        lang = cfg.language_default
-    else:
+    if i18n.languages:
+        cfg = context.cfg
+        if not cfg.language_ignore_browser:
+            for l, w in context.request.accept_languages:
+                logging.debug("client accepts language %r, weight %r" % (l, w))
+                if l in i18n.languages:
+                    logging.debug("moin supports language %r" % l)
+                    lang = l
+                    break
+            else:
+                logging.debug("moin does not support any language client accepts")
+                if cfg.language_default in i18n.languages:
+                    lang = cfg.language_default
+                    logging.debug("fall back to cfg.language_default (%r)" % lang)
+    if not lang:
         lang = 'en'
+        logging.debug("emergency fallback to 'en'")
+    logging.debug("setup_i18n_preauth returns %r" % lang)
     return lang
 
 def setup_i18n_postauth(context):
     """ Determine language for the request after user-id is established. """
     user = context.user
     if user and user.valid and user.language:
-        return user.language
+        logging.debug("valid user that has configured some specific language to use in his user profile")
+        lang = user.language
     else:
-        return context.lang
+        logging.debug("either no valid user or no specific language configured in user profile, using lang setup by setup_i18n_preauth")
+        lang = context.lang
+    logging.debug("setup_i18n_postauth returns %r" % lang)
+    return lang
 
 class Application(object):
     def __init__(self, app_config=None):
@@ -297,6 +328,7 @@ class Application(object):
 
     def __call__(self, environ, start_response):
         try:
+            request = None
             request = self.Request(environ)
             context = init(request)
             protect_backends(context)
@@ -308,8 +340,10 @@ class Application(object):
             # this is stuff the user should see on the web interface:
             response = fatal_response(e)
         except Exception, e:
+            # we avoid raising more exceptions here to preserve the original exception
+            url_info = request and ' [%s]' % request.url or ''
             # have exceptions logged within the moin logging framework:
-            logging.exception("An exception has occurred.")
+            logging.exception("An exception has occurred%s." % url_info)
             # re-raise exception, so e.g. the debugger middleware gets it
             raise
 
