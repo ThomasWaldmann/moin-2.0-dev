@@ -24,7 +24,6 @@ from MoinMoin.support.python_compatibility import hash_new, hmac_new
 from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import timefuncs, filesys, random_string
 from MoinMoin.util import timefuncs
-from MoinMoin.search import term
 from MoinMoin.wikiutil import url_quote_plus
 
 
@@ -50,6 +49,7 @@ def getUserList(request):
 
 def get_by_filter(request, key, value):
     """ Searches for an user with a given filter """
+    from MoinMoin.search import term
     filter = term.ItemMetaDataMatch(key, value)
     items = get_user_backend(request).search_item(filter)
     users = [User(request, item.name) for item in items]
@@ -72,6 +72,7 @@ def get_by_jabber_id(request, jabber_id):
 
 def getUserIdByOpenId(request, openid):
     """ Searches for an user with a particular openid id and returns it. """
+    from MoinMoin.search import term
     filter = term.ItemHasMetaDataValue('openids', openid)
     identifier = get_user_backend(request).search_item(filter)
 
@@ -88,6 +89,7 @@ def getUserId(request, searchName):
     @rtype: string
     @return: the corresponding user ID or None
     """
+    from MoinMoin.search import term
     try:
         backend = get_user_backend(request)
         for user in backend.search_item(term.ItemMetaDataMatch('name', searchName)):
@@ -440,7 +442,7 @@ class User:
         This is a private method and should not be used by clients.
 
         @param data: dict with user data (from storage)
-        @param password: password to verify
+        @param password: password to verify [unicode]
         @rtype: 2 tuple (bool, bool)
         @return: password is valid, enc_password changed
         """
@@ -454,19 +456,17 @@ class User:
         if not password:
             return False, False
 
-        password = password.encode('utf-8')
-
         if epwd[:5] == '{SHA}':
-            enc = '{SHA}' + base64.encodestring(hash_new('sha1', password).digest()).rstrip()
+            enc = '{SHA}' + base64.encodestring(hash_new('sha1', password.encode('utf-8')).digest()).rstrip()
             if epwd == enc:
-                data['enc_password'] = encodePassword(password)
+                data['enc_password'] = encodePassword(password) # upgrade to SSHA
                 return True, True
             return False, False
 
         if epwd[:6] == '{SSHA}':
             data = base64.decodestring(epwd[6:])
             salt = data[20:]
-            hash = hash_new('sha1', password)
+            hash = hash_new('sha1', password.encode('utf-8'))
             hash.update(salt)
             return hash.digest() == data[:20], False
 
@@ -951,11 +951,11 @@ Login Name: %s
 
 Password recovery token: %s
 
-Password reset URL: %s/?action=recoverpass&name=%s&token=%s
+Password reset URL: %s?action=recoverpass&name=%s&token=%s
 """) % (
                         self.name,
                         tok,
-                        self._request.script_root,
+                        self._request.url_root,
                         url_quote_plus(self.name),
                         tok, )
 

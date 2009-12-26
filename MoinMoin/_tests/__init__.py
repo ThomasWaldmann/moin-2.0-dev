@@ -13,7 +13,7 @@ from MoinMoin.formatter.text_html import Formatter
 from MoinMoin.items import Item, ACL
 from MoinMoin.util import random_string
 from MoinMoin import caching, user
-from MoinMoin import config
+from MoinMoin import config, security
 
 # Promoting the test user -------------------------------------------
 # Usually the tests run as anonymous user, but for some stuff, you
@@ -53,7 +53,7 @@ def become_superuser(request):
 
 # Creating and destroying test pages --------------------------------
 
-def create_page(request, itemname, content, mimetype='text/moin-wiki', acl=None):
+def create_item(request, itemname, content, mimetype='text/moin-wiki', acl=None):
     """ create a page with some content """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
@@ -64,7 +64,7 @@ def create_page(request, itemname, content, mimetype='text/moin-wiki', acl=None)
     item._save(meta, content, mimetype=mimetype)
     return Item.create(request, itemname)
 
-def append_page(request, itemname, content):
+def append_item(request, itemname, content):
     """ appends some content to an existing page """
     if isinstance(content, unicode):
         content = content.encode(config.charset)
@@ -99,3 +99,8 @@ def nuke_xapian_index(request):
     fpath = os.path.join(request.cfg.cache_dir, 'xapian')
     if os.path.exists(fpath):
         shutil.rmtree(fpath, True)
+
+def nuke_item(request, item_name):
+    """ complete destroys an item """
+    item = Item.create(request, item_name)
+    item.destroy()

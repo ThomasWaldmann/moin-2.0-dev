@@ -524,31 +524,6 @@ file. It should match the actual charset of the configuration file.
                                 raise error.ConfigurationError(message %
                                                                {'name': name})
 
-    def _check_directories(self):
-        """ Make sure directories are accessible
-
-        data/ should exists and allow read, write and
-        execute.
-        """
-        mode = os.F_OK | os.R_OK | os.W_OK | os.X_OK
-        attr = 'data_dir'
-        path = getattr(self, attr)
-
-        path_pages = os.path.join(path, "pages")
-        if not (os.path.isdir(path_pages) and os.access(path_pages, mode)):
-            msg = """
-%(attr)s "%(path)s" does not exist, or has incorrect ownership or
-permissions.
-
-Make sure the directory and the subdirectory "pages" are owned by the web
-server and are readable, writable and executable by the web server user
-and group.
-
-It is recommended to use absolute paths and not relative paths. Check
-also the spelling of the directory name.
-""" % {'attr': attr, 'path': path, }
-            raise error.ConfigurationError(msg)
-
     def _loadPluginModule(self):
         """
         import all plugin modules
@@ -691,7 +666,7 @@ options_no_group_name = {
      "The session service."),
     ('cookie_secure', None,
      'Use secure cookie. (None = auto-enable secure cookie for https, True = ever use secure cookie, False = never use secure cookie).'),
-    ('cookie_httponly', True,
+    ('cookie_httponly', False,
      'Use a httponly cookie that can only be used by the server, not by clientside scripts.'),
     ('cookie_domain', None,
      'Domain used in the session cookie. (None = do not specify domain).'),
@@ -746,16 +721,16 @@ options_no_group_name = {
         'rss_rc': (1, 60),
         # The following actions are often used for images - to avoid pages with lots of images
         # (like photo galleries) triggering surge protection, we assign rather high limits:
-        'get': (90, 60),
+        'get': (300, 30),
         'cache': (600, 30), # cache action is very cheap/efficient
      },
-     "Surge protection tries to deny clients causing too much load/traffic, see /SurgeProtection."),
+     "Surge protection tries to deny clients causing too much load/traffic, see HelpOnConfiguration/SurgeProtection."),
     ('surge_lockout_time', 3600, "time [s] someone gets locked out when ignoring the warnings"),
 
     ('textchas', None,
      "Spam protection setup using site-specific questions/answers, see HelpOnTextChas."),
     ('textchas_disabled_group', None,
-     "Name of a group of trusted users who do not get asked TextCha questions."),
+     "Name of a group of trusted users who do not get asked !TextCha questions."),
 
     # a regex of HTTP_USER_AGENTS that should be excluded from logging
     # and receive a FORBIDDEN for anything except viewing a page
@@ -766,13 +741,6 @@ options_no_group_name = {
       'microsoft.url.control|mirror| mj12bot|msnbot|msrbot|neomo|nutbot|omniexplorer|puf|robot|scooter|seekbot|'
       'sherlock|slurp|sitecheck|snoopy|spider|teleport|twiceler|voilabot|voyager|webreaper|wget|yeti'),
      "A regex of HTTP_USER_AGENTs that should be excluded from logging and are not allowed to use actions."),
-
-    ('unzip_single_file_size', 2.0 * 1000 ** 2,
-     "max. size of a single file in the archive which will be extracted [bytes]"),
-    ('unzip_attachments_space', 200.0 * 1000 ** 2,
-     "max. total amount of bytes can be used to unzip files [bytes]"),
-    ('unzip_attachments_count', 101,
-     "max. number of files which are extracted from the zip file"),
   )),
   # ==========================================================================
   'style': ('Style / Theme / UI related',
@@ -963,7 +931,7 @@ options_no_group_name = {
      "if True, add timing infos to the log output to analyse load conditions"),
 
     # some dangerous mimetypes (we don't use "content-disposition: inline" for them when a user
-    # downloads such attachments, because the browser might execute e.g. Javascript contained
+    # downloads such data, because the browser might execute e.g. Javascript contained
     # in the HTML and steal your moin session cookie or do other nasty stuff)
     ('mimetypes_xss_protect',
      [
@@ -971,7 +939,7 @@ options_no_group_name = {
        'application/x-shockwave-flash',
        'application/xhtml+xml',
      ],
-     '"content-disposition: inline" isn\'t used for them when a user downloads such attachments'),
+     '"content-disposition: inline" is not used for downloads of such data'),
 
     ('mimetypes_embed',
      [
@@ -1086,7 +1054,7 @@ options = {
         # id -> username for page info and recent changes, but it
         # is not usable for the user any more:
        ],
-       "Describes user preferences, see /UserPreferences."),
+       "Describes user preferences, see HelpOnConfiguration/UserPreferences."),
 
       ('checkbox_defaults',
        {
@@ -1102,13 +1070,13 @@ options = {
         'wikiname_add_spaces': 0,
         'remember_me': 1,
        },
-       "Defaults for user preferences, see /UserPreferences."),
+       "Defaults for user preferences, see HelpOnConfiguration/UserPreferences."),
 
       ('checkbox_disable', [],
-       "Disable user preferences, see /UserPreferences."),
+       "Disable user preferences, see HelpOnConfiguration/UserPreferences."),
 
       ('checkbox_remove', [],
-       "Remove user preferences, see /UserPreferences."),
+       "Remove user preferences, see HelpOnConfiguration/UserPreferences."),
 
       ('form_fields',
        [
@@ -1141,6 +1109,12 @@ options = {
       ('transient_fields',
        ['id', 'valid', 'may', 'auth_username', 'password', 'password2', 'auth_method', 'auth_attribs', ],
        "User object attributes that are not persisted to permanent storage (internal use)."),
+    )),
+
+    'openidrp': ('OpenID Relying Party',
+        'These settings control the built-in OpenID Relying Party (client).',
+    (
+      ('allowed_op', [], "List of forced providers"),
     )),
 
     'openid_server': ('OpenID Server',

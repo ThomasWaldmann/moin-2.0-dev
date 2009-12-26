@@ -6,13 +6,10 @@
     and/or dynamic page content.
 
     The canonical interface to plugin macros is their execute() function,
-    which gets passed an instance of the Macro class. Such an instance
-    has the four members parser, formatter, form and request.
-
-    Using "form" directly is deprecated and should be replaced by "request.form".
+    which gets passed an instance of the Macro class.
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2006-2007 MoinMoin:ThomasWaldmann,
+                2006-2009 MoinMoin:ThomasWaldmann,
                 2007 MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
 """
@@ -71,15 +68,10 @@ class Macro:
         "Icon": ["user"], # users have different themes and user prefs
         }
 
-    # we need the lang macros to execute when html is generated,
-    # to have correct dir and lang html attributes
-    for lang in i18n.wikiLanguages():
-        Dependencies[lang] = []
-
 
     def __init__(self, parser):
         self.parser = parser
-        self.form = self.parser.form
+        #self.form --> gone, please use self.request.{form,args,values}
         self.request = self.parser.request
         self.formatter = self.request.formatter
         self._ = self.request.getText
@@ -87,6 +79,12 @@ class Macro:
 
         # Initialized on execute
         self.name = None
+
+        # we need the lang macros to execute when html is generated,
+        # to have correct dir and lang html attributes
+        # note: i18n needs to be initialized first before .wikiLanguages() will work
+        for lang in i18n.wikiLanguages():
+            self.Dependencies[lang] = []
 
     def execute(self, macro_name, args):
         """ Get and execute a macro

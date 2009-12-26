@@ -68,12 +68,13 @@ class LocalSiteMap:
         """
         if not name:
             return
+        _ = request.getText
         pg = Page(request, name)
         action = __name__.split('.')[-1]
         self.append('&nbsp;' * (5*depth+1))
         self.append(pg.link_to(request, querystr={'do': action}))
         self.append("&nbsp;<small>[")
-        self.append(pg.link_to(request, 'view'))
+        self.append(pg.link_to(request, _('view')))
         self.append("</small>]<br>")
 
     def append(self, text):

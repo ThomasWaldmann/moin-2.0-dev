@@ -19,16 +19,11 @@ logging = log.getLogger(__name__)
 from MoinMoin import config, wikiutil
 from MoinMoin.search.results import Match, TitleMatch, TextMatch
 
-try:
-    from MoinMoin.search import Xapian
-    from MoinMoin.search.Xapian import Query
+from MoinMoin.search.Xapian import Query, WikiAnalyzer
 
-    OP_AND = Query.OP_AND
-    OP_OR = Query.OP_OR
-    OP_AND_NOT = Query.OP_AND_NOT
-
-except ImportError:
-    pass
+OP_AND = Query.OP_AND
+OP_OR = Query.OP_OR
+OP_AND_NOT = Query.OP_AND_NOT
 
 
 class BaseExpression(object):
@@ -316,7 +311,7 @@ class BaseTextFieldSearch(BaseExpression):
         else:
             queries = []
             stemmed = []
-            analyzer = Xapian.WikiAnalyzer(request=request, language=request.cfg.language_default)
+            analyzer = WikiAnalyzer(request=request, language=request.cfg.language_default)
 
             for term in self._pattern.split():
                 query_term = connection.query_field(self._field_to_search, term)
@@ -582,8 +577,7 @@ class DomainSearch(BaseFieldSearch):
         super(DomainSearch, self).__init__(pattern.lower(), use_re, case=False)
 
     def _get_matches(self, page):
-        checks = {'underlay': page.isUnderlayPage,
-                  'standard': page.isStandardPage,
+        checks = {'standard': page.isStandardPage,
                   'system': lambda page=page: wikiutil.isSystemPage(page.request, page.page_name),
                  }
 

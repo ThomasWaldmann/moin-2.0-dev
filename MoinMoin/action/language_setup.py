@@ -35,7 +35,7 @@ def execute(pagename, request):
         request.theme.add_msg(msg, "error")
         request.page.send_page()
         return ''
-    wiki_languages = list(set([lang_file.split('_')[0] for lang_file in files]) - set(['00']))
+    wiki_languages = list(set([lang_file.split('--')[0] for lang_file in files]) - set(['00_needs_fixing.zip']))
     wiki_languages.sort()
 
     lang = request.values.get('language') or 'English'
@@ -47,9 +47,7 @@ def execute(pagename, request):
         package = packages.ZipPackage(request, targetpath)
         if package.isPackage():
             if package.installPackage():
-                msg = package.msg
-                if not msg:
-                    msg = _("Attachment '%(filename)s' installed.") % {'filename': target}
+                msg = _("Attachment '%(filename)s' installed.") % {'filename': target}
             else:
                 msg = _("Installation of '%(filename)s' failed.") % {'filename': target}
         else:
@@ -64,7 +62,7 @@ def execute(pagename, request):
 
     label_install = _("install")
     for pageset_name in i18n.strings.pagesets:
-        attachment = "%s_%s.zip" % (lang, pageset_name)
+        attachment = "%s--%s.zip" % (lang, pageset_name)
         # not_translated_system_pages are in english
         if attachment.endswith(not_translated_system_pages):
             attachment = 'English_not_translated_system_pages.zip'

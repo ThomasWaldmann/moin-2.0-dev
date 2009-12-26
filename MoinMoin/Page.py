@@ -21,7 +21,6 @@ from MoinMoin.logfile import eventlog
 from MoinMoin.storage import Backend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 from MoinMoin.support.python_compatibility import set
-from MoinMoin.search import term
 
 from MoinMoin.items import ACL, MIMETYPE, SIZE, EDIT_LOG, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
@@ -735,7 +734,7 @@ class Page(object):
             redirect_url = Page(request, pagename).url(request,
                                                        querystr={'action': 'show', 'redirect': self.page_name, },
                                                        anchor=anchor)
-            request.http_redirect(redirect_url)
+            request.http_redirect(redirect_url, code=301)
             return
 
         if 'deprecated' in pi:
@@ -746,7 +745,7 @@ class Page(object):
             revisions = self.getRevList()
             if len(revisions) >= 2: # XXX shouldn't that be ever the case!? Looks like not.
                 oldpage = Page(request, self.page_name, rev=revisions[1])
-                body += oldpage.get_raw_body()
+                body += oldpage.get_data()
                 del oldpage
 
         lang = self.pi.get('language', request.cfg.language_default)
@@ -822,8 +821,10 @@ class Page(object):
                         userid = user.getUserId(request, openid_username)
 
                     openid_group_name = request.cfg.openid_server_restricted_users_group
-                    if userid is not None and not openid_group_name or \
-                            (openid_group_name in request.groups and openid_username in request.groups[openid_group_name]):
+                    if userid is not None and (
+                        not openid_group_name or (
+                            openid_group_name in request.groups and
+                            openid_username in request.groups[openid_group_name])):
                         html_head = '<link rel="openid2.provider" href="%s">' % \
                                         wikiutil.escape(request.getQualifiedURL(self.url(request,
                                                                                 querystr={'action': 'serveopenid'})), True)
@@ -1222,6 +1223,8 @@ class RootPage(Item):
         @return: user readable wiki page names
         """
         # XXX: better update this docstring
+
+        from MoinMoin.search import term
 
         request = self.request
         if user is None:

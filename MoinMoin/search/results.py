@@ -92,7 +92,7 @@ class AttachmentMatch(Match):
     pass
 
 
-class FoundPage:
+class FoundPage(object):
     """ Represents a page in a search result """
 
     def __init__(self, page_name, matches=None, page=None, rev=0):
@@ -201,7 +201,7 @@ class FoundAttachment(FoundPage):
 
 
 class FoundRemote(FoundPage):
-    """ Represents an attachment in search results """
+    """ Represents a remote search result """
 
     def __init__(self, wikiname, page_name, attachment, matches=None, page=None, rev=0):
         self.wikiname = wikiname
@@ -228,7 +228,7 @@ class FoundRemote(FoundPage):
 ############################################################################
 
 
-class SearchResults:
+class SearchResults(object):
     """ Manage search results, supply different views
 
     Search results can hold valid search results and format them for
@@ -255,16 +255,16 @@ class SearchResults:
 
     def _sortByWeight(self):
         """ Sorts found pages by the weight of the matches """
-        tmp = [(hit.weight(), hit.page_name, hit) for hit in self.hits]
+        tmp = [(hit.weight(), hit.page_name, hit.attachment, hit) for hit in self.hits]
         tmp.sort()
         tmp.reverse()
-        self.hits = [item[2] for item in tmp]
+        self.hits = [item[3] for item in tmp]
 
     def _sortByPagename(self):
-        """ Sorts a list of found pages alphabetical by page name """
-        tmp = [(hit.page_name, hit) for hit in self.hits]
+        """ Sorts a list of found pages alphabetical by page/attachment name """
+        tmp = [(hit.page_name, hit.attachment, hit) for hit in self.hits]
         tmp.sort()
-        self.hits = [item[1] for item in tmp]
+        self.hits = [item[2] for item in tmp]
 
     def stats(self, request, formatter, hitsFrom):
         """ Return search statistics, formatted with formatter
@@ -380,11 +380,6 @@ class SearchResults:
     def pageListWithContext(self, request, formatter, info=1, context=180,
                             maxlines=1, paging=True, hitsFrom=0, hitsInfo=0):
         """ Format a list of found pages with context
-
-        The default parameter values will create Google-like search
-        results, as this is the most known search interface. Good
-        interface is familiar interface, so unless we have much better
-        solution (we don't), being like Google is the way.
 
         @param request: current request
         @param formatter: formatter to use
@@ -676,7 +671,7 @@ class SearchResults:
         """
         _ = self.request.getText
         f = self.formatter
-        querydict = wikiutil.parseQueryString(self.request.query_string)
+        querydict = dict(wikiutil.parseQueryString(self.request.query_string))
 
         def page_url(n):
             querydict.update({'from': n * hitsPerPage})
@@ -801,8 +796,7 @@ class SearchResults:
 
         Do not call this, it should be called only by the instance code.
 
-        Each request might need different translations or other user
-        preferences.
+        Each request might need different translations or other user preferences.
 
         @param request: current request
         @param formatter: the formatter instance to use

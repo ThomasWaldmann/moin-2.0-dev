@@ -15,7 +15,7 @@ from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 
 # TODO: check if and where we can use the helpers:
-from MoinMoin._tests import become_trusted, create_page
+from MoinMoin._tests import become_trusted, create_item, nuke_item
 
 class TestExpandVars(object):
     """PageEditor: testing page editor"""
@@ -138,7 +138,7 @@ class TestSave(object):
 
     def teardown_method(self, method):
         self.request.cfg.event_handlers = self.old_handlers
-        nuke_page(self.request, u'AutoCreatedMoinMoinTemporaryTestPageFortestSave')
+        nuke_item(self.request, u'AutoCreatedMoinMoinTemporaryTestPageFortestSave')
 
     def testSaveAbort(self):
         """Test if saveText() is interrupted if PagePreSave event handler returns Abort"""

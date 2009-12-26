@@ -7,7 +7,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os
+import os, StringIO
 
 from jinja2 import Environment, FileSystemLoader, Template, FileSystemBytecodeCache, Markup
 
@@ -219,29 +219,34 @@ class ThemeBase:
         @return: title html
         """
         _ = self.request.getText
-        content = []
-        if d['title_text'] == d['page'].split_title(): # just showing a page, no action
-            curpage = ''
-            segments = d['page_name'].split('/') # was: title_text
-            for s in segments[:-1]:
-                curpage += s
-                content.append(Page(self.request, curpage).link_to(self.request, s))
-                curpage += '/'
+        if d['title_text'] == d['page'].split_title():
+            # just showing a page, no action
+            segments = d['page_name'].split('/')
             link_text = segments[-1]
             link_title = _('Click to do a full-text search for this title')
-            link_query = {
-                'do': 'fullsearch',
-                'value': 'linkto:"%s"' % d['page_name'],
-                'context': '180',
+            link_query = {'do': 'fullsearch',
+                          'context': '180',
+                          'value': 'linkto:"%s"' % d['page_name'],
             }
-            # we dont use d['title_link'] any more, but make it ourselves:
-            link = d['page'].link_to(self.request, link_text, querystr=link_query, title=link_title, css_class='backlink', rel='nofollow')
-            content.append(link)
+            link = d['page'].link_to(self.request, link_text,
+                                     querystr=link_query, title=link_title,
+                                     css_class='backlink', rel='nofollow')
+            if len(segments) <= 1:
+                html = link
+            else:
+                content = []
+                curpage = ''
+                for s in segments[:-1]:
+                    curpage += s
+                    content.append(Page(self.request,
+                                        curpage).link_to(self.request, s))
+                    curpage += '/'
+                path_html = u'<span class="sep">/</span>'.join(content)
+                html = u'<span class="pagepath">%s</span><span class="sep">/</span>%s' % (path_html, link)
         else:
-            content.append(wikiutil.escape(d['title_text']))
+            html = wikiutil.escape(d['title_text'])
 
-        location_html = u'<span class="sep">/</span>'.join(content)
-        html = u'<span id="pagelocation">%s</span>' % location_html
+        html = u'<span id="pagelocation">%s</span>' % html
         return html
 
     def username(self, d):
@@ -1547,6 +1552,27 @@ actionsMenuInit('%(label)s');
             request.theme.send_footer(item_name)
             request.theme.send_closing_html()
 
+    def sidebar(self, d, **keywords):
+        """ Display page called SideBar as an additional element on every page
+
+        @param d: parameter dictionary
+        @rtype: string
+        @return: sidebar html
+        """
+        # Check which page to display, return nothing if doesn't exist.
+        sidebar = self.request.getPragma('sidebar', u'SideBar')
+        page = Page(self.request, sidebar)
+        if not page.exists():
+            return u""
+        # Capture the page's generated HTML in a buffer.
+        buffer = StringIO.StringIO()
+        self.request.redirect(buffer)
+        try:
+            page.send_page(content_only=1, content_id="sidebar")
+        finally:
+            self.request.redirect()
+        return u'<div class="sidebar">%s</div>' % buffer.getvalue()
+
 
 class ThemeNotFound(Exception):
     """ Thrown if the supplied theme could not be found anywhere """
@@ -1588,7 +1614,7 @@ def load_theme_fallback(request, theme_name=None):
     except ThemeNotFound:
         fallback = 1
         try:
-            request.theme = load_theme(request.cfg.theme_default)
+            request.theme = load_theme(request, request.cfg.theme_default)
         except ThemeNotFound:
             fallback = 2
             from MoinMoin.theme.modernized import Theme

@@ -10,7 +10,7 @@
 
 from MoinMoin.datastruct.backends._tests import DictsBackendTest
 from MoinMoin.datastruct.backends import wiki_dicts
-from MoinMoin._tests import become_trusted, create_page
+from MoinMoin._tests import become_trusted, create_item
 
 
 class TestWikiDictsBackend(DictsBackendTest):
@@ -34,13 +34,13 @@ Next line has key with empty value
  Empty string::\x20
  Last:: last item
 '''
-        create_page(request, u'SomeTestDict', text)
+        create_item(request, u'SomeTestDict', text)
 
         text = """
  One:: 1
  Two:: 2
 """
-        create_page(request, u'SomeOtherTestDict', text)
+        create_item(request, u'SomeOtherTestDict', text)
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.wiki_dicts']

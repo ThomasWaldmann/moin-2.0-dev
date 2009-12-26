@@ -95,7 +95,7 @@ def execute(item_name, request):
 
     if not found:
         # we will not have linked, so forbid access
-        request.makeForbidden403()
+        request.makeForbidden(403, 'No MoinAuth in auth list')
         return
 
     title = _("Create Account")
