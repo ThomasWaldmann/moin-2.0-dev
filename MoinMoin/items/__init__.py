@@ -1010,11 +1010,10 @@ class Text(Binary):
         return data.decode(config.charset).replace(u'\r\n', u'\n')
 
     def _render_data(self):
-        from emeraldtree import ElementTree as ET
         from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.mime import Type, type_moin_document
         from MoinMoin.util.iri import Iri
-        from MoinMoin.util.tree import html, moin_page
+        from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import moin_page
 
         request = self.request
         InputConverter = reg.get(request,
