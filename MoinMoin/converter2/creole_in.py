@@ -664,7 +664,7 @@ class Converter(ConverterMacro):
         attrib = {}
         if arguments:
             for key, value in arguments.keyword.iteritems():
-                if key in ('style',):
+                if key in ('style', ):
                     attrib[moin_page(key)] = value
 
         body = moin_page.body(attrib=attrib)

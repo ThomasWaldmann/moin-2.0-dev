@@ -358,9 +358,9 @@ class _Value(unicode):
     # Rules for quoting parts of the IRI.
     # Each entry represents a range of unicode code points.
     quote_rules_unicode = (
-        (   0xA0,  0xD7FF),
-        ( 0xF900,  0xFDCF),
-        ( 0xFDF0,  0xFFEF),
+        (0x000A0, 0x0D7FF),
+        (0x0F900, 0x0FDCF),
+        (0x0FDF0, 0x0FFEF),
         (0x10000, 0x1FFFD),
         (0x20000, 0x2FFFD),
         (0x30000, 0x3FFFD),
@@ -754,10 +754,10 @@ class IriQuery(_Value):
         (ord(u'/'), ord(u'/')),
         (ord(u'?'), ord(u'?')),
     )
-    
+
     quote_rules_unicode = _Value.quote_rules_unicode + (
-        (  0xE000,   0xF8FF),
-        ( 0xF0000,  0xFFFFD),
+        (0x00E000, 0x00F8FF),
+        (0x0F0000, 0x0FFFFD),
         (0x100000, 0x10FFFD),
     )
 
