@@ -195,7 +195,7 @@ class Converter(object):
 
                     if xp_include_heading is not None:
                         attrib = {self.tag_href: page_href}
-                        children = (xp_include_heading or page.split_title(), )
+                        children = (xp_include_heading or page.page_name, )
                         elem_a = ET.Element(self.tag_a, attrib, children=children)
                         attrib = {self.tag_outline_level: xp_include_level or '1'}
                         elem_h = ET.Element(self.tag_h, attrib, children=(elem_a, ))
