@@ -12,10 +12,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, time, datetime, shutil
+import os, tarfile, time, datetime, shutil
 from StringIO import StringIO
 
-from MoinMoin import log
+from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
 from werkzeug import http_date, quote_etag
@@ -660,6 +660,7 @@ There is no help, you're doomed!
         request.send_file(file_to_send)
 
 
+
 class RenderableBinary(Binary):
     """ This is a base class for some binary stuff that renders with a object tag. """
     supported_mimetypes = []
@@ -763,6 +764,93 @@ class ApplicationXTar(Application):
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
 
+
+class ContainerItem(ApplicationXTar):
+    """
+    A storage container (multiple objects in 1 tarfile)
+    """
+    def __init__(self, request, item_name):
+        self.mimetype = "application/x-tar"
+        self.request = request
+        self.name = item_name
+        # We need a tmp file or filelike object to create by
+        # different requests one tar file
+        cache = caching.CacheEntry(self.request, "ContainerItem", item_name,
+                                  'wiki')
+        self.tmpfile = cache._fname
+
+    def member_url(self, member):
+        """
+        return URL for accessing container member
+        (we use same URL for get (GET) and put (POST))
+
+        @param member: name of the data in the container file
+        """
+        # XXX TBD
+        url = Item(self.request, self.name).url({
+            'action': 'box', #'from_tar': member,
+        })
+        return url + '&from_tar=%s' % member
+        # member needs to be last in qs because twikidraw looks for "file extension" at the end
+
+    def get(self, member):
+        """
+        return a file-like object with the member file data
+
+        @param member: name of the data in the container file
+        """
+        item = Item.create(self.request, self.name)
+        tf = tarfile.open(fileobj=item.rev, mode='r')
+        return tf.extractfile(member)
+
+    def get_members(self):
+        """
+        returns members of tar file
+        """
+        item = Item.create(self.request, self.name)
+        tf = tarfile.open(fileobj=item.rev, mode='r')
+        return tf.getnames()
+
+    def put(self, member, content, content_length=None, members=None):
+        """
+        puts data by different requests into a container file.
+        The data is appended first to a tmp file in the cache arena.
+        If the members in the container tmp file is the submitted members list
+        then the item is created and the data stored to an item revision.
+
+        @param member: name of the data in the container file
+        @param content: the data to store into the tar file
+        @param content_length: len content
+        @param members: list of member names
+        """
+        if not member in members:
+            raise StorageError("%s member not listed in members" % member)
+        tf = tarfile.TarFile(self.tmpfile, mode='a')
+        if isinstance(member, unicode):
+            member = member.encode('utf-8')
+        ti = tarfile.TarInfo(member)
+        if isinstance(content, str):
+            if content_length is None:
+                content_length = len(content)
+            content = StringIO(content) # we need a file obj
+        elif not hasattr(content, 'read'):
+            logging.error("unsupported content object: %r" % content)
+            raise StorageError("unsupported content object: %r" % content)
+        assert content_length >= 0  # we don't want -1 interpreted as 4G-1
+        ti.size = content_length
+        tf.addfile(ti, content)
+        tf_members = tf.getnames()
+        tf.close()
+        if set(tf_members) - set(members) != set([]):
+            logging.error("tarfile members of item %s do not fit into given members" % self.name)
+            # the cache file needs to be removed if that happens
+            raise StorageError("tarfile members do not fit into given members")
+
+        if sorted(members) == sorted(tf_members):
+            meta = {"mimetype": self.mimetype}
+            data = file(self.tmpfile, 'r')
+            self._save(meta, data, name=self.name, action='SAVE', mimetype=self.mimetype, comment='', extra='')
+            os.unlink(self.tmpfile)
 
 class RenderableApplication(RenderableBinary):
     supported_mimetypes = []

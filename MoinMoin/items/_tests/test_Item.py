@@ -9,7 +9,7 @@
 import py
 
 from MoinMoin._tests import become_trusted
-from MoinMoin.items import Item, NonExistent, Binary, Text, Image, TransformableBitmapImage, PythonSrc, \
+from MoinMoin.items import Item, ContainerItem, NonExistent, Binary, Text, Image, TransformableBitmapImage, PythonSrc, \
                            MIMETYPE, \
                            EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                            EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
@@ -98,6 +98,51 @@ class TestItem:
         assert flat_index == [(u'Foo/ab', u'ab', 'text/plain'),
                               (u'Foo/gh', u'gh', 'text/plain'),
                              ]
+
+
+class TestContainerItems:
+    """
+    tests for the container items
+    """
+    def testCreateContainerRevision(self):
+        """
+        creates a container and tests the content saved to the container
+        """
+        request = self.request
+        item_name = 'ContainerItem1'
+        ci = ContainerItem(request, item_name)
+        filecontent = 'abcdefghij'
+        content_length = len(filecontent)
+        members = ['example1.txt', 'example2.txt']
+        ci.put('example1.txt', filecontent, content_length, members=members)
+        ci.put('example2.txt', filecontent, content_length, members=members)
+
+        nci = ContainerItem(request, item_name)
+        tf_names = nci.get_members()
+        assert sorted(tf_names) == sorted(members)
+        assert nci.get('example1.txt').read() == filecontent
+
+    def testRevisionUpdate(self):
+        """
+        creates two revisions of a container item
+        """
+        request = self.request
+        item_name = 'ContainterItem2'
+        ci = ContainerItem(request, item_name)
+        filecontent = 'abcdefghij'
+        content_length = len(filecontent)
+        members = ['example1.txt']
+        ci.put('example1.txt', filecontent, content_length, members=members)
+        filecontent = 'AAAABBBB'
+        content_length = len(filecontent)
+        members = ['example1.txt']
+        ci.put('example1.txt', filecontent, content_length, members=members)
+
+        item = request.storage.get_item(item_name)
+        assert item.next_revno == 2
+
+        nci = ContainerItem(request, item_name)
+        assert nci.get('example1.txt').read() == filecontent
 
 coverage_modules = ['MoinMoin.items']
 

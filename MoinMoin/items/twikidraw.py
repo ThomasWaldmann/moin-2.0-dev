@@ -120,56 +120,6 @@ class TwikiDraw(Image):
         return '<img src="%s">' % ci.member_url(item_name.replace('.tdraw', '.png'))
 
 
-class ContainerItem:
-    """ A storage container (multiple objects in 1 tarfile) """
-    # TODO: modify for storage backend / mimetype items
-    # currently uses old pagename/filename combo as in AttachFile
-    def __init__(self, request, item_name):
-        self.request = request
-        self.name = item_name
-        self.container_filename = '' # TODO how to handle?
-
-    def member_url(self, member):
-        """ return URL for accessing container member
-            (we use same URL for get (GET) and put (POST))
-        """
-        url = Item(self.request, self.name).url({
-            'action': 'box', #'from_tar': member,
-        })
-        return url + '&from_tar=%s' % member
-        # member needs to be last in qs because twikidraw looks for "file extension" at the end
-
-    def get(self, member):
-        """ return a file-like object with the member file data
-        """
-        tf = tarfile.TarFile(self.container_filename)
-        return tf.extractfile(member)
-
-    def put(self, member, content, content_length=None):
-        """ save data into a container's member """
-        tf = tarfile.TarFile(self.container_filename, mode='a')
-        if isinstance(member, unicode):
-            member = member.encode('utf-8')
-        ti = tarfile.TarInfo(member)
-        if isinstance(content, str):
-            if content_length is None:
-                content_length = len(content)
-            content = StringIO(content) # we need a file obj
-        elif not hasattr(content, 'read'):
-            logging.error("unsupported content object: %r" % content)
-            raise
-        assert content_length >= 0  # we don't want -1 interpreted as 4G-1
-        ti.size = content_length
-        tf.addfile(ti, content)
-        tf.close()
-
-    def truncate(self):
-        f = open(self.container_filename, 'w')
-        f.close()
-
-    def exists(self):
-        return os.path.exists(self.container_filename)
-
 ############ some old code from formatter #################
     def attachment_drawing(self, url, text, **kw):
         # XXX text arg is unused!
