@@ -54,7 +54,7 @@ class ConverterBase(object):
 class ConverterExternOutput(ConverterBase):
     @classmethod
     def _factory(cls, _request, input, output, links=None, **kw):
-        if (type_moin_document.issupertype(input) and 
+        if (type_moin_document.issupertype(input) and
                 type_moin_document.issupertype(output) and
                 links == 'extern'):
             return cls
@@ -109,7 +109,7 @@ class ConverterExternOutput(ConverterBase):
 class ConverterPagelinks(ConverterBase):
     @classmethod
     def _factory(cls, _request, input, output, links=None, **kw):
-        if (type_moin_document.issupertype(input) and 
+        if (type_moin_document.issupertype(input) and
                 type_moin_document.issupertype(output) and
                 links == 'pagelinks'):
             return cls

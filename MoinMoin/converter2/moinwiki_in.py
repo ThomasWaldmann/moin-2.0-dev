@@ -651,7 +651,7 @@ class Converter(ConverterMacro):
         )
     """
 
-    def inline_strike_repl(self, stack,strike, strike_begin=None):
+    def inline_strike_repl(self, stack, strike, strike_begin=None):
         if strike_begin is not None:
             attrib = {moin_page.text_decoration: 'line-through'}
             stack.push(moin_page.span(attrib=attrib))
