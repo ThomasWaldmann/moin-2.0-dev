@@ -12,7 +12,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, tarfile, time, datetime, shutil
+import os, re, tarfile, time, datetime, shutil
 from StringIO import StringIO
 
 from MoinMoin import caching, log
@@ -263,8 +263,36 @@ class Item(object):
     def modify(self):
         # called from modify UI/POST
         request = self.request
+        item_name = self.name
         data_file = request.files.get('data_file')
-        if data_file and data_file.filename:
+        mimetype = request.values.get('mimetype', 'text/plain')
+        if mimetype == 'application/x-twikidraw':
+            file_upload = request.files.get('filepath')
+            filename = request.form['filename']
+            basepath, basename = os.path.split(filename)
+            basename, ext = os.path.splitext(basename)
+
+            ci = ContainerItem(request, item_name, mimetype=mimetype)
+            filecontent = file_upload.stream
+            content_length = None
+            if ext == '.draw': # TWikiDraw POSTs this first
+                filecontent = filecontent.read() # read file completely into memory
+                filecontent = filecontent.replace("\r", "")
+            elif ext == '.map':
+                # touch attachment directory to invalidate cache if new map is saved
+                filecontent = filecontent.read() # read file completely into memory
+                filecontent = filecontent.strip()
+            elif ext == '.png':
+                #content_length = file_upload.content_length
+                # XXX gives -1 for wsgiref :( If this is fixed, we could use the file obj,
+                # without reading it into memory completely:
+                filecontent = filecontent.read()
+
+            members = [basename + '.draw', basename + '.map', basename + '.png']
+            ci.put(basename + ext, filecontent, content_length, members=members)
+            return
+
+        elif data_file and data_file.filename:
             # user selected a file to upload
             data = data_file.stream
             mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
@@ -436,6 +464,10 @@ class NonExistent(Item):
             ('video/x-ms-wmv', 'WMV'),
             ('video/x-msvideo', 'AVI'),
         ]),
+        ('drawing items', [
+            ('application/x-twikidraw', 'TDRAW'),
+        ]),
+
         ('other items', [
             ('application/pdf', 'PDF'),
             ('application/x-shockwave-flash', 'SWF'),
@@ -769,8 +801,8 @@ class ContainerItem(ApplicationXTar):
     """
     A storage container (multiple objects in 1 tarfile)
     """
-    def __init__(self, request, item_name):
-        self.mimetype = "application/x-tar"
+    def __init__(self, request, item_name, mimetype="application/x-tar"):
+        self.mimetype = mimetype
         self.request = request
         self.name = item_name
         # We need a tmp file or filelike object to create by
@@ -786,11 +818,8 @@ class ContainerItem(ApplicationXTar):
 
         @param member: name of the data in the container file
         """
-        # XXX TBD
-        url = Item(self.request, self.name).url({
-            'action': 'box', #'from_tar': member,
-        })
-        return url + '&from_tar=%s' % member
+        return self.request.href(self.name, do='modify', mimetype=self.mimetype,
+                            from_tar=member)
         # member needs to be last in qs because twikidraw looks for "file extension" at the end
 
     def get(self, member):
@@ -1251,3 +1280,81 @@ class PythonSrc(MoinParserSupported):
     format = 'highlight'
     format_args = 'python'
 
+
+class TWikiDraw(Image):
+    """
+    Drawings stored as ContainerItem
+    """
+    wd_mimetype = 'application/x-twikidraw'
+    wd_template = "modify_twikidraw.html"
+    wd_ext = ".tdraw"
+    wd_member_ext = ".draw"
+
+    supported_mimetypes = [wd_mimetype]
+    wd_application = "TWikiDrawPlugin"
+    modify_help = ""
+
+    def do_modify(self, template_name):
+        request = self.request
+        from_tar = request.values.get('from_tar', '')
+        mimetype = request.values.get('mimetype', 'text/plain')
+        if from_tar:
+            # this is needed to extract a member of the tar file and to send it
+            ci = ContainerItem(request, self.name, mimetype=mimetype)
+            try:
+                data = ci.get(from_tar).read()
+                request.write(data)
+            except AttributeError: 
+                request.write('')
+            return
+
+        ci = ContainerItem(request, self.name, mimetype=self.wd_mimetype)
+        base_name = self.name.replace(self.wd_ext, '')
+        wd_params = {
+            'pubpath': request.cfg.url_prefix_static + "/applets/" + TWikiDraw.wd_application,
+            'pngpath': ci.member_url(base_name + '.png'),
+            'drawpath': ci.member_url(base_name + self.wd_member_ext),
+            'savelink': request.href(self.name, do='modify', mimetype=self.wd_mimetype),
+            'pagelink': request.href(self.name),
+            'helplink': '',
+            'basename': wikiutil.escape(base_name, 1),
+        }
+
+        template = self.env.get_template(TWikiDraw.wd_template)
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.name,
+                                  revno=0,
+                                  meta_text=self.meta_dict_to_text(self.meta),
+                                  help=self.modify_help,
+                                  t=wd_params,
+                                 )
+        return content
+
+    def _render_data(self):
+        request = self.request
+        item_name = self.name
+        base_name = item_name.replace(self.wd_ext, '')
+        ci = ContainerItem(request, item_name)
+        drawing_url = ci.member_url(base_name + self.wd_member_ext)
+        title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': item_name}
+
+        mapfile = ci.get(base_name + u'.map')
+        try:
+            image_map = mapfile.read()
+            mapfile.close()
+        except (IOError, OSError):
+            image_map = ''
+        if image_map:
+            # we have a image map. inline it and add a map ref to the img tag
+            mapid = 'ImageMapOf' + item_name
+            image_map = map.replace('%MAPNAME%', mapid)
+            # add alt and title tags to areas
+            image_map = re.sub(r'href\s*=\s*"((?!%TWIKIDRAW%).+?)"', r'href="\1" alt="\1" title="\1"', image_map)
+            image_map = image_map.replace('%TWIKIDRAW%"', '%s" alt="%s" title="%s"' % (drawing_url, title, title))
+            # unxml, because 4.01 concrete will not validate />
+            image_map = image_map.replace('/>', '>')
+            title = _('Clickable drawing: %(filename)s') % {'filename': item_name}
+
+            return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (ci.member_url(base_name + '.png'), title, mapid)
+        else:
+            return '<img src="%s" alt=%s>' % (ci.member_url(base_name + '.png'), title)
