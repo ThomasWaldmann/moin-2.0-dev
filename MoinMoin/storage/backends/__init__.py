@@ -15,7 +15,7 @@ from os.path import join
 
 from MoinMoin.storage.serialization import unserialize
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
-from MoinMoin.storage.backends import fs, memory
+from MoinMoin.storage.backends import fs, fs2, memory
 
 
 CONTENT = 'content'
@@ -23,6 +23,7 @@ USERPROFILES = 'userprofiles'
 TRASH = 'trash'
 
 FS_PREFIX = "fs:"
+FS2_PREFIX = "fs2:"
 HG_PREFIX = "hg:"
 SQLA_PREFIX = "sqla:"
 MEMORY_PREFIX = "memory:"
@@ -63,6 +64,11 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
         # Aha! We want to use the fs backend
         instance_folder = backend_uri[len(FS_PREFIX):]
         content, userprofile, trash = _create_backends(fs.FSBackend, instance_folder)
+
+    elif backend_uri.startswith(FS2_PREFIX):
+        # Aha! We want to use the fs2 backend
+        instance_folder = backend_uri[len(FS2_PREFIX):]
+        content, userprofile, trash = _create_backends(fs2.FS2Backend, instance_folder)
 
     elif backend_uri.startswith(HG_PREFIX):
         # Due to external dependency that may not always be present, import hg backend here:
