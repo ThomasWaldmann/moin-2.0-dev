@@ -818,8 +818,12 @@ class ContainerItem(ApplicationXTar):
 
         @param member: name of the data in the container file
         """
-        return self.request.href(self.name, do='modify', mimetype=self.mimetype,
-                            from_tar=member)
+        if self.request.rev is None:
+            return self.request.href(self.name, do='modify', mimetype=self.mimetype,
+                                     from_tar=member)
+        else:
+            return self.request.href(self.name, do='modify', mimetype=self.mimetype,
+                                     rev=self.request.rev, from_tar=member)
         # member needs to be last in qs because twikidraw looks for "file extension" at the end
 
     def get(self, member):
@@ -828,7 +832,11 @@ class ContainerItem(ApplicationXTar):
 
         @param member: name of the data in the container file
         """
-        item = Item.create(self.request, self.name)
+        if self.request.rev is None:
+            item = Item.create(self.request, self.name)
+        else:
+            item = Item.create(self.request, self.name, rev_no=self.request.rev)
+
         tf = tarfile.open(fileobj=item.rev, mode='r')
         return tf.extractfile(member)
 
@@ -836,7 +844,10 @@ class ContainerItem(ApplicationXTar):
         """
         returns members of tar file
         """
-        item = Item.create(self.request, self.name)
+        if self.request.rev is None:
+            item = Item.create(self.request, self.name)
+        else:
+            item = Item.create(self.request, self.name, rev_no=self.request.rev)
         tf = tarfile.open(fileobj=item.rev, mode='r')
         return tf.getnames()
 
