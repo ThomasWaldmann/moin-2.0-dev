@@ -1315,7 +1315,7 @@ class TWikiDraw(Image):
             try:
                 data = ci.get(from_tar).read()
                 request.write(data)
-            except AttributeError: 
+            except AttributeError:
                 request.write('')
             return
 
