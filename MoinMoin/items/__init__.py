@@ -811,6 +811,12 @@ class ContainerItem(ApplicationXTar):
                                   'wiki')
         self.tmpfile = cache._fname
 
+    def exists(self):
+        """
+        true if we have at least one revision
+        """
+        return self.request.rev is not None
+
     def member_url(self, member):
         """
         return URL for accessing container member
@@ -818,12 +824,12 @@ class ContainerItem(ApplicationXTar):
 
         @param member: name of the data in the container file
         """
-        if self.request.rev is None:
-            return self.request.href(self.name, do='modify', mimetype=self.mimetype,
-                                     from_tar=member)
-        else:
+        if self.exists():
             return self.request.href(self.name, do='modify', mimetype=self.mimetype,
                                      rev=self.request.rev, from_tar=member)
+        else:
+            return self.request.href(self.name, do='modify', mimetype=self.mimetype,
+                                     from_tar=member)
         # member needs to be last in qs because twikidraw looks for "file extension" at the end
 
     def get(self, member):
@@ -832,11 +838,10 @@ class ContainerItem(ApplicationXTar):
 
         @param member: name of the data in the container file
         """
-        if self.request.rev is None:
-            item = Item.create(self.request, self.name)
-        else:
+        if self.exists():
             item = Item.create(self.request, self.name, rev_no=self.request.rev)
-
+        else:
+            item = Item.create(self.request, self.name)
         tf = tarfile.open(fileobj=item.rev, mode='r')
         return tf.extractfile(member)
 
@@ -844,10 +849,10 @@ class ContainerItem(ApplicationXTar):
         """
         returns members of tar file
         """
-        if self.request.rev is None:
-            item = Item.create(self.request, self.name)
-        else:
+        if self.exists():
             item = Item.create(self.request, self.name, rev_no=self.request.rev)
+        else:
+            item = Item.create(self.request, self.name)
         tf = tarfile.open(fileobj=item.rev, mode='r')
         return tf.getnames()
 
