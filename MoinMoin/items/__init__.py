@@ -263,36 +263,9 @@ class Item(object):
     def modify(self):
         # called from modify UI/POST
         request = self.request
-        item_name = self.name
         data_file = request.files.get('data_file')
         mimetype = request.values.get('mimetype', 'text/plain')
-        if mimetype == 'application/x-twikidraw':
-            file_upload = request.files.get('filepath')
-            filename = request.form['filename']
-            basepath, basename = os.path.split(filename)
-            basename, ext = os.path.splitext(basename)
-
-            ci = ContainerItem(request, item_name, mimetype=mimetype)
-            filecontent = file_upload.stream
-            content_length = None
-            if ext == '.draw': # TWikiDraw POSTs this first
-                filecontent = filecontent.read() # read file completely into memory
-                filecontent = filecontent.replace("\r", "")
-            elif ext == '.map':
-                # touch attachment directory to invalidate cache if new map is saved
-                filecontent = filecontent.read() # read file completely into memory
-                filecontent = filecontent.strip()
-            elif ext == '.png':
-                #content_length = file_upload.content_length
-                # XXX gives -1 for wsgiref :( If this is fixed, we could use the file obj,
-                # without reading it into memory completely:
-                filecontent = filecontent.read()
-
-            members = [basename + '.draw', basename + '.map', basename + '.png']
-            ci.put(basename + ext, filecontent, content_length, members=members)
-            return
-
-        elif data_file and data_file.filename:
+        if data_file and data_file.filename:
             # user selected a file to upload
             data = data_file.stream
             mimetype = wikiutil.MimeType(filename=data_file.filename).mime_type()
@@ -1310,6 +1283,33 @@ class TWikiDraw(Image):
     wd_application = "TWikiDrawPlugin"
     modify_help = ""
 
+    def modify(self):
+        # called from modify UI/POST
+        request = self.request
+        file_upload = request.files.get('filepath')
+        filename = request.form['filename']
+        basepath, basename = os.path.split(filename)
+        basename, ext = os.path.splitext(basename)
+
+        ci = ContainerItem(request, self.name, mimetype=self.wd_mimetype)
+        filecontent = file_upload.stream
+        content_length = None
+        if ext == '.draw': # TWikiDraw POSTs this first
+            filecontent = filecontent.read() # read file completely into memory
+            filecontent = filecontent.replace("\r", "")
+        elif ext == '.map':
+            # touch attachment directory to invalidate cache if new map is saved
+            filecontent = filecontent.read() # read file completely into memory
+            filecontent = filecontent.strip()
+        elif ext == '.png':
+            #content_length = file_upload.content_length
+            # XXX gives -1 for wsgiref :( If this is fixed, we could use the file obj,
+            # without reading it into memory completely:
+            filecontent = filecontent.read()
+
+        members = [basename + '.draw', basename + '.map', basename + '.png']
+        ci.put(basename + ext, filecontent, content_length, members=members)
+
     def do_modify(self, template_name):
         request = self.request
         from_tar = request.values.get('from_tar', '')
@@ -1374,3 +1374,4 @@ class TWikiDraw(Image):
             return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (ci.member_url(base_name + '.png'), title, mapid)
         else:
             return '<img src="%s" alt=%s>' % (ci.member_url(base_name + '.png'), title)
+
