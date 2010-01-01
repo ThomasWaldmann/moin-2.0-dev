@@ -1272,15 +1272,9 @@ class PythonSrc(MoinParserSupported):
 
 class TWikiDraw(Image):
     """
-    Drawings stored as ContainerItem
+    drawings by TWikiDraw applet. It creates three files which are stored as ContainerItem.
     """
-    wd_mimetype = 'application/x-twikidraw'
-    wd_template = "modify_twikidraw.html"
-    wd_ext = ".tdraw"
-    wd_member_ext = ".draw"
-
-    supported_mimetypes = [wd_mimetype]
-    wd_application = "TWikiDrawPlugin"
+    supported_mimetypes = ["application/x-twikidraw"]
     modify_help = ""
 
     def modify(self):
@@ -1291,7 +1285,7 @@ class TWikiDraw(Image):
         basepath, basename = os.path.split(filename)
         basename, ext = os.path.splitext(basename)
 
-        ci = ContainerItem(request, self.name, mimetype=self.wd_mimetype)
+        ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
         filecontent = file_upload.stream
         content_length = None
         if ext == '.draw': # TWikiDraw POSTs this first
@@ -1311,12 +1305,15 @@ class TWikiDraw(Image):
         ci.put(basename + ext, filecontent, content_length, members=members)
 
     def do_modify(self, template_name):
+        """
+        Fills params into the template for initialzing of the the java applet.
+        The applet is called for doing modifications.
+        """
         request = self.request
         from_tar = request.values.get('from_tar', '')
-        mimetype = request.values.get('mimetype', 'text/plain')
         if from_tar:
             # this is needed to extract a member of the tar file and to send it
-            ci = ContainerItem(request, self.name, mimetype=mimetype)
+            ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
             try:
                 data = ci.get(from_tar).read()
                 request.write(data)
@@ -1324,34 +1321,34 @@ class TWikiDraw(Image):
                 request.write('')
             return
 
-        ci = ContainerItem(request, self.name, mimetype=self.wd_mimetype)
-        base_name = self.name.replace(self.wd_ext, '')
-        wd_params = {
-            'pubpath': request.cfg.url_prefix_static + "/applets/" + TWikiDraw.wd_application,
+        ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
+        base_name = self.name.replace(".tdraw", '')
+        twd_params = {
+            'pubpath': request.cfg.url_prefix_static + '/applets/TWikiDrawPlugin',
             'pngpath': ci.member_url(base_name + '.png'),
-            'drawpath': ci.member_url(base_name + self.wd_member_ext),
-            'savelink': request.href(self.name, do='modify', mimetype=self.wd_mimetype),
+            'drawpath': ci.member_url(base_name + '.draw'),
+            'savelink': request.href(self.name, do='modify', mimetype=self.supported_mimetypes[0]),
             'pagelink': request.href(self.name),
-            'helplink': '',
+            'helplink': self.modify_help,
             'basename': wikiutil.escape(base_name, 1),
         }
 
-        template = self.env.get_template(TWikiDraw.wd_template)
+        template = self.env.get_template("modify_twikidraw.html")
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
-                                  t=wd_params,
+                                  t=twd_params,
                                  )
         return content
 
     def _render_data(self):
         request = self.request
         item_name = self.name
-        base_name = item_name.replace(self.wd_ext, '')
+        base_name = item_name.replace(".tdraw", '')
         ci = ContainerItem(request, item_name)
-        drawing_url = ci.member_url(base_name + self.wd_member_ext)
+        drawing_url = ci.member_url(base_name + ".draw")
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': item_name}
 
         mapfile = ci.get(base_name + u'.map')
