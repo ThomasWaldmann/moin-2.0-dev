@@ -439,6 +439,7 @@ class NonExistent(Item):
         ]),
         ('drawing items', [
             ('application/x-twikidraw', 'TDRAW'),
+            ('application/x-anywikidraw', 'ADRAW'),
         ]),
 
         ('other items', [
@@ -1371,4 +1372,107 @@ class TWikiDraw(Image):
             return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (ci.member_url(base_name + '.png'), title, mapid)
         else:
             return '<img src="%s" alt=%s>' % (ci.member_url(base_name + '.png'), title)
+
+
+class AnyWikiDraw(Image):
+    """
+    drawings by AnyWikiDraw applet. It creates three files which are stored as ContainerItem.
+    """
+
+    supported_mimetypes = ["application/x-anywikidraw"]
+    modify_help = ""
+
+    def modify(self):
+        # called from modify UI/POST
+        request = self.request
+        file_upload = request.files.get('filepath')
+        filename = request.form['filename']
+        basepath, basename = os.path.split(filename)
+        basename, ext = os.path.splitext(basename)
+        ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
+        filecontent = file_upload.stream
+        content_length = None
+        if ext == '.svg': # TWikiDraw POSTs this first
+            filecontent = filecontent.read() # read file completely into memory
+            filecontent = filecontent.replace("\r", "")
+        elif ext == '.map':
+            # touch attachment directory to invalidate cache if new map is saved
+            filecontent = filecontent.read() # read file completely into memory
+            filecontent = filecontent.strip()
+        elif ext == '.png':
+            #content_length = file_upload.content_length
+            # XXX gives -1 for wsgiref :( If this is fixed, we could use the file obj,
+            # without reading it into memory completely:
+            filecontent = filecontent.read()
+
+        members = ["drawing.svg", "drawing.map", "drawing.png"]
+        ci.put('drawing' + ext, filecontent, content_length, members=members)
+
+    def do_modify(self, template_name):
+        """
+        Fills params into the template for initialzing of the the java applet.
+        The applet is called for doing modifications.
+        """
+        request = self.request
+        from_tar = request.values.get('from_tar', '')
+        if from_tar:
+            # this is needed to extract a member of the tar file and to send it
+            ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
+            try:
+                data = ci.get(from_tar).read()
+                request.write(data)
+            except AttributeError:
+                request.write('')
+            return
+        ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
+        # ci.exists() does not work (WHY?)
+        try:
+            if "drawing.svg" in ci.get_members():
+                drawpath = ci.member_url("drawing.svg")
+        except AttributeError:
+            drawpath = ''
+
+        wd_params = {
+            'name': 'drawing.svg',
+            'drawpath': drawpath,
+            'pagelink': request.href(self.name),
+            'pubpath': request.cfg.url_prefix_static + "/applets/anywikidraw/lib",
+            'savelink': request.href(self.name, do='modify', mimetype=self.supported_mimetypes[0]),
+        }
+
+        template = self.env.get_template("modify_anywikidraw.html")
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.name,
+                                  revno=0,
+                                  meta_text=self.meta_dict_to_text(self.meta),
+                                  help=self.modify_help,
+                                  t=wd_params,
+                                 )
+        return content
+
+    def _render_data(self):
+        request = self.request
+        ci = ContainerItem(request, self.name)
+        drawing_url = ci.member_url("drawing.svg")
+        title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': self.name}
+
+        mapfile = ci.get(u'drawing.map')
+        try:
+            image_map = mapfile.read()
+            mapfile.close()
+        except (IOError, OSError):
+            image_map = ''
+        if image_map:
+            # ToDo mapid must become uniq
+            # we have a image map. inline it and add a map ref to the img tag
+            # we have also to set a unique ID
+            mapid = 'ImageMapOf' + self.name
+            image_map = image_map.replace(u'id="drawing.svg"', '')
+            image_map = image_map.replace(u'name="drawing.svg"', u'name="%s"' % mapid)
+            # unxml, because 4.01 concrete will not validate />
+            image_map = image_map.replace(u'/>', u'>')
+            title = _('Clickable drawing: %(filename)s') % {'filename': self.name}
+            return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (ci.member_url('drawing.png'), title, mapid)
+        else:
+            return '<img src="%s" alt=%s>' % (ci.member_url('drawing.png'), title)
 

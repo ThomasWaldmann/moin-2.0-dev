@@ -19,7 +19,7 @@ def execute(item_name, request):
         cancelled = 'button_cancel' in request.form
         if not cancelled:
             item.modify()
-        if mimetype != 'application/x-twikidraw':
-            # 'application/x-twikidraw' sends three requests
+        if not mimetype in ('application/x-twikidraw', 'application/x-anywikidraw'):
+            # TwikiDraw and AnyWikiDraw can send more than one request
             # the follwowing line breaks it
             request.http_redirect(request.href(item_name)) # show item
