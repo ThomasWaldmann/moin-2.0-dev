@@ -795,12 +795,9 @@ class ContainerItem(ApplicationXTar):
 
         @param member: name of the data in the container file
         """
-        if self.request.rev is None:
-            return self.request.href(self.name, do='modify', mimetype=self.mimetype,
-                                     from_tar=member)
-        else:
-            return self.request.href(self.name, do='modify', mimetype=self.mimetype,
-                                     rev=self.request.rev, from_tar=member)
+        return self.request.href(self.name, do='modify', mimetype=self.mimetype,
+                                 rev=self.request.rev, from_tar=member)
+        # note: if self.request.rev is None, Href code will suppress rev=X arg
         # member needs to be last in qs because twikidraw looks for "file extension" at the end
 
     def get(self, member):
