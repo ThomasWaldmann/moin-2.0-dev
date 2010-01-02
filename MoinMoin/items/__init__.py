@@ -54,7 +54,7 @@ _ = lambda x: x
 class Item(object):
 
     @classmethod
-    def create(cls, request, name=u'', mimetype='application/x-unknown', rev_no=-1,
+    def create(cls, request, name=u'', mimetype='application/x-unknown', rev_no=None,
                formatter=None, item=None):
         class DummyRev(dict):
             def __init__(self, mimetype):
@@ -62,6 +62,9 @@ class Item(object):
                 self.item = None
             def read(self):
                 return ''
+
+        if rev_no is None:
+            rev_no = -1
 
         try:
             if item is None:
@@ -806,11 +809,7 @@ class ContainerItem(ApplicationXTar):
 
         @param member: name of the data in the container file
         """
-        if self.request.rev is None:
-            item = Item.create(self.request, self.name)
-        else:
-            item = Item.create(self.request, self.name, rev_no=self.request.rev)
-
+        item = Item.create(self.request, self.name, rev_no=self.request.rev)
         tf = tarfile.open(fileobj=item.rev, mode='r')
         return tf.extractfile(member)
 
@@ -818,10 +817,7 @@ class ContainerItem(ApplicationXTar):
         """
         returns members of tar file
         """
-        if self.request.rev is None:
-            item = Item.create(self.request, self.name)
-        else:
-            item = Item.create(self.request, self.name, rev_no=self.request.rev)
+        item = Item.create(self.request, self.name, rev_no=self.request.rev)
         tf = tarfile.open(fileobj=item.rev, mode='r')
         return tf.getnames()
 

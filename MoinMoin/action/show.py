@@ -8,13 +8,8 @@
 from MoinMoin.items import Item
 
 def execute(item_name, request):
-    if request.rev is None:
-        rev_no = -1
-    else:
-        rev_no = request.rev
     mimetype = request.values.get('mimetype')
-
-    item = Item.create(request, item_name, mimetype=mimetype, rev_no=rev_no)
+    item = Item.create(request, item_name, mimetype=mimetype, rev_no=request.rev)
     content = item.do_show()
     request.theme.render_content(item_name, content)
 
