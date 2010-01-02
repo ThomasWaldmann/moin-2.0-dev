@@ -1302,8 +1302,8 @@ class TWikiDraw(Image):
             # without reading it into memory completely:
             filecontent = filecontent.read()
 
-        members = [basename + '.draw', basename + '.map', basename + '.png']
-        ci.put(basename + ext, filecontent, content_length, members=members)
+        members = ['drawing.draw', 'drawing.map', 'drawing.png']
+        ci.put('drawing' + ext, filecontent, content_length, members=members)
 
     def do_modify(self, template_name):
         """
@@ -1323,15 +1323,14 @@ class TWikiDraw(Image):
             return
 
         ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
-        base_name = self.name.replace(".tdraw", '')
         twd_params = {
             'pubpath': request.cfg.url_prefix_static + '/applets/TWikiDrawPlugin',
-            'pngpath': ci.member_url(base_name + '.png'),
-            'drawpath': ci.member_url(base_name + '.draw'),
+            'pngpath': ci.member_url('drawing.png'),
+            'drawpath': ci.member_url('drawing.draw'),
             'savelink': request.href(self.name, do='modify', mimetype=self.supported_mimetypes[0]),
             'pagelink': request.href(self.name),
             'helplink': self.modify_help,
-            'basename': wikiutil.escape(base_name, 1),
+            'basename': 'drawing',
         }
 
         template = self.env.get_template("modify_twikidraw.html")
@@ -1347,12 +1346,11 @@ class TWikiDraw(Image):
     def _render_data(self):
         request = self.request
         item_name = self.name
-        base_name = item_name.replace(".tdraw", '')
         ci = ContainerItem(request, item_name)
-        drawing_url = ci.member_url(base_name + ".draw")
+        drawing_url = ci.member_url("drawing.draw")
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': item_name}
 
-        mapfile = ci.get(base_name + u'.map')
+        mapfile = ci.get(u'drawing.map')
         try:
             image_map = mapfile.read()
             mapfile.close()
@@ -1361,7 +1359,7 @@ class TWikiDraw(Image):
         if image_map:
             # we have a image map. inline it and add a map ref to the img tag
             mapid = 'ImageMapOf' + item_name
-            image_map = map.replace('%MAPNAME%', mapid)
+            image_map = image_map.replace('%MAPNAME%', mapid)
             # add alt and title tags to areas
             image_map = re.sub(r'href\s*=\s*"((?!%TWIKIDRAW%).+?)"', r'href="\1" alt="\1" title="\1"', image_map)
             image_map = image_map.replace('%TWIKIDRAW%"', '%s" alt="%s" title="%s"' % (drawing_url, title, title))
@@ -1369,9 +1367,9 @@ class TWikiDraw(Image):
             image_map = image_map.replace('/>', '>')
             title = _('Clickable drawing: %(filename)s') % {'filename': item_name}
 
-            return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (ci.member_url(base_name + '.png'), title, mapid)
+            return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (ci.member_url('drawing.png'), title, mapid)
         else:
-            return '<img src="%s" alt=%s>' % (ci.member_url(base_name + '.png'), title)
+            return '<img src="%s" alt=%s>' % (ci.member_url('drawing.png'), title)
 
 
 class AnyWikiDraw(Image):
