@@ -470,6 +470,9 @@ class NonExistent(Item):
     def do_get(self):
         self.request.status_code = 404
 
+    def do_highlight(self):
+        self.request.status_code = 404
+
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return (self.formatter.url(1, self.url(), css='nonexistent', title='click to create item') +
@@ -535,6 +538,9 @@ There is no help, you're doomed!
         item_iterator = self.search_item(term)
         items = [item.name for item in item_iterator]
         return sorted(items)
+
+    def do_highlight(self):
+        return '' # XXX we can't highlight the data, maybe show some "data icon" as a placeholder?
 
     def do_show(self):
         item = self.rev.item
@@ -1133,6 +1139,27 @@ class Text(Binary):
                                  )
         return content
 
+    def do_highlight(self):
+        request = self.request
+        template = self.env.get_template('highlight.html')
+        data_text = self.data_storage_to_internal(self.data)
+        Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", 'highlight')
+        parser = Parser(data_text, request, format_args=self.mimetype)
+        buffer = StringIO()
+        request.redirect(buffer)
+        parser.format(self.formatter)
+        content = buffer.getvalue()
+        request.redirect()
+        del buffer
+
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.name,
+                                  data_text=content,
+                                  lang='en', direction='ltr',
+                                  help=self.modify_help,
+                                 )
+        return content
+
 
 class HTML(Text):
     """ HTML markup """
@@ -1215,7 +1242,7 @@ class SafeHTML(MoinParserSupported):
     """ HTML markup """
     supported_mimetypes = ['text/x-safe-html']
     format = 'html'
-    format_args = ''
+    format_args = supported_mimetypes[0]
 
     # XXX duplicated from HTML class
     def do_modify(self, template_name):
@@ -1242,21 +1269,21 @@ class DiffPatch(MoinParserSupported):
     """ diff output / patch input format """
     supported_mimetypes = ['text/x-diff']
     format = 'highlight'
-    format_args = 'diff'
+    format_args = supported_mimetypes[0]
 
 
 class IRCLog(MoinParserSupported):
     """ Internet Relay Chat Log """
     supported_mimetypes = ['text/x-irclog']
     format = 'highlight'
-    format_args = 'irc'
+    format_args = supported_mimetypes[0]
 
 
 class PythonSrc(MoinParserSupported):
     """ Python source code """
     supported_mimetypes = ['text/x-python']
     format = 'highlight'
-    format_args = 'python'
+    format_args = supported_mimetypes[0]
 
 
 class TWikiDraw(Image):
