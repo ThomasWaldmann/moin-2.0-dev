@@ -117,28 +117,35 @@ class Parser:
         self.request = request
         self.raw = raw.strip('\n')
         self.filename = filename
-
+        self.mimetype = 'text/plain'
         if self.parsername == 'highlight':
             # user is directly using the highlight parser
             parts = format_args.split(None)
             if parts:
-                self.syntax = parts[0]
+                self.mimetype = parts[0]
             else:
-                self.syntax = 'text'
+                self.mimetype = 'text/plain'
             if len(parts) > 1:
                 params = ' '.join(parts[1:])
             else:
                 params = ''
         else:
             # a compatibility wrapper inherited from this class
-            self.syntax = self.parsername
+            for name, short, patterns, mime in pygments.lexers.get_all_lexers():
+                if name == self.parsername:
+                    self.mimetype = mime
+
             params = format_args
         self.show_nums, self.num_start, self.num_step, attrs = parse_start_step(request, params)
 
     def format(self, formatter):
         _ = self.request.getText
         fmt = PygmentsFormatter(formatter)
-        fmt.result.append(formatter.div(1, css_class="highlight %s" % self.syntax))
+        try:
+            syntax = pygments.lexers.get_lexer_for_mimetype(self.mimetype).name
+        except pygments.util.ClassNotFound:
+            syntax = ""
+        fmt.result.append(formatter.div(1, css_class="highlight %s" % syntax))
         self._code_id = hash_new('sha1', self.raw.encode(config.charset)).hexdigest()
         msg = None
         if self.filename is not None:
@@ -149,14 +156,14 @@ class Parser:
                 lexer = pygments.lexers.TextLexer()
         else:
             try:
-                lexer = pygments.lexers.get_lexer_by_name(self.syntax)
+                lexer = pygments.lexers.get_lexer_for_mimetype(self.mimetype)
             except pygments.util.ClassNotFound:
                 f = self.request.formatter
                 url = ''.join([
                                f.url(1, href=Page(self.request, _("HelpOnParsers")).url(self.request, escape=0)),
                                _("HelpOnParsers"),
                                f.url(0)])
-                msg = _("Syntax highlighting not supported for '%(syntax)s', see %(highlight_help_page)s.") % {"syntax": wikiutil.escape(self.syntax),
+                msg = _("Syntax highlighting not supported for '%(mimetype)s', see %(highlight_help_page)s.") % {"mimetype": wikiutil.escape(self.mimetype),
                                                                                                                "highlight_help_page": url
                                                                                                               }
                 lexer = pygments.lexers.TextLexer()
