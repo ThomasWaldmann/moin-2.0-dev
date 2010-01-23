@@ -15,10 +15,8 @@ from uuid import uuid4 as make_uuid
 
 import cPickle as pickle
 
-try:
-    import cdb
-except ImportError:
-    from MoinMoin.support import pycdb as cdb
+from sqlalchemy import create_engine, MetaData, Table, Column, String, Unicode
+from sqlalchemy.exceptions import IntegrityError
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -32,6 +30,12 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    CouldNotDestroyError
 
 PICKLEPROTOCOL = 1
+
+MAX_NAME_LEN = 500
+HASH_NAME = 'sha1' # XXX use request.cfg.hash_algorithm
+HASH_HEX_LEN = 40 # sha1 = 160 bit
+UUID_LEN = len(make_uuid().hex)
+
 
 class FS2Backend(Backend):
     """
@@ -47,13 +51,19 @@ class FS2Backend(Backend):
                     semantics which break on NFS
         """
         self._path = path
-        self._name_db = self._make_path('name-mapping')
-        self._history = self._make_path('history')
 
-        # if no name-mapping db yet, create an empty one
-        # (under lock, re-tests existence too)
-        if not os.path.exists(self._name_db):
-            self._do_locked(self._name_db + '.lock', self._create_new_cdb, None)
+        engine = create_engine('sqlite:///%s' % self._make_path('name-mapping.db'), echo=False)
+        metadata = MetaData()
+        metadata.bind = engine
+
+        # item_name -> item_id mapping
+        self._name2id = Table('name2id', metadata,
+                            Column('item_name', Unicode(MAX_NAME_LEN), primary_key=True),
+                            Column('item_id', String(UUID_LEN)),
+                        )
+        metadata.create_all()
+
+        self._history = self._make_path('history')
 
         # create meta data and revision content data storage dir
         try:
@@ -79,20 +89,10 @@ class FS2Backend(Backend):
         return os.path.join(self._path, *args)
 
     def _get_fs_path_data(self, rev):
-        hash_name = 'sha1' # XXX request.cfg.hash_algorithm, no request here
         if rev._fs_metadata is None:
             self._get_revision_metadata(rev)
-        data_hash = rev._fs_metadata[hash_name]
+        data_hash = rev._fs_metadata[HASH_NAME]
         return self._make_path('data', data_hash)
-
-    def _create_new_cdb(self, arg):
-        """
-        Create new name-mapping if it doesn't exist yet,
-        call this under the name-mapping.lock.
-        """
-        if not os.path.exists(self._name_db):
-            maker = cdb.cdbmake(self._name_db, self._name_db + '.tmp')
-            maker.finish()
 
     def history(self, reverse=True):
         """
@@ -165,8 +165,14 @@ class FS2Backend(Backend):
 
         @param itemname: name of item (unicode)
         """
-        c = cdb.init(self._name_db)
-        return c.get(itemname.encode('utf-8'))
+        name2id = self._name2id
+        results = name2id.select(name2id.c.item_name==itemname).execute()
+        row = results.fetchone()
+        results.close()
+        if row is not None:
+            item_id = row[name2id.c.item_id]
+            item_id = str(item_id) # we get unicode
+            return item_id
 
     def get_item(self, itemname):
         item_id = self._get_item_id(itemname)
@@ -196,13 +202,15 @@ class FS2Backend(Backend):
         return item
 
     def iteritems(self):
-        c = cdb.init(self._name_db)
-        r = c.each()
-        while r:
-            item = Item(self, r[0].decode('utf-8'))
-            item._fs_item_id = r[1]
+        name2id = self._name2id
+        results = name2id.select().execute()
+        for row in results:
+            item_name = row[name2id.c.item_name]
+            item_id = row[name2id.c.item_id]
+            item_id = str(item_id) # we get unicode!
+            item = Item(self, item_name)
+            item._fs_item_id = item_id
             yield item
-            r = c.each()
 
     def _get_revision(self, item, revno):
         item_id = item._fs_item_id
@@ -284,26 +292,17 @@ class FS2Backend(Backend):
 
     def _rename_item_locked(self, arg):
         item, newname = arg
-        nn = newname.encode('utf-8')
-        npath = self._make_path('meta', item._fs_item_id, 'name')
+        item_id = item._fs_item_id
 
-        c = cdb.init(self._name_db)
-        maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
-        r = c.each()
-        while r:
-            i, v = r
-            if i == nn:
-                raise ItemAlreadyExistsError("Target item '%r' already exists!" % newname)
-            elif v == item._fs_item_id:
-                maker.add(nn, v)
-            else:
-                maker.add(i, v)
-            r = c.each()
-        maker.finish()
+        name2id = self._name2id
+        try:
+            results = name2id.update().where(name2id.c.item_id==item_id).values(item_name=newname).execute()
+        except IntegrityError:
+            raise ItemAlreadyExistsError("Target item '%r' already exists!" % newname)
 
-        filesys.rename(self._name_db + '.ndb', self._name_db)
+        npath = self._make_path('meta', item_id, 'name')
         nf = open(npath, mode='wb')
-        nf.write(nn)
+        nf.write(newname.encode('utf-8'))
         nf.close()
 
     def _rename_item(self, item, newname):
@@ -315,54 +314,38 @@ class FS2Backend(Backend):
         See _add_item_internally, this is just internal for locked operation.
         """
         item, revmeta, revdata, revdata_target, itemmeta = arg
-        itemid = make_uuid().hex
+        item_id = make_uuid().hex
+        item_name = item.name
 
-        nn = item.name.encode('utf-8')
+        name2id = self._name2id
+        try:
+            results = name2id.insert().values(item_id=item_id, item_name=item_name).execute()
+        except IntegrityError:
+            raise ItemAlreadyExistsError("Item '%r' already exists!" % item_name)
 
-        c = cdb.init(self._name_db)
-        maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
-        r = c.each()
-        while r:
-            i, v = r
-            if i == nn:
-                # Oops. This item already exists! Clean up and error out.
-                maker.finish()
-                os.unlink(self._name_db + '.ndb')
-                if newrev is not None:
-                    os.unlink(newrev)
-                raise ItemAlreadyExistsError("Item '%r' already exists!" % item.name)
-            else:
-                maker.add(i, v)
-            r = c.each()
-        maker.add(nn, itemid)
-        maker.finish()
-
-        os.mkdir(self._make_path('meta', itemid))
+        os.mkdir(self._make_path('meta', item_id))
 
         if revdata is not None:
             filesys.rename(revdata, revdata_target)
 
         if revmeta is not None:
-            rp = self._make_path('meta', itemid, 'rev.%s' % 0)
+            rp = self._make_path('meta', item_id, 'rev.%s' % 0)
             filesys.rename(revmeta, rp)
 
         if itemmeta:
             # only write item level metadata file if we have any
-            meta = self._make_path('meta', itemid, 'meta')
+            meta = self._make_path('meta', item_id, 'meta')
             f = open(meta, 'wb')
             pickle.dump(itemmeta, f, protocol=PICKLEPROTOCOL)
             f.close()
 
         # write 'name' file of item
-        npath = self._make_path('meta', itemid, 'name')
+        npath = self._make_path('meta', item_id, 'name')
         nf = open(npath, mode='wb')
-        nf.write(nn)
+        nf.write(item_name.encode('utf-8'))
         nf.close()
 
-        # make item retrievable (by putting the name-mapping in place)
-        filesys.rename(self._name_db + '.ndb', self._name_db)
-
-        item._fs_item_id = itemid
+        item._fs_item_id = item_id
 
     def _add_item_internally(self, item, revmeta=None, revdata=None, revdata_target=None, itemmeta=None):
         """
@@ -395,8 +378,7 @@ class FS2Backend(Backend):
         rev._fs_file_meta.write(md)
         rev._fs_file_meta.close()
 
-        hash_name = 'sha1' # XXX request.cfg.hash_algorithm, no request here
-        data_hash = metadata[hash_name]
+        data_hash = metadata[HASH_NAME]
 
         pd = self._make_path('data', data_hash)
         if item._fs_item_id is None:
@@ -425,18 +407,12 @@ class FS2Backend(Backend):
         os.unlink(rev._fs_path_data)
 
     def _destroy_item_locked(self, item):
-        c = cdb.init(self._name_db)
-        maker = cdb.cdbmake(self._name_db + '.ndb', self._name_db + '.tmp')
-        r = c.each()
-        while r:
-            i, v = r
-            if v != item._fs_item_id:
-                maker.add(i, v)
-            r = c.each()
-        maker.finish()
+        item_id = item._fs_item_id
 
-        filesys.rename(self._name_db + '.ndb', self._name_db)
-        path = self._make_path('meta', item._fs_item_id)
+        name2id = self._name2id
+        results = name2id.delete().where(name2id.c.item_id==item_id).execute()
+
+        path = self._make_path('meta', item_id)
         try:
             shutil.rmtree(path)
         except OSError, err:
