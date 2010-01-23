@@ -4,13 +4,14 @@
     Features:
     * store metadata and data separately
     * use uuids for item storage names
+    * use sqlalchemy/sqlite (not cdb/self-made DBs like fs does)
 
     @copyright: 2008 MoinMoin:JohannesBerg ("fs2" is originally based on "fs" from JB),
-                2009 MoinMoin:ThomasWaldmann
+                2009-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, struct, tempfile, random, errno, shutil, time
+import os, tempfile, errno, shutil, time
 from uuid import uuid4 as make_uuid
 
 import cPickle as pickle
@@ -23,6 +24,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin.util.lock import ExclusiveLock
 from MoinMoin.util import filesys
+
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
@@ -41,18 +43,15 @@ class FS2Backend(Backend):
     """
     FS2 backend
     """
-    def __init__(self, path, nfs=False):
+    def __init__(self, path):
         """
-        Initialise filesystem backend, creating initial files and
-        some internal structures.
+        Initialise filesystem backend, creating initial files and some internal structures.
 
         @param path: storage path
-        @param nfs: set to True if operating on NFS to avoid using O_APPEND
-                    semantics which break on NFS
         """
         self._path = path
 
-        engine = create_engine('sqlite:///%s' % self._make_path('name-mapping.db'), echo=False)
+        engine = create_engine('sqlite:///%s' % self._make_path('index_history.db'), echo=False)
         metadata = MetaData()
         metadata.bind = engine
 
@@ -61,23 +60,22 @@ class FS2Backend(Backend):
                             Column('item_name', Unicode(MAX_NAME_LEN), primary_key=True),
                             Column('item_id', String(UUID_LEN)),
                         )
+        # history (e.g. for RecentChanges)
         self._history = Table('history', metadata,
                             Column('id', Integer, primary_key=True),
                             Column('item_id', String(UUID_LEN)),
                             Column('rev_id', Integer),
                             Column('ts', Integer),
                         )
+
         metadata.create_all()
 
         # create meta data and revision content data storage dir
-        try:
-            os.makedirs(self._make_path('data'))
-        except:
-            pass
-        try:
-            os.makedirs(self._make_path('meta'))
-        except:
-            pass
+        for name in ['meta', 'data', ]:
+            try:
+                os.makedirs(self._make_path(name))
+            except:
+                pass
 
     def _make_path(self, *args):
         return os.path.join(self._path, *args)
@@ -105,7 +103,7 @@ class FS2Backend(Backend):
                 item_name = f.read().decode('utf-8')
                 f.close()
                 # try to open the revision file just in case somebody removed it manually
-                mp = self._make_path('meta', itemid, 'rev.%d' % revno)
+                mp = self._make_path('meta', itemid, '%d.rev' % revno)
                 f = open(mp)
                 f.close()
             except IOError, err:
@@ -197,7 +195,7 @@ class FS2Backend(Backend):
                 raise NoSuchRevisionError("Item has no revisions.")
             revno = max(revs)
 
-        mp = self._make_path('meta', item_id, 'rev.%d' % revno)
+        mp = self._make_path('meta', item_id, '%d.rev' % revno)
         if not os.path.exists(mp):
             raise NoSuchRevisionError("Item '%r' has no revision #%d." % (item.name, revno))
 
@@ -215,8 +213,8 @@ class FS2Backend(Backend):
             return []
         p = self._make_path('meta', item._fs_item_id)
         l = os.listdir(p)
-        prefix = 'rev.'
-        ret = [int(i[len(prefix):]) for i in l if i.startswith(prefix)]
+        suffix = '.rev'
+        ret = [int(i[:-len(suffix)]) for i in l if i.endswith(suffix)]
         ret.sort()
         return ret
 
@@ -235,9 +233,11 @@ class FS2Backend(Backend):
 
         rev = NewRevision(item, revno)
         rev._revno = revno
-        fd, rev._fs_path_meta = tempfile.mkstemp('-meta', 'tmp-', self._path)
+        fd, rev._fs_path_meta = tempfile.mkstemp('.tmp', '', self._make_path('meta'))
+
         rev._fs_file_meta = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
-        fd, rev._fs_path_data = tempfile.mkstemp('-data', 'tmp-', self._path)
+        fd, rev._fs_path_data = tempfile.mkstemp('.tmp', '', self._make_path('data'))
+
         rev._fs_file_data = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
         return rev
 
@@ -305,7 +305,7 @@ class FS2Backend(Backend):
             filesys.rename(revdata, revdata_target)
 
         if revmeta is not None:
-            rp = self._make_path('meta', item_id, 'rev.%s' % 0)
+            rp = self._make_path('meta', item_id, '%d.rev' % 0)
             filesys.rename(revmeta, rp)
 
         if itemmeta:
@@ -366,7 +366,7 @@ class FS2Backend(Backend):
                 if err.errno != errno.EEXIST:
                     raise
 
-            pm = self._make_path('meta', item._fs_item_id, 'rev.%d' % rev.revno)
+            pm = self._make_path('meta', item._fs_item_id, '%d.rev' % rev.revno)
             try:
                 filesys.rename_no_overwrite(rev._fs_path_meta, pm, delete_old=True)
             except OSError, err:
