@@ -15,7 +15,7 @@ from uuid import uuid4 as make_uuid
 
 import cPickle as pickle
 
-from sqlalchemy import create_engine, MetaData, Table, Column, String, Unicode
+from sqlalchemy import create_engine, MetaData, Table, Column, String, Unicode, Integer
 from sqlalchemy.exceptions import IntegrityError
 
 from MoinMoin import log
@@ -61,9 +61,13 @@ class FS2Backend(Backend):
                             Column('item_name', Unicode(MAX_NAME_LEN), primary_key=True),
                             Column('item_id', String(UUID_LEN)),
                         )
+        self._history = Table('history', metadata,
+                            Column('id', Integer, primary_key=True),
+                            Column('item_id', String(UUID_LEN)),
+                            Column('rev_id', Integer),
+                            Column('ts', Integer),
+                        )
         metadata.create_all()
-
-        self._history = self._make_path('history')
 
         # create meta data and revision content data storage dir
         try:
@@ -74,16 +78,6 @@ class FS2Backend(Backend):
             os.makedirs(self._make_path('meta'))
         except:
             pass
-
-        # on NFS, append semantics are broken, so decorate the _addhistory
-        # method with a lock
-        if nfs:
-            _addhistory = self._addhistory
-            def locked_addhistory(args):
-                itemid, revid, ts = args
-                _addhistory(itemid, revid, ts)
-            historylock = self._history + '.lock'
-            self._addhistory = lambda itemid, revid, ts: self._do_locked(historylock, locked_addhistory, (itemid, revid, ts))
 
     def _make_path(self, *args):
         return os.path.join(self._path, *args)
@@ -98,66 +92,47 @@ class FS2Backend(Backend):
         """
         History implementation reading the log file.
         """
-        try:
-            historyfile = open(self._history, 'rb')
-        except IOError, err:
-            if err.errno != errno.ENOENT:
-                raise
-            return
-        offs = 0
+        history = self._history
+        results = history.select().order_by(history.id).execute()
         if reverse:
-            historyfile.seek(0, 2)
-            offs = historyfile.tell() - 1
-            # shouldn't happen, but let's be sure we don't get a partial record
-            offs -= offs % 16
-        while offs >= 0:
-            if reverse:
-                # seek to current position
-                historyfile.seek(offs)
-                # decrease current position by 16 to get to previous item
-                offs -= 16
-
-            # read history item
-            rec = historyfile.read(16)
-            if len(rec) < 16:
-                break
-
-            itemid, revno, tstamp = struct.unpack('!32sLQ', rec)
-            itemid = str(itemid)
+            results = reverse(results)
+        for row in results:
+            item_id, revno, ts = row
+            assert isinstance(item_id, str)  # item_id = str(item_id)
             try:
-                inamef = open(self._make_path('meta', itemid, 'name'), 'rb')
-                iname = inamef.read().decode('utf-8')
-                inamef.close()
-                # try to open the revision file just in case somebody
-                # removed it manually
+                # XXX get item name via name2id
+                f = open(self._make_path('meta', item_id, 'name'), 'rb')
+                item_name = f.read().decode('utf-8')
+                f.close()
+                # try to open the revision file just in case somebody removed it manually
                 mp = self._make_path('meta', itemid, 'rev.%d' % revno)
-                revf = open(mp)
-                revf.close()
+                f = open(mp)
+                f.close()
             except IOError, err:
                 if err.errno != errno.ENOENT:
                     raise
                 # oops, no such file, item/revision removed manually?
                 continue
-            item = Item(self, iname)
-            item._fs_item_id = itemid
-            rev = StoredRevision(item, revno, tstamp)
+            item = Item(self, item_name)
+            item._fs_item_id = item_id
+            rev = StoredRevision(item, revno, ts)
             rev._fs_path_meta = mp
             rev._fs_file_meta = None
             rev._fs_file_data = None
             rev._fs_metadata = None
             yield rev
+        results.close()
 
     def _addhistory(self, itemid, revid, ts):
         """
         Add a history item with current timestamp and the given data.
 
-        @param itemid: item's ID, must be a decimal integer in a string
+        @param itemid: item's ID, string
         @param revid: revision ID, must be an integer
         @param ts: timestamp
         """
-        historyfile = open(self._history, 'ab')
-        historyfile.write(struct.pack('!32sLQ', itemid, revid, ts))
-        historyfile.close()
+        history = self._history
+        history.insert().values(item_id=itemid, rev_id=revid, timestamp=ts).execute()
 
     def _get_item_id(self, itemname):
         """
@@ -211,6 +186,7 @@ class FS2Backend(Backend):
             item = Item(self, item_name)
             item._fs_item_id = item_id
             yield item
+        results.close()
 
     def _get_revision(self, item, revno):
         item_id = item._fs_item_id
