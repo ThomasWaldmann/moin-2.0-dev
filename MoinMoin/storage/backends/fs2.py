@@ -5,6 +5,10 @@
     * store metadata and data separately
     * use uuids for item storage names
     * use sqlalchemy/sqlite (not cdb/self-made DBs like fs does)
+    * TODO: the item name <-> item uuid relation is currently only stored in the
+            sqla db and only for the current item revision. This should be added
+            to item revision metadata, so that each item revision knows which name
+            the item had at the time when that revision was the current revision.
 
     @copyright: 2008 MoinMoin:JohannesBerg ("fs2" is originally based on "fs" from JB),
                 2009-2010 MoinMoin:ThomasWaldmann
@@ -58,7 +62,7 @@ class FS2Backend(Backend):
         # item_name -> item_id mapping
         self._name2id = Table('name2id', metadata,
                             Column('item_name', Unicode(MAX_NAME_LEN), primary_key=True),
-                            Column('item_id', String(UUID_LEN)),
+                            Column('item_id', String(UUID_LEN), index=True, unique=True),
                         )
         # history (e.g. for RecentChanges)
         self._history = Table('history', metadata,
@@ -91,6 +95,7 @@ class FS2Backend(Backend):
         History implementation reading the log file.
         """
         history = self._history
+        name2id = self._name2id
         results = history.select().order_by(history.id).execute()
         if reverse:
             results = reverse(results)
@@ -98,10 +103,6 @@ class FS2Backend(Backend):
             item_id, revno, ts = row
             assert isinstance(item_id, str)  # item_id = str(item_id)
             try:
-                # XXX get item name via name2id
-                f = open(self._make_path('meta', item_id, 'name'), 'rb')
-                item_name = f.read().decode('utf-8')
-                f.close()
                 # try to open the revision file just in case somebody removed it manually
                 mp = self._make_path('meta', itemid, '%d.rev' % revno)
                 f = open(mp)
@@ -111,6 +112,7 @@ class FS2Backend(Backend):
                     raise
                 # oops, no such file, item/revision removed manually?
                 continue
+            item_name = self._get_item_name(item_id)
             item = Item(self, item_name)
             item._fs_item_id = item_id
             rev = StoredRevision(item, revno, ts)
@@ -146,6 +148,20 @@ class FS2Backend(Backend):
             item_id = row[name2id.c.item_id]
             item_id = str(item_id) # we get unicode
             return item_id
+
+    def _get_item_name(self, itemid):
+        """
+        Get name of item (or None if no such item exists)
+
+        @param itemid: id of item (str)
+        """
+        name2id = self._name2id
+        results = name2id.select(name2id.c.item_id==itemid).execute()
+        row = results.fetchone()
+        results.close()
+        if row is not None:
+            item_name = row[name2id.c.item_name]
+            return item_name
 
     def get_item(self, itemname):
         item_id = self._get_item_id(itemname)
@@ -276,11 +292,6 @@ class FS2Backend(Backend):
         except IntegrityError:
             raise ItemAlreadyExistsError("Target item '%r' already exists!" % newname)
 
-        npath = self._make_path('meta', item_id, 'name')
-        nf = open(npath, mode='wb')
-        nf.write(newname.encode('utf-8'))
-        nf.close()
-
     def _rename_item(self, item, newname):
         self._do_locked(self._make_path('name-mapping.lock'),
                         self._rename_item_locked, (item, newname))
@@ -314,12 +325,6 @@ class FS2Backend(Backend):
             f = open(meta, 'wb')
             pickle.dump(itemmeta, f, protocol=PICKLEPROTOCOL)
             f.close()
-
-        # write 'name' file of item
-        npath = self._make_path('meta', item_id, 'name')
-        nf = open(npath, mode='wb')
-        nf.write(item_name.encode('utf-8'))
-        nf.close()
 
         item._fs_item_id = item_id
 
