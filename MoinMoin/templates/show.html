@@ -27,7 +27,7 @@ Data:
                 <th>Editor</td>
                 <th>MimeType</td>
                 <th>Comment</td>
-                <th colspan="4">Actions</td>
+                <th colspan="5">Actions</td>
             </tr>
             {% for entry in log %}
             <tr>
@@ -43,6 +43,7 @@ Data:
                 <td>{{ entry.comment|e }}</td>
                 <td>{{ '<a href="?rev=%d">%s</a>' % (entry.rev_no, 'show') }}</td>
                 <td>{{ '<a href="?rev=%d&do=get">%s</a>' % (entry.rev_no, 'get') }}</td>
+                <td>{{ '<a href="?rev=%d&do=highlight">%s</a>' % (entry.rev_no, 'highlight') }}</td>
                 {% if entry.rev_no == last_rev_no %}
                 <td>current revision</td>
                 {% else %}
