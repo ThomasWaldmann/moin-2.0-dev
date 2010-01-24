@@ -1,0 +1,83 @@
+AttachFile is dead
+------------------
+
+do=get is the new way for downloading or raw viewing of an item
+
+TODO: remove AttachFile usage from packages / PackagePages refactor
+
+TODO: replace AttachList(pagename=None, mime_type='*') macro (removed) by SubItems macro (todo)
+mig script?
+
+TODO: same for AttachInfo(pagename=None) ?
+
+TODO: moin maint mkpagepacks
+TODO: moin export dump
+
+TODO: do migration steps needed for 1.9 -> 2.0 in fs19 backend.
+
+Removed wiki xmlrpc attachment related parts.
+TODO: Check wikisync & co whether it works for any item type / fix xmlrpc accordingly.
+
+
+Page / Page*Editor is almost dead, stuff moving to new MoinMoin.items package
+-----------------------------------------------------------------------------
+
+send_page is not used any more - see MoinMoin.action.show.
+sendEditor is not used any more / action "edit" is "modify" now - see MoinMoin.action.modify.
+TODO: Both miss lots of functionality.
+
+Some actions like content/print/format were removed (all called do_show /
+send_page internally).
+
+Page / Page*Editor is deprecated.
+TODO: move functionality from there to MoinMoin.items.
+
+PageGraphicalEditor was removed, it contained only sending of FCKeditor and
+this currently is not used anyway. See 1.9 repo for latest code.
+
+MoinMoin.items has a Item hierarchy for highlevel items (!= storage items), like:
+Item, NonExistent, Binary, Image, Text, ...
+Currently it is all in one file, can be split later.
+
+Everything we want to be able to do with items should be implemented there.
+Stuff shall be implemented at the MOST GENERAL LEVEL of the hierarchy.
+
+Show nicer error pages than what we have at the moment.
+
+index pages: could filter by name (thus not displaying Trash/*, except if wanted)
+
+
+templating engine jinja used now
+---------------------------------
+
+See MoinMoin.support.jinja.
+
+Used by some new actions, like modify, show, diff, ...
+
+Only used for content div right now, the theme is still rendered by "old"
+MoinMoin.theme code.
+
+Removed all theme code except "modernized" theme.
+TODO: create a jinja2 based theme.
+
+
+MercurialBackend
+----------------
+
+Wiki instance pull which leads to merge invalidates Item index files (current revisions 
+index and destroyed revisions index). This files should be recreated from changelog after merge.
+
+Merge does not yet care about merged revisions metadata.
+
+Last API changes (destroy_revision) made storing revision parents in revision metadata invalid.
+Links to parents should be stored now in mutable collection. Index (revisions index) is suitable
+for this task and its record format can be extended to store this values.
+
+GraphInfo action showing revisions history as DAG has to be fixed.
+
+UI lacks actions for serving backend directly (hg serve), pulling data from other instances (hg pull)
+and merging (hg merge). This stuff is rather low-priority, as it can be done in command line very well.
+
+Handy mercurial extensions to ease commit and rename operations from command line  are still missing.
+
+

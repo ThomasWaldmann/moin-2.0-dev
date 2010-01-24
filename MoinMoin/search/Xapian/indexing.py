@@ -315,8 +315,6 @@ class XapianIndex(BaseIndex):
 
         @param page: page
         """
-        if page.isUnderlayPage():
-            yield 'underlay'
         if page.isStandardPage():
             yield 'standard'
         if wikiutil.isSystemPage(self.request, page.page_name):
@@ -393,6 +391,7 @@ class XapianIndex(BaseIndex):
         wikiname = request.cfg.interwikiname or u"Self"
         revision = str(page.get_real_rev())
         itemid = "%s:%s:%s" % (wikiname, pagename, revision)
+        #mtime = wikiutil.timestamp2version(page.mtime())
         mtime = page.mtime_usecs()
 
         doc = self._get_document(connection, itemid, mtime, mode)

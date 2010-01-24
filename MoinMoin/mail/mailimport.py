@@ -12,13 +12,11 @@
 import sys, re, time
 import email
 from email.Utils import getaddresses, parsedate_tz, mktime_tz
+from email.header import decode_header
 
 from MoinMoin import user
-from MoinMoin.action.AttachFile import add_attachment, AttachmentAlreadyExists
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
-# python, at least up to 2.4, ships a broken parser for headers
-from MoinMoin.support.HeaderFixed import decode_header
 
 infile = sys.stdin
 
@@ -174,7 +172,7 @@ def get_pagename_content(request, msg):
 
     subject = msg['subject'].replace('/', '\\') # we can't use / in pagenames
 
-    # rewrite using string.formatter when python 2.4 is mandatory
+    # TODO: rewrite using string.formatter when python 2.4 is mandatory
     pagename = (pagename_tpl.replace("$from", msg['from_addr'][0]).
                 replace("$date", msg['date']).
                 replace("$subject", subject))
@@ -224,12 +222,14 @@ def import_mail_from_message(request, message):
 
     page = PageEditor(request, pagename, do_editor_backup=0)
 
-    if not request.user.may.save(page, "", 0):
+    if not request.user.may.write(pagename):
         raise ProcessingError("Access denied for page %r" % pagename)
 
     attachments = []
 
-    for att in msg['attachments']:
+    if False:
+        # was: for att in msg['attachments']:
+        # TODO reimplement this with items
         i = 0
         while i < 1000: # do not create a gazillion attachments if something
                         # strange happens, give up after 1000.
@@ -273,7 +273,7 @@ def import_mail_from_message(request, message):
     new_content += "\n" + u"\n * ".join(attachment_links)
 
     try:
-        page.saveText(new_content, 0, comment=comment)
+        page.saveText(new_content, None, comment=comment)
     except page.AccessDenied:
         raise ProcessingError("Access denied for page %r" % pagename)
 
@@ -312,7 +312,7 @@ def import_mail_from_message(request, message):
             content = "\n".join(old_content) + table_header + new_line
 
         page = PageEditor(request, parent_page, do_editor_backup=0)
-        page.saveText(content, 0, comment=comment)
+        page.saveText(content, None, comment=comment)
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

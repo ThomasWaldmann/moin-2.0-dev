@@ -1,91 +1,46 @@
 # -*- coding: iso-8859-1 -*-
 """
-MoinMoin - reducewiki script
+    MoinMoin - Reduce Wiki
 
-@copyright: 2005-2006 MoinMoin:ThomasWaldmann
-@license: GPL, see COPYING for details
+    This script can be used to remove all revisions but
+    the last ones from all items.
+    Handle with great care!
+
+    @copyright: 2009 MoinMoin:ChristopherDenter
+    @license: GNU GPL, see COPYING for details.
 """
 
-import os, shutil, codecs
+from re import compile
 
-from MoinMoin import config, wikiutil
-from MoinMoin.Page import Page
-from MoinMoin.action import AttachFile
-
-from MoinMoin.script import MoinScript
+from MoinMoin.wsgiapp import init_unprotected_backends
+from MoinMoin.script import MoinScript, fatal
+from MoinMoin.search import term
+from MoinMoin.storage.error import NoSuchRevisionError
 
 class PluginScript(MoinScript):
-    """\
-Purpose:
-========
-This tool allows you to reduce a data/ directory to just the latest page
-revision of each non-deleted page (plus all attachments).
-
-This is used to make the distributed underlay directory, but can also be
-used for other purposes.
-
-So we change like this:
-    * data/pages/PageName/revisions/{1,2,3,4}
-        -> data/pages/revisions/1  (with content of 4)
-    * data/pages/PageName/current (pointing to e.g. 4)
-        -> same (pointing to 1)
-    * data/pages/PageName/edit-log and data/edit-log
-        -> do not copy
-    * data/pages/PageName/attachments/*
-        -> just copy
-
-Detailed Instructions:
-======================
-General syntax: moin [options] maint reducewiki [reducewiki-options]
-
-[options] usually should be:
-    --config-dir=/path/to/my/cfg/ --wiki-url=http://wiki.example.org/
-
-[reducewiki-options] see below:
-    0. To create a wiki data/ directory with just the latest revisions in the
-       directory '/mywiki'
-       moin ... maint reducewiki --target-dir=/mywiki
-"""
-
+    """Reduce Wiki Script"""
     def __init__(self, argv, def_values):
         MoinScript.__init__(self, argv, def_values)
         self.parser.add_option(
-            "-t", "--target-dir", dest="target_dir",
-            help="Write reduced wiki data to DIRECTORY."
+            "-p", "--pattern", dest="pattern", action="store", type='string', default=".*",
+            help="You can limit the operation on certain items whose names match the given pattern."
         )
-
-    def copypage(self, request, rootdir, pagename):
-        """ quick and dirty! """
-        pagedir = os.path.join(rootdir, 'pages', wikiutil.quoteWikinameFS(pagename))
-        os.makedirs(pagedir)
-
-        # write a "current" file with content "00000001"
-        revstr = '%08d' % 1
-        cf = os.path.join(pagedir, 'current')
-        file(cf, 'w').write(revstr+'\n')
-
-        # create a single revision 00000001
-        revdir = os.path.join(pagedir, 'revisions')
-        os.makedirs(revdir)
-        tf = os.path.join(revdir, revstr)
-        p = Page(request, pagename)
-        text = p.get_raw_body().replace("\n", "\r\n")
-        codecs.open(tf, 'wb', config.charset).write(text)
-
-        source_dir = AttachFile.getAttachDir(request, pagename)
-        if os.path.exists(source_dir):
-            dest_dir = os.path.join(pagedir, "attachments")
-            os.makedirs(dest_dir)
-            for filename in os.listdir(source_dir):
-                source_file = os.path.join(source_dir, filename)
-                dest_file = os.path.join(dest_dir, filename)
-                shutil.copyfile(source_file, dest_file)
 
     def mainloop(self):
         self.init_request()
         request = self.request
-        destdir = self.options.target_dir
-        pagelist = list(request.rootpage.getPageList(user=''))
-        for pagename in pagelist:
-            self.copypage(request, destdir, pagename)
+        init_unprotected_backends(request)
+        storage = request.unprotected_storage
+
+        pattern = self.options.pattern
+        query = term.NameRE(compile(pattern))
+        # If no pattern is given, the default regex will match every item.
+        for item in storage.search_item(query):
+            current_revno = item.next_revno - 1
+            for revno in item.list_revisions():
+                if revno < current_revno:
+                    rev = item.get_revision(revno)
+                    rev.destroy()
+
+        print "Finished reducing backend."
 

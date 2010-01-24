@@ -267,7 +267,7 @@ class TestBlock(ParserTestCase):
         ('----\n', '<hr'),
         ('= Heading =\n', '<h1'),
         ('{{{\nPre\n}}}\n', '<pre'),
-        ('{{{\n#!python\nPre\n}}}\n', '<div'),
+        ('{{{\n#!highlight python\nPre\n}}}\n', '<div'),
         ('| Table |\n', '<div'),
         (' * unordered list\n', '<ul'),
         (' # ordered list\n', '<ol'),
@@ -378,22 +378,6 @@ class TestLinkingMarkup(ParserTestCase):
             html = self.parse(self.text % test)
             result = self.needle.search(html).group(1)
             assert result == expected
-
-    def testLinkAttachment(self):
-        html = self.parse("[[attachment:some file.txt]]")
-        assert '<a ' in html
-        assert 'href="' in html
-        assert 'class="attachment nonexistent"' in html
-        assert 'action=AttachFile' in html
-        assert 'some+file.txt' in html
-
-    def testLinkAttachmentImage(self):
-        html = self.parse("[[attachment:some file.png]]")
-        assert '<a ' in html # must create a link
-        assert 'href="' in html
-        assert 'class="attachment nonexistent"' in html
-        assert 'action=AttachFile' in html
-        assert 'some+file.png' in html
 
     def testAnchor(self):
         html = self.parse("{{#anchor}}")

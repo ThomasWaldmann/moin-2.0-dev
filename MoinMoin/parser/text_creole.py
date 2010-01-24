@@ -76,10 +76,6 @@ class MoinRules(CreoleRules):
     # For the link targets:
     proto = r'http|https|ftp|nntp|news|mailto|telnet|file|irc'
     extern = r'(?P<extern_addr>(?P<extern_proto>%s):.*)' % proto
-    attach = r'''
-            (?P<attach_scheme> attachment | drawing | image ):
-            (?P<attach_addr> .* )
-        '''
     interwiki = r'''
             (?P<inter_wiki> [A-Z][a-zA-Z]+ ) :
             (?P<inter_page> .* )
@@ -89,7 +85,7 @@ class MoinRules(CreoleRules):
     def __init__(self, *args, **kwargs):
         CreoleRules.__init__(self, *args, **kwargs)
         # for addresses
-        self.addr_re = re.compile('|'.join([self.extern, self.attach,
+        self.addr_re = re.compile('|'.join([self.extern,
                                             self.interwiki, self.page]),
                                   re.X | re.U)
 
@@ -299,17 +295,6 @@ class Emitter:
                     self.emit_children(node) or self.formatter.text(page),
                     self.formatter.interwikilink(0),
                 ])
-            elif m.group('attach_scheme'):
-                # link to an attachment
-                scheme = m.group('attach_scheme')
-                attachment = m.group('attach_addr')
-                url = wikiutil.url_unquote(attachment)
-                text = self.get_text(node)
-                return ''.join([
-                        self.formatter.attachment_link(1, url),
-                        self.formatter.text(text),
-                        self.formatter.attachment_link(0)
-                    ])
         return "".join(["[[", self.formatter.text(target), "]]"])
 
 # Not used
@@ -331,8 +316,9 @@ class Emitter:
                 if target.startswith('#'):
                     return self.formatter.anchordef(url[1:])
                 # default to images
-                return self.formatter.attachment_image(
-                    url, alt=text, html_class='image')
+                raise # TODO
+                      # return self.formatter.attachment_image(
+                      # url, alt=text, html_class='image')
             elif m.group('extern_addr'):
                 # external link
                 address = m.group('extern_addr')
@@ -340,31 +326,13 @@ class Emitter:
                 url = wikiutil.url_unquote(address)
                 return self.formatter.image(
                     src=url, alt=text, html_class='external_image')
-            elif m.group('attach_scheme'):
-                # link to an attachment
-                scheme = m.group('attach_scheme')
-                attachment = m.group('attach_addr')
-                url = wikiutil.url_unquote(attachment)
-                if scheme == 'image':
-                    return self.formatter.attachment_image(
-                        url, alt=text, html_class='image')
-                elif scheme == 'drawing':
-                    url = wikiutil.drawing2fname(url)
-                    return self.formatter.attachment_drawing(url, text, alt=text)
-                else:
-                    pass
             elif m.group('inter_wiki'):
                 # interwiki link
                 pass
 #        return "".join(["{{", self.formatter.text(target), "}}"])
-        url = wikiutil.url_unquote(node.content)
-        return self.formatter.attachment_inlined(url, text)
-
-# Not used
-#    def drawing_emit(self, node):
-#        url = wikiutil.url_unquote(node.content)
-#        text = self.get_text(node)
-#        return self.formatter.attachment_drawing(url, text)
+        raise # TODO
+              # url = wikiutil.url_unquote(node.content)
+              # return self.formatter.attachment_inlined(url, text)
 
 # Not used
 #    def figure_emit(self, node):

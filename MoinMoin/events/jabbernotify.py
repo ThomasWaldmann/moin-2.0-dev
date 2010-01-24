@@ -16,7 +16,6 @@ logging = log.getLogger(__name__)
 from MoinMoin.Page import Page
 from MoinMoin.user import User, getUserList
 from MoinMoin.support.python_compatibility import set
-from MoinMoin.action.AttachFile import getAttachUrl
 
 import MoinMoin.events.notification as notification
 import MoinMoin.events as ev
@@ -35,11 +34,6 @@ def handle(event):
         return handle_page_changed(event)
     elif isinstance(event, (ev.JabberIDSetEvent, ev.JabberIDUnsetEvent)):
         return handle_jid_changed(event)
-    elif isinstance(event, ev.FileAttachedEvent):
-        return handle_file_attached(event)
-    # TODO (needs also corresponding changes in xmppbot + testing)
-    #elif isinstance(event, ev.FileRemovedEvent):
-    #    return handle_file_removed(event)
     elif isinstance(event, ev.PageDeletedEvent):
         return handle_page_deleted(event)
     elif isinstance(event, ev.PageRenamedEvent):
@@ -63,38 +57,6 @@ def handle_jid_changed(event):
         logging.error("XML RPC error: %s" % str(err))
     except Exception, err:
         logging.error("Low-level communication error: %s" % str(err))
-
-
-def handle_file_attached(event):
-    """Handles event sent when a file is attached to a page"""
-
-    names = set()
-    request = event.request
-    page = Page(request, event.pagename)
-    subscribers = page.getSubscribers(request, return_users=1)
-    notification.filter_subscriber_list(event, subscribers, True)
-    recipients = []
-
-    for lang in subscribers:
-        recipients.extend(subscribers[lang])
-
-    attachlink = request.getQualifiedURL(getAttachUrl(event.pagename, event.filename, request))
-    pagelink = request.getQualifiedURL(page.url(request, {}))
-
-    for lang in subscribers.keys():
-        _ = lambda text: request.getText(text, lang=lang)
-        data = notification.attachment_added(request, _, event.pagename, event.filename, event.size)
-        links = [{'url': attachlink, 'description': _("Attachment link")},
-                  {'url': pagelink, 'description': _("Page link")}]
-
-        jids = [usr.jid for usr in subscribers[lang]]
-        data['url_list'] = links
-        data['action'] = "file_attached"
-
-        if send_notification(request, jids, data):
-            names.update(recipients)
-
-    return notification.Success(names)
 
 
 def handle_page_changed(event):

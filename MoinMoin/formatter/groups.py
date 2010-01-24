@@ -68,7 +68,7 @@ class Formatter(FormatterBase):
     code = preformatted = small = big = code_area = code_line = null
     code_token = linebreak = paragraph = rule = icon = null
     number_list = definition_list = definition_term = definition_desc = null
-    heading = table = null
-    table_row = table_cell = attachment_link = attachment_image = attachment_drawing = null
+    heading = null
+    table = table_row = table_cell = null
     transclusion = transclusion_param = null
 

@@ -8,10 +8,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-
 from MoinMoin.datastruct.backends._tests import DictsBackendTest
 from MoinMoin.datastruct.backends import wiki_dicts
-from MoinMoin._tests import become_trusted, create_page, nuke_page
+from MoinMoin._tests import become_trusted, create_item
 
 
 class TestWikiDictsBackend(DictsBackendTest):
@@ -19,7 +18,7 @@ class TestWikiDictsBackend(DictsBackendTest):
     # Suppose that default configuration for the dicts is used which
     # is WikiDicts backend.
 
-    def setup_class(self):
+    def setup_method(self, method):
         request = self.request
         become_trusted(request)
 
@@ -35,18 +34,13 @@ Next line has key with empty value
  Empty string::\x20
  Last:: last item
 '''
-        create_page(request, u'SomeTestDict', text)
+        create_item(request, u'SomeTestDict', text)
 
         text = """
  One:: 1
  Two:: 2
 """
-        create_page(request, u'SomeOtherTestDict', text)
-
-    def teardown_class(self):
-        become_trusted(self.request)
-        nuke_page(self.request, u'SomeTestDict')
-        nuke_page(self.request, u'SomeOtherTestDict')
+        create_item(request, u'SomeOtherTestDict', text)
 
 
 coverage_modules = ['MoinMoin.datastruct.backends.wiki_dicts']

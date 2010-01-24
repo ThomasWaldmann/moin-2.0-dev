@@ -11,7 +11,6 @@ import sys, os, time, codecs, shutil, re, errno
 
 from MoinMoin import config, wikiutil, Page, user
 from MoinMoin import script
-from MoinMoin.action import AttachFile
 
 url_prefix_static = "."
 logo_html = '<img src="logo.png">'
@@ -65,29 +64,6 @@ td.noborder {
 </body>
 </html>
 '''
-
-
-def _attachment(request, pagename, filename, outputdir, **kw):
-    filename = filename.encode(config.charset)
-    source_dir = AttachFile.getAttachDir(request, pagename)
-    source_file = os.path.join(source_dir, filename)
-    dest_dir = os.path.join(outputdir, "attachments", wikiutil.quoteWikinameFS(pagename))
-    dest_file = os.path.join(dest_dir, filename)
-    dest_url = "attachments/%s/%s" % (wikiutil.quoteWikinameFS(pagename), wikiutil.url_quote(filename))
-    if os.access(source_file, os.R_OK):
-        if not os.access(dest_dir, os.F_OK):
-            try:
-                os.makedirs(dest_dir)
-            except:
-                script.fatal("Cannot create attachment directory '%s'" % dest_dir)
-        elif not os.path.isdir(dest_dir):
-            script.fatal("'%s' is not a directory" % dest_dir)
-
-        shutil.copyfile(source_file, dest_file)
-        script.log('Writing "%s"...' % dest_url)
-        return dest_url
-    else:
-        return ""
 
 
 class PluginScript(script.MoinScript):
@@ -158,6 +134,9 @@ General syntax: moin [options] export dump [dump-options]
         request.user = user.User(request, name=self.options.dump_user)
 
         pages = request.rootpage.getPageList(user='') # get list of all pages in wiki
+        # XXX sorting shouldn't be necessary, and filtering
+        #     should be done within the getPageList call!
+        pages = list(pages)
         pages.sort()
         if self.options.page: # did user request a particular page or group of pages?
             try:
@@ -169,8 +148,6 @@ General syntax: moin [options] export dump [dump-options]
                 pages = [self.options.page]
 
         wikiutil.quoteWikinameURL = lambda pagename, qfn=wikiutil.quoteWikinameFS: (qfn(pagename) + HTML_SUFFIX)
-
-        AttachFile.getAttachUrl = lambda pagename, filename, request, **kw: _attachment(request, pagename, filename, outputdir, **kw)
 
         errfile = os.path.join(outputdir, 'error.log')
         errlog = open(errfile, 'w')
