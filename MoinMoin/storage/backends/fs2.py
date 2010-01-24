@@ -4,6 +4,7 @@
     Features:
     * store metadata and data separately
     * use uuids for item storage names
+    * uses content hash addressing for revision data storage
     * use sqlalchemy/sqlite (not cdb/self-made DBs like fs does)
     * TODO: the item name <-> item uuid relation is currently only stored in the
             sqla db and only for the current item revision. This should be added
@@ -92,7 +93,7 @@ class FS2Backend(Backend):
 
     def history(self, reverse=True):
         """
-        History implementation reading the log file.
+        History implementation reading the history table.
         """
         history = self._history
         name2id = self._name2id
@@ -104,7 +105,7 @@ class FS2Backend(Backend):
             assert isinstance(item_id, str)  # item_id = str(item_id)
             try:
                 # try to open the revision file just in case somebody removed it manually
-                mp = self._make_path('meta', itemid, '%d.rev' % revno)
+                mp = self._make_path('meta', item_id, '%d.rev' % revno)
                 f = open(mp)
                 f.close()
             except IOError, err:
@@ -249,11 +250,11 @@ class FS2Backend(Backend):
 
         rev = NewRevision(item, revno)
         rev._revno = revno
+
         fd, rev._fs_path_meta = tempfile.mkstemp('.tmp', '', self._make_path('meta'))
-
         rev._fs_file_meta = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
-        fd, rev._fs_path_data = tempfile.mkstemp('.tmp', '', self._make_path('data'))
 
+        fd, rev._fs_path_data = tempfile.mkstemp('.tmp', '', self._make_path('data'))
         rev._fs_file_data = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
         return rev
 
@@ -321,8 +322,8 @@ class FS2Backend(Backend):
 
         if itemmeta:
             # only write item level metadata file if we have any
-            meta = self._make_path('meta', item_id, 'meta')
-            f = open(meta, 'wb')
+            mp = self._make_path('meta', item_id, 'item')
+            f = open(mp, 'wb')
             pickle.dump(itemmeta, f, protocol=PICKLEPROTOCOL)
             f.close()
 
@@ -407,7 +408,7 @@ class FS2Backend(Backend):
 
     def _change_item_metadata(self, item):
         if not item._fs_item_id is None:
-            lp = self._make_path('meta', item._fs_item_id, 'meta.lock')
+            lp = self._make_path('meta', item._fs_item_id, 'item.lock')
             item._fs_metadata_lock = ExclusiveLock(lp, 30)
             item._fs_metadata_lock.acquire(30)
 
@@ -423,18 +424,18 @@ class FS2Backend(Backend):
             elif not md:
                 # metadata now empty, just rm the metadata file
                 try:
-                    os.unlink(self._make_path('meta', item._fs_item_id, 'meta'))
+                    os.unlink(self._make_path('meta', item._fs_item_id, 'item'))
                 except OSError, err:
                     if err.errno != errno.ENOENT:
                         raise
                     # ignore, there might not have been metadata
             else:
-                tmp = self._make_path('meta', item._fs_item_id, 'meta.tmp')
+                tmp = self._make_path('meta', item._fs_item_id, 'item.tmp')
                 f = open(tmp, 'wb')
                 pickle.dump(md, f, protocol=PICKLEPROTOCOL)
                 f.close()
 
-                filesys.rename(tmp, self._make_path('meta', item._fs_item_id, 'meta'))
+                filesys.rename(tmp, self._make_path('meta', item._fs_item_id, 'item'))
             item._fs_metadata_lock.release()
             del item._fs_metadata_lock
 
@@ -450,7 +451,7 @@ class FS2Backend(Backend):
 
     def _get_item_metadata(self, item):
         if item._fs_item_id is not None:
-            p = self._make_path('meta', item._fs_item_id, 'meta')
+            p = self._make_path('meta', item._fs_item_id, 'item')
             try:
                 f = open(p, 'rb')
                 metadata = pickle.load(f)
