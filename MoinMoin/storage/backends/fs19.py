@@ -18,13 +18,23 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil
+from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.storage import Backend, Item, StoredRevision
-from MoinMoin.items import ACL, MIMETYPE, \
+from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+
+HASH = 'sha1'
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
+
+mimetype_default = "text/x-unidentified-wiki-format"
+format_to_mimetype = {
+    'wiki': 'text/moin-wiki',
+    'rst': 'text/rst',
+    'plain': 'text/plain',
+}
 
 
 class FSPageBackend(Backend):
@@ -224,7 +234,11 @@ class FsPageRevision(StoredRevision):
             meta, data = wikiutil.split_body(content)
         meta.update(editlog_data)
         meta['__size'] = len(data) # needed for converter checks
-        meta[MIMETYPE] = "text/x-unidentified-wiki-format"
+        format = meta.pop('format', None)
+        meta[MIMETYPE] = format_to_mimetype.get(format, mimetype_default)
+        meta[NAME] = item.name
+        hash_name, hash_digest = hash_hexdigest(data)
+        meta[hash_name] = hash_digest
         self._fs_meta = {}
         for k, v in meta.iteritems():
             if isinstance(v, list):
@@ -300,6 +314,8 @@ class FsAttachmentRevision(StoredRevision):
         if item._fs_parent_acl is not None:
             meta[ACL] = item._fs_parent_acl # XXX not needed for acl_hierarchic
         meta[MIMETYPE] = wikiutil.MimeType(filename=item._fs_attachname).mime_type()
+        hash_name, hash_digest = hash_hexdigest(open(attpath, 'rb'))
+        meta[hash_name] = hash_digest
         self._fs_meta = meta
         self._fs_data_fname = attpath
         self._fs_data_file = None
@@ -471,3 +487,19 @@ def _decode_dict(line):
     items = [item for item in items if item]
     items = [item.split(':', 1) for item in items]
     return dict(items)
+
+def hash_hexdigest(content):
+    hash_name = HASH
+    hash = hash_new(hash_name)
+    if hasattr(content, "read"):
+        while True:
+            buf = content.read(bufsize)
+            hash.update(buf)
+            if not buf:
+                break
+    elif isinstance(content, str):
+        hash.update(content)
+    else:
+        raise ValueError("unsupported content object: %r" % content)
+    return hash_name, hash.hexdigest()
+
