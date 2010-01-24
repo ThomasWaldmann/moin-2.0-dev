@@ -254,18 +254,18 @@ class FS2Backend(Backend):
         rev._fs_file_data = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
         return rev
 
-    def _destroy_revision(self, revision):
-        if revision._fs_file_meta is not None:
-            revision._fs_file_meta.close()
-        if revision._fs_file_data is not None:
-            revision._fs_file_data.close()
+    def _destroy_revision(self, rev):
+        if rev._fs_file_meta is not None:
+            rev._fs_file_meta.close()
+        if rev._fs_file_data is not None:
+            rev._fs_file_data.close()
         try:
-            os.unlink(revision._fs_path_meta)
-            os.unlink(revision._fs_path_data)
+            os.unlink(rev._fs_path_meta)
+            os.unlink(rev._fs_path_data)
         except OSError, err:
             if err.errno != errno.ENOENT:
                 raise CouldNotDestroyError("Could not destroy revision #%d of item '%r' [errno: %d]" % (
-                    revision.revno, revision.item.name, err.errno))
+                    rev.revno, rev.item.name, err.errno))
             #else:
             #    someone else already killed this revision, we silently ignore this error
 
@@ -488,11 +488,11 @@ class FS2Backend(Backend):
             rev._fs_file_data = open(rev._fs_path_data, 'rb') # XXX keeps file open as long as rev exists
         rev._fs_file_data.seek(position, mode)
 
-    def _tell_revision_data(self, revision):
+    def _tell_revision_data(self, rev):
         if rev._fs_file_data is None:
             if rev._fs_path_data is None:
                 rev._fs_path_data = self._get_fs_path_data(rev)
             rev._fs_file_data = open(rev._fs_path_data, 'rb') # XXX keeps file open as long as rev exists
 
-        return revision._fs_file_data.tell()
+        return rev._fs_file_data.tell()
 
