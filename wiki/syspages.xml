@@ -4452,7 +4452,7 @@
 </entry>
 <entry key="acl"><str>-All:write Default</str>
 </entry>
-<entry key="mimetype"><str>text/x-unidentified-wiki-format</str>
+<entry key="mimetype"><str>text/creole-wiki</str>
 </entry>
 <entry key="edit_log_action"><str>SAVE</str>
 </entry>
