@@ -14,8 +14,7 @@
 
     The main difference between v1 and v2 is that v2 relies on utf-8
     as transport encoding. No url-encoding and no base64 anymore, except
-    when really necessary (like for transferring binary files like
-    attachments maybe).
+    when really necessary (like for transferring binary data).
 
     @copyright: 2003-2009 MoinMoin:ThomasWaldmann,
                 2004-2006 MoinMoin:AlexanderSchremmer,
@@ -35,7 +34,6 @@ from MoinMoin import auth, config, user, wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 from MoinMoin.logfile import editlog
-from MoinMoin.action import AttachFile
 from MoinMoin import caching
 
 
@@ -276,19 +274,14 @@ class XmlRpcBase:
         @param opts: dictionary that can contain the following arguments:
                 include_system:: set it to false if you do not want to see system pages
                 include_revno:: set it to True if you want to have lists with [pagename, revno]
-                include_deleted:: set it to True if you want to include deleted pages
                 exclude_non_writable:: do not include pages that the current user may not write to
-                include_underlay:: return underlay pagenames as well
                 prefix:: the page name must begin with this prefix to be included
-                mark_deleted:: returns the revision number -rev_no if the page was deleted.
-                    Makes only sense if you enable include_revno and include_deleted.
         @rtype: list
         @return: a list of all pages.
         """
         from MoinMoin.wikisync import normalise_pagename
-        options = {"include_system": True, "include_revno": False, "include_deleted": False,
-                   "exclude_non_writable": False, "include_underlay": True, "prefix": "",
-                   "pagelist": None, "mark_deleted": False}
+        options = {"include_system": True, "include_revno": False,
+                   "exclude_non_writable": False, "prefix": "", "pagelist": None}
         if opts is not None:
             options.update(opts)
 
@@ -311,16 +304,12 @@ class XmlRpcBase:
                     return True
                 return n_name in pagelist
 
-        pagelist = self.request.rootpage.getPageList(filter=p_filter, exists=not options["include_deleted"],
-                                                     include_underlay=options["include_underlay"],
-                                                     return_objects=options["include_revno"])
+        pagelist = self.request.rootpage.getPageList(filter=p_filter, return_objects=options["include_revno"])
 
         if options['include_revno']:
             pages = []
             for page in pagelist:
                 revno = page.get_real_rev()
-                if options["mark_deleted"] and not page.exists():
-                    revno = -revno
                 pages.append([self._outstr(page.page_name), revno])
             return pages
         else:
@@ -346,10 +335,10 @@ class XmlRpcBase:
 
         return_items = []
 
-        edit_log = editlog.EditLog(self.request)
-        for log in edit_log.reverse():
+        glog = editlog.GlobalEditLog(self.request)
+        for log in glog:
             # get last-modified UTC (DateTime) from log
-            gmtuple = tuple(time.gmtime(wikiutil.version2timestamp(log.ed_time_usecs)))
+            gmtuple = tuple(time.gmtime(log.mtime))
             lastModified_date = xmlrpclib.DateTime(gmtuple)
 
             # skip if older than "date"
@@ -420,7 +409,7 @@ class XmlRpcBase:
         if not edit_info:
             return self.noLogEntryFault()
 
-        mtime = wikiutil.version2timestamp(long(edit_info['timestamp'])) # must be long for py 2.2.x
+        mtime = long(edit_info['timestamp']) # must be long for py 2.2.x
         gmtuple = tuple(time.gmtime(mtime))
 
         version = rev # our new rev numbers: 1,2,3,4,....
@@ -569,7 +558,7 @@ class XmlRpcBase:
                 newtext = self._instr(pagetext)
             elif self.version == 1:
                 newtext = self._inlob(pagetext)
-            msg = page.saveText(newtext, 0)
+            msg = page.saveText(newtext, None)
         except page.SaveError, msg:
             logging.error("SaveError: %s" % msg)
             return xmlrpclib.Fault(1, "%s" % msg)
@@ -979,7 +968,7 @@ class XmlRpcBase:
 
         # write page
         try:
-            currentpage.saveText(newcontents.decode("utf-8"), last_remote_rev or 0, comment=comment)
+            currentpage.saveText(newcontents.decode("utf-8"), last_remote_rev or None, comment=comment)
         except PageEditor.Unchanged: # could happen in case of both wiki's pages being equal
             pass
         except PageEditor.EditConflict:
@@ -993,100 +982,6 @@ class XmlRpcBase:
         # XXX unlock page
 
         return current_rev
-
-
-    # XXX BEGIN WARNING XXX
-    # All xmlrpc_*Attachment* functions have to be considered as UNSTABLE API -
-    # they are neither standard nor are they what we need when we have switched
-    # attachments (1.5 style) to mimetype items (hopefully in 1.6).
-    # They will be partly removed, esp. the semantics of the function "listAttachments"
-    # cannot be sensibly defined for items.
-    # If the first beta or more stable release of 1.6 will have new item semantics,
-    # we will remove the functions before it is released.
-    def xmlrpc_listAttachments(self, pagename):
-        """
-        Get list of attachment names for page <pagename>.
-        Deprecated.
-
-        @param pagename: pagename (utf-8)
-        @rtype: list
-        @return: a list of utf-8 attachment names
-        """
-        pagename = self._instr(pagename)
-        # User may read page?
-        if not self.request.user.may.read(pagename):
-            return self.notAllowedFault()
-
-        result = AttachFile._get_files(self.request, pagename)
-        return result
-
-    def xmlrpc_getAttachment(self, pagename, attachname):
-        """
-        Get contents of attachment <attachname> of page <pagename>
-
-        @param pagename: pagename (utf-8)
-        @param attachname: attachment name (utf-8)
-        @rtype: base64
-        @return: base64 data
-        """
-        pagename = self._instr(pagename)
-        # User may read page?
-        if not self.request.user.may.read(pagename):
-            return self.notAllowedFault()
-
-        attachname = wikiutil.taintfilename(self._instr(attachname))
-        filename = AttachFile.getFilename(self.request, pagename, attachname)
-        if not os.path.isfile(filename):
-            return self.noSuchPageFault()
-        return self._outlob(open(filename, 'rb').read())
-
-    def xmlrpc_putAttachment(self, pagename, attachname, data):
-        """
-        Store <data> as content of attachment <attachname> of page <pagename>.
-
-        @param pagename: pagename (utf-8)
-        @param attachname: attachment name (utf-8)
-        @param data: file data (base64)
-        @rtype: bool
-        @return: True if attachment was successfully stored
-        """
-        pagename = self._instr(pagename)
-        # User may read page?
-        if not self.request.user.may.read(pagename):
-            return self.notAllowedFault()
-
-        # also check ACLs
-        if not self.request.user.may.write(pagename):
-            return xmlrpclib.Fault(1, "You are not allowed to edit this page")
-
-        attachname = wikiutil.taintfilename(self._instr(attachname))
-        filename = AttachFile.getFilename(self.request, pagename, attachname)
-        if os.path.exists(filename) and not os.path.isfile(filename):
-            return self.noSuchPageFault()
-        open(filename, 'wb+').write(data.data)
-        AttachFile._addLogEntry(self.request, 'ATTNEW', pagename, attachname)
-        return xmlrpclib.Boolean(1)
-
-    def xmlrpc_deleteAttachment(self, pagename, attachname):
-        """
-        Deletes attachment <attachname> of page <pagename>.
-
-        @param pagename: pagename (utf-8)
-        @param attachname: attachment name (utf-8)
-        @rtype: bool
-        @return: True on success
-        """
-        pagename = self._instr(pagename)
-
-        if not self.request.user.may.delete(pagename):
-            return xmlrpclib.Fault(1, 'You are not allowed to delete attachments on this page.')
-
-        attachname = wikiutil.taintfilename(self._instr(attachname))
-        filename = AttachFile.getFilename(self.request, pagename, attachname)
-        AttachFile.remove_attachment(self.request, pagename, attachname)
-        return xmlrpclib.Boolean(1)
-
-    # XXX END WARNING XXX
 
     def xmlrpc_getBotTranslations(self):
         """

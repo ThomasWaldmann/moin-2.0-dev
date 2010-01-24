@@ -19,17 +19,6 @@ logging = log.getLogger(__name__)
 from MoinMoin import config, wikiutil
 from MoinMoin.search.results import Match, TitleMatch, TextMatch
 
-try:
-    from MoinMoin.search import Xapian
-    from MoinMoin.search.Xapian import Query
-
-    OP_AND = Query.OP_AND
-    OP_OR = Query.OP_OR
-    OP_AND_NOT = Query.OP_AND_NOT
-
-except ImportError:
-    pass
-
 
 class BaseExpression(object):
     """ Base class for all search terms """
@@ -130,6 +119,8 @@ class BaseExpression(object):
         Return a query which satisfy self.search_re for field values.
         If field_to_check is given check values only for that field.
         """
+        from MoinMoin.search.Xapian import Query
+
         queries = []
 
         documents = connection.get_all_documents()
@@ -148,7 +139,7 @@ class BaseExpression(object):
                         if self.search_re.match(term):
                             queries.append(connection.query_field(field_to_check, term))
 
-        return Query(OP_OR, queries)
+        return Query(Query.OP_OR, queries)
 
     def xapian_need_postproc(self):
         return self.case
@@ -241,6 +232,8 @@ class AndExpression(BaseExpression):
         return False
 
     def xapian_term(self, request, connection):
+        from MoinMoin.search.Xapian import Query
+
         # sort negated terms
         terms = []
         not_terms = []
@@ -253,17 +246,17 @@ class AndExpression(BaseExpression):
 
         # prepare query for not negated terms
         if terms:
-            query = Query(OP_AND, terms)
+            query = Query(Query.OP_AND, terms)
         else:
             query = Query('') # MatchAll
 
         # prepare query for negated terms
         if not_terms:
-            query_negated = Query(OP_OR, not_terms)
+            query_negated = Query(Query.OP_OR, not_terms)
         else:
             query_negated = Query()
 
-        return Query(OP_AND_NOT, query, query_negated)
+        return Query(Query.OP_AND_NOT, query, query_negated)
 
 
 class OrExpression(AndExpression):
@@ -290,7 +283,6 @@ class OrExpression(AndExpression):
 
         @param page: the page instance
         """
-
         # XXX Do we have any reason to sort here? we are not breaking out
         # of the search in any case.
         #self.sortByCost()
@@ -302,8 +294,9 @@ class OrExpression(AndExpression):
         return matches
 
     def xapian_term(self, request, connection):
+        from MoinMoin.search.Xapian import Query
         # XXX: negated terms managed by _moinSearch?
-        return Query(OP_OR, [term.xapian_term(request, connection) for term in self._subterms])
+        return Query(Query.OP_OR, [term.xapian_term(request, connection) for term in self._subterms])
 
 
 class BaseTextFieldSearch(BaseExpression):
@@ -311,12 +304,14 @@ class BaseTextFieldSearch(BaseExpression):
     _field_to_search = None
 
     def xapian_term(self, request, connection):
+        from MoinMoin.search.Xapian import Query, WikiAnalyzer
+
         if self.use_re:
             queries = [self._get_query_for_search_re(connection, self._field_to_search)]
         else:
             queries = []
             stemmed = []
-            analyzer = Xapian.WikiAnalyzer(request=request, language=request.cfg.language_default)
+            analyzer = WikiAnalyzer(request=request, language=request.cfg.language_default)
 
             for term in self._pattern.split():
                 query_term = connection.query_field(self._field_to_search, term)
@@ -327,18 +322,18 @@ class BaseTextFieldSearch(BaseExpression):
                     for token, stemmed_ in tokens:
                         if token != term.lower():
                             if stemmed_:
-                                query_token.append(Query(OP_OR,
+                                query_token.append(Query(Query.OP_OR,
                                                          [connection.query_field(self._field_to_search, token),
                                                           connection.query_field(self._field_to_search, stemmed_)]))
 #                                 stemmed.append('(%s|%s)' % (token, stemmed_))
                             else:
                                 query_token.append(connection.query_field(self._field_to_search, token))
 #                                 stemmed.append(token)
-                    query_tokens = Query(OP_AND, query_token)
+                    query_tokens = Query(Query.OP_AND, query_token)
                 else:
-                    query_tokens = Query(OP_AND, [connection.query_field(self._field_to_search, token) for token, stemmed_ in tokens if token != term.lower()])
+                    query_tokens = Query(Query.OP_AND, [connection.query_field(self._field_to_search, token) for token, stemmed_ in tokens if token != term.lower()])
 
-                queries.append(Query(OP_OR, [query_term, query_tokens]))
+                queries.append(Query(Query.OP_OR, [query_term, query_tokens]))
 
             # XXX broken wrong regexp is built!
             if not self.case and stemmed:
@@ -346,7 +341,7 @@ class BaseTextFieldSearch(BaseExpression):
                 self._pattern = new_pat
                 self.pattern, self.search_re = self._build_re(new_pat, use_re=False, case=self.case, stemmed=True)
 
-        return Query(OP_AND, queries)
+        return Query(Query.OP_AND, queries)
 
 
 class TextSearch(BaseTextFieldSearch):
@@ -378,11 +373,12 @@ class TextSearch(BaseTextFieldSearch):
         return matches
 
     def xapian_term(self, request, connection):
+        from MoinMoin.search.Xapian import Query
 
         content_query = super(TextSearch, self).xapian_term(request, connection)
         title_query = TitleSearch(self._pattern, use_re=self.use_re, case=self.case).xapian_term(request, connection)
 
-        return Query(OP_OR, [title_query, content_query])
+        return Query(Query.OP_OR, [title_query, content_query])
 
 
 class TitleSearch(BaseTextFieldSearch):
@@ -582,8 +578,7 @@ class DomainSearch(BaseFieldSearch):
         super(DomainSearch, self).__init__(pattern.lower(), use_re, case=False)
 
     def _get_matches(self, page):
-        checks = {'underlay': page.isUnderlayPage,
-                  'standard': page.isStandardPage,
+        checks = {'standard': page.isStandardPage,
                   'system': lambda page=page: wikiutil.isSystemPage(page.request, page.page_name),
                  }
 

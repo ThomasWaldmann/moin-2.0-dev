@@ -9,3 +9,4 @@
 
 from MoinMoin.search.Xapian.indexing import XapianIndex, Query, MoinSearchConnection, MoinIndexerConnection, XapianDatabaseLockError
 from MoinMoin.search.Xapian.tokenizer import WikiAnalyzer
+

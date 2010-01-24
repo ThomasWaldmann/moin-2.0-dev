@@ -13,7 +13,6 @@ logging = log.getLogger(__name__)
 from MoinMoin.formatter import FormatterBase
 from MoinMoin import wikiutil, i18n
 from MoinMoin.Page import Page
-from MoinMoin.action import AttachFile
 from MoinMoin.support.python_compatibility import set
 
 # insert IDs into output wherever they occur
@@ -599,71 +598,6 @@ class Formatter(FormatterBase):
             return self.anchorlink(on, name="line-%d" % lineno)
         else:
             return ''
-
-    # Attachments ######################################################
-
-    def attachment_link(self, on, url=None, querystr=None, **kw):
-        """ Link to an attachment.
-
-            @param on: 1/True=start link, 0/False=end link
-            @param url: filename.ext or PageName/filename.ext
-        """
-        assert on in (0, 1, False, True) # make sure we get called the new way, not like the 1.5 api was
-        _ = self.request.getText
-        if querystr is None:
-            querystr = {}
-        assert isinstance(querystr, dict) # new in 1.6, only support dicts
-        if 'do' not in querystr:
-            querystr['do'] = 'view'
-        if on:
-            pagename, filename = AttachFile.absoluteName(url, self.page.page_name)
-            #logging.debug("attachment_link: url %s pagename %s filename %s" % (url, pagename, filename))
-            fname = wikiutil.taintfilename(filename)
-            if AttachFile.exists(self.request, pagename, fname):
-                target = AttachFile.getAttachUrl(pagename, fname, self.request, do=querystr['do'])
-                if not 'title' in kw:
-                    kw['title'] = "attachment:%s" % url
-                kw['css'] = 'attachment'
-            else:
-                target = AttachFile.getAttachUrl(pagename, fname, self.request, do='upload_form')
-                kw['title'] = _('Upload new attachment "%(filename)s"') % {'filename': fname}
-                kw['css'] = 'attachment nonexistent'
-            return self.url(on, target, **kw)
-        else:
-            return self.url(on)
-
-    def attachment_image(self, url, **kw):
-        _ = self.request.getText
-        pagename, filename = AttachFile.absoluteName(url, self.page.page_name)
-        fname = wikiutil.taintfilename(filename)
-        exists = AttachFile.exists(self.request, pagename, fname)
-        if exists:
-            kw['css'] = 'attachment'
-            kw['src'] = AttachFile.getAttachUrl(pagename, fname, self.request, addts=1)
-            title = _('Inlined image: %(url)s') % {'url': self.text(url)}
-            if not 'title' in kw:
-                kw['title'] = title
-            # alt is required for images:
-            if not 'alt' in kw:
-                kw['alt'] = kw['title']
-            return self.image(**kw)
-        else:
-            title = _('Upload new attachment "%(filename)s"') % {'filename': fname}
-            img = self.icon('attachimg')
-            css = 'nonexistent'
-            target = AttachFile.getAttachUrl(pagename, fname, self.request, do='upload_form')
-            return self.url(1, target, css=css, title=title) + img + self.url(0)
-
-    def attachment_drawing(self, url, text, **kw):
-        # ToDo try to move this to a better place e.g. __init__
-        try:
-            drawing_action = AttachFile.get_action(self.request, url, do='modify')
-            assert drawing_action is not None
-            attachment_drawing = wikiutil.importPlugin(self.request.cfg, 'action',
-                                              drawing_action, 'attachment_drawing')
-            return attachment_drawing(self, url, text, **kw)
-        except (wikiutil.PluginMissingError, wikiutil.PluginAttributeError, AssertionError):
-            return url
 
     # Text ##############################################################
 

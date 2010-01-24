@@ -224,29 +224,6 @@ class Formatter(FormatterBase):
             kw['class'] = str(css)
         return self._set_tag('a', on, **kw)
 
-    def attachment_link(self, on, url=None, **kw):
-        kw['href'] = url
-        kw['type'] = 'link'
-        if on:
-            return self._set_tag('attachment', 1, **kw)
-        else:
-            return self._set_tag('attachment', 0, **kw)
-
-    def attachment_image(self, url, **kw):
-        kw['href'] = url
-        kw['type'] = 'image'
-        return self._add_tag('attachment', **kw)
-
-    def attachment_drawing(self, url, **kw):
-        kw['href'] = url
-        kw['type'] = 'drawing'
-        return self._add_tag('attachment', **kw)
-
-    def attachment_inlined(self, url, **kw):
-        kw['href'] = url
-        kw['type'] = 'inline'
-        return self._add_tag('attachment', **kw)
-
     def rule(self, size=0, **kw):
         return self._add_tag('hr', size=str(size))
 

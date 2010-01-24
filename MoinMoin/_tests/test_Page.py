@@ -7,6 +7,7 @@
 """
 
 import py
+py.test.skip("Broken. Needs Page -> Item refactoring.")
 
 from MoinMoin.Page import Page
 
@@ -14,7 +15,7 @@ class TestPage:
     def testMeta(self):
         page = Page(self.request, u'FrontPage')
         meta = page.meta
-        for k, v in meta:
+        for k, v in meta.iteritems():
             if k == u'format':
                 assert v == u'wiki'
             elif k == u'language':
@@ -33,12 +34,11 @@ class TestPage:
         assert not Page(self.request, 'ThisPageDoesNotExist').exists()
         assert not Page(self.request, '').exists()
 
-    def testEditInfoSystemPage(self):
-        # system pages have no edit-log (and only 1 revision),
-        # thus edit_info will return None
-        page = Page(self.request, u'RecentChanges')
-        edit_info = page.edit_info()
-        assert edit_info == {}
+    def testLastEdit(self):
+        page = Page(self.request, u'FrontPage')
+        last_edit = page.last_edit()
+        assert 'editor' in last_edit
+        assert 'timestamp' in last_edit
 
     def testSplitTitle(self):
         page = Page(self.request, u"FrontPage")
@@ -46,7 +46,7 @@ class TestPage:
 
     def testGetRevList(self):
         page = Page(self.request, u"FrontPage")
-        assert 1 in page.getRevList()
+        assert 0 in page.getRevList()
 
     def testGetPageLinks(self):
         page = Page(self.request, u"FrontPage")
@@ -68,9 +68,15 @@ class TestRootPage:
     def testPageList(self):
         rootpage = self.request.rootpage
         pagelist = rootpage.getPageList()
-        assert len(pagelist) > 100
-        assert u'FrontPage' in pagelist
-        assert u'' not in pagelist
+        cnt = 0
+        have_frontpage = False
+        for pg in pagelist:
+            if pg == u'FrontPage':
+                have_frontpage = True
+            assert pg != u''
+            cnt += 1
+        assert cnt >= self.request.cfg.test_num_pages
+        assert have_frontpage
 
 
 coverage_modules = ['MoinMoin.Page']

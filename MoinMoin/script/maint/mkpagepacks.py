@@ -115,7 +115,7 @@ General syntax: moin [options] maint mkpagepacks [mkpagepacks-options]
             cnt += 1
             zipname = "%d" % cnt
             script.append(packLine([function, zipname, pagename]))
-            timestamp = wikiutil.version2timestamp(page.mtime_usecs())
+            timestamp = page.mtime()
             zi = zipfile.ZipInfo(filename=zipname, date_time=datetime.fromtimestamp(timestamp).timetuple()[:6])
             zi.compress_type = COMPRESSION_LEVEL
             zf.writestr(zi, page.get_raw_body().encode("utf-8"))
@@ -124,19 +124,6 @@ General syntax: moin [options] maint mkpagepacks [mkpagepacks-options]
 
         zf.writestr(MOIN_PACKAGE_FILE, u"\n".join(script).encode("utf-8"))
         zf.close()
-
-    def removePages(self, pagelist):
-        """ Pages from pagelist get removed from the underlay directory. """
-        request = self.request
-        import shutil
-        for pagename in pagelist:
-            pagename = pagename.strip()
-            page = Page(request, pagename)
-            try:
-                underlay, path = page.getPageBasePath(-1)
-                shutil.rmtree(path)
-            except:
-                pass
 
     def mainloop(self):
         # self.options.wiki_url = 'localhost/'
@@ -166,10 +153,6 @@ General syntax: moin [options] maint mkpagepacks [mkpagepacks-options]
             pass
         generate_filename = lambda name: os.path.join(package_path, '%s.zip' % name)
         [self.packagePages(list(pages), generate_filename(name), "ReplaceUnderlay") for name, pages in pageSets.items()]
-
-        print "Removing pagedirs of packaged pages ..."
-        dontkill = set(['LanguageSetup'])
-        [self.removePages(list(pages - dontkill)) for name, pages in pageSets.items()]
 
         print "Finished."
 

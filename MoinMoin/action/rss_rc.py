@@ -53,29 +53,29 @@ def execute(pagename, request):
         ddiffs = 0
 
     # get data
-    log = editlog.EditLog(request)
+    glog = editlog.GlobalEditLog(request)
     logdata = []
     counter = 0
     pages = {}
     lastmod = 0
-    for line in log.reverse():
+    for line in glog:
         if not request.user.may.read(line.pagename):
             continue
         if (not line.action.startswith('SAVE') or
             ((line.pagename in pages) and unique)): continue
         #if log.dayChanged() and log.daycount > _MAX_DAYS: break
         line.editor = line.getInterwikiEditorData(request)
-        line.time = timefuncs.tmtuple(wikiutil.version2timestamp(line.ed_time_usecs)) # UTC
+        line.time = timefuncs.tmtuple(line.mtime) # UTC
         logdata.append(line)
         pages[line.pagename] = None
 
         if not lastmod:
-            lastmod = wikiutil.version2timestamp(line.ed_time_usecs)
+            lastmod = line.mtime
 
         counter += 1
         if counter >= max_items:
             break
-    del log
+    del glog
 
     timestamp = timefuncs.formathttpdate(lastmod)
     etag = "%d-%d-%d-%d-%d" % (lastmod, max_items, diffs, ddiffs, unique)
@@ -227,7 +227,7 @@ def execute(pagename, request):
             handler.endNode(('dc', 'contributor'))
 
             # wiki extensions
-            handler.simpleNode(('wiki', 'version'), "%i" % (item.ed_time_usecs))
+            handler.simpleNode(('wiki', 'version'), "%i" % (item.mtime))
             handler.simpleNode(('wiki', 'status'), ('deleted', 'updated')[page.exists()])
             handler.simpleNode(('wiki', 'diff'), full_url(request, page, querystr={'action': 'diff'}))
             handler.simpleNode(('wiki', 'history'), full_url(request, page, querystr={'action': 'info'}))

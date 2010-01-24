@@ -1,0 +1,18 @@
+    # This sample configuration snippet shows using fs for storage.
+    # Note: the "fs" filesystem backend is not compatible to moin 1.x.
+
+    # Import mapping creator - it helps you to create a simple mapping for the
+    # 'content', 'trash' and 'userprofiles' backends.
+    # The "fs:" prefix is needed to tell "I want to use fs backend" and is
+    # stripped internally.
+    # The path following the "fs:" prefix gives a directory that will contain
+    # all data for all backends.
+    # E.g.:
+    # given:    "fs:/home/myuser/mywiki"
+    # sets up:  /              -> "/home/myuser/mywiki/content/"
+    #           /Trash/        -> "/home/myuser/mywiki/trash/"
+    #           /UserProfiles/ -> "/home/myuser/mywiki/userprofiles/"
+    from MoinMoin.storage.backends import create_simple_mapping
+    namespace_mapping = create_simple_mapping("fs:/home/myuser/mywiki")
+
+    # If you want to use a more advanced config, please refer to HelpOnStorageConfiguration.

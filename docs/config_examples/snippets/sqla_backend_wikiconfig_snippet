@@ -1,0 +1,37 @@
+    # This sample configuration snippet shows using sqlalchemy for storage.
+    # Note: sqlite comes builtin with Python, but you may need to install
+    # additional software if you want to use some other database (like MySQL
+    # or PostgreSQL).
+    # Note: instead of using mywiki, myuser, mypassword, ... as given in the
+    # examples below, you would of course use something making sense for you.
+
+    # Import mapping creator - it helps you to create a simple mapping for the
+    # 'content', 'trash' and 'userprofiles' backends.
+    # The "sqla:" prefix is needed to tell "I want to use sqlalchemy" and is
+    # stripped internally.
+    # The URI following the "sqla:" prefix must contain a %(nsname)s place-
+    # holder that will be replaced with the namespace name (see also the
+    # sqlalchemy documentation about supported engines' URI specification).
+    # E.g.:
+    # URI template given:    "sqla:sqlite:///mywiki_%(nsname)s.db"
+    # sets up:  /              -> "sqlite:///mywiki_content.db"
+    #           /Trash/        -> "sqlite:///mywiki_trash.db"
+    #           /UserProfiles/ -> "sqlite:///mywiki_userprofiles.db"
+    # Note: instead of ///mywiki_ you could also give ////home/myuser/mywiki_
+    #       so it will use an absolute path to the DB files.
+    from MoinMoin.storage.backends import create_simple_mapping
+   
+    # For SQLite, the following will work:
+    namespace_mapping = create_simple_mapping("sqla:sqlite:///mywiki_%(nsname)s.db")
+
+    # In case you use some DBMS that does not allow creation of new databases
+    # on an as-needed basis, you need to create the databases yourself.
+    # E.g. for MySQL or PostgreSQL, you could create these databases manually:
+    # 'mywiki_content', 'mywiki_trash' and 'mywiki_userprofiles'
+    # Grant 'myuser' (his password: 'mypassword') full access to these databases.
+    # Finally, make moin use this by giving:
+    #namespace_mapping = create_simple_mapping("sqla:mysql://myuser:mypassword@localhost/mywiki_%(nsname)s")
+    # or:
+    #namespace_mapping = create_simple_mapping("sqla:postgres://myuser:mypassword@localhost/mywiki_%(nsname)s")
+
+    # If you want to use a more advanced config, please refer to HelpOnStorageConfiguration.

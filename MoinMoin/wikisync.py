@@ -65,7 +65,6 @@ class SyncPage(object):
         self.remote_deleted = remote_deleted
         self.local_mime_type = MIMETYPE_MOIN   # XXX no usable storage API yet
         self.remote_mime_type = MIMETYPE_MOIN
-        assert remote_rev != 99999999
 
     def __repr__(self):
         return repr("<Sync Page %r>" % unicode(self))
@@ -273,12 +272,10 @@ class MoinRemoteWiki(RemoteWiki):
 
     def get_pages(self, **kwargs):
         options = {"include_revno": True,
-                   "include_deleted": True,
                    "exclude_non_writable": kwargs["exclude_non_writable"],
-                   "include_underlay": False,
                    "prefix": self.prefix,
                    "pagelist": self.pagelist,
-                   "mark_deleted": True}
+                  }
         if self.token:
             m = xmlrpclib.MultiCall(self.connection)
             m.applyAuthToken(self.token)
@@ -291,10 +288,9 @@ class MoinRemoteWiki(RemoteWiki):
             normalised_name = normalise_pagename(name, self.prefix)
             if normalised_name is None:
                 continue
-            if abs(revno) != 99999999: # I love sane in-band signalling
-                remote_rev = abs(revno)
-                remote_deleted = revno < 0
-                rpages.append(SyncPage(normalised_name, remote_rev=remote_rev, remote_name=name, remote_deleted=remote_deleted))
+            remote_rev = abs(revno)
+            remote_deleted = revno < 0
+            rpages.append(SyncPage(normalised_name, remote_rev=remote_rev, remote_name=name, remote_deleted=remote_deleted))
         return rpages
 
     def __repr__(self):
@@ -320,9 +316,9 @@ class MoinLocalWiki(RemoteWiki):
         if normalised_name is None:
             return None
         page = Page(self.request, page_name)
-        revno = page.get_real_rev()
-        if revno == 99999999: # I love sane in-band signalling
+        if not page.exists():
             return None
+        revno = page.get_real_rev()
         return SyncPage(normalised_name, local_rev=revno, local_name=page_name, local_deleted=not page.exists())
 
     # Public methods:
@@ -355,7 +351,7 @@ class MoinLocalWiki(RemoteWiki):
         else:
             page_filter = lambda x: True
         pages = []
-        for x in self.request.rootpage.getPageList(exists=False, include_underlay=False, filter=page_filter):
+        for x in self.request.rootpage.getPageList(exists=False, filter=page_filter):
             sp = self.createSyncPage(x)
             if sp:
                 pages.append(sp)
@@ -432,54 +428,43 @@ class AbstractTagStore(object):
         return NotImplemented
 
 
-class PickleTagStore(AbstractTagStore):
+class MetadataTagStore(AbstractTagStore):
     """ This class manages the storage of tags in pickle files. """
 
     def __init__(self, page):
-        """ Creates a new TagStore that uses pickle files.
+        """
+        Creates a new TagStore using item metadata.
 
         @param page: a Page object where the tags should be related to
         """
-
         self.page = page
-        self.filename = page.getPagePath('synctags', use_underlay=0, check_create=1, isfile=1)
-        lock_dir = os.path.join(page.getPagePath('cache', use_underlay=0, check_create=1), '__taglock__')
-        self.rlock = lock.ReadLock(lock_dir, 60.0)
-        self.wlock = lock.WriteLock(lock_dir, 60.0)
-
-        if not self.rlock.acquire(3.0):
-            raise EnvironmentError("Could not lock in PickleTagStore")
+        # TODO ACL?
+        self.item = page.request.cfg.storage.get_item(page.page_name)
+        self.item.change_metadata()
         try:
             self.load()
         finally:
-            self.rlock.release()
+            self.item.publish_metadata()
 
     def load(self):
         """ Loads the tags from the data file. """
         try:
-            datafile = file(self.filename, "rb")
-            self.tags = pickle.load(datafile)
-        except (IOError, EOFError):
+            self.tags = pickle.loads(self.item['wikisync_tags'])
+        except KeyError:
             self.tags = []
-        else:
-            datafile.close()
 
     def commit(self):
-        """ Writes the memory contents to the data file. """
-        datafile = file(self.filename, "wb")
-        pickle.dump(self.tags, datafile, pickle.HIGHEST_PROTOCOL)
-        datafile.close()
+        self.item['wikisync_tags'] = pickle.dumps(self.tags, pickle.HIGHEST_PROTOCOL)
 
     # public methods ---------------------------------------------------
     def add(self, **kwargs):
-        if not self.wlock.acquire(3.0):
-            raise EnvironmentError("Could not lock in PickleTagStore")
+        self.item.change_metadata()
         try:
             self.load()
             self.tags.append(Tag(**kwargs))
             self.commit()
         finally:
-            self.wlock.release()
+            self.item.publish_metadata()
 
     def get_all_tags(self):
         return self.tags[:]
@@ -492,13 +477,12 @@ class PickleTagStore(AbstractTagStore):
         return temp[-1]
 
     def clear(self):
-        self.tags = []
-        if not self.wlock.acquire(3.0):
-            raise EnvironmentError("Could not lock in PickleTagStore")
+        self.item.change_metadata()
         try:
+            self.tags = []
             self.commit()
         finally:
-            self.wlock.release()
+            self.item.publish_metadata()
 
     def fetch(self, iwid_full, direction=None):
         iwid_full = unpackLine(iwid_full)
@@ -514,5 +498,5 @@ class PickleTagStore(AbstractTagStore):
 
 # currently we just have one implementation, so we do not need
 # a factory method
-TagStore = PickleTagStore
+TagStore = MetadataTagStore
 
