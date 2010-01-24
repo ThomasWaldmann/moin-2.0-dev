@@ -22,7 +22,8 @@ from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           IS_SYSPAGE, SYSPAGE_VERSION
 
 HASH = 'sha1'
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
@@ -49,13 +50,15 @@ class FSPageBackend(Backend):
 
     Everything not needed for the migration will likely just raise a NotImplementedError.
     """
-    def __init__(self, path):
+    def __init__(self, path, syspages=False):
         """
         Initialise filesystem backend.
 
         @param path: storage path (data_dir)
+        @param syspages: either False (not syspages) or revision number of syspages
         """
         self._path = path
+        self._syspages = syspages
 
     def _get_item_path(self, name, *args):
         """
@@ -162,6 +165,7 @@ class FsPageItem(Item):
             raise # TODO: current = determine_current(revdir, editlog)
         self._fs_current = current
         self._fs_editlog = EditLog(editlogpath)
+        self._syspages = backend._syspages
 
     def iter_attachments(self):
         attachmentspath = self._backend._get_item_path(self.name, 'attachments')
@@ -245,6 +249,9 @@ class FsPageRevision(StoredRevision):
         meta[NAME] = item.name
         hash_name, hash_digest = hash_hexdigest(data)
         meta[hash_name] = hash_digest
+        if item._syspages:
+            meta[IS_SYSPAGE] = True
+            meta[SYSPAGE_VERSION] = item._syspages
         self._fs_meta = {}
         for k, v in meta.iteritems():
             if isinstance(v, list):
@@ -292,6 +299,7 @@ class FsAttachmentItem(Item):
         except (NoSuchItemError, NoSuchRevisionError):
             acl = None
         self._fs_parent_acl = acl
+        self._syspages = backend._syspages
 
 class FsAttachmentRevision(StoredRevision):
     """ A moin 1.9 filesystem item revision (attachment) """
@@ -322,6 +330,9 @@ class FsAttachmentRevision(StoredRevision):
         meta[MIMETYPE] = wikiutil.MimeType(filename=item._fs_attachname).mime_type()
         hash_name, hash_digest = hash_hexdigest(open(attpath, 'rb'))
         meta[hash_name] = hash_digest
+        if item._syspages:
+            meta[IS_SYSPAGE] = True
+            meta[SYSPAGE_VERSION] = item._syspages
         self._fs_meta = meta
         self._fs_data_fname = attpath
         self._fs_data_file = None
@@ -494,7 +505,7 @@ def _decode_dict(line):
     items = [item.split(':', 1) for item in items]
     return dict(items)
 
-def hash_hexdigest(content):
+def hash_hexdigest(content, bufsize=4096):
     hash_name = HASH
     hash = hash_new(hash_name)
     if hasattr(content, "read"):
