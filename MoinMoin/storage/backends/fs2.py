@@ -6,10 +6,6 @@
     * use uuids for item storage names
     * uses content hash addressing for revision data storage
     * use sqlalchemy/sqlite (not cdb/self-made DBs like fs does)
-    * TODO: the item name <-> item uuid relation is currently only stored in the
-            sqla db and only for the current item revision. This should be added
-            to item revision metadata, so that each item revision knows which name
-            the item had at the time when that revision was the current revision.
 
     @copyright: 2008 MoinMoin:JohannesBerg ("fs2" is originally based on "fs" from JB),
                 2009-2010 MoinMoin:ThomasWaldmann
@@ -113,7 +109,7 @@ class FS2Backend(Backend):
                     raise
                 # oops, no such file, item/revision removed manually?
                 continue
-            item_name = self._get_item_name(item_id)
+            item_name = self._get_item_name(item_id) # this is the current name, NOT the name at revno
             item = Item(self, item_name)
             item._fs_item_id = item_id
             rev = StoredRevision(item, revno, ts)
