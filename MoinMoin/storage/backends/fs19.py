@@ -32,6 +32,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 mimetype_default = "text/x-unidentified-wiki-format"
 format_to_mimetype = {
     'wiki': 'text/moin-wiki',
+    'creole': 'text/creole-wiki',
     'rst': 'text/rst',
     'plain': 'text/plain',
 }
