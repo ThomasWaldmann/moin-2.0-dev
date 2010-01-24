@@ -28,6 +28,9 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessD
 
 from MoinMoin.items.sendcache import SendCache
 
+NAME = "name"
+NAME_OLD = "name_old"
+
 # some metadata key constants:
 ACL = "acl"
 
@@ -222,15 +225,11 @@ class Item(object):
         backend.copy_item(old_item, name=name)
         current_rev = old_item.get_revision(-1)
         # we just create a new revision with almost same meta/data to show up on RC
-        self._save(current_rev, current_rev, name=name, action='SAVE/COPY', extra=self.name, comment=comment)
+        self._save(current_rev, current_rev, name=name, action='SAVE/COPY', comment=comment)
 
-    def _rename(self, name, comment, action, extra=None):
-        oldname = self.name
-        extra = extra is not None and extra or oldname
+    def _rename(self, name, comment, action):
         self.rev.item.rename(name)
-        # we just create a new revision with almost same meta/data to show up on RC
-        # XXX any better way to do this?
-        self._save(self.meta, self.data, name=name, action=action, extra=oldname, comment=comment)
+        self._save(self.meta, self.data, name=name, action=action, comment=comment)
 
     def rename(self, name, comment=u''):
         """
@@ -312,6 +311,14 @@ class Item(object):
             # Skip this metadata key. It should not be copied when editing an item.
             if not k == SYSPAGE_VERSION:
                 newrev[k] = v
+
+        # we store the previous (if different) and current item name into revision metadata
+        # this is useful for rename history and backends that use item uids internally
+        oldname = meta.get(NAME)
+        if oldname and oldname != name:
+            newrev[NAME_OLD] = oldname
+        newrev[NAME] = name
+
         hash_name, hash_hexdigest = self._write_stream(data, newrev)
         newrev[hash_name] = hash_hexdigest
         timestamp = time.time()
@@ -500,6 +507,7 @@ There is no help, you're doomed!
         for rev_no in reversed(rev_nos):
             r = item.get_revision(rev_no)
             log.append(dict(
+                name=r[NAME],
                 rev_no=rev_no,
                 size=r.size,
                 mtime=self.request.user.getFormattedDateTime(float(r.timestamp)),
@@ -862,7 +870,7 @@ class ContainerItem(ApplicationXTar):
         if sorted(members) == sorted(tf_members):
             meta = {"mimetype": self.mimetype}
             data = file(self.tmpfile, 'r')
-            self._save(meta, data, name=self.name, action='SAVE', mimetype=self.mimetype, comment='', extra='')
+            self._save(meta, data, name=self.name, action='SAVE', mimetype=self.mimetype, comment='')
             os.unlink(self.tmpfile)
 
 class RenderableApplication(RenderableBinary):

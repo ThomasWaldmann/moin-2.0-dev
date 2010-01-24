@@ -20,17 +20,19 @@ Data:
         <input type="hidden" name="do" value="diff">
         <table>
             <tr>
-                <th align="right">#</td>
-                <th>Date</td>
-                <th align="right">Size</td>
+                <th>Name</th>
+                <th align="right">#</th>
+                <th>Date</th>
+                <th align="right">Size</th>
                 <th align="right"><input type="submit" value="Diff"></th>
-                <th>Editor</td>
-                <th>MimeType</td>
-                <th>Comment</td>
-                <th colspan="5">Actions</td>
+                <th>Editor</th>
+                <th>MimeType</th>
+                <th>Comment</th>
+                <th colspan="5">Actions</th>
             </tr>
             {% for entry in log %}
             <tr>
+                <td>{{ entry.name|e }}</td>
                 <td align="right">{{ entry.rev_no }}</td>
                 <td>{{ entry.mtime }}</td>
                 <td align="right">{{ entry.size }}</td>
