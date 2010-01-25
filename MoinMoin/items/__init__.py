@@ -644,12 +644,11 @@ There is no help, you're doomed!
                     request.headers.add(key, value)
             file_to_send = sendcache._get_datafile()
         elif from_tar: # content = file contained within a tar item revision
-            # TODO: make it work, file access to storage items?
             filename = wikiutil.taintfilename(from_tar)
             mt = wikiutil.MimeType(filename=filename)
             content_disposition = mt.content_disposition(request.cfg)
             content_type = mt.content_type()
-            content_length = os.path.getsize(fpath) # XXX
+            content_length = None
             ci = ContainerItem(request, self.name)
             file_to_send = ci.get(filename)
         else: # content = item revision
@@ -1316,13 +1315,12 @@ class TWikiDraw(Image):
             filecontent = filecontent.read() # read file completely into memory
             filecontent = filecontent.replace("\r", "")
         elif ext == '.map':
-            # touch attachment directory to invalidate cache if new map is saved
             filecontent = filecontent.read() # read file completely into memory
             filecontent = filecontent.strip()
         elif ext == '.png':
             #content_length = file_upload.content_length
-            # XXX gives -1 for wsgiref :( If this is fixed, we could use the file obj,
-            # without reading it into memory completely:
+            # XXX gives -1 for wsgiref, gives 0 for werkzeug :(
+            # If this is fixed, we could use the file obj, without reading it into memory completely:
             filecontent = filecontent.read()
 
         members = ['drawing.draw', 'drawing.map', 'drawing.png']
@@ -1413,17 +1411,16 @@ class AnyWikiDraw(Image):
         ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
         filecontent = file_upload.stream
         content_length = None
-        if ext == '.svg': # TWikiDraw POSTs this first
+        if ext == '.svg':
             filecontent = filecontent.read() # read file completely into memory
             filecontent = filecontent.replace("\r", "")
         elif ext == '.map':
-            # touch attachment directory to invalidate cache if new map is saved
             filecontent = filecontent.read() # read file completely into memory
             filecontent = filecontent.strip()
         elif ext == '.png':
             #content_length = file_upload.content_length
-            # XXX gives -1 for wsgiref :( If this is fixed, we could use the file obj,
-            # without reading it into memory completely:
+            # XXX gives -1 for wsgiref, gives 0 for werkzeug :(
+            # If this is fixed, we could use the file obj, without reading it into memory completely:
             filecontent = filecontent.read()
 
         members = ["drawing.svg", "drawing.map", "drawing.png"]
