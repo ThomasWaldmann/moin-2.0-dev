@@ -18,7 +18,7 @@ from StringIO import StringIO
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from werkzeug import http_date, quote_etag
+from werkzeug import http_date, quote_etag, url_quote
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
@@ -808,10 +808,11 @@ class ContainerItem(ApplicationXTar):
 
         @param member: name of the data in the container file
         """
-        return self.request.href(self.name, do='modify', mimetype=self.mimetype,
-                                 rev=self.request.rev, from_tar=member)
+        url = self.request.href(self.name, do='modify', mimetype=self.mimetype,
+                                 rev=self.request.rev)
+        return url + '&from_tar=%s' % url_quote(member)
         # note: if self.request.rev is None, Href code will suppress rev=X arg
-        # member needs to be last in qs because twikidraw looks for "file extension" at the end
+        # from_tar needs to be last in qs because twikidraw looks for "file extension" at the end
 
     def get(self, member):
         """
