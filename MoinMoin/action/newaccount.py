@@ -19,6 +19,9 @@ def _create_user(request):
     if request.method != 'POST':
         return
 
+    if not wikiutil.checkTicket(request, form.get('ticket', '')):
+        return
+
     if not TextCha(request).check_answer_from_form():
         return _('TextCha: Wrong answer! Go back and try again...')
 
@@ -109,6 +112,7 @@ def execute(item_name, request):
         content = template.render(gettext=request.getText,
                                   title=title,
                                   textcha=textcha,
+                                  ticket=wikiutil.createTicket(request),
                                  )
         request.theme.render_content(item_name, content, title=title)
     elif request.method == 'POST':
