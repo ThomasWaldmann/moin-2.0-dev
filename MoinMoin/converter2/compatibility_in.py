@@ -19,7 +19,7 @@ class Converter(object):
     def __init__(self, request):
         self.request = request
 
-    def __call__(self, content):
+    def __call__(self, content, arguments=None):
         text = '\n'.join(content)
 
         formatter = Formatter(self.request, 'Parser ' + self.name)
