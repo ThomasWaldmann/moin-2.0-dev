@@ -23,7 +23,7 @@
 </entry>
 <entry key="syspage_version"><int>1</int>
 </entry>
-<entry key="mimetype"><str>text/x.moin.wiki</str>
+<entry key="mimetype"><str>text/x.moin.wiki;format=1.9</str>
 </entry>
 <entry key="edit_log_action"><str>SAVE</str>
 </entry>
@@ -60,7 +60,7 @@
 </entry>
 <entry key="syspage_version"><int>1</int>
 </entry>
-<entry key="mimetype"><str>text/x.moin.wiki</str>
+<entry key="mimetype"><str>text/x.moin.wiki;format=1.9</str>
 </entry>
 <entry key="pragma"><str>section-numbers off</str>
 </entry>
@@ -101,7 +101,7 @@
 </entry>
 <entry key="syspage_version"><int>1</int>
 </entry>
-<entry key="mimetype"><str>text/x.moin.wiki</str>
+<entry key="mimetype"><str>text/x.moin.wiki;format=1.9</str>
 </entry>
 <entry key="edit_log_action"><str>SAVE</str>
 </entry>
