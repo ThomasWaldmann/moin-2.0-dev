@@ -13,6 +13,9 @@ from __future__ import absolute_import
 import re
 from emeraldtree import ElementTree as ET
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 from MoinMoin import config, wikiutil
 from MoinMoin.util import iri
 from MoinMoin.util.mime import Type, type_moin_document, type_moin_wiki
@@ -931,7 +934,9 @@ class Converter(ConverterMacro):
         Call the _repl method for the last matched group with the given prefix.
         """
         data = dict(((str(k), v) for k, v in match.groupdict().iteritems() if v is not None))
-        getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(*args, **data)
+        func = '%s_%s_repl' % (prefix, match.lastgroup)
+        #logging.debug("calling %s(%r, %r)" % (func, args, data))
+        getattr(self, func)(*args, **data)
 
     def parse_block(self, iter_content, arguments):
         attrib = {}
