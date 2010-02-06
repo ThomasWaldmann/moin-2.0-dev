@@ -79,20 +79,40 @@ class Converter(object):
 
 def _factory(_request, type_input, type_output, **kw):
     if type_moin_document.issupertype(type_output):
-        if Type('text/x-diff').issupertype(type_input):
-            pygments_type = 'diff'
-        elif Type('text/x-irclog').issupertype(type_input):
-            pygments_type = 'irc'
-        elif (Type('text/x-python').issupertype(type_input) or
-            Type('x-moin/format;name=python').issupertype(type_input)):
-            pygments_type = 'python'
-        else:
-            return
+        pygments_type = None
+        # first we check the input type against all mimetypes pygments knows:
+        for name, short_names, patterns, mime_types in pygments.lexers.get_all_lexers():
+            for mt in mime_types:
+                if Type(mt).issupertype(type_input):
+                    pygments_type = short_names[0]
+                    break
+            if pygments_type:
+                break
+        # if we still don't know the lexer name for pygments, check some formats
+        # that were supported by special parsers in moin 1.x:
+        if pygments_type is None:
+            moin_pygments = [
+                ('python', 'python'),
+                ('diff', 'diff'),
+                ('irssi', 'irc'),
+                ('irc', 'irc'),
+                ('java', 'java'),
+                ('cplusplus', 'cpp'),
+                ('pascal', 'pascal'),
+            ]
+            for moin_format, pygments_name in moin_pygments:
+                if Type('x-moin/format;name=%s' % moin_format).issupertype(type_input):
+                    pygments_type = pygments_name
+                    break
 
-        def real_factory(request):
-            return Converter(request, pygments_type)
-        return real_factory
+        if pygments_type:
+            def real_factory(request):
+                return Converter(request, pygments_type)
+            return real_factory
+
 
 from . import default_registry
-default_registry.register(_factory)
+# Pygments type detection is rather expensive, therefore we want to register
+# after all normal parsers but before the compatibility parsers and wildcard
+default_registry.register(_factory, default_registry.PRIORITY_MIDDLE + 1)
 

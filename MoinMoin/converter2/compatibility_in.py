@@ -51,6 +51,6 @@ def _factory(request, input, output, **kw):
         return type('Converter.%s' % str(name), (Converter, ), {'name': name, 'parser': parser})
 
 from . import default_registry
-# Need to register ourself after all normal parsers but before the wildcard
-default_registry.register(_factory, default_registry.PRIORITY_MIDDLE + 1)
+# Need to register ourself after all normal parsers, after pygments, but before the wildcard
+default_registry.register(_factory, default_registry.PRIORITY_MIDDLE + 2)
 
