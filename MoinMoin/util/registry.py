@@ -26,6 +26,9 @@ class Registry(object):
                 return cmp(self.factory, other.factory)
             return cmp(self.factory, other)
 
+        def __repr__(self):
+            return "%r[prio %d]" % (self.factory, self.priority)
+
     def __init__(self):
         self._entries = []
 
@@ -61,3 +64,7 @@ class Registry(object):
         @param: factory: Factory to unregister
         """
         self._entries.remove(factory)
+
+    def __repr__(self):
+        return ' '.join(repr(e) for e in self._entries)
+
