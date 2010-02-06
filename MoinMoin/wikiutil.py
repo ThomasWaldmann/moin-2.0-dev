@@ -25,7 +25,6 @@ from MoinMoin import config
 from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 from MoinMoin.support.python_compatibility import rsplit
-from inspect import getargspec, isfunction, isclass, ismethod
 
 from MoinMoin import web # needed so that next line works:
 import werkzeug
@@ -818,16 +817,13 @@ def RelPageName(context, pagename):
 
 def pagelinkmarkup(pagename, text=None):
     """ return markup that can be used as link to page <pagename> """
-    from MoinMoin.parser.text_moin_wiki import Parser
-    if re.match(Parser.word_rule + "$", pagename, re.U|re.X) and \
-            (text is None or text == pagename):
-        return pagename
+    # XXX: This used to check for CamelCase
+    # TODO: To be replaced by a converter application/x-moin-document -> real markup
+    if text is None or text == pagename:
+        text = ''
     else:
-        if text is None or text == pagename:
-            text = ''
-        else:
-            text = '|%s' % text
-        return u'[[%s%s]]' % (pagename, text)
+        text = u'|%s' % text
+    return u'[[%s%s]]' % (pagename, text)
 
 #############################################################################
 ### mimetype support
@@ -1796,6 +1792,7 @@ def invoke_extension_function(request, function, args, fixed_args=[]):
     @param fixed_args: fixed arguments to pass as the first arguments
     @returns: the return value from the function called
     """
+    from inspect import getargspec, isfunction, isclass, ismethod
 
     def _convert_arg(request, value, default, name=None):
         """
@@ -2311,17 +2308,6 @@ def getUnicodeIndexGroup(name):
         return unichr(0xac00 + (int(ord(c) - 0xac00) / 588) * 588)
     else:
         return c.upper() # we put lower and upper case words into the same index group
-
-
-def isStrictWikiname(name, word_re=re.compile(ur"^(?:[%(u)s][%(l)s]+){2,}$" % {'u': config.chars_upper, 'l': config.chars_lower})):
-    """
-    Check whether this is NOT an extended name.
-
-    @param name: the wikiname in question
-    @rtype: bool
-    @return: true if name matches the word_re
-    """
-    return word_re.match(name)
 
 
 def is_URL(arg, schemas=config.url_schemas):

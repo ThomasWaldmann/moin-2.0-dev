@@ -13,8 +13,8 @@
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin.search.queryparser import QueryParser, QueryError
-from MoinMoin.search.builtin import MoinSearch
+#from MoinMoin.search.queryparser import QueryParser, QueryError
+#from MoinMoin.search.builtin import MoinSearch
 
 
 def searchPages(request, query, sort='weight', mtime=None, historysearch=None, **kw):

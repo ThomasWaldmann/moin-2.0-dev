@@ -222,32 +222,29 @@ class ThemeBase:
         @return: title html
         """
         _ = self.request.getText
-        if d['title_text'] == d['page'].split_title():
-            # just showing a page, no action
-            segments = d['page_name'].split('/')
-            link_text = segments[-1]
-            link_title = _('Click to do a full-text search for this title')
-            link_query = {'do': 'fullsearch',
-                          'context': '180',
-                          'value': 'linkto:"%s"' % d['page_name'],
-            }
-            link = d['page'].link_to(self.request, link_text,
-                                     querystr=link_query, title=link_title,
-                                     css_class='backlink', rel='nofollow')
-            if len(segments) <= 1:
-                html = link
-            else:
-                content = []
-                curpage = ''
-                for s in segments[:-1]:
-                    curpage += s
-                    content.append(Page(self.request,
-                                        curpage).link_to(self.request, s))
-                    curpage += '/'
-                path_html = u'<span class="sep">/</span>'.join(content)
-                html = u'<span class="pagepath">%s</span><span class="sep">/</span>%s' % (path_html, link)
+        # just showing a page, no action
+        segments = d['page_name'].split('/')
+        link_text = segments[-1]
+        link_title = _('Click to do a full-text search for this title')
+        link_query = {'do': 'fullsearch',
+                      'context': '180',
+                      'value': 'linkto:"%s"' % d['page_name'],
+        }
+        link = d['page'].link_to(self.request, link_text,
+                                 querystr=link_query, title=link_title,
+                                 css_class='backlink', rel='nofollow')
+        if len(segments) <= 1:
+            html = link
         else:
-            html = wikiutil.escape(d['title_text'])
+            content = []
+            curpage = ''
+            for s in segments[:-1]:
+                curpage += s
+                content.append(Page(self.request,
+                                    curpage).link_to(self.request, s))
+                curpage += '/'
+            path_html = u'<span class="sep">/</span>'.join(content)
+            html = u'<span class="pagepath">%s</span><span class="sep">/</span>%s' % (path_html, link)
 
         html = u'<span id="pagelocation">%s</span>' % html
         return html
@@ -372,7 +369,7 @@ class ThemeBase:
         pagename = page.page_name # can be different, due to i18n
 
         if not title:
-            title = page.split_title()
+            title = page.page_name
             title = self.shortenPagename(title)
 
         link = page.link_to(request, title)
@@ -444,7 +441,7 @@ class ThemeBase:
 
         # Add current page at end of local pages
         if not current in found:
-            title = d['page'].split_title()
+            title = d['page'].page_name
             title = self.shortenPagename(title)
             link = d['page'].link_to(request, title)
             cls = 'current'
@@ -592,7 +589,7 @@ class ThemeBase:
                     except ValueError:
                         pass
                     page = Page(request, pagename)
-                    title = page.split_title()
+                    title = page.page_name
                     title = self.shortenPagename(title)
                     link = page.link_to(request, title)
                     items.append(link)
