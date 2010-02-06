@@ -887,10 +887,7 @@ class User:
         """
         wikiname, pagename = wikiutil.getInterwikiHomePage(self._request, self.name)
         if wikiname == 'Self':
-            if wikiutil.isStrictWikiname(self.name):
-                markup = pagename
-            else:
-                markup = '[[%s]]' % pagename
+            markup = '[[%s]]' % pagename
         else:
             markup = '[[%s:%s]]' % (wikiname, pagename)
         return markup
