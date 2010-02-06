@@ -407,7 +407,7 @@ class Converter(ConverterMacro):
         # If we are in a paragraph already, don't loose the whitespace
         else:
             stack.top_append('\n')
-        self.parse_inline(text, stack)
+        self.parse_inline(text, stack, self.inline_re)
 
     indent = r"""
         ^
@@ -512,7 +512,7 @@ class Converter(ConverterMacro):
                 stack.top_append(element_label)
                 new_stack = _Stack(element_label)
 
-                self.parse_inline(list_definition_text, new_stack)
+                self.parse_inline(list_definition_text, new_stack, self.inline_re)
 
             element_body = moin_page.list_item_body()
             element_body.level, element_body.type = level, type
@@ -878,7 +878,7 @@ class Converter(ConverterMacro):
                 if key in ('class', 'style', 'number-columns-spanned', 'number-rows-spanned'):
                     attrib[moin_page(key)] = value
 
-        self.parse_inline(cell_text, stack)
+        self.parse_inline(cell_text, stack, self.inline_re)
 
         stack.pop_name('table-cell')
 
@@ -957,7 +957,7 @@ class Converter(ConverterMacro):
 
         return body
 
-    def parse_inline(self, text, stack, inline_re=inline_re):
+    def parse_inline(self, text, stack, inline_re):
         """Recognize inline elements within the given text"""
 
         pos = 0
