@@ -1,9 +1,9 @@
 """
 MoinMoin - Moin Wiki input converter
 
-@copyright: 2000-2002 Juergen Hermann <jh@web.de>
-            2006-2008 MoinMoin:ThomasWaldmann
-            2007 MoinMoin:ReimarBauer
+@copyright: 2000-2002 Juergen Hermann <jh@web.de>,
+            2006-2008 MoinMoin:ThomasWaldmann,
+            2007 MoinMoin:ReimarBauer,
             2008,2009 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
@@ -1111,3 +1111,4 @@ class ConverterFormat19(Converter):
 
 default_registry.register(ConverterFormat19.factory)
 default_registry.register(Converter.factory)
+

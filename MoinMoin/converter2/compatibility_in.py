@@ -35,8 +35,8 @@ class Converter(object):
 
 def _factory(request, input, output, **kw):
     """
-    Creates a class dynamicaly which uses the matching old-style parser and
-    compatiblity formatter.
+    Creates a class dynamically, which uses the matching old-style parser and
+    compatibility formatter.
     """
     if (type_moin_document.issupertype(output) and
             Type('x-moin/format').issupertype(input)):
@@ -53,3 +53,4 @@ def _factory(request, input, output, **kw):
 from . import default_registry
 # Need to register ourself after all normal parsers but before the wildcard
 default_registry.register(_factory, default_registry.PRIORITY_MIDDLE + 1)
+

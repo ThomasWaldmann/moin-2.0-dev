@@ -1,13 +1,12 @@
 # -*- coding: iso-8859-1 -*-
 """
-    MoinMoin - Simple text input converter.
+MoinMoin - Simple text input converter.
 
-    It just puts all text into a code block. It acts as a wildcard for
-    text/* input.
+It just puts all text into a code block. It acts as a wildcard for text/* input.
 
-    @copyright: 2008 MoinMoin:ThomasWaldmann
-                2008 MoinMoin:BastianBlank
-    @license: GNU GPL, see COPYING for details.
+@copyright: 2008 MoinMoin:ThomasWaldmann,
+            2008 MoinMoin:BastianBlank
+@license: GNU GPL, see COPYING for details.
 """
 
 from __future__ import absolute_import
@@ -45,3 +44,4 @@ class Converter(object):
 from . import default_registry
 # Register wildcards behind anything else
 default_registry.register(Converter.factory, default_registry.PRIORITY_LAST)
+
