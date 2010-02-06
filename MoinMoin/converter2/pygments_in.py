@@ -95,3 +95,4 @@ def _factory(_request, type_input, type_output, **kw):
 
 from . import default_registry
 default_registry.register(_factory)
+

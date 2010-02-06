@@ -55,3 +55,4 @@ class Converter(object):
 
 from . import default_registry
 default_registry.register(Converter._factory)
+

@@ -551,3 +551,4 @@ class ConverterDocument(ConverterPage):
 
 from . import default_registry
 default_registry.register(ConverterPage._factory)
+

@@ -693,3 +693,4 @@ class Converter(ConverterMacro):
         stack.top_append_ifnotempty(text[pos:])
 
 default_registry.register(Converter.factory)
+

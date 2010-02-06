@@ -11,6 +11,7 @@ import re
 
 from ._args import Arguments
 
+# see parse() docstring for example
 _parse_rules = r'''
 (?:
     ([-\w]+)
@@ -31,6 +32,13 @@ _parse_rules = r'''
 _parse_re = re.compile(_parse_rules, re.X)
 
 def parse(input):
+    """
+    Parse <input> for positional and keyword arguments, with value quoting and
+    quotes escaping.
+
+    @param input: can be like: a b c d=e f="g h" i='j k' l="\"m\" n" o='\'p\' q'
+    @return: Argument instance
+    """
     ret = Arguments()
 
     for match in _parse_re.finditer(input):
@@ -44,10 +52,19 @@ def parse(input):
 
     return ret
 
+
 _unparse_rules = r'''^[-\w]+$'''
 _unparse_re = re.compile(_unparse_rules, re.X)
 
 def unparse(args):
+    """
+    Generate a argument string from a Argument instance <args>.
+    Argument values that need quoting will be quoted.
+    Keyword names must never need quoting (would raise ValueError).
+
+    @param args: Argument instance
+    @return: argument unicode object
+    """
     ret = []
 
     for value in args.positional:
@@ -59,9 +76,10 @@ def unparse(args):
     keywords.sort(key=lambda a: a[0])
     for key, value in keywords:
         if not _unparse_re.match(key):
-            raise RuntimeError(u"Can't argue with finger")
+            raise ValueError("Invalid keyword string")
         if not _unparse_re.match(value):
             value = u'"' + value.encode('unicode-escape') + u'"'
         ret.append(key + u'=' + value)
 
     return u' '.join(ret)
+
