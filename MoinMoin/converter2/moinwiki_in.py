@@ -175,7 +175,7 @@ class Converter(ConverterMacro):
         if type_moin_document.issupertype(output):
             if type_moin_wiki.issupertype(input):
                 return cls
-            if Type('x-moin/format?name=wiki').issupertype(input):
+            if Type('x-moin/format;name=wiki').issupertype(input):
                 return cls
 
     def __call__(self, content, arguments=None):
