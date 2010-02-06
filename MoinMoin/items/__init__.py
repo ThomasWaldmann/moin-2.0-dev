@@ -1125,8 +1125,7 @@ class Text(Binary):
         from MoinMoin.util.tree import moin_page
 
         request = self.request
-        InputConverter = reg.get(request,
-                Type(self.converter_mimetype or self.mimetype),
+        InputConverter = reg.get(request, Type(self.mimetype),
                 type_moin_document)
         IncludeConverter = reg.get(request, type_moin_document,
                 type_moin_document, includes='expandall')
