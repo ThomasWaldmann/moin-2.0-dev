@@ -19,7 +19,7 @@ class TestGroupFormatterWikiMarkup(object):
         formatter = Formatter(self.request)
 
         become_trusted(request)
-        create_item(request, u'TestPageGroup', text, mimetype='text/moin-wiki')
+        create_item(request, u'TestPageGroup', text, mimetype='text/x.moin.wiki')
         page = Page(request, 'TestPageGroup', formatter=formatter)
         page.send_page(content_only=True)
 
@@ -126,7 +126,7 @@ class TestGroupFormatterCreole(object):
         formatter = Formatter(self.request)
 
         become_trusted(request)
-        create_item(request, u'TestPageGroup', text, mimetype='text/creole-wiki')
+        create_item(request, u'TestPageGroup', text, mimetype='text/x.moin.creole')
         page = Page(request, 'TestPageGroup', formatter=formatter)
         page.send_page(content_only=True)
 

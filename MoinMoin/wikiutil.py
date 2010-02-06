@@ -857,8 +857,8 @@ MIMETYPES_MORE = {
  '.flv': 'video/x-flv',
  '.wmv': 'video/x-ms-wmv',
  '.swf': 'application/x-shockwave-flash',
- '.moin': 'text/moin-wiki',
- '.creole': 'text/creole',
+ '.moin': 'text/x.moin.wiki',
+ '.creole': 'text/x.moin.creole',
 }
 
 # add all mimetype patterns of pygments
@@ -931,14 +931,14 @@ class MimeType(object):
         """ maps from what we currently use on-page in a #format xxx processing
             instruction to a sanitized mimetype major, minor tuple.
             can also be user later for easier entry by the user, so he can just
-            type "wiki" instead of "text/moin-wiki".
+            type "wiki" instead of "text/x.moin.wiki".
         """
         format = format.lower()
         if format in config.parser_text_mimetype:
             mimetype = 'text', format
         else:
             mapping = {
-                'wiki': ('text', 'moin-wiki'),
+                'wiki': ('text', 'x.moin.wiki'),
                 'irc': ('text', 'irssi'),
             }
             try:
