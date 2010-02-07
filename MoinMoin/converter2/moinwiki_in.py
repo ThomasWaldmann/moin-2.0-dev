@@ -711,7 +711,7 @@ class Converter(ConverterMacro):
                     [^|]+?
                 )
                 |
-                (?P<link_page> [^|]+? )
+                (?P<link_item> [^|]+? )
             )
             \s*
             (
@@ -730,18 +730,21 @@ class Converter(ConverterMacro):
         )
     """
 
-    def inline_link_repl(self, stack, link, link_url=None, link_page=None,
+    def inline_link_repl(self, stack, link, link_url=None, link_item=None,
             link_text=None, link_args=None):
         """Handle all kinds of links."""
-
-        # TODO: Query string / fragment
-        if link_page is not None:
-            if '#' in link_page:
-                path, fragment = link_page.rsplit('#', 1)
+        if link_args:
+            link_args = parse_arguments(link_args) # XXX needs different parsing
+            query = wikiutil.makeQueryString(link_args.keyword)
+        else:
+            query = None
+        if link_item is not None:
+            if '#' in link_item:
+                path, fragment = link_item.rsplit('#', 1)
             else:
-                path, fragment = link_page, None
-            target = unicode(iri.Iri(scheme='wiki.local', path=path, fragment=fragment))
-            text = link_page
+                path, fragment = link_item, None
+            target = unicode(iri.Iri(scheme='wiki.local', path=path, query=query, fragment=fragment))
+            text = link_item
         else:
             target = unicode(iri.Iri(link_url))
             text = link_url
@@ -809,29 +812,59 @@ class Converter(ConverterMacro):
     inline_object = r"""
         (?P<object>
             {{
-            (?P<object_target> .+? )
+            \s*
+            (
+                (?P<object_url>
+                    [a-zA-Z0-9+.-]+
+                    ://
+                    [^|]+?
+                )
+                |
+                (?P<object_item> [^|]+? )
+            )
             \s*
             (
                 [|]
                 \s*
-                (?P<object_text> .+? )
+                (?P<object_text> [^|]*? )
+                \s*
+            )?
+            (
+                [|]
+                \s*
+                (?P<object_args> .*? )
                 \s*
             )?
             }}
         )
     """
 
-    def inline_object_repl(self, stack, object, object_target, object_text=None):
+    def inline_object_repl(self, stack, object, object_url=None, object_item=None,
+                           object_text=None, object_args=None):
         """Handles objects included in the page."""
-
-        target = unicode(iri.Iri(object_target))
+        if object_args:
+            object_args = parse_arguments(object_args) # XXX needs different parsing
+            query = wikiutil.makeQueryString(object_args.keyword)
+        else:
+            query = None
+        if object_item is not None:
+            target = unicode(iri.Iri(scheme='wiki.local', path=object_item, query=query, fragment=None))
+            text = object_item
+        else:
+            target = unicode(iri.Iri(object_url))
+            text = object_url
 
         attrib = {xlink.href: target}
         if object_text is not None:
             attrib[moin_page.alt] = object_text
 
         element = moin_page.object(attrib)
-        stack.top_append(element)
+        stack.push(element)
+        if object_text:
+            self.parse_inline(object_text, stack, self.inlinedesc_re)
+        else:
+            stack.top_append(text)
+        stack.pop()
 
     table = block_table
 

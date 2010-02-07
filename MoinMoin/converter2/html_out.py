@@ -158,7 +158,7 @@ class Converter(object):
         href = elem.get(xlink.href, None)
         if href is not None:
             attrib[html.href] = href
-
+        # XXX should support more tag attrs
         return self.new_copy(html.a, elem, attrib)
 
     def visit_moinpage_blockcode(self, elem):
@@ -262,18 +262,21 @@ class Converter(object):
 
     def visit_moinpage_object(self, elem):
         href = elem.get(xlink.href, None)
-
-        if href and wikiutil.isPicture(href):
-            out_tag = html.img
-            out_tag_href = html.src
-        else:
-            out_tag = html.object
-            out_tag_href = html.data
-
         attrib = {}
-        if href is not None:
-            attrib[out_tag_href] = href
-        return self.new(out_tag, attrib)
+
+        if href and wikiutil.isPicture(href): # XXX should rather look into target item metadata for mimetype
+                                              # XXX otherwise a target "foo" jpeg image won't work, only "foo.jpg"
+                                              # XXX unclear: do this here or rather in the input converter?
+            if href is not None:
+                attrib[html.src] = href
+            alt = ''.join(str(e) for e in elem) # XXX handle non-text e
+            if alt:
+                attrib[html.alt] = alt
+            return self.new(html.img, attrib)
+        else:
+            if href is not None:
+                attrib[html.data] = href
+            return self.new_copy(html.object, elem, attrib)
 
     def visit_moinpage_p(self, elem):
         return self.new_copy(html.p, elem)
