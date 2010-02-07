@@ -843,11 +843,14 @@ class Converter(ConverterMacro):
                            object_text=None, object_args=None):
         """Handles objects included in the page."""
         if object_args:
-            object_args = parse_arguments(object_args) # XXX needs different parsing
-            query = wikiutil.makeQueryString(object_args.keyword)
+            args = parse_arguments(object_args).keyword # XXX needs different parsing
         else:
-            query = None
+            args = {}
         if object_item is not None:
+            if 'do' not in args:
+                # by default, we want the item's get url for transclusion of raw data:
+                args['do'] = 'get'
+            query = wikiutil.makeQueryString(args)
             target = unicode(iri.Iri(scheme='wiki.local', path=object_item, query=query, fragment=None))
             text = object_item
         else:
