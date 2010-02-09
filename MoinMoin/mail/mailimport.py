@@ -14,7 +14,7 @@ import email
 from email.Utils import getaddresses, parsedate_tz, mktime_tz
 from email.header import decode_header
 
-from MoinMoin import user
+from MoinMoin import wikiutil, user
 from MoinMoin.Page import Page
 from MoinMoin.PageEditor import PageEditor
 
