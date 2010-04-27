@@ -179,7 +179,7 @@ class DirRevision(FileDirRevision):
     def __init__(self, item, revno):
         FileDirRevision.__init__(self, item, revno)
         self._fs_meta.update({
-            MIMETYPE: 'text/moin-wiki',
+            MIMETYPE: 'text/x.moin.wiki',
             'format': 'wiki',
         })
         # create a directory "page" in wiki markup:

@@ -25,18 +25,18 @@ class TestImportNameFromMoin(object):
     def testNonExistingModule(self):
         """ pysupport: import nonexistent module raises ImportError """
         py.test.raises(ImportError, pysupport.importName,
-                       'MoinMoin.parser.abcdefghijkl', 'Parser')
+                       'MoinMoin.util.nonexistent', 'importName')
 
     def testNonExistingAttribute(self):
         """ pysupport: import nonexistent attritbue raises AttributeError """
         py.test.raises(AttributeError, pysupport.importName,
-                       'MoinMoin.parser.text_moin_wiki', 'NoSuchParser')
+                       'MoinMoin.util.pysupport', 'nonexistent')
 
     def testExisting(self):
         """ pysupport: import name from existing module """
-        from MoinMoin.parser import text_moin_wiki
-        Parser = pysupport.importName('MoinMoin.parser.text_moin_wiki', 'Parser')
-        assert Parser is text_moin_wiki.Parser
+        from MoinMoin.util.pysupport import importName
+        t = pysupport.importName('MoinMoin.util.pysupport', 'importName')
+        assert importName is t
 
 
 class TestImportNameFromPlugin(object):

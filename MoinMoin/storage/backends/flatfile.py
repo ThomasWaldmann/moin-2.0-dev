@@ -97,7 +97,7 @@ class FlatFileBackend(Backend):
         for e in EDIT_LOG:
             rev._metadata[e] = ''
         rev._metadata[EDIT_LOG_ACTION] = 'SAVE'
-        rev._metadata[MIMETYPE] = 'text/moin-wiki' # XXX get this from PI
+        rev._metadata[MIMETYPE] = 'text/x.moin.wiki' # XXX get this from PI
         rev._data = StringIO(data)
         rev._data_size = len(data)
         return rev

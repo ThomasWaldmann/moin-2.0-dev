@@ -40,10 +40,6 @@ class TestPage:
         assert 'editor' in last_edit
         assert 'timestamp' in last_edit
 
-    def testSplitTitle(self):
-        page = Page(self.request, u"FrontPage")
-        assert page.split_title(force=True) == u'Front Page'
-
     def testGetRevList(self):
         page = Page(self.request, u"FrontPage")
         assert 0 in page.getRevList()
