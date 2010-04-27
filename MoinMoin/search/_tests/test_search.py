@@ -14,6 +14,8 @@ import os, StringIO, time
 
 import py
 
+py.test.skip("broken")
+
 from MoinMoin.search import QueryError, _get_searcher
 from MoinMoin.search.queryparser import QueryParser
 from MoinMoin.search.builtin import MoinSearch
