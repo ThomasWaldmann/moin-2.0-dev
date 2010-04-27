@@ -127,6 +127,19 @@ def contextfunction(f):
     return f
 
 
+def evalcontextfunction(f):
+    """This decoraotr can be used to mark a function or method as an eval
+    context callable.  This is similar to the :func:`contextfunction`
+    but instead of passing the context, an evaluation context object is
+    passed.  For more information about the eval context, see
+    :ref:`eval-context`.
+
+    .. versionadded:: 2.4
+    """
+    f.evalcontextfunction = True
+    return f
+
+
 def environmentfunction(f):
     """This decorator can be used to mark a function or method as environment
     callable.  This decorator works exactly like the :func:`contextfunction`
@@ -212,6 +225,22 @@ def open_if_exists(filename, mode='rb'):
     except IOError, e:
         if e.errno not in (errno.ENOENT, errno.EISDIR):
             raise
+
+
+def object_type_repr(obj):
+    """Returns the name of the object's type.  For some recognized
+    singletons the name of the object is returned instead. (For
+    example for `None` and `Ellipsis`).
+    """
+    if obj is None:
+        return 'None'
+    elif obj is Ellipsis:
+        return 'Ellipsis'
+    if obj.__class__.__module__ == '__builtin__':
+        name = obj.__class__.__name__
+    else:
+        name = obj.__class__.__module__ + '.' + obj.__class__.__name__
+    return '%s object' % name
 
 
 def pformat(obj, verbose=False):
