@@ -57,6 +57,13 @@ class Extension(object):
     #: if this extension parses this is the list of tags it's listening to.
     tags = set()
 
+    #: the priority of that extension.  This is especially useful for
+    #: extensions that preprocess values.  A lower value means higher
+    #: priority.
+    #:
+    #: .. versionadded:: 2.4
+    priority = 100
+
     def __init__(self, environment):
         self.environment = environment
 
@@ -357,6 +364,20 @@ class WithExtension(Extension):
         return node
 
 
+class AutoEscapeExtension(Extension):
+    """Changes auto escape rules for a scope."""
+    tags = set(['autoescape'])
+
+    def parse(self, parser):
+        node = nodes.ScopedEvalContextModifier(lineno=next(parser.stream).lineno)
+        node.options = [
+            nodes.Keyword('autoescape', parser.parse_expression())
+        ]
+        node.body = parser.parse_statements(('name:endautoescape',),
+                                            drop_needle=True)
+        return nodes.Scope([node])
+
+
 def extract_from_ast(node, gettext_functions=GETTEXT_FUNCTIONS,
                      babel_style=True):
     """Extract localizable strings from the given template node.  Per
@@ -529,3 +550,4 @@ i18n = InternationalizationExtension
 do = ExprStmtExtension
 loopcontrols = LoopControlExtension
 with_ = WithExtension
+autoescape = AutoEscapeExtension
