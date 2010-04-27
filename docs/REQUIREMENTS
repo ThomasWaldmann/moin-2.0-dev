@@ -108,6 +108,12 @@ shipped: 0.5.1
 minimum: 0.5.1 will work, maybe 0.5 also
 
 
+jinja2
+======
+shipped: 2.4.1
+minimum: 2.3(?)
+
+
 xappy (High-Level Python library for Xapian)
 ============================================
 shipped: 0.5
@@ -118,6 +124,12 @@ htmlmarkup.py (safe html rendering)
 ===================================
 shipped: copied from TRAC's trac.util.html, revision 3609, merged on 2006-08-20
 minimum: same(?)
+
+
+sqlalchemy
+==========
+shipped: 0.5.8
+minimum: 0.5.6
 
 
 Replacements for Python stdlib modules
