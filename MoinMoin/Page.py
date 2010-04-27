@@ -31,12 +31,11 @@ def is_cache_exception(e):
     args = e.args
     return not (len(args) != 1 or args[0] != 'CacheNeedsUpdate')
 
-
 class Page(object):
     """ Page - Manage an (immutable) page associated with a WikiName.
         To change a page's content, use the PageEditor class.
     """
-    def __init__(self, request, page_name, **kw):
+    def __init__(self, request, page_name, formatter=None, **kw):
         """ Create page object.
 
         Note that this is a 'lean' operation, since the text for the page
@@ -45,8 +44,8 @@ class Page(object):
 
         @param page_name: WikiName of the page
         @keyword rev: number of older revision
-        @keyword formatter: formatter instance or mimetype str,
-                            None or no kw arg will use default formatter
+        @keyword formatter: mimetype str,
+                            None or no kw arg will use default mimetype
         @keyword include_self: if 1, include current user (default: 0)
         """
         self.request = request
@@ -55,20 +54,13 @@ class Page(object):
         self.rev = kw.get('rev', -1) # revision of this page
         self.include_self = kw.get('include_self', 0)
 
-        formatter = kw.get('formatter', None)
-        if isinstance(formatter, (str, unicode)): # mimetype given
+        if isinstance(formatter, basestring): # mimetype given
             mimetype = str(formatter)
-            self.formatter = None
-            self.output_mimetype = mimetype
-            self.default_formatter = mimetype == "text/html"
-        elif formatter is not None: # formatter instance given
-            self.formatter = formatter
-            self.default_formatter = 0
-            self.output_mimetype = "text/todo" # TODO where do we get this value from?
         else:
-            self.formatter = None
-            self.default_formatter = 1
-            self.output_mimetype = "text/html"
+            mimetype = 'text/html'
+
+        self.output_mimetype = mimetype
+        self.default_formatter = mimetype == "text/html"
 
         self.output_charset = config.charset # correct for wiki pages
 
@@ -469,22 +461,6 @@ class Page(object):
             acls = (acls, )
         return AccessControlList(self.request.cfg, acls)
 
-    def split_title(self, force=0):
-        """ Return a string with the page name split by spaces, if the user wants that.
-
-        @param force: if != 0, then force splitting the page_name
-        @rtype: unicode
-        @return: pagename of this page, splitted into space separated words
-        """
-        request = self.request
-        if not force and not request.user.wikiname_add_spaces:
-            return self.page_name
-
-        # look for the end of words and the start of a new word,
-        # and insert a space there
-        splitted = config.split_regex.sub(r'\1 \2', self.page_name)
-        return splitted
-
     def url(self, request, querystr=None, anchor=None, relative=False, **kw):
         """ Return complete URL for this page, including scriptname.
             The URL is NOT escaped, if you write it to HTML, use wikiutil.escape
@@ -550,7 +526,7 @@ class Page(object):
         @return: formatted link
         """
         if not text:
-            text = self.split_title()
+            text = self.page_name
         text = wikiutil.escape(text)
 
         # Add css class for non existing page
@@ -745,30 +721,6 @@ class Page(object):
             request.http_redirect(redirect_url, code=301)
             return
 
-        # if necessary, load the formatter
-        if self.default_formatter:
-            from MoinMoin.formatter.text_html import Formatter
-            self.formatter = Formatter(request, store_pagelinks=1)
-        elif not self.formatter:
-            Formatter = wikiutil.searchAndImportPlugin(request.cfg, "formatter", self.output_mimetype)
-            self.formatter = Formatter(request)
-
-        # save formatter
-        no_formatter = object()
-        old_formatter = getattr(request, "formatter", no_formatter)
-        request.formatter = self.formatter
-
-        self.formatter.setPage(self)
-        if self.hilite_re:
-            try:
-                self.formatter.set_highlight_re(self.hilite_re)
-            except re.error, err:
-                request.theme.add_msg(_('Invalid highlighting regular expression "%(regex)s": %(error)s') % {
-                                          'regex': self.hilite_re,
-                                          'error': str(err),
-                                      }, "warning")
-                self.hilite_re = None
-
         if 'deprecated' in pi:
             # deprecated page, append last backup version to current contents
             # (which should be a short reason why the page is deprecated)
@@ -813,7 +765,7 @@ class Page(object):
                 # don't send any 404 content to bots
                 return
 
-            request.write(self.formatter.startDocument(self.page_name))
+            # TODO: request.write(self.formatter.startDocument(self.page_name))
 
             # send the page header
             if self.default_formatter:
@@ -830,7 +782,7 @@ class Page(object):
                     redir = request.values['redirect']
                     request.theme.add_msg('<strong>%s</strong><br>' % (
                         _('Redirected from page "%(page)s"') % {'page':
-                            wikiutil.link_tag(request, wikiutil.quoteWikinameURL(redir) + "?action=show", self.formatter.text(redir))}), "info")
+                            wikiutil.link_tag(request, wikiutil.quoteWikinameURL(redir) + "?action=show", redir)}), "info")
                 if 'redirect' in pi:
                     request.theme.add_msg('<strong>%s</strong><br>' % (
                         _('This page redirects to page "%(page)s"') % {'page': wikiutil.escape(pi['redirect'])}), "info")
@@ -841,7 +793,7 @@ class Page(object):
                     request.user.addTrail(self)
                     trail = request.user.getTrail()
 
-                title = self.split_title()
+                title = self.page_name
 
                 html_head = ''
                 if request.cfg.openid_server_enabled:
@@ -895,9 +847,6 @@ class Page(object):
 
         # if we didn't short-cut to a special page, output this page
         if not special:
-            # start wiki content div
-            request.write(self.formatter.startContent(content_id))
-
             # parse the text and send the page content
             self.send_page_content(request, body,
                                    format=pi['format'],
@@ -905,38 +854,17 @@ class Page(object):
                                    do_cache=do_cache,
                                    start_line=pi['lines'])
 
-            # check for pending footnotes
-            if getattr(request, 'footnotes', None) and not omit_footnotes:
-                from MoinMoin.macro.FootNote import emit_footnotes
-                request.write(emit_footnotes(request, self.formatter))
-
-            # end wiki content div
-            request.write(self.formatter.endContent())
-
         # end document output
         if not content_only:
             # send the page footer
             if self.default_formatter:
                 request.theme.send_footer(self.page_name, print_mode=print_mode)
 
-            request.write(self.formatter.endDocument())
+            # TODO: request.write(self.formatter.endDocument())
 
         request.clock.stop('send_page')
         if not content_only and self.default_formatter:
             request.theme.send_closing_html()
-
-        # cache the pagelinks
-        if do_cache and self.default_formatter and page_exists:
-            cache = caching.CacheEntry(request, self.page_name, 'pagelinks', scope='item', use_pickle=True)
-            if cache.needsUpdate(self.mtime()):
-                links = self.formatter.pagelinks
-                cache.update(links)
-
-        # restore old formatter (hopefully we dont throw any exception that is catched again)
-        if old_formatter is no_formatter:
-            del request.formatter
-        else:
-            request.formatter = old_formatter
 
     def getFormatterName(self):
         """ Return a formatter name as used in the caching system
@@ -961,15 +889,7 @@ class Page(object):
         @rtype: bool
         @return: if this page can use caching
         """
-        if (not self.rev and
-            not self.hilite_re and
-            not self._body_modified and
-            self.getFormatterName() in self.cfg.caching_formats):
-            # Everything is fine, now check the parser:
-            if parser is None:
-                parser = wikiutil.searchAndImportPlugin(self.request.cfg, "parser", self.pi['format'])
-            return getattr(parser, 'caching', False)
-        return False
+        return not self.rev and not self.__body_modified
 
     def send_page_content(self, request, body, format='wiki', format_args='', do_cache=1, **kw):
         """ Output the formatted wiki page, using caching if possible
@@ -981,89 +901,129 @@ class Page(object):
         @param do_cache: if True, use cached content
         """
         request.clock.start('send_page_content')
-        # Load the parser
-        Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", format)
-        parser = Parser(body, request, format_args=format_args, **kw)
 
-        if not (do_cache and self.canUseCache(Parser)):
-            self.format(parser)
+        from cStringIO import StringIO
+        from emeraldtree import ElementTree as ET
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.tree import html
+
+        IncludeConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-moin-document;includes=expandall')
+        MacroConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-moin-document;macros=expandall')
+        LinkConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-moin-document;links=extern')
+        # TODO: Real output format
+        HtmlConverter = reg.get(request, 'application/x-moin-document',
+                'application/x-xhtml-moin-page')
+
+        doc = None
+        if do_cache and self.canUseCache():
+            doc = self.convert_input_cache(request, body, format, format_args)
         else:
-            try:
-                code = self.loadCache(request)
-                self.execute(request, parser, code)
-            except Exception, e:
-                if not is_cache_exception(e):
-                    raise
-                try:
-                    code = self.makeCache(request, parser)
-                    self.execute(request, parser, code)
-                except Exception, e:
-                    if not is_cache_exception(e):
-                        raise
-                    logging.error('page cache failed after creation')
-                    self.format(parser)
+            doc = self.convert_input(request, body, format, format_args)
+
+        doc = IncludeConverter(request)(doc)
+        doc = MacroConverter(request)(doc)
+        doc = LinkConverter(request)(doc)
+        doc = HtmlConverter(request)(doc)
+
+        out = StringIO()
+        tree = ET.ElementTree(doc)
+        # TODO: Switch to xml
+        tree.write(out, encoding=self.output_charset,
+                default_namespace=html, method='html')
+        self.request.write(out.getvalue())
 
         request.clock.stop('send_page_content')
 
-    def format(self, parser):
-        """ Format and write page content without caching """
-        parser.format(self.formatter)
+    def convert_input(self, request, body=None, format=None, format_args='',
+            create_pagelinks=False):
+        if body is None:
+            body = self.data
+        if not format:
+            format = self.pi.get('format', 'wiki')
 
-    def execute(self, request, parser, code):
-        """ Write page content by executing cache code """
-        formatter = self.formatter
-        request.clock.start("Page.execute")
-        try:
-            from MoinMoin.macro import Macro
-            macro_obj = Macro(parser)
-            # Fix __file__ when running from a zip package
-            import MoinMoin
-            if hasattr(MoinMoin, '__loader__'):
-                __file__ = os.path.join(MoinMoin.__loader__.archive, 'dummy')
+        mime_type = wikiutil.MimeType(format).mime_type()
+
+        from emeraldtree import ElementTree as ET
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util import iri
+
+        InputConverter = reg.get(request, mime_type, 'application/x-moin-document')
+
+        i = iri.Iri(scheme='wiki', authority='', path='/' + self.page_name)
+
+        doc = InputConverter(request, i)(body.split('\n'))
+
+        if create_pagelinks:
+            PagelinksConverter = reg.get(request, 'application/x-moin-document',
+                    'application/x-moin-document;links=pagelinks')
+            pagelinks = PagelinksConverter(request)(doc)
+
+            return doc, pagelinks
+
+        return doc
+
+    def convert_input_cache_create(self, request, body=None, format=None,
+            format_args=''):
+        """
+        Create the document and write it to the cache.
+        """
+        data = self.convert_input(request, body, format, format_args,
+                create_pagelinks=True)
+        self.add_to_cache(request, 'tree', data[0])
+        self.add_to_cache(request, 'pagelinks', data[1])
+
+        return data
+
+    def convert_input_cache(self, request, body=None, format=None, format_args=''):
+        """
+        Loads document from cache if possible, otherwise create it.
+        """
+        data = self.load_from_cache(request, 'tree')
+
+        if data is None:
+            data = self.convert_input_cache_create(request, body, format,
+                    format_args)
+            return data[0]
+
+        return data
+
+    def convert_input_cache_pagelinks(self, request):
+        """
+        Loads document from cache if possible, otherwise create it.
+        All exceptions by the converters are swallowed and an empty set
+        returned and cached instead.
+        """
+        data = self.load_from_cache(request, 'pagelinks')
+
+        if data is None:
             try:
-                exec code
-            except "CacheNeedsUpdate": # convert the exception
-                raise Exception("CacheNeedsUpdate")
-        finally:
-            request.clock.stop("Page.execute")
+                data = self.convert_input_cache_create(request)[1]
+            except Exception:
+                data = set()
+                self.add_to_cache(request, 'pagelinks', data)
 
-    def loadCache(self, request):
-        """ Return page content cache or raises 'CacheNeedsUpdate' """
-        cache = caching.CacheEntry(request, self.page_name, self.getFormatterName(), scope='item')
-        if cache.needsUpdate(self.mtime()):
-            raise Exception('CacheNeedsUpdate')
+    def load_from_cache(self, request, name):
+        """ Return page content cache or None """
+        cache = caching.CacheEntry(request, self, name, scope='item', use_pickle=True)
+        attachmentsPath = self.getPagePath('attachments', check_create=0)
+        if cache.needsUpdate(self._text_filename(), attachmentsPath):
+            return
 
-        import marshal
         try:
-            return marshal.loads(cache.content())
+            return cache.content()
         except (EOFError, ValueError, TypeError):
-            # Bad marshal data, must update the cache.
-            # See http://docs.python.org/lib/module-marshal.html
-            raise Exception('CacheNeedsUpdate')
+            return
         except Exception, err:
             logging.info('failed to load "%s" cache: %s' %
                         (self.page_name, str(err)))
-            raise Exception('CacheNeedsUpdate')
+            return
 
-    def makeCache(self, request, parser):
-        """ Format content into code, update cache and return code """
-        import marshal
-        from MoinMoin.formatter.text_python import Formatter
-        formatter = Formatter(request, ["page"], self.formatter)
-
-        # Save request state while formatting page
-        saved_current_lang = request.current_lang
-        try:
-            text = request.redirectedOutput(parser.format, formatter)
-        finally:
-            request.current_lang = saved_current_lang
-
-        src = formatter.assemble_code(text)
-        code = compile(src.encode(config.charset),
-                       self.page_name.encode(config.charset), 'exec')
-        cache = caching.CacheEntry(request, self.page_name, self.getFormatterName(), scope='item')
-        cache.update(marshal.dumps(code))
-        return code
+    def add_to_cache(self, request, name, data):
+        cache = caching.CacheEntry(request, self, name, scope='item', use_pickle=True)
+        cache.update(data)
 
     def _specialPageText(self, request, special_type):
         """ Output the default page content for new pages.
@@ -1134,64 +1094,8 @@ class Page(object):
         @return: page names this page links to
         """
         if self.exists():
-            cache = caching.CacheEntry(request, self.page_name, 'pagelinks', scope='item', do_locking=False, use_pickle=True)
-            if cache.needsUpdate(self.mtime()):
-                links = self.parsePageLinks(request)
-                cache.update(links)
-            else:
-                try:
-                    links = cache.content()
-                except caching.CacheError:
-                    links = self.parsePageLinks(request)
-                    cache.update(links)
-        else:
-            links = []
-        return links
-
-    def parsePageLinks(self, request):
-        """ Parse page links by formatting with a pagelinks formatter
-
-        This is a old hack to get the pagelinks by rendering the page
-        with send_page. We can remove this hack after factoring
-        send_page and send_page_content into small reuseable methods.
-
-        More efficient now by using special pagelinks formatter and
-        redirecting possible output into null file.
-        """
-        pagename = self.page_name
-        if request.parsePageLinks_running.get(pagename, False):
-            #logging.debug("avoid recursion for page %r" % pagename)
-            return [] # avoid recursion
-
-        #logging.debug("running parsePageLinks for page %r" % pagename)
-        # remember we are already running this function for this page:
-        request.parsePageLinks_running[pagename] = True
-
-        request.clock.start('parsePageLinks')
-
-        class Null:
-            def write(self, data):
-                pass
-
-        request.redirect(Null())
-        request.mode_getpagelinks += 1
-        #logging.debug("mode_getpagelinks == %r" % request.mode_getpagelinks)
-        try:
-            try:
-                from MoinMoin.formatter.pagelinks import Formatter
-                formatter = Formatter(request, store_pagelinks=1)
-                page = Page(request, pagename, formatter=formatter)
-                page.send_page(content_only=1)
-            except:
-                logging.exception("pagelinks formatter failed, traceback follows")
-        finally:
-            request.mode_getpagelinks -= 1
-            #logging.debug("mode_getpagelinks == %r" % request.mode_getpagelinks)
-            request.redirect()
-            if hasattr(request, '_fmt_hd_counters'):
-                del request._fmt_hd_counters
-            request.clock.stop('parsePageLinks')
-        return formatter.pagelinks
+            return self.convert_input_cache_pagelinks(request)
+        return ()
 
     def getCategories(self, request):
         """ Get categories this page belongs to.

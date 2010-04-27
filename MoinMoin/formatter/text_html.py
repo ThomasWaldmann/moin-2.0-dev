@@ -36,9 +36,6 @@ _blocks = set(['dd', 'div', 'dl', 'dt', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h
 _self_closing_tags = set(['area', 'base', 'br', 'col', 'frame', 'hr', 'img',
                           'input', 'isindex', 'link', 'meta', 'param'])
 
-# We only open those tags and let the browser auto-close them:
-_auto_closing_tags = set(['p'])
-
 # These are the elements which generally should cause an increase in the
 # indention level in the html souce code.
 _indenting_tags = set(['ol', 'ul', 'dl', 'li', 'dt', 'dd', 'tr', 'td'])
@@ -193,15 +190,10 @@ class Formatter(FormatterBase):
         # Caution: upon changing, also check line numbers hide/show js.
         self._code_id_format = "%(id)s_%(num)d"
 
-        self._show_section_numbers = None
         self.pagelink_preclosed = False
         self._is_included = kw.get('is_included', False)
         self.request = request
         self.cfg = request.cfg
-        self.no_magic = kw.get('no_magic', False) # disabled tag auto closing
-
-        if not hasattr(request, '_fmt_hd_counters'):
-            request._fmt_hd_counters = []
 
     # Primitive formatter functions #####################################
 
@@ -386,7 +378,7 @@ class Formatter(FormatterBase):
         @rtype: string
         @return: closing tag as a string
         """
-        if tag in _self_closing_tags or (tag in _auto_closing_tags and not self.no_magic):
+        if tag in _self_closing_tags:
             # This tag was already closed
             tagstr = ''
         elif tag in _blocks:
@@ -1086,34 +1078,11 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
 
         count_depth = max(depth - (self._base_depth - 1), 1)
 
-        # check numbering, possibly changing the default
-        if self._show_section_numbers is None:
-            self._show_section_numbers = self.cfg.show_section_numbers
-            numbering = self.request.getPragma('section-numbers', '').lower()
-            if numbering in ['0', 'off']:
-                self._show_section_numbers = 0
-            elif numbering in ['1', 'on']:
-                self._show_section_numbers = 1
-            elif numbering in ['2', '3', '4', '5', '6']:
-                # explicit base level for section number display
-                self._show_section_numbers = int(numbering)
-
         heading_depth = depth
 
         # closing tag, with empty line after, to make source more readable
         if not on:
             return self._close('h%d' % heading_depth) + '\n'
-
-        # create section number
-        number = ''
-        if self._show_section_numbers:
-            # count headings on all levels
-            self.request._fmt_hd_counters = self.request._fmt_hd_counters[:count_depth]
-            while len(self.request._fmt_hd_counters) < count_depth:
-                self.request._fmt_hd_counters.append(0)
-            self.request._fmt_hd_counters[-1] = self.request._fmt_hd_counters[-1] + 1
-            number = '.'.join([str(x) for x in self.request._fmt_hd_counters[self._show_section_numbers-1:]])
-            if number: number += ". "
 
         # Add space before heading, easier to check source code
         result = '\n' + self._open('h%d' % heading_depth, **kw)
@@ -1123,7 +1092,7 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
                        self.anchorlink(1, "bottom"), self.icon('bottom'), self.anchorlink(0),
                        self.anchorlink(1, "top"), self.icon('top'), self.anchorlink(0))
 
-        return "%s%s" % (result, number)
+        return "%s" % result
 
 
     # Tables #############################################################
