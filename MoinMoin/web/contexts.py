@@ -144,9 +144,9 @@ class BaseContext(Context):
     def isSpiderAgent(self):
         """ Simple check if useragent is a spider bot. """
         cfg = self.cfg
-        user_agent = self.request.user_agent
+        user_agent = self.http_user_agent
         if user_agent and cfg.cache.ua_spiders:
-            return cfg.cache.ua_spiders.search(user_agent.browser) is not None
+            return cfg.cache.ua_spiders.search(user_agent) is not None
         return False
     isSpiderAgent = EnvironProxy(isSpiderAgent)
 
@@ -245,6 +245,7 @@ class HTTPContext(BaseContext):
         raise status[resultcode](msg)
 
     def setHttpHeader(self, header):
+        logging.warning("Deprecated call to request.setHttpHeader('k:v'), use request.headers.add/set('k', 'v')")
         header, value = header.split(':', 1)
         self.headers.add(header, value)
 
@@ -266,20 +267,28 @@ class HTTPContext(BaseContext):
             return
 
         if level == 1:
-            self.headers.set('Cache-Control', 'private, must-revalidate, max-age=10')
+            self.headers['Cache-Control'] = 'private, must-revalidate, max-age=10'
         elif level == 2:
-            self.headers.set('Cache-Control', 'no-cache')
-            self.headers.set('Pragma', 'no-cache')
+            self.headers['Cache-Control'] = 'no-cache'
+            self.headers['Pragma'] = 'no-cache'
         self.request.expires = time.time() - 3600 * 24 * 365
 
     def http_redirect(self, url, code=302):
         """ Raise a simple redirect exception. """
         abort(redirect(url, code=code))
 
+    def http_user_agent(self):
+        return self.environ.get('HTTP_USER_AGENT', '')
+    http_user_agent = EnvironProxy(http_user_agent)
+
+    def http_referer(self):
+        return self.environ.get('HTTP_REFERER', '')
+    http_referer = EnvironProxy(http_referer)
+
     # the output related methods
     def write(self, *data):
         """ Write to output stream. """
-        self.request.stream.writelines(data)
+        self.request.out_stream.writelines(data)
 
     def redirectedOutput(self, function, *args, **kw):
         """ Redirect output during function, return redirected output """

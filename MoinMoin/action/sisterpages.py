@@ -44,10 +44,10 @@ def execute(pagename, request):
         # generate an Expires header, using 1d cache lifetime of sisterpages list
         expires = time.time() + 24*3600
 
-        request.mime_type = 'text/plain'
+        request.mimetype = 'text/plain'
         request.expires = expires
         request.last_modified = timestamp
-        request.headers.add("Etag", etag)
+        request.headers['Etag'] = etag
 
         # send the generated XML document
         # Get list of user readable pages

@@ -16,10 +16,98 @@ Known main issues:
     editor_force = True
     editor_default = 'text'  # internal default, just for completeness
 
+Version 1.9.current:
+  Fixes:
+  * MoinMoin.util.filesys: disable usage of dircache, deprecate dc* functions,
+    because the dircache stdlib module can't work correctly for fast updates of
+    directories.
+  * rss_rc and sisterpages actions: fix Content-Type header (mimetype)
+  * openidrp auth: fix undefined _ (gettext)
+  * highlight parser: fixed MoinMoinBugs/LineNumberSpansForProcessInstructionsMissed
+  * pygments syntax highlighting: add missing code files
+  * notifications: use same email subject format for every notification
+
+  New features:
+  * RenamePage action: added ability to create redirect pages when renaming
+    (turned off by default, see show_rename_redirect config option).
+  * formatter/text_html: Added line number links to code blocks.
+  * diff action:
+    * Fixed whitespace in generated (html) diff view table so white-space: pre
+      can be used (and whitespace in diffs preserved).
+    * Added links to first/last revision.
+  * MoinMoin.widget.browser: introduced feature for sorting tables, see:
+    http://moinmo.in/FeatureRequests/SortableTables
+  * SystemAdmin user and attachment browsers: sorting feature used there now
+
+  Other changes:
+  * upgraded pygments from 1.2.2 to 1.3.1
+  * upgraded FCKeditor from 2.6.4.1 to 2.6.6
+  * added configuration snippet for ldap authentication against 2 servers
+
+
+Version 1.9.2:
+  Fixes:
+  * Fixed CVE-2010-0668: major security issues were discovered in misc. parts
+    of moin.
+    HINT: if you have removed superuser configuration to workaround the issue
+    (following our security advisory), you may re-add it after installing this
+    moin release. If you don't need superuser capabilities often, it might be
+    wise to not have superusers configured all the time, though.
+  * Fixed CVE-2010-0669: potential security issue due to incomplete user profile
+    input sanitizing.
+  * Improved package security: cfg.packagepages_actions_excluded excludes
+    unsafe or otherwise questionable package actions by default now.
+  * wiki parser: fixed transclusion of (e.g. video) attachments from other
+    pages.
+  * Fixed edit locking for non-logged in editors and cfg.log_remote_addr=False.
+  * mailimport: fix missing wikiutil import for normalize_pagename
+  * SubProcess: fix "timeout" AttributeError
+  * "standalone" wikiserver.py: fixed calling non-existing os.getuid on win32
+  * HTTPAuth deprecation warning moved from class level to __init__
+  * Fixed MoinMoinBugs/1.9DiffActionThrowsException.
+  * Fixed misc. session related problems, avoid unneccessary session file
+    updates.
+  * Fix/improve rename-related problems on Win32 (depending on Windows version).
+  * Fixed spider / user agent detection.
+  * Make sure to use language_default when language_ignore_browser is set.
+  * diff action: fix for case when user can't revert page.
+  * Fix trail size (was off by one).
+  * Updated bundled flup middleware (upstream repo checkout), avoids
+    socket.fromfd AttributeError on win32 if cgi is forced, gives helpful
+    exception msg.
+  * wikiutil: Fixed required_arg handling (no exception when trying to raise
+    exception that choice is wrong).
+  * Do not use MoinMoin.support.* to import 3rd party code, give dist packages
+    a chance.
+  * wikiutil.clean_input: avoid crash if it gets str type
+  * request: fixed for werkzeug 0.6 and 0.5.1 compatibility. Please note that
+    we didn't do much testing with 0.6 yet. So, if you use 0.6, please do some
+    testing and provide feedback to us.
+  * AttachFile._build_filelist: verifies readonly flag for unzip file link
+  * attachUrl: fix wrongly generated tickets (e.g. for AttachList macro)
+  * http headers: fix duplicated http headers (e.g. content-type)
+
+  New features:
+  * info action: added pagination ability to revision history viewer.
+    Use cfg.history_paging = True [default] / False to enable/disable it.
+  * ldap_login auth: add report_invalid_credentials param to control wrong
+    credentials error message (this is typically used when using multiple
+    ldap authenticators).
+  * Add RenderAsDocbook to actions_excluded if we have no python-xml.
+  * Upgraded pygments to 1.2.2 (some fixes, some new lexers).
+  * Text editor: if edit_rows==0 (user profile or config), we dynamically size
+    the text editor height. This avoids double sliders for the editor page
+    in most cases.
+
+  Other changes:
+  * New docs/REQUIREMENTS.
+  * Added a less magic cgi/fcgi driver (moin.fcgi), added fixer middleware
+    for apache2/win32 to it.
+
 
 Version 1.9.1:
   Bug fixes:
-  * Fixed sys.argv security issue.
+  * Fixed CVE-2010-0667: sys.argv security issue.
   * Fixed FileSessionService - use session_dir from CURRENT request.cfg (it
     mixed up session_dirs in farm setups).
     HINT: if you added the hotfix to your wikiconfig, please remove it now.
@@ -340,10 +428,11 @@ Version 1.9.0:
 
 Version 1.8.7:
   Fixes:
-  * Fixed major security issues in misc. actions.
+  * Fixed major security issues in miscellaneous parts of moin.
     HINT: if you have removed superuser configuration to workaround the issue
     (following our security advisory), you may re-add it after installing this
-    moin release.
+    moin release. If you don't need superuser capabilities often, it might be
+    wise to not have superusers configured all the time, though.
   * Improved package security: cfg.packagepages_actions_excluded excludes
     unsafe or otherwise questionable package actions by default now.
   * wiki parser: fixed transclusion of (e.g. video) attachments from other
@@ -353,8 +442,8 @@ Version 1.8.7:
     * Process attachname in get/putAttachment similarly.
     * revertPage: convert pagename to internal representation.
   * Fixed config.umask usage for page packages.
-  * Fixed usage of i18n.wikiLanguages() on class level (moved to method), failed
-    when tools import the module (e.g. pydoc -k foo).
+  * Fixed usage of i18n.wikiLanguages() on class level (moved to method),
+    failed when tools import the module (e.g. pydoc -k foo).
   * SubProcess: fixed win32-specific parts, fixed imports (fixes calling of
     external xapian index filters)
 

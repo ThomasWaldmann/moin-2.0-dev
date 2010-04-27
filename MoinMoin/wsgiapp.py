@@ -200,7 +200,7 @@ def dispatch(request, context, action_name='show'):
     hs = HeaderSet(('Cookie', 'User-Agent'))
     if not cfg.language_ignore_browser:
         hs.add('Accept-Language')
-    request.headers.add('Vary', str(hs))
+    request.headers['Vary'] = str(hs)
 
     # Handle request. We have these options:
     # 1. jump to page where user left off
@@ -297,9 +297,10 @@ def setup_i18n_preauth(context):
                     break
             else:
                 logging.debug("moin does not support any language client accepts")
-                if cfg.language_default in i18n.languages:
-                    lang = cfg.language_default
-                    logging.debug("fall back to cfg.language_default (%r)" % lang)
+        if not lang:
+            if cfg.language_default in i18n.languages:
+                lang = cfg.language_default
+                logging.debug("fall back to cfg.language_default (%r)" % lang)
     if not lang:
         lang = 'en'
         logging.debug("emergency fallback to 'en'")
