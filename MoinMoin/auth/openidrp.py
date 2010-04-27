@@ -18,7 +18,7 @@ from MoinMoin.widget import html
 from MoinMoin.auth import CancelLogin, ContinueLogin
 from MoinMoin.auth import MultistageFormLogin, MultistageRedirectLogin
 from MoinMoin.auth import get_multistage_continuation_url
-from werkzeug.utils import url_encode
+from werkzeug import url_encode
 
 class OpenIDAuth(BaseAuth):
     login_inputs = ['openid_identifier']
@@ -181,10 +181,10 @@ username and leave the password field blank.""")))
             return CancelLogin(_('OpenID failure.'))
 
     def _handle_name_continuation(self, request):
+        _ = request.getText
         if not 'openid.id' in request.session:
             return CancelLogin(_('No OpenID found in session.'))
 
-        _ = request.getText
         newname = request.form.get('username', '')
         if not newname:
             return MultistageFormLogin(self._get_account_name)

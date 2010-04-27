@@ -756,7 +756,7 @@ options_no_group_name = {
     ('surge_lockout_time', 3600, "time [s] someone gets locked out when ignoring the warnings"),
 
     ('textchas', None,
-     "Spam protection setup using site-specific questions/answers, see HelpOnTextChas."),
+     "Spam protection setup using site-specific questions/answers, see HelpOnSpam."),
     ('textchas_disabled_group', None,
      "Name of a group of trusted users who do not get asked !TextCha questions."),
 
@@ -826,6 +826,7 @@ options_no_group_name = {
      'show section numbers in headings by default'),
     ('show_timings', False, "show some timing values at bottom of a page"),
     ('show_version', False, "show moin's version at the bottom of a page"),
+    ('show_rename_redirect', False, "if True, offer creation of redirect pages when renaming wiki pages"),
 
     ('page_credits',
      [
@@ -1087,7 +1088,7 @@ options = {
       ('checkbox_defaults',
        {
         'mailto_author': 0,
-        'edit_on_doubleclick': 0,
+        'edit_on_doubleclick': 1,
         'remember_last_visit': 0,
         'show_comments': 0,
         'show_nonexist_qm': False,

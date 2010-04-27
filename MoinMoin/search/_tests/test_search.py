@@ -2,8 +2,10 @@
 """
     MoinMoin - MoinMoin.search Tests
 
+    We exclude underlay/system pages for some search tests to save time.
+
     @copyright: 2005 by Nir Soffer <nirs@freeshell.org>,
-                2007-2009 by MoinMoin:ThomasWaldmann
+                2007-2010 by MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -95,10 +97,17 @@ class BaseSearchTest(object):
              u'SearchTestOtherLinks': u'SearchTestLinks',
              u'MyHomePage': u'foo\n----\nCategoryHomepage\n',
              u'TestEdit': u'TestEdit',
+             u'TestOnEditing': u'another test page',
+             u'ContentSearchUpper': u'Find the NEEDLE in the haystack.',
+             u'ContentSearchLower': u'Find the needle in the haystack.',
+             u'LanguageSetup': None,
+             u'CategoryHomepage': None,
+             u'HomePageWiki': None,
              u'FrontPage': None,
-             u'HelpOnMoinWikiSyntax': None,
-             u'HelpOnLinking': None,
-    }
+             u'RecentChanges': None,
+             u'HelpOnCreoleSyntax': None,
+             u'HelpIndex': None,
+            }
 
     searcher_class = None
 
@@ -131,110 +140,151 @@ class BaseSearchTest(object):
 
     def test_title_search_simple(self):
         searches = {u'title:SearchTestPage': 1,
+                    u'title:LanguageSetup': 1,
+                    u'title:HelpIndex': 1,
                     u'title:Help': 2,
-                    u'title:HelpOn': 2,
+                    u'title:TestOn': 1,
                     u'title:SearchTestNotExisting': 0,
                     u'title:FrontPage': 1,
-                    u'title:HelpOnLinking': 1}
+                    u'title:TestOnEditing': 1,
+                   }
 
         def test(query, res_count):
             result = self.search(query)
-            assert len(result.hits) == res_count
+            test_result = len(result.hits)
+            assert test_result == res_count
 
         for query, res_count in searches.iteritems():
             yield query, test, query, res_count
 
     def test_title_search_re(self):
-        result = self.search(ur'title:re:\bSearchTest')
-        assert len(result.hits) == 4
+        expected_pages = set([u'SearchTestPage', u'SearchTestLinks', u'SearchTestLinksLowerCase', u'SearchTestOtherLinks', ])
+        result = self.search(ur'-domain:underlay -domain:system title:re:\bSearchTest')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
-        result = self.search(ur'title:re:\bSearchTest\b')
-        assert not result.hits
+        result = self.search(ur'-domain:underlay -domain:system title:re:\bSearchTest\b')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_title_search_case(self):
-        result = self.search(u'title:case:SearchTestPage')
-        assert len(result.hits) == 1
+        expected_pages = set([u'SearchTestPage', ])
+        result = self.search(u'-domain:underlay -domain:system title:case:SearchTestPage')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
-        result = self.search(u'title:case:searchtestpage')
-        assert not result.hits
+        result = self.search(u'-domain:underlay -domain:system title:case:searchtestpage')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_title_search_case_re(self):
-        result = self.search(ur'title:case:re:\bSearchTestPage\b')
-        assert len(result.hits) == 1
+        expected_pages = set([u'SearchTestPage', ])
+        result = self.search(ur'-domain:underlay -domain:system title:case:re:\bSearchTestPage\b')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
-        result = self.search(ur'title:case:re:\bsearchtestpage\b')
-        assert not result.hits
+        result = self.search(ur'-domain:underlay -domain:system title:case:re:\bsearchtestpage\b')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_linkto_search_simple(self):
-        result = self.search(u'linkto:SearchTestPage')
-        assert len(result.hits) == 1
+        expected_pages = set([u'SearchTestLinks', ])
+        result = self.search(u'-domain:underlay -domain:system linkto:SearchTestPage')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
-        result = self.search(u'linkto:SearchTestNotExisting')
-        assert not result.hits
+        result = self.search(u'-domain:underlay -domain:system linkto:SearchTestNotExisting')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_linkto_search_re(self):
-        result = self.search(ur'linkto:re:\bSearchTest')
-        assert len(result.hits) == 2
+        expected_pages = set([u'SearchTestLinks', u'SearchTestOtherLinks', ])
+        result = self.search(ur'-domain:underlay -domain:system linkto:re:\bSearchTest')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
-        result = self.search(ur'linkto:re:\bSearchTest\b')
-        assert not result.hits
+        result = self.search(ur'-domain:underlay -domain:system linkto:re:\bSearchTest\b')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_linkto_search_case(self):
-        result = self.search(u'linkto:case:SearchTestPage')
-        assert len(result.hits) == 1
+        expected_pages = set([u'SearchTestLinks', ])
+        result = self.search(u'-domain:underlay -domain:system linkto:case:SearchTestPage')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
-        result = self.search(u'linkto:case:searchtestpage')
-        assert not result.hits
+        result = self.search(u'-domain:underlay -domain:system linkto:case:searchtestpage')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_linkto_search_case_re(self):
-        result = self.search(ur'linkto:case:re:\bSearchTestPage\b')
-        assert len(result.hits) == 1
+        expected_pages = set([u'SearchTestLinks', ])
+        result = self.search(ur'-domain:underlay -domain:system linkto:case:re:\bSearchTestPage\b')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
-        result = self.search(ur'linkto:case:re:\bsearchtestpage\b')
-        assert not result.hits
+        result = self.search(ur'-domain:underlay -domain:system linkto:case:re:\bsearchtestpage\b')
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_category_search_simple(self):
+        expected_pages = set([u'HomePageWiki', ])
         result = self.search(u'category:CategoryHomepage')
-        assert len(result.hits) == 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
         result = self.search(u'category:CategorySearchTestNotExisting')
-        assert not result.hits
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_category_search_re(self):
+        expected_pages = set([u'HomePageWiki', ])
         result = self.search(ur'category:re:\bCategoryHomepage\b')
-        assert len(result.hits) == 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
         result = self.search(ur'category:re:\bCategoryHomepa\b')
-        assert not result.hits
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_category_search_case(self):
+        expected_pages = set([u'HomePageWiki', ])
         result = self.search(u'category:case:CategoryHomepage')
-        assert len(result.hits) == 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
         result = self.search(u'category:case:categoryhomepage')
-        assert not result.hits
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_category_search_case_re(self):
+        expected_pages = set([u'HomePageWiki', ])
         result = self.search(ur'category:case:re:\bCategoryHomepage\b')
-        assert len(result.hits) == 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
         result = self.search(ur'category:case:re:\bcategoryhomepage\b')
-        assert not result.hits
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_mimetype_search_simple(self):
         result = self.search(u'mimetype:text/wiki')
-        assert len(result.hits) == 9
+        test_result = len(result.hits)
+        assert test_result == 14
 
     def test_mimetype_search_re(self):
         result = self.search(ur'mimetype:re:\btext/wiki\b')
-        assert len(result.hits) == 9
+        test_result = len(result.hits)
+        assert test_result == 14
 
         result = self.search(ur'category:re:\bCategoryHomepa\b')
-        assert not result.hits
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def test_language_search_simple(self):
         result = self.search(u'language:en')
-        assert len(result.hits) == 9
+        test_result = len(result.hits)
+        assert test_result == 14
 
     def test_domain_search_simple(self):
         result = self.search(u'domain:system')
@@ -242,37 +292,69 @@ class BaseSearchTest(object):
 
     def test_search_and(self):
         """ search: title search with AND expression """
-        result = self.search(u"title:HelpOnMoinWikiSyntax lang:en")
-        assert len(result.hits) == 1
+        expected_pages = set([u'HelpOnCreoleSyntax', ])
+        result = self.search(u"title:HelpOnCreoleSyntax lang:en")
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
-        result = self.search(u"title:HelpOnMoinWikiSyntax lang:de")
-        assert len(result.hits) == 0
+        result = self.search(u"title:HelpOnCreoleSyntax lang:de")
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
         result = self.search(u"title:Help title:%s" % self.doesnotexist)
-        assert not result.hits
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert not found_pages
 
     def testTitleSearchOR(self):
         """ search: title search with OR expression """
-        result = self.search(u"title:FrontPage or title:HelpOnMoinWikiSyntax")
-        assert len(result.hits) == 2
+        expected_pages = set([u'FrontPage', u'RecentChanges', ])
+        result = self.search(u"title:FrontPage or title:RecentChanges")
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
     def testTitleSearchNegatedFindAll(self):
         """ search: negated title search for some pagename that does not exist results in all pagenames """
         result = self.search(u"-title:%s" % self.doesnotexist)
-        assert len(result.hits) == len(self.pages)
+        n_pages = len(self.pages)
+        test_result = len(result.hits)
+        assert test_result == n_pages
 
     def testTitleSearchNegativeTerm(self):
         """ search: title search for a AND expression with a negative term """
         result = self.search(u"-title:FrontPage")
-        assert len(result.hits) == len(self.pages) - 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert u'FrontPage' not in found_pages
+        test_result = len(result.hits)
+        n_pages = len(self.pages) - 1
+        assert test_result == n_pages
 
         result = self.search(u"-title:HelpOn")
-        assert len(result.hits) == len(self.pages) - 2
+        test_result = len(result.hits)
+        n_pages = len(self.pages) - 1
+        assert test_result == n_pages
 
     def testFullSearchNegatedFindAll(self):
         """ search: negated full search for some string that does not exist results in all pages """
         result = self.search(u"-%s" % self.doesnotexist)
-        assert len(result.hits) == len(self.pages)
+        test_result = len(result.hits)
+        n_pages = len(self.pages)
+        assert test_result == n_pages
+
+    def testFullSearchRegexCaseInsensitive(self):
+        """ search: full search for regular expression (case insensitive) """
+        search_re = 'ne{2}dle' # matches 'NEEDLE' or 'needle' or ...
+        expected_pages = set(['ContentSearchUpper', 'ContentSearchLower', ])
+        result = self.search(u'-domain:underlay -domain:system re:%s' % search_re)
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
+
+    def testFullSearchRegexCaseSensitive(self):
+        """ search: full search for regular expression (case sensitive) """
+        search_re = 'ne{2}dle' # matches 'needle'
+        expected_pages = set(['ContentSearchLower', ])
+        result = self.search(u'-domain:underlay -domain:system re:case:%s' % search_re)
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
     def testFullSearchNegativeTerm(self):
         """ search: full search for a AND expression with a negative term """
@@ -281,16 +363,18 @@ class BaseSearchTest(object):
         assert 0 < len(result.hits) < helpon_count
 
     def test_title_search(self):
+        expected_pages = set(['FrontPage', ])
         query = QueryParser(titlesearch=True).parse_query('FrontPage')
         result = self.search(query)
-        assert len(result.hits) == 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
     def test_get_searcher(self):
         assert isinstance(_get_searcher(self.request, ''), self.searcher_class)
 
 
 class TestMoinSearch(BaseSearchTest):
-
+    """ search: test Moin search """
     searcher_class = MoinSearch
 
     def get_searcher(self, query):
@@ -298,18 +382,21 @@ class TestMoinSearch(BaseSearchTest):
         return MoinSearch(self.request, query, pages=pages)
 
     def test_stemming(self):
+        expected_pages = set([u'TestEdit', u'TestOnEditing', ])
         result = self.search(u"title:edit")
-        assert len(result.hits) == 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
+        expected_pages = set([u'TestOnEditing', ])
         result = self.search(u"title:editing")
-        assert len(result.hits) == 0
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
 
 class TestXapianSearch(BaseSearchTest):
-    """ search: test Xapian indexing """
+    """ search: test Xapian indexing / search """
 
     class Config(wikiconfig.Config):
-
         xapian_search = True
 
     def _index_update(self):
@@ -337,7 +424,6 @@ class TestXapianSearch(BaseSearchTest):
         except ImportError, error:
             if not str(error).startswith('Xapian '):
                 raise
-
             py.test.skip('xapian is not installed')
 
         nuke_xapian_index(self.request)
@@ -355,8 +441,9 @@ class TestXapianSearch(BaseSearchTest):
     def test_get_all_documents(self):
         connection = self.get_moin_search_connection()
         documents = connection.get_all_documents()
-
-        assert len(self.pages) == len(documents)
+        n_pages = len(self.pages)
+        test_result = len(documents)
+        assert test_result == n_pages
         for document in documents:
             assert document.data['pagename'][0] in self.pages.keys()
 
@@ -370,7 +457,8 @@ class TestXapianSearch(BaseSearchTest):
                     u'category:': ([u'', u're:', u'case:', u'case:re:'], u'CategoryHomepage'),
                     u'mimetype:': ([u'', u're:'], u'text/wiki'),
                     u'language:': ([u''], u'en'),
-                    u'domain:': ([u''], u'system')}
+                    u'domain:': ([u''], u'system'),
+                   }
 
         def test_query(query):
             query_ = parser.parse_query(query).xapian_term(self.request, connection)
@@ -384,33 +472,39 @@ class TestXapianSearch(BaseSearchTest):
                 yield query, test_query, query
 
     def test_stemming(self):
+        expected_pages = set([u'TestEdit', ])
         result = self.search(u"title:edit")
-        assert len(result.hits) == 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
+        expected_pages = set([u'TestOnEditing', ])
         result = self.search(u"title:editing")
-        assert len(result.hits) == 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
 
 class TestXapianSearchStemmed(TestXapianSearch):
-    class Config(wikiconfig.Config):
+    """ search: test Xapian indexing / search - with stemming enabled """
 
+    class Config(wikiconfig.Config):
         xapian_search = True
         xapian_stemming = True
 
     def test_stemming(self):
-        py.test.skip("TODO fix TestXapianSearchStemmed - strange effects with stemming")
-
+        expected_pages = set([u'TestEdit', u'TestOnEditing', ])
         result = self.search(u"title:edit")
-        assert len(result.hits) == 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
+        expected_pages = set([u'TestEdit', u'TestOnEditing', ])
         result = self.search(u"title:editing")
-        assert len(result.hits) == 1
+        found_pages = set([hit.page_name for hit in result.hits])
+        assert found_pages == expected_pages
 
 
 class TestGetSearcher(object):
 
     class Config(wikiconfig.Config):
-
         xapian_search = True
 
     def test_get_searcher(self):

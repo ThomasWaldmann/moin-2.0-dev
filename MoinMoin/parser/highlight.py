@@ -95,37 +95,33 @@ class PygmentsFormatter(pygments.formatter.Formatter):
             # ... or use the token's name when nothing apropriate
             # return str(ttype).replace(".", " ")
 
-    def format(self, tokensource, outfile):
-        line_ready = False
+    def add_next_line(self, line_parts):
         fmt = self.formatter
-        result = self.result
+        self.lineno += 1
+        self.result.append(fmt.code_line(1))
+        self.result.append(fmt.line_anchordef(self.lineno))
+        self.result += line_parts
+        self.result.append(fmt.code_line(0))
+
+    def format(self, tokensource, outfile):
+        fmt = self.formatter
         self.lineno = self.start_line
-
-        for lineno in range(1, self.start_line + 1):
-            result.append(fmt.line_anchordef(lineno))
-
+        line_parts = []
         for ttype, value in tokensource:
             class_ = self.get_class(ttype)
             if value:
                 for line in self.line_re.split(value):
-                    if not line_ready:
-                        self.lineno += 1
-                        result.append(fmt.code_line(1))
-                        result.append(fmt.line_anchordef(self.lineno))
-                        line_ready = True
                     if line == '\n':
-                        result.append(fmt.code_line(0))
-                        line_ready = False
-                    else:
-                        if class_:
-                            result.append(fmt.code_token(1, class_))
-                        result.append(fmt.text(line))
-                        if class_:
-                            result.append(fmt.code_token(0, class_))
-        result[-2] = ''
-        result[-1] = ''
-#        if line_ready:
-#            result.append(fmt.code_line(0))
+                        self.add_next_line(line_parts)
+                        line_parts = []
+                        continue
+                    if class_:
+                        line_parts.append(fmt.code_token(1, class_))
+                    line_parts.append(fmt.text(line))
+                    if class_:
+                        line_parts.append(fmt.code_token(0, class_))
+        if line_parts and line_parts != [u'']: # Don't output an empty line at the end.
+            self.add_next_line(line_parts)
 
 
 class Parser:
@@ -135,7 +131,7 @@ class Parser:
 
     def __init__(self, raw, request, filename=None, format_args='', **kw):
         self.request = request
-        self.raw = raw.strip('\n')
+        self.raw = raw
         self.filename = filename
         self.mimetype = 'text/plain'
         self.start_line = kw.get('start_line', 0)
@@ -167,6 +163,11 @@ class Parser:
             syntax = pygments.lexers.get_lexer_for_mimetype(self.mimetype).name
         except pygments.util.ClassNotFound:
             syntax = ""
+
+        # adding line number anchors for process instruction lines
+        for lineno in range(1, self.num_start + 1):
+            fmt.result.append(formatter.line_anchordef(lineno))
+
         fmt.result.append(formatter.div(1, css_class="highlight %s" % syntax))
         self._code_id = hash_new('sha1', self.raw.encode(config.charset)).hexdigest()
         msg = None
@@ -189,6 +190,7 @@ class Parser:
                                                                                                                "highlight_help_page": url
                                                                                                               }
                 lexer = pygments.lexers.TextLexer()
+
         fmt.result.append(formatter.code_area(1, self._code_id, self.parsername, self.show_nums, self.num_start, self.num_step, msg))
         pygments.highlight(self.raw, lexer, fmt)
         fmt.result.append(formatter.code_area(0, self._code_id))
