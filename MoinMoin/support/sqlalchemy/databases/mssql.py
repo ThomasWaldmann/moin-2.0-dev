@@ -42,7 +42,7 @@ Examples of pyodbc connection string URLs:
 * *mssql://mydsn* - connects using the specified DSN named ``mydsn``.
   The connection string that is created will appear like::
 
-    dsn=mydsn;TrustedConnection=Yes
+    dsn=mydsn;Trusted_Connection=Yes
 
 * *mssql://user:pass@mydsn* - connects using the DSN named
   ``mydsn`` passing in the ``UID`` and ``PWD`` information. The
@@ -1065,13 +1065,13 @@ class MSSQLDialect(default.DefaultDialect):
     def __new__(cls, *args, **kwargs):
         if cls is not MSSQLDialect:
             # this gets called with the dialect specific class
-            return super(MSSQLDialect, cls).__new__(cls, *args, **kwargs)
+            return super(MSSQLDialect, cls).__new__(cls)
         dbapi = kwargs.get('dbapi', None)
         if dbapi:
             dialect = dialect_mapping.get(dbapi.__name__)
             return dialect(**kwargs)
         else:
-            return object.__new__(cls, *args, **kwargs)
+            return object.__new__(cls)
 
     def __init__(self,
                  auto_identity_insert=True, query_timeout=None,
@@ -1451,7 +1451,7 @@ class MSSQLDialect_pyodbc(MSSQLDialect):
                 connectors.append("UID=%s" % user)
                 connectors.append("PWD=%s" % keys.pop('password', ''))
             else:
-                connectors.append("TrustedConnection=Yes")
+                connectors.append("Trusted_Connection=Yes")
 
             # if set to 'Yes', the ODBC layer will try to automagically convert
             # textual data from your database encoding to your client encoding
