@@ -928,12 +928,12 @@ class TestPageLinkMarkup:
     def test_pagelinkmarkup(self):
         tests = [
             # pagename (no link text), expected markup
-            (('SomePage', ), 'SomePage'),
+            (('SomePage', ), '[[SomePage]]'),
             (('Somepage', ), '[[Somepage]]'),
             (('somepage', ), '[[somepage]]'),
             (('Some Page', ), '[[Some Page]]'),
             # with link text
-            (('SomePage', 'SomePage'), 'SomePage'),
+            (('SomePage', 'SomePage'), '[[SomePage]]'),
             (('SomePage', 'some page'), '[[SomePage|some page]]'),
             (('Some Page', 'Some Page'), '[[Some Page]]'),
             (('Some Page', 'some Page'), '[[Some Page|some Page]]'),
