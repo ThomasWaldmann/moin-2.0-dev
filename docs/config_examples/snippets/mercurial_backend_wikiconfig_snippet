@@ -10,6 +10,6 @@
    
     # Provide a string which consists of backend prefix (hg) and destination 
     # directory where data will be placed (instance), separated by a colon.
-    namespace_mapping = create_simple_mapping('hg:instance')
+    namespace_mapping = create_simple_mapping('hg:/home/myuser/mywiki/%(nsname)s')
 
     # If you want to use a more advanced config, please refer to HelpOnStorageConfiguration.

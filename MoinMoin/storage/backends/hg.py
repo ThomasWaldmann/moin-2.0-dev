@@ -84,10 +84,8 @@ class MercurialBackend(Backend):
             try:
                 os.makedirs(path)
             except OSError, err:
-                if err == errno.EACCES:
-                    raise BackendError("No permissions on path: %s" % self._path)
-                elif not os.path.isdir(self._path):
-                    raise BackendError("You passed invalid path: %s" % self._path)
+                if err.errno != errno.EEXIST:
+                    raise BackendError(str(err))
         try:
             self._repo = hg.repository(self._ui, self._rev_path)
         except RepoError:

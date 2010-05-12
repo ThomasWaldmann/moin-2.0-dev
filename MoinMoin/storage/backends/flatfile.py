@@ -20,7 +20,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, re
+import os, re, errno
 from cStringIO import StringIO
 
 from MoinMoin import log
@@ -41,6 +41,11 @@ class FlatFileBackend(Backend):
         @param path: storage path
         """
         self._path = path
+        try:
+            os.makedirs(path)
+        except OSError, err:
+            if err.errno != errno.EEXIST:
+                raise BackendError(str(err))
 
     def _quote(self, name):
         return quoteWikinameFS(name)

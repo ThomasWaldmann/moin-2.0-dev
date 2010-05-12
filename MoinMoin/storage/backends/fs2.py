@@ -52,6 +52,16 @@ class FS2Backend(Backend):
         """
         self._path = path
 
+        # create <path>, meta data and revision content data storage subdirs
+        meta_path = self._make_path('meta')
+        data_path = self._make_path('data')
+        for path in (self._path, meta_path, data_path):
+            try:
+                os.makedirs(path)
+            except OSError, err:
+                if err.errno != errno.EEXIST:
+                    raise BackendError(str(err))
+
         engine = create_engine('sqlite:///%s' % self._make_path('index_history.db'), echo=False)
         metadata = MetaData()
         metadata.bind = engine
@@ -70,13 +80,6 @@ class FS2Backend(Backend):
                         )
 
         metadata.create_all()
-
-        # create meta data and revision content data storage dir
-        for name in ['meta', 'data', ]:
-            try:
-                os.makedirs(self._make_path(name))
-            except:
-                pass
 
     def _make_path(self, *args):
         return os.path.join(self._path, *args)
