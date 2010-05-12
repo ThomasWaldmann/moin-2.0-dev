@@ -41,11 +41,11 @@ class MemoryBackend(Backend):
     Docstrings for the methods can be looked up in the superclass Backend, found
     in MoinMoin.storage.
     """
-    def __init__(self):
+    def __init__(self, uri=''):
         """
         Initialize this Backend.
-        We require no parameters for instantiation since the data is just kept
-        in memory.
+
+        We accept a (unused) uri parameter, because other backends have this, too.
         """
         self._last_itemid = 0
         self._itemmap = {}                  # {itemname : itemid}   // names may change...

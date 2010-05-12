@@ -53,6 +53,12 @@ class FSBackend(Backend):
         self._itemspace = 128
         self._revmeta_reserved_space = reserved_metadata_space
 
+        try:
+            os.makedirs(path)
+        except OSError, err:
+            if err.errno != errno.EEXIST:
+                raise BackendError(str(err))
+
         # if no name-mapping db yet, create an empty one
         # (under lock, re-tests existence too)
         if not os.path.exists(self._name_db):
