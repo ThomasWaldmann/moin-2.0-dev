@@ -18,7 +18,7 @@ from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_respo
     redirect_last_visited
 from MoinMoin.storage.error import AccessDeniedError, StorageError
 from MoinMoin.storage.serialization import unserialize
-from MoinMoin.storage.backends import router, acl, indexing, memory
+from MoinMoin.storage.backends import router, acl, memory
 from MoinMoin.Page import Page
 from MoinMoin import auth, config, i18n, user, wikiutil, xmlrpc, error
 
@@ -80,9 +80,8 @@ def init_unprotected_backends(context):
     # mountpoint, unprotected backend, protection to apply as a dict
     # We don't consider the protection here. That is done in protect_backends.
     ns_mapping = context.cfg.namespace_mapping
-    # Just initialize with unprotected backends, but with indexing.
-    imw = indexing.IndexingWrapperBackend
-    unprotected_mapping = [(ns, imw(context, backend)) for ns, backend, acls in ns_mapping]
+    # Just initialize with unprotected backends.
+    unprotected_mapping = [(ns, backend) for ns, backend, acls in ns_mapping]
     context.unprotected_storage = router.RouterBackend(unprotected_mapping)
 
     # This makes the first request after server restart potentially much slower...
@@ -132,10 +131,9 @@ def protect_backends(context):
     backends after the user has been set up.
     """
     amw = acl.AclWrapperBackend
-    imw = indexing.IndexingWrapperBackend
     ns_mapping = context.cfg.namespace_mapping
     # Protect each backend with the acls provided for it in the mapping at position 2
-    protected_mapping = [(ns, amw(context, imw(context, backend), **acls)) for ns, backend, acls in ns_mapping]
+    protected_mapping = [(ns, amw(context, backend, **acls)) for ns, backend, acls in ns_mapping]
     context.storage = router.RouterBackend(protected_mapping)
 
 
