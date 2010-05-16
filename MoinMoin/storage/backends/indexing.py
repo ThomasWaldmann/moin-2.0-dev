@@ -58,15 +58,44 @@ class IndexingProxyItem(Proxy):
         self.__unindexed_revision = IndexingProxyRevision(real_revision, self)
         return self.__unindexed_revision
 
-    # TODO implement index update for item-level metadata
     def commit(self):
         self.__unindexed_revision.update_index()
         self.__unindexed_revision = None
-        return super(self.__class__, self).commit()
+        s = super(self.__class__, self)
+        return s.commit()
 
     def rollback(self):
         self.__unindexed_revision = None
-        return self.item.rollback()
+        s = super(self.__class__, self)
+        return s.rollback()
+
+    def publish_metadata(self):
+        self.update_index()
+        s = super(self.__class__, self)
+        return s.publish_metadata()
+
+    def destroy(self):
+        self.remove_index()
+        s = super(self.__class__, self)
+        return s.destroy()
+
+    def update_index(self):
+        """
+        update the index with metadata of this item
+
+        this is automatically called by item.publish_metadata() and can be used by a indexer script also.
+        """
+        logging.debug("item %r update index:" % (self['name'], ))
+        for k, v in self.items():
+            logging.debug(" * item meta %r: %r" % (k, v))
+        # TODO implement real index update
+
+    def remove_index(self):
+        """
+        update the index, removing everything related to this item
+        """
+        logging.debug("item %r remove index!" % (self['name'], ))
+        # TODO implement real index removal
 
 
 class IndexingProxyRevision(Proxy):
@@ -75,6 +104,14 @@ class IndexingProxyRevision(Proxy):
     """
     def __init__(self, item):
         self.__item = item
+
+    def destroy(self):
+        self.remove_index()
+        s = super(self.__class__, self)
+        return s.destroy()
+
+    # TODO maybe use this class later for data indexing also,
+    # TODO by intercepting write() to index data written to a revision
 
     def update_index(self):
         """
@@ -93,12 +130,4 @@ class IndexingProxyRevision(Proxy):
         """
         logging.debug("item %r revno %d remove index!" % (self['name'], self._revno))
         # TODO implement real index removal
-
-
-    def destroy(self):
-        self.remove_index()
-        return self.revision.destroy()
-
-    # TODO maybe use this class later for data indexing also,
-    # TODO by intercepting write() to index data written to a revision
 
