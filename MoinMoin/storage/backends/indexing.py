@@ -85,7 +85,7 @@ class IndexingProxyItem(Proxy):
 
         this is automatically called by item.publish_metadata() and can be used by a indexer script also.
         """
-        logging.debug("item %r update index:" % (self['name'], ))
+        logging.debug("item %r update index:" % (self.name, ))
         for k, v in self.items():
             logging.debug(" * item meta %r: %r" % (k, v))
         # TODO implement real index update
@@ -94,7 +94,7 @@ class IndexingProxyItem(Proxy):
         """
         update the index, removing everything related to this item
         """
-        logging.debug("item %r remove index!" % (self['name'], ))
+        logging.debug("item %r remove index!" % (self.name, ))
         # TODO implement real index removal
 
 
