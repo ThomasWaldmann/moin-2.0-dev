@@ -119,7 +119,7 @@ class IndexingProxyRevision(Proxy):
 
         this is automatically called by item.commit() and can be used by a indexer script also.
         """
-        logging.debug("item %r revno %d update index:" % (self['name'], self._revno))
+        logging.debug("item %r revno %d update index:" % (self.item.name, self.revno))
         for k, v in self.items():
             logging.debug(" * rev meta %r: %r" % (k, v))
         # TODO implement real index update
@@ -128,6 +128,6 @@ class IndexingProxyRevision(Proxy):
         """
         update the index, removing everything related to this revision
         """
-        logging.debug("item %r revno %d remove index!" % (self['name'], self._revno))
+        logging.debug("item %r revno %d remove index!" % (self.item.name, self.revno))
         # TODO implement real index removal
 
