@@ -320,7 +320,7 @@ class Converter(object):
         return self.new(html.hr)
 
     def visit_moinpage_span(self, elem):
-        # TODO
+        # TODO : Fix bug if a span has multiple attributes
         # Check for the attributes of span
         attrib = Attributes(elem)
         # Check for the baseline-shift (subscript or superscript)
@@ -330,6 +330,10 @@ class Converter(object):
                 return self.new_copy(html.sub, elem)
             elif generate == 'super':
                 return self.new_copy(html.sup, elem)
+        generate = attrib.get('text-decoration')
+        if generate:
+            if generate == 'underline':
+                return self.new_copy(html.u, elem)
         # If no any attributes is handled by our converter, just return span
         return self.new_copy(html.span, elem)
 

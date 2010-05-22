@@ -117,6 +117,8 @@ class TestConverter(Base):
                 '<div><p><sub>sub</sub>script</p></div>'),
             ('<page><body><p><span baseline-shift="super">super</span>script</p></body></page>',
                 '<div><p><sup>super</sup>script</p></div>'),
+            ('<page><body><p><span text-decoration="underline">underline</span></p></body></page>',
+                '<div><p><u>underline</u></p></div>'),
         ]
         for i in data:
             yield (self.do, ) + i
