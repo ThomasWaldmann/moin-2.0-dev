@@ -11,7 +11,7 @@
 
 from MoinMoin.storage.serialization import unserialize
 from MoinMoin.storage.error import NoSuchItemError, RevisionAlreadyExistsError
-from MoinMoin.storage.backends import fs, fs2, memory, indexing
+from MoinMoin.storage.backends import fs, fs2, memory
 
 
 CONTENT = 'content'
@@ -40,7 +40,6 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
         for name in [CONTENT, USERPROFILES, TRASH, ]:
             backend_uri = uri % dict(nsname=name)
             backend = BackendClass(backend_uri)
-            backend = indexing.IndexingProxyBackend(backend)
             backends.append(backend)
         return backends
 
