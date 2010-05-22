@@ -111,6 +111,16 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_span(self):
+        data = [
+            ('<page><body><p><span baseline-shift="sub">sub</span>script</p></body></page>',
+                '<div><p><sub>sub</sub>script</p></div>'),
+            ('<page><body><p><span baseline-shift="super">super</span>script</p></body></page>',
+                '<div><p><sup>super</sup>script</p></div>'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
     def test_list(self):
         data = [
             ('<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
