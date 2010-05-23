@@ -38,7 +38,7 @@ class LocalConfig(multiconfig.DefaultConfig):
     # 'hg:' instead to indicate that you want to use the mercurial backend.
     # Alternatively you can set up the mapping yourself (see HelpOnStorageConfiguration).
     namespace_mapping = create_simple_mapping(
-                            backend_uri='fs:' + data_dir,
+                            backend_uri='fs2:%s/%%(nsname)s' % data_dir,
                             # XXX we use rather relaxed ACLs for the development wiki:
                             content_acl=dict(before=u'',
                                              default=u'All:read,write,create,destroy,admin',
