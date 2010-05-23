@@ -10,7 +10,7 @@
     Together with the CSS and JavaScript files of the debugger this gives
     a colorful and more compact output.
 
-    :copyright: (c) 2009 by the Werkzeug Team, see AUTHORS for more details.
+    :copyright: (c) 2010 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD.
 """
 import sys
@@ -18,7 +18,7 @@ import re
 from traceback import format_exception_only
 try:
     from collections import deque
-except ImportError:
+except ImportError: # pragma: no cover
     deque = None
 from werkzeug.utils import escape
 from werkzeug.debug.utils import render_template
@@ -52,9 +52,6 @@ class _Helper(object):
     """
 
     def __call__(self, topic=None):
-        sys.stdout._write(self.get_help(topic))
-
-    def get_help(self, topic):
         title = text = None
         if topic is not None:
             import pydoc
@@ -64,10 +61,11 @@ class _Helper(object):
             if len(paragraphs) > 1:
                 title = paragraphs[0]
                 text = '\n\n'.join(paragraphs[1:])
-            else:
+            else: # pragma: no cover
                 title = 'Help'
                 text = paragraphs[0]
-        return render_template('help_command.html', title=title, text=text)
+        rv = render_template('help_command.html', title=title, text=text)
+        sys.stdout._write(rv)
 
 helper = _Helper()
 
@@ -191,7 +189,7 @@ class DebugReprGenerator(object):
     def fallback_repr(self):
         try:
             info = ''.join(format_exception_only(*sys.exc_info()[:2]))
-        except:
+        except: # pragma: no cover
             info = '?'
         return u'<span class="brokenrepr">&lt;broken repr (%s)&gt;' \
                u'</span>' % escape(info.decode('utf-8', 'ignore').strip())

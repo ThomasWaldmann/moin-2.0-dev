@@ -84,7 +84,7 @@ r"""
             request.client_session.save_cookie(response)
             return response(environ, start_response)
 
-    :copyright: (c) 2009 by the Werkzeug Team, see AUTHORS for more details.
+    :copyright: (c) 2010 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
 import sys
@@ -170,12 +170,12 @@ class SecureCookie(ModificationTrackingDict):
             self.should_save and '*' or ''
         )
 
+    @property
     def should_save(self):
         """True if the session should be saved.  By default this is only true
         for :attr:`modified` cookies, not :attr:`new`.
         """
         return self.modified
-    should_save = property(should_save, doc=should_save.__doc__)
 
     @classmethod
     def quote(cls, value):
@@ -304,8 +304,8 @@ class SecureCookie(ModificationTrackingDict):
         """
         data = request.cookies.get(key)
         if not data:
-            return SecureCookie(secret_key=secret_key)
-        return SecureCookie.unserialize(data, secret_key)
+            return cls(secret_key=secret_key)
+        return cls.unserialize(data, secret_key)
 
     def save_cookie(self, response, key='session', expires=None,
                     session_expires=None, max_age=None, path='/', domain=None,
