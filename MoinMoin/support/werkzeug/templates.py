@@ -5,24 +5,23 @@ r"""
 
     A minimal template engine.
 
-    :copyright: (c) 2009 by the Werkzeug Team, see AUTHORS for more details.
+    :copyright: (c) 2010 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD License.
 """
 import sys
 import re
 import __builtin__ as builtins
 from compiler import ast, parse
-from compiler.consts import SC_LOCAL, SC_GLOBAL, SC_FREE, SC_CELL
 from compiler.pycodegen import ModuleCodeGenerator
 from tokenize import PseudoToken
-from werkzeug import utils
+from werkzeug import utils, urls
 from werkzeug._internal import _decode_unicode
 
 
 # Copyright notice: The `parse_data` method uses the string interpolation
-# algorithm by Ka-Ping Yee which originally was part of `ltpl20.py`_
+# algorithm by Ka-Ping Yee which originally was part of `Itpl20.py`_.
 #
-# .. _ltipl20.py: http://lfw.org/python/Itpl20.py
+# .. _Itpl20.py: http://lfw.org/python/Itpl20.py
 
 
 token_re = re.compile('%s|%s(?s)' % (
@@ -320,11 +319,12 @@ class Template(object):
     """Represents a simple text based template.  It's a good idea to load such
     templates from files on the file system to get better debug output.
     """
+
     default_context = {
         'escape':           utils.escape,
-        'url_quote':        utils.url_quote,
-        'url_quote_plus':   utils.url_quote_plus,
-        'url_encode':       utils.url_encode
+        'url_quote':        urls.url_quote,
+        'url_quote_plus':   urls.url_quote_plus,
+        'url_encode':       urls.url_encode
     }
 
     def __init__(self, source, filename='<template>', charset='utf-8',
@@ -343,7 +343,7 @@ class Template(object):
 
     @classmethod
     def from_file(cls, file, charset='utf-8', errors='strict',
-                  unicode_mode=True, encoding=None):
+                  unicode_mode=True):
         """Load a template from a file.
 
         .. versionchanged:: 0.5
@@ -355,11 +355,6 @@ class Template(object):
         :param unicode_mode: set to `False` to disable unicode mode.
         :return: a template
         """
-        if encoding is not None:
-            from warnings import warn
-            warn(DeprecationWarning('the encoding parameter is deprecated. '
-                                    'use charset instead.'), stacklevel=2)
-            charset = encoding
         close = False
         if isinstance(file, basestring):
             f = open(file, 'r')
