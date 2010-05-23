@@ -2590,10 +2590,15 @@ def split_body(body):
         pi.setdefault(verb.lower(), []).append(args.strip())
 
     for key, value in pi.iteritems():
-        if len(value) == 1:
-            pi[key] = value[0]
-        else:
+        if key in ['#', ]:
+            # transform the lists to tuples:
             pi[key] = tuple(value)
+        elif key in ['acl', ]:
+            # join the list of values to a single value
+            pi[key] = u' '.join(value)
+        else:
+            # for keys that can't occur multiple times, don't use a list:
+            pi[key] = value[-1] # use the last value to copy 1.9 parsing behaviour
 
     return pi, body
 
@@ -2613,8 +2618,8 @@ def add_metadata_to_body(metadata, data):
     for key, value in metadata.iteritems():
         if key not in parsing_instructions:
             continue
-        # special handling for list metadata like acls
-        if isinstance(value, list):
+        # special handling for list metadata
+        if isinstance(value, (list, tuple)):
             for line in value:
                 metadata_data += "#%s %s\n" % (key, line)
         else:
