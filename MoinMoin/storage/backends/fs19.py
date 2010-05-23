@@ -30,17 +30,17 @@ EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
-mimetype_default = "text/x-unidentified-wiki-format"
+mimetype_default = u'text/x-unidentified-wiki-format'
 format_to_mimetype = {
-    'wiki': 'text/x.moin.wiki',
-    'text/wiki': 'text/x.moin.wiki',
-    'text/moin-wiki': 'text/x.moin.wiki',
-    'creole': 'text/x.moin.creole',
-    'text/creole': 'text/x.moin.creole',
-    'rst': 'text/rst',
-    'text/rst': 'text/rst',
-    'plain': 'text/plain',
-    'text/plain': 'text/plain',
+    'wiki': u'text/x.moin.wiki',
+    'text/wiki': u'text/x.moin.wiki',
+    'text/moin-wiki': u'text/x.moin.wiki',
+    'creole': u'text/x.moin.creole',
+    'text/creole': u'text/x.moin.creole',
+    'rst': u'text/rst',
+    'text/rst': u'text/rst',
+    'plain': u'text/plain',
+    'text/plain': u'text/plain',
 }
 
 
@@ -194,7 +194,7 @@ class FsPageRevision(StoredRevision):
         editlog = item._fs_editlog
         # we just read the page and parse it here, makes the rest of the code simpler:
         try:
-            content = open(revpath, 'r').read()
+            content = codecs.open(revpath, 'r', config.charset).read()
         except (IOError, OSError):
             # XXX TODO: trashbin-like deletion needs different approach XXX
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
@@ -217,12 +217,12 @@ class FsPageRevision(StoredRevision):
                 if 0 <= revno <= item._fs_current:
                     editlog_data = { # make something up
                         EDIT_LOG_MTIME: previous_rev_mtime + 1, # we have no clue when it was, but it was later...
-                        EDIT_LOG_ACTION: 'SAVE/DELETE',
-                        EDIT_LOG_ADDR: '0.0.0.0',
-                        EDIT_LOG_HOSTNAME: '0.0.0.0',
-                        EDIT_LOG_USERID: '',
-                        EDIT_LOG_EXTRA: '',
-                        EDIT_LOG_COMMENT: '',
+                        EDIT_LOG_ACTION: u'SAVE/DELETE',
+                        EDIT_LOG_ADDR: u'0.0.0.0',
+                        EDIT_LOG_HOSTNAME: u'0.0.0.0',
+                        EDIT_LOG_USERID: u'',
+                        EDIT_LOG_EXTRA: u'',
+                        EDIT_LOG_COMMENT: u'',
                     }
                 else:
                     raise NoSuchRevisionError('Item %r has no revision %d (not even a deleted one)!' %
@@ -234,14 +234,15 @@ class FsPageRevision(StoredRevision):
                 if 0 <= revno <= item._fs_current:
                     editlog_data = { # make something up
                         EDIT_LOG_MTIME: os.path.getmtime(revpath),
-                        EDIT_LOG_ACTION: 'SAVE',
-                        EDIT_LOG_ADDR: '0.0.0.0',
-                        EDIT_LOG_HOSTNAME: '0.0.0.0',
-                        EDIT_LOG_USERID: '',
-                        EDIT_LOG_EXTRA: '',
-                        EDIT_LOG_COMMENT: '',
+                        EDIT_LOG_ACTION: u'SAVE',
+                        EDIT_LOG_ADDR: u'0.0.0.0',
+                        EDIT_LOG_HOSTNAME: u'0.0.0.0',
+                        EDIT_LOG_USERID: u'',
+                        EDIT_LOG_EXTRA: u'',
+                        EDIT_LOG_COMMENT: u'',
                     }
             meta, data = wikiutil.split_body(content)
+            data = data.encode(config.charset)
         meta.update(editlog_data)
         meta['__size'] = len(data) # needed for converter checks
         format = meta.pop('format', None)
@@ -316,19 +317,19 @@ class FsAttachmentRevision(StoredRevision):
         except KeyError:
             editlog_data = { # make something up
                 EDIT_LOG_MTIME: os.path.getmtime(attpath),
-                EDIT_LOG_ACTION: 'SAVE',
-                EDIT_LOG_ADDR: '0.0.0.0',
-                EDIT_LOG_HOSTNAME: '0.0.0.0',
-                EDIT_LOG_USERID: '',
-                EDIT_LOG_EXTRA: '',
-                EDIT_LOG_COMMENT: '',
+                EDIT_LOG_ACTION: u'SAVE',
+                EDIT_LOG_ADDR: u'0.0.0.0',
+                EDIT_LOG_HOSTNAME: u'0.0.0.0',
+                EDIT_LOG_USERID: u'',
+                EDIT_LOG_EXTRA: u'',
+                EDIT_LOG_COMMENT: u'',
             }
         meta = editlog_data
         meta['__size'] = 0 # not needed for converter
         # attachments in moin 1.9 were protected by their "parent" page's acl
         if item._fs_parent_acl is not None:
             meta[ACL] = item._fs_parent_acl # XXX not needed for acl_hierarchic
-        meta[MIMETYPE] = wikiutil.MimeType(filename=item._fs_attachname).mime_type()
+        meta[MIMETYPE] = unicode(wikiutil.MimeType(filename=item._fs_attachname).mime_type())
         hash_name, hash_digest = hash_hexdigest(open(attpath, 'rb'))
         meta[hash_name] = hash_digest
         if item._syspages:
@@ -519,5 +520,5 @@ def hash_hexdigest(content, bufsize=4096):
         hash.update(content)
     else:
         raise ValueError("unsupported content object: %r" % content)
-    return hash_name, hash.hexdigest()
+    return hash_name, unicode(hash.hexdigest())
 
