@@ -26,7 +26,13 @@ logging = log.getLogger(__name__)
 from MoinMoin.util.lock import ExclusiveLock
 from MoinMoin.util import filesys
 
-from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
+from MoinMoin.storage import Backend as BackendBase
+from MoinMoin.storage import Item as ItemBase
+from MoinMoin.storage import StoredRevision as StoredRevisionBase
+from MoinMoin.storage import NewRevision as NewRevisionBase
+
+from MoinMoin.storage.backends.indexing import IndexingBackendMixin, IndexingItemMixin, IndexingRevisionMixin
+
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError, \
@@ -39,8 +45,16 @@ HASH_NAME = 'sha1' # XXX use request.cfg.hash_algorithm
 HASH_HEX_LEN = 40 # sha1 = 160 bit
 UUID_LEN = len(make_uuid().hex)
 
+class Item(IndexingItemMixin, ItemBase):
+    pass
 
-class FS2Backend(Backend):
+class StoredRevision(IndexingRevisionMixin, StoredRevisionBase):
+    pass
+
+class NewRevision(IndexingRevisionMixin, NewRevisionBase):
+    pass
+
+class BareFS2Backend(BackendBase):
     """
     FS2 backend
     """
@@ -498,4 +512,8 @@ class FS2Backend(Backend):
             rev._fs_file_data = open(rev._fs_path_data, 'rb') # XXX keeps file open as long as rev exists
 
         return rev._fs_file_data.tell()
+
+
+class FS2Backend(IndexingBackendMixin, BareFS2Backend):
+    pass
 
