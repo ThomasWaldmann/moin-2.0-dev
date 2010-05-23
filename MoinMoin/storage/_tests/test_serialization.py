@@ -34,7 +34,7 @@ def update_item(request, name, revno, meta, data):
 class TestSerializeRev(object):
 
     def test_serialize_rev(self):
-        params = ('foo1', 0, dict(m1="m1"), 'bar1')
+        params = ('foo1', 0, dict(m1=u"m1"), 'bar1')
         item = update_item(self.request, *params)
         rev = item.get_revision(0)
         xmlfile = StringIO()
@@ -52,8 +52,8 @@ class TestSerializeItem(object):
 
     def test_serialize_item(self):
         testparams = [
-            ('foo2', 0, dict(m1="m1"), 'bar2'),
-            ('foo2', 1, dict(m2="m2"), 'baz2'),
+            ('foo2', 0, dict(m1=u"m1"), 'bar2'),
+            ('foo2', 1, dict(m2=u"m2"), 'baz2'),
         ]
         for params in testparams:
             item = update_item(self.request, *params)
@@ -77,9 +77,9 @@ class TestSerializeBackend(object):
 
     def test_serialize_backend(self):
         testparams = [
-            ('foo3', 0, dict(m3="m3"), 'bar1'),
-            ('foo4', 0, dict(m4="m4"), 'bar2'),
-            ('foo4', 1, dict(m4="m4"), 'baz2'),
+            ('foo3', 0, dict(m3=u"m3"), 'bar1'),
+            ('foo4', 0, dict(m4=u"m4"), 'bar2'),
+            ('foo4', 1, dict(m4=u"m4"), 'baz2'),
         ]
         for params in testparams:
             update_item(self.request, *params)
@@ -111,8 +111,8 @@ class TestSerializeBackend(object):
 class TestSerializer2(object):
     def test_Entry(self):
         test_data = [
-            ('foo', 'bar', '<entry key="foo"><str>bar</str>\n</entry>\n'),
-            (u'foo', u'bar', '<entry key="foo"><unicode>bar</unicode>\n</entry>\n'),
+            ('foo', 'bar', '<entry key="foo"><bytes>bar</bytes>\n</entry>\n'),
+            (u'foo', u'bar', '<entry key="foo"><str>bar</str>\n</entry>\n'),
         ]
         for k, v, expected_xml in test_data:
             e = Entry(k, v)
@@ -123,15 +123,15 @@ class TestSerializer2(object):
 
     def test_Values(self):
         test_data = [
-            ('bar', '<str>bar</str>\n'),
-            (u'bar', '<unicode>bar</unicode>\n'),
+            ('bar', '<bytes>bar</bytes>\n'),
+            (u'bar', '<str>bar</str>\n'),
             (42, '<int>42</int>\n'),
             (True, '<bool>True</bool>\n'),
             (23.42, '<float>23.42</float>\n'),
             (complex(1.2, 2.3), '<complex>(1.2+2.3j)</complex>\n'),
             ((1, 2), '<tuple><int>1</int>\n<int>2</int>\n</tuple>\n'),
-            ((1, 'bar'), '<tuple><int>1</int>\n<str>bar</str>\n</tuple>\n'),
-            ((1, ('bar', 'baz')), '<tuple><int>1</int>\n<tuple><str>bar</str>\n<str>baz</str>\n</tuple>\n</tuple>\n'),
+            ((1, u'bar'), '<tuple><int>1</int>\n<str>bar</str>\n</tuple>\n'),
+            ((1, (u'bar', u'baz')), '<tuple><int>1</int>\n<tuple><str>bar</str>\n<str>baz</str>\n</tuple>\n</tuple>\n'),
         ]
         for v, expected_xml in test_data:
             v = create_value_object(v)
