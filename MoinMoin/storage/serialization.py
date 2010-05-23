@@ -352,10 +352,10 @@ class Value(Serializable):
         return x # override in child class
 
 class UnicodeValue(Value):
-    element_name = 'unicode'
+    element_name = 'str' # py3-style (and shorter)
 
 class StrValue(Value):
-    element_name = 'str'
+    element_name = 'bytes' # py3-style (rarely used)
 
     def element_decode(self, x):
         return x.encode('utf-8')
@@ -423,8 +423,8 @@ class TupleValue(Serializable):
 
     def get_unserializer(self, context, name, attrs):
         mapping = {
-            'str': StrValue,
-            'unicode': UnicodeValue,
+            'bytes': StrValue, # py3-style
+            'str': UnicodeValue, # py3-style
             'bool': BoolValue,
             'int': IntValue,
             'long': LongValue,
