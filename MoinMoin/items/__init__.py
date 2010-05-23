@@ -215,7 +215,7 @@ class Item(object):
             hash.update(content)
         else:
             raise StorageError("unsupported content object: %r" % content)
-        return hash_name, hash.hexdigest()
+        return hash_name, unicode(hash.hexdigest())
 
     def copy(self, name, comment=u''):
         """
@@ -287,7 +287,7 @@ class Item(object):
         comment = self.request.form.get('comment')
         self._save(meta, data, mimetype=mimetype, comment=comment)
 
-    def _save(self, meta, data, name=None, action='SAVE', mimetype=None, comment='', extra=''):
+    def _save(self, meta, data, name=None, action=u'SAVE', mimetype=None, comment=u'', extra=u''):
         request = self.request
         if name is None:
             name = self.name
@@ -325,16 +325,16 @@ class Item(object):
         timestamp = time.time()
         # XXX if meta is from old revision, and user did not give a non-empty
         # XXX comment, re-using the old rev's comment is wrong behaviour:
-        newrev[EDIT_LOG_COMMENT] = comment or meta.get(EDIT_LOG_COMMENT, '')
+        newrev[EDIT_LOG_COMMENT] = comment or meta.get(EDIT_LOG_COMMENT, u'')
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
         # allow override by give metadata:
         assert mimetype is not None
-        newrev[MIMETYPE] = meta.get(MIMETYPE, mimetype)
+        newrev[MIMETYPE] = unicode(meta.get(MIMETYPE, mimetype))
         newrev[EDIT_LOG_ACTION] = action
-        newrev[EDIT_LOG_ADDR] = request.remote_addr
-        newrev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
-        newrev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
+        newrev[EDIT_LOG_ADDR] = unicode(request.remote_addr)
+        newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, request.remote_addr))
+        newrev[EDIT_LOG_USERID] = unicode(request.user.valid and request.user.id or '')
         newrev[EDIT_LOG_EXTRA] = extra
         storage_item.commit()
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
