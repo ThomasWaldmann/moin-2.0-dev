@@ -267,6 +267,7 @@ class FsPageRevision(StoredRevision):
         if acl_line:
             for old_priv in ('revert', 'delete'):
                 # possible occurrences:
+                # XXX this is crap and will fail for JoePrevert,JoeDoe:...
                 acl_line = acl_line.replace(old_priv + ',', '')  # All:old_priv,read
                 acl_line = acl_line.replace(',' + old_priv, '')  # All:read,old_priv
                 acl_line = acl_line.replace(':' + old_priv, '')  # JoePrevert:old_priv
@@ -376,13 +377,13 @@ class EditLog(LogFile):
         """ Find metadata for some attachment name in the edit-log. """
         for meta in self.reverse(): # use reverse iteration to get the latest upload's data
             if (meta['__rev'] == 99999998 and  # 99999999-1 because of 0-based
-                meta[EDIT_LOG_ACTION] =='ATTNEW' and
+                meta[EDIT_LOG_ACTION] == 'ATTNEW' and
                 meta[EDIT_LOG_EXTRA] == attachname):
                 break
         else:
             raise KeyError
         del meta['__rev']
-        meta[EDIT_LOG_ACTION] =='SAVE'
+        meta[EDIT_LOG_ACTION] = u'SAVE'
         return meta
 
 
