@@ -128,8 +128,6 @@ class IndexingRevisionMixin(object):
     # TODO maybe use this class later for data indexing also,
     # TODO by intercepting write() to index data written to a revision
 
-
-
 import time, datetime
 import os
 from uuid import uuid4 as gen_uuid
