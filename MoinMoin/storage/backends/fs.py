@@ -19,7 +19,14 @@ except ImportError:
 
 from MoinMoin.util.lock import ExclusiveLock
 from MoinMoin.util import filesys
-from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
+
+from MoinMoin.storage import Backend as BackendBase
+from MoinMoin.storage import Item as ItemBase
+from MoinMoin.storage import StoredRevision as StoredRevisionBase
+from MoinMoin.storage import NewRevision as NewRevisionBase
+
+from MoinMoin.storage.backends.indexing import IndexingBackendMixin, IndexingItemMixin, IndexingRevisionMixin
+
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError, \
@@ -27,7 +34,17 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
 
 PICKLEPROTOCOL = 1
 
-class FSBackend(Backend):
+
+class Item(IndexingItemMixin, ItemBase):
+    pass
+
+class StoredRevision(IndexingRevisionMixin, StoredRevisionBase):
+    pass
+
+class NewRevision(IndexingRevisionMixin, NewRevisionBase):
+    pass
+
+class BareFSBackend(BackendBase):
     """
     Basic filesystem backend, described at
     http://moinmo.in/JohannesBerg/FilesystemStorage
@@ -554,3 +571,6 @@ class FSBackend(Backend):
         pos = revision._fs_file.tell()
         return pos - revision._datastart
 
+
+class FSBackend(IndexingBackendMixin, BareFSBackend):
+    pass
