@@ -144,8 +144,8 @@ class ItemIndex(object):
     Index for Items/Revisions
     """
     def __init__(self, index_uri):
-        self.engine = create_engine(index_uri, echo=False)
         metadata = MetaData()
+        metadata.bind = create_engine(index_uri, echo=False)
 
         # for sqlite, lengths are not needed, but for other SQL DBs:
         UUID_LEN = 32
@@ -176,10 +176,9 @@ class ItemIndex(object):
 
         item_kvmeta = KVStoreMeta('item', metadata, Integer)
         rev_kvmeta = KVStoreMeta('rev', metadata, Integer)
-        metadata.create_all(self.engine)
-        self.conn = self.engine.connect()
-        self.item_kvstore = KVStore(item_kvmeta, self.conn)
-        self.rev_kvstore = KVStore(rev_kvmeta, self.conn)
+        metadata.create_all()
+        self.item_kvstore = KVStore(item_kvmeta)
+        self.rev_kvstore = KVStore(rev_kvmeta)
 
     def get_item_id(self, uuid):
         """
@@ -187,8 +186,9 @@ class ItemIndex(object):
         None, if not found.
         """
         item_table = self.item_table
-        sel = select([item_table.c.id], item_table.c.uuid == uuid)
-        result = self.conn.execute(sel).fetchone()
+        result = select([item_table.c.id],
+                        item_table.c.uuid == uuid
+                       ).execute().fetchone()
         if result:
             return result[0]
 
@@ -203,8 +203,7 @@ class ItemIndex(object):
         item_table = self.item_table
         item_id = self.get_item_id(uuid)
         if item_id is None:
-            ins = item_table.insert().values(uuid=uuid, name=name)
-            res = self.conn.execute(ins)
+            res = item_table.insert().values(uuid=uuid, name=name).execute()
             item_id = res.last_inserted_ids()[0]
         self.item_kvstore.store_kv(item_id, metas)
         return item_id
@@ -214,13 +213,12 @@ class ItemIndex(object):
         cache some important values from current revision into item for easy availability
         """
         item_table = self.item_table
-        upd = item_table.update().where(item_table.c.id == item_id).values(
+        item_table.update().where(item_table.c.id == item_id).values(
             current=rev_id,
             name=rev_metas['name'],
             mimetype=rev_metas['mimetype'],
             acl=rev_metas.get('acl', ''),
-        )
-        res = self.conn.execute(upd)
+        ).execute()
 
     def remove_item(self, metas):
         """
@@ -233,8 +231,7 @@ class ItemIndex(object):
         item_id = self.get_item_id(uuid)
         if item_id is not None:
             self.item_kvstore.store_kv(item_id, {})
-            delete = item_table.delete().where(item_table.c.id == item_id)
-            self.conn.execute(delete)
+            item_table.delete().where(item_table.c.id == item_id).execute()
 
     def add_rev(self, uuid, revno, metas):
         """
@@ -247,14 +244,15 @@ class ItemIndex(object):
         item_id = self.update_item(item_metas)
 
         # get (or create) the revision entry
-        sel = select([rev_table.c.id], and_(rev_table.c.revno == revno, rev_table.c.item_id == item_id))
-        result = self.conn.execute(sel).fetchone()
+        result = select([rev_table.c.id],
+                        and_(rev_table.c.revno == revno,
+                             rev_table.c.item_id == item_id)
+                       ).execute().fetchone()
         if result:
             rev_id = result[0]
         else:
             dt = datetime.datetime.utcfromtimestamp(0)
-            ins = rev_table.insert().values(revno=revno, item_id=item_id, datetime=dt)
-            res = self.conn.execute(ins)
+            res = rev_table.insert().values(revno=revno, item_id=item_id, datetime=dt).execute()
             rev_id = res.last_inserted_ids()[0]
 
         self.rev_kvstore.store_kv(rev_id, metas)
@@ -276,13 +274,14 @@ class ItemIndex(object):
 
         # get the revision entry
         rev_table = self.rev_table
-        sel = select([rev_table.c.id], and_(rev_table.c.revno == revno, rev_table.c.item_id == item_id))
-        result = self.conn.execute(sel).fetchone()
+        result = select([rev_table.c.id],
+                        and_(rev_table.c.revno == revno,
+                             rev_table.c.item_id == item_id)
+                       ).execute().fetchone()
         if result:
             rev_id = result[0]
             self.rev_kvstore.store_kv(rev_id, {})
-            delete = rev_table.delete().where(rev_table.c.id == rev_id)
-            self.conn.execute(delete)
+            rev_table.delete().where(rev_table.c.id == rev_id).execute()
 
     def get_uuid_revno_name(self, rev_id):
         """
@@ -290,9 +289,9 @@ class ItemIndex(object):
         """
         item_table = self.item_table
         rev_table = self.rev_table
-        sel = select([item_table.c.uuid, rev_table.c.revno, item_table.c.name],
-                 and_(
-                      rev_table.c.id == rev_id,
-                      item_table.c.id == rev_table.c.item_id))
-        return self.conn.execute(sel).fetchone()
+        result = select([item_table.c.uuid, rev_table.c.revno, item_table.c.name],
+                        and_(rev_table.c.id == rev_id,
+                             item_table.c.id == rev_table.c.item_id)
+                       ).execute().fetchone()
+        return result
 

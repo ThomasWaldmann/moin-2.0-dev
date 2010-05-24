@@ -113,8 +113,9 @@ class KVStore(object):
     (ref_id) that you used for storing those key/value pairs that belong to
     that reference id.
     """
-    def __init__(self, meta, conn):
-        self.conn = conn
+    def __init__(self, meta):
+        # note: for ease of use, we use implicit execution. it requires that
+        # you have bound an engine to the metadata: metadata.bind = engine
         self.fact_table = meta.fact_table
         self.key_table = meta.key_table
         self.value_tables = meta.value_tables
@@ -140,14 +141,14 @@ class KVStore(object):
         key_table = self.key_table
         name = unicode(name)
         value_type = self._get_value_type(value)
-        sel = select([key_table.c.id, key_table.c.value_type], key_table.c.name == name)
-        result = self.conn.execute(sel).fetchone()
+        result = select([key_table.c.id, key_table.c.value_type],
+                        key_table.c.name == name
+                       ).execute().fetchone()
         if result:
             key_id, wanted_value_type = result
             assert wanted_value_type == value_type
         else:
-            ins = key_table.insert().values(name=name, value_type=value_type)
-            res = self.conn.execute(ins)
+            res = key_table.insert().values(name=name, value_type=value_type).execute()
             key_id = res.last_inserted_ids()[0]
         return key_id
 
@@ -157,13 +158,13 @@ class KVStore(object):
         """
         value_type = self._get_value_type(value)
         value_table = self.value_tables[value_type]
-        sel = select([value_table.c.id], value_table.c.value == value)
-        result = self.conn.execute(sel).fetchone()
+        result = select([value_table.c.id],
+                        value_table.c.value == value
+                       ).execute().fetchone()
         if result:
             value_id = result[0]
         else:
-            ins = value_table.insert().values(value=value)
-            res = self.conn.execute(ins)
+            res = value_table.insert().values(value=value).execute()
             value_id = res.last_inserted_ids()[0]
         return value_id
 
@@ -172,26 +173,24 @@ class KVStore(object):
         associate a k/v pair identified by (key_id, value_id) with some entity identified by ref_id
         """
         fact_table = self.fact_table
-        sel = select(['*'], and_(fact_table.c.ref_id == ref_id,
-                                 fact_table.c.key_id == key_id))
-        result = self.conn.execute(sel).fetchone()
+        result = select(['*'],
+                        and_(fact_table.c.ref_id == ref_id,
+                             fact_table.c.key_id == key_id)
+                       ).execute().fetchone()
         if result:
-            upd = fact_table.update().where(
+            res = fact_table.update().where(
                       and_(fact_table.c.ref_id == ref_id,
                            fact_table.c.key_id == key_id)
-                  ).values(value_id=value_id)
-            res = self.conn.execute(upd)
+                  ).values(value_id=value_id).execute()
         else:
-            ins = fact_table.insert().values(ref_id=ref_id, key_id=key_id, value_id=value_id)
-            res = self.conn.execute(ins)
+            res = fact_table.insert().values(ref_id=ref_id, key_id=key_id, value_id=value_id).execute()
 
     def _unassociate_all(self, ref_id):
         """
         unassociate all k/v pairs that are associated with some entity identified by ref_id
         """
         fact_table = self.fact_table
-        delete = fact_table.delete().where(fact_table.c.ref_id == ref_id)
-        res = self.conn.execute(delete)
+        fact_table.delete().where(fact_table.c.ref_id == ref_id).execute()
 
     def store(self, ref_id, name, value):
         """
@@ -209,15 +208,15 @@ class KVStore(object):
         key_table = self.key_table
         value_tables = self.value_tables
         name = unicode(name)
-        sel = select([key_table.c.value_type, fact_table.c.value_id],
-                 and_(
-                      fact_table.c.ref_id == ref_id,
-                      fact_table.c.key_id == key_table.c.id,
-                      key_table.c.name == name))
-        value_type, value_id = self.conn.execute(sel).fetchone()
+        value_type, value_id = select([key_table.c.value_type, fact_table.c.value_id],
+                                      and_(fact_table.c.ref_id == ref_id,
+                                           fact_table.c.key_id == key_table.c.id,
+                                           key_table.c.name == name)
+                                     ).execute().fetchone()
         value_table = value_tables[value_type]
-        sel = select([value_table.c.value], value_table.c.id == value_id)
-        value = self.conn.execute(sel).fetchone()[0]
+        value = select([value_table.c.value],
+                       value_table.c.id == value_id
+                      ).execute().fetchone()[0]
         return value
 
     def store_kv(self, ref_id, kvs):
@@ -235,16 +234,16 @@ class KVStore(object):
         fact_table = self.fact_table
         key_table = self.key_table
         value_tables = self.value_tables
-        sel = select([key_table.c.name, key_table.c.value_type, fact_table.c.value_id],
-                 and_(
-                      fact_table.c.ref_id == ref_id,
-                      fact_table.c.key_id == key_table.c.id))
-        results = self.conn.execute(sel).fetchall()
+        results = select([key_table.c.name, key_table.c.value_type, fact_table.c.value_id],
+                         and_(fact_table.c.ref_id == ref_id,
+                              fact_table.c.key_id == key_table.c.id)
+                        ).execute().fetchall()
         result_dict = {}
         for name, value_type, value_id in results:
             value_table = value_tables[value_type]
-            sel = select([value_table.c.value], value_table.c.id == value_id)
-            value = self.conn.execute(sel).fetchone()[0]
+            value = select([value_table.c.value],
+                           value_table.c.id == value_id
+                          ).execute().fetchone()[0]
             result_dict[name] = value
         return result_dict
 
