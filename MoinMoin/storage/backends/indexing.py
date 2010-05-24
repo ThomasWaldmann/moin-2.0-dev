@@ -19,6 +19,9 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import os
+import time, datetime
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -107,12 +110,14 @@ class IndexingRevisionMixin(object):
         """
         name = self.item.name
         revno = self.revno
+        if self.timestamp is None:
+            self.timestamp = time.time()
         metas = self
         logging.debug("item %r revno %d update index:" % (name, revno))
         for k, v in metas.items():
             logging.debug(" * rev meta %r: %r" % (k, v))
         uuid = name # XXX
-        self._index.add_rev(uuid, revno, metas)
+        self._index.add_rev(uuid, revno, self.timestamp, metas)
 
     def remove_index(self):
         """
@@ -128,8 +133,6 @@ class IndexingRevisionMixin(object):
     # TODO maybe use this class later for data indexing also,
     # TODO by intercepting write() to index data written to a revision
 
-import time, datetime
-import os
 from uuid import uuid4 as gen_uuid
 
 from kvstore import KVStoreMeta, KVStore
@@ -233,7 +236,7 @@ class ItemIndex(object):
             self.item_kvstore.store_kv(item_id, {})
             item_table.delete().where(item_table.c.id == item_id).execute()
 
-    def add_rev(self, uuid, revno, metas):
+    def add_rev(self, uuid, revno, timestamp, metas):
         """
         add a new revision <revno> for item <uuid> with metadata <metas>
 
@@ -251,7 +254,7 @@ class ItemIndex(object):
         if result:
             rev_id = result[0]
         else:
-            dt = datetime.datetime.utcfromtimestamp(0)
+            dt = datetime.datetime.utcfromtimestamp(timestamp)
             res = rev_table.insert().values(revno=revno, item_id=item_id, datetime=dt).execute()
             rev_id = res.last_inserted_ids()[0]
 

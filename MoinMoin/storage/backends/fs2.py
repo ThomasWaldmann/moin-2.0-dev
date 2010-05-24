@@ -12,7 +12,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, tempfile, errno, shutil, time
+import os, tempfile, errno, shutil
 from uuid import uuid4 as make_uuid
 
 import cPickle as pickle
@@ -362,9 +362,6 @@ class BareFS2Backend(BackendBase):
                         self._add_item_internally_locked, (item, revmeta, revdata, revdata_target, itemmeta))
 
     def _commit_item(self, rev):
-        if rev.timestamp is None:
-            rev.timestamp = long(time.time())
-
         item = rev.item
         metadata = {'__timestamp': rev.timestamp}
         metadata.update(rev)
