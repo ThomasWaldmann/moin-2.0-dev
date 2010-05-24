@@ -12,6 +12,9 @@
 import os, struct, tempfile, random, errno, shutil, time
 import cPickle as pickle
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
 try:
     import cdb
 except ImportError:
@@ -255,8 +258,7 @@ class BareFSBackend(BackendBase):
         rev = NewRevision(item, revno)
         rev._revno = revno
         fd, rev._fs_revpath = tempfile.mkstemp('-rev', 'tmp-', self._path)
-        rev._fs_file = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
-        f = rev._fs_file
+        rev._fs_file = f = os.fdopen(fd, 'wb+') # XXX keeps file open as long a rev exists
         f.write(struct.pack('!I', self._revmeta_reserved_space + 4))
         f.seek(self._revmeta_reserved_space + 4)
 
@@ -412,8 +414,7 @@ class BareFSBackend(BackendBase):
             oldrp = rev._fs_revpath
             oldf = rev._fs_file
             fd, rev._fs_revpath = tempfile.mkstemp('-rev', 'tmp-', self._path)
-            rev._fs_file = os.fdopen(fd, 'wb')
-            f = rev._fs_file
+            rev._fs_file = f = os.fdopen(fd, 'wb+')
             f.write(struct.pack('!I', len(md) + 4))
             # write metadata
             f.write(md)
@@ -529,14 +530,12 @@ class BareFSBackend(BackendBase):
 
     def _get_revision_metadata(self, rev):
         if rev._fs_file is None:
-            f = open(rev._fs_revpath, 'rb')
+            rev._fs_file = f = open(rev._fs_revpath, 'rb+') # XXX keeps file open as long as rev exists
+                                                            # XXX further, this is easily triggered by accessing ANY
+                                                            # XXX revision metadata (e.g. the timestamp or size or ACL)
             datastart = f.read(4)
             datastart = struct.unpack('!L', datastart)[0]
-            pos = datastart
-            rev._fs_file = f # XXX keeps file open as long as rev exists
-                             # XXX further, this is easily triggered by accessing ANY
-                             # XXX revision metadata (e.g. the timestamp or size or ACL)
-            rev._datastart = datastart
+            rev._datastart = pos = datastart
         else:
             f = rev._fs_file
             pos = f.tell()
