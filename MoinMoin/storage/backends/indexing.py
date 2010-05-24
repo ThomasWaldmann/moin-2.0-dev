@@ -37,6 +37,14 @@ class IndexingBackendMixin(object):
         self._index = ItemIndex(index_uri)
 
 
+    def history_from_index(self, mountpoint, item_name=u'', reverse=True, start=None, end=None):
+        """
+        History implementation using the index.
+        """
+        for result in self._index.history(mountpoint, item_name, reverse, start, end):
+            yield result
+
+
 class IndexingItemMixin(object):
     """
     Item indexing support
@@ -139,7 +147,7 @@ from kvstore import KVStoreMeta, KVStore
 
 from sqlalchemy import Table, Column, Integer, String, Unicode, DateTime, PickleType, MetaData, ForeignKey
 from sqlalchemy import create_engine, select
-from sqlalchemy.sql import and_, exists
+from sqlalchemy.sql import and_, exists, asc, desc
 
 from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
@@ -301,4 +309,38 @@ class ItemIndex(object):
                              item_table.c.id == rev_table.c.item_id)
                        ).execute().fetchone()
         return result
+
+    def history(self, mountpoint, item_name=u'', reverse=True, start=None, end=None):
+        """
+        Yield ready-to-use history raw data for this backend.
+        """
+        if mountpoint:
+            mountpoint += '/'
+
+        item_table = self.item_table
+        rev_table = self.rev_table
+
+        selection = [rev_table.c.datetime, item_table.c.name, rev_table.c.revno, rev_table.c.id, ]
+
+        if reverse:
+            order_attr = desc(rev_table.c.datetime)
+        else:
+            order_attr = asc(rev_table.c.datetime)
+
+        if not item_name:
+            # empty item_name = all items
+            condition = item_table.c.id == rev_table.c.item_id
+        else:
+            condition = and_(item_table.c.id == rev_table.c.item_id,
+                             item_table.c.name == item_name)
+
+        query = select(selection, condition).order_by(order_attr)
+        if start is not None:
+            query = query.offset(start)
+            if end is not None:
+                query = query.limit(end-start)
+
+        for rev_datetime, name, revno, rev_id in query.execute().fetchall():
+            rev_metas = self.rev_kvstore.retrieve_kv(rev_id)
+            yield (rev_datetime, mountpoint + name, revno, rev_metas)
 
