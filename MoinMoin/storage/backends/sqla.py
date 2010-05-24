@@ -66,7 +66,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import time
 from threading import Lock
 
 from sqlalchemy import create_engine, Column, Unicode, Integer, Binary, PickleType, ForeignKey
@@ -260,8 +259,6 @@ class SQLAlchemyBackend(Backend):
             raise StorageError("The item's name is too long for this backend. It must be less than %s." % NAME_LEN)
         else:
             # Flushing of item succeeded. That means we can try to flush the revision.
-            if revision.timestamp is None:
-                revision.timestamp = int(time.time())
             # Close the item's data container and add potentially pending chunks.
             revision._data.close()
             session.add(revision)

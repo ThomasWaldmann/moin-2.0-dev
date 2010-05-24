@@ -270,8 +270,6 @@ class BareMemoryBackend(BackendBase):
 
         revision._data.seek(0)
 
-        if revision.timestamp is None:
-            revision.timestamp = long(time.time())
         if revision._metadata is None:
             revision._metadata = {}
         revision._metadata['__timestamp'] = revision.timestamp

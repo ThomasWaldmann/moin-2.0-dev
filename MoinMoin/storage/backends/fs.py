@@ -9,7 +9,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, struct, tempfile, random, errno, shutil, time
+import os, struct, tempfile, random, errno, shutil
 import cPickle as pickle
 
 from MoinMoin import log
@@ -400,9 +400,6 @@ class BareFSBackend(BackendBase):
                         self._add_item_internally_locked, (item, newrev, metadata))
 
     def _commit_item(self, rev):
-        if rev.timestamp is None:
-            rev.timestamp = long(time.time())
-
         item = rev.item
         metadata = {'__timestamp': rev.timestamp}
         metadata.update(rev)
