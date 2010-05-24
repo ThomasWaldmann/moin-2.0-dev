@@ -48,7 +48,6 @@ UUID_LEN = len(make_uuid().hex)
 
 class Item(IndexingItemMixin, ItemBase):
     def __init__(self, backend, item_name, _fs_item_id=None, _fs_metadata=None, *args, **kw):
-        self._backend = backend
         self._fs_item_id = _fs_item_id
         self._fs_metadata = _fs_metadata
         super(Item, self).__init__(backend, item_name, *args, **kw)
@@ -66,15 +65,15 @@ class StoredRevision(IndexingRevisionMixin, StoredRevisionBase):
 
 class NewRevision(IndexingRevisionMixin, NewRevisionBase):
     def __init__(self, item, revno, *args, **kw):
+        super(NewRevision, self).__init__(item, revno, *args, **kw)
         def maketemp(kind):
-            tmp_dir = item._backend._make_path(kind)
+            tmp_dir = self._backend._make_path(kind)
             fd, tmp_path = tempfile.mkstemp('.tmp', '', tmp_dir)
             tmp_file = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
             return tmp_file, tmp_path
 
         self._fs_file_meta, self._fs_path_meta = maketemp('meta')
         self._fs_file_data, self._fs_path_data = maketemp('data')
-        super(NewRevision, self).__init__(item, revno, *args, **kw)
 
 
 class BareFS2Backend(BackendBase):
