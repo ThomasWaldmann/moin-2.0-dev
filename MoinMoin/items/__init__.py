@@ -325,17 +325,17 @@ class Item(object):
         timestamp = time.time()
         # XXX if meta is from old revision, and user did not give a non-empty
         # XXX comment, re-using the old rev's comment is wrong behaviour:
-        newrev[EDIT_LOG_COMMENT] = comment or meta.get(EDIT_LOG_COMMENT, u'')
+        newrev[EDIT_LOG_COMMENT] = unicode(comment or meta.get(EDIT_LOG_COMMENT, ''))
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
         # allow override by give metadata:
         assert mimetype is not None
         newrev[MIMETYPE] = unicode(meta.get(MIMETYPE, mimetype))
-        newrev[EDIT_LOG_ACTION] = action
+        newrev[EDIT_LOG_ACTION] = unicode(action)
         newrev[EDIT_LOG_ADDR] = unicode(request.remote_addr)
         newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, request.remote_addr))
         newrev[EDIT_LOG_USERID] = unicode(request.user.valid and request.user.id or '')
-        newrev[EDIT_LOG_EXTRA] = extra
+        newrev[EDIT_LOG_EXTRA] = unicode(extra)
         storage_item.commit()
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)

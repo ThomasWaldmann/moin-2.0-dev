@@ -68,7 +68,9 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
         content, userprofile, trash = _create_backends(sqla.SQLAlchemyBackend, instance_uri, index_uri)
 
     elif backend_uri == MEMORY_PREFIX:
-        content, userprofile, trash = _create_backends(memory.MemoryBackend, '', '')
+        instance_uri = ''
+        index_uri = 'sqlite://' # default is memory
+        content, userprofile, trash = _create_backends(memory.MemoryBackend, instance_uri, index_uri)
 
     else:
         raise ConfigurationError("No proper backend uri provided. Given: %r" % backend_uri)
