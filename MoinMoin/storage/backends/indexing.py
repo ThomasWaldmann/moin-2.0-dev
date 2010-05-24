@@ -141,6 +141,10 @@ from sqlalchemy import Table, Column, Integer, String, Unicode, DateTime, Pickle
 from sqlalchemy import create_engine, select
 from sqlalchemy.sql import and_, exists
 
+from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
+                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
+                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           IS_SYSPAGE, SYSPAGE_VERSION
 
 class ItemIndex(object):
     """
@@ -201,7 +205,7 @@ class ItemIndex(object):
 
         note: if item does not exist already, it is added
         """
-        name = metas.get('name', '') # item name (if revisioned: same as current revision's name) XXX not there yet
+        name = metas.get(NAME, '') # item name (if revisioned: same as current revision's name) XXX not there yet
         uuid = metas.get('uuid', name) # item uuid (never changes) XXX we use name as long we have no uuid
         item_table = self.item_table
         item_id = self.get_item_id(uuid)
@@ -218,9 +222,9 @@ class ItemIndex(object):
         item_table = self.item_table
         item_table.update().where(item_table.c.id == item_id).values(
             current=rev_id,
-            name=rev_metas['name'],
-            mimetype=rev_metas['mimetype'],
-            acl=rev_metas.get('acl', ''),
+            name=rev_metas[NAME],
+            mimetype=rev_metas[MIMETYPE],
+            acl=rev_metas.get(ACL, ''),
         ).execute()
 
     def remove_item(self, metas):
@@ -243,7 +247,7 @@ class ItemIndex(object):
         currently assumes that added revision will be latest/current revision (not older/non-current)
         """
         rev_table = self.rev_table
-        item_metas = dict(uuid=uuid, name=metas['name'])
+        item_metas = dict(uuid=uuid, name=metas[NAME])
         item_id = self.update_item(item_metas)
 
         # get (or create) the revision entry
