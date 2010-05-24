@@ -45,14 +45,37 @@ HASH_NAME = 'sha1' # XXX use request.cfg.hash_algorithm
 HASH_HEX_LEN = 40 # sha1 = 160 bit
 UUID_LEN = len(make_uuid().hex)
 
+
 class Item(IndexingItemMixin, ItemBase):
-    pass
+    def __init__(self, backend, item_name, _fs_item_id=None, _fs_metadata=None, *args, **kw):
+        self._backend = backend
+        self._fs_item_id = _fs_item_id
+        self._fs_metadata = _fs_metadata
+        super(Item, self).__init__(backend, item_name, *args, **kw)
+
 
 class StoredRevision(IndexingRevisionMixin, StoredRevisionBase):
-    pass
+    def __init__(self, item, revno, _fs_path_meta=None, *args, **kw):
+        self._fs_path_meta = _fs_path_meta
+        self._fs_path_data = None
+        self._fs_file_meta = None
+        self._fs_file_data = None
+        self._fs_metadata = None
+        super(StoredRevision, self).__init__(item, revno, *args, **kw)
+
 
 class NewRevision(IndexingRevisionMixin, NewRevisionBase):
-    pass
+    def __init__(self, item, revno, *args, **kw):
+        def maketemp(kind):
+            tmp_dir = item._backend._make_path(kind)
+            fd, tmp_path = tempfile.mkstemp('.tmp', '', tmp_dir)
+            tmp_file = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
+            return tmp_file, tmp_path
+
+        self._fs_file_meta, self._fs_path_meta = maketemp('meta')
+        self._fs_file_data, self._fs_path_data = maketemp('data')
+        super(NewRevision, self).__init__(item, revno, *args, **kw)
+
 
 class BareFS2Backend(BackendBase):
     """
@@ -127,13 +150,8 @@ class BareFS2Backend(BackendBase):
                 # oops, no such file, item/revision removed manually?
                 continue
             item_name = self._get_item_name(item_id) # this is the current name, NOT the name at revno
-            item = Item(self, item_name)
-            item._fs_item_id = item_id
-            rev = StoredRevision(item, revno, ts)
-            rev._fs_path_meta = mp
-            rev._fs_file_meta = None
-            rev._fs_file_data = None
-            rev._fs_metadata = None
+            item = Item(self, item_name, _fs_item_id=item_id)
+            rev = StoredRevision(item, revno, ts, _fs_path_meta=mp)
             yield rev
         results.close()
 
@@ -182,11 +200,7 @@ class BareFS2Backend(BackendBase):
         if item_id is None:
             raise NoSuchItemError("No such item '%r'." % itemname)
 
-        item = Item(self, itemname)
-        item._fs_item_id = item_id
-        item._fs_metadata = None
-
-        return item
+        return Item(self, itemname, _fs_item_id=item_id)
 
     def has_item(self, itemname):
         return self._get_item_id(itemname) is not None
@@ -198,11 +212,7 @@ class BareFS2Backend(BackendBase):
         elif self.has_item(itemname):
             raise ItemAlreadyExistsError("An item '%r' already exists!" % itemname)
 
-        item = Item(self, itemname)
-        item._fs_item_id = None
-        item._fs_metadata = {}
-
-        return item
+        return Item(self, itemname, _fs_metadata={})
 
     def iteritems(self):
         name2id = self._name2id
@@ -211,8 +221,7 @@ class BareFS2Backend(BackendBase):
             item_name = row[name2id.c.item_name]
             item_id = row[name2id.c.item_id]
             item_id = str(item_id) # we get unicode!
-            item = Item(self, item_name)
-            item._fs_item_id = item_id
+            item = Item(self, item_name, _fs_item_id=item_id)
             yield item
         results.close()
 
@@ -229,14 +238,7 @@ class BareFS2Backend(BackendBase):
         if not os.path.exists(mp):
             raise NoSuchRevisionError("Item '%r' has no revision #%d." % (item.name, revno))
 
-        rev = StoredRevision(item, revno)
-        rev._fs_path_meta = mp
-        rev._fs_path_data = None
-        rev._fs_file_meta = None
-        rev._fs_file_data = None
-        rev._fs_metadata = None
-
-        return rev
+        return StoredRevision(item, revno, _fs_path_meta=mp)
 
     def _list_revisions(self, item):
         if item._fs_item_id is None:
@@ -261,15 +263,7 @@ class BareFS2Backend(BackendBase):
             raise RevisionNumberMismatchError("The latest revision of the item '%r' is #%d, thus you cannot create revision #%d. \
                                                The revision number must be latest_revision + 1." % (item.name, last_rev, revno))
 
-        rev = NewRevision(item, revno)
-        rev._revno = revno
-
-        fd, rev._fs_path_meta = tempfile.mkstemp('.tmp', '', self._make_path('meta'))
-        rev._fs_file_meta = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
-
-        fd, rev._fs_path_data = tempfile.mkstemp('.tmp', '', self._make_path('data'))
-        rev._fs_file_data = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
-        return rev
+        return NewRevision(item, revno)
 
     def _destroy_revision(self, rev):
         if rev._fs_file_meta is not None:
