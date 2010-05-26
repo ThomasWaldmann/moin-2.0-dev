@@ -86,7 +86,7 @@ class _Stack(list):
         """
         tag = self[-1].tag
         return tag.uri == moin_page.namespace and tag.name in names
-    
+
 class Converter(ConverterMacro):
     @classmethod
     def _factory(cls, _request, input, output, **kw):
@@ -94,18 +94,14 @@ class Converter(ConverterMacro):
            input == 'application/x-xhtml-moin-page':
             return cls
 
-	#TODO : * Add Arguments
+    #TODO : * Add Arguments
     def __call__(self, content, arguments=None):
         iter_content = _Iter(content)
-        
-        print content
-		
-		#Add Attrib for the page
+
+        #Add Attrib for the page
         body = moin_page.body()
         stack = _Stack(body)
-        
-        #Should explore each tag here :
-        	
-        root = moin_page.page(children=[body])
 
+        #Should explore each tag here
+        root = moin_page.page(children=[body])
         return root

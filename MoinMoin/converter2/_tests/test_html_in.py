@@ -22,7 +22,7 @@ class Base(object):
         html.namespace: '',
         moin_page.namespace: 'page'
     }
-        
+
     def do(self, input, path, string_test, args={}):
         out = self.conv(input, **args)
         tree = ET.ElementTree(out)
