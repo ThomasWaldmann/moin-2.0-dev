@@ -10,24 +10,29 @@ import re
 
 from MoinMoin.converter2.html_in import *
 from emeraldtree.tree import *
+from lxml import etree
 import StringIO
 
 class Base(object):
-    output_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:html="%s" xmlns:xlink="%s"' % (
-        moin_page.namespace,
-        moin_page.namespace,
-        html.namespace,
-        xlink.namespace)
-    input_namespaces = {
-        html.namespace: '',
-        moin_page.namespace: 'page'
+    namespaces = {
+        moin_page.namespace: '',
+        xlink.namespace: 'xlink',
     }
+
+    output_re = re.compile(r'\s+xmlns(:\S+)?="[^"]+"')
 
     def do(self, input, path, string_test, args={}):
         out = self.conv(input, **args)
-        tree = ET.ElementTree(out)
-        dump(tree)
-        assert tree.findtext(path) == string_test
+        f = StringIO.StringIO()
+        out.write(f.write, namespaces=self.namespaces,)
+
+        str_input = self.output_re.sub(u'',f.getvalue())
+        tree = etree.parse(StringIO.StringIO(str_input))
+        
+        r = tree.xpath(path)
+
+        assert len(r) == 1
+        assert tree.xpath(path) == string_test
 
 class TestConverter(Base):
     def setup_class(self):
