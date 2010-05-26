@@ -172,7 +172,7 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
-    
+
     def test_span_xpath(self):
         test_input = '<page><body><p><span baseline-shift="sub">sub</span>script</p></body></page>'
         out = self.conv(self.handle_input(test_input), )
