@@ -30,6 +30,9 @@ class Moinwiki(object):
     underline = '__'
     stroke_open = '--('
     stroke_close = ')--'
+    table_marker = '||'
+    p = '\n\n'
+
 
     # TODO: list type[(*,'lower-*')]
     list_type = {\
@@ -287,20 +290,73 @@ class Converter(object):
     def close_moinpage_strong(self, elem):
         return Moinwiki.strong
 
-
-    # TODO:conversion for moinpage.table*
-
+    # TODO: table and row attributes stack for output in first cell
     def open_moinpage_table(self, elem):
+        # TODO: tableclass attribute
+        if elem.children:
+            children.append(list(elem.children))
+            opened.append(elem)    
         return ''
 
-    def open_moinpage_table_cell(self, elem):
+    def close_moinpage_table(self, elem):
+        return ''
+
+    # TODO: header and footer class attribute, needs some variable, which would be used in table_cell
+    def open_moinpage_table_header(self, elem):
+        if elem.children:
+            children.append(list(elem.children))
+            opened.append(elem)    
+        return '' 
+
+    def close_moinpage_table_header(self, elem):
+        return ''
+
+    def open_moinpage_table_footer(self, elem):
+        if elem.children:
+            children.append(list(elem.children))
+            opened.append(elem)    
+        return '' 
+
+    def close_moinpage_table_footer(self, elem):
+        return ''
+
+    def open_moinpage_table_body(self, elem):
+        if elem.children:
+            children.append(list(elem.children))
+            opened.append(elem)    
+        return ''    
+
+    def close_moinpage_table_body(self, elem):
         return ''
 
     def open_moinpage_table_row(self, elem):
+        # TODO: rowclass attribute
+        if elem.children:
+            children.append(list(elem.children))
+            opened.append(elem)    
+    def close_moinpage_table_row(self, elem):
+        return Moinwiki.table_marker
+
+    def open_moinpage_table_cell(self, elem):
+        number_columns_spanned = elem.get(moin_page.number_columns_spanned, 1)
+        number_rows_spanned = elem.get(moinpage.number_rows_spanned, None)
+        ret = Moinwiki.table_marker * number_columns_spanned
+
+        # TODO: all attributes support
+        # 'class', 'style', 'number-columns-spanned', 'number-rows-spanned'
+        if number_rows_spanned:
+             ret += '<rowspan'+number_rows_spanned+'>'
+             # this is wrong example, only one attribute support
+
+        if elem.children:
+            children.append(list(elem.children))
+            opened.append(elem)    
+        return ret
+
+    def close_moinpage_table_cell(self, elem):
         return ''
 
 
 
 from . import default_registry
 default_registry.register(Converter._factory)
-
