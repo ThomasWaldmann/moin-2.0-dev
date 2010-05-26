@@ -1,11 +1,12 @@
 """
 MoinMoin - Moinwiki markup output converter
 
-Converts an internal document tree into a moinwiki markup.
+Converts an internal document tree into moinwiki markup.
 
 This is preprealpha version, do not use it, it doesn't work.
 
 @copyright: 2008 MoinMoin:BastianBlank
+            2010 MoinMoin:DmitryAndreev
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -13,7 +14,7 @@ from __future__ import absolute_import
 
 from MoinMoin.util.tree import moin_page, xlink
 
-class moinwiki:
+class Moinwiki(object):
     '''
     Moinwiki syntax elements
     It's dummy
@@ -30,10 +31,19 @@ class moinwiki:
     stroke_open = '--('
     stroke_close = ')--'
 
+    # TODO: list type[(*,'lower-*')]
+    list_type = {\
+        ('definition', None):'',\
+        ('ordered', None):'1.',\
+        ('ordered', 'upper-alpha'):'A.',\
+        ('ordered', 'upper-roman'):'I.',\
+        ('unordered', None):'*'
+    }
+
     def __init__(self):
         pass
 
-class Converter():
+class Converter(object):
     """
     Converter application/x.moin.document -> text/x.moin.wiki
     """
@@ -47,9 +57,10 @@ class Converter():
         self.request = request
 
     def __call__(self, root):
-        opened = [None, ]
-        children = [[root], None ]
-        output = []
+        self.opened = [None, ]
+        self.children = [[root], None ]
+        self.output = []
+        self.list_item_lable = []
         
         while children[0]:
             if children[0]:
@@ -117,7 +128,7 @@ class Converter():
         return a_close 
 
     def open_moinpage_blockcode(self, elem):
-        ret = moinwiki.verbatim_open        
+        ret = Moinwiki.verbatim_open        
         if elem.children:
             children.append(list(elem.children))
             opened.append(elem)
@@ -126,10 +137,10 @@ class Converter():
         return ret
 
     def close_moinpage_blockcode(self, elem):
-        return moinwiki.verbatim_close
+        return Moinwiki.verbatim_close
 
     def open_moinpage_code(self, elem):
-        ret = moinwiki.monospace
+        ret = Moinwiki.monospace
         if elem.children:
             children.append(list(elem.children))
             opened.append(elem)
@@ -138,7 +149,7 @@ class Converter():
         return ret
 
     def close_moinpage_code(self, elem):
-        return moinwiki.monospace
+        return Moinwiki.monospace
 
     def open_moinpage_div(self, elem):
         return ''
@@ -147,7 +158,7 @@ class Converter():
         return ''
 
     def open_moinpage_emphasis(self, elem):
-        ret = moinwiki.emphasis
+        ret = Moinwiki.emphasis
         if elem.children:
             self.children.append(list(elem.children))
             self.opened_nodes.append(elem)
@@ -156,7 +167,7 @@ class Converter():
         return ret
 
     def close_moinpage_emphasis(self, elem):
-        return moinwiki.emphasis
+        return Moinwiki.emphasis
 
 
     def open_moinpage_h(self, elem):
@@ -169,7 +180,7 @@ class Converter():
             level = 1
         elif level > 6:
             level = 6
-        ret = moinwiki.h * level
+        ret = Moinwiki.h * level
         if elem.children:
             children.append(list(elem.children))
             opened.append(elem)
@@ -187,21 +198,58 @@ class Converter():
             level = 1
         elif level > 6:
             level = 6
-        return moinwiki.h * level 
+        return Moinwiki.h * level 
 
     def open_moinpage_line_break(self, elem):
-        return moinwiki.linebreak
+        return Moinwiki.linebreak
 
     def open_moinpage_list(self, elem):
-        #TODO
+        if elem.children:
+            label_type = (elem.get(moin_page.item_label_generate, None), elem.get(moin_page.list_style_type, None))
+            self.list_item_labels.append(Moinwiki.list_label_type.get(label_type, ''))
+            self.children.append(list(elem.children))
+            self.opened.append(elem)
+        return ''
+        
+    def close__moinpage_list(self, elem):
+        self.list_item_labels.pop()
         return ''
 
+
+    def open_moinpage_list_item(self, elem):
+        if elem.children:
+            self.children.append(list(elem.children))
+            self.opened.append(elem)
+        # TODO: return shift, equal list level + list_label
+        return ''
+
+    def close_moinpage_list_item(self, elem):
+        return ''
+
+    def open_moinpage_list_label(self, elem):
+        if elem.children:
+            self.children.append(list(elem.children))
+            self.opened.append(elem)
+        return ''
+
+    def close_moinpage_list_label(self, elem):
+        return ''
+
+    def open_moinpage_list_item_body(self, elem):
+        if elem.children:
+            self.children.append(list(elem.children))
+            self.opened.append(elem)
+        return ''
+
+    def close_moinpage_list_item_body(self, elem):
+        return ''
+        
     def open_moinpage_object(self, elem):
-        #TODO
+        # TODO
         return ''
 
     def open_moinpage_p(self, elem):
-        ret = moinwiki.p
+        ret = moinpage_list_Moinwiki.p
         if elem.children:
             children.append(list(elem.children))
             opened.append(elem)
@@ -210,25 +258,25 @@ class Converter():
         return ret
 
     def close_moinpage_p(self, elem):
-        return moinwiki.p
+        return Moinwiki.p
 
     def open_moinpage_page(self, elem):
-        #TODO
+        # TODO
         return ''
 
     def open_moinpage_part(self, elem):
-        #TODO
+        # TODO
         return ''
 
     def open_moinpage_separator(self, elem):
-        return moinwiki.separator
+        return Moinwiki.separator
 
     def open_moinpage_span(self, elem):
         # TODO
         return ''
 
     def open_moinpage_strong(self, elem):
-        ret = moinwiki.strong
+        ret = Moinwiki.strong
         if elem.children:
             children.append(list(elem.children))
             opened.append(elem)
@@ -237,10 +285,11 @@ class Converter():
         return ret
 
     def close_moinpage_strong(self, elem):
-        return moinwiki.strong
+        return Moinwiki.strong
 
 
-    #TODO: convertrion for moinpage.table*
+    # TODO:conversion for moinpage.table*
+
     def open_moinpage_table(self, elem):
         return ''
 
