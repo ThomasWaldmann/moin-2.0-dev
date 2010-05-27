@@ -94,14 +94,14 @@ class Converter(ConverterMacro):
            input == 'application/x-xhtml-moin-page':
             return cls
 
-    #TODO : * Add Arguments
+    # TODO : * Add Arguments
     def __call__(self, content, arguments=None):
         iter_content = _Iter(content)
 
-        #Add Attrib for the page
+        # Add Attrib for the page
         body = moin_page.body()
         stack = _Stack(body)
 
-        #Should explore each tag here
+        # Should explore each tag here
         root = moin_page.page(children=[body])
         return root
