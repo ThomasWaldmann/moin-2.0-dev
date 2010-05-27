@@ -53,21 +53,21 @@ class JinjaTheme(object):
                                                                         rev[EDIT_LOG_ADDR],
                                                                         rev[EDIT_LOG_HOSTNAME])
 
-    def render_header(context={}):
+    def render_header(self, context={}):
         """
         Function that renders header.
         """
         return render('header.html', **context)    
     
-    def render_footer(context={}):
+    def render_footer(self, context={}):
         """
         Function that renders footer.
         """
         return render('footer.html', **context)
     
-    def render(filename, context={}):
+    def render(self, filename, context={}):
         """
-        Function that renders using Jinja2.
+        Base function that renders using Jinja2.
         """
         return template.render(**context)
     
