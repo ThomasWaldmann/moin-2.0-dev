@@ -3,3 +3,26 @@
 Gonna start with Search Form.	
 	
 #}
+<form id="searchform" method="get" action="{{ url }}">
+<div>
+<input type="hidden" name="do" value="fullsearch">
+<input type="hidden" name="context" value="180">
+<label for="searchinput">{{ search_label }}</label>
+<input id="searchinput" type="text" name="value" value="{{ search_value }}" size="20"
+    onfocus="searchFocus(this)" onblur="searchBlur(this)"
+    onkeyup="searchChange(this)" onchange="searchChange(this)" alt="Search">
+<input id="titlesearch" name="titlesearch" type="submit"
+    value="{{ search_title_label }}" alt="Search Titles">
+<input id="fullsearch" name="fullsearch" type="submit"
+    value="{{ search_full_label }}" alt="Search Full Text">
+</div>
+</form>
+<script type="text/javascript">
+<!--// Initialize search form
+var f = document.getElementById('searchform');
+f.getElementsByTagName('label')[0].style.display = 'none';
+var e = document.getElementById('searchinput');
+searchChange(e);
+searchBlur(e);
+//-->
+</script>

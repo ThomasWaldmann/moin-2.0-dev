@@ -4,6 +4,7 @@
 
     @copyright: 2003-2009 MoinMoin:ThomasWaldmann,
                 2008 MoinMoin:RadomirDopieralski
+                2010 MoinMoin:DiogenesAugustoFernandesHerminio
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -721,32 +722,7 @@ class ThemeBase:
             }
         d.update(updates)
 
-        html = u'''
-<form id="searchform" method="get" action="%(url)s">
-<div>
-<input type="hidden" name="do" value="fullsearch">
-<input type="hidden" name="context" value="180">
-<label for="searchinput">%(search_label)s</label>
-<input id="searchinput" type="text" name="value" value="%(search_value)s" size="20"
-    onfocus="searchFocus(this)" onblur="searchBlur(this)"
-    onkeyup="searchChange(this)" onchange="searchChange(this)" alt="Search">
-<input id="titlesearch" name="titlesearch" type="submit"
-    value="%(search_title_label)s" alt="Search Titles">
-<input id="fullsearch" name="fullsearch" type="submit"
-    value="%(search_full_label)s" alt="Search Full Text">
-</div>
-</form>
-<script type="text/javascript">
-<!--// Initialize search form
-var f = document.getElementById('searchform');
-f.getElementsByTagName('label')[0].style.display = 'none';
-var e = document.getElementById('searchinput');
-searchChange(e);
-searchBlur(e);
-//-->
-</script>
-''' % d
-        return html
+        return self.render('header.html', d)
 
     def showversion(self, d, **keywords):
         """
@@ -1576,6 +1552,12 @@ actionsMenuInit('%(label)s');
             self.request.redirect()
         return u'<div class="sidebar">%s</div>' % buffer.getvalue()
 
+    def render(self, filename, context={}):
+        """
+        Base function that renders using Jinja2.
+        """
+        template = self.env.get_template(filename)
+        return template.render(**context)
 
 class ThemeNotFound(Exception):
     """ Thrown if the supplied theme could not be found anywhere """
@@ -1622,4 +1604,5 @@ def load_theme_fallback(request, theme_name=None):
             fallback = 2
             from MoinMoin.theme.modernized import Theme
             request.theme = Theme(request)
+
 
