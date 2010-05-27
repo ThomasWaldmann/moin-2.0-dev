@@ -292,9 +292,8 @@ class ThemeBase(object):
                 userlinks.append(d['page'].link_to(request, text=_("Login"),
                                                    querystr=query, id='login', rel='nofollow'))
 
-        userlinks_html = u'<span class="sep"> | </span>'.join(userlinks)
-        html = u'<div id="username">%s</div>' % userlinks_html
-        return html
+        #userlinks_html = u'<span class="sep"> | </span>'.join(userlinks)
+        return { 'userlinks' : userlinks }
 
     def splitNavilink(self, text, localize=1):
         """ Split navibar links into pagename, link to page
@@ -1167,7 +1166,7 @@ actionsMenuInit('%(label)s');
         # Now pass dicts to render('header.html', newdict)
         d.update(self.logo())
         d.update(self.searchform(d))
-        #d.update(self.username(d))
+        d.update(self.username(d))
         d.update(self.interwiki())
         
         #Start of page
