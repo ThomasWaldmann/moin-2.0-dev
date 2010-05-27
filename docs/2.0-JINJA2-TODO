@@ -1,4 +1,11 @@
 Jinja2 
--------
+=======================
 
-* Have to convert templates to Jinja2.
+* Create header.html and footer.html
+* Pass variables as context
+* Don't FORGET to put business logic in class itself and then pass to template
+
+List:
+  1- Search Form
+
+* Switch Theme to JinjaTheme in Page
