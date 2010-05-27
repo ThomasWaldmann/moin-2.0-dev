@@ -4,7 +4,7 @@
     
     This module will be used to rendering a theme using Jinja2.
     
-    @copyright: 2010 MoinMoin:DiogenesAugustoFernandesHermínio
+    @copyright: 2010 MoinMoin:DiogenesAugustoFernandesHerminio
     @license: GNU GPL, see COPYING for details.
 """
 
