@@ -31,7 +31,7 @@ import sys, xml
 rss_supported = sys.version_info[:3] >= (2, 5, 1) or '_xmlplus' in xml.__file__
 
 
-class ThemeBase:
+class ThemeBase(object):
     """ Base class for themes
 
     This class supply all the standard template that sub classes can
@@ -189,31 +189,30 @@ class ThemeBase:
         admin inserted in the config file. Everything it enclosed inside
         a div with id="logo".
 
-        @rtype: unicode
-        @return: logo html
+        @rtype: dict
+        @return: logo variable
         """
-        html = u''
+        d = {}
         if self.cfg.logo_string:
             page = wikiutil.getFrontPage(self.request)
             logo = page.link_to_raw(self.request, self.cfg.logo_string)
-            html = u'''<div id="logo">%s</div>''' % logo
-        return html
+            d = { 'logo': logo }
+        return d
 
-    def interwiki(self, d):
+    def interwiki(self):
         """ Assemble the interwiki name display, linking to page_front_page
 
         @param d: parameter dictionary
-        @rtype: string
-        @return: interwiki html
+        @rtype: dict
+        @return: interwiki link
         """
+        d = {}
         if self.request.cfg.show_interwiki:
             page = wikiutil.getFrontPage(self.request)
             text = self.request.cfg.interwikiname or 'Self'
             link = page.link_to(self.request, text=text, rel='nofollow')
-            html = u'<span id="interwiki">%s<span class="sep">: </span></span>' % link
-        else:
-            html = u''
-        return html
+            d = {'interwiki_link' : link}
+        return d
 
     def title(self, d):
         """ Assemble the title (now using breadcrumbs)
@@ -722,7 +721,7 @@ class ThemeBase:
             }
         d.update(updates)
 
-        return self.render('header.html', d)
+        return d
 
     def showversion(self, d, **keywords):
         """
@@ -1141,10 +1140,11 @@ actionsMenuInit('%(label)s');
     def startPage(self):
         """ Start page div with page language and direction
 
-        @rtype: unicode
-        @return: page div with language and direction attribtues
+        @rtype: dict
+        @return: language and direction attributes
         """
-        return u'<div id="page"%s>\n' % self.content_lang_attr()
+        d = { 'content_lang': self.content_lang_attr()}
+        return d
 
     def endPage(self):
         """ End page div
@@ -1162,6 +1162,18 @@ actionsMenuInit('%(label)s');
         @param d: parameter dictionary
         @rtype: unicode
         @return: page header html
+        """
+        
+        # Now pass dicts to render('header.html', newdict)
+        d.update(self.logo())
+        d.update(self.searchform(d))
+        #d.update(self.username(d))
+        d.update(self.interwiki())
+        
+        #Start of page
+        d.update(self.startPage())
+        print d
+        return self.render('header.html', d)
         """
         html = [
             # Pre header custom html
@@ -1191,7 +1203,8 @@ actionsMenuInit('%(label)s');
             self.startPage(),
         ]
         return u'\n'.join(html)
-
+        """
+        
     def footer(self, d, **keywords):
         """ Assemble wiki footer
 
@@ -1414,7 +1427,7 @@ actionsMenuInit('%(label)s');
             }
             request.themedict = d
             output.append(self.startPage())
-            output.append(self.interwiki(d))
+            output.append(self.interwiki())
             output.append(self.title(d))
 
         # In standard mode, emit theme.header
