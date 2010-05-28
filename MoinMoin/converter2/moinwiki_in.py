@@ -638,7 +638,7 @@ class Converter(ConverterMacro):
 
     def inline_size_repl(self, stack, size, size_begin=None, size_end=None):
         if size_begin:
-            size = size[1] == '+' and '120%' or '85%'
+            size = '120%' if size[1] == '+' else '85%'
             attrib = {moin_page.font_size: size}
             elem = moin_page.span(attrib=attrib)
             stack.push(elem)
