@@ -44,8 +44,11 @@ class TestConverter(Base):
 
     def test_base(self):
         data = [
-            ('<page:page><page:body><page:h page:outline-level="2">Test:</page:h>\n<page:strong>strong</page:strong>\n<page:emphasis>emphasis</page:emphasis>\n<page:blockcode>blockcode</page:blockcode>\n<page:code>monospace</page:code></page:body></page:page>',
-                "== Test: ==\n'''strong'''\n''emphasis''\n{{{blockcode}}}\n`monospace`"),
+            ('<page:page><page:body><page:h page:outline-level="3">Text:</page:h>\n<page:strong>strong</page:strong>\n<page:emphasis>emphasis</page:emphasis>\n<page:blockcode>blockcode</page:blockcode>\n<page:code>monospace</page:code></page:body></page:page>',
+                "=== Text: ===\n'''strong'''\n''emphasis''\n{{{blockcode}}}\n`monospace`"),
+            ('<page:page><page:body><page:h page:outline-level="3">Table:</page:h>\n<page:table><page:table-body><page:table-row><page:table-cell>A</page:table-cell><page:table-cell>B</page:table-cell><page:table-cell page:number-rows-spanned="2">D</page:table-cell></page:table-row><page:table-row><page:table-cell page:number-columns-spanned="2">C</page:table-cell></page:table-row></page:table-body></page:table></page:body></page:page>', ''),
+            ('<page:page><page:body><page:h page:outline-level="3">List:</page:h>\n<page:list page:item-label-generate="unordered"><page:list-item><page:list-item-body>A</page:list-item-body></page:list-item><page:list-item><page:list-item-body>B</page:list-item-body></page:list-item></page:list></page:body></page:page>',
+            ''),
         ]
         for i in data:
             yield (self.do, ) + i

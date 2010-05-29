@@ -103,7 +103,7 @@ class Converter(object):
 
         self.list_item_labels = ['', ]
         self.list_item_label = ''
-        self.list_level = 1
+        self.list_level = 0
 
         self.request = request
 
@@ -234,14 +234,14 @@ class Converter(object):
         return Moinwiki.linebreak
 
     def open_moinpage_list(self, elem):
-        if elem.children:
-            label_type = (elem.get(moin_page.item_label_generate, None), \
-                            elem.get(moin_page.list_style_type, None))
-            self.list_item_labels.append(\
-                Moinwiki.list_label_type.get(label_type, ''))
-            self.children.append(iter(elem))
-            self.opened.append(elem)
-            self.list_level += 1
+        label_type = (elem.get(moin_page.item_label_generate, None), \
+                        elem.get(moin_page.list_style_type, None))
+        print label_type
+        self.list_item_labels.append(\
+            Moinwiki.list_type.get(label_type, ''))
+        self.children.append(iter(elem))
+        self.opened.append(elem)
+        self.list_level += 1
         return ''
 
     def close__moinpage_list(self, elem):
@@ -252,11 +252,11 @@ class Converter(object):
     def open_moinpage_list_item(self, elem):
         self.children.append(iter(elem))
         self.opened.append(elem)
-        self.list_item_label = self.list_item_labels[-1]
+        self.list_item_label = self.list_item_labels[-1] + ' '
         return ' ' * self.list_level + self.list_item_label
 
     def close_moinpage_list_item(self, elem):
-        return ''
+        return '\n'
 
     def open_moinpage_list_item_label(self, elem):
         return ''
@@ -389,11 +389,9 @@ class Converter(object):
 
     def open_moinpage_table_row(self, elem):
         self.table_rowclass = elem.attrib.get('class', '')
-        self.table_rowclass = ' '.join(filter([self.table_rowsclass, \
-                                        table_rowclass]))
+        self.table_rowclass = ' '.join(filter(None, [self.table_rowsclass, self.table_rowclass]))
         self.table_rowstyle = elem.attrib.get('style', '')
-        self.table_rowstyle = ' '.join(filter([self.table_rowsstyle, \
-                                        table_rowstyle]))
+        self.table_rowstyle = ' '.join(filter(None, [self.table_rowsstyle, self.table_rowstyle]))
         self.children.append(iter(elem))
         self.opened.append(elem)
         return ''
@@ -406,7 +404,7 @@ class Converter(object):
     def open_moinpage_table_cell(self, elem):
         table_cellclass = elem.attrib.get('class', '')
         table_cellstyle = elem.attrib.get('style', '')
-        number_columns_spanned = elem.get(moin_page.number_columns_spanned, 1)
+        number_columns_spanned = int(elem.get(moin_page.number_columns_spanned, 1))
         number_rows_spanned = elem.get(moin_page.number_rows_spanned, None)
         ret = Moinwiki.table_marker * number_columns_spanned
 
@@ -437,7 +435,7 @@ class Converter(object):
         if attrib:
             ret += '<%s>' % attrib
 
-        self.children.append(item(elem))
+        self.children.append(iter(elem))
         self.opened.append(elem)
         return ret
 
