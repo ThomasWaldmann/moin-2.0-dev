@@ -45,7 +45,7 @@ class TestACLStringIterator(object):
         assert entries == ['WikiName']
         assert rights == []
 
-    def testSingleWikiNameSingleWrite(self):
+    def testSingleWikiNameSingleRight(self):
         """ security: single wiki name, single right """
         acl_iter = acliter(self.request.cfg.acl_rights_valid, 'WikiName:read')
         mod, entries, rights = acl_iter.next()
@@ -147,11 +147,22 @@ class TestACLStringIterator(object):
         assert entries == ['All']
         assert rights == []
 
-    def testIgnodeInvalidRights(self):
-        """ security: ignore rights not in acl_rights_valid """
+    def testIgnoreInvalidRights(self):
+        """ security: ignore rights not in acl_rights_valid
+        
+        Note: this is also important for ACL regeneration (see also acl
+              regeneration test for storage.backends.fs19).
+        """
         acl_iter = acliter(self.request.cfg.acl_rights_valid, 'UserOne:read,sing,write,drink,sleep')
         mod, entries, rights = acl_iter.next()
         assert rights == ['read', 'write']
+
+        # we use strange usernames that include invalid rights as substrings
+        acls = list(acliter(self.request.cfg.acl_rights_valid,
+                    u"JimAdelete,JoeArevert:admin,read,delete,write,revert"))
+        # now check that we have lost the invalid rights 'delete' and 'revert',
+        # but the usernames should be still intact.
+        assert acls == [('', [u'JimAdelete', u'JoeArevert'], ['admin', 'read', 'write', ])]
 
     def testBadGuy(self):
         """ security: bad guy may not allowed anything
