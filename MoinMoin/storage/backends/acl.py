@@ -50,12 +50,7 @@ from MoinMoin.security import AccessControlList
 from MoinMoin.storage import Item, NewRevision, StoredRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 
-ADMIN = 'admin'
-READ = 'read'
-WRITE = 'write'
-# One may decide that only items that have been created by a trusted user can be edited.
-CREATE = 'create'
-DESTROY = 'destroy'
+from MoinMoin.config import ADMIN, READ, WRITE, CREATE, DESTROY
 
 
 class AclWrapperBackend(object):

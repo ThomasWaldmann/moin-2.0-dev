@@ -26,7 +26,6 @@ from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
-from MoinMoin.storage.backends.acl import ADMIN, READ, WRITE, CREATE, DESTROY
 from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
@@ -1030,7 +1029,7 @@ options = {
     'acl': ('Access control lists',
     'ACLs control who may do what, see HelpOnAccessControlLists.',
     (
-      ('rights_valid', [READ, WRITE, CREATE, ADMIN, DESTROY],
+      ('rights_valid', config.ACL_RIGHTS_VALID,
        "Valid tokens for right sides of ACL entries."),
     )),
 
