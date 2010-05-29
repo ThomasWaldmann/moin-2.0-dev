@@ -38,7 +38,7 @@ class Converter(ConverterMacro):
 
     def __call__(self, content, arguments=None):
         """
-        Function called by the converter to process the 
+        Function called by the converter to process the
         conversion.
 
         TODO : Add support for different arguments
