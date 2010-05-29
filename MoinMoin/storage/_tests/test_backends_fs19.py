@@ -12,7 +12,7 @@ import py.test
 
 from MoinMoin import wikiutil
 from MoinMoin.storage import Item
-from MoinMoin.storage.backends.fs19 import FSPageBackend
+from MoinMoin.storage.backends.fs19 import FSPageBackend, regenerate_acl
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 item_data = "Foo Bar"
@@ -189,4 +189,31 @@ class TestFS19Backend(object):
         item = self.backend.get_item(name)
         rev = item.get_revision(0)
         assert rev['acl'] == deleted_item_acl
+
+
+class TestAclRegeneration(object):
+    """
+    test ACL regeneration
+
+    We need to regenerate ACLs for moin 1.9 (fs19) -> 2.0 migration, because we need to cleanly
+    remove revert and delete rights.
+    """
+    def testAclRegeneration(self):
+        tests = [
+            (u'', u''),
+            (u'All:', u'All:'), # no rights, no change
+            (u'All:read', u'All:read'), # single entry, no change
+            (u'All:read,write,revert', u'All:read,write'), # single entry, remove 'revert'
+            (u'All:read,write,delete', u'All:read,write'), # single entry, remove 'delete'
+            (u'BadGuy: Default', u'BadGuy: Default'), # multiple entries, do not expand Default
+            (u'Known:read,delete,write,revert All:read',
+             u'Known:read,write All:read'), # multiple entries, remove 'delete'/'revert'
+            (u'Joe Doe,Jane Doe:delete,read,write All:',
+             u'Joe Doe,Jane Doe:read,write All:'), # multiple entries, blanks in names, remove 'delete'
+        ]
+        acl_rights_valid = self.request.cfg.acl_rights_valid
+        for acl, expected in tests:
+            result = regenerate_acl(acl, acl_rights_valid)
+            assert result == expected
+
 

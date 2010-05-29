@@ -28,6 +28,9 @@ from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
 HASH = 'sha1'
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
+# rights that are valid in moin2, TODO: move to config
+ACL_RIGHTS_VALID = ['read', 'write', 'create', 'admin', 'destroy', ]
+
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 mimetype_default = u'text/x-unidentified-wiki-format'
@@ -261,18 +264,9 @@ class FsPageRevision(StoredRevision):
         self._fs_data_fname = None # "file" is already opened here:
         self._fs_data_file = StringIO(data)
 
-        # Small hack to make migration to 2.0 clean. This removes any occurrences of
-        # the pre-2.0 ACL capabilities 'revert' and 'delete'. (They have been killed
-        # in 2.0.
         acl_line = self._fs_meta.get(ACL)
-        if acl_line:
-            for old_priv in ('revert', 'delete'):
-                # possible occurrences:
-                # XXX this is crap and will fail for JoePrevert,JoeDoe:...
-                acl_line = acl_line.replace(old_priv + ',', '')  # All:old_priv,read
-                acl_line = acl_line.replace(',' + old_priv, '')  # All:read,old_priv
-                acl_line = acl_line.replace(':' + old_priv, '')  # JoePrevert:old_priv
-            self._fs_meta[ACL] = acl_line
+        if acl_line is not None:
+            self._fs_meta[ACL] = regenerate_acl(acl_line, ACL_RIGHTS_VALID)
 
 
 class FsAttachmentItem(Item):
@@ -386,6 +380,26 @@ class EditLog(LogFile):
         del meta['__rev']
         meta[EDIT_LOG_ACTION] = u'SAVE'
         return meta
+
+
+from MoinMoin import security
+
+def regenerate_acl(acl_string, acl_rights_valid):
+    """ recreate ACL string to remove invalid rights """
+    assert isinstance(acl_string, unicode)
+    result = []
+    for modifier, entries, rights in security.ACLStringIterator(acl_rights_valid, acl_string):
+        if (entries, rights) == (['Default'], []):
+            result.append("Default")
+        else:
+            result.append("%s%s:%s" % (
+                          modifier,
+                          u','.join(entries),
+                          u','.join(rights) # iterator has removed invalid rights
+                         ))
+    result = u' '.join(result)
+    logging.debug("regenerate_acl %r -> %r" % (acl_string, result))
+    return result
 
 
 import re, codecs
