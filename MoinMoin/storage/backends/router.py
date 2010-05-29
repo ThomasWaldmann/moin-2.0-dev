@@ -301,7 +301,7 @@ class RouterItem(Serializable):
         return self._item.serialize_value(xmlgen)
 
 
-class RouterRevision(DictMixin):
+class RouterRevision(object, DictMixin):
     """
     This classes sole purpose is to make item name lookups via revision.item.name
     work return the item's fully-qualified item name.

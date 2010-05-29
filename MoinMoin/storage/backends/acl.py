@@ -414,7 +414,7 @@ class AclWrapperItem(Item):
         return wrapped_revision
 
 
-class AclWrapperRevision(DictMixin):
+class AclWrapperRevision(object, DictMixin):
     """
     Wrapper for revision classes. We need to wrap NewRevisions because they allow altering data.
     We need to wrap StoredRevisions since they offer a destroy() method and access to their item.
