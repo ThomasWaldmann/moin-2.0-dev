@@ -17,12 +17,12 @@ from MoinMoin.util.tree import moin_page, xlink
 from emeraldtree import ElementTree as ET
 
 
-
 class Moinwiki(object):
     '''
     Moinwiki syntax elements
     It's dummy
     '''
+    h = '='
     a_open = '[['
     a_middle = '|'
     a_close = ']]'
@@ -57,8 +57,7 @@ class Converter(object):
     Converter application/x.moin.document -> text/x.moin.wiki
     """
     namespaces = {
-        moin_page.namespace: 'moinpage'
-    }
+        moin_page.namespace: 'moinpage'}
 
     supported_tag = {
         'moinpage': (
@@ -84,8 +83,7 @@ class Converter(object):
                 'teble_footer',
                 'table_body',
                 'table_row',
-                'table_cell')
-            }
+                'table_cell')}
 
     @classmethod
     def _factory(cls, request, input, output, **kw):
@@ -111,23 +109,21 @@ class Converter(object):
 
     def __call__(self, root):
         self.opened = [None, ]
-        self.children = [None, [root]]
+        self.children = [None, iter([root])]
         self.output = []
         self.list_item_lable = []
-        print root
         while self.children[-1]:
-            if self.children[-1]:
-                next_child = self.children[-1].pop(0)
+            try:
+                next_child = self.children[-1].next()
                 if isinstance(next_child, ET.Element):
                     self.output.append(self.open(next_child))
-                    print 'next_child %s' % next_child
                 else:
-                    # if text
-                    print 'lalala'
                     self.output.append(next_child)
-            else:
-                next_parent = opened.pop()
-                self.output.append(self.close(next_parent))
+            except StopIteration:
+                self.children.pop()
+                next_parent = self.opened.pop()
+                if next_parent:
+                    self.output.append(self.close(next_parent))
 
         return ''.join(self.output)
 
@@ -146,14 +142,13 @@ class Converter(object):
         f = getattr(self, n, None)
         if f:
             return f(elem)
-        if elem.children:
-            self.children.append(list(elem.children))
-            self.opened.append(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ''
 
     def close(self, elem):
         uri = elem.tag.uri
-        name = self.namespaces_visit.get(uri, None)
+        name = self.namespaces.get(uri, None)
         if name is not None:
             n = 'close_' + name
             f = getattr(self, n, None)
@@ -171,21 +166,20 @@ class Converter(object):
     def open_moinpage_a(self, elem):
         ret = a_open
         ret += elem.get(xlink.href, None)
-        if elem.children:
+        text = ''.join(elem.itertext())
+        if text:
             ret += Moinwiki.a_middle
-            ret += ''.join(elem.itertext())
-        else:
-            href += self.close_moinpage_a(elem)
+            ret += text
         return ret + a.close
 
     def close_moinpage_a(self, elem):
         # dummy, open_moinpage_a does all the job
-        return ''
+        return a.close
 
     def open_moinpage_blockcode(self, elem):
         ret = Moinwiki.verbatim_open
         ret += ''.join(elem.itertext())
-        ret += Moinwiki.verbatim_open
+        ret += Moinwiki.verbatim_close
         return ret
 
     def close_moinpage_blockcode(self, elem):
@@ -210,11 +204,8 @@ class Converter(object):
 
     def open_moinpage_emphasis(self, elem):
         ret = Moinwiki.emphasis
-        if elem.children:
-            self.children.append(list(elem.children))
-            self.opened_nodes.append(elem)
-        else:
-            ret += self.close_moinpage_emphasis(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ret
 
     def close_moinpage_emphasis(self, elem):
@@ -230,9 +221,9 @@ class Converter(object):
             level = 1
         elif level > 6:
             level = 6
-        ret = Moinwiki.h * level
+        ret = Moinwiki.h * level + ' '
         ret += ''.join(elem.itertext())
-        ret += Moinwiki.h * level
+        ret += ' ' + Moinwiki.h * level
         return ret
 
     def close_moinpage_h():
@@ -248,7 +239,7 @@ class Converter(object):
                             elem.get(moin_page.list_style_type, None))
             self.list_item_labels.append(\
                 Moinwiki.list_label_type.get(label_type, ''))
-            self.children.append(list(elem.children))
+            self.children.append(iter(elem))
             self.opened.append(elem)
             self.list_level += 1
         return ''
@@ -259,9 +250,8 @@ class Converter(object):
         return ''
 
     def open_moinpage_list_item(self, elem):
-        if elem.children:
-            self.children.append(list(elem.children))
-            self.opened.append(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         self.list_item_label = self.list_item_labels[-1]
         return ' ' * self.list_level + self.list_item_label
 
@@ -275,9 +265,8 @@ class Converter(object):
         return ''
 
     def open_moinpage_list_item_body(self, elem):
-        if elem.children:
-            self.children.append(list(elem.children))
-            self.opened.append(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ''
 
     def close_moinpage_list_item_body(self, elem):
@@ -289,20 +278,16 @@ class Converter(object):
 
     def open_moinpage_p(self, elem):
         ret = Moinwiki.p
-        if elem.children:
-            children.append(list(elem.children))
-            opened.append(elem)
-        else:
-            ret += close_moinpage_p(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ret
 
     def close_moinpage_p(self, elem):
         return ''
 
     def open_moinpage_page(self, elem):
-        if elem.children:
-            children.append(list(elem.children))
-            opened.append(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ''
 
     def open_moinpage_part(self, elem):
@@ -318,28 +303,24 @@ class Converter(object):
         baseline_shift = elem.get(moin_page.baseline_shift, '')
 
         if text_decoration == 'line-through':
-            if elem.children:
-                children.append(list(elem.children))
-                opened.append(elem)
+            self.children.append(list(elem.children))
+            self.opened.append(elem)
             return Moinpage.stroke_open
-            
         if text_decoration == 'underline':
-            if elem.children:
-                children.append(list(elem.children))
-                opened.append(elem)
+            self.children.append(iter(elem))
+            self.opened.append(elem)
             return Moinpage.underline
         if font_size:
-            if elem.children:
-                children.append(list(elem.children))
-                opened.append(elem) 
-            return Moinpage.larger_open if font_size == "120%" else Moinpage.smaller_open
+            self.children.append(iter(elem))
+            self.opened.append(elem)
+            return Moinpage.larger_open if font_size == "120%" \
+                                        else Moinpage.smaller_open
         if baseline_shift == 'super':
             return '^%s^' % ''.join(elem.itertext())
         if baseline_shift == 'sub':
             return ',,%s,,' % ''.join(elem.itertext())
-        if elem.children:
-            children.append(list(elem.children))
-            opened.append(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ''
 
     def close_moinpage_span(self, elem):
@@ -351,15 +332,14 @@ class Converter(object):
         if text_decoration == 'underline':
             return Moinpage.underline
         if font_size:
-            return Moinpage.larger_close if font_size == "120%" else Moinpage.smaller_close
+            return Moinpage.larger_close if font_size == "120%" \
+                                         else Moinpage.smaller_close
         return ''
+
     def open_moinpage_strong(self, elem):
         ret = Moinwiki.strong
-        if elem.children:
-            children.append(list(elem.children))
-            opened.append(elem)
-        else:
-            ret += close_moinpage_h(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ret
 
     def close_moinpage_strong(self, elem):
@@ -370,9 +350,8 @@ class Converter(object):
         self.table_tablestyle = elem.attrib.get('style', '')
         self.table_rowsstyle = ''
         self.table_rowsclass = ''
-        if elem.children:
-            children.append(list(elem.children))
-            opened.append(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ''
 
     def close_moinpage_table(self, elem):
@@ -381,9 +360,8 @@ class Converter(object):
     def open_moinpage_table_header(self, elem):
         # is this correct rowclass?
         self.table_rowsclass = 'table-header'
-        if elem.children:
-            children.append(list(elem.children))
-            opened.append(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ''
 
     def close_moinpage_table_header(self, elem):
@@ -392,9 +370,8 @@ class Converter(object):
 
     def open_moinpage_table_footer(self, elem):
         self.table_rowsclass = 'table-footer'
-        if elem.children:
-            children.append(list(elem.children))
-            opened.append(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ''
 
     def close_moinpage_table_footer(self, elem):
@@ -403,9 +380,8 @@ class Converter(object):
 
     def open_moinpage_table_body(self, elem):
         self.table_rowsclass = ''
-        if elem.children:
-            children.append(list(elem.children))
-            opened.append(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ''
 
     def close_moinpage_table_body(self, elem):
@@ -418,9 +394,8 @@ class Converter(object):
         self.table_rowstyle = elem.attrib.get('style', '')
         self.table_rowstyle = ' '.join(filter([self.table_rowsstyle, \
                                         table_rowstyle]))
-        if elem.children:
-            children.append(list(elem.children))
-            opened.append(elem)
+        self.children.append(iter(elem))
+        self.opened.append(elem)
         return ''
 
     def close_moinpage_table_row(self, elem):
@@ -462,9 +437,8 @@ class Converter(object):
         if attrib:
             ret += '<%s>' % attrib
 
-        if elem.children:
-            children.append(list(elem.children))
-            opened.append(elem)
+        self.children.append(item(elem))
+        self.opened.append(elem)
         return ret
 
     def close_moinpage_table_cell(self, elem):
