@@ -17,7 +17,7 @@ from StringIO import StringIO
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import wikiutil
+from MoinMoin import wikiutil, config
 from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
@@ -27,9 +27,6 @@ from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
 
 HASH = 'sha1'
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
-
-# rights that are valid in moin2, TODO: move to config
-ACL_RIGHTS_VALID = ['read', 'write', 'create', 'admin', 'destroy', ]
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
@@ -266,7 +263,7 @@ class FsPageRevision(StoredRevision):
 
         acl_line = self._fs_meta.get(ACL)
         if acl_line is not None:
-            self._fs_meta[ACL] = regenerate_acl(acl_line, ACL_RIGHTS_VALID)
+            self._fs_meta[ACL] = regenerate_acl(acl_line, config.ACL_RIGHTS_VALID)
 
 
 class FsAttachmentItem(Item):

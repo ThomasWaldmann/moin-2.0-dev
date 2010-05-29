@@ -80,3 +80,13 @@ url_schemas = ['http', 'https', 'ftp', 'file',
 
 smileys = (r"X-( :D <:( :o :( :) B) :)) ;) /!\ <!> (!) :-? :\ >:> |) " +
            r":-( :-) B-) :-)) ;-) |-) (./) {OK} {X} {i} {1} {2} {3} {*} {o}").split()
+
+
+# rights that are valid in moin2
+ADMIN = 'admin'
+READ = 'read'
+WRITE = 'write'
+CREATE = 'create'
+DESTROY = 'destroy'
+ACL_RIGHTS_VALID = [READ, WRITE, CREATE, ADMIN, DESTROY, ]
+
