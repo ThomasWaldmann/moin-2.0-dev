@@ -149,7 +149,7 @@ class TestACLStringIterator(object):
 
     def testIgnoreInvalidRights(self):
         """ security: ignore rights not in acl_rights_valid
-        
+
         Note: this is also important for ACL regeneration (see also acl
               regeneration test for storage.backends.fs19).
         """
