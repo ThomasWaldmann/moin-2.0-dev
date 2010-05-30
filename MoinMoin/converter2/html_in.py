@@ -30,6 +30,9 @@ class Converter(ConverterMacro):
         html.namespace: 'xhtml',
         }
 
+    # HTML tags which can be converted directly to the moin_page namespace
+    symetric_tags = set(['div', 'p'])
+
     @classmethod
     def _factory(cls, _request, input, output, **kw):
         if output == 'application/x.moin.document' and \
@@ -74,6 +77,10 @@ class Converter(ConverterMacro):
         children = self.do_children(element)
         return self.new(tag, attrib, children)
 
+    def new_copy_symetric(self, element, attrib={}):
+        tag = ET.QName(element.tag.name, moin_page)
+        return self.new_copy(tag, element, attrib)
+
     def visit(self, element):
         uri = element.tag.uri
         name = self.html_namespace.get(uri, None)
@@ -85,16 +92,11 @@ class Converter(ConverterMacro):
         # TODO : Unknown element
 
     def visit_xhtml(self, element):
-        n = 'visit_xhtml_' + element.tag.name
-        print "n : %s" % n
-        f = getattr(self, n, None)
-        if f:
-            return f(element)
+        if element.tag.name in self.symetric_tags:
+            return self.new_copy_symetric(element)
+        else:
+            n = 'visit_xhtml_' + element.tag.name
+            f = getattr(self, n, None)
+            if f:
+                return f(element)
         # TODO : Unknown element
-
-    def visit_xhtml_div(self, element):
-        # No equivalence in DOM Tree ??
-        return self.new_copy(moin_page.div, element)
-
-    def visit_xhtml_p(self, element):
-        return self.new_copy(moin_page.p, element)
