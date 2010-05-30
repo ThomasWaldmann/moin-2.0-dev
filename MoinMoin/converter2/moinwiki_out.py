@@ -37,6 +37,10 @@ class Moinwiki(object):
     table_marker = '||'
     p = '\n\n'
     linebreak = '<<BR>>'
+    larger_open = '~+'
+    larger_close = '+~'
+    smaller_open = '~-'
+    smaller_close = '-~'
 
     # TODO: definition list
     list_type = {\
@@ -303,18 +307,18 @@ class Converter(object):
         baseline_shift = elem.get(moin_page.baseline_shift, '')
 
         if text_decoration == 'line-through':
-            self.children.append(list(elem.children))
+            self.children.append(iter(elem))
             self.opened.append(elem)
-            return Moinpage.stroke_open
+            return Moinwiki.stroke_open
         if text_decoration == 'underline':
             self.children.append(iter(elem))
             self.opened.append(elem)
-            return Moinpage.underline
+            return Moinwiki.underline
         if font_size:
             self.children.append(iter(elem))
             self.opened.append(elem)
-            return Moinpage.larger_open if font_size == "120%" \
-                                        else Moinpage.smaller_open
+            return Moinwiki.larger_open if font_size == "120%" \
+                                        else Moinwiki.smaller_open
         if baseline_shift == 'super':
             return '^%s^' % ''.join(elem.itertext())
         if baseline_shift == 'sub':
@@ -328,12 +332,12 @@ class Converter(object):
         font_size = elem.get(moin_page.font_size, '')
 
         if text_decoration == 'line-through':
-            return Moinpage.stroke_close
+            return Moinwiki.stroke_close
         if text_decoration == 'underline':
-            return Moinpage.underline
+            return Moinwiki.underline
         if font_size:
-            return Moinpage.larger_close if font_size == "120%" \
-                                         else Moinpage.smaller_close
+            return Moinwiki.larger_close if font_size == "120%" \
+                                         else Moinwiki.smaller_close
         return ''
 
     def open_moinpage_strong(self, elem):
