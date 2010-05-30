@@ -35,7 +35,7 @@ class Moinwiki(object):
     stroke_open = '--('
     stroke_close = ')--'
     table_marker = '||'
-    p = '\n\n'
+    p = ''
     linebreak = '<<BR>>'
     larger_open = '~+'
     larger_close = '+~'
@@ -43,13 +43,13 @@ class Moinwiki(object):
     smaller_close = '-~'
 
     # TODO: definition list
-    list_type = {\
-        ('definition', None): '',\
-        ('ordered', None): '1.',\
-        ('ordered', 'lower-alpha'): 'a.',\
-        ('ordered', 'upper-alpha'): 'A.',\
-        ('ordered', 'lower-roman'): 'i.',\
-        ('ordered', 'upper-roman'): 'I.',\
+    list_type = {
+        ('definition', None): '',
+        ('ordered', None): '1.',
+        ('ordered', 'lower-alpha'): 'a.',
+        ('ordered', 'upper-alpha'): 'A.',
+        ('ordered', 'lower-roman'): 'i.',
+        ('ordered', 'upper-roman'): 'I.',
         ('unordered', None): '*'}
 
     def __init__(self):
@@ -238,10 +238,9 @@ class Converter(object):
         return Moinwiki.linebreak
 
     def open_moinpage_list(self, elem):
-        label_type = (elem.get(moin_page.item_label_generate, None), \
+        label_type = (elem.get(moin_page.item_label_generate, None),
                         elem.get(moin_page.list_style_type, None))
-        print label_type
-        self.list_item_labels.append(\
+        self.list_item_labels.append(
             Moinwiki.list_type.get(label_type, ''))
         self.children.append(iter(elem))
         self.opened.append(elem)
@@ -393,9 +392,9 @@ class Converter(object):
 
     def open_moinpage_table_row(self, elem):
         self.table_rowclass = elem.attrib.get('class', '')
-        self.table_rowclass = ' '.join(filter(None, [self.table_rowsclass, self.table_rowclass]))
+        self.table_rowclass = ' '.join([s for s in [self.table_rowsclass, self.table_rowclass] if s])
         self.table_rowstyle = elem.attrib.get('style', '')
-        self.table_rowstyle = ' '.join(filter(None, [self.table_rowsstyle, self.table_rowstyle]))
+        self.table_rowstyle = ' '.join([s for s in [self.table_rowsstyle, self.table_rowstyle] if s])
         self.children.append(iter(elem))
         self.opened.append(elem)
         return ''
