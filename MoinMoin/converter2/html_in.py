@@ -124,10 +124,10 @@ class Converter(ConverterMacro):
         uri = element.tag.uri
         name = self.html_namespace.get(uri, None)
         if name is not None:
-            function_name = 'visit_' + name
-            function_address = getattr(self, function_name, None)
-            if function_address is not None:
-                return function_address(element)
+            method_name = 'visit_' + name
+            method = getattr(self, method_name, None)
+            if method is not None:
+                return method(element)
         # TODO: Unknown namespace
 
     def visit_xhtml(self, element):
@@ -146,10 +146,10 @@ class Converter(ConverterMacro):
             return self.visit_xhtml_heading(element)
         else:
         # Otherwise we need a specific procedure to handle it
-            function_name = 'visit_xhtml_' + element.tag.name
-            function_address = getattr(self, function_name, None)
-            if function_address:
-                return function_address(element)
+            method_name = 'visit_xhtml_' + element.tag.name
+            method = getattr(self, method_name, None)
+            if method:
+                return method(element)
         # TODO: Unknown element
 
     def visit_xhtml_heading(self, element):
