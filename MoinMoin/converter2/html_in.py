@@ -26,6 +26,7 @@ class Converter(ConverterMacro):
     Converter html -> .x.moin.document
     """
 
+    # Namespace of our input data
     html_namespace = {
         html.namespace: 'xhtml',
         }
@@ -49,13 +50,21 @@ class Converter(ConverterMacro):
         # We create an element tree from the HTML content
         html_tree = HTML(content)
 
-        # Add Attrib for the page
+        # Start the conversion of the first element
+        # Every child of each element will be recursively convert too
         element = self.visit(html_tree)
+
+        # Add Global element to our DOM Tree
         body = moin_page.body(children=[element])
         root = moin_page.page(children=[body])
+
         return root
 
     def do_children(self, element):
+        """
+        Function to process the conversion of the child of
+        a given elements.
+        """
         new = []
         for child in element:
             if isinstance(child, ET.Element):
@@ -70,18 +79,40 @@ class Converter(ConverterMacro):
         return new
 
     def new(self, tag, attrib={}, children=[]):
+        """
+        Return a new element for the DOM Tree
+        """
         return ET.Element(tag, attrib=attrib, children=children)
 
     def new_copy(self, tag, element, attrib={}):
+        """
+        Function to copy one element to the DOM Tree.
+
+        It first converts the child of the element,
+        and the element itself.
+        """
         # TODO : Attributes
         children = self.do_children(element)
         return self.new(tag, attrib, children)
 
     def new_copy_symetric(self, element, attrib={}):
+        """
+        Create a new QName, with the same tag of the element,
+        but with a different namespace.
+
+        Then, we handle the copy normally.
+        """
         tag = ET.QName(element.tag.name, moin_page)
         return self.new_copy(tag, element, attrib)
 
     def visit(self, element):
+        """
+        Function called at each element, to process it.
+
+        It will just determine the namespace of our element,
+        then call a dedicated function to handle conversion
+        for the found namespace.
+        """
         uri = element.tag.uri
         name = self.html_namespace.get(uri, None)
         if name is not None:
@@ -89,12 +120,21 @@ class Converter(ConverterMacro):
             function_address = getattr(self, function_name, None)
             if function_address is not None:
                 return function_address(element)
-        # TODO : Unknown element
+        # TODO : Unknown namespace
 
     def visit_xhtml(self, element):
+        """
+        Function called to handle the conversion of elements
+        belonging to the XHTML namespace.
+
+        We will detect the name of the tag, and apply an appropriate
+        procedure to convert it.
+        """
         if element.tag.name in self.symetric_tags:
+        # Our element can be converted directly, just by changing the namespace
             return self.new_copy_symetric(element)
         else:
+        # Otherwise we need a specific procedure to handle it
             function_name = 'visit_xhtml_' + element.tag.name
             function_address = getattr(self, function_name, None)
             if function_address:
