@@ -41,36 +41,37 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
             parms = dict(nsname=name)
             backend = BackendClass(backend_uri % parms, index_uri=index_uri % parms)
             backends.append(backend)
-        return backends
+        router_index_uri = index_uri % dict(nsname='ROUTER')
+        return backends + [router_index_uri]
 
     if backend_uri.startswith(FS_PREFIX):
         instance_uri = backend_uri[len(FS_PREFIX):]
         index_uri = 'sqlite:///%s_index.sqlite' % instance_uri
-        content, userprofile, trash = _create_backends(fs.FSBackend, instance_uri, index_uri)
+        content, userprofile, trash, router_index_uri = _create_backends(fs.FSBackend, instance_uri, index_uri)
 
     elif backend_uri.startswith(FS2_PREFIX):
         instance_uri = backend_uri[len(FS2_PREFIX):]
         index_uri = 'sqlite:///%s_index.sqlite' % instance_uri
-        content, userprofile, trash = _create_backends(fs2.FS2Backend, instance_uri, index_uri)
+        content, userprofile, trash, router_index_uri = _create_backends(fs2.FS2Backend, instance_uri, index_uri)
 
     elif backend_uri.startswith(HG_PREFIX):
         # Due to external dependency that may not always be present, import hg backend here:
         from MoinMoin.storage.backends import hg
         instance_uri = backend_uri[len(HG_PREFIX):]
         index_uri = 'sqlite:///%s_index.sqlite' % instance_uri
-        content, userprofile, trash = _create_backends(hg.MercurialBackend, instance_uri, index_uri)
+        content, userprofile, trash, router_index_uri = _create_backends(hg.MercurialBackend, instance_uri, index_uri)
 
     elif backend_uri.startswith(SQLA_PREFIX):
         # XXX Move this import to the module level once sqlalchemy is in MoinMoin.support
         from MoinMoin.storage.backends import sqla
         instance_uri = backend_uri[len(SQLA_PREFIX):]
         index_uri = '%s_index' % instance_uri
-        content, userprofile, trash = _create_backends(sqla.SQLAlchemyBackend, instance_uri, index_uri)
+        content, userprofile, trash, router_index_uri = _create_backends(sqla.SQLAlchemyBackend, instance_uri, index_uri)
 
     elif backend_uri == MEMORY_PREFIX:
         instance_uri = ''
         index_uri = 'sqlite://' # default is memory
-        content, userprofile, trash = _create_backends(memory.MemoryBackend, instance_uri, index_uri)
+        content, userprofile, trash, router_index_uri = _create_backends(memory.MemoryBackend, instance_uri, index_uri)
 
     else:
         raise ConfigurationError("No proper backend uri provided. Given: %r" % backend_uri)
@@ -102,7 +103,7 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
                     (ns_content, content, content_acl),
     ]
 
-    return namespace_mapping
+    return namespace_mapping, router_index_uri
 
 
 def upgrade_syspages(request, packagepath):

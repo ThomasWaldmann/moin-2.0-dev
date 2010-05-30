@@ -604,7 +604,6 @@ class Item(Serializable, DictMixin):
         self._read_accessed = False
         self._metadata = None  # Will be loaded lazily upon first real access.
         self._uncommitted_revision = None
-        self.element_attrs = dict(name=itemname)
 
     def get_name(self):
         """
@@ -613,6 +612,13 @@ class Item(Serializable, DictMixin):
         return self._name
 
     name = property(get_name, doc="This is the name of this item. This attribute is read-only.")
+
+    @property
+    def element_attrs(self):
+        """
+        For xml serialization <item name="...">
+        """
+        return dict(name=self.name)
 
     @property
     def next_revno(self):
@@ -840,7 +846,7 @@ class Revision(Serializable, DictMixin):
     care must be taken in that case to create monotone timestamps!
     This timestamp is also retrieved via the backend's history() method.
     """
-    def __init__(self, item, revno, timestamp):
+    def __init__(self, item, revno, timestamp=None):
         """
         Initialize the revision.
 
@@ -857,7 +863,6 @@ class Revision(Serializable, DictMixin):
         self._backend = item._backend
         self._metadata = None
         self._timestamp = timestamp
-        self.element_attrs = dict(revno=str(revno))
 
     def _get_item(self):
         return self._item
@@ -872,6 +877,10 @@ class Revision(Serializable, DictMixin):
 
     revno = property(get_revno, doc=("This property stores the revno of the revision object. "
                                      "Only read-only access is allowed."))
+
+    @property
+    def element_attrs(self):
+        return dict(revno=self.revno)
 
     def _load_metadata(self):
         self._metadata = self._backend._get_revision_metadata(self)

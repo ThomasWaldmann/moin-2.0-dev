@@ -346,7 +346,10 @@ class SQLAItem(Item, Base):
         self._locked = False
         self._read_accessed = False
         self._uncommitted_revision = None
-        self.element_attrs = dict(name=self._name)
+
+    @property
+    def element_attrs(self):
+        return dict(name=self._name)
 
     def list_revisions(self):
         """
@@ -590,7 +593,6 @@ class SQLARevision(NewRevision, Base):
     def __init__(self, item, revno, timestamp=None):
         self._revno = revno
         self._timestamp = timestamp
-        self.element_attrs = dict(revno=str(revno))
         self.setup(item._backend)
         self._item = item
 
@@ -600,6 +602,10 @@ class SQLARevision(NewRevision, Base):
             self.session.close()
         except AttributeError:
             pass
+
+    @property
+    def element_attrs(self):
+        return dict(revno=str(self._revno))
 
     def setup(self, backend):
         if self._data is None:
