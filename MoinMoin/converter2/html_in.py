@@ -37,7 +37,7 @@ class Converter(ConverterMacro):
         }
 
     # HTML tags which can be converted directly to the moin_page namespace
-    symetric_tags = set(['div', 'p'])
+    symmetric_tags = set(['div', 'p'])
 
     # Regular expression to detect an html heading tag
     heading_re = re.compile('h[1-6]')
@@ -53,7 +53,7 @@ class Converter(ConverterMacro):
         Function called by the converter to process the
         conversion.
 
-        TODO : Add support for different arguments
+        TODO: Add support for different arguments
         """
         # We create an element tree from the HTML content
         html_tree = HTML(content)
@@ -99,11 +99,11 @@ class Converter(ConverterMacro):
         It first converts the child of the element,
         and the element itself.
         """
-        # TODO : Handle Attributes correctly 
+        # TODO: Handle Attributes correctly
         children = self.do_children(element)
         return self.new(tag, attrib, children)
 
-    def new_copy_symetric(self, element, attrib={}):
+    def new_copy_symmetric(self, element, attrib={}):
         """
         Create a new QName, with the same tag of the element,
         but with a different namespace.
@@ -128,7 +128,7 @@ class Converter(ConverterMacro):
             function_address = getattr(self, function_name, None)
             if function_address is not None:
                 return function_address(element)
-        # TODO : Unknown namespace
+        # TODO: Unknown namespace
 
     def visit_xhtml(self, element):
         """
@@ -138,9 +138,9 @@ class Converter(ConverterMacro):
         We will detect the name of the tag, and apply an appropriate
         procedure to convert it.
         """
-        if element.tag.name in self.symetric_tags:
+        if element.tag.name in self.symmetric_tags:
         # Our element can be converted directly, just by changing the namespace
-            return self.new_copy_symetric(element)
+            return self.new_copy_symmetric(element)
         if self.heading_re.match(element.tag.name):
         # We have an heading tag
             return self.visit_xhtml_heading(element)
@@ -150,7 +150,7 @@ class Converter(ConverterMacro):
             function_address = getattr(self, function_name, None)
             if function_address:
                 return function_address(element)
-        # TODO : Unknown element
+        # TODO: Unknown element
 
     def visit_xhtml_heading(self, element):
         """
@@ -158,7 +158,7 @@ class Converter(ConverterMacro):
         element in our moin_page namespace
         """
         heading_level = element.tag.name[1]
-        # TODO : Maybe add some verification about the level
+        # TODO: Maybe add some verification about the level
 
         key = moin_page('outline-level')
         attrib = {}
