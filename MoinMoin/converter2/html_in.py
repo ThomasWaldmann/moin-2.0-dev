@@ -85,18 +85,18 @@ class Converter(ConverterMacro):
         uri = element.tag.uri
         name = self.html_namespace.get(uri, None)
         if name is not None:
-            n = 'visit_' + name
-            f = getattr(self, n, None)
-            if f is not None:
-                return f(element)
+            function_name = 'visit_' + name
+            function_address = getattr(self, function_name, None)
+            if function_address is not None:
+                return function_address(element)
         # TODO : Unknown element
 
     def visit_xhtml(self, element):
         if element.tag.name in self.symetric_tags:
             return self.new_copy_symetric(element)
         else:
-            n = 'visit_xhtml_' + element.tag.name
-            f = getattr(self, n, None)
-            if f:
-                return f(element)
+            function_name = 'visit_xhtml_' + element.tag.name
+            function_address = getattr(self, function_name, None)
+            if function_address:
+                return function_address(element)
         # TODO : Unknown element
