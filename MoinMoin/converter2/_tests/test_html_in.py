@@ -62,12 +62,12 @@ class TestConverter(Base):
         py.test.skip("Not supported yet")
         data = [
             ('<div><h2>Test</h2></div>',
-              '/page/body/h',
+              '/page/body/div/h',
               'outline-level',
               '2',
               'Test'),
             ('<div><h6>Test</h6></div>',
-              '/page/body/h',
+              '/page/body/div/h',
               'outline-level',
               '6',
               'Test'),
@@ -79,16 +79,16 @@ class TestConverter(Base):
         py.test.skip("Not supported yet")
         data = [
             ('<div><p><em>Test</em></p></div>',
-              '/page/body/p/emphasis',
+              '/page/body/div/p/emphasis',
               'Test'),
             ('<div><p><strong>Test</strong></p></div>',
-              '/page/body/p/strong',
+              '/page/body/div/p/strong',
               'Test'),
             ('<div><pre>Code</pre></div>',
-              '/page/body/blockcode',
+              '/page/body/div/blockcode',
               'Code'),
             ('<div><p><tt>Code</tt></p></div>',
-              '/page/body/p/code',
+              '/page/body/div/p/code',
               'Code'),
         ]
         for i in data:
