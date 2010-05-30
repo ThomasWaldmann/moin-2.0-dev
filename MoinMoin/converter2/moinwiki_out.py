@@ -227,7 +227,7 @@ class Converter(object):
             level = 6
         ret = Moinwiki.h * level + ' '
         ret += ''.join(elem.itertext())
-        ret += ' ' + Moinwiki.h * level
+        ret += ' %s\n' % (Moinwiki.h * level)
         return ret
 
     def close_moinpage_h():
@@ -247,7 +247,7 @@ class Converter(object):
         self.list_level += 1
         return ''
 
-    def close__moinpage_list(self, elem):
+    def close_moinpage_list(self, elem):
         self.list_item_labels.pop()
         self.list_level -= 1
         return ''
@@ -259,7 +259,7 @@ class Converter(object):
         return ' ' * self.list_level + self.list_item_label
 
     def close_moinpage_list_item(self, elem):
-        return '\n'
+        return ''
 
     def open_moinpage_list_item_label(self, elem):
         return ''
@@ -286,7 +286,7 @@ class Converter(object):
         return ret
 
     def close_moinpage_p(self, elem):
-        return ''
+        return '\n'
 
     def open_moinpage_page(self, elem):
         self.children.append(iter(elem))

@@ -39,6 +39,12 @@ class TestConverter(object):
         data = [
             (u'Text',
                 'Text'),
+            (u"=== Text: ===\n'''strong'''\n''emphasis''\n{{{blockcode}}}\n`monospace`",''),
+            (u"=== Table: ===\n||A||B||<|2>D||\n||||C||\n", ''),
+            (u"=== List: ===\n * A\n  1. C\n  1. D\n", ''),
+            (u"'=== Span: ===\n--(stroke)--\n__underline__\n~+larger+~\n~-smaller-~\n^super^script\n,,sub,,script\n", ''),
+            (u" * A\n * B\n * C\n * D\n * E\n * F", ''),
+            (u" * A\n * B\n i. C\n i. D\n 1. E\n 1. F\n i. G\n 1. H\n", ''),
         ]
         for i in data:
             yield (self.do, ) + i
