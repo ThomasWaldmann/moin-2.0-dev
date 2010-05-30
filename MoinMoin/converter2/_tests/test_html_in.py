@@ -59,7 +59,6 @@ class TestConverter(Base):
             yield (self.do, ) + i
 
     def test_title(self):
-        py.test.skip("Not supported yet")
         data = [
             ('<div><h2>Test</h2></div>',
               '/page/body/div/h',
