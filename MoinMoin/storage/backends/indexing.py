@@ -33,7 +33,6 @@ class IndexingBackendMixin(object):
     def __init__(self, *args, **kw):
         index_uri = kw.pop('index_uri', None)
         super(IndexingBackendMixin, self).__init__(*args, **kw)
-        assert not hasattr(self, '_index')
         self._index = ItemIndex(index_uri)
 
 
@@ -53,7 +52,6 @@ class IndexingItemMixin(object):
     """
     def __init__(self, backend, *args, **kw):
         super(IndexingItemMixin, self).__init__(backend, *args, **kw)
-        assert not hasattr(self, '_index')
         self._index = backend._index
         self.__unindexed_revision = None
 
@@ -103,7 +101,6 @@ class IndexingRevisionMixin(object):
     """
     def __init__(self, item, *args, **kw):
         super(IndexingRevisionMixin, self).__init__(item, *args, **kw)
-        assert not hasattr(self, '_index')
         self._index = item._index
 
     def destroy(self):

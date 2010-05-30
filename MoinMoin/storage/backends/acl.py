@@ -444,12 +444,13 @@ class AclWrapperRevision(object, DictMixin):
         """
         return self._item
 
-    @property
-    def timestamp(self):
-        """
-        @see: NewRevision.timestamp.__doc__
-        """
+    def _get_ts(self):
         return self._revision.timestamp
+
+    def _set_ts(self, ts):
+        self._revision.timestamp = ts
+
+    timestamp = property(_get_ts, _set_ts, doc="This property accesses the creation timestamp of the revision")
 
     @property
     def size(self):

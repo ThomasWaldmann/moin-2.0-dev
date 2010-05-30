@@ -23,20 +23,26 @@ logging = log.getLogger(__name__)
 from MoinMoin.error import ConfigurationError
 from MoinMoin.storage.error import AccessDeniedError
 
-from MoinMoin.storage import Backend
+from MoinMoin.storage import Backend as BackendBase
+from MoinMoin.storage import Item as ItemBase
+from MoinMoin.storage import NewRevision as NewRevisionBase
+from MoinMoin.storage import StoredRevision as StoredRevisionBase
+
+from MoinMoin.storage.backends.indexing import IndexingBackendMixin, IndexingItemMixin, IndexingRevisionMixin
+
 from MoinMoin.storage.serialization import Serializable
 
 from UserDict import DictMixin
 
 
-class RouterBackend(Backend):
+class BareRouterBackend(BackendBase):
     """
     Router Backend - routes requests to different backends depending
     on the item name.
 
     For method docstrings, please see the "Backend" base class.
     """
-    def __init__(self, mapping):
+    def __init__(self, mapping, *args, **kw):
         """
         Initialize router backend.
 
@@ -52,6 +58,7 @@ class RouterBackend(Backend):
         @type mapping: list of tuples of mountpoint -> backend mappings
         @param mapping: [(mountpoint, backend), ...]
         """
+        super(BareRouterBackend, self).__init__(*args, **kw)
         self.mapping = [(mountpoint.rstrip('/'), backend) for mountpoint, backend in mapping]
 
     def _get_backend(self, itemname):
@@ -93,7 +100,7 @@ class RouterBackend(Backend):
         """
         for mountpoint, backend in self.mapping:
             for item in backend.iteritems():
-                yield RouterItem(item, mountpoint, item.name, self)
+                yield RouterItem(self, item.name, item, mountpoint)
 
     def has_item(self, itemname):
         """
@@ -112,7 +119,7 @@ class RouterBackend(Backend):
         """
         logging.debug("get_item: %r" % itemname)
         backend, itemname, mountpoint = self._get_backend(itemname)
-        return RouterItem(backend.get_item(itemname), mountpoint, itemname, self)
+        return RouterItem(self, itemname, backend.get_item(itemname), mountpoint)
 
     def create_item(self, itemname):
         """
@@ -120,14 +127,18 @@ class RouterBackend(Backend):
         """
         logging.debug("create_item: %r" % itemname)
         backend, itemname, mountpoint = self._get_backend(itemname)
-        return RouterItem(backend.create_item(itemname), mountpoint, itemname, self)
+        return RouterItem(self, itemname, backend.create_item(itemname), mountpoint)
 
     def history_from_index(self, item_name, *args, **kw):
         backend, itemname, mountpoint = self._get_backend(item_name)
         return backend.history_from_index(mountpoint, item_name=itemname, *args, **kw)
 
 
-class RouterItem(Serializable):
+class RouterBackend(IndexingBackendMixin, BareRouterBackend):
+    pass
+
+
+class BareRouterItem(ItemBase):
     """
     Router Item - Wraps 'real' storage items to make them aware of their full name.
 
@@ -155,21 +166,31 @@ class RouterItem(Serializable):
     which can be looked up here:
     http://docs.python.org/reference/datamodel.html#special-method-lookup-for-new-style-classes
     """
-    def __init__(self, item, mountpoint, itemname, backend):
+    def __init__(self, backend, item_name, item, mountpoint, *args, **kw):
         """
+        @type backend: Object adhering to the storage API.
+        @param backend: The backend this item belongs to.
+        @type itemname: basestring.
+        @param itemname: The name of the item (not the FQIN).
         @type item: Object adhering to the storage item API.
         @param item: The item we want to wrap.
         @type mountpoint: basestring.
         @param mountpoint: The mountpoint where this item is located.
-        @type itemname: basestring.
-        @param basestring: The name of the item (not the FQIN).
-        @type backend: Object adhering to the storage API.
-        @param backend: The backend this item belongs to.
         """
+        self._get_backend = backend._get_backend
+        self._itemname = item_name
         self._item = item
         self._mountpoint = mountpoint
-        self._itemname = itemname
-        self._get_backend = backend._get_backend
+        super(BareRouterItem, self).__init__(backend, item_name, *args, **kw)
+
+    def __getattr__(self, attr):
+        """
+        Redirect all attribute lookups to the item that is proxied by this instance.
+
+        Note: __getattr__ only deals with stuff that is not found in instance,
+              this class and base classes, so be careful!
+        """
+        return getattr(self._item, attr)
 
     @property
     def name(self):
@@ -200,12 +221,20 @@ class RouterItem(Serializable):
         """
         return self._item.__getitem__(key)
 
-    def __getattr__(self, attr):
-        """
-        Redirect all attribute lookups to the item that is proxied by this instance.
-        """
-        # Note: this would fail if we subclassed Item
-        return getattr(self._item, attr)
+    def keys(self):
+        return self._item.keys()
+
+    def change_metadata(self):
+        return self._item.change_metadata()
+
+    def publish_metadata(self):
+        return self._item.publish_metadata()
+
+    def rollback(self):
+        return self._item.rollback()
+
+    def commit(self):
+        return self._item.commit()
 
     def rename(self, newname):
         """
@@ -246,6 +275,9 @@ class RouterItem(Serializable):
             self._item.rename(itemname)
             self._itemname = itemname
 
+    def list_revisions(self):
+        return self._item.list_revisions()
+
     def create_revision(self, revno):
         """
         In order to make item name lookups via revision.item.name work, we need
@@ -254,7 +286,7 @@ class RouterItem(Serializable):
         @see: Item.create_revision.__doc__
         """
         rev = self._item.create_revision(revno)
-        return RouterRevision(self, rev)
+        return NewRouterRevision(self, revno, rev)
 
     def get_revision(self, revno):
         """
@@ -264,7 +296,7 @@ class RouterItem(Serializable):
         @see: Item.get_revision.__doc__
         """
         rev = self._item.get_revision(revno)
-        return RouterRevision(self, rev)
+        return StoredRouterRevision(self, revno, rev)
 
     def destroy(self):
         """
@@ -276,44 +308,27 @@ class RouterItem(Serializable):
         """
         return self._item.destroy()
 
-    # serialization support
-    element_name = 'item'
 
-    @property
-    def element_attrs(self):
-        """
-        For xml serialization <item name="...">
-
-        Note: must not be delegated to self._item or we won't get the FULL name.
-        """
-        return dict(name=self.name)
-
-    def serialize(self, xmlgen):
-        if xmlgen.shall_serialize(item=self):
-            super(RouterItem, self).serialize(xmlgen)
-
-    def get_unserializer(self, context, name, attrs):
-        # Note: without this, we would inherit the default implementation from Serializable!
-        return self._item.get_unserializer(context, name, attrs)
-
-    def serialize_value(self, xmlgen):
-        # Note: without this, we would inherit the default implementation from Serializable!
-        return self._item.serialize_value(xmlgen)
+class RouterItem(IndexingItemMixin, BareRouterItem):
+    pass
 
 
-class RouterRevision(object, DictMixin):
+class BareNewRouterRevision(NewRevisionBase):
     """
-    This classes sole purpose is to make item name lookups via revision.item.name
-    work return the item's fully-qualified item name.
-
-    It needs to subclass DictMixin to allow the `metadata key in rev` syntax.
-    If we'd inherit from Revision we'd need to redirect all methods manually
-    since __getattr__ wouldn't work anymore. See RouterItem.__doc__ for an
-    explanation.
     """
-    def __init__(self, router_item, revision):
-        self._item = router_item
+    def __init__(self, item, revno, revision, *args, **kw):
+        self._item = item
         self._revision = revision
+        super(BareNewRouterRevision, self).__init__(item, revno, *args, **kw)
+
+    def __getattr__(self, attr):
+        """
+        Redirect all attribute lookups to the revision that is proxied by this instance.
+
+        Note: __getattr__ only deals with stuff that is not found in instance,
+              this class and base classes, so be careful!
+        """
+        return getattr(self._revision, attr)
 
     @property
     def item(self):
@@ -325,6 +340,22 @@ class RouterRevision(object, DictMixin):
         """
         assert isinstance(self._item, RouterItem)
         return self._item
+
+    @property
+    def revno(self):
+        return self._revision.revno
+
+    def _get_ts(self):
+        return self._revision.timestamp
+
+    def _set_ts(self, ts):
+        self._revision.timestamp = ts
+
+    timestamp = property(_get_ts, _set_ts, doc="This property accesses the creation timestamp of the revision")
+
+    @property
+    def size(self):
+        return self._revision.size
 
     def __setitem__(self, key, value):
         """
@@ -348,19 +379,78 @@ class RouterRevision(object, DictMixin):
         """
         return self._revision.__getitem__(key)
 
+    def keys(self):
+        return self._revision.keys()
+
+    def write(self, data):
+        self._revision.write(data)
+
+    def destroy(self):
+        return self._revision.destroy()
+
+
+class NewRouterRevision(IndexingRevisionMixin, BareNewRouterRevision):
+    pass
+
+class BareStoredRouterRevision(StoredRevisionBase):
+    """
+    """
+    def __init__(self, item, revno, revision, *args, **kw):
+        self._item = item
+        self._revision = revision
+        super(BareStoredRouterRevision, self).__init__(item, revno, *args, **kw)
+
     def __getattr__(self, attr):
         """
         Redirect all attribute lookups to the revision that is proxied by this instance.
+
+        Note: __getattr__ only deals with stuff that is not found in instance,
+              this class and base classes, so be careful!
         """
         return getattr(self._revision, attr)
 
-    def destroy(self):
+    @property
+    def item(self):
         """
-        ATTENTION!
-        This method performs an irreversible operation and deletes potentially important
-        data. Use with great care.
+        Here we have to return the RouterItem, which in turn wraps the real item
+        and provides it with its full name that we need for the rev.item.name lookup.
 
-        @see: Revision.destroy.__doc__
+        @see: Revision.item.__doc__
         """
+        assert isinstance(self._item, RouterItem)
+        return self._item
+
+    @property
+    def revno(self):
+        return self._revision.revno
+
+    @property
+    def timestamp(self):
+        return self._revision.timestamp
+
+    @property
+    def size(self):
+        return self._revision.size
+
+    def __getitem__(self, key):
+        return self._revision.__getitem__(key)
+
+    def keys(self):
+        return self._revision.keys()
+
+    def read(self, chunksize=-1):
+        return self._revision.read(chunksize)
+
+    def seek(self, position, mode=0):
+        return self._revision.seek(position, mode)
+
+    def tell(self):
+        return self._revision.tell()
+
+    def destroy(self):
         return self._revision.destroy()
+
+
+class StoredRouterRevision(IndexingRevisionMixin, BareStoredRouterRevision):
+    pass
 
