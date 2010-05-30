@@ -17,6 +17,11 @@ from MoinMoin import wikiutil
 from MoinMoin.util.tree import html, moin_page, xlink
 from ._wiki_macro import ConverterMacro
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
+
+import re
+
 # What is the purpose of this class ?
 class ElementException(RuntimeError):
     pass
@@ -33,6 +38,9 @@ class Converter(ConverterMacro):
 
     # HTML tags which can be converted directly to the moin_page namespace
     symetric_tags = set(['div', 'p'])
+
+    # Regular expression to detect an html heading tag
+    heading_re = re.compile('h[1-6]')
 
     @classmethod
     def _factory(cls, _request, input, output, **kw):
@@ -91,7 +99,7 @@ class Converter(ConverterMacro):
         It first converts the child of the element,
         and the element itself.
         """
-        # TODO : Attributes
+        # TODO : Handle Attributes correctly 
         children = self.do_children(element)
         return self.new(tag, attrib, children)
 
@@ -133,6 +141,9 @@ class Converter(ConverterMacro):
         if element.tag.name in self.symetric_tags:
         # Our element can be converted directly, just by changing the namespace
             return self.new_copy_symetric(element)
+        if self.heading_re.match(element.tag.name):
+        # We have an heading tag
+            return self.visit_xhtml_heading(element)
         else:
         # Otherwise we need a specific procedure to handle it
             function_name = 'visit_xhtml_' + element.tag.name
@@ -140,3 +151,16 @@ class Converter(ConverterMacro):
             if function_address:
                 return function_address(element)
         # TODO : Unknown element
+
+    def visit_xhtml_heading(self, element):
+        """
+        Function to convert an heading tag into the proper
+        element in our moin_page namespace
+        """
+        heading_level = element.tag.name[1]
+        # TODO : Maybe add some verification about the level
+
+        key = moin_page('outline-level')
+        attrib = {}
+        attrib[key] = heading_level
+        return self.new_copy(moin_page.h, element, attrib)
