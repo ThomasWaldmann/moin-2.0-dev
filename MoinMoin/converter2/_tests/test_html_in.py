@@ -91,3 +91,24 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_span(self):
+        data = [
+            ('<div><p><sub>sub</sub>script</p></div>',
+             '/page/body/div/p/span',
+             'base-line-shift',
+             'sub',
+             'sub'),
+            ('<div><p><sup>super</sup>script</p></div>',
+             '/page/body/div/p/span',
+             'base-line-shift',
+             'super',
+             'super'),
+            ('<div><p><u>underline</u></div>',
+             '/page/body/div/p/span',
+             'text-decoration',
+             'underline',
+             'underline'),
+        ]
+        for i in data:
+            yield (self.do_with_attr, ) + i
