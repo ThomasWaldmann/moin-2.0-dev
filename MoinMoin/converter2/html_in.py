@@ -185,3 +185,9 @@ class Converter(ConverterMacro):
         attrib = {}
         attrib[key] = 'super'
         return self.new_copy(moin_page.span, element, attrib)
+
+    def visit_xhtml_u(self, element):
+        key = moin_page('text-decoration')
+        attrib = {}
+        attrib[key] = 'underline'
+        return self.new_copy(moin_page.span, element, attrib)
