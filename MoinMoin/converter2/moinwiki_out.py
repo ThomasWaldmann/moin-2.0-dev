@@ -41,6 +41,9 @@ class Moinwiki(object):
     larger_close = '+~'
     smaller_open = '~-'
     smaller_close = '-~'
+    object_open = '{{'
+    object_close = '}}'
+    definition_list_marker = '::'
 
     # TODO: definition list
     list_type = {
@@ -262,13 +265,12 @@ class Converter(object):
         return ''
 
     def open_moinpage_list_item_label(self, elem):
-    # TODO: put "::" into Moinwiki class
-        if self.list_item_labels[-1] == '' or self.list_item_labels[-1] == '::':
+        if self.list_item_labels[-1] == '' or self.list_item_labels[-1] == Moinwiki.definition_list_marker:
             label = ''.join(elem.itertext())
             if label:
-                self.list_item_label = self.list_item_labels[-1] = ":: "
+                self.list_item_label = self.list_item_labels[-1] =  Moinwiki.definition_list_marker + ' '
                 # TODO: rewrite this using % formatting
-                return ' ' * self.list_level + label + "::\n"
+                return ' ' * self.list_level + label +  Moinwiki.definition_list_marker + '\n'
         return ''
 
     def close_moinpage_list_item_label(self, elem):
@@ -283,8 +285,8 @@ class Converter(object):
         return ''
 
     def open_moinpage_object(self, elem):
-        # TODO
-        return ''
+        ret = '%s%s%s' % (Moinwiki.object_open, ''.join(elem.itertext()), Moinwiki.object_close)
+        return ret
 
     def open_moinpage_p(self, elem):
         ret = Moinwiki.p
