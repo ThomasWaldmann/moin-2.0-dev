@@ -5,6 +5,8 @@
 </div>
 </div>
 
+{{ theme.emit_custom_html(theme.cfg.page_footer1) }}
+
 <div id="footer">
 	{% include "editbar.html" %}
 	{# Template used to render footer #}
@@ -27,3 +29,5 @@
 		{{ page_credits }}
 	{% endif %}
 </div>
+
+{{ theme.emit_custom_html(theme.cfg.page_footer2) }}
