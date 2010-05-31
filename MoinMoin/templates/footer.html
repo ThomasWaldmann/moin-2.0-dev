@@ -1,1 +1,29 @@
 {# Template used to render footer #}
+
+<div id="pagebottom">
+	
+</div>
+</div>
+
+<div id="footer">
+	{% include "editbar.html" %}
+	{# Template used to render footer #}
+	{# Template used to render footer #}
+	
+	{% if moin_revision and moin_release %}
+		<div id="version">
+			MoinMoin Release {{ moin_release }} [Revision {{ moin_revision }}], Copyright by Juergen Hermann et al.
+		</div>
+	
+	{% endif %}
+	
+	{% if page_credits %}
+		<ul id="credits">
+			{% for credit in page_credits %}
+				<li> {{ credit }} </li>
+			{% endfor %}
+		</ul>
+	{% else %}
+		{{ page_credits }}
+	{% endif %}
+</div>
