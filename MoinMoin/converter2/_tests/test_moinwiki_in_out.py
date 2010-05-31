@@ -46,7 +46,9 @@ class TestConverter(object):
             (u" * A\n * B\n * C\n * D\n * E\n * F", ''),
             (u" * A\n * B\n i. C\n i. D\n 1. E\n 1. F\n i. G\n 1. H\n", ''),
             (u"=== A ===\n dsfs:: dsf\n :: rdf\n :: sdfsdf\n :: dsfsf\n", ''),
-            (u"=== A ===\n css::\n :: rdf\n :: sdfsdf\n :: dsfsf\n", ''),
+            (u"=== A ===\n css:: \n :: rdf\n :: sdfsdf\n :: dsfsf\n", ''),
+            (u"{{drawing:anywikitest.adraw}}", ''),
+            (u"{{http://static.moinmo.in/logos/moinmoin.png}}\n",'')
         ]
         for i in data:
             yield (self.do, ) + i
