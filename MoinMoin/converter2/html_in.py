@@ -179,3 +179,9 @@ class Converter(ConverterMacro):
         attrib = {}
         attrib[key] = 'sub'
         return self.new_copy(moin_page.span, element, attrib)
+
+    def visit_xhtml_sup(self, element):
+        key = moin_page('base-line-shift')
+        attrib = {}
+        attrib[key] = 'super'
+        return self.new_copy(moin_page.span, element, attrib)
