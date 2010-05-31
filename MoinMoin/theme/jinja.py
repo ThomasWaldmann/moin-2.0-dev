@@ -993,8 +993,6 @@ actionsMenuInit('%(label)s');
         @return: page header html
         """
         
-        # it looks ugly
-        d.update({ 'theme': self })
         # Now pass dicts to render('header.html', newdict)
         d.update(self.logo())
         d.update(self.searchform(d))
@@ -1050,9 +1048,6 @@ actionsMenuInit('%(label)s');
         page = d['page']
         d.update(self.showversion(**keywords))
         d.update(self.credits())
-        
-        # it looks ugly
-        d.update({ 'theme' : self})
         
         """
         html = [
@@ -1137,6 +1132,7 @@ actionsMenuInit('%(label)s');
         request = self.request
         _ = request.getText
         rev = request.rev
+        
 
         if keywords.has_key('page'):
             page = keywords['page']
@@ -1147,6 +1143,8 @@ actionsMenuInit('%(label)s');
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
         scriptname = request.script_root
+
+        d = { 'page' : page }
 
         # get name of system pages
         page_front_page = wikiutil.getFrontPage(request).page_name
@@ -1162,14 +1160,11 @@ actionsMenuInit('%(label)s');
         # Prepare the HTML <head> element
         user_head = [request.cfg.html_head]
 
-        # include charset information - needed for moin_dump or any other case
-        # when reading the html without a web server
-        user_head.append('''<meta http-equiv="Content-Type" content="%s;charset=%s">\n''' % (page.output_mimetype, page.output_charset))
-
         meta_keywords = request.getPragma('keywords')
         meta_desc = request.getPragma('description')
         if meta_keywords:
             user_head.append('<meta name="keywords" content="%s">\n' % wikiutil.escape(meta_keywords, 1))
+            d.update({ 'meta_keywords' : wikiutil.escape(meta_keywords, 1)})
         if meta_desc:
             user_head.append('<meta name="description" content="%s">\n' % wikiutil.escape(meta_desc, 1))
 
@@ -1237,9 +1232,14 @@ actionsMenuInit('%(label)s');
             '<link rel="Help" href="%s">\n' % request.href(page_help_formatting),
                       ])
 
-        output.append("</head>\n")
         request.write(''.join(output))
+        
+        # Render with Jinja
+        request.write(self.render('head.html', d))
+        
+        #Preparing header
         output = []
+        d = {}
 
         # start the <body>
         bodyattr = []
@@ -1266,6 +1266,7 @@ actionsMenuInit('%(label)s');
                 'rev': rev,
             }
             request.themedict = d
+            #Adapt to new methods
             output.append(self.startPage())
             output.append(self.interwiki())
             output.append(self.title(d))
@@ -1276,6 +1277,7 @@ actionsMenuInit('%(label)s');
             # prepare dict for theme code:
             d = {
                 'theme': self.name,
+                'Theme': self,
                 'script_name': scriptname,
                 'title_text': text,
                 'logo_string': request.cfg.logo_string,
@@ -1457,5 +1459,4 @@ def load_theme_fallback(request, theme_name=None):
             fallback = 2
             from MoinMoin.theme.modernized import Theme
             request.theme = Theme(request)
-
 

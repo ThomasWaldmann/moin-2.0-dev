@@ -1,0 +1,15 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	
+	{#
+		include charset information - needed for moin_dump or any other case
+        when reading the html without a web server	
+	#}
+	<meta http-equiv="Content-Type" content="{{ page.output_mimetype }};charset={{ page.output_charset }}">
+	
+	{% if meta_keywords %}
+		<meta name="keywords" content="{{ meta_keywords}}">
+	{% endif %}
+	
+</head>
