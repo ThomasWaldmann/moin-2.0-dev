@@ -48,7 +48,12 @@ class TestConverter(object):
             (u"=== A ===\n dsfs:: dsf\n :: rdf\n :: sdfsdf\n :: dsfsf\n", ''),
             (u"=== A ===\n css:: \n :: rdf\n :: sdfsdf\n :: dsfsf\n", ''),
             (u"{{drawing:anywikitest.adraw}}", ''),
-            (u"{{http://static.moinmo.in/logos/moinmoin.png}}\n",'')
+            (u'{{http://static.moinmo.in/logos/moinmoin.png|alt text|width=100 height=150 align="position"}}', ''),
+            (u'{{http://static.moinmo.in/logos/moinmoin.png|alt text}}', ''),
+            (u"{{http://static.moinmo.in/logos/moinmoin.png}}\n", ''),
+            (u'{{attachment:image.png|alt text|width=100 height=150 align="position"}}', ''),
+            (u'{{attachment:image.png|alt text}}', ''),
+            (u'{{attachment:image.png}}', ''),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -73,7 +78,6 @@ class TestConverter(object):
         if skip:
             py.test.skip(skip)
         out = self.conv_in(input.split(u'\n'), **args)
-        print self.serialize(out)
         out = self.conv_out(self.handle_input(self.serialize(out)), **args)
         assert self.handle_output(out) == output
 

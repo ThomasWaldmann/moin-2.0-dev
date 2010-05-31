@@ -16,6 +16,8 @@ from MoinMoin.util.tree import moin_page, xlink
 
 from emeraldtree import ElementTree as ET
 
+from re import findall
+
 
 class Moinwiki(object):
     '''
@@ -268,9 +270,9 @@ class Converter(object):
         if self.list_item_labels[-1] == '' or self.list_item_labels[-1] == Moinwiki.definition_list_marker:
             label = ''.join(elem.itertext())
             if label:
-                self.list_item_label = self.list_item_labels[-1] =  Moinwiki.definition_list_marker + ' '
+                self.list_item_label = self.list_item_labels[-1] = Moinwiki.definition_list_marker + ' '
                 # TODO: rewrite this using % formatting
-                return ' ' * self.list_level + label +  Moinwiki.definition_list_marker + '\n'
+                return ' ' * self.list_level + label + Moinwiki.definition_list_marker + '\n'
         return ''
 
     def close_moinpage_list_item_label(self, elem):
@@ -285,7 +287,22 @@ class Converter(object):
         return ''
 
     def open_moinpage_object(self, elem):
-        ret = '%s%s%s' % (Moinwiki.object_open, ''.join(elem.itertext()), Moinwiki.object_close)
+        # TODO: this can be done with one regex:
+        href = elem.get(xlink.href, '')
+        href = href.split('?')
+        args = ''
+        if len(href) > 1:
+            args =' '.join([s for s in findall(r'(?:^|;|&|)(\w+=\w+)(?:&|$)', href[1]) if s[:3] != 'do='])
+        href = href[0].split('wiki.local:')[-1]
+        # TODO: add '|' to Moinwiki class and rewrite this using % formatting
+        ret = Moinwiki.object_open
+        ret += href
+        alt = elem.get(moin_page.alt, '')
+        if alt:
+            ret += '|' + alt
+        if args:
+            ret += '|' + args
+        ret += Moinwiki.object_close
         return ret
 
     def open_moinpage_p(self, elem):
