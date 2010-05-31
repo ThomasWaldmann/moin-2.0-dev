@@ -167,3 +167,6 @@ class Converter(ConverterMacro):
 
     def visit_xhtml_em(self, element):
         return self.new_copy(moin_page.emphasis, element)
+
+    def visit_xhtml_pre(self, element):
+        return self.new_copy(moin_page.blockcode, element)
