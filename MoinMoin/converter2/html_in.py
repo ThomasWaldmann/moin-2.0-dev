@@ -164,3 +164,6 @@ class Converter(ConverterMacro):
         attrib = {}
         attrib[key] = heading_level
         return self.new_copy(moin_page.h, element, attrib)
+
+    def visit_xhtml_em(self, element):
+        return self.new_copy(moin_page.emphasis, element)
