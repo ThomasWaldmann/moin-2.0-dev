@@ -170,3 +170,6 @@ class Converter(ConverterMacro):
 
     def visit_xhtml_pre(self, element):
         return self.new_copy(moin_page.blockcode, element)
+
+    def visit_xhtml_tt(self, element):
+        return self.new_copy(moin_page.code, element)
