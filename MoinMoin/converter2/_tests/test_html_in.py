@@ -75,7 +75,6 @@ class TestConverter(Base):
             yield (self.do_with_attr, ) + i
 
     def test_basic_style(self):
-        py.test.skip("Not supported yet")
         data = [
             ('<div><p><em>Test</em></p></div>',
               '/page/body/div/p/emphasis',
