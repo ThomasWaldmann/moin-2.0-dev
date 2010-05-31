@@ -570,7 +570,7 @@ class JinjaTheme(ThemeBase):
 
         return d
 
-    def showversion(self, d, **keywords):
+    def showversion(self, **keywords):
         """
         assemble HTML code for copyright and version display
 
@@ -578,11 +578,10 @@ class JinjaTheme(ThemeBase):
         @rtype: string
         @return: copyright and version display html
         """
-        html = ''
+        d = {}
         if self.cfg.show_version and not keywords.get('print_mode', 0):
-            html = (u'<div id="version">MoinMoin Release %s [Revision %s], '
-                     'Copyright by Juergen Hermann et al.</div>') % (version.release, version.revision, )
-        return html
+            d.update({ 'moin_release': version.release, 'moin_revision':version.revision })
+        return d
 
     def headscript(self, d):
         """ Return html head script with common functions
@@ -665,15 +664,13 @@ var search_hint = "%(search_hint)s";
         return (u'<link rel="alternate" type="application/wiki" '
                 u'title="%s" href="%s">' % (text, url))
 
-    def credits(self, d, **keywords):
+    def credits(self, **keywords):
         """ Create credits html from credits list """
+        d = {}
         if isinstance(self.cfg.page_credits, (list, tuple)):
-            items = ['<li>%s</li>' % i for i in self.cfg.page_credits]
-            html = '<ul id="credits">\n%s\n</ul>\n' % ''.join(items)
-        else:
-            # Old config using string, output as is
-            html = self.cfg.page_credits
-        return html
+            d.update({'new_page_credits': True})
+        d.update({'page_credits': self.cfg.page_credits})
+        return d
 
     def actionsMenu(self, page):
         """ Create actions menu list and items data dict
@@ -993,14 +990,6 @@ actionsMenuInit('%(label)s');
         d = { 'content_lang': self.content_lang_attr()}
         return d
 
-    def endPage(self):
-        """ End page div
-
-        Add an empty page bottom div to prevent floating elements to
-        float out of the page bottom over the footer.
-        """
-        return '<div id="pagebottom"></div>\n</div>\n'
-
     # Public functions #####################################################
 
     def header(self, d, **kw):
@@ -1062,6 +1051,9 @@ actionsMenuInit('%(label)s');
         @return: page footer html
         """
         page = d['page']
+        d.update(self.showversion(**keywords))
+        d.update(self.credits())
+        """
         html = [
             # End of page
             self.pageinfo(page),
@@ -1074,13 +1066,15 @@ actionsMenuInit('%(label)s');
             u'<div id="footer">',
             self.editbar(d),
             self.credits(d),
-            self.showversion(d, **keywords),
+            self.showversion(**keywords),
             u'</div>',
 
             # Post footer custom html
             self.emit_custom_html(self.cfg.page_footer2),
             ]
-        return u'\n'.join(html)
+        #return u'\n'.join(html)
+        """
+        return self.render('footer.html', d)
 
     # Language stuff ####################################################
 
