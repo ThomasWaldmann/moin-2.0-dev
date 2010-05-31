@@ -22,7 +22,7 @@ logging = log.getLogger(__name__)
 
 import re
 
-# What is the purpose of this class ?
+# What is the purpose of this class?
 class ElementException(RuntimeError):
     pass
 
