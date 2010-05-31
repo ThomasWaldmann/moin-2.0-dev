@@ -173,17 +173,26 @@ class Converter(object):
         return ''
 
     def open_moinpage_a(self, elem):
-        ret = a_open
-        ret += elem.get(xlink.href, None)
+        # TODO: this can be done using one regex
+        href = elem.get(xlink.href, None)
+        href = href.split('?')
+        args = ''
+        if len(href) > 1:
+            args =' '.join([s for s in findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)', href[1]) if s[:3] != 'do='])
+        href = href[0].split('wiki.local:')[-1]
+        # TODO: rewrite this using % formatting
+        ret = Moinwiki.a_open
+        ret += href
         text = ''.join(elem.itertext())
         if text:
-            ret += Moinwiki.a_middle
-            ret += text
-        return ret + a.close
+            ret += Moinwiki.a_middle + text
+        if args:
+            ret += Moinwiki.a_middle + args
+        return ret + Moinwiki.a_close
 
     def close_moinpage_a(self, elem):
         # dummy, open_moinpage_a does all the job
-        return a.close
+        return Moinwiki.a_close
 
     def open_moinpage_blockcode(self, elem):
         ret = Moinwiki.verbatim_open
@@ -292,7 +301,7 @@ class Converter(object):
         href = href.split('?')
         args = ''
         if len(href) > 1:
-            args =' '.join([s for s in findall(r'(?:^|;|&|)(\w+=\w+)(?:&|$)', href[1]) if s[:3] != 'do='])
+            args =' '.join([s for s in findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)', href[1]) if s[:3] != 'do='])
         href = href[0].split('wiki.local:')[-1]
         # TODO: add '|' to Moinwiki class and rewrite this using % formatting
         ret = Moinwiki.object_open
