@@ -314,14 +314,8 @@ class JinjaTheme(ThemeBase):
                                request.formatter.url(0)
                         items.append(item % (cls, link))
 
-        # Assemble html
-        items = u''.join(items)
-        html = u'''
-<ul id="navibar">
-%s
-</ul>
-''' % items
-        return html
+        d.update({ 'navibar_items' : items})    
+        return d
 
     def get_icon(self, icon):
         """ Return icon data from self.icons
@@ -827,11 +821,11 @@ actionsMenuInit('%(label)s');
 
         @param d: parameter dictionary
         @rtype: unicode
-        @return: iconbar html
+        @return: iconbar items
         """
         page = d['page']
         if not self.shouldShowEditbar(page):
-            return ''
+            return d
 
         html = self._cache.get('editbar')
         if html is None:
@@ -847,10 +841,9 @@ actionsMenuInit('%(label)s');
                         items.append('<li class="toggleCommentsButton" style="display:none;">%s</li>' % item)
                     else:
                         items.append('<li>%s</li>' % item)
-            html = u'<ul class="editbar">%s</ul>\n' % ''.join(items)
+            d.update({ 'editbar_items': items})
             self._cache['editbar'] = html
-
-        return html
+        return d
 
     def shouldShowEditbar(self, page):
         """ Should we show the editbar?
@@ -1000,6 +993,8 @@ actionsMenuInit('%(label)s');
         @return: page header html
         """
         
+        # it looks ugly
+        d.update({ 'theme': self })
         # Now pass dicts to render('header.html', newdict)
         d.update(self.logo())
         d.update(self.searchform(d))
@@ -1007,6 +1002,8 @@ actionsMenuInit('%(label)s');
         d.update(self.interwiki())
         d.update(self.title(d))
         d.update(self.trail(d))
+        d.update(self.navibar(d))
+        d.update(self.editbar(d))
         #Start of page
         d.update(self.startPage())
         print d
@@ -1053,6 +1050,10 @@ actionsMenuInit('%(label)s');
         page = d['page']
         d.update(self.showversion(**keywords))
         d.update(self.credits())
+        
+        # it looks ugly
+        d.update({ 'theme' : self})
+        
         """
         html = [
             # End of page
