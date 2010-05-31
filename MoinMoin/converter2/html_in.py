@@ -37,7 +37,7 @@ class Converter(ConverterMacro):
         }
 
     # HTML tags which can be converted directly to the moin_page namespace
-    symmetric_tags = set(['div', 'p'])
+    symmetric_tags = set(['div', 'p', 'strong'])
 
     # Regular expression to detect an html heading tag
     heading_re = re.compile('h[1-6]')
