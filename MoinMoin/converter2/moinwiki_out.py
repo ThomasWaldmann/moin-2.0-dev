@@ -256,12 +256,19 @@ class Converter(object):
         self.children.append(iter(elem))
         self.opened.append(elem)
         self.list_item_label = self.list_item_labels[-1] + ' '
-        return ' ' * self.list_level + self.list_item_label
+        return ''
 
     def close_moinpage_list_item(self, elem):
         return ''
 
     def open_moinpage_list_item_label(self, elem):
+    # TODO: put "::" into Moinwiki class
+        if self.list_item_labels[-1] == '' or self.list_item_labels[-1] == '::':
+            label = ''.join(elem.itertext())
+            if label:
+                self.list_item_label = self.list_item_labels[-1] = ":: "
+                # TODO: rewrite this using % formatting
+                return ' ' * self.list_level + label + "::\n"
         return ''
 
     def close_moinpage_list_item_label(self, elem):
@@ -270,7 +277,7 @@ class Converter(object):
     def open_moinpage_list_item_body(self, elem):
         self.children.append(iter(elem))
         self.opened.append(elem)
-        return ''
+        return ' ' * self.list_level + self.list_item_label
 
     def close_moinpage_list_item_body(self, elem):
         return ''

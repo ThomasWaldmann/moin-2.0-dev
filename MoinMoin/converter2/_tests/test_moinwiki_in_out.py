@@ -42,9 +42,11 @@ class TestConverter(object):
             (u"=== Text: ===\n'''strong'''\n''emphasis''\n{{{blockcode}}}\n`monospace`",''),
             (u"=== Table: ===\n||A||B||<|2>D||\n||||C||\n", ''),
             (u"=== List: ===\n * A\n  1. C\n  1. D\n", ''),
-            (u"'=== Span: ===\n--(stroke)--\n__underline__\n~+larger+~\n~-smaller-~\n^super^script\n,,sub,,script\n", ''),
+            (u"=== Span: ===\n--(stroke)--\n__underline__\n~+larger+~\n~-smaller-~\n^super^script\n,,sub,,script\n", ''),
             (u" * A\n * B\n * C\n * D\n * E\n * F", ''),
             (u" * A\n * B\n i. C\n i. D\n 1. E\n 1. F\n i. G\n 1. H\n", ''),
+            (u"=== A ===\n dsfs:: dsf\n :: rdf\n :: sdfsdf\n :: dsfsf\n", ''),
+            (u"=== A ===\n css::\n :: rdf\n :: sdfsdf\n :: dsfsf\n", ''),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -69,6 +71,7 @@ class TestConverter(object):
         if skip:
             py.test.skip(skip)
         out = self.conv_in(input.split(u'\n'), **args)
+        print self.serialize(out)
         out = self.conv_out(self.handle_input(self.serialize(out)), **args)
         assert self.handle_output(out) == output
 
