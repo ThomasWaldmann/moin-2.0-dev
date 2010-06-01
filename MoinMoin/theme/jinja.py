@@ -1163,10 +1163,9 @@ actionsMenuInit('%(label)s');
         meta_keywords = request.getPragma('keywords')
         meta_desc = request.getPragma('description')
         if meta_keywords:
-            user_head.append('<meta name="keywords" content="%s">\n' % wikiutil.escape(meta_keywords, 1))
             d.update({ 'meta_keywords' : wikiutil.escape(meta_keywords, 1)})
         if meta_desc:
-            user_head.append('<meta name="description" content="%s">\n' % wikiutil.escape(meta_desc, 1))
+            d.update({ 'meta_description' : wikiutil.escape(meta_desc, 1)})
 
         #  add meta statement if user has doubleclick on edit turned on or it is default
         if (pagename and keywords.get('allow_doubleclick', 0) and
@@ -1357,7 +1356,6 @@ actionsMenuInit('%(label)s');
                 request.write('<li>%s</li>\n' % t)
             request.write('</ul>\n')
         #request.write('<!-- auth_method == %s -->' % repr(request.user.auth_method))
-        request.write('</body>\n</html>\n\n')
 
     def render_content(self, item_name, content=None, title=None):
         """ render some content plus Theme header/footer.
