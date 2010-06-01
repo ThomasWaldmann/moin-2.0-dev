@@ -112,3 +112,14 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do_with_attr, ) + i
+
+    def test_link(self):
+        data = [
+            ('<div><a href="uri:test">Test</a></div>',
+             '/page/body/div/a',
+             'href',
+             'uri:test',
+             'Test'),
+        ]
+        for i in data:
+            yield (self.do_with_attr, ) + i
