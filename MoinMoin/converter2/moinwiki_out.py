@@ -26,7 +26,7 @@ class Moinwiki(object):
     '''
     h = '='
     a_open = '[['
-    a_middle = '|'
+    a_separator = '|'
     a_close = ']]'
     verbatim_open = '{{{'
     verbatim_close = '}}}'
@@ -46,7 +46,7 @@ class Moinwiki(object):
     object_open = '{{'
     object_close = '}}'
     definition_list_marker = '::'
-
+    separator = '----'
     # TODO: definition list
     list_type = {
         ('definition', None): '',
@@ -173,21 +173,34 @@ class Converter(object):
         return ''
 
     def open_moinpage_a(self, elem):
-        # TODO: this can be done using one regex
         href = elem.get(xlink.href, None)
+
+        # This part doesn't work in moinmoin_in converter
+        params = {}
+        params['target'] =  elem.get(xlink.target, None)
+        params['class'] = elem.get(xlink.class_, None)
+        params['title'] = elem.get(xlink.title, None)
+        params['accesskey'] =  elem.get(xlink.title, None)
+        params = ','.join(['%s=%s' % (p, params[p]) for p in params if params[p]]) 
+
+        # TODO: this can be done using one regex, can it?
         href = href.split('?')
         args = ''
         if len(href) > 1:
-            args =' '.join([s for s in findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)', href[1]) if s[:3] != 'do='])
+            # With normal
+            args = ','.join(['&'+s for s in findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)', href[1])])
         href = href[0].split('wiki.local:')[-1]
+        if params:
+            args+= ','+params
+
         # TODO: rewrite this using % formatting
         ret = Moinwiki.a_open
         ret += href
         text = ''.join(elem.itertext())
         if text:
-            ret += Moinwiki.a_middle + text
+            ret += Moinwiki.a_separator + text
         if args:
-            ret += Moinwiki.a_middle + args
+            ret += Moinwiki.a_separator + args
         return ret + Moinwiki.a_close
 
     def close_moinpage_a(self, elem):
@@ -279,7 +292,8 @@ class Converter(object):
         if self.list_item_labels[-1] == '' or self.list_item_labels[-1] == Moinwiki.definition_list_marker:
             label = ''.join(elem.itertext())
             if label:
-                self.list_item_label = self.list_item_labels[-1] = Moinwiki.definition_list_marker + ' '
+                self.list_item_labels[-1] = Moinwiki.definition_list_marker
+                self.list_item_label = self.list_item_labels[-1] + ' '
                 # TODO: rewrite this using % formatting
                 return ' ' * self.list_level + label + Moinwiki.definition_list_marker + '\n'
         return ''
@@ -333,7 +347,7 @@ class Converter(object):
         return ''
 
     def open_moinpage_separator(self, elem):
-        return Moinwiki.separator
+        return Moinwiki.separator + '\n'
 
     def open_moinpage_span(self, elem):
         text_decoration = elem.get(moin_page.text_decoration, '')
@@ -393,7 +407,7 @@ class Converter(object):
         return ''
 
     def close_moinpage_table(self, elem):
-        return '\n'
+        return ''
 
     def open_moinpage_table_header(self, elem):
         # is this correct rowclass?
