@@ -37,30 +37,63 @@ class TestConverter(object):
 
     def test_base(self):
         data = [
-            (u'Text',
-                'Text'),
-            (u"=== Text: ===\n'''strong'''\n''emphasis''\n{{{blockcode}}}\n`monospace`",''),
-            (u"=== Table: ===\n||A||B||<|2>D||\n||||C||\n", ''),
-            (u"=== List: ===\n * A\n  1. C\n  1. D\n", ''),
-            (u"=== Span: ===\n--(stroke)--\n__underline__\n~+larger+~\n~-smaller-~\n^super^script\n,,sub,,script\n", ''),
-            (u" * A\n * B\n * C\n * D\n * E\n * F", ''),
-            (u" * A\n * B\n i. C\n i. D\n 1. E\n 1. F\n i. G\n 1. H\n", ''),
-            (u"=== A ===\n dsfs:: dsf\n :: rdf\n :: sdfsdf\n :: dsfsf\n", ''),
-            (u"=== A ===\n css:: \n :: rdf\n :: sdfsdf\n :: dsfsf\n", ''),
-            (u"{{drawing:anywikitest.adraw}}", ''),
-            (u'{{http://static.moinmo.in/logos/moinmoin.png|alt text|width=100 height=150 align=right}}', ''),
-            (u'{{http://static.moinmo.in/logos/moinmoin.png|alt text}}', ''),
-            (u"{{http://static.moinmo.in/logos/moinmoin.png}}\n", ''),
-            (u'{{attachment:image.png|alt text|width=100 height=150 align=left}}', ''),
-            (u'{{attachment:image.png|alt text}}', ''),
-            (u'{{attachment:image.png}}', ''),
-            (u'[[SomePage|{{attachment:samplegraphic.png}}|target=aaaa]]', ''),
-            (u'[[SomePage#subsection|subsection of Some Page]]', ''),
-            (u'[[../SisterPage|link text]]', ''),
-            (u'[[http://static.moinmo.in/logos/moinmoin.png|{{attachment:samplegraphic.png}}|target=aaaa]]', ''),
+            (u'Text','Text\n'),
+            (u"----\n-----\n------\n", '----\n-----\n------\n'),
+            (u"'''strong'''\n", "'''strong'''\n"),
+            (u"''emphasis''\n", "''emphasis''\n"),
+            (u"{{{blockcode}}}\n", "{{{blockcode}}}\n"),
+            (u"`monospace`\n",'`monospace`\n'),
+            (u"--(stroke)--\n", '--(stroke)--\n'),
+            (u"__underline__\n", '__underline__\n'),
+            (u"~+larger+~\n", '~+larger+~\n'),
+            (u"~-smaller-~\n", '~-smaller-~\n'),
+            (u"^super^script\n", '^super^script\n'),
+            (u",,sub,,script\n", ',,sub,,script\n'),
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_link(self):
+        data = [
+            (u'[[SomePage|{{attachment:samplegraphic.png}}|target=_blank]]', '[[SomePage|{{attachment:samplegraphic.png}}|target=_blank]]\n'),
+            (u'[[SomePage#subsection|subsection of Some Page]]', '[[SomePage#subsection|subsection of Some Page]]\n'),
+            (u'[[../SisterPage|link text]]', '[[../SisterPage|link text]]\n'),
+            (u'[[http://static.moinmo.in/logos/moinmoin.png|{{attachment:samplegraphic.png}}|target=_blank,class=aaa]]', '[[http://static.moinmo.in/logos/moinmoin.png|{{attachment:samplegraphic.png}}|target=_blank]]\n'),
+            (u'[[http://moinmo.in/|MoinMoin Wiki|class=green dotted,accesskey=1]]', '[[http://moinmo.in/|MoinMoin Wiki|class=green dotted,accesskey=1]]\n'),
+            (u'[[MoinMoin:MoinMoinWiki|MoinMoin Wiki|&action=diff,&rev1=1,&rev2=2]]', '[[MoinMoin:MoinMoinWiki|MoinMoin Wiki|&action=diff,&rev1=1,&rev2=2]]\n'),
+            (u'[[attachment:HelpOnImages/pineapple.jpg|a pineapple|&do=get]]', '[[attachment:HelpOnImages/pineapple.jpg|a pineapple|&do=get]]\n'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_list(self):
+        data = [
+            (u" * A\n * B\n  1. C\n  1. D\n   I. E\n   I. F\n", ' * A\n * B\n  1. C\n  1. D\n   I. E\n   I. F\n'),
+            (u" A:: B\n :: C\n :: D\n", ' A::\n :: B\n :: C\n :: D\n'),
+            (u" A::\n :: B\n :: C\n :: D\n", ' A::\n :: B\n :: C\n :: D\n'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_table(self):
+        data = [
+            (u"||A||B||<|2>D||\n||||C||\n", '||A||B||<|2>D||\n||||C||\n'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_object(self):
+        data = [
+            (u"{{drawing:anywikitest.adraw}}", '{{drawing:anywikitest.adraw}}\n'),
+            (u"{{http://static.moinmo.in/logos/moinmoin.png}}\n", ''),
+            (u'{{http://static.moinmo.in/logos/moinmoin.png|alt text}}', '{{http://static.moinmo.in/logos/moinmoin.png|alt text}}\n'),
+            (u'{{http://static.moinmo.in/logos/moinmoin.png|alt text|width=100 height=150 align=right}}', '{{http://static.moinmo.in/logos/moinmoin.png|alt text|width=100 height=150 align=right}}\n'),
+            (u'{{attachment:image.png}}', '{{attachment:image.png}}\n'),
+            (u'{{attachment:image.png|alt text}}', '{{attachment:image.png|alt text}}\n'),
+            (u'{{attachment:image.png|alt text|width=100 height=150 align=left}}', '{{attachment:image.png|alt text|width=100 height=150 align=left}}\n'),
+
+        ]
+
 
     def handle_input(self, input):
         i = self.input_re.sub(r'\1 ' + self.input_namespaces, input)
