@@ -8,6 +8,8 @@
     #}
     <meta http-equiv="Content-Type" content="{{ page.output_mimetype }};charset={{ page.output_charset }}">
     
+    <link rel="alternate" title="{{ sitename|escape }} Recent Changes" href="{{ rsslink }}" type="application/rss+xml">
+    
     {% if meta_keywords %}
         <meta name="keywords" content="{{ meta_keywords}}">
     {% endif %}
@@ -16,7 +18,7 @@
         <meta name="description" content="{{ meta_description}}">
     {% endif %}
     
-    <title> {{ title }} - {{ sitename }}</title>
+    <title> {{ title|escape }} - {{ sitename|escape }}</title>
     
     <script type="text/javascript">
     <!--
