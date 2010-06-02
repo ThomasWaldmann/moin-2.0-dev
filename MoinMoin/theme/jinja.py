@@ -377,8 +377,8 @@ class JinjaTheme(ThemeBase):
         Display a message with a widget or simple strings with a clear message link.
 
         @param d: parameter dictionary
-        @rtype: unicode
-        @return: msg display html
+        @rtype: dict
+        @return: dict msg display html
         """
         _ = self.request.getText
         msgs = d['msg']
@@ -396,11 +396,9 @@ class JinjaTheme(ThemeBase):
                     result += u'<p>%s</p>\n' % msg
         if result:
             html = result + close
-            return u'<div id="message">\n%s\n</div>\n' % html
-        else:
-            return u''
-
-        return u'<div id="message">\n%s\n</div>\n' % html
+            d.update({ 'message': html })
+        
+        return d
 
     def trail(self, d):
         """ Assemble page trail
@@ -950,15 +948,6 @@ actionsMenuInit('%(label)s');
             return ""
         return page.link_to(self.request, text=text, querystr={'do': action}, css_class='nbquicklink', rel='nofollow')
 
-    def startPage(self):
-        """ Start page div with page language and direction
-
-        @rtype: dict
-        @return: language and direction attributes
-        """
-        d = { 'content_lang': self.content_lang_attr()}
-        return d
-
     # Public functions #####################################################
 
     def header(self, d, **kw):
@@ -978,39 +967,10 @@ actionsMenuInit('%(label)s');
         d.update(self.trail(d))
         d.update(self.navibar(d))
         d.update(self.editbar(d))
-        #Start of page
-        d.update(self.startPage())
+        d.update(self.msg(d))
+        #Language of the page
+        d.update({'content_lang': self.content_lang_attr()})
         return self.render('header.html', d)
-        """
-        html = [
-            # Pre header custom html
-            self.emit_custom_html(self.cfg.page_header1),
-
-            # Header
-            u'<div id="header">',
-            self.searchform(d),
-            self.logo(),
-            self.username(d),
-            u'<h1 id="locationline">',
-            self.interwiki(d),
-            self.title(d),
-            u'</h1>',
-            self.trail(d),
-            self.navibar(d),
-            #u'<hr id="pageline">',
-            u'<div id="pageline"><hr style="display:none;"></div>',
-            self.msg(d),
-            self.editbar(d),
-            u'</div>',
-
-            # Post header custom html (not recommended)
-            self.emit_custom_html(self.cfg.page_header2),
-
-            # Start of page
-            self.startPage(),
-        ]
-        return u'\n'.join(html)
-        """
         
     def footer(self, d, **keywords):
         """ Assemble wiki footer
