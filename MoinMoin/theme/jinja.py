@@ -1388,6 +1388,10 @@ actionsMenuInit('%(label)s');
     def render(self, filename, context={}):
         """
         Base function that renders using Jinja2.
+        
+        @param filename: name of the template will be render.
+        @param context: used to passes variables to template.
+        @return: template rendered by jinja2
         """
         template = self.env.get_template(filename)
         return template.render(**context)
