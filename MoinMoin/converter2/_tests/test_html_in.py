@@ -36,15 +36,6 @@ class Base(object):
         assert len(r) == 1
         assert r[0].text == text
 
-    def do_with_attr(self, input, path, attr, attr_value, text, args={}):
-        string_to_parse = self.handle_input(input)
-        print string_to_parse
-        tree = etree.parse(StringIO.StringIO(string_to_parse))
-        r = tree.xpath(path)
-        assert len(r) == 1
-        assert r[0].get(attr) == attr_value
-        assert r[0].text == text
-
 class TestConverter(Base):
     def setup_class(self):
         self.conv = Converter(self.request)
@@ -61,18 +52,14 @@ class TestConverter(Base):
     def test_title(self):
         data = [
             ('<div><h2>Test</h2></div>',
-              '/page/body/div/h',
-              'outline-level',
-              '2',
+              '/page/body/div/h[@outline-level=2]',
               'Test'),
             ('<div><h6>Test</h6></div>',
-              '/page/body/div/h',
-              'outline-level',
-              '6',
+              '/page/body/div/h[@outline-level=6]',
               'Test'),
         ]
         for i in data:
-            yield (self.do_with_attr, ) + i
+            yield (self.do, ) + i
 
     def test_basic_style(self):
         data = [
@@ -95,31 +82,23 @@ class TestConverter(Base):
     def test_span(self):
         data = [
             ('<div><p><sub>sub</sub>script</p></div>',
-             '/page/body/div/p/span',
-             'base-line-shift',
-             'sub',
+             '/page/body/div/p/span[@base-line-shift="sub"]',
              'sub'),
             ('<div><p><sup>super</sup>script</p></div>',
-             '/page/body/div/p/span',
-             'base-line-shift',
-             'super',
+             '/page/body/div/p/span[@base-line-shift="super"]',
              'super'),
             ('<div><p><u>underline</u></div>',
-             '/page/body/div/p/span',
-             'text-decoration',
-             'underline',
+             '/page/body/div/p/span[@text-decoration="underline"]',
              'underline'),
         ]
         for i in data:
-            yield (self.do_with_attr, ) + i
+            yield (self.do, ) + i
 
     def test_link(self):
         data = [
             ('<div><a href="uri:test">Test</a></div>',
-             '/page/body/div/a',
-             'href',
-             'uri:test',
+              '/page/body/div/a[@href="uri:test"]',
              'Test'),
         ]
         for i in data:
-            yield (self.do_with_attr, ) + i
+            yield (self.do, ) + i
