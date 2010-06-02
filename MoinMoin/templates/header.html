@@ -76,6 +76,12 @@ searchBlur(e);
 
 <div id="pageline"><hr style="display:none;"></div>
 
+{% if message %}
+    <div id="message">
+        {{ message }}
+    </div>
+{% endif %}
+
 {% include "editbar.html" %}
 
 </div>
