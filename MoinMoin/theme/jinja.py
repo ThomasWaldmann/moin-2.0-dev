@@ -577,25 +577,6 @@ class JinjaTheme(ThemeBase):
             d.update({ 'moin_release': version.release, 'moin_revision':version.revision })
         return d
 
-    def headscript(self, d):
-        """ Return html head script with common functions
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: script for html head
-        """
-        _ = self.request.getText
-        script = u"""
-<script type="text/javascript">
-<!--
-var search_hint = "%(search_hint)s";
-//-->
-</script>
-""" % {
-    'search_hint': _('Search'),
-    }
-        return script
-
     def rsslink(self, d):
         """ Create rss link in head, used by FireFox
 
@@ -629,7 +610,6 @@ var search_hint = "%(search_hint)s";
             },
             self.externalScript('svg', 'data-path="%(jspath)s"'),
             self.externalScript('common'),
-            self.headscript(d), # Should move to separate .js file
             self.html_stylesheets(d),
             self.rsslink(d),
             self.universal_edit_button(d),
@@ -1123,7 +1103,8 @@ actionsMenuInit('%(label)s');
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
         scriptname = request.script_root
 
-        d = { 'page' : page }
+        # Search_hint is moved from self.headscript() to here
+        d = { 'page':page, 'language':self.ui_lang_attr(), 'search_hint': _('Search') }
 
         # get name of system pages
         page_front_page = wikiutil.getFrontPage(request).page_name
