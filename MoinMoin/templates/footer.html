@@ -1,5 +1,7 @@
 {# Template used to render footer #}
-
+{% if pageinfo %}
+    <p id="pageinfo" class="info" {{ pageinfo_lang }}> {{ pageinfo }}</p>
+{% endif %}
 <div id="pagebottom">
     
 </div>

@@ -521,11 +521,11 @@ class JinjaTheme(ThemeBase):
         translated text using page direction looks worse.
 
         @param page: current page
-        @rtype: unicode
-        @return: page last edit information
+        @rtype: dict
+        @return: page last edit information in dict
         """
         _ = self.request.getText
-        html = ''
+        d = {}
         if self.shouldShowPageinfo(page):
             info = page.last_edit(printable=True)
             if info:
@@ -537,11 +537,11 @@ class JinjaTheme(ThemeBase):
                 if self.request.cfg.show_interwiki:
                     pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
                 info = "%s  (%s)" % (wikiutil.escape(pagename), info)
-                html = '<p id="pageinfo" class="info"%(lang)s>%(info)s</p>\n' % {
-                    'lang': self.ui_lang_attr(),
-                    'info': info
-                    }
-        return html
+                d.update({
+                    'pageinfo_lang': self.ui_lang_attr(),
+                    'pageinfo': info
+                    })
+        return d 
 
     def searchform(self, d):
         """
@@ -1048,28 +1048,7 @@ actionsMenuInit('%(label)s');
         page = d['page']
         d.update(self.showversion(**keywords))
         d.update(self.credits())
-        
-        """
-        html = [
-            # End of page
-            self.pageinfo(page),
-            self.endPage(),
-
-            # Pre footer custom html (not recommended!)
-            self.emit_custom_html(self.cfg.page_footer1),
-
-            # Footer
-            u'<div id="footer">',
-            self.editbar(d),
-            self.credits(d),
-            self.showversion(**keywords),
-            u'</div>',
-
-            # Post footer custom html
-            self.emit_custom_html(self.cfg.page_footer2),
-            ]
-        #return u'\n'.join(html)
-        """
+        d.update(self.pageinfo(page))
         return self.render('footer.html', d)
 
     # Language stuff ####################################################
@@ -1257,6 +1236,7 @@ actionsMenuInit('%(label)s');
         # Output -----------------------------------------------------------
 
         # If in print mode, start page div and emit the title
+        # TODO: Fix the print mode
         if keywords.get('print_mode', 0):
             d = {
                 'title_text': text,
