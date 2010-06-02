@@ -584,17 +584,15 @@ class JinjaTheme(ThemeBase):
         the page and let you subscribe to the wiki rss feed.
 
         @rtype: unicode
-        @return: html head
+        @param d: dictionary
+        @return: rss link in dict
         """
         request = self.request
         page = d['page']
         url = page.url(request, querystr={
                 'do': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0)
-        link = (u'<link rel="alternate" title="%s Recent Changes" '
-                u'href="%s" type="application/rss+xml">') % (
-                    wikiutil.escape(self.cfg.sitename, True),
-                    wikiutil.escape(url, True) )
-        return link
+        d.update({ 'rsslink' : url})
+        return d
 
     def html_head(self, d):
         """ Assemble html head
@@ -604,14 +602,10 @@ class JinjaTheme(ThemeBase):
         @return: html head
         """
         html = [
-            u'<title>%(title)s - %(sitename)s</title>' % {
-                'title': wikiutil.escape(d['title']),
-                'sitename': wikiutil.escape(d['sitename']),
-            },
             self.externalScript('svg', 'data-path="%(jspath)s"'),
             self.externalScript('common'),
             self.html_stylesheets(d),
-            self.rsslink(d),
+            #self.rsslink(d),
             self.universal_edit_button(d),
             ]
         return '\n'.join(html)
@@ -769,6 +763,8 @@ class JinjaTheme(ThemeBase):
             'do_button': _("Do"),
             'url': self.request.href(page.page_name)
             }
+            
+            # TODO: convert all this boilerplate
         html = '''
 <form class="actionsmenu" method="GET" action="%(url)s">
 <div>
@@ -984,7 +980,6 @@ actionsMenuInit('%(label)s');
         d.update(self.editbar(d))
         #Start of page
         d.update(self.startPage())
-        print d
         return self.render('header.html', d)
         """
         html = [
@@ -1171,13 +1166,17 @@ actionsMenuInit('%(label)s');
             ''.join(user_head),
             self.html_head({
                 'page': page,
-                'title': text,
-                'sitename': request.cfg.html_pagetitle or request.cfg.sitename,
                 'print_mode': keywords.get('print_mode', False),
                 'media': keywords.get('media', 'screen'),
             }),
             keywords.get('html_head', ''),
         ))
+        
+        #Variables used to render title
+        d.update({ 'title' : text , 'sitename': request.cfg.html_pagetitle or request.cfg.sitename})
+
+        #Variables used to render rsslink
+        d.update(self.rsslink(d))
 
         # Links
         output.append('<link rel="Start" href="%s">\n' % request.href(page_front_page))
