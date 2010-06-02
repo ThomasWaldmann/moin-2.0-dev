@@ -20,9 +20,18 @@
     
     <title> {{ title|escape }} - {{ sitename|escape }}</title>
     
-    <script type="text/javascript">
-    <!--
-    var search_hint = "{{ search_hint }}";
-    //-->
-    </script>
+    <link rel="Search" href="{{ link_search }}">
+    <link rel="Index" href="{{ link_index }}">
+    <link rel="Glossary" href="{{ link_glossary }}">
+    <link rel="Help" href="{{ link_help }}">
+    <link rel="Start" href="{{ link_start }}">
+    {% if link_parent %}
+        <link rel="Up" href="{{ link_parent }}">
+    {% endif %}
 </head>
+
+<script type="text/javascript">
+<!--
+var search_hint = "{{ search_hint }}";
+//-->
+</script>

@@ -8,7 +8,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, StringIO
+import os
+import StringIO
 
 from jinja2 import Environment, FileSystemLoader, Template, FileSystemBytecodeCache, Markup
 
@@ -26,16 +27,19 @@ modules = pysupport.getPackageModules(__file__)
 
 # Check whether we can emit a RSS feed.
 # RSS is broken on plain Python 2.4.x, and works only when installing PyXML.
-# News: A user reported that the RSS is valid when using Python 2.5.1 on Windows.
-import sys, xml
+# A user reported that the RSS is valid when using Python 2.5.1 on Windows.
+import sys
+import xml
 rss_supported = sys.version_info[:3] >= (2, 5, 1) or '_xmlplus' in xml.__file__
 
 from MoinMoin.theme import ThemeBase
 
+
 class JinjaTheme(ThemeBase):
 
     def logo(self):
-        """ Assemble logo with link to front page
+        """
+        Assemble logo with link to front page
 
         The logo contain an image and or text or any html markup the
         admin inserted in the config file. Everything it enclosed inside
@@ -48,11 +52,12 @@ class JinjaTheme(ThemeBase):
         if self.cfg.logo_string:
             page = wikiutil.getFrontPage(self.request)
             logo = page.link_to_raw(self.request, self.cfg.logo_string)
-            d = { 'logo': logo }
+            d = {'logo': logo}
         return d
 
     def interwiki(self):
-        """ Assemble the interwiki name display, linking to page_front_page
+        """
+        Assemble the interwiki name display, linking to page_front_page
 
         @param d: parameter dictionary
         @rtype: dict
@@ -63,11 +68,12 @@ class JinjaTheme(ThemeBase):
             page = wikiutil.getFrontPage(self.request)
             text = self.request.cfg.interwikiname or 'Self'
             link = page.link_to(self.request, text=text, rel='nofollow')
-            d = {'interwiki_link' : link}
+            d = {'interwiki_link': link}
         return d
 
     def title(self, d):
-        """ Assemble the title (now using breadcrumbs)
+        """
+        Assemble the title (now using breadcrumbs)
 
         @param d: parameter dictionary
         @rtype: string
@@ -85,7 +91,7 @@ class JinjaTheme(ThemeBase):
         link = d['page'].link_to(self.request, link_text,
                                  querystr=link_query, title=link_title,
                                  css_class='backlink', rel='nofollow')
-        d.update({ 'title_link':link })
+        d.update({'title_link': link})
         if len(segments) <= 1:
             return d
         else:
@@ -96,11 +102,12 @@ class JinjaTheme(ThemeBase):
                 content.append(Page(self.request,
                                     curpage).link_to(self.request, s))
                 curpage += '/'
-            d.update({ 'title_content':content })
+            d.update({'title_content': content})
         return d
 
     def username(self, d):
-        """ Assemble the username / userprefs link
+        """
+        Assemble the username / userprefs link
 
         @param d: parameter dictionary
         @rtype: unicode
@@ -121,8 +128,8 @@ class JinjaTheme(ThemeBase):
             title = "%s @ %s" % (aliasname, interwiki[0])
             # link to (interwiki) user homepage
             homelink = (request.formatter.interwikilink(1, title=title, id="userhome", generated=True, *interwiki) +
-                        request.formatter.text(name) +
-                        request.formatter.interwikilink(0, title=title, id="userhome", *interwiki))
+                request.formatter.text(name) +
+                request.formatter.interwikilink(0, title=title, id="userhome", *interwiki))
             userlinks.append(homelink)
             # link to userprefs action
             if 'userprefs' not in self.request.cfg.actions_excluded:
@@ -142,10 +149,11 @@ class JinjaTheme(ThemeBase):
                 userlinks.append(d['page'].link_to(request, text=_("Login"),
                                                    querystr=query, id='login', rel='nofollow'))
 
-        return { 'userlinks' : userlinks }
+        return {'userlinks': userlinks}
 
     def splitNavilink(self, text, localize=1):
-        """ Split navibar links into pagename, link to page
+        """
+        Split navibar links into pagename, link to page
 
         Admin or user might want to use shorter navibar items by using
         the [[page|title]] or [[url|title]] syntax. In this case, we don't
@@ -214,7 +222,7 @@ class JinjaTheme(ThemeBase):
         else:
             page = Page(request, pagename)
 
-        pagename = page.page_name # can be different, due to i18n
+        pagename = page.page_name  # can be different, due to i18n
 
         if not title:
             title = page.page_name
@@ -225,7 +233,8 @@ class JinjaTheme(ThemeBase):
         return pagename, link
 
     def shortenPagename(self, name):
-        """ Shorten page names
+        """
+        Shorten page names
 
         Shorten very long page names that tend to break the user
         interface. The short name is usually fine, unless really stupid
@@ -251,15 +260,16 @@ class JinjaTheme(ThemeBase):
     maxPagenameLength = 25  # maximum length for shortened page names
 
     def navibar(self, d):
-        """ Assemble the navibar
+        """
+        Assemble the navibar
 
         @param d: parameter dictionary
         @rtype: unicode
         @return: navibar html
         """
         request = self.request
-        found = {} # pages we found. prevent duplicates
-        items = [] # navibar items
+        found = {}  # pages we found. prevent duplicates
+        items = []  # navibar items
         item = u'<li class="%s">%s</li>'
         current = d['page_name']
 
@@ -297,7 +307,7 @@ class JinjaTheme(ThemeBase):
 
         # Add sister pages.
         for sistername, sisterurl in request.cfg.sistersites:
-            if sistername == request.cfg.interwikiname: # it is THIS wiki
+            if sistername == request.cfg.interwikiname:  # it is THIS wiki
                 cls = 'sisterwiki current'
                 items.append(item % (cls, sistername))
             else:
@@ -314,11 +324,12 @@ class JinjaTheme(ThemeBase):
                                request.formatter.url(0)
                         items.append(item % (cls, link))
 
-        d.update({ 'navibar_items' : items})    
+        d.update({'navibar_items': items})
         return d
 
     def get_icon(self, icon):
-        """ Return icon data from self.icons
+        """
+        Return icon data from self.icons
 
         If called from <<Icon(file)>> we have a filename, not a
         key. Using filenames is deprecated, but for now, we simulate old
@@ -372,7 +383,8 @@ class JinjaTheme(ThemeBase):
         return tag
 
     def msg(self, d):
-        """ Assemble the msg display
+        """
+        Assemble the msg display
 
         Display a message with a widget or simple strings with a clear message link.
 
@@ -396,12 +408,12 @@ class JinjaTheme(ThemeBase):
                     result += u'<p>%s</p>\n' % msg
         if result:
             html = result + close
-            d.update({ 'message': html })
-        
+            d.update({'message': html})
         return d
 
     def trail(self, d):
-        """ Assemble page trail
+        """
+        Assemble page trail
 
         @param d: parameter dictionary
         @rtype: unicode
@@ -432,7 +444,7 @@ class JinjaTheme(ThemeBase):
                     title = self.shortenPagename(title)
                     link = page.link_to(request, title)
                     items.append(link)
-                d.update({'trail_items':items})
+                d.update({'trail_items': items})
         return d
 
     def _stylesheet_link(self, theme, media, href, title=None):
@@ -458,7 +470,8 @@ class JinjaTheme(ThemeBase):
             return '<link rel="stylesheet" %s>' % attrs
 
     def html_stylesheets(self, d):
-        """ Assemble html head stylesheet links
+        """
+        Assemble html head stylesheet links
 
         @param d: parameter dictionary
         @rtype: string
@@ -492,7 +505,8 @@ class JinjaTheme(ThemeBase):
         return '\n'.join(theme_css + cfg_css + [msie_css, user_css])
 
     def shouldShowPageinfo(self, page):
-        """ Should we show page info?
+        """
+        Should we show page info?
 
         Should be implemented by actions. For now, we check here by action
         name and page.
@@ -512,7 +526,8 @@ class JinjaTheme(ThemeBase):
         return False
 
     def pageinfo(self, page):
-        """ Return html fragment with page meta data
+        """
+        Return html fragment with page meta data
 
         Since page information uses translated text, it uses the ui
         language and direction. It looks strange sometimes, but
@@ -537,13 +552,12 @@ class JinjaTheme(ThemeBase):
                 info = "%s  (%s)" % (wikiutil.escape(pagename), info)
                 d.update({
                     'pageinfo_lang': self.ui_lang_attr(),
-                    'pageinfo': info
-                    })
-        return d 
+                    'pageinfo': info})
+        return d
 
     def searchform(self, d):
         """
-        assemble HTML code for the search forms
+        Assemble HTML code for the search forms
 
         @param d: parameter dictionary
         @rtype: unicode
@@ -551,20 +565,18 @@ class JinjaTheme(ThemeBase):
         """
         _ = self.request.getText
         form = self.request.values
-        updates = {
+        d.update({
             'search_label': _('Search:'),
             'search_value': wikiutil.escape(form.get('value', ''), 1),
             'search_full_label': _('Text'),
             'search_title_label': _('Titles'),
-            'url': self.request.href(d['page'].page_name)
-            }
-        d.update(updates)
+            'url': self.request.href(d['page'].page_name)})
 
         return d
 
     def showversion(self, **keywords):
         """
-        assemble HTML code for copyright and version display
+        Assemble HTML code for copyright and version display
 
         @param d: parameter dictionary
         @rtype: string
@@ -572,11 +584,12 @@ class JinjaTheme(ThemeBase):
         """
         d = {}
         if self.cfg.show_version and not keywords.get('print_mode', 0):
-            d.update({ 'moin_release': version.release, 'moin_revision':version.revision })
+            d.update({'moin_release': version.release, 'moin_revision': version.revision})
         return d
 
     def rsslink(self, d):
-        """ Create rss link in head, used by FireFox
+        """
+        Create rss link in head, used by FireFox
 
         RSS link for FireFox. This shows an rss link in the bottom of
         the page and let you subscribe to the wiki rss feed.
@@ -589,11 +602,12 @@ class JinjaTheme(ThemeBase):
         page = d['page']
         url = page.url(request, querystr={
                 'do': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0)
-        d.update({ 'rsslink' : url})
+        d.update({'rsslink': url})
         return d
 
     def html_head(self, d):
-        """ Assemble html head
+        """
+        Assemble html head
 
         @param d: parameter dictionary
         @rtype: unicode
@@ -609,13 +623,21 @@ class JinjaTheme(ThemeBase):
         return '\n'.join(html)
 
     def externalScript(self, name, attrs=''):
-        """ Format external script html """
+        """
+        Format external script html
+
+        @param name: filename
+        @rtype: string
+        @return: external script link
+        """
         jspath = '%s/common/js' % self.request.cfg.url_prefix_local
         attrs = attrs % locals()
         return '<script type="text/javascript" src="%(jspath)s/%(name)s.js" %(attrs)s></script>' % locals()
 
     def universal_edit_button(self, d, **keywords):
-        """ Generate HTML for an edit link in the header."""
+        """
+        Generate HTML for an edit link in the header.
+        """
         page = d['page']
         if 'modify' in self.request.cfg.actions_excluded:
             return ""
@@ -631,7 +653,9 @@ class JinjaTheme(ThemeBase):
                 u'title="%s" href="%s">' % (text, url))
 
     def credits(self, **keywords):
-        """ Create credits html from credits list """
+        """
+        Create credits html from credits list
+        """
         d = {}
         if isinstance(self.cfg.page_credits, (list, tuple)):
             d.update({'new_page_credits': True})
@@ -639,7 +663,8 @@ class JinjaTheme(ThemeBase):
         return d
 
     def actionsMenu(self, page):
-        """ Create actions menu list and items data dict
+        """
+        Create actions menu list and items data dict
 
         The menu will contain the same items always, but items that are
         not available will be disabled (some broken browsers will let
@@ -759,9 +784,8 @@ class JinjaTheme(ThemeBase):
             'options': '\n'.join(options),
             'rev_field': rev is not None and '<input type="hidden" name="rev" value="%d">' % rev or '',
             'do_button': _("Do"),
-            'url': self.request.href(page.page_name)
-            }
-            
+            'url': self.request.href(page.page_name)}
+
             # TODO: convert all this boilerplate
         html = '''
 <form class="actionsmenu" method="GET" action="%(url)s">
@@ -789,7 +813,8 @@ actionsMenuInit('%(label)s');
         return html
 
     def editbar(self, d):
-        """ Assemble the page edit bar.
+        """
+        Assemble the page edit bar.
 
         Create html on first call, then return cached html.
 
@@ -815,12 +840,13 @@ actionsMenuInit('%(label)s');
                         items.append('<li class="toggleCommentsButton" style="display:none;">%s</li>' % item)
                     else:
                         items.append('<li>%s</li>' % item)
-            d.update({ 'editbar_items': items})
+            d.update({'editbar_items': items})
             self._cache['editbar'] = html
         return d
 
     def shouldShowEditbar(self, page):
-        """ Should we show the editbar?
+        """
+        Should we show the editbar?
 
         Actions should implement this, because only the action knows if
         the edit bar makes sense. Until it goes into actions, we do the
@@ -842,7 +868,8 @@ actionsMenuInit('%(label)s');
         return False
 
     def editbarItems(self, page):
-        """ Return list of items to show on the editbar
+        """
+        Return list of items to show on the editbar
 
         This is separate method to make it easy to customize the
         edtibar in sub classes.
@@ -872,10 +899,11 @@ actionsMenuInit('%(label)s');
         return editbar_actions
 
     def supplementation_page_nameLink(self, page):
-        """Return a link to the discussion page
+        """
+        Return a link to the discussion page
 
-           If the discussion page doesn't exist and the user
-           has no right to create it, show a disabled link.
+        If the discussion page doesn't exist and the user
+        has no right to create it, show a disabled link.
         """
         _ = self.request.getText
         suppl_name = self.request.cfg.supplementation_page_name
@@ -889,7 +917,9 @@ actionsMenuInit('%(label)s');
                                 querystr={'do': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
 
     def modifyLink(self, page):
-        """ Return a link to the modify action """
+        """
+        Return a link to the modify action
+        """
         if 'modify' in self.request.cfg.actions_excluded:
             return ""
 
@@ -902,7 +932,9 @@ actionsMenuInit('%(label)s');
         return page.link_to(self.request, text=text, querystr=querystr, **attrs)
 
     def downloadLink(self, page):
-        """ Return a link to the get action """
+        """
+        Return a link to the get action
+        """
         if 'get' in self.request.cfg.actions_excluded:
             return ""
 
@@ -913,7 +945,8 @@ actionsMenuInit('%(label)s');
         return page.link_to(self.request, text=text, querystr=querystr, **attrs)
 
     def subscribeLink(self, page):
-        """ Return subscribe/unsubscribe link to valid users
+        """
+        Return subscribe/unsubscribe link to valid users
 
         @rtype: unicode
         @return: subscribe or unsubscribe link
@@ -931,7 +964,8 @@ actionsMenuInit('%(label)s');
         return page.link_to(self.request, text=text, querystr={'do': action}, css_class='nbsubscribe', rel='nofollow')
 
     def quicklinkLink(self, page):
-        """ Return add/remove quicklink link
+        """
+        Return add/remove quicklink link
 
         @rtype: unicode
         @return: link to add or remove a quicklink
@@ -951,13 +985,14 @@ actionsMenuInit('%(label)s');
     # Public functions #####################################################
 
     def header(self, d, **kw):
-        """ Assemble wiki header
+        """
+        Assemble wiki header
 
         @param d: parameter dictionary
         @rtype: unicode
         @return: page header html
         """
-        
+
         # Now pass dicts to render('header.html', newdict)
         d.update(self.logo())
         d.update(self.searchform(d))
@@ -971,9 +1006,10 @@ actionsMenuInit('%(label)s');
         #Language of the page
         d.update({'content_lang': self.content_lang_attr()})
         return self.render('header.html', d)
-        
+
     def footer(self, d, **keywords):
-        """ Assemble wiki footer
+        """
+        Assemble wiki footer
 
         @param d: parameter dictionary
         @keyword ...:...
@@ -989,7 +1025,8 @@ actionsMenuInit('%(label)s');
     # Language stuff ####################################################
 
     def ui_lang_attr(self):
-        """Generate language attributes for user interface elements
+        """
+        Generate language attributes for user interface elements
 
         User interface elements use the user language (if any), kept in
         request.lang.
@@ -1001,7 +1038,8 @@ actionsMenuInit('%(label)s');
         return ' lang="%s" dir="%s"' % (lang, i18n.getDirection(lang))
 
     def content_lang_attr(self):
-        """Generate language attributes for wiki page content
+        """
+        Generate language attributes for wiki page content
 
         Page content uses the page language or the wiki default language.
 
@@ -1012,7 +1050,8 @@ actionsMenuInit('%(label)s');
         return ' lang="%s" dir="%s"' % (lang, i18n.getDirection(lang))
 
     def add_msg(self, msg, msg_class=None):
-        """ Adds a message to a list which will be used to generate status
+        """
+        Adds a message to a list which will be used to generate status
         information.
 
         @param msg: additional message
@@ -1046,7 +1085,6 @@ actionsMenuInit('%(label)s');
         request = self.request
         _ = request.getText
         rev = request.rev
-        
 
         if keywords.has_key('page'):
             page = keywords['page']
@@ -1059,7 +1097,7 @@ actionsMenuInit('%(label)s');
         scriptname = request.script_root
 
         # Search_hint is moved from self.headscript() to here
-        d = { 'page':page, 'language':self.ui_lang_attr(), 'search_hint': _('Search') }
+        d = {'page': page, 'language': self.ui_lang_attr(), 'search_hint': _('Search')}
 
         # get name of system pages
         page_front_page = wikiutil.getFrontPage(request).page_name
@@ -1069,7 +1107,7 @@ actionsMenuInit('%(label)s');
         page_word_index = wikiutil.getLocalizedPage(request, 'WordIndex').page_name
         page_help_formatting = wikiutil.getLocalizedPage(request, 'HelpOnFormatting').page_name
         page_find_page = wikiutil.getLocalizedPage(request, 'FindPage').page_name
-        home_page = wikiutil.getInterwikiHomePage(request) # sorry theme API change!!! Either None or tuple (wikiname,pagename) now.
+        home_page = wikiutil.getInterwikiHomePage(request)  # sorry theme API change!!! Either None or tuple (wikiname,pagename) now.
         page_parent_page = getattr(page.getParentPage(), 'page_name', None)
 
         # Prepare the HTML <head> element
@@ -1078,15 +1116,15 @@ actionsMenuInit('%(label)s');
         meta_keywords = request.getPragma('keywords')
         meta_desc = request.getPragma('description')
         if meta_keywords:
-            d.update({ 'meta_keywords' : wikiutil.escape(meta_keywords, 1)})
+            d.update({'meta_keywords': wikiutil.escape(meta_keywords, 1)})
         if meta_desc:
-            d.update({ 'meta_description' : wikiutil.escape(meta_desc, 1)})
+            d.update({'meta_description': wikiutil.escape(meta_desc, 1)})
 
         #  add meta statement if user has doubleclick on edit turned on or it is default
         if (pagename and keywords.get('allow_doubleclick', 0) and
             not keywords.get('print_mode', 0) and
             request.user.edit_on_doubleclick):
-            if request.user.may.write(pagename): # separating this gains speed
+            if request.user.may.write(pagename):  # separating this gains speed
                 user_head.append('<meta name="edit_on_doubleclick" content="1">\n')
 
         # search engine precautions / optimization:
@@ -1131,30 +1169,30 @@ actionsMenuInit('%(label)s');
             }),
             keywords.get('html_head', ''),
         ))
-        
+
         #Variables used to render title
-        d.update({ 'title' : text , 'sitename': request.cfg.html_pagetitle or request.cfg.sitename})
+        d.update({'title': text, 'sitename': request.cfg.html_pagetitle or request.cfg.sitename})
 
         #Variables used to render rsslink
         d.update(self.rsslink(d))
 
         # Links
-        output.append('<link rel="Start" href="%s">\n' % request.href(page_front_page))
         if pagename and page_parent_page:
-            output.append('<link rel="Up" href="%s">\n' % request.href(page_parent_page))
+            d.update({'link_parent': request.href(page_parent_page)})
 
-        output.extend([
-            '<link rel="Search" href="%s">\n' % request.href(page_find_page),
-            '<link rel="Index" href="%s">\n' % request.href(page_title_index),
-            '<link rel="Glossary" href="%s">\n' % request.href(page_word_index),
-            '<link rel="Help" href="%s">\n' % request.href(page_help_formatting),
-                      ])
+        d.update({
+            'link_search': request.href(page_find_page),
+            'link_index': request.href(page_title_index),
+            'link_glossary': request.href(page_word_index),
+            'link_help': request.href(page_help_formatting),
+            'link_start': request.href(page_front_page),
+        })
 
         request.write(''.join(output))
-        
+
         # Render with Jinja
         request.write(self.render('head.html', d))
-        
+
         #Preparing header
         output = []
         d = {}
@@ -1226,9 +1264,9 @@ actionsMenuInit('%(label)s');
             for key in d:
                 if key.startswith('page_'):
                     if not d[key] is None:
-                        newdict['q_'+key] = wikiutil.quoteWikinameURL(d[key])
+                        newdict['q_' + key] = wikiutil.quoteWikinameURL(d[key])
                     else:
-                        newdict['q_'+key] = None
+                        newdict['q_' + key] = None
             d.update(newdict)
             request.themedict = d
 
@@ -1259,9 +1297,10 @@ actionsMenuInit('%(label)s');
 
     # stuff moved from request.py
     def send_closing_html(self):
-        """ generate timing info html and closing html tag,
-            everyone calling send_title must call this at the end to close
-            the body and html tags.
+        """
+        Generate timing info html and closing html tag,
+        everyone calling send_title must call this at the end to close
+        the body and html tags.
         """
         request = self.request
 
@@ -1278,8 +1317,9 @@ actionsMenuInit('%(label)s');
         #request.write('<!-- auth_method == %s -->' % repr(request.user.auth_method))
 
     def render_content(self, item_name, content=None, title=None):
-        """ render some content plus Theme header/footer.
-            If content is None, the normal Item content for item_name will be rendered.
+        """
+        Render some content plus Theme header/footer.
+        If content is None, the normal Item content for item_name will be rendered.
         """
         request = self.request
         if content is None:
@@ -1305,7 +1345,8 @@ actionsMenuInit('%(label)s');
             request.theme.send_closing_html()
 
     def sidebar(self, d, **keywords):
-        """ Display page called SideBar as an additional element on every page
+        """
+        Display page called SideBar as an additional element on every page
 
         @param d: parameter dictionary
         @rtype: string
@@ -1328,7 +1369,7 @@ actionsMenuInit('%(label)s');
     def render(self, filename, context={}):
         """
         Base function that renders using Jinja2.
-        
+
         @param filename: name of the template will be render.
         @param context: used to passes variables to template.
         @return: template rendered by jinja2
@@ -1336,11 +1377,16 @@ actionsMenuInit('%(label)s');
         template = self.env.get_template(filename)
         return template.render(**context)
 
+
 class ThemeNotFound(Exception):
-    """ Thrown if the supplied theme could not be found anywhere """
+    """
+    Thrown if the supplied theme could not be found anywhere
+    """
+
 
 def load_theme(request, theme_name=None):
-    """ Load a theme for this request.
+    """
+    Load a theme for this request.
 
     @param request: moin request
     @param theme_name: the name of the theme
@@ -1358,8 +1404,10 @@ def load_theme(request, theme_name=None):
 
     return Theme(request)
 
+
 def load_theme_fallback(request, theme_name=None):
-    """ Try loading a theme, falling back to defaults on error.
+    """
+    Try loading a theme, falling back to defaults on error.
 
     @param request: moin request
     @param theme_name: the name of the theme
@@ -1381,4 +1429,3 @@ def load_theme_fallback(request, theme_name=None):
             fallback = 2
             from MoinMoin.theme.modernized import Theme
             request.theme = Theme(request)
-
