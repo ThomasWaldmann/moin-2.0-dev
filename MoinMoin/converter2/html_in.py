@@ -45,7 +45,7 @@ class Converter(ConverterMacro):
     @classmethod
     def _factory(cls, _request, input, output, **kw):
         if output == 'application/x.moin.document' and \
-           input == 'application/x-xhtml-moin-page':
+           input == 'text/html':
             return cls
 
     def __call__(self, content, arguments=None):
@@ -128,7 +128,9 @@ class Converter(ConverterMacro):
             method = getattr(self, method_name, None)
             if method is not None:
                 return method(element)
-        # TODO: Unknown namespace
+
+            # We process children of the unknown element
+            return self.do_children(element)
 
     def visit_xhtml(self, element):
         """
@@ -150,7 +152,9 @@ class Converter(ConverterMacro):
             method = getattr(self, method_name, None)
             if method:
                 return method(element)
-        # TODO: Unknown element
+
+            # We process children of the unknown element
+            return self.do_children(element)
 
     def visit_xhtml_heading(self, element):
         """
@@ -197,3 +201,6 @@ class Converter(ConverterMacro):
         attrib = {}
         attrib[key] = element.get(html.href)
         return self.new_copy(moin_page.a, element, attrib)
+
+from . import default_registry
+default_registry.register(Converter._factory)
