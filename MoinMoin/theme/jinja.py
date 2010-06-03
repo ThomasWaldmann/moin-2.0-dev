@@ -520,7 +520,7 @@ class JinjaTheme(ThemeBase):
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
             contentActions = [u'', u'show', u'refresh', u'preview', u'diff',
-                              u'subscribe', u'rename', u'copy', u'backlink'
+                              u'subscribe', u'rename', u'copy', u'backlink',
                              ]
             return self.request.action in contentActions
         return False
@@ -700,6 +700,7 @@ class JinjaTheme(ThemeBase):
             'SubscribeUser',
             'PackagePages',
             'SyncPages',
+            'backlink',
             ]
 
         titles = {
@@ -719,6 +720,7 @@ class JinjaTheme(ThemeBase):
             'PackagePages': _('Package Pages'),
             'RenderAsDocbook': _('Render as Docbook'),
             'SyncPages': _('Sync Pages'),
+            'backlink': _('What links here?'),
             }
 
         options = []
