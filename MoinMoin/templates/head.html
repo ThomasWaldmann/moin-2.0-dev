@@ -6,6 +6,13 @@
         include charset information - needed for moin_dump or any other case
         when reading the html without a web server  
     #}
+    {% for head in user_head %}
+        {{ head }}
+    {% endfor %}
+    
+    {{ html_head }}
+    {{ html_head_keywords }}
+        
     <meta http-equiv="Content-Type" content="{{ page.output_mimetype }};charset={{ page.output_charset }}">
     
     <link rel="alternate" title="{{ sitename|escape }} Recent Changes" href="{{ rsslink }}" type="application/rss+xml">
