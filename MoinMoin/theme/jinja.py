@@ -786,7 +786,8 @@ class JinjaTheme(ThemeBase):
             'options': '\n'.join(options),
             'rev_field': rev is not None and '<input type="hidden" name="rev" value="%d">' % rev or '',
             'do_button': _("Do"),
-            'actions': self.request.href(page.page_name)}
+            'url': self.request.href(page.page_name),
+            }
         return self.render('actions_menu.html', data)
 
     def editbar(self, d):
@@ -1120,23 +1121,12 @@ class JinjaTheme(ThemeBase):
         if 'pi_refresh' in keywords and keywords['pi_refresh']:
             user_head.append('<meta http-equiv="refresh" content="%d;URL=%s">' % keywords['pi_refresh'])
 
-        # output buffering increases latency but increases throughput as well
-        output = []
-        # later: <html xmlns=\"http://www.w3.org/1999/xhtml\">
-        output.append("""\
-%s
-%s
-%s
-""" % (
-            ''.join(user_head),
-            self.html_head({
-                'page': page,
-                'print_mode': keywords.get('print_mode', False),
-                'media': keywords.get('media', 'screen'),
-            }),
-            keywords.get('html_head', ''),
-        ))
-
+        html_head = self.html_head({
+            'page': page,
+            'print_mode': keywords.get('print_mode', False),
+            'media': keywords.get('media', 'screen'),
+        })
+        d.update({'user_head': user_head, 'html_head': html_head, 'html_head_keyword': keywords.get('html_head', '')})
         #Variables used to render title
         d.update({'title': text, 'sitename': request.cfg.html_pagetitle or request.cfg.sitename})
 
@@ -1154,8 +1144,6 @@ class JinjaTheme(ThemeBase):
             'link_help': request.href(page_help_formatting),
             'link_start': request.href(page_front_page),
         })
-
-        request.write(''.join(output))
 
         # Render with Jinja
         request.write(self.render('head.html', d))
