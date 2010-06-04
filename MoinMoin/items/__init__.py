@@ -412,6 +412,7 @@ class NonExistent(Item):
             ('text/x.moin.creole', 'Wiki (Creole)'),
             ('text/html', 'unsafe html'),
             ('text/x-safe-html', 'safe html'),
+            ('text/x.moin.html', 'html for MoinMoin'),
         ]),
         ('highlighted text items', [
             ('text/x-diff', 'diff/patch'),
@@ -1275,6 +1276,9 @@ class SafeHTML(Text):
                                  )
         return content
 
+class MoinHTML(Text):
+    """ Dummy Type to input HTML and store it in the Dom Tree """
+    supported_mimetypes = ['text/x.moin.html']
 
 class DiffPatch(Text):
     """ diff output / patch input format """

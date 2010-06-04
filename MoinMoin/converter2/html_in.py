@@ -45,7 +45,7 @@ class Converter(ConverterMacro):
     @classmethod
     def _factory(cls, _request, input, output, **kw):
         if output == 'application/x.moin.document' and \
-           input == 'text/html':
+           input == 'text/x.moin.html':
             return cls
 
     def __call__(self, content, arguments=None):
@@ -56,7 +56,11 @@ class Converter(ConverterMacro):
         TODO: Add support for different arguments
         """
         # We create an element tree from the HTML content
-        html_tree = HTML(content)
+        # The content is a list of string, line per line
+        # We can concatenate all in one string
+        html_str = ''
+        html_str = html_str.join(content)
+        html_tree = HTML(html_str)
 
         # Start the conversion of the first element
         # Every child of each element will be recursively convert too
