@@ -786,33 +786,8 @@ class JinjaTheme(ThemeBase):
             'options': '\n'.join(options),
             'rev_field': rev is not None and '<input type="hidden" name="rev" value="%d">' % rev or '',
             'do_button': _("Do"),
-            'url': self.request.href(page.page_name)}
-
-            # TODO: convert all this boilerplate
-        html = '''
-<form class="actionsmenu" method="GET" action="%(url)s">
-<div>
-    <label>%(label)s</label>
-    <select name="do"
-        onchange="if ((this.selectedIndex != 0) &&
-                      (this.options[this.selectedIndex].disabled == false)) {
-                this.form.submit();
-            }
-            this.selectedIndex = 0;">
-        %(options)s
-    </select>
-    <input type="submit" value="%(do_button)s">
-    %(rev_field)s
-</div>
-<script type="text/javascript">
-<!--// Init menu
-actionsMenuInit('%(label)s');
-//-->
-</script>
-</form>
-''' % data
-
-        return html
+            'actions': self.request.href(page.page_name)}
+        return self.render('actions_menu.html', data)
 
     def editbar(self, d):
         """
@@ -828,22 +803,12 @@ actionsMenuInit('%(label)s');
         if not self.shouldShowEditbar(page):
             return d
 
-        html = self._cache.get('editbar')
-        if html is None:
-            # Remove empty items and format as list. The item for showing inline comments
-            # is hidden by default. It gets activated through javascript only if inline
-            # comments exist on the page.
-            items = []
-            for item in self.editbarItems(page):
-                if item:
-                    if 'nbcomment' in item:
-                        # hiding the complete list item is cosmetically better than just
-                        # hiding the contents (e.g. for sidebar themes).
-                        items.append('<li class="toggleCommentsButton" style="display:none;">%s</li>' % item)
-                    else:
-                        items.append('<li>%s</li>' % item)
-            d.update({'editbar_items': items})
-            self._cache['editbar'] = html
+        # TODO: Make a new cache for editbar using Jinja
+        items = []
+        for item in self.editbarItems(page):
+            if item:
+                items.append(item)
+        d.update({'editbar_items': items})
         return d
 
     def shouldShowEditbar(self, page):
