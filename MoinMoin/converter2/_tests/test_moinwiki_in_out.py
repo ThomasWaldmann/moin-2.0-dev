@@ -50,14 +50,19 @@ class TestConverter(object):
             (u"~-smaller-~\n", '~-smaller-~\n'),
             (u"^super^script\n", '^super^script\n'),
             (u",,sub,,script\n", ',,sub,,script\n'),
+            (u"<<Anchor(anchorname)>>\n<<MailTo(user AT example DOT com)>>\n@TIME@\n/!\\\n", '<<Anchor(anchorname)>>\n<<MailTo(user AT example DOT com)>>\n@TIME@\n/!\\\n'),
+            (u"{{{#!wiki comment/dotted\nThis is a wiki parser.\n\nIts visibility gets toggled the same way.\n}}}", u"{{{#!wiki comment/dotted\nThis is a wiki parser.\n\nIts visibility gets toggled the same way.\n}}}\n"),
+            (u"{{{#!wiki red/solid\nThis is wiki markup in a '''div''' with __css__ `class=\"red solid\"`.\n}}}", "{{{#!wiki red/solid\nThis is wiki markup in a '''div''' with __css__ `class=\"red solid\"`.\n}}}\n"),
+            (u"{{{#!creole\na,b,c\n}}}",""),
         ]
         for i in data:
             yield (self.do, ) + i
 
     def test_link(self):
         data = [
-            (u'[[SomePage|{{attachment:samplegraphic.png}}|target=_blank]]', '[[SomePage|{{attachment:samplegraphic.png}}|target=_blank]]\n'),
             (u'[[SomePage#subsection|subsection of Some Page]]', '[[SomePage#subsection|subsection of Some Page]]\n'),
+            (u'[[SomePage|{{attachment:samplegraphic.png}}|target=_blank]]', '[[SomePage|{{attachment:samplegraphic.png}}|target=_blank]]\n'),
+            (u'[[SomePage|{{attachment:samplegraphic.png}}|&target=_blank]]', '[[SomePage|{{attachment:samplegraphic.png}}|&target=_blank]]\n'),
             (u'[[../SisterPage|link text]]', '[[../SisterPage|link text]]\n'),
             (u'[[http://static.moinmo.in/logos/moinmoin.png|{{attachment:samplegraphic.png}}|target=_blank,class=aaa]]', '[[http://static.moinmo.in/logos/moinmoin.png|{{attachment:samplegraphic.png}}|target=_blank]]\n'),
             (u'[[http://moinmo.in/|MoinMoin Wiki|class=green dotted,accesskey=1]]', '[[http://moinmo.in/|MoinMoin Wiki|class=green dotted,accesskey=1]]\n'),
