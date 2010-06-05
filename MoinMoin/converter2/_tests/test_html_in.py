@@ -8,9 +8,13 @@ MoinMoin - Tests for MoinMoin.converter2.html_in
 import py.test
 import re
 
+try:
+    from lxml import etree
+except:
+    py.test.skip("lxml module required to run test for html_in converter.")
+
 from MoinMoin.converter2.html_in import *
 from emeraldtree.tree import *
-from lxml import etree
 import StringIO
 
 class Base(object):
