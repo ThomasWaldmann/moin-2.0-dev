@@ -37,7 +37,8 @@ class TestConverter(object):
 
     def test_base(self):
         data = [
-            (u'Text','Text\n'),
+            (u'Text', 'Text\n'),
+            (u"Text\n\nText\n", 'Text\n\nText\n'),
             (u"----\n-----\n------\n", '----\n-----\n------\n'),
             (u"'''strong'''\n", "'''strong'''\n"),
             (u"''emphasis''\n", "''emphasis''\n"),
@@ -60,6 +61,7 @@ class TestConverter(object):
             (u'[[../SisterPage|link text]]', '[[../SisterPage|link text]]\n'),
             (u'[[http://static.moinmo.in/logos/moinmoin.png|{{attachment:samplegraphic.png}}|target=_blank,class=aaa]]', '[[http://static.moinmo.in/logos/moinmoin.png|{{attachment:samplegraphic.png}}|target=_blank]]\n'),
             (u'[[http://moinmo.in/|MoinMoin Wiki|class=green dotted,accesskey=1]]', '[[http://moinmo.in/|MoinMoin Wiki|class=green dotted,accesskey=1]]\n'),
+            (u'[[http://moinmo.in/|MoinMoin Wiki|class=green]]', '[[http://moinmo.in/|MoinMoin Wiki|class=green]]\n'),
             (u'[[MoinMoin:MoinMoinWiki|MoinMoin Wiki|&action=diff,&rev1=1,&rev2=2]]', '[[MoinMoin:MoinMoinWiki|MoinMoin Wiki|&action=diff,&rev1=1,&rev2=2]]\n'),
             (u'[[attachment:HelpOnImages/pineapple.jpg|a pineapple|&do=get]]', '[[attachment:HelpOnImages/pineapple.jpg|a pineapple|&do=get]]\n'),
         ]
