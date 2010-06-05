@@ -37,7 +37,7 @@ class Moinwiki(object):
     stroke_open = '--('
     stroke_close = ')--'
     table_marker = '||'
-    p = ''
+    p = '\n'
     linebreak = '<<BR>>'
     larger_open = '~+'
     larger_close = '+~'
@@ -55,7 +55,10 @@ class Moinwiki(object):
         ('ordered', 'upper-alpha'): 'A.',
         ('ordered', 'lower-roman'): 'i.',
         ('ordered', 'upper-roman'): 'I.',
-        ('unordered', None): '*'}
+        ('unordered', None): '*',
+# Next item is a hack, bug in moinwiki_in converter with ' def:: \n :: lis1\n :: list2' input
+        (None, None): '::',
+        }
 
     def __init__(self):
         pass
@@ -116,6 +119,13 @@ class Converter(object):
 
         self.request = request
 
+        # 'text' - default status - <p> = '/n' and </p> = '/n'
+        # 'table' - text inside table - <p> = '<<BR>>' and </p> = ''
+        # 'list' - text inside list - <p> if after </p> = '<<BR>>' and </p> = ''
+        # status added because of differences in interpretation of <p> in different places
+        self.status = ['text', ]
+        self.last_closed = None
+
     def __call__(self, root):
         self.opened = [None, ]
         self.children = [None, iter([root])]
@@ -128,6 +138,7 @@ class Converter(object):
                     self.output.append(self.open(next_child))
                 else:
                     self.output.append(next_child)
+                    self.last_closed = 'text'
             except StopIteration:
                 self.children.pop()
                 next_parent = self.opened.pop()
@@ -167,6 +178,7 @@ class Converter(object):
 
     def close_moinpage(self, elem):
         n = 'close_moinpage_' + elem.tag.name.replace('-', '_')
+        self.last_closed = elem.tag.name.replace('-', '_')
         f = getattr(self, n, None)
         if f:
             return f(elem)
@@ -175,13 +187,13 @@ class Converter(object):
     def open_moinpage_a(self, elem):
         href = elem.get(xlink.href, None)
 
-        # This part doesn't work in moinmoin_in converter
+        # This part doesn't work in moinwiki_in converter
         params = {}
-        params['target'] =  elem.get(xlink.target, None)
+        params['target'] = elem.get(xlink.target, None)
         params['class'] = elem.get(xlink.class_, None)
         params['title'] = elem.get(xlink.title, None)
-        params['accesskey'] =  elem.get(xlink.title, None)
-        params = ','.join(['%s=%s' % (p, params[p]) for p in params if params[p]]) 
+        params['accesskey'] = elem.get(xlink.title, None)
+        params = ','.join(['%s=%s' % (p, params[p]) for p in params if params[p]])
 
         # TODO: this can be done using one regex, can it?
         href = href.split('?')
@@ -191,7 +203,7 @@ class Converter(object):
             args = ','.join(['&'+s for s in findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)', href[1])])
         href = href[0].split('wiki.local:')[-1]
         if params:
-            args+= ','+params
+            args += ',' + params
 
         # TODO: rewrite this using % formatting
         ret = Moinwiki.a_open
@@ -272,12 +284,20 @@ class Converter(object):
         self.children.append(iter(elem))
         self.opened.append(elem)
         self.list_level += 1
-        return ''
+        ret = ''
+        if self.status[-1] != 'text' or self.last_closed:
+            ret = '\n'
+        self.status.append('list')
+        self.last_closed = None
+        return ret
 
     def close_moinpage_list(self, elem):
         self.list_item_labels.pop()
         self.list_level -= 1
-        return ''
+        self.status.pop()
+        if self.status[-1] == 'list':
+            return ''
+        return '\n'
 
     def open_moinpage_list_item(self, elem):
         self.children.append(iter(elem))
@@ -289,13 +309,19 @@ class Converter(object):
         return ''
 
     def open_moinpage_list_item_label(self, elem):
+        ret = ''
         if self.list_item_labels[-1] == '' or self.list_item_labels[-1] == Moinwiki.definition_list_marker:
             label = ''.join(elem.itertext())
             if label:
                 self.list_item_labels[-1] = Moinwiki.definition_list_marker
                 self.list_item_label = self.list_item_labels[-1] + ' '
                 # TODO: rewrite this using % formatting
-                return ' ' * self.list_level + label + Moinwiki.definition_list_marker + '\n'
+                ret = ' ' * self.list_level + label + Moinwiki.definition_list_marker
+                if self.last_closed:
+                    ret = '\n%s' % ret
+                else:
+                    ret = '%s\n' % ret
+                return ret
         return ''
 
     def close_moinpage_list_item_label(self, elem):
@@ -304,7 +330,11 @@ class Converter(object):
     def open_moinpage_list_item_body(self, elem):
         self.children.append(iter(elem))
         self.opened.append(elem)
-        return ' ' * self.list_level + self.list_item_label
+        ret = ''
+        if self.last_closed:
+            ret = '\n'
+        ret += ' ' * self.list_level + self.list_item_label
+        return ret
 
     def close_moinpage_list_item_body(self, elem):
         return ''
@@ -329,15 +359,32 @@ class Converter(object):
         return ret
 
     def open_moinpage_p(self, elem):
-        ret = Moinwiki.p
         self.children.append(iter(elem))
         self.opened.append(elem)
-        return ret
+        if self.status[-1] == 'text':
+            if self.last_closed == 'text':
+                return Moinwiki.p * 2
+            elif self.last_closed == 'p':
+                return Moinwiki.p
+            elif self.last_closed:
+                return Moinwiki.p
+        elif self.status[-1] == 'table':
+            if self.last_closed and self.last_closed != 'table_cell':
+                return Moinwiki.linebreak
+        elif self.status[-1] == 'list':
+            if self.last_closed and self.last_closed != 'list_item'\
+                                and self.last_closed != 'list_item_header'\
+                                and self.last_closed != 'list_item_footer':
+                return Moinwiki.linebreak
+        return ''
 
     def close_moinpage_p(self, elem):
-        return '\n'
+        if self.status[-1] == 'text':
+                return Moinwiki.p
+        return ''
 
     def open_moinpage_page(self, elem):
+        self.last_closed = None
         self.children.append(iter(elem))
         self.opened.append(elem)
         return ''
@@ -404,9 +451,12 @@ class Converter(object):
         self.table_rowsclass = ''
         self.children.append(iter(elem))
         self.opened.append(elem)
+        self.status.append('table')
+        self.last_closed = None
         return ''
 
     def close_moinpage_table(self, elem):
+        self.status.pop()
         return ''
 
     def open_moinpage_table_header(self, elem):
