@@ -5,7 +5,7 @@ Every module registers a factory for itself at the registry with a given
 priority.  During the lookup each factory is called with the given arguments and
 can return a callable to consider itself as a match.
 
-@copyright: 2008,2009 MoinMoin:BastianBlank
+@copyright: 2008-2010 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -27,10 +27,15 @@ class Registry(object):
             return cmp(self.factory, other)
 
         def __repr__(self):
-            return "%r[prio %d]" % (self.factory, self.priority)
+            return '<%s: prio %d [%r]>' % (self.__class__.__name__,
+                    self.priority,
+                    self.factory)
 
     def __init__(self):
         self._entries = []
+
+    def __repr__(self):
+        return '<%s: %r>' % (self.__class__.__name__, self._entries)
 
     def _sort(self):
         self._entries.sort(key=lambda a: a.priority)
@@ -64,7 +69,4 @@ class Registry(object):
         @param: factory: Factory to unregister
         """
         self._entries.remove(factory)
-
-    def __repr__(self):
-        return ' '.join(repr(e) for e in self._entries)
 
