@@ -18,16 +18,22 @@ class Type(object):
 
     def __init__(self, _type=None, type=None, subtype=None, parameters=None):
         """
-        @param _type: Textual type, is split into the parts
+        @param _type: Type object or string representation
         @keyword type: Type part
         @keyword subtype: Subtype part
         @keyword parameters: Parameters part
         """
-        self.type = self.subtype = None
-        self.parameters = {}
+        if isinstance(_type, Type):
+            self.type = _type.type
+            self.subtype = _type.subtype
+            self.parameters = _type.parameters.copy()
 
-        if _type:
-            self._parse(_type)
+        else:
+            self.type = self.subtype = None
+            self.parameters = {}
+
+            if _type:
+                self._parse(_type)
 
         if type is not None:
             self.type = type
