@@ -27,7 +27,6 @@ class Registry(_RegistryBase):
         @param output Input MIME-Type
         @return A converter or default value
         """
-        print (u"IN : %s OUT %s" % (input, output))
         ret = super(Registry, self).get(request, input, output, **kw)
         if ret:
             return ret
