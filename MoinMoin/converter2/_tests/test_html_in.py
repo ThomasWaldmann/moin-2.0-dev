@@ -46,20 +46,23 @@ class TestConverter(Base):
 
     def test_base(self):
         data = [
-            ('<div><p>Test</p></div>',
+            ('<html><div><p>Test</p></div></html>',
              '/page/body/div/p',
-             'Test'),
+            'Test'),
+            ('<html><div><p>First paragraph</p><h1>Title</h1><p><em>Paragraph</em></p></div></html>',
+             '/page/body/div/p[2]/emphasis',
+             'Paragraph'), # This test need to be improved
         ]
         for i in data:
             yield (self.do, ) + i
 
     def test_title(self):
         data = [
-            ('<div><h2>Test</h2></div>',
-              '/page/body/div/h[@outline-level=2]',
+            ('<html><h2>Test</h2></html>',
+              '/page/body/h[@outline-level=2]',
               'Test'),
-            ('<div><h6>Test</h6></div>',
-              '/page/body/div/h[@outline-level=6]',
+            ('<html><h6>Test</h6></html>',
+              '/page/body/h[@outline-level=6]',
               'Test'),
         ]
         for i in data:
@@ -67,17 +70,17 @@ class TestConverter(Base):
 
     def test_basic_style(self):
         data = [
-            ('<div><p><em>Test</em></p></div>',
-              '/page/body/div/p/emphasis',
+            ('<html><p><em>Test</em></p></html>',
+              '/page/body/p/emphasis',
               'Test'),
-            ('<div><p><strong>Test</strong></p></div>',
-              '/page/body/div/p/strong',
+            ('<html><p><strong>Test</strong></p></html>',
+              '/page/body/p/strong',
               'Test'),
-            ('<div><pre>Code</pre></div>',
-              '/page/body/div/blockcode',
+            ('<html><pre>Code</pre></html>',
+              '/page/body/blockcode',
               'Code'),
-            ('<div><p><tt>Code</tt></p></div>',
-              '/page/body/div/p/code',
+            ('<html><p><tt>Code</tt></p></html>',
+              '/page/body/p/code',
               'Code'),
         ]
         for i in data:
@@ -85,14 +88,14 @@ class TestConverter(Base):
 
     def test_span(self):
         data = [
-            ('<div><p><sub>sub</sub>script</p></div>',
-             '/page/body/div/p/span[@base-line-shift="sub"]',
+            ('<html><p><sub>sub</sub>script</p></html>',
+             '/page/body/p/span[@base-line-shift="sub"]',
              'sub'),
-            ('<div><p><sup>super</sup>script</p></div>',
-             '/page/body/div/p/span[@base-line-shift="super"]',
+            ('<html><p><sup>super</sup>script</p></html>',
+             '/page/body/p/span[@base-line-shift="super"]',
              'super'),
-            ('<div><p><u>underline</u></div>',
-             '/page/body/div/p/span[@text-decoration="underline"]',
+            ('<html><p><u>underline</u></html>',
+             '/page/body/p/span[@text-decoration="underline"]',
              'underline'),
         ]
         for i in data:
@@ -100,8 +103,8 @@ class TestConverter(Base):
 
     def test_link(self):
         data = [
-            ('<div><a href="uri:test">Test</a></div>',
-              '/page/body/div/a[@href="uri:test"]',
+            ('<html><a href="uri:test">Test</a></html>',
+              '/page/body/a[@href="uri:test"]',
              'Test'),
         ]
         for i in data:
