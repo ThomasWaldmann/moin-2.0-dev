@@ -23,6 +23,13 @@ def test_Type_init_2():
     assert t.subtype == 'bar'
     assert t.parameters == {'encoding': 'utf-8', 'foo': 'bar'}
 
+def test_Type_init_3():
+    i = Type(type='foo', subtype='bar')
+    t = Type(i)
+    assert i is not t
+    assert i == t
+    assert i.parameters is not t.parameters
+
 def test_Type_parser():
     i = 'text/plain'
     t = Type(i)
