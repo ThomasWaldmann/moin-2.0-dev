@@ -123,7 +123,7 @@ class Converter(object):
         # 'table' - text inside table - <p> = '<<BR>>' and </p> = ''
         # 'list' - text inside list - <p> if after </p> = '<<BR>>' and </p> = ''
         # status added because of differences in interpretation of <p> in different places
-        self.status = ['text', ]
+        self.status = []
         self.last_closed = None
 
     def __call__(self, root):
@@ -387,11 +387,34 @@ class Converter(object):
         self.last_closed = None
         self.children.append(iter(elem))
         self.opened.append(elem)
-        return ''
+        ret = ''
+        if self.status:
+            ret = "{{{#!wiki"
+        self.status.append('text')
+        return ret
 
-    def open_moinpage_part(self, elem):
-        # TODO
+    def close_moinpage_page(self, elem):
+        self.status.pop()
+        ret = ''
+        if self.status:
+            ret = "}}}\n"
+        return ret
+
+    def open_moinpage_body(self, elem):
+        self.children.append(iter(elem))
+        self.opened.append(elem)
+        class_ = elem.get(moin_page.class_,'').replace(' ', '/')
+        if class_:
+            return ' %s\n' % class_
+        if len(self.status)>1:
+            return '\n'
         return ''
+        
+    def close_moinpage_body(self, elem):
+        return ''
+ 
+    def open_moinpage_part(self, elem):
+       return ''
 
     def open_moinpage_separator(self, elem):
         return Moinwiki.separator + '\n'
