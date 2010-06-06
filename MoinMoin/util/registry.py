@@ -10,14 +10,14 @@ can return a callable to consider itself as a match.
 """
 
 
-class Registry(object):
+class RegistryBase(object):
     PRIORITY_REALLY_FIRST = -20
     PRIORITY_FIRST = -10
     PRIORITY_MIDDLE = 0
     PRIORITY_LAST = 10
     PRIORITY_REALLY_LAST = 20
 
-    class _Entry(object):
+    class Entry(object):
         def __init__(self, factory, priority):
             self.factory, self.priority = factory, priority
 
@@ -55,13 +55,7 @@ class Registry(object):
             if conv is not None:
                 return conv
 
-    def register(self, factory, priority=PRIORITY_MIDDLE):
-        """
-        Register a factory
-
-        @param factory: Factory to register. Callable, have to return a class
-        """
-        entry = self._Entry(factory, priority)
+    def _register(self, entry):
         if entry not in self._entries:
             entries = self._entries[:]
             entries.append(entry)
@@ -81,3 +75,12 @@ class Registry(object):
             raise ValueError
         self._entries = entries
 
+
+class Registry(RegistryBase):
+    def register(self, factory, priority=RegistryBase.PRIORITY_MIDDLE):
+        """
+        Register a factory
+
+        @param factory: Factory to register. Callable, have to return a class
+        """
+        return self._register(self.Entry(factory, priority))
