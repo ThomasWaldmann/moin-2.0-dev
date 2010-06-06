@@ -27,6 +27,11 @@ class Registry(object):
                         self.priority == other.priority)
             return NotImplemented
 
+        def __lt__(self, other):
+            if isinstance(other, self.__class__):
+                return self.priority < other.priority
+            return NotImplemented
+
         def __repr__(self):
             return '<%s: prio %d [%r]>' % (self.__class__.__name__,
                     self.priority,
@@ -60,7 +65,7 @@ class Registry(object):
         if entry not in self._entries:
             entries = self._entries[:]
             entries.append(entry)
-            entries.sort(key=lambda a: a.priority)
+            entries.sort()
             self._entries = entries
 
     def unregister(self, factory):
