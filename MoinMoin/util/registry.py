@@ -23,7 +23,8 @@ class Registry(object):
 
         def __eq__(self, other):
             if isinstance(other, self.__class__):
-                return self.factory == other.factory
+                return (self.factory == other.factory and
+                        self.priority == other.priority)
             return NotImplemented
 
         def __repr__(self):
