@@ -18,6 +18,7 @@ from emeraldtree import ElementTree as ET
 
 from re import findall
 
+from MoinMoin.support.werkzeug.utils import unescape
 
 class Moinwiki(object):
     '''
@@ -220,9 +221,7 @@ class Converter(object):
         return Moinwiki.a_close
 
     def open_moinpage_blockcode(self, elem):
-        ret = Moinwiki.verbatim_open
-        ret += ''.join(elem.itertext())
-        ret += Moinwiki.verbatim_close
+        ret = '%s\n%s\n%s\n' % (Moinwiki.verbatim_open, ''.join(elem.itertext()), Moinwiki.verbatim_close)
         return ret
 
     def close_moinpage_blockcode(self, elem):
@@ -414,7 +413,11 @@ class Converter(object):
         return ''
  
     def open_moinpage_part(self, elem):
-       return ''
+        ret = unescape(elem.get(moin_page.alt, ''))
+        return ret
+
+    def close_moinpage_part(self, elem):
+        return ''
 
     def open_moinpage_separator(self, elem):
         return Moinwiki.separator + '\n'
