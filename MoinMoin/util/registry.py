@@ -21,10 +21,10 @@ class Registry(object):
         def __init__(self, factory, priority):
             self.factory, self.priority = factory, priority
 
-        def __cmp__(self, other):
+        def __eq__(self, other):
             if isinstance(other, self.__class__):
-                return cmp(self.factory, other.factory)
-            return cmp(self.factory, other)
+                return self.factory == other.factory
+            return NotImplemented
 
         def __repr__(self):
             return '<%s: prio %d [%r]>' % (self.__class__.__name__,
@@ -36,9 +36,6 @@ class Registry(object):
 
     def __repr__(self):
         return '<%s: %r>' % (self.__class__.__name__, self._entries)
-
-    def _sort(self):
-        self._entries.sort(key=lambda a: a.priority)
 
     def get(self, *args, **kw):
         """
@@ -58,9 +55,12 @@ class Registry(object):
 
         @param factory: Factory to register. Callable, have to return a class
         """
-        if factory not in self._entries:
-            self._entries.append(self._Entry(factory, priority))
-            self._sort()
+        entry = self._Entry(factory, priority)
+        if entry not in self._entries:
+            entries = self._entries[:]
+            entries.append(entry)
+            entries.sort(key=lambda a: a.priority)
+            self._entries = entries
 
     def unregister(self, factory):
         """
@@ -68,5 +68,10 @@ class Registry(object):
 
         @param: factory: Factory to unregister
         """
-        self._entries.remove(factory)
+        old_entries = self._entries
+        entries = [i for i in old_entries if not i.factory is factory]
+        if len(old_entries) == len(entries):
+            # TODO: Is this necessary?
+            raise ValueError
+        self._entries = entries
 
