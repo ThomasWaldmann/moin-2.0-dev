@@ -80,6 +80,11 @@ def test_Type_compare():
     assert t1.issupertype(t2)
     assert not t2.issupertype(t1)
 
+    t3 = Type(type='text', subtype='plain', parameters={'encoding': 'utf-8'})
+    assert t2 != t3
+    assert not t2.issupertype(t3)
+    assert not t3.issupertype(t2)
+
     t2 = Type(type='text', subtype='html')
     assert t1 != t2
     assert not t1.issupertype(t2)
