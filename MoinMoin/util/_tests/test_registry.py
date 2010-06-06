@@ -22,7 +22,7 @@ def factory_special(arg):
     if arg == 'a':
         return 2
 
-def test_get():
+def test_Registry_get():
     r = Registry()
 
     r.register(factory_none)
@@ -37,29 +37,37 @@ def test_get():
     assert r.get(None) == 3
     assert r.get('a') == 3
 
-def test_register():
+def test_Registry_lifecycle():
     r = Registry()
+
     assert len(r._entries) == 0
+
     r.register(factory_all)
     assert len(r._entries) == 1
+
     r.register(factory_none)
     assert len(r._entries) == 2
+
     r.register(factory_none)
     assert len(r._entries) == 2
+    assert r._entries[0].factory is factory_all
+    assert r._entries[1].factory is factory_none
+
     r.register(factory_none, r.PRIORITY_FIRST)
     assert len(r._entries) == 3
+    assert r._entries[0].factory is factory_none
+    assert r._entries[0].priority == r.PRIORITY_FIRST
+    assert r._entries[1].factory is factory_all
+    assert r._entries[2].factory is factory_none
+    assert r._entries[2].priority == r.PRIORITY_MIDDLE
 
-def test_unregister():
-    r = Registry()
-    r.register(factory_all)
-    r.register(factory_none)
-    r.register(factory_none, r.PRIORITY_FIRST)
-
-    assert len(r._entries) == 3
-    r.unregister(factory_all)
-    assert len(r._entries) == 2
     r.unregister(factory_none)
+    assert len(r._entries) == 1
+    assert r._entries[0].factory is factory_all
+
+    r.unregister(factory_all)
     assert len(r._entries) == 0
+
     py.test.raises(ValueError, r.unregister, factory_none)
     assert len(r._entries) == 0
 
