@@ -14,9 +14,6 @@ from MoinMoin.util.mime import Type
 from MoinMoin.util.tree import moin_page, xinclude
 
 class ConverterMacro(object):
-    def __init__(self, request):
-        self.request = request
-
     def _BR_repl(self, args, text, context_block):
         if context_block:
             return

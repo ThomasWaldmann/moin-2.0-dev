@@ -174,7 +174,7 @@ class _TableArguments(object):
 class Converter(ConverterMacro):
     @classmethod
     def factory(cls, input, output, **kw):
-        return cls
+        return cls()
 
     def __call__(self, content, arguments=None):
         iter_content = _Iter(content)
@@ -994,12 +994,7 @@ class Converter(ConverterMacro):
 class ConverterFormat19(Converter):
     @classmethod
     def factory(cls, input, output, **kw):
-        if type_moin_document.issupertype(output):
-            if (type_moin_wiki.issupertype(input)
-                    and input.parameters.get('format') == '1.9'):
-                return cls
-            if Type('x-moin/format;name=wiki;format=1.9').issupertype(input):
-                return cls
+        return cls()
 
     inline_freelink = r"""
          (?:

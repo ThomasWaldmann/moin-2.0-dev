@@ -1125,26 +1125,26 @@ class Text(Binary):
         from MoinMoin.util.tree import moin_page
 
         request = self.request
-        InputConverter = reg.get(Type(self.mimetype), type_moin_document,
+        input_conv = reg.get(Type(self.mimetype), type_moin_document,
                 request=request)
-        IncludeConverter = reg.get(type_moin_document, type_moin_document,
+        include_conv = reg.get(type_moin_document, type_moin_document,
                 includes='expandall', request=request)
-        MacroConverter = reg.get(type_moin_document, type_moin_document,
+        macro_conv = reg.get(type_moin_document, type_moin_document,
                 macros='expandall', request=request)
-        LinkConverter = reg.get(type_moin_document, type_moin_document,
+        link_conv = reg.get(type_moin_document, type_moin_document,
                 links='extern', request=request)
         # TODO: Real output format
-        HtmlConverter = reg.get(type_moin_document,
+        html_conv = reg.get(type_moin_document,
                 Type('application/x-xhtml-moin-page'), request=request)
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
-        doc = InputConverter(request)(self.data_storage_to_internal(self.data).split(u'\n'))
+        doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
-        doc = IncludeConverter(request)(doc)
-        doc = MacroConverter(request)(doc)
-        doc = LinkConverter(request)(doc)
-        doc = HtmlConverter(request)(doc)
+        doc = include_conv(doc)
+        doc = macro_conv(doc)
+        doc = link_conv(doc)
+        doc = html_conv(doc)
 
         out = StringIO()
         # TODO: Switch to xml

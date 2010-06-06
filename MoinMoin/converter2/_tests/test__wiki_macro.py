@@ -24,7 +24,7 @@ class TestConverter(object):
     output_re = re.compile(r'(\s+xmlns(:\w+)?="[^"]+"|xmlns\(\w+=[^)]+\)\s+)')
 
     def setup_class(self):
-        self.conv = ConverterMacro(self.request)
+        self.conv = ConverterMacro()
 
     def test_macro(self):
         data = [

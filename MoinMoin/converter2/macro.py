@@ -50,9 +50,9 @@ class _PseudoRequest(object):
 
 class Converter(object):
     @classmethod
-    def _factory(cls, input, output, macros=None, **kw):
+    def _factory(cls, input, output, request, macros=None, **kw):
         if macros == 'expandall':
-            return cls
+            return cls(request)
 
     def handle_macro(self, elem, page):
         type = elem.get(moin_page.content_type)
