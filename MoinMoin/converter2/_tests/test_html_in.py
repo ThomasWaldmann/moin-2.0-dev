@@ -79,12 +79,6 @@ class TestConverter(Base):
             ('<html><p><strong>Test</strong></p></html>',
               '/page/body/p/strong',
               'Test'),
-            ('<html><pre>Code</pre></html>',
-              '/page/body/blockcode',
-              'Code'),
-            ('<html><p><tt>Code</tt></p></html>',
-              '/page/body/p/code',
-              'Code'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -121,6 +115,12 @@ class TestConverter(Base):
             ('<html><div><samp>Code</samp></div></html>',
              '/page/body/div/code',
              'Code'),
+            ('<html><pre>Code</pre></html>',
+              '/page/body/blockcode',
+              'Code'),
+            ('<html><p><tt>Code</tt></p></html>',
+              '/page/body/p/code',
+              'Code'),
         ]
         for i in data:
             yield (self.do, ) + i
