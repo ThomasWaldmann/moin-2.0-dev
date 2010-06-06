@@ -4,21 +4,19 @@ MoinMoin - Moin Wiki input converter
 @copyright: 2000-2002 Juergen Hermann <jh@web.de>,
             2006-2008 MoinMoin:ThomasWaldmann,
             2007 MoinMoin:ReimarBauer,
-            2008,2009 MoinMoin:BastianBlank
+            2008-2010 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
 
 from __future__ import absolute_import
 
 import re
-from emeraldtree import ElementTree as ET
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import config, wikiutil
-from MoinMoin.util import iri
-from MoinMoin.util.mime import Type, type_moin_document, type_moin_wiki
+from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import html, moin_page, xlink
 
 from ._args import Arguments
@@ -726,10 +724,10 @@ class Converter(ConverterMacro):
                 path, fragment = link_item.rsplit('#', 1)
             else:
                 path, fragment = link_item, None
-            target = unicode(iri.Iri(scheme='wiki.local', path=path, query=query, fragment=fragment))
+            target = unicode(Iri(scheme='wiki.local', path=path, query=query, fragment=fragment))
             text = link_item
         else:
-            target = unicode(iri.Iri(link_url))
+            target = unicode(Iri(link_url))
             text = link_url
         element = moin_page.a(attrib={xlink.href: target})
         stack.push(element)
@@ -834,10 +832,10 @@ class Converter(ConverterMacro):
                 # by default, we want the item's get url for transclusion of raw data:
                 args['do'] = 'get'
             query = wikiutil.makeQueryString(args)
-            target = unicode(iri.Iri(scheme='wiki.local', path=object_item, query=query, fragment=None))
+            target = unicode(Iri(scheme='wiki.local', path=object_item, query=query, fragment=None))
             text = object_item
         else:
-            target = unicode(iri.Iri(object_url))
+            target = unicode(Iri(object_url))
             text = object_url
 
         attrib = {xlink.href: target}
@@ -1062,7 +1060,7 @@ class ConverterFormat19(Converter):
                 path, fragment = page.rsplit('#', 1)
             else:
                 path, fragment = page, None
-            link = iri.Iri(scheme='wiki.local', path=path, fragment=fragment)
+            link = Iri(scheme='wiki.local', path=path, fragment=fragment)
             text = freelink_page
 
         elif freelink_email:
@@ -1076,7 +1074,7 @@ class ConverterFormat19(Converter):
                 stack.top_append(freelink)
                 return
 
-            link = iri.Iri(scheme='wiki',
+            link = Iri(scheme='wiki',
                     authority=freelink_interwiki_ref,
                     path='/' + freelink_interwiki_page)
             text = freelink_interwiki_page
@@ -1116,7 +1114,7 @@ class ConverterFormat19(Converter):
     """
 
     def inline_url_repl(self, stack, url, url_target):
-        url = unicode(iri.Iri(url_target))
+        url = unicode(Iri(url_target))
         attrib = {xlink.href: url}
         element = moin_page.a(attrib=attrib, children=[url_target])
         stack.top_append(element)
