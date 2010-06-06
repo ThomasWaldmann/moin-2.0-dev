@@ -71,7 +71,7 @@ class Type(object):
                 )
 
     def __unicode__(self):
-        ret = [u'%s/%s' % (self.type, self.subtype)]
+        ret = [u'%s/%s' % (self.type or '*', self.subtype or '*')]
 
         parameters = self.parameters.items()
         parameters.sort()
@@ -93,7 +93,10 @@ class Type(object):
     def _parse(self, type):
         parts = type.split(';')
 
-        self.type, self.subtype = parts[0].strip().lower().split('/', 1)
+        type, subtype = parts[0].strip().lower().split('/', 1)
+
+        self.type = type != '*' and type or None
+        self.subtype = subtype != '*' and subtype or None
 
         for param in parts[1:]:
             key, value = param.strip().split('=', 1)

@@ -30,26 +30,38 @@ def test_Type_init_3():
     assert i == t
     assert i.parameters is not t.parameters
 
-def test_Type_parser():
+def test_Type_text():
+    i = '*/*'
+    t = Type(i)
+    assert t.type == None
+    assert t.subtype == None
+    assert t.parameters == {}
+    assert unicode(t) == i
+
+    i = 'text/*'
+    t = Type(i)
+    assert t.type == 'text'
+    assert t.subtype == None
+    assert t.parameters == {}
+    assert unicode(t) == i
+
     i = 'text/plain'
     t = Type(i)
     assert t.type == 'text'
     assert t.subtype == 'plain'
     assert t.parameters == {}
+    assert unicode(t) == i
 
-    i = 'text/plain;encoding=utf-8;foo="bar"'
+    i = 'text/plain;encoding=utf-8;foo=bar'
     t = Type(i)
     assert t.type == 'text'
     assert t.subtype == 'plain'
     assert t.parameters == {'encoding': 'utf-8', 'foo': 'bar'}
-
-def test_Type_unicode():
-    i = 'text/plain;encoding=utf-8;foo=bar'
-    t = Type(i)
     assert unicode(t) == i
 
     i = 'text/plain;encoding=utf-8;foo="["'
     t = Type(i)
+    assert t.parameters == {'encoding': 'utf-8', 'foo': '['}
     assert unicode(t) == i
 
 def test_Type_compare():
@@ -61,14 +73,15 @@ def test_Type_compare():
     t2 = Type(type='text')
     assert t1 != t2
     assert t2.issupertype(t1)
+    assert not t1.issupertype(t2)
 
     t2 = Type(type='text', subtype='plain', parameters={'encoding': 'iso8859-1'})
-
     assert t1 != t2
     assert t1.issupertype(t2)
+    assert not t2.issupertype(t1)
 
     t2 = Type(type='text', subtype='html')
-
     assert t1 != t2
     assert not t1.issupertype(t2)
+    assert not t2.issupertype(t1)
 
