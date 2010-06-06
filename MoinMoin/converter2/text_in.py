@@ -42,6 +42,5 @@ class Converter(object):
         return moin_page.page(children=(body, ))
 
 from . import default_registry
-# Register wildcards behind anything else
-default_registry.register(Converter.factory, default_registry.PRIORITY_LAST)
-
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(Converter.factory, Type(type='text'), type_moin_document)

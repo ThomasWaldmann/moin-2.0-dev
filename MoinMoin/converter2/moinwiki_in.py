@@ -21,7 +21,6 @@ from MoinMoin.util import iri
 from MoinMoin.util.mime import Type, type_moin_document, type_moin_wiki
 from MoinMoin.util.tree import html, moin_page, xlink
 
-from . import default_registry
 from ._args import Arguments
 from ._args_wiki import parse as parse_arguments
 from ._wiki_macro import ConverterMacro
@@ -1138,6 +1137,9 @@ class ConverterFormat19(Converter):
     inline_re = re.compile('|'.join(inline), re.X | re.U)
 
 
-default_registry.register(ConverterFormat19.factory)
-default_registry.register(Converter.factory)
-
+from . import default_registry
+from MoinMoin.util.mime import Type, type_moin_document, type_moin_wiki
+default_registry.register(Converter.factory, type_moin_wiki, type_moin_document)
+default_registry.register(Converter.factory, Type('x-moin/format;name=wiki'), type_moin_document)
+default_registry.register(ConverterFormat19.factory, Type('text/x.moin.wiki;format=1.9'), type_moin_document)
+default_registry.register(ConverterFormat19.factory, Type('x-moin/format;name=wiki;format=1.9'), type_moin_document)
