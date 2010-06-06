@@ -209,5 +209,5 @@ class Converter(object):
         return tree
 
 from . import default_registry
-default_registry.register(Converter._factory)
-
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(Converter._factory, type_moin_document, type_moin_document)

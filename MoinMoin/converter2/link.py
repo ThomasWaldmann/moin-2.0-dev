@@ -135,6 +135,6 @@ class ConverterPagelinks(ConverterBase):
         return self.links
 
 from . import default_registry
-default_registry.register(ConverterExternOutput._factory)
-default_registry.register(ConverterPagelinks._factory)
-
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(ConverterExternOutput._factory, type_moin_document, type_moin_document)
+default_registry.register(ConverterPagelinks._factory, type_moin_document, type_moin_document)

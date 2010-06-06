@@ -32,7 +32,6 @@ from MoinMoin.util import iri
 from MoinMoin.util.mime import Type
 from MoinMoin.util.tree import moin_page, xlink
 
-from . import default_registry
 from ._args_wiki import parse as parse_arguments
 from ._wiki_macro import ConverterMacro
 
@@ -684,5 +683,7 @@ class Converter(ConverterMacro):
         # Handle trailing text
         stack.top_append_ifnotempty(text[pos:])
 
-default_registry.register(Converter.factory)
-
+from . import default_registry
+from MoinMoin.util.mime import Type, type_moin_document, type_moin_creole
+default_registry.register(Converter.factory, type_moin_creole, type_moin_document)
+default_registry.register(Converter.factory, Type('x-moin/format;name=creole'), type_moin_document)
