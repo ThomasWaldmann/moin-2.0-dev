@@ -327,20 +327,8 @@ class Converter(ConverterMacro):
                 stack.top_append(elem)
                 return
 
-            if '/' in nowiki_name:
-                type = Type(nowiki_name)
-            else:
-                type = Type(type='x-moin', subtype='format', parameters={'name': nowiki_name})
-
-            try:
-                converter = default_registry.get(self.request, type, Type('application/x.moin.document'))
-            except TypeError:
-                # XXX
-                pass
-            else:
-                doc = converter(self.request)(lines, args)
-                stack.top_append(doc)
-                return
+            stack.top_append(self.parser(nowiki_name, args, lines))
+            return
 
         elem = moin_page.blockcode()
         stack.top_append(elem)
