@@ -46,15 +46,18 @@ def test_register():
     assert len(r._entries) == 2
     r.register(factory_none)
     assert len(r._entries) == 2
+    r.register(factory_none, r.PRIORITY_FIRST)
+    assert len(r._entries) == 3
 
 def test_unregister():
     r = Registry()
     r.register(factory_all)
     r.register(factory_none)
+    r.register(factory_none, r.PRIORITY_FIRST)
 
-    assert len(r._entries) == 2
+    assert len(r._entries) == 3
     r.unregister(factory_all)
-    assert len(r._entries) == 1
+    assert len(r._entries) == 2
     r.unregister(factory_none)
     assert len(r._entries) == 0
     py.test.raises(ValueError, r.unregister, factory_none)
