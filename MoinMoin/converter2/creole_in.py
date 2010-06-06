@@ -18,18 +18,16 @@
 
     @copyright: 2007 MoinMoin:RadomirDopieralski (creole 0.5 implementation),
                 2007 MoinMoin:ThomasWaldmann (updates)
-                2008,2009 MoinMoin:BastianBlank
+                2008-2010 MoinMoin:BastianBlank
     @license: GNU GPL, see COPYING for details.
 """
 
 from __future__ import absolute_import
 
 import re
-from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
-from MoinMoin.util import iri
-from MoinMoin.util.mime import Type
+from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import moin_page, xlink
 
 from ._args_wiki import parse as parse_arguments
@@ -391,7 +389,7 @@ class Converter(ConverterMacro):
         """Handle all kinds of links."""
 
         if link_page is not None:
-            target = unicode(iri.Iri(scheme='wiki.local', path=link_page))
+            target = unicode(Iri(scheme='wiki.local', path=link_page))
             text = link_page
         else:
             target = link_url
@@ -639,12 +637,6 @@ class Converter(ConverterMacro):
         """
         data = dict(((k, v) for k, v in match.groupdict().iteritems() if v is not None))
         getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(*args, **data)
-
-    def macro_text(self, text):
-        conv = self.__class__(self.request, None)
-        conv._stack = [ET.Element(ET.QName(None))]
-        conv.parse_inline(text)
-        return conv._stack[0][:]
 
     def parse_block(self, iter_content, arguments):
         attrib = {}
