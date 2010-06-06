@@ -1330,6 +1330,7 @@ class JinjaTheme(ThemeBase):
         @return: template rendered by jinja2
         """
         template = self.env.get_template(filename)
+        context.update({'_': self.request.getText})
         return template.render(**context)
 
 
