@@ -42,7 +42,7 @@ class TestConverter(object):
             (u"----\n-----\n------\n", '----\n-----\n------\n'),
             (u"'''strong'''\n", "'''strong'''\n"),
             (u"''emphasis''\n", "''emphasis''\n"),
-            (u"{{{blockcode}}}\n", "{{{blockcode}}}\n"),
+            (u"{{{\nblockcode\n}}}\n", "{{{\nblockcode\n}}}\n"),
             (u"`monospace`\n",'`monospace`\n'),
             (u"--(stroke)--\n", '--(stroke)--\n'),
             (u"__underline__\n", '__underline__\n'),
@@ -51,9 +51,14 @@ class TestConverter(object):
             (u"^super^script\n", '^super^script\n'),
             (u",,sub,,script\n", ',,sub,,script\n'),
             (u"<<Anchor(anchorname)>>\n<<MailTo(user AT example DOT com)>>\n@TIME@\n/!\\\n", '<<Anchor(anchorname)>>\n<<MailTo(user AT example DOT com)>>\n@TIME@\n/!\\\n'),
+            (u"<<MonthCalendar(,,12)>>", '<<MonthCalendar(,,12)>>'),
             (u"{{{#!wiki comment/dotted\nThis is a wiki parser.\n\nIts visibility gets toggled the same way.\n}}}", u"{{{#!wiki comment/dotted\nThis is a wiki parser.\n\nIts visibility gets toggled the same way.\n}}}\n"),
             (u"{{{#!wiki red/solid\nThis is wiki markup in a '''div''' with __css__ `class=\"red solid\"`.\n}}}", "{{{#!wiki red/solid\nThis is wiki markup in a '''div''' with __css__ `class=\"red solid\"`.\n}}}\n"),
             (u"{{{#!creole\na,b,c\n}}}",""),
+            (u"## comment","## comment\n"),
+            (u"#REDIRECT pagename", ""),
+            (u"#format creole", ""),
+            (u"@DATE@", ""),
         ]
         for i in data:
             yield (self.do, ) + i
