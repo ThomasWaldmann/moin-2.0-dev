@@ -279,15 +279,7 @@ class Converter(ConverterMacro):
                 stack.top_append(elem)
 
             else:
-                if '/' in name:
-                    type = Type(name)
-                else:
-                    type = Type(type='x-moin', subtype='format', parameters={'name': name})
-
-                converter = default_registry.get(self.request, type, Type('application/x.moin.document'))
-
-                doc = converter(self.request)(lines, args)
-                stack.top_append(doc)
+                stack.top_append(self.parser(name, args, lines))
 
         else:
             elem = moin_page.blockcode(children=(firstline, ))
