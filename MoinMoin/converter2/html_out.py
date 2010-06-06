@@ -413,7 +413,7 @@ class ConverterPage(Converter):
     """
 
     @classmethod
-    def _factory(cls, _request, input, output, **kw):
+    def _factory(cls, input, output, **kw):
         return cls
 
     def __call__(self, element):

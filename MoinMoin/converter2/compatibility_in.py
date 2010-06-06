@@ -32,7 +32,7 @@ class Converter(object):
 
         return moin_page.page(children=(body, ))
 
-def _factory(request, input, output, **kw):
+def _factory(input, output, request, **kw):
     """
     Creates a class dynamically, which uses the matching old-style parser and
     compatibility formatter.

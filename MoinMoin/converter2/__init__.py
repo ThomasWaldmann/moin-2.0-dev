@@ -28,10 +28,10 @@ class RegistryConverter(RegistryBase):
             self.type_output = type_output
             self.priority = priority
 
-        def __call__(self, request, type_input, type_output, kw):
+        def __call__(self, type_input, type_output, kw):
             if (self.type_output.issupertype(type_output) and
                     self.type_input.issupertype(type_input)):
-                    return self.factory(request, type_input, type_output, **kw)
+                    return self.factory(type_input, type_output, **kw)
 
         def __eq__(self, other):
             if isinstance(other, self.__class__):
@@ -63,9 +63,9 @@ class RegistryConverter(RegistryBase):
                     self.priority,
                     self.factory)
 
-    def get(self, request, type_input, type_output, **kw):
+    def get(self, type_input, type_output, **kw):
         for entry in self._entries:
-            conv = entry(request, type_input, type_output, kw)
+            conv = entry(type_input, type_output, kw)
             if conv is not None:
                 return conv
 

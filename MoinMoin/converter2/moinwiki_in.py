@@ -173,7 +173,7 @@ class _TableArguments(object):
 
 class Converter(ConverterMacro):
     @classmethod
-    def factory(cls, _request, input, output, **kw):
+    def factory(cls, input, output, **kw):
         return cls
 
     def __call__(self, content, arguments=None):
@@ -993,7 +993,7 @@ class Converter(ConverterMacro):
 
 class ConverterFormat19(Converter):
     @classmethod
-    def factory(cls, _request, input, output, **kw):
+    def factory(cls, input, output, **kw):
         if type_moin_document.issupertype(output):
             if (type_moin_wiki.issupertype(input)
                     and input.parameters.get('format') == '1.9'):

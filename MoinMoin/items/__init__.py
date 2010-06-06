@@ -1125,17 +1125,17 @@ class Text(Binary):
         from MoinMoin.util.tree import moin_page
 
         request = self.request
-        InputConverter = reg.get(request, Type(self.mimetype),
-                type_moin_document)
-        IncludeConverter = reg.get(request, type_moin_document,
-                type_moin_document, includes='expandall')
-        MacroConverter = reg.get(request, type_moin_document,
-                type_moin_document, macros='expandall')
-        LinkConverter = reg.get(request, type_moin_document,
-                type_moin_document, links='extern')
+        InputConverter = reg.get(Type(self.mimetype), type_moin_document,
+                request=request)
+        IncludeConverter = reg.get(type_moin_document, type_moin_document,
+                includes='expandall', request=request)
+        MacroConverter = reg.get(type_moin_document, type_moin_document,
+                macros='expandall', request=request)
+        LinkConverter = reg.get(type_moin_document, type_moin_document,
+                links='extern', request=request)
         # TODO: Real output format
-        HtmlConverter = reg.get(request, type_moin_document,
-                Type('application/x-xhtml-moin-page'))
+        HtmlConverter = reg.get(type_moin_document,
+                Type('application/x-xhtml-moin-page'), request=request)
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
