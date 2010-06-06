@@ -94,9 +94,7 @@ class Converter(object):
 
     @classmethod
     def _factory(cls, _request, input, output, includes=None, **kw):
-        if (type_moin_document.issupertype(input) and
-                type_moin_document.issupertype(output) and
-                includes == 'expandall'):
+        if includes == 'expandall':
             return cls
 
     def recurse(self, elem, page_href):

@@ -414,9 +414,7 @@ class ConverterPage(Converter):
 
     @classmethod
     def _factory(cls, _request, input, output, **kw):
-        if input == 'application/x.moin.document' and \
-           output == 'application/x-xhtml-moin-page':
-            return cls
+        return cls
 
     def __call__(self, element):
         _ = self.request.getText

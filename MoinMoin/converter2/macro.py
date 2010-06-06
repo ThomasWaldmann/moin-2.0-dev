@@ -51,9 +51,7 @@ class _PseudoRequest(object):
 class Converter(object):
     @classmethod
     def _factory(cls, _request, input, output, macros=None, **kw):
-        if (type_moin_document.issupertype(input) and
-                type_moin_document.issupertype(output) and
-                macros == 'expandall'):
+        if macros == 'expandall':
             return cls
 
     def handle_macro(self, elem, page):
