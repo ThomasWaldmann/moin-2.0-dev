@@ -118,6 +118,9 @@ class TestConverter(Base):
             ('<html><div><code>Code</code></div></html>',
              '/page/body/div/code',
              'Code'),
+            ('<html><div><samp>Code</samp></div></html>',
+             '/page/body/div/code',
+             'Code'),
         ]
         for i in data:
             yield (self.do, ) + i
