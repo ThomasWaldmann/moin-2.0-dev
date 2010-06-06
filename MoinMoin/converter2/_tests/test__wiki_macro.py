@@ -87,6 +87,16 @@ class TestConverter(object):
             yield (self._do, name, args, text, True, output_block)
             yield (self._do, name, args, text, False, output_inline)
 
+    def test_parser(self):
+        data = [
+            ('test', None, ('text', ),
+                '<part content-type="x-moin/format;name=test"><body>text</body></part>'),
+            ('test', Arguments([u'arg1']), ('text', ),
+                '<part content-type="x-moin/format;name=test"><arguments><argument>arg1</argument></arguments><body>text</body></part>'),
+        ]
+        for name, args, text, output in data:
+            yield (self._do_parser, name, args, text, output)
+
     def serialize(self, elem, **options):
         from StringIO import StringIO
         file = StringIO()
@@ -100,4 +110,9 @@ class TestConverter(object):
                 assert result == output
             else:
                 assert self.serialize(result) == output
+
+    def _do_parser(self, name, args, text, output):
+        result = self.conv.parser(name, args, text)
+        if output is not None or result is not None:
+            assert self.serialize(result) == output
 
