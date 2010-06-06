@@ -93,9 +93,9 @@ class Converter(object):
     tag_xi_xpointer = xinclude.xpointer
 
     @classmethod
-    def _factory(cls, input, output, includes=None, **kw):
+    def _factory(cls, input, output, request, includes=None, **kw):
         if includes == 'expandall':
-            return cls
+            return cls(request)
 
     def recurse(self, elem, page_href):
         # Check if we reached a new page

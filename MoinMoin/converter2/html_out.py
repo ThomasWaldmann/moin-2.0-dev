@@ -413,8 +413,8 @@ class ConverterPage(Converter):
     """
 
     @classmethod
-    def _factory(cls, input, output, **kw):
-        return cls
+    def _factory(cls, input, output, request, **kw):
+        return cls(request)
 
     def __call__(self, element):
         _ = self.request.getText

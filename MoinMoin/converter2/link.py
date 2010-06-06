@@ -53,9 +53,9 @@ class ConverterBase(object):
 
 class ConverterExternOutput(ConverterBase):
     @classmethod
-    def _factory(cls, input, output, links=None, **kw):
+    def _factory(cls, input, output, request, links=None, **kw):
         if links == 'extern':
-            return cls
+            return cls(request)
 
     # TODO: Deduplicate code
     def handle_wiki(self, elem, input):
@@ -107,10 +107,8 @@ class ConverterExternOutput(ConverterBase):
 class ConverterPagelinks(ConverterBase):
     @classmethod
     def _factory(cls, input, output, links=None, **kw):
-        if (type_moin_document.issupertype(input) and
-                type_moin_document.issupertype(output) and
-                links == 'pagelinks'):
-            return cls
+        if links == 'pagelinks':
+            return cls(request)
 
     def handle_wikilocal(self, elem, input, page):
         if not input.path or ':' in input.path:

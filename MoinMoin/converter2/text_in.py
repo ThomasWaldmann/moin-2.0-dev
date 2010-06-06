@@ -21,10 +21,7 @@ class Converter(object):
 
     @classmethod
     def factory(cls, type_input, type_output, **kw):
-        return cls
-
-    def __init__(self, _request):
-        pass
+        return cls()
 
     def __call__(self, content, arguments=None):
         """Parse the text and return DOM tree."""

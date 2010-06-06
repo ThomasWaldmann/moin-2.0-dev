@@ -20,7 +20,7 @@ class TestConverter(object):
     output_re = re.compile(r'\s+xmlns(:\S+)?="[^"]+"')
 
     def setup_class(self):
-        self.conv = Converter(self.request)
+        self.conv = Converter()
 
     def test_base(self):
         data = [
