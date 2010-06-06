@@ -102,7 +102,7 @@ class _Stack(list):
 
 class Converter(ConverterMacro):
     @classmethod
-    def factory(cls, _request, input, output, **kw):
+    def factory(cls, input, output, **kw):
         return cls
 
     def __call__(self, content, arguments=None):

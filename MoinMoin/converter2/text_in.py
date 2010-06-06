@@ -20,7 +20,7 @@ class Converter(object):
     """
 
     @classmethod
-    def factory(cls, _request, type_input, type_output, **kw):
+    def factory(cls, type_input, type_output, **kw):
         return cls
 
     def __init__(self, _request):

@@ -50,7 +50,7 @@ class _PseudoRequest(object):
 
 class Converter(object):
     @classmethod
-    def _factory(cls, _request, input, output, macros=None, **kw):
+    def _factory(cls, input, output, macros=None, **kw):
         if macros == 'expandall':
             return cls
 

@@ -93,7 +93,7 @@ class Converter(object):
     tag_xi_xpointer = xinclude.xpointer
 
     @classmethod
-    def _factory(cls, _request, input, output, includes=None, **kw):
+    def _factory(cls, input, output, includes=None, **kw):
         if includes == 'expandall':
             return cls
 
