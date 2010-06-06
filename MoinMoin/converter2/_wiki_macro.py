@@ -10,6 +10,7 @@ Base class for wiki parser with macro support.
 from emeraldtree import ElementTree as ET
 
 from MoinMoin.util import iri
+from MoinMoin.util.mime import Type
 from MoinMoin.util.tree import moin_page, xinclude
 
 class ConverterMacro(object):
@@ -140,4 +141,30 @@ class ConverterMacro(object):
         @return Sequence of (ET.Element, unicode)
         """
         return [text]
+
+    # TODO: Merge with macro support somehow.
+    def parser(self, name, args, content):
+        if '/' in name:
+            type = Type(name)
+        else:
+            type = Type(type='x-moin', subtype='format', parameters={'name': name})
+
+        elem = moin_page.part(attrib={moin_page.content_type: type})
+
+        if args:
+            elem_arguments = moin_page.arguments()
+            elem.append(elem_arguments)
+
+            for key, value in args.items():
+                attrib = {}
+                if key:
+                    attrib[moin_page.name] = key
+                elem_arg = moin_page.argument(attrib=attrib, children=(value, ))
+                elem_arguments.append(elem_arg)
+
+        if content:
+            elem.append(moin_page.body(children=content))
+
+        return elem
+
 
