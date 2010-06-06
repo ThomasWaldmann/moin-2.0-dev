@@ -44,7 +44,11 @@ def test_Type_parser():
     assert t.parameters == {'encoding': 'utf-8', 'foo': 'bar'}
 
 def test_Type_unicode():
-    i = 'text/plain;encoding="utf-8";foo="bar"'
+    i = 'text/plain;encoding=utf-8;foo=bar'
+    t = Type(i)
+    assert unicode(t) == i
+
+    i = 'text/plain;encoding=utf-8;foo="["'
     t = Type(i)
     assert unicode(t) == i
 

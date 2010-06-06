@@ -16,6 +16,8 @@ class Type(object):
     @type parameters: dict
     """
 
+    __token_allowed = s = frozenset(r"""!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`abcdefghijklmnopqrstuvwxyz{|}~""")
+
     def __init__(self, _type=None, type=None, subtype=None, parameters=None):
         """
         @param _type: Type object or string representation
@@ -73,11 +75,20 @@ class Type(object):
 
         parameters = self.parameters.items()
         parameters.sort()
-        for item in parameters:
-            # TODO: check if quoting is necessary
-            ret.append(u'%s="%s"' % item)
+        for key, value in parameters:
+            if self.__token_check(value):
+                ret.append(u'%s=%s' % (key, value))
+            else:
+                ret.append(u'%s="%s"' % (key, value))
 
         return u';'.join(ret)
+
+    def __token_check(self, value):
+        token_allowed = self.__token_allowed
+        for v in value:
+            if v not in token_allowed:
+                return False
+        return True
 
     def _parse(self, type):
         parts = type.split(';')
