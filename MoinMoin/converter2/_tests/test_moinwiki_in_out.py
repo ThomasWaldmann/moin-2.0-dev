@@ -33,7 +33,7 @@ class TestConverter(object):
 
     def setup_class(self):
         self.conv_in = conv_in(self.request)
-        self.conv_out = conv_out(self.request) 
+        self.conv_out = conv_out(self.request)
 
     def test_base(self):
         data = [
@@ -50,15 +50,36 @@ class TestConverter(object):
             (u"~-smaller-~\n", '~-smaller-~\n'),
             (u"^super^script\n", '^super^script\n'),
             (u",,sub,,script\n", ',,sub,,script\n'),
-            (u"<<Anchor(anchorname)>>\n<<MailTo(user AT example DOT com)>>\n@TIME@\n/!\\\n", '<<Anchor(anchorname)>>\n<<MailTo(user AT example DOT com)>>\n@TIME@\n/!\\\n'),
+            (u"## comment\n", "## comment\n"),
+            (u"#ANY any", "#ANY any\n"),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_macros(self):
+        data = [
+            (u"<<Anchor(anchorname)>>", '<<Anchor(anchorname)>>'),
             (u"<<MonthCalendar(,,12)>>", '<<MonthCalendar(,,12)>>'),
-            (u"{{{#!wiki comment/dotted\nThis is a wiki parser.\n\nIts visibility gets toggled the same way.\n}}}", u"{{{#!wiki comment/dotted\nThis is a wiki parser.\n\nIts visibility gets toggled the same way.\n}}}\n"),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_parsers(self):
+        data = [
+            (u"{{{#!wiki comment/dotted\nThis is a wiki parser.\n\nIts visibility gets toggled the same way.\n}}}", u"{{{#!wiki comment/dotted\nThis is a wiki parser.\n\nIts visibility gets toggled the same way.\n}}}"),
             (u"{{{#!wiki red/solid\nThis is wiki markup in a '''div''' with __css__ `class=\"red solid\"`.\n}}}", "{{{#!wiki red/solid\nThis is wiki markup in a '''div''' with __css__ `class=\"red solid\"`.\n}}}\n"),
-            (u"{{{#!creole\na,b,c\n}}}",""),
-            (u"## comment","## comment\n"),
-            (u"#REDIRECT pagename", ""),
-            (u"#format creole", ""),
-            (u"@DATE@", ""),
+            (u"{{{#!creole\n... **bold** ...\n}}}", u"{{{#!creole\n\n}}}"),
+            (u"#format creole\n... **bold** ...\n", "#format creole\n... **bold** ...\n"),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_variables(self):
+        data = [
+            (u"VAR:: text", u"VAR:: text"),
+            (u"@TIME@", u""),
+            (u"@DATE@", u""),
+            (u"@PAGE@", u""),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -74,6 +95,7 @@ class TestConverter(object):
             (u'[[http://moinmo.in/|MoinMoin Wiki|class=green]]', '[[http://moinmo.in/|MoinMoin Wiki|class=green]]\n'),
             (u'[[MoinMoin:MoinMoinWiki|MoinMoin Wiki|&action=diff,&rev1=1,&rev2=2]]', '[[MoinMoin:MoinMoinWiki|MoinMoin Wiki|&action=diff,&rev1=1,&rev2=2]]\n'),
             (u'[[attachment:HelpOnImages/pineapple.jpg|a pineapple|&do=get]]', '[[attachment:HelpOnImages/pineapple.jpg|a pineapple|&do=get]]\n'),
+            (u'[[attachment:filename.txt]]','[[attachment:filename.txt]]\n')
         ]
         for i in data:
             yield (self.do, ) + i
@@ -90,6 +112,10 @@ class TestConverter(object):
     def test_table(self):
         data = [
             (u"||A||B||<|2>D||\n||||C||\n", '||A||B||<|2>D||\n||||C||\n'),
+            (u"||'''A'''||'''B'''||'''C'''||\n||1      ||2      ||3     ||\n", u"||'''A'''||'''B'''||'''C'''||\n||1||2||3||\n"),
+            (u"||<|2> cell spanning 2 rows ||cell in the 2nd column ||\n||cell in the 2nd column of the 2nd row ||\n||<-2>test||\n||||test||",
+             u"||<|2>cell spanning 2 rows||cell in the 2nd column||\n||cell in the 2nd column of the 2nd row||\n||||test||\n||||test||\n"),
+
         ]
         for i in data:
             yield (self.do, ) + i
@@ -97,14 +123,16 @@ class TestConverter(object):
     def test_object(self):
         data = [
             (u"{{drawing:anywikitest.adraw}}", '{{drawing:anywikitest.adraw}}\n'),
-            (u"{{http://static.moinmo.in/logos/moinmoin.png}}\n", ''),
+            (u"{{http://static.moinmo.in/logos/moinmoin.png}}\n", '{{http://static.moinmo.in/logos/moinmoin.png}}\n'),
             (u'{{http://static.moinmo.in/logos/moinmoin.png|alt text}}', '{{http://static.moinmo.in/logos/moinmoin.png|alt text}}\n'),
             (u'{{http://static.moinmo.in/logos/moinmoin.png|alt text|width=100 height=150 align=right}}', '{{http://static.moinmo.in/logos/moinmoin.png|alt text|width=100 height=150 align=right}}\n'),
             (u'{{attachment:image.png}}', '{{attachment:image.png}}\n'),
             (u'{{attachment:image.png|alt text}}', '{{attachment:image.png|alt text}}\n'),
-            (u'{{attachment:image.png|alt text|width=100 height=150 align=left}}', '{{attachment:image.png|alt text|width=100 height=150 align=left}}\n'),
+            (u'{{attachment:image.png|alt text|width=100 align=left height=150}}', '{{attachment:image.png|alt text|width=100 align=left height=150}}\n'),
 
         ]
+        for i in data:
+            yield (self.do, ) + i
 
 
     def handle_input(self, input):
