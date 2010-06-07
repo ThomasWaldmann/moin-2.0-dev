@@ -20,6 +20,8 @@ import cPickle as pickle
 from sqlalchemy import create_engine, MetaData, Table, Column, String, Unicode, Integer
 from sqlalchemy.exceptions import IntegrityError
 
+from werkzeug import cached_property
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -54,13 +56,33 @@ class Item(IndexingItemMixin, ItemBase):
 
 
 class StoredRevision(IndexingRevisionMixin, StoredRevisionBase):
-    def __init__(self, item, revno, _fs_path_meta=None, *args, **kw):
-        self._fs_path_meta = _fs_path_meta
-        self._fs_path_data = None
-        self._fs_file_meta = None
+    def __init__(self, item, revno, *args, **kw):
         self._fs_file_data = None
-        self._fs_metadata = None
+        if revno == -1:
+            revs = item.list_revisions()
+            if not revs:
+                raise NoSuchRevisionError("Item '%r' has no revisions." % (item.name, ))
+            revno = max(revs)
         super(StoredRevision, self).__init__(item, revno, *args, **kw)
+        # fail early if we don't have such a revision:
+        self._fs_path_meta = self._backend._make_path('meta', item._fs_item_id, '%d.rev' % revno)
+        if not os.path.exists(self._fs_path_meta):
+            raise NoSuchRevisionError("Item '%r' has no revision #%d." % (item.name, revno))
+
+    @cached_property
+    def _fs_metadata(self):
+        f = open(self._fs_path_meta, 'rb')
+        try:
+            metadata = pickle.load(f)
+        except EOFError:
+            metadata = {}
+        f.close()
+        return metadata
+
+    @cached_property
+    def _fs_path_data(self):
+        data_hash = self._fs_metadata[HASH_NAME]
+        return self._backend._make_path('data', data_hash)
 
 
 class NewRevision(IndexingRevisionMixin, NewRevisionBase):
@@ -120,12 +142,6 @@ class BareFS2Backend(BackendBase):
     def _make_path(self, *args):
         return os.path.join(self._path, *args)
 
-    def _get_fs_path_data(self, rev):
-        if rev._fs_metadata is None:
-            self._get_revision_metadata(rev)
-        data_hash = rev._fs_metadata[HASH_NAME]
-        return self._make_path('data', data_hash)
-
     def history(self, reverse=True):
         """
         History implementation reading the history table.
@@ -138,19 +154,9 @@ class BareFS2Backend(BackendBase):
         for row in results:
             item_id, revno, ts = row
             assert isinstance(item_id, str)  # item_id = str(item_id)
-            try:
-                # try to open the revision file just in case somebody removed it manually
-                mp = self._make_path('meta', item_id, '%d.rev' % revno)
-                f = open(mp)
-                f.close()
-            except IOError, err:
-                if err.errno != errno.ENOENT:
-                    raise
-                # oops, no such file, item/revision removed manually?
-                continue
             item_name = self._get_item_name(item_id) # this is the current name, NOT the name at revno
             item = Item(self, item_name, _fs_item_id=item_id)
-            rev = StoredRevision(item, revno, ts, _fs_path_meta=mp)
+            rev = StoredRevision(item, revno, ts)
             yield rev
         results.close()
 
@@ -225,19 +231,7 @@ class BareFS2Backend(BackendBase):
         results.close()
 
     def _get_revision(self, item, revno):
-        item_id = item._fs_item_id
-
-        if revno == -1:
-            revs = item.list_revisions()
-            if not revs:
-                raise NoSuchRevisionError("Item has no revisions.")
-            revno = max(revs)
-
-        mp = self._make_path('meta', item_id, '%d.rev' % revno)
-        if not os.path.exists(mp):
-            raise NoSuchRevisionError("Item '%r' has no revision #%d." % (item.name, revno))
-
-        return StoredRevision(item, revno, _fs_path_meta=mp)
+        return StoredRevision(item, revno)
 
     def _list_revisions(self, item):
         if item._fs_item_id is None:
@@ -265,13 +259,11 @@ class BareFS2Backend(BackendBase):
         return NewRevision(item, revno)
 
     def _destroy_revision(self, rev):
-        if rev._fs_file_meta is not None:
-            rev._fs_file_meta.close()
-        if rev._fs_file_data is not None:
-            rev._fs_file_data.close()
+        self._close_revision_data(rev)
         try:
             os.unlink(rev._fs_path_meta)
-            os.unlink(rev._fs_path_data)
+            # XXX do refcount data files and if zero, kill it
+            #os.unlink(rev._fs_path_data)
         except OSError, err:
             if err.errno != errno.ENOENT:
                 raise CouldNotDestroyError("Could not destroy revision #%d of item '%r' [errno: %d]" % (
@@ -361,12 +353,11 @@ class BareFS2Backend(BackendBase):
         md = pickle.dumps(metadata, protocol=PICKLEPROTOCOL)
 
         rev._fs_file_meta.write(md)
-        rev._fs_file_meta.close()
+
+        self._close_revision_meta(rev)
+        self._close_revision_data(rev)
 
         data_hash = metadata[HASH_NAME]
-
-        if rev._fs_file_data is not None:
-            rev._fs_file_data.close()
 
         pd = self._make_path('data', data_hash)
         if item._fs_item_id is None:
@@ -389,8 +380,8 @@ class BareFS2Backend(BackendBase):
         self._addhistory(item._fs_item_id, rev.revno, rev.timestamp)
 
     def _rollback_item(self, rev):
-        rev._fs_file_meta.close()
-        rev._fs_file_data.close()
+        self._close_revision_meta(rev)
+        self._close_revision_data(rev)
         os.unlink(rev._fs_path_meta)
         os.unlink(rev._fs_path_data)
 
@@ -445,16 +436,6 @@ class BareFS2Backend(BackendBase):
             item._fs_metadata_lock.release()
             del item._fs_metadata_lock
 
-    def _read_revision_data(self, rev, chunksize):
-        if rev._fs_file_data is None:
-            if rev._fs_path_data is None:
-                rev._fs_path_data = self._get_fs_path_data(rev)
-            rev._fs_file_data = open(rev._fs_path_data, 'rb') # XXX keeps file open as long as rev exists
-        return rev._fs_file_data.read(chunksize)
-
-    def _write_revision_data(self, rev, data):
-        rev._fs_file_data.write(data)
-
     def _get_item_metadata(self, item):
         if item._fs_item_id is not None:
             p = self._make_path('meta', item._fs_item_id, 'item')
@@ -471,40 +452,41 @@ class BareFS2Backend(BackendBase):
         return item._fs_metadata
 
     def _get_revision_metadata(self, rev):
-        if rev._fs_file_meta is None:
-            rev._fs_file_meta = open(rev._fs_path_meta, 'rb')
-        try:
-            rev._fs_metadata = pickle.load(rev._fs_file_meta)
-        except EOFError:
-            rev._fs_metadata = {}
-        rev._fs_file_meta.close()
-        rev._fs_file_meta = None
         return rev._fs_metadata
 
     def _get_revision_timestamp(self, rev):
-        if rev._fs_metadata is None:
-            self._get_revision_metadata(rev)
         return rev._fs_metadata['__timestamp']
 
     def _get_revision_size(self, rev):
-        if rev._fs_path_data is None:
-            rev._fs_path_data = self._get_fs_path_data(rev)
         return os.stat(rev._fs_path_data).st_size
 
-    def _seek_revision_data(self, rev, position, mode):
+    def _open_revision_data(self, rev, mode='rb'):
         if rev._fs_file_data is None:
-            if rev._fs_path_data is None:
-                rev._fs_path_data = self._get_fs_path_data(rev)
-            rev._fs_file_data = open(rev._fs_path_data, 'rb') # XXX keeps file open as long as rev exists
+            rev._fs_file_data = open(rev._fs_path_data, mode) # XXX keeps file open as long as rev exists
+
+    def _close_revision_data(self, rev):
+        if rev._fs_file_data is not None:
+            rev._fs_file_data.close()
+
+    def _close_revision_meta(self, rev):
+        if rev._fs_file_meta is not None:
+            rev._fs_file_meta.close()
+
+    def _seek_revision_data(self, rev, position, mode):
+        self._open_revision_data(rev)
         rev._fs_file_data.seek(position, mode)
 
     def _tell_revision_data(self, rev):
-        if rev._fs_file_data is None:
-            if rev._fs_path_data is None:
-                rev._fs_path_data = self._get_fs_path_data(rev)
-            rev._fs_file_data = open(rev._fs_path_data, 'rb') # XXX keeps file open as long as rev exists
-
+        self._open_revision_data(rev)
         return rev._fs_file_data.tell()
+
+    def _read_revision_data(self, rev, chunksize):
+        self._open_revision_data(rev)
+        return rev._fs_file_data.read(chunksize)
+
+    def _write_revision_data(self, rev, data):
+        # we assume that the file is already open for writing
+        rev._fs_file_data.write(data)
 
 
 class FS2Backend(IndexingBackendMixin, BareFS2Backend):
