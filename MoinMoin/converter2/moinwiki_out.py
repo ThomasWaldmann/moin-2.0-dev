@@ -124,10 +124,10 @@ class Converter(object):
         # 'table' - text inside table - <p> = '<<BR>>' and </p> = ''
         # 'list' - text inside list - <p> if after </p> = '<<BR>>' and </p> = ''
         # status added because of differences in interpretation of <p> in different places
-        self.status = []
-        self.last_closed = None
 
     def __call__(self, root):
+        self.status = ['text', ]
+        self.last_closed = None
         self.opened = [None, ]
         self.children = [None, iter([root])]
         self.output = []
@@ -193,7 +193,7 @@ class Converter(object):
         params['target'] = elem.get(xlink.target, None)
         params['class'] = elem.get(xlink.class_, None)
         params['title'] = elem.get(xlink.title, None)
-        params['accesskey'] = elem.get(xlink.title, None)
+        params['accesskey'] = elem.get(xlink.accesskey, None)
         params = ','.join(['%s=%s' % (p, params[p]) for p in params if params[p]])
 
         # TODO: this can be done using one regex, can it?
@@ -201,15 +201,18 @@ class Converter(object):
         args = ''
         if len(href) > 1:
             # With normal
-            args = ','.join(['&'+s for s in findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)', href[1])])
+            print href
+            args = ','.join(['&'+s for s in findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$|)', href[1])])
         href = href[0].split('wiki.local:')[-1]
-        if params:
-            args += ',' + params
+        print args
+        args = ','.join(s for s in [args, params] if s)
 
         # TODO: rewrite this using % formatting
         ret = Moinwiki.a_open
         ret += href
         text = ''.join(elem.itertext())
+        if not args and text == href:
+            text = ''
         if text:
             ret += Moinwiki.a_separator + text
         if args:
@@ -350,10 +353,10 @@ class Converter(object):
         ret = Moinwiki.object_open
         ret += href
         alt = elem.get(moin_page.alt, '')
-        if alt:
+        if alt and alt != href:
             ret += '|' + alt
-        if args:
-            ret += '|' + args
+            if args:
+                ret += '|' + args
         ret += Moinwiki.object_close
         return ret
 
@@ -387,15 +390,18 @@ class Converter(object):
         self.children.append(iter(elem))
         self.opened.append(elem)
         ret = ''
-        if self.status:
-            ret = "{{{#!wiki"
+        print self.status
+        if len(self.status) > 1:
+            ret = "{{{#!"
+            # ret += parser
+            # but we do not have the required attribute
         self.status.append('text')
         return ret
 
     def close_moinpage_page(self, elem):
         self.status.pop()
         ret = ''
-        if self.status:
+        if len(self.status) > 1:
             ret = "}}}\n"
         return ret
 
@@ -405,7 +411,7 @@ class Converter(object):
         class_ = elem.get(moin_page.class_,'').replace(' ', '/')
         if class_:
             return ' %s\n' % class_
-        if len(self.status)>1:
+        if len(self.status) > 2:
             return '\n'
         return ''
         
