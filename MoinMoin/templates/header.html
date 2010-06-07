@@ -1,3 +1,11 @@
+
+<body 
+{% if body_onload %}
+    onload="{{ body_onload }}"
+{% endif %}
+{{ body_attr }}
+>
+
 {{ Theme.emit_custom_html(Theme.cfg.page_header1) }}
 
 <div id="header">
@@ -46,12 +54,9 @@ searchBlur(e);
 {% endif %}
 
     <span id="pagelocation">
-        {% if title_content %}
-            <span class="pagepath">
-                {{ title_content|join('<span class="sep">/</span>') }}
-            </span>
-        {% endif %}
-        {{ title_link }}      
+        <span class="pagepath">
+            {{ title_content|join('<span class="sep">/</span>') }}
+        </span>
     </span>
 
 </h1>
