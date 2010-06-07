@@ -79,23 +79,16 @@ class JinjaTheme(ThemeBase):
         @rtype: string
         @return: title html
         """
-        _ = self.request.getText
         # just showing a page, no action
         segments = d['page_name'].split('/')
-        link_text = segments[-1]
-        link = d['page'].link_to(self.request, link_text, rel='nofollow')
-        d.update({'title_link': link})
-        if len(segments) <= 1:
-            return d
-        else:
-            content = []
-            curpage = ''
-            for s in segments[:-1]:
-                curpage += s
-                content.append(Page(self.request,
-                                    curpage).link_to(self.request, s))
-                curpage += '/'
-            d.update({'title_content': content})
+        content = []
+        curpage = ''
+        for s in segments:
+            curpage += s
+            content.append(Page(self.request,
+                                curpage).link_to(self.request, s))
+            curpage += '/'
+        d.update({'title_content': content})
         return d
 
     def username(self, d):
@@ -1151,25 +1144,27 @@ class JinjaTheme(ThemeBase):
             bodyattr.append(' ')
             bodyattr.append(keywords['body_attr'])
 
+        # Output -----------------------------------------------------------
+
+        d = {}
+        
         # Set body to the user interface language and direction
         bodyattr.append(' %s' % self.ui_lang_attr())
 
         body_onload = keywords.get('body_onload', '')
         if body_onload:
-            bodyattr.append(''' onload="%s"''' % body_onload)
-        output.append('\n<body%s>\n' % ''.join(bodyattr))
-
-        # Output -----------------------------------------------------------
-
+            d.update({'body_onload': body_onload})
+        d.update({'body_attr': ''.join(bodyattr)})
+        
         # If in print mode, start page div and emit the title
         # TODO: Fix the print mode
         if keywords.get('print_mode', 0):
-            d = {
+            d.update({
                 'title_text': text,
                 'page': page,
                 'page_name': pagename or '',
                 'rev': rev,
-            }
+            })
             request.themedict = d
             #Adapt to new methods
             output.append(self.startPage())
@@ -1180,7 +1175,7 @@ class JinjaTheme(ThemeBase):
         else:
             exists = pagename and page.exists()
             # prepare dict for theme code:
-            d = {
+            d.update({
                 'theme': self.name,
                 'Theme': self,
                 'script_name': scriptname,
@@ -1205,7 +1200,7 @@ class JinjaTheme(ThemeBase):
                 'user_valid': request.user.valid,
                 'msg': self._status,
                 'trail': keywords.get('trail', None),
-            }
+            })
 
             # add quoted versions of pagenames
             newdict = {}
