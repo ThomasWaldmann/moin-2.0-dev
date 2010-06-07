@@ -365,6 +365,9 @@ class BareFS2Backend(BackendBase):
 
         data_hash = metadata[HASH_NAME]
 
+        if rev._fs_file_data is not None:
+            rev._fs_file_data.close()
+
         pd = self._make_path('data', data_hash)
         if item._fs_item_id is None:
             self._add_item_internally(item, revmeta=rev._fs_path_meta, revdata=rev._fs_path_data, revdata_target=pd)
