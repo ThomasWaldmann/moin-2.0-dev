@@ -26,7 +26,7 @@ import re
 class ElementException(RuntimeError):
     pass
 
-class Converter(ConverterMacro):
+class Converter(object):
     """
     Converter html -> .x.moin.document
     """
@@ -43,10 +43,8 @@ class Converter(ConverterMacro):
     heading_re = re.compile('h[1-6]')
 
     @classmethod
-    def _factory(cls, _request, input, output, **kw):
-        if output == 'application/x.moin.document' and \
-           input == 'text/x.moin.html':
-            return cls
+    def _factory(cls, input, output, request, **kw):
+        return cls(request)
 
     def __call__(self, content, arguments=None):
         """
@@ -215,4 +213,5 @@ class Converter(ConverterMacro):
         return self.new_copy(moin_page.a, element, attrib)
 
 from . import default_registry
-default_registry.register(Converter._factory)
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(Converter._factory, Type('text/x.moin.xhtml'), type_moin_document)
