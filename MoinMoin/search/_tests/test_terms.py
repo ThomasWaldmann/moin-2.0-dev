@@ -56,6 +56,7 @@ for iname, md in _item_metadata.iteritems():
 
     rev = item.create_revision(0)
     md = _lastrevision_metadata[iname]
+    rev.update(dict(name=iname, mimetype=u"application/octet-stream"))
     rev.update(md)
     rev.write(_item_contents[iname])
     item.commit()

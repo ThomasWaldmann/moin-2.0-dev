@@ -39,7 +39,7 @@ class TestWikiGroupBackend(GroupsBackendTest):
         become_trusted(request)
 
         page = create_item(request, u'SomeGroup', u" * ExampleUser")
-        page.rename('AnotherGroup')
+        page.rename(u'AnotherGroup')
 
         result = u'ExampleUser' in request.groups[u'AnotherGroup']
         assert result
