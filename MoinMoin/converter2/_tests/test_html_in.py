@@ -102,8 +102,8 @@ class TestConverter(Base):
 
     def test_link(self):
         data = [
-            ('<html><a href="uri:test">Test</a></html>',
-              '/page/body/a[@href="uri:test"]',
+            ('<html><p><a href="uri:test">Test</a></p></html>',
+              '/page/body/p/a[@xlink:href="uri:test"]',
              'Test'),
         ]
         for i in data:
