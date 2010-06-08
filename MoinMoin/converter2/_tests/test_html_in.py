@@ -23,6 +23,8 @@ class Base(object):
         xlink.namespace: 'xlink',
     }
 
+    namespaces_xpath = {'xlink': xlink.namespace}
+
     output_re = re.compile(r'\s+xmlns="[^"]+"')
 
     def handle_input(self, input, args={}):
@@ -35,7 +37,7 @@ class Base(object):
     def do(self, input, path, text, args={}):
         string_to_parse = self.handle_input(input)
         tree = etree.parse(StringIO.StringIO(string_to_parse))
-        r = tree.xpath(path)
+        r = tree.xpath(path, namespaces=self.namespaces_xpath)
 
         assert len(r) == 1
         assert r[0].text == text
