@@ -69,10 +69,23 @@ class Iri(object):
         @param fragment Fragment part of the IRI, overrides the same part of the IRI.
         """
 
-        self.scheme = self._authority = self._path = self._query = self._fragment = None
+        if isinstance(iri, Iri):
+            old_authority = iri._authority
+            old_path = iri._path
+            old_query = iri._query
+            old_fragment = iri._fragment
 
-        if iri:
-            self._parse(iri, _quoted)
+            self.scheme = iri.scheme
+            self._authority = old_authority and IriAuthority(old_authority) or None
+            self._path = old_path and IriPath(old_path) or None
+            self._query = old_query and IriQuery(old_query) or None
+            self._fragment = old_fragment and IriFragment(old_fragment) or None
+
+        else:
+            self.scheme = self._authority = self._path = self._query = self._fragment = None
+
+            if iri:
+                self._parse(iri, _quoted)
 
         if scheme is not None:
             self.scheme = scheme
@@ -104,6 +117,16 @@ class Iri(object):
         if ret is NotImplemented:
             return ret
         return not ret
+
+    def __repr__(self):
+        return '%s(scheme=%r, authority=%r, path=%r, query=%r, fragment=%r)' % (
+                self.__class__.__name__,
+                self.scheme,
+                self._authority,
+                self._path,
+                self._query,
+                self._fragment,
+                )
 
     def __unicode__(self):
         ret = []
@@ -540,6 +563,14 @@ class IriAuthority(object):
         if self._userinfo or self._host or self.port:
             return True
         return False
+
+    def __repr__(self):
+        return '%s(userinfo=%r, host=%r, port=%r)' % (
+                self.__class__.__name__,
+                self._userinfo,
+                self._host,
+                self.port,
+                )
 
     def __unicode__(self):
         return self.__get(self._userinfo, self._host)
