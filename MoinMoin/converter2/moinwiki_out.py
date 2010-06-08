@@ -20,6 +20,7 @@ from re import findall
 
 from MoinMoin.support.werkzeug.utils import unescape
 
+
 class Moinwiki(object):
     '''
     Moinwiki syntax elements
@@ -117,14 +118,12 @@ class Converter(object):
         self.list_item_labels = ['', ]
         self.list_item_label = ''
         self.list_level = 0
-
         self.request = request
 
         # 'text' - default status - <p> = '/n' and </p> = '/n'
         # 'table' - text inside table - <p> = '<<BR>>' and </p> = ''
         # 'list' - text inside list - <p> if after </p> = '<<BR>>' and </p> = ''
         # status added because of differences in interpretation of <p> in different places
-
     def __call__(self, root):
         self.status = ['text', ]
         self.last_closed = None
@@ -341,6 +340,20 @@ class Converter(object):
     def close_moinpage_list_item_body(self, elem):
         return ''
 
+    def open_moinpage_note(self, elem):
+        class_ = elem.get(moin_page.note_class, "")
+        if class_:
+            self.status.append('table')
+            self.children.append(iter(elem))
+            self.opened.append(elem)
+            if class_ == "footnote":
+                return '<<FootNote('
+        return ""
+
+    def close_moinpage_note(self, elem):
+        self.status.pop()
+        return ')>>'
+
     def open_moinpage_object(self, elem):
         # TODO: this can be done with one regex:
         href = elem.get(xlink.href, '')
@@ -408,19 +421,25 @@ class Converter(object):
     def open_moinpage_body(self, elem):
         self.children.append(iter(elem))
         self.opened.append(elem)
-        class_ = elem.get(moin_page.class_,'').replace(' ', '/')
+        class_ = elem.get(moin_page.class_, '').replace(' ', '/')
         if class_:
             return ' %s\n' % class_
         if len(self.status) > 2:
             return '\n'
         return ''
-        
+
     def close_moinpage_body(self, elem):
         return ''
- 
+
     def open_moinpage_part(self, elem):
-        ret = unescape(elem.get(moin_page.alt, ''))
-        return ret
+        type = elem.get(moin_page.content_type, "").split(';')
+        if len(type) == 2:
+            if type[0] == "x-moin/macro":
+                if iter(elem).next().tag.name == "arguments":
+                    return "<<%s(%s)>>" % (type[1].split('=')[1], ','.join([''.join(c.itertext()) for c in iter(elem).next() if c.tag.name == "argument"]))
+                else:
+                    return "<<%s()>>" % type[1].split('=')[1]
+        return unescape(elem.get(moin_page.alt, ''))
 
     def close_moinpage_part(self, elem):
         return ''
@@ -574,6 +593,12 @@ class Converter(object):
         return ret
 
     def close_moinpage_table_cell(self, elem):
+        return ''
+
+    def open_moinpage_table_of_content(self, elem):
+        return "<<TableOfContents(%s)>>" % elem.get(moin_page.outline_level, "1")
+
+    def close_moinpage_table_of_content(self, elem):
         return ''
 
 from . import default_registry
