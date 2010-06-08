@@ -23,7 +23,7 @@ class Base(object):
         xlink.namespace: 'xlink',
     }
 
-    output_re = re.compile(r'\s+xmlns(:\S+)?="[^"]+"')
+    output_re = re.compile(r'\s+xmlns="[^"]+"')
 
     def handle_input(self, input, args={}):
         out = self.conv(input, **args)
