@@ -880,7 +880,7 @@ class Revision(Serializable, DictMixin):
 
     @property
     def element_attrs(self):
-        return dict(revno=self.revno)
+        return dict(revno=str(self.revno))
 
     def _load_metadata(self):
         self._metadata = self._backend._get_revision_metadata(self)

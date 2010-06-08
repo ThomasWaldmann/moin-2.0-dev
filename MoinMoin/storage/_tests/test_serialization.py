@@ -3,6 +3,8 @@
     MoinMoin - Test - XML (de)serialization
 
     TODO: provide fresh backend per test class (or even per test method?).
+    TODO: use xpath for testing (or any other way so sequence of metadata
+          keys does not matter)
 
     @copyright: 2009 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
@@ -26,6 +28,10 @@ def update_item(request, name, revno, meta, data):
     rev = item.create_revision(revno)
     for k, v in meta.items():
         rev[k] = v
+    if not 'name' in rev:
+        rev['name'] = name
+    if not 'mimetype' in rev:
+        rev['mimetype'] = u'application/octet-stream'
     rev.write(data)
     item.commit()
     return item
@@ -34,7 +40,7 @@ def update_item(request, name, revno, meta, data):
 class TestSerializeRev(object):
 
     def test_serialize_rev(self):
-        params = ('foo1', 0, dict(m1=u"m1"), 'bar1')
+        params = (u'foo1', 0, dict(m1=u"m1"), 'bar1')
         item = update_item(self.request, *params)
         rev = item.get_revision(0)
         xmlfile = StringIO()
@@ -42,7 +48,9 @@ class TestSerializeRev(object):
         xml = xmlfile.getvalue()
         assert xml == ('<revision revno="0">'
                        '<meta>'
+                       '<entry key="mimetype"><str>application/octet-stream</str>\n</entry>\n'
                        '<entry key="m1"><str>m1</str>\n</entry>\n'
+                       '<entry key="name"><str>foo1</str>\n</entry>\n'
                        '</meta>\n'
                        '<data coding="base64"><chunk>YmFyMQ==</chunk>\n</data>\n'
                        '</revision>\n')
@@ -52,8 +60,8 @@ class TestSerializeItem(object):
 
     def test_serialize_item(self):
         testparams = [
-            ('foo2', 0, dict(m1=u"m1"), 'bar2'),
-            ('foo2', 1, dict(m2=u"m2"), 'baz2'),
+            (u'foo2', 0, dict(m1=u"m1r0"), 'bar2'),
+            (u'foo2', 1, dict(m1=u"m1r1"), 'baz2'),
         ]
         for params in testparams:
             item = update_item(self.request, *params)
@@ -63,11 +71,19 @@ class TestSerializeItem(object):
         assert xml == ('<item name="foo2">'
                        '<meta></meta>\n'
                        '<revision revno="0">'
-                       '<meta><entry key="m1"><str>m1</str>\n</entry>\n</meta>\n'
+                       '<meta>'
+                       '<entry key="mimetype"><str>application/octet-stream</str>\n</entry>\n'
+                       '<entry key="m1"><str>m1r0</str>\n</entry>\n'
+                       '<entry key="name"><str>foo2</str>\n</entry>\n'
+                       '</meta>\n'
                        '<data coding="base64"><chunk>YmFyMg==</chunk>\n</data>\n'
                        '</revision>\n'
                        '<revision revno="1">'
-                       '<meta><entry key="m2"><str>m2</str>\n</entry>\n</meta>\n'
+                       '<meta>'
+                       '<entry key="mimetype"><str>application/octet-stream</str>\n</entry>\n'
+                       '<entry key="m1"><str>m1r1</str>\n</entry>\n'
+                       '<entry key="name"><str>foo2</str>\n</entry>\n'
+                       '</meta>\n'
                        '<data coding="base64"><chunk>YmF6Mg==</chunk>\n</data>\n'
                        '</revision>\n'
                        '</item>\n')
@@ -77,9 +93,9 @@ class TestSerializeBackend(object):
 
     def test_serialize_backend(self):
         testparams = [
-            ('foo3', 0, dict(m3=u"m3"), 'bar1'),
-            ('foo4', 0, dict(m4=u"m4"), 'bar2'),
-            ('foo4', 1, dict(m4=u"m4"), 'baz2'),
+            (u'foo3', 0, dict(m1=u"m1r0foo3"), 'bar1'),
+            (u'foo4', 0, dict(m1=u"m1r0foo4"), 'bar2'),
+            (u'foo4', 1, dict(m1=u"m1r1foo4"), 'baz2'),
         ]
         for params in testparams:
             update_item(self.request, *params)
@@ -91,18 +107,30 @@ class TestSerializeBackend(object):
         assert ('<item name="foo3">'
                 '<meta></meta>\n'
                 '<revision revno="0">'
-                '<meta><entry key="m3"><str>m3</str>\n</entry>\n</meta>\n'
+                '<meta>'
+                '<entry key="mimetype"><str>application/octet-stream</str>\n</entry>\n'
+                '<entry key="m1"><str>m1r0foo3</str>\n</entry>\n'
+                '<entry key="name"><str>foo3</str>\n</entry>\n'
+                '</meta>\n'
                 '<data coding="base64"><chunk>YmFyMQ==</chunk>\n</data>\n'
                 '</revision>\n'
                 '</item>') in xml
         assert ('<item name="foo4">'
                 '<meta></meta>\n'
                 '<revision revno="0">'
-                '<meta><entry key="m4"><str>m4</str>\n</entry>\n</meta>\n'
+                '<meta>'
+                '<entry key="mimetype"><str>application/octet-stream</str>\n</entry>\n'
+                '<entry key="m1"><str>m1r0foo4</str>\n</entry>\n'
+                '<entry key="name"><str>foo4</str>\n</entry>\n'
+                '</meta>\n'
                 '<data coding="base64"><chunk>YmFyMg==</chunk>\n</data>\n'
                 '</revision>\n'
                 '<revision revno="1">'
-                '<meta><entry key="m4"><str>m4</str>\n</entry>\n</meta>\n'
+                '<meta>'
+                '<entry key="mimetype"><str>application/octet-stream</str>\n</entry>\n'
+                '<entry key="m1"><str>m1r1foo4</str>\n</entry>\n'
+                '<entry key="name"><str>foo4</str>\n</entry>\n'
+                '</meta>\n'
                 '<data coding="base64"><chunk>YmF6Mg==</chunk>\n</data>\n'
                 '</revision>\n'
                 '</item>') in xml
