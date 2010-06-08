@@ -62,6 +62,7 @@ class TestConverter(object):
             (u"<<MonthCalendar(,,12)>>", '<<MonthCalendar(,,12)>>'),
             (u"<<FootNote(test)>>", "<<FootNote(test)>>\n"),
             (u"<<TableOfContents(2)>>", "<<TableOfContents(2)>>"),
+            (u"<<TeudView()>>", "<<TeudView()>>"),
         ]
         for i in data:
             yield (self.do, ) + i

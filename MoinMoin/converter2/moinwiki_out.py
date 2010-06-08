@@ -200,10 +200,8 @@ class Converter(object):
         args = ''
         if len(href) > 1:
             # With normal
-            print href
             args = ','.join(['&'+s for s in findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$|)', href[1])])
         href = href[0].split('wiki.local:')[-1]
-        print args
         args = ','.join(s for s in [args, params] if s)
 
         # TODO: rewrite this using % formatting
@@ -403,7 +401,6 @@ class Converter(object):
         self.children.append(iter(elem))
         self.opened.append(elem)
         ret = ''
-        print self.status
         if len(self.status) > 1:
             ret = "{{{#!"
             # ret += parser
@@ -435,7 +432,7 @@ class Converter(object):
         type = elem.get(moin_page.content_type, "").split(';')
         if len(type) == 2:
             if type[0] == "x-moin/macro":
-                if iter(elem).next().tag.name == "arguments":
+                if len(elem) and iter(elem).next().tag.name == "arguments":
                     return "<<%s(%s)>>" % (type[1].split('=')[1], ','.join([''.join(c.itertext()) for c in iter(elem).next() if c.tag.name == "argument"]))
                 else:
                     return "<<%s()>>" % type[1].split('=')[1]
