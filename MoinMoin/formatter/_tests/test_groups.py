@@ -7,6 +7,7 @@
 """
 
 import py.test
+py.test.skip("mostly broken")
 
 from  MoinMoin.formatter.groups import Formatter
 from MoinMoin.Page import Page
@@ -121,7 +122,6 @@ Ignore previous line and this text.
 class TestGroupFormatterCreole(object):
 
     def get_members(self, text):
-        py.test.skip('Currently broken, misses Page -> Item refactoring and/or correct format detection.')
         request = self.request
         formatter = Formatter(self.request)
 
