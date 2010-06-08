@@ -1,7 +1,22 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-    
+    {% macro stylesheet(theme, media, href, title) %}
+        <link charset="utf-8" type="text/css" media="{{ media }}" rel=
+        {% if title %}
+            "alternate stylesheet" title="{{ title }}"
+        {% else %}
+            "stylesheet"
+        {% endif %}
+        href=
+        {% if theme %}
+            "{{ cfg.url_prefix_static }}/{{ cfg.theme_default }}/css/{{ href }}.css"
+        {% else %}
+            "{{ href }}"
+        {% endif %}
+        >
+    {% endmacro %}
+
     {#
         include charset information - needed for moin_dump or any other case
         when reading the html without a web server  
@@ -34,6 +49,23 @@
     <link rel="Start" href="{{ link_start }}">
     {% if link_parent %}
         <link rel="Up" href="{{ link_parent }}">
+    {% endif %}
+    
+    {% for media, href in theme_stylesheets %}
+        {{ stylesheet(theme=True, media=media, href=href) }}
+    {% endfor %}
+    
+    {% for media, href in cfg.stylesheets %}
+        {{ stylesheet(media=media, href=href) }}
+    {% endfor %}
+    
+    <!-- css only for MS IE6/IE7 browsers -->
+    <!--[if lt IE 8]>
+       {{ stylesheet(theme=True, media="all", href="msie")}}
+    <![endif]-->
+    
+    {% if user_css_href %}
+      {{ stylesheet(media="all", href=user_css_href) }}
     {% endif %}
 </head>
 
