@@ -209,7 +209,7 @@ class Converter(ConverterMacro):
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_a(self, element):
-        key = moin_page('href')
+        key = xlink('href')
         attrib = {}
         attrib[key] = element.get(html.href)
         return self.new_copy(moin_page.a, element, attrib)
