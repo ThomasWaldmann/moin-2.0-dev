@@ -110,3 +110,13 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_macros(self):
+        data = [
+            (u"<page:note page:note-class=\"footnote\"><page:note-body>test</page:note-body></page:note>", "<<FootNote(test)>>"),
+            (u"<page:tag><page:table-of-content page:outline-level=\"2\" /></page:tag>", "<<TableOfContents(2)>>"),
+            (u"<page:part page:alt=\"&lt;&lt;Anchor(anchorname)&gt;&gt;\" page:content-type=\"x-moin/macro;name=Anchor\"><page:arguments><page:argument>anchorname</page:argument></page:arguments></page:part>", "<<Anchor(anchorname)>>"),
+            (u"<page:part page:alt=\"&lt;&lt;MonthCalendar(,,12)&gt;&gt;\" page:content-type=\"x-moin/macro;name=MonthCalendar\"><page:arguments><page:argument /><page:argument /><page:argument>12</page:argument></page:arguments></page:part>", "<<MonthCalendar(,,12)>>"),
+        ]
+        for i in data:
+            yield (self.do, ) + i
