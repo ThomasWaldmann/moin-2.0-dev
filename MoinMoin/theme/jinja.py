@@ -76,8 +76,8 @@ class JinjaTheme(ThemeBase):
         Assemble the title (now using breadcrumbs)
 
         @param d: parameter dictionary
-        @rtype: string
-        @return: title html
+        @rtype: dict
+        @return: title link in dict
         """
         # just showing a page, no action
         segments = d['page_name'].split('/')
@@ -432,64 +432,7 @@ class JinjaTheme(ThemeBase):
                     items.append(link)
                 d.update({'trail_items': items})
         return d
-
-    def _stylesheet_link(self, theme, media, href, title=None):
-        """
-        Create a link tag for a stylesheet.
-
-        @param theme: True: href gives the basename of a theme stylesheet,
-                      False: href is a full url of a user/admin defined stylesheet.
-        @param media: 'all', 'screen', 'print', 'projection', ...
-        @param href: see param theme
-        @param title: optional title (for alternate stylesheets), see
-                      http://www.w3.org/Style/Examples/007/alternatives
-        @rtype: string
-        @return: stylesheet link html
-        """
-        if theme:
-            href = '%s/%s/css/%s.css' % (self.cfg.url_prefix_static, self.name, href)
-        attrs = 'type="text/css" charset="%s" media="%s" href="%s"' % (
-                self.stylesheetsCharset, media, href, )
-        if title:
-            return '<link rel="alternate stylesheet" %s title="%s">' % (attrs, title)
-        else:
-            return '<link rel="stylesheet" %s>' % attrs
-
-    def html_stylesheets(self, d):
-        """
-        Assemble html head stylesheet links
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: stylesheets links
-        """
-        request = self.request
-        # Check mode
-        if d.get('print_mode'):
-            media = d.get('media', 'print')
-            stylesheets = getattr(self, 'stylesheets_' + media)
-        else:
-            stylesheets = self.stylesheets
-
-        theme_css = [self._stylesheet_link(True, *stylesheet) for stylesheet in stylesheets]
-        cfg_css = [self._stylesheet_link(False, *stylesheet) for stylesheet in request.cfg.stylesheets]
-
-        msie_css = """
-<!-- css only for MS IE6/IE7 browsers -->
-<!--[if lt IE 8]>
-   %s
-<![endif]-->
-""" % self._stylesheet_link(True, 'all', 'msie')
-
-        # Add user css url (assuming that user css uses same charset)
-        href = request.user.valid and request.user.css_url
-        if href and href.lower() != "none":
-            user_css = self._stylesheet_link(False, 'all', href)
-        else:
-            user_css = ''
-
-        return '\n'.join(theme_css + cfg_css + [msie_css, user_css])
-
+            
     def shouldShowPageinfo(self, page):
         """
         Should we show page info?
@@ -602,7 +545,6 @@ class JinjaTheme(ThemeBase):
         html = [
             self.externalScript('svg', 'data-path="%(jspath)s"'),
             self.externalScript('common'),
-            self.html_stylesheets(d),
             #self.rsslink(d),
             self.universal_edit_button(d),
             ]
@@ -1107,9 +1049,11 @@ class JinjaTheme(ThemeBase):
         if 'pi_refresh' in keywords and keywords['pi_refresh']:
             user_head.append('<meta http-equiv="refresh" content="%d;URL=%s">' % keywords['pi_refresh'])
 
+        print_mode = keywords.get('print_mode', False)
+
         html_head = self.html_head({
             'page': page,
-            'print_mode': keywords.get('print_mode', False),
+            'print_mode': print_mode,
             'media': keywords.get('media', 'screen'),
         })
         d.update({'user_head': user_head, 'html_head': html_head, 'html_head_keyword': keywords.get('html_head', '')})
@@ -1130,7 +1074,19 @@ class JinjaTheme(ThemeBase):
             'link_help': request.href(page_help_formatting),
             'link_start': request.href(page_front_page),
         })
-
+        
+        #Using this to render stylesheet
+        d.update({'cfg': self.request.cfg})
+        
+        if print_mode:
+             d.update({'theme_stylesheets': self.stylesheets_print})
+        else:
+            d.update({'theme_stylesheets': self.stylesheets})
+        
+        user_css_href = request.user.valid and request.user.css_url
+        if user_css_href and href.lower() != "none":
+            d.update({'user_css': user_css_href})
+        
         # Render with Jinja
         request.write(self.render('head.html', d))
 
