@@ -111,3 +111,15 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_list(self):
+        data = [
+            ('<html><div><ul><li>Item</li></ul></div></html>',
+              '/page/body/div/list[@item-label-generate="unordered"]/list-item[list-item-body="Item"]'),
+            ('<html><div><ol><li>Item</li></ol></div></html>',
+              '/page/body/div/list[@item-label-generate="ordered"]/list-item[list-item-body="Item"]'),
+            ('<html><div><dl><dt>Label</dt><dd>Item</dd></dl></div></html>',
+             '/page/body/div/list/list-item[list-item-label="Label"] | /page/body/div/list/list-item[list-item-body="Item"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
