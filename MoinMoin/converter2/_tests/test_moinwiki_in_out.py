@@ -32,8 +32,8 @@ class TestConverter(object):
     output_re = re.compile(r'\s+xmlns(:\S+)?="[^"]+"')
 
     def setup_class(self):
-        self.conv_in = conv_in(self.request)
-        self.conv_out = conv_out(self.request)
+        self.conv_in = conv_in()
+        self.conv_out = conv_out()
 
     def test_base(self):
         data = [
