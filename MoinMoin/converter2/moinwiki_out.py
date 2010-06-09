@@ -100,12 +100,10 @@ class Converter(object):
                 'table_cell')}
 
     @classmethod
-    def _factory(cls, request, input, output, **kw):
-        if input == 'application/x.moin.document' and \
-                output == 'text/x.moin.wiki':
-            return cls
+    def factory(cls, request, input, output, **kw):
+        return cls
 
-    def __init__(self, request):
+    def __init__(self):
 
         # TODO: create class containing all table attributes
         self.table_tableclass = ''
@@ -118,7 +116,6 @@ class Converter(object):
         self.list_item_labels = ['', ]
         self.list_item_label = ''
         self.list_level = 0
-        self.request = request
 
         # 'text' - default status - <p> = '/n' and </p> = '/n'
         # 'table' - text inside table - <p> = '<<BR>>' and </p> = ''
@@ -599,4 +596,6 @@ class Converter(object):
         return ''
 
 from . import default_registry
-default_registry.register(Converter._factory)
+from MoinMoin.util.mime import Type, type_moin_document, type_moin_wiki
+default_registry.register(Converter.factory, type_moin_document, type_moin_wiki)
+default_registry.register(Converter.factory, type_moin_document, Type('x-moin/format;name=wiki'))
