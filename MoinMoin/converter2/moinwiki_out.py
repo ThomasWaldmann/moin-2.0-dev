@@ -30,8 +30,8 @@ class Moinwiki(object):
     a_open = '[['
     a_separator = '|'
     a_close = ']]'
-    verbatim_open = '{{{'
-    verbatim_close = '}}}'
+    verbatim_open = '{' # * 3
+    verbatim_close = '}'# * 3 
     monospace = '`'
     strong = "'''"
     emphasis = "''"
@@ -128,19 +128,31 @@ class Converter(object):
         self.children = [None, iter([root])]
         self.output = []
         self.list_item_lable = []
+        self.subpage = [self.output]
+        self.subpage_level = [0,]
         while self.children[-1]:
             try:
                 next_child = self.children[-1].next()
                 if isinstance(next_child, ET.Element):
-                    self.output.append(self.open(next_child))
+                    # open function can change self.output
+                    ret_open = self.open(next_child)
+                    self.output.append(ret_open)
                 else:
+                    if self.status[-1] == "table" or self.status[-1] == "list":
+                        if self.last_closed == "p":
+                            self.output.append('<<BR>>')
+                    elif self.status[-1] == "text":
+                        if self.last_closed == "p":
+                             self.output.append('\n')
                     self.output.append(next_child)
                     self.last_closed = 'text'
             except StopIteration:
                 self.children.pop()
                 next_parent = self.opened.pop()
                 if next_parent:
-                    self.output.append(self.close(next_parent))
+                    # close function can change self.output
+                    close_ret = self.close(next_parent)
+                    self.output.append(close_ret)
 
         return ''.join(self.output)
 
@@ -218,7 +230,14 @@ class Converter(object):
         return Moinwiki.a_close
 
     def open_moinpage_blockcode(self, elem):
-        ret = '%s\n%s\n%s\n' % (Moinwiki.verbatim_open, ''.join(elem.itertext()), Moinwiki.verbatim_close)
+        text = ''.join(elem.itertext())
+        max_subpage_lvl = 3
+        for s in findall(r'}+', text):
+            if max_subpage_lvl <= len(s):
+                max_subpage_lvl = len(s) + 1
+        if max_subpage_lvl >= self.subpage_level[-1]:
+            self.subpage_level[-1] = max_subpage_lvl + 1
+        ret = '%s\n%s\n%s\n' % (Moinwiki.verbatim_open * max_subpage_lvl, text, Moinwiki.verbatim_close * max_subpage_lvl)
         return ret
 
     def close_moinpage_blockcode(self, elem):
@@ -371,17 +390,19 @@ class Converter(object):
     def open_moinpage_p(self, elem):
         self.children.append(iter(elem))
         self.opened.append(elem)
-        if self.status[-1] == 'text':
+        self.status.append("p")
+        if self.status[-2] == 'text':
             if self.last_closed == 'text':
                 return Moinwiki.p * 2
             elif self.last_closed == 'p':
                 return Moinwiki.p
             elif self.last_closed:
                 return Moinwiki.p
-        elif self.status[-1] == 'table':
-            if self.last_closed and self.last_closed != 'table_cell':
+        elif self.status[-2] == 'table':
+            if self.last_closed and self.last_closed != 'table_cell'\
+                                and self.last_closed != 'table_row':
                 return Moinwiki.linebreak
-        elif self.status[-1] == 'list':
+        elif self.status[-2] == 'list':
             if self.last_closed and self.last_closed != 'list_item'\
                                 and self.last_closed != 'list_item_header'\
                                 and self.last_closed != 'list_item_footer':
@@ -389,6 +410,7 @@ class Converter(object):
         return ''
 
     def close_moinpage_p(self, elem):
+        self.status.pop()
         if self.status[-1] == 'text':
                 return Moinwiki.p
         return ''
@@ -399,9 +421,10 @@ class Converter(object):
         self.opened.append(elem)
         ret = ''
         if len(self.status) > 1:
-            ret = "{{{#!"
-            # ret += parser
-            # but we do not have the required attribute
+            self.subpage.append([])
+            self.subpage_level.append(3)
+            self.output = self.subpage[-1]
+            ret = "#!wiki"
         self.status.append('text')
         return ret
 
@@ -409,7 +432,11 @@ class Converter(object):
         self.status.pop()
         ret = ''
         if len(self.status) > 1:
-            ret = "}}}\n"
+            ret = "{"*self.subpage_level[-1] + ''.join(self.subpage.pop()) + "}"*self.subpage_level[-1] + "\n"
+            subpage_lvl = self.subpage_level.pop()
+            if subpage_lvl >=  self.subpage_level[-1]:
+                self.subpage_level[-1] = subpage_lvl + 1
+            self.output = self.subpage[-1]
         return ret
 
     def open_moinpage_body(self, elem):
@@ -433,6 +460,18 @@ class Converter(object):
                     return "<<%s(%s)>>" % (type[1].split('=')[1], ','.join([''.join(c.itertext()) for c in iter(elem).next() if c.tag.name == "argument"]))
                 else:
                     return "<<%s()>>" % type[1].split('=')[1]
+            elif type[0] == "x-moin/format":
+                elem_it = iter(elem)
+                ret = "{{{#!%s" % type[1].split('=')[1]
+                if len(elem) and elem_it.next().tag.name == "arguments":
+                    args = []
+                    for arg in iter(elem).next():
+                        if arg.tag.name == "argument":
+                            args.append("%s=\"%s\"" % (arg.get(moin_page.name, ""), ' '.join(arg.itertext())))
+                    ret = '%s(%s)' % (ret, ' '.join(args))
+                    elem = elem_it.next()
+                ret = "%s\n%s\n}}}\n" % (ret, ' '.join(elem.itertext()))
+                return ret
         return unescape(elem.get(moin_page.alt, ''))
 
     def close_moinpage_part(self, elem):
@@ -590,7 +629,7 @@ class Converter(object):
         return ''
 
     def open_moinpage_table_of_content(self, elem):
-        return "<<TableOfContents(%s)>>" % elem.get(moin_page.outline_level, "1")
+        return "<<TableOfContents(%s)>>\n" % elem.get(moin_page.outline_level, "")
 
     def close_moinpage_table_of_content(self, elem):
         return ''
