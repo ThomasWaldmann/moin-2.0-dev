@@ -28,7 +28,10 @@ class ConverterBase(object):
     def handle_wikilocal(self, elem, link, page_name):
         pass
 
-    def recurse(self, elem, page,
+    def __init__(self, request):
+        self.request = request
+
+    def __call__(self, elem, page=None,
             __tag_page_href=moin_page.page_href, __tag_href=_tag_xlink_href):
         new_page_href = elem.get(__tag_page_href)
         if new_page_href:
@@ -36,23 +39,17 @@ class ConverterBase(object):
 
         href = elem.get(__tag_href)
         if href:
-            yield elem, Iri(href), page
-
-        for child in elem:
-            if isinstance(child, ET.Node):
-                for i in self.recurse(child, page):
-                    yield i
-
-    def __init__(self, request):
-        self.request = request
-
-    def __call__(self, tree):
-        for elem, href, page in self.recurse(tree, None):
+            href = Iri(href)
             if href.scheme == 'wiki.local':
                 self.handle_wikilocal(elem, href, page)
             elif href.scheme == 'wiki':
                 self.handle_wiki(elem, href)
-        return tree
+
+        for child in elem:
+            if isinstance(child, ET.Node):
+                self(child, page)
+
+        return elem
 
 class ConverterExternOutput(ConverterBase):
     @classmethod
