@@ -20,18 +20,21 @@ from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page, xlink
 
 class ConverterBase(object):
+    _tag_xlink_href = xlink.href
+
     def handle_wiki(self, elem, link):
         pass
 
     def handle_wikilocal(self, elem, link, page_name):
         pass
 
-    def recurse(self, elem, page):
-        new_page_href = elem.get(moin_page.page_href)
+    def recurse(self, elem, page,
+            __tag_page_href=moin_page.page_href, __tag_href=_tag_xlink_href):
+        new_page_href = elem.get(__tag_page_href)
         if new_page_href:
             page = Iri(new_page_href)
 
-        href = elem.get(xlink.href)
+        href = elem.get(__tag_href)
         if href:
             yield elem, Iri(href), page
 
@@ -77,7 +80,7 @@ class ConverterExternOutput(ConverterBase):
             link.path = input.path[1:]
             output = Iri(self.request.url_root) + link
 
-        elem.set(xlink.href, unicode(output))
+        elem.set(self._tag_xlink_href, unicode(output))
 
     def handle_wikilocal(self, elem, input, page):
         link = Iri(query=input.query, fragment=input.fragment)
@@ -102,7 +105,7 @@ class ConverterExternOutput(ConverterBase):
 
         output = Iri(self.request.url_root) + link
 
-        elem.set(xlink.href, unicode(output))
+        elem.set(self._tag_xlink_href, unicode(output))
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
