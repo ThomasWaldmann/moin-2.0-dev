@@ -29,6 +29,8 @@ class ConverterBase(object):
 
     def __init__(self, request):
         self.request = request
+        # TODO: request should hold this in a parsed way
+        self.url_root = Iri(request.url_root)
 
     def __call__(self, elem, page=None,
             __tag_page_href=moin_page.page_href, __tag_href=_tag_xlink_href):
@@ -70,11 +72,11 @@ class ConverterExternOutput(ConverterBase):
             else:
                 # TODO
                 link.path = input.path[1:]
-                output = Iri(self.request.url_root) + link
+                output = self.url_root + link
 
         else:
             link.path = input.path[1:]
-            output = Iri(self.request.url_root) + link
+            output = self.url_root + link
 
         elem.set(self._tag_xlink_href, unicode(output))
 
@@ -100,7 +102,7 @@ class ConverterExternOutput(ConverterBase):
         else:
             link.path = page.path[1:]
 
-        output = Iri(self.request.url_root) + link
+        output = self.url_root + link
 
         elem.set(self._tag_xlink_href, unicode(output))
 
