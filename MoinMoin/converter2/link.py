@@ -15,7 +15,7 @@ import urllib
 
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
-from MoinMoin.util import iri
+from MoinMoin.util.iri import Iri
 from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page, xlink
 
@@ -29,11 +29,11 @@ class ConverterBase(object):
     def recurse(self, elem, page):
         new_page_href = elem.get(moin_page.page_href)
         if new_page_href:
-            page = iri.Iri(new_page_href)
+            page = Iri(new_page_href)
 
         href = elem.get(xlink.href)
         if href:
-            yield elem, iri.Iri(href), page
+            yield elem, Iri(href), page
 
         for child in elem:
             if isinstance(child, ET.Node):
@@ -59,28 +59,28 @@ class ConverterExternOutput(ConverterBase):
 
     # TODO: Deduplicate code
     def handle_wiki(self, elem, input):
-        link = iri.Iri(query=input.query, fragment=input.fragment)
+        link = Iri(query=input.query, fragment=input.fragment)
 
         if input.authority:
             wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, input.authority, input.path[1:])
 
             if not err:
-                output = iri.Iri(wikiutil.join_wiki(wikiurl, wikitail)) + link
+                output = Iri(wikiutil.join_wiki(wikiurl, wikitail)) + link
 
                 elem.set(html.class_, 'interwiki')
             else:
                 # TODO
                 link.path = input.path[1:]
-                output = iri.Iri(self.request.url_root) + link
+                output = Iri(self.request.url_root) + link
 
         else:
             link.path = input.path[1:]
-            output = iri.Iri(self.request.url_root) + link
+            output = Iri(self.request.url_root) + link
 
         elem.set(xlink.href, unicode(output))
 
     def handle_wikilocal(self, elem, input, page):
-        link = iri.Iri(query=input.query, fragment=input.fragment)
+        link = Iri(query=input.query, fragment=input.fragment)
 
         if input.path:
             path = input.path
@@ -100,7 +100,7 @@ class ConverterExternOutput(ConverterBase):
         else:
             link.path = page.path[1:]
 
-        output = iri.Iri(self.request.url_root) + link
+        output = Iri(self.request.url_root) + link
 
         elem.set(xlink.href, unicode(output))
 
