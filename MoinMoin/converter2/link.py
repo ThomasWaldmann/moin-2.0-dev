@@ -14,7 +14,6 @@ from emeraldtree import ElementTree as ET
 import urllib
 
 from MoinMoin import wikiutil
-from MoinMoin.Page import Page
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page, xlink
@@ -94,9 +93,10 @@ class ConverterExternOutput(ConverterBase):
             else:
                 link.path = path
 
-            page = Page(self.request, unicode(link.path), None)
-            if not page.exists():
-                elem.set(html.class_, 'nonexistent')
+            # TODO: new existance check
+            #page = Page(self.request, unicode(link.path), None)
+            #if not page.exists():
+            #    elem.set(html.class_, 'nonexistent')
         else:
             link.path = page.path[1:]
 
