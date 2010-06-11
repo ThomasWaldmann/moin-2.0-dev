@@ -21,17 +21,13 @@ class ElementException(RuntimeError):
 
 class Attribute(object):
     """ Adds the attribute with the HTML namespace to the output. """
+    __slots__ = 'key'
+
     def __init__(self, key):
         self.key = html(key)
 
-    def __call__(self, key, value, out):
+    def __call__(self, value, out):
         out[self.key] = value
-
-
-class AttributeSimple(object):
-    """ Adds the attribute with the HTML namespace to the output. """
-    def __call__(self, key, value, out):
-        out[html(key.name)] = value
 
 
 class Attributes(object):
@@ -39,11 +35,11 @@ class Attributes(object):
         html,
     ])
 
-    visit_class = AttributeSimple()
+    visit_class = Attribute('class')
     visit_number_columns_spanned = Attribute('colspan')
     visit_number_rows_spanned = Attribute('rowspan')
-    visit_style = AttributeSimple()
-    visit_title = AttributeSimple()
+    visit_style = Attribute('style')
+    visit_title = Attribute('title')
 
     def __init__(self, element):
         self.element = element
@@ -75,7 +71,7 @@ class Attributes(object):
                     n = 'visit_' + key.name.replace('-', '_')
                     f = getattr(self, n, None)
                     if f is not None:
-                        f(key, value, new)
+                        f(value, new)
             elif key.uri in self.namespaces_valid_output:
                 new[key] = value
             elif key.uri is None:
@@ -83,7 +79,7 @@ class Attributes(object):
                     n = 'visit_' + key.name.replace('-', '_')
                     f = getattr(self, n, None)
                     if f is not None:
-                        f(key, value, new_default)
+                        f(value, new_default)
                 elif self.default_uri_output:
                     new_default[ET.QName(key.name, self.default_uri_output)] = value
 
