@@ -355,50 +355,13 @@ class Iri(object):
 class _Value(unicode):
     __slots__ = '_quoted'
 
-    # Rules for quoting parts of the IRI, also applies to URI.
-    # Each entry represents a range of unicode code points.
-    quote_rules_ascii = (
-        (ord(u'0'), ord(u'9')),
-        (ord(u'A'), ord(u'Z')),
-        (ord(u'a'), ord(u'z')),
-        (ord(u'-'), ord(u'-')),
-        (ord(u'.'), ord(u'.')),
-        (ord(u'_'), ord(u'_')),
-        (ord(u'~'), ord(u'~')),
-        (ord(u'!'), ord(u'!')),
-        (ord(u'$'), ord(u'$')),
-        (ord(u'&'), ord(u'&')),
-        (ord(u"'"), ord(u"'")),
-        (ord(u'('), ord(u'(')),
-        (ord(u')'), ord(u')')),
-        (ord(u'*'), ord(u'*')),
-        (ord(u'+'), ord(u'+')),
-        (ord(u','), ord(u',')),
-        (ord(u';'), ord(u';')),
-        (ord(u'='), ord(u'=')),
-    )
-
     # Rules for quoting parts of the IRI.
-    # Each entry represents a range of unicode code points.
-    quote_rules_unicode = (
-        (0x000A0, 0x0D7FF),
-        (0x0F900, 0x0FDCF),
-        (0x0FDF0, 0x0FFEF),
-        (0x10000, 0x1FFFD),
-        (0x20000, 0x2FFFD),
-        (0x30000, 0x3FFFD),
-        (0x40000, 0x4FFFD),
-        (0x50000, 0x5FFFD),
-        (0x60000, 0x6FFFD),
-        (0x70000, 0x7FFFD),
-        (0x80000, 0x8FFFD),
-        (0x90000, 0x9FFFD),
-        (0xA0000, 0xAFFFD),
-        (0xB0000, 0xBFFFD),
-        (0xC0000, 0xCFFFD),
-        (0xD0000, 0xDFFFD),
-        (0xE1000, 0xEFFFD),
-    )
+    quote_rules_iri = u"""((?:%[0-9a-fA-F]{2})+)|([^-!$&'*+.0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz|\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+)"""
+    quote_rules_uri = u"""((?:%[0-9a-fA-F]{2})+)|([^-!$&'*+.0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz|]+)"""
+    quote_filter = frozenset()
+
+    _quote_re_iri = re.compile(quote_rules_iri)
+    _quote_re_uri = re.compile(quote_rules_uri)
 
     # Matches consecutive percent-encoded values
     unquote_rules = r"(%[0-9a-fA-F]{2})+"
@@ -427,30 +390,21 @@ class _Value(unicode):
         @param requote: Input string is already quoted
         @return: Quoted string
         """
-        ret = []
+        quote_filter = cls.quote_filter
 
-        rules = cls.quote_rules_ascii
-        if not url:
-            rules = rules + cls.quote_rules_unicode
+        def subrepl(match):
+            t_quoted = match.group(1)
+            t_plain = match.group(2)
 
-        for i in input:
-            # Check if we have an already quoted string.
-            if requote and i == u'%':
-                ret.append(i)
-                continue
+            if t_quoted:
+                if not requote:
+                    t_quoted = t_quoted.replace('%', '%25')
+                return t_quoted
 
-            # Check if the current character matches any of the given ranges
-            c = ord(i)
-            for rule in rules:
-                if c >= rule[0] and c <= rule[1]:
-                    ret.append(i)
-                    break
+            return u''.join(a in quote_filter and a or u'%%%02X' % ord(a) for a in t_plain.encode('utf-8'))
 
-            else:
-                # Percent-encode illegal characters
-                ret.extend((u'%%%02X' % ord(a) for a in i.encode('utf-8')))
-
-        return u''.join(ret)
+        re = url and cls._quote_re_uri or cls._quote_re_iri
+        return re.sub(subrepl, input)
 
     @classmethod
     def _unquote(cls, s):
@@ -772,30 +726,10 @@ class IriPath(object):
         return u'/'.join((i.urlquoted for i in self._list))
 
 class IriPathSegment(_Value):
-    quote_rules_ascii = _Value.quote_rules_ascii + (
-        (ord(u'@'), ord(u'@')),
-        (ord(u':'), ord(u':')),
-        (ord(u'/'), ord(u'/')),
-    )
+    quote_filter = frozenset('@:/')
 
 class IriQuery(_Value):
-    quote_rules_ascii = _Value.quote_rules_ascii + (
-        (ord(u'@'), ord(u'@')),
-        (ord(u':'), ord(u':')),
-        (ord(u'/'), ord(u'/')),
-        (ord(u'?'), ord(u'?')),
-    )
-
-    quote_rules_unicode = _Value.quote_rules_unicode + (
-        (0x00E000, 0x00F8FF),
-        (0x0F0000, 0x0FFFFD),
-        (0x100000, 0x10FFFD),
-    )
+    quote_filter = frozenset('@:/?')
 
 class IriFragment(_Value):
-    quote_rules_ascii = _Value.quote_rules_ascii + (
-        (ord(u'@'), ord(u'@')),
-        (ord(u':'), ord(u':')),
-        (ord(u'/'), ord(u'/')),
-        (ord(u'?'), ord(u'?')),
-    )
+    quote_filter = frozenset('@:/?')
