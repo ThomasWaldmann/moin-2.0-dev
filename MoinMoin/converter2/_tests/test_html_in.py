@@ -52,6 +52,8 @@ class TestConverter(Base):
              '/page/body/div[p="Test"]'),
             ('<html><div><p>First paragraph</p><h1>Title</h1><p><em>Paragraph</em></p></div></html>',
              '/page/body/div/p[2][emphasis="Paragraph"]'),
+            ('<html><div><p>First Line<br />Second Line</p></div></html>',
+             '/page/body/div/p[1]/line-break')
         ]
         for i in data:
             yield (self.do, ) + i
