@@ -724,10 +724,10 @@ class Converter(ConverterMacro):
                 path, fragment = link_item.rsplit('#', 1)
             else:
                 path, fragment = link_item, None
-            target = unicode(Iri(scheme='wiki.local', path=path, query=query, fragment=fragment))
+            target = Iri(scheme='wiki.local', path=path, query=query, fragment=fragment)
             text = link_item
         else:
-            target = unicode(Iri(link_url))
+            target = Iri(link_url)
             text = link_url
         element = moin_page.a(attrib={xlink.href: target})
         stack.push(element)
@@ -832,10 +832,10 @@ class Converter(ConverterMacro):
                 # by default, we want the item's get url for transclusion of raw data:
                 args['do'] = 'get'
             query = wikiutil.makeQueryString(args)
-            target = unicode(Iri(scheme='wiki.local', path=object_item, query=query, fragment=None))
+            target = Iri(scheme='wiki.local', path=object_item, query=query, fragment=None)
             text = object_item
         else:
-            target = unicode(Iri(object_url))
+            target = Iri(object_url)
             text = object_url
 
         attrib = {xlink.href: target}
@@ -1079,7 +1079,7 @@ class ConverterFormat19(Converter):
                     path='/' + freelink_interwiki_page)
             text = freelink_interwiki_page
 
-        attrib[xlink.href] = unicode(link)
+        attrib[xlink.href] = link
 
         element = moin_page.a(attrib, children=[text])
         stack.top_append(element)
@@ -1114,7 +1114,7 @@ class ConverterFormat19(Converter):
     """
 
     def inline_url_repl(self, stack, url, url_target):
-        url = unicode(Iri(url_target))
+        url = Iri(url_target)
         attrib = {xlink.href: url}
         element = moin_page.a(attrib=attrib, children=[url_target])
         stack.top_append(element)
