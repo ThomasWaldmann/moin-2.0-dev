@@ -36,7 +36,7 @@ class AttributeSimple(object):
 
 class Attributes(object):
     namespaces_valid_output = frozenset([
-        html.namespace,
+        html,
     ])
 
     visit_class = AttributeSimple()
@@ -51,7 +51,7 @@ class Attributes(object):
         # Detect if we either namespace of the element matches the input or the
         # output.
         self.default_uri_input = self.default_uri_output = None
-        if element.tag.uri == moin_page.namespace:
+        if element.tag.uri == moin_page:
             self.default_uri_input = element.tag.uri
         if element.tag.uri in self.namespaces_valid_output:
             self.default_uri_output = element.tag.uri
@@ -68,7 +68,7 @@ class Attributes(object):
         new_default = {}
 
         for key, value in self.element.attrib.iteritems():
-            if key.uri == moin_page.namespace:
+            if key.uri == moin_page:
                 # We never have _ in attribute names, so ignore them instead of
                 # create ambigues matches.
                 if not '_' in key.name:
@@ -99,7 +99,7 @@ class Converter(object):
     """
 
     namespaces_visit = {
-        moin_page.namespace: 'moinpage',
+        moin_page: 'moinpage',
     }
 
     def __init__(self, request):
@@ -192,13 +192,13 @@ class Converter(object):
             level = 1
         elif level > 6:
             level = 6
-        return self.new_copy(ET.QName('h%d' % level, html.namespace), elem)
+        return self.new_copy(ET.QName('h%d' % level, html), elem)
 
     def visit_moinpage_inline_part(self, elem):
         body = error = None
 
         for item in elem:
-            if item.tag.uri == moin_page.namespace:
+            if item.tag.uri == moin_page:
                 if item.tag.name == 'inline-body':
                     body = item
                 elif item.tag.name == 'error':
@@ -242,15 +242,15 @@ class Converter(object):
             ret = self.new(html.dl, attrib_new)
 
         for item in elem:
-            if item.tag.uri == moin_page.namespace and item.tag.name == 'list-item':
+            if item.tag.uri == moin_page and item.tag.name == 'list-item':
                 if not generate:
                     for label in item:
-                        if label.tag.uri == moin_page.namespace and label.tag.name == 'list-item-label':
+                        if label.tag.uri == moin_page and label.tag.name == 'list-item-label':
                             ret_label = self.new_copy(html.dt, label)
                             ret.append(ret_label)
 
                 for body in item:
-                    if body.tag.uri == moin_page.namespace and body.tag.name == 'list-item-body':
+                    if body.tag.uri == moin_page and body.tag.name == 'list-item-body':
                         if generate:
                             ret_body = self.new_copy(html.li, body)
                         else:
@@ -283,7 +283,7 @@ class Converter(object):
 
     def visit_moinpage_page(self, elem):
         for item in elem:
-            if item.tag.uri == moin_page.namespace and item.tag.name == 'body':
+            if item.tag.uri == moin_page and item.tag.name == 'body':
                 return self.new_copy(html.div, item)
 
         raise RuntimeError('page:page need to contain exactly one page:body tag, got %r' % elem[:])
@@ -292,7 +292,7 @@ class Converter(object):
         body = error = None
 
         for item in elem:
-            if item.tag.uri == moin_page.namespace:
+            if item.tag.uri == moin_page:
                 if item.tag.name == 'body':
                     body = item
                 elif item.tag.name == 'error':
@@ -331,14 +331,14 @@ class Converter(object):
         ret = self.new(html.table, attrib)
         for item in elem:
             tag = None
-            if item.tag.uri == moin_page.namespace:
+            if item.tag.uri == moin_page:
                 if item.tag.name == 'table-body':
                     tag = html.tbody
                 elif item.tag.name == 'table-header':
                     tag = html.thead
                 elif item.tag.name == 'table-footer':
                     tag = html.tfoot
-            elif item.tag.uri == html.namespace and \
+            elif item.tag.uri == html and \
                     item.tag.name in ('tbody', 'thead', 'tfoot'):
                 tag = item.tag
             if tag is not None:
@@ -499,7 +499,7 @@ class ConverterPage(Converter):
             level = 1
         elif level > 6:
             level = 6
-        elem = self.new_copy(ET.QName('h%d' % level, html.namespace), elem)
+        elem = self.new_copy(ET.QName('h%d' % level, html), elem)
 
         id = elem.get(html.id)
         if not id:
@@ -514,7 +514,7 @@ class ConverterPage(Converter):
 
         body = None
         for child in elem:
-            if child.tag.uri == moin_page.namespace:
+            if child.tag.uri == moin_page:
                 if child.tag.name == 'note-body':
                     body = self.do_children(child)
 
@@ -522,11 +522,11 @@ class ConverterPage(Converter):
 
         elem_ref = ET.XML("""
 <html:sup xmlns:html="%s" html:id="note-%d-ref"><html:a html:href="#note-%d">%d</html:a></html:sup>
-""" % (html.namespace, id, id, id))
+""" % (html, id, id, id))
 
         elem_note = ET.XML("""
 <html:p xmlns:html="%s" html:id="note-%d"><html:sup><html:a html:href="#note-%d-ref">%d</html:a></html:sup></html:p>
-""" % (html.namespace, id, id, id))
+""" % (html, id, id, id))
 
         elem_note.extend(body)
 
