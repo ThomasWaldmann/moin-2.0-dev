@@ -61,7 +61,7 @@ class _Stack(object):
     class Item(object):
         def __init__(self, elem):
             self.elem = elem
-            if elem.tag.uri == moin_page.namespace:
+            if elem.tag.uri == moin_page:
                 self.name = elem.tag.name
             else:
                 self.name = None
