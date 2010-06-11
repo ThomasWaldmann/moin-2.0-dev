@@ -10,7 +10,7 @@
         {% endif %}
         href=
         {% if theme %}
-            "{{ cfg.url_prefix_static }}/{{ cfg.theme_default }}/css/{{ href }}.css"
+            "{{ cfg.url_prefix_static }}/{{ theme_name }}/css/{{ href }}.css"
         {% else %}
             "{{ href }}"
         {% endif %}

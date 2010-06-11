@@ -1077,7 +1077,8 @@ class JinjaTheme(ThemeBase):
         
         #Using this to render stylesheet
         d.update({'cfg': self.request.cfg})
-        
+        #Using to render stylesheet acording to theme
+        d.update({'theme_name': self.name})
         if print_mode:
              d.update({'theme_stylesheets': self.stylesheets_print})
         else:
