@@ -176,6 +176,9 @@ class Converter(object):
     def visit_xhtml_em(self, element):
         return self.new_copy(moin_page.emphasis, element)
 
+    def visit_xhtml_br(self, element):
+        return moin_page.line_break()
+
     def visit_xhtml_i(self, element):
         return self.new_copy(moin_page.emphasis, element)
 
