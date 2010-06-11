@@ -532,15 +532,10 @@ class JinjaTheme(ThemeBase):
         @rtype: unicode
         @return: search form html
         """
-        _ = self.request.getText
         form = self.request.values
         d.update({
-            'search_label': _('Search:'),
             'search_value': wikiutil.escape(form.get('value', ''), 1),
-            'search_full_label': _('Text'),
-            'search_title_label': _('Titles'),
-            'url': self.request.href(d['page'].page_name)})
-
+            'search_url': self.request.href(d['page'].page_name)})
         return d
 
     def showversion(self, **keywords):
