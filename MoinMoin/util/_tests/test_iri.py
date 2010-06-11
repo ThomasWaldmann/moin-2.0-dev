@@ -253,7 +253,6 @@ def test_Iri_add_1():
     assert u.fragment is None
 
     u = base + Iri('..')
-    print unicode(u)
     assert u.scheme == 'wiki'
     assert u.authority == 'moinmo.in'
     assert u.path == '/'
