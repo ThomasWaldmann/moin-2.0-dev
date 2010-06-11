@@ -228,7 +228,19 @@ class Converter(object):
         attrib[moin_page('item-label-generate')] = 'ordered'
         return ET.Element(moin_page.list, attrib=attrib, children=[list_item])
 
+    def visit_xhtml_dl(self, element):
+        # We will process all children (which should be list element normally
+        list_items_elements = self.do_children(element)
+        list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
+        return ET.Element(moin_page.list, attrib={}, children=[list_item])
+
     def visit_xhtml_li(self, element):
+        return self.new_copy(moin_page.list_item_body, element)
+
+    def visit_xhtml_dt(self, element):
+        return self.new_copy(moin_page.list_item_label, element)
+
+    def visit_xhtml_dd(self, element):
         return self.new_copy(moin_page.list_item_body, element)
 
 from . import default_registry
