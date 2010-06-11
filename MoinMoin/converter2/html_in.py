@@ -212,6 +212,25 @@ class Converter(object):
         attrib[key] = element.get(html.href)
         return self.new_copy(moin_page.a, element, attrib)
 
+    def visit_xhtml_ul(self, element):
+        # We will process all children (which should be list element normally
+        list_items_elements = self.do_children(element)
+        list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
+        attrib = {}
+        attrib[moin_page('item-label-generate')] = 'unordered'
+        return ET.Element(moin_page.list, attrib=attrib, children=[list_item])
+
+    def visit_xhtml_ol(self, element):
+        # We will process all children (which should be list element normally
+        list_items_elements = self.do_children(element)
+        list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
+        attrib = {}
+        attrib[moin_page('item-label-generate')] = 'ordered'
+        return ET.Element(moin_page.list, attrib=attrib, children=[list_item])
+
+    def visit_xhtml_li(self, element):
+        return self.new_copy(moin_page.list_item_body, element)
+
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
 default_registry.register(Converter._factory, Type('text/x.moin.xhtml'), type_moin_document)
