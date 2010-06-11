@@ -148,14 +148,14 @@ class Converter(object):
         # Unknown element are just copied
         return self.new_copy(elem.tag, elem)
 
-    def visit_moinpage_a(self, elem):
+    def visit_moinpage_a(self, elem,
+            _tag_html_a=html.a, _tag_html_href=html.href, _tag_xlink_href=xlink.href):
         attrib = {}
-
-        href = elem.get(xlink.href, None)
-        if href is not None:
-            attrib[html.href] = href
+        href = elem.get(_tag_xlink_href)
+        if href:
+            attrib[_tag_html_href] = href
         # XXX should support more tag attrs
-        return self.new_copy(html.a, elem, attrib)
+        return self.new_copy(_tag_html_a, elem, attrib)
 
     def visit_moinpage_blockcode(self, elem):
         pre = self.new_copy(html.pre, elem)
@@ -463,8 +463,10 @@ class ConverterPage(Converter):
 
         return ret
 
-    def visit(self, elem):
-        if elem.get(moin_page.page_href):
+    def visit(self, elem,
+            _tag_moin_page_page_href=moin_page.page_href):
+        # TODO: Is this correct, or is <page> better?
+        if elem.get(_tag_moin_page_page_href):
             self._special_stack.append(SpecialPage())
 
             ret = super(ConverterPage, self).visit(elem)
