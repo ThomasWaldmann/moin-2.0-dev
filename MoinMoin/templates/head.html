@@ -67,6 +67,11 @@
     {% if user_css_href %}
       {{ stylesheet(media="all", href=user_css_href) }}
     {% endif %}
+    
+    {% for src, extra_attrs in external_scripts %}
+        <script type="text/javascript" src="{{ src }}" {{ extra_attrs }}></script>
+    {% endfor %}
+    
 </head>
 
 <script type="text/javascript">

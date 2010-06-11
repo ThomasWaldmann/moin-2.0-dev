@@ -578,9 +578,6 @@ class JinjaTheme(ThemeBase):
         @return: html head
         """
         html = [
-            self.externalScript('svg', 'data-path="%(jspath)s"'),
-            self.externalScript('common'),
-            #self.rsslink(d),
             self.universal_edit_button(d),
             ]
         return '\n'.join(html)
@@ -595,8 +592,9 @@ class JinjaTheme(ThemeBase):
         """
         jspath = '%s/common/js' % self.request.cfg.url_prefix_local
         attrs = attrs % locals()
-        return '<script type="text/javascript" src="%(jspath)s/%(name)s.js" %(attrs)s></script>' % locals()
-
+        url = "%s/%s.js" % (jspath, name)
+        return url, attrs
+        
     def universal_edit_button(self, d, **keywords):
         """
         Generate HTML for an edit link in the header.
@@ -1120,6 +1118,13 @@ class JinjaTheme(ThemeBase):
         user_css_href = request.user.valid and request.user.css_url
         if user_css_href and href.lower() != "none":
             d.update({'user_css': user_css_href})
+        
+        # Listing externalScripts
+        external_scripts = [
+                            self.externalScript('svg', 'data-path="%(jspath)s"'),
+                            self.externalScript('common'),
+                            ]
+        d.update({'external_scripts': external_scripts})
         
         # Render with Jinja
         request.write(self.render('head.html', d))
