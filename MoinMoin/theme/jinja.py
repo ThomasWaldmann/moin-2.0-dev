@@ -472,6 +472,59 @@ class JinjaTheme(ThemeBase):
                     items.append(link)
                 d.update({'trail_items': items})
         return d
+     
+    def _stylesheet_link(self, theme, media, href, title=None):
+        """
+        Create a link tag for a stylesheet.
+
+        @param theme: True: href gives the basename of a theme stylesheet,
+                      False: href is a full url of a user/admin defined stylesheet.
+        @param media: 'all', 'screen', 'print', 'projection', ...
+        @param href: see param theme
+        @param title: optional title (for alternate stylesheets), see
+                      http://www.w3.org/Style/Examples/007/alternatives
+        @rtype: tuple
+        @return: parameters to render stylesheet in template
+        """
+        if theme:
+            href = '%s/%s/css/%s.css' % (self.cfg.url_prefix_static, self.name, href)
+        attrs = 'type="text/css" charset="%s" media="%s" href="%s"' % (
+                self.stylesheetsCharset, media, href, )
+        return media, href, title
+
+    def stylesheets_list(self, d):
+        """ Assemble html head stylesheet links
+
+        @param d: parameter dictionary
+        @rtype: list
+        @return: list of stylesheets parameters
+        """
+        request = self.request
+        stylesheet_list = []
+        # Check mode
+        if d.get('print_mode'):
+            media = d.get('media', 'print')
+            stylesheets = getattr(self, 'stylesheets_' + media)
+        else:
+            stylesheets = self.stylesheets
+
+        theme_css = [self._stylesheet_link(True, *stylesheet) for stylesheet in stylesheets]
+        stylesheet_list.extend(theme_css)
+        
+        cfg_css = [self._stylesheet_link(False, *stylesheet) for stylesheet in request.cfg.stylesheets]
+        stylesheet_list.extend(cfg_css)
+        
+        # Add user css url (assuming that user css uses same charset)
+        href = request.user.valid and request.user.css_url
+        if href and href.lower() != "none":
+            user_css = self._stylesheet_link(False, 'all', href)
+            stylesheet_list.append(user_css)
+            
+        #MSIE must to be the last add. This is used in for loop in head.html to render specific tags.
+        msie_css = self._stylesheet_link(True, 'all', 'msie')
+        stylesheet_list.append(msie_css)
+        
+        return stylesheet_list
             
     def shouldShowPageinfo(self, page):
         """
@@ -569,18 +622,6 @@ class JinjaTheme(ThemeBase):
         d.update({'rsslink': url})
         return d
 
-    def html_head(self, d):
-        """
-        Assemble html head
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: html head
-        """
-        html = [
-            self.universal_edit_button(d),
-            ]
-        return '\n'.join(html)
 
     def externalScript(self, name, attrs=''):
         """
@@ -601,17 +642,17 @@ class JinjaTheme(ThemeBase):
         """
         page = d['page']
         if 'modify' in self.request.cfg.actions_excluded:
-            return ""
+            return d
         may_write = self.request.user.may.write(page.page_name)
         if not (page.exists() and may_write):
-            return ""  # Why ""?
+            return d  # Why dict?
         _ = self.request.getText
         querystr = {'do': 'modify'}
         # XXX is this actually used?
         text = _(u'Modify') if may_write else _(u'Immutable Page')
         url = page.url(self.request, querystr=querystr, escape=0)
-        return (u'<link rel="alternate" type="application/wiki" '
-                u'title="%s" href="%s">' % (text, url))
+        d.update({'ueb_title': text, 'ueb_url': url})
+        return d
 
     def credits(self, **keywords):
         """
@@ -1084,12 +1125,7 @@ class JinjaTheme(ThemeBase):
 
         print_mode = keywords.get('print_mode', False)
 
-        html_head = self.html_head({
-            'page': page,
-            'print_mode': print_mode,
-            'media': keywords.get('media', 'screen'),
-        })
-        d.update({'user_head': user_head, 'html_head': html_head, 'html_head_keyword': keywords.get('html_head', '')})
+        d.update({'user_head': user_head, 'html_head_keyword': keywords.get('html_head', '')})
         #Variables used to render title
         d.update({'title': text, 'sitename': request.cfg.html_pagetitle or request.cfg.sitename})
 
@@ -1119,6 +1155,9 @@ class JinjaTheme(ThemeBase):
         if user_css_href and href.lower() != "none":
             d.update({'user_css': user_css_href})
         
+        # Listing stylesheets
+        d.update({'stylesheets': self.stylesheets_list(d)})
+        
         # Listing externalScripts
         external_scripts = [
                             self.externalScript('svg', 'data-path="%(jspath)s"'),
@@ -1126,6 +1165,7 @@ class JinjaTheme(ThemeBase):
                             ]
         d.update({'external_scripts': external_scripts})
         
+        d.update(self.universal_edit_button(d))
         # Render with Jinja
         request.write(self.render('head.html', d))
 
