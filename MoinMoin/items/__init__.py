@@ -1129,8 +1129,6 @@ class Text(Binary):
                 request=request)
         include_conv = reg.get(type_moin_document, type_moin_document,
                 includes='expandall', request=request)
-        macro_conv = reg.get(type_moin_document, type_moin_document,
-                macros='expandall', request=request)
         link_conv = reg.get(type_moin_document, type_moin_document,
                 links='extern', request=request)
         # TODO: Real output format
@@ -1142,7 +1140,6 @@ class Text(Binary):
         doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
         doc = include_conv(doc)
-        doc = macro_conv(doc)
         doc = link_conv(doc)
         doc = html_conv(doc)
 
