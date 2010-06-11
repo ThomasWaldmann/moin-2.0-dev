@@ -10,9 +10,6 @@ special wiki links.
 
 from __future__ import absolute_import
 
-from emeraldtree import ElementTree as ET
-import urllib
-
 from MoinMoin import wikiutil
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.mime import type_moin_document
@@ -46,9 +43,8 @@ class ConverterBase(object):
             elif href.scheme == 'wiki':
                 self.handle_wiki(elem, href)
 
-        for child in elem:
-            if isinstance(child, ET.Node):
-                self(child, page)
+        for child in elem.iter_elements():
+            self(child, page)
 
         return elem
 
