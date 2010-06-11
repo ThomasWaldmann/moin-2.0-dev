@@ -1143,10 +1143,11 @@ class Text(Binary):
         doc = link_conv(doc)
         doc = html_conv(doc)
 
-        out = StringIO()
+        from array import array
+        out = array('u')
         # TODO: Switch to xml
-        doc.write(out.write, method='html')
-        return out.getvalue()
+        doc.write(out.fromunicode, method='html')
+        return out.tounicode()
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
