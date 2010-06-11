@@ -224,8 +224,18 @@ class Converter(object):
         # We will process all children (which should be list element normally
         list_items_elements = self.do_children(element)
         list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
+
+        # We create attributes according to the type of the list
         attrib = {}
         attrib[moin_page('item-label-generate')] = 'ordered'
+
+        # We check which kind of style we have
+        style = element.get(html.type)
+        if 'A' == style:
+            attrib[moin_page('list-style-type')] = 'upper-alpha'
+        elif 'I' == style:
+            attrib[moin_page('list-style-type')] = 'upper-roman'
+
         return ET.Element(moin_page.list, attrib=attrib, children=[list_item])
 
     def visit_xhtml_dl(self, element):
