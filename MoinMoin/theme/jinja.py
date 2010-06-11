@@ -36,7 +36,47 @@ from MoinMoin.theme import ThemeBase
 
 
 class JinjaTheme(ThemeBase):
+    """
+    Base class for actual themes.
+    
+    We need to know how the rendering will be done.
+    """
+    
+    def __init__(self, request):
+        """
+        Initialize the theme object.
 
+        @param request: the request object
+        """
+        self.request = request
+        self.cfg = request.cfg
+        self._cache = {} # Used to cache elements that may be used several times
+        self._status = []
+        self._send_title_called = False
+
+        jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
+        try:
+            os.mkdir(jinja_cachedir)
+        except:
+            pass
+
+        jinja_templatedir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+
+        self.env = Environment(loader=FileSystemLoader(jinja_templatedir),
+                               bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'),
+                               extensions=['jinja2.ext.i18n'])
+        from werkzeug import url_quote, url_encode
+        self.env.filters['urlencode'] = lambda x: url_encode(x)
+        self.env.filters['urlquote'] = lambda x: url_quote(x)
+        self.env.filters['datetime_format'] = lambda tm, u=request.user: u.getFormattedDateTime(tm)
+        self.env.filters['date_format'] = lambda tm, u=request.user: u.getFormattedDate(tm)
+        self.env.filters['user_format'] = lambda rev, request=request: \
+                                              user.get_printable_editor(request,
+                                                                        rev[EDIT_LOG_USERID],
+                                                                        rev[EDIT_LOG_ADDR],
+                                                                        rev[EDIT_LOG_HOSTNAME])
+        self.env.globals.update({'cfg': self.request.cfg, '_': self.request.getText})
+        
     def logo(self):
         """
         Assemble logo with link to front page
@@ -1075,8 +1115,6 @@ class JinjaTheme(ThemeBase):
             'link_start': request.href(page_front_page),
         })
         
-        #Using this to render stylesheet
-        d.update({'cfg': self.request.cfg})
         #Using to render stylesheet acording to theme
         d.update({'theme_name': self.name})
         if print_mode:
@@ -1275,7 +1313,6 @@ class JinjaTheme(ThemeBase):
         @return: template rendered by jinja2
         """
         template = self.env.get_template(filename)
-        context.update({'_': self.request.getText})
         return template.render(**context)
 
 
