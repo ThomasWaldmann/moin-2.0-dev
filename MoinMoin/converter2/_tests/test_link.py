@@ -7,6 +7,8 @@ MoinMoin - Tests for MoinMoin.converter2.link
 
 import py.test
 
+from emeraldtree import tree as ET
+
 from MoinMoin.converter2.link import *
 
 class TestConverterExternOutput(object):
