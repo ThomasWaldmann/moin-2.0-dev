@@ -74,7 +74,7 @@ class ConverterExternOutput(ConverterBase):
             link.path = input.path[1:]
             output = self.url_root + link
 
-        elem.set(self._tag_xlink_href, unicode(output))
+        elem.set(self._tag_xlink_href, output)
 
     def handle_wikilocal(self, elem, input, page):
         link = Iri(query=input.query, fragment=input.fragment)
@@ -100,7 +100,7 @@ class ConverterExternOutput(ConverterBase):
 
         output = self.url_root + link
 
-        elem.set(self._tag_xlink_href, unicode(output))
+        elem.set(self._tag_xlink_href, output)
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
@@ -119,7 +119,7 @@ class ConverterPagelinks(ConverterBase):
         elif path[0] == '..':
             path = page.path[1:] + path[1:]
 
-        self.links.add(unicode(path))
+        self.links.add(path)
 
     def __call__(self, tree):
         self.links = set()
