@@ -129,3 +129,11 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_table(self):
+        data = [
+            ('<html><div><table><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table></div></html>',
+             '/page/body/div/table/table-header/table-row[table-cell="Header"] | /page/body/div/table/table-footer/table-row[table-cell="Footer"] | /page/body/div/table/table-body/table-row[table-cell="Cell"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
