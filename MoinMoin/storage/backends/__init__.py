@@ -39,7 +39,7 @@ def create_simple_mapping(backend_uri='fs:instance', content_acl=None, user_prof
         backends = []
         for name in [CONTENT, USERPROFILES, TRASH, ]:
             parms = dict(nsname=name)
-            backend = BackendClass(backend_uri % parms, index_uri=index_uri % parms)
+            backend = BackendClass(backend_uri % parms)
             backends.append(backend)
         router_index_uri = index_uri % dict(nsname='ROUTER')
         return backends + [router_index_uri]

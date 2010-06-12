@@ -33,8 +33,6 @@ from MoinMoin.storage import Item as ItemBase
 from MoinMoin.storage import StoredRevision as StoredRevisionBase
 from MoinMoin.storage import NewRevision as NewRevisionBase
 
-from MoinMoin.storage.backends.indexing import IndexingBackendMixin, IndexingItemMixin, IndexingRevisionMixin
-
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError, \
@@ -48,14 +46,14 @@ HASH_HEX_LEN = 40 # sha1 = 160 bit
 UUID_LEN = len(make_uuid().hex)
 
 
-class Item(IndexingItemMixin, ItemBase):
+class Item(ItemBase):
     def __init__(self, backend, item_name, _fs_item_id=None, _fs_metadata=None, *args, **kw):
         self._fs_item_id = _fs_item_id
         self._fs_metadata = _fs_metadata
         super(Item, self).__init__(backend, item_name, *args, **kw)
 
 
-class StoredRevision(IndexingRevisionMixin, StoredRevisionBase):
+class StoredRevision(StoredRevisionBase):
     def __init__(self, item, revno, *args, **kw):
         self._fs_file_data = None
         if revno == -1:
@@ -85,7 +83,7 @@ class StoredRevision(IndexingRevisionMixin, StoredRevisionBase):
         return self._backend._make_path('data', data_hash)
 
 
-class NewRevision(IndexingRevisionMixin, NewRevisionBase):
+class NewRevision(NewRevisionBase):
     def __init__(self, item, revno, *args, **kw):
         super(NewRevision, self).__init__(item, revno, *args, **kw)
         def maketemp(kind):
@@ -98,7 +96,7 @@ class NewRevision(IndexingRevisionMixin, NewRevisionBase):
         self._fs_file_data, self._fs_path_data = maketemp('data')
 
 
-class BareFS2Backend(BackendBase):
+class FS2Backend(BackendBase):
     """
     FS2 backend
     """
@@ -488,7 +486,4 @@ class BareFS2Backend(BackendBase):
         # we assume that the file is already open for writing
         rev._fs_file_data.write(data)
 
-
-class FS2Backend(IndexingBackendMixin, BareFS2Backend):
-    pass
 
