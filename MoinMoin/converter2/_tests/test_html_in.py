@@ -134,6 +134,10 @@ class TestConverter(Base):
         data = [
             ('<html><div><table><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table></div></html>',
              '/page/body/div/table/table-header/table-row[table-cell="Header"] | /page/body/div/table/table-footer/table-row[table-cell="Footer"] | /page/body/div/table/table-body/table-row[table-cell="Cell"]'),
+            ('<html><div><table><tbody><tr><td colspan="2">Cell</td></tr></tbody></table></div></html>',
+             '/page/body/div/table/table-body/table-row/table-cell[@number-colmuns-spanned="2"] | /page/body/div/table/table-body/table-row[table-cell="Cell"]'),
+            ('<html><div><table><tbody><tr><td rowspan="2">Cell</td></tr></tbody></table></div></html>',
+             '/page/body/div/table/table-body/table-row/table-cell[@number-rows-spanned="2"] | /page/body/div/table/table-body/table-row[table-cell="Cell"]'),
         ]
         for i in data:
             yield (self.do, ) + i
