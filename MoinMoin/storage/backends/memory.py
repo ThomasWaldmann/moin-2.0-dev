@@ -30,23 +30,21 @@ from MoinMoin.storage import StoredRevision as StoredRevisionBase
 from MoinMoin.storage import NewRevision as NewRevisionBase
 from MoinMoin.storage import Revision as RevisionBase
 
-from MoinMoin.storage.backends.indexing import IndexingBackendMixin, IndexingItemMixin, IndexingRevisionMixin
-
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError
 
 
-class Item(IndexingItemMixin, ItemBase):
+class Item(ItemBase):
     pass
 
-class StoredRevision(IndexingRevisionMixin, StoredRevisionBase):
+class StoredRevision(StoredRevisionBase):
     pass
 
-class NewRevision(IndexingRevisionMixin, NewRevisionBase):
+class NewRevision(NewRevisionBase):
     pass
 
-class BareMemoryBackend(BackendBase):
+class MemoryBackend(BackendBase):
     Item = Item
     StoredRevision = StoredRevision
     NewRevision = NewRevision
@@ -359,11 +357,6 @@ class BareMemoryBackend(BackendBase):
         @see: Backend._tell_revision_data.__doc__
         """
         return revision._data.tell()
-
-
-class MemoryBackend(IndexingBackendMixin, BareMemoryBackend):
-    def __init__(self, backend_uri='', index_uri='sqlite://', *args, **kw):
-        super(MemoryBackend, self).__init__(backend_uri, index_uri=index_uri, *args, **kw)
 
 
 # ------ The tracing backend
