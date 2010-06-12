@@ -269,7 +269,15 @@ class Converter(object):
         return self.new_copy(moin_page.table_row, element)
 
     def visit_xhtml_td(self, element):
-        return self.new_copy(moin_page.table_cell, element)
+        attrib = {}
+        rowspan = element.get(html.rowspan)
+        colspan = element.get(html.colspan)
+        if rowspan:
+            attrib[moin_page('number-rows-spanned')] = rowspan
+        if colspan:
+            attrib[moin_page('number-columns-spanned')] = colspan
+        return self.new_copy(moin_page.table_cell, element, attrib=attri)
+
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
