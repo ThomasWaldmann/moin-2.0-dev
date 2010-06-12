@@ -37,7 +37,7 @@ class Converter(object):
         }
 
     # HTML tags which can be converted directly to the moin_page namespace
-    symmetric_tags = set(['div', 'p', 'strong', 'code'])
+    symmetric_tags = set(['div', 'p', 'strong', 'code', 'table'])
 
     # Regular expression to detect an html heading tag
     heading_re = re.compile('h[1-6]')
@@ -255,6 +255,21 @@ class Converter(object):
 
     def visit_xhtml_dd(self, element):
         return self.new_copy(moin_page.list_item_body, element)
+
+    def visit_xhtml_theader(self, element):
+        return self.new_copy(moin_page.table_header, element)
+
+    def visit_xhtml_tfooter(self, element):
+        return self.new_copy(moin_page.table_footer, element)
+
+    def visit_xhtml_tbody(self, element):
+        return self.new_copy(moin_page.table_body, element)
+
+    def visit_xhtml_tr(self, element):
+        return self.new_copy(moin_page.table_row, element)
+
+    def visit_xhtml_td(self, element):
+        return self.new_copy(moin_page.table_cell, element)
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
