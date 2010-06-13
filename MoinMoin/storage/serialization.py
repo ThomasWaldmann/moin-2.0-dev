@@ -496,7 +496,7 @@ class ItemMeta(Meta):
 
 class Chunk(Serializable):
     element_name = 'chunk'
-    size = 4096
+    size = 200 # later increase value so we have less overhead
 
     def __init__(self, value=None, attrs=None, setter_fn=None):
         self.value = value
