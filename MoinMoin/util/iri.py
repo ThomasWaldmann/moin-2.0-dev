@@ -58,10 +58,10 @@ class Iri(object):
 
     _overall_re = re.compile(overall_rules, re.X)
 
-    def __init__(self, iri=None, _quoted=True,
+    def __init__(self, _iri=None, _quoted=True,
             scheme=None, authority=None, path=None, query=None, fragment=None):
         """
-        @param iri A full IRI in unicode
+        @param _iri A full IRI in unicode
         @param scheme Scheme part of the IRI, overrides the same part of the IRI.
         @param authority Authority part of the IRI, overrides the same part of the IRI.
         @param path Path part of the IRI, overrides the same part of the IRI.
@@ -69,34 +69,71 @@ class Iri(object):
         @param fragment Fragment part of the IRI, overrides the same part of the IRI.
         """
 
-        if isinstance(iri, Iri):
-            old_authority = iri._authority
-            old_path = iri._path
-            old_query = iri._query
-            old_fragment = iri._fragment
+        if isinstance(_iri, Iri):
+            _scheme = _iri.scheme
 
-            self.scheme = iri.scheme
-            self._authority = old_authority and IriAuthority(old_authority) or None
-            self._path = old_path and IriPath(old_path) or None
-            self._query = old_query and IriQuery(old_query) or None
-            self._fragment = old_fragment and IriFragment(old_fragment) or None
+            _authority = _iri._authority
+            # Need to copy IriAuthority, not immutable
+            if _authority is not None:
+                _authority = IriAuthority(_authority)
+
+            _path = _iri._path
+            # Need to copy IriPath, not immutable
+            if _path is not None:
+                _path = IriPath(_path)
+
+            _query = _iri._query
+            _fragment = _iri._fragment
+
+        elif _iri:
+            match = self._overall_re.match(unicode(_iri))
+            if not match:
+                raise ValueError('Input does not look like an IRI')
+
+            _scheme = match.group('scheme')
+
+            _authority = match.group('authority')
+            if _authority is not None:
+                _authority = IriAuthority(_authority, _quoted)
+
+            _path = match.group('path')
+            if _path is not None:
+                _path = IriPath(_path, _quoted)
+
+            _query = match.group('query')
+            if _query is not None:
+                _query = IriQuery(_query, _quoted)
+
+            _fragment = match.group('fragment')
+            if _fragment is not None:
+                _fragment = IriFragment(_fragment, _quoted)
 
         else:
-            self.scheme = self._authority = self._path = self._query = self._fragment = None
-
-            if iri:
-                self._parse(iri, _quoted)
+            _scheme = _authority = _path = _query = _fragment = None
 
         if scheme is not None:
-            self.scheme = scheme
+            _scheme = scheme
+        self.scheme = _scheme
+
         if authority is not None:
             self.authority = authority
+        else:
+            self._authority = _authority
+
         if path is not None:
             self.path = path
+        else:
+            self._path = _path
+
         if query is not None:
             self.query = query
+        else:
+            self._query = _query
+
         if fragment is not None:
             self.fragment = fragment
+        else:
+            self._fragment = _fragment
 
     def __eq__(self, other):
         if isinstance(other, basestring):
@@ -181,32 +218,6 @@ class Iri(object):
                     query=query, fragment=other.fragment)
 
         return NotImplemented
-
-    def _parse(self, iri, quoted):
-        match = self._overall_re.match(unicode(iri))
-
-        if not match:
-            raise ValueError('Input does not look like an IRI')
-
-        scheme = match.group('scheme')
-        if scheme is not None:
-            self.scheme = scheme.lower()
-
-        authority = match.group('authority')
-        if authority is not None:
-            self._authority = IriAuthority(authority, quoted)
-
-        path = match.group('path')
-        if path is not None:
-            self._path = IriPath(path, quoted)
-
-        query = match.group('query')
-        if query is not None:
-            self._query = IriQuery(query, quoted)
-
-        fragment = match.group('fragment')
-        if fragment is not None:
-            self._fragment = IriFragment(fragment, quoted)
 
     def __del_authority(self):
         self._authority = None
