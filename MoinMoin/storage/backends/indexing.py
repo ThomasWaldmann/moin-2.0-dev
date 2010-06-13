@@ -153,7 +153,7 @@ from sqlalchemy.sql import and_, exists, asc, desc
 
 from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           EDIT_LOG_USERID, EDIT_LOG_COMMENT, \
                            IS_SYSPAGE, SYSPAGE_VERSION
 
 class ItemIndex(object):

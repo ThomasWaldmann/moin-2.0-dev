@@ -287,7 +287,7 @@ class Item(object):
         comment = self.request.form.get('comment')
         self._save(meta, data, mimetype=mimetype, comment=comment)
 
-    def _save(self, meta, data, name=None, action=u'SAVE', mimetype=None, comment=u'', extra=u''):
+    def _save(self, meta, data, name=None, action=u'SAVE', mimetype=None, comment=u''):
         request = self.request
         if name is None:
             name = self.name
@@ -335,7 +335,6 @@ class Item(object):
         newrev[EDIT_LOG_ADDR] = unicode(request.remote_addr)
         newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, request.remote_addr))
         newrev[EDIT_LOG_USERID] = unicode(request.user.valid and request.user.id or '')
-        newrev[EDIT_LOG_EXTRA] = unicode(extra)
         storage_item.commit()
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
