@@ -31,7 +31,7 @@ class Base(object):
         from cStringIO import StringIO
         file = StringIO()
         file.write(elem)
-        return elem 
+        return elem
 
     def do(self, input, output, args={}):
         out = self.conv(self.handle_input(input), **args)
