@@ -25,13 +25,13 @@ def execute(item_name, request):
     for rev in request.storage.history(item_name=item_name):
         name = rev[NAME]
         url = request.abs_href(name)
-        author = user.get_editor(request,
+        author = user.get_printable_editor(request,
                       rev[EDIT_LOG_USERID], rev[EDIT_LOG_ADDR], rev[EDIT_LOG_HOSTNAME])
         updated = datetime.utcfromtimestamp(rev.timestamp)
         feed.add(title=name, title_type='text',
                  summary=rev[EDIT_LOG_COMMENT], summary_type='text',
                  #content=content, content_type='text',
-                 author=str(author),
+                 author=author,
                  url=url,
                  updated=updated)
     request.write(feed.to_string())
