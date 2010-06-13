@@ -29,7 +29,7 @@ def execute(item_name, request):
         item = rev.item
         name = rev[NAME]
         author = user.get_printable_editor(request,
-                      rev[EDIT_LOG_USERID], rev[EDIT_LOG_ADDR], rev[EDIT_LOG_HOSTNAME])
+                      rev.get(EDIT_LOG_USERID), rev.get(EDIT_LOG_ADDR), rev.get(EDIT_LOG_HOSTNAME))
         updated = datetime.utcfromtimestamp(rev.timestamp)
         hl_item = Item.create(request, name, rev_no=this_revno)
         previous_revno = this_revno - 1
@@ -44,7 +44,7 @@ def execute(item_name, request):
             content = hl_item.do_show()
         url = hl_item.rev_url(_absolute=True)
         feed.add(title=name, title_type='text',
-                 summary=rev[EDIT_LOG_COMMENT], summary_type='text',
+                 summary=rev.get(EDIT_LOG_COMMENT, ''), summary_type='text',
                  content=content, content_type='html',
                  author=author,
                  url=url,

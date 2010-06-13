@@ -218,11 +218,6 @@ class FsPageRevision(StoredRevision):
                     editlog_data = { # make something up
                         EDIT_LOG_MTIME: previous_rev_mtime + 1, # we have no clue when it was, but it was later...
                         EDIT_LOG_ACTION: u'SAVE/DELETE',
-                        EDIT_LOG_ADDR: u'0.0.0.0',
-                        EDIT_LOG_HOSTNAME: u'0.0.0.0',
-                        EDIT_LOG_USERID: u'',
-                        EDIT_LOG_EXTRA: u'',
-                        EDIT_LOG_COMMENT: u'',
                     }
                 else:
                     raise NoSuchRevisionError('Item %r has no revision %d (not even a deleted one)!' %
@@ -235,11 +230,6 @@ class FsPageRevision(StoredRevision):
                     editlog_data = { # make something up
                         EDIT_LOG_MTIME: os.path.getmtime(revpath),
                         EDIT_LOG_ACTION: u'SAVE',
-                        EDIT_LOG_ADDR: u'0.0.0.0',
-                        EDIT_LOG_HOSTNAME: u'0.0.0.0',
-                        EDIT_LOG_USERID: u'',
-                        EDIT_LOG_EXTRA: u'',
-                        EDIT_LOG_COMMENT: u'',
                     }
             meta, data = wikiutil.split_body(content)
             data = data.encode(config.charset)
@@ -309,11 +299,6 @@ class FsAttachmentRevision(StoredRevision):
             editlog_data = { # make something up
                 EDIT_LOG_MTIME: os.path.getmtime(attpath),
                 EDIT_LOG_ACTION: u'SAVE',
-                EDIT_LOG_ADDR: u'0.0.0.0',
-                EDIT_LOG_HOSTNAME: u'0.0.0.0',
-                EDIT_LOG_USERID: u'',
-                EDIT_LOG_EXTRA: u'',
-                EDIT_LOG_COMMENT: u'',
             }
         meta = editlog_data
         meta['__size'] = 0 # not needed for converter
@@ -351,8 +336,6 @@ class EditLog(LogFile):
         result[EDIT_LOG_MTIME] = int(result[EDIT_LOG_MTIME] or 0) / 1000000 # convert usecs to secs
         result['__rev'] = int(result['__rev']) - 1 # old storage is 1-based, we want 0-based
         del result['__pagename']
-        if not result[EDIT_LOG_HOSTNAME]:
-            result[EDIT_LOG_HOSTNAME] = result[EDIT_LOG_ADDR]
         return result
 
     def find_rev(self, revno):
