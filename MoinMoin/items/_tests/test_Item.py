@@ -9,7 +9,7 @@
 import py
 
 from MoinMoin._tests import become_trusted
-from MoinMoin.items import Item, ContainerItem, NonExistent, Binary, Text, Image, TransformableBitmapImage, PythonSrc, \
+from MoinMoin.items import Item, ApplicationXTar, NonExistent, Binary, Text, Image, TransformableBitmapImage, PythonSrc, \
                            MIMETYPE, \
                            EDIT_LOG_ADDR, EDIT_LOG_COMMENT, \
                            EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
@@ -100,7 +100,7 @@ class TestItem:
                              ]
 
 
-class TestContainerItems:
+class TestTarItems:
     """
     tests for the container items
     """
@@ -109,40 +109,39 @@ class TestContainerItems:
         creates a container and tests the content saved to the container
         """
         request = self.request
-        item_name = 'ContainerItem1'
-        ci = ContainerItem(request, item_name)
+        item_name = u'ContainerItem1'
+        item = Item.create(request, item_name, mimetype='application/x-tar')
         filecontent = 'abcdefghij'
         content_length = len(filecontent)
-        members = ['example1.txt', 'example2.txt']
-        ci.put('example1.txt', filecontent, content_length, members=members)
-        ci.put('example2.txt', filecontent, content_length, members=members)
+        members = set(['example1.txt', 'example2.txt'])
+        item.put_member('example1.txt', filecontent, content_length, expected_members=members)
+        item.put_member('example2.txt', filecontent, content_length, expected_members=members)
 
-        nci = ContainerItem(request, item_name)
-        tf_names = nci.get_members()
-        assert sorted(tf_names) == sorted(members)
-        assert nci.get('example1.txt').read() == filecontent
+        item = Item.create(request, item_name, mimetype='application/x-tar')
+        tf_names = set(item.list_members())
+        assert tf_names == members
+        assert item.get_member('example1.txt').read() == filecontent
 
     def testRevisionUpdate(self):
         """
         creates two revisions of a container item
         """
         request = self.request
-        item_name = 'ContainterItem2'
-        ci = ContainerItem(request, item_name)
+        item_name = u'ContainerItem2'
+        item = Item.create(request, item_name, mimetype='application/x-tar')
         filecontent = 'abcdefghij'
         content_length = len(filecontent)
-        members = ['example1.txt']
-        ci.put('example1.txt', filecontent, content_length, members=members)
+        members = set(['example1.txt'])
+        item.put_member('example1.txt', filecontent, content_length, expected_members=members)
         filecontent = 'AAAABBBB'
         content_length = len(filecontent)
-        members = ['example1.txt']
-        ci.put('example1.txt', filecontent, content_length, members=members)
+        item.put_member('example1.txt', filecontent, content_length, expected_members=members)
 
         item = request.storage.get_item(item_name)
         assert item.next_revno == 2
 
-        nci = ContainerItem(request, item_name)
-        assert nci.get('example1.txt').read() == filecontent
+        item = Item.create(request, item_name, mimetype='application/x-tar')
+        assert item.get_member('example1.txt').read() == filecontent
 
 coverage_modules = ['MoinMoin.items']
 
