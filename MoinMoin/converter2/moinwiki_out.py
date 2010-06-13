@@ -31,7 +31,7 @@ class Moinwiki(object):
     a_separator = '|'
     a_close = ']]'
     verbatim_open = '{' # * 3
-    verbatim_close = '}'# * 3 
+    verbatim_close = '}'# * 3
     monospace = '`'
     strong = "'''"
     emphasis = "''"
@@ -129,7 +129,7 @@ class Converter(object):
         self.output = []
         self.list_item_lable = []
         self.subpage = [self.output]
-        self.subpage_level = [0,]
+        self.subpage_level = [0, ]
         while self.children[-1]:
             try:
                 next_child = self.children[-1].next()
@@ -143,7 +143,7 @@ class Converter(object):
                             self.output.append('<<BR>>')
                     elif self.status[-1] == "text":
                         if self.last_closed == "p":
-                             self.output.append('\n')
+                            self.output.append('\n')
                     self.output.append(next_child)
                     self.last_closed = 'text'
             except StopIteration:
@@ -434,7 +434,7 @@ class Converter(object):
         if len(self.status) > 1:
             ret = "{"*self.subpage_level[-1] + ''.join(self.subpage.pop()) + "}"*self.subpage_level[-1] + "\n"
             subpage_lvl = self.subpage_level.pop()
-            if subpage_lvl >=  self.subpage_level[-1]:
+            if subpage_lvl >= self.subpage_level[-1]:
                 self.subpage_level[-1] = subpage_lvl + 1
             self.output = self.subpage[-1]
         return ret
@@ -472,7 +472,16 @@ class Converter(object):
                     elem = elem_it.next()
                 ret = "%s\n%s\n}}}\n" % (ret, ' '.join(elem.itertext()))
                 return ret
-        return unescape(elem.get(moin_page.alt, ''))
+        return unescape(elem.get(moin_page.alt, '')) + "\n"
+
+    def open_moinpage_inline_part(self, elem):
+        ret = self.open_moinpage_part(elem)
+        if ret[-1] == '\n':
+            ret = ret[:-1]
+        return ret
+
+    def close_moinpage_inline_part(self, elem):
+        return ''
 
     def close_moinpage_part(self, elem):
         return ''
