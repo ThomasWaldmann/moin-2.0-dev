@@ -129,10 +129,6 @@ class BareRouterBackend(BackendBase):
         backend, itemname, mountpoint = self._get_backend(itemname)
         return RouterItem(self, itemname, backend.create_item(itemname), mountpoint)
 
-    def history_from_index(self, item_name, *args, **kw):
-        backend, itemname, mountpoint = self._get_backend(item_name)
-        return backend.history_from_index(mountpoint, item_name=itemname, *args, **kw)
-
 
 class RouterBackend(IndexingBackendMixin, BareRouterBackend):
     pass
