@@ -10,7 +10,7 @@ class LocalConfig(DefaultConfig):
     # hostname or IP the server listens on
     # use '' for all interfaces
     # or "1.2.3.4" for some specific IP
-    #hostname = 'localhost'
+    hostname = '127.0.0.1'
 
     # if you use port < 1024, you need to start as root
     #port = 8080
