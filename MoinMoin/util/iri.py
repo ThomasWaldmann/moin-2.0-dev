@@ -215,34 +215,7 @@ class Iri(object):
     def __set_authority(self, value):
         self._authority = IriAuthority(value, False)
     authority = property(__get_authority, __set_authority, __del_authority,
-            """
-            Authority part of the IRI.
-
-            Complete unquoted unicode string. It may include replacement
-            characters.
-            """)
-
-    @property
-    def authority_fullquoted(self):
-        """
-        Full quoted form of the authority part of the IRI.
-
-        All characters which are illegal in the authority part are encoded.
-        Used to generate the full URI.
-        """
-        if self._authority is not None:
-            return self._authority.fullquoted
-
-    @property
-    def authority_quoted(self):
-        """
-        Minimal quoted form of the authority part of the IRI.
-
-        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
-        have a one-to-one mapping with non-UTF-8 URIs.
-        """
-        if self._authority is not None:
-            return self._authority.quoted
+            """Authority part of the IRI.""")
 
     def __del_path(self):
         self._path = None
@@ -251,34 +224,7 @@ class Iri(object):
     def __set_path(self, value):
         self._path = IriPath(value, False)
     path = property(__get_path, __set_path, __del_path,
-            """
-            Path part of the IRI.
-
-            Complete unquoted unicode string. It may include replacement
-            characters.
-            """)
-
-    @property
-    def path_fullquoted(self):
-        """
-        Full quoted form of the path part of the IRI.
-
-        All characters which are illegal in the path part are encoded.
-        Used to generate the full URI.
-        """
-        if self._path is not None:
-            return self._path.fullquoted
-
-    @property
-    def path_quoted(self):
-        """
-        Minimal quoted form of the path part of the IRI.
-
-        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
-        have a one-to-one mapping with non-UTF-8 URIs.
-        """
-        if self._path is not None:
-            return self._path.quoted
+            """Path part of the IRI.""")
 
     def __del_query(self):
         self._query = None
@@ -287,34 +233,7 @@ class Iri(object):
     def __set_query(self, value):
         self._query = IriQuery(value, False)
     query = property(__get_query, __set_query, __del_query,
-            """
-            Query part of the IRI.
-
-            Complete unquoted unicode string. It may include replacement
-            characters.
-            """)
-
-    @property
-    def query_fullquoted(self):
-        """
-        Full quoted form of the query part of the IRI.
-
-        All characters which are illegal in the query part are encoded.
-        Used to generate the full URI.
-        """
-        if self._query is not None:
-            return self._query.fullquoted
-
-    @property
-    def query_quoted(self):
-        """
-        Minimal quoted form of the query part of the IRI.
-
-        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
-        have a one-to-one mapping with non-UTF-8 URIs.
-        """
-        if self._query is not None:
-            return self._query.quoted
+            """Query part of the IRI.""")
 
     def __del_fragment(self):
         self._fragment = None
@@ -323,34 +242,8 @@ class Iri(object):
     def __set_fragment(self, value):
         self._fragment = IriFragment(value, False)
     fragment = property(__get_fragment, __set_fragment, __del_fragment,
-            """
-            Fragment part of the IRI.
+            """Fragment part of the IRI.""")
 
-            Complete unquoted unicode string. It may include replacement
-            characters.
-            """)
-
-    @property
-    def fragment_fullquoted(self):
-        """
-        Full quoted form of the fragment part of the IRI.
-
-        All characters which are illegal in the fragment part are encoded.
-        Used to generate the full URI.
-        """
-        if self._fragment is not None:
-            return self._fragment.fullquoted
-
-    @property
-    def fragment_quoted(self):
-        """
-        Minimal quoted form of the fragment part of the IRI.
-
-        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
-        have a one-to-one mapping with non-UTF-8 URIs.
-        """
-        if self._fragment is not None:
-            return self._fragment.quoted
 
 class _Value(unicode):
     __slots__ = '_quoted'
@@ -439,18 +332,36 @@ class _Value(unicode):
 
     @property
     def fullquoted(self):
+        """
+        Full quoted form of the IRI part.
+
+        All characters which are illegal in the part are encoded.
+        Used to generate the full IRI.
+        """
         if self._quoted is not None:
             return self._quote(self._quoted, requote=True)
         return self._quote(self)
 
     @property
     def quoted(self):
+        """
+        Minimal quoted form of the IRI part.
+
+        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
+        have a one-to-one mapping with non-UTF-8 URIs.
+        """
         if self._quoted is not None:
             return self._quoted
         return self.replace(u'%', u'%25')
 
     @property
     def urlquoted(self):
+        """
+        URI quoted form of the IRI part.
+
+        All characters which are illegal in the part are encoded.
+        Used to generate the full URI.
+        """
         if self._quoted is not None:
             return self._quote(self._quoted, url=True, requote=True)
         return self._quote(self, url=True)
@@ -566,18 +477,36 @@ class IriAuthority(object):
 
     @property
     def fullquoted(self):
+        """
+        Full quoted form of the authority part of the IRI.
+
+        All characters which are illegal in the authority part are encoded.
+        Used to generate the full IRI.
+        """
         userinfo = self._userinfo and self._userinfo.fullquoted
         host = self._host and self._host.fullquoted
         return self.__get(userinfo, host)
 
     @property
     def quoted(self):
+        """
+        Minimal quoted form of the authority part of the IRI.
+
+        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
+        have a one-to-one mapping with non-UTF-8 URIs.
+        """
         userinfo = self._userinfo and self._userinfo.quoted
         host = self._host and self._host.quoted
         return self.__get(userinfo, host)
 
     @property
     def urlquoted(self):
+        """
+        URI quoted form of the authority part of the IRI.
+
+        All characters which are illegal in the authority part are encoded.
+        Used to generate the full URI.
+        """
         userinfo = self._userinfo and self._userinfo.urlquoted
         host = self._host and self._host.urlquoted
         return self.__get(userinfo, host)
@@ -715,14 +644,32 @@ class IriPath(object):
 
     @property
     def fullquoted(self):
+        """
+        Full quoted form of the path part of the IRI.
+
+        All characters which are illegal in the path part are encoded.
+        Used to generate the full IRI.
+        """
         return u'/'.join((i.fullquoted for i in self._list))
 
     @property
     def quoted(self):
+        """
+        Minimal quoted form of the path part of the IRI.
+
+        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
+        have a one-to-one mapping with non-UTF-8 URIs.
+        """
         return u'/'.join((i.quoted for i in self._list))
 
     @property
     def urlquoted(self):
+        """
+        URI quoted form of the path part of the IRI.
+
+        All characters which are illegal in the path part are encoded.
+        Used to generate the full URI.
+        """
         return u'/'.join((i.urlquoted for i in self._list))
 
 class IriPathSegment(_Value):
