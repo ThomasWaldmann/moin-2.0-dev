@@ -15,7 +15,6 @@ from MoinMoin import config, caching, wikiutil, error, user
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
-from MoinMoin.logfile import eventlog
 from MoinMoin.mail.sendmail import encodeSpamSafeEmail
 from MoinMoin.support.python_compatibility import set
 from MoinMoin.util import timefuncs, web
@@ -315,10 +314,6 @@ class PageEditor(Page):
 
         self._item.commit()
         self.reset()
-
-        # add event log entry
-        elog = eventlog.EventLog(request)
-        elog.add(request, 'SAVEPAGE', {'pagename': self.page_name}, 1, time.time())
 
     def saveText(self, newtext, rev, **kw):
         """ Save new text for a page.
