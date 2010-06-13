@@ -25,6 +25,8 @@ codecs.register_error('iriquote', _iriquote_replace)
 
 
 class Iri(object):
+    __slots__ = 'scheme', '_authority', '_path', '_query', '_fragment'
+
     overall_rules = r"""
     ^
     (
