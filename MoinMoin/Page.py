@@ -17,7 +17,6 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import config, caching, util, wikiutil, user
-from MoinMoin.logfile import eventlog
 from MoinMoin.storage import Backend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 from MoinMoin.support.python_compatibility import set
@@ -680,7 +679,6 @@ class Page(object):
 
         @keyword content_only: if 1, omit http headers, page header and footer
         @keyword content_id: set the id of the enclosing div
-        @keyword count_hit: if 1, add an event to the log
         @keyword send_special: if True, this is a special page send
         @keyword omit_footnotes: if True, do not send footnotes (used by include macro)
         """
@@ -700,10 +698,6 @@ class Page(object):
             media = 'screen'
         self.hilite_re = (keywords.get('hilite_re') or
                           request.values.get('highlight'))
-
-        # count hit?
-        if keywords.get('count_hit', 0):
-            eventlog.EventLog(request).add(request, 'VIEWPAGE', {'pagename': self.page_name})
 
         # load the text
         body = self.data
