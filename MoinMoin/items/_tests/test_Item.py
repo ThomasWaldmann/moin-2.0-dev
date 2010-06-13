@@ -11,7 +11,7 @@ import py
 from MoinMoin._tests import become_trusted
 from MoinMoin.items import Item, ContainerItem, NonExistent, Binary, Text, Image, TransformableBitmapImage, PythonSrc, \
                            MIMETYPE, \
-                           EDIT_LOG_ADDR, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           EDIT_LOG_ADDR, EDIT_LOG_COMMENT, \
                            EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_ACTION
 
 class TestItem:

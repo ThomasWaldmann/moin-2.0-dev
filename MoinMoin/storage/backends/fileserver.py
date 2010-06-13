@@ -25,7 +25,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
 from MoinMoin.items import ACL, MIMETYPE, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+                           EDIT_LOG_USERID, EDIT_LOG_COMMENT
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
 class FSError(Exception):
@@ -166,7 +166,6 @@ class FileDirRevision(StoredRevision):
             EDIT_LOG_ADDR: '0.0.0.0',
             EDIT_LOG_HOSTNAME: '0.0.0.0',
             EDIT_LOG_USERID: '',
-            EDIT_LOG_EXTRA: '',
             EDIT_LOG_COMMENT: '',
             '__size': st.st_size,
         }
