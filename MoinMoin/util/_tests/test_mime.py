@@ -33,15 +33,15 @@ def test_Type_init_3():
 def test_Type_text():
     i = '*/*'
     t = Type(i)
-    assert t.type == None
-    assert t.subtype == None
+    assert t.type is None
+    assert t.subtype is None
     assert t.parameters == {}
     assert unicode(t) == i
 
     i = 'text/*'
     t = Type(i)
     assert t.type == 'text'
-    assert t.subtype == None
+    assert t.subtype is None
     assert t.parameters == {}
     assert unicode(t) == i
 
