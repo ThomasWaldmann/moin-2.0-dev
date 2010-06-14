@@ -29,7 +29,7 @@ def execute(pagename, request):
         if test.exists(): # page is defined -> redirect
             request.http_redirect(url)
         elif request.user.may.write(newpagename):  # page will be created from template
-            query = {'action': 'edit', 'backto': newpagename, 'template': quoteWikinameURL(sub_page_template)}
+            query = {'do': 'modify', 'backto': newpagename, 'template': quoteWikinameURL(sub_page_template)}
             url = Page(request, newpagename).url(request, query)
             request.http_redirect(url)
         else:

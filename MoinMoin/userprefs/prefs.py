@@ -390,7 +390,7 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
                     .append('\n'.join(request.user.getQuickLinks())),
             ], valign="top")
 
-            self._form.append(html.INPUT(type="hidden", name="action", value="userprefs"))
+            self._form.append(html.INPUT(type="hidden", name="do", value="userprefs"))
             self._form.append(html.INPUT(type="hidden", name="handler", value="prefs"))
 
             ticket = wikiutil.createTicket(request)
