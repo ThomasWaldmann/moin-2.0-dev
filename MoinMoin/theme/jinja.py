@@ -10,6 +10,7 @@
 
 import os
 import StringIO
+import gettext
 
 from jinja2 import Environment, FileSystemLoader, Template, FileSystemBytecodeCache, Markup
 
@@ -33,7 +34,6 @@ import xml
 rss_supported = sys.version_info[:3] >= (2, 5, 1) or '_xmlplus' in xml.__file__
 
 from MoinMoin.theme import ThemeBase
-
 
 class JinjaTheme(ThemeBase):
     """
@@ -75,25 +75,24 @@ class JinjaTheme(ThemeBase):
                                                                         rev[EDIT_LOG_USERID],
                                                                         rev[EDIT_LOG_ADDR],
                                                                         rev[EDIT_LOG_HOSTNAME])
-        self.env.globals.update({'cfg': self.request.cfg, '_': self.request.getText})
-        
-    def logo(self):
+        self.env.globals.update({'cfg': self.request.cfg, '_': self.request.getText, 'url_for': self.url_for})
+    
+    def url_for(self, pagename='', text='', querystr=None, anchor=None, raw=False):
         """
-        Assemble logo with link to front page
-
-        The logo contain an image and or text or any html markup the
-        admin inserted in the config file. Everything it enclosed inside
-        a div with id="logo".
-
-        @rtype: dict
-        @return: logo variable
+        Get a link to be used directly in template
+        @param pagename: where url points to. if not defined, use actual page
+        @param text: text used inside <a> tags
+        @param raw: use to define if call link_to or link_raw from page.
+        @rtype: string
+        @return: url for determined text and page
         """
-        d = {}
-        if self.cfg.logo_string:
-            page = wikiutil.getFrontPage(self.request)
-            logo = page.link_to_raw(self.request, self.cfg.logo_string)
-            d = {'logo': logo}
-        return d
+        if pagename:
+            page = wikiutil.getLocalizedPage(self.request, pagename)
+        else:
+            page = self.request.page
+        if raw:
+            return page.link_to_raw(self.request, text, querystr, anchor)
+        return page.link_to(self.request, text, querystr, anchor)
 
     def interwiki(self):
         """
@@ -964,7 +963,6 @@ class JinjaTheme(ThemeBase):
         """
 
         # Now pass dicts to render('header.html', newdict)
-        d.update(self.logo())
         d.update(self.searchform(d))
         d.update(self.username(d))
         d.update(self.interwiki())
@@ -1152,7 +1150,7 @@ class JinjaTheme(ThemeBase):
             d.update({'theme_stylesheets': self.stylesheets})
         
         user_css_href = request.user.valid and request.user.css_url
-        if user_css_href and href.lower() != "none":
+        if user_css_href and user_css_href.lower() != "none":
             d.update({'user_css': user_css_href})
         
         # Listing stylesheets
