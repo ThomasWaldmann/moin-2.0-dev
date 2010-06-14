@@ -20,7 +20,7 @@ def _create_user(request):
         return
 
     if not wikiutil.checkTicket(request, form.get('ticket', '')):
-        return
+        return _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'newaccount'}
 
     if not TextCha(request).check_answer_from_form():
         return _('TextCha: Wrong answer! Go back and try again...')
