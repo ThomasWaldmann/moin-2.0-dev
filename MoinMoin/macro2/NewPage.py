@@ -66,7 +66,7 @@ class Macro(MacroBlockBase):
                 self.request.getScriptname(),
                 wikiutil.quoteWikinameURL(self.page_name)),
             u'<div>',
-            u'<input type="hidden" name="action" value="newpage" />',
+            u'<input type="hidden" name="do" value="newpage" />',
             u'<input type="hidden" name="parent" value="%s" />' % wikiutil.escape(self.parent, 1),
             u'<input type="hidden" name="template" value="%s" />' % wikiutil.escape(self.template, 1),
             u'<input type="hidden" name="nametemplate" value="%s" />' % wikiutil.escape(self.nametemplate, 1),

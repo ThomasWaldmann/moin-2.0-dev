@@ -61,7 +61,7 @@ def _create_form(request):
     _ = request.getText
     url = request.page.url(request)
     ret = html.FORM(action=url)
-    ret.append(html.INPUT(type='hidden', name='action', value='recoverpass'))
+    ret.append(html.INPUT(type='hidden', name='do', value='recoverpass'))
     lang_attr = request.theme.ui_lang_attr()
     ret.append(html.Raw('<div class="userpref"%s>' % lang_attr))
     tbl = html.TABLE(border="0")
@@ -95,7 +95,7 @@ def _create_token_form(request, name=None, token=None):
     _ = request.getText
     url = request.page.url(request)
     ret = html.FORM(action=url)
-    ret.append(html.INPUT(type='hidden', name='action', value='recoverpass'))
+    ret.append(html.INPUT(type='hidden', name='do', value='recoverpass'))
     lang_attr = request.theme.ui_lang_attr()
     ret.append(html.Raw('<div class="userpref"%s>' % lang_attr))
     tbl = html.TABLE(border="0")
