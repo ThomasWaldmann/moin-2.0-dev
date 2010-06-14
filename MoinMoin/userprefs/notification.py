@@ -84,7 +84,8 @@ class Settings(UserPrefBase):
             return
 
         if not wikiutil.checkTicket(request, form.get('ticket', '')):
-            return
+            return _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'userprefs.notification'}
+
 
         if form.has_key('save'): # Save user profile
             return self._save_notification_settings()
