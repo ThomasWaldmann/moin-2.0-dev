@@ -7,7 +7,7 @@
 </div>
 </div>
 
-{{ Theme.emit_custom_html(Theme.cfg.page_footer1) }}
+{{ emit_custom_html(cfg.page_footer1) }}
 
 <div id="footer">
     {% include "editbar.html" %}
@@ -21,18 +21,14 @@
     
     {% endif %}
     
-    {% if new_page_credits %}
         <ul id="credits">
-            {% for credit in page_credits %}
+            {% for credit in cfg.page_credits %}
                 <li> {{ credit }} </li>
             {% endfor %}
         </ul>
-    {% else %}
-        {{ page_credits }}
-    {% endif %}
 </div>
 
-{{ Theme.emit_custom_html(Theme.cfg.page_footer2) }}
+{{ emit_custom_html(cfg.page_footer2) }}
 
 </body>
 </html>
