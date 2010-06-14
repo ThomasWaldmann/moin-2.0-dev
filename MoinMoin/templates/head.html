@@ -23,7 +23,13 @@
         <meta name="description" content="{{ meta_description}}">
     {% endif %}
     
-    <title> {{ title|escape }} - {{ sitename|escape }}</title>
+    <title> {{ title|escape }} - 
+        {% if cfg.html_pagetitle %}
+            {{ cfg.html_pagetitle|escape }}
+        {% else %}
+            {{ cfg.sitename|escape }}
+        {% endif %}
+    </title>
     
     <link rel="Search" href="{{ link_search }}">
     <link rel="Index" href="{{ link_index }}">

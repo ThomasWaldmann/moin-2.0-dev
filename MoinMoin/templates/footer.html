@@ -8,7 +8,7 @@
 </div>
 </div>
 
-{{ emit_custom_html(cfg.page_footer1) }}
+{{ theme.emit_custom_html(cfg.page_footer1) }}
 
 <div id="footer">
     {% include "editbar.html" %}
@@ -20,7 +20,20 @@
     </ul>
 </div>
 
-{{ emit_custom_html(cfg.page_footer2) }}
+{{ theme.emit_custom_html(cfg.page_footer2) }}
+
+{% set null = theme.request.clock.stop('run') %}
+{% set null = theme.request.clock.stop('total') %}
+{% set timing_information = theme.request.clock.dump() %}
+
+{% if cfg.show_timings %}
+    <ul id="timings">
+    {% for timing in timing_information %}
+        <li> {{ timing }}</li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
 
 </body>
 </html>
