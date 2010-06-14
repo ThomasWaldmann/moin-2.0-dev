@@ -75,7 +75,12 @@ class JinjaTheme(ThemeBase):
                                                                         rev[EDIT_LOG_USERID],
                                                                         rev[EDIT_LOG_ADDR],
                                                                         rev[EDIT_LOG_HOSTNAME])
-        self.env.globals.update({'cfg': self.request.cfg, '_': self.request.getText, 'url_for': self.url_for})
+        self.env.globals.update({
+                                'cfg': self.request.cfg,
+                                '_': self.request.getText, 
+                                'url_for': self.url_for,
+                                'href': request.href,
+                                })
     
     def url_for(self, pagename='', text='', querystr=None, anchor=None, raw=False):
         """
