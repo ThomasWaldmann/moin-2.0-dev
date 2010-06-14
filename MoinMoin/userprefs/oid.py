@@ -143,7 +143,8 @@ class Settings(UserPrefBase):
             return
 
         if not wikiutil.checkTicket(self.request, form.get('ticket', '')):
-            return
+            return _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'userprefs.oid'}
+
 
         if form.has_key('remove'):
             return self._handle_remove()
