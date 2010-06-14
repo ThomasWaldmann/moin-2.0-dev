@@ -582,18 +582,6 @@ class JinjaTheme(ThemeBase):
                     'pageinfo': info})
         return d
 
-    def showversion(self, **keywords):
-        """
-        Assemble HTML code for copyright and version display
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: copyright and version display html
-        """
-        d = {}
-        if self.cfg.show_version and not keywords.get('print_mode', 0):
-            d.update({'moin_release': version.release, 'moin_revision': version.revision})
-        return d
 
     def rsslink(self, d):
         """

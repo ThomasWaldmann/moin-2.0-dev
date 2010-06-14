@@ -1,4 +1,5 @@
 {# Template used to render footer #}
+
 {% if pageinfo %}
     <p id="pageinfo" class="info" {{ pageinfo_lang }}> {{ pageinfo }}</p>
 {% endif %}
@@ -11,21 +12,12 @@
 
 <div id="footer">
     {% include "editbar.html" %}
-    {# Template used to render footer #}
-    {# Template used to render footer #}
     
-    {% if moin_revision and moin_release %}
-        <div id="version">
-            MoinMoin Release {{ moin_release }} [Revision {{ moin_revision }}], Copyright by Juergen Hermann et al.
-        </div>
-    
-    {% endif %}
-    
-        <ul id="credits">
-            {% for credit in cfg.page_credits %}
-                <li> {{ credit }} </li>
-            {% endfor %}
-        </ul>
+    <ul id="credits">
+        {% for credit in cfg.page_credits %}
+            <li> {{ credit }} </li>
+        {% endfor %}
+    </ul>
 </div>
 
 {{ emit_custom_html(cfg.page_footer2) }}
