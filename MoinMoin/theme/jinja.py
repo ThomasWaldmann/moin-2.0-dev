@@ -581,20 +581,6 @@ class JinjaTheme(ThemeBase):
                     'pageinfo': info})
         return d
 
-    def searchform(self, d):
-        """
-        Assemble HTML code for the search forms
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: search form html
-        """
-        form = self.request.values
-        d.update({
-            'search_value': wikiutil.escape(form.get('value', ''), 1),
-            'search_url': self.request.href(d['page'].page_name)})
-        return d
-
     def showversion(self, **keywords):
         """
         Assemble HTML code for copyright and version display
@@ -968,7 +954,12 @@ class JinjaTheme(ThemeBase):
         """
 
         # Now pass dicts to render('header.html', newdict)
-        d.update(self.searchform(d))
+        
+        # Use to show text in search form if is searching something
+        form = self.request.values
+        value = form.get('value', '')
+        if value:
+            d.update({'search_value': value})
         d.update(self.username(d))
         d.update(self.interwiki())
         d.update(self.title(d))
