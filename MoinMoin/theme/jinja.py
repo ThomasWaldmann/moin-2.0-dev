@@ -80,6 +80,7 @@ class JinjaTheme(ThemeBase):
                                 '_': self.request.getText, 
                                 'url_for': self.url_for,
                                 'href': request.href,
+                                'emit_custom_html': self.emit_custom_html,
                                 })
     
     def url_for(self, pagename='', text='', querystr=None, anchor=None, raw=False):
@@ -644,16 +645,6 @@ class JinjaTheme(ThemeBase):
         d.update({'ueb_title': text, 'ueb_url': url})
         return d
 
-    def credits(self, **keywords):
-        """
-        Create credits html from credits list
-        """
-        d = {}
-        if isinstance(self.cfg.page_credits, (list, tuple)):
-            d.update({'new_page_credits': True})
-        d.update({'page_credits': self.cfg.page_credits})
-        return d
-
     def actionsMenu(self, page):
         """
         Create actions menu list and items data dict
@@ -982,7 +973,6 @@ class JinjaTheme(ThemeBase):
         """
         page = d['page']
         d.update(self.showversion(**keywords))
-        d.update(self.credits())
         d.update(self.pageinfo(page))
         return self.render('footer.html', d)
 
@@ -1206,10 +1196,8 @@ class JinjaTheme(ThemeBase):
             # prepare dict for theme code:
             d.update({
                 'theme': self.name,
-                'Theme': self,
                 'script_name': scriptname,
                 'title_text': text,
-                'logo_string': request.cfg.logo_string,
                 'site_name': request.cfg.sitename,
                 'page': page,
                 'rev': rev,
