@@ -76,11 +76,11 @@ class JinjaTheme(ThemeBase):
                                                                         rev[EDIT_LOG_ADDR],
                                                                         rev[EDIT_LOG_HOSTNAME])
         self.env.globals.update({
+                                'theme': self,
                                 'cfg': self.request.cfg,
                                 '_': self.request.getText, 
                                 'url_for': self.url_for,
                                 'href': request.href,
-                                'emit_custom_html': self.emit_custom_html,
                                 })
     
     def url_for(self, pagename='', text='', querystr=None, anchor=None, raw=False):
@@ -960,7 +960,6 @@ class JinjaTheme(ThemeBase):
         @return: page footer html
         """
         page = d['page']
-        d.update(self.showversion(**keywords))
         d.update(self.pageinfo(page))
         return self.render('footer.html', d)
 
@@ -1039,7 +1038,7 @@ class JinjaTheme(ThemeBase):
         scriptname = request.script_root
 
         # Search_hint is moved from self.headscript() to here
-        d = {'page': page, 'language': self.ui_lang_attr(), 'search_hint': _('Search')}
+        d = {'page': page, 'language': self.ui_lang_attr()}
 
         # get name of system pages
         page_front_page = wikiutil.getFrontPage(request).page_name
@@ -1099,7 +1098,7 @@ class JinjaTheme(ThemeBase):
 
         d.update({'user_head': user_head, 'html_head_keyword': keywords.get('html_head', '')})
         #Variables used to render title
-        d.update({'title': text, 'sitename': request.cfg.html_pagetitle or request.cfg.sitename})
+        d.update({'title': text})
 
         #Variables used to render rsslink
         d.update(self.rsslink(d))
@@ -1117,7 +1116,6 @@ class JinjaTheme(ThemeBase):
         })
         
         #Using to render stylesheet acording to theme
-        d.update({'theme_name': self.name})
         if print_mode:
              d.update({'theme_stylesheets': self.stylesheets_print})
         else:
@@ -1173,7 +1171,7 @@ class JinjaTheme(ThemeBase):
                 'rev': rev,
             })
             request.themedict = d
-            #Adapt to new methods
+            #TODO: Adapt to new methods
             output.append(self.startPage())
             output.append(self.interwiki())
             output.append(self.title(d))
@@ -1183,10 +1181,8 @@ class JinjaTheme(ThemeBase):
             exists = pagename and page.exists()
             # prepare dict for theme code:
             d.update({
-                'theme': self.name,
                 'script_name': scriptname,
                 'title_text': text,
-                'site_name': request.cfg.sitename,
                 'page': page,
                 'rev': rev,
                 'pagesize': pagename and page.size() or 0,
@@ -1243,26 +1239,6 @@ class JinjaTheme(ThemeBase):
         else:
             request.write(self.footer(d, **keywords))
 
-    # stuff moved from request.py
-    def send_closing_html(self):
-        """
-        Generate timing info html and closing html tag,
-        everyone calling send_title must call this at the end to close
-        the body and html tags.
-        """
-        request = self.request
-
-        # as this is the last chance to emit some html, we stop the clocks:
-        request.clock.stop('run')
-        request.clock.stop('total')
-
-        # Close html code
-        if request.cfg.show_timings:
-            request.write('<ul id="timings">\n')
-            for t in request.clock.dump():
-                request.write('<li>%s</li>\n' % t)
-            request.write('</ul>\n')
-        #request.write('<!-- auth_method == %s -->' % repr(request.user.auth_method))
 
     def render_content(self, item_name, content=None, title=None):
         """
@@ -1290,7 +1266,6 @@ class JinjaTheme(ThemeBase):
             request.theme.send_title(title, pagename=item_name)
             request.write(content)
             request.theme.send_footer(item_name)
-            request.theme.send_closing_html()
 
     def sidebar(self, d, **keywords):
         """
