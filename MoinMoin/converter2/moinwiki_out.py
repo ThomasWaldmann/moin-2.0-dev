@@ -457,9 +457,9 @@ class Converter(object):
         if len(type) == 2:
             if type[0] == "x-moin/macro":
                 if len(elem) and iter(elem).next().tag.name == "arguments":
-                    return "<<%s(%s)>>" % (type[1].split('=')[1], ','.join([''.join(c.itertext()) for c in iter(elem).next() if c.tag.name == "argument"]))
+                    return "<<%s(%s)>>\n" % (type[1].split('=')[1], ','.join([''.join(c.itertext()) for c in iter(elem).next() if c.tag.name == "argument"]))
                 else:
-                    return "<<%s()>>" % type[1].split('=')[1]
+                    return "<<%s()>>\n" % type[1].split('=')[1]
             elif type[0] == "x-moin/format":
                 elem_it = iter(elem)
                 ret = "{{{#!%s" % type[1].split('=')[1]
