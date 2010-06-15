@@ -76,6 +76,8 @@ class TestConverter(Base):
               '/page/body/p[emphasis="Test"]'),
             ('<html><p><strong>Test</strong></p></html>',
               '/page/body/p[strong="Test"]'),
+            ('<html><p><b>Test</b></p></html>',
+              '/page/body/p[strong="Test"]'),
         ]
         for i in data:
             yield (self.do, ) + i
