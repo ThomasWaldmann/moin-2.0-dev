@@ -250,6 +250,7 @@ class Converter(object):
         self.list_item_lable = []
         self.subpage = [self.output]
         self.subpage_level = [0, ]
+        self.footnotes = []
         while self.children[-1]:
             try:
                 next_child = self.children[-1].next()
@@ -276,7 +277,7 @@ class Converter(object):
                     # close function can change self.output
                     close_ret = self.close(next_parent)
                     self.output.append(close_ret)
-
+        self.output.append("\n\n.. [#]".join(self.footnotes))
         return ''.join(self.output)
 
     def open(self, elem):
@@ -382,6 +383,8 @@ class Converter(object):
         return ''
 
     def open_moinpage_line_break(self, elem):
+        if self.status[-1] == "list":
+            return ReST.linebreak + ' ' * (self.list_level + 1)
         return ReST.linebreak
 
     def open_moinpage_list(self, elem):
@@ -450,9 +453,22 @@ class Converter(object):
         return ''
 
     def open_moinpage_note(self, elem):
+        class_ = elem.get(moin_page.note_class, "")
+        if class_:
+            self.status.append('list')
+            self.children.append(iter(elem))
+            self.opened.append(elem)
+            if class_ == "footnote":
+                self.output = []
+                self.subpage.append(self.output)
+                return '[#]_'
         return ""
 
     def close_moinpage_note(self, elem):
+        self.status.pop()
+        self.footnotes.append("".join(self.output))
+        self.subpage.pop()
+        self.output = self.subpage[-1]
         return ''
 
     def open_moinpage_object(self, elem):
@@ -510,10 +526,39 @@ class Converter(object):
         return ''
 
     def open_moinpage_part(self, elem):
+        type = elem.get(moin_page.content_type, "").split(';')
+        if len(type) == 2:
+            if type[0] == "x-moin/macro":
+                if len(elem) and iter(elem).next().tag.name == "arguments":
+                    return "\n.. macro:: <<%s(%s)>>\n" % (type[1].split('=')[1], ','.join([''.join(c.itertext()) for c in iter(elem).next() if c.tag.name == "argument"]))
+                else:
+                    return "\n.. macro:: <<%s()>>\n" % type[1].split('=')[1]
+            elif type[0] == "x-moin/format":
+                elem_it = iter(elem)
+                ret = "{{{#!%s" % type[1].split('=')[1]
+                if len(elem) and elem_it.next().tag.name == "arguments":
+                    args = []
+                    for arg in iter(elem).next():
+                        if arg.tag.name == "argument":
+                            args.append("%s=\"%s\"" % (arg.get(moin_page.name, ""), ' '.join(arg.itertext())))
+                    ret = '%s(%s)' % (ret, ' '.join(args))
+                    elem = elem_it.next()
+                ret = "%s\n%s\n}}}\n" % (ret, ' '.join(elem.itertext()))
+                return ""
+        return unescape(elem.get(moin_page.alt, '')) + "\n"
+
         return ''
 
     def close_moinpage_part(self, elem):
         return ''
+
+    def close_moinpage_inline_part(self, elem):
+        return ''
+
+    def open_moinpage_inline_part(self, elem):
+        # TODO: No inline macro in rst?
+        ret = self.open_moinpage_part(elem)
+        return ret
 
     def open_moinpage_separator(self, elem):
         return '\n\n' + ReST.separator + '\n\n'
