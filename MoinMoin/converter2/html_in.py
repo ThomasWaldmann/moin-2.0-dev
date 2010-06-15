@@ -276,7 +276,7 @@ class Converter(object):
             attrib[moin_page('number-rows-spanned')] = rowspan
         if colspan:
             attrib[moin_page('number-columns-spanned')] = colspan
-        return self.new_copy(moin_page.table_cell, element, attrib=attri)
+        return self.new_copy(moin_page.table_cell, element, attrib=attrib)
 
 
 from . import default_registry
