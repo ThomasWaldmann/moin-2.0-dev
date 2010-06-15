@@ -31,11 +31,11 @@
         {% endif %}
     </title>
     
-    <link rel="Search" href="{{ link_search }}">
-    <link rel="Index" href="{{ link_index }}">
-    <link rel="Glossary" href="{{ link_glossary }}">
-    <link rel="Help" href="{{ link_help }}">
-    <link rel="Start" href="{{ link_start }}">
+    <link rel="Search" href="{{ href(translated_item_name('FindPage')) }}">
+    <link rel="Index" href="{{ href(translated_item_name('TitleIndex')) }}">
+    <link rel="Glossary" href="{{ href(translated_item_name('WordIndex')) }}">
+    <link rel="Help" href="{{ href(translated_item_name('HelpOnFormatting')) }}">
+    <link rel="Start" href="{{ href(translated_item_name(cfg.page_front_page)) }}">
     {% if link_parent %}
         <link rel="Up" href="{{ link_parent }}">
     {% endif %}

@@ -81,7 +81,22 @@ class JinjaTheme(ThemeBase):
                                 '_': self.request.getText, 
                                 'url_for': self.url_for,
                                 'href': request.href,
+                                'translated_item_name': self.translated_item_name
                                 })
+    
+    def translated_item_name(self, item_name):
+        """
+        Get a translated Item Name.
+        If page exists return it, if not return item_name in English.
+        @param item_name: string
+        @rtype: string
+        """
+        # TODO: Convert to ITEM! TOP-PRIORITY
+        item_translated = self.request.getText(item_name)
+        page = wikiutil.getLocalizedPage(self.request, item_translated)
+        if page.exists():
+            return item_translated
+        return item_name
     
     def url_for(self, pagename='', text='', querystr=None, anchor=None, raw=False):
         """
@@ -1107,14 +1122,6 @@ class JinjaTheme(ThemeBase):
         if pagename and page_parent_page:
             d.update({'link_parent': request.href(page_parent_page)})
 
-        d.update({
-            'link_search': request.href(page_find_page),
-            'link_index': request.href(page_title_index),
-            'link_glossary': request.href(page_word_index),
-            'link_help': request.href(page_help_formatting),
-            'link_start': request.href(page_front_page),
-        })
-        
         #Using to render stylesheet acording to theme
         if print_mode:
              d.update({'theme_stylesheets': self.stylesheets_print})
@@ -1141,7 +1148,6 @@ class JinjaTheme(ThemeBase):
 
         #Preparing header
         output = []
-        d = {}
 
         # start the <body>
         bodyattr = []
@@ -1149,9 +1155,6 @@ class JinjaTheme(ThemeBase):
             bodyattr.append(' ')
             bodyattr.append(keywords['body_attr'])
 
-        # Output -----------------------------------------------------------
-
-        d = {}
         
         # Set body to the user interface language and direction
         bodyattr.append(' %s' % self.ui_lang_attr())
@@ -1215,11 +1218,8 @@ class JinjaTheme(ThemeBase):
             request.themedict = d
 
             # now call the theming code to do the rendering
-            output.append(self.header(d))
-
-        # emit it
-        request.write(''.join(output))
-        output = []
+            request.write(self.header(d))
+        #request.write(self.render('base.html'), d)
         self._send_title_called = True
 
     def send_footer(self, pagename, **keywords):
