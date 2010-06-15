@@ -134,6 +134,14 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_object(self):
+        data = [
+            ('<html><div><img src="uri:test" /></div></html>',
+              '/page/body/div/object/@xlink:href="uri:test"'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
     def test_table(self):
         data = [
             ('<html><div><table><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table></div></html>',
