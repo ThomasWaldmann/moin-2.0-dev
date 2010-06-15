@@ -323,7 +323,6 @@ class JinjaTheme(ThemeBase):
         request = self.request
         found = {}  # pages we found. prevent duplicates
         items = []  # navibar items
-        item = u'<li class="%s">%s</li>'
         current = d['page_name']
 
         # Process config navi_bar
@@ -334,7 +333,7 @@ class JinjaTheme(ThemeBase):
                     cls = 'wikilink current'
                 else:
                     cls = 'wikilink'
-                items.append(item % (cls, link))
+                items.append((cls, link))
                 found[pagename] = 1
 
         # Add user links to wiki links, eliminating duplicates.
@@ -343,26 +342,15 @@ class JinjaTheme(ThemeBase):
             # Split text without localization, user knows what he wants
             pagename, link = self.splitNavilink(text, localize=0)
             if not pagename in found:
-                if pagename == current:
-                    cls = 'userlink current'
-                else:
-                    cls = 'userlink'
-                items.append(item % (cls, link))
+                cls = 'userlink'
+                items.append((cls, link))
                 found[pagename] = 1
-
-        # Add current page at end of local pages
-        if not current in found:
-            title = d['page'].page_name
-            title = self.shortenPagename(title)
-            link = d['page'].link_to(request, title)
-            cls = 'current'
-            items.append(item % (cls, link))
 
         # Add sister pages.
         for sistername, sisterurl in request.cfg.sistersites:
             if sistername == request.cfg.interwikiname:  # it is THIS wiki
                 cls = 'sisterwiki current'
-                items.append(item % (cls, sistername))
+                items.append((cls, sistername))
             else:
                 # TODO optimize performance
                 cache = caching.CacheEntry(request, 'sisters', sistername, 'farm', use_pickle=True)
@@ -375,8 +363,7 @@ class JinjaTheme(ThemeBase):
                         link = request.formatter.url(1, url) + \
                                request.formatter.text(sistername) +\
                                request.formatter.url(0)
-                        items.append(item % (cls, link))
-
+                        items.append((cls, link))
         d.update({'navibar_items': items})
         return d
 
@@ -629,8 +616,8 @@ class JinjaTheme(ThemeBase):
         Format external script html
 
         @param name: filename
-        @rtype: string
-        @return: external script link
+        @rtype: tuple
+        @return: external script url and attributes
         """
         jspath = '%s/common/js' % self.request.cfg.url_prefix_local
         attrs = attrs % locals()

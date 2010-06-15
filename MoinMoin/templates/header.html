@@ -64,8 +64,8 @@ searchBlur(e);
 {% endif %}
 
 <ul id="navibar">
-    {% for navibar in navibar_items %}
-        {{ navibar }}
+    {% for cls, link in navibar_items %}
+        <li class="{{ cls }}">{{ link }}</li>
     {% endfor %}
 </ul>
 
