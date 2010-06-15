@@ -329,10 +329,7 @@ class JinjaTheme(ThemeBase):
         if request.cfg.navi_bar:
             for text in request.cfg.navi_bar:
                 pagename, link = self.splitNavilink(text)
-                if pagename == current:
-                    cls = 'wikilink current'
-                else:
-                    cls = 'wikilink'
+                cls = 'wikilink'
                 items.append((cls, link))
                 found[pagename] = 1
 
