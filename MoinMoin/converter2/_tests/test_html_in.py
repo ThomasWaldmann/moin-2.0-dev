@@ -90,6 +90,10 @@ class TestConverter(Base):
              '/page/body/p/span[@base-line-shift="super"] | /page/body/p[span="super"]'),
             ('<html><p><u>underline</u></html>',
              '/page/body/p/span[@text-decoration="underline"] | /page/body/p[span="underline"]'),
+            ('<html><p><big>Test</big></p></html>',
+              '/page/body/p/span[@font-size="120%"] | /page/body/p[span="Test"]'),
+            ('<html><p><small>Test</small></p></html>',
+              '/page/body/p/span[@font-size="85%"] | /page/body/p[span="Test"]'),
         ]
         for i in data:
             yield (self.do, ) + i
