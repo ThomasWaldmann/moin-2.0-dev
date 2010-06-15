@@ -42,6 +42,9 @@ class Converter(object):
     # Regular expression to detect an html heading tag
     heading_re = re.compile('h[1-6]')
 
+    # Store the Base URL for all the URL of the document
+    base_url = ""
+
     @classmethod
     def _factory(cls, input, output, request, **kw):
         return cls(request)
@@ -160,6 +163,12 @@ class Converter(object):
             # We process children of the unknown element
             return self.do_children(element)
 
+    def visit_xhtml_base(self, element):
+        """
+        Function to store the base url for the relative url of the document
+        """
+        self.base_url = element.get(html.href)
+
     def visit_xhtml_heading(self, element):
         """
         Function to convert an heading tag into the proper
@@ -212,7 +221,7 @@ class Converter(object):
     def visit_xhtml_a(self, element):
         key = xlink('href')
         attrib = {}
-        attrib[key] = element.get(html.href)
+        attrib[key] = ''.join([self.base_url, element.get(html.href)])
         return self.new_copy(moin_page.a, element, attrib)
 
     def visit_xhtml_ul(self, element):
