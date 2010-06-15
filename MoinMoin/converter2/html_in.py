@@ -191,6 +191,9 @@ class Converter(object):
     def visit_xhtml_i(self, element):
         return self.new_copy(moin_page.emphasis, element)
 
+    def visit_xhtml_b(self, element):
+        return self.new_copy(moin_page.strong, element)
+
     def visit_xhtml_pre(self, element):
         return self.new_copy(moin_page.blockcode, element)
 
