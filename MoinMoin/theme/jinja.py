@@ -84,7 +84,7 @@ class JinjaTheme(ThemeBase):
                                 'translated_item_name': self.translated_item_name
                                 })
     
-    def translated_item_name(self, item_name):
+    def translated_item_name(self, item_en):
         """
         Get a translated Item Name.
         If page exists return it, if not return item_name in English.
@@ -92,11 +92,18 @@ class JinjaTheme(ThemeBase):
         @rtype: string
         """
         # TODO: Convert to ITEM! TOP-PRIORITY
-        item_translated = self.request.getText(item_name)
-        page = wikiutil.getLocalizedPage(self.request, item_translated)
+        request = self.request
+        item_lang_request= request.getText(item_en)
+        page = wikiutil.getLocalizedPage(request, item_lang_request)
         if page.exists():
-            return item_translated
-        return item_name
+            return item_lang_request
+            
+        item_lang_default = i18n.getText(item_en, request, self.cfg.language_default)
+        page = wikiutil.getLocalizedPage(request, item_lang_default)
+        if page.exists():
+            return item_lang_default
+            
+        return item_en
     
     def url_for(self, pagename='', text='', querystr=None, anchor=None, raw=False):
         """
