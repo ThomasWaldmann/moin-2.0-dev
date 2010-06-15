@@ -56,6 +56,10 @@ class Converter(object):
 
         TODO: Add support for different arguments
         """
+
+        # Be sure we have empty string in the base url
+        self.base_url = ""
+
         # We create an element tree from the HTML content
         # The content is a list of string, line per line
         # We can concatenate all in one string
