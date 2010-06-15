@@ -231,6 +231,12 @@ class Converter(object):
         attrib[key] = ''.join([self.base_url, element.get(html.href)])
         return self.new_copy(moin_page.a, element, attrib)
 
+    def visit_xhtml_img(self, element):
+        key = xlink('href')
+        attrib = {}
+        attrib[key] = ''.join([self.base_url, element.get(html.src)])
+        return moin_page.object(attrib)
+
     def visit_xhtml_ul(self, element):
         # We will process all children (which should be list element normally
         list_items_elements = self.do_children(element)
