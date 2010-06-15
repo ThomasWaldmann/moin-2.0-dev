@@ -198,6 +198,18 @@ class Converter(object):
     def visit_xhtml_b(self, element):
         return self.new_copy(moin_page.strong, element)
 
+    def visit_xhtml_big(self, element):
+        key = moin_page('font-size')
+        attrib = {}
+        attrib[key] = '120%'
+        return self.new_copy(moin_page.span, element, attrib)
+
+    def visit_xhtml_small(self, element):
+        key = moin_page('font-size')
+        attrib = {}
+        attrib[key] = '85%'
+        return self.new_copy(moin_page.span, element, attrib)
+
     def visit_xhtml_pre(self, element):
         return self.new_copy(moin_page.blockcode, element)
 
