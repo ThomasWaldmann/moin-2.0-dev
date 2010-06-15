@@ -58,11 +58,11 @@ class TestConverter(object):
 
     def test_macros(self):
         data = [
-            (u"<<Anchor(anchorname)>>", '<<Anchor(anchorname)>>'),
-            (u"<<MonthCalendar(,,12)>>", '<<MonthCalendar(,,12)>>'),
+            (u"<<Anchor(anchorname)>>", '<<Anchor(anchorname)>>\n'),
+            (u"<<MonthCalendar(,,12)>>", '<<MonthCalendar(,,12)>>\n'),
             (u"<<FootNote(test)>>", "<<FootNote(test)>>\n"),
             (u"<<TableOfContents(2)>>", "<<TableOfContents(2)>>\n"),
-            (u"<<TeudView()>>", "<<TeudView()>>"),
+            (u"<<TeudView()>>", "<<TeudView()>>\n"),
         ]
         for i in data:
             yield (self.do, ) + i
