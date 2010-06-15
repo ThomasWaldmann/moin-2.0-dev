@@ -96,6 +96,8 @@ class TestConverter(Base):
         data = [
             ('<html><p><a href="uri:test">Test</a></p></html>',
               '/page/body/p/a[@xlink:href="uri:test"] | /page/body/p[a="Test"]'),
+            ('<html><base href="http://www.base-url.com/" /><body><div><p><a href="myPage.html">Test</a></p></div></body></html>',
+              '/page/body/div/p/a[@xlink:href="http://www.base-url.com/myPage.html"]'),
         ]
         for i in data:
             yield (self.do, ) + i
