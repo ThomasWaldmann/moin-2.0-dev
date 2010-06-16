@@ -8,7 +8,7 @@
     TODO: nearly working, but needs more work at other places,
           e.g. in the router backend, to be useful.
 
-    @copyright: 2008 MoinMoin:ThomasWaldmann
+    @copyright: 2008-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
