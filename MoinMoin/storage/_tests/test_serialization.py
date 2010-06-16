@@ -6,7 +6,7 @@
     TODO: use xpath for testing (or any other way so sequence of metadata
           keys does not matter)
 
-    @copyright: 2009 MoinMoin:ThomasWaldmann
+    @copyright: 2009-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 

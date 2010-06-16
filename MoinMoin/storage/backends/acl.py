@@ -33,7 +33,7 @@
 
     All wrapped classes must, of course, adhere to the normal storage API.
 
-    @copyright: 2003-2008 MoinMoin:ThomasWaldmann,
+    @copyright: 2003-2010 MoinMoin:ThomasWaldmann,
                 2000-2004 Juergen Hermann <jh@web.de>,
                 2003 Gustavo Niemeyer,
                 2005 Oliver Graf,

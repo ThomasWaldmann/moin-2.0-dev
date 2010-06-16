@@ -66,7 +66,7 @@ To get a backup, just click here:""", wiki=True))
 
     request.write("""
 <form action="%(baseurl)s/%(pagename)s" method="POST" enctype="multipart/form-data">
-<input type="hidden" name="action" value="backup">
+<input type="hidden" name="do" value="backup">
 <input type="hidden" name="do" value="backup">
 <input type="submit" value="%(backup_button)s">
 </form>

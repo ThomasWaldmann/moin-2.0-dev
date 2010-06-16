@@ -40,8 +40,9 @@ class Settings(UserPrefBase):
         if request.method != 'POST':
             return
 
-        if not wikiutil.checkTicket(request, form['ticket']):
-            return
+        if not wikiutil.checkTicket(request, form.get('ticket', '')):
+            return _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'userprefs.suid'}
+
 
         uid = form.get('selected_user', '')
         if not uid:

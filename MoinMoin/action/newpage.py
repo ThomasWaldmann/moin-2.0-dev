@@ -80,7 +80,7 @@ class NewPage:
             # Redirect to new page using edit action. No error checking
             # is needed because it is done later in new request.
             pagename = self.pagename
-            query = {'action': 'edit', 'backto': self.referrer}
+            query = {'do': 'modify', 'backto': self.referrer}
 
             template = self.request.values.get('template', '')
             if template:

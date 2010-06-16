@@ -163,9 +163,9 @@ class ThemeBase:
         self.env.filters['date_format'] = lambda tm, u=request.user: u.getFormattedDate(tm)
         self.env.filters['user_format'] = lambda rev, request=request: \
                                               user.get_printable_editor(request,
-                                                                        rev[EDIT_LOG_USERID],
-                                                                        rev[EDIT_LOG_ADDR],
-                                                                        rev[EDIT_LOG_HOSTNAME])
+                                                                        rev.get(EDIT_LOG_USERID),
+                                                                        rev.get(EDIT_LOG_ADDR),
+                                                                        rev.get(EDIT_LOG_HOSTNAME))
 
     def emit_custom_html(self, html):
         """
