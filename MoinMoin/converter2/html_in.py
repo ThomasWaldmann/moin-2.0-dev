@@ -237,6 +237,30 @@ class Converter(object):
         attrib[key] = 'underline'
         return self.new_copy(moin_page.span, element, attrib)
 
+    def visit_xhtml_ins(self, element):
+        key = moin_page('text-decoration')
+        attrib = {}
+        attrib[key] = 'underline'
+        return self.new_copy(moin_page.span, element, attrib)
+
+    def visit_xhtml_del(self, element):
+        key = moin_page('text-decoration')
+        attrib = {}
+        attrib[key] = 'line-through'
+        return self.new_copy(moin_page.span, element, attrib)
+
+    def visit_xhtml_s(self, element):
+        key = moin_page('text-decoration')
+        attrib = {}
+        attrib[key] = 'line-through'
+        return self.new_copy(moin_page.span, element, attrib)
+
+    def visit_xhtml_strike(self, element):
+        key = moin_page('text-decoration')
+        attrib = {}
+        attrib[key] = 'line-through'
+        return self.new_copy(moin_page.span, element, attrib)
+
     def visit_xhtml_a(self, element):
         key = xlink('href')
         attrib = {}
