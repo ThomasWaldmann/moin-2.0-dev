@@ -195,32 +195,31 @@ class Iri(object):
         return u''.join(ret)
 
     def __add__(self, other):
-        if isinstance(other, basestring):
-            return self + Iri(other, False)
-
         if isinstance(other, Iri):
-            if other.scheme is not None:
-                scheme = other.scheme
-                authority = other.authority
-                path = other.path
-                query = other.query
-            else:
-                if other.authority is not None:
-                    authority = other.authority
-                    path = other.path
-                    query = other.query
-                else:
-                    if not other.path:
-                        path = self.path
-                        query = other.query or self.query
-                    else:
-                        path = self.path + other.path
-                        query = other.query
-                    authority = self.authority
-                scheme = self.scheme
+            new_scheme = other.scheme
+            new_authority = other.authority
+            new_path = other.path
+            new_query = other.query
 
-            return Iri(scheme=scheme, authority=authority, path=path,
-                    query=query, fragment=other.fragment)
+            if new_scheme is None:
+                new_scheme = self.scheme
+
+                if new_authority is None:
+                    new_authority = self.authority
+
+                    if not new_path:
+                        new_path = self.path
+
+                        if new_query is None:
+                            new_query = self.query
+                    else:
+                        new_path = self.path + new_path
+
+            return Iri(scheme=new_scheme, authority=new_authority, path=new_path,
+                    query=new_query, fragment=other.fragment)
+
+        if isinstance(other, basestring):
+            return self + Iri(other)
 
         return NotImplemented
 
