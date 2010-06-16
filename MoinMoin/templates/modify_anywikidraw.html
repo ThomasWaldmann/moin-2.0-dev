@@ -1,0 +1,20 @@
+{% extends "modify_applet.html" %}
+{% block data_editor %}
+<p>
+<img src="{{ t.pngpath }}">
+<applet code="org.anywikidraw.moinmoin.MoinMoinDrawingApplet.class"  codebase="." archive="{{ t.pubpath }}/AnyWikiDrawForMoinMoin.jar" width="800" height="620">
+<param name="DrawingName" value="{{ t.name }}">
+<param name="DrawingURL" value="{{ t.drawpath }}">
+<param name="PageURL" value="{{ t.pagelink }}">
+<param name="UploadURL" value="{{ t.savelink }}">
+<param name="Locale" value="en">
+<param name="codebase_lookup" value="false">
+<param name="classloader_cache" value="false">
+<param name="boxborder" value="false">
+<param name="centerimage" value="true">
+<strong>NOTE:</strong> You need a Java enabled browser to edit the drawing example.
+</applet>
+</p>
+<br>
+{% endblock %}
+

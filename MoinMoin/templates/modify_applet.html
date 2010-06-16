@@ -1,0 +1,16 @@
+{% extends "base_contentonly.html" %}
+{% block content %}
+<h1>Modifying {{ item_name }}</h1>
+<form action="" method="POST" enctype="multipart/form-data">
+<fieldset style="border: none; padding: 0;">
+<input type="hidden" name="action" value="modify">
+<input type="hidden" name="rev" value="{{ revno }}">
+{% block data_editor %}{% endblock %}
+<br>
+<label for="data_file">Upload file: <input type="file" name="data_file" size="50" value="Upload File"></label>
+<pre>{{ help }}</pre>
+<textarea name="meta_text" lang="en" dir="ltr" rows="{{ rows_meta }}" cols="{{ cols }}">{{ meta_text|e }}</textarea>
+</fieldset>
+</form>
+{% endblock %}
+

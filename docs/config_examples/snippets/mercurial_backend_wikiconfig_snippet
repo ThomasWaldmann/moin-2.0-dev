@@ -1,0 +1,15 @@
+    # This is a sample configuration snippet for a wiki which uses a Mercurial
+    # based storage backend.
+    # Note that you have to install Mercurial first, if you don't have it already.
+
+
+    # Basic configuration.
+ 
+    # Import enduser backend.
+    from MoinMoin.storage.backends import create_simple_mapping
+   
+    # Provide a string which consists of backend prefix (hg) and destination 
+    # directory where data will be placed (instance), separated by a colon.
+    namespace_mapping = create_simple_mapping('hg:/home/myuser/mywiki/%(nsname)s')
+
+    # If you want to use a more advanced config, please refer to HelpOnStorageConfiguration.
