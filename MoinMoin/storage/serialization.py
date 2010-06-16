@@ -67,8 +67,8 @@ class XMLSelectiveGenerator(XMLGenerator):
 
     You are expected to subclass this class and overwrite the shall_serialize method.
     """
-    def __init__(self, out, encoding='utf-8'):
-        # note: we have utf-8 as default, base class has iso-8859-1
+    def __init__(self, out, encoding='UTF-8'):
+        # note: we have UTF-8 as default, base class has iso-8859-1
         if out is not None and not hasattr(out, 'write'):
             # None is OK (will become stdout by XMLGenerator.__init__)
             # file-like is also OK
@@ -180,6 +180,7 @@ def serialize(obj, xmlfile, xmlgen_cls=XMLSelectiveGenerator, *args, **kwargs):
                      given after this will be given to xmlgen_cls.__init__()
     """
     xg = xmlgen_cls(xmlfile, *args, **kwargs)
+    xg.startDocument() # <?xml version="1.0" encoding="UTF-8"?>
     obj.serialize(xg)
 
 
