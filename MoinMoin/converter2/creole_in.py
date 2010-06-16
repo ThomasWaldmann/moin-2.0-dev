@@ -265,7 +265,7 @@ class Converter(ConverterMacro):
                 args = parse_arguments(args)
 
             # Parse it directly if the type is ourself
-            if not name:
+            if not name or name == 'creole':
                 body = self.parse_block(lines, args)
                 elem = moin_page.page(children=(body, ))
                 stack.top_append(elem)

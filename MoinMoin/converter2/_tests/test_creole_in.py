@@ -6,17 +6,18 @@ MoinMoin - Tests for MoinMoin.converter2.creole_in
 """
 
 import py.test
-py.test.skip("broken tests? broken code? please fix.")
 
 import re
 
-from MoinMoin.converter2.creole_in import *
+from MoinMoin.util.tree import moin_page, xlink
+
+from ..creole_in import Converter
 
 
 class TestConverter(object):
     namespaces = {
-        moin_page.namespace: '',
-        xlink.namespace: 'xlink',
+        moin_page: '',
+        xlink: 'xlink',
     }
 
     output_re = re.compile(r'\s+xmlns(:\S+)?="[^"]+"')
