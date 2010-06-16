@@ -532,16 +532,6 @@ class IriAuthority(object):
         self._userinfo = IriAuthorityUserinfo(value, False)
     userinfo = property(__get_userinfo, __set_userinfo, __del_userinfo)
 
-    @property
-    def userinfo_fullquoted(self):
-        if self._userinfo is not None:
-            return self._userinfo.fullquoted
-
-    @property
-    def userinfo_quoted(self):
-        if self._userinfo is not None:
-            return self._userinfo.quoted
-
     def __del_host(self):
         self._host = None
     def __get_host(self):
@@ -549,16 +539,6 @@ class IriAuthority(object):
     def __set_host(self, value):
         self._host = IriAuthorityHost(value, False)
     host = property(__get_host, __set_host, __del_host)
-
-    @property
-    def host_fullquoted(self):
-        if self._host is not None:
-            return self._host.fullquoted
-
-    @property
-    def host_quoted(self):
-        if self._host is not None:
-            return self._host.quoted
 
 
 class IriAuthorityUserinfo(_Value):
