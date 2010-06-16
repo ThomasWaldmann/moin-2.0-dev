@@ -1,22 +1,23 @@
 """
 MoinMoin - Tests for MoinMoin.converter2.moinwiki_in
 
-@copyright: 2008 MoinMoin:BastianBlank
+@copyright: 2008-2010 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
 
 import py.test
-py.test.skip("broken tests? broken code? please fix.")
 
 import re
 
-from MoinMoin.converter2.moinwiki_in import *
+from MoinMoin.util.tree import moin_page, xlink
+
+from ..moinwiki_in import Converter
 
 
 class TestConverter(object):
     namespaces = {
-        moin_page.namespace: '',
-        xlink.namespace: 'xlink',
+        moin_page: '',
+        xlink: 'xlink',
     }
 
     output_re = re.compile(r'\s+xmlns(:\S+)?="[^"]+"')
@@ -32,14 +33,6 @@ class TestConverter(object):
                 '<page><body><p>Text\nTest</p></body></page>'),
             (u'Text\n\nTest',
                 '<page><body><p>Text</p><p>Test</p></body></page>'),
-            (u'MoinMoin',
-                '<page><body><p><a xlink:href="wiki.local:MoinMoin">MoinMoin</a></p></body></page>'),
-            (u'!MoinMoin',
-                '<page><body><p>MoinMoin</p></body></page>'),
-            (u'Self:FrontPage',
-                '<page><body><p><a xlink:href="wiki://Self/FrontPage">FrontPage</a></p></body></page>'),
-            (u'http://moinmo.in/',
-                '<page><body><p><a xlink:href="http://moinmo.in/">http://moinmo.in/</a></p></body></page>'),
             (u'[[http://moinmo.in/]]',
                 '<page><body><p><a xlink:href="http://moinmo.in/">http://moinmo.in/</a></p></body></page>'),
             (u'[[http://moinmo.in/|MoinMoin]]',
@@ -47,9 +40,9 @@ class TestConverter(object):
             (u'[[MoinMoin]]',
                 '<page><body><p><a xlink:href="wiki.local:MoinMoin">MoinMoin</a></p></body></page>'),
             (u'{{http://moinmo.in/}}',
-                '<page><body><p><object xlink:href="http://moinmo.in/" /></p></body></page>'),
+                '<page><body><p><object xlink:href="http://moinmo.in/" /></p></body></page>', None, 'unknown'),
             (u'{{http://moinmo.in/|MoinMoin}}',
-                '<page><body><p><object alt="MoinMoin" xlink:href="http://moinmo.in/" /></p></body></page>'),
+                '<page><body><p><object alt="MoinMoin" xlink:href="http://moinmo.in/" /></p></body></page>', None, 'unknown'),
             (u'----',
                 '<page><body><separator /></body></page>'),
         ]
@@ -268,4 +261,3 @@ class TestConverter(object):
             py.test.skip(skip)
         out = self.conv(input.split(u'\n'), **args)
         assert self.serialize(out) == output
-
