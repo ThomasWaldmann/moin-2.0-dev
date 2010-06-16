@@ -18,6 +18,7 @@ from MoinMoin._tests import become_trusted
 from MoinMoin.storage.error import ItemAlreadyExistsError
 from MoinMoin.storage.serialization import Entry, create_value_object, serialize
 
+XML_DECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 
 def update_item(request, name, revno, meta, data):
     become_trusted(request)
@@ -46,7 +47,8 @@ class TestSerializeRev(object):
         xmlfile = StringIO()
         serialize(rev, xmlfile)
         xml = xmlfile.getvalue()
-        assert xml == ('<revision revno="0">'
+        assert xml == (XML_DECL +
+                       '<revision revno="0">'
                        '<meta>'
                        '<entry key="mimetype"><str>application/octet-stream</str>\n</entry>\n'
                        '<entry key="m1"><str>m1</str>\n</entry>\n'
@@ -68,7 +70,8 @@ class TestSerializeItem(object):
         xmlfile = StringIO()
         serialize(item, xmlfile)
         xml = xmlfile.getvalue()
-        assert xml == ('<item name="foo2">'
+        assert xml == (XML_DECL +
+                       '<item name="foo2">'
                        '<meta></meta>\n'
                        '<revision revno="0">'
                        '<meta>'
@@ -102,7 +105,7 @@ class TestSerializeBackend(object):
         xmlfile = StringIO()
         serialize(self.request.storage, xmlfile)
         xml = xmlfile.getvalue()
-        assert xml.startswith('<backend>')
+        assert xml.startswith(XML_DECL + '<backend>')
         assert xml.endswith('</backend>\n')
         assert ('<item name="foo3">'
                 '<meta></meta>\n'
@@ -147,7 +150,7 @@ class TestSerializer2(object):
             xmlfile = StringIO()
             serialize(e, xmlfile)
             xml = xmlfile.getvalue()
-            assert xml == expected_xml
+            assert xml == XML_DECL + expected_xml
 
     def test_Values(self):
         test_data = [
@@ -166,5 +169,5 @@ class TestSerializer2(object):
             xmlfile = StringIO()
             serialize(v, xmlfile)
             xml = xmlfile.getvalue()
-            assert xml == expected_xml
+            assert xml == XML_DECL + expected_xml
 
