@@ -772,12 +772,30 @@ class JinjaTheme(ThemeBase):
         if not self.shouldShowEditbar(page):
             return d
 
+        _ = self.request.getText
+        editbar_actions = []
+        for editbar_item in self.request.cfg.edit_bar:
+            if (editbar_item == 'Discussion' and
+               (self.request.getPragma('supplementation-page', self.request.cfg.supplementation_page)
+                                                   in (True, 1, 'on', '1'))):
+                    editbar_actions.append(self.supplementation_page_nameLink(page))
+            elif editbar_item == 'Comments':
+                # we just use <a> to get same style as other links, but we add some dummy
+                # link target to get correct mouseover pointer appearance. return false
+                # keeps the browser away from jumping to the link target::
+                editbar_actions.append('<a href="#" class="nbcomment" onClick="toggleComments();return false;">%s</a>' % _('Comments'))
+            elif editbar_item == 'Modify':
+                editbar_actions.append(self.modifyLink(page))
+            elif editbar_item == 'Download':
+                editbar_actions.append(self.downloadLink(page))
+            elif editbar_item == 'Subscribe':
+                editbar_actions.append(self.subscribeLink(page))
+            elif editbar_item == 'Quicklink':
+                editbar_actions.append(self.quicklinkLink(page))
+            elif editbar_item == 'ActionsMenu':
+                editbar_actions.append(self.actionsMenu(page))
         # TODO: Make a new cache for editbar using Jinja
-        items = []
-        for item in self.editbarItems(page):
-            if item:
-                items.append(item)
-        d.update({'editbar_items': items})
+        d.update({'editbar_items': editbar_actions})
         return d
 
     def shouldShowEditbar(self, page):
@@ -802,37 +820,6 @@ class JinjaTheme(ThemeBase):
                         not form.has_key('button_save') and
                         not form.has_key('button_cancel'))
         return False
-
-    def editbarItems(self, page):
-        """
-        Return list of items to show on the editbar
-
-        This is separate method to make it easy to customize the
-        edtibar in sub classes.
-        """
-        _ = self.request.getText
-        editbar_actions = []
-        for editbar_item in self.request.cfg.edit_bar:
-            if (editbar_item == 'Discussion' and
-               (self.request.getPragma('supplementation-page', self.request.cfg.supplementation_page)
-                                                   in (True, 1, 'on', '1'))):
-                    editbar_actions.append(self.supplementation_page_nameLink(page))
-            elif editbar_item == 'Comments':
-                # we just use <a> to get same style as other links, but we add some dummy
-                # link target to get correct mouseover pointer appearance. return false
-                # keeps the browser away from jumping to the link target::
-                editbar_actions.append('<a href="#" class="nbcomment" onClick="toggleComments();return false;">%s</a>' % _('Comments'))
-            elif editbar_item == 'Modify':
-                editbar_actions.append(self.modifyLink(page))
-            elif editbar_item == 'Download':
-                editbar_actions.append(self.downloadLink(page))
-            elif editbar_item == 'Subscribe':
-                editbar_actions.append(self.subscribeLink(page))
-            elif editbar_item == 'Quicklink':
-                editbar_actions.append(self.quicklinkLink(page))
-            elif editbar_item == 'ActionsMenu':
-                editbar_actions.append(self.actionsMenu(page))
-        return editbar_actions
 
     def supplementation_page_nameLink(self, page):
         """
