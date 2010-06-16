@@ -7,7 +7,7 @@
     This backend is neither intended for nor capable of being used for production.
 
     @copyright: 2008 MoinMoin:JohannesBerg,
-                2008 MoinMoin:ThomasWaldmann
+                2008-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 

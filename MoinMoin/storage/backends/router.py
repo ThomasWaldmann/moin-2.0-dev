@@ -10,7 +10,7 @@
     temporary items in a MemoryBackend() that are discarded when the
     process terminates.
 
-    @copyright: 2008 MoinMoin:ThomasWaldmann,
+    @copyright: 2008-2010 MoinMoin:ThomasWaldmann,
                 2009 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """

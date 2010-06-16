@@ -4,8 +4,9 @@
     This package contains code for the backends of the new storage layer.
 
     @copyright: 2007 MoinMoin:HeinrichWendel,
-    @copyright: 2008 MoinMoin:PawelPacana,
-    @copyright: 2009 MoinMoin:ChristopherDenter
+                2008 MoinMoin:PawelPacana,
+                2009 MoinMoin:ChristopherDenter,
+                2009-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 

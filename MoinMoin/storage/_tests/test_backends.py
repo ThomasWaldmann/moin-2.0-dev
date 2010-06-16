@@ -10,8 +10,8 @@
     put in class inherited from this one.
 
     @copyright: 2008 MoinMoin:PawelPacana,
-    @copyright: 2008 MoinMoin:ChristopherDenter,
-    @copyright: 2008 MoinMoin:JohannesBerg
+                2008 MoinMoin:ChristopherDenter,
+                2008 MoinMoin:JohannesBerg
     @license: GNU GPL, see COPYING for details.
 """
 

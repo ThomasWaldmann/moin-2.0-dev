@@ -2,7 +2,7 @@
 """
     MoinMoin - fs19 read-only backend tests
 
-    @copyright: 2008 MoinMoin:ThomasWaldmann
+    @copyright: 2008-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
