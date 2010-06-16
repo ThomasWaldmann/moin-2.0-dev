@@ -326,12 +326,10 @@ class JinjaTheme(ThemeBase):
         current = d['page_name']
 
         # Process config navi_bar
-        if request.cfg.navi_bar:
-            for text in request.cfg.navi_bar:
-                pagename, link = self.splitNavilink(text)
-                cls = 'wikilink'
-                items.append((cls, link))
-                found[pagename] = 1
+        for text in request.cfg.navi_bar:
+            pagename, link = self.splitNavilink(text)
+            items.append(('wikilink', link))
+            found[pagename] = 1
 
         # Add user links to wiki links, eliminating duplicates.
         userlinks = request.user.getQuickLinks()
@@ -339,15 +337,13 @@ class JinjaTheme(ThemeBase):
             # Split text without localization, user knows what he wants
             pagename, link = self.splitNavilink(text, localize=0)
             if not pagename in found:
-                cls = 'userlink'
-                items.append((cls, link))
+                items.append(('userlink', link))
                 found[pagename] = 1
 
         # Add sister pages.
         for sistername, sisterurl in request.cfg.sistersites:
             if sistername == request.cfg.interwikiname:  # it is THIS wiki
-                cls = 'sisterwiki current'
-                items.append((cls, sistername))
+                items.append(('sisterwiki current', sistername))
             else:
                 # TODO optimize performance
                 cache = caching.CacheEntry(request, 'sisters', sistername, 'farm', use_pickle=True)
@@ -355,12 +351,11 @@ class JinjaTheme(ThemeBase):
                     data = cache.content()
                     sisterpages = data['sisterpages']
                     if current in sisterpages:
-                        cls = 'sisterwiki'
                         url = sisterpages[current]
                         link = request.formatter.url(1, url) + \
                                request.formatter.text(sistername) +\
                                request.formatter.url(0)
-                        items.append((cls, link))
+                        items.append(('sisterwiki', link))
         d.update({'navibar_items': items})
         return d
 
