@@ -25,7 +25,7 @@ codecs.register_error('iriquote', _iriquote_replace)
 
 
 class Iri(object):
-    __slots__ = 'scheme', '_authority', '_path', '_query', '_fragment'
+    __slots__ = '_scheme', '_authority', '_path', '_query', '_fragment'
 
     overall_rules = r"""
     ^
@@ -93,6 +93,8 @@ class Iri(object):
                 raise ValueError('Input does not look like an IRI')
 
             _scheme = match.group('scheme')
+            if _scheme is not None:
+                _scheme = unicode(_scheme).lower()
 
             _authority = match.group('authority')
             if _authority is not None:
@@ -114,8 +116,9 @@ class Iri(object):
             _scheme = _authority = _path = _query = _fragment = None
 
         if scheme is not None:
-            _scheme = scheme
-        self.scheme = _scheme
+            self.scheme = scheme
+        else:
+            self._scheme = _scheme
 
         if authority is not None:
             self.authority = authority
@@ -142,7 +145,7 @@ class Iri(object):
             return unicode(self) == other
 
         if isinstance(other, Iri):
-            if self.scheme != other.scheme: return False
+            if self._scheme != other._scheme: return False
             if self._authority != other._authority: return False
             if self._path != other._path: return False
             if self._query != other._query: return False
@@ -220,6 +223,15 @@ class Iri(object):
                     query=query, fragment=other.fragment)
 
         return NotImplemented
+
+    def __del_scheme(self):
+        self._scheme = None
+    def __get_scheme(self):
+        return self._scheme
+    def __set_scheme(self, value):
+        self._scheme = unicode(value).lower()
+    scheme = property(__get_scheme, __set_scheme, __del_scheme,
+            """Scheme part of the IRI.""")
 
     def __del_authority(self):
         self._authority = None
