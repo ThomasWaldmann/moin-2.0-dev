@@ -237,7 +237,9 @@ class Iri(object):
     def __get_authority(self):
         return self._authority
     def __set_authority(self, value):
-        self._authority = IriAuthority(value, False)
+        if value.__class__ is not IriAuthority:
+            value = IriAuthority(value, False)
+        self._authority = value
     authority = property(__get_authority, __set_authority, __del_authority,
             """Authority part of the IRI.""")
 
@@ -246,7 +248,9 @@ class Iri(object):
     def __get_path(self):
         return self._path
     def __set_path(self, value):
-        self._path = IriPath(value, False)
+        if value.__class__ is not IriPath:
+            value = IriPath(value, False)
+        self._path = value
     path = property(__get_path, __set_path, __del_path,
             """Path part of the IRI.""")
 
