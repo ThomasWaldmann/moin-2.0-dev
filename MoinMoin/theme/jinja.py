@@ -321,7 +321,6 @@ class JinjaTheme(ThemeBase):
         @return: navibar html
         """
         request = self.request
-        found = {}  # pages we found. prevent duplicates
         items = []  # navibar items
         current = d['page_name']
 
@@ -329,16 +328,13 @@ class JinjaTheme(ThemeBase):
         for text in request.cfg.navi_bar:
             pagename, link = self.splitNavilink(text)
             items.append(('wikilink', link))
-            found[pagename] = 1
 
         # Add user links to wiki links, eliminating duplicates.
         userlinks = request.user.getQuickLinks()
         for text in userlinks:
             # Split text without localization, user knows what he wants
             pagename, link = self.splitNavilink(text, localize=0)
-            if not pagename in found:
-                items.append(('userlink', link))
-                found[pagename] = 1
+            items.append(('userlink', link))
 
         # Add sister pages.
         for sistername, sisterurl in request.cfg.sistersites:
