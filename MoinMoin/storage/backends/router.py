@@ -10,7 +10,7 @@
     temporary items in a MemoryBackend() that are discarded when the
     process terminates.
 
-    @copyright: 2008 MoinMoin:ThomasWaldmann,
+    @copyright: 2008-2010 MoinMoin:ThomasWaldmann,
                 2009 MoinMoin:ChristopherDenter
     @license: GNU GPL, see COPYING for details.
 """
@@ -128,10 +128,6 @@ class BareRouterBackend(BackendBase):
         logging.debug("create_item: %r" % itemname)
         backend, itemname, mountpoint = self._get_backend(itemname)
         return RouterItem(self, itemname, backend.create_item(itemname), mountpoint)
-
-    def history_from_index(self, item_name, *args, **kw):
-        backend, itemname, mountpoint = self._get_backend(item_name)
-        return backend.history_from_index(mountpoint, item_name=itemname, *args, **kw)
 
 
 class RouterBackend(IndexingBackendMixin, BareRouterBackend):

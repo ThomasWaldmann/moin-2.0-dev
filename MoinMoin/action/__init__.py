@@ -3,8 +3,7 @@
     MoinMoin - Action Implementation
 
     Actions are triggered by the user clicking on special links on the page
-    (e.g. the "edit" link). The name of the action is passed in the "action"
-    CGI parameter.
+    (e.g. the "edit" link). The name of the action is passed in the "do" param.
 
     The sub-package "MoinMoin.action" contains external actions, you can
     place your own extensions there (similar to extension macros). User
@@ -146,7 +145,7 @@ class ActionBase:
 %(error_html)s
 <form action="%(url)s" method="%(method)s" enctype="%(enctype)s">
 <div>
-<input type="hidden" name="action" value="%(actionname)s">
+<input type="hidden" name="do" value="%(actionname)s">
 %(ticket_html)s
 %(user_html)s
 </div>

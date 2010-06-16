@@ -22,7 +22,7 @@
     some_items = [u'FrontPage', u'HelpOnLinking', u'HelpOnMoinWikiSyntax', ]
     serialize(backend, 'some_items.xml', ItemNameList, some_items)
 
-    @copyright: 2009 MoinMoin:ThomasWaldmann
+    @copyright: 2009-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -496,7 +496,7 @@ class ItemMeta(Meta):
 
 class Chunk(Serializable):
     element_name = 'chunk'
-    size = 4096
+    size = 200 # later increase value so we have less overhead
 
     def __init__(self, value=None, attrs=None, setter_fn=None):
         self.value = value

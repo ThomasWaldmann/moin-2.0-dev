@@ -15,7 +15,7 @@ import sys, os
 from MoinMoin.macro2._base import MacroDefinitionListBase
 from MoinMoin import wikiutil, version
 from MoinMoin import action, macro, parser
-from MoinMoin.logfile import editlog, eventlog
+from MoinMoin.logfile import editlog
 from MoinMoin.Page import Page
 
 class Macro(MacroDefinitionListBase):
@@ -90,10 +90,6 @@ class Macro(MacroDefinitionListBase):
             row(_('Number of system pages'), str(len(systemPages)))
 
             row(_('Accumulated page sizes'), self.formatInReadableUnits(totalsize))
-
-            # This puts a heavy load on the server when the log is large
-            eventlogger = eventlog.EventLog(request)
-            row('Event log', self.formatInReadableUnits(eventlogger.size()))
 
         nonestr = _("NONE")
         # a valid user gets info about all installed extensions

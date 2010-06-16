@@ -79,7 +79,7 @@ class Settings(UserPrefBase):
             if oidreq is None:
                 return 'error', _("No OpenID given.") # ??
 
-            qstr = {'action': 'userprefs',
+            qstr = {'do': 'userprefs',
                     'handler': 'oid',
                     'oid.return': '1'}
             return_to = request.getQualifiedURL(request.page.url(request, qstr))
@@ -102,7 +102,7 @@ class Settings(UserPrefBase):
         query = {}
         for key in request.form:
             query[key] = request.form[key]
-        qstr = {'action': 'userprefs',
+        qstr = {'do': 'userprefs',
                 'handler': 'oid',
                 'oid.return': '1'}
         return_to = request.getQualifiedURL(request.page.url(request, qstr))
@@ -143,7 +143,8 @@ class Settings(UserPrefBase):
             return
 
         if not wikiutil.checkTicket(self.request, form.get('ticket', '')):
-            return
+            return _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'userprefs.oid'}
+
 
         if form.has_key('remove'):
             return self._handle_remove()
@@ -154,7 +155,7 @@ class Settings(UserPrefBase):
     def _make_form(self):
         action = "%s%s" % (self.request.script_root, self.request.path)
         _form = html.FORM(action=action)
-        _form.append(html.INPUT(type="hidden", name="action", value="userprefs"))
+        _form.append(html.INPUT(type="hidden", name="do", value="userprefs"))
         _form.append(html.INPUT(type="hidden", name="handler", value="oid"))
         ticket = wikiutil.createTicket(self.request)
         _form.append(html.INPUT(type="hidden", name="ticket", value=ticket))

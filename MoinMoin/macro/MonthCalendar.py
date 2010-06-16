@@ -371,7 +371,7 @@ def execute(macro, text):
                 else:
                     csslink = "cal-emptyday"
                     if parmtemplate:
-                        query = {'action': 'edit', 'template': parmtemplate}
+                        query = {'do': 'modify', 'template': parmtemplate}
                     else:
                         query = {}
                     r, g, b, u = (255, 255, 255, 0)

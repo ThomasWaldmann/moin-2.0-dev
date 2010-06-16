@@ -36,12 +36,17 @@ class IndexingBackendMixin(object):
         self._index = ItemIndex(index_uri)
 
 
-    def history_from_index(self, mountpoint, item_name=u'', reverse=True, start=None, end=None):
+    def history(self, reverse=True, item_name=u'', start=None, end=None):
         """
         History implementation using the index.
         """
-        for result in self._index.history(mountpoint, item_name, reverse, start, end):
-            yield result
+        for result in self._index.history(reverse=reverse, item_name=item_name, start=start, end=end):
+            # we currently create the item, the revision and yield it to stay
+            # compatible with storage api definition, but this could be changed to
+            # just return the data we get from the index (without accessing backend)
+            rev_datetime, name, rev_no, rev_metas = result
+            item = self.get_item(name)
+            yield item.get_revision(rev_no)
 
 
 class IndexingItemMixin(object):
@@ -148,7 +153,7 @@ from sqlalchemy.sql import and_, exists, asc, desc
 
 from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
+                           EDIT_LOG_USERID, EDIT_LOG_COMMENT, \
                            IS_SYSPAGE, SYSPAGE_VERSION
 
 class ItemIndex(object):
@@ -307,7 +312,7 @@ class ItemIndex(object):
                        ).execute().fetchone()
         return result
 
-    def history(self, mountpoint, item_name=u'', reverse=True, start=None, end=None):
+    def history(self, mountpoint=u'', item_name=u'', reverse=True, start=None, end=None):
         """
         Yield ready-to-use history raw data for this backend.
         """
