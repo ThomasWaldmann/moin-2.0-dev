@@ -774,7 +774,9 @@ class JinjaTheme(ThemeBase):
 
         _ = self.request.getText
         editbar_actions = []
-        for editbar_item in self.request.cfg.edit_bar:
+        default_editbar = ['Modify', 'Download', 'Comments', 'Discussion', 'Subscribe', 'Quicklink', 'ActionsMenu']
+        editbar = [item for item in self.request.cfg.edit_bar if item in default_editbar]
+        for editbar_item in editbar:
             if (editbar_item == 'Discussion' and
                (self.request.getPragma('supplementation-page', self.request.cfg.supplementation_page)
                                                    in (True, 1, 'on', '1'))):
