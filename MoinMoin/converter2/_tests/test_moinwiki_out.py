@@ -26,18 +26,16 @@ class Base(object):
 
     def handle_input(self, input):
         i = self.input_re.sub(r'\1 ' + self.input_namespaces, input)
-        return ET.XML(i)
+        return ET.XML(i.encode("utf-8"))
 
     def handle_output(self, elem, **options):
-        from cStringIO import StringIO
-        file = StringIO()
-        file.write(elem)
         return elem
 
     def do(self, input, output, args={}):
         out = self.conv(self.handle_input(input), **args)
-        print self.handle_output(out)
-        assert self.handle_output(out) == output
+        x = self.handle_output(out)
+        print x
+        assert x == output
 
 
 class TestConverter(Base):
@@ -46,7 +44,7 @@ class TestConverter(Base):
 
     def test_base(self):
         data = [
-            (u'<page:p>Текст</page:p>', 'Текст\n'),
+            (u'<page:p>Текст</page:p>', u'Текст\n'),
             (u'<page:p>Text</page:p>', u'Text\n'),
             (u"<page:tag><page:p>Text</page:p><page:p>Text</page:p></page:tag>", 'Text\n\nText\n'),
             (u"<page:separator />", '----\n'),
