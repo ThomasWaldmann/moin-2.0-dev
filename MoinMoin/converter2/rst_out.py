@@ -46,6 +46,11 @@ class Table(object):
         self.i = -1
         self.j = -1
         self.table = []
+        self.header_count = 0
+
+    def add_header(self):
+        self.header_count += 1
+        return self.add_row()
 
     def add_row(self):
         row = []
@@ -143,6 +148,8 @@ class Table(object):
                 for col in range(len(cols)):
                     if self.table[row][col][1] > 1:
                         line.append(' '*cols[col])
+                    elif row == self.header_count - 1:
+                        line.append('='*cols[col])
                     else:
                         line.append('-'*cols[col])
                     if self.table[row][col][0] > 1:
@@ -571,20 +578,19 @@ class Converter(object):
         if text_decoration == 'line-through':
             self.children.append(iter(elem))
             self.opened.append(elem)
-            return ReST.stroke_open
+            return ''
         if text_decoration == 'underline':
             self.children.append(iter(elem))
             self.opened.append(elem)
-            return ReST.underline
+            return ''
         if font_size:
             self.children.append(iter(elem))
             self.opened.append(elem)
-            return ReST.larger_open if font_size == "120%" \
-                                        else ReST.smaller_open
+            return ''
         if baseline_shift == 'super':
-            return '^%s^' % ''.join(elem.itertext())
+            return ''.join(elem.itertext())
         if baseline_shift == 'sub':
-            return ',,%s,,' % ''.join(elem.itertext())
+            return ''.join(elem.itertext())
         self.children.append(iter(elem))
         self.opened.append(elem)
         return ''
@@ -592,21 +598,12 @@ class Converter(object):
     def close_moinpage_span(self, elem):
         text_decoration = elem.get(moin_page.text_decoration, '')
         font_size = elem.get(moin_page.font_size, '')
-
-        if text_decoration == 'line-through':
-            return ReST.stroke_close
-        if text_decoration == 'underline':
-            return ReST.underline
-        if font_size:
-            return ReST.larger_close if font_size == "120%" \
-                                         else ReST.smaller_close
         return ''
 
     def open_moinpage_strong(self, elem):
-        ret = ReST.strong
         self.children.append(iter(elem))
         self.opened.append(elem)
-        return ret
+        return ReST.strong
 
     def close_moinpage_strong(self, elem):
         return ReST.strong
