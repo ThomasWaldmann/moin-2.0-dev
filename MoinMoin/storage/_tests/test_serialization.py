@@ -16,7 +16,7 @@ from StringIO import StringIO
 
 from MoinMoin._tests import become_trusted
 from MoinMoin.storage.error import ItemAlreadyExistsError
-from MoinMoin.storage.serialization import Entry, create_value_object, serialize
+from MoinMoin.storage.serialization import Entry, create_value_object, serialize, unserialize
 
 XML_DECL = '<?xml version="1.0" encoding="UTF-8"?>\n'
 
@@ -144,6 +144,7 @@ class TestSerializer2(object):
         test_data = [
             ('foo', 'bar', '<entry key="foo"><bytes>bar</bytes>\n</entry>\n'),
             (u'foo', u'bar', '<entry key="foo"><str>bar</str>\n</entry>\n'),
+            ('''<"a"&'b'>''', '<c&d>', '''<entry key="&lt;&quot;a&quot;&amp;'b'&gt;"><bytes>&lt;c&amp;d&gt;</bytes>\n</entry>\n'''),
         ]
         for k, v, expected_xml in test_data:
             e = Entry(k, v)
@@ -151,6 +152,13 @@ class TestSerializer2(object):
             serialize(e, xmlfile)
             xml = xmlfile.getvalue()
             assert xml == XML_DECL + expected_xml
+
+        for expected_k, expected_v, xml in test_data:
+            xmlfile = StringIO(xml)
+            result = {}
+            unserialize(Entry(attrs={'key': expected_k}, rev_or_item=result), xmlfile)
+            assert expected_k in result
+            assert result[expected_k] == expected_v
 
     def test_Values(self):
         test_data = [
