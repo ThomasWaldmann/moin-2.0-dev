@@ -1026,16 +1026,15 @@ class JinjaTheme(ThemeBase):
         d = {'page': page, 'language': self.ui_lang_attr()}
 
         # get name of system pages
-        page_front_page = wikiutil.getFrontPage(request).page_name
-        page_help_contents = wikiutil.getLocalizedPage(request, 'HelpContents').page_name
-        page_title_index = wikiutil.getLocalizedPage(request, 'TitleIndex').page_name
-        page_site_navigation = wikiutil.getLocalizedPage(request, 'SiteNavigation').page_name
-        page_word_index = wikiutil.getLocalizedPage(request, 'WordIndex').page_name
-        page_help_formatting = wikiutil.getLocalizedPage(request, 'HelpOnFormatting').page_name
-        page_find_page = wikiutil.getLocalizedPage(request, 'FindPage').page_name
+        page_front_page = self.translated_item_name(self.cfg.page_front_page)
+        page_help_contents = self.translated_item_name('HelpContents')
+        page_title_index = self.translated_item_name('TitleIndex')
+        page_site_navigation = self.translated_item_name('SiteNavigation')
+        page_word_index = self.translated_item_name('WordIndex')
+        page_help_formatting = self.translated_item_name('HelpOnFormatting')
+        page_find_page =  self.translated_item_name('FindPage')
         home_page = wikiutil.getInterwikiHomePage(request)  # sorry theme API change!!! Either None or tuple (wikiname,pagename) now.
         page_parent_page = getattr(page.getParentPage(), 'page_name', None)
-
         # Prepare the HTML <head> element
         user_head = [request.cfg.html_head]
 
