@@ -774,9 +774,7 @@ class JinjaTheme(ThemeBase):
 
         _ = self.request.getText
         editbar_actions = []
-        default_editbar = ['Modify', 'Download', 'Comments', 'Discussion', 'Subscribe', 'Quicklink', 'ActionsMenu']
-        editbar = [item for item in self.request.cfg.edit_bar if item in default_editbar]
-        for editbar_item in editbar:
+        for editbar_item in self.request.cfg.edit_bar:
             if (editbar_item == 'Discussion' and
                (self.request.getPragma('supplementation-page', self.request.cfg.supplementation_page)
                                                    in (True, 1, 'on', '1'))):
@@ -796,8 +794,9 @@ class JinjaTheme(ThemeBase):
                 editbar_actions.append(self.quicklinkLink(page))
             elif editbar_item == 'ActionsMenu':
                 editbar_actions.append(self.actionsMenu(page))
+        editbar = [item for item in editbar_actions if item]
         # TODO: Make a new cache for editbar using Jinja
-        d.update({'editbar_items': editbar_actions})
+        d.update({'editbar_items': editbar})
         return d
 
     def shouldShowEditbar(self, page):
