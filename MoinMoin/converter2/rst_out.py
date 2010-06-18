@@ -258,6 +258,7 @@ class Converter(object):
         self.subpage = [self.output]
         self.subpage_level = [0, ]
         self.footnotes = []
+        self.objects = []
         while self.children[-1]:
             try:
                 next_child = self.children[-1].next()
@@ -274,6 +275,8 @@ class Converter(object):
                             self.output.append('\n' + ' ' * (self.list_level + 1))
                     elif self.status[-1] == "text":
                         if self.last_closed == "p":
+                            self.output.extend(self.objects)
+                            self.objects = []
                             self.output.append('\n')
                     self.output.append(next_child)
                     self.last_closed = 'text'
@@ -284,7 +287,10 @@ class Converter(object):
                     # close function can change self.output
                     close_ret = self.close(next_parent)
                     self.output.append(close_ret)
+        self.output.extend(self.objects)
+        self.objects = []
         self.output.append("\n\n.. [#]".join(self.footnotes))
+
         return ''.join(self.output)
 
     def open(self, elem):
@@ -335,9 +341,11 @@ class Converter(object):
         params['accesskey'] = elem.get(xlink.accesskey, None)
         params = ','.join(['%s=%s' % (p, params[p]) for p in params if params[p]])
 
-        # TODO: rewrite this using % formatting
         text = ''.join(elem.itertext())
-        return "`%s <%s>`_" % (text, href)
+
+        # TODO: check that links have different alt texts
+        self.objects.append("\n\n.. _`%s`: %s\n\n" % (text, href))
+        return "`%s`_" % (text)
 
     def close_moinpage_a(self, elem):
         # dummy, open_moinpage_a does all the job
@@ -479,14 +487,27 @@ class Converter(object):
         return ''
 
     def open_moinpage_object(self, elem):
-        # TODO: this can be done with one regex:
-        return ''
+        # TODO: object parametrs support
+        href = elem.get(xlink.href, '')
+        href = href.split('?')
+        args = ''
+        if len(href) > 1:
+            args =' '.join([s for s in findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)', href[1]) if s[:3] != 'do='])
+        href = href[0].split('wiki.local:')[-1].split('attachment:')[-1]
+        alt = elem.get(moin_page.alt, '')
+        if not alt:
+            alt = href
+        ret = '|%s|' % alt
+        self.objects.append(".. |%s| image:: %s" % (alt, href))
+        return ret
 
     def open_moinpage_p(self, elem):
         self.children.append(iter(elem))
         self.opened.append(elem)
         self.status.append("p")
         if self.status[-2] == 'text':
+            self.output.extend(self.objects)
+            self.objects = []
             if self.last_closed == 'text':
                 return ReST.p * 2
             elif self.last_closed == 'p':
