@@ -7,6 +7,8 @@ MoinMoin - Tests for MoinMoin.converter2.link
 
 import py.test
 
+from emeraldtree import tree as ET
+
 from MoinMoin.converter2.link import *
 
 class TestConverterExternOutput(object):
@@ -58,12 +60,12 @@ class TestConverterExternOutput(object):
         if skip:
             py.test.skip(skip)
         elem = ET.Element(None)
-        self.conv.handle_wiki(elem, iri.Iri(input))
+        self.conv.handle_wiki(elem, Iri(input))
         assert elem.get(xlink.href) == output
 
     def _do_wikilocal(self, input, page, output, skip=None):
         if skip:
             py.test.skip(skip)
         elem = ET.Element(None)
-        self.conv.handle_wikilocal(elem, iri.Iri(input), iri.Iri(page))
+        self.conv.handle_wikilocal(elem, Iri(input), Iri(page))
         assert elem.get(xlink.href) == output

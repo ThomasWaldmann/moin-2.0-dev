@@ -10,12 +10,10 @@ Base class for wiki parser with macro support.
 from emeraldtree import ElementTree as ET
 
 from MoinMoin.util import iri
+from MoinMoin.util.mime import Type
 from MoinMoin.util.tree import moin_page, xinclude
 
 class ConverterMacro(object):
-    def __init__(self, request):
-        self.request = request
-
     def _BR_repl(self, args, text, context_block):
         if context_block:
             return
@@ -57,37 +55,37 @@ class ConverterMacro(object):
 
         def add_moin_xpointer(function, args):
             args = unicode(args).replace('^', '^^').replace('(', '^(').replace(')', '^)')
-            xpointer_moin.append(function + '(' + args + ')')
+            xpointer_moin.append(function + u'(' + args + u')')
 
         moin_args = []
 
-        if pagename.startswith('^'):
-            add_moin_xpointer('pages', pagename)
+        if pagename.startswith(u'^'):
+            add_moin_xpointer(u'pages', pagename)
             if sort:
-                add_moin_xpointer('sort', sort)
+                add_moin_xpointer(u'sort', sort)
             if items:
-                add_moin_xpointer('items', items)
+                add_moin_xpointer(u'items', items)
             if skipitems:
-                add_moin_xpointer('skipitems', skipitems)
+                add_moin_xpointer(u'skipitems', skipitems)
         else:
-            link = unicode(iri.Iri(scheme='wiki.local', path=pagename))
+            link = iri.Iri(scheme=u'wiki.local', path=pagename)
             attrib[xinclude.href] = link
 
         if heading is not None:
-            add_moin_xpointer('heading', heading)
+            add_moin_xpointer(u'heading', heading)
         if level:
-            add_moin_xpointer('level', str(level))
+            add_moin_xpointer(u'level', str(level))
         if titlesonly:
-            add_moin_xpointer('titlesonly')
+            add_moin_xpointer(u'titlesonly')
         if editlink:
-            add_moin_xpointer('editlink')
+            add_moin_xpointer(u'editlink')
 
         if xpointer_moin:
-            xpointer.append('page:include(%s)' % ' '.join(xpointer_moin))
+            xpointer.append(u'page:include(%s)' % u' '.join(xpointer_moin))
 
         if xpointer:
             # TODO: Namespace?
-            ns = 'xmlns(page=%s) ' % moin_page.namespace
+            ns = 'xmlns(page=%s) ' % moin_page
 
             attrib[xinclude.xpointer] = ns + ' '.join(xpointer)
 
@@ -140,4 +138,30 @@ class ConverterMacro(object):
         @return Sequence of (ET.Element, unicode)
         """
         return [text]
+
+    # TODO: Merge with macro support somehow.
+    def parser(self, name, args, content):
+        if '/' in name:
+            type = Type(name)
+        else:
+            type = Type(type='x-moin', subtype='format', parameters={'name': name})
+
+        elem = moin_page.part(attrib={moin_page.content_type: type})
+
+        if args:
+            elem_arguments = moin_page.arguments()
+            elem.append(elem_arguments)
+
+            for key, value in args.items():
+                attrib = {}
+                if key:
+                    attrib[moin_page.name] = key
+                elem_arg = moin_page.argument(attrib=attrib, children=(value, ))
+                elem_arguments.append(elem_arg)
+
+        if content:
+            elem.append(moin_page.body(children=content))
+
+        return elem
+
 

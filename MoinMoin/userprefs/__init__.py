@@ -74,7 +74,7 @@ class UserPrefBase(object):
         '''
         action = self.request.page.url(self.request)
         _form = html.FORM(action=action)
-        _form.append(html.INPUT(type="hidden", name="action", value="userprefs"))
+        _form.append(html.INPUT(type="hidden", name="do", value="userprefs"))
         _form.append(html.INPUT(type="hidden", name="handler", value=self.name))
 
         self._table = html.TABLE(border="0")

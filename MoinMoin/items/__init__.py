@@ -215,7 +215,7 @@ class Item(object):
             hash.update(content)
         else:
             raise StorageError("unsupported content object: %r" % content)
-        return hash_name, hash.hexdigest()
+        return hash_name, unicode(hash.hexdigest())
 
     def copy(self, name, comment=u''):
         """
@@ -287,7 +287,7 @@ class Item(object):
         comment = self.request.form.get('comment')
         self._save(meta, data, mimetype=mimetype, comment=comment)
 
-    def _save(self, meta, data, name=None, action='SAVE', mimetype=None, comment='', extra=''):
+    def _save(self, meta, data, name=None, action=u'SAVE', mimetype=None, comment=u''):
         request = self.request
         if name is None:
             name = self.name
@@ -325,17 +325,19 @@ class Item(object):
         timestamp = time.time()
         # XXX if meta is from old revision, and user did not give a non-empty
         # XXX comment, re-using the old rev's comment is wrong behaviour:
-        newrev[EDIT_LOG_COMMENT] = comment or meta.get(EDIT_LOG_COMMENT, '')
+        comment = unicode(comment or meta.get(EDIT_LOG_COMMENT, ''))
+        if comment:
+            newrev[EDIT_LOG_COMMENT] = comment
         # allow override by form- / qs-given mimetype:
         mimetype = request.values.get('mimetype', mimetype)
         # allow override by give metadata:
         assert mimetype is not None
-        newrev[MIMETYPE] = meta.get(MIMETYPE, mimetype)
-        newrev[EDIT_LOG_ACTION] = action
-        newrev[EDIT_LOG_ADDR] = request.remote_addr
-        newrev[EDIT_LOG_HOSTNAME] = wikiutil.get_hostname(request, request.remote_addr)
-        newrev[EDIT_LOG_USERID] = request.user.valid and request.user.id or ''
-        newrev[EDIT_LOG_EXTRA] = extra
+        newrev[MIMETYPE] = unicode(meta.get(MIMETYPE, mimetype))
+        newrev[EDIT_LOG_ACTION] = unicode(action)
+        newrev[EDIT_LOG_ADDR] = unicode(request.remote_addr)
+        newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, request.remote_addr))
+        if request.user.valid:
+            newrev[EDIT_LOG_USERID] = unicode(request.user.id)
         storage_item.commit()
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
@@ -513,7 +515,7 @@ There is no help, you're doomed!
                 size=r.size,
                 mtime=self.request.user.getFormattedDateTime(float(r.timestamp)),
                 editor=user.get_printable_editor(self.request,
-                       r[EDIT_LOG_USERID], r[EDIT_LOG_ADDR], r[EDIT_LOG_HOSTNAME]) or _("N/A"),
+                       r.get(EDIT_LOG_USERID), r.get(EDIT_LOG_ADDR), r.get(EDIT_LOG_HOSTNAME)) or _("N/A"),
                 comment=r.get(EDIT_LOG_COMMENT, ''),
                 mimetype=r.get(MIMETYPE, ''),
             ))
@@ -650,8 +652,7 @@ There is no help, you're doomed!
             content_disposition = mt.content_disposition(request.cfg)
             content_type = mt.content_type()
             content_length = None
-            ci = ContainerItem(request, self.name)
-            file_to_send = ci.get(filename)
+            file_to_send = self.get_member(filename)
         else: # content = item revision
             rev = self.rev
             try:
@@ -761,7 +762,91 @@ class ApplicationZip(Application):
         return self._render_data()
 
 
-class ApplicationXTar(Application):
+class TarMixin(object):
+    """
+    TarMixin offers additional functionality for tar-like items to list and
+    access member files and to create new revisions by multiple posts.
+    """
+    # Note: from_tar query string arg needs to be last because twikidraw looks
+    # for "file extension" at the end - therefore we need special url methods.
+    def rev_url(self, _absolute=False, member=None, **kw):
+        url = super(TarMixin, self).rev_url(_absolute=_absolute, **kw)
+        if member is not None:
+            url += '&from_tar=%s' % url_quote(member)
+        return url
+
+    def url(self, _absolute=False, member=None, **kw):
+        url = super(TarMixin, self).url(_absolute=_absolute, **kw)
+        if member is not None:
+            url += '&from_tar=%s' % url_quote(member)
+            # note: from_tar needs to be last in qs because twikidraw looks for "file extension" at the end
+        return url
+
+    def list_members(self):
+        """
+        list tar file contents (member file names)
+        """
+        self.rev.seek(0)
+        tf = tarfile.open(fileobj=self.rev, mode='r')
+        return tf.getnames()
+
+    def get_member(self, name):
+        """
+        return a file-like object with the member file data
+
+        @param name: name of the data in the container file
+        """
+        self.rev.seek(0)
+        tf = tarfile.open(fileobj=self.rev, mode='r')
+        return tf.extractfile(name)
+
+    def put_member(self, name, content, content_length, expected_members):
+        """
+        puts a new member file into a temporary tar container.
+        If all expected members have been put, it saves the tar container
+        to a new item revision.
+
+        @param name: name of the data in the container file
+        @param content: the data to store into the tar file (str or file-like)
+        @param content_length: byte-length of content (for str, None can be given)
+        @param expected_members: set of expected member file names
+        """
+        if not name in expected_members:
+            raise StorageError("tried to add unexpected member %r to container item %r" % (name, self.name))
+        if isinstance(name, unicode):
+            name = name.encode('utf-8')
+        cache = caching.CacheEntry(self.request, "TarContainer", self.name, 'wiki')
+        tmp_fname = cache._fname
+        tf = tarfile.TarFile(tmp_fname, mode='a')
+        ti = tarfile.TarInfo(name)
+        if isinstance(content, str):
+            if content_length is None:
+                content_length = len(content)
+            content = StringIO(content) # we need a file obj
+        elif not hasattr(content, 'read'):
+            logging.error("unsupported content object: %r" % content)
+            raise StorageError("unsupported content object: %r" % content)
+        assert content_length >= 0  # we don't want -1 interpreted as 4G-1
+        ti.size = content_length
+        tf.addfile(ti, content)
+        tf_members = set(tf.getnames())
+        tf.close()
+        if tf_members - expected_members:
+            msg = "found unexpected members in container item %r" % (self.name, )
+            logging.error(msg)
+            cache.remove()
+            raise StorageError(msg)
+
+        if tf_members == expected_members:
+            # everything we expected has been added to the tar file, save the container as revision
+            meta = {"mimetype": self.mimetype}
+            cache.open(mode='rb')
+            self._save(meta, cache, name=self.name, action='SAVE', mimetype=self.mimetype, comment='')
+            cache.close()
+            cache.remove()
+
+
+class ApplicationXTar(TarMixin, Application):
     supported_mimetypes = ['application/x-tar', 'application/x-gtar']
 
     def _render_data(self):
@@ -787,92 +872,6 @@ class ApplicationXTar(Application):
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
 
-
-class ContainerItem(ApplicationXTar):
-    """
-    A storage container (multiple objects in 1 tarfile)
-    """
-    def __init__(self, request, item_name, mimetype="application/x-tar"):
-        self.mimetype = mimetype
-        self.request = request
-        self.name = item_name
-        # We need a tmp file or filelike object to create by
-        # different requests one tar file
-        cache = caching.CacheEntry(self.request, "ContainerItem", item_name,
-                                  'wiki')
-        self.tmpfile = cache._fname
-
-    def member_url(self, member):
-        """
-        return URL for accessing container member
-        (we use same URL for get (GET) and put (POST))
-
-        @param member: name of the data in the container file
-        """
-        url = self.request.href(self.name, do='modify', mimetype=self.mimetype,
-                                 rev=self.request.rev)
-        return url + '&from_tar=%s' % url_quote(member)
-        # note: if self.request.rev is None, Href code will suppress rev=X arg
-        # from_tar needs to be last in qs because twikidraw looks for "file extension" at the end
-
-    def get(self, member):
-        """
-        return a file-like object with the member file data
-
-        @param member: name of the data in the container file
-        """
-        item = Item.create(self.request, self.name, rev_no=self.request.rev)
-        tf = tarfile.open(fileobj=item.rev, mode='r')
-        return tf.extractfile(member)
-
-    def get_members(self):
-        """
-        returns members of tar file
-        """
-        item = Item.create(self.request, self.name, rev_no=self.request.rev)
-        tf = tarfile.open(fileobj=item.rev, mode='r')
-        return tf.getnames()
-
-    def put(self, member, content, content_length=None, members=None):
-        """
-        puts data by different requests into a container file.
-        The data is appended first to a tmp file in the cache arena.
-        If the members in the container tmp file is the submitted members list
-        then the item is created and the data stored to an item revision.
-
-        @param member: name of the data in the container file
-        @param content: the data to store into the tar file
-        @param content_length: len content
-        @param members: list of member names
-        """
-        if not member in members:
-            raise StorageError("%s member not listed in members" % member)
-        tf = tarfile.TarFile(self.tmpfile, mode='a')
-        if isinstance(member, unicode):
-            member = member.encode('utf-8')
-        ti = tarfile.TarInfo(member)
-        if isinstance(content, str):
-            if content_length is None:
-                content_length = len(content)
-            content = StringIO(content) # we need a file obj
-        elif not hasattr(content, 'read'):
-            logging.error("unsupported content object: %r" % content)
-            raise StorageError("unsupported content object: %r" % content)
-        assert content_length >= 0  # we don't want -1 interpreted as 4G-1
-        ti.size = content_length
-        tf.addfile(ti, content)
-        tf_members = tf.getnames()
-        tf.close()
-        if set(tf_members) - set(members) != set([]):
-            logging.error("tarfile members of item %s do not fit into given members" % self.name)
-            # the cache file needs to be removed if that happens
-            raise StorageError("tarfile members do not fit into given members")
-
-        if sorted(members) == sorted(tf_members):
-            meta = {"mimetype": self.mimetype}
-            data = file(self.tmpfile, 'r')
-            self._save(meta, data, name=self.name, action='SAVE', mimetype=self.mimetype, comment='')
-            os.unlink(self.tmpfile)
 
 class RenderableApplication(RenderableBinary):
     supported_mimetypes = []
@@ -1125,31 +1124,29 @@ class Text(Binary):
         from MoinMoin.util.tree import moin_page
 
         request = self.request
-        InputConverter = reg.get(request, Type(self.mimetype),
-                type_moin_document)
-        IncludeConverter = reg.get(request, type_moin_document,
-                type_moin_document, includes='expandall')
-        MacroConverter = reg.get(request, type_moin_document,
-                type_moin_document, macros='expandall')
-        LinkConverter = reg.get(request, type_moin_document,
-                type_moin_document, links='extern')
+        input_conv = reg.get(Type(self.mimetype), type_moin_document,
+                request=request)
+        include_conv = reg.get(type_moin_document, type_moin_document,
+                includes='expandall', request=request)
+        link_conv = reg.get(type_moin_document, type_moin_document,
+                links='extern', request=request)
         # TODO: Real output format
-        HtmlConverter = reg.get(request, type_moin_document,
-                Type('application/x-xhtml-moin-page'))
+        html_conv = reg.get(type_moin_document,
+                Type('application/x-xhtml-moin-page'), request=request)
 
         i = Iri(scheme='wiki', authority='', path='/' + self.name)
 
-        doc = InputConverter(request)(self.data_storage_to_internal(self.data).split(u'\n'))
+        doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
-        doc = IncludeConverter(request)(doc)
-        doc = MacroConverter(request)(doc)
-        doc = LinkConverter(request)(doc)
-        doc = HtmlConverter(request)(doc)
+        doc = include_conv(doc)
+        doc = link_conv(doc)
+        doc = html_conv(doc)
 
-        out = StringIO()
+        from array import array
+        out = array('u')
         # TODO: Switch to xml
-        doc.write(out.write, method='html')
-        return out.getvalue()
+        doc.write(out.fromunicode, method='html')
+        return out.tounicode()
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
@@ -1297,9 +1294,9 @@ class PythonSrc(Text):
     format_args = supported_mimetypes[0]
 
 
-class TWikiDraw(Image):
+class TWikiDraw(TarMixin, Image):
     """
-    drawings by TWikiDraw applet. It creates three files which are stored as ContainerItem.
+    drawings by TWikiDraw applet. It creates three files which are stored as tar file.
     """
     supported_mimetypes = ["application/x-twikidraw"]
     modify_help = ""
@@ -1312,7 +1309,6 @@ class TWikiDraw(Image):
         basepath, basename = os.path.split(filename)
         basename, ext = os.path.splitext(basename)
 
-        ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
         filecontent = file_upload.stream
         content_length = None
         if ext == '.draw': # TWikiDraw POSTs this first
@@ -1327,8 +1323,8 @@ class TWikiDraw(Image):
             # If this is fixed, we could use the file obj, without reading it into memory completely:
             filecontent = filecontent.read()
 
-        members = ['drawing.draw', 'drawing.map', 'drawing.png']
-        ci.put('drawing' + ext, filecontent, content_length, members=members)
+        self.put_member('drawing' + ext, filecontent, content_length,
+                        expected_members=set(['drawing.draw', 'drawing.map', 'drawing.png']))
 
     def do_modify(self, template_name):
         """
@@ -1336,28 +1332,15 @@ class TWikiDraw(Image):
         The applet is called for doing modifications.
         """
         request = self.request
-        from_tar = request.values.get('from_tar', '')
-        if from_tar:
-            # this is needed to extract a member of the tar file and to send it
-            ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
-            try:
-                data = ci.get(from_tar).read()
-                request.write(data)
-            except AttributeError:
-                request.write('')
-            return
-
-        ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
         twd_params = {
             'pubpath': request.cfg.url_prefix_static + '/applets/TWikiDrawPlugin',
-            'pngpath': ci.member_url('drawing.png'),
-            'drawpath': ci.member_url('drawing.draw'),
-            'savelink': request.href(self.name, do='modify', mimetype=self.supported_mimetypes[0]),
-            'pagelink': request.href(self.name),
+            'pngpath': self.url(do='get', member='drawing.png'),
+            'drawpath': self.url(do='get', member='drawing.draw'),
+            'savelink': self.url(do='modify', mimetype=self.supported_mimetypes[0]),
+            'pagelink': self.url(),
             'helplink': self.modify_help,
             'basename': 'drawing',
         }
-
         template = self.env.get_template("modify_twikidraw.html")
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
@@ -1371,11 +1354,11 @@ class TWikiDraw(Image):
     def _render_data(self):
         request = self.request
         item_name = self.name
-        ci = ContainerItem(request, item_name)
-        drawing_url = ci.member_url("drawing.draw")
+        drawing_url = self.url(do='get', member='drawing.draw')
+        png_url = self.url(do='get', member='drawing.png')
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': item_name}
 
-        mapfile = ci.get(u'drawing.map')
+        mapfile = self.get_member('drawing.map')
         try:
             image_map = mapfile.read()
             mapfile.close()
@@ -1392,16 +1375,15 @@ class TWikiDraw(Image):
             image_map = image_map.replace('/>', '>')
             title = _('Clickable drawing: %(filename)s') % {'filename': item_name}
 
-            return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (ci.member_url('drawing.png'), title, mapid)
+            return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (png_url, title, mapid)
         else:
-            return '<img src="%s" alt=%s>' % (ci.member_url('drawing.png'), title)
+            return '<img src="%s" alt=%s>' % (png_url, title)
 
 
-class AnyWikiDraw(Image):
+class AnyWikiDraw(TarMixin, Image):
     """
-    drawings by AnyWikiDraw applet. It creates three files which are stored as ContainerItem.
+    drawings by AnyWikiDraw applet. It creates three files which are stored as tar file.
     """
-
     supported_mimetypes = ["application/x-anywikidraw"]
     modify_help = ""
 
@@ -1412,7 +1394,6 @@ class AnyWikiDraw(Image):
         filename = request.form['filename']
         basepath, basename = os.path.split(filename)
         basename, ext = os.path.splitext(basename)
-        ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
         filecontent = file_upload.stream
         content_length = None
         if ext == '.svg':
@@ -1426,9 +1407,8 @@ class AnyWikiDraw(Image):
             # XXX gives -1 for wsgiref, gives 0 for werkzeug :(
             # If this is fixed, we could use the file obj, without reading it into memory completely:
             filecontent = filecontent.read()
-
-        members = ["drawing.svg", "drawing.map", "drawing.png"]
-        ci.put('drawing' + ext, filecontent, content_length, members=members)
+        self.put_member('drawing' + ext, filecontent, content_length,
+                        expected_members=set(['drawing.svg', 'drawing.map', 'drawing.png']))
 
     def do_modify(self, template_name):
         """
@@ -1436,30 +1416,17 @@ class AnyWikiDraw(Image):
         The applet is called for doing modifications.
         """
         request = self.request
-        from_tar = request.values.get('from_tar', '')
-        if from_tar:
-            # this is needed to extract a member of the tar file and to send it
-            ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
-            try:
-                data = ci.get(from_tar).read()
-                request.write(data)
-            except AttributeError:
-                request.write('')
-            return
-        ci = ContainerItem(request, self.name, mimetype=self.supported_mimetypes[0])
-        # ci.exists() does not work (WHY?)
-        try:
-            if "drawing.svg" in ci.get_members():
-                drawpath = ci.member_url("drawing.svg")
-        except AttributeError:
+        if 'drawing.svg' in self.list_members():
+            drawpath = self.url(do='get', member='drawing.svg')
+        else:
             drawpath = ''
 
-        wd_params = {
+        awd_params = {
             'name': 'drawing.svg',
             'drawpath': drawpath,
-            'pagelink': request.href(self.name),
+            'pagelink': self.url(),
+            'savelink': self.url(do='modify', mimetype=self.supported_mimetypes[0]),
             'pubpath': request.cfg.url_prefix_static + "/applets/anywikidraw/lib",
-            'savelink': request.href(self.name, do='modify', mimetype=self.supported_mimetypes[0]),
         }
 
         template = self.env.get_template("modify_anywikidraw.html")
@@ -1468,17 +1435,17 @@ class AnyWikiDraw(Image):
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
-                                  t=wd_params,
+                                  t=awd_params,
                                  )
         return content
 
     def _render_data(self):
         request = self.request
-        ci = ContainerItem(request, self.name)
-        drawing_url = ci.member_url("drawing.svg")
+        drawing_url = self.url(do='get', member='drawing.svg')
+        png_url = self.url(do='get', member='drawing.png')
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': self.name}
 
-        mapfile = ci.get(u'drawing.map')
+        mapfile = self.get_member('drawing.map')
         try:
             image_map = mapfile.read()
             mapfile.close()
@@ -1494,7 +1461,7 @@ class AnyWikiDraw(Image):
             # unxml, because 4.01 concrete will not validate />
             image_map = image_map.replace(u'/>', u'>')
             title = _('Clickable drawing: %(filename)s') % {'filename': self.name}
-            return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (ci.member_url('drawing.png'), title, mapid)
+            return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (png_url, title, mapid)
         else:
-            return '<img src="%s" alt=%s>' % (ci.member_url('drawing.png'), title)
+            return '<img src="%s" alt=%s>' % (png_url, title)
 

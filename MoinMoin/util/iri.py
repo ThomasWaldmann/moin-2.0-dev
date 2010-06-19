@@ -25,6 +25,8 @@ codecs.register_error('iriquote', _iriquote_replace)
 
 
 class Iri(object):
+    __slots__ = '_scheme', '_authority', '_path', '_query', '_fragment'
+
     overall_rules = r"""
     ^
     (
@@ -58,10 +60,10 @@ class Iri(object):
 
     _overall_re = re.compile(overall_rules, re.X)
 
-    def __init__(self, iri=None, _quoted=True,
+    def __init__(self, _iri=None, _quoted=True,
             scheme=None, authority=None, path=None, query=None, fragment=None):
         """
-        @param iri A full IRI in unicode
+        @param _iri A full IRI in unicode
         @param scheme Scheme part of the IRI, overrides the same part of the IRI.
         @param authority Authority part of the IRI, overrides the same part of the IRI.
         @param path Path part of the IRI, overrides the same part of the IRI.
@@ -69,28 +71,81 @@ class Iri(object):
         @param fragment Fragment part of the IRI, overrides the same part of the IRI.
         """
 
-        self.scheme = self._authority = self._path = self._query = self._fragment = None
+        if isinstance(_iri, Iri):
+            _scheme = _iri.scheme
 
-        if iri:
-            self._parse(iri, _quoted)
+            _authority = _iri._authority
+            # Need to copy IriAuthority, not immutable
+            if _authority is not None:
+                _authority = IriAuthority(_authority)
+
+            _path = _iri._path
+            # Need to copy IriPath, not immutable
+            if _path is not None:
+                _path = IriPath(_path)
+
+            _query = _iri._query
+            _fragment = _iri._fragment
+
+        elif _iri:
+            match = self._overall_re.match(unicode(_iri))
+            if not match:
+                raise ValueError('Input does not look like an IRI')
+
+            _scheme = match.group('scheme')
+            if _scheme is not None:
+                _scheme = unicode(_scheme).lower()
+
+            _authority = match.group('authority')
+            if _authority is not None:
+                _authority = IriAuthority(_authority, _quoted)
+
+            _path = match.group('path')
+            if _path is not None:
+                _path = IriPath(_path, _quoted)
+
+            _query = match.group('query')
+            if _query is not None:
+                _query = IriQuery(_query, _quoted)
+
+            _fragment = match.group('fragment')
+            if _fragment is not None:
+                _fragment = IriFragment(_fragment, _quoted)
+
+        else:
+            _scheme = _authority = _path = _query = _fragment = None
 
         if scheme is not None:
             self.scheme = scheme
+        else:
+            self._scheme = _scheme
+
         if authority is not None:
             self.authority = authority
+        else:
+            self._authority = _authority
+
         if path is not None:
             self.path = path
+        else:
+            self._path = _path
+
         if query is not None:
             self.query = query
+        else:
+            self._query = _query
+
         if fragment is not None:
             self.fragment = fragment
+        else:
+            self._fragment = _fragment
 
     def __eq__(self, other):
         if isinstance(other, basestring):
             return unicode(self) == other
 
         if isinstance(other, Iri):
-            if self.scheme != other.scheme: return False
+            if self._scheme != other._scheme: return False
             if self._authority != other._authority: return False
             if self._path != other._path: return False
             if self._query != other._query: return False
@@ -104,6 +159,16 @@ class Iri(object):
         if ret is NotImplemented:
             return ret
         return not ret
+
+    def __repr__(self):
+        return '%s(scheme=%r, authority=%r, path=%r, query=%r, fragment=%r)' % (
+                self.__class__.__name__,
+                self.scheme,
+                self._authority,
+                self._path,
+                self._query,
+                self._fragment,
+                )
 
     def __unicode__(self):
         ret = []
@@ -130,132 +195,64 @@ class Iri(object):
         return u''.join(ret)
 
     def __add__(self, other):
-        if isinstance(other, basestring):
-            return self + Iri(other, False)
-
         if isinstance(other, Iri):
-            if other.scheme is not None:
-                scheme = other.scheme
-                authority = other.authority
-                path = other.path
-                query = other.query
-            else:
-                if other.authority is not None:
-                    authority = other.authority
-                    path = other.path
-                    query = other.query
-                else:
-                    if not other.path:
-                        path = self.path
-                        query = other.query or self.query
-                    else:
-                        path = self.path + other.path
-                        query = other.query
-                    authority = self.authority
-                scheme = self.scheme
+            new_scheme = other.scheme
+            new_authority = other.authority
+            new_path = other.path
+            new_query = other.query
 
-            return Iri(scheme=scheme, authority=authority, path=path,
-                    query=query, fragment=other.fragment)
+            if new_scheme is None:
+                new_scheme = self.scheme
+
+                if new_authority is None:
+                    new_authority = self.authority
+
+                    if not new_path:
+                        new_path = self.path
+
+                        if new_query is None:
+                            new_query = self.query
+                    else:
+                        new_path = self.path + new_path
+
+            return Iri(scheme=new_scheme, authority=new_authority, path=new_path,
+                    query=new_query, fragment=other.fragment)
+
+        if isinstance(other, basestring):
+            return self + Iri(other)
 
         return NotImplemented
 
-    def _parse(self, iri, quoted):
-        match = self._overall_re.match(unicode(iri))
-
-        if not match:
-            raise ValueError('Input does not look like an IRI')
-
-        scheme = match.group('scheme')
-        if scheme is not None:
-            self.scheme = scheme.lower()
-
-        authority = match.group('authority')
-        if authority is not None:
-            self._authority = IriAuthority(authority, quoted)
-
-        path = match.group('path')
-        if path is not None:
-            self._path = IriPath(path, quoted)
-
-        query = match.group('query')
-        if query is not None:
-            self._query = IriQuery(query, quoted)
-
-        fragment = match.group('fragment')
-        if fragment is not None:
-            self._fragment = IriFragment(fragment, quoted)
+    def __del_scheme(self):
+        self._scheme = None
+    def __get_scheme(self):
+        return self._scheme
+    def __set_scheme(self, value):
+        self._scheme = unicode(value).lower()
+    scheme = property(__get_scheme, __set_scheme, __del_scheme,
+            """Scheme part of the IRI.""")
 
     def __del_authority(self):
         self._authority = None
     def __get_authority(self):
         return self._authority
     def __set_authority(self, value):
-        self._authority = IriAuthority(value, False)
+        if value.__class__ is not IriAuthority:
+            value = IriAuthority(value, False)
+        self._authority = value
     authority = property(__get_authority, __set_authority, __del_authority,
-            """
-            Authority part of the IRI.
-
-            Complete unquoted unicode string. It may include replacement
-            characters.
-            """)
-
-    @property
-    def authority_fullquoted(self):
-        """
-        Full quoted form of the authority part of the IRI.
-
-        All characters which are illegal in the authority part are encoded.
-        Used to generate the full URI.
-        """
-        if self._authority is not None:
-            return self._authority.fullquoted
-
-    @property
-    def authority_quoted(self):
-        """
-        Minimal quoted form of the authority part of the IRI.
-
-        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
-        have a one-to-one mapping with non-UTF-8 URIs.
-        """
-        if self._authority is not None:
-            return self._authority.quoted
+            """Authority part of the IRI.""")
 
     def __del_path(self):
         self._path = None
     def __get_path(self):
         return self._path
     def __set_path(self, value):
-        self._path = IriPath(value, False)
+        if value.__class__ is not IriPath:
+            value = IriPath(value, False)
+        self._path = value
     path = property(__get_path, __set_path, __del_path,
-            """
-            Path part of the IRI.
-
-            Complete unquoted unicode string. It may include replacement
-            characters.
-            """)
-
-    @property
-    def path_fullquoted(self):
-        """
-        Full quoted form of the path part of the IRI.
-
-        All characters which are illegal in the path part are encoded.
-        Used to generate the full URI.
-        """
-        if self._path is not None:
-            return self._path.fullquoted
-
-    @property
-    def path_quoted(self):
-        """
-        Minimal quoted form of the path part of the IRI.
-
-        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
-        have a one-to-one mapping with non-UTF-8 URIs.
-        """
-        if self._path is not None:
-            return self._path.quoted
+            """Path part of the IRI.""")
 
     def __del_query(self):
         self._query = None
@@ -264,34 +261,7 @@ class Iri(object):
     def __set_query(self, value):
         self._query = IriQuery(value, False)
     query = property(__get_query, __set_query, __del_query,
-            """
-            Query part of the IRI.
-
-            Complete unquoted unicode string. It may include replacement
-            characters.
-            """)
-
-    @property
-    def query_fullquoted(self):
-        """
-        Full quoted form of the query part of the IRI.
-
-        All characters which are illegal in the query part are encoded.
-        Used to generate the full URI.
-        """
-        if self._query is not None:
-            return self._query.fullquoted
-
-    @property
-    def query_quoted(self):
-        """
-        Minimal quoted form of the query part of the IRI.
-
-        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
-        have a one-to-one mapping with non-UTF-8 URIs.
-        """
-        if self._query is not None:
-            return self._query.quoted
+            """Query part of the IRI.""")
 
     def __del_fragment(self):
         self._fragment = None
@@ -300,82 +270,19 @@ class Iri(object):
     def __set_fragment(self, value):
         self._fragment = IriFragment(value, False)
     fragment = property(__get_fragment, __set_fragment, __del_fragment,
-            """
-            Fragment part of the IRI.
+            """Fragment part of the IRI.""")
 
-            Complete unquoted unicode string. It may include replacement
-            characters.
-            """)
-
-    @property
-    def fragment_fullquoted(self):
-        """
-        Full quoted form of the fragment part of the IRI.
-
-        All characters which are illegal in the fragment part are encoded.
-        Used to generate the full URI.
-        """
-        if self._fragment is not None:
-            return self._fragment.fullquoted
-
-    @property
-    def fragment_quoted(self):
-        """
-        Minimal quoted form of the fragment part of the IRI.
-
-        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
-        have a one-to-one mapping with non-UTF-8 URIs.
-        """
-        if self._fragment is not None:
-            return self._fragment.quoted
 
 class _Value(unicode):
     __slots__ = '_quoted'
 
-    # Rules for quoting parts of the IRI, also applies to URI.
-    # Each entry represents a range of unicode code points.
-    quote_rules_ascii = (
-        (ord(u'0'), ord(u'9')),
-        (ord(u'A'), ord(u'Z')),
-        (ord(u'a'), ord(u'z')),
-        (ord(u'-'), ord(u'-')),
-        (ord(u'.'), ord(u'.')),
-        (ord(u'_'), ord(u'_')),
-        (ord(u'~'), ord(u'~')),
-        (ord(u'!'), ord(u'!')),
-        (ord(u'$'), ord(u'$')),
-        (ord(u'&'), ord(u'&')),
-        (ord(u"'"), ord(u"'")),
-        (ord(u'('), ord(u'(')),
-        (ord(u')'), ord(u')')),
-        (ord(u'*'), ord(u'*')),
-        (ord(u'+'), ord(u'+')),
-        (ord(u','), ord(u',')),
-        (ord(u';'), ord(u';')),
-        (ord(u'='), ord(u'=')),
-    )
-
     # Rules for quoting parts of the IRI.
-    # Each entry represents a range of unicode code points.
-    quote_rules_unicode = (
-        (0x000A0, 0x0D7FF),
-        (0x0F900, 0x0FDCF),
-        (0x0FDF0, 0x0FFEF),
-        (0x10000, 0x1FFFD),
-        (0x20000, 0x2FFFD),
-        (0x30000, 0x3FFFD),
-        (0x40000, 0x4FFFD),
-        (0x50000, 0x5FFFD),
-        (0x60000, 0x6FFFD),
-        (0x70000, 0x7FFFD),
-        (0x80000, 0x8FFFD),
-        (0x90000, 0x9FFFD),
-        (0xA0000, 0xAFFFD),
-        (0xB0000, 0xBFFFD),
-        (0xC0000, 0xCFFFD),
-        (0xD0000, 0xDFFFD),
-        (0xE1000, 0xEFFFD),
-    )
+    quote_rules_iri = u"""((?:%[0-9a-fA-F]{2})+)|([^-!$&'*+.0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz|\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+)"""
+    quote_rules_uri = u"""((?:%[0-9a-fA-F]{2})+)|([^-!$&'*+.0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz|]+)"""
+    quote_filter = frozenset()
+
+    _quote_re_iri = re.compile(quote_rules_iri)
+    _quote_re_uri = re.compile(quote_rules_uri)
 
     # Matches consecutive percent-encoded values
     unquote_rules = r"(%[0-9a-fA-F]{2})+"
@@ -404,30 +311,21 @@ class _Value(unicode):
         @param requote: Input string is already quoted
         @return: Quoted string
         """
-        ret = []
+        quote_filter = cls.quote_filter
 
-        rules = cls.quote_rules_ascii
-        if not url:
-            rules = rules + cls.quote_rules_unicode
+        def subrepl(match):
+            t_quoted = match.group(1)
+            t_plain = match.group(2)
 
-        for i in input:
-            # Check if we have an already quoted string.
-            if requote and i == u'%':
-                ret.append(i)
-                continue
+            if t_quoted:
+                if not requote:
+                    t_quoted = t_quoted.replace('%', '%25')
+                return t_quoted
 
-            # Check if the current character matches any of the given ranges
-            c = ord(i)
-            for rule in rules:
-                if c >= rule[0] and c <= rule[1]:
-                    ret.append(i)
-                    break
+            return u''.join(a in quote_filter and a or u'%%%02X' % ord(a) for a in t_plain.encode('utf-8'))
 
-            else:
-                # Percent-encode illegal characters
-                ret.extend((u'%%%02X' % ord(a) for a in i.encode('utf-8')))
-
-        return u''.join(ret)
+        re = url and cls._quote_re_uri or cls._quote_re_iri
+        return re.sub(subrepl, input)
 
     @classmethod
     def _unquote(cls, s):
@@ -462,18 +360,36 @@ class _Value(unicode):
 
     @property
     def fullquoted(self):
+        """
+        Full quoted form of the IRI part.
+
+        All characters which are illegal in the part are encoded.
+        Used to generate the full IRI.
+        """
         if self._quoted is not None:
             return self._quote(self._quoted, requote=True)
         return self._quote(self)
 
     @property
     def quoted(self):
+        """
+        Minimal quoted form of the IRI part.
+
+        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
+        have a one-to-one mapping with non-UTF-8 URIs.
+        """
         if self._quoted is not None:
             return self._quoted
         return self.replace(u'%', u'%25')
 
     @property
     def urlquoted(self):
+        """
+        URI quoted form of the IRI part.
+
+        All characters which are illegal in the part are encoded.
+        Used to generate the full URI.
+        """
         if self._quoted is not None:
             return self._quote(self._quoted, url=True, requote=True)
         return self._quote(self, url=True)
@@ -541,6 +457,14 @@ class IriAuthority(object):
             return True
         return False
 
+    def __repr__(self):
+        return '%s(userinfo=%r, host=%r, port=%r)' % (
+                self.__class__.__name__,
+                self._userinfo,
+                self._host,
+                self.port,
+                )
+
     def __unicode__(self):
         return self.__get(self._userinfo, self._host)
 
@@ -581,18 +505,36 @@ class IriAuthority(object):
 
     @property
     def fullquoted(self):
+        """
+        Full quoted form of the authority part of the IRI.
+
+        All characters which are illegal in the authority part are encoded.
+        Used to generate the full IRI.
+        """
         userinfo = self._userinfo and self._userinfo.fullquoted
         host = self._host and self._host.fullquoted
         return self.__get(userinfo, host)
 
     @property
     def quoted(self):
+        """
+        Minimal quoted form of the authority part of the IRI.
+
+        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
+        have a one-to-one mapping with non-UTF-8 URIs.
+        """
         userinfo = self._userinfo and self._userinfo.quoted
         host = self._host and self._host.quoted
         return self.__get(userinfo, host)
 
     @property
     def urlquoted(self):
+        """
+        URI quoted form of the authority part of the IRI.
+
+        All characters which are illegal in the authority part are encoded.
+        Used to generate the full URI.
+        """
         userinfo = self._userinfo and self._userinfo.urlquoted
         host = self._host and self._host.urlquoted
         return self.__get(userinfo, host)
@@ -605,16 +547,6 @@ class IriAuthority(object):
         self._userinfo = IriAuthorityUserinfo(value, False)
     userinfo = property(__get_userinfo, __set_userinfo, __del_userinfo)
 
-    @property
-    def userinfo_fullquoted(self):
-        if self._userinfo is not None:
-            return self._userinfo.fullquoted
-
-    @property
-    def userinfo_quoted(self):
-        if self._userinfo is not None:
-            return self._userinfo.quoted
-
     def __del_host(self):
         self._host = None
     def __get_host(self):
@@ -622,16 +554,6 @@ class IriAuthority(object):
     def __set_host(self, value):
         self._host = IriAuthorityHost(value, False)
     host = property(__get_host, __set_host, __del_host)
-
-    @property
-    def host_fullquoted(self):
-        if self._host is not None:
-            return self._host.fullquoted
-
-    @property
-    def host_quoted(self):
-        if self._host is not None:
-            return self._host.quoted
 
 
 class IriAuthorityUserinfo(_Value):
@@ -730,41 +652,39 @@ class IriPath(object):
 
     @property
     def fullquoted(self):
+        """
+        Full quoted form of the path part of the IRI.
+
+        All characters which are illegal in the path part are encoded.
+        Used to generate the full IRI.
+        """
         return u'/'.join((i.fullquoted for i in self._list))
 
     @property
     def quoted(self):
+        """
+        Minimal quoted form of the path part of the IRI.
+
+        Only '%' and illegal UTF-8 sequences are encoded. Primarily used to
+        have a one-to-one mapping with non-UTF-8 URIs.
+        """
         return u'/'.join((i.quoted for i in self._list))
 
     @property
     def urlquoted(self):
+        """
+        URI quoted form of the path part of the IRI.
+
+        All characters which are illegal in the path part are encoded.
+        Used to generate the full URI.
+        """
         return u'/'.join((i.urlquoted for i in self._list))
 
 class IriPathSegment(_Value):
-    quote_rules_ascii = _Value.quote_rules_ascii + (
-        (ord(u'@'), ord(u'@')),
-        (ord(u':'), ord(u':')),
-        (ord(u'/'), ord(u'/')),
-    )
+    quote_filter = frozenset('@:/')
 
 class IriQuery(_Value):
-    quote_rules_ascii = _Value.quote_rules_ascii + (
-        (ord(u'@'), ord(u'@')),
-        (ord(u':'), ord(u':')),
-        (ord(u'/'), ord(u'/')),
-        (ord(u'?'), ord(u'?')),
-    )
-
-    quote_rules_unicode = _Value.quote_rules_unicode + (
-        (0x00E000, 0x00F8FF),
-        (0x0F0000, 0x0FFFFD),
-        (0x100000, 0x10FFFD),
-    )
+    quote_filter = frozenset('@:/?')
 
 class IriFragment(_Value):
-    quote_rules_ascii = _Value.quote_rules_ascii + (
-        (ord(u'@'), ord(u'@')),
-        (ord(u':'), ord(u':')),
-        (ord(u'/'), ord(u'/')),
-        (ord(u'?'), ord(u'?')),
-    )
+    quote_filter = frozenset('@:/?')

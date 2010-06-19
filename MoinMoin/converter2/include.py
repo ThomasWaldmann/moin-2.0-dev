@@ -93,11 +93,9 @@ class Converter(object):
     tag_xi_xpointer = xinclude.xpointer
 
     @classmethod
-    def _factory(cls, _request, input, output, includes=None, **kw):
-        if (type_moin_document.issupertype(input) and
-                type_moin_document.issupertype(output) and
-                includes == 'expandall'):
-            return cls
+    def _factory(cls, input, output, request, includes=None, **kw):
+        if includes == 'expandall':
+            return cls(request)
 
     def recurse(self, elem, page_href):
         # Check if we reached a new page
@@ -228,5 +226,5 @@ class Converter(object):
         return tree
 
 from . import default_registry
-default_registry.register(Converter._factory)
-
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(Converter._factory, type_moin_document, type_moin_document)

@@ -6,21 +6,24 @@ MoinMoin - Tests for MoinMoin.converter2.creole_in
 """
 
 import py.test
+
 import re
 
-from MoinMoin.converter2.creole_in import *
+from MoinMoin.util.tree import moin_page, xlink
+
+from ..creole_in import Converter
 
 
 class TestConverter(object):
     namespaces = {
-        moin_page.namespace: '',
-        xlink.namespace: 'xlink',
+        moin_page: '',
+        xlink: 'xlink',
     }
 
     output_re = re.compile(r'\s+xmlns(:\S+)?="[^"]+"')
 
     def setup_class(self):
-        self.conv = Converter(self.request)
+        self.conv = Converter()
 
     def test_base(self):
         data = [
@@ -224,6 +227,8 @@ class TestConverter(object):
                '<page><body><page><body><p>wiki</p></body></page></body></page>'),
             (u'{{{\n#!creole(style="background-color: red")\nwiki\n}}}',
                '<page><body><page><body style="background-color: red"><p>wiki</p></body></page></body></page>'),
+            (u'{{{\n#!text/plain\ntext\n}}}',
+               u'<page><body><part content-type="text/plain"><body>text</body></part></body></page>'),
         ]
         for i in data:
             yield (self.do, ) + i

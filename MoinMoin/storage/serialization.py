@@ -22,7 +22,7 @@
     some_items = [u'FrontPage', u'HelpOnLinking', u'HelpOnMoinWikiSyntax', ]
     serialize(backend, 'some_items.xml', ItemNameList, some_items)
 
-    @copyright: 2009 MoinMoin:ThomasWaldmann
+    @copyright: 2009-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -67,8 +67,8 @@ class XMLSelectiveGenerator(XMLGenerator):
 
     You are expected to subclass this class and overwrite the shall_serialize method.
     """
-    def __init__(self, out, encoding='utf-8'):
-        # note: we have utf-8 as default, base class has iso-8859-1
+    def __init__(self, out, encoding='UTF-8'):
+        # note: we have UTF-8 as default, base class has iso-8859-1
         if out is not None and not hasattr(out, 'write'):
             # None is OK (will become stdout by XMLGenerator.__init__)
             # file-like is also OK
@@ -180,6 +180,7 @@ def serialize(obj, xmlfile, xmlgen_cls=XMLSelectiveGenerator, *args, **kwargs):
                      given after this will be given to xmlgen_cls.__init__()
     """
     xg = xmlgen_cls(xmlfile, *args, **kwargs)
+    xg.startDocument() # <?xml version="1.0" encoding="UTF-8"?>
     obj.serialize(xg)
 
 
@@ -352,10 +353,10 @@ class Value(Serializable):
         return x # override in child class
 
 class UnicodeValue(Value):
-    element_name = 'unicode'
+    element_name = 'str' # py3-style (and shorter)
 
 class StrValue(Value):
-    element_name = 'str'
+    element_name = 'bytes' # py3-style (rarely used)
 
     def element_decode(self, x):
         return x.encode('utf-8')
@@ -423,8 +424,8 @@ class TupleValue(Serializable):
 
     def get_unserializer(self, context, name, attrs):
         mapping = {
-            'str': StrValue,
-            'unicode': UnicodeValue,
+            'bytes': StrValue, # py3-style
+            'str': UnicodeValue, # py3-style
             'bool': BoolValue,
             'int': IntValue,
             'long': LongValue,
@@ -496,7 +497,7 @@ class ItemMeta(Meta):
 
 class Chunk(Serializable):
     element_name = 'chunk'
-    size = 4096
+    size = 200 # later increase value so we have less overhead
 
     def __init__(self, value=None, attrs=None, setter_fn=None):
         self.value = value

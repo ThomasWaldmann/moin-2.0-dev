@@ -18,7 +18,6 @@
 from __future__ import with_statement
 
 import os
-import time
 import errno
 import weakref
 import tempfile
@@ -324,8 +323,6 @@ class MercurialBackend(Backend):
             meta = self._encode_metadata(internal_meta, BACKEND_METADATA_PREFIX)
             meta.update(self._encode_metadata(revision, WIKI_METADATA_PREFIX))
 
-            if not revision.timestamp:
-                revision.timestamp = long(time.time())
             date = datetime.fromtimestamp(revision.timestamp).isoformat(sep=' ')
             user = revision.get(EDIT_LOG_USERID, DEFAULT_USER).encode("utf-8")
             msg = revision.get(EDIT_LOG_COMMENT, DEFAULT_COMMIT_MESSAGE).encode("utf-8")

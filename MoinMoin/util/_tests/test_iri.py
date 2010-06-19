@@ -18,7 +18,7 @@ def test_Iri_init_1():
     assert u.query == 'action=raw'
     assert u.fragment is None
 
-def test_Iri_init_override_2():
+def test_Iri_init_2():
     i = 'wiki://MoinMoin/StartSeite?action=raw#body'
     u = Iri(i, scheme='newwiki', path='/newStartSeite', query='action=false')
     assert u.scheme == 'newwiki'
@@ -26,6 +26,12 @@ def test_Iri_init_override_2():
     assert u.path == '/newStartSeite'
     assert u.query == 'action=false'
     assert u.fragment == 'body'
+
+def test_Iri_init_3():
+    i = Iri(scheme='wiki', path='/StartSeite', query='action=raw')
+    u = Iri(i)
+    assert i is not u
+    assert i == u
 
 def test_Iri_parser():
     i = 'http://moinmo.in/StartSeite?action=raw#body'
@@ -247,7 +253,6 @@ def test_Iri_add_1():
     assert u.fragment is None
 
     u = base + Iri('..')
-    print unicode(u)
     assert u.scheme == 'wiki'
     assert u.authority == 'moinmo.in'
     assert u.path == '/'

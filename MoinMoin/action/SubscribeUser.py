@@ -21,7 +21,7 @@ def show_form(pagename, request):
 
     request.write("""
 <form action="%s" method="POST" enctype="multipart/form-data">
-<input type="hidden" name="action" value="SubscribeUser">
+<input type="hidden" name="do" value="SubscribeUser">
 %s <input type="text" name="users" size="50">
 <input type="submit" value="Subscribe">
 </form>

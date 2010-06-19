@@ -18,21 +18,18 @@
 
     @copyright: 2007 MoinMoin:RadomirDopieralski (creole 0.5 implementation),
                 2007 MoinMoin:ThomasWaldmann (updates)
-                2008,2009 MoinMoin:BastianBlank
+                2008-2010 MoinMoin:BastianBlank
     @license: GNU GPL, see COPYING for details.
 """
 
 from __future__ import absolute_import
 
 import re
-from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
-from MoinMoin.util import iri
-from MoinMoin.util.mime import Type
+from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import moin_page, xlink
 
-from . import default_registry
 from ._args_wiki import parse as parse_arguments
 from ._wiki_macro import ConverterMacro
 
@@ -103,13 +100,8 @@ class _Stack(list):
 
 class Converter(ConverterMacro):
     @classmethod
-    def factory(cls, _request, input, output, **kw):
-        if output.type == 'application' and output.subtype == 'x.moin.document':
-            if input.type == 'text' and input.subtype == 'x.moin.creole':
-                return cls
-            if (input.type == 'x-moin' and input.subtype == 'format' and
-                    input.parameters.get('name') == 'creole'):
-                return cls
+    def factory(cls, input, output, **kw):
+        return cls()
 
     def __call__(self, content, arguments=None):
         iter_content = _Iter(content)
@@ -273,21 +265,13 @@ class Converter(ConverterMacro):
                 args = parse_arguments(args)
 
             # Parse it directly if the type is ourself
-            if not name:
+            if not name or name == 'creole':
                 body = self.parse_block(lines, args)
                 elem = moin_page.page(children=(body, ))
                 stack.top_append(elem)
 
             else:
-                if '/' in name:
-                    type = Type(name)
-                else:
-                    type = Type(type='x-moin', subtype='format', parameters={'name': name})
-
-                converter = default_registry.get(self.request, type, Type('application/x.moin.document'))
-
-                doc = converter(self.request)(lines, args)
-                stack.top_append(doc)
+                stack.top_append(self.parser(name, args, lines))
 
         else:
             elem = moin_page.blockcode(children=(firstline, ))
@@ -405,7 +389,7 @@ class Converter(ConverterMacro):
         """Handle all kinds of links."""
 
         if link_page is not None:
-            target = unicode(iri.Iri(scheme='wiki.local', path=link_page))
+            target = unicode(Iri(scheme='wiki.local', path=link_page))
             text = link_page
         else:
             target = link_url
@@ -654,12 +638,6 @@ class Converter(ConverterMacro):
         data = dict(((k, v) for k, v in match.groupdict().iteritems() if v is not None))
         getattr(self, '%s_%s_repl' % (prefix, match.lastgroup))(*args, **data)
 
-    def macro_text(self, text):
-        conv = self.__class__(self.request, None)
-        conv._stack = [ET.Element(ET.QName(None))]
-        conv.parse_inline(text)
-        return conv._stack[0][:]
-
     def parse_block(self, iter_content, arguments):
         attrib = {}
         if arguments:
@@ -692,5 +670,7 @@ class Converter(ConverterMacro):
         # Handle trailing text
         stack.top_append_ifnotempty(text[pos:])
 
-default_registry.register(Converter.factory)
-
+from . import default_registry
+from MoinMoin.util.mime import Type, type_moin_document, type_moin_creole
+default_registry.register(Converter.factory, type_moin_creole, type_moin_document)
+default_registry.register(Converter.factory, Type('x-moin/format;name=creole'), type_moin_document)

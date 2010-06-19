@@ -17,7 +17,6 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import config, caching, util, wikiutil, user
-from MoinMoin.logfile import eventlog
 from MoinMoin.storage import Backend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 from MoinMoin.support.python_compatibility import set
@@ -480,7 +479,7 @@ class Page(object):
         url = wikiutil.quoteWikinameURL(self.page_name)
         if querystr:
             if isinstance(querystr, dict):
-                action = querystr.get('action', None)
+                action = querystr.get('do', None)
             else:
                 action = None # we don't support getting the action out of a str
 
@@ -680,7 +679,6 @@ class Page(object):
 
         @keyword content_only: if 1, omit http headers, page header and footer
         @keyword content_id: set the id of the enclosing div
-        @keyword count_hit: if 1, add an event to the log
         @keyword send_special: if True, this is a special page send
         @keyword omit_footnotes: if True, do not send footnotes (used by include macro)
         """
@@ -701,22 +699,18 @@ class Page(object):
         self.hilite_re = (keywords.get('hilite_re') or
                           request.values.get('highlight'))
 
-        # count hit?
-        if keywords.get('count_hit', 0):
-            eventlog.EventLog(request).add(request, 'VIEWPAGE', {'pagename': self.page_name})
-
         # load the text
         body = self.data
         pi = self.pi
 
         if 'redirect' in pi and not (
-            'action' in request.values or 'redirect' in request.values or content_only):
+            'do' in request.values or 'redirect' in request.values or content_only):
             # redirect to another page
             # note that by including "action=show", we prevent endless looping
             # (see code in "request") or any cascaded redirection
             pagename, anchor = wikiutil.split_anchor(pi['redirect'])
             redirect_url = Page(request, pagename).url(request,
-                                                       querystr={'action': 'show', 'redirect': self.page_name, },
+                                                       querystr={'do': 'show', 'redirect': self.page_name, },
                                                        anchor=anchor)
             request.http_redirect(redirect_url, code=301)
             return
@@ -811,17 +805,17 @@ class Page(object):
                             openid_username in request.groups[openid_group_name])):
                         html_head = '<link rel="openid2.provider" href="%s">' % \
                                         wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'action': 'serveopenid'})), True)
+                                                                                querystr={'do': 'serveopenid'})), True)
                         html_head += '<link rel="openid.server" href="%s">' % \
                                         wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'action': 'serveopenid'})), True)
+                                                                                querystr={'do': 'serveopenid'})), True)
                         html_head += '<meta http-equiv="x-xrds-location" content="%s">' % \
                                         wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'action': 'serveopenid', 'yadis': 'ep'})), True)
+                                                                                querystr={'do': 'serveopenid', 'yadis': 'ep'})), True)
                     elif self.page_name == request.cfg.page_front_page:
                         html_head = '<meta http-equiv="x-xrds-location" content="%s">' % \
                                         wikiutil.escape(request.getQualifiedURL(self.url(request,
-                                                                                querystr={'action': 'serveopenid', 'yadis': 'idp'})), True)
+                                                                                querystr={'do': 'serveopenid', 'yadis': 'idp'})), True)
 
                 request.theme.send_title(title, page=self,
                                     print_mode=print_mode,

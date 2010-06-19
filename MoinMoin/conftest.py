@@ -69,7 +69,8 @@ except ImportError:
 def init_test_request(given_config):
     request = TestRequest()
     content_acl = given_config.content_acl
-    given_config.namespace_mapping = create_simple_mapping("memory:", content_acl)
+    given_config.namespace_mapping, given_config.router_index_uri = \
+        create_simple_mapping("memory:", content_acl)
     request.given_config = given_config
     request = init(request)
     protect_backends(request)

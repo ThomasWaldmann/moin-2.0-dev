@@ -5,7 +5,7 @@
 
     WSGI application traceback debugger.
 
-    :copyright: (c) 2009 by the Werkzeug Team, see AUTHORS for more details.
+    :copyright: (c) 2010 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
 import mimetypes
@@ -52,6 +52,9 @@ class DebuggedApplication(object):
                                to `True`.
     """
 
+    # this class is public
+    __module__ = 'werkzeug'
+
     def __init__(self, app, evalex=False, request_key='werkzeug.request',
                  console_path='/console', console_init_func=None,
                  show_hidden_frames=False):
@@ -95,7 +98,7 @@ class DebuggedApplication(object):
                 # more, better log something into the error log and fall
                 # back gracefully.
                 environ['wsgi.errors'].write(
-                    'Debugging middleware catched exception in streamed '
+                    'Debugging middleware caught exception in streamed '
                     'response at a point where response headers were already '
                     'sent.\n')
             else:

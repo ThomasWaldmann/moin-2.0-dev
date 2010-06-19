@@ -12,7 +12,6 @@ from __future__ import absolute_import
 
 from MoinMoin import wikiutil
 from MoinMoin.formatter.compatibility import Formatter
-from MoinMoin.util.mime import Type, type_moin_document
 from MoinMoin.util.tree import moin_page
 
 class Converter(object):
@@ -33,7 +32,7 @@ class Converter(object):
 
         return moin_page.page(children=(body, ))
 
-def _factory(request, input, output, **kw):
+def _factory(input, output, request, **kw):
     """
     Creates a class dynamically, which uses the matching old-style parser and
     compatibility formatter.
@@ -51,6 +50,5 @@ def _factory(request, input, output, **kw):
         return type('Converter.%s' % str(name), (Converter, ), {'name': name, 'parser': parser})
 
 from . import default_registry
-# Need to register ourself after all normal parsers, after pygments, but before the wildcard
-default_registry.register(_factory, default_registry.PRIORITY_MIDDLE + 2)
-
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(_factory, Type('x-moin/format'), type_moin_document)

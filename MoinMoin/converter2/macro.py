@@ -50,11 +50,9 @@ class _PseudoRequest(object):
 
 class Converter(object):
     @classmethod
-    def _factory(cls, _request, input, output, macros=None, **kw):
-        if (type_moin_document.issupertype(input) and
-                type_moin_document.issupertype(output) and
-                macros == 'expandall'):
-            return cls
+    def _factory(cls, input, output, request, macros=None, **kw):
+        if macros == 'expandall':
+            return cls(request)
 
     def handle_macro(self, elem, page):
         type = elem.get(moin_page.content_type)
@@ -209,5 +207,5 @@ class Converter(object):
         return tree
 
 from . import default_registry
-default_registry.register(Converter._factory)
-
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(Converter._factory, type_moin_document, type_moin_document)

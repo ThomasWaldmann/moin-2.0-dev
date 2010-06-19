@@ -77,6 +77,17 @@ class Node(object):
     Node class.
     """
 
+    def write(self, write, encoding=None, namespaces={}, method=None):
+        if not method or method == "xml":
+            Writer = XMLWriter
+        elif method == "html":
+            Writer = HTMLWriter
+        else:
+            Writer = TextWriter
+
+        Writer(encoding, namespaces).write(write, self)
+
+
 ##
 # Element class.  This class defines the Element interface, and
 # provides a reference implementation of this interface.
@@ -139,7 +150,7 @@ class Element(Node):
         attrib.update(extra)
         self.tag = tag
         self.attrib = attrib
-        self._children = [self._check_node(i) for i in children]
+        self._children = list(children)
 
     def __repr__(self):
         return "<Element %s at %x>" % (repr(self.tag), id(self))
@@ -174,10 +185,6 @@ class Element(Node):
     # @exception AssertionError If element is not a valid object.
 
     def __setitem__(self, index, element):
-        if isinstance(index, slice):
-            element = [self._check_node(i) for i in element]
-        else:
-            element = self._check_node(element)
         self._children.__setitem__(index, element)
 
     ##
@@ -189,14 +196,6 @@ class Element(Node):
     def __delitem__(self, index):
         self._children.__delitem__(index)
 
-    @staticmethod
-    def _check_node(node):
-        if isinstance(node, (Node, unicode)):
-            return node
-        if isinstance(node, str):
-            return unicode(node)
-        raise TypeError
-
     ##
     # Adds a subelement to the end of this element.
     #
@@ -204,7 +203,6 @@ class Element(Node):
     # @exception AssertionError If a sequence member is not a valid object.
 
     def append(self, element):
-        element = self._check_node(element)
         self._children.append(element)
 
     ##
@@ -215,7 +213,6 @@ class Element(Node):
     # @since 1.3
 
     def extend(self, elements):
-        elements = [self._check_node(i) for i in elements]
         self._children.extend(elements)
 
     ##
@@ -225,7 +222,6 @@ class Element(Node):
     # @exception AssertionError If the element is not a valid object.
 
     def insert(self, index, element):
-        element = self._check_node(element)
         self._children.insert(index, element)
 
     ##
@@ -370,15 +366,24 @@ class Element(Node):
             elif isinstance(e, basestring):
                 yield e
 
-    def write(self, write, encoding=None, namespaces={}, method=None):
-        if not method or method == "xml":
-            Writer = XMLWriter
-        elif method == "html":
-            Writer = HTMLWriter
-        else:
-            Writer = TextWriter
+    def iter_elements(self):
+        """
+        Creates an interator over all direct element children.
+        """
+        for child in self._children:
+            if child.__class__ is Element:
+                yield child
 
-        Writer(encoding, namespaces).write(write, self)
+    def iter_elements_tree(self):
+        """
+        Creates an interator over all elements in document order.
+        """
+        work = [(self ,)]
+        while work:
+            cur = work.pop()
+            for i in cur:
+                yield i
+                work.append(i.iter_elements())
 
 
 ##
@@ -434,13 +439,16 @@ class ProcessingInstruction(Node):
 
 PI = ProcessingInstruction
 
-##
-# QName wrapper.  This can be used to wrap a QName attribute value, in
-# order to get proper namespace handling on output.
-#
-# @return An opaque object, representing the QName.
-
 class QName(unicode):
+    """
+    QName wrapper.  This can be used to wrap a QName attribute value, in
+    order to get proper namespace handling on output.
+
+    @ivar name: local part of the QName
+    @type name: unicode
+    @ivar uri: URI part of the QName
+    @type uri: unicode
+    """
     __slots__ = 'name', 'uri'
 
     def __new__(cls, name, uri=None):
@@ -476,13 +484,7 @@ class QName(unicode):
 
     def __setattr__(self, key, value):
         raise AttributeError('read-only')
-
-    def copy(self):
-        return self.__class__(self.name, self.uri)
-
-    @property
-    def text(self):
-        return self
+    __delattr__ = __setattr__
 
 # --------------------------------------------------------------------
 
@@ -637,59 +639,15 @@ class ElementTree(object):
         write = file.write
         if not encoding:
             encoding = "us-ascii"
-        if not method or method == "xml":
-            Writer = XMLWriter
-        elif method == "html":
-            Writer = HTMLWriter
-        else:
-            Writer = TextWriter
 
         if default_namespace:
             namespaces = namespaces.copy()
             namespaces[default_namespace] = ''
 
-        Writer(encoding, namespaces).write(write, self._root)
+        self._root.write(write, encoding=encoding, namespaces=namespaces, method=method)
 
 # --------------------------------------------------------------------
 # serialization support
-
-##
-# Registers a namespace prefix.  The registry is global, and any
-# existing mapping for either the given prefix or the namespace URI
-# will be removed.
-#
-# @param prefix Namespace prefix.
-# @param uri Namespace uri.  Tags and attributes in this namespace
-#     will be serialized with the given prefix, if at all possible.
-# @raise ValueError If the prefix is reserved, or is otherwise
-#     invalid.
-
-def register_namespace(prefix, uri):
-    import re
-    if re.match("ns\d+$", prefix):
-        raise ValueError("Prefix format reserved for internal use")
-    for k, v in _namespace_map.items():
-        if k == uri or v == prefix:
-            del _namespace_map[k]
-    _namespace_map[uri] = prefix
-
-_namespace_map = {
-    # "well-known" namespace prefixes
-    "http://www.w3.org/XML/1998/namespace": "xml",
-    "http://www.w3.org/1999/xhtml": "html",
-    "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
-    "http://schemas.xmlsoap.org/wsdl/": "wsdl",
-    # xml schema
-    "http://www.w3.org/2001/XMLSchema": "xs",
-    "http://www.w3.org/2001/XMLSchema-instance": "xsi",
-    # dublic core
-    "http://purl.org/dc/elements/1.1/": "dc",
-}
-
-def _raise_serialization_error(text):
-    raise TypeError(
-        "cannot serialize %r (type %s)" % (text, type(text).__name__)
-        )
 
 # --------------------------------------------------------------------
 
@@ -1060,7 +1018,7 @@ class XMLParser(object):
     def _fixname(self, key):
         # expand qname, and convert name string to ascii, if possible
         if key in self._names:
-            return self._names[key].copy()
+            return self._names[key]
         if '}' in key:
             uri, name = key.split('}', 1)
             name = QName(name, uri)
@@ -1167,11 +1125,6 @@ class BaseWriter(object):
         self.encoding = encoding
         self.namespaces = namespaces
 
-    def _encode(self, text):
-        if self.encoding:
-            return text.encode(self.encoding, "xmlcharrefreplace")
-        return text
-
     def _escape_cdata(self, text):
         # escape character data
         # it's worth avoiding do-nothing calls for strings that are
@@ -1183,7 +1136,7 @@ class BaseWriter(object):
             text = text.replace("<", "&lt;")
         if ">" in text:
             text = text.replace(">", "&gt;")
-        return self._encode(text)
+        return text
 
     def _escape_attrib(self, text):
         # escape attribute value
@@ -1200,7 +1153,7 @@ class BaseWriter(object):
         qnames = {None: None}
 
         # maps uri:s to prefixes
-        candidate_namespaces = _namespace_map.copy()
+        candidate_namespaces = self._namespace_map.copy()
         candidate_namespaces = {}
         candidate_namespaces.update(self.namespaces)
         used_namespaces = {}
@@ -1228,43 +1181,89 @@ class BaseWriter(object):
                     # XXX: What happens with undefined namespace?
                     qnames[qname] = qname.name
             except TypeError:
-                _raise_serialization_error(qname)
+                self._raise_serialization_error(qname)
 
         # populate qname and namespaces table
-        if isinstance(elem, Element):
-            for elem in elem.iter():
-                if isinstance(elem, Element):
-                    tag = elem.tag
-                    if isinstance(tag, QName):
-                        add_qname(tag)
-                    elif isinstance(tag, basestring):
-                        add_qname(QName(tag))
-                    elif tag is not None:
-                        _raise_serialization_error(tag)
+        if elem.__class__ is Element:
+            for elem in elem.iter_elements_tree():
+                tag = elem.tag
+                if isinstance(tag, QName):
+                    add_qname(tag)
+                elif isinstance(tag, basestring):
+                    add_qname(QName(tag))
+                elif tag is not None:
+                    self._raise_serialization_error(tag)
 
-                    for key in elem.keys():
-                        if isinstance(key, QName):
-                            add_qname(key)
-                        elif isinstance(key, basestring):
-                            add_qname(QName(key))
-                        elif key is not None:
-                            _raise_serialization_error(key)
+                for key in elem.attrib.iterkeys():
+                    if isinstance(key, QName):
+                        add_qname(key)
+                    elif isinstance(key, basestring):
+                        add_qname(QName(key))
+                    elif key is not None:
+                        self._raise_serialization_error(key)
 
         return qnames, used_namespaces
+
+    @staticmethod
+    def _raise_serialization_error(text):
+        raise TypeError(
+            "cannot serialize %r (type %s)" % (text, type(text).__name__)
+            )
+
+    ##
+    # Registers a namespace prefix.  The registry is global, and any
+    # existing mapping for either the given prefix or the namespace URI
+    # will be removed.
+    #
+    # @param prefix Namespace prefix.
+    # @param uri Namespace uri.  Tags and attributes in this namespace
+    #     will be serialized with the given prefix, if at all possible.
+    # @raise ValueError If the prefix is reserved, or is otherwise
+    #     invalid.
+
+    @classmethod
+    def register_namespace(cls, prefix, uri):
+        import re
+        if re.match("ns\d+$", prefix):
+            raise ValueError("Prefix format reserved for internal use")
+        for k, v in cls._namespace_map.items():
+            if k == uri or v == prefix:
+                del _namespace_map[k]
+        cls._namespace_map[uri] = prefix
+
+    _namespace_map = {
+        # "well-known" namespace prefixes
+        "http://www.w3.org/XML/1998/namespace": "xml",
+        "http://www.w3.org/1999/xhtml": "html",
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
+        "http://schemas.xmlsoap.org/wsdl/": "wsdl",
+        # xml schema
+        "http://www.w3.org/2001/XMLSchema": "xs",
+        "http://www.w3.org/2001/XMLSchema-instance": "xsi",
+        # dublic core
+        "http://purl.org/dc/elements/1.1/": "dc",
+    }
 
     def serialize_start(self, write):
         pass
 
     def write(self, write, element):
         qnames, namespaces = self._namespaces(element)
-        self.serialize_start(write)
-        self.serialize(write, element, qnames, namespaces)
+
+        if self.encoding:
+            def write_encode(text):
+                write(text.encode(self.encoding, "xmlcharrefreplace"))
+        else:
+            write_encode = write
+
+        self.serialize_start(write_encode)
+        self.serialize(write_encode, element, qnames, namespaces)
 
 
 class TextWriter(BaseWriter):
     def serialize(self, write, elem, qnames=None, namespaces=None):
         for part in elem.itertext():
-            write(self._encode(part))
+            write(part)
 
 
 class XMLWriter(BaseWriter):
@@ -1273,7 +1272,7 @@ class XMLWriter(BaseWriter):
             tag = qnames[elem.tag]
 
             if tag is not None:
-                write("<" + tag)
+                write(u"<" + tag)
 
                 if elem.attrib:
                     items = elem.attrib.items()
@@ -1284,44 +1283,44 @@ class XMLWriter(BaseWriter):
                             v = qnames[v]
                         else:
                             v = self._escape_attrib(unicode(v))
-                        write(' ' + k + '="' + v + '"')
+                        write(u' ' + k + u'="' + v + u'"')
                 if namespaces:
                     items = namespaces.items()
                     items.sort(key=lambda x: x[1]) # sort on prefix
                     for v, k in items:
                         if k:
-                            k = ":" + k
-                        write(" xmlns%s=\"%s\"" % (
-                            self._encode(k),
+                            k = u":" + k
+                        write(u" xmlns%s=\"%s\"" % (
+                            k,
                             self._escape_attrib(v)
                             ))
                 if len(elem):
-                    write(">")
+                    write(u">")
                     for e in elem:
                         self.serialize(write, e, qnames)
-                    write("</" + tag + ">")
+                    write(u"</" + tag + u">")
                 else:
-                    write(" />")
+                    write(u" />")
 
             else:
                 for e in elem:
                     self.serialize(write, e, encoding, qnames)
 
         elif isinstance(elem, Comment):
-            write("<!--%s-->" % self._escape_cdata(elem.text))
+            write(u"<!--%s-->" % self._escape_cdata(elem.text))
 
         elif isinstance(elem, ProcessingInstruction):
             text = self._escape_cdata(elem.target)
             if elem.text is not None:
                 text += ' ' + self._escape_cdata(elem.text)
-            write("<?%s?>" % text)
+            write(u"<?%s?>" % text)
 
         else:
             write(self._escape_cdata(unicode(elem)))
 
     def serialize_start(self, write):
         if self.encoding and self.encoding not in ("utf-8", "us-ascii"):
-            write("<?xml version='1.0' encoding='%s'?>\n" % self.encoding)
+            write(u"<?xml version='1.0' encoding='%s'?>\n" % self.encoding)
 
 
 class HTMLWriter(BaseWriter):
@@ -1337,7 +1336,7 @@ class HTMLWriter(BaseWriter):
             tag = qnames[elem.tag]
 
             if tag is not None:
-                write("<" + tag)
+                write(u"<" + tag)
 
                 if elem.attrib:
                     items = elem.attrib.items()
@@ -1349,41 +1348,41 @@ class HTMLWriter(BaseWriter):
                         else:
                             v = self._escape_attrib(unicode(v))
                         # FIXME: handle boolean attributes
-                        write(' ' + k + '="' + v + '"')
+                        write(u' ' + k + u'="' + v + u'"')
                 if namespaces:
                     items = namespaces.items()
                     items.sort(key=lambda x: x[1]) # sort on prefix
                     for v, k in items:
                         if k:
-                            k = ":" + k
-                        write(" xmlns%s=\"%s\"" % (
-                            self._encode(k),
+                            k = u":" + k
+                        write(u" xmlns%s=\"%s\"" % (
+                            k,
                             self._escape_attrib(v)
                             ))
-                write(">")
+                write(u">")
 
                 if tag.lower() in ('script', 'style'):
-                    write(self._encode(''.join(elem.itertext())))
+                    write(u''.join(elem.itertext()))
                 else:
                     for e in elem:
                         self.serialize(write, e, qnames)
 
                 if tag not in self.empty_elements:
-                    write("</" + tag + ">")
+                    write(u"</" + tag + u">")
 
             else:
                 for e in elem:
                     self.serialize(write, e, qnames)
 
         elif isinstance(elem, Comment):
-            write("<!--%s-->" % self._escape_cdata(elem.text))
+            write(u"<!--%s-->" % self._escape_cdata(elem.text))
 
         elif isinstance(elem, ProcessingInstruction):
             text = self._escape_cdata(elem.target)
             if elem.text is not None:
                 text += ' ' + self._escape_cdata(elem.text)
-            write("<?%s?>" % text)
+            write(u"<?%s?>" % text)
 
         else:
-            write(self._escape_cdata(elem))
+            write(self._escape_cdata(unicode(elem)))
 

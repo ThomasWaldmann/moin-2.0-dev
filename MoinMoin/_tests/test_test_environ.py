@@ -28,10 +28,12 @@ class TestStorageEnvironWithoutConfig(object):
         assert hasattr(storage, 'history')
         assert not list(storage.iteritems())
         assert not list(storage.history())
-        itemname = "this item shouldn't exist yet"
+        itemname = u"this item shouldn't exist yet"
         assert py.test.raises(NoSuchItemError, storage.get_item, itemname)
         item = storage.create_item(itemname)
-        rev = item.create_revision(0)
+        new_rev = item.create_revision(0)
+        new_rev['name'] = itemname
+        new_rev['mimetype'] = u'text/plain'
         item.commit()
         assert storage.has_item(itemname)
         assert not storage.has_item("FrontPage")
@@ -53,7 +55,7 @@ class TestStorageEnvironWithConfig(object):
         assert isinstance(self.request.cfg, wikiconfig.Config)
 
         storage = self.request.storage
-        should_be_there = ("FrontPage", "HelpOnLinking", "HelpOnMoinWikiSyntax", )
+        should_be_there = (u"FrontPage", u"HelpOnLinking", u"HelpOnMoinWikiSyntax", )
         for pagename in should_be_there:
             assert storage.has_item(pagename)
             item = storage.get_item(pagename)
@@ -63,12 +65,16 @@ class TestStorageEnvironWithConfig(object):
             assert rev[SYSPAGE_VERSION] == 1
             # check whether this dirties the backend for the second iteration of the test
             new_rev = item.create_revision(1)
+            new_rev['name'] = pagename
+            new_rev['mimetype'] = u'text/plain'
             item.commit()
 
-        itemname = "OnlyForThisTest"
+        itemname = u"OnlyForThisTest"
         assert not storage.has_item(itemname)
         new_item = storage.create_item(itemname)
-        new_item.create_revision(0)
+        new_rev = new_item.create_revision(0)
+        new_rev['name'] = itemname
+        new_rev['mimetype'] = u'text/plain'
         new_item.commit()
         assert storage.has_item(itemname)
 

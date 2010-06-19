@@ -33,7 +33,7 @@
 
     All wrapped classes must, of course, adhere to the normal storage API.
 
-    @copyright: 2003-2008 MoinMoin:ThomasWaldmann,
+    @copyright: 2003-2010 MoinMoin:ThomasWaldmann,
                 2000-2004 Juergen Hermann <jh@web.de>,
                 2003 Gustavo Niemeyer,
                 2005 Oliver Graf,
@@ -50,12 +50,7 @@ from MoinMoin.security import AccessControlList
 from MoinMoin.storage import Item, NewRevision, StoredRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
 
-ADMIN = 'admin'
-READ = 'read'
-WRITE = 'write'
-# One may decide that only items that have been created by a trusted user can be edited.
-CREATE = 'create'
-DESTROY = 'destroy'
+from MoinMoin.config import ADMIN, READ, WRITE, CREATE, DESTROY
 
 
 class AclWrapperBackend(object):
@@ -419,7 +414,7 @@ class AclWrapperItem(Item):
         return wrapped_revision
 
 
-class AclWrapperRevision(DictMixin):
+class AclWrapperRevision(object, DictMixin):
     """
     Wrapper for revision classes. We need to wrap NewRevisions because they allow altering data.
     We need to wrap StoredRevisions since they offer a destroy() method and access to their item.
@@ -449,12 +444,13 @@ class AclWrapperRevision(DictMixin):
         """
         return self._item
 
-    @property
-    def timestamp(self):
-        """
-        @see: NewRevision.timestamp.__doc__
-        """
+    def _get_ts(self):
         return self._revision.timestamp
+
+    def _set_ts(self, ts):
+        self._revision.timestamp = ts
+
+    timestamp = property(_get_ts, _set_ts, doc="This property accesses the creation timestamp of the revision")
 
     @property
     def size(self):

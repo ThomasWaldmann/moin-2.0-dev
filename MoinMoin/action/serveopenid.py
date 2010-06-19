@@ -106,7 +106,7 @@ class MoinOpenIDServer:
         """
            Verify that the given identity matches the current endpoint.
 
-           We always serve out /UserName?action=... for the UserName
+           We always serve out /UserName?do=... for the UserName
            OpenID and this is pure paranoia to make sure it is that way
            on incoming data.
 
@@ -130,7 +130,7 @@ class MoinOpenIDServer:
 
         # some sanity checking
         # even if someone goes to http://johannes.sipsolutions.net/
-        # we'll serve out http://johannes.sipsolutions.net/JohannesBerg?action=serveopenid
+        # we'll serve out http://johannes.sipsolutions.net/JohannesBerg?do=serveopenid
         # (if JohannesBerg is set as page_front_page)
         # For the #OpenIDUser PI, we need to allow the page that includes the PI,
         # hence use check_name here (see above for how it is assigned)
@@ -162,7 +162,7 @@ class MoinOpenIDServer:
         page = wikiutil.getHomePage(self.request)
         if page:
             server_url = self.request.getQualifiedURL(
-                             page.url(self.request, querystr={'action': 'serveopenid'}))
+                             page.url(self.request, querystr={'do': 'serveopenid'}))
             identity = self.request.getQualifiedURL(page.url(self.request))
             return identity, server_url
         return None, None
@@ -185,7 +185,7 @@ class MoinOpenIDServer:
             return
 
         server_url = request.getQualifiedURL(
-                         request.page.url(request, querystr={'action': 'serveopenid'}))
+                         request.page.url(request, querystr={'do': 'serveopenid'}))
 
         yadis_type = form.get('yadis')
         if yadis_type == 'ep':
@@ -332,7 +332,7 @@ delegation on its own.)''') % openidreq.identity)
         request.write(request.formatter.paragraph(0))
 
         form = html.FORM(method='POST', action=request.page.url(request))
-        form.append(html.INPUT(type='hidden', name='action', value='serveopenid'))
+        form.append(html.INPUT(type='hidden', name='do', value='serveopenid'))
         form.append(html.INPUT(type='hidden', name='openid.identity', value=openidreq.identity))
         form.append(html.INPUT(type='hidden', name='openid.return_to', value=openidreq.return_to))
         form.append(html.INPUT(type='hidden', name='openid.trust_root', value=openidreq.trust_root))
@@ -401,7 +401,7 @@ verification.'''))
         request.write(request.formatter.paragraph(0))
 
         form = html.FORM(method='POST', action=request.page.url(request))
-        form.append(html.INPUT(type='hidden', name='action', value='serveopenid'))
+        form.append(html.INPUT(type='hidden', name='do', value='serveopenid'))
 
         nonce = randomString(32, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789')
         form.append(html.INPUT(type='hidden', name='nonce', value=nonce))

@@ -65,7 +65,7 @@ class Settings(UserPrefBase):
         pi = self.request.getPathinfo()
         action = u"%s%s" % (sn, pi)
         _form = html.FORM(action=action)
-        _form.append(html.INPUT(type="hidden", name="action", value="userprefs"))
+        _form.append(html.INPUT(type="hidden", name="do", value="userprefs"))
         _form.append(html.INPUT(type="hidden", name="handler", value="oidserv"))
         return _form
 

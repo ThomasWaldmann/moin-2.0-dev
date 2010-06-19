@@ -10,79 +10,74 @@ special wiki links.
 
 from __future__ import absolute_import
 
-from emeraldtree import ElementTree as ET
-import urllib
-
 from MoinMoin import wikiutil
-from MoinMoin.Page import Page
-from MoinMoin.util import iri
+from MoinMoin.util.iri import Iri
 from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page, xlink
 
 class ConverterBase(object):
+    _tag_xlink_href = xlink.href
+
     def handle_wiki(self, elem, link):
         pass
 
     def handle_wikilocal(self, elem, link, page_name):
         pass
 
-    def recurse(self, elem, page):
-        new_page_href = elem.get(moin_page.page_href)
-        if new_page_href:
-            page = iri.Iri(new_page_href)
-
-        href = elem.get(xlink.href)
-        if href:
-            yield elem, iri.Iri(href), page
-
-        for child in elem:
-            if isinstance(child, ET.Node):
-                for i in self.recurse(child, page):
-                    yield i
-
     def __init__(self, request):
         self.request = request
+        # TODO: request should hold this in a parsed way
+        self.url_root = Iri(request.url_root)
 
-    def __call__(self, tree):
-        for elem, href, page in self.recurse(tree, None):
+    def __call__(self, elem, page=None,
+            __tag_page_href=moin_page.page_href, __tag_href=_tag_xlink_href):
+        new_page_href = elem.get(__tag_page_href)
+        if new_page_href:
+            page = Iri(new_page_href)
+
+        href = elem.get(__tag_href)
+        if href:
+            href = Iri(href)
             if href.scheme == 'wiki.local':
                 self.handle_wikilocal(elem, href, page)
             elif href.scheme == 'wiki':
                 self.handle_wiki(elem, href)
-        return tree
+
+        for child in elem.iter_elements():
+            self(child, page)
+
+        return elem
 
 class ConverterExternOutput(ConverterBase):
     @classmethod
-    def _factory(cls, _request, input, output, links=None, **kw):
-        if (type_moin_document.issupertype(input) and
-                type_moin_document.issupertype(output) and
-                links == 'extern'):
-            return cls
+    def _factory(cls, input, output, request, links=None, **kw):
+        if links == 'extern':
+            return cls(request)
 
     # TODO: Deduplicate code
     def handle_wiki(self, elem, input):
-        link = iri.Iri(query=input.query, fragment=input.fragment)
+        link = Iri(query=input.query, fragment=input.fragment)
 
         if input.authority:
             wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, input.authority, input.path[1:])
 
             if not err:
-                output = iri.Iri(wikiutil.join_wiki(wikiurl, wikitail)) + link
+                output = Iri(wikiutil.join_wiki(wikiurl, wikitail)) + link
 
                 elem.set(html.class_, 'interwiki')
             else:
                 # TODO
                 link.path = input.path[1:]
-                output = iri.Iri(self.request.url_root) + link
+                output = self.url_root + link
 
         else:
             link.path = input.path[1:]
-            output = iri.Iri(self.request.url_root) + link
+            output = self.url_root + link
 
-        elem.set(xlink.href, unicode(output))
+        elem.set(self._tag_xlink_href, output)
 
     def handle_wikilocal(self, elem, input, page):
-        link = iri.Iri(query=input.query, fragment=input.fragment)
+        link = Iri(query=input.query, fragment=input.fragment)
 
         if input.path:
             path = input.path
@@ -96,23 +91,22 @@ class ConverterExternOutput(ConverterBase):
             else:
                 link.path = path
 
-            page = Page(self.request, unicode(link.path), None)
-            if not page.exists():
-                elem.set(html.class_, 'nonexistent')
+            # TODO: new existance check
+            #page = Page(self.request, unicode(link.path), None)
+            #if not page.exists():
+            #    elem.set(html.class_, 'nonexistent')
         else:
             link.path = page.path[1:]
 
-        output = iri.Iri(self.request.url_root) + link
+        output = self.url_root + link
 
-        elem.set(xlink.href, unicode(output))
+        elem.set(self._tag_xlink_href, output)
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
-    def _factory(cls, _request, input, output, links=None, **kw):
-        if (type_moin_document.issupertype(input) and
-                type_moin_document.issupertype(output) and
-                links == 'pagelinks'):
-            return cls
+    def _factory(cls, input, output, links=None, **kw):
+        if links == 'pagelinks':
+            return cls(request)
 
     def handle_wikilocal(self, elem, input, page):
         if not input.path or ':' in input.path:
@@ -125,7 +119,7 @@ class ConverterPagelinks(ConverterBase):
         elif path[0] == '..':
             path = page.path[1:] + path[1:]
 
-        self.links.add(unicode(path))
+        self.links.add(path)
 
     def __call__(self, tree):
         self.links = set()
@@ -135,6 +129,6 @@ class ConverterPagelinks(ConverterBase):
         return self.links
 
 from . import default_registry
-default_registry.register(ConverterExternOutput._factory)
-default_registry.register(ConverterPagelinks._factory)
-
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(ConverterExternOutput._factory, type_moin_document, type_moin_document)
+default_registry.register(ConverterPagelinks._factory, type_moin_document, type_moin_document)

@@ -77,7 +77,7 @@ class Converter(object):
         return moin_page.page(children=(body, ))
 
 
-def _factory(_request, type_input, type_output, **kw):
+def _factory(type_input, type_output, **kw):
     if type_moin_document.issupertype(type_output):
         pygments_type = None
         # first we check the input type against all mimetypes pygments knows:
@@ -114,5 +114,5 @@ def _factory(_request, type_input, type_output, **kw):
 from . import default_registry
 # Pygments type detection is rather expensive, therefore we want to register
 # after all normal parsers but before the compatibility parsers and wildcard
-default_registry.register(_factory, default_registry.PRIORITY_MIDDLE + 1)
+#default_registry.register(_factory, default_registry.PRIORITY_MIDDLE + 1)
 
