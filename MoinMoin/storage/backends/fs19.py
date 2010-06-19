@@ -225,8 +225,11 @@ class FsPageRevision(StoredRevision):
             if revno == item._fs_current and item._backend.deleted_mode == DELETED_MODE_KILL:
                 raise NoSuchRevisionError('deleted_mode wants killing/ignoring')
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
-            # we prepare a faked mtime in case we don't find a better value in edit-log:
-            meta = {EDIT_LOG_MTIME: -1}
+            # we prepare some values for the case we don't find a better value in edit-log:
+            meta = {EDIT_LOG_MTIME: -1, # fake, will get 0 in the end
+                    NAME: item.name, # will get overwritten with name from edit-log
+                                     # if we have an entry there
+                   }
             try:
                 previous_meta = FsPageRevision(item, revno-1)._fs_meta
                 # if this page revision is deleted, we have no on-page metadata.
@@ -255,16 +258,20 @@ class FsPageRevision(StoredRevision):
             except KeyError:
                 if 0 <= revno <= item._fs_current:
                     editlog_data = { # make something up
+                        NAME: item.name,
                         EDIT_LOG_MTIME: os.path.getmtime(revpath),
                         EDIT_LOG_ACTION: u'SAVE',
                     }
             meta, data = wikiutil.split_body(content)
             data = data.encode(config.charset)
         meta.update(editlog_data)
+        if meta[EDIT_LOG_ACTION] == 'SAVE/RENAME':
+            name_old = meta.get(EDIT_LOG_EXTRA)
+            if name_old:
+                meta[NAME_OLD] = name_old
         meta['__size'] = len(data) # needed for converter checks
         format = meta.pop('format', backend.format_default)
         meta[MIMETYPE] = format_to_mimetype.get(format, mimetype_default)
-        meta[NAME] = item.name
         hash_name, hash_digest = hash_hexdigest(data)
         meta[hash_name] = hash_digest
         if item._syspages:
@@ -356,13 +363,13 @@ class EditLog(LogFile):
         """ Parse edit-log line into fields """
         fields = line.strip().split(u'\t')
         fields = (fields + [u''] * self._NUM_FIELDS)[:self._NUM_FIELDS]
-        keys = (EDIT_LOG_MTIME, '__rev', EDIT_LOG_ACTION, '__pagename', EDIT_LOG_ADDR,
+        keys = (EDIT_LOG_MTIME, '__rev', EDIT_LOG_ACTION, NAME, EDIT_LOG_ADDR,
                 EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT)
         result = dict(zip(keys, fields))
         # do some conversions/cleanups/fallbacks:
         result[EDIT_LOG_MTIME] = int(result[EDIT_LOG_MTIME] or 0) / 1000000 # convert usecs to secs
         result['__rev'] = int(result['__rev']) - 1 # old storage is 1-based, we want 0-based
-        del result['__pagename']
+        result[NAME] = wikiutil.unquoteWikiname(result[NAME])
         return result
 
     def find_rev(self, revno):
