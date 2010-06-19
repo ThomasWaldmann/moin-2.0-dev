@@ -6,6 +6,9 @@
 
     This backend is neither intended for nor capable of being used for production.
 
+    Note: we do not support emulation of trashbin-like deletion, you have to
+          choose a deleted_mode (see below) when creating a FSPageBackend.
+
     @copyright: 2008 MoinMoin:JohannesBerg,
                 2008-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
@@ -30,6 +33,9 @@ EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
+DELETED_MODE_KEEP = 'keep'
+DELETED_MODE_KILL = 'kill'
+
 mimetype_default = u'text/x-unidentified-wiki-format'
 format_to_mimetype = {
     'wiki': u'text/x.moin.wiki',
@@ -50,15 +56,25 @@ class FSPageBackend(Backend):
 
     Everything not needed for the migration will likely just raise a NotImplementedError.
     """
-    def __init__(self, path, syspages=False):
+    def __init__(self, path, syspages=False, deleted_mode=DELETED_MODE_KEEP):
         """
         Initialise filesystem backend.
 
         @param path: storage path (data_dir)
         @param syspages: either False (not syspages) or revision number of syspages
+        @param deleted_mode: 'kill' - just ignore deleted pages (pages with
+                                      non-existing current revision) and their attachments
+                                      as if they were not there.
+                                      Non-deleted pages (pages with an existing current
+                                      revision) that have non-current deleted revisions
+                                      will be treated as for 'keep'.
+                             'keep' - keep deleted pages as items with empty revisions,
+                                      keep their attachments. (default)
         """
         self._path = path
         self._syspages = syspages
+        assert deleted_mode in (DELETED_MODE_KILL, DELETED_MODE_KEEP, )
+        self.deleted_mode = deleted_mode
 
     def _get_item_path(self, name, *args):
         """
@@ -166,6 +182,11 @@ class FsPageItem(Item):
         self._fs_current = current
         self._fs_editlog = EditLog(editlogpath)
         self._syspages = backend._syspages
+        if backend.deleted_mode == DELETED_MODE_KILL:
+            try:
+                FsPageRevision(self, current)
+            except NoSuchRevisionError:
+                raise NoSuchItemError('deleted_mode wants killing/ignoring of page %r and its attachments' % itemname)
 
     def iter_attachments(self):
         attachmentspath = self._backend._get_item_path(self.name, 'attachments')
@@ -196,27 +217,28 @@ class FsPageRevision(StoredRevision):
         try:
             content = codecs.open(revpath, 'r', config.charset).read()
         except (IOError, OSError):
-            # XXX TODO: trashbin-like deletion needs different approach XXX
+            if revno == item._fs_current and item._backend.deleted_mode == DELETED_MODE_KILL:
+                raise NoSuchRevisionError('deleted_mode wants killing/ignoring')
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
-            meta = {}
-            # if this page revision is deleted, we have no on-page metadata.
-            # Thus, we have to copy it from the (non-deleted) revision revno-1:
+            # we prepare a faked mtime in case we don't find a better value in edit-log:
+            meta = {EDIT_LOG_MTIME: -1}
             try:
-                previous_rev = FsPageRevision(item, revno-1)
-                meta.update(previous_rev._fs_meta) # XXX do we want all metadata?
+                previous_meta = FsPageRevision(item, revno-1)._fs_meta
+                # if this page revision is deleted, we have no on-page metadata.
+                # but some metadata is required, thus we have to copy it from the
+                # (non-deleted) revision revno-1:
+                for key in [ACL, NAME, MIMETYPE, EDIT_LOG_MTIME, ]:
+                    if key in previous_meta:
+                        meta[key] = previous_meta[key]
             except NoSuchRevisionError:
                 pass # should not happen
+            meta[EDIT_LOG_MTIME] += 1 # it is now either 0 or prev rev mtime + 1
             data = ''
             try:
                 editlog_data = editlog.find_rev(revno)
             except KeyError:
-                try:
-                    previous_rev_mtime = meta[EDIT_LOG_MTIME]
-                except KeyError:
-                    previous_rev_mtime = -1
                 if 0 <= revno <= item._fs_current:
                     editlog_data = { # make something up
-                        EDIT_LOG_MTIME: previous_rev_mtime + 1, # we have no clue when it was, but it was later...
                         EDIT_LOG_ACTION: u'SAVE/DELETE',
                     }
                 else:
