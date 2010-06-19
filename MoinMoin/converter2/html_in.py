@@ -151,6 +151,7 @@ class Converter(object):
         We will detect the name of the tag, and apply an appropriate
         procedure to convert it.
         """
+        print element.tag.name
         if element.tag.name in self.symmetric_tags:
         # Our element can be converted directly, just by changing the namespace
             return self.new_copy_symmetric(element)
@@ -277,6 +278,14 @@ class Converter(object):
         return moin_page.object(attrib)
 
     def visit_xhtml_ul(self, element):
+        # We will process all children (which should be list element normally
+        list_items_elements = self.do_children(element)
+        list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
+        attrib = {}
+        attrib[moin_page('item-label-generate')] = 'unordered'
+        return ET.Element(moin_page.list, attrib=attrib, children=[list_item])
+
+    def visit_xhtml_dir(self, element):
         # We will process all children (which should be list element normally
         list_items_elements = self.do_children(element)
         list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
