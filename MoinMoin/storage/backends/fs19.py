@@ -349,8 +349,8 @@ class EditLog(LogFile):
 
     def parser(self, line):
         """ Parse edit-log line into fields """
-        fields = line.strip().split('\t')
-        fields = (fields + [''] * self._NUM_FIELDS)[:self._NUM_FIELDS]
+        fields = line.strip().split(u'\t')
+        fields = (fields + [u''] * self._NUM_FIELDS)[:self._NUM_FIELDS]
         keys = (EDIT_LOG_MTIME, '__rev', EDIT_LOG_ACTION, '__pagename', EDIT_LOG_ADDR,
                 EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT)
         result = dict(zip(keys, fields))
@@ -368,6 +368,10 @@ class EditLog(LogFile):
         else:
             raise KeyError
         del meta['__rev']
+        meta = dict([(k, v) for k, v in meta.items() if v]) # remove keys with empty values
+        if meta.get(EDIT_LOG_ACTION) == u'SAVENEW':
+            # replace SAVENEW with just SAVE
+            meta[EDIT_LOG_ACTION] = u'SAVE'
         return meta
 
     def find_attach(self, attachname):
