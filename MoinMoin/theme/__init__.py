@@ -4,7 +4,6 @@
 
     @copyright: 2003-2009 MoinMoin:ThomasWaldmann,
                 2008 MoinMoin:RadomirDopieralski
-                2010 MoinMoin:DiogenesAugustoFernandesHerminio
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -31,7 +30,7 @@ import sys, xml
 rss_supported = sys.version_info[:3] >= (2, 5, 1) or '_xmlplus' in xml.__file__
 
 
-class ThemeBase(object):
+class ThemeBase:
     """ Base class for themes
 
     This class supply all the standard template that sub classes can
@@ -164,9 +163,9 @@ class ThemeBase(object):
         self.env.filters['date_format'] = lambda tm, u=request.user: u.getFormattedDate(tm)
         self.env.filters['user_format'] = lambda rev, request=request: \
                                               user.get_printable_editor(request,
-                                                                        rev[EDIT_LOG_USERID],
-                                                                        rev[EDIT_LOG_ADDR],
-                                                                        rev[EDIT_LOG_HOSTNAME])
+                                                                        rev.get(EDIT_LOG_USERID),
+                                                                        rev.get(EDIT_LOG_ADDR),
+                                                                        rev.get(EDIT_LOG_HOSTNAME))
 
     def emit_custom_html(self, html):
         """
@@ -189,30 +188,31 @@ class ThemeBase(object):
         admin inserted in the config file. Everything it enclosed inside
         a div with id="logo".
 
-        @rtype: dict
-        @return: logo variable
+        @rtype: unicode
+        @return: logo html
         """
-        d = {}
+        html = u''
         if self.cfg.logo_string:
             page = wikiutil.getFrontPage(self.request)
             logo = page.link_to_raw(self.request, self.cfg.logo_string)
-            d = { 'logo': logo }
-        return d
+            html = u'''<div id="logo">%s</div>''' % logo
+        return html
 
-    def interwiki(self):
+    def interwiki(self, d):
         """ Assemble the interwiki name display, linking to page_front_page
 
         @param d: parameter dictionary
-        @rtype: dict
-        @return: interwiki link
+        @rtype: string
+        @return: interwiki html
         """
-        d = {}
         if self.request.cfg.show_interwiki:
             page = wikiutil.getFrontPage(self.request)
             text = self.request.cfg.interwikiname or 'Self'
             link = page.link_to(self.request, text=text, rel='nofollow')
-            d = {'interwiki_link' : link}
-        return d
+            html = u'<span id="interwiki">%s<span class="sep">: </span></span>' % link
+        else:
+            html = u''
+        return html
 
     def title(self, d):
         """ Assemble the title (now using breadcrumbs)
@@ -292,8 +292,9 @@ class ThemeBase(object):
                 userlinks.append(d['page'].link_to(request, text=_("Login"),
                                                    querystr=query, id='login', rel='nofollow'))
 
-        #userlinks_html = u'<span class="sep"> | </span>'.join(userlinks)
-        return { 'userlinks' : userlinks }
+        userlinks_html = u'<span class="sep"> | </span>'.join(userlinks)
+        html = u'<div id="username">%s</div>' % userlinks_html
+        return html
 
     def splitNavilink(self, text, localize=1):
         """ Split navibar links into pagename, link to page
@@ -720,7 +721,32 @@ class ThemeBase(object):
             }
         d.update(updates)
 
-        return d
+        html = u'''
+<form id="searchform" method="get" action="%(url)s">
+<div>
+<input type="hidden" name="do" value="fullsearch">
+<input type="hidden" name="context" value="180">
+<label for="searchinput">%(search_label)s</label>
+<input id="searchinput" type="text" name="value" value="%(search_value)s" size="20"
+    onfocus="searchFocus(this)" onblur="searchBlur(this)"
+    onkeyup="searchChange(this)" onchange="searchChange(this)" alt="Search">
+<input id="titlesearch" name="titlesearch" type="submit"
+    value="%(search_title_label)s" alt="Search Titles">
+<input id="fullsearch" name="fullsearch" type="submit"
+    value="%(search_full_label)s" alt="Search Full Text">
+</div>
+</form>
+<script type="text/javascript">
+<!--// Initialize search form
+var f = document.getElementById('searchform');
+f.getElementsByTagName('label')[0].style.display = 'none';
+var e = document.getElementById('searchinput');
+searchChange(e);
+searchBlur(e);
+//-->
+</script>
+''' % d
+        return html
 
     def showversion(self, d, **keywords):
         """
@@ -1139,11 +1165,10 @@ actionsMenuInit('%(label)s');
     def startPage(self):
         """ Start page div with page language and direction
 
-        @rtype: dict
-        @return: language and direction attributes
+        @rtype: unicode
+        @return: page div with language and direction attribtues
         """
-        d = { 'content_lang': self.content_lang_attr()}
-        return d
+        return u'<div id="page"%s>\n' % self.content_lang_attr()
 
     def endPage(self):
         """ End page div
@@ -1161,18 +1186,6 @@ actionsMenuInit('%(label)s');
         @param d: parameter dictionary
         @rtype: unicode
         @return: page header html
-        """
-        
-        # Now pass dicts to render('header.html', newdict)
-        d.update(self.logo())
-        d.update(self.searchform(d))
-        d.update(self.username(d))
-        d.update(self.interwiki())
-        
-        #Start of page
-        d.update(self.startPage())
-        print d
-        return self.render('header.html', d)
         """
         html = [
             # Pre header custom html
@@ -1202,8 +1215,7 @@ actionsMenuInit('%(label)s');
             self.startPage(),
         ]
         return u'\n'.join(html)
-        """
-        
+
     def footer(self, d, **keywords):
         """ Assemble wiki footer
 
@@ -1426,7 +1438,7 @@ actionsMenuInit('%(label)s');
             }
             request.themedict = d
             output.append(self.startPage())
-            output.append(self.interwiki())
+            output.append(self.interwiki(d))
             output.append(self.title(d))
 
         # In standard mode, emit theme.header
@@ -1564,12 +1576,6 @@ actionsMenuInit('%(label)s');
             self.request.redirect()
         return u'<div class="sidebar">%s</div>' % buffer.getvalue()
 
-    def render(self, filename, context={}):
-        """
-        Base function that renders using Jinja2.
-        """
-        template = self.env.get_template(filename)
-        return template.render(**context)
 
 class ThemeNotFound(Exception):
     """ Thrown if the supplied theme could not be found anywhere """
@@ -1616,5 +1622,4 @@ def load_theme_fallback(request, theme_name=None):
             fallback = 2
             from MoinMoin.theme.modernized import Theme
             request.theme = Theme(request)
-
 
