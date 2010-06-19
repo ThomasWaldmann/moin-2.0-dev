@@ -1,8 +1,8 @@
 """
     MoinMoin - Atom Feed
 
-    .../SomeItem?do=atom    # emit SomeItem changes as atom feed
-    .../?do=atom&global=1   # emit global changes as atom feed (item name does not matter)
+    .../SomeItem?do=atom_feed # emit SomeItem changes as atom feed
+    .../?do=atom_feed&all=1   # emit all (global) changes as atom feed (item name does not matter)
 
     @copyright: 2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
@@ -20,8 +20,8 @@ from MoinMoin.items import Item
 
 def execute(item_name, request):
     cfg = request.cfg
-    if request.values.get('global'): # any value will be considered True
-        item_name = u''
+    if request.values.get('all'): # any value will be considered True
+        item_name = u'' # empty item name means "all items"
     title = cfg.sitename
     feed = AtomFeed(title=title, feed_url=request.url, url=request.host_url)
     for rev in request.storage.history(item_name=item_name):
