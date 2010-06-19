@@ -8,6 +8,6 @@
 from MoinMoin.Page import Page
 
 def execute(pagename, request):
-    url = Page(request, pagename).url(request, {'action': 'show', 'mimetype': 'text/docbook'})
+    url = Page(request, pagename).url(request, {'do': 'show', 'mimetype': 'text/docbook'})
     return request.http_redirect(url)
 

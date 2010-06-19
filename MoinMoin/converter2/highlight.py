@@ -12,7 +12,7 @@ from MoinMoin.util.tree import html, moin_page
 
 class Converter(object):
     @classmethod
-    def _factory(cls, _request, input, output, **kw):
+    def _factory(cls, input, output, **kw):
         if input == 'application/x.moin.document' and \
                 output == 'application/x.moin.document;highlight=regex':
             return cls
@@ -54,5 +54,5 @@ class Converter(object):
         return tree
 
 from . import default_registry
-default_registry.register(Converter._factory)
-
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(Converter._factory, type_moin_document, type_moin_document)

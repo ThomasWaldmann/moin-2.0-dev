@@ -8,7 +8,7 @@
     TODO: nearly working, but needs more work at other places,
           e.g. in the router backend, to be useful.
 
-    @copyright: 2008 MoinMoin:ThomasWaldmann
+    @copyright: 2008-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -23,9 +23,7 @@ from MoinMoin import wikiutil, config
 from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
-from MoinMoin.items import ACL, MIMETYPE, \
-                           EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
-                           EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT
+from MoinMoin.items import ACL, MIMETYPE, EDIT_LOG_ACTION, EDIT_LOG_COMMENT
 EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
 class FSError(Exception):
@@ -163,11 +161,6 @@ class FileDirRevision(StoredRevision):
         meta = { # make something up
             EDIT_LOG_MTIME: st.st_mtime,
             EDIT_LOG_ACTION: 'SAVE',
-            EDIT_LOG_ADDR: '0.0.0.0',
-            EDIT_LOG_HOSTNAME: '0.0.0.0',
-            EDIT_LOG_USERID: '',
-            EDIT_LOG_EXTRA: '',
-            EDIT_LOG_COMMENT: '',
             '__size': st.st_size,
         }
         self._fs_meta = meta
@@ -180,7 +173,6 @@ class DirRevision(FileDirRevision):
         FileDirRevision.__init__(self, item, revno)
         self._fs_meta.update({
             MIMETYPE: 'text/x.moin.wiki',
-            'format': 'wiki',
         })
         # create a directory "page" in wiki markup:
         try:

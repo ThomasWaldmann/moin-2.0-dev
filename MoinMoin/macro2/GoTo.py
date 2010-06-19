@@ -18,7 +18,7 @@ class Macro(MacroBlockBase):
 
         return ET.XML("""
 <form xmlns="%s" method="get" action="%s/%s">
-    <input type="hidden" name="action" value="goto" />
+    <input type="hidden" name="do" value="goto" />
     <p>
         <input type="text" name="target" size="30" />
         <input type="submit" value="%s" />

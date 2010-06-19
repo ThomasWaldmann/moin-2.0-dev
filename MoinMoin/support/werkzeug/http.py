@@ -3,7 +3,7 @@
     werkzeug.http
     ~~~~~~~~~~~~~
 
-    Werkzeug comes with a bunch of utilties that help Werkzeug to deal with
+    Werkzeug comes with a bunch of utilities that help Werkzeug to deal with
     HTTP data.  Most of the classes and functions provided by this module are
     used by the wrappers, but they are useful on their own, too, especially if
     the response and request objects are not used.
@@ -13,32 +13,36 @@
     module.
 
 
-    :copyright: (c) 2009 by the Werkzeug Team, see AUTHORS for more details.
+    :copyright: (c) 2010 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
 import re
 import inspect
 try:
-    from email.utils import parsedate_tz, mktime_tz
-except ImportError:
-    from email.Utils import parsedate_tz, mktime_tz
-from cStringIO import StringIO
-from tempfile import TemporaryFile
+    from email.utils import parsedate_tz
+except ImportError: # pragma: no cover
+    from email.Utils import parsedate_tz
 from urllib2 import parse_http_list as _parse_list_header
-from datetime import datetime
-from itertools import chain, repeat
+from datetime import datetime, timedelta
 try:
     from hashlib import md5
-except ImportError:
+except ImportError: # pragma: no cover
     from md5 import new as md5
-from werkzeug._internal import _decode_unicode, HTTP_STATUS_CODES
+
+
+#: HTTP_STATUS_CODES is "exported" from this module.
+#: XXX: move to werkzeug.consts or something
+from werkzeug._internal import HTTP_STATUS_CODES
 
 
 _accept_re = re.compile(r'([^\s;,]+)(?:[^,]*?;\s*q=(\d*(?:\.\d+)?))?')
 _token_chars = frozenset("!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                          '^_`abcdefghijklmnopqrstuvwxyz|~')
 _etag_re = re.compile(r'([Ww]/)?(?:"(.*?)"|(.*?))(?:\s*,\s*|$)')
-_multipart_boundary_re = re.compile('^[ -~]{0,200}[!-~]$')
+_unsafe_header_chars = set('()<>@,;:\"/[]?={} \t')
+_quoted_string_re = r'"[^"\\]*(?:\\.[^"\\]*)*"'
+_option_header_piece_re = re.compile(r';\s*([^\s;=]+|%s)\s*(?:=\s*([^;]+|%s))?\s*' %
+    (_quoted_string_re, _quoted_string_re))
 
 _entity_headers = frozenset([
     'allow', 'content-encoding', 'content-language', 'content-length',
@@ -50,10 +54,6 @@ _hop_by_pop_headers = frozenset([
     'proxy-authorization', 'te', 'trailers', 'transfer-encoding',
     'upgrade'
 ])
-
-#: supported http encodings that are also available in python we support
-#: for multipart messages.
-_supported_multipart_encodings = frozenset(['base64', 'quoted-printable'])
 
 
 def quote_header_value(value, extra_chars='', allow_token=True):
@@ -74,7 +74,7 @@ def quote_header_value(value, extra_chars='', allow_token=True):
     return '"%s"' % value.replace('\\', '\\\\').replace('"', '\\"')
 
 
-def unquote_header_value(value):
+def unquote_header_value(value, is_filename = False):
     r"""Unquotes a header value.  (Reversal of :func:`quote_header_value`).
     This does not use the real unquoting but what browsers are actually
     using for quoting.
@@ -88,7 +88,15 @@ def unquote_header_value(value):
         # RFC is met will result in bugs with internet explorer and
         # probably some other browsers as well.  IE for example is
         # uploading files with "C:\foo\bar.txt" as filename
-        value = value[1:-1].replace('\\\\', '\\').replace('\\"', '"')
+        value = value[1:-1]
+        
+        # if this is a filename and the starting characters look like
+        # a UNC path, then just return the value without quotes.  Using the
+        # replace sequence below on a UNC path has the effect of turning
+        # the leading double slash into a single slash and then
+        # _fix_ie_filename() doesn't work correctly.  See #458.
+        if not is_filename or value[:2] != '\\\\':
+            return value.replace('\\\\', '\\').replace('\\"', '"')
     return value
 
 
@@ -114,6 +122,11 @@ def dump_header(iterable, allow_token=True):
     :func:`parse_list_header`, :func:`parse_set_header` and
     :func:`parse_dict_header`.  This also quotes strings that include an
     equals sign unless you pass it as dict of key, value pairs.
+
+    >>> dump_header({'foo': 'bar baz'})
+    'foo="bar baz"'
+    >>> dump_header(('foo', 'bar baz'))
+    'foo, "bar baz"'
 
     :param iterable: the iterable or dict of values to quote.
     :param allow_token: if set to `False` tokens as values are disallowed.
@@ -143,8 +156,19 @@ def parse_list_header(value):
     contain a comma.  A non-quoted string could have quotes in the
     middle.  Quotes are removed automatically after parsing.
 
+    It basically works like :func:`parse_set_header` just that items
+    may appear multiple times and case sensitivity is preserved.
+
+    The return value is a standard :class:`list`:
+
+    >>> parse_list_header('token, "quoted value"')
+    ['token', 'quoted value']
+
+    To create a header from the :class:`list` again, use the
+    :func:`dump_header` function.
+
     :param value: a string with a list header.
-    :return: list
+    :return: :class:`list`
     """
     result = []
     for item in _parse_list_header(value):
@@ -156,11 +180,24 @@ def parse_list_header(value):
 
 def parse_dict_header(value):
     """Parse lists of key, value pairs as described by RFC 2068 Section 2 and
-    convert them into a python dict.  If there is no value for a key it will
-    be `None`.
+    convert them into a python dict:
+
+    >>> d = parse_dict_header('foo="is a fish", bar="as well"')
+    >>> type(d) is dict
+    True
+    >>> sorted(d.items())
+    [('bar', 'as well'), ('foo', 'is a fish')]
+
+    If there is no value for a key it will be `None`:
+
+    >>> parse_dict_header('key_without_value')
+    {'key_without_value': None}
+
+    To create a header from the :class:`dict` again, use the
+    :func:`dump_header` function.
 
     :param value: a string with a dict header.
-    :return: dict
+    :return: :class:`dict`
     """
     result = {}
     for item in _parse_list_header(value):
@@ -191,26 +228,19 @@ def parse_options_header(value):
     :return: (str, options)
     """
     def _tokenize(string):
-        while string[:1] == ';':
-            string = string[1:]
-            end = string.find(';')
-            while end > 0 and string.count('"', 0, end) % 2:
-                end = string.find(';', end + 1)
-            if end < 0:
-                end = len(string)
-            value = string[:end]
-            yield value.strip()
-            string = string[end:]
+        for match in _option_header_piece_re.finditer(string):
+            key, value = match.groups()
+            key = unquote_header_value(key)
+            if value is not None:
+                value = unquote_header_value(value, key == 'filename')
+            yield key, value
+
+    if not value:
+        return '', {}
 
     parts = _tokenize(';' + value)
-    name = parts.next()
-    extra = {}
-    for part in parts:
-        if '=' in part:
-            key, value = part.split('=', 1)
-            extra[key.strip().lower()] = unquote_header_value(value.strip())
-        else:
-            extra[part.strip()] = None
+    name = parts.next()[0]
+    extra = dict(parts)
     return name, extra
 
 
@@ -271,9 +301,22 @@ def parse_cache_control_header(value, on_update=None, cls=None):
 
 
 def parse_set_header(value, on_update=None):
-    """Parse a set-like header and return a :class:`HeaderSet` object.  The
-    return value is an object that treats the items case-insensitively and
-    keeps the order of the items.
+    """Parse a set-like header and return a :class:`HeaderSet` object:
+
+    >>> hs = parse_set_header('token, "quoted value"')
+
+    The return value is an object that treats the items case-insensitively
+    and keeps the order of the items:
+
+    >>> 'TOKEN' in hs
+    True
+    >>> hs.index('quoted value')
+    1
+    >>> hs
+    HeaderSet(['token', 'quoted value'])
+
+    To create a header from the :class:`HeaderSet` again, use the
+    :func:`dump_header` function.
 
     :param value: a set header to be parsed.
     :param on_update: an optional callable that is called every time a
@@ -331,7 +374,7 @@ def parse_www_authenticate_header(value, on_update=None):
         auth_type, auth_info = value.split(None, 1)
         auth_type = auth_type.lower()
     except (ValueError, AttributeError):
-        return WWWAuthenticate(value.lower(), on_update=on_update)
+        return WWWAuthenticate(value.strip().lower(), on_update=on_update)
     return WWWAuthenticate(auth_type, parse_dict_header(auth_info),
                            on_update)
 
@@ -424,238 +467,27 @@ def parse_date(value):
     if value:
         t = parsedate_tz(value.strip())
         if t is not None:
-            # if no timezone is part of the string we assume UTC
-            if t[-1] is None:
-                t = t[:-1] + (0,)
             try:
-                return datetime.utcfromtimestamp(mktime_tz(t))
-            except (OverflowError, ValueError):
-                # XXX Exception handler added by MoinMoin development:
-                # catch exceptions raised by the stdlib functions if they receive far-off or invalid values.
-                # This can happen if a user agent transmits a broken if-modified-since header:
-                # 'HTTP_IF_MODIFIED_SINCE': 'Mon, 23 Jan 3115 29:41:44 GMT'
-                # 'HTTP_USER_AGENT': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; ja; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'
-                # TODO: remove this patch if we require a werkzeug version > 0.5.1
-                # that has an official fix for this problem.
-                # related werkzeug ticket: http://dev.pocoo.org/projects/werkzeug/ticket/432
-                return None  # just tell we can't parse this
-
-
-def default_stream_factory(total_content_length, filename, content_type,
-                           content_length=None):
-    """The stream factory that is used per default."""
-    if total_content_length > 1024 * 500:
-        return TemporaryFile('wb+')
-    return StringIO()
-
-
-def _make_stream_factory(factory):
-    """this exists for backwards compatibility!, will go away in 0.6."""
-    args, _, _, defaults = inspect.getargspec(factory)
-    required_args = len(args) - len(defaults or ())
-    if inspect.ismethod(factory):
-        required_args -= 1
-    if required_args != 0:
-        return factory
-    from warnings import warn
-    warn(DeprecationWarning('stream factory passed to `parse_form_data` '
-                            'uses deprecated invokation API.'), stacklevel=4)
-    return lambda *a: factory()
-
-
-def _fix_ie_filename(filename):
-    """Internet Explorer 6 transmits the full file name if a file is
-    uploaded.  This function strips the full path if it thinks the
-    filename is Windows-like absolute.
-    """
-    if filename[1:3] == ':\\' or filename[:2] == '\\\\':
-        return filename.split('\\')[-1]
-    return filename
-
-
-def _line_parse(line):
-    """Removes line ending characters and returns a tuple (`stripped_line`,
-    `is_terminated`).
-    """
-    if line[-2:] == '\r\n':
-        return line[:-2], True
-    elif line[-1:] in '\r\n':
-        return line[:-1], True
-    return line, False
-
-
-def parse_multipart(file, boundary, content_length, stream_factory=None,
-                    charset='utf-8', errors='ignore', buffer_size=10 * 1024,
-                    max_form_memory_size=None):
-    """Parse a multipart/form-data stream.  This is invoked by
-    :func:`utils.parse_form_data` if the content type matches.  Currently it
-    exists for internal usage only, but could be exposed as separate
-    function if it turns out to be useful and if we consider the API stable.
-    """
-    # XXX: this function does not support multipart/mixed.  I don't know of
-    #      any browser that supports this, but it should be implemented
-    #      nonetheless.
-
-    # make sure the buffer size is divisible by four so that we can base64
-    # decode chunk by chunk
-    assert buffer_size % 4 == 0, 'buffer size has to be divisible by 4'
-    # also the buffer size has to be at least 1024 bytes long or long headers
-    # will freak out the system
-    assert buffer_size >= 1024, 'buffer size has to be at least 1KB'
-
-    if stream_factory is None:
-        stream_factory = default_stream_factory
-    else:
-        stream_factory = _make_stream_factory(stream_factory)
-
-    if not boundary:
-        raise ValueError('Missing boundary')
-    if not is_valid_multipart_boundary(boundary):
-        raise ValueError('Invalid boundary: %s' % boundary)
-    if len(boundary) > buffer_size:
-        raise ValueError('Boundary longer than buffer size')
-
-    total_content_length = content_length
-    next_part = '--' + boundary
-    last_part = next_part + '--'
-
-    form = []
-    files = []
-    in_memory = 0
-
-    # convert the file into a limited stream with iteration capabilities
-    file = LimitedStream(file, content_length)
-    iterator = chain(make_line_iter(file, buffer_size=buffer_size),
-                     repeat(''))
-
-    def _find_terminator():
-        """The terminator might have some additional newlines before it.
-        There is at least one application that sends additional newlines
-        before headers (the python setuptools package).
-        """
-        for line in iterator:
-            if not line:
-                break
-            line = line.strip()
-            if line:
-                return line
-        return ''
-
-    try:
-        terminator = _find_terminator()
-        if terminator != next_part:
-            raise ValueError('Expected boundary at start of multipart data')
-
-        while terminator != last_part:
-            headers = parse_multipart_headers(iterator)
-            disposition = headers.get('content-disposition')
-            if disposition is None:
-                raise ValueError('Missing Content-Disposition header')
-            disposition, extra = parse_options_header(disposition)
-            filename = extra.get('filename')
-            name = extra.get('name')
-            transfer_encoding = headers.get('content-transfer-encoding')
-
-            content_type = headers.get('content-type')
-            if content_type is None:
-                is_file = False
-            else:
-                content_type = parse_options_header(content_type)[0]
-                is_file = True
-
-            if is_file:
-                if filename is not None:
-                    filename = _fix_ie_filename(_decode_unicode(filename,
-                                                                charset,
-                                                                errors))
-                try:
-                    content_length = int(headers['content-length'])
-                except (KeyError, ValueError):
-                    content_length = 0
-                stream = stream_factory(total_content_length, content_type,
-                                        filename, content_length)
-            else:
-                stream = StringIO()
-
-            buf = ''
-            for line in iterator:
-                if not line:
-                    raise ValueError('unexpected end of stream')
-                if line[:2] == '--':
-                    terminator = line.rstrip()
-                    if terminator in (next_part, last_part):
-                        break
-                if transfer_encoding in _supported_multipart_encodings:
-                    try:
-                        line = line.decode(transfer_encoding)
-                    except:
-                        raise ValueError('could not base 64 decode chunk')
-                # we have something in the buffer from the last iteration.
-                # write that value to the output stream now and clear the buffer.
-                if buf:
-                    stream.write(buf)
-                    buf = ''
-
-                # If the line ends with windows CRLF we write everything except
-                # the last two bytes.  In all other cases however we write everything
-                # except the last byte.  If it was a newline, that's fine, otherwise
-                # it does not matter because we write it the last iteration.  If the
-                # loop aborts early because the end of a part was reached, the last
-                # newline is not written which is exactly what we want.
-                newline_length = line[-2:] == '\r\n' and 2 or 1
-                stream.write(line[:-newline_length])
-                buf = line[-newline_length:]
-                if not is_file and max_form_memory_size is not None:
-                    in_memory += len(line)
-                    if in_memory > max_form_memory_size:
-                        from werkzeug.exceptions import RequestEntityTooLarge
-                        raise RequestEntityTooLarge()
-            else:
-                raise ValueError('unexpected end of part')
-
-            # rewind the stream
-            stream.seek(0)
-
-            if is_file:
-                files.append((name, FileStorage(stream, filename, name,
-                                                content_type,
-                                                content_length)))
-            else:
-                form.append((name, _decode_unicode(stream.read(),
-                                                   charset, errors)))
-    finally:
-        # make sure the whole input stream is read
-        file.exhaust()
-
-    return form, files
-
-
-def parse_multipart_headers(iterable):
-    """Parses multipart headers from an iterable that yields lines (including
-    the trailing newline symbol.
-    """
-    result = []
-    for line in iterable:
-        line, line_terminated = _line_parse(line)
-        if not line_terminated:
-            raise ValueError('unexpected end of line in multipart header')
-        if not line:
-            break
-        elif line[0] in ' \t' and result:
-            key, value = result[-1]
-            result[-1] = (key, value + '\n ' + line[1:])
-        else:
-            parts = line.split(':', 1)
-            if len(parts) == 2:
-                result.append((parts[0].strip(), parts[1].strip()))
-    return Headers(result)
+                year = t[0]
+                # unfortunately that function does not tell us if two digit
+                # years were part of the string, or if they were prefixed
+                # with two zeroes.  So what we do is to assume that 69-99
+                # refer to 1900, and everything below to 2000
+                if year >= 0 and year <= 68:
+                    year += 2000
+                elif year >= 69 and year <= 99:
+                    year += 1900
+                return datetime(*((year,) + t[1:7])) - \
+                       timedelta(seconds=t[-1] or 0)
+            except (ValueError, OverflowError):
+                return None
 
 
 def is_resource_modified(environ, etag=None, data=None, last_modified=None):
     """Convenience method for conditional requests.
 
     :param environ: the WSGI environment of the request to be checked.
-    :param etag: the etag for the response for comparision.
+    :param etag: the etag for the response for comparison.
     :param data: or alternatively the data of the response to automatically
                  generate an etag using :func:`generate_etag`.
     :param last_modified: an optional date of the last modification.
@@ -735,18 +567,12 @@ def is_hop_by_hop_header(header):
     return header.lower() in _hop_by_pop_headers
 
 
-def is_valid_multipart_boundary(boundary):
-    """Checks if the string given is a valid multipart boundary."""
-    return _multipart_boundary_re.match(boundary) is not None
-
-
 # circular dependency fun
-from werkzeug.utils import make_line_iter, FileStorage, LimitedStream
 from werkzeug.datastructures import Headers, Accept, RequestCacheControl, \
      ResponseCacheControl, HeaderSet, ETags, Authorization, \
      WWWAuthenticate
 
 
 # DEPRECATED
-# backwards compatibible imports
+# backwards compatible imports
 from werkzeug.datastructures import MIMEAccept, CharsetAccept, LanguageAccept

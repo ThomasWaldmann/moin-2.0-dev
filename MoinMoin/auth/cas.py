@@ -75,7 +75,6 @@ class CASAuth(BaseAuth):
 
     def request(self, request, user_obj, **kw):
         ticket = request.args.get('ticket')
-        action = request.args.get("action", [])
         logoutRequest = request.args.get('logoutRequest', [])
         url = request.getBaseURL() + urllib.quote_plus(request.getPathinfo().encode('utf-8'))
 
@@ -92,7 +91,7 @@ class CASAuth(BaseAuth):
             return user_obj, True
 
         # anonymous
-        if not ticket and not "login" in action:
+        if not ticket and request.action != "login":
             return user_obj, True
 
         # valid ticket on CAS

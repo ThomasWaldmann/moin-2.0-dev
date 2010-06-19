@@ -4,24 +4,21 @@ MoinMoin - Moin Wiki input converter
 @copyright: 2000-2002 Juergen Hermann <jh@web.de>,
             2006-2008 MoinMoin:ThomasWaldmann,
             2007 MoinMoin:ReimarBauer,
-            2008,2009 MoinMoin:BastianBlank
+            2008-2010 MoinMoin:BastianBlank
 @license: GNU GPL, see COPYING for details.
 """
 
 from __future__ import absolute_import
 
 import re
-from emeraldtree import ElementTree as ET
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import config, wikiutil
-from MoinMoin.util import iri
-from MoinMoin.util.mime import Type, type_moin_document, type_moin_wiki
+from MoinMoin import wikiutil
+from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import html, moin_page, xlink
 
-from . import default_registry
 from ._args import Arguments
 from ._args_wiki import parse as parse_arguments
 from ._wiki_macro import ConverterMacro
@@ -64,7 +61,7 @@ class _Stack(object):
     class Item(object):
         def __init__(self, elem):
             self.elem = elem
-            if elem.tag.uri == moin_page.namespace:
+            if elem.tag.uri == moin_page:
                 self.name = elem.tag.name
             else:
                 self.name = None
@@ -174,12 +171,8 @@ class _TableArguments(object):
 
 class Converter(ConverterMacro):
     @classmethod
-    def factory(cls, _request, input, output, **kw):
-        if type_moin_document.issupertype(output):
-            if type_moin_wiki.issupertype(input):
-                return cls
-            if Type('x-moin/format;name=wiki').issupertype(input):
-                return cls
+    def factory(cls, input, output, **kw):
+        return cls()
 
     def __call__(self, content, arguments=None):
         iter_content = _Iter(content)
@@ -327,20 +320,8 @@ class Converter(ConverterMacro):
                 stack.top_append(elem)
                 return
 
-            if '/' in nowiki_name:
-                type = Type(nowiki_name)
-            else:
-                type = Type(type='x-moin', subtype='format', parameters={'name': nowiki_name})
-
-            try:
-                converter = default_registry.get(self.request, type, Type('application/x.moin.document'))
-            except TypeError:
-                # XXX
-                pass
-            else:
-                doc = converter(self.request)(lines, args)
-                stack.top_append(doc)
-                return
+            stack.top_append(self.parser(nowiki_name, args, lines))
+            return
 
         elem = moin_page.blockcode()
         stack.top_append(elem)
@@ -743,10 +724,10 @@ class Converter(ConverterMacro):
                 path, fragment = link_item.rsplit('#', 1)
             else:
                 path, fragment = link_item, None
-            target = unicode(iri.Iri(scheme='wiki.local', path=path, query=query, fragment=fragment))
+            target = Iri(scheme='wiki.local', path=path, query=query, fragment=fragment)
             text = link_item
         else:
-            target = unicode(iri.Iri(link_url))
+            target = Iri(link_url)
             text = link_url
         element = moin_page.a(attrib={xlink.href: target})
         stack.push(element)
@@ -851,10 +832,10 @@ class Converter(ConverterMacro):
                 # by default, we want the item's get url for transclusion of raw data:
                 args['do'] = 'get'
             query = wikiutil.makeQueryString(args)
-            target = unicode(iri.Iri(scheme='wiki.local', path=object_item, query=query, fragment=None))
+            target = Iri(scheme='wiki.local', path=object_item, query=query, fragment=None)
             text = object_item
         else:
-            target = unicode(iri.Iri(object_url))
+            target = Iri(object_url)
             text = object_url
 
         attrib = {xlink.href: target}
@@ -1008,148 +989,7 @@ class Converter(ConverterMacro):
         stack.top_append_ifnotempty(text[pos:])
 
 
-class ConverterFormat19(Converter):
-    @classmethod
-    def factory(cls, _request, input, output, **kw):
-        if type_moin_document.issupertype(output):
-            if (type_moin_wiki.issupertype(input)
-                    and input.parameters.get('format') == '1.9'):
-                return cls
-            if Type('x-moin/format;name=wiki;format=1.9').issupertype(input):
-                return cls
-
-    inline_freelink = r"""
-         (?:
-          (?<![%(u)s%(l)s/])  # require anything not upper/lower/slash before
-          |
-          ^  # ... or beginning of line
-         )
-         (?P<freelink_bang>\!)?  # configurable: avoid getting CamelCase rendered as link
-         (?P<freelink>
-          (?P<freelink_interwiki_ref>
-           [A-Z][a-zA-Z]+
-          )
-          \:
-          (?P<freelink_interwiki_page>
-           (?=\S*[%(u)s%(l)s0..9]\S* )  # make sure there is something non-blank with at least one alphanum letter following
-           [^\s"\'}\]|:,.\)?!]+  # we take all until we hit some blank or punctuation char ...
-          )
-          |
-          (?P<freelink_page>
-           (?:
-            (%(parent)s)*  # there might be either ../ parent prefix(es)
-            |
-            ((?<!%(child)s)%(child)s)?  # or maybe a single / child prefix (but not if we already had it before)
-           )
-           (
-            ((?<!%(child)s)%(child)s)?  # there might be / child prefix (but not if we already had it before)
-            (?:[%(u)s][%(l)s]+){2,}  # at least 2 upper>lower transitions make CamelCase
-           )+  # we can have MainPage/SubPage/SubSubPage ...
-           (?:
-            \#  # anchor separator          TODO check if this does not make trouble at places where word_rule is used
-            \S+  # some anchor name
-           )?
-          )
-          |
-          (?P<freelink_email>
-           [-\w._+]+  # name
-           \@  # at
-           [\w-]+(\.[\w-]+)+  # server/domain
-          )
-         )
-         (?:
-          (?![%(u)s%(l)s/])  # require anything not upper/lower/slash following
-          |
-          $  # ... or end of line
-         )
-    """ % {
-        'u': config.chars_upper,
-        'l': config.chars_lower,
-        'child': re.escape(wikiutil.CHILD_PREFIX),
-        'parent': re.escape(wikiutil.PARENT_PREFIX),
-    }
-
-    def inline_freelink_repl(self, stack, freelink, freelink_bang=None,
-            freelink_interwiki_page=None, freelink_interwiki_ref=None,
-            freelink_page=None, freelink_email=None):
-        if freelink_bang:
-            stack.top_append(freelink)
-            return
-
-        attrib = {}
-
-        if freelink_page:
-            page = freelink_page.encode('utf-8')
-            if '#' in page:
-                path, fragment = page.rsplit('#', 1)
-            else:
-                path, fragment = page, None
-            link = iri.Iri(scheme='wiki.local', path=path, fragment=fragment)
-            text = freelink_page
-
-        elif freelink_email:
-            link = 'mailto:' + freelink_email
-            text = freelink_email
-
-        else:
-            wikitag_bad = wikiutil.resolve_interwiki(self.request,
-                    freelink_interwiki_ref, freelink_interwiki_page)[3]
-            if wikitag_bad:
-                stack.top_append(freelink)
-                return
-
-            link = iri.Iri(scheme='wiki',
-                    authority=freelink_interwiki_ref,
-                    path='/' + freelink_interwiki_page)
-            text = freelink_interwiki_page
-
-        attrib[xlink.href] = unicode(link)
-
-        element = moin_page.a(attrib, children=[text])
-        stack.top_append(element)
-
-    inline_url = r"""
-        (?P<url>
-            (
-                ^
-                |
-                (?<=
-                    \s
-                    |
-                    [.,:;!?()/=]
-                )
-            )
-            (?P<url_target>
-                # TODO: config.url_schemas
-                (http|https|ftp|nntp|news|mailto|telnet|file|irc):
-                \S+?
-            )
-            (
-                $
-                |
-                (?=
-                    \s
-                    |
-                    [,.:;!?()]
-                    (\s | $)
-                )
-            )
-        )
-    """
-
-    def inline_url_repl(self, stack, url, url_target):
-        url = unicode(iri.Iri(url_target))
-        attrib = {xlink.href: url}
-        element = moin_page.a(attrib=attrib, children=[url_target])
-        stack.top_append(element)
-
-    inline = Converter.inline + (
-        inline_freelink,
-        inline_url,
-    )
-    inline_re = re.compile('|'.join(inline), re.X | re.U)
-
-
-default_registry.register(ConverterFormat19.factory)
-default_registry.register(Converter.factory)
-
+from . import default_registry
+from MoinMoin.util.mime import Type, type_moin_document, type_moin_wiki
+default_registry.register(Converter.factory, type_moin_wiki, type_moin_document)
+default_registry.register(Converter.factory, Type('x-moin/format;name=wiki'), type_moin_document)

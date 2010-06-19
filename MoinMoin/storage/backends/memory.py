@@ -24,13 +24,27 @@ import StringIO
 from threading import Lock
 import time
 
-from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision, Revision
+from MoinMoin.storage import Backend as BackendBase
+from MoinMoin.storage import Item as ItemBase
+from MoinMoin.storage import StoredRevision as StoredRevisionBase
+from MoinMoin.storage import NewRevision as NewRevisionBase
+from MoinMoin.storage import Revision as RevisionBase
+
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError
 
 
-class MemoryBackend(Backend):
+class Item(ItemBase):
+    pass
+
+class StoredRevision(StoredRevisionBase):
+    pass
+
+class NewRevision(NewRevisionBase):
+    pass
+
+class MemoryBackend(BackendBase):
     Item = Item
     StoredRevision = StoredRevision
     NewRevision = NewRevision
@@ -41,7 +55,7 @@ class MemoryBackend(Backend):
     Docstrings for the methods can be looked up in the superclass Backend, found
     in MoinMoin.storage.
     """
-    def __init__(self, uri=''):
+    def __init__(self, backend_uri=''):
         """
         Initialize this Backend.
 
@@ -254,8 +268,6 @@ class MemoryBackend(Backend):
 
         revision._data.seek(0)
 
-        if revision.timestamp is None:
-            revision.timestamp = long(time.time())
         if revision._metadata is None:
             revision._metadata = {}
         revision._metadata['__timestamp'] = revision.timestamp
@@ -394,7 +406,7 @@ def _get_thingie_id(thingie, item):
 
 def _retval_to_expr(retval):
     """ Determines whether we need to do an assignment and generates the assignment subexpr if necessary. """
-    for thingie, klass in (("item", Item), ("rev", Revision)):
+    for thingie, klass in (("item", Item), ("rev", RevisionBase)):
         if isinstance(retval, klass):
             return _get_thingie_id(thingie, retval) + " = "
     return ""

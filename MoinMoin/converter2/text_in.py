@@ -20,13 +20,8 @@ class Converter(object):
     """
 
     @classmethod
-    def factory(cls, _request, type_input, type_output, **kw):
-        if (type_input.type == 'text' and
-                type_output == 'application/x.moin.document'):
-            return cls
-
-    def __init__(self, _request):
-        pass
+    def factory(cls, type_input, type_output, **kw):
+        return cls()
 
     def __call__(self, content, arguments=None):
         """Parse the text and return DOM tree."""
@@ -42,6 +37,5 @@ class Converter(object):
         return moin_page.page(children=(body, ))
 
 from . import default_registry
-# Register wildcards behind anything else
-default_registry.register(Converter.factory, default_registry.PRIORITY_LAST)
-
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(Converter.factory, Type(type='text'), type_moin_document)

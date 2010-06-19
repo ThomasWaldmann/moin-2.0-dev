@@ -227,8 +227,8 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
         if request.method != 'POST':
             return
 
-        if not wikiutil.checkTicket(request, form['ticket']):
-            return
+        if not wikiutil.checkTicket(request, form.get('ticket', '')):
+            return _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'userprefs.prefs'}
 
         if 'save' in form: # Save user profile
             return self._save_user_prefs()
@@ -390,7 +390,7 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
                     .append('\n'.join(request.user.getQuickLinks())),
             ], valign="top")
 
-            self._form.append(html.INPUT(type="hidden", name="action", value="userprefs"))
+            self._form.append(html.INPUT(type="hidden", name="do", value="userprefs"))
             self._form.append(html.INPUT(type="hidden", name="handler", value="prefs"))
 
             ticket = wikiutil.createTicket(request)

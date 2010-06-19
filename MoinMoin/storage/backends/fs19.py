@@ -7,7 +7,7 @@
     This backend is neither intended for nor capable of being used for production.
 
     @copyright: 2008 MoinMoin:JohannesBerg,
-                2008 MoinMoin:ThomasWaldmann
+                2008-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -17,7 +17,7 @@ from StringIO import StringIO
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import wikiutil
+from MoinMoin import wikiutil, config
 from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
@@ -30,17 +30,17 @@ EDIT_LOG_MTIME = '__timestamp' # does not exist in storage any more
 
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 
-mimetype_default = "text/x-unidentified-wiki-format"
+mimetype_default = u'text/x-unidentified-wiki-format'
 format_to_mimetype = {
-    'wiki': 'text/x.moin.wiki',
-    'text/wiki': 'text/x.moin.wiki',
-    'text/moin-wiki': 'text/x.moin.wiki',
-    'creole': 'text/x.moin.creole',
-    'text/creole': 'text/x.moin.creole',
-    'rst': 'text/rst',
-    'text/rst': 'text/rst',
-    'plain': 'text/plain',
-    'text/plain': 'text/plain',
+    'wiki': u'text/x.moin.wiki',
+    'text/wiki': u'text/x.moin.wiki',
+    'text/moin-wiki': u'text/x.moin.wiki',
+    'creole': u'text/x.moin.creole',
+    'text/creole': u'text/x.moin.creole',
+    'rst': u'text/rst',
+    'text/rst': u'text/rst',
+    'plain': u'text/plain',
+    'text/plain': u'text/plain',
 }
 
 
@@ -194,7 +194,7 @@ class FsPageRevision(StoredRevision):
         editlog = item._fs_editlog
         # we just read the page and parse it here, makes the rest of the code simpler:
         try:
-            content = open(revpath, 'r').read()
+            content = codecs.open(revpath, 'r', config.charset).read()
         except (IOError, OSError):
             # XXX TODO: trashbin-like deletion needs different approach XXX
             # handle deleted revisions (for all revnos with 0<=revno<=current) here
@@ -217,12 +217,7 @@ class FsPageRevision(StoredRevision):
                 if 0 <= revno <= item._fs_current:
                     editlog_data = { # make something up
                         EDIT_LOG_MTIME: previous_rev_mtime + 1, # we have no clue when it was, but it was later...
-                        EDIT_LOG_ACTION: 'SAVE/DELETE',
-                        EDIT_LOG_ADDR: '0.0.0.0',
-                        EDIT_LOG_HOSTNAME: '0.0.0.0',
-                        EDIT_LOG_USERID: '',
-                        EDIT_LOG_EXTRA: '',
-                        EDIT_LOG_COMMENT: '',
+                        EDIT_LOG_ACTION: u'SAVE/DELETE',
                     }
                 else:
                     raise NoSuchRevisionError('Item %r has no revision %d (not even a deleted one)!' %
@@ -234,14 +229,10 @@ class FsPageRevision(StoredRevision):
                 if 0 <= revno <= item._fs_current:
                     editlog_data = { # make something up
                         EDIT_LOG_MTIME: os.path.getmtime(revpath),
-                        EDIT_LOG_ACTION: 'SAVE',
-                        EDIT_LOG_ADDR: '0.0.0.0',
-                        EDIT_LOG_HOSTNAME: '0.0.0.0',
-                        EDIT_LOG_USERID: '',
-                        EDIT_LOG_EXTRA: '',
-                        EDIT_LOG_COMMENT: '',
+                        EDIT_LOG_ACTION: u'SAVE',
                     }
             meta, data = wikiutil.split_body(content)
+            data = data.encode(config.charset)
         meta.update(editlog_data)
         meta['__size'] = len(data) # needed for converter checks
         format = meta.pop('format', None)
@@ -260,17 +251,9 @@ class FsPageRevision(StoredRevision):
         self._fs_data_fname = None # "file" is already opened here:
         self._fs_data_file = StringIO(data)
 
-        # Small hack to make migration to 2.0 clean. This removes any occurrences of
-        # the pre-2.0 ACL capabilities 'revert' and 'delete'. (They have been killed
-        # in 2.0.
         acl_line = self._fs_meta.get(ACL)
-        if acl_line:
-            for old_priv in ('revert', 'delete'):
-                # possible occurrences:
-                acl_line = acl_line.replace(old_priv + ',', '')  # All:old_priv,read
-                acl_line = acl_line.replace(',' + old_priv, '')  # All:read,old_priv
-                acl_line = acl_line.replace(':' + old_priv, '')  # JoePrevert:old_priv
-            self._fs_meta[ACL] = acl_line
+        if acl_line is not None:
+            self._fs_meta[ACL] = regenerate_acl(acl_line, config.ACL_RIGHTS_VALID)
 
 
 class FsAttachmentItem(Item):
@@ -315,19 +298,14 @@ class FsAttachmentRevision(StoredRevision):
         except KeyError:
             editlog_data = { # make something up
                 EDIT_LOG_MTIME: os.path.getmtime(attpath),
-                EDIT_LOG_ACTION: 'SAVE',
-                EDIT_LOG_ADDR: '0.0.0.0',
-                EDIT_LOG_HOSTNAME: '0.0.0.0',
-                EDIT_LOG_USERID: '',
-                EDIT_LOG_EXTRA: '',
-                EDIT_LOG_COMMENT: '',
+                EDIT_LOG_ACTION: u'SAVE',
             }
         meta = editlog_data
         meta['__size'] = 0 # not needed for converter
         # attachments in moin 1.9 were protected by their "parent" page's acl
         if item._fs_parent_acl is not None:
             meta[ACL] = item._fs_parent_acl # XXX not needed for acl_hierarchic
-        meta[MIMETYPE] = wikiutil.MimeType(filename=item._fs_attachname).mime_type()
+        meta[MIMETYPE] = unicode(wikiutil.MimeType(filename=item._fs_attachname).mime_type())
         hash_name, hash_digest = hash_hexdigest(open(attpath, 'rb'))
         meta[hash_name] = hash_digest
         if item._syspages:
@@ -358,8 +336,6 @@ class EditLog(LogFile):
         result[EDIT_LOG_MTIME] = int(result[EDIT_LOG_MTIME] or 0) / 1000000 # convert usecs to secs
         result['__rev'] = int(result['__rev']) - 1 # old storage is 1-based, we want 0-based
         del result['__pagename']
-        if not result[EDIT_LOG_HOSTNAME]:
-            result[EDIT_LOG_HOSTNAME] = result[EDIT_LOG_ADDR]
         return result
 
     def find_rev(self, revno):
@@ -376,14 +352,34 @@ class EditLog(LogFile):
         """ Find metadata for some attachment name in the edit-log. """
         for meta in self.reverse(): # use reverse iteration to get the latest upload's data
             if (meta['__rev'] == 99999998 and  # 99999999-1 because of 0-based
-                meta[EDIT_LOG_ACTION] =='ATTNEW' and
+                meta[EDIT_LOG_ACTION] == 'ATTNEW' and
                 meta[EDIT_LOG_EXTRA] == attachname):
                 break
         else:
             raise KeyError
         del meta['__rev']
-        meta[EDIT_LOG_ACTION] =='SAVE'
+        meta[EDIT_LOG_ACTION] = u'SAVE'
         return meta
+
+
+from MoinMoin import security
+
+def regenerate_acl(acl_string, acl_rights_valid):
+    """ recreate ACL string to remove invalid rights """
+    assert isinstance(acl_string, unicode)
+    result = []
+    for modifier, entries, rights in security.ACLStringIterator(acl_rights_valid, acl_string):
+        if (entries, rights) == (['Default'], []):
+            result.append("Default")
+        else:
+            result.append("%s%s:%s" % (
+                          modifier,
+                          u','.join(entries),
+                          u','.join(rights) # iterator has removed invalid rights
+                         ))
+    result = u' '.join(result)
+    logging.debug("regenerate_acl %r -> %r" % (acl_string, result))
+    return result
 
 
 import re, codecs
@@ -518,5 +514,5 @@ def hash_hexdigest(content, bufsize=4096):
         hash.update(content)
     else:
         raise ValueError("unsupported content object: %r" % content)
-    return hash_name, hash.hexdigest()
+    return hash_name, unicode(hash.hexdigest())
 

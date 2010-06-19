@@ -35,7 +35,7 @@ def prep_page_changed_mail(request, page, comment, email_lang, revisions, trivia
     _ = lambda text: request.getText(text, lang=email_lang)
 
     if len(revisions) >= 2:
-        querystr = {'action': 'diff',
+        querystr = {'do': 'diff',
                     'rev2': str(revisions[0]),
                     'rev1': str(revisions[1])}
     else:

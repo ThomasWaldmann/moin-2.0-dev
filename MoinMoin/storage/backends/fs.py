@@ -5,12 +5,15 @@
          some are maybe NOT.
 
     @copyright: 2008 MoinMoin:JohannesBerg,
-                2009 MoinMoin:ThomasWaldmann
+                2009-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, struct, tempfile, random, errno, shutil, time
+import os, struct, tempfile, random, errno, shutil
 import cPickle as pickle
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 try:
     import cdb
@@ -19,7 +22,12 @@ except ImportError:
 
 from MoinMoin.util.lock import ExclusiveLock
 from MoinMoin.util import filesys
-from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
+
+from MoinMoin.storage import Backend as BackendBase
+from MoinMoin.storage import Item as ItemBase
+from MoinMoin.storage import StoredRevision as StoredRevisionBase
+from MoinMoin.storage import NewRevision as NewRevisionBase
+
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
                                    ItemAlreadyExistsError, \
                                    RevisionAlreadyExistsError, RevisionNumberMismatchError, \
@@ -27,7 +35,17 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, \
 
 PICKLEPROTOCOL = 1
 
-class FSBackend(Backend):
+
+class Item(ItemBase):
+    pass
+
+class StoredRevision(StoredRevisionBase):
+    pass
+
+class NewRevision(NewRevisionBase):
+    pass
+
+class FSBackend(BackendBase):
     """
     Basic filesystem backend, described at
     http://moinmo.in/JohannesBerg/FilesystemStorage
@@ -238,8 +256,7 @@ class FSBackend(Backend):
         rev = NewRevision(item, revno)
         rev._revno = revno
         fd, rev._fs_revpath = tempfile.mkstemp('-rev', 'tmp-', self._path)
-        rev._fs_file = os.fdopen(fd, 'wb') # XXX keeps file open as long a rev exists
-        f = rev._fs_file
+        rev._fs_file = f = os.fdopen(fd, 'wb+') # XXX keeps file open as long a rev exists
         f.write(struct.pack('!I', self._revmeta_reserved_space + 4))
         f.seek(self._revmeta_reserved_space + 4)
 
@@ -381,9 +398,6 @@ class FSBackend(Backend):
                         self._add_item_internally_locked, (item, newrev, metadata))
 
     def _commit_item(self, rev):
-        if rev.timestamp is None:
-            rev.timestamp = long(time.time())
-
         item = rev.item
         metadata = {'__timestamp': rev.timestamp}
         metadata.update(rev)
@@ -395,8 +409,7 @@ class FSBackend(Backend):
             oldrp = rev._fs_revpath
             oldf = rev._fs_file
             fd, rev._fs_revpath = tempfile.mkstemp('-rev', 'tmp-', self._path)
-            rev._fs_file = os.fdopen(fd, 'wb')
-            f = rev._fs_file
+            rev._fs_file = f = os.fdopen(fd, 'wb+')
             f.write(struct.pack('!I', len(md) + 4))
             # write metadata
             f.write(md)
@@ -512,14 +525,12 @@ class FSBackend(Backend):
 
     def _get_revision_metadata(self, rev):
         if rev._fs_file is None:
-            f = open(rev._fs_revpath, 'rb')
+            rev._fs_file = f = open(rev._fs_revpath, 'rb+') # XXX keeps file open as long as rev exists
+                                                            # XXX further, this is easily triggered by accessing ANY
+                                                            # XXX revision metadata (e.g. the timestamp or size or ACL)
             datastart = f.read(4)
             datastart = struct.unpack('!L', datastart)[0]
-            pos = datastart
-            rev._fs_file = f # XXX keeps file open as long as rev exists
-                             # XXX further, this is easily triggered by accessing ANY
-                             # XXX revision metadata (e.g. the timestamp or size or ACL)
-            rev._datastart = datastart
+            rev._datastart = pos = datastart
         else:
             f = rev._fs_file
             pos = f.tell()
@@ -553,4 +564,5 @@ class FSBackend(Backend):
 
         pos = revision._fs_file.tell()
         return pos - revision._datastart
+
 

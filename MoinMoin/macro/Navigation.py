@@ -160,7 +160,7 @@ class Navigation:
             # projection mode
             label = _('Wiki')
             toggle = {}
-            result.append(pg.link_to(request, text=_('Edit'), querystr={'action': 'edit'}))
+            result.append(pg.link_to(request, text=_('Edit'), querystr={'do': 'modify'}))
             result.append(' &nbsp; ')
         else:
             # wiki mode

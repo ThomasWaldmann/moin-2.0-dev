@@ -35,19 +35,21 @@ class Namespace(unicode):
 
         The given key is used to generate a QName within the represented
         namespace.  Two modifications are applied to the key:
-         - a trailing "_" (underline) is removed and
-         - all included "_" (underline) are replaced by "-" (minus).
+         - a trailing "_" (underscore) is removed and
+         - all included "_" (underscore) are replaced by "-" (hyphen).
 
         @return: A Name
         """
-        if key.startswith('_'):
-            raise AttributeError(key)
-        if key.endswith('_'):
-            key = key[:-1]
-        return Name(key.replace('_', '-'), self)
+        if '_' in key:
+            if key.startswith('_'):
+                raise AttributeError(key)
+            if key.endswith('_'):
+                key = key[:-1]
+            key = key.replace('_', '-')
+        return Name(key, self)
 
     def __repr__(self):
-        return '<%s(%r)>' % (self.__class__.__name__, unicode(self))
+        return '<%s(%r)>' % (self.__class__.__name__, self)
 
     @property
     def namespace(self):

@@ -16,18 +16,26 @@ class Type(object):
     @type parameters: dict
     """
 
+    __token_allowed = s = frozenset(r"""!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`abcdefghijklmnopqrstuvwxyz{|}~""")
+
     def __init__(self, _type=None, type=None, subtype=None, parameters=None):
         """
-        @param _type: Textual type, is split into the parts
+        @param _type: Type object or string representation
         @keyword type: Type part
         @keyword subtype: Subtype part
         @keyword parameters: Parameters part
         """
-        self.type = self.subtype = None
-        self.parameters = {}
+        if isinstance(_type, Type):
+            self.type = _type.type
+            self.subtype = _type.subtype
+            self.parameters = _type.parameters.copy()
 
-        if _type:
-            self._parse(_type)
+        else:
+            self.type = self.subtype = None
+            self.parameters = {}
+
+            if _type:
+                self._parse(_type)
 
         if type is not None:
             self.type = type
@@ -63,20 +71,32 @@ class Type(object):
                 )
 
     def __unicode__(self):
-        ret = [u'%s/%s' % (self.type, self.subtype)]
+        ret = [u'%s/%s' % (self.type or '*', self.subtype or '*')]
 
         parameters = self.parameters.items()
         parameters.sort()
-        for item in parameters:
-            # TODO: check if quoting is necessary
-            ret.append(u'%s="%s"' % item)
+        for key, value in parameters:
+            if self.__token_check(value):
+                ret.append(u'%s=%s' % (key, value))
+            else:
+                ret.append(u'%s="%s"' % (key, value))
 
         return u';'.join(ret)
+
+    def __token_check(self, value):
+        token_allowed = self.__token_allowed
+        for v in value:
+            if v not in token_allowed:
+                return False
+        return True
 
     def _parse(self, type):
         parts = type.split(';')
 
-        self.type, self.subtype = parts[0].strip().lower().split('/', 1)
+        type, subtype = parts[0].strip().lower().split('/', 1)
+
+        self.type = type != '*' and type or None
+        self.subtype = subtype != '*' and subtype or None
 
         for param in parts[1:]:
             key, value = param.strip().split('=', 1)
