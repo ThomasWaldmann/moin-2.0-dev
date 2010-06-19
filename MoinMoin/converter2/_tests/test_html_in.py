@@ -145,6 +145,8 @@ class TestConverter(Base):
               '/page/body/div/list[@item-label-generate="ordered" and @list-style-type="upper-roman"]/list-item[list-item-body="Item"]'),
             ('<html><div><dl><dt>Label</dt><dd>Item</dd></dl></div></html>',
              '/page/body/div/list/list-item[list-item-label="Label"] | /page/body/div/list/list-item[list-item-body="Item"]'),
+            ('<html><div><dir><li>Item</li></dir></div></html>',
+              '/page/body/div/list[@item-label-generate="unordered"]/list-item[list-item-body="Item"]'),
         ]
         for i in data:
             yield (self.do, ) + i
