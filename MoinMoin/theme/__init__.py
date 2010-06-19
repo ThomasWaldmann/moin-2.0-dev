@@ -776,17 +776,20 @@ var search_hint = "%(search_hint)s";
         return script
 
     def rsslink(self, d):
-        """ Create (atom) feed link.
+        """ Create (atom) feed link for recent changes of the CURRENT item.
+
+        TODO: the link for the global (all items) recent changes shall be
+              emitted on action rc output (.../?do=atom_feed&all=1).
 
         @rtype: unicode
         @return: link element
         """
         request = self.request
         page = d['page']
-        url = page.url(request, querystr={'do': 'atom', }, escape=0)
-        link = (u'<link rel="alternate" title="%s Recent Changes" '
+        url = page.url(request, querystr={'do': 'atom_feed', }, escape=0)
+        link = (u'<link rel="alternate" title="%s changes" '
                 u'href="%s" type="application/atom+xml">') % (
-                    wikiutil.escape(self.cfg.sitename, True),
+                    wikiutil.escape(page.page_name, True),
                     wikiutil.escape(url, True) )
         return link
 
