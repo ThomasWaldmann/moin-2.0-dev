@@ -36,7 +36,7 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
 DELETED_MODE_KEEP = 'keep'
 DELETED_MODE_KILL = 'kill'
 
-mimetype_default = u'text/x-unidentified-wiki-format'
+mimetype_default = u'text/plain'
 format_to_mimetype = {
     'wiki': u'text/x.moin.wiki',
     'text/wiki': u'text/x.moin.wiki',
@@ -56,7 +56,8 @@ class FSPageBackend(Backend):
 
     Everything not needed for the migration will likely just raise a NotImplementedError.
     """
-    def __init__(self, path, syspages=False, deleted_mode=DELETED_MODE_KEEP):
+    def __init__(self, path, syspages=False, deleted_mode=DELETED_MODE_KEEP,
+                 default_markup=u'wiki'):
         """
         Initialise filesystem backend.
 
@@ -70,11 +71,14 @@ class FSPageBackend(Backend):
                                       will be treated as for 'keep'.
                              'keep' - keep deleted pages as items with empty revisions,
                                       keep their attachments. (default)
+        @param default_markup: used if a page has no #format line, moin 1.9's default
+                               'wiki' and we also use this default here.
         """
         self._path = path
         self._syspages = syspages
         assert deleted_mode in (DELETED_MODE_KILL, DELETED_MODE_KEEP, )
         self.deleted_mode = deleted_mode
+        self.format_default = default_markup
 
     def _get_item_path(self, name, *args):
         """
@@ -211,7 +215,8 @@ class FsPageRevision(StoredRevision):
         StoredRevision.__init__(self, item, revno)
         if revno == -1: # not used by converter, but nice to try a life wiki
             revno = item._fs_current
-        revpath = item._backend._get_rev_path(item.name, revno)
+        backend = item._backend
+        revpath = backend._get_rev_path(item.name, revno)
         editlog = item._fs_editlog
         # we just read the page and parse it here, makes the rest of the code simpler:
         try:
@@ -257,7 +262,7 @@ class FsPageRevision(StoredRevision):
             data = data.encode(config.charset)
         meta.update(editlog_data)
         meta['__size'] = len(data) # needed for converter checks
-        format = meta.pop('format', None)
+        format = meta.pop('format', backend.format_default)
         meta[MIMETYPE] = format_to_mimetype.get(format, mimetype_default)
         meta[NAME] = item.name
         hash_name, hash_digest = hash_hexdigest(data)
