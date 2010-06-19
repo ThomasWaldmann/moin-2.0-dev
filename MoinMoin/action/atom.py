@@ -1,6 +1,9 @@
 """
     MoinMoin - Atom Feed
 
+    .../SomeItem?do=atom    # emit SomeItem changes as atom feed
+    .../?do=atom&global=1   # emit global changes as atom feed (item name does not matter)
+
     @copyright: 2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
@@ -17,9 +20,7 @@ from MoinMoin.items import Item
 
 def execute(item_name, request):
     cfg = request.cfg
-    # XXX we want to be able to get global recent changes when visiting
-    # hostname/?do=rc, but we get item_name = cfg.page_front_page for this
-    if item_name == cfg.page_front_page:
+    if request.values.get('global'): # any value will be considered True
         item_name = u''
     title = cfg.sitename
     feed = AtomFeed(title=title, feed_url=request.url, url=request.host_url)
