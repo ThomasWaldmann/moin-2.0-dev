@@ -23,12 +23,6 @@ from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 
 modules = pysupport.getPackageModules(__file__)
 
-# Check whether we can emit a RSS feed.
-# RSS is broken on plain Python 2.4.x, and works only when installing PyXML.
-# News: A user reported that the RSS is valid when using Python 2.5.1 on Windows.
-import sys, xml
-rss_supported = sys.version_info[:3] >= (2, 5, 1) or '_xmlplus' in xml.__file__
-
 
 class ThemeBase:
     """ Base class for themes
@@ -782,20 +776,16 @@ var search_hint = "%(search_hint)s";
         return script
 
     def rsslink(self, d):
-        """ Create rss link in head, used by FireFox
-
-        RSS link for FireFox. This shows an rss link in the bottom of
-        the page and let you subscribe to the wiki rss feed.
+        """ Create (atom) feed link.
 
         @rtype: unicode
-        @return: html head
+        @return: link element
         """
         request = self.request
         page = d['page']
-        url = page.url(request, querystr={
-                'do': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0)
+        url = page.url(request, querystr={'do': 'atom', }, escape=0)
         link = (u'<link rel="alternate" title="%s Recent Changes" '
-                u'href="%s" type="application/rss+xml">') % (
+                u'href="%s" type="application/atom+xml">') % (
                     wikiutil.escape(self.cfg.sitename, True),
                     wikiutil.escape(url, True) )
         return link
