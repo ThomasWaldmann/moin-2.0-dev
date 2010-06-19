@@ -261,6 +261,9 @@ class Converter(object):
         attrib[key] = 'line-through'
         return self.new_copy(moin_page.span, element, attrib)
 
+    def visit_xhtml_hr(self, element):
+        return moin_page.separator()
+
     def visit_xhtml_a(self, element):
         key = xlink('href')
         attrib = {}
