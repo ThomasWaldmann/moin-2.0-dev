@@ -27,7 +27,7 @@ def check_forbidden(request):
     args = request.args
     action = args.get('do')
     if ((args or request.method != 'GET') and
-        action not in ['rss_rc', 'show', 'sitemap'] and
+        action not in ['atom_feed', 'show', 'sitemap'] and
         action != 'get'):
         if request.isSpiderAgent:
             raise Forbidden()

@@ -745,7 +745,7 @@ options_no_group_name = {
         'diff': (30, 60),
         'fullsearch': (10, 120),
         'modify': (30, 300), # can be lowered after making preview different from edit
-        'rss_rc': (1, 60),
+        'atom_feed': (1, 60),
         # The following actions are often used for images - to avoid pages with lots of images
         # (like photo galleries) triggering surge protection, we assign rather high limits:
         'get': (300, 30),
@@ -994,7 +994,6 @@ options_no_group_name = {
 
     ('refresh', None,
      "refresh = (minimum_delay_s, targets_allowed) enables use of `#refresh 5 PageName` processing instruction, targets_allowed must be either `'internal'` or `'external'`"),
-    ('rss_cache', 60, "suggested caching time for Recent''''''Changes RSS, in second"),
 
     ('search_results_per_page', 25, "Number of hits shown per page in the search results"),
 
