@@ -309,6 +309,8 @@ class Serializable(object):
 def create_value_object(v):
     if isinstance(v, tuple):
         return TupleValue(v)
+    elif isinstance(v, dict):
+        return DictValue(v)
     elif isinstance(v, unicode):
         return UnicodeValue(v)
     elif isinstance(v, str):
@@ -432,6 +434,7 @@ class TupleValue(Serializable):
             'float': FloatValue,
             'complex': ComplexValue,
             'tuple': TupleValue,
+            'dict': DictValue,
         }
         cls = mapping.get(name)
         if cls:
@@ -448,6 +451,39 @@ class TupleValue(Serializable):
 
     def serialize_value(self, xmlgen):
         for e in self.value:
+            e = create_value_object(e)
+            e.serialize(xmlgen)
+
+
+class DictValue(Serializable):
+    element_name = 'dict'
+
+    def __init__(self, value=None, attrs=None, setter_fn=None):
+        self.value = value
+        self.element_attrs = attrs
+        self._result_fn = setter_fn
+        self._data = []
+
+    def get_unserializer(self, context, name, attrs):
+        mapping = {
+            'tuple': TupleValue,
+        }
+        cls = mapping.get(name)
+        if cls:
+            return cls(attrs=attrs, setter_fn=self.setter_fn)
+        else:
+            raise TypeError("unsupported element: %s", name)
+
+    def setter_fn(self, value):
+        self._data.append(value)
+
+    def endElement(self):
+        value = dict(self._data)
+        self._result_fn(value)
+
+    def serialize_value(self, xmlgen):
+        for e in self.value.items():
+            # we serialize each element e as a tuple (key, value)
             e = create_value_object(e)
             e.serialize(xmlgen)
 
