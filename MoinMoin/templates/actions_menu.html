@@ -1,0 +1,21 @@
+<form class="actionsmenu" method="GET" action="{{ url }}">
+    <div>
+        <label>{{ label }}</label>
+        <select name="do"
+            onchange="if ((this.selectedIndex != 0) &&
+                          (this.options[this.selectedIndex].disabled == false)) {
+                    this.form.submit();
+                }
+                this.selectedIndex = 0;">
+            {{ options }}
+        </select>
+        <input type="submit" value="{{ do_button }}">
+        {{ rev_field }}
+    </div>
+    <script type="text/javascript">
+    <!--// Init menu
+    actionsMenuInit('{{ label }}');
+    //-->
+    </script>
+</form>
+

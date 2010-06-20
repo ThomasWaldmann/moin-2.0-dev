@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    {#
+        include charset information - needed for moin_dump or any other case
+        when reading the html without a web server  
+    #}
+    {% for head in user_head %}
+        {{ head }}
+    {% endfor %}
+    
+    {{ html_head_keywords }}
+        
+    <meta http-equiv="Content-Type" content="{{ page.output_mimetype }};charset={{ page.output_charset }}">
+    
+    <link rel="alternate" title="{{ sitename|escape }} Recent Changes" href="{{ rsslink }}" type="application/rss+xml">
+    
+    {% if meta_keywords %}
+        <meta name="keywords" content="{{ meta_keywords}}">
+    {% endif %}
+    
+    {% if meta_description %}
+        <meta name="description" content="{{ meta_description}}">
+    {% endif %}
+    
+    <title> {{ title|escape }} - 
+        {% if cfg.html_pagetitle %}
+            {{ cfg.html_pagetitle|escape }}
+        {% else %}
+            {{ cfg.sitename|escape }}
+        {% endif %}
+    </title>
+    
+    <link rel="Search" href="{{ href(translated_item_name('FindPage')) }}">
+    <link rel="Index" href="{{ href(translated_item_name('TitleIndex')) }}">
+    <link rel="Glossary" href="{{ href(translated_item_name('WordIndex')) }}">
+    <link rel="Help" href="{{ href(translated_item_name('HelpOnFormatting')) }}">
+    <link rel="Start" href="{{ href(translated_item_name(cfg.page_front_page)) }}">
+    {% if link_parent %}
+        <link rel="Up" href="{{ link_parent }}">
+    {% endif %}
+    
+    {# ueb refers to universal edit button #}
+    {% if ueb_title and ueb_url %}
+        <link rel="alternate" type="application/wiki" title="{{ ueb_title }}" href="{{ ueb_url }}">
+    {% endif %}   
+    
+    {% for src, extra_attrs in external_scripts %}
+        <script type="text/javascript" src="{{ src }}" {{ extra_attrs }}></script>
+    {% endfor %}
+    
+    {% for media, href, title in stylesheets %}
+        {% if loop.last %}
+        <!-- css only for MS IE6/IE7 browsers -->
+        <!--[if lt IE 8]>
+        {% endif %}
+        
+        <link charset="utf-8" type="text/css" media="{{ media }}" rel=
+        {% if title %}
+            "alternate stylesheet" title="{{ title }}"
+        {% else %}
+            "stylesheet"
+        {% endif %}
+        href="{{ href }}"
+        >
+        {% if loop.last %}
+        <![endif]-->
+        {% endif %}
+    {% endfor %}
+    
+</head>
+
+<script type="text/javascript">
+<!--
+var search_hint = " {{ _('Search') }}";
+//-->
+</script>

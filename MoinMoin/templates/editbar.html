@@ -1,0 +1,10 @@
+<ul class="editbar">    
+{% for item in editbar_items %}
+    {% if 'nbcomment' in item %}
+        <li class="toggleCommentsButton" style="display:none;">{{ item }}</li>
+    {% else %}
+        <li>{{ item }}</li>
+    {% endif %}
+{% endfor %}
+</ul>
+

@@ -1,0 +1,87 @@
+
+<body 
+{% if body_onload %}
+    onload="{{ body_onload }}"
+{% endif %}
+{{ body_attr }}
+>
+
+{{ theme.emit_custom_html(cfg.page_header1) }}
+
+<div id="header">
+
+<form id="searchform" method="get" action="{{ href(page.page_name) }}">
+<div>
+<input type="hidden" name="do" value="fullsearch">
+<input type="hidden" name="context" value="180">
+<label for="searchinput">{{ _('Search') }}</label>
+<input id="searchinput" type="text" name="value" value="{{ search_value|escape }}" size="20"
+    onfocus="searchFocus(this)" onblur="searchBlur(this)"
+    onkeyup="searchChange(this)" onchange="searchChange(this)" alt="Search">
+<input id="titlesearch" name="titlesearch" type="submit"
+    value="{{ _('Titles') }}" alt="Search Titles">
+<input id="fullsearch" name="fullsearch" type="submit"
+    value="{{ _('Text') }}" alt="Search Full Text">
+</div>
+</form>
+<script type="text/javascript">
+<!--// Initialize search form
+var f = document.getElementById('searchform');
+f.getElementsByTagName('label')[0].style.display = 'none';
+var e = document.getElementById('searchinput');
+searchChange(e);
+searchBlur(e);
+//-->
+</script>
+
+<div id="logo">
+    <a href="{{ href(cfg.page_front_page) }}">{{ cfg.logo_string }}</a>
+</div>
+
+<div id="username">
+    {{ userlinks|join('<span class="sep"> | </span>')}}
+</div>
+
+
+<h1 id="locationline">
+
+{% if interwiki_link %}
+    <span id="interwiki">{{ interwiki_link }}<span class="sep">: </span></span>
+{% endif %}
+
+    <span id="pagelocation">
+        <span class="pagepath">
+            {{ title_content|join('<span class="sep">/</span>') }}
+        </span>
+    </span>
+
+</h1>
+
+{% if trail_items %}
+    <div id="pagetrail">
+        {{ trail_items|join('<span class="sep"> &raquo; </span>') }}
+    </div>
+{% endif %}
+
+<ul id="navibar">
+    {% for cls, link in navibar_items %}
+        <li class="{{ cls }}">{{ link }}</li>
+    {% endfor %}
+</ul>
+
+<div id="pageline"><hr style="display:none;"></div>
+
+{% if message %}
+    <div id="message">
+        {{ message }}
+    </div>
+{% endif %}
+
+{% include "editbar.html" %}
+
+</div>
+
+{{ theme.emit_custom_html(cfg.page_header2) }}
+
+<div id="page" {{ content_lang }}>
+
