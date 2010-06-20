@@ -5,22 +5,19 @@
         include charset information - needed for moin_dump or any other case
         when reading the html without a web server  
     #}
+    
+    <meta http-equiv="Content-Type" content="{{ page.output_mimetype }};charset={{ page.output_charset }}" />
+    
     {% for head in user_head %}
         {{ head }}
     {% endfor %}
-    
-    {{ html_head_keywords }}
-        
-    <meta http-equiv="Content-Type" content="{{ page.output_mimetype }};charset={{ page.output_charset }}">
-    
-    <link rel="alternate" title="{{ sitename|escape }} Recent Changes" href="{{ rsslink }}" type="application/rss+xml">
-    
+       
     {% if meta_keywords %}
-        <meta name="keywords" content="{{ meta_keywords}}">
+        <meta name="keywords" content="{{ meta_keywords }}">
     {% endif %}
     
     {% if meta_description %}
-        <meta name="description" content="{{ meta_description}}">
+        <meta name="description" content="{{ meta_description }}">
     {% endif %}
     
     <title> {{ title|escape }} - 
@@ -44,6 +41,9 @@
     {% if ueb_title and ueb_url %}
         <link rel="alternate" type="application/wiki" title="{{ ueb_title }}" href="{{ ueb_url }}">
     {% endif %}   
+    
+    <link rel="alternate" title="{{ sitename|escape }} Recent Changes" href="{{ rsslink }}" type="application/rss+xml">
+    {{ html_head_keywords }}    
     
     {% for src, extra_attrs in external_scripts %}
         <script type="text/javascript" src="{{ src }}" {{ extra_attrs }}></script>
