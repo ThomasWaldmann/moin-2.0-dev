@@ -553,6 +553,9 @@ class FsUserItem(Item):
         # rename show_page_trail to show_trail
         metadata['show_trail'] = metadata['show_page_trail']
 
+        # rename subscribed_pages to subscribed_items
+        metadata['subscribed_items'] = metadata['subscribed_pages']
+
         # stuff we want to get rid of:
         kill = ['real_language', # crap (use 'language')
                 'wikiname_add_spaces', # crap magic (you get it like it is)
@@ -562,6 +565,7 @@ class FsUserItem(Item):
                 'show_topbottom', # crap
                 'show_nonexist_qm', # crap, can be done by css
                 'show_page_trail', # renamed to show_trail
+                'subscribed_pages', # renamed to subscribed_items
                ]
         for key in kill:
             if key in metadata:
@@ -570,7 +574,7 @@ class FsUserItem(Item):
         # finally, remove some empty values (that have empty defaults anyway or
         # make no sense when empty):
         empty_kill = ['aliasname', 'date_fmt', 'datetime_fmt', 'bookmarks', 'enc_password',
-                      'language', 'css_url', 'jid', 'email', ] # XXX check subscribed_pages, quicklinks
+                      'language', 'css_url', 'jid', 'email', ] # XXX check subscribed_items, quicklinks
         for key in empty_kill:
             if key in metadata and metadata[key] in [u'', tuple(), {}, [], ]:
                 del metadata[key]

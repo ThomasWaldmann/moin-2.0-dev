@@ -910,8 +910,8 @@ options_no_group_name = {
   'user': ('User Preferences related', None, (
     ('quicklinks_default', [],
      'List of preset quicklinks for a newly created user accounts. Existing accounts are not affected by this option whereas changes in navi_bar do always affect existing accounts. Preset quicklinks can be removed by the user in the user preferences menu, navi_bar settings not.'),
-    ('subscribed_pages_default', [],
-     "List of pagenames used for presetting page subscriptions for newly created user accounts."),
+    ('subscribed_items_default', [],
+     "List of item names used for presetting item subscriptions for newly created user accounts."),
 
     ('email_subscribed_events_default',
      [

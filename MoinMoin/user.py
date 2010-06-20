@@ -296,7 +296,7 @@ class User:
         self.date_fmt = ""
         self.datetime_fmt = ""
         self.quicklinks = self._cfg.quicklinks_default
-        self.subscribed_pages = self._cfg.subscribed_pages_default
+        self.subscribed_items = self._cfg.subscribed_items_default
         self.email_subscribed_events = self._cfg.email_subscribed_events_default
         self.jabber_subscribed_events = self._cfg.jabber_subscribed_events_default
         self.theme_name = self._cfg.theme_default
@@ -617,7 +617,7 @@ class User:
         @rtype: list
         @return: pages this user has subscribed to
         """
-        return self.subscribed_pages
+        return self.subscribed_items
 
     def isSubscribedTo(self, pagelist):
         """ Check if user subscription matches any page in pagelist.
@@ -671,8 +671,8 @@ class User:
         if self._cfg.interwikiname:
             pagename = self._interWikiName(pagename)
 
-        if pagename not in self.subscribed_pages:
-            self.subscribed_pages.append(pagename)
+        if pagename not in self.subscribed_items:
+            self.subscribed_items.append(pagename)
             self.save()
 
             # Send a notification
@@ -703,13 +703,13 @@ class User:
             regular expression that match, it will always fail.
         """
         changed = False
-        if pagename in self.subscribed_pages:
-            self.subscribed_pages.remove(pagename)
+        if pagename in self.subscribed_items:
+            self.subscribed_items.remove(pagename)
             changed = True
 
         interWikiName = self._interWikiName(pagename)
-        if interWikiName and interWikiName in self.subscribed_pages:
-            self.subscribed_pages.remove(interWikiName)
+        if interWikiName and interWikiName in self.subscribed_items:
+            self.subscribed_items.remove(interWikiName)
             changed = True
 
         if changed:

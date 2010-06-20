@@ -73,7 +73,7 @@ General syntax: moin [options] account disable [disable-options]
             u.name = "%s-%s" % (u.name, u.id)
             if u.email:
                 u.email = "%s-%s" % (u.email, u.id)
-            u.subscribed_pages = "" # avoid using email
+            u.subscribed_items = [] # avoid using email
             u.save()
             print "- disabled."
         else:

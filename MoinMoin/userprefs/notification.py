@@ -51,7 +51,7 @@ class Settings(UserPrefBase):
             return
 
         # subscription for page change notification
-        theuser.subscribed_pages = self._decode_pagelist('subscribed_pages')
+        theuser.subscribed_items = self._decode_pagelist('subscribed_items')
 
         # subscription to various events
         available = events.get_subscribable_events()
@@ -165,7 +165,7 @@ class Settings(UserPrefBase):
 
         self.make_row(
             html.Raw(_('Subscribed wiki pages<<BR>>(one regex per line)', wiki=True)),
-            [html.TEXTAREA(name="subscribed_pages", rows="6", cols="50").append(
+            [html.TEXTAREA(name="subscribed_items", rows="6", cols="50").append(
                 '\n'.join(notifylist)), ],
             valign="top"
         )

@@ -150,7 +150,7 @@ General syntax: moin [options] account check [check-options]
             u.name = "%s-%s" % (u.name, uid)
             if u.email:
                 u.email = "%s-%s" % (u.email, uid)
-            u.subscribed_pages = "" # avoid using email
+            u.subscribed_items = [] # avoid using email
             if self.options.save:
                 u.save()
                 print "- disabled."
