@@ -588,7 +588,7 @@ class Page(object):
                 continue
 
             # add the user to the list
-            lang = subscriber.language or request.cfg.language_default
+            lang = subscriber.getLang()
             if not lang in subscriber_list:
                 subscriber_list[lang] = []
             if return_users:
@@ -609,7 +609,7 @@ class Page(object):
         pi = {} # we collect the processing instructions here
 
         # default language from cfg
-        pi['language'] = self.cfg.language_default or "en"
+        pi['language'] = self.cfg.language_default
 
         body = self.body
         meta = self.meta

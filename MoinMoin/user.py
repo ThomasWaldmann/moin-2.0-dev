@@ -289,7 +289,10 @@ class User:
             self.enc_password = encodePassword(password)
 
         self.tz_offset = int(self._cfg.tz_offset * 3600)
-        self.language = '' # XXX check later
+        self.language = '' # '' means user did not specify language preference
+                           # in userprefs - do not put cfg.language_default here
+                           # or moin won't use browser language
+                           # Note: usually you want to use .getLang()!
         self._stored = False
         self.date_fmt = self._cfg.date_fmt
         self.datetime_fmt = self._cfg.datetime_fmt
@@ -330,10 +333,6 @@ class User:
         else:
             from MoinMoin.security import Default
             self.may = Default(self)
-
-        # we must dynamically check here, because supported languages may change:
-        if self.language and not self.language in i18n.wikiLanguages():
-            self.language = 'en'
 
     def __repr__(self):
         return "<%s.%s at 0x%x name:%r valid:%r>" % (
@@ -507,6 +506,31 @@ class User:
         else:
             event = events.UserChangedEvent(self._request, self)
         events.send_event(event)
+
+    def getLang(self):
+        """ Get the language this user likely wants (limited by what we can support).
+
+            If this is a valid user (not an anon user), we try to use his language
+            preference, if there is one.
+            If there is none or this is an anon user, we check if this is the current
+            user and if yes, try to follow his browser language preferences.
+            If it is not the current user or we can't follow his language preferences,
+            we'll try using the language_default from the configuration.
+            If the language we have determined so far is not supported by moin,
+            we'll fall back to English, we never return an unsupported language.
+        """
+        lang = self.language
+        if not lang:
+            # user did not specify his language preference explicitly
+            if self.isCurrentUser():
+                # browser language if this is current user
+                lang = i18n.get_browser_language(self._request)
+        if not lang:
+            lang = self._request.cfg.language_default
+        available = i18n.wikiLanguages() or ["en"]
+        if lang not in available:
+            lang = 'en'
+        return lang
 
     # -----------------------------------------------------------------
     # Time and date formatting
