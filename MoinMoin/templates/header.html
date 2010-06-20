@@ -45,8 +45,17 @@ searchBlur(e);
 
 <h1 id="locationline">
 
-{% if interwiki_link %}
-    <span id="interwiki">{{ interwiki_link }}<span class="sep">: </span></span>
+{% if cfg.show_interwiki %}
+    <span id="interwiki">
+        <a href="{{ href(cfg.page_front_page) }}" rel="nofollow">
+            {% if cfg.interwikiname %}
+                {{ cfg.interwikiname }}
+            {% else %}
+                Self
+            {% endif %}
+        </a>
+        <span class="sep">: </span>
+    </span>
 {% endif %}
 
     <span id="pagelocation">

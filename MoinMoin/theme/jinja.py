@@ -75,8 +75,7 @@ class JinjaTheme(ThemeBase):
         self.env.globals.update({
                                 'theme': self,
                                 'cfg': self.request.cfg,
-                                '_': self.request.getText, 
-                                'url_for': self.url_for,
+                                '_': self.request.getText,
                                 'href': request.href,
                                 'translated_item_name': self.translated_item_name
                                 })
@@ -102,39 +101,6 @@ class JinjaTheme(ThemeBase):
             
         return item_en
     
-    def url_for(self, pagename='', text='', querystr=None, anchor=None, raw=False):
-        """
-        Get a link to be used directly in template
-        @param pagename: where url points to. if not defined, use actual page
-        @param text: text used inside <a> tags
-        @param raw: use to define if call link_to or link_raw from page.
-        @rtype: string
-        @return: url for determined text and page
-        """
-        if pagename:
-            page = wikiutil.getLocalizedPage(self.request, pagename)
-        else:
-            page = self.request.page
-        if raw:
-            return page.link_to_raw(self.request, text, querystr, anchor)
-        return page.link_to(self.request, text, querystr, anchor)
-
-    def interwiki(self):
-        """
-        Assemble the interwiki name display, linking to page_front_page
-
-        @param d: parameter dictionary
-        @rtype: dict
-        @return: interwiki link
-        """
-        d = {}
-        if self.request.cfg.show_interwiki:
-            page = wikiutil.getFrontPage(self.request)
-            text = self.request.cfg.interwikiname or 'Self'
-            link = page.link_to(self.request, text=text, rel='nofollow')
-            d = {'interwiki_link': link}
-        return d
-
     def title(self, d):
         """
         Assemble the title (now using breadcrumbs)
@@ -898,7 +864,6 @@ class JinjaTheme(ThemeBase):
         if value:
             d.update({'search_value': value})
         d.update(self.username(d))
-        d.update(self.interwiki())
         d.update(self.title(d))
         d.update(self.trail(d))
         d.update(self.navibar(d))
