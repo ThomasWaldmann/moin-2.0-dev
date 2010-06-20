@@ -21,10 +21,7 @@ from MoinMoin import i18n, wikiutil, config, version, caching, user
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
 from MoinMoin.Page import Page
-from MoinMoin.util import pysupport
 from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
-
-modules = pysupport.getPackageModules(__file__)
 
 # Check whether we can emit a RSS feed.
 # RSS is broken on plain Python 2.4.x, and works only when installing PyXML.
@@ -1268,56 +1265,3 @@ class JinjaTheme(ThemeBase):
         """
         template = self.env.get_template(filename)
         return template.render(**context)
-
-
-class ThemeNotFound(Exception):
-    """
-    Thrown if the supplied theme could not be found anywhere
-    """
-
-
-def load_theme(request, theme_name=None):
-    """
-    Load a theme for this request.
-
-    @param request: moin request
-    @param theme_name: the name of the theme
-    @type theme_name: str
-    @rtype: Theme
-    @return: a theme initialized for the request
-    """
-    if theme_name is None or theme_name == '<default>':
-        theme_name = request.cfg.theme_default
-
-    try:
-        Theme = wikiutil.importPlugin(request.cfg, 'theme', theme_name, 'Theme')
-    except wikiutil.PluginMissingError:
-        raise ThemeNotFound(theme_name)
-
-    return Theme(request)
-
-
-def load_theme_fallback(request, theme_name=None):
-    """
-    Try loading a theme, falling back to defaults on error.
-
-    @param request: moin request
-    @param theme_name: the name of the theme
-    @type theme_name: str
-    @rtype: int
-    @return: A statuscode for how successful the loading was
-             0 - theme was loaded
-             1 - fallback to default theme
-             2 - serious fallback to builtin theme
-    """
-    fallback = 0
-    try:
-        request.theme = load_theme(request, theme_name)
-    except ThemeNotFound:
-        fallback = 1
-        try:
-            request.theme = load_theme(request, request.cfg.theme_default)
-        except ThemeNotFound:
-            fallback = 2
-            from MoinMoin.theme.modernized import Theme
-            request.theme = Theme(request)
