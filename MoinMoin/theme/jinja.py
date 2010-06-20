@@ -501,11 +501,7 @@ class JinjaTheme(ThemeBase):
         request = self.request
         stylesheet_list = []
         # Check mode
-        if d.get('print_mode'):
-            media = d.get('media', 'print')
-            stylesheets = getattr(self, 'stylesheets_' + media)
-        else:
-            stylesheets = self.stylesheets
+        stylesheets = self.stylesheets
 
         theme_css = [self._stylesheet_link(True, *stylesheet) for stylesheet in stylesheets]
         stylesheet_list.extend(theme_css)
@@ -998,7 +994,6 @@ class JinjaTheme(ThemeBase):
         @param text: the title text
         @keyword page: the page instance that called us - using this is more efficient than using pagename..
         @keyword pagename: 'PageName'
-        @keyword print_mode: 1 (or 0)
         @keyword media: css media type, defaults to 'screen'
         @keyword allow_doubleclick: 1 (or 0)
         @keyword html_head: additional <head> code
@@ -1044,7 +1039,6 @@ class JinjaTheme(ThemeBase):
 
         #  add meta statement if user has doubleclick on edit turned on or it is default
         if (pagename and keywords.get('allow_doubleclick', 0) and
-            not keywords.get('print_mode', 0) and
             request.user.edit_on_doubleclick):
             if request.user.may.write(pagename):  # separating this gains speed
                 user_head.append('<meta name="edit_on_doubleclick" content="1">\n')
@@ -1075,8 +1069,6 @@ class JinjaTheme(ThemeBase):
         if 'pi_refresh' in keywords and keywords['pi_refresh']:
             user_head.append('<meta http-equiv="refresh" content="%d;URL=%s">' % keywords['pi_refresh'])
 
-        print_mode = keywords.get('print_mode', False)
-
         d.update({'user_head': user_head, 'html_head_keyword': keywords.get('html_head', '')})
         #Variables used to render title
         d.update({'title': text})
@@ -1089,10 +1081,7 @@ class JinjaTheme(ThemeBase):
             d.update({'link_parent': request.href(page_parent_page)})
 
         #Using to render stylesheet acording to theme
-        if print_mode:
-             d.update({'theme_stylesheets': self.stylesheets_print})
-        else:
-            d.update({'theme_stylesheets': self.stylesheets})
+        d.update({'theme_stylesheets': self.stylesheets})
         
         user_css_href = request.user.valid and request.user.css_url
         if user_css_href and user_css_href.lower() != "none":
@@ -1132,59 +1121,44 @@ class JinjaTheme(ThemeBase):
         
         # If in print mode, start page div and emit the title
         # TODO: Fix the print mode
-        if keywords.get('print_mode', 0):
-            d.update({
-                'title_text': text,
-                'page': page,
-                'page_name': pagename or '',
-                'rev': rev,
-            })
-            request.themedict = d
-            #TODO: Adapt to new methods
-            output.append(self.startPage())
-            output.append(self.interwiki())
-            output.append(self.title(d))
+        exists = pagename and page.exists()
+        # prepare dict for theme code:
+        d.update({
+            'script_name': scriptname,
+            'title_text': text,
+            'page': page,
+            'rev': rev,
+            'pagesize': pagename and page.size() or 0,
+            # exists checked to avoid creation of empty edit-log for non-existing pages
+            'last_edit_info': exists and page.last_edit_info() or '',
+            'page_name': pagename or '',
+            'page_find_page': page_find_page,
+            'page_front_page': page_front_page,
+            'home_page': home_page,
+            'page_help_contents': page_help_contents,
+            'page_help_formatting': page_help_formatting,
+            'page_parent_page': page_parent_page,
+            'page_title_index': page_title_index,
+            'page_word_index': page_word_index,
+            'user_name': request.user.name,
+            'user_valid': request.user.valid,
+            'msg': self._status,
+            'trail': keywords.get('trail', None),
+        })
 
-        # In standard mode, emit theme.header
-        else:
-            exists = pagename and page.exists()
-            # prepare dict for theme code:
-            d.update({
-                'script_name': scriptname,
-                'title_text': text,
-                'page': page,
-                'rev': rev,
-                'pagesize': pagename and page.size() or 0,
-                # exists checked to avoid creation of empty edit-log for non-existing pages
-                'last_edit_info': exists and page.last_edit_info() or '',
-                'page_name': pagename or '',
-                'page_find_page': page_find_page,
-                'page_front_page': page_front_page,
-                'home_page': home_page,
-                'page_help_contents': page_help_contents,
-                'page_help_formatting': page_help_formatting,
-                'page_parent_page': page_parent_page,
-                'page_title_index': page_title_index,
-                'page_word_index': page_word_index,
-                'user_name': request.user.name,
-                'user_valid': request.user.valid,
-                'msg': self._status,
-                'trail': keywords.get('trail', None),
-            })
+        # add quoted versions of pagenames
+        newdict = {}
+        for key in d:
+            if key.startswith('page_'):
+                if not d[key] is None:
+                    newdict['q_' + key] = wikiutil.quoteWikinameURL(d[key])
+                else:
+                    newdict['q_' + key] = None
+        d.update(newdict)
+        request.themedict = d
 
-            # add quoted versions of pagenames
-            newdict = {}
-            for key in d:
-                if key.startswith('page_'):
-                    if not d[key] is None:
-                        newdict['q_' + key] = wikiutil.quoteWikinameURL(d[key])
-                    else:
-                        newdict['q_' + key] = None
-            d.update(newdict)
-            request.themedict = d
-
-            # now call the theming code to do the rendering
-            request.write(self.header(d))
+        # now call the theming code to do the rendering
+        request.write(self.header(d))
         #request.write(self.render('base.html'), d)
         self._send_title_called = True
 
@@ -1193,17 +1167,12 @@ class JinjaTheme(ThemeBase):
         Output the page footer.
 
         @param pagename: WikiName of the page
-        @keyword print_mode: true, when page is displayed in Print mode
         """
         request = self.request
         d = request.themedict
 
         # Emit end of page in print mode, or complete footer in standard mode
-        if keywords.get('print_mode', 0):
-            request.write(self.pageinfo(d['page']))
-            request.write(self.endPage())
-        else:
-            request.write(self.footer(d, **keywords))
+        request.write(self.footer(d, **keywords))
 
 
     def render_content(self, item_name, content=None, title=None):
