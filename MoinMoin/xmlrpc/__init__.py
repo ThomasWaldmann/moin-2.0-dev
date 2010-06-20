@@ -708,7 +708,7 @@ class XmlRpcBase:
         retval = "en"
         u = user.get_by_jabber_id(self.request, jid)
         if u:
-            retval = u.language
+            retval = u.getLang()
 
         return retval
 

@@ -50,29 +50,15 @@ class TextCha(object):
         cfg = request.cfg
         user = request.user
         disabled_group = cfg.textchas_disabled_group
-        if disabled_group and user.name and user.name in groups.get(disabled_group, []):
-            return None
         textchas = cfg.textchas
-        if textchas:
-            lang = user.language or request.lang
-            logging.debug(u"TextCha: user.language == '%s'." % lang)
-            if lang not in textchas:
-                lang = cfg.language_default
-                logging.debug(u"TextCha: fallback to language_default == '%s'." % lang)
-                if lang not in textchas:
-                    logging.error(u"TextCha: The textchas do not have content for language_default == '%s'! Falling back to English." % lang)
-                    lang = 'en'
-                    if lang not in textchas:
-                        logging.error(u"TextCha: The textchas do not have content for 'en', auto-disabling textchas!")
-                        cfg.textchas = None
-                        lang = None
-        else:
-            lang = None
-        if lang is None:
-            return None
-        else:
-            logging.debug(u"TextCha: using lang = '%s'" % lang)
-            return textchas[lang]
+        use_textchas = disabled_group and user.name and user.name in groups.get(disabled_group, [])
+        if textchas and use_textchas:
+            langs = [user.getLang(), cfg.language_default, 'en', ]
+            for lang in langs:
+                logging.debug(u"TextCha: trying language == '%s'." % lang)
+                if lang in textchas:
+                    logging.debug(u"TextCha: using lang = '%s'" % lang)
+                    return textchas[lang]
 
     def _init_qa(self, question=None):
         """ Initialize the question / answer.

@@ -279,7 +279,7 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
         """ Create language selection. """
         from MoinMoin import i18n
         _ = self._
-        cur_lang = self.request.user.valid and self.request.user.language or ''
+        cur_lang = self.request.user.language
         langs = i18n.wikiLanguages().items()
         langs.sort(lambda x, y: cmp(x[1]['x-language'], y[1]['x-language']))
         options = [('', _('<Browser setting>'))]
