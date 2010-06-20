@@ -190,7 +190,6 @@ class Formatter(FormatterBase):
         # Caution: upon changing, also check line numbers hide/show js.
         self._code_id_format = "%(id)s_%(num)d"
 
-        self.pagelink_preclosed = False
         self._is_included = kw.get('is_included', False)
         self.request = request
         self.cfg = request.cfg
@@ -465,16 +464,7 @@ class Formatter(FormatterBase):
             del kw['generated']
         if page is None:
             page = Page(self.request, pagename, formatter=self)
-        if self.request.user.show_nonexist_qm and on and not page.exists():
-            self.pagelink_preclosed = True
-            return (page.link_to(self.request, on=1, **kw) +
-                    self.text("?") +
-                    page.link_to(self.request, on=0, **kw))
-        elif not on and self.pagelink_preclosed:
-            self.pagelink_preclosed = False
-            return ""
-        else:
-            return page.link_to(self.request, on=on, **kw)
+        return page.link_to(self.request, on=on, **kw)
 
     def interwikilink(self, on, interwiki='', pagename='', **kw):
         """
@@ -1086,11 +1076,6 @@ document.write('<a href="#" onclick="return togglenumber(\'%s\', %d, %d);" \
 
         # Add space before heading, easier to check source code
         result = '\n' + self._open('h%d' % heading_depth, **kw)
-
-        if self.request.user.show_topbottom:
-            result += "%s%s%s%s%s%s" % (
-                       self.anchorlink(1, "bottom"), self.icon('bottom'), self.anchorlink(0),
-                       self.anchorlink(1, "top"), self.icon('top'), self.anchorlink(0))
 
         return "%s" % result
 
