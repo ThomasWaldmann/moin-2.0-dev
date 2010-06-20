@@ -35,7 +35,7 @@ searchBlur(e);
 </script>
 
 <div id="logo">
-    <a href="{{ href(cfg.page_front_page) }}">{{ cfg.logo_string }}</a>
+    <a href="{{ href(translated_item_name(cfg.page_front_page)) }}">{{ cfg.logo_string }}</a>
 </div>
 
 <div id="username">
@@ -47,7 +47,7 @@ searchBlur(e);
 
 {% if cfg.show_interwiki %}
     <span id="interwiki">
-        <a href="{{ href(cfg.page_front_page) }}" rel="nofollow">
+        <a href="{{ href(translated_item_name(cfg.page_front_page)) }}" rel="nofollow">
             {% if cfg.interwikiname %}
                 {{ cfg.interwikiname }}
             {% else %}
