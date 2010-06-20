@@ -265,10 +265,6 @@ class FsPageRevision(StoredRevision):
             meta, data = wikiutil.split_body(content)
             data = data.encode(config.charset)
         meta.update(editlog_data)
-        if meta[EDIT_LOG_ACTION] == 'SAVE/RENAME':
-            name_old = meta.get(EDIT_LOG_EXTRA)
-            if name_old:
-                meta[NAME_OLD] = name_old
         meta['__size'] = len(data) # needed for converter checks
         format = meta.pop('format', backend.format_default)
         meta[MIMETYPE] = format_to_mimetype.get(format, mimetype_default)
@@ -370,6 +366,16 @@ class EditLog(LogFile):
         result[EDIT_LOG_MTIME] = int(result[EDIT_LOG_MTIME] or 0) / 1000000 # convert usecs to secs
         result['__rev'] = int(result['__rev']) - 1 # old storage is 1-based, we want 0-based
         result[NAME] = wikiutil.unquoteWikiname(result[NAME])
+        action = result[EDIT_LOG_ACTION]
+        extra = result[EDIT_LOG_EXTRA]
+        if extra:
+            if action.startswith('ATT'):
+                result[NAME] += u'/' + extra # append filename to pagename
+                # keep EDIT_LOG_EXTRA for find_attach
+            elif action == 'SAVE/RENAME':
+                if extra:
+                    result[NAME_OLD] = extra
+                del result[EDIT_LOG_EXTRA]
         return result
 
     def find_rev(self, revno):
@@ -396,7 +402,9 @@ class EditLog(LogFile):
         else:
             raise KeyError
         del meta['__rev']
+        del meta[EDIT_LOG_EXTRA] #  we have full name in NAME
         meta[EDIT_LOG_ACTION] = u'SAVE'
+        meta = dict([(k, v) for k, v in meta.items() if v]) # remove keys with empty values
         return meta
 
 
