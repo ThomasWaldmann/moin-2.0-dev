@@ -524,19 +524,15 @@ class FsUserItem(Item):
 
     def _process_usermeta(self, metadata):
         # stuff we want to have stored as boolean:
-        bool_defaults = [
-            ('show_toolbar', 'False'),
+        bool_defaults = [ # XXX use cfg.checkbox_defaults
             ('show_comments', 'False'),
             ('show_page_trail', 'True'),
-            ('show_nonexist_qm', 'False'),
-            ('show_topbottom', 'False'),
-            ('show_fancy_diff', 'True'),
+            ('show_fancy_diff', 'True'), # XXX kill this? usability for vision impaired?
             ('edit_on_doubleclick', 'True'),
-            ('remember_me', 'False'),
+            ('remember_me', 'True'),
             ('remember_last_visit', 'False'),
             ('want_trivial', 'False'),
             ('mailto_author', 'False'),
-            ('wikiname_add_spaces', 'False'),
             ('disabled', 'False'),
         ]
         for key, default in bool_defaults:
@@ -555,7 +551,14 @@ class FsUserItem(Item):
         metadata['last_saved'] = int(float(metadata.get('last_saved', '0')))
 
         # stuff we want to get rid of:
-        kill = ['real_language', 'recoverpass_key', 'external_target', ]
+        kill = ['real_language', # crap (use 'language')
+                'wikiname_add_spaces', # crap magic (you get it like it is)
+                'recoverpass_key', # user can recover again if needed
+                'external_target', # ancient, not used any more
+                'show_toolbar', # not used any more
+                'show_topbottom', # crap
+                'show_nonexist_qm', # crap, can be done by css
+               ]
         for key in kill:
             if key in metadata:
                 del metadata[key]

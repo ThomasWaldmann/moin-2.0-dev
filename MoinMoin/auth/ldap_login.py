@@ -238,7 +238,7 @@ class LDAPAuth(BaseAuth):
                     u = user.User(request, auth_username=username, auth_method=self.name, auth_attribs=('name', 'password', 'mailto_author', ))
                 u.name = username
                 u.aliasname = aliasname
-                u.remember_me = 0 # 0 enforces cookie_lifetime config param
+                u.remember_me = False # False enforces cookie_lifetime config param
                 logging.debug("creating user object with name %r email %r alias %r" % (username, email, aliasname))
 
             except ldap.INVALID_CREDENTIALS, err:
