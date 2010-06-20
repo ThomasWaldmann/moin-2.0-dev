@@ -495,10 +495,11 @@ class FsUserItem(Item):
             raise NoSuchItemError("userid does not match user_re")
         Item.__init__(self, backend, itemname)
         try:
-            self._fs_meta = self._parse_userprofile(itemname)
+            meta = self._parse_userprofile(itemname)
         except (OSError, IOError):
             # no current file means no item
             raise NoSuchItemError("No such item, %r" % itemname)
+        self._fs_meta = self._process_usermeta(meta)
 
     def _parse_userprofile(self, itemname):
         meta_file = codecs.open(self._backend._get_item_path(itemname), "r", config.charset)
@@ -519,6 +520,54 @@ class FsUserItem(Item):
 
             metadata[key] = value
         meta_file.close()
+        return metadata
+
+    def _process_usermeta(self, metadata):
+        # stuff we want to have stored as boolean:
+        bool_defaults = [
+            ('show_toolbar', 'False'),
+            ('show_comments', 'False'),
+            ('show_page_trail', 'True'),
+            ('show_nonexist_qm', 'False'),
+            ('show_topbottom', 'False'),
+            ('show_fancy_diff', 'True'),
+            ('edit_on_doubleclick', 'True'),
+            ('remember_me', 'False'),
+            ('remember_last_visit', 'False'),
+            ('want_trivial', 'False'),
+            ('mailto_author', 'False'),
+            ('wikiname_add_spaces', 'False'),
+            ('disabled', 'False'),
+        ]
+        for key, default in bool_defaults:
+            metadata[key] = metadata.get(key, default) in ['True', 'true', '1']
+
+        # stuff we want to have stored as integer:
+        int_defaults = [
+            ('tz_offset', '0'),
+            ('edit_cols', '0'),
+            ('edit_rows', '0'),
+        ]
+        for key, default in int_defaults:
+            metadata[key] = int(metadata.get(key, default))
+
+        # int last_saved timestamp should be enough:
+        metadata['last_saved'] = int(float(metadata.get('last_saved', '0')))
+
+        # stuff we want to get rid of:
+        kill = ['real_language', 'recoverpass_key', 'external_target', ]
+        for key in kill:
+            if key in metadata:
+                del metadata[key]
+
+        # finally, remove some empty values (that have empty defaults anyway or
+        # make no sense when empty):
+        empty_kill = ['aliasname', 'date_fmt', 'datetime_fmt', 'bookmarks', 'enc_password',
+                      'language', 'css_url', 'jid', 'email', ] # XXX check subscribed_pages, quicklinks
+        for key in empty_kill:
+            if key in metadata and metadata[key] in [u'', tuple(), {}, [], ]:
+                del metadata[key]
+
         return metadata
 
 
