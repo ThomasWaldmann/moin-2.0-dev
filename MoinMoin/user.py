@@ -279,22 +279,20 @@ class User:
         elif auth_username: # this is needed for user autocreate
             self.name = auth_username
 
-        # create checkbox fields (with default 0)
+        # initialize checkbox values with defaults
         for key, label in self._cfg.user_checkbox_fields:
-            setattr(self, key, self._cfg.user_checkbox_defaults.get(key, 0))
+            setattr(self, key, self._cfg.user_checkbox_defaults.get(key))
 
         self.recoverpass_key = ""
 
         if password:
             self.enc_password = encodePassword(password)
 
-        #self.edit_cols = 80
-        self.tz_offset = int(float(self._cfg.tz_offset) * 3600)
-        self.language = ""
-        self.real_language = "" # In case user uses "Browser setting". For language-statistics
+        self.tz_offset = int(self._cfg.tz_offset * 3600)
+        self.language = '' # XXX check later
         self._stored = False
-        self.date_fmt = ""
-        self.datetime_fmt = ""
+        self.date_fmt = self._cfg.date_fmt
+        self.datetime_fmt = self._cfg.datetime_fmt
         self.quicklinks = self._cfg.quicklinks_default
         self.subscribed_items = self._cfg.subscribed_items_default
         self.email_subscribed_events = self._cfg.email_subscribed_events_default
@@ -302,7 +300,7 @@ class User:
         self.theme_name = self._cfg.theme_default
         self.editor_default = self._cfg.editor_default
         self.editor_ui = self._cfg.editor_ui
-        self.last_saved = str(time.time())
+        self.last_saved = 0
 
         # attrs not saved to profile
         self._request = request
@@ -333,6 +331,7 @@ class User:
             from MoinMoin.security import Default
             self.may = Default(self)
 
+        # we must dynamically check here, because supported languages may change:
         if self.language and not self.language in i18n.wikiLanguages():
             self.language = 'en'
 
@@ -404,26 +403,6 @@ class User:
         for key, val in user_data.items():
             vars(self)[key] = val
 
-        self.tz_offset = int(self.tz_offset)
-
-        # Remove old unsupported attributes from user data file.
-        remove_attributes = ['passwd', 'show_emoticons']
-        for attr in remove_attributes:
-            if hasattr(self, attr):
-                delattr(self, attr)
-                changed = 1
-
-        # make sure checkboxes are boolean
-        for key, label in self._cfg.user_checkbox_fields:
-            try:
-                setattr(self, key, int(getattr(self, key)))
-            except ValueError:
-                setattr(self, key, 0)
-
-        # convert (old) hourly format to seconds
-        if -24 <= self.tz_offset and self.tz_offset <= 24:
-            self.tz_offset = self.tz_offset * 3600
-
         if not self.disabled:
             self.valid = 1
 
@@ -494,7 +473,7 @@ class User:
         for key in self._user.keys():
             del self._user[key]
 
-        self.last_saved = str(time.time())
+        self.last_saved = int(time.time())
 
         attrs = self.persistent_items()
         attrs.sort()
@@ -549,8 +528,7 @@ class User:
         @rtype: string
         @return: formatted date, see cfg.date_fmt
         """
-        date_fmt = self.date_fmt or self._cfg.date_fmt
-        return time.strftime(date_fmt, self.getTime(tm))
+        return time.strftime(self.date_fmt, self.getTime(tm))
 
 
     def getFormattedDateTime(self, tm):
@@ -560,8 +538,7 @@ class User:
         @rtype: string
         @return: formatted date and time, see cfg.datetime_fmt
         """
-        datetime_fmt = self.datetime_fmt or self._cfg.datetime_fmt
-        return time.strftime(datetime_fmt, self.getTime(tm))
+        return time.strftime(self.datetime_fmt, self.getTime(tm))
 
     # -----------------------------------------------------------------
     # Bookmark
