@@ -1088,6 +1088,7 @@ options = {
         'show_trail': True,
         'show_fancy_diff': True,
         'remember_me': True,
+        'disabled': False,
        },
        "Defaults for user preferences, see HelpOnConfiguration/UserPreferences."),
 

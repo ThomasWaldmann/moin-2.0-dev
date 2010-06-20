@@ -144,8 +144,7 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
             dt_d_combined = Settings._date_formats.get(form['datetime_fmt'], '')
             request.user.datetime_fmt, request.user.date_fmt = dt_d_combined.split(' & ')
         except (KeyError, ValueError):
-            request.user.datetime_fmt = '' # default
-            request.user.date_fmt = '' # default
+            pass # keep the default
 
         # try to get the (optional) theme
         theme_name = wikiutil.clean_input(form.get('theme_name', self.cfg.theme_default))
@@ -163,11 +162,6 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
 
         # try to get the (optional) preferred language
         request.user.language = wikiutil.clean_input(form.get('language', ''))
-        if request.user.language == u'': # For language-statistics
-            from MoinMoin import i18n
-            request.user.real_language = i18n.get_browser_language(request)
-        else:
-            request.user.real_language = ''
 
         # I want to handle all inputs from user_form_fields, but
         # don't want to handle the cases that have already been coded
@@ -194,9 +188,9 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
         # checkbox options
         for key, label in self.cfg.user_checkbox_fields:
             if key not in self.cfg.user_checkbox_disable and key not in self.cfg.user_checkbox_remove:
-                value = form.get(key, "0")
+                value = form.get(key, 'False')
                 try:
-                    value = int(value)
+                    value = value == 'True'
                 except ValueError:
                     # value we got is crap, do not setattr this value, just pass
                     pass
@@ -340,7 +334,7 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
                 if not key in uf_remove:
                     if key in uf_disable:
                         self.make_row(_(label),
-                                  [html.INPUT(type=type, size=length, name=key, disabled="disabled",
+                                  [html.INPUT(type=type, size=length, name=key, disabled=True,
                                    value=getattr(request.user, key)), ' ', _(textafter), ])
                     else:
                         self.make_row(_(label),
@@ -378,9 +372,9 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
             for key, label in checkbox_fields:
                 if not key in self.cfg.user_checkbox_remove:
                     bool_options.extend([
-                        html.INPUT(type="checkbox", name=key, value="1",
-                            checked=getattr(request.user, key, 0),
-                            disabled=key in self.cfg.user_checkbox_disable and True or None),
+                        html.INPUT(type="checkbox", name=key, value="True",
+                            checked=getattr(request.user, key, False),
+                            disabled=key in self.cfg.user_checkbox_disable),
                         ' ', label(_), html.BR(),
                     ])
             self.make_row(_('General options'), bool_options, valign="top")

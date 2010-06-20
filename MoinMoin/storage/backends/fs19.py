@@ -541,11 +541,15 @@ class FsUserItem(Item):
         # stuff we want to have stored as integer:
         int_defaults = [
             ('tz_offset', '0'),
-            ('edit_cols', '0'),
             ('edit_rows', '0'),
         ]
         for key, default in int_defaults:
             metadata[key] = int(metadata.get(key, default))
+
+        tz_offset = metadata['tz_offset']
+        # convert (old) hourly format to seconds
+        if -24 <= tz_offset <= 24:
+            metadata['tz_offset'] = tz_offset * 3600
 
         # int last_saved timestamp should be enough:
         metadata['last_saved'] = int(float(metadata.get('last_saved', '0')))
@@ -561,11 +565,14 @@ class FsUserItem(Item):
                 'wikiname_add_spaces', # crap magic (you get it like it is)
                 'recoverpass_key', # user can recover again if needed
                 'external_target', # ancient, not used any more
+                'passwd', # ancient, not used any more (use enc_passwd)
+                'show_emoticons', # ancient, not used any more
                 'show_toolbar', # not used any more
                 'show_topbottom', # crap
                 'show_nonexist_qm', # crap, can be done by css
                 'show_page_trail', # renamed to show_trail
                 'subscribed_pages', # renamed to subscribed_items
+                'edit_cols', # not used any more
                ]
         for key in kill:
             if key in metadata:
