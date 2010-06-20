@@ -814,7 +814,7 @@ class User:
 
     def _wantTrail(self):
         return (not self.valid and self._request.cfg.cookie_lifetime[0]  # anon sessions enabled
-                or self.valid and (self.show_page_trail or self.remember_last_visit))  # logged-in session
+                or self.valid and (self.show_trail or self.remember_last_visit))  # logged-in session
 
     def addTrail(self, page):
         """ Add page to trail.

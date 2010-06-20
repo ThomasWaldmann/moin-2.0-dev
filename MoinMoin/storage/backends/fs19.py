@@ -550,6 +550,9 @@ class FsUserItem(Item):
         # int last_saved timestamp should be enough:
         metadata['last_saved'] = int(float(metadata.get('last_saved', '0')))
 
+        # rename show_page_trail to show_trail
+        metadata['show_trail'] = metadata['show_page_trail']
+
         # stuff we want to get rid of:
         kill = ['real_language', # crap (use 'language')
                 'wikiname_add_spaces', # crap magic (you get it like it is)
@@ -558,6 +561,7 @@ class FsUserItem(Item):
                 'show_toolbar', # not used any more
                 'show_topbottom', # crap
                 'show_nonexist_qm', # crap, can be done by css
+                'show_page_trail', # renamed to show_trail
                ]
         for key in kill:
             if key in metadata:
