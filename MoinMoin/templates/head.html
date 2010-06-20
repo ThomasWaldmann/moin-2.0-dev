@@ -42,7 +42,7 @@
         <link rel="alternate" type="application/wiki" title="{{ ueb_title }}" href="{{ ueb_url }}">
     {% endif %}   
     
-    <link rel="alternate" title="{{ sitename|escape }} Recent Changes" href="{{ rsslink }}" type="application/rss+xml">
+    <link rel="alternate" title="{{ page.page_name|escape }} changes" href="{{ href(page.page_name, do='atom_feed') }}" type="application/atom+xml">
     {{ html_head_keywords }}    
     
     {% for src, extra_attrs in external_scripts %}

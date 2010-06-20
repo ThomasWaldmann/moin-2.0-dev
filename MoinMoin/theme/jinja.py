@@ -572,26 +572,6 @@ class JinjaTheme(ThemeBase):
                     'pageinfo': info})
         return d
 
-
-    def rsslink(self, d):
-        """
-        Create rss link in head, used by FireFox
-
-        RSS link for FireFox. This shows an rss link in the bottom of
-        the page and let you subscribe to the wiki rss feed.
-
-        @rtype: unicode
-        @param d: dictionary
-        @return: rss link in dict
-        """
-        request = self.request
-        page = d['page']
-        url = page.url(request, querystr={
-                'do': 'rss_rc', 'ddiffs': '1', 'unique': '1', }, escape=0)
-        d.update({'rsslink': url})
-        return d
-
-
     def externalScript(self, name, attrs=''):
         """
         Format external script html
@@ -1072,9 +1052,6 @@ class JinjaTheme(ThemeBase):
         d.update({'user_head': user_head, 'html_head_keyword': keywords.get('html_head', '')})
         #Variables used to render title
         d.update({'title': text})
-
-        #Variables used to render rsslink
-        d.update(self.rsslink(d))
 
         # Links
         if pagename and page_parent_page:
