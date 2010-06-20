@@ -507,6 +507,10 @@ class User:
             event = events.UserChangedEvent(self._request, self)
         events.send_event(event)
 
+    def getText(self, text):
+        """ translate a text to the language of this user """
+        return self._request.getText(text, lang=self.getLang())
+
     def getLang(self):
         """ Get the language this user likely wants (limited by what we can support).
 
