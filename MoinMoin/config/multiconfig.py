@@ -800,7 +800,7 @@ options_no_group_name = {
     ('sistersites', [], "list of tuples `('WikiName', 'sisterpagelist_fetch_url')`"),
 
     ('trail_size', 5,
-     "Number of pages in the trail of visited pages"),
+     "Number of items in the trail of recently visited items"),
 
     ('page_footer1', '', "Custom HTML markup sent ''before'' the system footer."),
     ('page_footer2', '', "Custom HTML markup sent ''after'' the system footer."),
@@ -1068,7 +1068,7 @@ options = {
         ('edit_on_doubleclick', lambda _: _('Open editor on double click')),
         ('remember_last_visit', lambda _: _('After login, jump to last visited page')),
         ('show_comments', lambda _: _('Show comment sections')),
-        ('show_page_trail', lambda _: _('Show page trail')),
+        ('show_trail', lambda _: _('Show trail of recently visited items')),
         ('show_fancy_diff', lambda _: _('Show fancy diffs')),
         ('remember_me', lambda _: _('Remember login information')),
 
@@ -1085,7 +1085,7 @@ options = {
         'edit_on_doubleclick': True,
         'remember_last_visit': False,
         'show_comments': False,
-        'show_page_trail': True,
+        'show_trail': True,
         'show_fancy_diff': True,
         'remember_me': True,
        },
