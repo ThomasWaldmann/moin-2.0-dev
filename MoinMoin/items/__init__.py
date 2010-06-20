@@ -15,6 +15,7 @@
 
 import os, re, tarfile, time, datetime, shutil
 from StringIO import StringIO
+import json # python 2.6 stdlib module
 
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
@@ -147,16 +148,11 @@ class Item(object):
 
     def meta_text_to_dict(self, text):
         """ convert meta data from a text fragment to a dict """
-        meta = {}
-        for line in text.splitlines():
-            k, v = line.split(':', 1)
-            k, v = k.strip(), v.strip()
-            meta[k] = v
-        return meta
+        return json.loads(text)
 
     def meta_dict_to_text(self, meta):
-        text = u'\n'.join([u"%s: %s" % (k, v) for k, v in meta.items()])
-        return text
+        """ convert meta data from a dict to a text fragment """
+        return json.dumps(dict(meta), sort_keys=True, indent=2, ensure_ascii=False)
 
     def get_data(self):
         return '' # TODO create a better method for binary stuff
