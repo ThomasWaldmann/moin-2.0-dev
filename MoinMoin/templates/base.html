@@ -1,11 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
-<html>
-    <head>
-        <title>{{ title|e }} - MoinMoin Wiki</title>
-    </head>
-    <body>
-        {{ content }}
-    </body>
-</html>
-
-
+{% include "head.html" %}
+{% include "header.html" %}
+{{ content }}
+{% include "footer.html" %}

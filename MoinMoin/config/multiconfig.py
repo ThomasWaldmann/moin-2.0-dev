@@ -824,7 +824,6 @@ options_no_group_name = {
     ('show_section_numbers', False,
      'show section numbers in headings by default'),
     ('show_timings', False, "show some timing values at bottom of a page"),
-    ('show_version', False, "show moin's version at the bottom of a page"),
     ('show_rename_redirect', False, "if True, offer creation of redirect pages when renaming wiki pages"),
 
     ('page_credits',

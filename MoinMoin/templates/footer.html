@@ -1,0 +1,40 @@
+{# Template used to render footer #}
+
+{% if pageinfo %}
+    <p id="pageinfo" class="info" {{ pageinfo_lang }}> {{ pageinfo }}</p>
+{% endif %}
+<div id="pagebottom">
+    
+</div>
+</div>
+
+{{ theme.emit_custom_html(cfg.page_footer1) }}
+
+<div id="footer">
+    {% include "editbar.html" %}
+    
+    <ul id="credits">
+        {% for credit in cfg.page_credits %}
+            <li> {{ credit }} </li>
+        {% endfor %}
+    </ul>
+</div>
+
+{{ theme.emit_custom_html(cfg.page_footer2) }}
+
+{% set null = theme.request.clock.stop('run') %}
+{% set null = theme.request.clock.stop('total') %}
+{% set timing_information = theme.request.clock.dump() %}
+
+{% if cfg.show_timings %}
+    <ul id="timings">
+    {% for timing in timing_information %}
+        <li> {{ timing }}</li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+
+</body>
+</html>
+
