@@ -12,7 +12,6 @@
 from MoinMoin import user
 from MoinMoin.Page import Page
 from MoinMoin.mail import sendmail
-from MoinMoin.support.python_compatibility import set
 from MoinMoin.user import User, getUserList
 
 import MoinMoin.events as ev

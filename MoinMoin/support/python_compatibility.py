@@ -11,23 +11,6 @@
 min_req_exc = Exception("Minimum requirement for MoinMoin is Python 2.6.")
 
 try:
-    import string
-    rsplit = string.rsplit # Python >= 2.4 needed
-except AttributeError:
-    raise min_req_exc
-
-try:
-    sorted = sorted # Python >= 2.4 needed
-except NameError:
-    raise min_req_exc
-
-try:
-    set = set # Python >= 2.4 needed
-    frozenset = frozenset
-except NameError:
-    raise min_req_exc
-
-try:
     from functools import partial # Python >= 2.5 needed
 except (NameError, ImportError):
     raise min_req_exc

@@ -13,7 +13,6 @@ logging = log.getLogger(__name__)
 from MoinMoin.formatter import FormatterBase
 from MoinMoin import wikiutil, i18n
 from MoinMoin.Page import Page
-from MoinMoin.support.python_compatibility import set
 
 # insert IDs into output wherever they occur
 # warning: breaks toggle line numbers javascript

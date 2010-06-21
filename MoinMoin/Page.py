@@ -19,7 +19,6 @@ logging = log.getLogger(__name__)
 from MoinMoin import config, caching, util, wikiutil, user
 from MoinMoin.storage import Backend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
-from MoinMoin.support.python_compatibility import set
 
 from MoinMoin.items import ACL, MIMETYPE, SIZE, EDIT_LOG, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \

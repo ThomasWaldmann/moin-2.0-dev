@@ -16,7 +16,6 @@ from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
 from MoinMoin.mail.sendmail import encodeSpamSafeEmail
-from MoinMoin.support.python_compatibility import set
 from MoinMoin.util import timefuncs, web
 from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent, PageRevertedEvent
