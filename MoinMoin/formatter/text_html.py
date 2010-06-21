@@ -473,7 +473,6 @@ class Formatter(FormatterBase):
         wikitag, wikiurl, wikitail, wikitag_bad = wikiutil.resolve_interwiki(self.request, interwiki, pagename)
         wikiurl = wikiutil.mapURL(self.request, wikiurl)
         if wikitag == 'Self': # for own wiki, do simple links
-            wikitail = wikiutil.url_unquote(wikitail)
             try: # XXX this is the only place where we access self.page - do we need it? Crashes silently on actions!
                 pagename = wikiutil.AbsPageName(self.page.page_name, wikitail)
             except:

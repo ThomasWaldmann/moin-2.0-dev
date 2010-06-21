@@ -27,6 +27,8 @@ modules = pysupport.getPackageModules(__file__)
 
 import os, sys, time, xmlrpclib
 
+from werkzeug import url_quote, url_unquote
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -1011,7 +1013,9 @@ class XmlRpc1(XmlRpcBase):
         @rtype: unicode
         @return: text
         """
-        return wikiutil.url_unquote(text) # config.charset must be utf-8
+        if isinstance(text, unicode):
+            text = text.encode('utf-8') # url_unquote wants a str
+        return url_unquote(text, charset='utf-8')
 
     def _outstr(self, text):
         """
@@ -1021,7 +1025,7 @@ class XmlRpc1(XmlRpcBase):
         @rtype: str
         @return: text encoded in utf-8 and quoted
         """
-        return wikiutil.url_quote(text) # config.charset must be utf-8
+        return url_quote(text, charset='utf-8', safe='/')
 
 
 class XmlRpc2(XmlRpcBase):

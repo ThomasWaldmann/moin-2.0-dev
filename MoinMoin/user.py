@@ -21,9 +21,10 @@ import os, time, codecs, base64
 import hashlib
 import hmac
 
+from werkzeug import url_quote_plus
+
 from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import random_string
-from MoinMoin.wikiutil import url_quote_plus
 
 
 def get_user_backend(request):
@@ -972,7 +973,7 @@ Password reset URL: %s?action=recoverpass&name=%s&token=%s
                         self.name,
                         tok,
                         self._request.url_root,
-                        url_quote_plus(self.name),
+                        url_quote_plus(self.name, charset=config.charset),
                         tok, )
 
         text = _("""\
