@@ -370,35 +370,3 @@ def lock(file, flags):
 def unlock(file):
     raise NotImplementedError
 
-
-# ----------------------------------------------------------------------
-# Get real case of path name on case insensitive file systems
-# TODO: nt version?
-
-if sys.platform == 'darwin':
-
-    def realPathCase(path):
-        """ Return the real case of path e.g. PageName for pagename
-
-        HFS and HFS+ file systems, are case preserving but case
-        insensitive. You can't have 'file' and 'File' in the same
-        directory, but you can get the real name of 'file'.
-
-        @param path: string
-        @rtype: string
-        @return the real case of path or None
-        """
-        try:
-            from Carbon import File
-            try:
-                return File.FSRef(path).as_pathname()
-            except File.Error:
-                return None
-        except ImportError:
-            return None
-
-else:
-
-    def realPathCase(path):
-        return None
-
