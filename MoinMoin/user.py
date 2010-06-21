@@ -21,8 +21,6 @@ import os, time, codecs, base64
 import hashlib
 import hmac
 
-from werkzeug import url_quote_plus
-
 from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import random_string
 
@@ -968,13 +966,10 @@ Login Name: %s
 
 Password recovery token: %s
 
-Password reset URL: %s?action=recoverpass&name=%s&token=%s
-""") % (
-                        self.name,
-                        tok,
-                        self._request.url_root,
-                        url_quote_plus(self.name, charset=config.charset),
-                        tok, )
+Password reset URL: %s
+""") % (self.name,
+        tok,
+        self._request.abs_href(do='recoverpass', name=self.name, token=tok))
 
         text = _("""\
 Somebody has requested to email you a password recovery token.
