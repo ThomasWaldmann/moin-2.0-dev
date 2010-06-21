@@ -1242,6 +1242,7 @@ class HTML(Text):
                                   meta_text=meta_text,
                                   lang='en', direction='ltr',
                                   help=self.modify_help,
+                                  url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
                                  )
         return content
 
@@ -1290,6 +1291,7 @@ class SafeHTML(Text):
                                   meta_text=meta_text,
                                   lang='en', direction='ltr',
                                   help=self.modify_help,
+                                  url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
                                  )
         return content
 
