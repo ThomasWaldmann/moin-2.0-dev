@@ -560,7 +560,7 @@ file. It should match the actual charset of the configuration file.
         plugin packages as "moin_plugin_<sha1(path)>.plugin".
         """
         import imp
-        from MoinMoin.support.python_compatibility import hash_new
+        import hashlib
 
         plugin_dirs = [self.plugin_dir] + self.plugin_dirs
         self._plugin_modules = []
@@ -570,7 +570,7 @@ file. It should match the actual charset of the configuration file.
             imp.acquire_lock()
             try:
                 for pdir in plugin_dirs:
-                    csum = 'p_%s' % hash_new('sha1', pdir).hexdigest()
+                    csum = 'p_%s' % hashlib.new('sha1', pdir).hexdigest()
                     modname = '%s.%s' % (self.siteid, csum)
                     # If the module is not loaded, try to load it
                     if not modname in sys.modules:

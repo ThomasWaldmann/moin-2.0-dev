@@ -18,8 +18,8 @@
 """
 
 import os, time, codecs, base64
-
-from MoinMoin.support.python_compatibility import hash_new, hmac_new
+import hashlib
+import hmac
 
 from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import timefuncs, random_string
@@ -195,7 +195,7 @@ def encodePassword(pwd, salt=None):
     if salt is None:
         salt = random_string(20)
     assert isinstance(salt, str)
-    hash = hash_new('sha1', pwd)
+    hash = hashlib.new('sha1', pwd)
     hash.update(salt)
 
     return '{SSHA}' + base64.encodestring(hash.digest() + salt).rstrip()
@@ -435,7 +435,7 @@ class User:
             return False, False
 
         if epwd[:5] == '{SHA}':
-            enc = '{SHA}' + base64.encodestring(hash_new('sha1', password.encode('utf-8')).digest()).rstrip()
+            enc = '{SHA}' + base64.encodestring(hashlib.new('sha1', password.encode('utf-8')).digest()).rstrip()
             if epwd == enc:
                 data['enc_password'] = encodePassword(password) # upgrade to SSHA
                 return True, True
@@ -444,7 +444,7 @@ class User:
         if epwd[:6] == '{SSHA}':
             data = base64.decodestring(epwd[6:])
             salt = data[20:]
-            hash = hash_new('sha1', password.encode('utf-8'))
+            hash = hashlib.new('sha1', password.encode('utf-8'))
             hash.update(salt)
             return hash.digest() == data[:20], False
 
@@ -919,7 +919,7 @@ class User:
     def generate_recovery_token(self):
         key = random_string(64, "abcdefghijklmnopqrstuvwxyz0123456789")
         msg = str(int(time.time()))
-        h = hmac_new(key, msg).hexdigest()
+        h = hmac.new(key, msg, digestmod=hashlib.sha1).hexdigest()
         self.recoverpass_key = key
         self.save()
         return msg + '-' + h
@@ -937,7 +937,7 @@ class User:
             return False
         # check hmac
         # key must be of type string
-        h = hmac_new(str(self.recoverpass_key), str(stamp)).hexdigest()
+        h = hmac.new(str(self.recoverpass_key), str(stamp), digestmod=hashlib.sha1).hexdigest()
         if h != parts[1]:
             return False
         self.recoverpass_key = ""

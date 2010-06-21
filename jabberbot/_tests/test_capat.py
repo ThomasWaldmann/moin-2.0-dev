@@ -27,7 +27,7 @@ def test_ver_complex():
             )
     feat = ()
 
-    expected = capat.hash_new('sha1')
+    expected = capat.hashlib.new('sha1')
     expected.update("apple/foo<apples/bar<client/animal<client/bear<")
     expected = capat.base64.b64encode(expected.digest())
     assert capat.generate_ver(ident, feat) == expected

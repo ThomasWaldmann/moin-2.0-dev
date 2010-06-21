@@ -2485,7 +2485,7 @@ def createTicket(request, tm=None, action=None, pagename=None):
                              page name you use when posting the form.
     """
 
-    from MoinMoin.support.python_compatibility import hmac_new
+    import hmac, hashlib
     if tm is None:
         # for age-check of ticket
         tm = "%010x" % time.time()
@@ -2518,9 +2518,9 @@ def createTicket(request, tm=None, action=None, pagename=None):
             value = value.encode('utf-8')
         hmac_data.append(value)
 
-    hmac = hmac_new(request.cfg.secrets['wikiutil/tickets'],
-                    ''.join(hmac_data))
-    return "%s.%s" % (tm, hmac.hexdigest())
+    h = hmac.new(request.cfg.secrets['wikiutil/tickets'],
+                 ''.join(hmac_data), digestmod=hashlib.sha1)
+    return "%s.%s" % (tm, h.hexdigest())
 
 
 def checkTicket(request, ticket):
