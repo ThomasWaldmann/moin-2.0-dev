@@ -145,13 +145,34 @@ class Item(object):
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.name, self.mimetype))
 
+    def meta_filter(self, meta):
+        """ kill metadata entries that we set automatically when saving """
+        hash_name = self.request.cfg.hash_algorithm
+        kill_keys = [# shall not get copied from old rev to new rev
+                     SYSPAGE_VERSION,
+                     NAME_OLD,
+                     # are automatically implanted when saving
+                     NAME,
+                     hash_name,
+                     EDIT_LOG_COMMENT,
+                     EDIT_LOG_ACTION,
+                     EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID,
+                    ]
+        for key in kill_keys:
+            meta.pop(key, None)
+        return meta
+
     def meta_text_to_dict(self, text):
         """ convert meta data from a text fragment to a dict """
-        return json.loads(text)
+        meta = json.loads(text)
+        return self.meta_filter(meta)
 
-    def meta_dict_to_text(self, meta):
+    def meta_dict_to_text(self, meta, use_filter=True):
         """ convert meta data from a dict to a text fragment """
-        return json.dumps(dict(meta), sort_keys=True, indent=2, ensure_ascii=False)
+        meta = dict(meta)
+        if use_filter:
+            meta = self.meta_filter(meta)
+        return json.dumps(meta, sort_keys=True, indent=2, ensure_ascii=False)
 
     def get_data(self):
         return '' # TODO create a better method for binary stuff
@@ -303,10 +324,7 @@ class Item(object):
         for k, v in meta.iteritems():
             # TODO Put metadata into newrev here for now. There should be a safer way
             #      of input for this.
-
-            # Skip this metadata key. It should not be copied when editing an item.
-            if not k == SYSPAGE_VERSION:
-                newrev[k] = v
+            newrev[k] = v
 
         # we store the previous (if different) and current item name into revision metadata
         # this is useful for rename history and backends that use item uids internally
@@ -529,7 +547,7 @@ There is no help, you're doomed!
                 self.formatter.url(0))
 
     def _render_meta(self):
-        return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta)
+        return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta, use_filter=False)
 
     def _render_data(self):
         return '' # XXX we can't render the data, maybe show some "data icon" as a placeholder?
