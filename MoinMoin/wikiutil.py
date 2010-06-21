@@ -90,6 +90,8 @@ def decodeUserInput(s, charsets=[config.charset]):
 
 def parseQueryString(qstr, want_unicode=None):
     """ see werkzeug.url_decode
+    
+        DEPRECATED, use werkzeug directly
 
         Please note: this returns a MultiDict, you might need to use dict() on
                      the result if your code expects a "normal" dict.
@@ -101,8 +103,10 @@ def parseQueryString(qstr, want_unicode=None):
     return werkzeug.url_decode(qstr, charset=config.charset, errors='fallback:iso-8859-1',
                                decode_keys=False, include_empty=False)
 
-def makeQueryString(qstr=None, want_unicode=None, **kw):
+def makeQueryString(qstr=None, want_unicode=None, **kw): # DEPRECATED, use werkzeug!
     """ Make a querystring from arguments.
+
+    DEPRECATED, use werkzeug directly
 
     kw arguments overide values in qstr.
 

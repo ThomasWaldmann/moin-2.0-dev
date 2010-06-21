@@ -12,10 +12,12 @@ from __future__ import absolute_import
 
 import re
 
+from werkzeug import url_encode
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import wikiutil
+from MoinMoin import config
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import html, moin_page, xlink
 
@@ -716,7 +718,7 @@ class Converter(ConverterMacro):
         """Handle all kinds of links."""
         if link_args:
             link_args = parse_arguments(link_args) # XXX needs different parsing
-            query = wikiutil.makeQueryString(link_args.keyword)
+            query = url_encode(link_args.keyword, charset=config.charset, encode_keys=True)
         else:
             query = None
         if link_item is not None:
@@ -831,7 +833,7 @@ class Converter(ConverterMacro):
             if 'do' not in args:
                 # by default, we want the item's get url for transclusion of raw data:
                 args['do'] = 'get'
-            query = wikiutil.makeQueryString(args)
+            query = url_encode(args, charset=config.charset, encode_keys=True)
             target = Iri(scheme='wiki.local', path=object_item, query=query, fragment=None)
             text = object_item
         else:
