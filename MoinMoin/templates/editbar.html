@@ -6,5 +6,11 @@
         <li>{{ item }}</li>
     {% endif %}
 {% endfor %}
+
+{% if 'Download' in cfg.edit_bar %}
+    {% if not 'get' in cfg.actions_excluded %}
+        <a href="{{ href(do='get') }}" rel="nofollow">{{ _('Download') }}</a>
+    {% endif %}
+{% endif %}
 </ul>
 
