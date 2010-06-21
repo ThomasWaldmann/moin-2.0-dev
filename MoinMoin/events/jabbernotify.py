@@ -15,7 +15,6 @@ logging = log.getLogger(__name__)
 
 from MoinMoin.Page import Page
 from MoinMoin.user import User, getUserList
-from MoinMoin.support.python_compatibility import set
 
 import MoinMoin.events.notification as notification
 import MoinMoin.events as ev
@@ -110,7 +109,7 @@ def handle_user_created(event):
         usr = User(request, id=id)
         # Currently send this only to super users
         if usr.isSuperUser() and usr.jid and event_name in usr.jabber_subscribed_events:
-            _ = lambda text: request.getText(text, lang=usr.language or 'en')
+            _ = lambda text: usr.getText(text)
             msg = notification.user_created_message(request, _, sitename, username, email)
             data = {'action': "user_created", 'subject': msg['subject'], 'text': msg['text'],
                     'url_list': []}

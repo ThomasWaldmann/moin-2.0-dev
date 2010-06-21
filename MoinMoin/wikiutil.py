@@ -11,12 +11,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import cgi
 import codecs
 import os
 import re
 import time
-import urllib
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -24,7 +22,6 @@ logging = log.getLogger(__name__)
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.support.python_compatibility import rsplit
 
 from MoinMoin import web # needed so that next line works:
 import werkzeug
@@ -91,35 +88,10 @@ def decodeUserInput(s, charsets=[config.charset]):
     raise UnicodeError('The string %r cannot be decoded.' % s)
 
 
-def url_quote(s, safe='/', want_unicode=None):
-    """ see werkzeug.url_quote, we use a different safe param default value """
-    try:
-        assert want_unicode is None
-    except AssertionError:
-        log.exception("call with deprecated want_unicode param, please fix caller")
-    return werkzeug.url_quote(s, charset=config.charset, safe=safe)
-
-def url_quote_plus(s, safe='/', want_unicode=None):
-    """ see werkzeug.url_quote_plus, we use a different safe param default value """
-    try:
-        assert want_unicode is None
-    except AssertionError:
-        log.exception("call with deprecated want_unicode param, please fix caller")
-    return werkzeug.url_quote_plus(s, charset=config.charset, safe=safe)
-
-def url_unquote(s, want_unicode=None):
-    """ see werkzeug.url_unquote """
-    try:
-        assert want_unicode is None
-    except AssertionError:
-        log.exception("call with deprecated want_unicode param, please fix caller")
-    if isinstance(s, unicode):
-        s = s.encode(config.charset)
-    return werkzeug.url_unquote(s, charset=config.charset, errors='fallback:iso-8859-1')
-
-
 def parseQueryString(qstr, want_unicode=None):
     """ see werkzeug.url_decode
+    
+        DEPRECATED, use werkzeug directly
 
         Please note: this returns a MultiDict, you might need to use dict() on
                      the result if your code expects a "normal" dict.
@@ -131,8 +103,10 @@ def parseQueryString(qstr, want_unicode=None):
     return werkzeug.url_decode(qstr, charset=config.charset, errors='fallback:iso-8859-1',
                                decode_keys=False, include_empty=False)
 
-def makeQueryString(qstr=None, want_unicode=None, **kw):
+def makeQueryString(qstr=None, want_unicode=None, **kw): # DEPRECATED, use werkzeug!
     """ Make a querystring from arguments.
+
+    DEPRECATED, use werkzeug directly
 
     kw arguments overide values in qstr.
 
@@ -162,8 +136,6 @@ def makeQueryString(qstr=None, want_unicode=None, **kw):
 
 def quoteWikinameURL(pagename, charset=config.charset):
     """ Return a url encoding of filename in plain ascii
-
-    Use urllib.quote to quote any character that is not always safe.
 
     @param pagename: the original pagename (unicode)
     @param charset: url text encoding, 'utf-8' recommended. Other charset
@@ -264,8 +236,7 @@ def unquoteWikiname(filename, charsets=[config.charset]):
     cheap to find.
 
     This function should be used only to unquote file names, not page
-    names we receive from the user. These are handled in request by
-    urllib.unquote, decodePagename and normalizePagename.
+    names we receive from the user. These are handled in request already.
 
     Todo: search clients of unquoteWikiname and check for exceptions.
 
@@ -594,7 +565,7 @@ def join_wiki(wikiurl, wikitail):
     @rtype: string
     @return: generated URL of the page in the other wiki
     """
-    wikitail = url_quote(wikitail)
+    wikitail = werkzeug.url_quote(wikitail, charset=config.charset, safe='/')
     if '$PAGE' in wikiurl:
         return wikiurl.replace('$PAGE', wikitail)
     else:
@@ -2434,7 +2405,7 @@ def anchor_name_from_text(text):
           valid ID/name, it will return it without modification (identity
           transformation).
     '''
-    quoted = urllib.quote_plus(text.encode('utf-7'), safe=':')
+    quoted = werkzeug.url_quote_plus(text, charset='utf-7', safe=':')
     res = quoted.replace('%', '.').replace('+', '_')
     if not res[:1].isalpha():
         return 'A%s' % res
@@ -2460,7 +2431,7 @@ def split_anchor(pagename):
           pagename part (and no anchor). Also, we need to append #anchor
           at the END of the generated URL (AFTER the query string).
     """
-    parts = rsplit(pagename, '#', 1)
+    parts = pagename.rsplit('#', 1)
     if len(parts) == 2:
         return parts
     else:
@@ -2486,7 +2457,7 @@ def createTicket(request, tm=None, action=None, pagename=None):
                              page name you use when posting the form.
     """
 
-    from MoinMoin.support.python_compatibility import hmac_new
+    import hmac, hashlib
     if tm is None:
         # for age-check of ticket
         tm = "%010x" % time.time()
@@ -2519,9 +2490,9 @@ def createTicket(request, tm=None, action=None, pagename=None):
             value = value.encode('utf-8')
         hmac_data.append(value)
 
-    hmac = hmac_new(request.cfg.secrets['wikiutil/tickets'],
-                    ''.join(hmac_data))
-    return "%s.%s" % (tm, hmac.hexdigest())
+    h = hmac.new(request.cfg.secrets['wikiutil/tickets'],
+                 ''.join(hmac_data), digestmod=hashlib.sha1)
+    return "%s.%s" % (tm, h.hexdigest())
 
 
 def checkTicket(request, ticket):

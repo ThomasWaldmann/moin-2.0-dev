@@ -3,7 +3,7 @@
     MoinMoin - File System Utilities
 
     @copyright: 2002 Juergen Hermann <jh@web.de>,
-                2006-2008 MoinMoin:ThomasWaldmann
+                2006-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -319,7 +319,6 @@ def copystat(src, dst):
             mode = S_IMODE(st[ST_MODE])
             if hasattr(os, 'chmod'):
                 os.chmod(dst, mode) # KEEP THIS ONE!
-        #else: pass # we are on Win9x,ME - no chmod here
     else:
         shutil.copystat(src, dst)
 
@@ -370,64 +369,4 @@ def lock(file, flags):
 
 def unlock(file):
     raise NotImplementedError
-
-
-# ----------------------------------------------------------------------
-# Get real case of path name on case insensitive file systems
-# TODO: nt version?
-
-if sys.platform == 'darwin':
-
-    def realPathCase(path):
-        """ Return the real case of path e.g. PageName for pagename
-
-        HFS and HFS+ file systems, are case preserving but case
-        insensitive. You can't have 'file' and 'File' in the same
-        directory, but you can get the real name of 'file'.
-
-        @param path: string
-        @rtype: string
-        @return the real case of path or None
-        """
-        try:
-            from Carbon import File
-            try:
-                return File.FSRef(path).as_pathname()
-            except File.Error:
-                return None
-        except ImportError:
-            return None
-
-else:
-
-    def realPathCase(path):
-        return None
-
-# dircache stuff seems to be broken on win32 (at least for FAT32, maybe NTFS).
-# dircache stuff is also broken on POSIX if updates happen too fast (< 1s).
-DCENABLED = 0 # set to 0 to completely disable dircache usage
-
-# Note: usage of the dc* functions below is deprecated, they'll get removed soon.
-dc_deprecated = "dircache function calls (dcdisable,dclistdir,dcreset) are deprecated, please fix caller"
-
-def dcdisable():
-    warnings.warn(dc_deprecated, DeprecationWarning, stacklevel=2)
-    global DCENABLED
-    DCENABLED = 0
-
-import dircache
-
-def dclistdir(path):
-    warnings.warn(dc_deprecated, DeprecationWarning, stacklevel=2)
-    if sys.platform == 'win32' or not DCENABLED:
-        return os.listdir(path)
-    else:
-        return dircache.listdir(path)
-
-def dcreset():
-    warnings.warn(dc_deprecated, DeprecationWarning, stacklevel=2)
-    if sys.platform == 'win32' or not DCENABLED:
-        return
-    else:
-        return dircache.reset()
 

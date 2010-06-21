@@ -18,13 +18,11 @@
 """
 
 import os, time, codecs, base64
-
-from MoinMoin.support.python_compatibility import hash_new, hmac_new
+import hashlib
+import hmac
 
 from MoinMoin import config, caching, wikiutil, i18n, events
-from MoinMoin.util import timefuncs, random_string
-from MoinMoin.util import timefuncs
-from MoinMoin.wikiutil import url_quote_plus
+from MoinMoin.util import random_string
 
 
 def get_user_backend(request):
@@ -195,7 +193,7 @@ def encodePassword(pwd, salt=None):
     if salt is None:
         salt = random_string(20)
     assert isinstance(salt, str)
-    hash = hash_new('sha1', pwd)
+    hash = hashlib.new('sha1', pwd)
     hash.update(salt)
 
     return '{SSHA}' + base64.encodestring(hash.digest() + salt).rstrip()
@@ -289,7 +287,10 @@ class User:
             self.enc_password = encodePassword(password)
 
         self.tz_offset = int(self._cfg.tz_offset * 3600)
-        self.language = '' # XXX check later
+        self.language = '' # '' means user did not specify language preference
+                           # in userprefs - do not put cfg.language_default here
+                           # or moin won't use browser language
+                           # Note: usually you want to use .getLang()!
         self._stored = False
         self.date_fmt = self._cfg.date_fmt
         self.datetime_fmt = self._cfg.datetime_fmt
@@ -330,10 +331,6 @@ class User:
         else:
             from MoinMoin.security import Default
             self.may = Default(self)
-
-        # we must dynamically check here, because supported languages may change:
-        if self.language and not self.language in i18n.wikiLanguages():
-            self.language = 'en'
 
     def __repr__(self):
         return "<%s.%s at 0x%x name:%r valid:%r>" % (
@@ -436,7 +433,7 @@ class User:
             return False, False
 
         if epwd[:5] == '{SHA}':
-            enc = '{SHA}' + base64.encodestring(hash_new('sha1', password.encode('utf-8')).digest()).rstrip()
+            enc = '{SHA}' + base64.encodestring(hashlib.new('sha1', password.encode('utf-8')).digest()).rstrip()
             if epwd == enc:
                 data['enc_password'] = encodePassword(password) # upgrade to SSHA
                 return True, True
@@ -445,7 +442,7 @@ class User:
         if epwd[:6] == '{SSHA}':
             data = base64.decodestring(epwd[6:])
             salt = data[20:]
-            hash = hash_new('sha1', password.encode('utf-8'))
+            hash = hashlib.new('sha1', password.encode('utf-8'))
             hash.update(salt)
             return hash.digest() == data[:20], False
 
@@ -508,17 +505,54 @@ class User:
             event = events.UserChangedEvent(self._request, self)
         events.send_event(event)
 
+    def getText(self, text):
+        """ translate a text to the language of this user """
+        return self._request.getText(text, lang=self.getLang())
+
+    def getLang(self):
+        """ Get the language this user likely wants (limited by what we can support).
+
+            If this is a valid user (not an anon user), we try to use his language
+            preference, if there is one.
+            If there is none or this is an anon user, we check if this is the current
+            user and if yes, try to follow his browser language preferences.
+            If it is not the current user or we can't follow his language preferences,
+            we'll try using the language_default from the configuration.
+            If the language we have determined so far is not supported by moin,
+            we'll fall back to English, we never return an unsupported language.
+        """
+        lang = self.language
+        if not lang:
+            # user did not specify his language preference explicitly
+            if self.isCurrentUser():
+                # browser language if this is current user
+                lang = i18n.get_browser_language(self._request)
+        if not lang:
+            lang = self._request.cfg.language_default
+        available = i18n.wikiLanguages() or ["en"]
+        if lang not in available:
+            lang = 'en'
+        return lang
+
     # -----------------------------------------------------------------
     # Time and date formatting
 
     def getTime(self, tm):
         """ Get time in user's timezone.
 
+        This is able to process arbitrary timestamps, even 0 or near 0
+        are processed in a way so that adjusted timestamp for user does
+        not cause trouble in the time library.
+
         @param tm: time (UTC UNIX timestamp)
         @rtype: int
         @return: tm tuple adjusted for user's timezone
         """
-        return timefuncs.tmtuple(tm + self.tz_offset)
+        if tm != 0: # we keep 0 as it is a special value
+            tm += self.tz_offset # if tm is near 0, this might make it < 0
+        if tm < 0: # avoid it getting negative
+            tm += 86400 # 1d later, so it is differentiable from 0
+        return time.gmtime(tm)
 
 
     def getFormattedDate(self, tm):
@@ -891,7 +925,7 @@ class User:
     def generate_recovery_token(self):
         key = random_string(64, "abcdefghijklmnopqrstuvwxyz0123456789")
         msg = str(int(time.time()))
-        h = hmac_new(key, msg).hexdigest()
+        h = hmac.new(key, msg, digestmod=hashlib.sha1).hexdigest()
         self.recoverpass_key = key
         self.save()
         return msg + '-' + h
@@ -909,7 +943,7 @@ class User:
             return False
         # check hmac
         # key must be of type string
-        h = hmac_new(str(self.recoverpass_key), str(stamp)).hexdigest()
+        h = hmac.new(str(self.recoverpass_key), str(stamp), digestmod=hashlib.sha1).hexdigest()
         if h != parts[1]:
             return False
         self.recoverpass_key = ""
@@ -932,13 +966,10 @@ Login Name: %s
 
 Password recovery token: %s
 
-Password reset URL: %s?action=recoverpass&name=%s&token=%s
-""") % (
-                        self.name,
-                        tok,
-                        self._request.url_root,
-                        url_quote_plus(self.name),
-                        tok, )
+Password reset URL: %s
+""") % (self.name,
+        tok,
+        self._request.abs_href(do='recoverpass', name=self.name, token=tok))
 
         text = _("""\
 Somebody has requested to email you a password recovery token.
