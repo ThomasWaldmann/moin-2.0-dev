@@ -11,12 +11,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import cgi
 import codecs
 import os
 import re
 import time
-import urllib
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -162,8 +160,6 @@ def makeQueryString(qstr=None, want_unicode=None, **kw):
 def quoteWikinameURL(pagename, charset=config.charset):
     """ Return a url encoding of filename in plain ascii
 
-    Use urllib.quote to quote any character that is not always safe.
-
     @param pagename: the original pagename (unicode)
     @param charset: url text encoding, 'utf-8' recommended. Other charset
                     might not be able to encode the page name and raise
@@ -263,8 +259,7 @@ def unquoteWikiname(filename, charsets=[config.charset]):
     cheap to find.
 
     This function should be used only to unquote file names, not page
-    names we receive from the user. These are handled in request by
-    urllib.unquote, decodePagename and normalizePagename.
+    names we receive from the user. These are handled in request already.
 
     Todo: search clients of unquoteWikiname and check for exceptions.
 
@@ -2433,7 +2428,7 @@ def anchor_name_from_text(text):
           valid ID/name, it will return it without modification (identity
           transformation).
     '''
-    quoted = urllib.quote_plus(text.encode('utf-7'), safe=':')
+    quoted = werkzeug.url_quote_plus(text, charset='utf-7', safe=':')
     res = quoted.replace('%', '.').replace('+', '_')
     if not res[:1].isalpha():
         return 'A%s' % res
