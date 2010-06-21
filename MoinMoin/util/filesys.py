@@ -319,7 +319,6 @@ def copystat(src, dst):
             mode = S_IMODE(st[ST_MODE])
             if hasattr(os, 'chmod'):
                 os.chmod(dst, mode) # KEEP THIS ONE!
-        #else: pass # we are on Win9x,ME - no chmod here
     else:
         shutil.copystat(src, dst)
 
