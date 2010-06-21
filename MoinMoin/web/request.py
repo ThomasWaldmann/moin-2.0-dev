@@ -41,8 +41,22 @@ class Request(ResponseBase, RequestBase):
     def __init__(self, environ, populate_request=True, shallow=False):
         ResponseBase.__init__(self)
         RequestBase.__init__(self, environ, populate_request, shallow)
-        self.href = Href(self.script_root or '/', self.charset)
-        self.abs_href = Href(self.url_root, self.charset)
+        def sort_key(item):
+            """
+            sort the query string key/values in the way we want:
+
+            First: do=...
+            Last:  target=...
+
+            @param item: tuple (key, value)
+            @return: sort key
+            """
+            return {
+                'do': 0, # nice to have this first (but not technically required)
+                'from_tar': 99, # TWikiDraw searches a "file extension" at URL end
+            }.get(item[0], 50) # 50 -> other stuff is somewhere in the middle
+        self.href = Href(self.script_root or '/', self.charset, sort=True, key=sort_key)
+        self.abs_href = Href(self.url_root, self.charset, sort=True, key=sort_key)
         self.headers = Headers([('Content-Type', 'text/html')])
         self.response = []
         self.status_code = 200

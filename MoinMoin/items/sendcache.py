@@ -26,12 +26,14 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+import hashlib
+import hmac
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil
 from MoinMoin import config, caching
-from MoinMoin.support.python_compatibility import hmac_new
 
 class SendCache(object):
     cache_arena = 'sendcache' # Do NOT get this directly from request.values or user would be able to read any cache!
@@ -66,7 +68,7 @@ class SendCache(object):
         hmac_data = repr(meta)
         if secret is None:
             secret = request.cfg.secrets['action/cache']
-        key = hmac_new(secret, hmac_data).hexdigest()
+        key = hmac.new(secret, hmac_data, digestmod=hashlib.sha1).hexdigest()
         return cls(request, key)
 
     def __init__(self, request, key):
@@ -120,7 +122,6 @@ class SendCache(object):
         request = self.request
         key = self.key
         import os.path
-        from MoinMoin.util import timefuncs
 
         if filename:
             # make sure we just have a simple filename (without path)

@@ -165,7 +165,7 @@ def run(context):
             return request
         except AccessDeniedError, ade:
             forbidden = Forbidden()
-            forbidden.description = ade.message
+            forbidden.description = str(ade)
             return forbidden
     finally:
         context.finish()
@@ -311,13 +311,7 @@ def setup_i18n_preauth(context):
 
 def setup_i18n_postauth(context):
     """ Determine language for the request after user-id is established. """
-    user = context.user
-    if user and user.valid and user.language:
-        logging.debug("valid user that has configured some specific language to use in his user profile")
-        lang = user.language
-    else:
-        logging.debug("either no valid user or no specific language configured in user profile, using lang setup by setup_i18n_preauth")
-        lang = context.lang
+    lang = context.user.getLang()
     logging.debug("setup_i18n_postauth returns %r" % lang)
     return lang
 

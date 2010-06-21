@@ -25,6 +25,7 @@ import StringIO
 import itertools
 import cPickle as pickle
 from datetime import datetime
+import hashlib
 
 os.environ["HGENCODING"] = "utf-8" # must be set before importing mercurial
 os.environ["HGMERGE"] = "internal:fail"
@@ -49,7 +50,6 @@ except ImportError:
     from MoinMoin.support import pycdb as cdb
 
 from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_COMMENT
-from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.storage import Backend, Item, StoredRevision, NewRevision
 from MoinMoin.storage.error import (BackendError, NoSuchItemError, NoSuchRevisionError,
                                    RevisionNumberMismatchError, ItemAlreadyExistsError,
@@ -439,7 +439,7 @@ class MercurialBackend(Backend):
 
     def _hash(self, itemname):
         """Compute Item ID from given name."""
-        return hash_new('md5', itemname.encode('utf-8')).hexdigest()
+        return hashlib.new('md5', itemname.encode('utf-8')).hexdigest()
 
     def _name(self, itemid):
         """Resolve Item name by given ID."""

@@ -1,9 +1,9 @@
 Python requirements
 ===================
 
-Please use Python 2.4.x, 2.5.x or 2.6.x, we recommend 2.5.x / 2.6.x.
+Please use Python >= 2.6, we recommend 2.6.x.
 
-Python 2.3 is not supported by moin 1.9.x (use moin 1.8.x if you can't
+Python 2.4 and 2.5 is not supported by moin 2.0 (use moin 1.9.x if you can't
 upgrade Python).
 
 Python 3.x won't work for MoinMoin for now.
@@ -29,8 +29,6 @@ You can use anything that speaks WSGI to moin:
 
 Requirements needed for some moin features
 ==========================================
-
-RSS feed: python-xml (pyxml) or python >= 2.5.1
 
 GUI editor: python-xml (pyxml) - more precisely, this stuff is needed by the
             html to wiki markup converter invoked when the gui editor posts
@@ -104,7 +102,7 @@ minimum: 0.8.7(?)
 
 werkzeug (WSGI toolkit)
 =======================
-shipped: 0.5.1
+shipped: 0.6.2
 minimum: 0.5.1 will work, maybe 0.5 also
 
 

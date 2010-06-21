@@ -84,16 +84,6 @@ def rangelist(numbers):
     return pattern[1:]
 
 
-def IsWin9x():
-    """ Returns true if run on Windows 95, 98 or ME. """
-    if hasattr(sys, 'getwindowsversion'):
-        if sys.getwindowsversion()[3] == 1:
-            return True
-    elif 'command' in os.environ.get('comspec', ''):
-        return True
-    return False
-
-
 class simpleIO:
     """ A simple StringIO replacement for code that calls us
         with ascii, Unicode and iso-8859-1 data. Wee, that is fun. """

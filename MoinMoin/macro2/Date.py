@@ -14,7 +14,7 @@ from MoinMoin.macro2._base import MacroInlineBase
 class MacroDateTimeBase(MacroInlineBase):
     def parse_time(self, args):
         """ parse a time specification argument for usage by Date and DateTime macro
-        
+
         @param args: YYYY-MM-DDTHH:MM:SS (plus optional Z for UTC, or +/-HHMM) or
                      float/int UNIX timestamp
         @returns: UNIX timestamp (UTC)

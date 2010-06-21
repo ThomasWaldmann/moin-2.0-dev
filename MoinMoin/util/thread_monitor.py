@@ -20,7 +20,6 @@ import traceback
 from time import sleep
 from StringIO import StringIO
 
-from MoinMoin.support.python_compatibility import set
 
 class Monitor(object):
     def __init__(self):

@@ -7,6 +7,7 @@
 
 from random import randint
 import time
+import hashlib
 
 from openid import oidutil
 from openid.store.interface import OpenIDStore
@@ -14,7 +15,6 @@ from openid.association import Association
 from openid.store import nonce
 
 from MoinMoin import caching
-from MoinMoin.support.python_compatibility import hash_new
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -53,7 +53,7 @@ class MoinOpenIDStore(OpenIDStore):
 
     def key(self, url):
         '''return cache key'''
-        return hash_new('sha1', url).hexdigest()
+        return hashlib.new('sha1', url).hexdigest()
 
     def storeAssociation(self, server_url, association):
         ce = caching.CacheEntry(self.request, 'openid', self.key(server_url),
@@ -104,7 +104,7 @@ class MoinOpenIDStore(OpenIDStore):
 
     def useNonce(self, server_url, timestamp, salt):
         val = ''.join([str(server_url), str(timestamp), str(salt)])
-        csum = hash_new('sha1', val).hexdigest()
+        csum = hashlib.new('sha1', val).hexdigest()
         ce = caching.CacheEntry(self.request, 'openid-nonce', csum,
                                 scope='farm', use_pickle=False)
         if ce.exists():

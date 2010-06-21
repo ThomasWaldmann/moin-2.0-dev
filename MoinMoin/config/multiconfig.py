@@ -26,7 +26,6 @@ from MoinMoin.events import PageDeletedEvent, PageCopiedEvent, PageRevertedEvent
 import MoinMoin.web.session
 from MoinMoin.packages import packLine
 from MoinMoin.security import AccessControlList
-from MoinMoin.support.python_compatibility import set
 
 _url_re_cache = None
 _farmconfig_mtime = None
@@ -380,8 +379,8 @@ class ConfigFunctionality(object):
             raise error.ConfigurationError("No storage configuration specified! You need to define a namespace_mapping. " + \
                                            "For further reference, please see HelpOnStorageConfiguration.")
 
-        if self.url_prefix_fckeditor is None:
-            self.url_prefix_fckeditor = self.url_prefix_local + '/applets/FCKeditor'
+        if self.url_prefix_ckeditor is None:
+            self.url_prefix_ckeditor = self.url_prefix_local + '/applets/ckeditor'
 
         if self.secrets is None:  # admin did not setup a real secret, so make up something
             self.secrets = self.calc_secrets()
@@ -561,7 +560,7 @@ file. It should match the actual charset of the configuration file.
         plugin packages as "moin_plugin_<sha1(path)>.plugin".
         """
         import imp
-        from MoinMoin.support.python_compatibility import hash_new
+        import hashlib
 
         plugin_dirs = [self.plugin_dir] + self.plugin_dirs
         self._plugin_modules = []
@@ -571,7 +570,7 @@ file. It should match the actual charset of the configuration file.
             imp.acquire_lock()
             try:
                 for pdir in plugin_dirs:
-                    csum = 'p_%s' % hash_new('sha1', pdir).hexdigest()
+                    csum = 'p_%s' % hashlib.new('sha1', pdir).hexdigest()
                     modname = '%s.%s' % (self.siteid, csum)
                     # If the module is not loaded, try to load it
                     if not modname in sys.modules:
@@ -872,8 +871,8 @@ options_no_group_name = {
      "used as the base URL for icons, css, etc. - includes the moin version number and changes on every release. This replaces the deprecated and sometimes confusing `url_prefix = '/wiki'` setting."),
     ('url_prefix_local', None,
      "used as the base URL for some Javascript - set this to a URL on same server as the wiki if your url_prefix_static points to a different server."),
-    ('url_prefix_fckeditor', None,
-     "used as the base URL for FCKeditor - similar to url_prefix_local, but just for FCKeditor."),
+    ('url_prefix_ckeditor', None,
+     "used as the base URL for CKeditor - similar to url_prefix_local, but just for CKeditor."),
 
     ('url_prefix_action', None,
      "Use 'action' to enable action URL generation to be compatible with robots.txt. It will generate .../action/info/PageName?action=info then. Recommended for internet wikis."),

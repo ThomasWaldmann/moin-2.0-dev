@@ -15,19 +15,23 @@
 
 import os, re, tarfile, time, datetime, shutil
 from StringIO import StringIO
+import json
+import hashlib
 
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from werkzeug import http_date, quote_etag, url_quote
+from werkzeug import http_date, quote_etag
 
 from MoinMoin import wikiutil, config, user
-from MoinMoin.util import timefuncs
-from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
 
 from MoinMoin.items.sendcache import SendCache
+
+COLS = 80
+ROWS_DATA = 20
+ROWS_META = 10
 
 NAME = "name"
 NAME_OLD = "name_old"
@@ -64,8 +68,12 @@ class Item(object):
             def __init__(self, mimetype):
                 self[MIMETYPE] = mimetype
                 self.item = None
-            def read(self):
+            def read(self, size=-1):
                 return ''
+            def seek(self, offset, whence=0):
+                pass
+            def tell(self):
+                return 0
 
         if rev_no is None:
             rev_no = -1
@@ -145,18 +153,34 @@ class Item(object):
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.name, self.mimetype))
 
-    def meta_text_to_dict(self, text):
-        """ convert meta data from a text fragment to a dict """
-        meta = {}
-        for line in text.splitlines():
-            k, v = line.split(':', 1)
-            k, v = k.strip(), v.strip()
-            meta[k] = v
+    def meta_filter(self, meta):
+        """ kill metadata entries that we set automatically when saving """
+        hash_name = self.request.cfg.hash_algorithm
+        kill_keys = [# shall not get copied from old rev to new rev
+                     SYSPAGE_VERSION,
+                     NAME_OLD,
+                     # are automatically implanted when saving
+                     NAME,
+                     hash_name,
+                     EDIT_LOG_COMMENT,
+                     EDIT_LOG_ACTION,
+                     EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID,
+                    ]
+        for key in kill_keys:
+            meta.pop(key, None)
         return meta
 
-    def meta_dict_to_text(self, meta):
-        text = u'\n'.join([u"%s: %s" % (k, v) for k, v in meta.items()])
-        return text
+    def meta_text_to_dict(self, text):
+        """ convert meta data from a text fragment to a dict """
+        meta = json.loads(text)
+        return self.meta_filter(meta)
+
+    def meta_dict_to_text(self, meta, use_filter=True):
+        """ convert meta data from a dict to a text fragment """
+        meta = dict(meta)
+        if use_filter:
+            meta = self.meta_filter(meta)
+        return json.dumps(meta, sort_keys=True, indent=2, ensure_ascii=False)
 
     def get_data(self):
         return '' # TODO create a better method for binary stuff
@@ -167,7 +191,7 @@ class Item(object):
         template = self.env.get_template('modify_binary.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  rows_meta=3, cols=80,
+                                  rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
@@ -202,7 +226,7 @@ class Item(object):
 
     def _write_stream(self, content, new_rev, bufsize=8192):
         hash_name = self.request.cfg.hash_algorithm
-        hash = hash_new(hash_name)
+        hash = hashlib.new(hash_name)
         if hasattr(content, "read"):
             while True:
                 buf = content.read(bufsize)
@@ -243,7 +267,7 @@ class Item(object):
         delete this item by moving it to the trashbin
         """
         trash_prefix = u'Trash/' # XXX move to config
-        now = time.strftime(self.request.cfg.datetime_fmt, timefuncs.tmtuple(time.time()))
+        now = time.strftime(self.request.cfg.datetime_fmt, time.gmtime())
         # make trash name unique by including timestamp:
         trashname = u'%s%s (%s UTC)' % (trash_prefix, self.name, now)
         return self._rename(trashname, comment, action='SAVE/DELETE')
@@ -308,10 +332,7 @@ class Item(object):
         for k, v in meta.iteritems():
             # TODO Put metadata into newrev here for now. There should be a safer way
             #      of input for this.
-
-            # Skip this metadata key. It should not be copied when editing an item.
-            if not k == SYSPAGE_VERSION:
-                newrev[k] = v
+            newrev[k] = v
 
         # we store the previous (if different) and current item name into revision metadata
         # this is useful for rename history and backends that use item uids internally
@@ -534,7 +555,7 @@ There is no help, you're doomed!
                 self.formatter.url(0))
 
     def _render_meta(self):
-        return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta)
+        return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta, use_filter=False)
 
     def _render_data(self):
         return '' # XXX we can't render the data, maybe show some "data icon" as a placeholder?
@@ -577,6 +598,7 @@ There is no help, you're doomed!
 
         template = self.env.get_template(html_template)
         content = template.render(gettext=self.request.getText,
+                                  item_name=self.name,
                                   rev=self.rev,
                                   log=log,
                                   mimetype=self.mimetype,
@@ -767,21 +789,6 @@ class TarMixin(object):
     TarMixin offers additional functionality for tar-like items to list and
     access member files and to create new revisions by multiple posts.
     """
-    # Note: from_tar query string arg needs to be last because twikidraw looks
-    # for "file extension" at the end - therefore we need special url methods.
-    def rev_url(self, _absolute=False, member=None, **kw):
-        url = super(TarMixin, self).rev_url(_absolute=_absolute, **kw)
-        if member is not None:
-            url += '&from_tar=%s' % url_quote(member)
-        return url
-
-    def url(self, _absolute=False, member=None, **kw):
-        url = super(TarMixin, self).url(_absolute=_absolute, **kw)
-        if member is not None:
-            url += '&from_tar=%s' % url_quote(member)
-            # note: from_tar needs to be last in qs because twikidraw looks for "file extension" at the end
-        return url
-
     def list_members(self):
         """
         list tar file contents (member file names)
@@ -1167,7 +1174,7 @@ class Text(Binary):
         template = self.env.get_template('modify_text.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  rows_data=20, rows_meta=3, cols=80,
+                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   data_text=data_text,
                                   meta_text=meta_text,
@@ -1215,12 +1222,13 @@ class HTML(Text):
         template = self.env.get_template('modify_text_html.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  rows_data=20, rows_meta=3, cols=80,
+                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   data_text=data_text,
                                   meta_text=meta_text,
                                   lang='en', direction='ltr',
                                   help=self.modify_help,
+                                  url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
                                  )
         return content
 
@@ -1263,12 +1271,13 @@ class SafeHTML(Text):
         template = self.env.get_template('modify_text_html.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  rows_data=20, rows_meta=3, cols=80,
+                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   data_text=data_text,
                                   meta_text=meta_text,
                                   lang='en', direction='ltr',
                                   help=self.modify_help,
+                                  url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
                                  )
         return content
 
@@ -1334,8 +1343,8 @@ class TWikiDraw(TarMixin, Image):
         request = self.request
         twd_params = {
             'pubpath': request.cfg.url_prefix_static + '/applets/TWikiDrawPlugin',
-            'pngpath': self.url(do='get', member='drawing.png'),
-            'drawpath': self.url(do='get', member='drawing.draw'),
+            'pngpath': self.url(do='get', from_tar='drawing.png'),
+            'drawpath': self.url(do='get', from_tar='drawing.draw'),
             'savelink': self.url(do='modify', mimetype=self.supported_mimetypes[0]),
             'pagelink': self.url(),
             'helplink': self.modify_help,
@@ -1344,6 +1353,7 @@ class TWikiDraw(TarMixin, Image):
         template = self.env.get_template("modify_twikidraw.html")
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
+                                  rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
@@ -1354,8 +1364,8 @@ class TWikiDraw(TarMixin, Image):
     def _render_data(self):
         request = self.request
         item_name = self.name
-        drawing_url = self.url(do='get', member='drawing.draw')
-        png_url = self.url(do='get', member='drawing.png')
+        drawing_url = self.url(do='get', from_tar='drawing.draw')
+        png_url = self.url(do='get', from_tar='drawing.png')
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': item_name}
 
         mapfile = self.get_member('drawing.map')
@@ -1417,7 +1427,7 @@ class AnyWikiDraw(TarMixin, Image):
         """
         request = self.request
         if 'drawing.svg' in self.list_members():
-            drawpath = self.url(do='get', member='drawing.svg')
+            drawpath = self.url(do='get', from_tar='drawing.svg')
         else:
             drawpath = ''
 
@@ -1432,6 +1442,7 @@ class AnyWikiDraw(TarMixin, Image):
         template = self.env.get_template("modify_anywikidraw.html")
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
+                                  rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
@@ -1441,8 +1452,8 @@ class AnyWikiDraw(TarMixin, Image):
 
     def _render_data(self):
         request = self.request
-        drawing_url = self.url(do='get', member='drawing.svg')
-        png_url = self.url(do='get', member='drawing.png')
+        drawing_url = self.url(do='get', from_tar='drawing.svg')
+        png_url = self.url(do='get', from_tar='drawing.png')
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': self.name}
 
         mapfile = self.get_member('drawing.map')

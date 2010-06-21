@@ -19,7 +19,6 @@ logging = log.getLogger(__name__)
 from MoinMoin import config, caching, util, wikiutil, user
 from MoinMoin.storage import Backend
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError
-from MoinMoin.support.python_compatibility import set
 
 from MoinMoin.items import ACL, MIMETYPE, SIZE, EDIT_LOG, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
@@ -588,7 +587,7 @@ class Page(object):
                 continue
 
             # add the user to the list
-            lang = subscriber.language or request.cfg.language_default
+            lang = subscriber.getLang()
             if not lang in subscriber_list:
                 subscriber_list[lang] = []
             if return_users:
@@ -609,7 +608,7 @@ class Page(object):
         pi = {} # we collect the processing instructions here
 
         # default language from cfg
-        pi['language'] = self.cfg.language_default or "en"
+        pi['language'] = self.cfg.language_default
 
         body = self.body
         meta = self.meta
@@ -750,7 +749,7 @@ class Page(object):
                         # if it does, we must not use the page file mtime as last modified value
                         # The following code is commented because it is incorrect for dynamic pages:
                         #lastmod = self.mtime()
-                        #request.headers['Last-Modified'] =util.timefuncs.formathttpdate(lastmod)
+                        #request.headers['Last-Modified'] = werkzeug.http_date(lastmod)
                         pass
                 else:
                     request.status_code = 404
