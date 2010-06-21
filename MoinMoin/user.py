@@ -22,8 +22,7 @@ import hashlib
 import hmac
 
 from MoinMoin import config, caching, wikiutil, i18n, events
-from MoinMoin.util import timefuncs, random_string
-from MoinMoin.util import timefuncs
+from MoinMoin.util import random_string
 from MoinMoin.wikiutil import url_quote_plus
 
 
@@ -542,11 +541,19 @@ class User:
     def getTime(self, tm):
         """ Get time in user's timezone.
 
+        This is able to process arbitrary timestamps, even 0 or near 0
+        are processed in a way so that adjusted timestamp for user does
+        not cause trouble in the time library.
+
         @param tm: time (UTC UNIX timestamp)
         @rtype: int
         @return: tm tuple adjusted for user's timezone
         """
-        return timefuncs.tmtuple(tm + self.tz_offset)
+        if tm != 0: # we keep 0 as it is a special value
+            tm += self.tz_offset # if tm is near 0, this might make it < 0
+        if tm < 0: # avoid it getting negative
+            tm += 86400 # 1d later, so it is differentiable from 0
+        return time.gmtime(tm)
 
 
     def getFormattedDate(self, tm):

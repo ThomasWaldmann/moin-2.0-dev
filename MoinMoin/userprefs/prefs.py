@@ -8,6 +8,7 @@
 """
 
 import time
+
 from MoinMoin import user, util, wikiutil, events
 from MoinMoin.theme import load_theme_fallback
 from MoinMoin.widget import html
@@ -250,7 +251,7 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
             options.append((
                 str(offset),
                 '%s [%s%s:%s]' % (
-                    time.strftime(self.cfg.datetime_fmt, util.timefuncs.tmtuple(t)),
+                    time.strftime(self.cfg.datetime_fmt, time.gmtime(t)),
                     "+-"[offset < 0],
                     "%02d" % (abs(offset) / 3600),
                     "%02d" % (abs(offset) % 3600 / 60),
@@ -355,7 +356,7 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
                     self._tz_select(),
                     html.BR(),
                     _('Server time is'), ' ',
-                    time.strftime(self.cfg.datetime_fmt, util.timefuncs.tmtuple()),
+                    time.strftime(self.cfg.datetime_fmt, time.gmtime()),
                     ' (UTC)',
                 ])
 

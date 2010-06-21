@@ -10,10 +10,11 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import time, urllib
+import urllib
+
+from werkzeug import http_date
 
 from MoinMoin import caching
-from MoinMoin.util import timefuncs
 
 def execute(pagename, request):
     status = []
@@ -43,7 +44,7 @@ def execute(pagename, request):
             try:
                 lastmod = f.info()["Last-Modified"]
             except:
-                lastmod = timefuncs.formathttpdate(time.time())
+                lastmod = http_date()
             f.close()
             data['lastmod'] = lastmod
             data['sisterpages'] = sisterpages
