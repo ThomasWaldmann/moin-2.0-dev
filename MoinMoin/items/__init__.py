@@ -15,7 +15,7 @@
 
 import os, re, tarfile, time, datetime, shutil
 from StringIO import StringIO
-import json # python 2.6 stdlib module
+import json
 
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
