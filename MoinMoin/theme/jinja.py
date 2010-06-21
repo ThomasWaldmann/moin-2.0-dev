@@ -77,6 +77,7 @@ class JinjaTheme(ThemeBase):
                                 'cfg': self.request.cfg,
                                 '_': self.request.getText,
                                 'href': request.href,
+                                'abs_href': request.abs_href,
                                 'translated_item_name': self.translated_item_name
                                 })
     
@@ -725,8 +726,6 @@ class JinjaTheme(ThemeBase):
                 editbar_actions.append('<a href="#" class="nbcomment" onClick="toggleComments();return false;">%s</a>' % _('Comments'))
             elif editbar_item == 'Modify':
                 editbar_actions.append(self.modifyLink(page))
-            elif editbar_item == 'Download':
-                editbar_actions.append(self.downloadLink(page))
             elif editbar_item == 'Subscribe':
                 editbar_actions.append(self.subscribeLink(page))
             elif editbar_item == 'Quicklink':
@@ -792,19 +791,6 @@ class JinjaTheme(ThemeBase):
         text = _(u'Modify') if may_write else _(u'Immutable Page')
         attrs = {'rel': 'nofollow', }
         # TODO: Remove link alltogether when item immutable
-        return page.link_to(self.request, text=text, querystr=querystr, **attrs)
-
-    def downloadLink(self, page):
-        """
-        Return a link to the get action
-        """
-        if 'get' in self.request.cfg.actions_excluded:
-            return ""
-
-        _ = self.request.getText
-        querystr = {'do': 'get'}
-        text = _('Download')
-        attrs = {'rel': 'nofollow', }
         return page.link_to(self.request, text=text, querystr=querystr, **attrs)
 
     def subscribeLink(self, page):
