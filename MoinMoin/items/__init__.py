@@ -1361,6 +1361,7 @@ class TWikiDraw(TarMixin, Image):
         template = self.env.get_template("modify_twikidraw.html")
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
+                                  rows_meta=3, cols=80,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
@@ -1449,6 +1450,7 @@ class AnyWikiDraw(TarMixin, Image):
         template = self.env.get_template("modify_anywikidraw.html")
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
+                                  rows_meta=3, cols=80,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
