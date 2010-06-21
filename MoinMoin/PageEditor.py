@@ -16,7 +16,7 @@ from MoinMoin.Page import Page
 from MoinMoin.widget import html
 from MoinMoin.widget.dialog import Status
 from MoinMoin.mail.sendmail import encodeSpamSafeEmail
-from MoinMoin.util import timefuncs, web
+from MoinMoin.util import web
 from MoinMoin.storage.error import BackendError
 from MoinMoin.events import PageDeletedEvent, PageRenamedEvent, PageCopiedEvent, PageRevertedEvent
 from MoinMoin.events import PagePreSaveEvent, Abort, send_event
@@ -135,7 +135,7 @@ class PageEditor(Page):
             # correct the time by the offset we've found
             now += tz
 
-        return time.strftime("%Y-%m-%dT%H:%M:%S", timefuncs.tmtuple(now)) + zone
+        return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(now)) + zone
 
     def _expand_variables(self, text):
         """ Expand @VARIABLE@ in `text`and return the expanded text.

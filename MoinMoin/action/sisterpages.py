@@ -12,8 +12,9 @@
 
 import time
 
+from werkzeug import http_date
+
 from MoinMoin.Page import Page
-from MoinMoin.util import timefuncs
 from MoinMoin.logfile import editlog
 
 def execute(pagename, request):
@@ -23,7 +24,7 @@ def execute(pagename, request):
     except:
         lastmod = 0
 
-    timestamp = timefuncs.formathttpdate(lastmod)
+    timestamp = http_date(lastmod)
     etag = "%d" % lastmod
 
     # for 304, we look at if-modified-since and if-none-match headers,

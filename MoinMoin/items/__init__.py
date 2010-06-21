@@ -24,7 +24,6 @@ logging = log.getLogger(__name__)
 from werkzeug import http_date, quote_etag, url_quote
 
 from MoinMoin import wikiutil, config, user
-from MoinMoin.util import timefuncs
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
 
@@ -239,7 +238,7 @@ class Item(object):
         delete this item by moving it to the trashbin
         """
         trash_prefix = u'Trash/' # XXX move to config
-        now = time.strftime(self.request.cfg.datetime_fmt, timefuncs.tmtuple(time.time()))
+        now = time.strftime(self.request.cfg.datetime_fmt, time.gmtime())
         # make trash name unique by including timestamp:
         trashname = u'%s%s (%s UTC)' % (trash_prefix, self.name, now)
         return self._rename(trashname, comment, action='SAVE/DELETE')

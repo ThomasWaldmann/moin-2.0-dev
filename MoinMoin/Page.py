@@ -749,7 +749,7 @@ class Page(object):
                         # if it does, we must not use the page file mtime as last modified value
                         # The following code is commented because it is incorrect for dynamic pages:
                         #lastmod = self.mtime()
-                        #request.headers['Last-Modified'] =util.timefuncs.formathttpdate(lastmod)
+                        #request.headers['Last-Modified'] = werkzeug.http_date(lastmod)
                         pass
                 else:
                     request.status_code = 404
