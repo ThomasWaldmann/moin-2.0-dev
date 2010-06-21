@@ -16,6 +16,7 @@
 import os, re, tarfile, time, datetime, shutil
 from StringIO import StringIO
 import json
+import hashlib
 
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
@@ -24,7 +25,6 @@ from werkzeug import http_date, quote_etag, url_quote
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.util import timefuncs
-from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
                                    StorageError
 
@@ -198,7 +198,7 @@ class Item(object):
 
     def _write_stream(self, content, new_rev, bufsize=8192):
         hash_name = self.request.cfg.hash_algorithm
-        hash = hash_new(hash_name)
+        hash = hashlib.new(hash_name)
         if hasattr(content, "read"):
             while True:
                 buf = content.read(bufsize)

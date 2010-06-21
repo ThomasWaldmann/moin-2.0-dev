@@ -11,11 +11,11 @@
 import os
 import shutil
 import tempfile
+import hashlib
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin import config
 from MoinMoin.util import filesys, lock, pickle, PICKLE_PROTOCOL
 
@@ -41,7 +41,7 @@ def get_arena_dir(request, arena, scope):
     if scope == 'dir':
         return arena
     if scope == 'item':
-        path = request.cfg.siteid, 'item', hash_new('sha1', arena.encode('utf-8')).hexdigest()
+        path = request.cfg.siteid, 'item', hashlib.new('sha1', arena.encode('utf-8')).hexdigest()
     elif scope == 'wiki':
         path = request.cfg.siteid, arena
     elif scope == 'farm':

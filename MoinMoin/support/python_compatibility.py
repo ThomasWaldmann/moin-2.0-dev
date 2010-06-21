@@ -10,17 +10,5 @@
 
 min_req_exc = Exception("Minimum requirement for MoinMoin is Python 2.6.")
 
-try:
-    from functools import partial # Python >= 2.5 needed
-except (NameError, ImportError):
-    raise min_req_exc
-
-try:
-    import hashlib, hmac # Python >= 2.5 needed
-    hash_new = hashlib.new
-    def hmac_new(key, msg, digestmod=hashlib.sha1):
-        return hmac.new(key, msg, digestmod)
-
-except (NameError, ImportError):
-    raise min_req_exc
+raise min_req_exc # no need to import python_compatibility
 

@@ -16,12 +16,12 @@
 
 import os
 from StringIO import StringIO
+import hashlib
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil, config
-from MoinMoin.support.python_compatibility import hash_new
 from MoinMoin.storage import Backend, Item, StoredRevision
 from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
@@ -616,7 +616,7 @@ def _decode_dict(line):
 
 def hash_hexdigest(content, bufsize=4096):
     hash_name = HASH
-    hash = hash_new(hash_name)
+    hash = hashlib.new(hash_name)
     if hasattr(content, "read"):
         while True:
             buf = content.read(bufsize)
