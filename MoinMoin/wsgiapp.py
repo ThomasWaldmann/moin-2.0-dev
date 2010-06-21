@@ -165,7 +165,7 @@ def run(context):
             return request
         except AccessDeniedError, ade:
             forbidden = Forbidden()
-            forbidden.description = ade.message
+            forbidden.description = str(ade)
             return forbidden
     finally:
         context.finish()
