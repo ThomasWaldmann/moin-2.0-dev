@@ -88,33 +88,6 @@ def decodeUserInput(s, charsets=[config.charset]):
     raise UnicodeError('The string %r cannot be decoded.' % s)
 
 
-def url_quote(s, safe='/', want_unicode=None):
-    """ see werkzeug.url_quote, we use a different safe param default value """
-    try:
-        assert want_unicode is None
-    except AssertionError:
-        log.exception("call with deprecated want_unicode param, please fix caller")
-    return werkzeug.url_quote(s, charset=config.charset, safe=safe)
-
-def url_quote_plus(s, safe='/', want_unicode=None):
-    """ see werkzeug.url_quote_plus, we use a different safe param default value """
-    try:
-        assert want_unicode is None
-    except AssertionError:
-        log.exception("call with deprecated want_unicode param, please fix caller")
-    return werkzeug.url_quote_plus(s, charset=config.charset, safe=safe)
-
-def url_unquote(s, want_unicode=None):
-    """ see werkzeug.url_unquote """
-    try:
-        assert want_unicode is None
-    except AssertionError:
-        log.exception("call with deprecated want_unicode param, please fix caller")
-    if isinstance(s, unicode):
-        s = s.encode(config.charset)
-    return werkzeug.url_unquote(s, charset=config.charset, errors='fallback:iso-8859-1')
-
-
 def parseQueryString(qstr, want_unicode=None):
     """ see werkzeug.url_decode
 
@@ -588,7 +561,7 @@ def join_wiki(wikiurl, wikitail):
     @rtype: string
     @return: generated URL of the page in the other wiki
     """
-    wikitail = url_quote(wikitail)
+    wikitail = werkzeug.url_quote(wikitail, charset=config.charset, safe='/')
     if '$PAGE' in wikiurl:
         return wikiurl.replace('$PAGE', wikitail)
     else:
