@@ -21,7 +21,7 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from werkzeug import http_date, quote_etag, url_quote
+from werkzeug import http_date, quote_etag
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
