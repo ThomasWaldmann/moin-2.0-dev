@@ -788,21 +788,6 @@ class TarMixin(object):
     TarMixin offers additional functionality for tar-like items to list and
     access member files and to create new revisions by multiple posts.
     """
-    # Note: from_tar query string arg needs to be last because twikidraw looks
-    # for "file extension" at the end - therefore we need special url methods.
-    def rev_url(self, _absolute=False, member=None, **kw):
-        url = super(TarMixin, self).rev_url(_absolute=_absolute, **kw)
-        if member is not None:
-            url += '&from_tar=%s' % url_quote(member)
-        return url
-
-    def url(self, _absolute=False, member=None, **kw):
-        url = super(TarMixin, self).url(_absolute=_absolute, **kw)
-        if member is not None:
-            url += '&from_tar=%s' % url_quote(member)
-            # note: from_tar needs to be last in qs because twikidraw looks for "file extension" at the end
-        return url
-
     def list_members(self):
         """
         list tar file contents (member file names)
@@ -1357,8 +1342,8 @@ class TWikiDraw(TarMixin, Image):
         request = self.request
         twd_params = {
             'pubpath': request.cfg.url_prefix_static + '/applets/TWikiDrawPlugin',
-            'pngpath': self.url(do='get', member='drawing.png'),
-            'drawpath': self.url(do='get', member='drawing.draw'),
+            'pngpath': self.url(do='get', from_tar='drawing.png'),
+            'drawpath': self.url(do='get', from_tar='drawing.draw'),
             'savelink': self.url(do='modify', mimetype=self.supported_mimetypes[0]),
             'pagelink': self.url(),
             'helplink': self.modify_help,
@@ -1378,8 +1363,8 @@ class TWikiDraw(TarMixin, Image):
     def _render_data(self):
         request = self.request
         item_name = self.name
-        drawing_url = self.url(do='get', member='drawing.draw')
-        png_url = self.url(do='get', member='drawing.png')
+        drawing_url = self.url(do='get', from_tar='drawing.draw')
+        png_url = self.url(do='get', from_tar='drawing.png')
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': item_name}
 
         mapfile = self.get_member('drawing.map')
@@ -1441,7 +1426,7 @@ class AnyWikiDraw(TarMixin, Image):
         """
         request = self.request
         if 'drawing.svg' in self.list_members():
-            drawpath = self.url(do='get', member='drawing.svg')
+            drawpath = self.url(do='get', from_tar='drawing.svg')
         else:
             drawpath = ''
 
@@ -1466,8 +1451,8 @@ class AnyWikiDraw(TarMixin, Image):
 
     def _render_data(self):
         request = self.request
-        drawing_url = self.url(do='get', member='drawing.svg')
-        png_url = self.url(do='get', member='drawing.png')
+        drawing_url = self.url(do='get', from_tar='drawing.svg')
+        png_url = self.url(do='get', from_tar='drawing.png')
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': self.name}
 
         mapfile = self.get_member('drawing.map')
