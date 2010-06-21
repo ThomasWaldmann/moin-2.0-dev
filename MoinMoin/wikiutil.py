@@ -24,7 +24,6 @@ logging = log.getLogger(__name__)
 from MoinMoin import config
 from MoinMoin.util import pysupport, lock
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError
-from MoinMoin.support.python_compatibility import rsplit
 
 from MoinMoin import web # needed so that next line works:
 import werkzeug
@@ -2460,7 +2459,7 @@ def split_anchor(pagename):
           pagename part (and no anchor). Also, we need to append #anchor
           at the END of the generated URL (AFTER the query string).
     """
-    parts = rsplit(pagename, '#', 1)
+    parts = pagename.rsplit('#', 1)
     if len(parts) == 2:
         return parts
     else:
