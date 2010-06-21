@@ -598,6 +598,7 @@ There is no help, you're doomed!
 
         template = self.env.get_template(html_template)
         content = template.render(gettext=self.request.getText,
+                                  item_name=self.name,
                                   rev=self.rev,
                                   log=log,
                                   mimetype=self.mimetype,

@@ -150,6 +150,10 @@ class ThemeBase:
         self.env = Environment(loader=FileSystemLoader(jinja_templatedir),
                                bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'),
                                extensions=['jinja2.ext.i18n'])
+        self.env.globals.update(dict(
+            href=request.href,
+            abs_href=request.abs_href,
+        ))
         from werkzeug import url_quote, url_encode
         self.env.filters['urlencode'] = lambda x: url_encode(x)
         self.env.filters['urlquote'] = lambda x: url_quote(x)
