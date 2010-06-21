@@ -64,8 +64,12 @@ class Item(object):
             def __init__(self, mimetype):
                 self[MIMETYPE] = mimetype
                 self.item = None
-            def read(self):
+            def read(self, size=-1):
                 return ''
+            def seek(self, offset, whence=0):
+                pass
+            def tell(self):
+                return 0
 
         if rev_no is None:
             rev_no = -1
