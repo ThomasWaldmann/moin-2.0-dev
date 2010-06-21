@@ -3,7 +3,7 @@
     MoinMoin - File System Utilities
 
     @copyright: 2002 Juergen Hermann <jh@web.de>,
-                2006-2008 MoinMoin:ThomasWaldmann
+                2006-2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -402,32 +402,4 @@ else:
 
     def realPathCase(path):
         return None
-
-# dircache stuff seems to be broken on win32 (at least for FAT32, maybe NTFS).
-# dircache stuff is also broken on POSIX if updates happen too fast (< 1s).
-DCENABLED = 0 # set to 0 to completely disable dircache usage
-
-# Note: usage of the dc* functions below is deprecated, they'll get removed soon.
-dc_deprecated = "dircache function calls (dcdisable,dclistdir,dcreset) are deprecated, please fix caller"
-
-def dcdisable():
-    warnings.warn(dc_deprecated, DeprecationWarning, stacklevel=2)
-    global DCENABLED
-    DCENABLED = 0
-
-import dircache
-
-def dclistdir(path):
-    warnings.warn(dc_deprecated, DeprecationWarning, stacklevel=2)
-    if sys.platform == 'win32' or not DCENABLED:
-        return os.listdir(path)
-    else:
-        return dircache.listdir(path)
-
-def dcreset():
-    warnings.warn(dc_deprecated, DeprecationWarning, stacklevel=2)
-    if sys.platform == 'win32' or not DCENABLED:
-        return
-    else:
-        return dircache.reset()
 
