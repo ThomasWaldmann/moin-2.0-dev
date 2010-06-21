@@ -29,6 +29,10 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessD
 
 from MoinMoin.items.sendcache import SendCache
 
+COLS = 80
+ROWS_DATA = 20
+ROWS_META = 10
+
 NAME = "name"
 NAME_OLD = "name_old"
 
@@ -187,7 +191,7 @@ class Item(object):
         template = self.env.get_template('modify_binary.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  rows_meta=3, cols=80,
+                                  rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
@@ -1184,7 +1188,7 @@ class Text(Binary):
         template = self.env.get_template('modify_text.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  rows_data=20, rows_meta=3, cols=80,
+                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   data_text=data_text,
                                   meta_text=meta_text,
@@ -1232,7 +1236,7 @@ class HTML(Text):
         template = self.env.get_template('modify_text_html.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  rows_data=20, rows_meta=3, cols=80,
+                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   data_text=data_text,
                                   meta_text=meta_text,
@@ -1280,7 +1284,7 @@ class SafeHTML(Text):
         template = self.env.get_template('modify_text_html.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  rows_data=20, rows_meta=3, cols=80,
+                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   data_text=data_text,
                                   meta_text=meta_text,
@@ -1361,7 +1365,7 @@ class TWikiDraw(TarMixin, Image):
         template = self.env.get_template("modify_twikidraw.html")
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  rows_meta=3, cols=80,
+                                  rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
@@ -1450,7 +1454,7 @@ class AnyWikiDraw(TarMixin, Image):
         template = self.env.get_template("modify_anywikidraw.html")
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  rows_meta=3, cols=80,
+                                  rows_meta=ROWS_META, cols=COLS,
                                   revno=0,
                                   meta_text=self.meta_dict_to_text(self.meta),
                                   help=self.modify_help,
