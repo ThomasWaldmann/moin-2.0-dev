@@ -90,7 +90,7 @@ def decodeUserInput(s, charsets=[config.charset]):
 
 def parseQueryString(qstr, want_unicode=None):
     """ see werkzeug.url_decode
-    
+
         DEPRECATED, use werkzeug directly
 
         Please note: this returns a MultiDict, you might need to use dict() on
