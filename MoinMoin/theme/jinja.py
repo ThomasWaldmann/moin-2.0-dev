@@ -724,7 +724,7 @@ class JinjaTheme(ThemeBase):
                 # link target to get correct mouseover pointer appearance. return false
                 # keeps the browser away from jumping to the link target::
                 editbar_actions.append('<a href="#" class="nbcomment" onClick="toggleComments();return false;">%s</a>' % _('Comments'))
-            elif editbar_item == 'Modify':
+            elif editbar_item == 'Subscribe':
                 editbar_actions.append(self.subscribeLink(page))
             elif editbar_item == 'Quicklink':
                 editbar_actions.append(self.quicklinkLink(page))
