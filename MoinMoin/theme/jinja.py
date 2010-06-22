@@ -10,25 +10,16 @@
 
 import os
 import StringIO
-import gettext
-
-from jinja2 import Environment, FileSystemLoader, Template, FileSystemBytecodeCache, Markup
+from jinja2 import Environment, FileSystemLoader, FileSystemBytecodeCache
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import i18n, wikiutil, config, version, caching, user
+from MoinMoin import i18n, wikiutil, caching, user
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
 from MoinMoin.Page import Page
 from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
-
-# Check whether we can emit a RSS feed.
-# RSS is broken on plain Python 2.4.x, and works only when installing PyXML.
-# A user reported that the RSS is valid when using Python 2.5.1 on Windows.
-import sys
-import xml
-rss_supported = sys.version_info[:3] >= (2, 5, 1) or '_xmlplus' in xml.__file__
 
 from MoinMoin.theme import ThemeBase
 
@@ -1012,9 +1003,6 @@ class JinjaTheme(ThemeBase):
         # Render with Jinja
         request.write(self.render('head.html', d))
 
-        #Preparing header
-        output = []
-
         # start the <body>
         bodyattr = []
         if keywords.has_key('body_attr'):
@@ -1135,7 +1123,7 @@ class JinjaTheme(ThemeBase):
             self.request.redirect()
         return u'<div class="sidebar">%s</div>' % buffer.getvalue()
 
-    def render(self, filename, context={}):
+    def render(self, filename, context):
         """
         Base function that renders using Jinja2.
 
