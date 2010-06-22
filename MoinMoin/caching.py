@@ -87,11 +87,6 @@ class CacheEntry:
         self._tmp_fname = None  # name of temporary file (used for write)
         self._mode = None  # mode of open file object
 
-
-    def _filename(self):
-        # DEPRECATED - please use file-like api
-        return self._fname
-
     def exists(self):
         return os.path.exists(self._fname)
 
