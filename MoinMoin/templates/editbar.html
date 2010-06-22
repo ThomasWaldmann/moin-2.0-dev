@@ -3,7 +3,7 @@
 {% if 'Modify' in cfg.edit_bar %}
     {% if not 'modify' in cfg.actions_excluded %} 
         {% if theme.request.user.may.write(page_name) %}
-            <a href="{{ href(do='modify') }}" rel="nofollow"> {{ _('Modify') }}</a>
+            <a href="{{ href(page_name, do='modify') }}" rel="nofollow"> {{ _('Modify') }}</a>
         {% else %}
             {{ _('Immutable Page')}}
         {% endif %}
@@ -12,7 +12,7 @@
 
 {% if 'Download' in cfg.edit_bar %}
     {% if not 'get' in cfg.actions_excluded %}
-        <a href="{{ href(do='get') }}" rel="nofollow">{{ _('Download') }}</a>
+        <a href="{{ href(page_name, do='get') }}" rel="nofollow">{{ _('Download') }}</a>
     {% endif %}
 {% endif %}
 
