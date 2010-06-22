@@ -725,8 +725,6 @@ class JinjaTheme(ThemeBase):
                 # keeps the browser away from jumping to the link target::
                 editbar_actions.append('<a href="#" class="nbcomment" onClick="toggleComments();return false;">%s</a>' % _('Comments'))
             elif editbar_item == 'Modify':
-                editbar_actions.append(self.modifyLink(page))
-            elif editbar_item == 'Subscribe':
                 editbar_actions.append(self.subscribeLink(page))
             elif editbar_item == 'Quicklink':
                 editbar_actions.append(self.quicklinkLink(page))
@@ -777,21 +775,6 @@ class JinjaTheme(ThemeBase):
         else:
             return page.link_to(self.request, text=_(suppl_name),
                                 querystr={'do': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
-
-    def modifyLink(self, page):
-        """
-        Return a link to the modify action
-        """
-        if 'modify' in self.request.cfg.actions_excluded:
-            return ""
-
-        _ = self.request.getText
-        querystr = {'do': 'modify'}
-        may_write = self.request.user.may.write(page.page_name)
-        text = _(u'Modify') if may_write else _(u'Immutable Page')
-        attrs = {'rel': 'nofollow', }
-        # TODO: Remove link alltogether when item immutable
-        return page.link_to(self.request, text=text, querystr=querystr, **attrs)
 
     def subscribeLink(self, page):
         """

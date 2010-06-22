@@ -1,4 +1,21 @@
 <ul class="editbar">    
+
+{% if 'Modify' in cfg.edit_bar %}
+    {% if not 'modify' in cfg.actions_excluded %} 
+        {% if theme.request.user.may.write(page_name) %}
+            <a href="{{ href(do='modify') }}" rel="nofollow"> {{ _('Modify') }}</a>
+        {% else %}
+            {{ _('Immutable Page')}}
+        {% endif %}
+    {% endif %}
+{% endif %}
+
+{% if 'Download' in cfg.edit_bar %}
+    {% if not 'get' in cfg.actions_excluded %}
+        <a href="{{ href(do='get') }}" rel="nofollow">{{ _('Download') }}</a>
+    {% endif %}
+{% endif %}
+
 {% for item in editbar_items %}
     {% if 'nbcomment' in item %}
         <li class="toggleCommentsButton" style="display:none;">{{ item }}</li>
@@ -7,10 +24,5 @@
     {% endif %}
 {% endfor %}
 
-{% if 'Download' in cfg.edit_bar %}
-    {% if not 'get' in cfg.actions_excluded %}
-        <a href="{{ href(do='get') }}" rel="nofollow">{{ _('Download') }}</a>
-    {% endif %}
-{% endif %}
 </ul>
 
