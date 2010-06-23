@@ -827,7 +827,7 @@ class JinjaTheme(ThemeBase):
         self._status.append((msg, msg_class))
 
     # stuff from wikiutil.py
-    def send_title(self, text, **keywords):
+    def send_title(self, text, content, **keywords):
         """
         Output the page header (and title).
 
@@ -993,20 +993,9 @@ class JinjaTheme(ThemeBase):
 
         # now call the theming code to do the rendering
         request.write(self.header(d))
-        self._send_title_called = True
-
-    def send_footer(self, pagename, **keywords):
-        """
-        Output the page footer.
-
-        @param pagename: WikiName of the page
-        """
-        request = self.request
-        d = request.themedict
-
-        # Emit end of page in print mode, or complete footer in standard mode
+        request.write(content)
         request.write(self.render('footer.html', d))
-
+        self._send_title_called = True
 
     def render_content(self, item_name, content=None, title=None):
         """
@@ -1031,9 +1020,7 @@ class JinjaTheme(ThemeBase):
             request.headers.add('Content-Type', 'text/html; charset=utf-8')
             # Use user interface language for this generated page
             request.setContentLanguage(request.lang)
-            request.theme.send_title(title, pagename=item_name)
-            request.write(content)
-            request.theme.send_footer(item_name)
+            request.theme.send_title(title, pagename=item_name, content=content)
 
     def sidebar(self, d, **keywords):
         """
