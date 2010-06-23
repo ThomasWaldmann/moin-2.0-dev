@@ -541,11 +541,11 @@ class JinjaTheme(ThemeBase):
     def universal_edit_button(self, page):
         """
         Should we show an edit link in the header?
+        User have permission? If yes, show the universal edit button.
         """
+        can_modify = 'modify' not in self.request.cfg.actions_excluded
         may_write = self.request.user.may.write(page.page_name)
-        if ('modify' in self.request.cfg.actions_excluded) or (not (page.exists() and may_write)):
-            return False
-        return True
+        return can_modify and page.exists() and may_write
 
     def actionsMenu(self, page):
         """
