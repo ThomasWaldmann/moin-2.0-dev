@@ -709,7 +709,7 @@ class JinjaTheme(ThemeBase):
             if (editbar_item == 'Discussion' and
                (self.request.getPragma('supplementation-page', self.request.cfg.supplementation_page)
                                                    in (True, 1, 'on', '1'))):
-                    editbar_actions.append(self.supplementation_page_nameLink(page))
+                editbar_actions.append(self.supplementation_page_nameLink(page))
             elif editbar_item == 'ActionsMenu':
                 editbar_actions.append(self.actionsMenu(page))
         editbar = [item for item in editbar_actions if item]
@@ -1011,7 +1011,6 @@ class JinjaTheme(ThemeBase):
 
         # now call the theming code to do the rendering
         request.write(self.header(d))
-        #request.write(self.render('base.html'), d)
         self._send_title_called = True
 
     def send_footer(self, pagename, **keywords):
