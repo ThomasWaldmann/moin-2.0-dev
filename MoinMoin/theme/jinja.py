@@ -479,7 +479,7 @@ class JinjaTheme(ThemeBase):
         
         return stylesheet_list
             
-    def shouldShowPageinfo(self, page):
+    def shouldShowPageInfo(self, page):
         """
         Should we show page info?
 
@@ -513,22 +513,17 @@ class JinjaTheme(ThemeBase):
         @return: page last edit information in dict
         """
         _ = self.request.getText
-        d = {}
-        if self.shouldShowPageinfo(page):
-            info = page.last_edit(printable=True)
-            if info:
-                if info['editor']:
-                    info = _("last edited %(timestamp)s by %(editor)s") % info
-                else:
-                    info = _("last modified %(timestamp)s") % info
-                pagename = page.page_name
-                if self.request.cfg.show_interwiki:
-                    pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
-                info = "%s  (%s)" % (wikiutil.escape(pagename), info)
-                d.update({
-                    'pageinfo_lang': self.ui_lang_attr(),
-                    'pageinfo': info})
-        return d
+        info = page.last_edit(printable=True)
+        if info:
+            if info['editor']:
+                info = _("last edited %(timestamp)s by %(editor)s") % info
+            else:
+                info = _("last modified %(timestamp)s") % info
+            pagename = page.page_name
+            if self.request.cfg.show_interwiki:
+                pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
+            info = "%s  (%s)" % (wikiutil.escape(pagename), info)
+            return info
 
     def externalScript(self, name, attrs=''):
         """
@@ -786,19 +781,6 @@ class JinjaTheme(ThemeBase):
         d.update({'content_lang': self.content_lang_attr()})
         return self.render('header.html', d)
 
-    def footer(self, d, **keywords):
-        """
-        Assemble wiki footer
-
-        @param d: parameter dictionary
-        @keyword ...:...
-        @rtype: unicode
-        @return: page footer html
-        """
-        page = d['page']
-        d.update(self.pageinfo(page))
-        return self.render('footer.html', d)
-
     # Language stuff ####################################################
 
     def ui_lang_attr(self):
@@ -1023,7 +1005,7 @@ class JinjaTheme(ThemeBase):
         d = request.themedict
 
         # Emit end of page in print mode, or complete footer in standard mode
-        request.write(self.footer(d, **keywords))
+        request.write(self.render('footer.html', d))
 
 
     def render_content(self, item_name, content=None, title=None):
