@@ -58,8 +58,8 @@
     {% endif %}
     
     {# ueb refers to universal edit button #}
-    {% if ueb_title and ueb_url %}
-        <link rel="alternate" type="application/wiki" title="{{ ueb_title }}" href="{{ ueb_url }}">
+    {% if theme.universal_edit_button(page) %}
+        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href(page.page_name, do='modify') }}">
     {% endif %}   
     
     <link rel="alternate" title="{{ page.page_name|escape }} changes" href="{{ href(page.page_name, do='atom_feed') }}" type="application/atom+xml">
