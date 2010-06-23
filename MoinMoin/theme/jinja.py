@@ -870,46 +870,24 @@ class JinjaTheme(ThemeBase):
         # Prepare the HTML <head> element
         user_head = [request.cfg.html_head]
 
-        meta_keywords = request.getPragma('keywords')
-        meta_desc = request.getPragma('description')
-        if meta_keywords:
-            d.update({'meta_keywords': wikiutil.escape(meta_keywords, 1)})
-        if meta_desc:
-            d.update({'meta_description': wikiutil.escape(meta_desc, 1)})
-
         #  add meta statement if user has doubleclick on edit turned on or it is default
         if (pagename and keywords.get('allow_doubleclick', 0) and
             request.user.edit_on_doubleclick):
             if request.user.may.write(pagename):  # separating this gains speed
                 user_head.append('<meta name="edit_on_doubleclick" content="1">\n')
 
-        # search engine precautions / optimization:
-        # if it is an action or edit/search, send query headers (noindex,nofollow):
-        if request.query_string:
-            user_head.append(request.cfg.html_head_queries)
-        elif request.method == 'POST':
-            user_head.append(request.cfg.html_head_posts)
-        # we don't want to have BadContent stuff indexed:
-        elif pagename in ['BadContent', 'LocalBadContent', ]:
-            user_head.append(request.cfg.html_head_posts)
-        # if it is a special page, index it and follow the links - we do it
-        # for the original, English pages as well as for (the possibly
-        # modified) frontpage:
-        elif pagename in [page_front_page, request.cfg.page_front_page,
-                          page_title_index, 'TitleIndex',
-                          page_find_page, 'FindPage',
-                          page_site_navigation, 'SiteNavigation',
-                         ]:
-            user_head.append(request.cfg.html_head_index)
-        # if it is a normal page, index it, but do not follow the links, because
-        # there are a lot of illegal links (like actions) or duplicates:
-        else:
-            user_head.append(request.cfg.html_head_normal)
-
         if 'pi_refresh' in keywords and keywords['pi_refresh']:
             user_head.append('<meta http-equiv="refresh" content="%d;URL=%s">' % keywords['pi_refresh'])
 
-        d.update({'user_head': user_head, 'html_head_keyword': keywords.get('html_head', '')})
+        d.update({
+                 'user_head': user_head,
+                 'html_head_keyword': keywords.get('html_head', ''),
+                 'special_pagename': [page_front_page, request.cfg.page_front_page,
+                                   page_title_index, 'TitleIndex',
+                                   page_find_page, 'FindPage',
+                                   page_site_navigation, 'SiteNavigation',
+                                   ]
+                 })
         #Variables used to render title
         d.update({'title': text})
 
