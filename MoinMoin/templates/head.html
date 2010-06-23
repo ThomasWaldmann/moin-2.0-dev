@@ -8,14 +8,34 @@
     
     <meta http-equiv="Content-Type" content="{{ page.output_mimetype }};charset={{ page.output_charset }}" />
     
+    {# Search engine precautions / optimizations #}
+    
+    {% if theme.request.query_string %}
+        {# if it is an action or edit/search, send query headers (noindex,nofollow): #}
+        {{ cfg.html_head_queries }}
+    {% elif theme.request.method == 'POST' or page.page_name in ['BadContent', 'LocalBadContent', ] %}
+        {# we don't want to have BadContent stuff indexed: #}
+        {{ cfg.html_head_posts }}
+    {% elif page.page_name in special_pagename %}
+        {# if it is a special page, index it and follow the links - we do it #}
+        {# for the original, English pages as well as for (the possibly modified frontpage #}
+        {{ cfg.html_head_index }}
+    {% else %}
+        {# if it is a normal page, index it, but do not follow the links, because #}
+        {# there are a lot of illegal links (like actions) or duplicates: #}
+        {{ cfg.html_head_normal }}
+    {% endif %}
+    
     {% for head in user_head %}
         {{ head }}
     {% endfor %}
        
+    {% set meta_keywords = theme.request.getPragma('keywords') %}
     {% if meta_keywords %}
         <meta name="keywords" content="{{ meta_keywords }}">
     {% endif %}
     
+    {% set meta_description = theme.request.getPragma('description') %}
     {% if meta_description %}
         <meta name="description" content="{{ meta_description }}">
     {% endif %}
