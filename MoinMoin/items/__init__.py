@@ -29,6 +29,8 @@ from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessD
 
 from MoinMoin.items.sendcache import SendCache
 
+from MoinMoin.widget.table import Table
+
 COLS = 80
 ROWS_DATA = 20
 ROWS_META = 10
@@ -759,26 +761,29 @@ class ApplicationZip(Application):
 
     def _render_data(self):
         import zipfile
+        rows = []
         try:
-            content = []
-            fmt = u"%12s  %-19s  %-60s"
-            headline = fmt % (_("Size"), _("Modified"), _("File Name"))
-            content.append(headline)
-            content.append(u"-" * len(headline))
             zf = zipfile.ZipFile(self.rev, mode='r')
             for zinfo in zf.filelist:
-                content.append(wikiutil.escape(fmt % (
-                    str(zinfo.file_size),
-                    u"%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time,
-                    zinfo.filename,
-                )))
+                rows.append(dict(
+                    size=str(zinfo.file_size),
+                    mtime="%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time,
+                    fname=zinfo.filename,
+                ))
         except (RuntimeError, zipfile.BadZipfile), err:
             # RuntimeError is raised by zipfile stdlib module in case of
             # problems (like inconsistent slash and backslash usage in the
             # archive or a defective zip file).
             logging.exception("An exception within zip file handling occurred:")
-            content = [str(err)]
-        return u"<pre>%s</pre>" % "\n".join(content)
+            return u"<pre>%s</pre>" % str(err)
+        t = Table(caption=_("ZIP listing of %(itemname)s") % dict(itemname=self.name),
+                  css_class="archivecontents")
+        t.add_column(key="size", label=_("Size"))
+        t.add_column(key="mtime", label=_("Modified"))
+        t.add_column(key="fname", label=_("File Name"))
+        for row in rows:
+            t.add_row(**row)
+        return t.render(self.env)
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
@@ -858,23 +863,26 @@ class ApplicationXTar(TarMixin, Application):
 
     def _render_data(self):
         import tarfile
+        rows = []
         try:
-            content = []
-            fmt = u"%12s  %-19s  %-60s"
-            headline = fmt % (_("Size"), _("Modified"), _("File Name"))
-            content.append(headline)
-            content.append(u"-" * len(headline))
             tf = tarfile.open(fileobj=self.rev, mode='r')
             for tinfo in tf.getmembers():
-                content.append(wikiutil.escape(fmt % (
-                    str(tinfo.size),
-                    time.strftime("%Y-%02m-%02d %02H:%02M:%02S", time.gmtime(tinfo.mtime)),
-                    tinfo.name,
-                )))
+                rows.append(dict(
+                    size=str(tinfo.size),
+                    mtime=time.strftime("%Y-%02m-%02d %02H:%02M:%02S", time.gmtime(tinfo.mtime)),
+                    fname=tinfo.name,
+                ))
         except tarfile.TarError, err:
             logging.exception("An exception within tar file handling occurred:")
-            content = [str(err)]
-        return u"<pre>%s</pre>" % "\n".join(content)
+            return u"<pre>%s</pre>" % str(err)
+        t = Table(caption=_("TAR listing of %(itemname)s") % dict(itemname=self.name),
+                  css_class="archivecontents")
+        t.add_column(key="size", label=_("Size"))
+        t.add_column(key="mtime", label=_("Modified"))
+        t.add_column(key="fname", label=_("File Name"))
+        for row in rows:
+            t.add_row(**row)
+        return t.render(self.env)
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
