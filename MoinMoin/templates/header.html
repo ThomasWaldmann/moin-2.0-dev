@@ -3,8 +3,7 @@
 {% if body_onload %}
     onload="{{ body_onload }}"
 {% endif %}
-{{ body_attr }}
->
+{{ theme.ui_lang_attr() }}>
 
 {{ theme.emit_custom_html(cfg.page_header1) }}
 
@@ -92,5 +91,5 @@ searchBlur(e);
 
 {{ theme.emit_custom_html(cfg.page_header2) }}
 
-<div id="page" {{ content_lang }}>
+<div id="page" {{ theme.content_lang_attr() }}>
 

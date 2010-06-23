@@ -768,8 +768,6 @@ class JinjaTheme(ThemeBase):
         d.update(self.navibar(d))
         d.update(self.editbar(d))
         d.update(self.msg(d))
-        #Language of the page
-        d.update({'content_lang': self.content_lang_attr()})
         return self.render('header.html', d)
 
     # Language stuff ####################################################
@@ -846,7 +844,7 @@ class JinjaTheme(ThemeBase):
         scriptname = request.script_root
 
         # Search_hint is moved from self.headscript() to here
-        d = {'page': page, 'language': self.ui_lang_attr()}
+        d = {'page': page}
 
         # get name of system pages
         page_front_page = self.translated_item_name(self.cfg.page_front_page)
@@ -911,10 +909,6 @@ class JinjaTheme(ThemeBase):
         if keywords.has_key('body_attr'):
             bodyattr.append(' ')
             bodyattr.append(keywords['body_attr'])
-
-        
-        # Set body to the user interface language and direction
-        bodyattr.append(' %s' % self.ui_lang_attr())
 
         body_onload = keywords.get('body_onload', '')
         if body_onload:
