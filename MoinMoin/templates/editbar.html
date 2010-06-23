@@ -38,12 +38,32 @@
     {% endif %}
 {% endif %}
 
-{% for item in editbar_items %}
-    {% if 'nbcomment' in item %}
-        <li class="toggleCommentsButton" style="display:none;">{{ item }}</li>
-    {% else %}
-        <li>{{ item }}</li>
+{% if 'Subscribe' in cfg.edit_bar %}
+    {% if (cfg.mail_enabled or cfg.jabber_enabled) and theme.request.user.valid %}
+        {% if not theme.request.user.isSubscribedTo([page.page_name]) %}
+            {% if not 'subscribe' in cfg.actions_excluded %}
+                <li>
+                    <a class="nbsubscribe" href="{{ href(page_name, do='subscribe') }}" rel="nofollow">{{ _('Subscribe') }}</a>
+                </li>
+            {% endif %}
+        {% else %}
+            {% if not 'unsubscribe' in cfg.actions_excluded %}
+                <li>
+                    <a class="nbsubscribe" href="{{ href(page_name, do='unsubscribe') }}" rel="nofollow">{{ _('Unsubscribe') }}</a>
+                </li>
+            {% endif %}
+        {% endif %}
     {% endif %}
+{% endif %}
+
+{% if 'Comments' in cfg.edit_bar %}
+    <li class="toggleCommentsButton" style="display:none;">
+        <a href="#" class="nbcomment" onClick="toggleComments();return false;">{{ _('Comments') }}</a>
+    </li>
+{% endif %}
+
+{% for item in editbar_items %}
+        <li>{{ item }}</li>
 {% endfor %}
 
 </ul>

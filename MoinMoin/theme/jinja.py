@@ -710,13 +710,6 @@ class JinjaTheme(ThemeBase):
                (self.request.getPragma('supplementation-page', self.request.cfg.supplementation_page)
                                                    in (True, 1, 'on', '1'))):
                     editbar_actions.append(self.supplementation_page_nameLink(page))
-            elif editbar_item == 'Comments':
-                # we just use <a> to get same style as other links, but we add some dummy
-                # link target to get correct mouseover pointer appearance. return false
-                # keeps the browser away from jumping to the link target::
-                editbar_actions.append('<a href="#" class="nbcomment" onClick="toggleComments();return false;">%s</a>' % _('Comments'))
-            elif editbar_item == 'Subscribe':
-                editbar_actions.append(self.subscribeLink(page))
             elif editbar_item == 'ActionsMenu':
                 editbar_actions.append(self.actionsMenu(page))
         editbar = [item for item in editbar_actions if item]
@@ -764,25 +757,6 @@ class JinjaTheme(ThemeBase):
         else:
             return page.link_to(self.request, text=_(suppl_name),
                                 querystr={'do': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
-
-    def subscribeLink(self, page):
-        """
-        Return subscribe/unsubscribe link to valid users
-
-        @rtype: unicode
-        @return: subscribe or unsubscribe link
-        """
-        if not ((self.cfg.mail_enabled or self.cfg.jabber_enabled) and self.request.user.valid):
-            return ''
-
-        _ = self.request.getText
-        if self.request.user.isSubscribedTo([page.page_name]):
-            action, text = 'unsubscribe', _("Unsubscribe")
-        else:
-            action, text = 'subscribe', _("Subscribe")
-        if action in self.request.cfg.actions_excluded:
-            return ""
-        return page.link_to(self.request, text=text, querystr={'do': action}, css_class='nbsubscribe', rel='nofollow')
 
     # Public functions #####################################################
 
