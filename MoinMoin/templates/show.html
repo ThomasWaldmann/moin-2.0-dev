@@ -43,15 +43,15 @@ Data:
                 <td>{{ entry.editor }}</td>
                 <td>{{ entry.mimetype|e }}</td>
                 <td>{{ entry.comment|e }}</td>
-                <td>{{ '<a href="?rev=%d">%s</a>' % (entry.rev_no, 'show') }}</td>
-                <td>{{ '<a href="?rev=%d&do=get">%s</a>' % (entry.rev_no, 'get') }}</td>
-                <td>{{ '<a href="?rev=%d&do=highlight">%s</a>' % (entry.rev_no, 'highlight') }}</td>
+                <td><a href="{{ href(entry.name, rev=entry.rev_no)|e }}">{{ _('show') }}</a></td>
+                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='get')|e }}">{{ _('get') }}</a></td>
+                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='highlight')|e }}">{{_('highlight') }}</a></td>
                 {% if entry.rev_no == last_rev_no %}
                 <td>current revision</td>
                 {% else %}
-                <td>{{ '<a href="?rev=%d&do=revert">%s</a>' % (entry.rev_no, 'revert') }}</td>
+                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='revert')|e }}">{{ _('revert') }}</a></td>
                 {% endif %}
-                <td>{{ '<a href="?rev=%d&do=destroy">%s</a>' % (entry.rev_no, 'destroy') }}</td>
+                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='destroy')|e }}">{{ _('destroy') }}</a></td>
             </tr>
             {% endfor %}
         </table>
@@ -63,7 +63,7 @@ Data:
     {% if index %}
         <hr>Index of sub items:
         {% for fullname, relname, mimetype in index %}
-            <a href="{{ href(fullname) }}">{{ relname|e }} ({{ mimetype|e }})</a> 
+            <a href="{{ href(fullname)|e }}">{{ relname|e }} ({{ mimetype|e }})</a> 
         {% endfor %}
     {% endif %}
 {% endblock %}
