@@ -404,7 +404,7 @@ class JinjaTheme(ThemeBase):
         """
         request = self.request
         user = request.user
-        if not user.valid or user.show_page_trail:
+        if not user.valid or user.show_trail:
             trail = user.getTrail()
             if trail:
                 items = []
@@ -717,8 +717,6 @@ class JinjaTheme(ThemeBase):
                 editbar_actions.append('<a href="#" class="nbcomment" onClick="toggleComments();return false;">%s</a>' % _('Comments'))
             elif editbar_item == 'Subscribe':
                 editbar_actions.append(self.subscribeLink(page))
-            elif editbar_item == 'Quicklink':
-                editbar_actions.append(self.quicklinkLink(page))
             elif editbar_item == 'ActionsMenu':
                 editbar_actions.append(self.actionsMenu(page))
         editbar = [item for item in editbar_actions if item]
@@ -785,25 +783,6 @@ class JinjaTheme(ThemeBase):
         if action in self.request.cfg.actions_excluded:
             return ""
         return page.link_to(self.request, text=text, querystr={'do': action}, css_class='nbsubscribe', rel='nofollow')
-
-    def quicklinkLink(self, page):
-        """
-        Return add/remove quicklink link
-
-        @rtype: unicode
-        @return: link to add or remove a quicklink
-        """
-        if not self.request.user.valid:
-            return ''
-
-        _ = self.request.getText
-        if self.request.user.isQuickLinkedTo([page.page_name]):
-            action, text = 'quickunlink', _("Remove Link")
-        else:
-            action, text = 'quicklink', _("Add Link")
-        if action in self.request.cfg.actions_excluded:
-            return ""
-        return page.link_to(self.request, text=text, querystr={'do': action}, css_class='nbquicklink', rel='nofollow')
 
     # Public functions #####################################################
 
