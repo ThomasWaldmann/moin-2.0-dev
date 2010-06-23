@@ -18,7 +18,7 @@ from MoinMoin import config, wikiutil
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import html, moin_page, xlink
 #### TODO: try block
-from docutils import nodes, utils
+from docutils import nodes, utils, writers
 from docutils.parsers.rst import Parser
 #####
 
@@ -26,44 +26,56 @@ class NodeVisitor(nodes.NodeVisitor):
 
     def __init__(self, document):
         nodes.NodeVisitor.__init__(self, document)
-        root = None
+        current_node = moin_page.body()
+        root = moin_page.page(children=(current_code, ))
+        path = [root, current_node]
+
+    def open_moin_page_node(mointree_element): 
+        self.current_node.append(mointree_element)
+        self.current_node = mointree_element
+        self.path.append(mointree_element)
+    
+    def close_moin_page_node():
+        self.path.pop()
+        self.current_node = self.path[-1]
 
     def tree(self):
         return self.root 
 
     def visit_Text(self, node):
         text = node.astext()
-        self.children.append(text)
+        self.current_node.append(text)
 
     def depart_Text(self, node):
         pass
 
     def visit_block_quote(self, node):
-        self.children.append(text)
+        # No needed elements in MoinDOM
+        pass
 
     def depart_block_quote(self, node):
         pass
 
     def visit_bullet_list(self, node):
-        pass
+        self.open_moin_page_node(moin_page.list(attrib={moin_page.list_label_generate:'unordered', moin_page.list_style_type:None}))
+
+    def depart_bullet_list(self, node):
+        self.close_moin_page_node()
 
     def visit_caption(self, node):
         pass
 
-    def depart_bullet_list(self, node):
-        pass
-
     def visit_definition(self, node):
-        pass
+        self.open_moin_page_node(moin_page.list_item())
 
     def depart_definition(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_definition_list(self, node):
-        pass
+        self.open_moin_page_node(moin_page.list(attrib={moin_page.list_label_generate:'definition', moin_page.list_style_type:None}))
 
     def depart_definition_list(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_definition_list_item(self, node):
         pass
@@ -72,10 +84,10 @@ class NodeVisitor(nodes.NodeVisitor):
         pass
 
     def visit_emphasis(self, node):
-        pass
+        self.open_moin_page_node(moin_page.emphasis())
 
     def depart_emphasis(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_entry(self, node):
     # table cell?
@@ -85,10 +97,10 @@ class NodeVisitor(nodes.NodeVisitor):
         pass
 
     def visit_enumerated_list(self, node):
-        pass
+        self.open_moin_page_node(moin_page.list(attrib={moin_page.list_label_generate:'enumerate', moin_page.list_style_type:node['enumtype'].insert(5, '-')}))
 
     def depart_enumerated_list(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_field(self, node):
     # table row?
@@ -146,9 +158,15 @@ class NodeVisitor(nodes.NodeVisitor):
         pass
 
     def visit_image(self, node):
-        pass
-
+        new_node = moin_page.object(attrib={xlink.href:node[uri]})
+        new_node[moin_page.alt] = node.get('alt', uri)
+        if 'width' in node:
+            new_node[moin_page.width] = node['width']
+        if 'height' in node:
+            new_node[moin_page.height] = node['height']
+        self.open_moin_page_node(new_node)
     def depart_image(self, node):
+        self.close_moin_page_node()
         pass
 
     def visit_inline(self, node):
@@ -176,25 +194,29 @@ class NodeVisitor(nodes.NodeVisitor):
         pass
 
     def visit_list_item(self, node):
-        pass
+        self.open_moin_page_node(moin_page.list_item())
 
     def depart_list_item(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_literal(self, node):
-        pass
+        self.open_moin_page_node(moin_page.code())
+        self.open_moin_page_node(node.astext())
+        self.close_moin_page_node()
+        self.close_moin_page_node()
 
     def visit_literal_block(self, node):
-        pass
+        self.open_moin_page_node(moin_page.blockcode())
 
     def depart_literal_block(self, node):
-        pass
+        self.close_moin_page_node()
+        
 
     def visit_paragraph(self, node):
-        pass
+        self.open_moin_page_node(moin_page.p())
 
     def depart_paragraph(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_problematic(self, node):
         pass
@@ -210,17 +232,16 @@ class NodeVisitor(nodes.NodeVisitor):
         pass
 
     def visit_row(self, node):
-        pass
+        self.open_moin_page_node(moin_page.table_row())
 
     def depart_row(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_rubric(self, node):
-    # <p>
-        pass
+        self.visit_paragraph(node)
 
     def depart_rubric(self, node):
-        pass
+        self.depart_paragraph(node)
 
     def visit_section(self, node):
         pass
@@ -235,16 +256,16 @@ class NodeVisitor(nodes.NodeVisitor):
         pass
 
     def visit_strong(self, node):
-        pass
+        self.open_moin_page_node(moin_page.strong()) 
 
     def depart_strong(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_subscript(self, node):
-        pass
+        self.open_moin_page_node(moin_page.span(attrib={moin_page.baseline_shift: 'sub'}))
 
     def depart_subscript(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_subtitle(self, node):
         pass
@@ -253,10 +274,10 @@ class NodeVisitor(nodes.NodeVisitor):
         pass
 
     def visit_superscript(self, node):
-        pass
+        self.open_moin_page_node(moin_page.span(attrib={moin_page.baseline_shift: 'super'}))
 
     def depart_superscript(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_system_message(self, node):
         pass
@@ -265,28 +286,35 @@ class NodeVisitor(nodes.NodeVisitor):
         pass
 
     def visit_table(self, node):
-        pass
+        self.open_moin_page_node(moin_page.table())
 
     def depart_table(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_tbody(self, node):
-        pass
+        self.open_moin_page_node(moin_page.table_body())
 
     def depart_tbody(self, node):
-        pass
+        self.close_moin_page_node()
+
+    def visit_term(self,node):
+        self.open_moin_page_node(moin_page.list_item_label())
+        
+    def depart_term(self, node):
+        self.close_moin_page_node()
 
     def visit_tgroup(self, node):
+        # TODO: Color style of tbody
         pass
 
     def depart_tgroup(self, node):
         pass
 
     def visit_thead(self, node):
-        pass
+        self.open_moin_page_node(moin_page.table_header())
 
     def depart_thead(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_title(self, node):
         pass
@@ -303,20 +331,31 @@ class NodeVisitor(nodes.NodeVisitor):
     def unimplemented_visit(self, node):
         pass
 
+class Writer(writers.Writer):
+
+    supported = ('moin-x-document')
+    config_section = 'MoinMoin writer'
+    config_section_dependencies = ('writers', )
+    output = None
+    visitor_attributes = (, )
+
+    def translate(self):
+        self.visitor = visitor = NodeVisitor(self.document)
+        self.document.walkabout(visitor)
+        self.output = visitor.tree()
+
+
+
 class Converter(object):
     @classmethod
     def factory(cls, input,output, **kw):
         return cls()
 
     def __call__(self, input, arguments=None):
-        parser = Parser()
-        docutils_internal_document = utils.new_document()
-        parser.parse(input, docutils_internal_document)
-        visitor = NodeVisitor()
-        docutils_internal_document.walk(visitor)
-        return visitor.tree()
+        # TODO:call some function from docutils.core to initiate parser
+        return 
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
-default_registry.register(Converter.factory, Type('x-moin/format;name=rst', type_moin_document))
+default_registry.register(Converter.factory, Type('x-moin/format;name=rst'), type_moin_document)
 
