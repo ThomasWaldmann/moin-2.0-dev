@@ -1,67 +1,67 @@
 <ul class="editbar">    
-
-{% if 'Modify' in cfg.edit_bar %}
-    {% if not 'modify' in cfg.actions_excluded %} 
-        <li>
-        {% if theme.request.user.may.write(page_name) %}
-            <a href="{{ href(page_name, do='modify') }}" rel="nofollow"> {{ _('Modify') }}</a>
-        {% else %}
-            {{ _('Immutable Page')}}
+{% if theme.shouldShowEditbar(page) %}
+    {% if 'Modify' in cfg.edit_bar %}
+        {% if not 'modify' in cfg.actions_excluded %} 
+            <li>
+            {% if theme.request.user.may.write(page_name) %}
+                <a href="{{ href(page_name, do='modify') }}" rel="nofollow"> {{ _('Modify') }}</a>
+            {% else %}
+                {{ _('Immutable Page')}}
+            {% endif %}
+            </li>
         {% endif %}
+    {% endif %}
+
+    {% if 'Download' in cfg.edit_bar %}
+        {% if not 'get' in cfg.actions_excluded %}
+            <li>
+                <a href="{{ href(page_name, do='get') }}" rel="nofollow">{{ _('Download') }}</a>
+            </li>
+        {% endif %}
+    {% endif %}
+
+    {% if 'Quicklink' in cfg.edit_bar %}
+        {% if theme.request.user.valid %}
+            {% if not theme.request.user.isQuickLinkedTo([page.page_name]) %}
+                {% if not 'quicklink' in cfg.actions_excluded %}
+                    <li>
+                        <a class="nbquicklink" href="{{ href(page_name, do='quicklink') }}" rel="nofollow">{{ _('Add Link') }}</a>
+                    </li>
+                {% endif %}
+            {% else %}
+                {% if not 'quickunlink' in cfg.actions_excluded %}
+                    <li>
+                        <a class="nbquicklink" href="{{ href(page_name, do='quickunlink') }}" rel="nofollow">{{ _('Remove Link') }}</a>
+                    </li>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    {% if 'Subscribe' in cfg.edit_bar %}
+        {% if (cfg.mail_enabled or cfg.jabber_enabled) and theme.request.user.valid %}
+            {% if not theme.request.user.isSubscribedTo([page.page_name]) %}
+                {% if not 'subscribe' in cfg.actions_excluded %}
+                    <li>
+                        <a class="nbsubscribe" href="{{ href(page_name, do='subscribe') }}" rel="nofollow">{{ _('Subscribe') }}</a>
+                    </li>
+                {% endif %}
+            {% else %}
+                {% if not 'unsubscribe' in cfg.actions_excluded %}
+                    <li>
+                        <a class="nbsubscribe" href="{{ href(page_name, do='unsubscribe') }}" rel="nofollow">{{ _('Unsubscribe') }}</a>
+                    </li>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    {% if 'Comments' in cfg.edit_bar %}
+        <li class="toggleCommentsButton" style="display:none;">
+            <a href="#" class="nbcomment" onClick="toggleComments();return false;">{{ _('Comments') }}</a>
         </li>
     {% endif %}
 {% endif %}
-
-{% if 'Download' in cfg.edit_bar %}
-    {% if not 'get' in cfg.actions_excluded %}
-        <li>
-            <a href="{{ href(page_name, do='get') }}" rel="nofollow">{{ _('Download') }}</a>
-        </li>
-    {% endif %}
-{% endif %}
-
-{% if 'Quicklink' in cfg.edit_bar %}
-    {% if theme.request.user.valid %}
-        {% if not theme.request.user.isQuickLinkedTo([page.page_name]) %}
-            {% if not 'quicklink' in cfg.actions_excluded %}
-                <li>
-                    <a class="nbquicklink" href="{{ href(page_name, do='quicklink') }}" rel="nofollow">{{ _('Add Link') }}</a>
-                </li>
-            {% endif %}
-        {% else %}
-            {% if not 'quickunlink' in cfg.actions_excluded %}
-                <li>
-                    <a class="nbquicklink" href="{{ href(page_name, do='quickunlink') }}" rel="nofollow">{{ _('Remove Link') }}</a>
-                </li>
-            {% endif %}
-        {% endif %}
-    {% endif %}
-{% endif %}
-
-{% if 'Subscribe' in cfg.edit_bar %}
-    {% if (cfg.mail_enabled or cfg.jabber_enabled) and theme.request.user.valid %}
-        {% if not theme.request.user.isSubscribedTo([page.page_name]) %}
-            {% if not 'subscribe' in cfg.actions_excluded %}
-                <li>
-                    <a class="nbsubscribe" href="{{ href(page_name, do='subscribe') }}" rel="nofollow">{{ _('Subscribe') }}</a>
-                </li>
-            {% endif %}
-        {% else %}
-            {% if not 'unsubscribe' in cfg.actions_excluded %}
-                <li>
-                    <a class="nbsubscribe" href="{{ href(page_name, do='unsubscribe') }}" rel="nofollow">{{ _('Unsubscribe') }}</a>
-                </li>
-            {% endif %}
-        {% endif %}
-    {% endif %}
-{% endif %}
-
-{% if 'Comments' in cfg.edit_bar %}
-    <li class="toggleCommentsButton" style="display:none;">
-        <a href="#" class="nbcomment" onClick="toggleComments();return false;">{{ _('Comments') }}</a>
-    </li>
-{% endif %}
-
 {% for item in editbar_items %}
         <li>{{ item }}</li>
 {% endfor %}
