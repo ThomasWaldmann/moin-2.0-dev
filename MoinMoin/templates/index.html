@@ -6,7 +6,7 @@
     {% if index %}
         <ul>
         {% for fullname, relname, mimetype in index %}
-            <li><a href="{{ href(fullname) }}">{{ relname|e }} ({{ mimetype|e }})</a></li>
+            <li><a href="{{ href(fullname)|e }}">{{ relname|e }} ({{ mimetype|e }})</a></li>
         {% endfor %}
         </ul>
     {% endif %}
