@@ -538,23 +538,14 @@ class JinjaTheme(ThemeBase):
         url = "%s/%s.js" % (jspath, name)
         return url, attrs
         
-    def universal_edit_button(self, d, **keywords):
+    def universal_edit_button(self, page):
         """
-        Generate HTML for an edit link in the header.
+        Should we show an edit link in the header?
         """
-        page = d['page']
-        if 'modify' in self.request.cfg.actions_excluded:
-            return d
         may_write = self.request.user.may.write(page.page_name)
-        if not (page.exists() and may_write):
-            return d  # Why dict?
-        _ = self.request.getText
-        querystr = {'do': 'modify'}
-        # XXX is this actually used?
-        text = _(u'Modify') if may_write else _(u'Immutable Page')
-        url = page.url(self.request, querystr=querystr, escape=0)
-        d.update({'ueb_title': text, 'ueb_url': url})
-        return d
+        if ('modify' in self.request.cfg.actions_excluded) or (not (page.exists() and may_write)):
+            return False
+        return True
 
     def actionsMenu(self, page):
         """
@@ -912,7 +903,6 @@ class JinjaTheme(ThemeBase):
                             ]
         d.update({'external_scripts': external_scripts})
         
-        d.update(self.universal_edit_button(d))
         # Render with Jinja
         request.write(self.render('head.html', d))
 
