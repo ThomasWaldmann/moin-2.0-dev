@@ -266,7 +266,7 @@ class JinjaTheme(ThemeBase):
 
     maxPagenameLength = 25  # maximum length for shortened page names
 
-    def navibar(self, d):
+    def navibar(self):
         """
         Assemble the navibar
 
@@ -276,7 +276,7 @@ class JinjaTheme(ThemeBase):
         """
         request = self.request
         items = []  # navibar items
-        current = d['page_name']
+        current = self.page_name
 
         # Process config navi_bar
         for text in request.cfg.navi_bar:
@@ -306,8 +306,7 @@ class JinjaTheme(ThemeBase):
                                request.formatter.text(sistername) +\
                                request.formatter.url(0)
                         items.append(('sisterwiki', link))
-        d.update({'navibar_items': items})
-        return d
+        return items
 
     def get_icon(self, icon):
         """
@@ -364,21 +363,20 @@ class JinjaTheme(ThemeBase):
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
-    def msg(self, d):
+    def msg(self):
         """
         Assemble the msg display
 
         Display a message with a widget or simple strings with a clear message link.
 
-        @param d: parameter dictionary
-        @rtype: dict
-        @return: dict msg display html
+        @rtype: unicode
+        @return: msg display
         """
         _ = self.request.getText
-        msgs = d['msg']
+        msgs = self._status
 
         result = u""
-        close = d['page'].link_to(self.request, text=_('Clear message'), css_class="clear-link")
+        close = self.page.link_to(self.request, text=_('Clear message'), css_class="clear-link")
         for msg, msg_class in msgs:
             try:
                 result += u'<p>%s</p>' % msg.render()
@@ -390,8 +388,8 @@ class JinjaTheme(ThemeBase):
                     result += u'<p>%s</p>\n' % msg
         if result:
             html = result + close
-            d.update({'message': html})
-        return d
+            return html
+        return ''
 
     def trail(self):
         """
@@ -721,8 +719,6 @@ class JinjaTheme(ThemeBase):
         value = form.get('value', '')
         if value:
             d.update({'search_value': value})
-        d.update(self.navibar(d))
-        d.update(self.msg(d))
         return self.render('header.html', d)
 
     # Language stuff ####################################################
@@ -789,15 +785,16 @@ class JinjaTheme(ThemeBase):
         rev = request.rev
 
         if keywords.has_key('page'):
-            page = keywords['page']
+            self.page = keywords['page']
             pagename = page.page_name
         else:
             pagename = keywords.get('pagename', '')
-            page = Page(request, pagename)
+            self.page = Page(request, pagename)
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
         scriptname = request.script_root
-
+        page = self.page
+        self.page_name = page.page_name
         # Search_hint is moved from self.headscript() to here
         d = {'page': page}
 
@@ -886,7 +883,6 @@ class JinjaTheme(ThemeBase):
             'page_word_index': page_word_index,
             'user_name': request.user.name,
             'user_valid': request.user.valid,
-            'msg': self._status,
             'trail': keywords.get('trail', None),
         })
 
