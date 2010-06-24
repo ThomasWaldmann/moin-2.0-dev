@@ -465,6 +465,23 @@ class AclWrapperRevision(object, DictMixin):
         We must allow the (unchanged) preceeding revision's ACL being stored
         into the new revision, though.
 
+        TODO: the ACL specialcasing done here (requiring admin privilege for
+              changing ACLs) is only one case of a more generic problem:
+              Access (read,write,change) to some metadata must be checked.
+              ACL - changing needs ADMIN priviledge
+              EDIT_LOG_* - writing them should be from system only
+              content hash - writing it should be from system only
+              For the metadata editing offered to the wiki user on the UI,
+              we should only offer metadata for which the wiki user has change
+              permissions. On save, we have to check the permissions.
+              Idea: have metadata key prefixes, classifying metadata entries:
+              security.* - security related
+                      .acl - content acl
+                      .insecure - allow insecure rendering (e.g. raw html)
+              system.* - internal stuff, only system may process this
+              user.* - user defined entries
+              (... needs more thinking ...)
+
         @see: NewRevision.__setitem__.__doc__
         """
         if key == ACL:
