@@ -93,16 +93,16 @@ class JinjaTheme(ThemeBase):
             
         return item_en
     
-    def title(self, d):
+    def title(self, page_name):
         """
         Assemble the title (now using breadcrumbs)
 
-        @param d: parameter dictionary
-        @rtype: dict
-        @return: title link in dict
+        @param page_name: name of the page
+        @rtype: string
+        @return: title
         """
         # just showing a page, no action
-        segments = d['page_name'].split('/')
+        segments = page_name.split('/')
         content = []
         curpage = ''
         for s in segments:
@@ -110,16 +110,15 @@ class JinjaTheme(ThemeBase):
             content.append(Page(self.request,
                                 curpage).link_to(self.request, s))
             curpage += '/'
-        d.update({'title_content': content})
-        return d
+        return content
 
-    def username(self, d):
+    def username(self, page):
         """
         Assemble the username / userprefs link
 
         @param d: parameter dictionary
         @rtype: unicode
-        @return: username html
+        @return: username
         """
         request = self.request
         _ = request.getText
@@ -141,12 +140,12 @@ class JinjaTheme(ThemeBase):
             userlinks.append(homelink)
             # link to userprefs action
             if 'userprefs' not in self.request.cfg.actions_excluded:
-                userlinks.append(d['page'].link_to(request, text=_('Settings'),
+                userlinks.append(page.link_to(request, text=_('Settings'),
                                                querystr={'do': 'userprefs'}, id='userprefs', rel='nofollow'))
 
         if request.user.valid:
             if request.user.auth_method in request.cfg.auth_can_logout:
-                userlinks.append(d['page'].link_to(request, text=_('Logout'),
+                userlinks.append(page.link_to(request, text=_('Logout'),
                                                    querystr={'do': 'logout', 'logout': 'logout'}, id='logout', rel='nofollow'))
         else:
             query = {'do': 'login'}
@@ -154,10 +153,10 @@ class JinjaTheme(ThemeBase):
             if request.cfg.auth_login_inputs == ['special_no_input']:
                 query['login'] = '1'
             if request.cfg.auth_have_login:
-                userlinks.append(d['page'].link_to(request, text=_("Login"),
+                userlinks.append(page.link_to(request, text=_("Login"),
                                                    querystr=query, id='login', rel='nofollow'))
 
-        return {'userlinks': userlinks}
+        return userlinks
 
     def splitNavilink(self, text, localize=1):
         """
@@ -394,13 +393,13 @@ class JinjaTheme(ThemeBase):
             d.update({'message': html})
         return d
 
-    def trail(self, d):
+    def trail(self):
         """
         Assemble page trail
 
         @param d: parameter dictionary
         @rtype: unicode
-        @return: trail html
+        @return: trail items
         """
         request = self.request
         user = request.user
@@ -427,8 +426,8 @@ class JinjaTheme(ThemeBase):
                     title = self.shortenPagename(title)
                     link = page.link_to(request, title)
                     items.append(link)
-                d.update({'trail_items': items})
-        return d
+                return items
+        return ''
      
     def _stylesheet_link(self, theme, media, href, title=None):
         """
@@ -529,6 +528,7 @@ class JinjaTheme(ThemeBase):
         """
         Should we show an edit link in the header?
         User have permission? If yes, show the universal edit button.
+        @rtype: boolean
         """
         can_modify = 'modify' not in self.request.cfg.actions_excluded
         may_write = self.request.user.may.write(page.page_name)
@@ -721,9 +721,6 @@ class JinjaTheme(ThemeBase):
         value = form.get('value', '')
         if value:
             d.update({'search_value': value})
-        d.update(self.username(d))
-        d.update(self.title(d))
-        d.update(self.trail(d))
         d.update(self.navibar(d))
         d.update(self.msg(d))
         return self.render('header.html', d)
