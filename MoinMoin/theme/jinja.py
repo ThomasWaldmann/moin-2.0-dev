@@ -524,20 +524,7 @@ class JinjaTheme(ThemeBase):
                 pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
             info = "%s  (%s)" % (wikiutil.escape(pagename), info)
             return info
-
-    def externalScript(self, name, attrs=''):
-        """
-        Format external script html
-
-        @param name: filename
-        @rtype: tuple
-        @return: external script url and attributes
-        """
-        jspath = '%s/common/js' % self.request.cfg.url_prefix_local
-        attrs = attrs % locals()
-        url = "%s/%s.js" % (jspath, name)
-        return url, attrs
-        
+            
     def universal_edit_button(self, page):
         """
         Should we show an edit link in the header?
@@ -893,13 +880,6 @@ class JinjaTheme(ThemeBase):
         
         # Listing stylesheets
         d.update({'stylesheets': self.stylesheets_list(d)})
-        
-        # Listing externalScripts
-        external_scripts = [
-                            self.externalScript('svg', 'data-path="%(jspath)s"'),
-                            self.externalScript('common'),
-                            ]
-        d.update({'external_scripts': external_scripts})
         
         # Render with Jinja
         request.write(self.render('head.html', d))
