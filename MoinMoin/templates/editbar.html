@@ -62,13 +62,15 @@
         </li>
     {% endif %}
     
+    {% if 'Discussion' in cfg.edit_bar %}
+        {{ theme.supplementation_page_nameLink(page) }}
+    {% endif %}
+    
     {% if 'ActionsMenu' in cfg.edit_bar %}
         {{ theme.actionsMenu(page) }}
     {% endif %}
+    
 {% endif %}
-{% for item in editbar_items %}
-        <li>{{ item }}</li>
-{% endfor %}
 
 </ul>
 

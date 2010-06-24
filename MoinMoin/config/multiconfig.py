@@ -788,8 +788,6 @@ options_no_group_name = {
     ('stylesheets', [],
      "List of tuples (media, csshref) to insert after theme css, before user css, see HelpOnThemes."),
 
-    ('supplementation_page', False,
-     "if True, show a link to the supplementation page in the theme"),
     ('supplementation_page_name', u'Discussion',
      "default name of the supplementation (sub)page [unicode]"),
     ('supplementation_page_template', u'DiscussionTemplate',
