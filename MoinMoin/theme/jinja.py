@@ -662,32 +662,6 @@ class JinjaTheme(ThemeBase):
             }
         return self.render('actions_menu.html', data)
 
-    def editbar(self, d):
-        """
-        Assemble the page edit bar.
-
-        Create html on first call, then return cached html.
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: iconbar items
-        """
-        page = d['page']
-        if not self.shouldShowEditbar(page):
-            return d
-
-        _ = self.request.getText
-        editbar_actions = []
-        for editbar_item in self.request.cfg.edit_bar:
-            if (editbar_item == 'Discussion' and
-               (self.request.getPragma('supplementation-page', self.request.cfg.supplementation_page)
-                                                   in (True, 1, 'on', '1'))):
-                editbar_actions.append(self.supplementation_page_nameLink(page))
-        editbar = [item for item in editbar_actions if item]
-        # TODO: Make a new cache for editbar using Jinja
-        d.update({'editbar_items': editbar})
-        return d
-
     def shouldShowEditbar(self, page):
         """
         Should we show the editbar?
@@ -751,7 +725,6 @@ class JinjaTheme(ThemeBase):
         d.update(self.title(d))
         d.update(self.trail(d))
         d.update(self.navibar(d))
-        d.update(self.editbar(d))
         d.update(self.msg(d))
         return self.render('header.html', d)
 
