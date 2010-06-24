@@ -73,13 +73,14 @@ searchBlur(e);
 {% endif %}
 
 <ul id="navibar">
-    {% for cls, link in navibar_items %}
+    {% for cls, link in theme.navibar() %}
         <li class="{{ cls }}">{{ link }}</li>
     {% endfor %}
 </ul>
 
 <div id="pageline"><hr style="display:none;"></div>
 
+{% set message = theme.msg() %} 
 {% if message %}
     <div id="message">
         {{ message }}
