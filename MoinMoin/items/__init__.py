@@ -48,6 +48,7 @@ SYSPAGE_VERSION = "syspage_version"
 
 MIMETYPE = "mimetype"
 SIZE = "size"
+LANGUAGE = "language"
 
 EDIT_LOG_ACTION = "edit_log_action"
 EDIT_LOG_ADDR = "edit_log_addr"

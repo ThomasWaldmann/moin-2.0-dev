@@ -98,11 +98,7 @@ class FlatFileBackend(Backend):
         rev = StoredRevision(item, 0)
         data = open(revpath, 'rb').read()
         rev._metadata, data = split_body(data)
-        # XXX: HACK!!!
-        for e in EDIT_LOG:
-            rev._metadata[e] = ''
         rev._metadata[EDIT_LOG_ACTION] = 'SAVE'
-        rev._metadata[MIMETYPE] = 'text/x.moin.wiki' # XXX get this from PI
         rev._data = StringIO(data)
         rev._data_size = len(data)
         return rev
