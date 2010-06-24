@@ -4,7 +4,7 @@
         {% if not 'modify' in cfg.actions_excluded %} 
             <li>
             {% if theme.request.user.may.write(page_name) %}
-                <a href="{{ href(page_name, do='modify') }}" rel="nofollow"> {{ _('Modify') }}</a>
+                <a href="{{ href(page_name, do='modify')|e }}" rel="nofollow"> {{ _('Modify') }}</a>
             {% else %}
                 {{ _('Immutable Page')}}
             {% endif %}
@@ -15,7 +15,7 @@
     {% if 'Download' in cfg.edit_bar %}
         {% if not 'get' in cfg.actions_excluded %}
             <li>
-                <a href="{{ href(page_name, do='get') }}" rel="nofollow">{{ _('Download') }}</a>
+                <a href="{{ href(page_name, do='get')|e }}" rel="nofollow">{{ _('Download') }}</a>
             </li>
         {% endif %}
     {% endif %}
@@ -25,13 +25,13 @@
             {% if not theme.request.user.isQuickLinkedTo([page.page_name]) %}
                 {% if not 'quicklink' in cfg.actions_excluded %}
                     <li>
-                        <a class="nbquicklink" href="{{ href(page_name, do='quicklink') }}" rel="nofollow">{{ _('Add Link') }}</a>
+                        <a class="nbquicklink" href="{{ href(page_name, do='quicklink')|e }}" rel="nofollow">{{ _('Add Link') }}</a>
                     </li>
                 {% endif %}
             {% else %}
                 {% if not 'quickunlink' in cfg.actions_excluded %}
                     <li>
-                        <a class="nbquicklink" href="{{ href(page_name, do='quickunlink') }}" rel="nofollow">{{ _('Remove Link') }}</a>
+                        <a class="nbquicklink" href="{{ href(page_name, do='quickunlink')|e }}" rel="nofollow">{{ _('Remove Link') }}</a>
                     </li>
                 {% endif %}
             {% endif %}
@@ -43,13 +43,13 @@
             {% if not theme.request.user.isSubscribedTo([page.page_name]) %}
                 {% if not 'subscribe' in cfg.actions_excluded %}
                     <li>
-                        <a class="nbsubscribe" href="{{ href(page_name, do='subscribe') }}" rel="nofollow">{{ _('Subscribe') }}</a>
+                        <a class="nbsubscribe" href="{{ href(page_name, do='subscribe')|e }}" rel="nofollow">{{ _('Subscribe') }}</a>
                     </li>
                 {% endif %}
             {% else %}
                 {% if not 'unsubscribe' in cfg.actions_excluded %}
                     <li>
-                        <a class="nbsubscribe" href="{{ href(page_name, do='unsubscribe') }}" rel="nofollow">{{ _('Unsubscribe') }}</a>
+                        <a class="nbsubscribe" href="{{ href(page_name, do='unsubscribe')|e }}" rel="nofollow">{{ _('Unsubscribe') }}</a>
                     </li>
                 {% endif %}
             {% endif %}
