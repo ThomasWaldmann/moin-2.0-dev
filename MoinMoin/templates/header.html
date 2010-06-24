@@ -38,7 +38,7 @@ searchBlur(e);
 </div>
 
 <div id="username">
-    {{ userlinks|join('<span class="sep"> | </span>')}}
+    {{ theme.username(page)|join('<span class="sep"> | </span>')}}
 </div>
 
 
@@ -59,12 +59,13 @@ searchBlur(e);
 
     <span id="pagelocation">
         <span class="pagepath">
-            {{ title_content|join('<span class="sep">/</span>') }}
+            {{ theme.title(page_name)|join('<span class="sep">/</span>') }}
         </span>
     </span>
 
 </h1>
 
+{% set trail_items = theme.trail() %}
 {% if trail_items %}
     <div id="pagetrail">
         {{ trail_items|join('<span class="sep"> &raquo; </span>') }}
