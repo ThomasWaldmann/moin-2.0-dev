@@ -118,7 +118,7 @@ class FS2Backend(BackendBase):
                 if err.errno != errno.EEXIST:
                     raise BackendError(str(err))
 
-        engine = create_engine('sqlite:///%s' % self._make_path('index_history.db'), echo=False)
+        engine = create_engine('sqlite:///%s' % self._make_path('index.db'), echo=False)
         metadata = MetaData()
         metadata.bind = engine
 
@@ -127,47 +127,11 @@ class FS2Backend(BackendBase):
                             Column('item_name', Unicode(MAX_NAME_LEN), primary_key=True),
                             Column('item_id', String(UUID_LEN), index=True, unique=True),
                         )
-        # history (e.g. for RecentChanges)
-        self._history = Table('history', metadata,
-                            Column('id', Integer, primary_key=True),
-                            Column('item_id', String(UUID_LEN)),
-                            Column('rev_id', Integer),
-                            Column('ts', Integer),
-                        )
 
         metadata.create_all()
 
     def _make_path(self, *args):
         return os.path.join(self._path, *args)
-
-    def history(self, reverse=True):
-        """
-        History implementation reading the history table.
-        """
-        history = self._history
-        name2id = self._name2id
-        results = history.select().order_by(history.id).execute()
-        if reverse:
-            results = reverse(results)
-        for row in results:
-            item_id, revno, ts = row
-            assert isinstance(item_id, str)  # item_id = str(item_id)
-            item_name = self._get_item_name(item_id) # this is the current name, NOT the name at revno
-            item = Item(self, item_name, _fs_item_id=item_id)
-            rev = StoredRevision(item, revno, ts)
-            yield rev
-        results.close()
-
-    def _addhistory(self, itemid, revid, ts):
-        """
-        Add a history item with current timestamp and the given data.
-
-        @param itemid: item's ID, string
-        @param revid: revision ID, must be an integer
-        @param ts: timestamp
-        """
-        history = self._history
-        history.insert().values(item_id=itemid, rev_id=revid, timestamp=ts).execute()
 
     def _get_item_id(self, itemname):
         """
@@ -374,8 +338,6 @@ class FS2Backend(BackendBase):
                 if err.errno != errno.EEXIST:
                     raise
                 raise RevisionAlreadyExistsError("")
-
-        self._addhistory(item._fs_item_id, rev.revno, rev.timestamp)
 
     def _rollback_item(self, rev):
         self._close_revision_meta(rev)
