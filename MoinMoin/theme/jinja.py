@@ -701,26 +701,6 @@ class JinjaTheme(ThemeBase):
             return page.link_to(self.request, text=_(suppl_name),
                                 querystr={'do': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
 
-    # Public functions #####################################################
-
-    def header(self, d, **kw):
-        """
-        Assemble wiki header
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: page header html
-        """
-
-        # Now pass dicts to render('header.html', newdict)
-        
-        # Use to show text in search form if is searching something
-        form = self.request.values
-        value = form.get('value', '')
-        if value:
-            d.update({'search_value': value})
-        return self.render('header.html', d)
-
     # Language stuff ####################################################
 
     def ui_lang_attr(self):
@@ -898,7 +878,11 @@ class JinjaTheme(ThemeBase):
         request.themedict = d
 
         # now call the theming code to do the rendering
-        request.write(self.header(d))
+        form = self.request.values
+        value = form.get('value', '')
+        if value:
+            d.update({'search_value': value})
+        request.write(self.render('header.html', d))
         request.write(content)
         request.write(self.render('footer.html', d))
         self._send_title_called = True
