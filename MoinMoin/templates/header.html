@@ -1,4 +1,3 @@
-
 <body 
 {% if body_onload %}
     onload="{{ body_onload }}"
@@ -10,27 +9,27 @@
 <div id="header">
 
 <form id="searchform" method="get" action="{{ href(page.page_name) }}">
-<div>
-<input type="hidden" name="do" value="fullsearch">
-<input type="hidden" name="context" value="180">
-<label for="searchinput">{{ _('Search') }}</label>
-<input id="searchinput" type="text" name="value" value="{{ search_value|e }}" size="20"
-    onfocus="searchFocus(this)" onblur="searchBlur(this)"
-    onkeyup="searchChange(this)" onchange="searchChange(this)" alt="Search">
-<input id="titlesearch" name="titlesearch" type="submit"
-    value="{{ _('Titles') }}" alt="Search Titles">
-<input id="fullsearch" name="fullsearch" type="submit"
-    value="{{ _('Text') }}" alt="Search Full Text">
-</div>
+    <div>
+        <input type="hidden" name="do" value="fullsearch">
+        <input type="hidden" name="context" value="180">
+        <label for="searchinput">{{ _('Search') }}</label>
+        <input id="searchinput" type="text" name="value" value="{{ search_value|e }}" size="20"
+            onfocus="searchFocus(this)" onblur="searchBlur(this)"
+            onkeyup="searchChange(this)" onchange="searchChange(this)" alt="Search">
+        <input id="titlesearch" name="titlesearch" type="submit"
+            value="{{ _('Titles') }}" alt="Search Titles">
+        <input id="fullsearch" name="fullsearch" type="submit"
+            value="{{ _('Text') }}" alt="Search Full Text">
+    </div>
 </form>
 <script type="text/javascript">
-<!--// Initialize search form
-var f = document.getElementById('searchform');
-f.getElementsByTagName('label')[0].style.display = 'none';
-var e = document.getElementById('searchinput');
-searchChange(e);
-searchBlur(e);
-//-->
+    <!--// Initialize search form
+    var f = document.getElementById('searchform');
+    f.getElementsByTagName('label')[0].style.display = 'none';
+    var e = document.getElementById('searchinput');
+    searchChange(e);
+    searchBlur(e);
+    //-->
 </script>
 
 <div id="logo">
@@ -44,7 +43,7 @@ searchBlur(e);
 
 <h1 id="locationline">
 
-{% if cfg.show_interwiki %}
+    {% if cfg.show_interwiki %}
     <span id="interwiki">
         <a href="{{ href(translated_item_name(cfg.page_front_page)) }}" rel="nofollow">
             {% if cfg.interwikiname %}
@@ -55,7 +54,7 @@ searchBlur(e);
         </a>
         <span class="sep">: </span>
     </span>
-{% endif %}
+    {% endif %}
 
     <span id="pagelocation">
         <span class="pagepath">

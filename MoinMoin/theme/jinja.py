@@ -746,7 +746,8 @@ class JinjaTheme(ThemeBase):
             return
         self._status.append((msg, msg_class))
 
-    # stuff from wikiutil.py
+    # Public Functions ########################################################
+    
     def send_title(self, text, content, **keywords):
         """
         Output the page header (and title).
@@ -775,7 +776,7 @@ class JinjaTheme(ThemeBase):
         scriptname = request.script_root
         page = self.page
         self.page_name = page.page_name
-        # Search_hint is moved from self.headscript() to here
+        
         d = {'page': page}
 
         # get name of system pages
