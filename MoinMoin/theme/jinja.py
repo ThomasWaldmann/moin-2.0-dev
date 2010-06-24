@@ -683,8 +683,6 @@ class JinjaTheme(ThemeBase):
                (self.request.getPragma('supplementation-page', self.request.cfg.supplementation_page)
                                                    in (True, 1, 'on', '1'))):
                 editbar_actions.append(self.supplementation_page_nameLink(page))
-            elif editbar_item == 'ActionsMenu':
-                editbar_actions.append(self.actionsMenu(page))
         editbar = [item for item in editbar_actions if item]
         # TODO: Make a new cache for editbar using Jinja
         d.update({'editbar_items': editbar})

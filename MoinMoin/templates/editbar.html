@@ -61,6 +61,10 @@
             <a href="#" class="nbcomment" onClick="toggleComments();return false;">{{ _('Comments') }}</a>
         </li>
     {% endif %}
+    
+    {% if 'ActionsMenu' in cfg.edit_bar %}
+        {{ theme.actionsMenu(page) }}
+    {% endif %}
 {% endif %}
 {% for item in editbar_items %}
         <li>{{ item }}</li>
