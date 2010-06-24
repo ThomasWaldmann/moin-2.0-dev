@@ -2578,16 +2578,13 @@ def add_metadata_to_body(metadata, data):
     """
     Adds the processing instructions to the data.
     """
-    from MoinMoin.items import SIZE, EDIT_LOG
-    READONLY_METADATA = [SIZE] + list(EDIT_LOCK) + EDIT_LOG
+    from MoinMoin.items import NAME, ACL, MIMETYPE, LANGUAGE
 
-    parsing_instructions = ["format", "language", "refresh", "acl",
-                            "redirect", "deprecated", "openiduser",
-                            "pragma", "internal", "external"]
+    meta_keys = [NAME, ACL, MIMETYPE, LANGUAGE, ]
 
     metadata_data = ""
     for key, value in metadata.iteritems():
-        if key not in parsing_instructions:
+        if key not in meta_keys:
             continue
         # special handling for list metadata
         if isinstance(value, (list, tuple)):
