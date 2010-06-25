@@ -1,5 +1,5 @@
 <ul class="editbar">    
-{% if theme.shouldShowEditbar(page) %}
+{% if theme.shouldShowEditbar() %}
     {% if 'Modify' in cfg.edit_bar %}
         {% if not 'modify' in cfg.actions_excluded %} 
             <li>
@@ -63,11 +63,11 @@
     {% endif %}
     
     {% if 'Discussion' in cfg.edit_bar %}
-        {{ theme.supplementation_page_nameLink(page) }}
+        {{ theme.supplementation_page_nameLink() }}
     {% endif %}
     
     {% if 'ActionsMenu' in cfg.edit_bar %}
-        {{ theme.actionsMenu(page) }}
+        {{ theme.actionsMenu() }}
     {% endif %}
     
 {% endif %}

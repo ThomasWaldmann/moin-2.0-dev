@@ -1,7 +1,7 @@
 {# Template used to render footer #}
 
-{% if theme.shouldShowPageInfo(page) %}
-    {% set info = theme.pageinfo(page) %}
+{% if theme.shouldShowPageInfo() %}
+    {% set info = theme.pageinfo() %}
     {% if info %}
         <p id="pageinfo" class="info" {{ theme.ui_lang_attr() }}> {{ info }}</p>
     {% endif %}

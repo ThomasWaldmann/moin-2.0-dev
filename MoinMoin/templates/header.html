@@ -72,12 +72,16 @@
 {% endif %}
 
 <ul id="navibar">
-    {% for cls, link in theme.navibar() %}
-        <li class="{{ cls }}">{{ link }}</li>
+    {% for cls, link, text in theme.navibar() %}
+        <li class="{{ cls }}">
+            <a href="{{ link|e }}">{{ text }}</a>
+        </li>
     {% endfor %}
 </ul>
 
-<div id="pageline"><hr style="display:none;"></div>
+<div id="pageline">
+    <hr style="display:none;">
+</div>
 
 {% set message = theme.msg() %} 
 {% if message %}
