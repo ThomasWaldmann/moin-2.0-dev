@@ -235,9 +235,8 @@ class JinjaTheme(ThemeBase):
             title = page.page_name
             title = self.shortenPagename(title)
 
-        link = page.link_to(request, title)
-
-        return pagename, link
+        link = self.request.href(page.page_name)
+        return pagename, link, title
 
     def shortenPagename(self, name):
         """
@@ -279,33 +278,26 @@ class JinjaTheme(ThemeBase):
         current = self.page_name
 
         # Process config navi_bar
+        # TODO: Optimize performance and caching with Jinja
         for text in request.cfg.navi_bar:
-            pagename, link = self.splitNavilink(text)
-            items.append(('wikilink', link))
+            pagename, link, link_text = self.splitNavilink(text)
+            items.append(('wikilink', link, link_text))
 
-        # Add user links to wiki links, eliminating duplicates.
+        # Add user links to wiki links.
         userlinks = request.user.getQuickLinks()
         for text in userlinks:
             # Split text without localization, user knows what he wants
-            pagename, link = self.splitNavilink(text, localize=0)
-            items.append(('userlink', link))
+            pagename, link, link_text = self.splitNavilink(text, localize=0)
+            items.append(('userlink', link, link_text))
 
         # Add sister pages.
+        # TODO: Optimize performance and caching with Jinja
         for sistername, sisterurl in request.cfg.sistersites:
-            if sistername == request.cfg.interwikiname:  # it is THIS wiki
-                items.append(('sisterwiki current', sistername))
-            else:
-                # TODO optimize performance
-                cache = caching.CacheEntry(request, 'sisters', sistername, 'farm', use_pickle=True)
-                if cache.exists():
-                    data = cache.content()
-                    sisterpages = data['sisterpages']
-                    if current in sisterpages:
-                        url = sisterpages[current]
-                        link = request.formatter.url(1, url) + \
-                               request.formatter.text(sistername) +\
-                               request.formatter.url(0)
-                        items.append(('sisterwiki', link))
+            if sistername == request.cfg.interwikiname:
+                cls = 'sisterwiki current'
+            else:   
+                cls = 'sisterwiki'
+            items.append((cls, sisterurl, sistername))
         return items
 
     def get_icon(self, icon):
@@ -476,7 +468,7 @@ class JinjaTheme(ThemeBase):
         
         return stylesheet_list
             
-    def shouldShowPageInfo(self, page):
+    def shouldShowPageInfo(self):
         """
         Should we show page info?
 
@@ -487,6 +479,7 @@ class JinjaTheme(ThemeBase):
         @rtype: bool
         @return: true if should show page info
         """
+        page = self.page
         if page.exists() and self.request.user.may.read(page.page_name):
             # These actions show the page content.
             # TODO: on new action, page info will not show.
@@ -497,7 +490,7 @@ class JinjaTheme(ThemeBase):
             return self.request.action in contentActions
         return False
 
-    def pageinfo(self, page):
+    def pageinfo(self):
         """
         Return html fragment with page meta data
 
@@ -510,6 +503,7 @@ class JinjaTheme(ThemeBase):
         @return: page last edit information in dict
         """
         _ = self.request.getText
+        page = self.page
         info = page.last_edit(printable=True)
         if info:
             if info['editor']:
@@ -532,7 +526,7 @@ class JinjaTheme(ThemeBase):
         may_write = self.request.user.may.write(page.page_name)
         return can_modify and page.exists() and may_write
 
-    def actionsMenu(self, page):
+    def actionsMenu(self):
         """
         Create actions menu list and items data dict
 
@@ -554,7 +548,8 @@ class JinjaTheme(ThemeBase):
         request = self.request
         _ = request.getText
         rev = request.rev
-
+        page = self.page
+        
         menu = [
             'rc',
             '__separator__',
@@ -660,7 +655,7 @@ class JinjaTheme(ThemeBase):
             }
         return self.render('actions_menu.html', data)
 
-    def shouldShowEditbar(self, page):
+    def shouldShowEditbar(self):
         """
         Should we show the editbar?
 
@@ -672,6 +667,7 @@ class JinjaTheme(ThemeBase):
         @rtype: bool
         @return: true if editbar should show
         """
+        page = self.page
         # Show editbar only for existing pages, that the user may read.
         # If you may not read, you can't edit, so you don't need editbar.
         if (page.exists() and self.request.user.may.read(page.page_name)):
@@ -683,7 +679,7 @@ class JinjaTheme(ThemeBase):
                         not form.has_key('button_cancel'))
         return False
 
-    def supplementation_page_nameLink(self, page):
+    def supplementation_page_nameLink(self):
         """
         Return a link to the discussion page
 
@@ -691,15 +687,17 @@ class JinjaTheme(ThemeBase):
         has no right to create it, show a disabled link.
         """
         _ = self.request.getText
+        href = self.request.href
+        page = self.page
         suppl_name = self.request.cfg.supplementation_page_name
         suppl_name_full = "%s/%s" % (page.page_name, suppl_name)
 
         test = Page(self.request, suppl_name_full)
         if not test.exists() and not self.request.user.may.write(suppl_name_full):
-            return ('<span class="disabled">%s</span>' % _(suppl_name))
+            return '<span class="disabled">%s</span>' % _(suppl_name)
         else:
-            return page.link_to(self.request, text=_(suppl_name),
-                                querystr={'do': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
+            return '<a class="nbsupplementation" href="%s" rel="nofollow">%s</a>' % (href(page.page_name, do='supplementation'),
+                                                                                    _(suppl_name))
 
     # Language stuff ####################################################
 
@@ -766,16 +764,20 @@ class JinjaTheme(ThemeBase):
         rev = request.rev
 
         if keywords.has_key('page'):
-            self.page = keywords['page']
+            page = keywords['page']
             pagename = page.page_name
         else:
             pagename = keywords.get('pagename', '')
-            self.page = Page(request, pagename)
+            page = Page(request, pagename)
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
         scriptname = request.script_root
-        page = self.page
+        
+        #Attributes to use directly in template
+        # Or to reduce parameters of functions of JinjaTheme
+        self.page = page
         self.page_name = page.page_name
+        self.head_title = text
         
         d = {'page': page}
 
@@ -810,9 +812,7 @@ class JinjaTheme(ThemeBase):
                                    page_site_navigation, 'SiteNavigation',
                                    ]
                  })
-        #Variables used to render title
-        d.update({'title': text})
-
+                 
         # Links
         if pagename and page_parent_page:
             d.update({'link_parent': request.href(page_parent_page)})

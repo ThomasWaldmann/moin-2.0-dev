@@ -40,7 +40,7 @@
         <meta name="description" content="{{ meta_description }}">
     {% endif %}
     
-    <title> {{ title|escape }} - 
+    <title> {{ theme.head_title|escape }} - 
         {% if cfg.html_pagetitle %}
             {{ cfg.html_pagetitle|e }}
         {% else %}
