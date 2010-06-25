@@ -93,7 +93,7 @@ class JinjaTheme(ThemeBase):
             
         return item_en
     
-    def title(self, page_name):
+    def title(self):
         """
         Assemble the title (now using breadcrumbs)
 
@@ -102,13 +102,18 @@ class JinjaTheme(ThemeBase):
         @return: title
         """
         # just showing a page, no action
+        page_name = self.page.page_name
         segments = page_name.split('/')
         content = []
         curpage = ''
         for s in segments:
             curpage += s
-            content.append(Page(self.request,
-                                curpage).link_to(self.request, s))
+            page = Page(self.request, curpage)
+            link = '<a '
+            if not page.exists():
+                link += 'class="nonexistent" '    
+            link += ' href="%s">%s</a>' % (self.request.href(curpage), s)
+            content.append(link)
             curpage += '/'
         return content
 
