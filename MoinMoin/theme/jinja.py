@@ -858,7 +858,6 @@ class JinjaTheme(ThemeBase):
             d.update({'body_onload': body_onload})
         d.update({'body_attr': ''.join(bodyattr)})
         
-        # If in print mode, start page div and emit the title
         # TODO: Fix the print mode
         exists = pagename and page.exists()
         # prepare dict for theme code:
@@ -895,10 +894,6 @@ class JinjaTheme(ThemeBase):
         request.themedict = d
 
         # now call the theming code to do the rendering
-        form = self.request.values
-        value = form.get('value', '')
-        if value:
-            d.update({'search_value': value})
         request.write(self.render('header.html', d))
         request.write(content)
         request.write(self.render('footer.html', d))
