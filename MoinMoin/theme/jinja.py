@@ -96,6 +96,12 @@ class JinjaTheme(ThemeBase):
     def link_to(self, pagename, text, querystr=None, css_id=None, css_class=None, rel=None):
         """
         Small wrapper to replace page.link_to
+        @param pagename: name of the page
+        @param text: text linked
+        @param querystr: add querystring to url
+        @param css_id: id of 'a' tag
+        @param css_id: class of 'a' tag
+        @param rel: rel of 'a' tag
         @rtype: string
         @return: link html
         """
@@ -533,7 +539,7 @@ class JinjaTheme(ThemeBase):
         translated text using page direction looks worse.
 
         @param page: current page
-        @rtype: dict
+        @rtype: string
         @return: page last edit information in dict
         """
         _ = self.request.getText
@@ -716,9 +722,9 @@ class JinjaTheme(ThemeBase):
 
     def parent_page(self):
         """
-        Return a href to parent page for the current page
+        Return an url to parent page for the current page
         @rtype: unicode
-        @return: href to parent page
+        @return: url to parent page
         """
         pagename = self.page.page_name
         page_parent_page = getattr(self.page.getParentPage(), 'page_name', None)
