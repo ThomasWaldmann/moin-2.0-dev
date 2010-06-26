@@ -50,6 +50,9 @@ class Converter(object):
                    # TODO : Some tags related to tables can be also simplify
                   }
 
+    # HTML Tag which does not have equivalence in the DOM Tree
+    # But we keep the information using <span html-element>
+    inline_tags = set(['abbr', 'acronym', 'address', 'dfn', 'kbd'])
 
     # Regular expression to detect an html heading tag
     heading_re = re.compile('h[1-6]')
@@ -171,6 +174,10 @@ class Converter(object):
         # Our element is enough simple to just change the tag name
         if element.tag.name in self.simple_tags:
             return self.new_copy(self.simple_tags[element.tag.name], element, attrib={})
+
+        # We convert our element as a span tag with html-element attribute
+        if element.tag.name in self.inline_tags:
+            return self.visit_xhtml_inline(element)
 
         # We have an heading tag
         if self.heading_re.match(element.tag.name):
@@ -312,6 +319,16 @@ class Converter(object):
         attrib = {}
         attrib[key] = ''.join([self.base_url, element.get(html.src)])
         return moin_page.object(attrib)
+
+    def visit_xhtml_inline(self, element):
+        """
+        For some specific inline tags (defined in inline_tags)
+        We just return <span html-element="tag.name">
+        """
+        key = moin_page('html-element')
+        attrib = {}
+        attrib[key] = element.tag.name
+        return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_ul(self, element):
         # We will process all children (which should be list element normally
