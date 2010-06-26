@@ -109,6 +109,22 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_span_html_element(self):
+        data = [
+            ('<html><p><abbr>Text</abbr></p></html>',
+             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="abbr"]'),
+            ('<html><p><acronym>Text</acronym></p></html>',
+             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="acronym"]'),
+            ('<html><p><address>Text</address></p></html>',
+             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="address"]'),
+            ('<html><p><dfn>Text</dfn></p></html>',
+             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="dfn"]'),
+            ('<html><p><kbd>Text</kbd></p></html>',
+             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="kbd"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
     def test_link(self):
         data = [
             ('<html><p><a href="uri:test">Test</a></p></html>',
