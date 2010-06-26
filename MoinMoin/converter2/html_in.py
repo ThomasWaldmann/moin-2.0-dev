@@ -7,7 +7,6 @@ Converts an HTML Tree into an internal document tree.
 @copyright: 2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details.
 @TODO : * Add basic support for the styles
-        * 
 """
 
 from __future__ import absolute_import
@@ -39,15 +38,15 @@ class Converter(object):
 
     # HTML tags which can be convert without attributes in a different DOM tag
     simple_tags = {# Emphasis
-                   'em':moin_page.emphasis, 'i':moin_page.emphasis,
+                   'em': moin_page.emphasis, 'i': moin_page.emphasis,
                    # Strong 
-                   'b':moin_page.strong, 'strong':moin_page.strong,
+                   'b': moin_page.strong, 'strong': moin_page.strong,
                    # Code and Blockcode
-                   'pre':moin_page.blockcode, 'tt':moin_page.code,
-                   'samp':moin_page.code,
+                   'pre': moin_page.blockcode, 'tt': moin_page.code,
+                   'samp': moin_page.code,
                    # Lists
-                   'li':moin_page.list_item_body, 'dt':moin_page.list_item_label,
-                   'dd':moin_page.list_item_body,
+                   'li': moin_page.list_item_body, 'dt': moin_page.list_item_label,
+                   'dd': moin_page.list_item_body,
                    # TODO : Some tags related to tables can be also simplify
                   }
 
