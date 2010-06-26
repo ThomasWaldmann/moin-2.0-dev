@@ -9,6 +9,10 @@ import py.test
 import re
 
 from MoinMoin.converter2.html_out import *
+from emeraldtree.tree import *
+from lxml import etree
+import StringIO
+
 
 
 class Base(object):
@@ -111,6 +115,18 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_span(self):
+        data = [
+            ('<page><body><p><span baseline-shift="sub">sub</span>script</p></body></page>',
+                '<div><p><sub>sub</sub>script</p></div>'),
+            ('<page><body><p><span baseline-shift="super">super</span>script</p></body></page>',
+                '<div><p><sup>super</sup>script</p></div>'),
+            ('<page><body><p><span text-decoration="underline">underline</span></p></body></page>',
+                '<div><p><u>underline</u></p></div>'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
     def test_list(self):
         data = [
             ('<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
@@ -156,6 +172,25 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_span_xpath(self):
+        test_input = '<page><body><p><span baseline-shift="sub">sub</span>script</p></body></page>'
+        out = self.conv(self.handle_input(test_input), )
+        tree = ET.ElementTree(out)
+
+        #Check that our text is in appropraite sub tag
+        assert tree.findtext('{http://www.w3.org/1999/xhtml}p/{http://www.w3.org/1999/xhtml}sub') == 'sub'
+
+    def test_span_xpath_lxml(self):
+        test_input = '<page><body><p><span baseline-shift="sub">sub</span>script</p></body></page>'
+        out = self.conv(self.handle_input(test_input), )
+        f = self.handle_output(out)
+
+        tree = etree.parse(StringIO.StringIO(f))
+
+        r = tree.xpath('/div/p/sub')
+        assert len(r) == 1
+        assert r[0].text == 'sub'
 
     def test_table(self):
         data = [
