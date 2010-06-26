@@ -108,12 +108,12 @@ class JinjaTheme(ThemeBase):
         # I'm using page_name instead of page in parameter thinking in future, when we gonna drop Page.
         page = Page(self.request, pagename)
         link = '<a '
-        if not page.exists():
-            link += 'class="nonexistent" '
-        if css_id:
-            link += 'id="%s" ' % css_id
         if css_class:
             link += 'class="%s" ' % css_class
+        elif not page.exists():
+            link += 'class="nonexistent" '
+        if css_id:
+            link += 'id="%s" ' % css_id     
         if rel:
             link += 'rel="%s" ' % rel
         link += 'href="%s' % (self.request.href(pagename))
@@ -315,15 +315,15 @@ class JinjaTheme(ThemeBase):
         # Process config navi_bar
         # TODO: Optimize performance and caching with Jinja
         for text in request.cfg.navi_bar:
-            pagename, url, inside_text = self.splitNavilink(text)
-            items.append(('wikilink', url, inside_text))
+            pagename, url, link_text = self.splitNavilink(text)
+            items.append(('wikilink', url, link_text))
 
         # Add user links to wiki links.
         userlinks = request.user.getQuickLinks()
         for text in userlinks:
             # Split text without localization, user knows what he wants
-            pagename, url, inside_text = self.splitNavilink(text, localize=0)
-            items.append(('userlink', url, inside_text))
+            pagename, url, link_text = self.splitNavilink(text, localize=0)
+            items.append(('userlink', url, link_text))
 
         # Add sister pages.
         for sistername, sisterurl in request.cfg.sistersites:
