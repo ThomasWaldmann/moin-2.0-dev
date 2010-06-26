@@ -59,7 +59,7 @@
     {% endif %}
     
     {# ueb refers to universal edit button #}
-    {% if theme.universal_edit_button(page) %}
+    {% if theme.universal_edit_button() %}
         <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href(page.page_name, do='modify')|e }}">
     {% endif %}   
     
