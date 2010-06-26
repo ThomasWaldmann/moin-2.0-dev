@@ -93,6 +93,33 @@ class JinjaTheme(ThemeBase):
             
         return item_en
     
+    def link_to(self, pagename, text, querystr=None, css_id=None, css_class=None, rel=None):
+        """
+        Small wrapper to replace page.link_to
+        @rtype: string
+        @return: link html
+        """
+        # I'm using page_name instead of page in parameter thinking in future, when we gonna drop Page.
+        page = Page(self.request, pagename)
+        link = '<a '
+        if not page.exists():
+            link += 'class="nonexistent" '
+        if css_id:
+            link += 'id="%s" ' % css_id
+        if css_class:
+            link += 'class="%s" ' % css_class
+        if rel:
+            link += 'rel="%s" ' % rel
+        link += 'href="%s' % (self.request.href(pagename))
+        if querystr:
+            link += '?'
+            query = []
+            for key in querystr.iterkeys():
+                query.append('%s=%s' % (key, querystr[key]))
+            link += '&'.join(query)
+        link += '">%s</a>' % text
+        return link
+        
     def title(self):
         """
         Assemble the title (now using breadcrumbs)
@@ -108,16 +135,12 @@ class JinjaTheme(ThemeBase):
         curpage = ''
         for s in segments:
             curpage += s
-            page = Page(self.request, curpage)
-            link = '<a '
-            if not page.exists():
-                link += 'class="nonexistent" '    
-            link += ' href="%s">%s</a>' % (self.request.href(curpage), s)
+            link = self.link_to(pagename=curpage, text=s)   
             content.append(link)
             curpage += '/'
         return content
 
-    def username(self, page):
+    def username(self):
         """
         Assemble the username / userprefs link
 
@@ -127,7 +150,8 @@ class JinjaTheme(ThemeBase):
         """
         request = self.request
         _ = request.getText
-
+        page = self.page
+        
         userlinks = []
         # Add username/homepage link for registered users. We don't care
         # if it exists, the user can create it.
@@ -145,21 +169,21 @@ class JinjaTheme(ThemeBase):
             userlinks.append(homelink)
             # link to userprefs action
             if 'userprefs' not in self.request.cfg.actions_excluded:
-                userlinks.append(page.link_to(request, text=_('Settings'),
-                                               querystr={'do': 'userprefs'}, id='userprefs', rel='nofollow'))
+                userlinks.append(self.link_to(pagename=page.page_name, text=_('Settings'),
+                                               querystr={'do': 'userprefs'}, css_id='userprefs', rel='nofollow'))
 
         if request.user.valid:
             if request.user.auth_method in request.cfg.auth_can_logout:
-                userlinks.append(page.link_to(request, text=_('Logout'),
-                                                   querystr={'do': 'logout', 'logout': 'logout'}, id='logout', rel='nofollow'))
+                userlinks.append(self.link_to(pagename=page.page_name, text=_('Logout'),
+                                                   querystr={'do': 'logout', 'logout': 'logout'}, css_id='logout', rel='nofollow'))
         else:
             query = {'do': 'login'}
             # special direct-login link if the auth methods want no input
             if request.cfg.auth_login_inputs == ['special_no_input']:
                 query['login'] = '1'
             if request.cfg.auth_have_login:
-                userlinks.append(page.link_to(request, text=_("Login"),
-                                                   querystr=query, id='login', rel='nofollow'))
+                userlinks.append(self.link_to(pagename=page.page_name, text=_("Login"),
+                                                   querystr=query, css_id='login', rel='nofollow'))
 
         return userlinks
 
@@ -378,7 +402,7 @@ class JinjaTheme(ThemeBase):
         msgs = self._status
 
         result = u""
-        close = self.page.link_to(self.request, text=_('Clear message'), css_class="clear-link")
+        close = self.link_to(pagename=self.page.page_name, text=_('Clear message'), css_class="clear-link")
         for msg, msg_class in msgs:
             try:
                 result += u'<p>%s</p>' % msg.render()
@@ -424,7 +448,7 @@ class JinjaTheme(ThemeBase):
                     page = Page(request, pagename)
                     title = page.page_name
                     title = self.shortenPagename(title)
-                    link = page.link_to(request, title)
+                    link = self.link_to(pagename=page.page_name, text=title)
                     items.append(link)
                 return items
         return ''
@@ -526,12 +550,13 @@ class JinjaTheme(ThemeBase):
             info = "%s  (%s)" % (wikiutil.escape(pagename), info)
             return info
             
-    def universal_edit_button(self, page):
+    def universal_edit_button(self):
         """
         Should we show an edit link in the header?
         User have permission? If yes, show the universal edit button.
         @rtype: boolean
         """
+        page = self.page
         can_modify = 'modify' not in self.request.cfg.actions_excluded
         may_write = self.request.user.may.write(page.page_name)
         return can_modify and page.exists() and may_write
@@ -690,11 +715,11 @@ class JinjaTheme(ThemeBase):
         return False
 
     def parent_page(self):
-        '''
+        """
         Return a parent page for the current page
         @rtype: Page
         @return: parent page
-        '''
+        """
         pagename = self.page.page_name
         page_parent_page = getattr(self.page.getParentPage(), 'page_name', None)
         if pagename and page_parent_page:
