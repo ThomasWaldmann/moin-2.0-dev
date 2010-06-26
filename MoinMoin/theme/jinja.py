@@ -923,28 +923,8 @@ class JinjaTheme(ThemeBase):
             request.setContentLanguage(request.lang)
             request.theme.send_title(title, pagename=item_name, content=content)
 
-    def sidebar(self, d, **keywords):
-        """
-        Display page called SideBar as an additional element on every page
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: sidebar html
-        """
-        # Check which page to display, return nothing if doesn't exist.
-        sidebar = self.request.getPragma('sidebar', u'SideBar')
-        page = Page(self.request, sidebar)
-        if not page.exists():
-            return u""
-        # Capture the page's generated HTML in a buffer.
-        buffer = StringIO.StringIO()
-        self.request.redirect(buffer)
-        try:
-            page.send_page(content_only=1, content_id="sidebar")
-        finally:
-            self.request.redirect()
-        return u'<div class="sidebar">%s</div>' % buffer.getvalue()
-
+    #TODO: reimplement on-wiki-page sidebar definition with converter2
+    
     def render(self, filename, context):
         """
         Base function that renders using Jinja2.
