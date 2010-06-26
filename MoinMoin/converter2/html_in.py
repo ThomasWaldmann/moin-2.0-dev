@@ -109,13 +109,13 @@ class Converter(object):
                 new.append(child)
         return new
 
-    def new(self, tag, attrib={}, children=[]):
+    def new(self, tag, attrib, children):
         """
         Return a new element for the DOM Tree
         """
         return ET.Element(tag, attrib=attrib, children=children)
 
-    def new_copy(self, tag, element, attrib={}):
+    def new_copy(self, tag, element, attrib):
         """
         Function to copy one element to the DOM Tree.
 
@@ -126,7 +126,7 @@ class Converter(object):
         children = self.do_children(element)
         return self.new(tag, attrib, children)
 
-    def new_copy_symmetric(self, element, attrib={}):
+    def new_copy_symmetric(self, element, attrib):
         """
         Create a new QName, with the same tag of the element,
         but with a different namespace.
@@ -166,11 +166,11 @@ class Converter(object):
 
         # Our element can be converted directly, just by changing the namespace
         if element.tag.name in self.symmetric_tags:
-            return self.new_copy_symmetric(element)
+            return self.new_copy_symmetric(element, attrib={})
 
         # Our element is enough simple to just change the tag name
         if element.tag.name in self.simple_tags:
-            return self.new_copy(self.simple_tags[element.tag.name], element)
+            return self.new_copy(self.simple_tags[element.tag.name], element, attrib={})
 
         # We have an heading tag
         if self.heading_re.match(element.tag.name):
@@ -358,16 +358,16 @@ class Converter(object):
         return ET.Element(moin_page.list, attrib={}, children=[list_item])
 
     def visit_xhtml_theader(self, element):
-        return self.new_copy(moin_page.table_header, element)
+        return self.new_copy(moin_page.table_header, element, attrib={})
 
     def visit_xhtml_tfooter(self, element):
-        return self.new_copy(moin_page.table_footer, element)
+        return self.new_copy(moin_page.table_footer, element, attrib={})
 
     def visit_xhtml_tbody(self, element):
-        return self.new_copy(moin_page.table_body, element)
+        return self.new_copy(moin_page.table_body, element, attrib={})
 
     def visit_xhtml_tr(self, element):
-        return self.new_copy(moin_page.table_row, element)
+        return self.new_copy(moin_page.table_row, element, attrib={})
 
     def visit_xhtml_td(self, element):
         attrib = {}
