@@ -44,7 +44,7 @@
         {% if cfg.html_pagetitle %}
             {{ cfg.html_pagetitle|e }}
         {% else %}
-            {{ cfg.sitename|escape }}
+            {{ cfg.sitename|e }}
         {% endif %}
     </title>
     
@@ -53,8 +53,9 @@
     <link rel="Glossary" href="{{ href(translated_item_name('WordIndex'))|e }}">
     <link rel="Help" href="{{ href(translated_item_name('HelpOnFormatting'))|e }}">
     <link rel="Start" href="{{ href(translated_item_name(cfg.page_front_page))|e }}">
-    {% if link_parent %}
-        <link rel="Up" href="{{ link_parent }}">
+    {% set parent_page = theme.parent_page() %}
+    {% if parent_page %}
+        <link rel="Up" href="{{ href(parent_page)|e }}">
     {% endif %}
     
     {# ueb refers to universal edit button #}
