@@ -285,24 +285,29 @@ class JinjaTheme(ThemeBase):
         # Process config navi_bar
         # TODO: Optimize performance and caching with Jinja
         for text in request.cfg.navi_bar:
-            pagename, link, link_text = self.splitNavilink(text)
-            items.append(('wikilink', link, link_text))
+            pagename, url, inside_text = self.splitNavilink(text)
+            items.append(('wikilink', url, inside_text))
 
         # Add user links to wiki links.
         userlinks = request.user.getQuickLinks()
         for text in userlinks:
             # Split text without localization, user knows what he wants
-            pagename, link, link_text = self.splitNavilink(text, localize=0)
-            items.append(('userlink', link, link_text))
+            pagename, url, inside_text = self.splitNavilink(text, localize=0)
+            items.append(('userlink', url, inside_text))
 
         # Add sister pages.
-        # TODO: Optimize performance and caching with Jinja
         for sistername, sisterurl in request.cfg.sistersites:
-            if sistername == request.cfg.interwikiname:
-                cls = 'sisterwiki current'
-            else:   
-                cls = 'sisterwiki'
-            items.append((cls, sisterurl, sistername))
+            if sistername == request.cfg.interwikiname:  # it is THIS wiki
+                items.append(('sisterwiki current', sisterurl, sistername))
+            else:
+                # TODO optimize performance
+                cache = caching.CacheEntry(request, 'sisters', sistername, 'farm', use_pickle=True)
+                if cache.exists():
+                    data = cache.content()
+                    sisterpages = data['sisterpages']
+                    if current in sisterpages:
+                        url = sisterpages[current]
+                        items.append(('sisterwiki', url, sistername))
         return items
 
     def get_icon(self, icon):
