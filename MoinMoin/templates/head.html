@@ -70,7 +70,7 @@
         <script type="text/javascript" src="{{ href("%s/common/js/%s.js" % (cfg.url_prefix_local, src))|e }}"></script>
     {% endfor %}
     
-    {% for media, href, title in stylesheets %}
+    {% for media, href, title in theme.stylesheets_list() %}
         {% if loop.last %}
         <!-- css only for MS IE6/IE7 browsers -->
         <!--[if lt IE 8]>
