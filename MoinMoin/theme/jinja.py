@@ -716,9 +716,9 @@ class JinjaTheme(ThemeBase):
 
     def parent_page(self):
         """
-        Return a parent page for the current page
-        @rtype: Page
-        @return: parent page
+        Return a href to parent page for the current page
+        @rtype: unicode
+        @return: href to parent page
         """
         pagename = self.page.page_name
         page_parent_page = getattr(self.page.getParentPage(), 'page_name', None)
