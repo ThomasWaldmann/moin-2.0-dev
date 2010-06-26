@@ -39,6 +39,20 @@ class Converter(object):
     # HTML tags which can be converted directly to the moin_page namespace
     symmetric_tags = set(['div', 'p', 'strong', 'code', 'table'])
 
+    # HTML tags which can be convert without attributes in a different DOM tag
+    simple_tags = {# Emphasis
+                   'em':moin_page.emphasis, 'i':moin_page.emphasis,
+                   # Strong 
+                   'b':moin_page.strong, 'strong':moin_page.strong,
+                   # Code and Blockcode
+                   'pre':moin_page.blockcode, 'tt':moin_page.code,
+                   'samp':moin_page.code,
+                   # Lists
+                   'li':moin_page.list_item_body, 'dt':moin_page.list_item_label,
+                   'dd':moin_page.list_item_body,
+                  }
+
+
     # Regular expression to detect an html heading tag
     heading_re = re.compile('h[1-6]')
 
@@ -155,6 +169,9 @@ class Converter(object):
         if element.tag.name in self.symmetric_tags:
         # Our element can be converted directly, just by changing the namespace
             return self.new_copy_symmetric(element)
+        if element.tag.name in self.simple_tags:
+        # Our element is enough simple to just change the tag name
+            return self.new_copy(self.simple_tags[element.tag.name], element)
         if self.heading_re.match(element.tag.name):
         # We have an heading tag
             return self.visit_xhtml_heading(element)
@@ -187,17 +204,8 @@ class Converter(object):
         attrib[key] = heading_level
         return self.new_copy(moin_page.h, element, attrib)
 
-    def visit_xhtml_em(self, element):
-        return self.new_copy(moin_page.emphasis, element)
-
     def visit_xhtml_br(self, element):
         return moin_page.line_break()
-
-    def visit_xhtml_i(self, element):
-        return self.new_copy(moin_page.emphasis, element)
-
-    def visit_xhtml_b(self, element):
-        return self.new_copy(moin_page.strong, element)
 
     def visit_xhtml_big(self, element):
         key = moin_page('font-size')
@@ -210,15 +218,6 @@ class Converter(object):
         attrib = {}
         attrib[key] = '85%'
         return self.new_copy(moin_page.span, element, attrib)
-
-    def visit_xhtml_pre(self, element):
-        return self.new_copy(moin_page.blockcode, element)
-
-    def visit_xhtml_tt(self, element):
-        return self.new_copy(moin_page.code, element)
-
-    def visit_xhtml_samp(self, element):
-        return self.new_copy(moin_page.code, element)
 
     def visit_xhtml_sub(self, element):
         key = moin_page('base-line-shift')
@@ -320,15 +319,6 @@ class Converter(object):
         list_items_elements = self.do_children(element)
         list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
         return ET.Element(moin_page.list, attrib={}, children=[list_item])
-
-    def visit_xhtml_li(self, element):
-        return self.new_copy(moin_page.list_item_body, element)
-
-    def visit_xhtml_dt(self, element):
-        return self.new_copy(moin_page.list_item_label, element)
-
-    def visit_xhtml_dd(self, element):
-        return self.new_copy(moin_page.list_item_body, element)
 
     def visit_xhtml_theader(self, element):
         return self.new_copy(moin_page.table_header, element)
