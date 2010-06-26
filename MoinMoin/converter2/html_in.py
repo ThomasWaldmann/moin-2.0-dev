@@ -6,6 +6,8 @@ Converts an HTML Tree into an internal document tree.
 
 @copyright: 2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details.
+@TODO : * Add basic support for the styles
+        * 
 """
 
 from __future__ import absolute_import
@@ -46,6 +48,7 @@ class Converter(object):
                    # Lists
                    'li':moin_page.list_item_body, 'dt':moin_page.list_item_label,
                    'dd':moin_page.list_item_body,
+                   # TODO : Some tags related to tables can be also simplify
                   }
 
 
@@ -161,25 +164,27 @@ class Converter(object):
         We will detect the name of the tag, and apply an appropriate
         procedure to convert it.
         """
-        print element.tag.name
-        if element.tag.name in self.symmetric_tags:
-        # Our element can be converted directly, just by changing the namespace
-            return self.new_copy_symmetric(element)
-        if element.tag.name in self.simple_tags:
-        # Our element is enough simple to just change the tag name
-            return self.new_copy(self.simple_tags[element.tag.name], element)
-        if self.heading_re.match(element.tag.name):
-        # We have an heading tag
-            return self.visit_xhtml_heading(element)
-        else:
-        # Otherwise we need a specific procedure to handle it
-            method_name = 'visit_xhtml_' + element.tag.name
-            method = getattr(self, method_name, None)
-            if method:
-                return method(element)
 
-            # We process children of the unknown element
-            return self.do_children(element)
+        # Our element can be converted directly, just by changing the namespace
+        if element.tag.name in self.symmetric_tags:
+            return self.new_copy_symmetric(element)
+
+        # Our element is enough simple to just change the tag name
+        if element.tag.name in self.simple_tags:
+            return self.new_copy(self.simple_tags[element.tag.name], element)
+
+        # We have an heading tag
+        if self.heading_re.match(element.tag.name):
+            return self.visit_xhtml_heading(element)
+
+        # Otherwise we need a specific procedure to handle it
+        method_name = 'visit_xhtml_' + element.tag.name
+        method = getattr(self, method_name, None)
+        if method:
+            return method(element)
+
+        # Otherwise we process children of the unknown element
+        return self.do_children(element)
 
     def visit_xhtml_base(self, element):
         """
@@ -193,80 +198,117 @@ class Converter(object):
         element in our moin_page namespace
         """
         heading_level = element.tag.name[1]
-        # TODO: Maybe add some verification about the level
-
         key = moin_page('outline-level')
         attrib = {}
         attrib[key] = heading_level
         return self.new_copy(moin_page.h, element, attrib)
 
     def visit_xhtml_br(self, element):
+        """
+        <br /> --> <line-break />
+        """
         return moin_page.line_break()
 
     def visit_xhtml_big(self, element):
+        """
+        <big>Text</big> --> <span font-size=120%>Text</span>
+        """
         key = moin_page('font-size')
         attrib = {}
         attrib[key] = '120%'
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_small(self, element):
+        """
+        <small>Text</small> --> <span font-size=85%>Text</span>
+        """
         key = moin_page('font-size')
         attrib = {}
         attrib[key] = '85%'
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_sub(self, element):
+        """
+        <sub>Text</sub> --> <span base-line-shift="sub">Text</span>
+        """
         key = moin_page('base-line-shift')
         attrib = {}
         attrib[key] = 'sub'
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_sup(self, element):
+        """
+        <sup>Text</sup> --> <span base-line-shift="super">Text</span>
+        """
         key = moin_page('base-line-shift')
         attrib = {}
         attrib[key] = 'super'
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_u(self, element):
+        """
+        <u>Text</u> --> <span text-decoration="underline">Text</span>
+        """
         key = moin_page('text-decoration')
         attrib = {}
         attrib[key] = 'underline'
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_ins(self, element):
+        """
+        <ins>Text</ins> --> <span text-decoration="underline">Text</span>
+        """
         key = moin_page('text-decoration')
         attrib = {}
         attrib[key] = 'underline'
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_del(self, element):
+        """
+        <del>Text</del> --> <span text-decoration="underline">Text</span>
+        """
         key = moin_page('text-decoration')
         attrib = {}
         attrib[key] = 'line-through'
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_s(self, element):
+        """
+        <s>Text</s> --> <span text-decoration="line-through">Text</span>
+        """
         key = moin_page('text-decoration')
         attrib = {}
         attrib[key] = 'line-through'
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_strike(self, element):
+        """
+        <strike>Text</strike> --> <span text-decoration="line-through">Text</span>
+        """
         key = moin_page('text-decoration')
         attrib = {}
         attrib[key] = 'line-through'
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_hr(self, element):
+        """
+        <hr /> --> <separator />
+        """
         return moin_page.separator()
 
     def visit_xhtml_a(self, element):
+        """
+        <a href="URI">Text</a> --> <a xlink:href="URI">Text</a>
+        """
         key = xlink('href')
         attrib = {}
         attrib[key] = ''.join([self.base_url, element.get(html.href)])
         return self.new_copy(moin_page.a, element, attrib)
 
     def visit_xhtml_img(self, element):
+        """
+        <img src="URI" /> --> <object xlink:href="URI />
+        """
         key = xlink('href')
         attrib = {}
         attrib[key] = ''.join([self.base_url, element.get(html.src)])
