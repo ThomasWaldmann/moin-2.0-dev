@@ -448,7 +448,7 @@ class JinjaTheme(ThemeBase):
                 self.stylesheetsCharset, media, href, )
         return media, href, title
 
-    def stylesheets_list(self, d):
+    def stylesheets_list(self):
         """ Assemble html head stylesheet links
 
         @param d: parameter dictionary
@@ -840,9 +840,6 @@ class JinjaTheme(ThemeBase):
         user_css_href = request.user.valid and request.user.css_url
         if user_css_href and user_css_href.lower() != "none":
             d.update({'user_css': user_css_href})
-        
-        # Listing stylesheets
-        d.update({'stylesheets': self.stylesheets_list(d)})
         
         # Render with Jinja
         request.write(self.render('head.html', d))
