@@ -689,6 +689,17 @@ class JinjaTheme(ThemeBase):
                         not form.has_key('button_cancel'))
         return False
 
+    def parent_page(self):
+        '''
+        Return a parent page for the current page
+        @rtype: Page
+        @return: parent page
+        '''
+        pagename = self.page.page_name
+        page_parent_page = getattr(self.page.getParentPage(), 'page_name', None)
+        if pagename and page_parent_page:
+            return page_parent_page
+
     def supplementation_page_nameLink(self):
         """
         Return a link to the discussion page
@@ -800,7 +811,7 @@ class JinjaTheme(ThemeBase):
         page_help_formatting = self.translated_item_name('HelpOnFormatting')
         page_find_page =  self.translated_item_name('FindPage')
         home_page = wikiutil.getInterwikiHomePage(request)  # sorry theme API change!!! Either None or tuple (wikiname,pagename) now.
-        page_parent_page = getattr(page.getParentPage(), 'page_name', None)
+        
         # Prepare the HTML <head> element
         user_head = [request.cfg.html_head]
 
@@ -822,10 +833,6 @@ class JinjaTheme(ThemeBase):
                                    page_site_navigation, 'SiteNavigation',
                                    ]
                  })
-                 
-        # Links
-        if pagename and page_parent_page:
-            d.update({'link_parent': request.href(page_parent_page)})
 
         #Using to render stylesheet acording to theme
         d.update({'theme_stylesheets': self.stylesheets})
@@ -869,7 +876,6 @@ class JinjaTheme(ThemeBase):
             'home_page': home_page,
             'page_help_contents': page_help_contents,
             'page_help_formatting': page_help_formatting,
-            'page_parent_page': page_parent_page,
             'page_title_index': page_title_index,
             'page_word_index': page_word_index,
             'user_name': request.user.name,
