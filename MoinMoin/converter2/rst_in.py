@@ -3,7 +3,8 @@ MoinMoin - ReStructured Text input converter
 
 This is preprealpha version, do not use it, it doesn't work.
 
-@copyright: 2010 MoinMoin:DmitryAndreev
+@copyright: Docutils:David Goodger <goodger@python.org>
+            2010 MoinMoin:DmitryAndreev
 @license: GNU GPL, see COPYING for details.
 """
 
@@ -18,24 +19,59 @@ from MoinMoin import config, wikiutil
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import html, moin_page, xlink
 #### TODO: try block
-from docutils import nodes, utils, writers
+from docutils import nodes, utils, writers, core
 from docutils.parsers.rst import Parser
 #####
 
-class NodeVisitor(nodes.NodeVisitor):
+class NodeVisitor():
 
-    def __init__(self, document):
-        nodes.NodeVisitor.__init__(self, document)
-        current_node = moin_page.body()
-        root = moin_page.page(children=(current_code, ))
-        path = [root, current_node]
+    def __init__(self):
+        self.current_node = moin_page.body()
+        self.root = moin_page.page(children=(self.current_node, ))
+        self.path = [self.root, self.current_node]
 
-    def open_moin_page_node(mointree_element): 
+    def dispatch_visit(self, node):
+        """
+        Call self."``visit_`` + node class name" with `node` as
+        parameter.  If the ``visit_...`` method does not exist, call
+        self.unknown_visit.
+        """
+        node_name = node.__class__.__name__
+        method = getattr(self, 'visit_' + node_name, self.unknown_visit)
+        return method(node)
+
+    def dispatch_departure(self, node):
+        """
+        Call self."``depart_`` + node class name" with `node` as
+        parameter.  If the ``depart_...`` method does not exist, call
+        self.unknown_departure.
+        """
+        node_name = node.__class__.__name__
+        method = getattr(self, 'depart_' + node_name, self.unknown_departure)
+        return method(node)
+
+    def unknown_visit(self, node):
+        """
+        Called when entering unknown `Node` types.
+
+        Raise an exception unless overridden.
+        """
+        pass
+
+    def unknown_departure(self, node):
+        """
+        Called before exiting unknown `Node` types.
+
+        Raise exception unless overridden.
+        """
+        pass
+
+    def open_moin_page_node(self, mointree_element): 
         self.current_node.append(mointree_element)
         self.current_node = mointree_element
         self.path.append(mointree_element)
     
-    def close_moin_page_node():
+    def close_moin_page_node(self):
         self.path.pop()
         self.current_node = self.path[-1]
 
@@ -331,13 +367,41 @@ class NodeVisitor(nodes.NodeVisitor):
     def unimplemented_visit(self, node):
         pass
 
+
+
+def walkabout(node, visitor):
+    call_depart = 1
+    stop = 0
+    try:
+        try:
+            visitor.dispatch_visit(node)
+        except nodes.SkipNode:
+            return stop
+        except nodes.SkipDeparture:
+            call_depart = 0
+        children = node.children
+        try:
+            for child in children[:]:
+                if walkabout(child, visitor):
+                    stop = 1
+                    break
+        except nodes.SkipSiblings:
+            pass
+    except nodes.SkipChildren:
+        pass
+    except nodes.StopTraversal:
+        stop = 1
+    if call_depart:
+        visitor.dispatch_departure(node)
+    return stop
+
 class Writer(writers.Writer):
 
     supported = ('moin-x-document')
     config_section = 'MoinMoin writer'
     config_section_dependencies = ('writers', )
     output = None
-    visitor_attributes = (, )
+    visitor_attributes = []
 
     def translate(self):
         self.visitor = visitor = NodeVisitor(self.document)
@@ -352,8 +416,11 @@ class Converter(object):
         return cls()
 
     def __call__(self, input, arguments=None):
-        # TODO:call some function from docutils.core to initiate parser
-        return 
+        docutils_tree = core.publish_doctree(source=input)
+        visitor = NodeVisitor()
+        walkabout(docutils_tree, visitor)
+        return visitor.tree()
+        
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
