@@ -39,7 +39,7 @@ class Converter(object):
     # HTML tags which can be convert without attributes in a different DOM tag
     simple_tags = {# Emphasis
                    'em': moin_page.emphasis, 'i': moin_page.emphasis,
-                   # Strong 
+                   # Strong
                    'b': moin_page.strong, 'strong': moin_page.strong,
                    # Code and Blockcode
                    'pre': moin_page.blockcode, 'tt': moin_page.code,
