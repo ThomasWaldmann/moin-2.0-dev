@@ -22,10 +22,6 @@ logging = log.getLogger(__name__)
 
 import re
 
-# What is the purpose of this class?
-class ElementException(RuntimeError):
-    pass
-
 class Converter(object):
     """
     Converter html -> .x.moin.document
