@@ -308,6 +308,10 @@ class Converter(object):
             attrib[moin_page('list-style-type')] = 'upper-alpha'
         elif 'I' == style:
             attrib[moin_page('list-style-type')] = 'upper-roman'
+        elif 'a' == style:
+            attrib[moin_page('list-style-type')] = 'downer-alpha'
+        elif 'i' == style:
+            attrib[moin_page('list-style-type')] = 'downer-roman'
 
         return ET.Element(moin_page.list, attrib=attrib, children=[list_item])
 
