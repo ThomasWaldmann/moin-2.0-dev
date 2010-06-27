@@ -320,6 +320,15 @@ class Converter(object):
         attrib[key] = ''.join([self.base_url, element.get(html.src)])
         return moin_page.object(attrib)
 
+    def visit_xhtml_object(self, element):
+        """
+        <object data="href"></object> --> <object xlink="href" />
+        """
+        key = xlink('href')
+        attrib = {}
+        attrib[key] = ''.join([self.base_url, element.get(html.data)])
+        return moin_page.object(attrib)
+
     def visit_xhtml_inline(self, element):
         """
         For some specific inline tags (defined in inline_tags)
