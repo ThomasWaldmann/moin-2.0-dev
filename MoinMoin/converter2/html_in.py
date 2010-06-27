@@ -62,7 +62,7 @@ class Converter(object):
 
     @classmethod
     def _factory(cls, input, output, request, **kw):
-        return cls(request)
+        return cls()
 
     def __call__(self, content, arguments=None):
         """
@@ -81,9 +81,6 @@ class Converter(object):
         html_str = ''
         html_str = html_str.join(content)
         html_tree = HTML(html_str)
-
-        if html_tree.tag.name != 'html':
-            raise TypeError(u"Unvalid html document, it should start with <html> tag")
 
         # Start the conversion of the first element
         # Every child of each element will be recursively convert too
@@ -408,4 +405,4 @@ class Converter(object):
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
-default_registry.register(Converter._factory, Type('text/x.moin.xhtml'), type_moin_document)
+default_registry.register(Converter._factory, Type('text/x.moin.html'), type_moin_document)
