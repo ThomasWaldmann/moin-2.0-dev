@@ -175,6 +175,8 @@ class TestConverter(Base):
         data = [
             ('<html><div><img src="uri:test" /></div></html>',
               '/page/body/div/object/@xlink:href="uri:test"'),
+            ('<html><div><object data="href"></object></div></html>',
+              '/page/body/div/object/@xlink:href="href"'),
         ]
         for i in data:
             yield (self.do, ) + i
