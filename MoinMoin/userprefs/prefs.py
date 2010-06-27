@@ -214,6 +214,7 @@ space between words. Group page name is not allowed.""", wiki=True) % wikiutil.e
     def handle_form(self):
         request = self.request
         form = request.form
+        _ = self._
 
         if 'cancel' in form:
             return
