@@ -1,9 +1,13 @@
 """
 MoinMoin - ReStructured Text input converter
 
+It's based on docutils rst parser. Conversion of docutils document tree to moinmoin document tree.
+
 This is preprealpha version, do not use it, it doesn't work.
 
 @copyright: Docutils:David Goodger <goodger@python.org>
+            2004 Matthew Gilbert <gilbert AT voxmea DOT net>,
+            2004 Alexander Schremmer <alex AT alexanderweb DOT de>
             2010 MoinMoin:DmitryAndreev
 @license: GNU GPL, see COPYING for details.
 """
@@ -18,9 +22,13 @@ logging = log.getLogger(__name__)
 from MoinMoin import config, wikiutil
 from MoinMoin.util.iri import Iri
 from MoinMoin.util.tree import html, moin_page, xlink
+
 #### TODO: try block
 from docutils import nodes, utils, writers, core
 from docutils.parsers.rst import Parser
+from docutils.nodes import reference
+from docutils.parsers import rst
+from docutils.parsers.rst import directives, roles
 #####
 
 class NodeVisitor():
@@ -29,6 +37,7 @@ class NodeVisitor():
         self.current_node = moin_page.body()
         self.root = moin_page.page(children=(self.current_node, ))
         self.path = [self.root, self.current_node]
+        self.header_size = 1
 
     def dispatch_visit(self, node):
         """
@@ -133,7 +142,12 @@ class NodeVisitor():
         pass
 
     def visit_enumerated_list(self, node):
-        self.open_moin_page_node(moin_page.list(attrib={moin_page.list_label_generate:'enumerate', moin_page.list_style_type:node['enumtype'].insert(5, '-')}))
+        enum_style = {'arabic':None,
+                'loweralpha':'lower-alpha',
+                'upperalpha':'upper-alpha',
+                'lowerroman':'lower-roman',
+                'upperroman':'upper-roman' }
+        self.open_moin_page_node(moin_page.list(attrib={moin_page.list_label_generate:'ordered', moin_page.list_style_type:enum_style.get(node['enumtype'],None)}))
 
     def depart_enumerated_list(self, node):
         self.close_moin_page_node()
@@ -194,12 +208,12 @@ class NodeVisitor():
         pass
 
     def visit_image(self, node):
-        new_node = moin_page.object(attrib={xlink.href:node[uri]})
-        new_node[moin_page.alt] = node.get('alt', uri)
+        new_node = moin_page.object(attrib={xlink.href:node['uri']})
+        new_node.set(moin_page.alt, node.get('alt', node['uri']))
         if 'width' in node:
-            new_node[moin_page.width] = node['width']
+            new_nodei.set(moin_page.width, node['width'])
         if 'height' in node:
-            new_node[moin_page.height] = node['height']
+            new_node.set(moin_page.height, node['height'])
         self.open_moin_page_node(new_node)
     def depart_image(self, node):
         self.close_moin_page_node()
@@ -280,10 +294,10 @@ class NodeVisitor():
         self.depart_paragraph(node)
 
     def visit_section(self, node):
-        pass
+        self.header_size += 1
 
     def depart_section(self, node):
-        pass
+        self.header_size -= 1
 
     def visit_sidebar(self, node):
         pass
@@ -304,10 +318,12 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_subtitle(self, node):
-        pass
+        self.header_size += 1
+        self.open_moin_page_node(moin_page.h(attrib={moin_page.outline_level:repr(self.header_size)}))
 
     def depart_subtitle(self, node):
-        pass
+        self.header_size -= 1
+        self.close_moin_page_node()
 
     def visit_superscript(self, node):
         self.open_moin_page_node(moin_page.span(attrib={moin_page.baseline_shift: 'super'}))
@@ -316,7 +332,7 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_system_message(self, node):
-        pass
+        node.children = []
 
     def depart_system_message(self, node):
         pass
@@ -353,10 +369,10 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_title(self, node):
-        pass
+        self.open_moin_page_node(moin_page.h(attrib={moin_page.outline_level:repr(self.header_size)}))
 
     def depart_title(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_title_reference(self, node):
         pass
@@ -408,7 +424,97 @@ class Writer(writers.Writer):
         self.document.walkabout(visitor)
         self.output = visitor.tree()
 
+class MoinDirectives:
+    """
+        Class to handle all custom directive handling. This code is called as
+        part of the parsing stage.
+    """
 
+    def __init__(self):
+
+        # include MoinMoin pages
+        directives.register_directive('include', self.include)
+
+        # used for MoinMoin macros
+        directives.register_directive('macro', self.macro)
+
+        # disallow a few directives in order to prevent XSS
+        # for directive in ('meta', 'include', 'raw'):
+        for directive in ('meta', 'raw'):
+            directives.register_directive(directive, None)
+
+        # disable the raw role
+        roles._roles['raw'] = None
+
+        # As a quick fix for infinite includes we only allow a fixed number of
+        # includes per page
+        self.num_includes = 0
+        self.max_includes = 10
+
+    # Handle the include directive rather than letting the default docutils
+    # parser handle it. This allows the inclusion of MoinMoin pages instead of
+    # something from the filesystem.
+    def include(self, name, arguments, options, content, lineno,
+                content_offset, block_text, state, state_machine):
+        # content contains the included file name
+
+        _ = self.request.getText
+
+        # Limit the number of documents that can be included
+        if self.num_includes < self.max_includes:
+            self.num_includes += 1
+        else:
+            lines = [_("**Maximum number of allowed includes exceeded**")]
+            state_machine.insert_input(lines, 'MoinDirectives')
+            return
+
+        if len(content):
+            pagename = content[0]
+            page = Page(page_name=pagename, request=self.request)
+            if not self.request.user.may.read(pagename):
+                lines = [_("**You are not allowed to read the page: %s**") % (pagename, )]
+            else:
+                if page.exists():
+                    text = page.get_raw_body()
+                    lines = text.split('\n')
+                    # Remove the "#format rst" line
+                    if lines[0].startswith("#format"):
+                        del lines[0]
+                else:
+                    lines = [_("**Could not find the referenced page: %s**") % (pagename, )]
+            # Insert the text from the included document and then continue parsing
+            state_machine.insert_input(lines, 'MoinDirectives')
+        return
+
+    include.has_content = include.content = True
+    include.option_spec = {}
+    include.required_arguments = 1
+    include.optional_arguments = 0
+
+    # Add additional macro directive.
+    # This allows MoinMoin macros to be used either by using the directive
+    # directly or by using the substitution syntax. Much cleaner than using the
+    # reference hack (`<<SomeMacro>>`_). This however simply adds a node to the
+    # document tree which is a reference, but through a much better user
+    # interface.
+    def macro(self, name, arguments, options, content, lineno,
+                content_offset, block_text, state, state_machine):
+        # content contains macro to be called
+        if len(content):
+            # Allow either with or without brackets
+            if content[0].startswith('<<'):
+                macro = content[0]
+            else:
+                macro = '<<%s>>' % content[0]
+            ref = reference(macro, refuri=macro)
+            ref['name'] = macro
+            return [ref]
+        return
+
+    macro.has_content = macro.content = True
+    macro.option_spec = {}
+    macro.required_arguments = 1
+    macro.optional_arguments = 0
 
 class Converter(object):
     @classmethod
@@ -416,7 +522,10 @@ class Converter(object):
         return cls()
 
     def __call__(self, input, arguments=None):
+        parser = MoinDirectives()
+        
         docutils_tree = core.publish_doctree(source=input)
+        print docutils_tree # delete this
         visitor = NodeVisitor()
         walkabout(docutils_tree, visitor)
         return visitor.tree()
