@@ -27,15 +27,15 @@ class Base(object):
 
     output_re = re.compile(r'\s+xmlns="[^"]+"')
 
-    def handle_input(self, input, args={}):
+    def handle_input(self, input, args):
         out = self.conv(input, **args)
         f = StringIO.StringIO()
         out.write(f.write, namespaces=self.namespaces, )
         return self.output_re.sub(u'', f.getvalue())
 
 
-    def do(self, input, path, args={}):
-        string_to_parse = self.handle_input(input)
+    def do(self, input, path):
+        string_to_parse = self.handle_input(input, args={})
         tree = etree.parse(StringIO.StringIO(string_to_parse))
         assert (tree.xpath(path, namespaces=self.namespaces_xpath))
 
