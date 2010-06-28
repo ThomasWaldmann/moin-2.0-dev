@@ -538,7 +538,7 @@ class JinjaTheme(ThemeBase):
 
     def pageinfo(self):
         """
-        Return html fragment with page meta data
+        Return info with page meta data
 
         Since page information uses translated text, it uses the ui
         language and direction. It looks strange sometimes, but
@@ -546,7 +546,7 @@ class JinjaTheme(ThemeBase):
 
         @param page: current page
         @rtype: string
-        @return: page last edit information in dict
+        @return: page last edit information
         """
         _ = self.request.getText
         page = self.page
@@ -759,33 +759,6 @@ class JinjaTheme(ThemeBase):
         else:
             return '<a class="nbsupplementation" href="%s" rel="nofollow">%s</a>' % (href(page.page_name, do='supplementation'),
                                                                                     _(suppl_name))
-
-    # Language stuff ####################################################
-
-    def ui_lang_attr(self):
-        """
-        Generate language attributes for user interface elements
-
-        User interface elements use the user language (if any), kept in
-        request.lang.
-
-        @rtype: string
-        @return: lang and dir html attributes
-        """
-        lang = self.request.lang
-        return ' lang="%s" dir="%s"' % (lang, i18n.getDirection(lang))
-
-    def content_lang_attr(self):
-        """
-        Generate language attributes for wiki page content
-
-        Page content uses the page language or the wiki default language.
-
-        @rtype: string
-        @return: lang and dir html attributes
-        """
-        lang = self.request.content_lang
-        return ' lang="%s" dir="%s"' % (lang, i18n.getDirection(lang))
 
     def add_msg(self, msg, msg_class=None):
         """
