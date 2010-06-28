@@ -134,7 +134,6 @@ class TestConverter(Base):
             yield (self.do, ) + i
 
     def test_link(self):
-        py.test.skip()
         data = [
             ('<html><p><a href="uri:test">Test</a></p></html>',
               '/div/p/a[@href="uri:test"] | /div/p[a="Test"]'),
