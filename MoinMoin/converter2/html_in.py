@@ -242,7 +242,7 @@ class Converter(object):
         """
         <sub>Text</sub> --> <span base-line-shift="sub">Text</span>
         """
-        key = moin_page('base-line-shift')
+        key = moin_page('baseline-shift')
         attrib = {}
         attrib[key] = 'sub'
         return self.new_copy(moin_page.span, element, attrib)
@@ -251,7 +251,7 @@ class Converter(object):
         """
         <sup>Text</sup> --> <span base-line-shift="super">Text</span>
         """
-        key = moin_page('base-line-shift')
+        key = moin_page('baseline-shift')
         attrib = {}
         attrib[key] = 'super'
         return self.new_copy(moin_page.span, element, attrib)
