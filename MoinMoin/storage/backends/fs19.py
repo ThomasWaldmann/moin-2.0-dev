@@ -70,6 +70,7 @@ class Index(object):
                            Column('uuid', String, index=True, unique=True),
                            Column('name', Unicode, index=True, unique=username_unique),
                            Column('old_id', String, index=True, unique=True),
+                           Column('refcount', Integer), # reference count in edit-log
                      )
         self.content = Table('content', metadata,
                              Column('uuid', String, index=True, unique=True),
@@ -77,7 +78,7 @@ class Index(object):
                        )
         metadata.create_all()
 
-    def user_uuid(self, name='', old_id=''):
+    def user_uuid(self, name='', old_id='', refcount=False):
         """
         Get uuid for user name, create a new uuid if we don't already have one.
 
@@ -95,7 +96,10 @@ class Index(object):
         results.close()
         if row is not None:
             uuid = row[idx.c.uuid]
-            return uuid
+            if refcount:
+                refs = row[idx.c.refcount]
+                refs += 1
+                idx.update().where(idx.c.uuid==uuid).values(refcount=refs).execute()
         else:
             uuid = make_uuid()
             if not name:
@@ -103,11 +107,12 @@ class Index(object):
                 # an no name - to avoid non-unique name, assign uuid also to name
                 name = uuid
             try:
-                idx.insert().values(name=name, uuid=uuid, old_id=old_id).execute()
+                refs = refcount and 1 or 0
+                idx.insert().values(name=name, uuid=uuid, old_id=old_id, refcount=refs).execute()
             except IntegrityError, err:
                 # input maybe has duplicate names in user profiles
                 logging.warning("Multiple user profiles for name: %r" % name)
-            return uuid
+        return uuid
 
     def content_uuid(self, name):
         """
@@ -466,7 +471,7 @@ class EditLog(LogFile):
                 del result[EDIT_LOG_EXTRA]
         userid = result[EDIT_LOG_USERID]
         if userid:
-            result[EDIT_LOG_USERID] = self.idx.user_uuid(old_id=userid)
+            result[EDIT_LOG_USERID] = self.idx.user_uuid(old_id=userid, refcount=True)
         return result
 
     def find_rev(self, revno):
