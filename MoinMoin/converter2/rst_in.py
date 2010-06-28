@@ -38,6 +38,8 @@ class NodeVisitor():
         self.root = moin_page.page(children=(self.current_node, ))
         self.path = [self.root, self.current_node]
         self.header_size = 1
+        self.status = ['document']
+        self.footnotes = dict()
 
     def dispatch_visit(self, node):
         """
@@ -190,16 +192,19 @@ class NodeVisitor():
         pass
 
     def visit_footnote(self, node):
-        pass
+        self.status.append('footnote')
 
     def depart_footnote(self, node):
-        pass
+        self.status.pop()
 
     def visit_footnote_reference(self, node):
-        pass
+        new_footnote = moin_page.note(attrib={moin_page.note_class:'footnote'})
+        self.open_moin_page_node(new_footnote)
+        self.footnotes[node.children[0]] = new_footnote
+        node.children = []
 
     def depart_footnote_reference(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_header(self, node):
         pass
@@ -226,7 +231,10 @@ class NodeVisitor():
         pass
 
     def visit_label(self, node):
-        pass
+        if self.status[-1] == 'footnote':
+            self.footnote_lable = node.astext()
+        node.children = []
+
 
     def depart_label(self, node):
         pass
@@ -263,7 +271,13 @@ class NodeVisitor():
         
 
     def visit_paragraph(self, node):
-        self.open_moin_page_node(moin_page.p())
+        if self.status[-1] == 'footnote':
+            footnote_node = self.footnotes.get(self.footnote_lable, None)
+            if footnote_node:
+                footnote_node.append(node.astext())
+            node.children = []
+        else:
+            self.open_moin_page_node(moin_page.p())
 
     def depart_paragraph(self, node):
         self.close_moin_page_node()
