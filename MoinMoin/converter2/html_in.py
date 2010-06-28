@@ -397,10 +397,10 @@ class Converter(object):
         list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
         return ET.Element(moin_page.list, attrib={}, children=[list_item])
 
-    def visit_xhtml_theader(self, element):
+    def visit_xhtml_thead(self, element):
         return self.new_copy(moin_page.table_header, element, attrib={})
 
-    def visit_xhtml_tfooter(self, element):
+    def visit_xhtml_tfoot(self, element):
         return self.new_copy(moin_page.table_footer, element, attrib={})
 
     def visit_xhtml_tbody(self, element):
