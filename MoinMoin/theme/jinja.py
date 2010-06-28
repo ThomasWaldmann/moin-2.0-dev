@@ -37,11 +37,15 @@ class JinjaTheme(ThemeBase):
         @param request: the request object
         """
         self.request = request
-        self.cfg = request.cfg
+        self.cfg = request.cfg     
+        self.ui_lang = self.request.lang
+        self.ui_dir = i18n.getDirection(self.ui_lang)
+        self.content_lang = self.request.content_lang
+        self.content_dir = i18n.getDirection(self.content_lang)
         self._cache = {} # Used to cache elements that may be used several times
         self._status = []
         self._send_title_called = False
-
+        
         jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
         try:
             os.mkdir(jinja_cachedir)
@@ -116,14 +120,16 @@ class JinjaTheme(ThemeBase):
             link += 'id="%s" ' % css_id     
         if rel:
             link += 'rel="%s" ' % rel
-        link += 'href="%s' % (self.request.href(pagename))
+        
+        link +='href="'
+        url = '%s' % (self.request.href(pagename))
         if querystr:
-            link += '?'
+            url += '?'
             query = []
             for key in querystr.iterkeys():
                 query.append('%s=%s' % (key, querystr[key]))
-            link += '&'.join(query)
-        link += '">%s</a>' % text
+            url += '&'.join(query)
+        link += '%s">%s</a>' % (wikiutil.escape(url, 0), text)
         return link
         
     def title(self):
