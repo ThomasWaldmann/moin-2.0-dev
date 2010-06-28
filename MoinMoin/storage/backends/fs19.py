@@ -114,6 +114,20 @@ class Index(object):
                 logging.warning("Multiple user profiles for name: %r" % name)
         return uuid
 
+    def user_old_id(self, uuid):
+        """
+        Get old_id for some user with uuid <uuid>.
+
+        @param name: uuid - uuid of user (str)
+        """
+        idx = self.users
+        results = idx.select(idx.c.uuid==uuid).execute()
+        row = results.fetchone()
+        results.close()
+        if row is not None:
+            old_id = row[idx.c.old_id]
+            return old_id
+
     def content_uuid(self, name):
         """
         Get uuid for a content name, create a new uuid if we don't already have one.
@@ -561,9 +575,9 @@ class FSUserBackend(Backend):
         return os.path.isfile(self._get_item_path(itemname))
 
     def iteritems(self):
-        for itemname in os.listdir(self._path):
+        for old_id in os.listdir(self._path):
             try:
-                item = FsUserItem(self, itemname)
+                item = FsUserItem(self, old_id=old_id)
             except NoSuchItemError:
                 continue
             else:
@@ -590,21 +604,29 @@ class FsUserItem(Item):
     """ A moin 1.9 filesystem item (user) """
     user_re = re.compile(r'^\d+\.\d+(\.\d+)?$')
 
-    def __init__(self, backend, itemname):
-        if not self.user_re.match(itemname):
+    def __init__(self, backend, itemname=None, old_id=None):
+        if itemname is not None:
+            # get_item calls us with a new itemname (uuid)
+            uuid = str(itemname)
+            old_id = backend.idx.user_old_id(uuid=uuid)
+        if not self.user_re.match(old_id):
             raise NoSuchItemError("userid does not match user_re")
-        Item.__init__(self, backend, itemname)
+        Item.__init__(self, backend, itemname) # itemname might be None still
         try:
-            meta = self._parse_userprofile(itemname)
+            meta = self._parse_userprofile(old_id)
         except (OSError, IOError):
             # no current file means no item
             raise NoSuchItemError("No such item, %r" % itemname)
         self._fs_meta = meta = self._process_usermeta(meta)
-        uuid = backend.idx.user_uuid(name=meta['name'], old_id=itemname)
+        if itemname is None:
+            # iteritems calls us without itemname, just with old_id
+            uuid = backend.idx.user_uuid(name=meta['name'], old_id=old_id)
+            itemname = unicode(uuid)
+            Item.__init__(self, backend, itemname) # XXX init again, with itemname
         self.uuid = meta['uuid'] = uuid
 
-    def _parse_userprofile(self, itemname):
-        meta_file = codecs.open(self._backend._get_item_path(itemname), "r", config.charset)
+    def _parse_userprofile(self, old_id):
+        meta_file = codecs.open(self._backend._get_item_path(old_id), "r", config.charset)
         metadata = {}
         for line in meta_file:
             if line.startswith('#') or line.strip() == "":
