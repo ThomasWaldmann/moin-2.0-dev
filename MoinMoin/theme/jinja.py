@@ -463,7 +463,7 @@ class JinjaTheme(ThemeBase):
                     link = self.link_to(pagename=page.page_name, text=title)
                     items.append(link)
                 return items
-        return ''
+        return []
      
     def _stylesheet_link(self, theme, media, href, title=None):
         """
@@ -550,17 +550,20 @@ class JinjaTheme(ThemeBase):
         """
         _ = self.request.getText
         page = self.page
-        info = page.last_edit(printable=True)
-        if info:
-            if info['editor']:
-                info = _("last edited %(timestamp)s by %(editor)s") % info
-            else:
-                info = _("last modified %(timestamp)s") % info
-            pagename = page.page_name
-            if self.request.cfg.show_interwiki:
-                pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
-            info = "%s  (%s)" % (wikiutil.escape(pagename), info)
-            return info
+
+        if self.shouldShowPageinfo(page):
+            info = page.last_edit(printable=True)
+            if info:
+                if info['editor']:
+                    info = _("last edited %(timestamp)s by %(editor)s") % info
+                else:
+                    info = _("last modified %(timestamp)s") % info
+                pagename = page.page_name
+                if self.request.cfg.show_interwiki:
+                    pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
+                info = "%s  (%s)" % (wikiutil.escape(pagename), info)
+                return info
+        return ''
             
     def universal_edit_button(self):
         """
