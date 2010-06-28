@@ -118,18 +118,17 @@ class TestConverter(Base):
             yield (self.do, ) + i
 
     def test_span_html_element(self):
-        py.test.skip()
         data = [
             ('<html><p><abbr>Text</abbr></p></html>',
-             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="abbr"]'),
+             '/div/p[abbr="Text"]'),
             ('<html><p><acronym>Text</acronym></p></html>',
-             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="acronym"]'),
+             '/div/p[acronym="Text"]'),
             ('<html><p><address>Text</address></p></html>',
-             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="address"]'),
+             '/div/p[address="Text"]'),
             ('<html><p><dfn>Text</dfn></p></html>',
-             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="dfn"]'),
+             '/div/p[dfn="Text"]'),
             ('<html><p><kbd>Text</kbd></p></html>',
-             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="kbd"]'),
+             '/div/p[kbd="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
