@@ -82,13 +82,17 @@ class Converter(object):
         html_str = html_str.join(content)
         html_tree = HTML(html_str)
 
-        if html_tree.tag.name != 'html':
-            html_str = ''.join(['<html>', html_str, '</html>'])
+        # We should have a root element, which will be converted as <page>
+        # for the DOM Tree. It can be <html> or <div>.
+        # NB : If <html> used, it will be converted back to <div> after
+        # one roundtrip
+        if html_tree.tag.name != 'html' and html_tree.tag.name != 'div':
+            html_str = ''.join(['<div>', html_str, '</div>'])
             html_tree = HTML(html_str)
 
         # Start the conversion of the first element
         # Every child of each element will be recursively convert too
-        element = self.visit(html_tree)
+        element = self.do_children(html_tree)
 
         # Add Global element to our DOM Tree
         body = moin_page.body(children=element)
