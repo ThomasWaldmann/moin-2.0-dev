@@ -58,7 +58,7 @@ class Converter(object):
     heading_re = re.compile('h[1-6]')
 
     # Store the Base URL for all the URL of the document
-    base_url = ""
+    base_url = ''
 
     @classmethod
     def _factory(cls, input, output, request, **kw):
@@ -73,7 +73,7 @@ class Converter(object):
         """
 
         # Be sure we have empty string in the base url
-        self.base_url = ""
+        self.base_url = ''
 
         # We create an element tree from the HTML content
         # The content is a list of string, line per line
@@ -305,7 +305,10 @@ class Converter(object):
         """
         key = xlink('href')
         attrib = {}
-        attrib[key] = ''.join([self.base_url, element.get(html.href)])
+        if self.base_url:
+            attrib[key] = ''.join([self.base_url, element.get(html.href)])
+        else:
+            attrib[key] = element.get(html.href)
         return self.new_copy(moin_page.a, element, attrib)
 
     def visit_xhtml_img(self, element):
@@ -314,7 +317,10 @@ class Converter(object):
         """
         key = xlink('href')
         attrib = {}
-        attrib[key] = ''.join([self.base_url, element.get(html.src)])
+        if self.base_url:
+            attrib[key] = ''.join([self.base_url, element.get(html.src)])
+        else:
+            attrib[key] = element.get(html.src)
         return moin_page.object(attrib)
 
     def visit_xhtml_object(self, element):
@@ -323,7 +329,10 @@ class Converter(object):
         """
         key = xlink('href')
         attrib = {}
-        attrib[key] = ''.join([self.base_url, element.get(html.data)])
+        if self.base_url:
+            attrib[key] = ''.join([self.base_url, element.get(html.data)])
+        else:
+            attrib[key] = element.get(html.data)
         return moin_page.object(attrib)
 
     def visit_xhtml_inline(self, element):
