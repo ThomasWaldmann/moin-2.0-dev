@@ -89,9 +89,9 @@ class TestConverter(Base):
     def test_span(self):
         data = [
             ('<html><p><sub>sub</sub>script</p></html>',
-             '/page/body/p/span[@base-line-shift="sub"] | /page/body/p[span="sub"]'),
+             '/page/body/p/span[@baseline-shift="sub"] | /page/body/p[span="sub"]'),
             ('<html><p><sup>super</sup>script</p></html>',
-             '/page/body/p/span[@base-line-shift="super"] | /page/body/p[span="super"]'),
+             '/page/body/p/span[@baseline-shift="super"] | /page/body/p[span="super"]'),
             ('<html><p><u>underline</u></p></html>',
              '/page/body/p/span[@text-decoration="underline"] | /page/body/p[span="underline"]'),
             ('<html><p><big>Test</big></p></html>',
