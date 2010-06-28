@@ -31,6 +31,8 @@ class TestConverter(object):
                 '<page><body><p>Text\nTest</p></body></page>'),
             (u'Text\n\nTest',
                 '<page><body><p>Text</p><p>Test</p></body></page>'),
+            (u'H\ :sub:`2`\ O\n\nE = mc\ :sup:`2`',''),
+
         ]
         for i in data:
             yield (self.do, ) + i
@@ -56,6 +58,40 @@ class TestConverter(object):
             (u'Chapter 1 Title\n===============\n\nSection 1.1 Title\n-----------------\n\nSubsection 1.1.1 Title\n~~~~~~~~~~~~~~~~~~~~~~\n\nSection 1.2 Title\n-----------------\n\nChapter 2 Title\n===============\n',''),
             (u'================\n Document Title\n================\n\n----------\n Subtitle\n----------\n\nSection Title\n=============', '')
             ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_footnote(self):
+        data = [
+            (u'Abra [1]_\n\n.. [1] arba', ''),
+            (u'Abra [#]_\n\n.. [#] arba', ''),
+            ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_link(self):
+        data = [
+            (u'Abra test_ arba\n\n.. _test: http://python.org', ''),
+            ]
+        for i in data:
+            yield (self.do, ) + i
+    
+    def test_table(self):
+        data = [
+            (u"+-+-+-+\n|A|B|D|\n+-+-+ +\n|C  | |\n+---+-+\n\n", '<table><table-body><table-row><table-cell>A</table-cell><table-cell>B</table-cell><table-cell number-rows-spanned=\"2\">D</table-cell></table-row><table-row><table-cell number-columns-spanned=\"2\">C</table-cell></table-row></table-body></table>'),
+            (u"+-----+-----+-----+\n|**A**|**B**|**C**|\n+-----+-----+-----+\n|1    |2    |3    |\n+-----+-----+-----+\n\n", '<table><table-body><table-row><table-cell><strong>A</strong></table-cell><table-cell><strong>B</strong></table-cell><table-cell><strong>C</strong></table-cell></table-row><table-row><table-cell><p>1</p></table-cell><table-cell>2</table-cell><table-cell>3</table-cell></table-row></table-body></table>'),
+            ("""+--------------------+-------------------------------------+
+|cell spanning 2 rows|cell in the 2nd column               |
++                    +-------------------------------------+
+|                    |cell in the 2nd column of the 2nd row|
++--------------------+-------------------------------------+
+|test                                                      |
++----------------------------------------------------------+
+|test                                                      |
++----------------------------------------------------------+
+
+""", '<table><table-body><table-row><table-cell number-rows-spanned=\"2\">cell spanning 2 rows</table-cell><table-cell>cell in the 2nd column</table-cell></table-row><table-row><table-cell>cell in the 2nd column of the 2nd row</table-cell></table-row><table-row><table-cell number-columns-spanned=\"2\">test</table-cell></table-row><table-row><table-cell number-columns-spanned=\"2\">test</table-cell></table-row></table-body></table>'),
+        ]
         for i in data:
             yield (self.do, ) + i
 
