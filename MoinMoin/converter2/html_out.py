@@ -337,7 +337,18 @@ class Converter(object):
         generate = attrib.get('text-decoration')
         if generate:
             if generate == 'underline':
-                return self.new_copy(html.u, elem)
+                return self.new_copy(html.ins, elem)
+            elif generate == 'line-through':
+                return self.new_copy(html('del'), elem)
+        generate = attrib.get('font-size')
+        if generate:
+            if generate == '85%':
+                return self.new_copy(html.small, elem)
+            elif generate == '120%':
+                return self.new_copy(html.big, elem)
+        generate = attrib.get('html-element')
+        if generate:
+            return self.new_copy(html(generate), elem)
         # If no any attributes is handled by our converter, just return span
         return self.new_copy(html.span, elem)
 
