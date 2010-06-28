@@ -1,13 +1,13 @@
 {# Template used to render footer #}
 
+
+<div id="pagebottom">
 {% if theme.shouldShowPageInfo() %}
     {% set info = theme.pageinfo() %}
     {% if info %}
-        <p id="pageinfo" class="info" {{ theme.ui_lang_attr() }}> {{ info }}</p>
+        <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}"> {{ info }}</p>
     {% endif %}
-{% endif %}
-<div id="pagebottom">
-    
+{% endif %}   
 </div>
 </div>
 
