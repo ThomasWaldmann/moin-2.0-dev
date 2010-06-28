@@ -229,6 +229,16 @@ class Converter(object):
 
         if generate:
             if generate == 'ordered':
+                style = attrib.get('list-style-type')
+                if style:
+                    if style == 'upper-alpha':
+                        attrib_new[html('type')] = 'A'
+                    elif style == 'upper-roman':
+                        attrib_new[html('type')] = 'I'
+                    elif style == 'downer-roman':
+                        attrib_new[html('type')] = 'i'
+                    elif style == 'downer-alpha':
+                        attrib_new[html('type')] = 'a'
                 ret = self.new(html.ol, attrib_new)
             elif generate == 'unordered':
                 ret = self.new(html.ul, attrib_new)
