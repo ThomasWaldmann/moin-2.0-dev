@@ -82,6 +82,10 @@ class Converter(object):
         html_str = html_str.join(content)
         html_tree = HTML(html_str)
 
+        if html_tree.tag.name != 'html':
+            html_str = ''.join(['<html>', html_str, '</html>'])
+            html_tree = HTML(html_str)
+
         # Start the conversion of the first element
         # Every child of each element will be recursively convert too
         element = self.visit(html_tree)
