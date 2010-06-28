@@ -18,6 +18,15 @@ import os
 from StringIO import StringIO
 import hashlib
 
+from uuid import uuid4
+make_uuid = lambda: uuid4().hex
+
+MAX_NAME_LEN = 1000 # max length of a page name, page+attach name, user name
+UUID_LEN = len(make_uuid())
+
+from sqlalchemy import create_engine, MetaData, Table, Column, String, Unicode, Integer
+from sqlalchemy.exceptions import IntegrityError
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -49,6 +58,79 @@ format_to_mimetype = {
     'text/plain': u'text/plain',
 }
 
+class Index(object):
+    """
+    maintain mappings with names / old userid (for user profile items) / uuid
+    """
+    def __init__(self, path, username_unique=True):
+        engine = create_engine('sqlite:///%s/index.db' % path, echo=False)
+        metadata = MetaData()
+        metadata.bind = engine
+        self.users = Table('users', metadata,
+                           Column('uuid', String, index=True, unique=True),
+                           Column('name', Unicode, index=True, unique=username_unique),
+                           Column('old_id', String, index=True, unique=True),
+                     )
+        self.content = Table('content', metadata,
+                             Column('uuid', String, index=True, unique=True),
+                             Column('name', Unicode, index=True, unique=True),
+                       )
+        metadata.create_all()
+
+    def user_uuid(self, name='', old_id=''):
+        """
+        Get uuid for user name, create a new uuid if we don't already have one.
+
+        @param name: name of user (unicode)
+        @param old_id: moin 1.x user id (str)
+        """
+        idx = self.users
+        if old_id:
+            results = idx.select(idx.c.old_id==old_id).execute()
+        elif name:
+            results = idx.select(idx.c.name==name).execute()
+        else:
+            raise ValueError("you need to give name or old_id")
+        row = results.fetchone()
+        results.close()
+        if row is not None:
+            uuid = row[idx.c.uuid]
+            return uuid
+        else:
+            uuid = make_uuid()
+            if not name:
+                # if we don't have a name, we were called from EditLog with just a old_id
+                # an no name - to avoid non-unique name, assign uuid also to name
+                name = uuid
+            try:
+                idx.insert().values(name=name, uuid=uuid, old_id=old_id).execute()
+            except IntegrityError, err:
+                # input maybe has duplicate names in user profiles
+                logging.warning("Multiple user profiles for name: %r" % name)
+            return uuid
+
+    def content_uuid(self, name):
+        """
+        Get uuid for a content name, create a new uuid if we don't already have one.
+
+        @param name: name of content item (page or page/attachment, unicode)
+        """
+        idx = self.content
+        results = idx.select(idx.c.name==name).execute()
+        row = results.fetchone()
+        results.close()
+        if row is not None:
+            uuid = row[idx.c.uuid]
+            return uuid
+        else:
+            uuid = make_uuid()
+            try:
+                idx.insert().values(name=name, uuid=uuid).execute()
+            except IntegrityError, err:
+                # shouldn't happen
+                logging.warning(str(err))
+            return uuid
+
 
 class FSPageBackend(Backend):
     """
@@ -79,6 +161,7 @@ class FSPageBackend(Backend):
         assert deleted_mode in (DELETED_MODE_KILL, DELETED_MODE_KEEP, )
         self.deleted_mode = deleted_mode
         self.format_default = default_markup
+        self.idx = Index(path)
 
     def _get_item_path(self, name, *args):
         """
@@ -184,13 +267,15 @@ class FsPageItem(Item):
             # we have a current file, but its content is damaged
             raise # TODO: current = determine_current(revdir, editlog)
         self._fs_current = current
-        self._fs_editlog = EditLog(editlogpath)
+        self._fs_editlog = EditLog(editlogpath, idx=backend.idx)
         self._syspages = backend._syspages
         if backend.deleted_mode == DELETED_MODE_KILL:
             try:
                 FsPageRevision(self, current)
             except NoSuchRevisionError:
                 raise NoSuchItemError('deleted_mode wants killing/ignoring of page %r and its attachments' % itemname)
+        uuid = backend.idx.content_uuid(itemname)
+        self.uuid = self._fs_meta['uuid'] = uuid
 
     def iter_attachments(self):
         attachmentspath = self._backend._get_item_path(self.name, 'attachments')
@@ -297,7 +382,7 @@ class FsAttachmentItem(Item):
         editlogpath = self._backend._get_item_path(itemname, 'edit-log')
         self._fs_current = 0 # attachments only have 1 revision with revno 0
         self._fs_meta = {} # no attachment item level metadata
-        self._fs_editlog = EditLog(editlogpath)
+        self._fs_editlog = EditLog(editlogpath, idx=backend.idx)
         attachpath = self._backend._get_att_path(itemname, attachname)
         if not os.path.isfile(attachpath):
             # no attachment file means no item
@@ -313,6 +398,8 @@ class FsAttachmentItem(Item):
             acl = None
         self._fs_parent_acl = acl
         self._syspages = backend._syspages
+        uuid = backend.idx.content_uuid(name)
+        self.uuid = self._fs_meta['uuid'] = uuid
 
 class FsAttachmentRevision(StoredRevision):
     """ A moin 1.9 filesystem item revision (attachment) """
@@ -351,9 +438,10 @@ from MoinMoin import wikiutil
 
 class EditLog(LogFile):
     """ Access the edit-log and return metadata as the new api wants it. """
-    def __init__(self, filename, buffer_size=4096):
+    def __init__(self, filename, buffer_size=4096, idx=None):
         LogFile.__init__(self, filename, buffer_size)
         self._NUM_FIELDS = 9
+        self.idx = idx
 
     def parser(self, line):
         """ Parse edit-log line into fields """
@@ -376,6 +464,9 @@ class EditLog(LogFile):
                 if extra:
                     result[NAME_OLD] = extra
                 del result[EDIT_LOG_EXTRA]
+        userid = result[EDIT_LOG_USERID]
+        if userid:
+            result[EDIT_LOG_USERID] = self.idx.user_uuid(old_id=userid)
         return result
 
     def find_rev(self, revno):
@@ -437,11 +528,12 @@ class FSUserBackend(Backend):
 
     Everything not needed for the migration will likely just raise a NotImplementedError.
     """
-    def __init__(self, path, kill_save=False):
+    def __init__(self, path, data_path, kill_save=False):
         """
         Initialise filesystem backend.
 
         @param path: storage path (user_dir)
+        @param data_path: storage path (data_dir) - only used for index storage
         """
         self._path = path
         if kill_save:
@@ -449,6 +541,7 @@ class FSUserBackend(Backend):
             # XXX to be able to use the wiki logged-in
             from MoinMoin.user import User
             User.save = lambda x: None # do nothing, we can't save
+        self.idx = Index(data_path)
 
     def _get_item_path(self, name, *args):
         """
@@ -499,7 +592,9 @@ class FsUserItem(Item):
         except (OSError, IOError):
             # no current file means no item
             raise NoSuchItemError("No such item, %r" % itemname)
-        self._fs_meta = self._process_usermeta(meta)
+        self._fs_meta = meta = self._process_usermeta(meta)
+        uuid = backend.idx.user_uuid(name=meta['name'], old_id=itemname)
+        self.uuid = meta['uuid'] = uuid
 
     def _parse_userprofile(self, itemname):
         meta_file = codecs.open(self._backend._get_item_path(itemname), "r", config.charset)
