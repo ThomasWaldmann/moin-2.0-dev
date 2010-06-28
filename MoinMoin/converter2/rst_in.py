@@ -88,7 +88,7 @@ class NodeVisitor():
 
     def tree(self):
         return self.root 
-
+    
     def visit_Text(self, node):
         text = node.astext()
         self.current_node.append(text)
@@ -137,11 +137,15 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_entry(self, node):
-    # table cell?
-        pass
+        new_element = moin_page.table_item()
+        if 'morerows' in node.attributes:
+            new_element.set(moin_page.number_rows_spanned, repr(int(node['morerows'])+1))
+        if 'morecols' in node.attributes:
+            new_element.set(moin_page.number_cols_spanned, repr(int(node['morecols'])+1))
+        self.open_moin_page_node(new_element)
 
     def depart_entry(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_enumerated_list(self, node):
         enum_style = {'arabic':None,
@@ -220,9 +224,9 @@ class NodeVisitor():
         if 'height' in node:
             new_node.set(moin_page.height, node['height'])
         self.open_moin_page_node(new_node)
+
     def depart_image(self, node):
         self.close_moin_page_node()
-        pass
 
     def visit_inline(self, node):
         pass
@@ -289,10 +293,11 @@ class NodeVisitor():
         pass
 
     def visit_reference(self, node):
-    # <a>
+        self.open_moin_page_node(moin_page.a(attrib={xlink.href:node.get('refuri', '')}))
         pass
 
     def depart_reference(self, node):
+        self.close_moin_page_node()
         pass
 
     def visit_row(self, node):
