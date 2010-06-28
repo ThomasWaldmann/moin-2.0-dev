@@ -143,12 +143,13 @@ class FSPageBackend(Backend):
 
     Everything not needed for the migration will likely just raise a NotImplementedError.
     """
-    def __init__(self, path, syspages=False, deleted_mode=DELETED_MODE_KEEP,
+    def __init__(self, path, idx_path, syspages=False, deleted_mode=DELETED_MODE_KEEP,
                  default_markup=u'wiki'):
         """
         Initialise filesystem backend.
 
         @param path: storage path (data_dir)
+        @param idx_path: path for index storage
         @param syspages: either False (not syspages) or revision number of syspages
         @param deleted_mode: 'kill' - just ignore deleted pages (pages with
                                       non-existing current revision) and their attachments
@@ -166,7 +167,7 @@ class FSPageBackend(Backend):
         assert deleted_mode in (DELETED_MODE_KILL, DELETED_MODE_KEEP, )
         self.deleted_mode = deleted_mode
         self.format_default = default_markup
-        self.idx = Index(path)
+        self.idx = Index(idx_path)
 
     def _get_item_path(self, name, *args):
         """
@@ -533,11 +534,12 @@ class FSUserBackend(Backend):
 
     Everything not needed for the migration will likely just raise a NotImplementedError.
     """
-    def __init__(self, path, data_path, kill_save=False):
+    def __init__(self, path, idx_path, kill_save=False):
         """
         Initialise filesystem backend.
 
         @param path: storage path (user_dir)
+        @param idx_path: path for index storage
         @param data_path: storage path (data_dir) - only used for index storage
         """
         self._path = path
@@ -546,7 +548,7 @@ class FSUserBackend(Backend):
             # XXX to be able to use the wiki logged-in
             from MoinMoin.user import User
             User.save = lambda x: None # do nothing, we can't save
-        self.idx = Index(data_path)
+        self.idx = Index(idx_path)
 
     def _get_item_path(self, name, *args):
         """
