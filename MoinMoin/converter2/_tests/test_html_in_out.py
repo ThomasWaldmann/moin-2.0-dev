@@ -136,7 +136,7 @@ class TestConverter(Base):
     def test_link(self):
         data = [
             ('<html><p><a href="uri:test">Test</a></p></html>',
-              '/div/p/a[@href="uri:test"] | /div/p[a="Test"]'),
+              '/div/p/a[text()="Test"][@href="uri:test"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -170,7 +170,7 @@ class TestConverter(Base):
             ('<html><div><ol type="i"><li>Item</li></ol></div></html>',
               '/div/div/ol[@type="i"][li="Item"]'),
             ('<html><div><dl><dt>Label</dt><dd>Item</dd></dl></div></html>',
-             '/div/div/dl[dt="Item"] | /div/div/dl[dd="Item"]'),
+             '/div/div/dl[dt="Label"][dd="Item"]'),
             ('<html><div><dir><li>Item</li></dir></div></html>',
               '/div/div/ul[li="Item"]'),
         ]
