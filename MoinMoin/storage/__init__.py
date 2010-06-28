@@ -616,9 +616,9 @@ class Item(Serializable, DictMixin):
     @property
     def element_attrs(self):
         """
-        For xml serialization <item name="...">
+        For xml serialization <item name="..." uuid="...">
         """
-        return dict(name=self.name)
+        return dict(name=self.name, uuid=self.uuid)
 
     @property
     def next_revno(self):
