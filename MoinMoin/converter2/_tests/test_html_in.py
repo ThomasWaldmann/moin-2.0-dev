@@ -42,9 +42,6 @@ class Base(object):
         tree = etree.parse(StringIO.StringIO(string_to_parse))
         assert (tree.xpath(path, namespaces=self.namespaces_xpath))
 
-        #assert len(r) == 1
-        #assert r[0].text == text
-
 class TestConverter(Base):
     def setup_class(self):
         self.conv = Converter()
