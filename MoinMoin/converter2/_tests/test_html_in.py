@@ -65,9 +65,9 @@ class TestConverter(Base):
     def test_title(self):
         data = [
             ('<html><h2>Test</h2></html>',
-              '/page/body/h[@outline-level=2] | /page/body[h="Test"]'),
+              '/page/body/h[text()="Test"][@outline-level=2]'),
             ('<html><h6>Test</h6></html>',
-              '/page/body/h[@outline-level=6] | /page/body[h="Test"]'),
+              '/page/body/h[text()="Test"][@outline-level=6]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -89,23 +89,23 @@ class TestConverter(Base):
     def test_span(self):
         data = [
             ('<html><p><sub>sub</sub>script</p></html>',
-             '/page/body/p/span[@base-line-shift="sub"] | /page/body/p[span="sub"]'),
+             '/page/body/p/span[text()="sub"][@baseline-shift="sub"]'),
             ('<html><p><sup>super</sup>script</p></html>',
-             '/page/body/p/span[@base-line-shift="super"] | /page/body/p[span="super"]'),
+             '/page/body/p/span[text()="super"][@baseline-shift="super"]'),
             ('<html><p><u>underline</u></p></html>',
-             '/page/body/p/span[@text-decoration="underline"] | /page/body/p[span="underline"]'),
+             '/page/body/p/span[text()="underline"][@text-decoration="underline"]'),
             ('<html><p><big>Test</big></p></html>',
-              '/page/body/p/span[@font-size="120%"] | /page/body/p[span="Test"]'),
+              '/page/body/p/span[text()="Test"][@font-size="120%"]'),
             ('<html><p><small>Test</small></p></html>',
-              '/page/body/p/span[@font-size="85%"] | /page/body/p[span="Test"]'),
+              '/page/body/p/span[text()="Test"][@font-size="85%"]'),
             ('<html><p><ins>underline</ins></p></html>',
-             '/page/body/p/span[@text-decoration="underline"] | /page/body/p[span="underline"]'),
+             '/page/body/p/span[text()="underline"][@text-decoration="underline"]'),
             ('<html><p><del>Test</del></p></html>',
-             '/page/body/p/span[@text-decoration="line-through"] | /page/body/p[span="Test"]'),
+             '/page/body/p/span[text()="Test"][@text-decoration="line-through"]'),
             ('<html><p><s>Test</s></p></html>',
-             '/page/body/p/span[@text-decoration="line-through"] | /page/body/p[span="Test"]'),
+             '/page/body/p/span[text()="Test"][@text-decoration="line-through"]'),
             ('<html><p><strike>Test</strike></p></html>',
-             '/page/body/p/span[@text-decoration="line-through"] | /page/body/p[span="Test"]'),
+             '/page/body/p/span[text()="Test"][@text-decoration="line-through"]'),
 
         ]
         for i in data:
@@ -114,15 +114,15 @@ class TestConverter(Base):
     def test_span_html_element(self):
         data = [
             ('<html><p><abbr>Text</abbr></p></html>',
-             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="abbr"]'),
+             '/page/body/p/span[text()="Text"][@html-element="abbr"]'),
             ('<html><p><acronym>Text</acronym></p></html>',
-             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="acronym"]'),
+             '/page/body/p/span[text()="Text"][@html-element="acronym"]'),
             ('<html><p><address>Text</address></p></html>',
-             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="address"]'),
+             '/page/body/p/span[text()="Text"][@html-element="address"]'),
             ('<html><p><dfn>Text</dfn></p></html>',
-             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="dfn"]'),
+             '/page/body/p/span[text()="Text"][@html-element="dfn"]'),
             ('<html><p><kbd>Text</kbd></p></html>',
-             '/page/body/p[span="Text"] | /page/body/p/span[@html-element="kbd"]'),
+             '/page/body/p/span[text()="Text"][@html-element="kbd"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -130,7 +130,7 @@ class TestConverter(Base):
     def test_link(self):
         data = [
             ('<html><p><a href="uri:test">Test</a></p></html>',
-              '/page/body/p/a[@xlink:href="uri:test"] | /page/body/p[a="Test"]'),
+              '/page/body/p/a[text()="Test"][@xlink:href="uri:test"]'),
             ('<html><base href="http://www.base-url.com/" /><body><div><p><a href="myPage.html">Test</a></p></div></body></html>',
               '/page/body/div/p/a[@xlink:href="http://www.base-url.com/myPage.html"]'),
         ]
@@ -166,7 +166,7 @@ class TestConverter(Base):
             ('<html><div><ol type="i"><li>Item</li></ol></div></html>',
               '/page/body/div/list[@item-label-generate="ordered" and @list-style-type="downer-roman"]/list-item[list-item-body="Item"]'),
             ('<html><div><dl><dt>Label</dt><dd>Item</dd></dl></div></html>',
-             '/page/body/div/list/list-item[list-item-label="Label"] | /page/body/div/list/list-item[list-item-body="Item"]'),
+             '/page/body/div/list/list-item[list-item-label="Label"][list-item-body="Item"]'),
             ('<html><div><dir><li>Item</li></dir></div></html>',
               '/page/body/div/list[@item-label-generate="unordered"]/list-item[list-item-body="Item"]'),
         ]
@@ -186,11 +186,11 @@ class TestConverter(Base):
     def test_table(self):
         data = [
             ('<html><div><table><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table></div></html>',
-             '/page/body/div/table/table-header/table-row[table-cell="Header"] | /page/body/div/table/table-footer/table-row[table-cell="Footer"] | /page/body/div/table/table-body/table-row[table-cell="Cell"]'),
+             '/page/body/div/table[./table-header/table-row[table-cell="Header"]][./table-footer/table-row[table-cell="Footer"]][./table-body/table-row[table-cell="Cell"]]'),
             ('<html><div><table><tbody><tr><td colspan="2">Cell</td></tr></tbody></table></div></html>',
-             '/page/body/div/table/table-body/table-row/table-cell[@number-colmuns-spanned="2"] | /page/body/div/table/table-body/table-row[table-cell="Cell"]'),
+             '/page/body/div/table/table-body/table-row/table-cell[text()="Cell"][@number-columns-spanned="2"]'),
             ('<html><div><table><tbody><tr><td rowspan="2">Cell</td></tr></tbody></table></div></html>',
-             '/page/body/div/table/table-body/table-row/table-cell[@number-rows-spanned="2"] | /page/body/div/table/table-body/table-row[table-cell="Cell"]'),
+             '/page/body/div/table/table-body/table-row/table-cell[text()="Cell"][@number-rows-spanned="2"]'),
         ]
         for i in data:
             yield (self.do, ) + i
