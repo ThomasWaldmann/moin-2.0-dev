@@ -94,7 +94,6 @@ class TestConverter(Base):
             yield (self.do, ) + i
 
     def test_span(self):
-        py.test.skip()
         data = [
             ('<html><p><sub>sub</sub>script</p></html>',
              '/div/p[sub="sub"]'),
@@ -102,11 +101,10 @@ class TestConverter(Base):
              '/div/p[sup="super"]'),
             ('<html><p><u>underline</u></p></html>',
              '/div/p[ins="underline"]'),
-            # Unsupported Roundtrip
-            #('<html><p><big>Test</big></p></html>',
-            #  ''),
-            #('<html><p><small>Test</small></p></html>',
-            #  ''),
+            ('<html><p><big>Test</big></p></html>',
+              '/div/p[big="Test"]'),
+            ('<html><p><small>Test</small></p></html>',
+              '/div/p[small="Test"]'),
             ('<html><p><ins>underline</ins></p></html>',
              '/div/p[ins="underline"]'),
             ('<html><p><del>Test</del></p></html>',
