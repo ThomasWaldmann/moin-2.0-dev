@@ -45,8 +45,7 @@ class Converter(object):
                    'pre': moin_page.blockcode, 'tt': moin_page.code,
                    'samp': moin_page.code,
                    # Lists
-                   'li': moin_page.list_item_body, 'dt': moin_page.list_item_label,
-                   'dd': moin_page.list_item_body,
+                   'dt': moin_page.list_item_label, 'dd': moin_page.list_item_body,
                    # TODO : Some tags related to tables can be also simplify
                   }
 
@@ -357,26 +356,16 @@ class Converter(object):
         return self.new_copy(moin_page.span, element, attrib)
 
     def visit_xhtml_ul(self, element):
-        # We will process all children (which should be list element normally
-        list_items_elements = self.do_children(element)
-        list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
         attrib = {}
         attrib[moin_page('item-label-generate')] = 'unordered'
-        return ET.Element(moin_page.list, attrib=attrib, children=[list_item])
+        return self.new_copy(moin_page.list, element, attrib=attrib)
 
     def visit_xhtml_dir(self, element):
-        # We will process all children (which should be list element normally
-        list_items_elements = self.do_children(element)
-        list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
         attrib = {}
         attrib[moin_page('item-label-generate')] = 'unordered'
-        return ET.Element(moin_page.list, attrib=attrib, children=[list_item])
+        return self.new_copy(moin_page.list, element, attrib=attrib)
 
     def visit_xhtml_ol(self, element):
-        # We will process all children (which should be list element normally
-        list_items_elements = self.do_children(element)
-        list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
-
         # We create attributes according to the type of the list
         attrib = {}
         attrib[moin_page('item-label-generate')] = 'ordered'
@@ -392,13 +381,76 @@ class Converter(object):
         elif 'i' == style:
             attrib[moin_page('list-style-type')] = 'downer-roman'
 
-        return ET.Element(moin_page.list, attrib=attrib, children=[list_item])
+        return self.new_copy(moin_page.list, element, attrib=attrib)
 
     def visit_xhtml_dl(self, element):
-        # We will process all children (which should be list element normally
-        list_items_elements = self.do_children(element)
-        list_item = ET.Element(moin_page.list_item, attrib={}, children=list_items_elements)
-        return ET.Element(moin_page.list, attrib={}, children=[list_item])
+        """
+        Convert a list of definition. The conversion is like :
+        <dl>
+            <dt>Label 1</dt><dd>Text 1</dd>
+            <dt>Label 2</dt><dd>Text 2</dd>
+        </dl>
+
+        will give
+
+        <list>
+            <list-item>
+                <list-item-label>Label 1</list-item-label>
+                <list-item-body>Text 1</list-item-body>
+            </list-item>
+            <list-item>
+                <list-item-label>Label 2</list-item-label>
+                <list-item-body>Text 2</list-item-body>
+            </list-item>
+        </list>
+        """
+        list_item = []
+        pair = []
+        number_pair = 0
+        # We will browse the child, and try to catch all the pair
+        # of <dt><dd>
+        for child in element:
+            # We need one dt tag, and one dd tag, a have a pair
+            if (child.tag.name == 'dt' or child.tag.name == 'dd'):
+                number_pair = number_pair + 1
+
+            # The following code is similar to do_children method
+            if isinstance(child, ET.Element):
+                r = self.visit(child)
+                if r is None:
+                    r = ()
+                elif not isinstance(r, (list, tuple)):
+                    r = (r, )
+                pair.extend(r)
+            else:
+                pair.append(r)
+
+            if (number_pair == 2):
+                # We have two elements of the pair
+                # So we can put it into a <list-item> element
+                list_item_element = ET.Element(moin_page.list_item,
+                                               attrib={}, children=pair)
+                list_item.append(list_item_element)
+                pair = []
+                number_pair = 0
+
+        # we return the <list> with all the list item element
+        return ET.Element(moin_page.list, attrib={}, children=list_item)
+
+    def visit_xhtml_li(self, element):
+       """ 
+       NB : A list item (<li>) is like the following snippet :
+       <list-item>
+           <list-item-label>label</list-item-label>
+           <list-item-body>Body</list-item-body>
+       </list-item>
+
+       For <li> element, there is no label
+       """
+       list_item_body = ET.Element(moin_page.list_item_body,
+                                   attrib={}, children=self.do_children(element))
+       return ET.Element(moin_page.list_item, attrib={}, children=[list_item_body])
+
 
     def visit_xhtml_thead(self, element):
         return self.new_copy(moin_page.table_header, element, attrib={})
