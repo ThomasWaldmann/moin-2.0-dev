@@ -169,6 +169,8 @@ class TestConverter(Base):
              '/page/body/div/list/list-item[list-item-label="Label"][list-item-body="Item"]'),
             ('<html><div><dir><li>Item</li></dir></div></html>',
               '/page/body/div/list[@item-label-generate="unordered"]/list-item[list-item-body="Item"]'),
+            ('<div><ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul></div>',
+             '/page/body/list[@item-label-generate="unordered"]/list-item[list-item-body[1]="Item 1"][list-item-body[2]="Item 2"][list-item-body[3]="Item 3"]'),
         ]
         for i in data:
             yield (self.do, ) + i
