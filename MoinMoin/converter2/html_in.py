@@ -36,6 +36,9 @@ class Converter(object):
     # HTML tags which can be converted directly to the moin_page namespace
     symmetric_tags = set(['div', 'p', 'strong', 'code', 'table'])
 
+    # HTML tags to define a list, except dl which is a little bit different
+    list_tags = set(['ul', 'dir', 'ol'])
+
     # HTML tags which can be convert without attributes in a different DOM tag
     simple_tags = {# Emphasis
                    'em': moin_page.emphasis, 'i': moin_page.emphasis,
@@ -179,6 +182,10 @@ class Converter(object):
         if element.tag.name in self.simple_tags:
             return self.new_copy(self.simple_tags[element.tag.name], element, attrib={})
 
+        # Our element define a list
+        if element.tag.name in self.list_tags:
+            return self.visit_xhtml_list(element)
+
         # We convert our element as a span tag with html-element attribute
         if element.tag.name in self.inline_tags:
             return self.visit_xhtml_inline(element)
@@ -257,6 +264,7 @@ class Converter(object):
 
     def visit_xhtml_u(self, element):
         """
+
         <u>Text</u> --> <span text-decoration="underline">Text</span>
         """
         key = moin_page('text-decoration')
@@ -277,6 +285,7 @@ class Converter(object):
         """
         <del>Text</del> --> <span text-decoration="underline">Text</span>
         """
+
         key = moin_page('text-decoration')
         attrib = {}
         attrib[key] = 'line-through'
@@ -355,33 +364,55 @@ class Converter(object):
         attrib[key] = element.tag.name
         return self.new_copy(moin_page.span, element, attrib)
 
-    def visit_xhtml_ul(self, element):
+    def visit_xhtml_list(self, element):
+        """
+        Convert a list of item (whatever the type : ordered or unordered)
+        So we have a html code like :
+        <ul>
+            <li>Item 1</li>
+            <li>Item 2</li>
+        </ul>
+
+        Which will be convert like :
+        <list>
+            <list-item>
+                <list-item-body>Item 1</list-item-body>
+            </list-item>
+            <list-item>
+                <list-item-body>Item 2</list-item-body>
+            </list-item>
+        </list>
+        """
+        # We will define the appropriate attribute
+        # according to the type of the list
         attrib = {}
-        attrib[moin_page('item-label-generate')] = 'unordered'
-        return self.new_copy(moin_page.list, element, attrib=attrib)
+        if element.tag.name == "ul" or element.tag.name == "dir":
+            attrib[moin_page('item-label-generate')] = 'unordered'
+        elif element.tag.name == "ol":
+            attrib[moin_page('item-label-generate')] = 'ordered'
 
-    def visit_xhtml_dir(self, element):
-        attrib = {}
-        attrib[moin_page('item-label-generate')] = 'unordered'
-        return self.new_copy(moin_page.list, element, attrib=attrib)
+            # We check which kind of style we have
+            style = element.get(html.type)
+            if 'A' == style:
+                attrib[moin_page('list-style-type')] = 'upper-alpha'
+            elif 'I' == style:
+                attrib[moin_page('list-style-type')] = 'upper-roman'
+            elif 'a' == style:
+                attrib[moin_page('list-style-type')] = 'downer-alpha'
+            elif 'i' == style:
+                attrib[moin_page('list-style-type')] = 'downer-roman'
 
-    def visit_xhtml_ol(self, element):
-        # We create attributes according to the type of the list
-        attrib = {}
-        attrib[moin_page('item-label-generate')] = 'ordered'
-
-        # We check which kind of style we have
-        style = element.get(html.type)
-        if 'A' == style:
-            attrib[moin_page('list-style-type')] = 'upper-alpha'
-        elif 'I' == style:
-            attrib[moin_page('list-style-type')] = 'upper-roman'
-        elif 'a' == style:
-            attrib[moin_page('list-style-type')] = 'downer-alpha'
-        elif 'i' == style:
-            attrib[moin_page('list-style-type')] = 'downer-roman'
-
-        return self.new_copy(moin_page.list, element, attrib=attrib)
+        # we should not have any strings in the child
+        list_items = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                r = self.visit(child)
+                if r is None:
+                    r = ()
+                elif not isinstance(r, (list, tuple)):
+                    r = (r, )
+                list_items.extend(r)
+        return ET.Element(moin_page.list, attrib=attrib, children=list_items)
 
     def visit_xhtml_dl(self, element):
         """
