@@ -341,6 +341,9 @@ class Converter(object):
             attrib[key] = ''.join([self.base_url, element.get(html.data)])
         else:
             attrib[key] = element.get(html.data)
+
+        # Convert the href attribute into unicode
+        attrib[key] = unicode(attrib[key])
         return moin_page.object(attrib)
 
     def visit_xhtml_inline(self, element):
