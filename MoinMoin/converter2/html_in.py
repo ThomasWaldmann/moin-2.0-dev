@@ -438,18 +438,18 @@ class Converter(object):
         return ET.Element(moin_page.list, attrib={}, children=list_item)
 
     def visit_xhtml_li(self, element):
-       """ 
-       NB : A list item (<li>) is like the following snippet :
-       <list-item>
-           <list-item-label>label</list-item-label>
-           <list-item-body>Body</list-item-body>
-       </list-item>
+        """
+        NB : A list item (<li>) is like the following snippet :
+        <list-item>
+            <list-item-label>label</list-item-label>
+            <list-item-body>Body</list-item-body>
+        </list-item>
 
-       For <li> element, there is no label
-       """
-       list_item_body = ET.Element(moin_page.list_item_body,
-                                   attrib={}, children=self.do_children(element))
-       return ET.Element(moin_page.list_item, attrib={}, children=[list_item_body])
+        For <li> element, there is no label
+        """
+        list_item_body = ET.Element(moin_page.list_item_body,
+                                    attrib={}, children=self.do_children(element))
+        return ET.Element(moin_page.list_item, attrib={}, children=[list_item_body])
 
 
     def visit_xhtml_thead(self, element):
