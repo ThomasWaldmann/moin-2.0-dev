@@ -173,6 +173,8 @@ class TestConverter(Base):
              '/div/div/dl[dt="Label"][dd="Item"]'),
             ('<html><div><dir><li>Item</li></dir></div></html>',
               '/div/div/ul[li="Item"]'),
+            ('<div><ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul></div>',
+             '/div/ul[li[1]="Item 1"][li[2]="Item 2"][li[3]="Item 3"]'),
         ]
         for i in data:
             yield (self.do, ) + i
