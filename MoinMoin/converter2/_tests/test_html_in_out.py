@@ -202,6 +202,9 @@ class TestConverter(Base):
              '/div/div/table/tbody/tr/td[text()="Cell"][@colspan="2"]'),
             ('<html><div><table><tbody><tr><td rowspan="2">Cell</td></tr></tbody></table></div></html>',
              '/div/div/table/tbody/tr/td[text()="Cell"][@rowspan="2"]'),
+            # Test for bug with newline between cell
+            ('<div><table>\n<tbody>\n<tr>\n<td>\n Cell 1:1</td>\n<td>\n Cell 1:2</td>\n</tr>\n<tr>\n<td>\n Cell 2:1</td>\n<td>\n Cell 2:2</td>\n</tr>\n</tbody>\n</table></div>',
+              '/div/table/tbody[tr[1][td[1]="\n Cell 1:1"][td[2]="\n Cell 1:2"]][tr[2][td[1]="\n Cell 2:1"][td[2]="\n Cell 2:2"]]'),
         ]
         for i in data:
             yield (self.do, ) + i
