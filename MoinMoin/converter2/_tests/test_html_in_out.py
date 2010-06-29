@@ -27,7 +27,7 @@ class Base(object):
 
     namespaces = {
         html.namespace: '',
-        moin_page.namespace:'',
+        moin_page.namespace: '',
         xlink.namespace: 'xlink',
     }
 
@@ -77,7 +77,7 @@ class TestConverter(Base):
              '/div[h6="Test"]'),
         ]
         for i in data:
-          yield (self.do, ) + i
+            yield (self.do, ) + i
 
     def test_basic_style(self):
         data = [
