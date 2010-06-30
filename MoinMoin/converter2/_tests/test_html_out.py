@@ -149,6 +149,14 @@ class TestConverter(Base):
                 '/div/ol[li="Item"]'),
             ('<page><body><list><list-item><list-item-label>Label</list-item-label><list-item-body>Item</list-item-body></list-item></list></body></page>',
                 '/div/dl[dt="Label"][dd="Item"]'),
+            ('<page><body><list item-label-generate="ordered" list-style-type="upper-alpha"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
+                '/div/ol[@type="A"][li="Item"]'),
+            ('<page><body><list item-label-generate="ordered" list-style-type="lower-alpha"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
+                '/div/ol[@type="a"][li="Item"]'),
+            ('<page><body><list item-label-generate="ordered" list-style-type="upper-roman"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
+                '/div/ol[@type="I"][li="Item"]'),
+            ('<page><body><list item-label-generate="ordered" list-style-type="lower-roman"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
+                '/div/ol[@type="i"][li="Item"]'),
         ]
         for i in data:
             yield (self.do, ) + i
