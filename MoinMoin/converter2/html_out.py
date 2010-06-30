@@ -235,9 +235,9 @@ class Converter(object):
                         attrib_new[html('type')] = 'A'
                     elif style == 'upper-roman':
                         attrib_new[html('type')] = 'I'
-                    elif style == 'downer-roman':
+                    elif style == 'lower-roman':
                         attrib_new[html('type')] = 'i'
-                    elif style == 'downer-alpha':
+                    elif style == 'lower-alpha':
                         attrib_new[html('type')] = 'a'
                 ret = self.new(html.ol, attrib_new)
             elif generate == 'unordered':

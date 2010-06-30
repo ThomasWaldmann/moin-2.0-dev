@@ -398,9 +398,9 @@ class Converter(object):
             elif 'I' == style:
                 attrib[moin_page('list-style-type')] = 'upper-roman'
             elif 'a' == style:
-                attrib[moin_page('list-style-type')] = 'downer-alpha'
+                attrib[moin_page('list-style-type')] = 'lower-alpha'
             elif 'i' == style:
-                attrib[moin_page('list-style-type')] = 'downer-roman'
+                attrib[moin_page('list-style-type')] = 'lower-roman'
 
         # we should not have any strings in the child
         list_items = []
