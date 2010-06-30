@@ -131,6 +131,8 @@ class TestConverter(Base):
                 '/div/p[text()="script"][sup="super"]'),
             ('<page><body><p><span text-decoration="underline">underline</span></p></body></page>',
                 '/div/p[ins="underline"]'),
+            ('<page><body><p><span text-decoration="line-through">stroke</span></p></body></page>',
+                '/div/p[del="stroke"]'),
         ]
         for i in data:
             yield (self.do, ) + i
