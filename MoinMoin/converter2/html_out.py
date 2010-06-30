@@ -219,7 +219,7 @@ class Converter(object):
         return html.span()
 
     def visit_moinpage_line_break(self, elem):
-      # TODO: attributes?
+        # TODO: attributes?
         return self.new(html.br)
 
     def visit_moinpage_list(self, elem):
