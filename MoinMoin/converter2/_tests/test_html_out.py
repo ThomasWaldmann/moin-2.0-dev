@@ -133,6 +133,10 @@ class TestConverter(Base):
                 '/div/p[ins="underline"]'),
             ('<page><body><p><span text-decoration="line-through">stroke</span></p></body></page>',
                 '/div/p[del="stroke"]'),
+            ('<page><body><p><span font-size="85%">small</span></p></body></page>',
+                '/div/p[small="small"]'),
+            ('<page><body><p><span font-size="120%">big</span></p></body></page>',
+                '/div/p[big="big"]'),
         ]
         for i in data:
             yield (self.do, ) + i
