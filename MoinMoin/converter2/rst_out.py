@@ -16,7 +16,7 @@ from MoinMoin.util.tree import moin_page, xlink
 
 from emeraldtree import ElementTree as ET
 
-from re import findall
+import re
 
 from MoinMoin.support.werkzeug.utils import unescape
 
@@ -254,7 +254,7 @@ class Converter(object):
         self.opened = [None, ]
         self.children = [None, iter([root])]
         self.output = []
-        self.list_item_lable = []
+        self.list_item_label = []
         self.subpage = [self.output]
         self.subpage_level = [0, ]
         self.footnotes = []
@@ -271,8 +271,11 @@ class Converter(object):
                         if self.last_closed == "p":
                             self.output.append('\n\n')
                     elif self.status[-1] == "list":
+                        space_bonus = 0
+                        if len(''.join(self.list_item_labels))-1: space_bonus = 1
+                        next_child = next_child.replace(u'\n', u'\n' + u' ' * (len(''.join(self.list_item_labels))+1+space_bonus)) # (self.list_level + 1))
                         if self.last_closed == "p":
-                            self.output.append('\n' + ' ' * (self.list_level + 1))
+                            self.output.append('\n' + ' ' * (len(''.join(self.list_item_labels))+1)) #  (self.list_level + 1))
                     elif self.status[-1] == "text":
                         if self.last_closed == "p":
                             self.output.extend(self.objects)
@@ -358,8 +361,16 @@ class Converter(object):
     def open_moinpage_blockcode(self, elem):
         text = ''.join(elem.itertext())
         max_subpage_lvl = 3
-        text = text.replace('\n', '\n  ')
-        ret = "::\n\n  %s\n\n" % text
+        text = text.replace('\n', '\n  '+' '*len(''.join(self.list_item_labels)))# self.list_level+1))
+        if self.list_level>=0:
+            while self.output and re.match(r'(\n*)\Z', self.output[-1]):
+                self.output.pop()
+            last_newlines = r'(\n*)\Z'
+            if self.output:
+                i = -len(re.search(last_newlines,self.output[-1]).groups(1))
+                self.output[-1] = self.output[-1][:i]
+        
+        ret = "::\n\n  %s%s\n\n" % (' '*len(''.join(self.list_item_labels)), text)
         return ret
 
     def close_moinpage_blockcode(self, elem):
@@ -403,7 +414,7 @@ class Converter(object):
 
     def open_moinpage_line_break(self, elem):
         if self.status[-1] == "list":
-            return ReST.linebreak + ' ' * (self.list_level + 1)
+            return ReST.linebreak + ' ' * len(''.join(self.list_item_labels)) #(self.list_level + 1)
         return ReST.linebreak
 
     def open_moinpage_list(self, elem):
@@ -440,18 +451,18 @@ class Converter(object):
 
     def open_moinpage_list_item_label(self, elem):
         ret = ''
-        if self.list_item_labels[-1] == '':
-            label = ''.join(elem.itertext())
-            if label:
-                self.list_item_labels[-1] = ' '
-                self.list_item_label = self.list_item_labels[-1] + ' '
+        if self.list_item_labels[-1] == '' or self.list_item_labels[-1] == ' ':
+            self.children.append(iter(elem))
+            self.opened.append(elem)
+            self.list_item_labels[-1] = ' '
+            self.list_item_label = self.list_item_labels[-1] + ' '
                 # TODO: rewrite this using % formatting
-                ret = ' ' * self.list_level + label
-                if self.last_closed:
-                    ret = '\n%s' % ret
-                else:
-                    ret = '%s\n' % ret
-                return ret
+            space_bonus = 0
+            if len(''.join(self.list_item_labels[:-1])): space_bonus = 1
+            ret = ' ' * (len(''.join(self.list_item_labels[:-1])) + space_bonus)# self.list_level
+            if self.last_closed:
+                ret = '\n%s' % ret
+            return ret
         return ''
 
     def close_moinpage_list_item_label(self, elem):
@@ -463,7 +474,9 @@ class Converter(object):
         ret = ''
         if self.last_closed:
             ret = '\n'
-        ret += ' ' * self.list_level + self.list_item_label
+        space_bonus = 0
+        if len(''.join(self.list_item_labels[:-1])): space_bonus = 1
+        ret += ' ' * (len(''.join(self.list_item_labels[:-1]))+space_bonus) + self.list_item_label
         if self.list_item_labels[-1] in ['1.', 'i.', 'I.', 'a.', 'A.']:
             self.list_item_labels[-1] = '#.'
         return ret
@@ -496,7 +509,7 @@ class Converter(object):
         href = href.split('?')
         args = ''
         if len(href) > 1:
-            args =' '.join([s for s in findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)', href[1]) if s[:3] != 'do='])
+            args =' '.join([s for s in re.findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)', href[1]) if s[:3] != 'do='])
         href = href[0].split('wiki.local:')[-1].split('attachment:')[-1]
         alt = elem.get(moin_page.alt, '')
         if not alt:
@@ -508,8 +521,8 @@ class Converter(object):
     def open_moinpage_p(self, elem):
         self.children.append(iter(elem))
         self.opened.append(elem)
-        self.status.append("p")
-        if self.status[-2] == 'text':
+        #self.status.append("p")
+        if self.status[-1] == 'text':
             self.output.extend(self.objects)
             self.objects = []
             if self.last_closed == 'text':
@@ -518,22 +531,24 @@ class Converter(object):
                 return ReST.p
             elif self.last_closed:
                 return ReST.p
-        elif self.status[-2] == 'table':
+        elif self.status[-1] == 'table':
             if self.last_closed and self.last_closed != 'table_cell'\
                                 and self.last_closed != 'table_row':
                 return ReST.linebreak
-        elif self.status[-2] == 'list':
+        elif self.status[-1] == 'list':
+            if self.last_closed and self.last_closed == 'list_item_label':
+                return ''
             if self.last_closed and self.last_closed != 'list_item'\
                                 and self.last_closed != 'list_item_header'\
                                 and self.last_closed != 'list_item_footer'\
                                 and self.last_closed != 'p':
-                return ReST.linebreak + ' '* (self.list_level + 1)
+                return ReST.linebreak + ' '* len(''.join(self.list_item_labels)) #(self.list_level + 1) 
             elif self.last_closed and self.last_closed == 'p':
-                return ReST.p + ' '* (self.list_level + 1)
+                return ReST.p + ' '* len(''.join(self.list_item_labels)) # self.list_level + 1)
         return ''
 
     def close_moinpage_p(self, elem):
-        self.status.pop()
+        # self.status.pop()
         if self.status[-1] == 'text':
             return ReST.p
         if self.status[-1] == 'list':
