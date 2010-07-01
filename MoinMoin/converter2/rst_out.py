@@ -106,7 +106,7 @@ class Table(object):
 
     def complete_line(self):
         if self.i > 0:
-            if len(table[-1]) < len(table[-2]):
+            if len(self.table[-1]) < len(self.table[-2]):
                 pass
 
     def __str__(self):
@@ -390,7 +390,7 @@ class Converter(object):
             level = 1
         elif level > 6:
             level = 6
-        ret = "%s\n%s\n%s\n\n" % (ReST.h[level]*len(text), text, ReST.h[level]*len(text))
+        ret = "\n\n%s\n%s\n%s\n\n" % (ReST.h[level]*len(text), text, ReST.h[level]*len(text))
         return ret
 
     def close_moinpage_h():
@@ -739,9 +739,9 @@ class Converter(object):
 
     def open_moinpage_table_of_content(self, elem):
         depth = elem.get(moin_page.outline_level, "")
-        ret = "\n.. contents::"
+        ret = "\n\n.. contents::"
         if depth:
-            ret += " :depth: %s" % depth
+            ret += "\n   :depth: %s" % depth
         return ret + "\n\n"
 
     def close_moinpage_table_of_content(self, elem):

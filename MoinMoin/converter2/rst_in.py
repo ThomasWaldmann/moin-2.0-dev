@@ -104,7 +104,7 @@ class NodeVisitor():
         pass
 
     def visit_bullet_list(self, node):
-        self.open_moin_page_node(moin_page.list(attrib={moin_page.list_label_generate:'unordered', moin_page.list_style_type:None}))
+        self.open_moin_page_node(moin_page.list(attrib={moin_page.list_label_generate:'unordered'}))
 
     def depart_bullet_list(self, node):
         self.close_moin_page_node()
@@ -220,7 +220,7 @@ class NodeVisitor():
         new_node = moin_page.object(attrib={xlink.href:node['uri']})
         new_node.set(moin_page.alt, node.get('alt', node['uri']))
         if 'width' in node:
-            new_nodei.set(moin_page.width, node['width'])
+            new_node.set(moin_page.width, node['width'])
         if 'height' in node:
             new_node.set(moin_page.height, node['height'])
         self.open_moin_page_node(new_node)
@@ -293,12 +293,33 @@ class NodeVisitor():
         pass
 
     def visit_reference(self, node):
-        self.open_moin_page_node(moin_page.a(attrib={xlink.href:node.get('refuri', '')}))
-        pass
+        refuri = node.get('refuri', '')
+        if refuri.startswith('<<') and refuri.endswith('>>'): # moin macro
+            macro_name = refuri[2:-2].split('(')[0]
+            if macro_name == "TableOfContents":
+                arguments = refuri[2:-2].split('(')[1][:-1].split(',')
+                node = moin_page.table_of_content()
+                self.open_moin_page_node(node)
+                if arguments:
+                    node.set(moin_page.outline_level, arguments[0])
+                    
+                return
+            arguments = refuri[2:-2].split('(')[1][:-1].split(',')
+            self.open_moin_page_node(moin_page.part(attrib={moin_page.content_type:"x-moin/macro;name=%s" % macro_name, }))
+            if arguments:
+                self.open_moin_page_node(moin_page.arguments())
+                for i in arguments:
+                    self.open_moin_page_node(moin_page.argument(children=[i]))
+                    self.close_moin_page_node()
+                self.close_moin_page_node()
+            
+            self.open_moin_page_node(refuri)
+            return
+
+        self.open_moin_page_node(moin_page.a(attrib={xlink.href:refuri}))
 
     def depart_reference(self, node):
         self.close_moin_page_node()
-        pass
 
     def visit_row(self, node):
         self.open_moin_page_node(moin_page.table_row())
@@ -393,6 +414,12 @@ class NodeVisitor():
     def depart_title(self, node):
         self.close_moin_page_node()
 
+    def visit_topic(self, node):
+        pass
+
+    def depart_topic(self, node):
+        pass
+
     def visit_title_reference(self, node):
         pass
 
@@ -456,6 +483,8 @@ class MoinDirectives:
 
         # used for MoinMoin macros
         directives.register_directive('macro', self.macro)
+
+        directives.register_directive('contents', self.table_of_content)
 
         # disallow a few directives in order to prevent XSS
         # for directive in ('meta', 'include', 'raw'):
@@ -534,6 +563,25 @@ class MoinDirectives:
     macro.option_spec = {}
     macro.required_arguments = 1
     macro.optional_arguments = 0
+
+    def table_of_content(self, name, arguments, options, content, lineno,
+                            content_offset, block_text, state, state_machine):
+        text = ''
+        for i in content:
+            m = re.search(':(\w+): (\w+)', i)
+            if m and len(m.groups()) == 2:
+                if m.groups()[0] == 'depth':
+                    text = m.groups()[1]
+        macro = '<<TableOfContents(%s)>>' % text
+        ref = reference(macro, refuri=macro)
+        ref['name'] = macro
+        return [ref]
+
+    table_of_content.has_content = table_of_content.content = True
+    table_of_content.option_spec = {}
+    table_of_content.required_arguments = 1
+    table_of_content.optional_arguments = 0
+
 
 class Converter(object):
     @classmethod
