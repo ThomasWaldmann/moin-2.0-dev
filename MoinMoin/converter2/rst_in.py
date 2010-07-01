@@ -104,7 +104,7 @@ class NodeVisitor():
         pass
 
     def visit_bullet_list(self, node):
-        self.open_moin_page_node(moin_page.list(attrib={moin_page.list_label_generate:'unordered'}))
+        self.open_moin_page_node(moin_page.list(attrib={moin_page.item_label_generate:'unordered'}))
 
     def depart_bullet_list(self, node):
         self.close_moin_page_node()
@@ -113,22 +113,22 @@ class NodeVisitor():
         pass
 
     def visit_definition(self, node):
-        self.open_moin_page_node(moin_page.list_item())
+        self.open_moin_page_node(moin_page.list_item_body())
 
     def depart_definition(self, node):
         self.close_moin_page_node()
 
     def visit_definition_list(self, node):
-        self.open_moin_page_node(moin_page.list(attrib={moin_page.list_label_generate:'definition', moin_page.list_style_type:None}))
+        self.open_moin_page_node(moin_page.list(attrib={moin_page.item_label_generate:'definition'}))
 
     def depart_definition_list(self, node):
         self.close_moin_page_node()
 
     def visit_definition_list_item(self, node):
-        pass
+        self.open_moin_page_node(moin_page.list_item())
 
     def depart_definition_list_item(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_emphasis(self, node):
         self.open_moin_page_node(moin_page.emphasis())
@@ -152,8 +152,13 @@ class NodeVisitor():
                 'loweralpha':'lower-alpha',
                 'upperalpha':'upper-alpha',
                 'lowerroman':'lower-roman',
-                'upperroman':'upper-roman' }
-        self.open_moin_page_node(moin_page.list(attrib={moin_page.list_label_generate:'ordered', moin_page.list_style_type:enum_style.get(node['enumtype'],None)}))
+                'upperroman':'upper-roman'}
+        new_node = moin_page.list(attrib={moin_page.item_label_generate:'ordered'})
+        type = enum_style.get(node['enumtype'],None)
+        if type:
+            new_node.set(moin_page.list_style_type, type)
+        self.open_moin_page_node(new_node)
+        #self.open_moin_page_node(moin_page.list(attrib={moin_page.item_label_generate:'ordered', moin_page.list_style_type:enum_style.get(node['enumtype'],None)}))
 
     def depart_enumerated_list(self, node):
         self.close_moin_page_node()
@@ -257,8 +262,10 @@ class NodeVisitor():
 
     def visit_list_item(self, node):
         self.open_moin_page_node(moin_page.list_item())
+        self.open_moin_page_node(moin_page.list_item_body())
 
     def depart_list_item(self, node):
+        self.close_moin_page_node()
         self.close_moin_page_node()
 
     def visit_literal(self, node):
