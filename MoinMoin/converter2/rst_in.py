@@ -264,6 +264,7 @@ class NodeVisitor():
     def visit_literal(self, node):
         self.open_moin_page_node(moin_page.code())
         self.open_moin_page_node(node.astext())
+        node.children = []
         self.close_moin_page_node()
         self.close_moin_page_node()
 

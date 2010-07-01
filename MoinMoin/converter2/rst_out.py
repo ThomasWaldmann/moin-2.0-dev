@@ -287,6 +287,10 @@ class Converter(object):
                     # close function can change self.output
                     close_ret = self.close(next_parent)
                     self.output.append(close_ret)
+                    if self.status[-1] == "text":
+                        if self.last_closed == "p":
+                            self.output.extend(self.objects)
+                            self.objects = []
         self.output.extend(self.objects)
         self.objects = []
         self.output.append("\n\n.. [#]".join(self.footnotes))
@@ -341,10 +345,10 @@ class Converter(object):
         params['accesskey'] = elem.get(xlink.accesskey, None)
         params = ','.join(['%s=%s' % (p, params[p]) for p in params if params[p]])
 
-        text = ''.join(elem.itertext())
+        text = ''.join(elem.itertext()).replace('\n', ' ')
 
         # TODO: check that links have different alt texts
-        self.objects.append("\n\n.. _`%s`: %s\n\n" % (text, href))
+        self.objects.append("\n\n.. _%s: %s\n\n" % (text, href))
         return "`%s`_" % (text)
 
     def close_moinpage_a(self, elem):
