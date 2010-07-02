@@ -11,7 +11,7 @@ import re
 try:
     from lxml import etree
 except:
-    py.test.skip("lxml module required to run test for html_in converter.")
+    py.test.skip("lxml module required to run test for html_out converter.")
 
 from MoinMoin.converter2.html_out import *
 from emeraldtree.tree import *
