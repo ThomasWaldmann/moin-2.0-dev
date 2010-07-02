@@ -33,6 +33,8 @@ class Converter(object):
         docbook.namespace: 'docbook'
     }
 
+    sect_re = re.compile('sect[1-5]')
+
     @classmethod
     def _factory(cls, input, output, request, **kw):
         return cls()
@@ -109,6 +111,12 @@ class Converter(object):
         to convert it.
         """
 
+        # We have a section tag
+        if self.sect_re.match(element.tag.name):
+            result = []
+            result.append(self.visit_docbook_sect(element))
+            result.extend(self.do_children(element))
+            return result
         method_name = 'visit_docbook_' + element.tag.name
         method = getattr(self, method_name, None)
         if method:
@@ -124,6 +132,29 @@ class Converter(object):
 
     def visit_docbook_para(self, element):
         return self.new_copy(moin_page.p, element, attrib={})
+
+    def visit_docbook_sect(self, element):
+        title = ''
+        for child in element:
+            if isinstance(child, ET.Element):
+                uri = child.tag.uri
+                name = self.docbook_namespace.get(uri, None)
+                if name == 'docbook' and child.tag.name == 'title':
+                    title = child
+        heading_level = element.tag.name[4]
+        key = moin_page('outline-level')
+        attrib = {}
+        attrib[key] = heading_level
+        return self.new(moin_page.h, attrib=attrib, children=title)
+
+    def visit_docbook_title(self, element):
+        """
+        Later we should add support for all the different kind of title.
+
+        But currently, only the section title are supported, so we do
+        not want to process it.
+        """
+        pass
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
