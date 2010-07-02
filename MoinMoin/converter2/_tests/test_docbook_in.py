@@ -65,7 +65,7 @@ class TestConverter(Base):
     def test_title(self):
         data = [
             ('<article><sect1><title>Heading 1</title> <para>First</para><sect2><title>Heading 2</title><para>Second</para></sect2></sect1></article>',
-             '/page/body[./h[@outline-level="1"][text()="Heading 1"]][./p[@text()="First"]][./h[@outline-level="2"][text()="Heading 2"]][./p[@text()="Second"]]'),
+             '/page/body[h[1][@outline-level="1"][text()="Heading 1"]][p[1][text()="First"]][h[2][@outline-level="2"][text()="Heading 2"]][p[2][text()="Second"]]'),
         ]
 
         for i in data:
