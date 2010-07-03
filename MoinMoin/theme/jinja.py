@@ -710,7 +710,7 @@ class JinjaTheme(ThemeBase):
         if pagename and page_parent_page:
             return page_parent_page
 
-    def has_supplementation_page(self):
+    def link_supplementation_page(self):
         """
         If the discussion page doesn't exist and the user
         has no right to create it, show a disabled link.
@@ -721,7 +721,7 @@ class JinjaTheme(ThemeBase):
         suppl_name_full = "%s/%s" % (self.page_name, suppl_name)
 
         test = Page(self.request, suppl_name_full)
-        return not(test.exists() and self.request.user.may.write(suppl_name_full))
+        return test.exists() or self.request.user.may.write(suppl_name_full)
 
     def add_msg(self, msg, msg_class=None):
         """
