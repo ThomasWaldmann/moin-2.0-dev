@@ -11,6 +11,7 @@
 import os
 import StringIO
 from jinja2 import Environment, FileSystemLoader, FileSystemBytecodeCache
+from werkzeug import Href
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -72,6 +73,7 @@ class JinjaTheme(ThemeBase):
                                 'cfg': self.request.cfg,
                                 '_': self.request.getText,
                                 'href': request.href,
+                                'static_href': self.request.static_href,
                                 'abs_href': request.abs_href,
                                 'translated_item_name': self.translated_item_name
                                 })
@@ -375,8 +377,7 @@ class JinjaTheme(ThemeBase):
             else:
                 alt, icon, w, h = '', icon, '', ''
 
-        img_url = "%s/%s/img/%s" % (self.cfg.url_prefix_static, self.name, icon)
-
+        img_url = self.request.static_href(self.name, 'img', icon)
         return alt, img_url, w, h
 
     def make_icon(self, icon, vars=None, **kw):
@@ -450,8 +451,8 @@ class JinjaTheme(ThemeBase):
         @rtype: tuple
         @return: parameters to render stylesheet in template
         """
-        if theme:
-            href = '%s/%s/css/%s.css' % (self.cfg.url_prefix_static, self.name, href)
+        if theme: 
+            href = self.request.static_href(self.name, 'css', '%s.css' % href)
         attrs = 'type="text/css" charset="%s" media="%s" href="%s"' % (
                 self.stylesheetsCharset, media, href, )
         return media, href, title
