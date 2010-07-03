@@ -186,7 +186,7 @@ class ReST(object):
         ('ordered', 'upper-roman'): 'I.',
         ('unordered', None): '*',
 # Next item is a hack, bug in moinwiki_in converter with ' def:: \n :: lis1\n :: list2' input
-        (None, None): '',
+        (None, None): ' ',
         }
 
     def __init__(self):
@@ -447,7 +447,7 @@ class Converter(object):
         label_type = (elem.get(moin_page.item_label_generate, None),
                         elem.get(moin_page.list_style_type, None))
         self.list_item_labels.append(
-            ReST.list_type.get(label_type, ''))
+            ReST.list_type.get(label_type, ' '))
         self.children.append(iter(elem))
         self.opened.append(elem)
         self.list_level += 1
@@ -577,9 +577,9 @@ class Converter(object):
                                 and self.last_closed != 'list_item_header'\
                                 and self.last_closed != 'list_item_footer'\
                                 and self.last_closed != 'p':
-                return ReST.linebreak + ' '* len(''.join(self.list_item_labels)) #(self.list_level + 1) 
+                return ReST.linebreak + ' '* (len(''.join(self.list_item_labels)) + 1) #(self.list_level + 1) 
             elif self.last_closed and self.last_closed == 'p':
-                return ReST.p + ' '* len(''.join(self.list_item_labels)) # self.list_level + 1)
+                return ReST.p + ' '* (len(''.join(self.list_item_labels)) + 1 ) # self.list_level + 1)
         return ''
 
     def close_moinpage_p(self, elem):
