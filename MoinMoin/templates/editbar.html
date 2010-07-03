@@ -65,7 +65,7 @@
     {% if 'Discussion' in cfg.edit_bar %}
         <li>
         {% if theme.link_supplementation_page() %}
-            <a class="nbsupplementation" href="{{ href(theme.page_name, do="supplementation") }}" rel="nofollow">
+            <a class="nbsupplementation" href="{{ href(theme.page_name, do="supplementation")|e }}" rel="nofollow">
                  {{ _(cfg.supplementation_page_name) }}
              </a>
         {% else %}
