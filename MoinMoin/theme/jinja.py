@@ -43,7 +43,7 @@ class JinjaTheme(ThemeBase):
         self.content_lang = self.request.content_lang
         self.content_dir = i18n.getDirection(self.content_lang)
         self._cache = {} # Used to cache elements that may be used several times
-        self._status = []
+        self.msg_list = []
         self._send_title_called = False
         
         jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
@@ -774,9 +774,12 @@ class JinjaTheme(ThemeBase):
             import traceback
             logging.warning("Calling add_msg() after send_title(): no message can be added.")
             logging.info('\n'.join(['Call stack for add_msg():'] + traceback.format_stack()))
-
             return
-        self._status.append((msg, msg_class))
+        try:
+            msg = msg.render()
+        except AttributeError:
+            msg = '<div class="%s">%s</div>' % (msg_class, msg)
+        self.msg_list.append(msg)
 
     # Public Functions ########################################################
     

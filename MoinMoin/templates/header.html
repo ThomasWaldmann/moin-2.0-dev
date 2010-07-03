@@ -82,11 +82,13 @@
 <div id="pageline">
     <hr style="display:none;">
 </div>
-
-{% set message = theme.msg() %} 
-{% if message %}
+ 
+{% if theme.msg_list %}
     <div id="message">
-        {{ message }}
+        {% for msg in theme.msg_list %}
+                <p>{{ msg }}</p>            
+        {% endfor %}
+        <a href="{{ href(theme.page_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
     </div>
 {% endif %}
 
