@@ -130,6 +130,59 @@ class NodeVisitor():
     def depart_definition_list_item(self, node):
         self.close_moin_page_node()
 
+    def visit_docinfo(self, node):
+        self.open_moin_page_node(moin_page.table())
+        self.open_moin_page_node(moin_page.table_body())
+
+    def depart_docinfo(self, node):
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+
+    def visit_author(self, node):
+        self.open_moin_page_node(moin_page.table_row())
+        self.open_moin_page_node(moin_page.table_cell())
+        self.open_moin_page_node(moin_page.strong())
+        # TODO: i18n for docutils:
+        self.open_moin_page_node("Author:")
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+        self.open_moin_page_node(moin_page.table_cell())
+
+    def depart_author(self,node):
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+
+    def visit_version(self, node):
+        self.open_moin_page_node(moin_page.table_row())
+        self.open_moin_page_node(moin_page.table_cell())
+        self.open_moin_page_node(moin_page.strong())
+        # TODO: i18n for docutils:
+        self.open_moin_page_node("Version:")
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+        self.open_moin_page_node(moin_page.table_cell())
+    
+    def depart_version(self, node):
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+
+    def visit_copyright(self, node):
+        self.open_moin_page_node(moin_page.table_row())
+        self.open_moin_page_node(moin_page.table_cell())
+        self.open_moin_page_node(moin_page.strong())
+        # TODO: i18n for docutils:
+        self.open_moin_page_node("Copyright:")
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+        self.open_moin_page_node(moin_page.table_cell())
+    
+    def depart_copyright(self, node):
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+
     def visit_emphasis(self, node):
         self.open_moin_page_node(moin_page.emphasis())
 
@@ -137,7 +190,7 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_entry(self, node):
-        new_element = moin_page.table_item()
+        new_element = moin_page.table_cell()
         if 'morerows' in node.attributes:
             new_element.set(moin_page.number_rows_spanned, repr(int(node['morerows'])+1))
         if 'morecols' in node.attributes:
