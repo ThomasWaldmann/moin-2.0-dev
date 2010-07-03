@@ -95,7 +95,8 @@ def preload_xml(context):
     xmlfile = context.cfg.preloaded_xml
     if xmlfile:
         context.cfg.preloaded_xml = None
-        tmp_backend = memory.MemoryBackend()
+        tmp_backend = router.RouterBackend([('/', memory.MemoryBackend())],
+                                           index_uri='sqlite://')
         unserialize(tmp_backend, xmlfile)
         # TODO optimize this, maybe unserialize could count items it processed
         item_count = 0

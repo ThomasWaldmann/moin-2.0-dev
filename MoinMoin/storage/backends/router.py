@@ -30,9 +30,7 @@ from MoinMoin.storage import StoredRevision as StoredRevisionBase
 
 from MoinMoin.storage.backends.indexing import IndexingBackendMixin, IndexingItemMixin, IndexingRevisionMixin
 
-from MoinMoin.storage.serialization import Serializable
-
-from UserDict import DictMixin
+from MoinMoin.storage.serialization import SerializableRevisionMixin, SerializableItemMixin, SerializableBackendMixin
 
 
 class BareRouterBackend(BackendBase):
@@ -130,7 +128,7 @@ class BareRouterBackend(BackendBase):
         return RouterItem(self, itemname, backend.create_item(itemname), mountpoint)
 
 
-class RouterBackend(IndexingBackendMixin, BareRouterBackend):
+class RouterBackend(SerializableBackendMixin, IndexingBackendMixin, BareRouterBackend):
     pass
 
 
@@ -305,7 +303,7 @@ class BareRouterItem(ItemBase):
         return self._item.destroy()
 
 
-class RouterItem(IndexingItemMixin, BareRouterItem):
+class RouterItem(SerializableItemMixin, IndexingItemMixin, BareRouterItem):
     pass
 
 
@@ -385,7 +383,7 @@ class BareNewRouterRevision(NewRevisionBase):
         return self._revision.destroy()
 
 
-class NewRouterRevision(IndexingRevisionMixin, BareNewRouterRevision):
+class NewRouterRevision(SerializableRevisionMixin, IndexingRevisionMixin, BareNewRouterRevision):
     pass
 
 class BareStoredRouterRevision(StoredRevisionBase):
@@ -447,6 +445,6 @@ class BareStoredRouterRevision(StoredRevisionBase):
         return self._revision.destroy()
 
 
-class StoredRouterRevision(IndexingRevisionMixin, BareStoredRouterRevision):
+class StoredRouterRevision(SerializableRevisionMixin, IndexingRevisionMixin, BareStoredRouterRevision):
     pass
 
