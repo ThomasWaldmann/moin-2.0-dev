@@ -223,7 +223,10 @@ class NodeVisitor():
 
     def visit_image(self, node):
         new_node = moin_page.object(attrib={xlink.href:node['uri']})
-        new_node.set(moin_page.alt, node.get('alt', node['uri']))
+        alt = node.get('alt', None)
+        if alt:
+            new_node.set(moin_page.alt, node['uri'])
+
         if 'width' in node:
             new_node.set(moin_page.width, node['width'])
         if 'height' in node:

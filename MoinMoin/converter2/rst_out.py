@@ -259,6 +259,9 @@ class Converter(object):
         self.subpage_level = [0, ]
         self.footnotes = []
         self.objects = []
+        self.all_used_references = []
+        self.anonymous_reference = None
+        self.used_references = []
         while self.children[-1]:
             try:
                 next_child = self.children[-1].next()
@@ -278,8 +281,11 @@ class Converter(object):
                             self.output.append('\n' + ' ' * (len(''.join(self.list_item_labels))+1)) #  (self.list_level + 1))
                     elif self.status[-1] == "text":
                         if self.last_closed == "p":
+                            self.define_references()
+                            """
                             self.output.extend(self.objects)
                             self.objects = []
+                            """
                             self.output.append('\n')
                     self.output.append(next_child)
                     self.last_closed = 'text'
@@ -292,11 +298,19 @@ class Converter(object):
                     self.output.append(close_ret)
                     if self.status[-1] == "text":
                         if self.last_closed == "p":
+                            self.define_references()
+                            """
                             self.output.extend(self.objects)
                             self.objects = []
+                            """
+        self.define_references()
+        """
         self.output.extend(self.objects)
         self.objects = []
-        self.output.append("\n\n.. [#]".join(self.footnotes))
+        """
+        notes = "\n\n".join(".. [#]_ %s" % note for note in self.footnotes)
+        if notes:
+            self.output.append("\n\n%s\n\n" % notes)
 
         return ''.join(self.output)
 
@@ -351,8 +365,20 @@ class Converter(object):
         text = ''.join(elem.itertext()).replace('\n', ' ')
 
         # TODO: check that links have different alt texts
-        self.objects.append("\n\n.. _%s: %s\n\n" % (text, href))
-        return "`%s`_" % (text)
+        if text in [ t for (t,h) in self.all_used_references]:
+            if (text, href) in self.all_used_references:
+                 return "`%s`_" % text
+            if not self.anonymous_reference:
+                self.anonymous_reference = href
+                self.used_references.insert(0, ("_", href))
+                return "`%s`__" % text
+            else:
+                while text in [ t for (t,h) in self.all_used_references]:
+                    text = text + "~"
+        self.used_references.append((text, href))
+        self.all_used_references.append((text, href))
+        #self.objects.append("\n\n.. _%s: %s\n\n" % (text, href))
+        return "`%s`_" % text
 
     def close_moinpage_a(self, elem):
         # dummy, open_moinpage_a does all the job
@@ -471,6 +497,7 @@ class Converter(object):
     def open_moinpage_list_item_body(self, elem):
         self.children.append(iter(elem))
         self.opened.append(elem)
+        self.define_references()
         ret = ''
         if self.last_closed:
             ret = '\n'
@@ -493,7 +520,7 @@ class Converter(object):
             if class_ == "footnote":
                 self.output = []
                 self.subpage.append(self.output)
-                return '[#]_'
+                return ''
         return ""
 
     def close_moinpage_note(self, elem):
@@ -513,9 +540,10 @@ class Converter(object):
         href = href[0].split('wiki.local:')[-1].split('attachment:')[-1]
         alt = elem.get(moin_page.alt, '')
         if not alt:
-            alt = href
-        ret = '|%s|' % alt
-        self.objects.append(".. |%s| image:: %s" % (alt, href))
+            ret = ''
+        else:
+            ret = '|%s|' % alt
+        self.objects.append("\n.. %s image:: %s\n" % (ret, href))
         return ret
 
     def open_moinpage_p(self, elem):
@@ -523,8 +551,15 @@ class Converter(object):
         self.opened.append(elem)
         #self.status.append("p")
         if self.status[-1] == 'text':
+            self.define_references()
+            """
+            self.all_used_references.extend(self.used_references)
             self.output.extend(self.objects)
+            self.output.append("\n\n%s\n\n" % "\n\n".join(".. _%s: %s" % link for link in self.used_references))
+            self.used_references = []
             self.objects = []
+            self.anonymous_reference = None
+            """
             if self.last_closed == 'text':
                 return ReST.p * 2
             elif self.last_closed == 'p':
@@ -765,6 +800,25 @@ class Converter(object):
 
     def close_moinpage_table_of_content(self, elem):
         return ''
+
+    def define_references(self):
+        self.all_used_references.extend(self.used_references)
+        self.output.extend(self.objects)
+        
+        space_bonus = 0
+        if len(''.join(self.list_item_labels)): space_bonus = 1
+        definitions = "\n\n".join(" "* (len(''.join(self.list_item_labels))+space_bonus) + ".. _%s: %s" % link for link in self.used_references)
+
+        if definitions:
+            if self.last_closed == 'list_item_label':
+                self.output.append("\n%s\n\n" % definitions)
+            else:
+                self.output.append("\n\n%s\n\n" % definitions)
+        self.used_references = []
+        self.objects = []
+        self.anonymous_reference = None
+        return
+
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
