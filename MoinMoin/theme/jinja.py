@@ -739,6 +739,22 @@ class JinjaTheme(ThemeBase):
             msg = '<div class="%s">%s</div>' % (msg_class, msg)
         self.msg_list.append(msg)
 
+    # Properties ##############################################################
+    
+    @property
+    def special_pagenames(self):
+        page_front_page = self.translated_item_name(self.cfg.page_front_page)
+        page_help_contents = self.translated_item_name('HelpContents')
+        page_title_index = self.translated_item_name('TitleIndex')
+        page_site_navigation = self.translated_item_name('SiteNavigation')
+        page_word_index = self.translated_item_name('WordIndex')
+        page_find_page =  self.translated_item_name('FindPage')
+        return [page_front_page, self.request.cfg.page_front_page,
+                page_title_index, 'TitleIndex',
+                page_find_page, 'FindPage',
+                page_site_navigation, 'SiteNavigation',
+               ]
+               
     # Public Functions ########################################################
     
     def send_title(self, text, content, **keywords):
@@ -756,7 +772,6 @@ class JinjaTheme(ThemeBase):
         """
         request = self.request
         _ = request.getText
-        rev = request.rev
 
         if keywords.has_key('page'):
             page = keywords['page']
@@ -775,17 +790,6 @@ class JinjaTheme(ThemeBase):
         self.head_title = text
         
         d = {'page': page}
-
-        # get name of system pages
-        page_front_page = self.translated_item_name(self.cfg.page_front_page)
-        page_help_contents = self.translated_item_name('HelpContents')
-        page_title_index = self.translated_item_name('TitleIndex')
-        page_site_navigation = self.translated_item_name('SiteNavigation')
-        page_word_index = self.translated_item_name('WordIndex')
-        page_help_formatting = self.translated_item_name('HelpOnFormatting')
-        page_find_page =  self.translated_item_name('FindPage')
-        home_page = wikiutil.getInterwikiHomePage(request)  # sorry theme API change!!! Either None or tuple (wikiname,pagename) now.
-        
         # Prepare the HTML <head> element
         user_head = [request.cfg.html_head]
 
@@ -801,16 +805,8 @@ class JinjaTheme(ThemeBase):
         d.update({
                  'user_head': user_head,
                  'html_head_keyword': keywords.get('html_head', ''),
-                 'special_pagename': [page_front_page, request.cfg.page_front_page,
-                                   page_title_index, 'TitleIndex',
-                                   page_find_page, 'FindPage',
-                                   page_site_navigation, 'SiteNavigation',
-                                   ]
-                 })
+                  })
 
-        #Using to render stylesheet acording to theme
-        d.update({'theme_stylesheets': self.stylesheets})
-        
         user_css_href = request.user.valid and request.user.css_url
         if user_css_href and user_css_href.lower() != "none":
             d.update({'user_css': user_css_href})
@@ -836,18 +832,10 @@ class JinjaTheme(ThemeBase):
             'script_name': scriptname,
             'title_text': text,
             'page': page,
-            'rev': rev,
             'pagesize': pagename and page.size() or 0,
             # exists checked to avoid creation of empty edit-log for non-existing pages
             'last_edit_info': exists and page.last_edit_info() or '',
             'page_name': pagename or '',
-            'page_find_page': page_find_page,
-            'page_front_page': page_front_page,
-            'home_page': home_page,
-            'page_help_contents': page_help_contents,
-            'page_help_formatting': page_help_formatting,
-            'page_title_index': page_title_index,
-            'page_word_index': page_word_index,
             'user_name': request.user.name,
             'user_valid': request.user.valid,
             'trail': keywords.get('trail', None),

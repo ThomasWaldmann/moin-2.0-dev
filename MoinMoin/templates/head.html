@@ -16,7 +16,7 @@
     {% elif theme.request.method == 'POST' or page.page_name in ['BadContent', 'LocalBadContent', ] %}
         {# we don't want to have BadContent stuff indexed: #}
         {{ cfg.html_head_posts }}
-    {% elif page.page_name in special_pagename %}
+    {% elif theme.page_name in theme.special_pagename %}
         {# if it is a special page, index it and follow the links - we do it #}
         {# for the original, English pages as well as for (the possibly modified frontpage #}
         {{ cfg.html_head_index }}
