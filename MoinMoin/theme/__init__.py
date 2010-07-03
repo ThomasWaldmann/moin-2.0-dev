@@ -1467,6 +1467,18 @@ actionsMenuInit('%(label)s');
                 'msg': self._status,
                 'trail': keywords.get('trail', None),
             }
+
+            # add quoted versions of pagenames
+            newdict = {}
+            for key in d:
+                if key.startswith('page_'):
+                    if not d[key] is None:
+                        newdict['q_'+key] = wikiutil.quoteWikinameURL(d[key])
+                    else:
+                        newdict['q_'+key] = None
+            d.update(newdict)
+            request.themedict = d
+
             # now call the theming code to do the rendering
             output.append(self.header(d))
 
