@@ -97,11 +97,14 @@ class NodeVisitor():
         pass
 
     def visit_block_quote(self, node):
-        # No needed elements in MoinDOM
-        pass
+        self.open_moin_page_node(moin_page.list())
+        self.open_moin_page_node(moin_page.list_item())
+        self.open_moin_page_node(moin_page.list_item_body())
 
     def depart_block_quote(self, node):
-        pass
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+        self.close_moin_page_node()
 
     def visit_bullet_list(self, node):
         self.open_moin_page_node(moin_page.list(attrib={moin_page.item_label_generate:'unordered'}))
