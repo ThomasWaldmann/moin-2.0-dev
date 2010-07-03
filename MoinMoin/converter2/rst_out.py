@@ -308,7 +308,7 @@ class Converter(object):
         self.output.extend(self.objects)
         self.objects = []
         """
-        notes = "\n\n".join(".. [#]_ %s" % note for note in self.footnotes)
+        notes = "\n\n".join(".. [#] %s" % note for note in self.footnotes)
         if notes:
             self.output.append("\n\n%s\n\n" % notes)
 
@@ -528,7 +528,7 @@ class Converter(object):
         self.footnotes.append("".join(self.output))
         self.subpage.pop()
         self.output = self.subpage[-1]
-        return ''
+        return '[#]_'
 
     def open_moinpage_object(self, elem):
         # TODO: object parametrs support
