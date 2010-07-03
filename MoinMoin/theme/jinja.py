@@ -401,34 +401,6 @@ class JinjaTheme(ThemeBase):
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
-    def msg(self):
-        """
-        Assemble the msg display
-
-        Display a message with a widget or simple strings with a clear message link.
-
-        @rtype: unicode
-        @return: msg display
-        """
-        _ = self.request.getText
-        msgs = self._status
-
-        result = u""
-        close = self.link_to(pagename=self.page.page_name, text=_('Clear message'), css_class="clear-link")
-        for msg, msg_class in msgs:
-            try:
-                result += u'<p>%s</p>' % msg.render()
-                close = ''
-            except AttributeError:
-                if msg and msg_class:
-                    result += u'<p><div class="%s">%s</div></p>' % (msg_class, msg)
-                elif msg:
-                    result += u'<p>%s</p>\n' % msg
-        if result:
-            html = result + close
-            return html
-        return ''
-
     def trail(self):
         """
         Assemble page trail
