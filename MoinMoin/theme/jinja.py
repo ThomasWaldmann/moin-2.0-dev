@@ -710,25 +710,18 @@ class JinjaTheme(ThemeBase):
         if pagename and page_parent_page:
             return page_parent_page
 
-    def supplementation_page_nameLink(self):
+    def has_supplementation_page(self):
         """
-        Return a link to the discussion page
-
         If the discussion page doesn't exist and the user
         has no right to create it, show a disabled link.
+        
+        @rtype: bool
         """
-        _ = self.request.getText
-        href = self.request.href
-        page = self.page
         suppl_name = self.request.cfg.supplementation_page_name
-        suppl_name_full = "%s/%s" % (page.page_name, suppl_name)
+        suppl_name_full = "%s/%s" % (self.page_name, suppl_name)
 
         test = Page(self.request, suppl_name_full)
-        if not test.exists() and not self.request.user.may.write(suppl_name_full):
-            return '<span class="disabled">%s</span>' % _(suppl_name)
-        else:
-            return '<a class="nbsupplementation" href="%s" rel="nofollow">%s</a>' % (href(page.page_name, do='supplementation'),
-                                                                                    _(suppl_name))
+        return not(test.exists() and self.request.user.may.write(suppl_name_full))
 
     def add_msg(self, msg, msg_class=None):
         """
