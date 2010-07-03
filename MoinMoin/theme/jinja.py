@@ -45,7 +45,6 @@ class JinjaTheme(ThemeBase):
         self.content_dir = i18n.getDirection(self.content_lang)
         self._cache = {} # Used to cache elements that may be used several times
         self.msg_list = []
-        self._send_title_called = False
         
         jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
         try:
@@ -743,11 +742,6 @@ class JinjaTheme(ThemeBase):
         """
         if not msg_class:
             msg_class = 'dialog'
-        if self._send_title_called:
-            import traceback
-            logging.warning("Calling add_msg() after send_title(): no message can be added.")
-            logging.info('\n'.join(['Call stack for add_msg():'] + traceback.format_stack()))
-            return
         try:
             msg = msg.render()
         except AttributeError:
@@ -883,7 +877,6 @@ class JinjaTheme(ThemeBase):
         request.write(self.render('header.html', d))
         request.write(content)
         request.write(self.render('footer.html', d))
-        self._send_title_called = True
 
     def render_content(self, item_name, content=None, title=None):
         """
