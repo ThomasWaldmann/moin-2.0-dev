@@ -9,9 +9,7 @@
 """
 
 import os
-import StringIO
 from jinja2 import Environment, FileSystemLoader, FileSystemBytecodeCache
-from werkzeug import Href
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
