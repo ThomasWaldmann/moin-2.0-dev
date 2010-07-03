@@ -57,6 +57,7 @@ class Request(ResponseBase, RequestBase):
             }.get(item[0], 50) # 50 -> other stuff is somewhere in the middle
         self.href = Href(self.script_root or '/', self.charset, sort=True, key=sort_key)
         self.abs_href = Href(self.url_root, self.charset, sort=True, key=sort_key)
+        self.static_href = Href(config.url_prefix_static, self.charset, sort=True, key=sort_key)
         self.headers = Headers([('Content-Type', 'text/html')])
         self.response = []
         self.status_code = 200
