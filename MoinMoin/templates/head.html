@@ -48,6 +48,9 @@
         {% endif %}
     </title>
     
+    <link rel="shortcut icon" href="{{ href(cfg.url_prefix_static, "favicon.ico") }}" />
+    <link rel="apple-touch-icon" href="{{ href(cfg.url_prefix_static, "favicon.ico") }}" />
+    
     <link rel="Search" href="{{ href(translated_item_name('FindPage'))|e }}">
     <link rel="Index" href="{{ href(translated_item_name('TitleIndex'))|e }}">
     <link rel="Glossary" href="{{ href(translated_item_name('WordIndex'))|e }}">
