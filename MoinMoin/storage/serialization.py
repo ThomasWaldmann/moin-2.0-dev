@@ -35,6 +35,8 @@ from xml.sax import parse as xml_parse
 from xml.sax.saxutils import XMLGenerator
 from xml.sax.handler import ContentHandler
 
+from MoinMoin.storage.error import ItemAlreadyExistsError
+
 class MoinContentHandler(ContentHandler):
     """
     ContentHandler that handles sax parse events and feeds them into the
@@ -586,4 +588,88 @@ class Data(Serializable):
                 break
             ch = Chunk(data)
             ch.serialize(xmlgen)
+
+
+class SerializableRevisionMixin(Serializable):
+    element_name = 'revision'
+
+    @property
+    def element_attrs(self):
+        return dict(revno=str(self.revno))
+
+    def endElement(self):
+        logging.debug("Committing %r revno %r" % (self.item.name, self.revno))
+        self.item.commit()
+
+    def get_unserializer(self, context, name, attrs):
+        if name == 'meta':
+            return Meta(attrs, self)
+        elif name == 'data':
+            return Data(attrs, write_fn=self.write)
+
+    def serialize(self, xmlgen):
+        if xmlgen.shall_serialize(item=self._item, rev=self):
+            super(SerializableRevisionMixin, self).serialize(xmlgen)
+
+    def serialize_value(self, xmlgen):
+        m = Meta({}, self)
+        m.serialize(xmlgen)
+        d = Data({}, read_fn=self.read)
+        d.serialize(xmlgen)
+
+
+class SerializableItemMixin(Serializable):
+    element_name = 'item'
+
+    @property
+    def element_attrs(self):
+        return dict(name=self.name)
+
+    def get_unserializer(self, context, name, attrs):
+        mode = context.revno_mode
+        if name == 'meta':
+            if mode == 'as_is':
+                # do not touch item meta data
+                return None # XXX give a dummy unserializer
+            elif mode == 'next':
+                # replace item meta data
+                return ItemMeta(attrs, self)
+        elif name == 'revision':
+            if mode == 'as_is':
+                revno = int(attrs['revno'])
+            elif mode == 'next':
+                revno = self.next_revno
+            return self.create_revision(revno)
+
+    def serialize(self, xmlgen):
+        if xmlgen.shall_serialize(item=self):
+            super(SerializableItemMixin, self).serialize(xmlgen)
+
+    def serialize_value(self, xmlgen):
+        im = ItemMeta({}, self)
+        im.serialize(xmlgen)
+        revnos = self.list_revisions()
+        if revnos:
+            current_revno = revnos[-1]
+            for revno in revnos:
+                if xmlgen.shall_serialize(item=self, revno=revno, current_revno=current_revno):
+                    rev = self.get_revision(revno)
+                    rev.serialize(xmlgen)
+
+
+class SerializableBackendMixin(Serializable):
+    element_name = 'backend'
+
+    def get_unserializer(self, context, name, attrs):
+        if name == 'item':
+            item_name = attrs['name']
+            try:
+                item = self.create_item(item_name)
+            except ItemAlreadyExistsError:
+                item = self.get_item(item_name)
+            return item
+
+    def serialize_value(self, xmlgen):
+        for item in self.iteritems():
+            item.serialize(xmlgen)
 
