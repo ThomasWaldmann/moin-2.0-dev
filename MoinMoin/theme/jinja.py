@@ -37,9 +37,9 @@ class JinjaTheme(ThemeBase):
         """
         self.request = request
         self.cfg = request.cfg     
-        self.ui_lang = self.request.lang
+        self.ui_lang = request.lang
         self.ui_dir = i18n.getDirection(self.ui_lang)
-        self.content_lang = self.request.content_lang
+        self.content_lang = request.content_lang
         self.content_dir = i18n.getDirection(self.content_lang)
         self.msg_list = []
         
@@ -66,10 +66,10 @@ class JinjaTheme(ThemeBase):
                                                                         rev[EDIT_LOG_HOSTNAME])
         self.env.globals.update({
                                 'theme': self,
-                                'cfg': self.request.cfg,
-                                '_': self.request.getText,
+                                'cfg': request.cfg,
+                                '_': request.getText,
                                 'href': request.href,
-                                'static_href': self.request.static_href,
+                                'static_href': request.static_href,
                                 'abs_href': request.abs_href,
                                 'translated_item_name': self.translated_item_name
                                 })
