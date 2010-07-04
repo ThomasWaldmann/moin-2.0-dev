@@ -132,11 +132,10 @@ class JinjaTheme(ThemeBase):
         
     def location_breadcrumbs(self):
         """
-        Assemble the title (now using breadcrumbs)
+        Assemble the location using breadcrumbs
 
-        @param page_name: name of the page
         @rtype: string
-        @return: title
+        @return: title in breadcrumbs
         """
         # just showing a page, no action
         page_name = self.page.page_name
@@ -400,11 +399,10 @@ class JinjaTheme(ThemeBase):
 
     def path_breadcrumbs(self):
         """
-        Assemble page trail
+        Assemble path breadcrumbs
 
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: trail items
+        @rtype: list
+        @return: path breadcrumbs items
         """
         request = self.request
         user = request.user
