@@ -130,7 +130,7 @@ class JinjaTheme(ThemeBase):
         link += '%s">%s</a>' % (wikiutil.escape(url, 0), text)
         return link
         
-    def title(self):
+    def location_breadcrumbs(self):
         """
         Assemble the title (now using breadcrumbs)
 
@@ -398,7 +398,7 @@ class JinjaTheme(ThemeBase):
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
-    def trail(self):
+    def path_breadcrumbs(self):
         """
         Assemble page trail
 

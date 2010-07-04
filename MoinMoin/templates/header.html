@@ -58,13 +58,13 @@
 
     <span id="pagelocation">
         <span class="pagepath">
-            {{ theme.title()|join('<span class="sep">/</span>') }}
+            {{ theme.location_breadcrumbs()|join('<span class="sep">/</span>') }}
         </span>
     </span>
 
 </h1>
 
-{% set trail_items = theme.trail() %}
+{% set trail_items = theme.path_breadcrumbs() %}
 {% if trail_items %}
     <div id="pagetrail">
         {{ trail_items|join('<span class="sep"> &raquo; </span>') }}
