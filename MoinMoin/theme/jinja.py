@@ -132,7 +132,7 @@ class JinjaTheme(ThemeBase):
         
     def location_breadcrumbs(self):
         """
-        Assemble the location using breadcrumbs
+        Assemble the location using breadcrumbs (was: title)
 
         @rtype: string
         @return: title in breadcrumbs
@@ -399,7 +399,7 @@ class JinjaTheme(ThemeBase):
 
     def path_breadcrumbs(self):
         """
-        Assemble path breadcrumbs
+        Assemble path breadcrumbs (a.k.a.: trail)
 
         @rtype: list
         @return: path breadcrumbs items
