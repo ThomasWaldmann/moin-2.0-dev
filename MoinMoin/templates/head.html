@@ -10,6 +10,8 @@
     
     {# Search engine precautions / optimizations #}
     
+    {{ cfg.html_head }}
+    
     {% if theme.request.query_string %}
         {# if it is an action or edit/search, send query headers (noindex,nofollow): #}
         {{ cfg.html_head_queries }}

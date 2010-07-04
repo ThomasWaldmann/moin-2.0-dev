@@ -781,8 +781,6 @@ class JinjaTheme(ThemeBase):
             page = Page(request, pagename)
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
-        scriptname = request.script_root
-        
         #Attributes to use directly in template
         # Or to reduce parameters of functions of JinjaTheme
         self.page = page
@@ -791,7 +789,7 @@ class JinjaTheme(ThemeBase):
         
         d = {'page': page}
         # Prepare the HTML <head> element
-        user_head = [request.cfg.html_head]
+        user_head = []
 
         #  add meta statement if user has doubleclick on edit turned on or it is default
         if (pagename and keywords.get('allow_doubleclick', 0) and
@@ -814,23 +812,12 @@ class JinjaTheme(ThemeBase):
         # Render with Jinja
         request.write(self.render('head.html', d))
 
-        # start the <body>
-        bodyattr = []
-        if keywords.has_key('body_attr'):
-            bodyattr.append(' ')
-            bodyattr.append(keywords['body_attr'])
-
-        body_onload = keywords.get('body_onload', '')
-        if body_onload:
-            d.update({'body_onload': body_onload})
-        d.update({'body_attr': ''.join(bodyattr)})
-
         # now call the theming code to do the rendering
         request.write(self.render('header.html', d))
         request.write(content)
         request.write(self.render('footer.html', d))
 
-    def render_content(self, item_name, content=None, title=None):
+    def render_content(self, item_name, content=None, title=None, page=None, pagename=None, allow_doubleclick=None, pi_refresh=None, html_head=None, trail=None):
         """
         Render some content plus Theme header/footer.
         If content is None, the normal Item content for item_name will be rendered.
@@ -849,11 +836,11 @@ class JinjaTheme(ThemeBase):
                                    content=content,
                                   )
             request.write(html)
-        else:
-            request.headers.add('Content-Type', 'text/html; charset=utf-8')
-            # Use user interface language for this generated page
-            request.setContentLanguage(request.lang)
-            request.theme.send_title(title, pagename=item_name, content=content)
+            return
+        request.headers.add('Content-Type', 'text/html; charset=utf-8')
+        # Use user interface language for this generated page
+        request.setContentLanguage(request.lang)
+        request.theme.send_title(title, pagename=item_name, content=content)
 
     #TODO: reimplement on-wiki-page sidebar definition with converter2
     
