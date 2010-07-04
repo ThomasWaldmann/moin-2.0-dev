@@ -138,15 +138,16 @@ class JinjaTheme(ThemeBase):
         @return: title in breadcrumbs
         """
         # just showing a page, no action
-        page_name = self.page.page_name
-        segments = page_name.split('/')
+        item_name = self.page.page_name
+        segments = item_name.split('/')
         content = []
-        curpage = ''
+        current_item = ''
         for s in segments:
-            curpage += s
-            link = self.link_to(pagename=curpage, text=s)   
-            content.append(link)
-            curpage += '/'
+            current_item += s
+            exists = Page(self.request, current_item).exists()
+            content.append((s, current_item, exists))
+            current_item += '/'
+        print content
         return content
 
     def username(self):
@@ -402,7 +403,7 @@ class JinjaTheme(ThemeBase):
         Assemble path breadcrumbs (a.k.a.: trail)
 
         @rtype: list
-        @return: path breadcrumbs items
+        @return: path breadcrumbs items in tuple (item_name, url, exists)
         """
         request = self.request
         user = request.user

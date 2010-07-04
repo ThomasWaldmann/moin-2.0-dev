@@ -58,7 +58,14 @@
 
     <span id="pagelocation">
         <span class="pagepath">
-            {{ theme.location_breadcrumbs()|join('<span class="sep">/</span>') }}
+            {% for item_name, url, exists in theme.location_breadcrumbs() %}
+                <a href="{{ href(url) }}" {% if not exists %}class="nonexistent"{% endif %}">
+                    {{ item_name }}
+                </a>
+                {% if not loop.last %}
+                    <span class="sep">/</span>
+                {% endif %}
+            {% endfor %}
         </span>
     </span>
 
