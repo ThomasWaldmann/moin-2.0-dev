@@ -786,7 +786,7 @@ class JinjaTheme(ThemeBase):
         #Attributes to use directly in template
         # Or to reduce parameters of functions of JinjaTheme
         self.page = page
-        self.page_name = page.page_name
+        self.page_name = page.page_name or ''
         self.head_title = text
         
         d = {'page': page}
@@ -824,22 +824,6 @@ class JinjaTheme(ThemeBase):
         if body_onload:
             d.update({'body_onload': body_onload})
         d.update({'body_attr': ''.join(bodyattr)})
-        
-        # TODO: Fix the print mode
-        exists = pagename and page.exists()
-        # prepare dict for theme code:
-        d.update({
-            'script_name': scriptname,
-            'title_text': text,
-            'page': page,
-            'pagesize': pagename and page.size() or 0,
-            # exists checked to avoid creation of empty edit-log for non-existing pages
-            'last_edit_info': exists and page.last_edit_info() or '',
-            'page_name': pagename or '',
-            'user_name': request.user.name,
-            'user_valid': request.user.valid,
-            'trail': keywords.get('trail', None),
-        })
 
         # now call the theming code to do the rendering
         request.write(self.render('header.html', d))
