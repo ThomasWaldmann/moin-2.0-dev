@@ -6,14 +6,14 @@
         when reading the html without a web server  
     #}
     
-    <meta http-equiv="Content-Type" content="{{ page.output_mimetype }};charset={{ page.output_charset }}">
+    <meta http-equiv="Content-Type" content="{{ theme.page.output_mimetype }};charset={{ theme.page.output_charset }}">
     
     {# Search engine precautions / optimizations #}
     
     {% if theme.request.query_string %}
         {# if it is an action or edit/search, send query headers (noindex,nofollow): #}
         {{ cfg.html_head_queries }}
-    {% elif theme.request.method == 'POST' or page.page_name in ['BadContent', 'LocalBadContent', ] %}
+    {% elif theme.request.method == 'POST' or theme.page_name in ['BadContent', 'LocalBadContent', ] %}
         {# we don't want to have BadContent stuff indexed: #}
         {{ cfg.html_head_posts }}
     {% elif theme.page_name in theme.special_pagename %}
@@ -62,10 +62,10 @@
     
     {# ueb refers to universal edit button #}
     {% if theme.universal_edit_button() %}
-        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href(page.page_name, do='modify')|e }}">
+        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href(theme.page_name, do='modify')|e }}">
     {% endif %}   
     
-    <link rel="alternate" title="{{ page.page_name|e }} changes" href="{{ href(page.page_name, do='atom_feed')|e }}" type="application/atom+xml">
+    <link rel="alternate" title="{{ theme.page_name|e }} changes" href="{{ href(theme.page_name, do='atom_feed')|e }}" type="application/atom+xml">
     {{ html_head_keywords }}    
     
     {% for src in ['svg', 'common'] %}
