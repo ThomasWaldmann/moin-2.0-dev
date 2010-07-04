@@ -757,7 +757,7 @@ class JinjaTheme(ThemeBase):
                
     # Public Functions ########################################################
     
-    def send_title(self, text, content, **keywords):
+    def send_title(self, text, content=None, **keywords):
         """
         Output the page header (and title).
 
@@ -787,60 +787,59 @@ class JinjaTheme(ThemeBase):
         self.page_name = page.page_name or ''
         self.head_title = text
         
-        d = {'page': page}
-        # Prepare the HTML <head> element
-        user_head = []
-
-        #  add meta statement if user has doubleclick on edit turned on or it is default
-        if (pagename and keywords.get('allow_doubleclick', 0) and
-            request.user.edit_on_doubleclick):
-            if request.user.may.write(pagename):  # separating this gains speed
-                user_head.append('<meta name="edit_on_doubleclick" content="1">\n')
-
-        if 'pi_refresh' in keywords and keywords['pi_refresh']:
-            user_head.append('<meta http-equiv="refresh" content="%d;URL=%s">' % keywords['pi_refresh'])
-
-        d.update({
-                 'user_head': user_head,
-                 'html_head_keyword': keywords.get('html_head', ''),
-                  })
-
-        user_css_href = request.user.valid and request.user.css_url
-        if user_css_href and user_css_href.lower() != "none":
-            d.update({'user_css': user_css_href})
-        
         # Render with Jinja
-        request.write(self.render('head.html', d))
+        request.write(self.render('head.html', {}))
 
         # now call the theming code to do the rendering
-        request.write(self.render('header.html', d))
+        request.write(self.render('header.html', {}))
         request.write(content)
-        request.write(self.render('footer.html', d))
+        request.write(self.render('footer.html', {}))
 
-    def render_content(self, item_name, content=None, title=None, page=None, pagename=None, allow_doubleclick=None, pi_refresh=None, html_head=None, trail=None):
+    def render_content(self, item_name, content=None, title=None, page=None, pagename=None,
+                        allow_doubleclick=None, pi_refresh=None, html_head=None, trail=None, **keywords):
         """
         Render some content plus Theme header/footer.
         If content is None, the normal Item content for item_name will be rendered.
         """
         request = self.request
+        _ = request.getText
+
+        #TODO: Have to fix this code (looks ugly for me)
+        if keywords.has_key('page'):
+            page = keywords['page']
+            pagename = page.page_name
+        else:
+            pagename = item_name
+            page = Page(request, pagename)
+        if keywords.get('msg', ''):
+            raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
+
         if content is None:
             item = Item.create(request, item_name)
             content = item.do_show()
         if title is None:
             title = item_name
-        if getattr(request.cfg, 'templating', False):
-            template = self.env.get_template('base.html')
-            html = template.render(gettext=self.request.getText,
-                                   item_name=item_name,
-                                   title=title,
-                                   content=content,
-                                  )
-            request.write(html)
-            return
+            
+        #Attributes to use directly in template
+        # Or to reduce parameters of functions of JinjaTheme
+        self.page = page
+        self.page_name = page.page_name or ''
+        self.head_title = title
+        
+        template = self.env.get_template('base.html')
+        html = template.render(gettext=self.request.getText,
+                               item_name=item_name,
+                               title=title,
+                               content=content,
+                               allow_doubleclick=allow_doubleclick,
+                               pi_refresh=pi_refresh,
+                               html_head=html_head,
+                               trail=trail,
+                              )
+        request.write(html)
         request.headers.add('Content-Type', 'text/html; charset=utf-8')
         # Use user interface language for this generated page
         request.setContentLanguage(request.lang)
-        request.theme.send_title(title, pagename=item_name, content=content)
 
     #TODO: reimplement on-wiki-page sidebar definition with converter2
     
