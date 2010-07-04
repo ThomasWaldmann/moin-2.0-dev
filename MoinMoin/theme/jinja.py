@@ -41,7 +41,6 @@ class JinjaTheme(ThemeBase):
         self.ui_dir = i18n.getDirection(self.ui_lang)
         self.content_lang = self.request.content_lang
         self.content_dir = i18n.getDirection(self.content_lang)
-        self._cache = {} # Used to cache elements that may be used several times
         self.msg_list = []
         
         jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')

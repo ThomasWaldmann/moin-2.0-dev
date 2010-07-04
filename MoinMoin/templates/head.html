@@ -18,7 +18,7 @@
     {% elif theme.request.method == 'POST' or theme.page_name in ['BadContent', 'LocalBadContent', ] %}
         {# we don't want to have BadContent stuff indexed: #}
         {{ cfg.html_head_posts }}
-    {% elif theme.page_name in theme.special_pagename %}
+    {% elif theme.page_name in theme.special_pagenames %}
         {# if it is a special page, index it and follow the links - we do it #}
         {# for the original, English pages as well as for (the possibly modified frontpage #}
         {{ cfg.html_head_index }}
@@ -34,10 +34,9 @@
     {% if pi_refresh %}
         {{ '<meta http-equiv="refresh" content="%d;URL=%s"' % pi_refresh }}
     {% endif %}
-    {% if theme.page_name and allow_doubleclick and theme.request.user.edit_on_doubleclick %}
-        {% if request.user.may.write(theme.page_name) %}
+    {% if theme.page_name and allow_doubleclick and 
+        theme.request.user.edit_on_doubleclick and request.user.may.write(theme.page_name) %}
             <meta name="edit_on_doubleclick" content="1">
-        {% endif %}
     {% endif %}
       
     {% set meta_keywords = theme.request.getPragma('keywords') %}
