@@ -92,6 +92,56 @@ class Converter(object):
         # Otherwise we process the children of the unknown element
         return self.do_children(element)
 
+    def visit_moinpage_list(self, element):
+        """
+        Function called to handle the conversion of list.
+
+        It will called a specific function to handle (un)ordered list,
+        with the appropriate DocBook tag.
+
+        Or a specific function to handle definition list.
+        """
+
+        item_label_generate = element.get(moin_page('item-label-generate'))
+        if 'ordered' == item_label_generate:
+            #TODO : Attrib
+            return self.handle_simple_list(docbook.orderedlist, element, attrib={})
+        elif 'unordered' == item_label_generate:
+            return self.handle_simple_list(docbook.itemizedlist, element, attrib={})
+        # TODO : Definition List
+
+    def visit_moinpage_list_item_body(self, element):
+        items = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                r = self.visit(child)
+                if r is None:
+                    r = ()
+                elif not isinstance(r, (list, tuple)):
+                    r = (r, )
+                items.extend(r)
+            else:
+                an_item = ET.Element(docbook.para, attrib={}, children=child)
+                items.append(an_item)
+        return ET.Element(docbook.listitem, attrib={}, children=items)
+
+    def handle_simple_list(self, docbook_tag, element, attrib):
+        list_items = []
+        for child in element:
+          if isinstance (child, ET.Element):
+              # We do not care about <list-item>
+              if child.tag.name != 'list-item':
+                  r = self.visit(child)
+              else:
+                  r = self.do_children(child)
+
+              if r is None:
+                  r = ()
+              elif not isinstance(r, (list, tuple)):
+                  r = (r, )
+              list_items.extend(r)
+        return ET.Element(docbook_tag, attrib=attrib, children=list_items)
+
     def visit_moinpage_page(self, element):
         for item in element:
             if item.tag.uri == moin_page and item.tag.name == 'body':
