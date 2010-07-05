@@ -87,6 +87,10 @@ class TestConverter(Base):
                 '/div/hr'),
             ('<page:page><page:body><page:div><page:p>Text</page:p></page:div></page:body></page:page>',
                 '/div/div[p="Text"]'),
+            ('<page:page><page:body><page:div><page:blockquote>Quotation</page:blockquote></page:div></page:body></page:page>',
+                '/div/div[blockquote="Quotation"]'),
+            ('<page:page><page:body><page:div><page:p><page:quote>Quotation</page:quote></page:p></page:div></page:body></page:page>',
+                '/div/div/p[quote="Quotation"]'),
         ]
         for i in data:
             yield (self.do, ) + i
