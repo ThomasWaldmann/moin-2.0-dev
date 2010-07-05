@@ -147,7 +147,6 @@ class JinjaTheme(ThemeBase):
             exists = Page(self.request, current_item).exists()
             content.append((s, current_item, exists))
             current_item += '/'
-        print content
         return content
 
     def username(self):
@@ -670,7 +669,6 @@ class JinjaTheme(ThemeBase):
             'options': '\n'.join(options),
             'rev_field': rev is not None and '<input type="hidden" name="rev" value="%d">' % rev or '',
             'do_button': _("Do"),
-            'url': self.request.href(page.page_name),
             }
         return self.render('actions_menu.html', data)
 
