@@ -92,8 +92,8 @@ class Converter(object):
         # Otherwise we process the children of the unknown element
         return self.do_children(element)
 
-    def visit_moinpage_page(self, elem):
-        for item in elem:
+    def visit_moinpage_page(self, element):
+        for item in element:
             if item.tag.uri == moin_page and item.tag.name == 'body':
                 return self.new_copy(docbook.article, item, attrib={})
 
