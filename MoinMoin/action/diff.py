@@ -77,6 +77,4 @@ def execute(item_name, request):
     item = Item.create(request, item_name, mimetype=commonmt, rev_no=newrevno)
     content = item.do_diff(oldrev, newrev)
     # Have to do this because Item renders itself diff.html
-    request.headers.add('Content-Type', 'text/html; charset=utf-8')
-    request.write(content)
-
+    return content
