@@ -7,7 +7,6 @@
             <th>Item name</th>
             <th>Revision #</th>
             <th>Revision type</th>
-            <th>Extra</th>
             <th>Submitter</th>
             <th>Comment</th>
         </tr>
@@ -19,7 +18,6 @@
                 {% if rev.item.name != rev.name %} ({{ rev.name|e }}){% endif %}</td>
             <td>{{ rev.revno }}</td>
             <td>{{ rev.mimetype }}</td>
-            <td>{{ rev.edit_log_extra }}</td>
             <td>{{ rev|user_format }}</td>
             <td>{{ rev.edit_log_comment }}</td>
         </tr>
