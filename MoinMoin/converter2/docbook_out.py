@@ -141,18 +141,18 @@ class Converter(object):
     def handle_simple_list(self, docbook_tag, element, attrib):
         list_items = []
         for child in element:
-          if isinstance (child, ET.Element):
-              # We do not care about <list-item>
-              if child.tag.name != 'list-item':
-                  r = self.visit(child)
-              else:
-                  r = self.do_children(child)
+            if isinstance(child, ET.Element):
+                # We do not care about <list-item>
+                if child.tag.name != 'list-item':
+                    r = self.visit(child)
+                else:
+                    r = self.do_children(child)
 
-              if r is None:
-                  r = ()
-              elif not isinstance(r, (list, tuple)):
-                  r = (r, )
-              list_items.extend(r)
+                if r is None:
+                    r = ()
+                elif not isinstance(r, (list, tuple)):
+                    r = (r, )
+                list_items.extend(r)
         return ET.Element(docbook_tag, attrib=attrib, children=list_items)
 
     def visit_moinpage_page(self, element):
