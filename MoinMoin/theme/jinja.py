@@ -415,9 +415,9 @@ class JinjaTheme(ThemeBase):
                     try:
                         interwiki, page = wikiutil.split_interwiki(pagename)
                         if interwiki != request.cfg.interwikiname and interwiki != 'Self':
-                            link = (self.request.formatter.interwikilink(True, interwiki, page) +
+                            link = (request.formatter.interwikilink(True, interwiki, page) +
                                     self.shortenPagename(page) +
-                                    self.request.formatter.interwikilink(False, interwiki, page))
+                                    request.formatter.interwikilink(False, interwiki, page))
                             items.append(link)
                             continue
                         else:
@@ -431,7 +431,8 @@ class JinjaTheme(ThemeBase):
                     link = self.link_to(pagename=page.page_name, text=title)
                     items.append(link)
                 return items
-        return []
+        dummy_trail = [('TODO', 'TODO', False), ('HelpContents', 'HelpContents', True)]
+        return dummy_trail
      
     def _stylesheet_link(self, theme, media, href, title=None):
         """
