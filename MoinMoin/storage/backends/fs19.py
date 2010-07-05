@@ -32,7 +32,7 @@ logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil, config
 from MoinMoin.storage import Backend, Item, StoredRevision
-from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, \
+from MoinMoin.items import ACL, MIMETYPE, NAME, NAME_OLD, REVERTED_TO, \
                            EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, \
                            EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT, \
                            IS_SYSPAGE, SYSPAGE_VERSION
@@ -483,6 +483,10 @@ class EditLog(LogFile):
             elif action == 'SAVE/RENAME':
                 if extra:
                     result[NAME_OLD] = extra
+                del result[EDIT_LOG_EXTRA]
+            elif action == 'SAVE/REVERT':
+                if extra:
+                    result[REVERTED_TO] = int(extra)
                 del result[EDIT_LOG_EXTRA]
         userid = result[EDIT_LOG_USERID]
         if userid:
