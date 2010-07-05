@@ -8,7 +8,7 @@
                 }
                 this.selectedIndex = 0;">
             {% for do, disabled, title in options %}
-                <option value="{{ do }}" {{ disabled }}> {{ title }}</option>
+                <option value="{{ do }}" {% if disabled %}disabled class="disabled"{% endif %}> {{ title }}</option>
             {% endfor %}
         </select>
         <input type="submit" value="{{ _('Do') }}">
