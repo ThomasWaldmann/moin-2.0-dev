@@ -1,15 +1,18 @@
 <div id="content">
     <h1>Recent Changes</h1>
     <table id="recentchanges">
-        <tr>
-            <th>Timestamp</th>
-            <th>Action</th>
-            <th>Item name</th>
-            <th>Revision #</th>
-            <th>Revision type</th>
-            <th>Submitter</th>
-            <th>Comment</th>
-        </tr>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Item name</th>
+                <th>Revision #</th>
+                <th>Revision type</th>
+                <th>Submitter</th>
+                <th>Comment</th>
+            </tr>
+        </thead>
+        <tbody>
         {% for rev in history %}
         <tr>
             <td>{{ rev.timestamp|datetime_format }}</td>
@@ -22,5 +25,6 @@
             <td>{{ rev.edit_log_comment }}</td>
         </tr>
         {% endfor %}
+        </tbody>
     </table>
 </div>
