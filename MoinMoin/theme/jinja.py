@@ -263,7 +263,7 @@ class JinjaTheme(ThemeBase):
 
         # Use localized pages for the current user
         if localize:
-            page = wikiutil.getLocalizedPage(request, pagename)
+            page = self.translated_item_name(pagename)
         else:
             page = Page(request, pagename)
 
