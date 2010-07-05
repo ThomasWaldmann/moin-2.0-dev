@@ -127,7 +127,7 @@ class Converter(object):
         self.opened = [None, ]
         self.children = [None, iter([root])]
         self.output = []
-        self.list_item_lable = []
+        self.list_item_label = []
         self.subpage = [self.output]
         self.subpage_level = [0, ]
         while self.children[-1]:
@@ -326,21 +326,20 @@ class Converter(object):
     def open_moinpage_list_item_label(self, elem):
         ret = ''
         if self.list_item_labels[-1] == '' or self.list_item_labels[-1] == Moinwiki.definition_list_marker:
-            label = ''.join(elem.itertext())
-            if label:
-                self.list_item_labels[-1] = Moinwiki.definition_list_marker
-                self.list_item_label = self.list_item_labels[-1] + ' '
-                # TODO: rewrite this using % formatting
-                ret = ' ' * self.list_level + label + Moinwiki.definition_list_marker
-                if self.last_closed:
-                    ret = '\n%s' % ret
-                else:
-                    ret = '%s\n' % ret
-                return ret
+            self.list_item_labels[-1] = Moinwiki.definition_list_marker
+            self.list_item_label = self.list_item_labels[-1] + ' '
+            self.children.append(iter(elem))
+            self.opened.append(elem)
+            # TODO: rewrite this using % formatting
+            # TODO: delete self.list_level from everywhere 
+            ret = ' ' * (len(''.join(self.list_item_labels[:-1])) + len(self.list_item_labels[:-1]))# self.list_level
+            if self.last_closed:
+                ret = '\n%s' % ret
+            return ret
         return ''
 
     def close_moinpage_list_item_label(self, elem):
-        return ''
+        return Moinwiki.definition_list_marker
 
     def open_moinpage_list_item_body(self, elem):
         self.children.append(iter(elem))
@@ -348,7 +347,7 @@ class Converter(object):
         ret = ''
         if self.last_closed:
             ret = '\n'
-        ret += ' ' * self.list_level + self.list_item_label
+        ret += ' ' * (len(''.join(self.list_item_labels[:-1])) + len(self.list_item_labels[:-1])) + self.list_item_label
         return ret
 
     def close_moinpage_list_item_body(self, elem):
@@ -405,7 +404,8 @@ class Converter(object):
         elif self.status[-2] == 'list':
             if self.last_closed and self.last_closed != 'list_item'\
                                 and self.last_closed != 'list_item_header'\
-                                and self.last_closed != 'list_item_footer':
+                                and self.last_closed != 'list_item_footer'\
+                                and self.last_closed != 'list_item_label':
                 return Moinwiki.linebreak
         return ''
 
