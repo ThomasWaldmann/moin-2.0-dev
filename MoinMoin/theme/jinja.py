@@ -563,6 +563,9 @@ class JinjaTheme(ThemeBase):
         enabled browsers, and acceptable behavior for those who prefer
         not to use Javascript.
 
+        TODO: Move actionsMenuInit() into body onload - requires that the theme will render body,
+        it is currently done in wikiutil/page.
+
         @param page: current page, Page object
         @rtype: unicode
         @return: actions menu html fragment
