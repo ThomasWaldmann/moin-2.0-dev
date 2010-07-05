@@ -240,7 +240,7 @@ class Converter(object):
         self.table_rowstyle = ''
         self.table_rowclass = ''
 
-        self.list_item_labels = ['', ]
+        self.list_item_labels = []
         self.list_item_label = ''
         self.list_level = -1
 
@@ -274,11 +274,12 @@ class Converter(object):
                         if self.last_closed == "p":
                             self.output.append('\n\n')
                     elif self.status[-1] == "list":
+                        # TODO: delete space_bonus and self.list_level everywhere
                         space_bonus = 0
                         if len(''.join(self.list_item_labels))-1: space_bonus = 1
-                        next_child = next_child.replace(u'\n', u'\n' + u' ' * (len(''.join(self.list_item_labels))+1+space_bonus)) # (self.list_level + 1))
+                        next_child = next_child.replace(u'\n', u'\n' + u' ' * (len(''.join(self.list_item_labels))+len(self.list_item_labels))) # (self.list_level + 1))
                         if self.last_closed == "p":
-                            self.output.append('\n' + ' ' * (len(''.join(self.list_item_labels))+1)) #  (self.list_level + 1))
+                            self.output.append('\n' + ' ' * (len(''.join(self.list_item_labels))+len(self.list_item_labels))) #  (self.list_level + 1))
                     elif self.status[-1] == "text":
                         if self.last_closed == "p":
                             self.define_references()
@@ -387,7 +388,7 @@ class Converter(object):
     def open_moinpage_blockcode(self, elem):
         text = ''.join(elem.itertext())
         max_subpage_lvl = 3
-        text = text.replace('\n', '\n  '+' '*len(''.join(self.list_item_labels)))# self.list_level+1))
+        text = text.replace('\n', '\n  '+' '*(len(''.join(self.list_item_labels))+len(self.list_item_labels)))# self.list_level+1))
         if self.list_level>=0:
             while self.output and re.match(r'(\n*)\Z', self.output[-1]):
                 self.output.pop()
@@ -396,7 +397,7 @@ class Converter(object):
                 i = -len(re.search(last_newlines,self.output[-1]).groups(1))
                 self.output[-1] = self.output[-1][:i]
         
-        ret = "::\n\n  %s%s\n\n" % (' '*len(''.join(self.list_item_labels)), text)
+        ret = "::\n\n  %s%s\n\n" % (' '*(len(''.join(self.list_item_labels))+len(self.list_item_labels)), text)
         return ret
 
     def close_moinpage_blockcode(self, elem):
@@ -440,7 +441,7 @@ class Converter(object):
 
     def open_moinpage_line_break(self, elem):
         if self.status[-1] == "list":
-            return ReST.linebreak + ' ' * len(''.join(self.list_item_labels)) #(self.list_level + 1)
+            return ReST.linebreak + ' ' * (len(''.join(self.list_item_labels))+len(self.list_item_labels)) #(self.list_level + 1)
         return ReST.linebreak
 
     def open_moinpage_list(self, elem):
@@ -485,7 +486,7 @@ class Converter(object):
                 # TODO: rewrite this using % formatting
             space_bonus = 0
             if len(''.join(self.list_item_labels[:-1])): space_bonus = 1
-            ret = ' ' * (len(''.join(self.list_item_labels[:-1])) + space_bonus)# self.list_level
+            ret = ' ' * (len(''.join(self.list_item_labels[:-1])) + len(self.list_item_labels[:-1]))# self.list_level
             if self.last_closed:
                 ret = '\n%s' % ret
             return ret
@@ -503,7 +504,7 @@ class Converter(object):
             ret = '\n'
         space_bonus = 0
         if len(''.join(self.list_item_labels[:-1])): space_bonus = 1
-        ret += ' ' * (len(''.join(self.list_item_labels[:-1]))+space_bonus) + self.list_item_label
+        ret += ' ' * (len(''.join(self.list_item_labels[:-1]))+len(self.list_item_labels[:-1])) + self.list_item_label
         if self.list_item_labels[-1] in ['1.', 'i.', 'I.', 'a.', 'A.']:
             self.list_item_labels[-1] = '#.'
         return ret
