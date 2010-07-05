@@ -59,7 +59,8 @@ class Table(object):
         self.table.append(row)
         if self.i > 0:
             if len(self.table[-2]) > (self.j):
-                self.add_cell(self.table[-2][self.j][0], self.table[-2][self.j][1] - 1, Cell(''))
+                self.add_cell(self.table[-2][self.j][0],
+                                self.table[-2][self.j][1] - 1, Cell(''))
         return row
 
     def add_cell(self, cs, rs, cell):
@@ -71,7 +72,8 @@ class Table(object):
         self.j += cs
         if self.i > 0:
             if len(self.table[-2]) > self.j:
-                self.add_cell(self.table[-2][self.j][0], self.table[-2][self.j][1] - 1, Cell(''))
+                self.add_cell(self.table[-2][self.j][0],
+                                self.table[-2][self.j][1] - 1, Cell(''))
         return
 
     def height(self):
@@ -137,7 +139,9 @@ class Table(object):
                         if self.table[row][col][2].height() <= i:
                             line.append(''.ljust(cols[col])[:cols[col]])
                         else:
-                            line.append(self.table[row][col][2]().split('\n')[i].ljust(cols[col])[:cols[col]])
+                            line.append(
+                                self.table[row][col][2]().split(
+                                    '\n')[i].ljust(cols[col])[:cols[col]])
                         if self.table[row][col][0] > 1:
                             line.append(' ')
                         else:
@@ -153,7 +157,9 @@ class Table(object):
                     else:
                         line.append('-'*cols[col])
                     if self.table[row][col][0] > 1:
-                        if row + 1 < len(rows) and self.table[row + 1][col][0] > 1 or row + 1 >= len(rows):
+                        if row + 1 < len(rows)\
+                                and self.table[row + 1][col][0] > 1\
+                                or row + 1 >= len(rows):
                             line.append('-')
                         else:
                             line.append('+')
@@ -185,7 +191,6 @@ class ReST(object):
         ('ordered', 'lower-roman'): 'i.',
         ('ordered', 'upper-roman'): 'I.',
         ('unordered', None): '*',
-# Next item is a hack, bug in moinwiki_in converter with ' def:: \n :: lis1\n :: list2' input
         (None, None): ' ',
         }
 
@@ -246,8 +251,10 @@ class Converter(object):
 
         # 'text' - default status - <p> = '/n' and </p> = '/n'
         # 'table' - text inside table - <p> = '<<BR>>' and </p> = ''
-        # 'list' - text inside list - <p> if after </p> = '<<BR>>' and </p> = ''
-        # status added because of differences in interpretation of <p> in different places
+        # 'list' - text inside list -
+        #       <p> if after </p> = '<<BR>>' and </p> = ''
+        # status added because of
+        #  differences in interpretation of <p> in different places
     def __call__(self, root):
         self.status = ['text', ]
         self.last_closed = None
@@ -274,12 +281,16 @@ class Converter(object):
                         if self.last_closed == "p":
                             self.output.append('\n\n')
                     elif self.status[-1] == "list":
-                        # TODO: delete space_bonus and self.list_level everywhere
-                        space_bonus = 0
-                        if len(''.join(self.list_item_labels))-1: space_bonus = 1
-                        next_child = next_child.replace(u'\n', u'\n' + u' ' * (len(''.join(self.list_item_labels))+len(self.list_item_labels))) # (self.list_level + 1))
+                        next_child =\
+                            next_child.replace(u'\n',\
+                                u'\n'\
+                                + u' '*(len(''.join(self.list_item_labels))\
+                                     + len(self.list_item_labels)))
                         if self.last_closed == "p":
-                            self.output.append('\n' + ' ' * (len(''.join(self.list_item_labels))+len(self.list_item_labels))) #  (self.list_level + 1))
+                            self.output.append('\n'\
+                                    + ' '\
+                                    * (len(''.join(self.list_item_labels))\
+                                       + len(self.list_item_labels)))
                     elif self.status[-1] == "text":
                         if self.last_closed == "p":
                             self.define_references()
@@ -309,7 +320,7 @@ class Converter(object):
         self.output.extend(self.objects)
         self.objects = []
         """
-        notes = "\n\n".join(".. [#] %s" % note for note in self.footnotes)
+        notes = "\n\n".join(".. [#] %s" % note.replace("\n", "\n  ") for note in self.footnotes)
         if notes:
             self.output.append("\n\n%s\n\n" % notes)
 
@@ -355,26 +366,18 @@ class Converter(object):
     def open_moinpage_a(self, elem):
         href = elem.get(xlink.href, None)
 
-        # This part doesn't work in moinwiki_in converter
-        params = {}
-        params['target'] = elem.get(xlink.target, None)
-        params['class'] = elem.get(xlink.class_, None)
-        params['title'] = elem.get(xlink.title, None)
-        params['accesskey'] = elem.get(xlink.accesskey, None)
-        params = ','.join(['%s=%s' % (p, params[p]) for p in params if params[p]])
-
         text = ''.join(elem.itertext()).replace('\n', ' ')
 
         # TODO: check that links have different alt texts
-        if text in [ t for (t,h) in self.all_used_references]:
+        if text in [t for (t, h) in self.all_used_references]:
             if (text, href) in self.all_used_references:
-                 return "`%s`_" % text
+                return "`%s`_" % text
             if not self.anonymous_reference:
                 self.anonymous_reference = href
                 self.used_references.insert(0, ("_", href))
                 return "`%s`__" % text
             else:
-                while text in [ t for (t,h) in self.all_used_references]:
+                while text in [t for (t, h) in self.all_used_references]:
                     text = text + "~"
         self.used_references.append((text, href))
         self.all_used_references.append((text, href))
@@ -388,16 +391,20 @@ class Converter(object):
     def open_moinpage_blockcode(self, elem):
         text = ''.join(elem.itertext())
         max_subpage_lvl = 3
-        text = text.replace('\n', '\n  '+' '*(len(''.join(self.list_item_labels))+len(self.list_item_labels)))# self.list_level+1))
-        if self.list_level>=0:
+        text = text.replace('\n', '\n  '\
+                                  + ' ' * (len(''.join(self.list_item_labels))\
+                                         + len(self.list_item_labels)))
+        if self.list_level >= 0:
             while self.output and re.match(r'(\n*)\Z', self.output[-1]):
                 self.output.pop()
             last_newlines = r'(\n*)\Z'
             if self.output:
-                i = -len(re.search(last_newlines,self.output[-1]).groups(1))
+                i = -len(re.search(last_newlines, self.output[-1]).groups(1))
                 self.output[-1] = self.output[-1][:i]
-        
-        ret = "::\n\n  %s%s\n\n" % (' '*(len(''.join(self.list_item_labels))+len(self.list_item_labels)), text)
+
+        ret = "::\n\n  %s%s\n\n" % (' '\
+                                    * (len(''.join(self.list_item_labels))\
+                                       + len(self.list_item_labels)), text)
         return ret
 
     def close_moinpage_blockcode(self, elem):
@@ -405,7 +412,9 @@ class Converter(object):
         return ''
 
     def open_moinpage_code(self, elem):
-        ret = "%s%s%s" % (ReST.monospace, ''.join(elem.itertext()), ReST.monospace)
+        ret = "%s%s%s" % (ReST.monospace,\
+                          ''.join(elem.itertext()),\
+                          ReST.monospace)
         return ret
 
     def close_moinpage_code(self, elem):
@@ -432,7 +441,9 @@ class Converter(object):
             level = 1
         elif level > 6:
             level = 6
-        ret = "\n\n%s\n%s\n%s\n\n" % (ReST.h[level]*len(text), text, ReST.h[level]*len(text))
+        ret = "\n\n%s\n%s\n%s\n\n" % (ReST.h[level]*len(text),\
+                                      text,\
+                                      ReST.h[level]*len(text))
         return ret
 
     def close_moinpage_h():
@@ -441,7 +452,10 @@ class Converter(object):
 
     def open_moinpage_line_break(self, elem):
         if self.status[-1] == "list":
-            return ReST.linebreak + ' ' * (len(''.join(self.list_item_labels))+len(self.list_item_labels)) #(self.list_level + 1)
+            return ReST.linebreak\
+                   + ' '\
+                     * (len(''.join(self.list_item_labels))\
+                        + len(self.list_item_labels))
         return ReST.linebreak
 
     def open_moinpage_list(self, elem):
@@ -486,7 +500,9 @@ class Converter(object):
                 # TODO: rewrite this using % formatting
             space_bonus = 0
             if len(''.join(self.list_item_labels[:-1])): space_bonus = 1
-            ret = ' ' * (len(''.join(self.list_item_labels[:-1])) + len(self.list_item_labels[:-1]))# self.list_level
+            ret = ' '\
+                  * (len(''.join(self.list_item_labels[:-1]))\
+                     + len(self.list_item_labels[:-1]))
             if self.last_closed:
                 ret = '\n%s' % ret
             return ret
@@ -504,7 +520,9 @@ class Converter(object):
             ret = '\n'
         space_bonus = 0
         if len(''.join(self.list_item_labels[:-1])): space_bonus = 1
-        ret += ' ' * (len(''.join(self.list_item_labels[:-1]))+len(self.list_item_labels[:-1])) + self.list_item_label
+        ret += ' ' * (len(''.join(self.list_item_labels[:-1]))\
+                      + len(self.list_item_labels[:-1]))\
+               + self.list_item_label
         if self.list_item_labels[-1] in ['1.', 'i.', 'I.', 'a.', 'A.']:
             self.list_item_labels[-1] = '#.'
         return ret
@@ -537,14 +555,16 @@ class Converter(object):
         href = href.split('?')
         args = ''
         if len(href) > 1:
-            args =' '.join([s for s in re.findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)', href[1]) if s[:3] != 'do='])
+            args =' '.join([s for s\
+                              in re.findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)',
+                                            href[1]) if s[:3] != 'do='])
         href = href[0].split('wiki.local:')[-1].split('attachment:')[-1]
         alt = elem.get(moin_page.alt, '')
         if not alt:
             ret = ''
         else:
             ret = '|%s|' % alt
-        self.objects.append("\n.. %s image:: %s\n" % (ret, href))
+        self.objects.append(".. %s image:: %s" % (ret, href))
         return ret
 
     def open_moinpage_p(self, elem):
@@ -553,14 +573,6 @@ class Converter(object):
         #self.status.append("p")
         if self.status[-1] == 'text':
             self.define_references()
-            """
-            self.all_used_references.extend(self.used_references)
-            self.output.extend(self.objects)
-            self.output.append("\n\n%s\n\n" % "\n\n".join(".. _%s: %s" % link for link in self.used_references))
-            self.used_references = []
-            self.objects = []
-            self.anonymous_reference = None
-            """
             if self.last_closed == 'text':
                 return ReST.p * 2
             elif self.last_closed == 'p':
@@ -578,9 +590,13 @@ class Converter(object):
                                 and self.last_closed != 'list_item_header'\
                                 and self.last_closed != 'list_item_footer'\
                                 and self.last_closed != 'p':
-                return ReST.linebreak + ' '* (len(''.join(self.list_item_labels)) + 1) #(self.list_level + 1) 
+                return ReST.linebreak + ' '\
+                                        * (len(''.join(self.list_item_labels))\
+                                           + len(self.list_item_labels))
             elif self.last_closed and self.last_closed == 'p':
-                return ReST.p + ' '* (len(''.join(self.list_item_labels)) + 1 ) # self.list_level + 1)
+                return ReST.p + ' '\
+                                * (len(''.join(self.list_item_labels))\
+                                   + len(self.list_item_labels))
         return ''
 
     def close_moinpage_p(self, elem):
@@ -613,7 +629,11 @@ class Converter(object):
         if len(type) == 2:
             if type[0] == "x-moin/macro":
                 if len(elem) and iter(elem).next().tag.name == "arguments":
-                    return "\n.. macro:: <<%s(%s)>>\n" % (type[1].split('=')[1], ','.join([''.join(c.itertext()) for c in iter(elem).next() if c.tag.name == "argument"]))
+                    return "\n.. macro:: <<%s(%s)>>\n"\
+                           % (type[1].split('=')[1],
+                              ','.join([''.join(c.itertext())\
+                                        for c in iter(elem).next()\
+                                        if c.tag.name == "argument"]))
                 else:
                     return "\n.. macro:: <<%s()>>\n" % type[1].split('=')[1]
             elif type[0] == "x-moin/format":
@@ -623,7 +643,9 @@ class Converter(object):
                     args = []
                     for arg in iter(elem).next():
                         if arg.tag.name == "argument":
-                            args.append("%s=\"%s\"" % (arg.get(moin_page.name, ""), ' '.join(arg.itertext())))
+                            args.append("%s=\"%s\""\
+                                        % (arg.get(moin_page.name, ""),
+                                           ' '.join(arg.itertext())))
                     ret = '%s(%s)' % (ret, ' '.join(args))
                     elem = elem_it.next()
                 ret = "%s\n%s\n}}}\n" % (ret, ' '.join(elem.itertext()))
@@ -733,9 +755,11 @@ class Converter(object):
 
     def open_moinpage_table_row(self, elem):
         self.table_rowclass = elem.attrib.get('class', '')
-        self.table_rowclass = ' '.join([s for s in [self.table_rowsclass, self.table_rowclass] if s])
+        self.table_rowclass = ' '.join([s for s in [self.table_rowsclass,
+                                                    self.table_rowclass] if s])
         self.table_rowstyle = elem.attrib.get('style', '')
-        self.table_rowstyle = ' '.join([s for s in [self.table_rowsstyle, self.table_rowstyle] if s])
+        self.table_rowstyle = ' '.join([s for s in [self.table_rowsstyle,
+                                                    self.table_rowstyle] if s])
         self.children.append(iter(elem))
         self.opened.append(elem)
         self.table.append([])
@@ -751,8 +775,10 @@ class Converter(object):
     def open_moinpage_table_cell(self, elem):
         table_cellclass = elem.attrib.get('class', '')
         table_cellstyle = elem.attrib.get('style', '')
-        number_columns_spanned = int(elem.get(moin_page.number_columns_spanned, 1))
-        number_rows_spanned = int(elem.get(moin_page.number_rows_spanned, 1))
+        number_columns_spanned\
+                = int(elem.get(moin_page.number_columns_spanned, 1))
+        number_rows_spanned\
+                = int(elem.get(moin_page.number_rows_spanned, 1))
 
         attrib = []
 
@@ -782,7 +808,9 @@ class Converter(object):
         self.opened.append(elem)
         self.output = []
         self.subpage.append(self.output)
-        self.table[-1].append((number_columns_spanned, number_rows_spanned, self.output))
+        self.table[-1].append((number_columns_spanned,
+                                number_rows_spanned,
+                                self.output))
         return ''
 
     def close_moinpage_table_cell(self, elem):
@@ -804,17 +832,21 @@ class Converter(object):
 
     def define_references(self):
         self.all_used_references.extend(self.used_references)
-        self.output.extend(self.objects)
-        
-        space_bonus = 0
-        if len(''.join(self.list_item_labels)): space_bonus = 1
-        definitions = "\n\n".join(" "* (len(''.join(self.list_item_labels))+space_bonus) + ".. _%s: %s" % link for link in self.used_references)
+        definitions = [" " * (len(''.join(self.list_item_labels))\
+                                    + len(self.list_item_labels))\
+                                  + ".. _%s: %s"\
+                                    % link for link in self.used_references]
+        definitions.extend(" " * (len(''.join(self.list_item_labels))\
+                                     + len(self.list_item_labels))\
+                                  + link for link in self.objects)
+        definition_block = "\n\n".join(definitions)
 
         if definitions:
             if self.last_closed == 'list_item_label':
-                self.output.append("\n%s\n\n" % definitions)
+                self.output.append("\n%s\n\n" % definition_block)
             else:
-                self.output.append("\n\n%s\n\n" % definitions)
+                self.output.append("\n\n%s\n\n" % definition_block)
+
         self.used_references = []
         self.objects = []
         self.anonymous_reference = None
@@ -823,4 +855,6 @@ class Converter(object):
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
-default_registry.register(Converter.factory, type_moin_document, Type('x-moin/format;name=rst'))
+default_registry.register(Converter.factory,
+                          type_moin_document,
+                          Type('x-moin/format;name=rst'))

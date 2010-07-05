@@ -58,7 +58,6 @@ class Moinwiki(object):
         ('ordered', 'lower-roman'): 'i.',
         ('ordered', 'upper-roman'): 'I.',
         ('unordered', None): '*',
-# Next item is a hack, bug in moinwiki_in converter with ' def:: \n :: lis1\n :: list2' input
         (None, None): '::',
         }
 
@@ -331,7 +330,7 @@ class Converter(object):
             self.children.append(iter(elem))
             self.opened.append(elem)
             # TODO: rewrite this using % formatting
-            # TODO: delete self.list_level from everywhere 
+            # TODO: delete self.list_level from everywhere
             ret = ' ' * (len(''.join(self.list_item_labels[:-1])) + len(self.list_item_labels[:-1]))# self.list_level
             if self.last_closed:
                 ret = '\n%s' % ret

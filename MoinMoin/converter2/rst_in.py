@@ -1,7 +1,8 @@
 """
 MoinMoin - ReStructured Text input converter
 
-It's based on docutils rst parser. Conversion of docutils document tree to moinmoin document tree.
+It's based on docutils rst parser.
+Conversion of docutils document tree to moinmoin document tree.
 
 This is preprealpha version, do not use it, it doesn't work.
 
@@ -77,18 +78,18 @@ class NodeVisitor():
         """
         pass
 
-    def open_moin_page_node(self, mointree_element): 
+    def open_moin_page_node(self, mointree_element):
         self.current_node.append(mointree_element)
         self.current_node = mointree_element
         self.path.append(mointree_element)
-    
+
     def close_moin_page_node(self):
         self.path.pop()
         self.current_node = self.path[-1]
 
     def tree(self):
-        return self.root 
-    
+        return self.root
+
     def visit_Text(self, node):
         text = node.astext()
         self.current_node.append(text)
@@ -107,7 +108,8 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_bullet_list(self, node):
-        self.open_moin_page_node(moin_page.list(attrib={moin_page.item_label_generate:'unordered'}))
+        self.open_moin_page_node(moin_page.list(
+                        attrib={moin_page.item_label_generate: 'unordered'}))
 
     def depart_bullet_list(self, node):
         self.close_moin_page_node()
@@ -122,7 +124,8 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_definition_list(self, node):
-        self.open_moin_page_node(moin_page.list(attrib={moin_page.item_label_generate:'definition'}))
+        self.open_moin_page_node(moin_page.list(
+                        attrib={moin_page.item_label_generate: 'definition'}))
 
     def depart_definition_list(self, node):
         self.close_moin_page_node()
@@ -152,7 +155,7 @@ class NodeVisitor():
         self.close_moin_page_node()
         self.open_moin_page_node(moin_page.table_cell())
 
-    def depart_author(self,node):
+    def depart_author(self, node):
         self.close_moin_page_node()
         self.close_moin_page_node()
 
@@ -166,7 +169,7 @@ class NodeVisitor():
         self.close_moin_page_node()
         self.close_moin_page_node()
         self.open_moin_page_node(moin_page.table_cell())
-    
+
     def depart_version(self, node):
         self.close_moin_page_node()
         self.close_moin_page_node()
@@ -181,7 +184,7 @@ class NodeVisitor():
         self.close_moin_page_node()
         self.close_moin_page_node()
         self.open_moin_page_node(moin_page.table_cell())
-    
+
     def depart_copyright(self, node):
         self.close_moin_page_node()
         self.close_moin_page_node()
@@ -195,26 +198,28 @@ class NodeVisitor():
     def visit_entry(self, node):
         new_element = moin_page.table_cell()
         if 'morerows' in node.attributes:
-            new_element.set(moin_page.number_rows_spanned, repr(int(node['morerows'])+1))
+            new_element.set(moin_page.number_rows_spanned,
+                            repr(int(node['morerows'])+1))
         if 'morecols' in node.attributes:
-            new_element.set(moin_page.number_cols_spanned, repr(int(node['morecols'])+1))
+            new_element.set(moin_page.number_cols_spanned,
+                            repr(int(node['morecols'])+1))
         self.open_moin_page_node(new_element)
 
     def depart_entry(self, node):
         self.close_moin_page_node()
 
     def visit_enumerated_list(self, node):
-        enum_style = {'arabic':None,
-                'loweralpha':'lower-alpha',
-                'upperalpha':'upper-alpha',
-                'lowerroman':'lower-roman',
-                'upperroman':'upper-roman'}
-        new_node = moin_page.list(attrib={moin_page.item_label_generate:'ordered'})
-        type = enum_style.get(node['enumtype'],None)
+        enum_style = {'arabic': None,
+                'loweralpha': 'lower-alpha',
+                'upperalpha': 'upper-alpha',
+                'lowerroman': 'lower-roman',
+                'upperroman': 'upper-roman'}
+        new_node = moin_page.list(
+                attrib={moin_page.item_label_generate: 'ordered'})
+        type = enum_style.get(node['enumtype'], None)
         if type:
             new_node.set(moin_page.list_style_type, type)
         self.open_moin_page_node(new_node)
-        #self.open_moin_page_node(moin_page.list(attrib={moin_page.item_label_generate:'ordered', moin_page.list_style_type:enum_style.get(node['enumtype'],None)}))
 
     def depart_enumerated_list(self, node):
         self.close_moin_page_node()
@@ -263,7 +268,8 @@ class NodeVisitor():
         self.status.pop()
 
     def visit_footnote_reference(self, node):
-        new_footnote = moin_page.note(attrib={moin_page.note_class:'footnote'})
+        new_footnote = moin_page.note(
+                            attrib={moin_page.note_class: 'footnote'})
         self.open_moin_page_node(new_footnote)
         self.footnotes[node.children[0]] = new_footnote
         node.children = []
@@ -278,7 +284,7 @@ class NodeVisitor():
         pass
 
     def visit_image(self, node):
-        new_node = moin_page.object(attrib={xlink.href:node['uri']})
+        new_node = moin_page.object(attrib={xlink.href: node['uri']})
         alt = node.get('alt', None)
         if alt:
             new_node.set(moin_page.alt, node['uri'])
@@ -302,7 +308,6 @@ class NodeVisitor():
         if self.status[-1] == 'footnote':
             self.footnote_lable = node.astext()
         node.children = []
-
 
     def depart_label(self, node):
         pass
@@ -339,7 +344,6 @@ class NodeVisitor():
 
     def depart_literal_block(self, node):
         self.close_moin_page_node()
-        
 
     def visit_paragraph(self, node):
         if self.status[-1] == 'footnote':
@@ -369,21 +373,23 @@ class NodeVisitor():
                 self.open_moin_page_node(node)
                 if arguments:
                     node.set(moin_page.outline_level, arguments[0])
-                    
                 return
             arguments = refuri[2:-2].split('(')[1][:-1].split(',')
-            self.open_moin_page_node(moin_page.part(attrib={moin_page.content_type:"x-moin/macro;name=%s" % macro_name, }))
+            self.open_moin_page_node(
+                moin_page.part(
+                    attrib={
+                        moin_page.content_type:\
+                            "x-moin/macro;name=%s" % macro_name, }))
             if arguments:
                 self.open_moin_page_node(moin_page.arguments())
                 for i in arguments:
                     self.open_moin_page_node(moin_page.argument(children=[i]))
                     self.close_moin_page_node()
                 self.close_moin_page_node()
-            
             self.open_moin_page_node(refuri)
             return
 
-        self.open_moin_page_node(moin_page.a(attrib={xlink.href:refuri}))
+        self.open_moin_page_node(moin_page.a(attrib={xlink.href: refuri}))
 
     def depart_reference(self, node):
         self.close_moin_page_node()
@@ -413,27 +419,33 @@ class NodeVisitor():
         pass
 
     def visit_strong(self, node):
-        self.open_moin_page_node(moin_page.strong()) 
+        self.open_moin_page_node(moin_page.strong())
 
     def depart_strong(self, node):
         self.close_moin_page_node()
 
     def visit_subscript(self, node):
-        self.open_moin_page_node(moin_page.span(attrib={moin_page.baseline_shift: 'sub'}))
+        self.open_moin_page_node(
+            moin_page.span(
+                attrib={moin_page.baseline_shift: 'sub'}))
 
     def depart_subscript(self, node):
         self.close_moin_page_node()
 
     def visit_subtitle(self, node):
         self.header_size += 1
-        self.open_moin_page_node(moin_page.h(attrib={moin_page.outline_level:repr(self.header_size)}))
+        self.open_moin_page_node(
+            moin_page.h(
+                attrib={moin_page.outline_level: repr(self.header_size)}))
 
     def depart_subtitle(self, node):
         self.header_size -= 1
         self.close_moin_page_node()
 
     def visit_superscript(self, node):
-        self.open_moin_page_node(moin_page.span(attrib={moin_page.baseline_shift: 'super'}))
+        self.open_moin_page_node(
+            moin_page.span(
+                attrib={moin_page.baseline_shift: 'super'}))
 
     def depart_superscript(self, node):
         self.close_moin_page_node()
@@ -456,9 +468,9 @@ class NodeVisitor():
     def depart_tbody(self, node):
         self.close_moin_page_node()
 
-    def visit_term(self,node):
+    def visit_term(self, node):
         self.open_moin_page_node(moin_page.list_item_label())
-        
+
     def depart_term(self, node):
         self.close_moin_page_node()
 
@@ -476,7 +488,9 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_title(self, node):
-        self.open_moin_page_node(moin_page.h(attrib={moin_page.outline_level:repr(self.header_size)}))
+        self.open_moin_page_node(
+            moin_page.h(
+                attrib={moin_page.outline_level: repr(self.header_size)}))
 
     def depart_title(self, node):
         self.close_moin_page_node()
@@ -495,7 +509,6 @@ class NodeVisitor():
 
     def unimplemented_visit(self, node):
         pass
-
 
 
 def walkabout(node, visitor):
@@ -524,6 +537,7 @@ def walkabout(node, visitor):
         visitor.dispatch_departure(node)
     return stop
 
+
 class Writer(writers.Writer):
 
     supported = ('moin-x-document')
@@ -536,6 +550,7 @@ class Writer(writers.Writer):
         self.visitor = visitor = NodeVisitor(self.document)
         self.document.walkabout(visitor)
         self.output = visitor.tree()
+
 
 class MoinDirectives:
     """
@@ -587,7 +602,9 @@ class MoinDirectives:
             pagename = content[0]
             page = Page(page_name=pagename, request=self.request)
             if not self.request.user.may.read(pagename):
-                lines = [_("**You are not allowed to read the page: %s**") % (pagename, )]
+                lines =\
+                    [_("**You are not allowed to read the page: %s**")\
+                        % (pagename, )]
             else:
                 if page.exists():
                     text = page.get_raw_body()
@@ -596,8 +613,9 @@ class MoinDirectives:
                     if lines[0].startswith("#format"):
                         del lines[0]
                 else:
-                    lines = [_("**Could not find the referenced page: %s**") % (pagename, )]
-            # Insert the text from the included document and then continue parsing
+                    lines =\
+                        [_("**Could not find the referenced page: %s**")\
+                        % (pagename, )]
             state_machine.insert_input(lines, 'MoinDirectives')
         return
 
@@ -651,21 +669,20 @@ class MoinDirectives:
 
 
 class Converter(object):
+
     @classmethod
-    def factory(cls, input,output, **kw):
+    def factory(cls, input, output, **kw):
         return cls()
 
     def __call__(self, input, arguments=None):
         parser = MoinDirectives()
-        
         docutils_tree = core.publish_doctree(source=input)
         print docutils_tree # delete this
         visitor = NodeVisitor()
         walkabout(docutils_tree, visitor)
         return visitor.tree()
-        
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
-default_registry.register(Converter.factory, Type('x-moin/format;name=rst'), type_moin_document)
-
+default_registry.register(Converter.factory,
+                          Type('x-moin/format;name=rst'), type_moin_document)
