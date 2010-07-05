@@ -44,8 +44,15 @@ class Converter(object):
         Function called by the converter to process
         the conversion.
         """
-
-        tree = ET.XML(content)
+        # We will create an element tree from the DocBook content
+        # The content is given to the converter as a list of string,
+        # line per line.
+        # So we will concatenate all in one string.
+        docbook_str = ''
+        docbook_str = docbook_str.join(content)
+        print "content : %s" % content
+        print "db str : %s" % docbook_str
+        tree = ET.XML(docbook_str)
 
         return self.visit(tree)
 

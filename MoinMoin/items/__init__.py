@@ -450,6 +450,7 @@ class NonExistent(Item):
             ('text/plain', 'plain text'),
             ('text/csv', 'csv'),
             ('text/x-irclog', 'IRC log'),
+            ('application/docbook+xml', 'DocBook document'),
         ]),
         ('image items', [
             ('image/jpeg', 'JPEG'),
@@ -1116,7 +1117,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
 
 class Text(Binary):
     """ Any kind of text """
-    supported_mimetypes = ['text/']
+    supported_mimetypes = ['text/', 'application/docbook+xml']
     converter_mimetype = None
 
     # text/plain mandates crlf - but in memory, we want lf only
@@ -1294,9 +1295,9 @@ class SafeHTML(Text):
         return content
 
 class MoinHTML(Text):
-    """ 
+    """
     Dummy Type to input HTML and store it in the Dom Tree
-    
+
     Very similar to SafeHTML, Should not be kept in the final release.
 
     This is only for DEBUG purpose.
@@ -1322,6 +1323,10 @@ class MoinHTML(Text):
                                   url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
                                  )
         return content
+
+class DocBook(Text):
+    """ DocBook Document """
+    supported_mimetypes = ['application/docbook+xml']
 
 
 class DiffPatch(Text):
