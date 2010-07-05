@@ -11,8 +11,7 @@ def execute(item_name, request):
     mimetype = request.values.get('mimetype')
     item = Item.create(request, item_name, mimetype=mimetype, rev_no=request.rev)
     content = item.do_show()
+    request.headers.add('Content-Type', 'text/html; charset=utf-8')
     # Have to do this because Item renders itself show.html
     request.write(content)
-    # Where is gonna be the high level place that constructs response object?
-    request.headers.add('Content-Type', 'text/html; charset=utf-8')
 
