@@ -13,5 +13,5 @@ def execute(item_name, request):
     content = item.do_show()
     request.headers.add('Content-Type', 'text/html; charset=utf-8')
     # Have to do this because Item renders itself show.html
-    request.write(content)
+    return content
 
