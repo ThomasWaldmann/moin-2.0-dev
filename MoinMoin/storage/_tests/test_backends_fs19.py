@@ -61,7 +61,7 @@ class TestFS19Backend(object):
     def setup_method(self, method):
         # create backend
         self.tempdir = d = tempfile.mkdtemp('', 'moin-')
-        self.backend = FSPageBackend(self.tempdir)
+        self.backend = FSPageBackend(self.tempdir, self.tempdir)
         # populate it manually because the backend is just read-only
         join = os.path.join
         for name, revno, revdata, logdata, attachments in items:

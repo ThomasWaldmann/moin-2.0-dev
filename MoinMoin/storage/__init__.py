@@ -51,11 +51,8 @@ from MoinMoin.storage.error import RevisionNumberMismatchError, AccessError, \
                                    BackendError, NoSuchItemError, \
                                    RevisionAlreadyExistsError, ItemAlreadyExistsError
 
-from MoinMoin.storage.serialization import Serializable, XMLGenerator, \
-                                           Data, Meta, ItemMeta
 
-
-class Backend(Serializable):
+class Backend(object):
     """
     This class abstracts access to backends. If you want to write a specific
     backend, say a mercurial backend, you have to implement the methods below.
@@ -450,22 +447,6 @@ class Backend(Serializable):
         """
         raise NotImplementedError()
 
-    # (un)serialization support following:
-    element_name = 'backend'
-
-    def get_unserializer(self, context, name, attrs):
-        if name == 'item':
-            item_name = attrs['name']
-            try:
-                item = self.create_item(item_name)
-            except ItemAlreadyExistsError:
-                item = self.get_item(item_name)
-            return item
-
-    def serialize_value(self, xmlgen):
-        for item in self.iteritems():
-            item.serialize(xmlgen)
-
     # item copying
     def _copy_item_progress(self, verbose, st):
         if verbose:
@@ -578,7 +559,7 @@ class Backend(Serializable):
         return converts, skips, fails
 
 
-class Item(Serializable, DictMixin):
+class Item(object, DictMixin):
     """
     An item object collects the information of an item (e.g. a page) that is
     stored in persistent storage. It has metadata and revisions.
@@ -612,13 +593,6 @@ class Item(Serializable, DictMixin):
         return self._name
 
     name = property(get_name, doc="This is the name of this item. This attribute is read-only.")
-
-    @property
-    def element_attrs(self):
-        """
-        For xml serialization <item name="...">
-        """
-        return dict(name=self.name)
 
     @property
     def next_revno(self):
@@ -797,42 +771,8 @@ class Item(Serializable, DictMixin):
         """
         return self._backend._destroy_item(self)
 
-    # (un)serialization support following:
-    element_name = 'item'
 
-    def get_unserializer(self, context, name, attrs):
-        mode = context.revno_mode
-        if name == 'meta':
-            if mode == 'as_is':
-                # do not touch item meta data
-                return None # XXX give a dummy unserializer
-            elif mode == 'next':
-                # replace item meta data
-                return ItemMeta(attrs, self)
-        elif name == 'revision':
-            if mode == 'as_is':
-                revno = int(attrs['revno'])
-            elif mode == 'next':
-                revno = self.next_revno
-            return self.create_revision(revno)
-
-    def serialize(self, xmlgen):
-        if xmlgen.shall_serialize(item=self):
-            super(Item, self).serialize(xmlgen)
-
-    def serialize_value(self, xmlgen):
-        im = ItemMeta({}, self)
-        im.serialize(xmlgen)
-        revnos = self.list_revisions()
-        if revnos:
-            current_revno = revnos[-1]
-            for revno in revnos:
-                if xmlgen.shall_serialize(item=self, revno=revno, current_revno=current_revno):
-                    rev = self.get_revision(revno)
-                    rev.serialize(xmlgen)
-
-
-class Revision(Serializable, DictMixin):
+class Revision(object, DictMixin):
     """
     This class serves as superclass for StoredRevision and NewRevision.
     An object of either subclass represents a revision of an item. An item can have
@@ -878,10 +818,6 @@ class Revision(Serializable, DictMixin):
     revno = property(get_revno, doc=("This property stores the revno of the revision object. "
                                      "Only read-only access is allowed."))
 
-    @property
-    def element_attrs(self):
-        return dict(revno=str(self.revno))
-
     def _load_metadata(self):
         self._metadata = self._backend._get_revision_metadata(self)
 
@@ -906,29 +842,6 @@ class Revision(Serializable, DictMixin):
             self._load_metadata()
 
         return [key for key in self._metadata if not key.startswith("__")]
-
-    # (un)serialization support following:
-    element_name = 'revision'
-
-    def endElement(self):
-        logging.debug("Committing %r revno %r" % (self.item.name, self.revno))
-        self.item.commit()
-
-    def get_unserializer(self, context, name, attrs):
-        if name == 'meta':
-            return Meta(attrs, self)
-        elif name == 'data':
-            return Data(attrs, write_fn=self.write)
-
-    def serialize(self, xmlgen):
-        if xmlgen.shall_serialize(item=self._item, rev=self):
-            super(Revision, self).serialize(xmlgen)
-
-    def serialize_value(self, xmlgen):
-        m = Meta({}, self)
-        m.serialize(xmlgen)
-        d = Data({}, read_fn=self.read)
-        d.serialize(xmlgen)
 
 
 class StoredRevision(Revision):
