@@ -151,6 +151,16 @@ class TestConverter(Base):
         for i in data:
             yield (self.do, ) + i
 
+    def test_quote(self):
+        data = [
+            ('<html><div><p><quote>Inline quote</quote></p></div></html>',
+             '/page/body/div/p[quote="Inline quote"]'),
+            ('<html><div><blockquote>Block quote</blockquote></div></html>',
+             '/page/body/div[blockquote="Block quote"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
     def test_list(self):
         data = [
             ('<html><div><ul><li>Item</li></ul></div></html>',
