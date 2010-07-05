@@ -31,7 +31,8 @@ class TestConverter(object):
                 '<page><body><p>Text\nTest</p></body></page>'),
             (u'Text\n\nTest',
                 '<page><body><p>Text</p><p>Test</p></body></page>'),
-            (u'H\ :sub:`2`\ O\n\nE = mc\ :sup:`2`',''),
+            (u'H\ :sub:`2`\ O\n\nE = mc\ :sup:`2`', ''),
+            (u'| Lend us a couple of bob till Thursday.', '')
 
         ]
         for i in data:
@@ -39,7 +40,7 @@ class TestConverter(object):
 
     def test_list(self):
         data = [
-            (u'1. a\n2. b\n\nA. c\nc\n\n   e\n\na. A\n\n   3. B\n\n   4. C\n\n',''),
+            (u'1. a\n2. b\n\nA. c\nc\n\n   e\n\na. A\n\n   3. B\n\n   4. C\n\n', ''),
             (u'* A\n\n   - B\n\n      + C\n\n   - D\n\n* E', ''),
             (u'what\n      def\n\nhow\n      to', '')
             ]
@@ -49,13 +50,18 @@ class TestConverter(object):
     def test_image(self):
         data = [
             (u'.. image:: images/biohazard.png', ''),
+            (u""".. image:: images/biohazard.png
+   :height: 100
+   :width: 200
+   :scale: 50
+   :alt: alternate text""", ""),
             ]
         for i in data:
             yield (self.do, ) + i
 
     def test_headers(self):
         data = [
-            (u'Chapter 1 Title\n===============\n\nSection 1.1 Title\n-----------------\n\nSubsection 1.1.1 Title\n~~~~~~~~~~~~~~~~~~~~~~\n\nSection 1.2 Title\n-----------------\n\nChapter 2 Title\n===============\n',''),
+            (u'Chapter 1 Title\n===============\n\nSection 1.1 Title\n-----------------\n\nSubsection 1.1.1 Title\n~~~~~~~~~~~~~~~~~~~~~~\n\nSection 1.2 Title\n-----------------\n\nChapter 2 Title\n===============\n', ''),
             (u'================\n Document Title\n================\n\n----------\n Subtitle\n----------\n\nSection Title\n=============', '')
             ]
         for i in data:
@@ -75,7 +81,15 @@ class TestConverter(object):
             ]
         for i in data:
             yield (self.do, ) + i
-    
+
+    def test_directive(self):
+        data = [
+            (u'.. macro:: <<TableOfContents()>>', ''),
+            (u'.. contents::\n  :depth: 1\n', ''),
+            ]
+        for i in data:
+            yield (self.do, ) + i
+
     def test_table(self):
         data = [
             (u"+-+-+-+\n|A|B|D|\n+-+-+ +\n|C  | |\n+---+-+\n\n", '<table><table-body><table-row><table-cell>A</table-cell><table-cell>B</table-cell><table-cell number-rows-spanned=\"2\">D</table-cell></table-row><table-row><table-cell number-columns-spanned=\"2\">C</table-cell></table-row></table-body></table>'),
@@ -91,6 +105,21 @@ class TestConverter(object):
 +----------------------------------------------------------+
 
 """, '<table><table-body><table-row><table-cell number-rows-spanned=\"2\">cell spanning 2 rows</table-cell><table-cell>cell in the 2nd column</table-cell></table-row><table-row><table-cell>cell in the 2nd column of the 2nd row</table-cell></table-row><table-row><table-cell number-columns-spanned=\"2\">test</table-cell></table-row><table-row><table-cell number-columns-spanned=\"2\">test</table-cell></table-row></table-body></table>'),
+            ("""
++--------------------+-------------------------------------+
+| AAAAAAAAAAAAAAAAAA | BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB |
++====================+=====================================+
+|cell spanning 2 rows|cell in the 2nd column               |
++                    +-------------------------------------+
+|                    |cell in the 2nd column of the 2nd row|
++--------------------+-------------------------------------+
+|test                                                      |
++----------------------------------------------------------+
+|test                                                      |
++----------------------------------------------------------+
+
+""", '<table><table-body><table-row><table-cell number-rows-spanned=\"2\">cell spanning 2 rows</table-cell><table-cell>cell in the 2nd column</table-cell></table-row><table-row><table-cell>cell in the 2nd column of the 2nd row</table-cell></table-row><table-row><table-cell number-columns-spanned=\"2\">test</table-cell></table-row><table-row><table-cell number-columns-spanned=\"2\">test</table-cell></table-row></table-body></table>'),
+
         ]
         for i in data:
             yield (self.do, ) + i
