@@ -438,6 +438,8 @@ class NonExistent(Item):
             ('text/x.moin.creole', 'Wiki (Creole)'),
             ('text/html', 'unsafe html'),
             ('text/x-safe-html', 'safe html'),
+            # The following mimetype is just for test purpose
+            # It should be replace by a html or x-safe-html in the release
             ('text/x.moin.html', 'html for MoinMoin'),
         ]),
         ('highlighted text items', [
@@ -1292,7 +1294,13 @@ class SafeHTML(Text):
         return content
 
 class MoinHTML(Text):
-    """ Dummy Type to input HTML and store it in the Dom Tree """
+    """ 
+    Dummy Type to input HTML and store it in the Dom Tree
+    
+    Very similar to SafeHTML, Should not be kept in the final release.
+
+    This is only for DEBUG purpose.
+    """
     supported_mimetypes = ['text/x.moin.html']
 
     def do_modify(self, template_name):
