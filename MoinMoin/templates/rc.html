@@ -1,3 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
 <div id="content">
     <h1>Recent Changes</h1>
     <table id="recentchanges">
@@ -11,6 +13,7 @@
             <th>Submitter</th>
             <th>Comment</th>
         </tr>
+        {{ tenso }}
         {% for rev in history %}
         <tr>
             <td>{{ rev.timestamp|datetime_format }}</td>
@@ -26,3 +29,4 @@
         {% endfor %}
     </table>
 </div>
+{% endblock %}
