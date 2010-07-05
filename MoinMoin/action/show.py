@@ -13,4 +13,6 @@ def execute(item_name, request):
     content = item.do_show()
     # Have to do this because Item renders itself show.html
     request.write(content)
+    # Where is gonna be the high level place that constructs response object?
+    request.headers.add('Content-Type', 'text/html; charset=utf-8')
 
