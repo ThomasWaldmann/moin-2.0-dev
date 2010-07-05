@@ -74,10 +74,10 @@ class TestConverter(Base):
 
     def test_list(self):
         data = [
-            ('<page><body><list item-label-generate="unordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
-             'article/itemizedlist[listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
-            ('<page><body><list item-label-generate="ordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
-             'article/orderedlist[listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
+            ('<page><body><list page:item-label-generate="unordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
+             '/article/itemizedlist[listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
+            ('<page><body><list page:item-label-generate="ordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
+             '/article/orderedlist[listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
         ]
 
         for i in data:
