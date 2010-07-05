@@ -34,7 +34,7 @@ class Converter(object):
         }
 
     # HTML tags which can be converted directly to the moin_page namespace
-    symmetric_tags = set(['div', 'p', 'strong', 'code'])
+    symmetric_tags = set(['div', 'p', 'strong', 'code', 'quote', 'blockquote'])
 
     # HTML tags to define a list, except dl which is a little bit different
     list_tags = set(['ul', 'dir', 'ol'])
