@@ -104,8 +104,21 @@ class Converter(object):
 
         item_label_generate = element.get(moin_page('item-label-generate'))
         if 'ordered' == item_label_generate:
-            #TODO : Attrib
-            return self.handle_simple_list(docbook.orderedlist, element, attrib={})
+            attrib = {}
+            # Get the list-style-type to define correctly numeration
+            list_style_type = element.get(moin_page('list-style-type'))
+            if 'upper-alpha' == list_style_type:
+                attrib[docbook('numeration')] = 'upperalpha'
+            elif 'upper-roman' == list_style_type:
+                attrib[docbook('numeration')] = 'upperroman'
+            elif 'lower-alpha' == list_style_type:
+                attrib[docbook('numeration')] = 'loweralpha'
+            elif 'lower-roman' == list_style_type:
+                attrib[docbook('numeration')] = 'lowerroman'
+            else:
+                attrib[docbook('numeration')] = 'arabic'
+
+            return self.handle_simple_list(docbook.orderedlist, element, attrib=attrib)
         elif 'unordered' == item_label_generate:
             return self.handle_simple_list(docbook.itemizedlist, element, attrib={})
         # TODO : Definition List
