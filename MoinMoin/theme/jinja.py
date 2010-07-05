@@ -9,6 +9,7 @@
 """
 
 import os
+import urlparse
 from jinja2 import Environment, FileSystemLoader, FileSystemBytecodeCache
 
 from MoinMoin import log
@@ -36,8 +37,12 @@ class JinjaTheme(ThemeBase):
         @param request: the request object
         """
         self.request = request
-        self.page = request.page
-        self.page_name = request.page.page_name
+        page = request.page
+        if page is None:
+            path = urlparse.urlparse(request.getBaseURL()).path[1:]
+            page = Page(request, path)
+        self.page = page
+        self.page_name = page.page_name
         self.cfg = request.cfg     
         self.ui_lang = request.lang
         self.ui_dir = i18n.getDirection(self.ui_lang)
