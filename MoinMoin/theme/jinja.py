@@ -36,6 +36,8 @@ class JinjaTheme(ThemeBase):
         @param request: the request object
         """
         self.request = request
+        self.page = request.page
+        self.page_name = request.page.page_name
         self.cfg = request.cfg     
         self.ui_lang = request.lang
         self.ui_dir = i18n.getDirection(self.ui_lang)
