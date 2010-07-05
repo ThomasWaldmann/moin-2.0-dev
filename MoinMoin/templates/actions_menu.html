@@ -7,9 +7,11 @@
                     this.form.submit();
                 }
                 this.selectedIndex = 0;">
-            {{ options }}
+            {% for disabled, do, title in options %}
+                <option value="{{ do }}" {{ disabled }}> {{ title }}</option>
+            {% endfor %}
         </select>
-        <input type="submit" value="{{ do_button }}">
+        <input type="submit" value="{{ _('Do') }}">
         {{ rev_field }}
     </div>
     <script type="text/javascript">

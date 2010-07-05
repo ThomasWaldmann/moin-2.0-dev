@@ -263,7 +263,7 @@ class JinjaTheme(ThemeBase):
 
         # Use localized pages for the current user
         if localize:
-            page = self.translated_item_name(pagename)
+            page = Page(request, self.translated_item_name(pagename))
         else:
             page = Page(request, pagename)
 
@@ -544,7 +544,7 @@ class JinjaTheme(ThemeBase):
         may_write = self.request.user.may.write(page.page_name)
         return can_modify and page.exists() and may_write
 
-    def actionsMenu(self):
+    def actions_menu(self):
         """
         Create actions menu list and items data dict
 
@@ -555,9 +555,6 @@ class JinjaTheme(ThemeBase):
         The menu should give best user experience for javascript
         enabled browsers, and acceptable behavior for those who prefer
         not to use Javascript.
-
-        TODO: Move actionsMenuInit() into body onload - requires that the theme will render body,
-              it is currently done in wikiutil/page.
 
         @param page: current page, Page object
         @rtype: unicode
@@ -607,7 +604,6 @@ class JinjaTheme(ThemeBase):
             }
 
         options = []
-        option = '<option value="%(do)s"%(disabled)s>%(title)s</option>'
         # class="disabled" is a workaround for browsers that ignore
         # "disabled", e.g IE, Safari
         # for XHTML: data['disabled'] = ' disabled="disabled"'
@@ -616,7 +612,9 @@ class JinjaTheme(ThemeBase):
         # Format standard actions
         available = actionmod.get_names(request.cfg)
         for action in menu:
-            data = {'do': action, 'disabled': '', 'title': titles[action]}
+            do = action
+            action_disabled = ''
+            title = titles[action]
             # removes excluded actions from the more actions menu
             if action in request.cfg.actions_excluded:
                 continue
@@ -624,51 +622,49 @@ class JinjaTheme(ThemeBase):
             # Enable delete cache only if page can use caching
             if action == 'refresh':
                 if not page.canUseCache():
-                    data['do'] = 'show'
-                    data['disabled'] = disabled
+                    do = 'show'
+                    action_disabled = disabled
 
             # SubscribeUser action enabled only if user has admin rights
             if action == 'SubscribeUser' and not request.user.may.admin(page.page_name):
-                data['do'] = 'show'
-                data['disabled'] = disabled
+                do = 'show'
+                action_disabled = disabled
 
             # Special menu items. Without javascript, executing will
             # just return to the page.
             if action.startswith('__'):
-                data['do'] = 'show'
+                do = 'show'
 
             # Actions which are not available for this wiki, user or page
             if (action == '__separator__' or
                 (action[0].isupper() and not action in available)):
-                data['disabled'] = disabled
-
-            options.append(option % data)
+                action_disabled = disabled
+            options.append((do, action_disabled, title))
 
         # Add custom actions not in the standard menu
         more = [item for item in available if not item in titles]
         more.sort()
         if more:
             # Add separator
-            separator = option % {'do': 'show', 'disabled': disabled,
-                                  'title': titles['__separator__']}
+            separator = ('show', disabled, titles['__separator__'])
             options.append(separator)
             # Add more actions (all enabled)
             for action in more:
-                data = {'do': action, 'disabled': ''}
+                do = action
+                action_disabled = ''
                 # Always add spaces: LikePages -> Like Pages
                 # XXX do not create page just for using split_title -
                 # creating pages for non-existent does 2 storage lookups
                 #title = Page(request, action).split_title(force=1)
                 title = action
                 # Use translated version if available
-                data['title'] = _(title)
-                options.append(option % data)
+                title = _(title)
+                options.append((do, action_disabled, title))
 
         data = {
             'label': titles['__title__'],
-            'options': '\n'.join(options),
+            'options': options,
             'rev_field': rev is not None and '<input type="hidden" name="rev" value="%d">' % rev or '',
-            'do_button': _("Do"),
             }
         return self.render('actions_menu.html', data)
 
