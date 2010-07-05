@@ -7,7 +7,7 @@
                     this.form.submit();
                 }
                 this.selectedIndex = 0;">
-            {% for disabled, do, title in options %}
+            {% for do, disabled, title in options %}
                 <option value="{{ do }}" {{ disabled }}> {{ title }}</option>
             {% endfor %}
         </select>
