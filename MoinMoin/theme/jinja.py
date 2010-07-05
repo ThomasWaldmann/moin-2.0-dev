@@ -84,12 +84,12 @@ class JinjaTheme(ThemeBase):
         # TODO: Convert to ITEM! TOP-PRIORITY
         request = self.request
         item_lang_request= request.getText(item_en)
-        page = wikiutil.getLocalizedPage(request, item_lang_request)
+        page = Page(request, item_lang_request)
         if page.exists():
             return item_lang_request
             
         item_lang_default = i18n.getText(item_en, request, self.cfg.language_default)
-        page = wikiutil.getLocalizedPage(request, item_lang_default)
+        page = Page(request, item_lang_default)
         if page.exists():
             return item_lang_default
             
