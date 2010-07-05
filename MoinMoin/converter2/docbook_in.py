@@ -50,8 +50,6 @@ class Converter(object):
         # So we will concatenate all in one string.
         docbook_str = ''
         docbook_str = docbook_str.join(content)
-        print "content : %s" % content
-        print "db str : %s" % docbook_str
         tree = ET.XML(docbook_str)
 
         return self.visit(tree)
