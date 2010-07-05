@@ -13,7 +13,6 @@
             <th>Submitter</th>
             <th>Comment</th>
         </tr>
-        {{ tenso }}
         {% for rev in history %}
         <tr>
             <td>{{ rev.timestamp|datetime_format }}</td>
