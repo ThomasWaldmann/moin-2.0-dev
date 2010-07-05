@@ -617,13 +617,13 @@ class JinjaTheme(ThemeBase):
         # class="disabled" is a workaround for browsers that ignore
         # "disabled", e.g IE, Safari
         # for XHTML: data['disabled'] = ' disabled="disabled"'
-        disabled = ' disabled class="disabled"'
+        disabled = True
 
         # Format standard actions
         available = actionmod.get_names(request.cfg)
         for action in menu:
             do = action
-            action_disabled = ''
+            action_disabled = False
             title = titles[action]
             # removes excluded actions from the more actions menu
             if action in request.cfg.actions_excluded:
@@ -661,7 +661,7 @@ class JinjaTheme(ThemeBase):
             # Add more actions (all enabled)
             for action in more:
                 do = action
-                action_disabled = ''
+                action_disabled = False
                 # Always add spaces: LikePages -> Like Pages
                 # XXX do not create page just for using split_title -
                 # creating pages for non-existent does 2 storage lookups
