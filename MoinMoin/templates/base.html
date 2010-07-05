@@ -1,4 +1,13 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 {% include "head.html" %}
+
+<body 
+{% if body_onload %}
+    onload="{{ body_onload }}"
+{% endif %}
+{{ theme.ui_lang_attr() }}>
+
 {% include "header.html" %}
 
 {% block content_base %}
@@ -6,3 +15,7 @@
 {% endblock %}
 
 {% include "footer.html" %}
+
+</body>
+</html>
+
