@@ -169,6 +169,9 @@ class Converter(object):
 
         return pre
 
+    def visit_moinpage_blockquote(self, elem):
+        return  self.new_copy(html.blockquote, elem)
+
     def visit_moinpage_code(self, elem):
         return self.new_copy(html.tt, elem)
 
@@ -329,6 +332,9 @@ class Converter(object):
             return html.p(children=(alt, ))
 
         return html.p()
+
+    def visit_moinpage_quote(self, elem):
+        return self.new_copy(html.quote, elem)
 
     def visit_moinpage_separator(self, elem):
         return self.new(html.hr)
