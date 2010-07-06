@@ -1,14 +1,3 @@
-{# Template used to render footer #}
-
-    {% set info = theme.pageinfo() %}
-    {% if info %}
-    <div id="pagebottom">
-        <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}"> {{ info }}</p>
-    </div>
-    {% endif %} 
-
-</div>
-
 {{ theme.emit_custom_html(cfg.page_footer1) }}
 
 <div id="footer">

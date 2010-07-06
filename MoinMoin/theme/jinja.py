@@ -837,7 +837,7 @@ class JinjaTheme(ThemeBase):
                                     pi_refresh=pi_refresh,
                                     html_head=html_head,
                                     trail=trail,
-                                    **keywords,
+                                    **keywords
                                    )
         return html
 
