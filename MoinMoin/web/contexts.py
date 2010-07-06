@@ -233,9 +233,9 @@ class HTTPContext(BaseContext):
     def read(self, n=None):
         """ Read n bytes (or everything) from input stream. """
         if n is None:
-            return self.request.in_data
+            return self.request.stream.read()
         else:
-            return self.request.in_stream.read(n)
+            return self.request.stream.read(n)
 
     def makeForbidden(self, resultcode, msg):
         status = {401: Unauthorized,
@@ -275,6 +275,10 @@ class HTTPContext(BaseContext):
 
     def http_redirect(self, url, code=302):
         """ Raise a simple redirect exception. """
+        # werkzeug >= 0.6 does iri-to-uri transform if it gets unicode, but our
+        # url is already url-quoted, so we better give it str to have same behaviour
+        # with werkzeug 0.5.x and 0.6.x:
+        url = str(url) # if url is unicode, it should contain ascii chars only
         abort(redirect(url, code=code))
 
     def http_user_agent(self):

@@ -27,7 +27,7 @@ def execute(item_name, request):
         oldval = getattr(theuser, key)
         setattr(theuser, key, val)
         theuser.save()
-        request.theme.add_msg('%s.%s: %s -> %s' % (user_name, key, oldval, val), "info")
+        request.theme.add_msg('%s.%s: %s -> %s' % tuple([wikiutil.escape(s) for s in [user_name, key, oldval, val]]), "info")
 
     request.theme.render_content(request, item_name)
 

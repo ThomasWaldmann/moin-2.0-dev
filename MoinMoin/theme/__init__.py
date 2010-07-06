@@ -1324,6 +1324,9 @@ actionsMenuInit('%(label)s');
         home_page = wikiutil.getInterwikiHomePage(request) # sorry theme API change!!! Either None or tuple (wikiname,pagename) now.
         page_parent_page = getattr(page.getParentPage(), 'page_name', None)
 
+        # set content_type, including charset, so web server doesn't touch it:
+        request.content_type = "text/html; charset=%s" % (config.charset, )
+
         # Prepare the HTML <head> element
         user_head = [request.cfg.html_head]
 
@@ -1343,7 +1346,7 @@ actionsMenuInit('%(label)s');
             not keywords.get('print_mode', 0) and
             request.user.edit_on_doubleclick):
             if request.user.may.write(pagename): # separating this gains speed
-                user_head.append('<meta name="edit_on_doubleclick" content="1">\n')
+                user_head.append('<meta name="edit_on_doubleclick" content="%s">\n' % (request.script_root or '/'))
 
         # search engine precautions / optimization:
         # if it is an action or edit/search, send query headers (noindex,nofollow):

@@ -58,7 +58,7 @@ class Permissions:
         """
         request = self.request
         if attr not in request.cfg.acl_rights_valid:
-            raise AttributeError, attr
+            raise AttributeError(attr)
         ns_content = request.cfg.ns_content
         may = request.storage.get_backend(ns_content)._may
         return lambda itemname: may(itemname, attr)
