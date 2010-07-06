@@ -50,7 +50,7 @@
     {% endif %}
     
     <title> 
-    {% if title %}{{ title }}{% else %}{{ theme.head_title|escape }}{% endif %} - 
+    {% if title %}{{ title }}{% else %}{{ theme.head_title|e }}{% endif %} - 
         {% if cfg.html_pagetitle %}
             {{ cfg.html_pagetitle|e }}
         {% else %}
