@@ -614,16 +614,12 @@ class JinjaTheme(ThemeBase):
             }
 
         options = []
-        # class="disabled" is a workaround for browsers that ignore
-        # "disabled", e.g IE, Safari
-        # for XHTML: data['disabled'] = ' disabled="disabled"'
-        disabled = True
 
         # Format standard actions
         available = actionmod.get_names(request.cfg)
         for action in menu:
             do = action
-            action_disabled = False
+            disabled = False
             title = titles[action]
             # removes excluded actions from the more actions menu
             if action in request.cfg.actions_excluded:
@@ -633,12 +629,12 @@ class JinjaTheme(ThemeBase):
             if action == 'refresh':
                 if not page.canUseCache():
                     do = 'show'
-                    action_disabled = disabled
+                    disabled = True
 
             # SubscribeUser action enabled only if user has admin rights
             if action == 'SubscribeUser' and not request.user.may.admin(page.page_name):
                 do = 'show'
-                action_disabled = disabled
+                disabled = True
 
             # Special menu items. Without javascript, executing will
             # just return to the page.
@@ -648,20 +644,19 @@ class JinjaTheme(ThemeBase):
             # Actions which are not available for this wiki, user or page
             if (action == '__separator__' or
                 (action[0].isupper() and not action in available)):
-                action_disabled = disabled
-            options.append((do, action_disabled, title))
+                disabled = True
+            options.append((do, disabled, title))
 
         # Add custom actions not in the standard menu
         more = [item for item in available if not item in titles]
         more.sort()
         if more:
             # Add separator
-            separator = ('show', disabled, titles['__separator__'])
+            separator = ('show', True, titles['__separator__'])
             options.append(separator)
             # Add more actions (all enabled)
             for action in more:
                 do = action
-                action_disabled = False
                 # Always add spaces: LikePages -> Like Pages
                 # XXX do not create page just for using split_title -
                 # creating pages for non-existent does 2 storage lookups
@@ -669,7 +664,7 @@ class JinjaTheme(ThemeBase):
                 title = action
                 # Use translated version if available
                 title = _(title)
-                options.append((do, action_disabled, title))
+                options.append((do, False, title))
 
         context = {
             'label': titles['__title__'],
