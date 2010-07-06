@@ -829,17 +829,16 @@ class JinjaTheme(ThemeBase):
         self.page_name = page.page_name or ''
         self.head_title = title
         
-        template = self.env.get_template('base.html')
-        html = template.render(gettext=self.request.getText,
-                               item_name=item_name,
-                               title=title,
-                               content=content,
-                               allow_doubleclick=allow_doubleclick,
-                               pi_refresh=pi_refresh,
-                               html_head=html_head,
-                               trail=trail,
-                               **keywords
-                              )
+        html = self.render_template(gettext=self.request.getText,
+                                    item_name=item_name,
+                                    title=title,
+                                    content=content,
+                                    allow_doubleclick=allow_doubleclick,
+                                    pi_refresh=pi_refresh,
+                                    html_head=html_head,
+                                    trail=trail,
+                                    **keywords,
+                                   )
         return html
 
     #TODO: reimplement on-wiki-page sidebar definition with converter2
