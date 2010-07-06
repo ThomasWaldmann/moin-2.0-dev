@@ -21,12 +21,12 @@ def execute(item_name, request):
             hint = authmethod.login_hint(request)
             if hint:
                 login_hints.append(hint)
-        template = request.theme.env.get_template('login.html')
-        content = template.render(gettext=request.getText,
-                                  login_hints=login_hints,
-                                  login_inputs=request.cfg.auth_login_inputs,
-                                  title=title
-                                 )
+        content = request.theme.render_template('login.html',
+                                                gettext=request.getText,
+                                                login_hints=login_hints,
+                                                login_inputs=request.cfg.auth_login_inputs,
+                                                title=title
+                                                )
     elif request.method == 'POST':
         if 'login' in request.form:
             if hasattr(request, '_login_messages'):
