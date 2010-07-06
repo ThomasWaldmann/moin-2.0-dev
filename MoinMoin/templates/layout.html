@@ -1,5 +1,7 @@
-{{ theme.emit_custom_html(cfg.page_header1) }}
+{% extends "base.html" %}
 
+{% block layout %}
+{{ theme.emit_custom_html(cfg.page_header1) }}
 <div id="header">
 
 <form id="searchform" method="get" action="{{ href(theme.page_name) }}">
@@ -106,7 +108,54 @@
 
 {{ theme.emit_custom_html(cfg.page_header2) }}
 
-
 <div id="page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
 
+    {# ALL CONTENT TEMPLATES SHOULD HAVE IMPLEMENTS THIS BLOCK #}
+    {% block item %}
+        <div id="content">
+        {% block content %}{% endblock %}
+        </div>
+        <div id="history" class="green">
+        {% block history %}{% endblock %}
+        </div>
+        <div id="index">
+        {% block index %}{% endblock %}
+        </div>
+    {% endblock %}
+    
+    {% set info = theme.pageinfo() %}
+    {% if info %}
+    <div id="pagebottom">
+        <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}"> {{ info }}</p>
+    </div>
+    {% endif %} 
+
+</div>
+
+{{ theme.emit_custom_html(cfg.page_footer1) }}
+
+<div id="footer">
+    {% include "editbar.html" %}
+    
+    <ul id="credits">
+        {% for credit in cfg.page_credits %}
+            <li> {{ credit }} </li>
+        {% endfor %}
+    </ul>
+</div>
+
+{{ theme.emit_custom_html(cfg.page_footer2) }}
+
+{% set null = theme.request.clock.stop('run') %}
+{% set null = theme.request.clock.stop('total') %}
+{% set timing_information = theme.request.clock.dump() %}
+
+{% if cfg.show_timings %}
+    <ul id="timings">
+    {% for timing in timing_information %}
+        <li> {{ timing }}</li>
+    {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}
 
