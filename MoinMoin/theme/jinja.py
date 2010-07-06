@@ -671,12 +671,12 @@ class JinjaTheme(ThemeBase):
                 title = _(title)
                 options.append((do, action_disabled, title))
 
-        data = {
+        context = {
             'label': titles['__title__'],
             'options': options,
             'rev_field': rev is not None and '<input type="hidden" name="rev" value="%d">' % rev or '',
             }
-        return self.render('actions_menu.html', data)
+        return self.render_template('actions_menu.html', **context)
 
     def shouldShowEditbar(self):
         """
@@ -838,15 +838,13 @@ class JinjaTheme(ThemeBase):
                                pi_refresh=pi_refresh,
                                html_head=html_head,
                                trail=trail,
+                               **keywords
                               )
-        request.write(html)
-        request.headers.add('Content-Type', 'text/html; charset=utf-8')
-        # Use user interface language for this generated page
-        request.setContentLanguage(request.lang)
+        return html
 
     #TODO: reimplement on-wiki-page sidebar definition with converter2
     
-    def render(self, filename, context):
+    def render_template(self, filename='base.html', **context):
         """
         Base function that renders using Jinja2.
 

@@ -25,12 +25,12 @@ def execute(item_name, request):
         content = template.render(gettext=request.getText,
                                   login_hints=login_hints,
                                   login_inputs=request.cfg.auth_login_inputs,
+                                  title=title
                                  )
-        request.theme.render_content(item_name, content, title=title)
     elif request.method == 'POST':
         if 'login' in request.form:
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
                     request.theme.add_msg(msg, "error")
-        request.theme.render_content(item_name, title=title)
-
+        content = request.theme.render_content(item_name, title=title)
+    return content
