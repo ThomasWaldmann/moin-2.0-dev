@@ -56,6 +56,14 @@ class Converter(object):
     # But we keep the information using <span html-element>
     inline_tags = set(['abbr', 'acronym', 'address', 'dfn', 'kbd'])
 
+    # HTML tags which are completely ignored by our converter.
+    # We even do not process children of these elements.
+    ignored_tags = set(['applet', 'area', 'button', 'caption', 'center', 'fieldset',
+                        'form', 'frame', 'frameset', 'head', 'iframe', 'input', 'isindex',
+                        'label', 'legend', 'link', 'map', 'menu', 'noframes', 'noscript',
+                        'optgroup', 'option', 'param', 'script', 'select', 'style',
+                        'textarea', 'title', 'var'])
+
     # Regular expression to detect an html heading tag
     heading_re = re.compile('h[1-6]')
 
@@ -200,7 +208,13 @@ class Converter(object):
         if method:
             return method(element)
 
+        # We should ignore this tag
+        if element.tag.name in self.ignored_tags:
+            logging.debug("WARNING : Ignored tag : %s" % element.tag.name)
+            return
+
         # Otherwise we process children of the unknown element
+        logging.debug("WARNING : Unknown tag : %s" % element.tag.name)
         return self.do_children(element)
 
     def visit_xhtml_base(self, element):
