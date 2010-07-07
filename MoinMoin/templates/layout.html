@@ -32,7 +32,14 @@
 </div>
 
 <div id="username">
-    {{ theme.username()|join('<span class="sep"> | </span>')}}
+    {% for url, text, extra_attrs, exists in theme.username() %}
+        <a href="{{ url }}" {% if not exists %}class="nonexistent"{% endif %} {{extra_attrs}}>
+            {{ text }}
+        </a>
+        {% if not loop.last %}
+            <span class="sep"> | </span>
+        {% endif %}
+    {% endfor %}
 </div>
 
 

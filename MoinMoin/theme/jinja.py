@@ -167,6 +167,8 @@ class JinjaTheme(ThemeBase):
         request = self.request
         _ = request.getText
         page = self.page
+        href = request.href
+        item_name = page.page_name
         
         userlinks = []
         # Add username/homepage link for registered users. We don't care
@@ -179,28 +181,31 @@ class JinjaTheme(ThemeBase):
                 aliasname = name
             title = "%s @ %s" % (aliasname, interwiki[0])
             # link to (interwiki) user homepage
-            homelink = (request.formatter.interwikilink(1, title=title, id="userhome", generated=True, *interwiki) +
-                request.formatter.text(name) +
-                request.formatter.interwikilink(0, title=title, id="userhome", *interwiki))
-            userlinks.append(homelink)
+            name = interwiki[1]
+            interwiki_page = Page(self.request, name)
+            item = href(name), name, 'id="userhome" title="%s"' % title, interwiki_page.exists()
+            userlinks.append(item)
             # link to userprefs action
             if 'userprefs' not in self.request.cfg.actions_excluded:
-                userlinks.append(self.link_to(pagename=page.page_name, text=_('Settings'),
-                                               querystr={'do': 'userprefs'}, css_id='userprefs', rel='nofollow'))
+                item = (href(item_name, do='userprefs'), _('Settings'),
+                        'css_id="userprefs", rel="nofollow"', page.exists())
+                userlinks.append(item)
 
         if request.user.valid:
             if request.user.auth_method in request.cfg.auth_can_logout:
-                userlinks.append(self.link_to(pagename=page.page_name, text=_('Logout'),
-                                                   querystr={'do': 'logout', 'logout': 'logout'}, css_id='logout', rel='nofollow'))
+                item = (href(item_name, do='logout', logout='logout'), _('Logout'),
+                        'css_id="logout" rel="nofollow"', page.exists())
+                userlinks.append(item)
         else:
-            query = {'do': 'login'}
+            url = None
             # special direct-login link if the auth methods want no input
             if request.cfg.auth_login_inputs == ['special_no_input']:
-                query['login'] = '1'
+                url = href(item_name, do='login', login=1)
             if request.cfg.auth_have_login:
-                userlinks.append(self.link_to(pagename=page.page_name, text=_("Login"),
-                                                   querystr=query, css_id='login', rel='nofollow'))
-
+                url = url or href(item_name, do='login')
+                item = url, _("Login"), 'css_id="login" rel="nofollow"', page.exists()
+                userlinks.append(item)
+        print userlinks
         return userlinks
 
     def splitNavilink(self, text, localize=1):
@@ -838,7 +843,7 @@ class JinjaTheme(ThemeBase):
 
     #TODO: reimplement on-wiki-page sidebar definition with converter2
     
-    def render_template(self, filename='base.html', **context):
+    def render_template(self, filename='layout.html', **context):
         """
         Base function that renders using Jinja2.
 
