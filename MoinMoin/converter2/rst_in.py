@@ -114,9 +114,6 @@ class NodeVisitor():
     def depart_bullet_list(self, node):
         self.close_moin_page_node()
 
-    def visit_caption(self, node):
-        pass
-
     def visit_definition(self, node):
         self.open_moin_page_node(moin_page.list_item_body())
 
@@ -225,17 +222,16 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_field(self, node):
-    # table row?
-        pass
+        self.open_moin_page_node(moin_page.table_row())
 
     def depart_field(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_field_body(self, node):
-        pass
+        self.open_moin_page_node(moin_page.table_cell())
 
     def depart_field_body(self, node):
-        pass
+        self.close_moin_page_node()
 
     def visit_field_list(self, node):
         pass
@@ -244,10 +240,15 @@ class NodeVisitor():
         pass
 
     def visit_field_name(self, node):
-        pass
+        self.open_moin_page_node(moin_page.table_cell())
+        self.open_moin_page_node(moin_page.strong())
+        self.open_moin_page_node('%s:' % node.astext())
+        node.children = []
+        self.close_moin_page_node()
 
     def depart_field_name(self, node):
-        pass
+        self.close_moin_page_node()
+        self.close_moin_page_node()
 
     def visit_figure(self, node):
         pass
@@ -285,14 +286,22 @@ class NodeVisitor():
 
     def visit_image(self, node):
         new_node = moin_page.object(attrib={xlink.href: node['uri']})
+        # TODO: rewrite this more compact
         alt = node.get('alt', None)
         if alt:
             new_node.set(moin_page.alt, node['uri'])
+        arg = node.get('width', '')
+        if arg:
+            new_node.set(moin_page.width, arg)
+        arg = node.get('height', '')
+        if arg:
+            new_node.set(moin_page.height, arg)
 
-        if 'width' in node:
-            new_node.set(moin_page.width, node['width'])
-        if 'height' in node:
-            new_node.set(moin_page.height, node['height'])
+        # TODO: there is no 'scale' attribute in moinwiki
+        arg = node.get('scale', '')
+        if arg:
+            new_node.set(moin_page.scale, arg)
+
         self.open_moin_page_node(new_node)
 
     def depart_image(self, node):
@@ -349,9 +358,9 @@ class NodeVisitor():
             for value in simple_args:
                 args.append(moin_page.argument(children=[value]))
             for name, value in named_args:
-                args.append(moin_page.argument(attrib={moin_page.name:name}, children=[value]))
+                args.append(moin_page.argument(attrib={moin_page.name: name}, children=[value]))
             arguments = moin_page.arguments(children=args)
-            self.open_moin_page_node(moin_page.part(children=[arguments], attrib={moin_page.content_type:"x-moin/format;name=%s" % parser.split(' ')[0]}))
+            self.open_moin_page_node(moin_page.part(children=[arguments], attrib={moin_page.content_type: "x-moin/format;name=%s" % parser.split(' ')[0]}))
         else:
             self.open_moin_page_node(moin_page.blockcode())
 
@@ -384,7 +393,7 @@ class NodeVisitor():
                 arguments = refuri[2:-2].split('(')[1][:-1].split(',')
                 node = moin_page.table_of_content()
                 self.open_moin_page_node(node)
-                if arguments:
+                if arguments and arguments[0]:
                     node.set(moin_page.outline_level, arguments[0])
                 return
             arguments = refuri[2:-2].split('(')[1][:-1].split(',')
@@ -400,6 +409,7 @@ class NodeVisitor():
                     self.close_moin_page_node()
                 self.close_moin_page_node()
             self.open_moin_page_node(refuri)
+            self.close_moin_page_node()
             return
 
         self.open_moin_page_node(moin_page.a(attrib={xlink.href: refuri}))
@@ -418,6 +428,12 @@ class NodeVisitor():
 
     def depart_rubric(self, node):
         self.depart_paragraph(node)
+
+    def visit_substitution_definition(self, node):
+        node.children = []
+
+    def depart_substitution_definition(self, node):
+        pass
 
     def visit_section(self, node):
         self.header_size += 1
@@ -603,22 +619,23 @@ class MoinDirectives:
                 content_offset, block_text, state, state_machine):
         # content contains the included file name
 
-        _ = self.request.getText
+        # TODO: i18n for errors
 
         # Limit the number of documents that can be included
         if self.num_includes < self.max_includes:
             self.num_includes += 1
         else:
-            lines = [_("**Maximum number of allowed includes exceeded**")]
+            lines = ["**Maximum number of allowed includes exceeded**"]
             state_machine.insert_input(lines, 'MoinDirectives')
-            return
-
+            return []
+        # This is part of old moinmoin rst parser. TODO: delete
+        """
         if len(content):
             pagename = content[0]
             page = Page(page_name=pagename, request=self.request)
             if not self.request.user.may.read(pagename):
                 lines =\
-                    [_("**You are not allowed to read the page: %s**")\
+                    ["**You are not allowed to read the page: %s**"\
                         % (pagename, )]
             else:
                 if page.exists():
@@ -629,12 +646,16 @@ class MoinDirectives:
                         del lines[0]
                 else:
                     lines =\
-                        [_("**Could not find the referenced page: %s**")\
+                        ["**Could not find the referenced page: %s**"\
                         % (pagename, )]
             state_machine.insert_input(lines, 'MoinDirectives')
-        return
-
-
+        """
+        if content:
+            macro = '<<Include(%s)>>' % content[0]
+        else:
+            macro = '<<Include()>>'
+        ref = reference(macro, refuri=macro)
+        return [ref]
 
     include.has_content = include.content = True
     include.option_spec = {}
@@ -696,7 +717,6 @@ class MoinDirectives:
     parser.required_arguments = 1
     parser.optional_arguments = 0
 
-        
 
 class Converter(object):
 
