@@ -86,6 +86,7 @@ class TestConverter(object):
         data = [
             (u'.. macro:: <<TableOfContents()>>', ''),
             (u'.. contents::\n  :depth: 1\n', ''),
+            (u'.. parser:: python test=test\n  import test\n  test.s = 11', '')
             ]
         for i in data:
             yield (self.do, ) + i

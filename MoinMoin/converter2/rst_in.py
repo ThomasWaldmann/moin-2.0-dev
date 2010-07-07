@@ -27,7 +27,7 @@ from MoinMoin.util.tree import html, moin_page, xlink
 #### TODO: try block
 from docutils import nodes, utils, writers, core
 from docutils.parsers.rst import Parser
-from docutils.nodes import reference
+from docutils.nodes import reference, literal_block
 from docutils.parsers import rst
 from docutils.parsers.rst import directives, roles
 #####
@@ -340,7 +340,20 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_literal_block(self, node):
-        self.open_moin_page_node(moin_page.blockcode())
+        parser = node.get('parser', '')
+        if parser:
+            named_args = re.findall(r"(\w+)=(\w+)", parser)
+            simple_args = re.findall("(?:\s)\w+(?:\s|$)", parser)
+            print named_args, simple_args
+            args = []
+            for value in simple_args:
+                args.append(moin_page.argument(children=[value]))
+            for name, value in named_args:
+                args.append(moin_page.argument(attrib={moin_page.name:name}, children=[value]))
+            arguments = moin_page.arguments(children=args)
+            self.open_moin_page_node(moin_page.part(children=[arguments], attrib={moin_page.content_type:"x-moin/format;name=%s" % parser.split(' ')[0]}))
+        else:
+            self.open_moin_page_node(moin_page.blockcode())
 
     def depart_literal_block(self, node):
         self.close_moin_page_node()
@@ -568,6 +581,8 @@ class MoinDirectives:
 
         directives.register_directive('contents', self.table_of_content)
 
+        directives.register_directive('parser', self.parser)
+
         # disallow a few directives in order to prevent XSS
         # for directive in ('meta', 'include', 'raw'):
         for directive in ('meta', 'raw'):
@@ -619,6 +634,8 @@ class MoinDirectives:
             state_machine.insert_input(lines, 'MoinDirectives')
         return
 
+
+
     include.has_content = include.content = True
     include.option_spec = {}
     include.required_arguments = 1
@@ -667,6 +684,19 @@ class MoinDirectives:
     table_of_content.required_arguments = 1
     table_of_content.optional_arguments = 0
 
+    def parser(self, name, arguments, options, content, lineo,
+                content_offset, block_text, state, state_machine):
+        block = literal_block()
+        block['parser'] = content[0]
+        block.children = [nodes.Text("\n".join(content[1:]))]
+        return [block]
+
+    parser.has_content = parser.content = True
+    parser.option_spec = {}
+    parser.required_arguments = 1
+    parser.optional_arguments = 0
+
+        
 
 class Converter(object):
 
