@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block layout %}
-{{ theme.emit_custom_html(cfg.page_header1) }}
 <div id="header">
 
 <form id="searchform" method="get" action="{{ href(theme.page_name) }}">
@@ -106,8 +105,6 @@
 
 </div>
 
-{{ theme.emit_custom_html(cfg.page_header2) }}
-
 <div id="page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
 
     {# ALL CONTENT TEMPLATES SHOULD HAVE IMPLEMENTS THIS BLOCK #}
@@ -127,8 +124,6 @@
 
 </div>
 
-{{ theme.emit_custom_html(cfg.page_footer1) }}
-
 <div id="footer">
     {% block extra_footer %}{% endblock %}    
     <ul id="credits">
@@ -137,8 +132,6 @@
         {% endfor %}
     </ul>
 </div>
-
-{{ theme.emit_custom_html(cfg.page_footer2) }}
 
 {% set null = theme.request.clock.stop('run') %}
 {% set null = theme.request.clock.stop('total') %}
