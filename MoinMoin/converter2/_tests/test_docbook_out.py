@@ -92,6 +92,9 @@ class TestConverter(Base):
             # Simple ordered list with lower-roman numeration
             ('<page><body><list page:item-label-generate="ordered" page:list-style-type="lower-roman"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
              '/article/orderedlist[@numeration="lowerroman"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
+            # Simple definition list
+            ('<page><body><list><list-item><list-item-label>First Term</list-item-label><list-item-body>First Definition</list-item-body></list-item><list-item><list-item-label>Second Term</list-item-label><list-item-body>Second Definition</list-item-body></list-item></list></body></page>',
+             '/article/variablelist[varlistentry[1][./term[text()="First Term"]][./listitem/para[text()="First Definition"]]][varlistentry[2][./term[text()="Second Term"]][./listitem/para[text()="Second Definition"]]]')
         ]
 
         for i in data:
