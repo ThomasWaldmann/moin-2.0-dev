@@ -282,10 +282,7 @@ class Converter(object):
                             self.output.append('\n\n')
                     elif self.status[-1] == "list":
                         next_child =\
-                            next_child.replace(u'\n',\
-                                u'\n'\
-                                + u' '*(len(''.join(self.list_item_labels))\
-                                     + len(self.list_item_labels)))
+                            re.sub(r"\n(.)", lambda m: "\n%s%s" % (u' '*(len(''.join(self.list_item_labels)) + len(self.list_item_labels)), m.group(1)), next_child)
                         if self.last_closed == "p":
                             self.output.append('\n'\
                                     + ' '\
@@ -299,6 +296,11 @@ class Converter(object):
                             self.objects = []
                             """
                             self.output.append('\n')
+                        #if self.last_closed == "list":
+                        #    self.output.append('\n')
+                    elif self.status[-2] == "list":
+                        next_child =\
+                            re.sub(r"\n(.)", lambda m: "\n%s%s" % (u' '*(len(''.join(self.list_item_labels)) + len(self.list_item_labels)), m.group(1)), next_child)
                     self.output.append(next_child)
                     self.last_closed = 'text'
             except StopIteration:
@@ -357,10 +359,12 @@ class Converter(object):
 
     def close_moinpage(self, elem):
         n = 'close_moinpage_' + elem.tag.name.replace('-', '_')
-        self.last_closed = elem.tag.name.replace('-', '_')
         f = getattr(self, n, None)
         if f:
-            return f(elem)
+            close = f(elem)
+        self.last_closed = elem.tag.name.replace('-', '_')
+        if f:
+            return close
         return ''
 
     def open_moinpage_a(self, elem):
@@ -467,7 +471,9 @@ class Converter(object):
         self.opened.append(elem)
         self.list_level += 1
         ret = ''
-        if self.status[-1] != 'text' or self.last_closed:
+        if self.status[-1] == 'text' and self.last_closed:
+            ret = '\n\n'
+        elif self.status[-1] != 'text' or self.last_closed:
             ret = '\n'
         self.status.append('list')
         self.last_closed = None
@@ -503,7 +509,7 @@ class Converter(object):
             ret = ' '\
                   * (len(''.join(self.list_item_labels[:-1]))\
                      + len(self.list_item_labels[:-1]))
-            if self.last_closed:
+            if self.last_closed and self.last_closed != 'list':
                 ret = '\n%s' % ret
             return ret
         return ''
@@ -519,7 +525,6 @@ class Converter(object):
         if self.last_closed:
             ret = '\n'
         space_bonus = 0
-        if len(''.join(self.list_item_labels[:-1])): space_bonus = 1
         ret += ' ' * (len(''.join(self.list_item_labels[:-1]))\
                       + len(self.list_item_labels[:-1]))\
                + self.list_item_label
@@ -528,7 +533,9 @@ class Converter(object):
         return ret
 
     def close_moinpage_list_item_body(self, elem):
-        return ''
+        if self.last_closed == "text":
+            return '\n'
+        return ""
 
     def open_moinpage_note(self, elem):
         class_ = elem.get(moin_page.note_class, "")
@@ -572,6 +579,7 @@ class Converter(object):
         self.opened.append(elem)
         #self.status.append("p")
         if self.status[-1] == 'text':
+            self.status.append('p')
             self.define_references()
             if self.last_closed == 'text':
                 return ReST.p * 2
@@ -580,10 +588,15 @@ class Converter(object):
             elif self.last_closed:
                 return ReST.p
         elif self.status[-1] == 'table':
+            self.status.append('p')
             if self.last_closed and self.last_closed != 'table_cell'\
                                 and self.last_closed != 'table_row':
+          #                      and self.last_closed != 'p':
                 return ReST.linebreak
+            elif self.last_closed == 'p':
+                return ''
         elif self.status[-1] == 'list':
+            self.status.append('p')
             if self.last_closed and self.last_closed == 'list_item_label':
                 return ''
             if self.last_closed and self.last_closed != 'list_item'\
@@ -594,13 +607,13 @@ class Converter(object):
                                         * (len(''.join(self.list_item_labels))\
                                            + len(self.list_item_labels))
             elif self.last_closed and self.last_closed == 'p':
-                return ReST.p + ' '\
-                                * (len(''.join(self.list_item_labels))\
+                #return ReST.p +\
+                return "\n" + ' ' * (len(''.join(self.list_item_labels))\
                                    + len(self.list_item_labels))
         return ''
 
     def close_moinpage_p(self, elem):
-        # self.status.pop()
+        self.status.pop()
         if self.status[-1] == 'text':
             return ReST.p
         if self.status[-1] == 'list':
