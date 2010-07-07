@@ -121,7 +121,16 @@ class Converter(object):
             return self.handle_simple_list(docbook.orderedlist, element, attrib=attrib)
         elif 'unordered' == item_label_generate:
             return self.handle_simple_list(docbook.itemizedlist, element, attrib={})
-        # TODO : Definition List
+        else:
+            return self.new_copy(docbook.variablelist, element, attrib={})
+
+    def visit_moinpage_list_item(self, element):
+        """
+        We can be sure we will have a varlist entry, because the
+        two other kind of list we support will ignore <list-item>
+        tag.
+        """
+        return self.new_copy(docbook.varlistentry, element, attrib={})
 
     def visit_moinpage_list_item_body(self, element):
         items = []
@@ -137,6 +146,14 @@ class Converter(object):
                 an_item = ET.Element(docbook.para, attrib={}, children=child)
                 items.append(an_item)
         return ET.Element(docbook.listitem, attrib={}, children=items)
+
+    def visit_moinpage_list_item_label(self, element):
+        """
+        In our DOM Tree, <list-item-label> only occur for a
+        list of definition, so we can convert it as a term
+        in the DocBook tree.
+        """
+        return self.new_copy(docbook.term, element, attrib={})
 
     def handle_simple_list(self, docbook_tag, element, attrib):
         list_items = []
