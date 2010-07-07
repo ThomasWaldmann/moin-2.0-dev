@@ -102,7 +102,7 @@
     </div>
 {% endif %}
 
-{% include "editbar.html" %}
+{% block extra_header %}{% endblock %}
 
 </div>
 
@@ -123,19 +123,14 @@
         </div>
     {% endblock %}
     
-    {% set info = theme.pageinfo() %}
-    {% if info %}
-    <div id="pagebottom">
-        <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}"> {{ info }}</p>
-    </div>
-    {% endif %} 
+    {% block extra_content %}{% endblock %}
 
 </div>
 
 {{ theme.emit_custom_html(cfg.page_footer1) }}
 
 <div id="footer">
-    {% include "editbar.html" %}    
+    {% block extra_footer %}{% endblock %}    
     <ul id="credits">
         {% for credit in cfg.page_credits %}
             <li> {{ credit }} </li>
