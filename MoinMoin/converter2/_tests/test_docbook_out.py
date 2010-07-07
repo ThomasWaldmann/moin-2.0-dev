@@ -75,7 +75,7 @@ class TestConverter(Base):
     def test_title(self):
         data = [
             ('<page><body><h page:outline-level="1">Heading 1</h><p>First</p><h page:outline-level="2">Heading 2</h><p>Second</p></body></page>',
-             '/article/sect1[title="Heading 1"][para="First"]/sect2[title="Heading2"][para="Second"]'),
+             '/article/sect1[title="Heading 1"][para="First"]/sect2[title="Heading 2"][para="Second"]'),
         ]
         for i in data:
             yield (self.do, ) + i
