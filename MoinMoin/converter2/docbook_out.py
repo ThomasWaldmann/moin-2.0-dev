@@ -24,6 +24,10 @@ class Converter(object):
     }
 
     def __call__(self, element):
+        self.section_children = {}
+        self.parent_section = 0
+        self.current_section = 0
+        self.root_section = 10
         return self.visit(element)
 
     def do_children(self, element):
@@ -44,7 +48,10 @@ class Converter(object):
         """
         Return a new element in the DocBook tree
         """
-        return ET.Element(tag, attrib=attrib, children=children)
+        if self.current_section > 0:
+            self.section_children[self.current_section].append(ET.Element(tag, attrib=attrib, children=children))
+        else:
+            return ET.Element(tag, attrib=attrib, children=children)
 
     def new_copy(self, tag, element, attrib):
         """
@@ -91,6 +98,40 @@ class Converter(object):
 
         # Otherwise we process the children of the unknown element
         return self.do_children(element)
+
+    def visit_moinpage_h(self, element):
+        """
+        There is not really heading in DocBook, but rather section with
+        title. The section is a root tag for all the elements which in
+        the dom tree will be between two heading tags.
+
+        So we need to process child manually to determine correctly the
+        children of each section.
+
+        A section is closed when we have a new heading with an equal or
+        higher level.
+        """
+
+        depth = element.get(moin_page('outline-level'))
+        # We will have a new section
+        # under another section
+        if depth > self.current_section:
+            self.parent_section = self.current_section
+            self.current_section = int(depth)
+            self.section_children[self.current_section] = []
+            #NB : Error with docbook.title
+            title = ET.Element(docbook('title'), attrib={}, children=element[0])
+            self.section_children[self.current_section].append(title)
+
+        # We will close a section before starting a new one
+        # Need more test
+        elif  depth < current_depth:
+            if self.parent_section != 0:
+                section_tag = 'sect%d' % self.parent_section
+                section = ET.Element(docbook(section_tag), attrib={},
+                                     children=self.section_children[self.current_section])
+                self.section_children[self.parent_section].append(section)
+                self.current_section = int(depth)
 
     def visit_moinpage_list(self, element):
         """
@@ -175,9 +216,23 @@ class Converter(object):
     def visit_moinpage_page(self, element):
         for item in element:
             if item.tag.uri == moin_page and item.tag.name == 'body':
-                return self.new_copy(docbook.article, item, attrib={})
+                c = self.do_children(item)
+                if not(c):
+                    self.section_children = sorted(self.section_children.items(), reverse=True)
+                    section = None
+                    for k, v in self.section_children:
+                        if section:
+                            section_tag = 'sect%d' % k
+                            v.append(section)
+                            section = ET.Element(docbook(section_tag), attrib={}, children=v)
+                        else:
+                            section_tag = 'sect%d' % k
+                            section = ET.Element(docbook(section_tag), attrib={}, children=v)
+                    return ET.Element(docbook.article, attrib={}, children=[section])
+                else:
+                    return ET.Element(docbook.article, attrib={}, children=c)
 
-        raise RuntimeError('page:page need to contain exactly one page body tag, got %r' % elem[:])
+        raise RuntimeError('page:page need to contain exactly one page body tag, got %r' % element[:])
 
     def visit_moinpage_p(self, element):
         return self.new_copy(docbook.para, element, attrib={})
