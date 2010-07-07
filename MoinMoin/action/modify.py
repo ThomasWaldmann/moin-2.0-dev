@@ -14,7 +14,7 @@ def execute(item_name, request):
     item = Item.create(request, item_name, mimetype=mimetype)
     if request.method == 'GET':
         content = item.do_modify(template_name)
-        request.theme.render_content(item_name, content)
+        return content
     elif request.method == 'POST':
         cancelled = 'button_cancel' in request.form
         if not cancelled:
