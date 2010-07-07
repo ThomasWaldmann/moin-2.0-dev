@@ -798,12 +798,7 @@ options_no_group_name = {
 
     ('trail_size', 5,
      "Number of items in the trail of recently visited items"),
-
-    ('page_footer1', '', "Custom HTML markup sent ''before'' the system footer."),
-    ('page_footer2', '', "Custom HTML markup sent ''after'' the system footer."),
-    ('page_header1', '', "Custom HTML markup sent ''before'' the system header / title area but after the body tag."),
-    ('page_header2', '', "Custom HTML markup sent ''after'' the system header / title area (and body tag)."),
-
+     
     ('changed_time_fmt', '%H:%M', "Time format used on Recent``Changes for page edits within the last 24 hours"),
     ('date_fmt', '%Y-%m-%d', "System date format, used mostly in Recent``Changes"),
     ('datetime_fmt', '%Y-%m-%d %H:%M:%S', 'Default format for dates and times (when the user has no preferences or chose the "default" date format)'),
