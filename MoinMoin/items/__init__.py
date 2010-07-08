@@ -1168,6 +1168,80 @@ class Text(Binary):
         doc.write(out.fromunicode, method='html')
         return out.tounicode()
 
+    def do_get(self):
+        """
+        Here is a rough implementation of the get action with
+        conversion.
+
+        It is only for test purpose and it is working only for
+        'text/docbook' mimetype.
+
+        The idea behind this implementation is to detect wether the
+        text object should be (and can be) converted according
+        to the mimetype of the item, and the mimetype in the request.
+
+        So to get a docbook from any item just request
+        ItemName?do=get&mimetype=text/docbook
+        """
+        # Import a bunch of stuffs to realize conversion
+        # Probably not really clean to do it here
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import moin_page
+        from cStringIO import StringIO
+        from MoinMoin.converter2.docbook_out import *
+        from emeraldtree.tree import *
+        request = self.request
+
+        # We catch a mimetype parameter from the request
+        request_mimetype = request.values.get('mimetype')
+
+        # We just test if the mimetype is 'text/docbook'
+        # If not, we use the normal get action
+        # We should rather test here if the conversion is possible
+        if request_mimetype != 'text/docbook':
+            return super(Text, self).do_get()
+
+        # If we are here, we will convert into a DocBook document
+        # This code is format specific, and should probably
+        # be moved in an appropriate method
+        output_namespaces = {
+            docbook.namespace: '',
+            moin_page.namespace: 'page'
+            }
+
+        # Get the converter from the factory
+        # Include, and link are not used at this time
+        input_conv = reg.get(Type(self.mimetype),
+            type_moin_document, request=request)
+        output_conv = reg.get(type_moin_document,
+            Type('application/docbook+xml'), request=request)
+
+        doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
+        doc = output_conv(doc)
+
+        # We convert the result into a StringIO object
+        # With the appropriate namespace
+        # Some other operation should probably be done here to
+        # like adding a doctype
+        file_to_send = StringIO()
+        tree = ET.ElementTree(doc)
+        tree.write(file_to_send, namespaces=output_namespaces)
+
+        # We determine the different parameters for the reply
+        mt = wikiutil.MimeType(mimestr='application/docbook+xml')
+        content_disposition = mt.content_disposition(request.cfg)
+        content_type = mt.content_type()
+
+        # After creation of the StringIO, the pointer is at the and
+        # so position of the pointer is the size.
+        # and then we should move it back at the beginning of the file
+        content_length = file_to_send.tell()
+        file_to_send.seek(0)
+
+        # We call the parent method send to return the file
+        return super(Text, self)._send(content_type, content_length, None, file_to_send, content_disposition=content_disposition)
+
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
 
