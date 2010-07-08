@@ -47,12 +47,11 @@ class Table(object):
         self.j = -1
         self.table = []
         self.header_count = 0
-
-    def add_header(self):
-        self.header_count += 1
-        return self.add_row()
+        self.rowclass = ''
 
     def add_row(self):
+        if self.rowclass == 'table-header':
+            self.header_count += 1
         row = []
         self.i += 1
         self.j = 0
@@ -62,6 +61,14 @@ class Table(object):
                 self.add_cell(self.table[-2][self.j][0],
                                 self.table[-2][self.j][1] - 1, Cell(''))
         return row
+
+    def end_row(self):
+        if len(self.table) > 1:
+            if len(self.table[-2]) > len(self.table[-1]):
+                self.add_cell(1, 1, Cell(''))
+                self.end_row()
+        if self.rowclass == 'table-header':
+            self.table.insert(self.header_count - 1, self.table.pop())
 
     def add_cell(self, cs, rs, cell):
         if cs < 1 or rs < 1:
@@ -106,12 +113,7 @@ class Table(object):
                 height = col[2].height()
         return height
 
-    def complete_line(self):
-        if self.i > 0:
-            if len(self.table[-1]) < len(self.table[-2]):
-                pass
-
-    def __str__(self):
+    def __repr__(self):
         ret = []
         if self.height() and self.width():
             cols = []
@@ -194,9 +196,6 @@ class ReST(object):
         (None, None): ' ',
         }
 
-    def __init__(self):
-        pass
-
 
 class Converter(object):
     """
@@ -236,7 +235,6 @@ class Converter(object):
         return cls
 
     def __init__(self):
-
         # TODO: create class containing all table attributes
         self.table_tableclass = ''
         self.table_tablestyle = ''
@@ -369,9 +367,7 @@ class Converter(object):
 
     def open_moinpage_a(self, elem):
         href = elem.get(xlink.href, None)
-
         text = ''.join(elem.itertext()).replace('\n', ' ')
-
         # TODO: check that links have different alt texts
         if text in [t for (t, h) in self.all_used_references]:
             if (text, href) in self.all_used_references:
@@ -403,8 +399,9 @@ class Converter(object):
                 self.output.pop()
             last_newlines = r'(\n*)\Z'
             if self.output:
-                i = -len(re.search(last_newlines, self.output[-1]).groups(1))
-                self.output[-1] = self.output[-1][:i]
+                i = -len(re.search(last_newlines, self.output[-1]).groups(1)[0])
+                if i:
+                    self.output[-1] = self.output[-1][:i]
 
         ret = "::\n\n  %s%s\n\n" % (' '\
                                     * (len(''.join(self.list_item_labels))\
@@ -554,7 +551,7 @@ class Converter(object):
         self.footnotes.append("".join(self.output))
         self.subpage.pop()
         self.output = self.subpage[-1]
-        return '[#]_'
+        return ' [#]_ '
 
     def open_moinpage_object(self, elem):
         # TODO: object parametrs support
@@ -562,16 +559,18 @@ class Converter(object):
         href = href.split('?')
         args = ''
         if len(href) > 1:
-            args =' '.join([s for s\
-                              in re.findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)',
-                                            href[1]) if s[:3] != 'do='])
-        href = href[0].split('wiki.local:')[-1].split('attachment:')[-1]
+            args =[s for s in re.findall(r'(?:^|;|,|&|)(\w+=\w+)(?:,|&|$)',
+                                            href[1]) if s[:3] != 'do=']
+        href = href[0]
         alt = elem.get(moin_page.alt, '')
         if not alt:
             ret = ''
         else:
             ret = '|%s|' % alt
-        self.objects.append(".. %s image:: %s" % (ret, href))
+        args_text = ''
+        if args:
+            args_text = "\n  %s" % '\n  '.join(':%s: %s' % (arg.split('=')[0], arg.split('=')[1]) for arg in args)
+        self.objects.append(".. %s image:: %s%s" % (ret, href, args_text))
         return ret
 
     def open_moinpage_p(self, elem):
@@ -590,7 +589,10 @@ class Converter(object):
         elif self.status[-1] == 'table':
             self.status.append('p')
             if self.last_closed and self.last_closed != 'table_cell'\
-                                and self.last_closed != 'table_row':
+                                and self.last_closed != 'table_row'\
+                                and self.last_closed != 'table_header'\
+                                and self.last_closed != 'table_footer'\
+                                and self.last_closed != 'table_body':
           #                      and self.last_closed != 'p':
                 return ReST.linebreak
             elif self.last_closed == 'p':
@@ -734,21 +736,25 @@ class Converter(object):
 
     def close_moinpage_table(self, elem):
         self.status.pop()
-        return str(self.tablec) + ReST.linebreak
+        table = repr(self.tablec)
+        if self.status[-1] == "list":
+            table =\
+                re.sub(r"\n(.)", lambda m: "\n%s%s" % (u' '*(len(''.join(self.list_item_labels)) + len(self.list_item_labels)), m.group(1)), "\n" + table)
+            return table + ReST.p
+        return table + ReST.linebreak
 
     def open_moinpage_table_header(self, elem):
         # is this correct rowclass?
-        self.table_rowsclass = 'table-header'
+        self.tablec.rowclass = 'table-header'
         self.children.append(iter(elem))
         self.opened.append(elem)
         return ''
 
     def close_moinpage_table_header(self, elem):
-        self.table_rowsclass = ''
         return ''
 
     def open_moinpage_table_footer(self, elem):
-        self.table_rowsclass = 'table-footer'
+        self.tablec.rowclass = 'table-footer'
         self.children.append(iter(elem))
         self.opened.append(elem)
         return ''
@@ -758,7 +764,7 @@ class Converter(object):
         return ''
 
     def open_moinpage_table_body(self, elem):
-        self.table_rowsclass = ''
+        self.tablec.rowclass = 'table-body'
         self.children.append(iter(elem))
         self.opened.append(elem)
         return ''
@@ -782,14 +788,14 @@ class Converter(object):
     def close_moinpage_table_row(self, elem):
         self.table_rowstyle = ''
         self.table_rowclass = ''
-
+        self.tablec.end_row()
         return ''
 
     def open_moinpage_table_cell(self, elem):
         table_cellclass = elem.attrib.get('class', '')
         table_cellstyle = elem.attrib.get('style', '')
-        number_columns_spanned\
-                = int(elem.get(moin_page.number_columns_spanned, 1))
+        number_cols_spanned\
+                = int(elem.get(moin_page.number_cols_spanned, 1))
         number_rows_spanned\
                 = int(elem.get(moin_page.number_rows_spanned, 1))
 
@@ -821,7 +827,7 @@ class Converter(object):
         self.opened.append(elem)
         self.output = []
         self.subpage.append(self.output)
-        self.table[-1].append((number_columns_spanned,
+        self.table[-1].append((number_cols_spanned,
                                 number_rows_spanned,
                                 self.output))
         return ''
