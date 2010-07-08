@@ -23,6 +23,10 @@ class Converter(object):
         moin_page: 'moinpage'
     }
 
+    @classmethod
+    def _factory(cls, input, output, request, **kw):
+        return cls()
+
     def __call__(self, element):
         self.section_children = {}
         self.parent_section = 0
@@ -237,3 +241,7 @@ class Converter(object):
     def visit_moinpage_p(self, element):
         return self.new_copy(docbook.para, element, attrib={})
 
+from . import default_registry
+from MoinMoin.util.mime import Type, type_moin_document
+default_registry.register(Converter._factory, type_moin_document,
+    Type('application/docbook+xml'))
