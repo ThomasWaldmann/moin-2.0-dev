@@ -500,7 +500,6 @@ class Formatter(FormatterBase):
         """
         @keyword title: override using the interwiki wikiname as title
         """
-        querystr = kw.get('querystr', {})
         wikitag, wikiurl, wikitail, wikitag_bad = wikiutil.resolve_interwiki(self.request, interwiki, pagename)
         wikiurl = wikiutil.mapURL(self.request, wikiurl)
         if wikitag == 'Self': # for own wiki, do simple links
@@ -510,11 +509,7 @@ class Formatter(FormatterBase):
                 pagename = wikitail
             return pagename
         else: # return InterWiki hyperlink
-            href = wikiutil.join_wiki(wikiurl, wikitail)
-            if querystr:
-                separator = ('?', '&')['?' in href]
-                href = '%s%s%s' % (href, separator, wikiutil.makeQueryString(querystr))
-            return href
+            return wikiutil.join_wiki(wikiurl, wikitail)
 
     def url(self, on, url=None, css=None, do_escape=None, **kw):
         """
