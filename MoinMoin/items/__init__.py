@@ -38,6 +38,9 @@ ROWS_META = 10
 NAME = "name"
 NAME_OLD = "name_old"
 
+# if an item is reverted, we store the revision number we used for reverting there:
+REVERTED_TO = "reverted_to"
+
 # some metadata key constants:
 ACL = "acl"
 

@@ -14,7 +14,7 @@ time, along with a navigation aid.
 
 import re, time
 
-from MoinMoin import wikiutil, i18n, error
+from MoinMoin import config, wikiutil, i18n, error
 from MoinMoin.Page import Page
 
 Dependencies = ['language']
@@ -158,10 +158,11 @@ class SlideshowAction:
         try:
             self.setSlideNumber()
             language = self.page.pi['language']
+            self.request.content_type = "text/html; charset=%s" % (config.charset, )
             self.request.setContentLanguage(language)
             self.request.write(self.template % self)
         except Error, err:
-            self.request.theme.add_msg(unicode(err), "error")
+            self.request.theme.add_msg(wikiutil.escape(unicode(err)), "error")
             self.page.send_page()
 
     # Private ----------------------------------------------------------------
