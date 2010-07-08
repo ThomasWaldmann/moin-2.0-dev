@@ -101,8 +101,8 @@ class Settings(UserPrefBase):
         oidconsumer = consumer.Consumer(request.session,
                                         MoinOpenIDStore(request))
         query = {}
-        for key in request.form:
-            query[key] = request.form[key]
+        for key in request.values:
+            query[key] = request.values[key]
         qstr = {'do': 'userprefs',
                 'handler': 'oid',
                 'oid.return': '1'}
