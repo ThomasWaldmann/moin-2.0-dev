@@ -182,8 +182,10 @@ class JinjaTheme(ThemeBase):
             title = "%s @ %s" % (aliasname, interwiki[0])
             # link to (interwiki) user homepage
             name = interwiki[1]
-            interwiki_page = Page(self.request, name)
-            item = href(name), name, 'id="userhome" title="%s"' % title, interwiki_page.exists()
+            item_name = request.formatter.interwiki_item_name(title=title, id="userhome", generated=True, *interwiki)
+            interwiki_page = Page(self.request, item_name)
+            item = href(item_name), name, 'id="userhome" title="%s"' % title, interwiki_page.exists()
+
             userlinks.append(item)
             # link to userprefs action
             if 'userprefs' not in self.request.cfg.actions_excluded:
@@ -205,7 +207,6 @@ class JinjaTheme(ThemeBase):
                 url = url or href(item_name, do='login')
                 item = url, _("Login"), 'css_id="login" rel="nofollow"', page.exists()
                 userlinks.append(item)
-        print userlinks
         return userlinks
 
     def splitNavilink(self, text, localize=1):
