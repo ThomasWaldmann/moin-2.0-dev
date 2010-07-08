@@ -135,6 +135,12 @@ class Converter(object):
         body = moin_page.body(children=children)
         return moin_page.page(children=[body])
 
+    def visit_docbook_itemizedlist(self, element):
+        attrib = {}
+        key = moin_page('item-label-generate')
+        attrib[key] = 'unordered'
+        return self.visit_simple_list(moin_page.list, attrib, element)
+
     def visit_docbook_para(self, element):
         return self.new_copy(moin_page.p, element, attrib={})
 
@@ -160,6 +166,28 @@ class Converter(object):
         not want to process it.
         """
         pass
+
+    def visit_simple_list(self, moin_page_tag, attrib, element):
+        items = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.name == 'listitem':
+                    children = self.visit(child)
+                    list_item_body = ET.Element(moin_page('list-item-body'), attrib={}, children=children)
+                    tag = ET.Element(moin_page('list-item'), attrib={},
+                                     children=[list_item_body])
+                    tag = (tag, )
+                    items.extend(tag)
+                else:
+                    r = self.visit(child)
+                    if r is None:
+                        r = ()
+                    elif not isinstance(r, (list, tuple)):
+                        r = (r, )
+                    items.extend(r)
+            else:
+                items.append(child)
+        return ET.Element(moin_page.list, attrib=attrib, children=items)
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
