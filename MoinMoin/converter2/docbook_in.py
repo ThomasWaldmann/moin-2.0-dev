@@ -141,6 +141,12 @@ class Converter(object):
         attrib[key] = 'unordered'
         return self.visit_simple_list(moin_page.list, attrib, element)
 
+    def visit_docbook_orderedlist(self, element):
+        attrib = {}
+        key = moin_page('item-label-generate')
+        attrib[key] = 'ordered'
+        return self.visit_simple_list(moin_page.list, attrib, element)
+
     def visit_docbook_para(self, element):
         return self.new_copy(moin_page.p, element, attrib={})
 
