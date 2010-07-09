@@ -88,6 +88,9 @@ class TestConverter(Base):
             # GLOSS LIST --> Definition list
             ('<article><glosslist><glossentry><glossterm>Term 1</glossterm><glossdef><para>Definition 1</para></glossdef></glossentry><glossentry><glossterm>Term 2</glossterm><glossdef><para>Definition 2</para></glossdef></glossentry></glosslist></article>',
             '/page/body/list[list-item[1][list-item-label="Term 1"][list-item-body[p="Definition 1"]]][list-item[2][list-item-label="Term 2"][list-item-body[p="Definition 2"]]]'),
+            # SEGMENTED LIST --> Definition List
+            ('<article><segmentedlist><segtitle>Term 1</segtitle><segtitle>Term 2</segtitle><segtitle>Term 3</segtitle><seglistitem><seg>Def 1:1</seg><seg>Def 1:2</seg><seg>Def 1:3</seg></seglistitem><seglistitem><seg>Def 2:1</seg><seg>Def 2:2</seg><seg>Def 2:3</seg></seglistitem></segmentedlist></article>',
+              '/page/body/list[list-item[1][list-item-label="Term 1"][list-item-body="Def 1:1"]][list-item[2][list-item-label="Term 2"][list-item-body="Def 1:2"]][list-item[3][list-item-label="Term 3"][list-item-body="Def 1:3"]][list-item[4][list-item-label="Term 1"][list-item-body="Def 2:1"]][list-item[5][list-item-label="Term 2"][list-item-body="Def 2:2"]][list-item[6][list-item-label="Term 3"][list-item-body="Def 2:3"]]'),
         ]
         for i in data:
             yield (self.do, ) + i
