@@ -82,6 +82,9 @@ class TestConverter(Base):
             # VARIABLE LIST --> list
             ('<article><variablelist><varlistentry><term>Term 1</term><listitem>Definition 1</listitem></varlistentry><varlistentry><term>Term 2</term><listitem>Definition 2</listitem></varlistentry></variablelist></article>',
             '/page/body/list[list-item[1][list-item-label="Term 1"][list-item-body="Definition 1"]][list-item[2][list-item-label="Term 2"][list-item-body="Definition 2"]]'),
+            # PROCEDURE --> ordered list (with arabic numeration)
+            ('<article><procedure><step>First Step</step><step>Second Step</step></procedure></article>',
+             '/page/body/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="First Step"]][list-item[2]/list-item-body[text()="Second Step"]]'),
         ]
         for i in data:
             yield (self.do, ) + i
