@@ -171,6 +171,13 @@ class Converter(object):
         # NB : We need to be sure it is only called for a variablelist
         return self.new_copy(moin_page('list-item-body'), element, attrib={})
 
+    def visit_docbook_procedure(self, element):
+        # TODO : See to add Procedure text (if needed)
+        attrib = {}
+        key = moin_page('item-label-generate')
+        attrib[key] = 'ordered'
+        return self.visit_simple_list(moin_page.list, attrib, element)
+
     def visit_docbook_title(self, element):
         """
         Later we should add support for all the different kind of title.
@@ -187,10 +194,11 @@ class Converter(object):
         return self.new_copy(moin_page('list-item'), element, attrib={})
 
     def visit_simple_list(self, moin_page_tag, attrib, element):
+        list_item_tags = set(['listitem', 'step'])
         items = []
         for child in element:
             if isinstance(child, ET.Element):
-                if child.tag.name == 'listitem':
+                if child.tag.name in list_item_tags:
                     children = self.visit(child)
                     list_item_body = ET.Element(moin_page('list-item-body'), attrib={}, children=children)
                     tag = ET.Element(moin_page('list-item'), attrib={},
