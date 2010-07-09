@@ -246,6 +246,12 @@ class Converter(object):
                 new.append(child)
         return ET.Element(moin_page.list, attrib={}, children=new)
 
+    def visit_docbook_simplelist(self, element):
+        # TODO : Add support of the type attribute
+        attrib = {}
+        key = moin_page('item-label-generate')
+        attrib[key] = 'unordered'
+        return self.visit_simple_list(moin_page.list, attrib, element)
 
     def visit_docbook_term(self, element):
         return self.new_copy(moin_page('list-item-label'), element, attrib={})
@@ -277,7 +283,7 @@ class Converter(object):
         return self.new_copy(moin_page('list-item'), element, attrib={})
 
     def visit_simple_list(self, moin_page_tag, attrib, element):
-        list_item_tags = set(['listitem', 'step'])
+        list_item_tags = set(['listitem', 'step', 'member'])
         items = []
         for child in element:
             if isinstance(child, ET.Element):
