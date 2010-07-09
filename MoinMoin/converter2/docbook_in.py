@@ -135,6 +135,18 @@ class Converter(object):
         body = moin_page.body(children=children)
         return moin_page.page(children=[body])
 
+    def visit_docbook_glossdef(self, element):
+        return self.new_copy(moin_page('list-item-body'), element, attrib={})
+
+    def visit_docbook_glossentry(self, element):
+        return self.new_copy(moin_page('list-item'), element, attrib={})
+
+    def visit_docbook_glosslist(self, element):
+        return self.new_copy(moin_page.list, element, attrib={})
+
+    def visit_docbook_glossterm(self, element):
+        return self.new_copy(moin_page('list-item-label'), element, attrib={})
+
     def visit_docbook_itemizedlist(self, element):
         attrib = {}
         key = moin_page('item-label-generate')
