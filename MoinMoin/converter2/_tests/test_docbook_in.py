@@ -85,6 +85,9 @@ class TestConverter(Base):
             # PROCEDURE --> ordered list (with arabic numeration)
             ('<article><procedure><step>First Step</step><step>Second Step</step></procedure></article>',
              '/page/body/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="First Step"]][list-item[2]/list-item-body[text()="Second Step"]]'),
+            # GLOSS LIST --> Definition list
+            ('<article><glosslist><glossentry><glossterm>Term 1</glossterm><glossdef><para>Definition 1</para></glossdef></glossentry><glossentry><glossterm>Term 2</glossterm><glossdef><para>Definition 2</para></glossdef></glossentry></glosslist></article>',
+            '/page/body/list[list-item[1][list-item-label="Term 1"][list-item-body[p="Definition 1"]]][list-item[2][list-item-label="Term 2"][list-item-body[p="Definition 2"]]]'),
         ]
         for i in data:
             yield (self.do, ) + i
