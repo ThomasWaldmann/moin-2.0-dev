@@ -164,6 +164,13 @@ class Converter(object):
         attrib[key] = heading_level
         return self.new(moin_page.h, attrib=attrib, children=title)
 
+    def visit_docbook_term(self, element):
+        return self.new_copy(moin_page('list-item-label'), element, attrib={})
+
+    def visit_docbook_listitem(self, element):
+        # NB : We need to be sure it is only called for a variablelist
+        return self.new_copy(moin_page('list-item-body'), element, attrib={})
+
     def visit_docbook_title(self, element):
         """
         Later we should add support for all the different kind of title.
@@ -172,6 +179,12 @@ class Converter(object):
         not want to process it.
         """
         pass
+
+    def visit_docbook_variablelist(self, element):
+        return self.new_copy(moin_page.list, element, attrib={})
+
+    def visit_docbook_varlistentry(self, element):
+        return self.new_copy(moin_page('list-item'), element, attrib={})
 
     def visit_simple_list(self, moin_page_tag, attrib, element):
         items = []
