@@ -176,6 +176,77 @@ class Converter(object):
         attrib[key] = heading_level
         return self.new(moin_page.h, attrib=attrib, children=title)
 
+    def visit_docbook_seglistitem(self, element, labels):
+        """
+        A seglistitem is a list-item for a segmented list. It is quite
+        special because it act list definition with label, but the labels
+        are predetermined in the labels list.
+
+        So we generate label/body couple according to the content in
+        labels
+        """
+        new = []
+        counter = 0
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.name == 'seg':
+                    label_tag = ET.Element(moin_page('list-item-label'),
+                            attrib={}, children=labels[counter % len(labels)])
+                    body_tag = ET.Element(moin_page('list-item-body'),
+                            attrib={}, children=self.visit(child))
+                    item_tag = ET.Element(moin_page('list-item'),
+                            attrib={}, children=[label_tag, body_tag])
+                    item_tag = (item_tag, )
+                    new.extend(item_tag)
+                    counter = counter + 1
+                else:
+                    r = self.visit(child)
+                    if r is None:
+                        r = ()
+                    elif not isinstance(r, (list, tuple)):
+                        r = (r, )
+                    new.extend(r)
+            else:
+                new.append(child)
+        return new
+
+    def visit_docbook_segmentedlist(self, element):
+        """
+        A segmented list is a like a list of definition, but the label
+        are defined at the start with <segtitle> tag and then for each
+        definition, we repeat the label.
+
+        So to convert such list, we will first determine and save the
+        labels. Then we will iterate over the object to get the
+        definition.
+        """
+        labels = []
+        new = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                r = None
+                if child.tag.name == 'segtitle':
+                    r = self.visit(child)
+                    if r is None:
+                        r = ()
+                    elif not isinstance(r, (list, tuple)):
+                        r = (r, )
+                    labels.extend(r)
+                else:
+                    if child.tag.name == 'seglistitem':
+                        r = self.visit_docbook_seglistitem(child, labels)
+                    else:
+                        r = self.visit(child)
+                    if r is None:
+                        r = ()
+                    elif not isinstance(r, (list, tuple)):
+                        r = (r, )
+                    new.extend(r)
+            else:
+                new.append(child)
+        return ET.Element(moin_page.list, attrib={}, children=new)
+
+
     def visit_docbook_term(self, element):
         return self.new_copy(moin_page('list-item-label'), element, attrib={})
 
