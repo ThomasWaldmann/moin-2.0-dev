@@ -3,7 +3,7 @@
 {% block layout %}
 <div id="header">
 
-<form id="searchform" method="get" action="{{ href(theme.page_name) }}">
+<form id="searchform" method="get" action="{{ href(theme.item_name) }}">
     <div>
         <input type="hidden" name="do" value="fullsearch">
         <input type="hidden" name="context" value="180">
@@ -104,7 +104,7 @@
         {% for msg in theme.msg_list %}
                 <p>{{ msg }}</p>            
         {% endfor %}
-        <a href="{{ href(theme.page_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
+        <a href="{{ href(theme.item_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
     </div>
 {% endif %}
 

@@ -42,7 +42,7 @@ class JinjaTheme(ThemeBase):
             path = urlparse.urlparse(request.getBaseURL()).path[1:]
             page = Page(request, path)
         self.page = page
-        self.page_name = page.page_name
+        self.item_name = page.page_name
         self.cfg = request.cfg     
         self.ui_lang = request.lang
         self.ui_dir = i18n.getDirection(self.ui_lang)
@@ -326,7 +326,7 @@ class JinjaTheme(ThemeBase):
         """
         request = self.request
         items = []  # navibar items
-        current = self.page_name
+        current = self.item_name
 
         # Process config navi_bar
         # TODO: Optimize performance and caching with Jinja
@@ -720,7 +720,7 @@ class JinjaTheme(ThemeBase):
         @rtype: bool
         """
         suppl_name = self.request.cfg.supplementation_page_name
-        suppl_name_full = "%s/%s" % (self.page_name, suppl_name)
+        suppl_name_full = "%s/%s" % (self.item_name, suppl_name)
 
         test = Page(self.request, suppl_name_full)
         return test.exists() or self.request.user.may.write(suppl_name_full)
@@ -786,7 +786,7 @@ class JinjaTheme(ThemeBase):
         #Attributes to use directly in template
         # Or to reduce parameters of functions of JinjaTheme
         self.page = page
-        self.page_name = page.page_name or ''
+        self.item_name = page.page_name or ''
         self.head_title = text
         
         # Render with Jinja
@@ -825,7 +825,7 @@ class JinjaTheme(ThemeBase):
         #Attributes to use directly in template
         # Or to reduce parameters of functions of JinjaTheme
         self.page = page
-        self.page_name = page.page_name or ''
+        self.item_name = page.page_name or ''
         self.head_title = title
         
         html = self.render_template(gettext=self.request.getText,
