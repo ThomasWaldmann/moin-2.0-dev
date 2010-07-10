@@ -722,8 +722,8 @@ class JinjaTheme(ThemeBase):
         suppl_name = self.request.cfg.supplementation_page_name
         suppl_name_full = "%s/%s" % (self.item_name, suppl_name)
 
-        test = Page(self.request, suppl_name_full)
-        return test.exists() or self.request.user.may.write(suppl_name_full)
+        page = Page(self.request, suppl_name_full)
+        return page.exists() or self.request.user.may.write(suppl_name_full)
 
     def add_msg(self, msg, msg_class=None):
         """
