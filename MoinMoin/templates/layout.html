@@ -33,7 +33,7 @@
 
 <div id="username">
     {% for url, text, extra_attrs, exists in theme.username() %}
-        <a href="{{ url }}" {% if not exists %}class="nonexistent"{% endif %} {{extra_attrs}}>
+        <a href="{{ url|e }}" {% if not exists %}class="nonexistent"{% endif %} {{extra_attrs}}>
             {{ text }}
         </a>
         {% if not loop.last %}
