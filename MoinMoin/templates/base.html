@@ -35,7 +35,7 @@
         {{ '<meta http-equiv="refresh" content="%d;URL=%s"' % pi_refresh }}
     {% endif %}
     {% if theme.item_name and allow_doubleclick and 
-        theme.user.edit_on_doubleclick and theme.user.may.write(theme.item_name) %}
+        theme.user.edit_on_doubleclick and theme.item_writable %}
             <meta name="edit_on_doubleclick" content="1">
     {% endif %}
       

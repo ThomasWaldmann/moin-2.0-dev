@@ -48,7 +48,10 @@ class JinjaTheme(ThemeBase):
         self.output_mimetype = page.output_mimetype
         self.output_charset = page.output_charset
         self.cfg = request.cfg
-        self.user = request.user
+        user = request.user
+        self.user = user
+        self.item_readable = user.may.read(item_name)
+        self.item_writable = user.may.write(item_name)
         self.ui_lang = request.lang
         self.ui_dir = i18n.getDirection(self.ui_lang)
         self.content_lang = request.content_lang
@@ -511,7 +514,7 @@ class JinjaTheme(ThemeBase):
         @rtype: bool
         @return: true if should show page info
         """
-        if self.item_exists and self.user.may.read(self.item_name):
+        if self.item_exists and self.item_readable:
             # These actions show the page content.
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
@@ -557,8 +560,7 @@ class JinjaTheme(ThemeBase):
         @rtype: boolean
         """
         can_modify = 'modify' not in self.cfg.actions_excluded
-        may_write = self.user.may.write(self.item_name)
-        return can_modify and self.item_exists and may_write
+        return can_modify and self.item_exists and self.item_writable
 
     def actions_menu(self):
         """
@@ -690,7 +692,7 @@ class JinjaTheme(ThemeBase):
         """
         # Show editbar only for existing pages, that the user may read.
         # If you may not read, you can't edit, so you don't need editbar.
-        if (self.item_exists and self.user.may.read(self.item_name)):
+        if (self.item_exists and self.item_readable):
             form = self.request.form
             action = self.request.action
             # Do not show editbar on edit but on save/cancel

@@ -3,7 +3,7 @@
     {% if 'Modify' in cfg.edit_bar %}
         {% if not 'modify' in cfg.actions_excluded %} 
             <li>
-            {% if theme.user.may.write(theme.item_name) %}
+            {% if theme.item_writable %}
                 <a href="{{ href(theme.item_name, do='modify')|e }}" rel="nofollow"> {{ _('Modify') }}</a>
             {% else %}
                 {{ _('Immutable Page')}}
