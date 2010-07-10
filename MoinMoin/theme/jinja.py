@@ -145,7 +145,7 @@ class JinjaTheme(ThemeBase):
         @return: title in breadcrumbs
         """
         # just showing a page, no action
-        item_name = self.page.page_name
+        item_name = self.item_name
         segments = item_name.split('/')
         content = []
         current_item = ''
@@ -707,7 +707,7 @@ class JinjaTheme(ThemeBase):
         @rtype: unicode
         @return: url to parent page
         """
-        pagename = self.page.page_name
+        pagename = self.item_name
         page_parent_page = getattr(self.page.getParentPage(), 'page_name', None)
         if pagename and page_parent_page:
             return page_parent_page
