@@ -200,7 +200,7 @@ class JinjaTheme(ThemeBase):
         if user.valid:
             if user.auth_method in request.cfg.auth_can_logout:
                 item = (href(item_name, do='logout', logout='logout'), _('Logout'),
-                        'css_id="logout" rel="nofollow"', page.exists())
+                        'css_id="logout" rel="nofollow"', True)
                 userlinks.append(item)
         else:
             url = None
@@ -209,7 +209,7 @@ class JinjaTheme(ThemeBase):
                 url = href(item_name, do='login', login=1)
             if request.cfg.auth_have_login:
                 url = url or href(item_name, do='login')
-                item = url, _("Login"), 'css_id="login" rel="nofollow"', page.exists()
+                item = url, _("Login"), 'css_id="login" rel="nofollow"', True
                 userlinks.append(item)
         return userlinks
 
