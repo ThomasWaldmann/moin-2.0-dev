@@ -457,7 +457,12 @@ class Converter(object):
                    + ' '\
                      * (len(''.join(self.list_item_labels))\
                         + len(self.list_item_labels))
+        if self.last_closed == 'p':
+            return '\n'
         return ReST.linebreak
+
+    def close_moinpage_line_break(self, elem):
+        return ''
 
     def open_moinpage_list(self, elem):
         label_type = (elem.get(moin_page.item_label_generate, None),
@@ -588,14 +593,16 @@ class Converter(object):
                 return ReST.p
         elif self.status[-1] == 'table':
             self.status.append('p')
+            print self.last_closed
             if self.last_closed and self.last_closed != 'table_cell'\
                                 and self.last_closed != 'table_row'\
                                 and self.last_closed != 'table_header'\
                                 and self.last_closed != 'table_footer'\
-                                and self.last_closed != 'table_body':
+                                and self.last_closed != 'table_body'\
+                                and self.last_closed != 'line_break':
           #                      and self.last_closed != 'p':
                 return ReST.linebreak
-            elif self.last_closed == 'p':
+            elif self.last_closed == 'p' or self.last_closed == 'line_break':
                 return ''
         elif self.status[-1] == 'list':
             self.status.append('p')
@@ -644,16 +651,19 @@ class Converter(object):
         if len(type) == 2:
             if type[0] == "x-moin/macro":
                 if len(elem) and iter(elem).next().tag.name == "arguments":
-                    return "\n.. macro:: <<%s(%s)>>\n"\
-                           % (type[1].split('=')[1],
-                              ','.join([''.join(c.itertext())\
+                    alt = "<<%s(%s)>>"  % (type[1].split('=')[1],
+                                    ','.join([''.join(c.itertext())\
                                         for c in iter(elem).next()\
                                         if c.tag.name == "argument"]))
                 else:
-                    return "\n.. macro:: <<%s()>>\n" % type[1].split('=')[1]
+                    alt = "<<%s()>>" % type[1].split('=')[1]
+
+                obj = ".. |%s| macro:: %s" % (alt, alt)
+                self.objects.append(obj)
+                return " |%s| " % alt
             elif type[0] == "x-moin/format":
                 elem_it = iter(elem)
-                ret = "{{{#!%s" % type[1].split('=')[1]
+                ret = "\n\n.. parser:%s" % type[1].split('=')[1]
                 if len(elem) and elem_it.next().tag.name == "arguments":
                     args = []
                     for arg in iter(elem).next():
@@ -661,13 +671,11 @@ class Converter(object):
                             args.append("%s=\"%s\""\
                                         % (arg.get(moin_page.name, ""),
                                            ' '.join(arg.itertext())))
-                    ret = '%s(%s)' % (ret, ' '.join(args))
+                    ret = '%s %s' % (ret, ' '.join(args))
                     elem = elem_it.next()
-                ret = "%s\n%s\n}}}\n" % (ret, ' '.join(elem.itertext()))
-                return ""
-        return unescape(elem.get(moin_page.alt, '')) + "\n"
-
-        return ''
+                ret = "%s\n  %s" % (ret, ' '.join(elem.itertext()))
+                return ret
+        return elem.get(moin_page.alt, '') + "\n"
 
     def close_moinpage_part(self, elem):
         return ''
@@ -676,7 +684,6 @@ class Converter(object):
         return ''
 
     def open_moinpage_inline_part(self, elem):
-        # TODO: No inline macro in rst?
         ret = self.open_moinpage_part(elem)
         return ret
 
@@ -688,6 +695,8 @@ class Converter(object):
         font_size = elem.get(moin_page.font_size, '')
         baseline_shift = elem.get(moin_page.baseline_shift, '')
 
+        # No text decoration and text size in rst, this can be deleted
+        """
         if text_decoration == 'line-through':
             self.children.append(iter(elem))
             self.opened.append(elem)
@@ -700,10 +709,11 @@ class Converter(object):
             self.children.append(iter(elem))
             self.opened.append(elem)
             return ''
+        """
         if baseline_shift == 'super':
-            return ''.join(elem.itertext())
+            return "\\ :sup:`%s`\\ " % ''.join(elem.itertext())
         if baseline_shift == 'sub':
-            return ''.join(elem.itertext())
+            return "\\ :sub:`%s`\\ " % ''.join(elem.itertext())
         self.children.append(iter(elem))
         self.opened.append(elem)
         return ''
@@ -753,6 +763,8 @@ class Converter(object):
     def close_moinpage_table_header(self, elem):
         return ''
 
+    # No table footer support, TODO if needed
+    """
     def open_moinpage_table_footer(self, elem):
         self.tablec.rowclass = 'table-footer'
         self.children.append(iter(elem))
@@ -762,6 +774,7 @@ class Converter(object):
     def close_moinpage_table_footer(self, elem):
         self.table_rowsclass = ''
         return ''
+    """
 
     def open_moinpage_table_body(self, elem):
         self.tablec.rowclass = 'table-body'
@@ -801,7 +814,8 @@ class Converter(object):
 
         attrib = []
 
-        # TODO: maybe this can be written shorter
+        # TODO: styles and classes
+        """
         if self.table_tableclass:
             attrib.append('tableclass="%s"' % self.table_tableclass)
             self.table_tableclass = ''
@@ -822,7 +836,7 @@ class Converter(object):
             attrib.append('|'+str(number_rows_spanned))
 
         attrib = ' '.join(attrib)
-
+        """
         self.children.append(iter(elem))
         self.opened.append(elem)
         self.output = []

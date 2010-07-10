@@ -55,6 +55,8 @@ class TestConverter(Base):
             (u"<page:blockcode>blockcode</page:blockcode>", "::\n\n  blockcode\n\n"),
             (u"<page:code>monospace</page:code>", '``monospace``'),
             (u"""<page:page><page:body><page:h page:outline-level="1">h1</page:h><page:h page:outline-level="2">h2</page:h><page:h page:outline-level="3">h3</page:h><page:h page:outline-level="4">h4</page:h><page:h page:outline-level="5">h5</page:h><page:h page:outline-level="6">h6</page:h></page:body></page:page>""", u"""\n\n--\nh1\n--\n\n\n\n``\nh2\n``\n\n\n\n::\nh3\n::\n\n\n\n\'\'\nh4\n\'\'\n\n\n\n""\nh5\n""\n\n\n\n~~\nh6\n~~\n\n"""),
+            (u'<page:page><page:body><page:p>H<page:span page:baseline-shift="sub">2</page:span>O</page:p><page:p>E = mc<page:span page:baseline-shift="super">2</page:span></page:p></page:body></page:page>', u'H\\ :sub:`2`\\ O\n\nE = mc\\ :sup:`2`\\ \n'),
+            (u'<page:page><page:body><page:p>H<page:span>2</page:span>O</page:p></page:body></page:page>', 'H2O\n')
         ]
         for i in data:
             yield (self.do, ) + i
@@ -153,6 +155,7 @@ class TestConverter(Base):
 
 """),
             (u"<page:page><page:body><page:list page:item-label-generate=\"unordered\"><page:list-item><page:list-item-body><page:p>A</page:p><page:blockcode> test </page:blockcode></page:list-item-body></page:list-item></page:list></page:body></page:page>", u"* A::\n\n     test \n\n\n"),
+            (u'<page:page><page:body><page:table><page:table-body><page:table-row><page:table-cell><page:p><page:strong>A</page:strong></page:p><page:line_break /><page:p><page:strong>A</page:strong></page:p></page:table-cell><page:table-cell><page:strong>B</page:strong><page:line_break /><page:strong>B</page:strong></page:table-cell></page:table-row></page:table-body></page:table></page:body></page:page>', '+-----+-----+\n|**A**|**B**|\n|     |     |\n|     |**B**|\n|**A**|     |\n+-----+-----+\n\n'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -172,17 +175,15 @@ class TestConverter(Base):
     def test_macros(self):
         data = [
             (u"<page:tag><page:table-of-content page:outline-level=\"2\" /></page:tag>", "\n\n.. contents::\n   :depth: 2\n\n"),
-            (u"<page:part page:alt=\"&lt;&lt;Anchor(anchorname)&gt;&gt;\" page:content-type=\"x-moin/macro;name=Anchor\"><page:arguments><page:argument>anchorname</page:argument></page:arguments></page:part>", "\n.. macro:: <<Anchor(anchorname)>>\n"),
-            (u"<page:part page:alt=\"&lt;&lt;MonthCalendar(,,12)&gt;&gt;\" page:content-type=\"x-moin/macro;name=MonthCalendar\"><page:arguments><page:argument /><page:argument /><page:argument>12</page:argument></page:arguments></page:part>", "\n.. macro:: <<MonthCalendar(,,12)>>\n"),
+            (u"<page:part page:alt=\"&lt;&lt;Anchor(anchorname)&gt;&gt;\" page:content-type=\"x-moin/macro;name=Anchor\"><page:arguments><page:argument>anchorname</page:argument></page:arguments></page:part>", " |<<Anchor(anchorname)>>| \n\n.. |<<Anchor(anchorname)>>| macro:: <<Anchor(anchorname)>>\n\n"),
+            (u"<page:part page:alt=\"&lt;&lt;MonthCalendar(,,12)&gt;&gt;\" page:content-type=\"x-moin/macro;name=MonthCalendar\"><page:arguments><page:argument /><page:argument /><page:argument>12</page:argument></page:arguments></page:part>", u' |<<MonthCalendar(,,12)>>| \n\n.. |<<MonthCalendar(,,12)>>| macro:: <<MonthCalendar(,,12)>>\n\n'),
         ]
         for i in data:
             yield (self.do, ) + i
 
     def test_parser(self):
         data = [
-            (u"<page:page><page:body><page:page><page:body page:class=\"comment dotted\"><page:p>This is a wiki parser.</page:p><page:p>Its visibility gets toggled the same way.</page:p></page:body></page:page></page:body></page:page>", "test"),
-            (u"<page:page><page:body><page:page><page:body page:class=\"red solid\"><page:p>This is wiki markup in a <page:strong>div</page:strong> with <page:span page:text-decoration=\"underline\">css</page:span> <page:code>class=\"red solid\"</page:code>.</page:p></page:body></page:page></page:body></page:page>", "test"),
-            (u"<page:page><page:body><page:part page:content-type=\"x-moin/format;name=creole\"><page:arguments><page:argument page:name=\"style\">st: er</page:argument><page:argument page:name=\"class\">par: arg para: arga</page:argument></page:arguments><page:body>... **bold** ...</page:body></page:part></page:body></page:page>", "test"),
+            (u"<page:page><page:body><page:part page:content-type=\"x-moin/format;name=creole\"><page:arguments><page:argument page:name=\"style\">st: er</page:argument><page:argument page:name=\"class\">par: arg para: arga</page:argument></page:arguments><page:body>... **bold** ...</page:body></page:part></page:body></page:page>", u"""\n\n.. parser:creole style="st: er" class="par: arg para: arga"\n  ... **bold** ..."""),
         ]
         for i in data:
             yield (self.do, ) + i
