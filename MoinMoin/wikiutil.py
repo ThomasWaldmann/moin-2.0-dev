@@ -801,7 +801,7 @@ def ParentPageName(pagename):
     if pagename:
         pos = pagename.rfind('/')
         if pos > 0:
-            return pagename[:pos])
+            return pagename[:pos]
     return u''
 
 
