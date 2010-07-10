@@ -267,6 +267,16 @@ class Converter(object):
         attrib[key] = 'ordered'
         return self.visit_simple_list(moin_page.list, attrib, element)
 
+    def visit_docbook_qandaset(self, element):
+        default_label = element.get(docbook.defaultlabel)
+        logging.debug("default_label : %s" % default_label)
+        if default_label == 'number':
+            return self.visit_qandaset_number(element)
+        #elif default_label == 'qanda':
+        #    return self.visit_qandaset_qanda(self, element)
+        else:
+            return self.do_children(element)
+
     def visit_docbook_title(self, element):
         """
         Later we should add support for all the different kind of title.
@@ -281,6 +291,43 @@ class Converter(object):
 
     def visit_docbook_varlistentry(self, element):
         return self.new_copy(moin_page('list-item'), element, attrib={})
+
+    def visit_qandaentry_number(self, element):
+        items = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.name == 'question' or child.tag.name == 'answer':
+                    r = self.visit(child)
+                    if r is None:
+                        r = ()
+                    elif not isinstance(r, (list, tuple)):
+                        r = (r, )
+                    items.extend(r)
+            else:
+                items.append(child)
+
+        item_body = ET.Element(moin_page('list-item-body'), attrib={}, children=items)
+        return ET.Element(moin_page('list-item'), attrib={}, children=[item_body])
+
+    def visit_qandaset_number(self, element):
+        attrib = {}
+        key = moin_page('item-label-generate')
+        attrib[key] = 'ordered'
+        items = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.name == 'qandaentry':
+                    r = self.visit_qandaentry_number(child)
+                else:
+                    r = self.visit(child)
+                if r is None:
+                    r = ()
+                elif not isinstance(r, (list, tuple)):
+                    r = (r, )
+                items.extend(r, )
+            else:
+                items.append(child)
+        return ET.Element(moin_page('list'), attrib=attrib, children=items)
 
     def visit_simple_list(self, moin_page_tag, attrib, element):
         list_item_tags = set(['listitem', 'step', 'member'])
