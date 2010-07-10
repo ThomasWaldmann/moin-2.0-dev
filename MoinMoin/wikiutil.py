@@ -790,6 +790,21 @@ def RelPageName(context, pagename):
         return PARENT_PREFIX * go_up + '/'.join(pagename_frags)
 
 
+def ParentPageName(pagename):
+    """
+    Return the parent pagename.
+
+    @param pagename: the absolute page name (unicode)
+    @rtype: unicode
+    @return: the parent page name (or empty string for toplevel pages)
+    """
+    if pagename:
+        pos = pagename.rfind('/')
+        if pos > 0:
+            return pagename[:pos])
+    return u''
+
+
 def pagelinkmarkup(pagename, text=None):
     """ return markup that can be used as link to page <pagename> """
     # XXX: This used to check for CamelCase
