@@ -700,13 +700,14 @@ class JinjaTheme(ThemeBase):
 
     def parent_page(self):
         """
-        Return an url to parent page for the current page
+        Return name of parent page for the current page
         @rtype: unicode
-        @return: url to parent page
+        @return: parent page name
         """
-        page_parent_page = getattr(self.page.getParentPage(), 'page_name', None)
-        if self.item_name and page_parent_page:
-            return page_parent_page
+        item_name = self.item_name
+        parent_page_name = wikiutil.ParentPageName(item_name)
+        if item_name and parent_page_name:
+            return parent_page_name
 
     def link_supplementation_page(self):
         """
