@@ -248,9 +248,16 @@ def handle_action(context, pagename, action_name='show'):
         # use a handler that should work ever:
         handler = action.getHandler(cfg, 'show')
 
-    context.user.addTrail(context.page.page_name)
-    handler(context.page.page_name, context)
 
+    context.user.addTrail(context.page.page_name)
+    context.headers.add('Content-Type', 'text/html; charset=utf-8')
+    # Use user interface language for this generated page
+    context.setContentLanguage(context.lang)
+
+    #TODO: Check for binary stuff
+    content = handler(context.page.page_name, context)
+    if isinstance(content, unicode):
+        context.write(content)
     return context
 
 def setup_user(context, session):

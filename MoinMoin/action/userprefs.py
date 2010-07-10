@@ -102,10 +102,5 @@ def execute(pagename, request):
     else:
         title = _("Settings")
     request.theme.add_msg(msg, msg_class)
-    request.theme.send_title(title, page=request.page, pagename=pagename)
-    # Start content (important for RTL support)
-    request.write(request.formatter.startContent("content"))
-    request.write(text)
-    request.write(request.formatter.endContent())
-    request.theme.send_footer(pagename)
-    request.theme.send_closing_html()
+    content = "%s%s%s" % (request.formatter.startContent("content"), text, request.formatter.endContent())
+    return request.theme.render_template('content.html', title=title, content=content)
