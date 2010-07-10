@@ -94,6 +94,12 @@ class TestConverter(Base):
             # SIMPLE LIST --> unordered list
             ('<article><simplelist><member>Item 1</member><member>Item 2</member></simplelist></article>',
              '/page/body/list[@item-label-generate="unordered"][list-item[1]/list-item-body[text()="Item 1"]][list-item[2]/list-item-body[text()="Item 2"]]'),
+            # Q and A set with defaultlabel = number --> ordered list
+            ("<article><qandaset defaultlabel='number'><qandaentry><question><para>Question 1</para></question><answer><para>Answer 1</para></answer></qandaentry><qandaentry><question><para>Question 2</para></question><answer><para>Answer 2</para></answer></qandaentry></qandaset></article> ",
+             '/page/body/list[@item-label-generate="unordered"][list-item[1]/list-item-body[p[1][text()="Question 1"]][p[2][text()="Answer 1"]]][list-item[2]/list-item-body[p[1][text()="Question 2"]][p[2][text()="Answer 2"]]]'),
+            # Q and A set with defaultlabel = qanda --> definition list, with Q: and A: for the label
+            ("<article><qandaset defaultlabel='qanda'><qandaentry><question><para>Question 1</para></question><answer><para>Answer 1</para></answer></qandaentry><qandaentry><question><para>Question 2</para></question><answer><para>Answer 2</para></answer></qandaentry></qandaset></article> ",
+              '/page/body/list[list-item[1][list-item-label="Q:"][list-item-body="Question 1"]][list-item[2][list-item-label="A:"][list-item-body="Answer 1"]][list-item[3][list-item-label="Q:"][list-item-body="Question 2"]][list-item[4][list-item-label="A:"][list-item-body="Answer 2"]]'),
         ]
         for i in data:
             yield (self.do, ) + i
