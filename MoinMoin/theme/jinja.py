@@ -43,6 +43,8 @@ class JinjaTheme(ThemeBase):
             page = Page(request, path)
         self.page = page
         self.item_name = page.page_name
+        self.output_mimetype = page.output_mimetype
+        self.output_charset = page.output_charset
         self.cfg = request.cfg
         self.user = request.user
         self.ui_lang = request.lang
