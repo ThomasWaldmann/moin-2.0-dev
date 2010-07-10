@@ -168,7 +168,7 @@ class JinjaTheme(ThemeBase):
         _ = request.getText
         page = self.page
         href = request.href
-        item_name = page.page_name
+        item_name = self.item_name
         
         userlinks = []
         # Add username/homepage link for registered users. We don't care
@@ -504,8 +504,7 @@ class JinjaTheme(ThemeBase):
         @rtype: bool
         @return: true if should show page info
         """
-        page = self.page
-        if page.exists() and self.request.user.may.read(page.page_name):
+        if self.page.exists() and self.request.user.may.read(self.item_name):
             # These actions show the page content.
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
@@ -537,7 +536,7 @@ class JinjaTheme(ThemeBase):
                     info = _("last edited %(timestamp)s by %(editor)s") % info
                 else:
                     info = _("last modified %(timestamp)s") % info
-                pagename = page.page_name
+                pagename = self.item_name
                 if self.request.cfg.show_interwiki:
                     pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
                 info = "%s  (%s)" % (wikiutil.escape(pagename), info)
@@ -550,10 +549,9 @@ class JinjaTheme(ThemeBase):
         User have permission? If yes, show the universal edit button.
         @rtype: boolean
         """
-        page = self.page
         can_modify = 'modify' not in self.request.cfg.actions_excluded
-        may_write = self.request.user.may.write(page.page_name)
-        return can_modify and page.exists() and may_write
+        may_write = self.request.user.may.write(self.item_name)
+        return can_modify and self.page.exists() and may_write
 
     def actions_menu(self):
         """
@@ -692,7 +690,7 @@ class JinjaTheme(ThemeBase):
         page = self.page
         # Show editbar only for existing pages, that the user may read.
         # If you may not read, you can't edit, so you don't need editbar.
-        if (page.exists() and self.request.user.may.read(page.page_name)):
+        if (page.exists() and self.request.user.may.read(self.item_name)):
             form = self.request.form
             action = self.request.action
             # Do not show editbar on edit but on save/cancel
