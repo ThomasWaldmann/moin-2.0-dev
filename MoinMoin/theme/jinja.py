@@ -707,9 +707,8 @@ class JinjaTheme(ThemeBase):
         @rtype: unicode
         @return: url to parent page
         """
-        pagename = self.item_name
         page_parent_page = getattr(self.page.getParentPage(), 'page_name', None)
-        if pagename and page_parent_page:
+        if self.item_name and page_parent_page:
             return page_parent_page
 
     def link_supplementation_page(self):
