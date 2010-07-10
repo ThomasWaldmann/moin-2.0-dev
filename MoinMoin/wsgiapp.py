@@ -248,6 +248,7 @@ def handle_action(context, pagename, action_name='show'):
         # use a handler that should work ever:
         handler = action.getHandler(cfg, 'show')
 
+    context.user.addTrail(context.page.page_name)
     handler(context.page.page_name, context)
 
     return context
