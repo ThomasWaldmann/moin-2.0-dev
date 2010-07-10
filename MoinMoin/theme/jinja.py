@@ -612,8 +612,7 @@ class JinjaTheme(ThemeBase):
                 do = 'show'
 
             # Actions which are not available for this wiki, user or page
-            if (action == '__separator__' or
-                (action[0].isupper() and not action in available)):
+            if action == '__separator__' or (action[0].isupper() and not action in available):
                 disabled = True
             options.append((do, disabled, title))
 
@@ -657,7 +656,7 @@ class JinjaTheme(ThemeBase):
         """
         # Show editbar only for existing pages, that the user may read.
         # If you may not read, you can't edit, so you don't need editbar.
-        if (self.item_exists and self.item_readable):
+        if self.item_exists and self.item_readable:
             form = self.request.form
             action = self.request.action
             # Do not show editbar on edit but on save/cancel
