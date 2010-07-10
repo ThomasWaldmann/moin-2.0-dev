@@ -109,42 +109,7 @@ class JinjaTheme(ThemeBase):
             return item_lang_default
             
         return item_en
-    
-    def link_to(self, pagename, text, querystr=None, css_id=None, css_class=None, rel=None):
-        """
-        Small wrapper to replace page.link_to
-        @param pagename: name of the page
-        @param text: text linked
-        @param querystr: add querystring to url
-        @param css_id: id of 'a' tag
-        @param css_id: class of 'a' tag
-        @param rel: rel of 'a' tag
-        @rtype: string
-        @return: link html
-        """
-        # I'm using page_name instead of page in parameter thinking in future, when we gonna drop Page.
-        page = Page(self.request, pagename)
-        link = '<a '
-        if css_class:
-            link += 'class="%s" ' % css_class
-        elif not page.exists():
-            link += 'class="nonexistent" '
-        if css_id:
-            link += 'id="%s" ' % css_id     
-        if rel:
-            link += 'rel="%s" ' % rel
-        
-        link +='href="'
-        url = '%s' % (self.request.href(pagename))
-        if querystr:
-            url += '?'
-            query = []
-            for key in querystr.iterkeys():
-                query.append('%s=%s' % (key, querystr[key]))
-            url += '&'.join(query)
-        link += '%s">%s</a>' % (wikiutil.escape(url, 0), text)
-        return link
-        
+
     def location_breadcrumbs(self):
         """
         Assemble the location using breadcrumbs (was: title)
