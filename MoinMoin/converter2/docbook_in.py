@@ -269,11 +269,10 @@ class Converter(object):
 
     def visit_docbook_qandaset(self, element):
         default_label = element.get(docbook.defaultlabel)
-        logging.debug("default_label : %s" % default_label)
         if default_label == 'number':
             return self.visit_qandaset_number(element)
-        #elif default_label == 'qanda':
-        #    return self.visit_qandaset_qanda(self, element)
+        elif default_label == 'qanda':
+            return self.visit_qandaset_qanda(element)
         else:
             return self.do_children(element)
 
@@ -328,6 +327,50 @@ class Converter(object):
             else:
                 items.append(child)
         return ET.Element(moin_page('list'), attrib=attrib, children=items)
+
+    def visit_qandaentry_qanda(self, element):
+        items = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                r = ()
+                item_label = None
+                if child.tag.name == 'question':
+                    item_label = ET.Element(moin_page('list-item-label'), attrib={}, children="Q:")
+                elif child.tag.name == 'answer':
+                    item_label = ET.Element(moin_page('list-item-label'), attrib={}, children="A:")
+                else:
+                    r = self.visit(child)
+                    if r is None:
+                         r = ()
+                    elif not isinstance(r, (list, tuple)):
+                          r = (r, )
+                    items.extend(r)
+                if item_label is not None:
+                    item_body = ET.Element(moin_page('list-item-body'), attrib={}, children=self.visit(child))
+                    r = (item_label, item_body)
+                    list_item = ET.Element(moin_page('list-item'), attrib={}, children=r)
+                    items.append(list_item)
+            else:
+                items.append(child)
+        return items
+
+    def visit_qandaset_qanda(self, element):
+        items = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                  r = ()
+                  if child.tag.name == 'qandaentry':
+                      r = self.visit_qandaentry_qanda(child)
+                  else:
+                      r = self.visit(child)
+                  if r is None:
+                      r = ()
+                  elif not isinstance(r, (list, tuple)):
+                      r = (r, )
+                  items.extend(r)
+            else:
+                  items.append(child)
+        return ET.Element(moin_page('list'), attrib={}, children=items)
 
     def visit_simple_list(self, moin_page_tag, attrib, element):
         list_item_tags = set(['listitem', 'step', 'member'])
