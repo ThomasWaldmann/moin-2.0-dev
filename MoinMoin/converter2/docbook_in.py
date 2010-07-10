@@ -341,9 +341,9 @@ class Converter(object):
                 else:
                     r = self.visit(child)
                     if r is None:
-                         r = ()
+                        r = ()
                     elif not isinstance(r, (list, tuple)):
-                          r = (r, )
+                        r = (r, )
                     items.extend(r)
                 if item_label is not None:
                     item_body = ET.Element(moin_page('list-item-body'), attrib={}, children=self.visit(child))
@@ -358,18 +358,18 @@ class Converter(object):
         items = []
         for child in element:
             if isinstance(child, ET.Element):
-                  r = ()
-                  if child.tag.name == 'qandaentry':
-                      r = self.visit_qandaentry_qanda(child)
-                  else:
-                      r = self.visit(child)
-                  if r is None:
-                      r = ()
-                  elif not isinstance(r, (list, tuple)):
-                      r = (r, )
-                  items.extend(r)
+                r = ()
+                if child.tag.name == 'qandaentry':
+                    r = self.visit_qandaentry_qanda(child)
+                else:
+                    r = self.visit(child)
+                if r is None:
+                    r = ()
+                elif not isinstance(r, (list, tuple)):
+                    r = (r, )
+                items.extend(r)
             else:
-                  items.append(child)
+                items.append(child)
         return ET.Element(moin_page('list'), attrib={}, children=items)
 
     def visit_simple_list(self, moin_page_tag, attrib, element):
