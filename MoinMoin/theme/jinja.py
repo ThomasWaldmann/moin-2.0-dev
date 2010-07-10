@@ -42,7 +42,9 @@ class JinjaTheme(ThemeBase):
             path = urlparse.urlparse(request.getBaseURL()).path[1:]
             page = Page(request, path)
         self.page = page
-        self.item_name = page.page_name
+        item_name = page.page_name
+        self.item_name = item_name 
+        self.item_exists = Page(request, item_name).exists()
         self.output_mimetype = page.output_mimetype
         self.output_charset = page.output_charset
         self.cfg = request.cfg
@@ -509,7 +511,7 @@ class JinjaTheme(ThemeBase):
         @rtype: bool
         @return: true if should show page info
         """
-        if self.page.exists() and self.user.may.read(self.item_name):
+        if self.item_exists and self.user.may.read(self.item_name):
             # These actions show the page content.
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
@@ -556,7 +558,7 @@ class JinjaTheme(ThemeBase):
         """
         can_modify = 'modify' not in self.cfg.actions_excluded
         may_write = self.user.may.write(self.item_name)
-        return can_modify and self.page.exists() and may_write
+        return can_modify and self.item_exists and may_write
 
     def actions_menu(self):
         """
@@ -686,10 +688,9 @@ class JinjaTheme(ThemeBase):
         @rtype: bool
         @return: true if editbar should show
         """
-        page = self.page
         # Show editbar only for existing pages, that the user may read.
         # If you may not read, you can't edit, so you don't need editbar.
-        if (page.exists() and self.user.may.read(self.item_name)):
+        if (self.item_exists and self.user.may.read(self.item_name)):
             form = self.request.form
             action = self.request.action
             # Do not show editbar on edit but on save/cancel
