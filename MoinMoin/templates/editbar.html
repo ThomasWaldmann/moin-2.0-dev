@@ -3,7 +3,7 @@
     {% if 'Modify' in cfg.edit_bar %}
         {% if not 'modify' in cfg.actions_excluded %} 
             <li>
-            {% if theme.request.user.may.write(theme.item_name) %}
+            {% if theme.user.may.write(theme.item_name) %}
                 <a href="{{ href(theme.item_name, do='modify')|e }}" rel="nofollow"> {{ _('Modify') }}</a>
             {% else %}
                 {{ _('Immutable Page')}}
@@ -21,8 +21,8 @@
     {% endif %}
 
     {% if 'Quicklink' in cfg.edit_bar %}
-        {% if theme.request.user.valid %}
-            {% if not theme.request.user.isQuickLinkedTo([theme.item_name]) %}
+        {% if theme.user.valid %}
+            {% if not theme.user.isQuickLinkedTo([theme.item_name]) %}
                 {% if not 'quicklink' in cfg.actions_excluded %}
                     <li>
                         <a class="nbquicklink" href="{{ href(theme.item_name, do='quicklink')|e }}" rel="nofollow">{{ _('Add Link') }}</a>
@@ -39,8 +39,8 @@
     {% endif %}
 
     {% if 'Subscribe' in cfg.edit_bar %}
-        {% if (cfg.mail_enabled or cfg.jabber_enabled) and theme.request.user.valid %}
-            {% if not theme.request.user.isSubscribedTo([theme.item_name]) %}
+        {% if (cfg.mail_enabled or cfg.jabber_enabled) and theme.user.valid %}
+            {% if not theme.user.isSubscribedTo([theme.item_name]) %}
                 {% if not 'subscribe' in cfg.actions_excluded %}
                     <li>
                         <a class="nbsubscribe" href="{{ href(theme.item_name, do='subscribe')|e }}" rel="nofollow">{{ _('Subscribe') }}</a>

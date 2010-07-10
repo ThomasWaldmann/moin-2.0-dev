@@ -43,7 +43,8 @@ class JinjaTheme(ThemeBase):
             page = Page(request, path)
         self.page = page
         self.item_name = page.page_name
-        self.cfg = request.cfg     
+        self.cfg = request.cfg
+        self.user = request.user
         self.ui_lang = request.lang
         self.ui_dir = i18n.getDirection(self.ui_lang)
         self.content_lang = request.content_lang
@@ -169,14 +170,15 @@ class JinjaTheme(ThemeBase):
         page = self.page
         href = request.href
         item_name = self.item_name
+        user = self.user
         
         userlinks = []
         # Add username/homepage link for registered users. We don't care
         # if it exists, the user can create it.
-        if request.user.valid and request.user.name:
+        if user.valid and user.name:
             interwiki = wikiutil.getInterwikiHomePage(request)
-            name = request.user.name
-            aliasname = request.user.aliasname
+            name = user.name
+            aliasname = user.aliasname
             if not aliasname:
                 aliasname = name
             title = "%s @ %s" % (aliasname, interwiki[0])
@@ -193,8 +195,8 @@ class JinjaTheme(ThemeBase):
                         'css_id="userprefs", rel="nofollow"', page.exists())
                 userlinks.append(item)
 
-        if request.user.valid:
-            if request.user.auth_method in request.cfg.auth_can_logout:
+        if user.valid:
+            if user.auth_method in request.cfg.auth_can_logout:
                 item = (href(item_name, do='logout', logout='logout'), _('Logout'),
                         'css_id="logout" rel="nofollow"', page.exists())
                 userlinks.append(item)
@@ -335,7 +337,7 @@ class JinjaTheme(ThemeBase):
             items.append(('wikilink', url, link_text))
 
         # Add user links to wiki links.
-        userlinks = request.user.getQuickLinks()
+        userlinks = self.user.getQuickLinks()
         for text in userlinks:
             # Split text without localization, user knows what he wants
             pagename, url, link_text = self.splitNavilink(text, localize=0)
@@ -418,7 +420,7 @@ class JinjaTheme(ThemeBase):
         @return: path breadcrumbs items in tuple (item_name, url, exists)
         """
         request = self.request
-        user = request.user
+        user = self.user
         items = []
         if not user.valid or user.show_trail:
             trail = user.getTrail()
@@ -471,6 +473,7 @@ class JinjaTheme(ThemeBase):
         @return: list of stylesheets parameters
         """
         request = self.request
+        user = self.user
         stylesheet_list = []
         # Check mode
         stylesheets = self.stylesheets
@@ -482,7 +485,7 @@ class JinjaTheme(ThemeBase):
         stylesheet_list.extend(cfg_css)
         
         # Add user css url (assuming that user css uses same charset)
-        href = request.user.valid and request.user.css_url
+        href = user.valid and user.css_url
         if href and href.lower() != "none":
             user_css = self._stylesheet_link(False, 'all', href)
             stylesheet_list.append(user_css)
@@ -504,7 +507,7 @@ class JinjaTheme(ThemeBase):
         @rtype: bool
         @return: true if should show page info
         """
-        if self.page.exists() and self.request.user.may.read(self.item_name):
+        if self.page.exists() and self.user.may.read(self.item_name):
             # These actions show the page content.
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
@@ -550,7 +553,7 @@ class JinjaTheme(ThemeBase):
         @rtype: boolean
         """
         can_modify = 'modify' not in self.cfg.actions_excluded
-        may_write = self.request.user.may.write(self.item_name)
+        may_write = self.user.may.write(self.item_name)
         return can_modify and self.page.exists() and may_write
 
     def actions_menu(self):
@@ -628,7 +631,7 @@ class JinjaTheme(ThemeBase):
                 continue
 
             # SubscribeUser action enabled only if user has admin rights
-            if action == 'SubscribeUser' and not request.user.may.admin(page.page_name):
+            if action == 'SubscribeUser' and not self.user.may.admin(page.page_name):
                 do = 'show'
                 disabled = True
 
@@ -684,7 +687,7 @@ class JinjaTheme(ThemeBase):
         page = self.page
         # Show editbar only for existing pages, that the user may read.
         # If you may not read, you can't edit, so you don't need editbar.
-        if (page.exists() and self.request.user.may.read(self.item_name)):
+        if (page.exists() and self.user.may.read(self.item_name)):
             form = self.request.form
             action = self.request.action
             # Do not show editbar on edit but on save/cancel
@@ -714,7 +717,7 @@ class JinjaTheme(ThemeBase):
         suppl_name_full = "%s/%s" % (self.item_name, suppl_name)
 
         page = Page(self.request, suppl_name_full)
-        return page.exists() or self.request.user.may.write(suppl_name_full)
+        return page.exists() or self.user.may.write(suppl_name_full)
 
     def add_msg(self, msg, msg_class=None):
         """
