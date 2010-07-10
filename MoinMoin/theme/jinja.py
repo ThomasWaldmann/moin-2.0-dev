@@ -419,10 +419,10 @@ class JinjaTheme(ThemeBase):
         """
         request = self.request
         user = request.user
+        items = []
         if not user.valid or user.show_trail:
             trail = user.getTrail()
             if trail:
-                items = []
                 for pagename in trail:
                     try:
                         interwiki, page = wikiutil.split_interwiki(pagename)
@@ -440,11 +440,9 @@ class JinjaTheme(ThemeBase):
                     page = Page(request, pagename)
                     title = page.page_name
                     title = self.shortenPagename(title)
-                    link = self.link_to(pagename=page.page_name, text=title)
-                    items.append(link)
-                return items
-        dummy_trail = [('TODO', 'TODO', False), ('HelpContents', 'HelpContents', True)]
-        return dummy_trail
+                    trail_item = title, page.page_name, page.exists()
+                    items.append(trail_item)
+        return items
      
     def _stylesheet_link(self, theme, media, href, title=None):
         """
