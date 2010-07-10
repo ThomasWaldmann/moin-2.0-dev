@@ -194,7 +194,7 @@ class JinjaTheme(ThemeBase):
             # link to userprefs action
             if 'userprefs' not in self.cfg.actions_excluded:
                 item = (href(item_name, do='userprefs'), _('Settings'),
-                        'css_id="userprefs", rel="nofollow"', page.exists())
+                        'css_id="userprefs", rel="nofollow"', True)
                 userlinks.append(item)
 
         if user.valid:
