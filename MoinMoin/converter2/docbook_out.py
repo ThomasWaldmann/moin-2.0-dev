@@ -200,6 +200,30 @@ class Converter(object):
         """
         return self.new_copy(docbook.term, element, attrib={})
 
+    def visit_moinpage_table(self, element):
+        # TODO : Attributes conversion
+        return self.new_copy(docbook.table, element, attrib={})
+
+    def visit_moinpage_table_body(self, element):
+        # TODO : Attributes conversion
+        return self.new_copy(docbook.tbody, element, attrib={})
+
+    def visit_moinpage_table_cell(self, element):
+        # TODO : Attributes conversion
+        return self.new_copy(docbook.td, element, attrib={})
+
+    def visit_moinpage_table_header(self, element):
+        # TODO : Attributes conversion
+        return self.new_copy(docbook.thead, element, attrib={})
+
+    def visit_moinpage_table_footer(self, element):
+        # TODO : Attributes conversion
+        return self.new_copy(docbook.tfoot, element, attrib={})
+
+    def visit_moinpage_table_row(self, element):
+        #TODO : Attributes conversion
+        return self.new_copy(docbook.tr, element, attrib={})
+
     def handle_simple_list(self, docbook_tag, element, attrib):
         list_items = []
         for child in element:
