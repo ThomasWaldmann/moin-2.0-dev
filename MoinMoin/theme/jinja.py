@@ -188,7 +188,7 @@ class JinjaTheme(ThemeBase):
 
             userlinks.append(item)
             # link to userprefs action
-            if 'userprefs' not in self.request.cfg.actions_excluded:
+            if 'userprefs' not in self.cfg.actions_excluded:
                 item = (href(item_name, do='userprefs'), _('Settings'),
                         'css_id="userprefs", rel="nofollow"', page.exists())
                 userlinks.append(item)
@@ -537,8 +537,8 @@ class JinjaTheme(ThemeBase):
                 else:
                     info = _("last modified %(timestamp)s") % info
                 pagename = self.item_name
-                if self.request.cfg.show_interwiki:
-                    pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
+                if self.cfg.show_interwiki:
+                    pagename = "%s: %s" % (self.cfg.interwikiname, pagename)
                 info = "%s  (%s)" % (wikiutil.escape(pagename), info)
                 return info
         return ''
@@ -549,7 +549,7 @@ class JinjaTheme(ThemeBase):
         User have permission? If yes, show the universal edit button.
         @rtype: boolean
         """
-        can_modify = 'modify' not in self.request.cfg.actions_excluded
+        can_modify = 'modify' not in self.cfg.actions_excluded
         may_write = self.request.user.may.write(self.item_name)
         return can_modify and self.page.exists() and may_write
 
@@ -710,7 +710,7 @@ class JinjaTheme(ThemeBase):
         
         @rtype: bool
         """
-        suppl_name = self.request.cfg.supplementation_page_name
+        suppl_name = self.cfg.supplementation_page_name
         suppl_name_full = "%s/%s" % (self.item_name, suppl_name)
 
         page = Page(self.request, suppl_name_full)
@@ -742,7 +742,7 @@ class JinjaTheme(ThemeBase):
         page_site_navigation = self.translated_item_name('SiteNavigation')
         page_word_index = self.translated_item_name('WordIndex')
         page_find_page =  self.translated_item_name('FindPage')
-        return [page_front_page, self.request.cfg.page_front_page,
+        return [page_front_page, self.cfg.page_front_page,
                 page_title_index, 'TitleIndex',
                 page_find_page, 'FindPage',
                 page_site_navigation, 'SiteNavigation',
