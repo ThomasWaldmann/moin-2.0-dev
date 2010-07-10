@@ -627,12 +627,6 @@ class JinjaTheme(ThemeBase):
             if action in request.cfg.actions_excluded:
                 continue
 
-            # Enable delete cache only if page can use caching
-            if action == 'refresh':
-                if not page.canUseCache():
-                    do = 'show'
-                    disabled = True
-
             # SubscribeUser action enabled only if user has admin rights
             if action == 'SubscribeUser' and not request.user.may.admin(page.page_name):
                 do = 'show'
