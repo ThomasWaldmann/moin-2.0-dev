@@ -827,43 +827,28 @@ class User:
         return (not self.valid and self._request.cfg.cookie_lifetime[0]  # anon sessions enabled
                 or self.valid and (self.show_trail or self.remember_last_visit))  # logged-in session
 
-    def addTrail(self, page):
-        """ Add page to trail.
+    def addTrail(self, item_name):
+        """ Add item name to trail.
 
-        @param page: the page (object) to add to the trail
+        @param item_name: the item name (unicode) to add to the trail
         """
         if self._wantTrail():
-            pagename = page.page_name
-            # Add only existing pages that the user may read
-            if not (page.exists() and self._request.user.may.read(pagename)):
-                return
-
             # Save interwiki links internally
             if self._cfg.interwikiname:
-                pagename = self._interWikiName(pagename)
-
-            trail = self._request.session.get('trail', [])
-            trail_current = trail[:]
-
-            # Don't append tail to trail ;)
-            if trail and trail[-1] == pagename:
-                return
-
-            # Append new page, limiting the length
-            trail = [p for p in trail if p != pagename]
-            pagename_stripped = pagename.strip()
-            if pagename_stripped:
-                trail.append(pagename_stripped)
-            trail = trail[-self._cfg.trail_size:]
-            if trail != trail_current:
-                # we only modify the session if we have something different:
+                item_name = self._interWikiName(item_name)
+            trail_in_session = self._request.session.get('trail', [])
+            trail = trail_in_session[:]
+            trail = [i for i in trail if i != item_name] # avoid dupes
+            trail.append(item_name) # append current item name at end
+            trail = trail[-self._cfg.trail_size:] # limit trail length
+            if trail != trail_in_session:
                 self._request.session['trail'] = trail
 
     def getTrail(self):
-        """ Return list of recently visited pages.
+        """ Return list of recently visited item names.
 
         @rtype: list
-        @return: pages in trail
+        @return: item names (unicode) in trail
         """
         if self._wantTrail():
             trail = self._request.session.get('trail', [])

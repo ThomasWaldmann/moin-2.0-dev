@@ -780,12 +780,6 @@ class Page(object):
                     request.theme.add_msg('<strong>%s</strong><br>' % (
                         _('This page redirects to page "%(page)s"') % {'page': wikiutil.escape(pi['redirect'])}), "info")
 
-                # Page trail
-                trail = None
-                if not print_mode:
-                    request.user.addTrail(self)
-                    trail = request.user.getTrail()
-
                 title = self.page_name
 
                 html_head = ''
@@ -819,7 +813,7 @@ class Page(object):
                 request.theme.send_title(title, page=self,
                                     print_mode=print_mode,
                                     media=media, pi_refresh=pi.get('refresh'),
-                                    allow_doubleclick=1, trail=trail,
+                                    allow_doubleclick=1, trail=None,
                                     html_head=html_head,
                                     )
 
