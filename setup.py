@@ -3,8 +3,8 @@
 """
     MoinMoin installer
 
-    @copyright: 2001-2005 by Jürgen Hermann <jh@web.de>,
-                2006-2007 by MoinMoin:ThomasWaldmann
+    @copyright: 2001-2005 by Juergen Hermann <jh@web.de>,
+                2006-2010 by MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
