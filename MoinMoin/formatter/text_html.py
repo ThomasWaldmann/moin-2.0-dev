@@ -496,21 +496,6 @@ class Formatter(FormatterBase):
             else:
                 return self.url(0)
 
-    def interwiki_item_name(self, interwiki='', pagename='', **kw):
-        """
-        @keyword title: override using the interwiki wikiname as title
-        """
-        wikitag, wikiurl, wikitail, wikitag_bad = wikiutil.resolve_interwiki(self.request, interwiki, pagename)
-        wikiurl = wikiutil.mapURL(self.request, wikiurl)
-        if wikitag == 'Self': # for own wiki, do simple links
-            try: # XXX this is the only place where we access self.page - do we need it? Crashes silently on actions!
-                pagename = wikiutil.AbsPageName(self.page.page_name, wikitail)
-            except:
-                pagename = wikitail
-            return pagename
-        else: # return InterWiki hyperlink
-            return wikiutil.join_wiki(wikiurl, wikitail)
-
     def url(self, on, url=None, css=None, do_escape=None, **kw):
         """
         Inserts an <a> element (you can give any A tag attributes as kw args).
