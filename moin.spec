@@ -2,23 +2,23 @@
 %define version 2.0.0
 %define release 0.0.alpha
 #Upgrade Path Example:
-#     moin-1.3-0.1.beta1
+#     moin-2.0-0.1.beta1
 #         Patched
-#     moin-1.3-0.2.beta1
+#     moin-2.0-0.2.beta1
 #         Move to beta2
-#     moin-1.3-0.3.beta2
+#     moin-2.0-0.3.beta2
 #         Move to beta3 and simultaneously patch
-#     moin-1.3-0.4.beta3
+#     moin-2.0-0.4.beta3
 #         Patched again
-#     moin-1.3-0.5.beta3
+#     moin-2.0-0.5.beta3
 #         Move to rc1
-#     moin-1.3-0.6.rc1
+#     moin-2.0-0.6.rc1
 #         Move to rc2
-#     moin-1.3-0.7.rc2
+#     moin-2.0-0.7.rc2
 #         Move to "final"
-#     moin-1.3-1
+#     moin-2.0-1
 #         Patched
-#     moin-1.3-2
+#     moin-2.0-2
 
 Name: %{name}
 Version: %{version}
@@ -66,19 +66,4 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Sun Jun 21 2010 Thomas Waldmann
 - Raised requirement to Python 2.6 (for MoinMoin 2.0.0alpha).
-
-* Sun May 31 2009 Thomas Waldmann
-- Raised requirement to Python 2.5 (for MoinMoin 2.0.0alpha).
-
-* Sun Feb 15 2009 Thomas Waldmann
-- Raised requirement to Python 2.4
-- Removed references to Python 1.5
-- Fixed doc files.
-
-* Thu Jun  8 2006 Johannes Poehlmann
-- Fix RPM build errror "Files listet twice" 
-  Replaced files list and just package all of /usr.
-
-* Fri Mar 05 2004 Florian Festi
-- Initial RPM release.
 

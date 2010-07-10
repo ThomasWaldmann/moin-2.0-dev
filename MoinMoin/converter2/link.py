@@ -91,10 +91,8 @@ class ConverterExternOutput(ConverterBase):
             else:
                 link.path = path
 
-            # TODO: new existance check
-            #page = Page(self.request, unicode(link.path), None)
-            #if not page.exists():
-            #    elem.set(html.class_, 'nonexistent')
+            if not self.request.storage.has_item(unicode(link.path)):
+                elem.set(html.class_, 'nonexistent')
         else:
             link.path = page.path[1:]
 
