@@ -25,8 +25,7 @@ def isbad(name):
     """ Whether name should not be installed """
     return (name.startswith('.') or
             name.startswith('#') or
-            name.endswith('.pickle') or
-            name == 'CVS')
+            name.endswith('.pickle'))
 
 def isgood(name):
     """ Whether name should be installed """
@@ -219,7 +218,7 @@ setup_args = {
     a personal notes organizer deployed on a laptop or home web server,
     a company knowledge base deployed on an intranet, or an Internet server
     open to individuals sharing the same interests, goals or projects.""",
-    'classifiers': """Development Status :: 5 - Production/Stable
+    'classifiers': """Development Status :: 2 - Pre-Alpha
 Environment :: No Input/Output (Daemon)
 Environment :: Web Environment
 Environment :: Win32 (MS Windows)
@@ -238,34 +237,17 @@ Intended Audience :: Science/Research
 Intended Audience :: System Administrators
 Intended Audience :: Telecommunications Industry
 License :: OSI Approved :: GNU General Public License (GPL)
-Natural Language :: Chinese (Simplified)
-Natural Language :: Chinese (Traditional)
-Natural Language :: Danish
-Natural Language :: Dutch
 Natural Language :: English
-Natural Language :: French
-Natural Language :: German
-Natural Language :: Hebrew
-Natural Language :: Hungarian
-Natural Language :: Italian
-Natural Language :: Javanese
-Natural Language :: Korean
-Natural Language :: Norwegian
-Natural Language :: Russian
-Natural Language :: Serbian
-Natural Language :: Spanish
-Natural Language :: Vietnamese
+Operating System :: OS Independent
 Operating System :: MacOS :: MacOS X
 Operating System :: Microsoft :: Windows
-Operating System :: Microsoft :: Windows :: Windows 95/98/2000
-Operating System :: Microsoft :: Windows :: Windows NT/2000
-Operating System :: OS Independent
 Operating System :: POSIX
-Operating System :: POSIX :: BSD :: FreeBSD
+Operating System :: POSIX :: BSD
 Operating System :: POSIX :: Linux
 Operating System :: Unix
 Programming Language :: Python
-Topic :: Communications :: Conferencing
+Topic :: Internet :: WWW/HTTP :: WSGI
+Topic :: Internet :: WWW/HTTP :: WSGI :: Application
 Topic :: Internet :: WWW/HTTP :: Dynamic Content
 Topic :: Office/Business :: Groupware
 Topic :: Text Processing :: Markup""".splitlines(),
