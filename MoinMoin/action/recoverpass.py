@@ -213,7 +213,7 @@ Contact the owner of the wiki, who can enable email."""), 'warning')
         request.write(request.formatter.startContent("content"))
 
         request.write(_("""
-Recovering a lost password - 
+Recovering a lost password -
 If you have forgotten your password, provide your email address or
 username and click on 'Mail me my account data'.
 You will receive an email containing a recovery token that can be
