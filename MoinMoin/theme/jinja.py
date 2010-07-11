@@ -15,7 +15,7 @@ from jinja2 import Environment, FileSystemLoader, FileSystemBytecodeCache
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import i18n, wikiutil, caching, user
+from MoinMoin import i18n, wikiutil, caching
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
 from MoinMoin.Page import Page
@@ -136,7 +136,6 @@ class JinjaTheme(ThemeBase):
         """
         request = self.request
         _ = request.getText
-        page = self.page
         href = request.href
         item_name = self.item_name
         user = self.user
@@ -545,7 +544,6 @@ class JinjaTheme(ThemeBase):
         request = self.request
         _ = request.getText
         rev = request.rev
-        page = self.page
 
         menu = [
             'rc',
@@ -598,7 +596,7 @@ class JinjaTheme(ThemeBase):
                 continue
 
             # SubscribeUser action enabled only if user has admin rights
-            if action == 'SubscribeUser' and not self.user.may.admin(page.page_name):
+            if action == 'SubscribeUser' and not self.user.may.admin(self.item_name):
                 do = 'show'
                 disabled = True
 
@@ -699,12 +697,17 @@ class JinjaTheme(ThemeBase):
     # Properties ##############################################################
 
     @property
-    def special_pagenames(self):
+    def special_item_names(self):
+        """
+        Used to test if an item is in this list. (base.html)
+        If is, put customizable html (cfg.html_head_index)
+        
+        @rtype: list
+        @return: list of item names
+        """
         page_front_page = self.translated_item_name(self.cfg.page_front_page)
-        page_help_contents = self.translated_item_name('HelpContents')
         page_title_index = self.translated_item_name('TitleIndex')
         page_site_navigation = self.translated_item_name('SiteNavigation')
-        page_word_index = self.translated_item_name('WordIndex')
         page_find_page =  self.translated_item_name('FindPage')
         return [page_front_page, self.cfg.page_front_page,
                 page_title_index, 'TitleIndex',
