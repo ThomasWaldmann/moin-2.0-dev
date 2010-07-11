@@ -156,7 +156,7 @@ class JinjaTheme(ThemeBase):
             title = "%s @ %s" % (aliasname, interwiki[0])
             # link to (interwiki) user homepage
             name = interwiki[1]
-            item_name = wikiutil.interwiki_name(self.request, interwiki=interwiki[0], item_name=name)
+            item_name = wikiutil.interwiki_name(self.request, wiki_name=interwiki[0], item_name=name)
             interwiki_page = Page(self.request, item_name)
             item = href(item_name), name, 'id="userhome" title="%s"' % title, interwiki_page.exists()
 
