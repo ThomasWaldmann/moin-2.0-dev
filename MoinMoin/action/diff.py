@@ -76,5 +76,5 @@ def execute(item_name, request):
 
     item = Item.create(request, item_name, mimetype=commonmt, rev_no=newrevno)
     content = item.do_diff(oldrev, newrev)
-    request.theme.render_content(item_name, content)
-
+    # Have to do this because Item renders itself diff.html
+    return content
