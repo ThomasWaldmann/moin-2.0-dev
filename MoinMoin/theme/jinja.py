@@ -77,9 +77,9 @@ class JinjaTheme(ThemeBase):
         self.env.filters['date_format'] = lambda tm, u=request.user: u.getFormattedDate(tm)
         self.env.filters['user_format'] = lambda rev, request=request: \
                                               user.get_printable_editor(request,
-                                                                        rev[EDIT_LOG_USERID],
-                                                                        rev[EDIT_LOG_ADDR],
-                                                                        rev[EDIT_LOG_HOSTNAME])
+                                                                        rev.get(EDIT_LOG_USERID),
+                                                                        rev.get(EDIT_LOG_ADDR),
+                                                                        rev.get(EDIT_LOG_HOSTNAME))
         self.env.globals.update({
                                 'theme': self,
                                 'cfg': request.cfg,
@@ -622,10 +622,6 @@ class JinjaTheme(ThemeBase):
             # Add more actions (all enabled)
             for action in more:
                 do = action
-                # Always add spaces: LikePages -> Like Pages
-                # XXX do not create page just for using split_title -
-                # creating pages for non-existent does 2 storage lookups
-                #title = Page(request, action).split_title(force=1)
                 title = action
                 # Use translated version if available
                 title = _(title)

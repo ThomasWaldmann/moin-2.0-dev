@@ -22,7 +22,7 @@ def execute(macro, args):
 
     # With whitespace argument, return same error message as FullSearch
     if not needle.strip():
-        err = _('Please use a more selective search term instead of {{{"%s"}}}', wiki=True) % needle
+        err = _('Please use a more selective search term instead of "%s"') % needle
         return '<span class="error">%s</span>' % err
 
     # Return a title search for needle, sorted by name.
@@ -34,8 +34,8 @@ def execute(macro, args):
     except ValueError:
         # same error as in MoinMoin/action/fullsearch.py, keep it that way!
         ret = ''.join([macro.formatter.text('<<PageList('),
-                      _('Your search query {{{"%s"}}} is invalid. Please refer to '
-                        'HelpOnSearching for more information.', wiki=True,
-                        percent=True) % wikiutil.escape(needle),
+                      _('Your search query "%s" is invalid. Please refer to '
+                        'HelpOnSearching for more information.',
+                       ) % wikiutil.escape(needle),
                       macro.formatter.text(')>>')])
     return ret

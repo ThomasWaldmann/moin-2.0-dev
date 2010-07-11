@@ -181,46 +181,6 @@ class Translation(object):
         except (AttributeError, AssertionError), err:
             logging.warning("direction problem in %r: %s" % (self.language, str(err)))
 
-    def formatMarkup(self, request, text, percent):
-        """ Formats the text using the wiki parser/formatter.
-
-        This raises an exception if a text needs itself to be translated,
-        this could possibly happen with macros.
-
-        @param request: the request object
-        @param text: the text to format
-        @param percent: True if result is used as left-side of a % operator and
-                        thus any GENERATED % needs to be escaped as %%.
-        """
-        logging.debug("formatting: %r" % text)
-
-        from MoinMoin.Page import Page
-        from MoinMoin.parser.text_moin_wiki import Parser as WikiParser
-        if percent:
-            from MoinMoin.formatter.text_html_percent import Formatter
-        else:
-            from MoinMoin.formatter.text_html import Formatter
-
-        out = StringIO()
-        request.redirect(out)
-        parser = WikiParser(text, request, line_anchors=False)
-        formatter = Formatter(request, terse=True)
-        reqformatter = None
-        if hasattr(request, 'formatter'):
-            reqformatter = request.formatter
-        request.formatter = formatter
-        p = Page(request, "$$$$i18n$$$$")
-        formatter.setPage(p)
-        parser.format(formatter)
-        text = out.getvalue()
-        if reqformatter is None:
-            del request.formatter
-        else:
-            request.formatter = reqformatter
-        request.redirect()
-        text = text.strip()
-        return text
-
     def loadLanguage(self, request, trans_dir="i18n"):
         request.clock.start('loadLanguage')
         # see comment about per-wiki scope above
@@ -243,14 +203,12 @@ class Translation(object):
             f.close()
             trans = self.translation
             unformatted = trans._catalog
-            self.has_wikimarkup = self.info.get('x-haswikimarkup', 'False') == 'True'
             logging.debug("dumping lang %s" % self.language)
             try:
                 cache.update(unformatted)
             except caching.CacheError:
                 pass
 
-        self.formatted = {}
         self.raw = unformatted
         request.clock.stop('loadLanguage')
 
@@ -265,18 +223,7 @@ def getText(original, request, lang, **kw):
     @param original: the original (english) text
     @param request: the request object
     @lang: the target language for the translation
-    @keyword wiki: True to use the wiki parser/formatter on the translation result,
-                   False to return the translation result "as is"
-    @keyword percent: True if we need special escaping because we use the translation
-                      result as the left side of a % operator: e.g. % chars need to
-                      become %% for that usage. This will only escape generated % chars,
-                      e.g. in wiki links to non-ascii pagenames (%XX%XX%XX).
-                      False, if we don't use it as a left-side of % operator.
-                      Only specify this option for wiki==True, it doesn't do
-                      anything for wiki==False.
     """
-    formatted = kw.get('wiki', False) # 1.6 and early 1.7 (until 2/2008) used 'formatted' with True as default!
-    percent = kw.get('percent', False)
     if original == u"":
         return u"" # we don't want to get *.po files metadata!
 
@@ -291,20 +238,6 @@ def getText(original, request, lang, **kw):
     translation = translations[lang]
     if original in translation.raw:
         translated = translation.raw[original]
-        if formatted:
-            # it is important to include siteid and percent into the key because
-            # formatted output depends on the (farm) wiki in which the page is
-            # rendered (e.g. for link urls) and also on the percent param
-            key = (original, request.cfg.siteid, percent)
-            if key in translation.formatted:
-                translated = translation.formatted[key]
-                if translated is None:
-                    logging.error("formatting a %r text that is already being formatted: %r" % (lang, original))
-                    translated = original + u'*' # get some error indication to the UI
-            else:
-                translation.formatted[key] = None # we use this as "formatting in progress" indicator
-                translated = translation.formatMarkup(request, translated, percent)
-                translation.formatted[key] = translated # remember it
     else:
         try:
             if SUPPORT_DICT_PAGES:
@@ -323,15 +256,10 @@ def getText(original, request, lang, **kw):
                 raise KeyError
         except KeyError:
             # do not simply return trans with str, but recursively call
-            # to get english translation, maybe formatted.
-            # if we don't find an english "translation", we just format it
-            # on the fly (this is needed for quickhelp).
+            # to get english translation.
             if lang != 'en':
                 logging.debug("falling back to english, requested string not in %r translation: %r" % (lang, original))
-                translated = getText(original, request, 'en', wiki=formatted, percent=percent)
-            elif formatted: # and lang == 'en'
-                logging.debug("formatting for %r on the fly: %r" % (lang, original))
-                translated = translations[lang].formatMarkup(request, original, percent)
+                translated = getText(original, request, 'en')
     return translated
 
 
