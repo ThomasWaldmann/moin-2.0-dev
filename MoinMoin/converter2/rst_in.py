@@ -33,6 +33,9 @@ from docutils.parsers.rst import directives, roles
 #####
 
 class NodeVisitor():
+    """
+    Part of docutils which converts docutils DOM tree to Moin DOM tree
+    """
 
     def __init__(self):
         self.current_node = moin_page.body()
@@ -541,6 +544,9 @@ class NodeVisitor():
 
 
 def walkabout(node, visitor):
+    """
+    This is tree traversal part of docutils without docutils logging.
+    """
     call_depart = 1
     stop = 0
     try:
@@ -583,8 +589,8 @@ class Writer(writers.Writer):
 
 class MoinDirectives:
     """
-        Class to handle all custom directive handling. This code is called as
-        part of the parsing stage.
+    Class to handle all custom directive handling. This code is called as
+    part of the parsing stage.
     """
 
     def __init__(self):
@@ -595,8 +601,10 @@ class MoinDirectives:
         # used for MoinMoin macros
         directives.register_directive('macro', self.macro)
 
+        #used for MoinMoin tables of content
         directives.register_directive('contents', self.table_of_content)
 
+        #used for MoinMoin parsers
         directives.register_directive('parser', self.parser)
 
         # disallow a few directives in order to prevent XSS
@@ -628,6 +636,7 @@ class MoinDirectives:
             lines = ["**Maximum number of allowed includes exceeded**"]
             state_machine.insert_input(lines, 'MoinDirectives')
             return []
+
         # This is part of old moinmoin rst parser. TODO: delete
         """
         if len(content):
@@ -727,7 +736,6 @@ class Converter(object):
     def __call__(self, input, arguments=None):
         parser = MoinDirectives()
         docutils_tree = core.publish_doctree(source=input)
-        print docutils_tree # delete this
         visitor = NodeVisitor()
         walkabout(docutils_tree, visitor)
         return visitor.tree()
