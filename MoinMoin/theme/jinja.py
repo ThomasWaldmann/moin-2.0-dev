@@ -623,10 +623,6 @@ class JinjaTheme(ThemeBase):
             # Add more actions (all enabled)
             for action in more:
                 do = action
-                # Always add spaces: LikePages -> Like Pages
-                # XXX do not create page just for using split_title -
-                # creating pages for non-existent does 2 storage lookups
-                #title = Page(request, action).split_title(force=1)
                 title = action
                 # Use translated version if available
                 title = _(title)
