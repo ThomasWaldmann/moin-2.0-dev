@@ -130,6 +130,18 @@ shipped: 0.5.8
 minimum: 0.5.6
 
 
+babel
+=====
+shipped: 0.9.5
+minimum: 0.9.5(?)
+
+
+pytz
+====
+shipped: 2010h
+minimum: 2010h(?)
+
+
 Replacements for Python stdlib modules
 ======================================
 difflib.py (fixes broken Python 2.4.3 difflib, see comment in file)
