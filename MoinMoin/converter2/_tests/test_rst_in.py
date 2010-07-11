@@ -31,13 +31,11 @@ class TestConverter(object):
                 '<page><body><p>Text\nTest</p></body></page>'),
             (u'Text\n\nTest',
                 '<page><body><p>Text</p><p>Test</p></body></page>'),
-            (u'H\ :sub:`2`\ O\n\nE = mc\ :sup:`2`', '<page><body><p>H<span baseline-shift="sub">2</span>O</p><p>E = mc<span baseline-shift="super">2</span></p></body></page>'),
+            (u'H\\ :sub:`2`\\ O\n\nE = mc\\ :sup:`2`', '<page><body><p>H<span baseline-shift="sub">2</span>O</p><p>E = mc<span baseline-shift="super">2</span></p></body></page>'),
             (u'| Lend us a couple of bob till Thursday.', '<page><body>Lend us a couple of bob till Thursday.</body></page>'),
             (u'**Text**', '<page><body><p><strong>Text</strong></p></body></page>' ),
             (u'*Text*', '<page><body><p><emphasis>Text</emphasis></p></body></page>' ),
             (u'``Text``', '<page><body><p><code>Text</code></p></body></page>' ),
-
-
         ]
         for i in data:
             yield (self.do, ) + i
@@ -107,7 +105,7 @@ c</p></list-item-body></list-item><list-item><list-item-body><p>b</p><p>d</p></l
     def test_table(self):
         data = [
             (u"+-+-+-+\n|A|B|D|\n+-+-+ +\n|C  | |\n+---+-+\n\n", '<page><body><table><table-body><table-row><table-cell><p>A</p></table-cell><table-cell><p>B</p></table-cell><table-cell number-rows-spanned="2"><p>D</p></table-cell></table-row><table-row><table-cell number-cols-spanned="2"><p>C</p></table-cell></table-row></table-body></table></body></page>'),
-            (u"+-----+-----+-----+\n|**A**|**B**|**C**|\n+-----+-----+-----+\n|1    |2    |3    |\n+-----+-----+-----+\n\n", '<page><body><table><table-body><table-row><table-cell><p><strong>A</strong></p></table-cell><table-cell><p><strong>B</strong></p></table-cell><table-cell><p><strong>C</strong></p></table-cell></table-row><table-row><table-cell><p>1</p></table-cell><table-cell><p>2</p></table-cell><table-cell><p>3</p></table-cell></table-row></table-body></table></body></page>'),                                                                                                     
+            (u"+-----+-----+-----+\n|**A**|**B**|**C**|\n+-----+-----+-----+\n|1    |2    |3    |\n+-----+-----+-----+\n\n", '<page><body><table><table-body><table-row><table-cell><p><strong>A</strong></p></table-cell><table-cell><p><strong>B</strong></p></table-cell><table-cell><p><strong>C</strong></p></table-cell></table-row><table-row><table-cell><p>1</p></table-cell><table-cell><p>2</p></table-cell><table-cell><p>3</p></table-cell></table-row></table-body></table></body></page>'),
             ("""+--------------------+-------------------------------------+
 |cell spanning 2 rows|cell in the 2nd column               |
 +                    +-------------------------------------+
@@ -118,7 +116,7 @@ c</p></list-item-body></list-item><list-item><list-item-body><p>b</p><p>d</p></l
 |test                                                      |
 +----------------------------------------------------------+
 
-""", '<page><body><table><table-body><table-row><table-cell number-rows-spanned="2"><p>cell spanning 2 rows</p></table-cell><table-cell><p>cell in the 2nd column</p></table-cell></table-row><table-row><table-cell><p>cell in the 2nd column of the 2nd row</p></table-cell></table-row><table-row><table-cell number-cols-spanned="2"><p>test</p></table-cell></table-row><table-row><table-cell number-cols-spanned="2"><p>test</p></table-cell></table-row></table-body></table></body></page>'), 
+""", '<page><body><table><table-body><table-row><table-cell number-rows-spanned="2"><p>cell spanning 2 rows</p></table-cell><table-cell><p>cell in the 2nd column</p></table-cell></table-row><table-row><table-cell><p>cell in the 2nd column of the 2nd row</p></table-cell></table-row><table-row><table-cell number-cols-spanned="2"><p>test</p></table-cell></table-row><table-row><table-cell number-cols-spanned="2"><p>test</p></table-cell></table-row></table-body></table></body></page>'),
             ("""
 +--------------------+-------------------------------------+
 | AAAAAAAAAAAAAAAAAA | BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB |
@@ -139,7 +137,7 @@ c</p></list-item-body></list-item><list-item><list-item-body><p>b</p><p>d</p></l
 
     def test_docutils_feature(self):
         data = [
-            (u':Author: Test\n:Version:  $Revision: 1.17 $\n:Copyright: c\n:Test: t', '<page><body><table><table-body><table-row><table-cell><strong>Author:</strong></table-cell><table-cell>Test</table-cell></table-row><table-row><table-cell><strong>Version:</strong></table-cell><table-cell>1.17</table-cell></table-row><table-row><table-cell><strong>Copyright:</strong></table-cell><table-cell>c</table-cell></table-row><table-row><table-cell><strong>Test:</strong></table-cell><table-cell><p>t</p></table-cell></table-row></table-body></table></body></page>')
+            (u':Author: Test\n:Version:  $Revision: 1.17 $\n:Copyright: c\n:Test: t', '<page><body><table><table-body><table-row><table-cell><strong>Author:</strong></table-cell><table-cell>Test</table-cell></table-row><table-row><table-cell><strong>Version:</strong></table-cell><table-cell>1.17</table-cell></table-row><table-row><table-cell><strong>Copyright:</strong></table-cell><table-cell>c</table-cell></table-row><table-row><table-cell><strong>Test:</strong></table-cell><table-cell><p>t</p></table-cell></table-row></table-body></table></body></page>'),
         ]
         for i in data:
             yield (self.do, ) + i
