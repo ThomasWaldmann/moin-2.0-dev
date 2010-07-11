@@ -29,11 +29,5 @@ This package is basically composed of two major parts:
 from babel.core import *
 
 __docformat__ = 'restructuredtext en'
-try:
-    from pkg_resources import get_distribution, ResolutionError
-    try:
-        __version__ = get_distribution('Babel').version
-    except ResolutionError:
-        __version__ = None # unknown
-except ImportError:
-    __version__ = None # unknown
+__version__ = '0.9.5'
+
