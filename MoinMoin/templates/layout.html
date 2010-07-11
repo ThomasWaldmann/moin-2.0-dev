@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block layout %}
+<div id="header">
+
+<form id="searchform" method="get" action="{{ href(theme.item_name) }}">
+    <div>
+        <input type="hidden" name="do" value="fullsearch">
+        <input type="hidden" name="context" value="180">
+        <label for="searchinput">{{ _('Search') }}</label>
+        <input id="searchinput" type="text" name="value" value="{{ theme.request.values.get('value', '')|e }}" size="20"
+            onfocus="searchFocus(this)" onblur="searchBlur(this)"
+            onkeyup="searchChange(this)" onchange="searchChange(this)" alt="Search">
+        <input id="titlesearch" name="titlesearch" type="submit"
+            value="{{ _('Titles') }}" alt="Search Titles">
+        <input id="fullsearch" name="fullsearch" type="submit"
+            value="{{ _('Text') }}" alt="Search Full Text">
+    </div>
+</form>
+<script type="text/javascript">
+    <!--// Initialize search form
+    var f = document.getElementById('searchform');
+    f.getElementsByTagName('label')[0].style.display = 'none';
+    var e = document.getElementById('searchinput');
+    searchChange(e);
+    searchBlur(e);
+    //-->
+</script>
+
+<div id="logo">
+    <a href="{{ href(translated_item_name(cfg.page_front_page))|e }}">{{ cfg.logo_string }}</a>
+</div>
+
+<div id="username">
+    {% for url, text, extra_attrs, exists in theme.username() %}
+        <a href="{{ url|e }}" {% if not exists %}class="nonexistent"{% endif %} {{extra_attrs}}>
+            {{ text }}
+        </a>
+        {% if not loop.last %}
+            <span class="sep"> | </span>
+        {% endif %}
+    {% endfor %}
+</div>
+
+
+<h1 id="locationline">
+
+    {% if cfg.show_interwiki %}
+    <span id="interwiki">
+        <a href="{{ href(translated_item_name(cfg.page_front_page)) }}" rel="nofollow">
+            {% if cfg.interwikiname %}
+                {{ cfg.interwikiname }}
+            {% else %}
+                Self
+            {% endif %}
+        </a>
+        <span class="sep">: </span>
+    </span>
+    {% endif %}
+
+    <span id="pagelocation">
+        <span class="pagepath">
+            {% for item_name, item_path, exists in theme.location_breadcrumbs() %}
+                <a href="{{ href(item_path) }}" {% if not exists %}class="nonexistent"{% endif %}>
+                    {{ item_name }}
+                </a>
+                {% if not loop.last %}
+                    <span class="sep">/</span>
+                {% endif %}
+            {% endfor %}
+        </span>
+    </span>
+
+</h1>
+
+{% set trail_items = theme.path_breadcrumbs() %}
+{% if trail_items %}
+    <div id="pagetrail">
+    {% for item_name, item_path, exists in trail_items %}
+        <a href="{{ href(item_path) }}" {% if not exists %}class="nonexistent"{% endif %}>
+            {{ item_name }}
+        </a>
+        {% if not loop.last %}
+            <span class="sep"> &raquo; </span>
+        {% endif %}
+    {% endfor %}
+    </div>
+{% endif %}
+
+<ul id="navibar">
+    {% for cls, url, text in theme.navibar() %}
+        <li class="{{ cls }}">
+            <a href="{{ url|e }}">{{ text }}</a>
+        </li>
+    {% endfor %}
+</ul>
+
+<div id="pageline">
+    <hr style="display:none;">
+</div>
+ 
+{% if theme.msg_list %}
+    <div id="message">
+        {% for msg in theme.msg_list %}
+                <p>{{ msg }}</p>            
+        {% endfor %}
+        <a href="{{ href(theme.item_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
+    </div>
+{% endif %}
+
+{% block extra_header %}{% endblock %}
+
+</div>
+
+<div id="page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
+
+    {# ALL CONTENT TEMPLATES SHOULD HAVE IMPLEMENTS THIS BLOCK #}
+    {% block item %}
+        <div id="content">
+        {% block content %}{% endblock %}
+        </div>
+        <div id="history" class="green">
+        {% block history %}{% endblock %}
+        </div>
+        <div id="index">
+        {% block index %}{% endblock %}
+        </div>
+    {% endblock %}
+    
+    {% block extra_content %}{% endblock %}
+
+</div>
+
+<div id="footer">
+    {% block extra_footer %}{% endblock %}    
+    <ul id="credits">
+        {% for credit in cfg.page_credits %}
+            <li> {{ credit }} </li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% set null = theme.request.clock.stop('run') %}
+{% set null = theme.request.clock.stop('total') %}
+{% set timing_information = theme.request.clock.dump() %}
+
+{% if cfg.show_timings %}
+    <ul id="timings">
+    {% for timing in timing_information %}
+        <li> {{ timing }}</li>
+    {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}
+
