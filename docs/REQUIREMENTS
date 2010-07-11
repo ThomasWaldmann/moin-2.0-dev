@@ -130,8 +130,10 @@ minimum: 0.5.6
 
 babel
 =====
-shipped: 0.9.5
+shipped: 0.9.5 + patch
 minimum: 0.9.5(?)
+Note:
+0.9.5 needs patch from moin/2.0-dev changeset de6a753a8363 to remove its usage of pkg_resources (setuptools)
 
 
 pytz
