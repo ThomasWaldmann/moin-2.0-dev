@@ -136,7 +136,7 @@ class ActionClass(object):
 
     def show_password_form(self, name, password):
         _ = self.request.getText
-        d = {"message": _(r"Please enter your password of your account at the remote wiki below. <<BR>> /!\ You should trust both wikis because the password could be read by the particular administrators.", wiki=True),
+        d = {"message": _(r"Please enter your password of your account at the remote wiki below. You should trust both wikis because the password could be read by the wiki administrators."),
              "namelabel": _("Name"),
              "name": name,
              "passwordlabel": _("Password"),
@@ -198,10 +198,10 @@ class ActionClass(object):
                 raise ActionStatus(_("The only supported directions are BOTH and DOWN."), "error")
 
             if not self.request.cfg.interwikiname:
-                raise ActionStatus(_("Please set an interwikiname in your wikiconfig (see HelpOnConfiguration) to be able to use this action.", wiki=True), "error")
+                raise ActionStatus(_("Please set an interwikiname in your wikiconfig (see HelpOnConfiguration) to be able to use this action."), "error")
 
             if not params["remoteWiki"]:
-                raise ActionStatus(_("Incorrect parameters. Please supply at least the ''remoteWiki'' parameter. Refer to HelpOnSynchronisation for help.", wiki=True), "error")
+                raise ActionStatus(_("Incorrect parameters. Please supply at least the 'remoteWiki' parameter. Refer to HelpOnSynchronisation for help."), "error")
 
             local = MoinLocalWiki(self.request, params["localPrefix"], params["pageList"])
             try:
@@ -210,7 +210,7 @@ class ActionClass(object):
                 raise ActionStatus(msg, "error")
 
             if not remote.valid:
-                raise ActionStatus(_("The ''remoteWiki'' is unknown.", wiki=True), "error")
+                raise ActionStatus(_("The 'remoteWiki' is unknown."), "error")
         except ActionStatus, e:
             self.request.theme.add_msg(*e.args)
         else:

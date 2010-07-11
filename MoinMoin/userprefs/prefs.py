@@ -67,9 +67,9 @@ class Settings(UserPrefBase):
 
             # Don't allow changing the name to an invalid one
             if not user.isValidName(request, new_name):
-                return 'error', _("""Invalid user name {{{'%s'}}}.
+                return 'error', _("""Invalid user name '%s'.
 Name may contain any Unicode alpha numeric character, with optional one
-space between words. Group page name is not allowed.""", wiki=True) % wikiutil.escape(new_name)
+space between words. Group page name is not allowed.""") % wikiutil.escape(new_name)
 
             # Is this an existing user trying to change information or a new user?
             # Name required to be unique. Check if name belong to another user.

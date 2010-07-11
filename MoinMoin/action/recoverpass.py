@@ -194,9 +194,7 @@ Contact the owner of the wiki, who can enable email."""), 'warning')
 
         request.write(request.formatter.startContent("content"))
 
-        request.write(_("""
-== Password reset ==
-Enter a new password below.""", wiki=True))
+        request.write(_("""Password reset - enter a new password below."""))
         request.write(_create_token_form(request, name=name, token=token))
 
         request.write(request.formatter.endContent())
@@ -215,21 +213,21 @@ Enter a new password below.""", wiki=True))
         request.write(request.formatter.startContent("content"))
 
         request.write(_("""
-== Recovering a lost password ==
+Recovering a lost password - 
 If you have forgotten your password, provide your email address or
-username and click on '''Mail me my account data'''.
+username and click on 'Mail me my account data'.
 You will receive an email containing a recovery token that can be
 used to change your password. The email will also contain further
-instructions.""", wiki=True))
+instructions."""))
 
         request.write(_create_form(request))
 
         request.write(request.formatter.rule())
 
         request.write(_("""
-=== Password reset ===
+Password reset -
 If you already have received the email with the recovery token, enter your
-username, the recovery token and a new password (twice) below.""", wiki=True))
+username, the recovery token and a new password (twice) below."""))
 
         request.write(_create_token_form(request))
 
