@@ -1,0 +1,84 @@
+<ul class="editbar">    
+{% if theme.shouldShowEditbar() %}
+    {% if 'Modify' in cfg.edit_bar %}
+        {% if not 'modify' in cfg.actions_excluded %} 
+            <li>
+            {% if theme.item_writable %}
+                <a href="{{ href(theme.item_name, do='modify')|e }}" rel="nofollow"> {{ _('Modify') }}</a>
+            {% else %}
+                {{ _('Immutable Page')}}
+            {% endif %}
+            </li>
+        {% endif %}
+    {% endif %}
+
+    {% if 'Download' in cfg.edit_bar %}
+        {% if not 'get' in cfg.actions_excluded %}
+            <li>
+                <a href="{{ href(theme.item_name, do='get')|e }}" rel="nofollow">{{ _('Download') }}</a>
+            </li>
+        {% endif %}
+    {% endif %}
+
+    {% if 'Quicklink' in cfg.edit_bar %}
+        {% if theme.user.valid %}
+            {% if not theme.user.isQuickLinkedTo([theme.item_name]) %}
+                {% if not 'quicklink' in cfg.actions_excluded %}
+                    <li>
+                        <a class="nbquicklink" href="{{ href(theme.item_name, do='quicklink')|e }}" rel="nofollow">{{ _('Add Link') }}</a>
+                    </li>
+                {% endif %}
+            {% else %}
+                {% if not 'quickunlink' in cfg.actions_excluded %}
+                    <li>
+                        <a class="nbquicklink" href="{{ href(theme.item_name, do='quickunlink')|e }}" rel="nofollow">{{ _('Remove Link') }}</a>
+                    </li>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    {% if 'Subscribe' in cfg.edit_bar %}
+        {% if (cfg.mail_enabled or cfg.jabber_enabled) and theme.user.valid %}
+            {% if not theme.user.isSubscribedTo([theme.item_name]) %}
+                {% if not 'subscribe' in cfg.actions_excluded %}
+                    <li>
+                        <a class="nbsubscribe" href="{{ href(theme.item_name, do='subscribe')|e }}" rel="nofollow">{{ _('Subscribe') }}</a>
+                    </li>
+                {% endif %}
+            {% else %}
+                {% if not 'unsubscribe' in cfg.actions_excluded %}
+                    <li>
+                        <a class="nbsubscribe" href="{{ href(theme.item_name, do='unsubscribe')|e }}" rel="nofollow">{{ _('Unsubscribe') }}</a>
+                    </li>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    {% if 'Comments' in cfg.edit_bar %}
+        <li class="toggleCommentsButton" style="display:none;">
+            <a href="#" class="nbcomment" onClick="toggleComments();return false;">{{ _('Comments') }}</a>
+        </li>
+    {% endif %}
+    
+    {% if 'Discussion' in cfg.edit_bar %}
+        <li>
+        {% if theme.link_supplementation_page() %}
+            <a class="nbsupplementation" href="{{ href(theme.item_name, do="supplementation")|e }}" rel="nofollow">
+                 {{ _(cfg.supplementation_page_name) }}
+             </a>
+        {% else %}
+            <span class="disabled">{{ _(cfg.supplementation_page_name) }}</span>
+        {% endif %}
+        </li>
+    {% endif %}
+    
+    {% if 'ActionsMenu' in cfg.edit_bar %}
+        <li>{{ theme.actions_menu() }}</li>
+    {% endif %}
+    
+{% endif %}
+
+</ul>
+

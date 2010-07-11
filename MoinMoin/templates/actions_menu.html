@@ -1,0 +1,23 @@
+<form class="actionsmenu" method="GET" action="{{ href(theme.item_name)|e }}">
+    <div>
+        <label>{{ label }}</label>
+        <select name="do"
+            onchange="if ((this.selectedIndex != 0) &&
+                          (this.options[this.selectedIndex].disabled == false)) {
+                    this.form.submit();
+                }
+                this.selectedIndex = 0;">
+            {% for do, disabled, title in options %}
+                <option value="{{ do }}" {% if disabled %}disabled class="disabled"{% endif %}> {{ title }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="{{ _('Do') }}">
+        {{ rev_field }}
+    </div>
+    <script type="text/javascript">
+    <!--// Init menu
+    actionsMenuInit('{{ label }}');
+    //-->
+    </script>
+</form>
+
