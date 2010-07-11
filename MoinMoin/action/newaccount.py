@@ -120,4 +120,4 @@ def execute(item_name, request):
             request.theme.add_msg(_create_user(request), "dialog")
         content = request.theme.render_content(item_name, title=title)
         return content
-        
+

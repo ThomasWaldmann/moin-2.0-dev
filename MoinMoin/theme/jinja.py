@@ -26,10 +26,9 @@ from MoinMoin.theme import ThemeBase
 class JinjaTheme(ThemeBase):
     """
     Base class for actual themes.
-    
+
     We need to know how the rendering will be done.
     """
-    
     def __init__(self, request):
         """
         Initialize the theme object.
@@ -59,7 +58,7 @@ class JinjaTheme(ThemeBase):
         self.content_lang = request.content_lang
         self.content_dir = i18n.getDirection(self.content_lang)
         self.msg_list = []
-        
+
         jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
         try:
             os.mkdir(jinja_cachedir)
@@ -90,7 +89,7 @@ class JinjaTheme(ThemeBase):
                                 'abs_href': request.abs_href,
                                 'translated_item_name': self.translated_item_name
                                 })
-    
+
     def translated_item_name(self, item_en):
         """
         Get a translated Item Name.
@@ -103,10 +102,10 @@ class JinjaTheme(ThemeBase):
         item_lang_request= request.getText(item_en)
         if self.storage.has_item(item_lang_request):
             return item_lang_request
-            
+
         item_lang_default = i18n.getText(item_en, request, self.cfg.language_default)
         if self.storage.has_item(item_lang_default):
-            return item_lang_default            
+            return item_lang_default
         return item_en
 
     def location_breadcrumbs(self):
@@ -141,7 +140,7 @@ class JinjaTheme(ThemeBase):
         href = request.href
         item_name = self.item_name
         user = self.user
-        
+
         userlinks = []
         # Add username/homepage link for registered users. We don't care
         # if it exists, the user can create it.
@@ -414,7 +413,7 @@ class JinjaTheme(ThemeBase):
                     trail_item = title, pagename, exists
                     items.append(trail_item)
         return items
-     
+
     def _stylesheet_link(self, theme, media, href, title=None):
         """
         Create a link tag for a stylesheet.
@@ -428,7 +427,7 @@ class JinjaTheme(ThemeBase):
         @rtype: tuple
         @return: parameters to render stylesheet in template
         """
-        if theme: 
+        if theme:
             href = self.request.static_href(self.name, 'css', '%s.css' % href)
         attrs = 'type="text/css" charset="%s" media="%s" href="%s"' % (
                 self.stylesheetsCharset, media, href, )
@@ -449,22 +448,22 @@ class JinjaTheme(ThemeBase):
 
         theme_css = [self._stylesheet_link(True, *stylesheet) for stylesheet in stylesheets]
         stylesheet_list.extend(theme_css)
-        
+
         cfg_css = [self._stylesheet_link(False, *stylesheet) for stylesheet in request.cfg.stylesheets]
         stylesheet_list.extend(cfg_css)
-        
+
         # Add user css url (assuming that user css uses same charset)
         href = user.valid and user.css_url
         if href and href.lower() != "none":
             user_css = self._stylesheet_link(False, 'all', href)
             stylesheet_list.append(user_css)
-            
+
         #MSIE must to be the last add. This is used in for loop in head.html to render specific tags.
         msie_css = self._stylesheet_link(True, 'all', 'msie')
         stylesheet_list.append(msie_css)
-        
+
         return stylesheet_list
-            
+
     def shouldShowPageInfo(self):
         """
         Should we show page info?
@@ -514,7 +513,7 @@ class JinjaTheme(ThemeBase):
                 info = "%s  (%s)" % (wikiutil.escape(pagename), info)
                 return info
         return ''
-            
+
     def universal_edit_button(self):
         """
         Should we show an edit link in the header?
@@ -547,7 +546,7 @@ class JinjaTheme(ThemeBase):
         _ = request.getText
         rev = request.rev
         page = self.page
-        
+
         menu = [
             'rc',
             '__separator__',
@@ -677,7 +676,7 @@ class JinjaTheme(ThemeBase):
         """
         If the discussion page doesn't exist and the user
         has no right to create it, show a disabled link.
-        
+
         @rtype: bool
         """
         suppl_name = self.cfg.supplementation_page_name
@@ -702,7 +701,7 @@ class JinjaTheme(ThemeBase):
         self.msg_list.append(msg)
 
     # Properties ##############################################################
-    
+
     @property
     def special_pagenames(self):
         page_front_page = self.translated_item_name(self.cfg.page_front_page)
@@ -716,9 +715,9 @@ class JinjaTheme(ThemeBase):
                 page_find_page, 'FindPage',
                 page_site_navigation, 'SiteNavigation',
                ]
-               
+
     # Public Functions ########################################################
-    
+
     def send_title(self, text, content=None, **keywords):
         """
         Output the page header (and title).
@@ -748,7 +747,7 @@ class JinjaTheme(ThemeBase):
         self.page = page
         self.item_name = page.page_name or ''
         self.head_title = text
-        
+
         # Render with Jinja
         request.write(self.render('head.html', {}))
 
@@ -781,13 +780,13 @@ class JinjaTheme(ThemeBase):
             content = item.do_show()
         if title is None:
             title = item_name
-            
+
         #Attributes to use directly in template
         # Or to reduce parameters of functions of JinjaTheme
         self.page = page
         self.item_name = page.page_name or ''
         self.head_title = title
-        
+
         html = self.render_template(gettext=self.request.getText,
                                     item_name=item_name,
                                     title=title,
@@ -801,7 +800,7 @@ class JinjaTheme(ThemeBase):
         return html
 
     #TODO: reimplement on-wiki-page sidebar definition with converter2
-    
+
     def render_template(self, filename='layout.html', **context):
         """
         Base function that renders using Jinja2.
