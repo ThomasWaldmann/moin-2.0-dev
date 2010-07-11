@@ -40,9 +40,9 @@ class Macro(MacroBlockBase):
             moin_page.h(attrib={moin_page.outline_level: '1'}, children=[_("Wiki configuration")]))
 
         desc = _("This table shows all settings in this wiki that do not have default values. "
-              "Settings that the configuration system doesn't know about are shown in ''italic'', "
+              "Settings that the configuration system doesn't know about are shown in italic, "
               "those may be due to third-party extensions needing configuration or settings that "
-              "were removed from Moin.", wiki=True, tree=True)
+              "were removed from Moin.")
         result.append(moin_page.p(children=[desc]))
 
         table = moin_page.table()

@@ -59,7 +59,7 @@ class Macro(MacroBlockBase):
                         default_txt = moin_page.span(
                             attrib={moin_page.title: default_txt},
                             children=['...'])
-                    description = _(description or '', wiki=True, tree=True)
+                    description = _(description or '')
                 row = moin_page.table_row()
                 body.append(row)
                 row.append(moin_page.table_cell(children=[name]))
