@@ -489,7 +489,7 @@ class PageLock:
                 # warn user about existing lock
 
                 result = 1, _(
-"""This page was opened for editing or last previewed at %(timestamp)s by %(owner)s. 
+"""This page was opened for editing or last previewed at %(timestamp)s by %(owner)s.
 You should refrain from editing this page for at least another %(mins_valid)d minute(s),
 to avoid editing conflicts.
 To leave the editor, press the Cancel button.""") % {
