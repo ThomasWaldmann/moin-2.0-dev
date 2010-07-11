@@ -43,8 +43,10 @@ class JinjaTheme(ThemeBase):
             page = Page(request, path)
         self.page = page
         item_name = page.page_name
-        self.item_name = item_name 
-        self.item_exists = Page(request, item_name).exists()
+        self.item_name = item_name
+        storage = request.storage
+        self.storage = storage
+        self.item_exists = storage.has_item(item_name)
         self.output_mimetype = page.output_mimetype
         self.output_charset = page.output_charset
         self.cfg = request.cfg
@@ -99,15 +101,12 @@ class JinjaTheme(ThemeBase):
         # TODO: Convert to ITEM! TOP-PRIORITY
         request = self.request
         item_lang_request= request.getText(item_en)
-        page = Page(request, item_lang_request)
-        if page.exists():
+        if self.storage.has_item(item_lang_request):
             return item_lang_request
             
         item_lang_default = i18n.getText(item_en, request, self.cfg.language_default)
-        page = Page(request, item_lang_default)
-        if page.exists():
-            return item_lang_default
-            
+        if self.storage.has_item(item_lang_default):
+            return item_lang_default            
         return item_en
 
     def location_breadcrumbs(self):
@@ -124,8 +123,7 @@ class JinjaTheme(ThemeBase):
         current_item = ''
         for s in segments:
             current_item += s
-            exists = Page(self.request, current_item).exists()
-            content.append((s, current_item, exists))
+            content.append((s, current_item, self.storage.has_item(current_item)))
             current_item += '/'
         return content
 
@@ -411,10 +409,9 @@ class JinjaTheme(ThemeBase):
 
                     except ValueError:
                         pass
-                    page = Page(request, pagename)
-                    title = page.page_name
-                    title = self.shortenPagename(title)
-                    trail_item = title, page.page_name, page.exists()
+                    exists = self.storage.has_item(pagename)
+                    title = self.shortenPagename(pagename)
+                    trail_item = title, pagename, exists
                     items.append(trail_item)
         return items
      
@@ -686,8 +683,7 @@ class JinjaTheme(ThemeBase):
         suppl_name = self.cfg.supplementation_page_name
         suppl_name_full = "%s/%s" % (self.item_name, suppl_name)
 
-        page = Page(self.request, suppl_name_full)
-        return page.exists() or self.user.may.write(suppl_name_full)
+        return self.storage.has_item(suppl_name_full) or self.user.may.write(suppl_name_full)
 
     def add_msg(self, msg, msg_class=None):
         """
