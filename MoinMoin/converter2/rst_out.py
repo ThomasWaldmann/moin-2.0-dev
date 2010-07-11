@@ -41,6 +41,10 @@ class Cell(object):
 
 
 class Table(object):
+    """
+    An object of this class collects the structure of a table
+    and represent it in ReStructuredText syntax.
+    """
 
     def __init__(self):
         self.i = -1
@@ -50,6 +54,9 @@ class Table(object):
         self.rowclass = ''
 
     def add_row(self):
+        """
+        Add new row to the table.
+        """
         if self.rowclass == 'table-header':
             self.header_count += 1
         row = []
@@ -63,14 +70,24 @@ class Table(object):
         return row
 
     def end_row(self):
+        """
+        Adds empyt cells to current row if it's too short.
+
+        Moves the row to the head of the table if it is table header.
+        """
         if len(self.table) > 1:
             if len(self.table[-2]) > len(self.table[-1]):
                 self.add_cell(1, 1, Cell(''))
                 self.end_row()
-        if self.rowclass == 'table-header':
-            self.table.insert(self.header_count - 1, self.table.pop())
+            if self.rowclass == 'table-header':
+                self.table.insert(self.header_count - 1, self.table.pop())
 
     def add_cell(self, cs, rs, cell):
+        """
+        Adds cell to the row.
+
+        @param cs: number of columns spanned
+        """
         if cs < 1 or rs < 1:
             return
         self.table[-1].append((cs, rs, cell))
@@ -84,9 +101,15 @@ class Table(object):
         return
 
     def height(self):
+        """
+        @return: number of rows in the table
+        """
         return len(self.table)
 
     def width(self):
+        """
+        @return: width of rows in the table or zero if rows have different width
+        """
         if not self.table:
             return 0
         width = len(self.table[0])
@@ -96,6 +119,12 @@ class Table(object):
         return width
 
     def col_width(self, col):
+        """
+        Counts the width of the column in ReSturcturedText representation.
+
+        @param col: index of the column
+        @return: number of characters
+        """
         if self.width() <= col:
             return 0
         width = 0
@@ -105,6 +134,12 @@ class Table(object):
         return width
 
     def row_height(self, row):
+        """
+        Counts lines in ReSturcturedText representation of the row
+
+        @param row: index of the row
+        @return: number of lines
+        """
         if self.height() <= row:
             return 0
         height = 0
@@ -114,6 +149,9 @@ class Table(object):
         return height
 
     def __repr__(self):
+        """
+        Represent table using ReStructuredText syntax.
+        """
         ret = []
         if self.height() and self.width():
             cols = []
@@ -289,10 +327,6 @@ class Converter(object):
                     elif self.status[-1] == "text":
                         if self.last_closed == "p":
                             self.define_references()
-                            """
-                            self.output.extend(self.objects)
-                            self.objects = []
-                            """
                             self.output.append('\n')
                         #if self.last_closed == "list":
                         #    self.output.append('\n')
@@ -311,15 +345,7 @@ class Converter(object):
                     if self.status[-1] == "text":
                         if self.last_closed == "p":
                             self.define_references()
-                            """
-                            self.output.extend(self.objects)
-                            self.objects = []
-                            """
         self.define_references()
-        """
-        self.output.extend(self.objects)
-        self.objects = []
-        """
         notes = "\n\n".join(".. [#] %s" % note.replace("\n", "\n  ") for note in self.footnotes)
         if notes:
             self.output.append("\n\n%s\n\n" % notes)
@@ -864,6 +890,9 @@ class Converter(object):
         return ''
 
     def define_references(self):
+        """
+        Adds defenitions of founded links and objects to the converter output.
+        """
         self.all_used_references.extend(self.used_references)
         definitions = [" " * (len(''.join(self.list_item_labels))\
                                     + len(self.list_item_labels))\
