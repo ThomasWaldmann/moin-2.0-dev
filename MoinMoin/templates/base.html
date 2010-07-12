@@ -91,10 +91,9 @@
     {% for media, url in cfg.stylesheets %}
     <link charset="utf-8" type="text/css" media="{{ media }}" rel="stylesheet" href="{{ url|e }}">
     {% endfor %}
-
-    {% set user_css_url = theme.user.valid and theme.user.css_url %}
-    {% if user_css_url %}
-    <link charset="utf-8" type="text/css" media="all" rel="stylesheet" href="{{ user_css_url|e }}">
+    
+    {% if theme.user.valid and theme.user.css_url %}
+    <link charset="utf-8" type="text/css" media="all" rel="stylesheet" href="{{ theme.user.css_url|e }}">
     {% endif %}
 
     <!-- css only for MS IE6/IE7 browsers -->
