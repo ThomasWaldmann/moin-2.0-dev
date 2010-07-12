@@ -16,4 +16,4 @@
 ^.settings
 ^MANIFEST
 .DS_Store
-
+.sqlite$
