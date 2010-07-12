@@ -210,8 +210,15 @@ class Converter(object):
         return self.new_copy(docbook.tbody, element, attrib={})
 
     def visit_moinpage_table_cell(self, element):
-        # TODO : Attributes conversion
-        return self.new_copy(docbook.td, element, attrib={})
+        attrib = {}
+        rowspan = element.get(moin_page('number-rows-spanned'))
+        colspan = element.get(moin_page('number-columns-spanned'))
+        print "rowspan : %s" % rowspan
+        if rowspan:
+            attrib[docbook.rowspan] = rowspan
+        if colspan:
+            attrib[docbook.colspan] = colspan
+        return self.new_copy(docbook.td, element, attrib=attrib)
 
     def visit_moinpage_table_header(self, element):
         # TODO : Attributes conversion
