@@ -293,6 +293,41 @@ class Converter(object):
         """
         pass
 
+    def visit_docbook_table(self, element):
+        # we should not have any strings in the child
+        list_table_elements = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                r = self.visit(child)
+                if r is None:
+                    r = ()
+                elif not isinstance(r, (list, tuple)):
+                    r = (r, )
+                list_table_elements.extend(r)
+        return ET.Element(moin_page.table, attrib={}, children=list_table_elements)
+
+    def visit_docbook_thead(self, element):
+        return self.new_copy(moin_page.table_header, element, attrib={})
+
+    def visit_docbook_tfoot(self, element):
+        return self.new_copy(moin_page.table_footer, element, attrib={})
+
+    def visit_docbook_tbody(self, element):
+        return self.new_copy(moin_page.table_body, element, attrib={})
+
+    def visit_docbook_tr(self, element):
+        return self.new_copy(moin_page.table_row, element, attrib={})
+
+    def visit_docbook_td(self, element):
+        attrib = {}
+        rowspan = element.get(docbook.rowspan)
+        colspan = element.get(docbook.colspan)
+        if rowspan:
+            attrib[moin_page('number-rows-spanned')] = rowspan
+        if colspan:
+            attrib[moin_page('number-columns-spanned')] = colspan
+        return self.new_copy(moin_page.table_cell, element, attrib=attrib)
+
     def visit_docbook_variablelist(self, element):
         return self.new_copy(moin_page.list, element, attrib={})
 
