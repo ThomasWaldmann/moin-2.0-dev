@@ -80,6 +80,18 @@ class TestConverter(Base):
             # ORDERED LIST --> ordered list
             ('<article><orderedlist><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
              '/page/body/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
+            # ORDERED LIST with upperalpha numeration --> ordered list with upper-alpha list-style-type
+            ('<article><orderedlist db:numeration="upperalpha"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+             '/page/body/list[@item-label-generate="ordered"][@list-style-type="upper-alpha"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
+            # ORDERED LIST with loweralpha numeration --> ordered list with lower-alpha list-style-type
+            ('<article><orderedlist db:numeration="loweralpha"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+             '/page/body/list[@item-label-generate="ordered"][@list-style-type="lower-alpha"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
+            # ORDERED LIST with upperroman numeration --> ordered list with upper-roman list-style-type
+            ('<article><orderedlist db:numeration="upperroman"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+             '/page/body/list[@item-label-generate="ordered"][@list-style-type="upper-roman"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
+            # ORDERED LIST with lowerroman numeration --> ordered list with lower-roman list-style-type
+            ('<article><orderedlist db:numeration="lowerroman"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+             '/page/body/list[@item-label-generate="ordered"][@list-style-type="lower-roman"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # VARIABLE LIST --> list
             ('<article><variablelist><varlistentry><term>Term 1</term><listitem>Definition 1</listitem></varlistentry><varlistentry><term>Term 2</term><listitem>Definition 2</listitem></varlistentry></variablelist></article>',
             '/page/body/list[list-item[1][list-item-label="Term 1"][list-item-body="Definition 1"]][list-item[2][list-item-label="Term 2"][list-item-body="Definition 2"]]'),
