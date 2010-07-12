@@ -99,7 +99,7 @@
 {"id": "tool_docprops_cancel", "textContent": "Abbrechen"},
 {"id": "tool_docprops_save", "textContent": "OK"},
 {"id": "tool_ellipse", "title": "Ellipse"},
-{"id": "tool_export", "textContent": "Export as PNG"},
+{"id": "tool_export", "textContent": "Bild speichern"},
 {"id": "tool_eyedropper", "title": "Eye Dropper Tool"},
 {"id": "tool_fhellipse", "title": "Freihand Ellipse"},
 {"id": "tool_fhpath", "title": "Freihandlinien zeichnen"},

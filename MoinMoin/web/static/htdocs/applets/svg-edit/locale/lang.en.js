@@ -100,7 +100,7 @@
 {"id": "tool_docprops_cancel", "textContent": "Cancel"},
 {"id": "tool_docprops_save", "textContent": "OK"},
 {"id": "tool_ellipse", "title": "Ellipse"},
-{"id": "tool_export", "textContent": "Export as PNG"},
+{"id": "tool_export", "textContent": "Save Image [S]"},
 {"id": "tool_eyedropper", "title": "Eye Dropper Tool"},
 {"id": "tool_fhellipse", "title": "Free-Hand Ellipse"},
 {"id": "tool_fhpath", "title": "Pencil Tool"},
