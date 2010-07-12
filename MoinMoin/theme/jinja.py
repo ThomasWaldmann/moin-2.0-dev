@@ -144,17 +144,20 @@ class JinjaTheme(ThemeBase):
         # Add username/homepage link for registered users. We don't care
         # if it exists, the user can create it.
         if user.valid and user.name:
-            interwiki = wikiutil.getInterwikiHomePage(request)
+            wikiname, itemname = wikiutil.getInterwikiHomePage(request)
             name = user.name
             aliasname = user.aliasname
             if not aliasname:
                 aliasname = name
-            title = "%s @ %s" % (aliasname, interwiki[0])
+            title = "%s @ %s" % (aliasname, wikiname)
             # link to (interwiki) user homepage
-            name = interwiki[1]
-            item_name = wikiutil.interwiki_name(self.request, wiki_name=interwiki[0], item_name=name)
-            interwiki_page = Page(self.request, item_name)
-            item = href(item_name), name, 'id="userhome" title="%s"' % title, interwiki_page.exists()
+            if wikiname == "Self":
+                exists = self.storage.has_item(itemname)
+            else:
+                # We cannot check if wiki pages exists in remote wikis
+                exists = True
+            interwiki_href = wikiutil.interwiki_item_url(self.request, wiki_name=wikiname, item_name=itemname)
+            item = interwiki_href, aliasname, 'id="userhome" title="%s"' % title, exists
 
             userlinks.append(item)
             # link to userprefs action
