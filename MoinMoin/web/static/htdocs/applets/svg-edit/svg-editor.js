@@ -501,43 +501,49 @@
 			var strokePaint = new $.jGraduate.Paint({solidColor: curConfig.initStroke.color});
 		
 			var saveHandler = function(window,svg) {
+				// save can't be used for post of png data yet
 				show_save_warning = false;
-			
-				// by default, we add the XML prolog back, systems integrating SVG-edit (wikis, CMSs) 
-				// can just provide their own custom save handler and might not want the XML prolog
-				svg = "<?xml version='1.0'?>\n" + svg;
+				var svg_data = Utils.encode64(svg);
+				var loc = document.location.href;
+				var itemname = loc.split('&item=')[1].split('?do')[0];
+				//var itemname = "/T11";
+				$.post(
+					itemname,
+					{'do': "modify", 'mimetype': 'application/x-svgdraw', 'filename': 'drawing.svg', 'filepath': svg_data}
+				      );
+
+				if(!$('#export_canvas').length) {
+					$('<canvas>', {id: 'export_canvas'}).hide().appendTo('body');
+				};
+				var c = $('#export_canvas')[0];
+				c.width = svgCanvas.contentW;
+				c.height = svgCanvas.contentH;
+				canvg(c, svg);
+				var datauri = c.toDataURL('image/png');
+				exportWindow.location.href = datauri;
+				var png_data = Utils.encode64(datauri);
 				
-				// Opens the SVG in new window, with warning about Mozilla bug #308590 when applicable
-				
-				var win = window.open("data:image/svg+xml;base64," + Utils.encode64(svg));
-				
-				// Alert will only appear the first time saved OR the first time the bug is encountered
-				var done = $.pref('save_notice_done');
-				if(done !== "all") {
-		
-					var note = uiStrings.saveFromBrowser.replace('%s', 'SVG');
-					
-					// Check if FF and has <defs/>
-					if(navigator.userAgent.indexOf('Gecko/') !== -1) {
-						if(svg.indexOf('<defs') !== -1) {
-							note += "\n\n" + uiStrings.defsFailOnSave;
-							$.pref('save_notice_done', 'all');
-							done = "all";
-						} else {
-							$.pref('save_notice_done', 'part');
-						}
-					} else {
-						$.pref('save_notice_done', 'all'); 
-					}
-					
-					if(done !== 'part') {
-						win.alert(note);
-					}
-				}
+				$.post(
+					itemname,
+					{'do': "modify", 'mimetype': 'application/x-svgdraw', 'filename': 'drawing.png', 'filepath': png_data}
+					);
+				top.window.location = itemname;
 			};
 			
 			var exportHandler = function(window, data) {
+				// the exportHandler can save to PNG and therefore post it too
+				// additional post of svg data
+				// the posts are stored as tarfile item in moin-2.0
+				// ToDo change menue
+				show_save_warning = false;
 				var issues = data.issues;
+				var svg_data = Utils.encode64(data.svg);
+				var loc = document.location.href;
+				var itemname = loc.split('&item=')[1].split('?do')[0];
+				$.post(
+					itemname,
+					{'do': "modify", 'mimetype': 'application/x-svgdraw', 'filename': 'drawing.svg', 'filepath': svg_data}
+				      );
 				
 				if(!$('#export_canvas').length) {
 					$('<canvas>', {id: 'export_canvas'}).hide().appendTo('body');
@@ -548,17 +554,13 @@
 				c.height = svgCanvas.contentH;
 				canvg(c, data.svg);
 				var datauri = c.toDataURL('image/png');
-				exportWindow.location.href = datauri;
+				var png_data = Utils.encode64(datauri);
 				
-				var note = uiStrings.saveFromBrowser.replace('%s', 'PNG');
-				
-				// Check if there's issues
-
-				if(issues.length) {
-					var pre = "\n \u2022 ";
-					note += ("\n\n" + uiStrings.noteTheseIssues + pre + issues.join(pre));
-				} 
-				exportWindow.alert(note);
+				$.post(
+					itemname,
+					{'do': "modify", 'mimetype': 'application/x-svgdraw', 'filename': 'drawing.png', 'filepath': png_data}
+					);
+				top.window.location = itemname;
 			};
 			
 			// called when we've selected a different element
@@ -2101,7 +2103,8 @@
 			var clickExport = function() {
 				// Open placeholder window (prevents popup)
 				var str = uiStrings.loadingImage;
-				exportWindow = window.open("data:text/html;charset=utf-8,<title>" + str + "<\/title><h1>" + str + "<\/h1>");
+				// removed for avoiding the png save window tab
+				//exportWindow = window.open("data:text/html;charset=utf-8,<title>" + str + "<\/title><h1>" + str + "<\/h1>");
 
 				if(window.canvg) {
 					svgCanvas.rasterExport();
