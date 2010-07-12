@@ -163,13 +163,13 @@ class JinjaTheme(ThemeBase):
             # link to userprefs action
             if 'userprefs' not in self.cfg.actions_excluded:
                 item = (href(item_name, do='userprefs'), _('Settings'),
-                        'css_id="userprefs", rel="nofollow"', True)
+                        'class="userprefs" rel="nofollow"', True)
                 userlinks.append(item)
 
         if user.valid:
             if user.auth_method in request.cfg.auth_can_logout:
                 item = (href(item_name, do='logout', logout='logout'), _('Logout'),
-                        'css_id="logout" rel="nofollow"', True)
+                        'class="logout" rel="nofollow"', True)
                 userlinks.append(item)
         else:
             url = None
