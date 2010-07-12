@@ -571,18 +571,16 @@ def join_wiki(wikiurl, wikitail):
     else:
         return wikiurl + wikitail
 
-def interwiki_name(request, wiki_name='', item_name=''):
+def interwiki_item_url(request, wiki_name='', item_name=''):
     """
-    Get Interwiki name.
+    Get Interwiki url with item_name.
+    
+    @rtype: unicode
     """
     wikitag, wikiurl, wikitail, wikitag_bad = resolve_interwiki(request, wiki_name, item_name)
     wikiurl = mapURL(request, wikiurl)
     if wikitag == 'Self': # for own wiki, do simple links
-        try: # XXX this is the only place where we access self.page - do we need it? Crashes silently on actions!
-            interwiki_name = AbsPageName(item_name, wikitail)
-        except:
-            interwiki_name = wikitail
-        return interwiki_name
+        return wikitail
     else: # return InterWiki hyperlink
         return join_wiki(wikiurl, wikitail)
 
