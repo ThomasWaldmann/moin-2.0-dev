@@ -219,12 +219,12 @@ class JinjaTheme(ThemeBase):
                 pagename = text.strip()
         else:
             pagename = text
-
+            
         if wikiutil.is_URL(pagename):
             if not title:
                 title = pagename
-            link = fmt.url(1, pagename) + fmt.text(title) + fmt.url(0)
-            return pagename, link
+            url = self.request.href(pagename)
+            return pagename, url, title, ''
 
         # remove wiki: url prefix
         if pagename.startswith("wiki:"):
@@ -239,8 +239,9 @@ class JinjaTheme(ThemeBase):
             else:
                 if not title:
                     title = page
-                link = fmt.interwikilink(True, interwiki, page) + fmt.text(title) + fmt.interwikilink(False, interwiki, page)
-                return pagename, link
+                #link = fmt.interwikilink(True, interwiki, page) + fmt.text(title) + fmt.interwikilink(False, interwiki, page)
+                url = wikiutil.interwiki_item_url(request, interwiki, pagename)
+                return pagename, url, title, interwiki
         except ValueError:
             pass
 
@@ -259,8 +260,8 @@ class JinjaTheme(ThemeBase):
             title = page.page_name
             title = self.shortenPagename(title)
 
-        link = self.request.href(page.page_name)
-        return pagename, link, title
+        url = self.request.href(page.page_name)
+        return pagename, url, title, ''
 
     def shortenPagename(self, name):
         """
@@ -304,15 +305,15 @@ class JinjaTheme(ThemeBase):
         # Process config navi_bar
         # TODO: Optimize performance and caching with Jinja
         for text in request.cfg.navi_bar:
-            pagename, url, link_text = self.splitNavilink(text)
-            items.append(('wikilink', url, link_text))
-
+            pagename, url, link_text, title = self.splitNavilink(text)
+            items.append(('wikilink', url, link_text, title))
+            
         # Add user links to wiki links.
         userlinks = self.user.getQuickLinks()
         for text in userlinks:
             # Split text without localization, user knows what he wants
-            pagename, url, link_text = self.splitNavilink(text, localize=0)
-            items.append(('userlink', url, link_text))
+            pagename, url, link_text, title = self.splitNavilink(text, localize=0)
+            items.append(('userlink', url, link_text, title))
 
         # Add sister pages.
         for sistername, sisterurl in request.cfg.sistersites:
@@ -326,7 +327,7 @@ class JinjaTheme(ThemeBase):
                     sisterpages = data['sisterpages']
                     if current in sisterpages:
                         url = sisterpages[current]
-                        items.append(('sisterwiki', url, sistername))
+                        items.append(('sisterwiki', url, sistername, ''))
         return items
 
     def get_icon(self, icon):

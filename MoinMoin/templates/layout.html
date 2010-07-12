@@ -89,9 +89,9 @@
 {% endif %}
 
 <ul id="navibar">
-    {% for cls, url, text in theme.navibar() %}
+    {% for cls, url, text, title in theme.navibar() %}
         <li class="{{ cls }}">
-            <a href="{{ url|e }}">{{ text }}</a>
+            <a href="{{ url|e }}" {% if title %}title="{{ title }}"{% endif %}>{{ text }}</a>
         </li>
     {% endfor %}
 </ul>
