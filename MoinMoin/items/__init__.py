@@ -13,7 +13,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, re, tarfile, time, datetime, shutil
+import os, re, tarfile, time, datetime, shutil, base64
 from StringIO import StringIO
 import json
 import hashlib
@@ -480,6 +480,7 @@ class NonExistent(Item):
         ('drawing items', [
             ('application/x-twikidraw', 'TDRAW'),
             ('application/x-anywikidraw', 'ADRAW'),
+            ('application/x-svgdraw', 'SVGDRAW'),
         ]),
 
         ('other items', [
@@ -945,6 +946,63 @@ class RenderableImage(RenderableBinary):
 class SvgImage(RenderableImage):
     """ SVG images use <object> tag mechanism from RenderableBinary base class """
     supported_mimetypes = ['image/svg+xml']
+
+
+class SvgDraw(TarMixin, Image):
+    """ drawings by svg-edit. It creates two files (svg, png) which are stored as tar file. """
+
+    supported_mimetypes = ['application/x-svgdraw']
+    modify_help = ""
+
+    def modify(self):
+        # called from modify UI/POST
+        request = self.request
+        filepath = request.values.get('filepath')
+        filecontent = filepath.decode('base_64')
+        filename = request.values.get('filename').strip()
+        basepath, basename = os.path.split(filename)
+        basename, ext = os.path.splitext(basename)
+        if ext == '.png':
+            filecontent = base64.urlsafe_b64decode(filecontent.split(',')[1])
+        content_length = None # len(filecontent)
+        self.put_member(filename, filecontent, content_length,
+                        expected_members=set(['drawing.svg', 'drawing.png']))
+
+    def do_modify(self, template_name):
+        """
+        Fills params into the template for initialzing of the the java applet.
+        The applet is called for doing modifications.
+        """
+        request = self.request
+        if 'drawing.svg' in self.list_members():
+            drawpath = self.url(do='get', from_tar='drawing.svg')
+        else:
+            drawpath = ''
+
+        #drawpath = self.url(do='get', from_tar='drawing.svg')
+        svg_params = {
+            'drawpath': drawpath,
+            'itemname': self.name,
+            'savelink': self.url(do='modify', mimetype=self.supported_mimetypes[0]),
+            'pubpath': request.cfg.url_prefix_static + "/applets/svg-edit/",
+        }
+
+        template = self.env.get_template("modify_svg-edit.html")
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.name,
+                                  rows_meta=ROWS_META, cols=COLS,
+                                  revno=0,
+                                  meta_text=self.meta_dict_to_text(self.meta),
+                                  help=self.modify_help,
+                                  t=svg_params,
+                                 )
+        return content
+
+    def _render_data(self):
+        request = self.request
+        drawing_url = self.url(do='get', from_tar='drawing.svg')
+        png_url = self.url(do='get', from_tar='drawing.png')
+        return '<img src="%s" alt=%s>' % (png_url, drawing_url)
 
 
 class RenderableBitmapImage(RenderableImage):

@@ -178,3 +178,8 @@ svgweb
 shipped: 2010-04-09 dracolisk release
 required: ?
 
+
+svg-edit
+========
+shipped: Version 2.5 slightly modified
+required see shipped
