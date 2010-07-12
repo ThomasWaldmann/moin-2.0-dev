@@ -9,9 +9,10 @@
 from MoinMoin.theme import ThemeBase
 from MoinMoin.Page import Page
 
+
 class TestEditBarActions(object):
     #TODO: Made new tests for new ThemeBase
-    
+
     def setup_method(self, method):
         self.savedValid = self.request.user.valid
         self.savedMailEnabled = self.request.cfg.mail_enabled
