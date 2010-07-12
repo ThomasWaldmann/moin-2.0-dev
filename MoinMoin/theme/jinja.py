@@ -29,6 +29,16 @@ class JinjaTheme(ThemeBase):
 
     We need to know how the rendering will be done.
     """
+    
+    # Standard set of style sheets
+    stylesheets = (
+        # media         basename
+        ('all',         'common'),
+        ('screen',      'screen'),
+        ('print',       'print'),
+        ('projection',  'projection'),
+        )
+    
     def __init__(self, request):
         """
         Initialize the theme object.
@@ -414,56 +424,6 @@ class JinjaTheme(ThemeBase):
                     trail_item = title, pagename, exists, ''
                     items.append(trail_item)
         return items
-
-    def _stylesheet_link(self, theme, media, href, title=None):
-        """
-        Create a link tag for a stylesheet.
-
-        @param theme: True: href gives the basename of a theme stylesheet,
-                      False: href is a full url of a user/admin defined stylesheet.
-        @param media: 'all', 'screen', 'print', 'projection', ...
-        @param href: see param theme
-        @param title: optional title (for alternate stylesheets), see
-                      http://www.w3.org/Style/Examples/007/alternatives
-        @rtype: tuple
-        @return: parameters to render stylesheet in template
-        """
-        if theme:
-            href = self.request.static_href(self.name, 'css', '%s.css' % href)
-        attrs = 'type="text/css" charset="%s" media="%s" href="%s"' % (
-                self.stylesheetsCharset, media, href, )
-        return media, href, title
-
-    def stylesheets_list(self):
-        """ Assemble html head stylesheet links
-
-        @param d: parameter dictionary
-        @rtype: list
-        @return: list of stylesheets parameters
-        """
-        request = self.request
-        user = self.user
-        stylesheet_list = []
-        # Check mode
-        stylesheets = self.stylesheets
-
-        theme_css = [self._stylesheet_link(True, *stylesheet) for stylesheet in stylesheets]
-        stylesheet_list.extend(theme_css)
-
-        cfg_css = [self._stylesheet_link(False, *stylesheet) for stylesheet in request.cfg.stylesheets]
-        stylesheet_list.extend(cfg_css)
-
-        # Add user css url (assuming that user css uses same charset)
-        href = user.valid and user.css_url
-        if href and href.lower() != "none":
-            user_css = self._stylesheet_link(False, 'all', href)
-            stylesheet_list.append(user_css)
-
-        #MSIE must to be the last add. This is used in for loop in head.html to render specific tags.
-        msie_css = self._stylesheet_link(True, 'all', 'msie')
-        stylesheet_list.append(msie_css)
-
-        return stylesheet_list
 
     def shouldShowPageInfo(self):
         """
