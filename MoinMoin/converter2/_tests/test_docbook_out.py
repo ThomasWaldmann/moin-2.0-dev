@@ -112,9 +112,9 @@ class TestConverter(Base):
         data = [
             ('<page><body><table><table-header><table-row><table-cell>Header</table-cell></table-row></table-header><table-footer><table-row><table-cell>Footer</table-cell></table-row></table-footer><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></body></page>',
                 '/article/table[thead/tr[td="Header"]][tfoot/tr[td="Footer"]][tbody/tr[td="Cell"]]'),
-            ('<page><body><table><table-body><table-row><table-cell number-columns-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>',
+            ('<page><body><table><table-body><table-row><table-cell page:number-columns-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>',
                 '/article/table/tbody/tr/td[@colspan="2"][text()="Cell"]'),
-            ('<page><body><table><table-body><table-row><table-cell number-rows-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>',
+            ('<page><body><table><table-body><table-row><table-cell page:number-rows-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>',
                 '/article/table/tbody/tr/td[@rowspan="2"][text()="Cell"]'),
         ]
         for i in data:
