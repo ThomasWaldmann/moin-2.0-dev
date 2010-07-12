@@ -8,9 +8,8 @@
 """
 
 from MoinMoin.theme import ThemeBase
-from MoinMoin.theme.jinja import JinjaTheme
 
-class Theme(JinjaTheme):
+class Theme(ThemeBase):
     name = "modernized"
 
 
