@@ -93,7 +93,7 @@
     {% endfor %}
 
     {% set user_css_url = theme.user.valid and theme.user.css_url %}
-    {% if user_css_url and user_css_url.lower!= "none" %}
+    {% if user_css_url %}
     <link charset="utf-8" type="text/css" media="all" rel="stylesheet" href="{{ user_css_url|e }}">
     {% endif %}
 
