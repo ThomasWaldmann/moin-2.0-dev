@@ -10,10 +10,9 @@
 """
 import sys
 from itertools import chain, imap
-from jinja2.nodes import EvalContext
+from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
-     concat, MethodType, FunctionType, internalcode, next, \
-     object_type_repr
+     concat, internalcode, next, object_type_repr
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 
@@ -21,17 +20,16 @@ from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
 # these variables are exported to the template runtime
 __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
-           'markup_join', 'unicode_join', 'to_string',
+           'markup_join', 'unicode_join', 'to_string', 'identity',
            'TemplateNotFound']
-
-
-#: the types we support for context functions
-_context_function_types = (FunctionType, MethodType)
 
 #: the name of the function that is used to convert something into
 #: a string.  2to3 will adopt that automatically and the generated
 #: code can take advantage of it.
 to_string = unicode
+
+#: the identity function.  Useful for certain things in the environment
+identity = lambda x: x
 
 
 def markup_join(seq):
@@ -529,7 +527,7 @@ class StrictUndefined(Undefined):
     """
     __slots__ = ()
     __iter__ = __unicode__ = __str__ = __len__ = __nonzero__ = __eq__ = \
-        __ne__ = Undefined._fail_with_undefined_error
+        __ne__ = __bool__ = Undefined._fail_with_undefined_error
 
 
 # remove remaining slots attributes, after the metaclass did the magic they

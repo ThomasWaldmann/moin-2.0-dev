@@ -106,8 +106,8 @@ minimum: 0.5.1 will work, maybe 0.5 also
 
 jinja2
 ======
-shipped: 2.4.1
-minimum: 2.3(?)
+shipped: 2.5
+minimum: 2.5
 
 
 xappy (High-Level Python library for Xapian)
