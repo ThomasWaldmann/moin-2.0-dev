@@ -9,6 +9,7 @@
 """
 
 import os, StringIO
+import urlparse
 
 from jinja2 import Environment, FileSystemLoader, Template, FileSystemBytecodeCache, Markup
 
@@ -119,7 +120,6 @@ class ThemeBase(object):
 
         @param request: the request object
         """
-        print 'iniciando'
         self.request = request
         page = request.page
         if page is None:
@@ -781,12 +781,7 @@ class ThemeBase(object):
         self.head_title = text
 
         # Render with Jinja
-        request.write(self.render_template('head.html', {}))
-
-        # now call the theming code to do the rendering
-        request.write(self.render_template('header.html', {}))
-        request.write(content)
-        request.write(self.render_template('footer.html', {}))
+        request.write(self.render_content(page.page_name))
 
     def render_content(self, item_name, content=None, title=None, page=None, pagename=None,
                         allow_doubleclick=None, pi_refresh=None, html_head=None, trail=None, **keywords):
