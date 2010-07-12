@@ -3,7 +3,8 @@ MoinMoin - DocBook output converter
 
 Converts an internal document tree into a DocBook v.5 tree.
 
-@copyright: 2010 MoinMoin:ValentinJaniaut
+@copyright: 2010 MoinMoin:ValentinJaniaut,
+            table conversion based on html_out table conversion by Bastian Blank
 @license: GNU GPL, see COPYING for details.
 """
 
