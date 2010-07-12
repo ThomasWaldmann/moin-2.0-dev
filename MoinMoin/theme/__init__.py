@@ -25,6 +25,7 @@ from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 
 modules = pysupport.getPackageModules(__file__)
 
+
 class ThemeBase(object):
     """ Base class for themes
 
@@ -172,8 +173,7 @@ class ThemeBase(object):
                                 'href': request.href,
                                 'static_href': request.static_href,
                                 'abs_href': request.abs_href,
-                                'translated_item_name': self.translated_item_name
-                                })
+                                'translated_item_name': self.translated_item_name})
 
     def translated_item_name(self, item_en):
         """
@@ -184,7 +184,7 @@ class ThemeBase(object):
         """
         # TODO: Convert to ITEM! TOP-PRIORITY
         request = self.request
-        item_lang_request= request.getText(item_en)
+        item_lang_request = request.getText(item_en)
         if self.storage.has_item(item_lang_request):
             return item_lang_request
 
@@ -741,7 +741,7 @@ class ThemeBase(object):
         page_front_page = self.translated_item_name(self.cfg.page_front_page)
         page_title_index = self.translated_item_name('TitleIndex')
         page_site_navigation = self.translated_item_name('SiteNavigation')
-        page_find_page =  self.translated_item_name('FindPage')
+        page_find_page = self.translated_item_name('FindPage')
         return [page_front_page, self.cfg.page_front_page,
                 page_title_index, 'TitleIndex',
                 page_find_page, 'FindPage',
@@ -822,8 +822,7 @@ class ThemeBase(object):
                                     pi_refresh=pi_refresh,
                                     html_head=html_head,
                                     trail=trail,
-                                    **keywords
-                                   )
+                                    **keywords)
         return html
 
     #TODO: reimplement on-wiki-page sidebar definition with converter2
@@ -843,6 +842,7 @@ class ThemeBase(object):
 class ThemeNotFound(Exception):
     """ Thrown if the supplied theme could not be found anywhere """
 
+
 def load_theme(request, theme_name=None):
     """ Load a theme for this request.
 
@@ -861,6 +861,7 @@ def load_theme(request, theme_name=None):
         raise ThemeNotFound(theme_name)
 
     return Theme(request)
+
 
 def load_theme_fallback(request, theme_name=None):
     """ Try loading a theme, falling back to defaults on error.
@@ -885,4 +886,3 @@ def load_theme_fallback(request, theme_name=None):
             fallback = 2
             from MoinMoin.theme.modernized import Theme
             request.theme = Theme(request)
-

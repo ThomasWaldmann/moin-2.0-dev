@@ -8,6 +8,7 @@
 
 from MoinMoin.theme import ThemeBase
 
+
 class TestNaviBar(object):
     def setup_method(self, method):
         self.theme = ThemeBase(self.request)
