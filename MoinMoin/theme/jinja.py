@@ -250,17 +250,12 @@ class JinjaTheme(ThemeBase):
 
         # Use localized pages for the current user
         if localize:
-            page = Page(request, self.translated_item_name(pagename))
-        else:
-            page = Page(request, pagename)
-
-        pagename = page.page_name  # can be different, due to i18n
-
+            pagename = self.translated_item_name(pagename)
+        
         if not title:
-            title = page.page_name
-            title = self.shortenPagename(title)
+            title = self.shortenPagename(pagename)
 
-        url = self.request.href(page.page_name)
+        url = self.request.href(pagename)
         return pagename, url, title, ''
 
     def shortenPagename(self, name):
