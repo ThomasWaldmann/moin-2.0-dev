@@ -76,8 +76,9 @@
 {% set trail_items = theme.path_breadcrumbs() %}
 {% if trail_items %}
     <div id="pagetrail">
-    {% for item_name, item_path, exists in trail_items %}
-        <a href="{{ href(item_path) }}" {% if not exists %}class="nonexistent"{% endif %}>
+    {% for item_name, item_path, exists, title in trail_items %}
+        <a href="{{ href(item_path) }}" {% if not exists %}class="nonexistent"{% endif %}
+        {% if title %}title="{{ title }}"{% endif %}>
             {{ item_name }}
         </a>
         {% if not loop.last %}
