@@ -157,6 +157,14 @@ class Converter(object):
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'ordered'
+        attribute_conversion = {"upperalpha":"upper-alpha",
+                                "loweralpha":"lower-alpha",
+                                "upperroman":"upper-roman",
+                                "lowerroman":"lower-roman"}
+        numeration = element.get(docbook.numeration)
+        if numeration in attribute_conversion:
+            key = moin_page('list-style-type')
+            attrib[key] = attribute_conversion[numeration]
         return self.visit_simple_list(moin_page.list, attrib, element)
 
     def visit_docbook_para(self, element):
