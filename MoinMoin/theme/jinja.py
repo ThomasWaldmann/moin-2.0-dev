@@ -400,10 +400,13 @@ class JinjaTheme(ThemeBase):
                     try:
                         interwiki, page = wikiutil.split_interwiki(pagename)
                         if interwiki != request.cfg.interwikiname and interwiki != 'Self':
-                            link = (request.formatter.interwikilink(True, interwiki, page) +
-                                    self.shortenPagename(page) +
-                                    request.formatter.interwikilink(False, interwiki, page))
-                            items.append(link)
+                            #link = (request.formatter.interwikilink(True, interwiki, page) +
+                            #        self.shortenPagename(page) +
+                            #        request.formatter.interwikilink(False, interwiki, page))
+                            # TODO: Converting this to new version of interwikilink, still need feedback
+                            href = wikiutil.interwiki_item_url(request, interwiki, pagename)
+                            interwiki_item = self.shortenPagename(page), href, True, interwiki
+                            items.append(interwiki_item)
                             continue
                         else:
                             pagename = page
@@ -412,7 +415,7 @@ class JinjaTheme(ThemeBase):
                         pass
                     exists = self.storage.has_item(pagename)
                     title = self.shortenPagename(pagename)
-                    trail_item = title, pagename, exists
+                    trail_item = title, pagename, exists, ''
                     items.append(trail_item)
         return items
 
