@@ -53,17 +53,18 @@ class Converter(object):
         # TODO : Check why the XML parser from Element Tree need ByteString
         tree = ET.XML(docbook_str.encode('utf-8'))
 
-        return self.visit(tree)
+        return self.visit(tree, 0)
 
-    def do_children(self, element):
+    def do_children(self, element, depth):
         """
         Function to process the conversion of the child of
         a given elements.
         """
         new = []
+        depth = depth + 1
         for child in element:
             if isinstance(child, ET.Element):
-                r = self.visit(child)
+                r = self.visit(child, depth)
                 if r is None:
                     r = ()
                 elif not isinstance(r, (list, tuple)):
@@ -79,17 +80,17 @@ class Converter(object):
         """
         return ET.Element(tag, attrib=attrib, children=children)
 
-    def new_copy(self, tag, element, attrib):
+    def new_copy(self, tag, element, depth, attrib):
         """
         Function to copy one element to the DocBook Tree.
 
         It first converts the child of the element,
         and the element itself.
         """
-        children = self.do_children(element)
+        children = self.do_children(element, depth)
         return self.new(tag, attrib, children)
 
-    def visit(self, element):
+    def visit(self, element, depth):
         """
         Function called at each element, to process it.
 
@@ -103,12 +104,12 @@ class Converter(object):
             method_name = 'visit_' + name
             method = getattr(self, method_name, None)
             if method is not None:
-                return method(element)
+                return method(element, depth)
 
             # We process children of the unknown element
-            return self.do_children(element)
+            return self.do_children(element, depth)
 
-    def visit_docbook(self, element):
+    def visit_docbook(self, element, depth):
         """
         Function called to handle the conversion of DocBook elements
         to the Moin_page DOM Tree.
@@ -120,41 +121,46 @@ class Converter(object):
         # We have a section tag
         if self.sect_re.match(element.tag.name):
             result = []
-            result.append(self.visit_docbook_sect(element))
-            result.extend(self.do_children(element))
+            result.append(self.visit_docbook_sect(element, depth))
+            result.extend(self.do_children(element, depth))
             return result
         method_name = 'visit_docbook_' + element.tag.name
         method = getattr(self, method_name, None)
         if method:
-            return method(element)
+            return method(element, depth)
 
         # Otherwise we process children of the unknown element
-        return self.do_children(element)
+        return self.do_children(element, depth)
 
-    def visit_docbook_article(self, element):
-        children = self.do_children(element)
+    def visit_docbook_article(self, element, depth):
+        children = self.do_children(element, depth)
         body = moin_page.body(children=children)
         return moin_page.page(children=[body])
 
-    def visit_docbook_glossdef(self, element):
-        return self.new_copy(moin_page('list-item-body'), element, attrib={})
+    def visit_docbook_glossdef(self, element, depth):
+        return self.new_copy(moin_page('list-item-body'),
+                             element, depth, attrib={})
 
-    def visit_docbook_glossentry(self, element):
-        return self.new_copy(moin_page('list-item'), element, attrib={})
+    def visit_docbook_glossentry(self, element, depth):
+        return self.new_copy(moin_page('list-item'),
+                             element, depth, attrib={})
 
-    def visit_docbook_glosslist(self, element):
-        return self.new_copy(moin_page.list, element, attrib={})
+    def visit_docbook_glosslist(self, element, depth):
+        return self.new_copy(moin_page.list, element,
+                             depth, attrib={})
 
-    def visit_docbook_glossterm(self, element):
-        return self.new_copy(moin_page('list-item-label'), element, attrib={})
+    def visit_docbook_glossterm(self, element, depth):
+        return self.new_copy(moin_page('list-item-label'),
+                             element, depth, attrib={})
 
-    def visit_docbook_itemizedlist(self, element):
+    def visit_docbook_itemizedlist(self, element, depth):
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'unordered'
-        return self.visit_simple_list(moin_page.list, attrib, element)
+        return self.visit_simple_list(moin_page.list, attrib,
+                                      element, depth)
 
-    def visit_docbook_orderedlist(self, element):
+    def visit_docbook_orderedlist(self, element, depth):
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'ordered'
@@ -166,12 +172,13 @@ class Converter(object):
         if numeration in attribute_conversion:
             key = moin_page('list-style-type')
             attrib[key] = attribute_conversion[numeration]
-        return self.visit_simple_list(moin_page.list, attrib, element)
+        return self.visit_simple_list(moin_page.list, attrib,
+                                      element, depth)
 
-    def visit_docbook_para(self, element):
-        return self.new_copy(moin_page.p, element, attrib={})
+    def visit_docbook_para(self, element, depth):
+        return self.new_copy(moin_page.p, element, depth, attrib={})
 
-    def visit_docbook_sect(self, element):
+    def visit_docbook_sect(self, element, depth):
         """
         This is the function to convert numbered section.
 
@@ -199,7 +206,7 @@ class Converter(object):
         attrib[key] = heading_level
         return self.new(moin_page.h, attrib=attrib, children=title)
 
-    def visit_docbook_seglistitem(self, element, labels):
+    def visit_docbook_seglistitem(self, element, labels, depth):
         """
         A seglistitem is a list-item for a segmented list. It is quite
         special because it act list definition with label, but the labels
@@ -216,7 +223,7 @@ class Converter(object):
                     label_tag = ET.Element(moin_page('list-item-label'),
                             attrib={}, children=labels[counter % len(labels)])
                     body_tag = ET.Element(moin_page('list-item-body'),
-                            attrib={}, children=self.visit(child))
+                            attrib={}, children=self.visit(child, depth))
                     item_tag = ET.Element(moin_page('list-item'),
                             attrib={}, children=[label_tag, body_tag])
                     item_tag = (item_tag, )
@@ -233,7 +240,7 @@ class Converter(object):
                 new.append(child)
         return new
 
-    def visit_docbook_segmentedlist(self, element):
+    def visit_docbook_segmentedlist(self, element, depth):
         """
         A segmented list is a like a list of definition, but the label
         are defined at the start with <segtitle> tag and then for each
@@ -249,7 +256,7 @@ class Converter(object):
             if isinstance(child, ET.Element):
                 r = None
                 if child.tag.name == 'segtitle':
-                    r = self.visit(child)
+                    r = self.visit(child, depth)
                     if r is None:
                         r = ()
                     elif not isinstance(r, (list, tuple)):
@@ -257,7 +264,8 @@ class Converter(object):
                     labels.extend(r)
                 else:
                     if child.tag.name == 'seglistitem':
-                        r = self.visit_docbook_seglistitem(child, labels)
+                        r = self.visit_docbook_seglistitem(child,
+                            labels, depth)
                     else:
                         r = self.visit(child)
                     if r is None:
@@ -269,37 +277,40 @@ class Converter(object):
                 new.append(child)
         return ET.Element(moin_page.list, attrib={}, children=new)
 
-    def visit_docbook_simplelist(self, element):
+    def visit_docbook_simplelist(self, element, depth):
         # TODO : Add support of the type attribute
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'unordered'
-        return self.visit_simple_list(moin_page.list, attrib, element)
+        return self.visit_simple_list(moin_page.list, attrib, element, depth)
 
-    def visit_docbook_term(self, element):
-        return self.new_copy(moin_page('list-item-label'), element, attrib={})
+    def visit_docbook_term(self, element, depth):
+        return self.new_copy(moin_page('list-item-label'),
+                             element, depth, attrib={})
 
-    def visit_docbook_listitem(self, element):
+    def visit_docbook_listitem(self, element, depth):
         # NB : We need to be sure it is only called for a variablelist
-        return self.new_copy(moin_page('list-item-body'), element, attrib={})
+        return self.new_copy(moin_page('list-item-body'),
+                             element, depth, attrib={})
 
-    def visit_docbook_procedure(self, element):
+    def visit_docbook_procedure(self, element, depth):
         # TODO : See to add Procedure text (if needed)
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'ordered'
-        return self.visit_simple_list(moin_page.list, attrib, element)
+        return self.visit_simple_list(moin_page.list, attrib,
+                                      element, depth)
 
-    def visit_docbook_qandaset(self, element):
+    def visit_docbook_qandaset(self, element, depth):
         default_label = element.get(docbook.defaultlabel)
         if default_label == 'number':
-            return self.visit_qandaset_number(element)
+            return self.visit_qandaset_number(element, depth)
         elif default_label == 'qanda':
-            return self.visit_qandaset_qanda(element)
+            return self.visit_qandaset_qanda(element, depth)
         else:
-            return self.do_children(element)
+            return self.do_children(element, depth)
 
-    def visit_docbook_title(self, element):
+    def visit_docbook_title(self, element, depth):
         """
         Later we should add support for all the different kind of title.
 
@@ -308,12 +319,12 @@ class Converter(object):
         """
         pass
 
-    def visit_docbook_table(self, element):
+    def visit_docbook_table(self, element, depth):
         # we should not have any strings in the child
         list_table_elements = []
         for child in element:
             if isinstance(child, ET.Element):
-                r = self.visit(child)
+                r = self.visit(child, depth)
                 if r is None:
                     r = ()
                 elif not isinstance(r, (list, tuple)):
@@ -321,19 +332,23 @@ class Converter(object):
                 list_table_elements.extend(r)
         return ET.Element(moin_page.table, attrib={}, children=list_table_elements)
 
-    def visit_docbook_thead(self, element):
-        return self.new_copy(moin_page.table_header, element, attrib={})
+    def visit_docbook_thead(self, element, depth):
+        return self.new_copy(moin_page.table_header,
+                             element, depth, attrib={})
 
-    def visit_docbook_tfoot(self, element):
-        return self.new_copy(moin_page.table_footer, element, attrib={})
+    def visit_docbook_tfoot(self, element, depth):
+        return self.new_copy(moin_page.table_footer,
+                             element, depth, attrib={})
 
-    def visit_docbook_tbody(self, element):
-        return self.new_copy(moin_page.table_body, element, attrib={})
+    def visit_docbook_tbody(self, element, depth):
+        return self.new_copy(moin_page.table_body,
+                             element, depth, attrib={})
 
-    def visit_docbook_tr(self, element):
-        return self.new_copy(moin_page.table_row, element, attrib={})
+    def visit_docbook_tr(self, element, depth):
+        return self.new_copy(moin_page.table_row,
+                             element, depth, attrib={})
 
-    def visit_docbook_td(self, element):
+    def visit_docbook_td(self, element, depth):
         attrib = {}
         rowspan = element.get(docbook.rowspan)
         colspan = element.get(docbook.colspan)
@@ -341,20 +356,22 @@ class Converter(object):
             attrib[moin_page('number-rows-spanned')] = rowspan
         if colspan:
             attrib[moin_page('number-columns-spanned')] = colspan
-        return self.new_copy(moin_page.table_cell, element, attrib=attrib)
+        return self.new_copy(moin_page.table_cell,
+                             element, depth, attrib=attrib)
 
-    def visit_docbook_variablelist(self, element):
-        return self.new_copy(moin_page.list, element, attrib={})
+    def visit_docbook_variablelist(self, element, depth):
+        return self.new_copy(moin_page.list, element, depth, attrib={})
 
-    def visit_docbook_varlistentry(self, element):
-        return self.new_copy(moin_page('list-item'), element, attrib={})
+    def visit_docbook_varlistentry(self, element, depth):
+        return self.new_copy(moin_page('list-item'), element,
+                             depth, attrib={})
 
-    def visit_qandaentry_number(self, element):
+    def visit_qandaentry_number(self, element, depth):
         items = []
         for child in element:
             if isinstance(child, ET.Element):
                 if child.tag.name == 'question' or child.tag.name == 'answer':
-                    r = self.visit(child)
+                    r = self.visit(child, depth)
                     if r is None:
                         r = ()
                     elif not isinstance(r, (list, tuple)):
@@ -366,7 +383,7 @@ class Converter(object):
         item_body = ET.Element(moin_page('list-item-body'), attrib={}, children=items)
         return ET.Element(moin_page('list-item'), attrib={}, children=[item_body])
 
-    def visit_qandaset_number(self, element):
+    def visit_qandaset_number(self, element, depth):
         attrib = {}
         key = moin_page('item-label-generate')
         attrib[key] = 'ordered'
@@ -374,9 +391,9 @@ class Converter(object):
         for child in element:
             if isinstance(child, ET.Element):
                 if child.tag.name == 'qandaentry':
-                    r = self.visit_qandaentry_number(child)
+                    r = self.visit_qandaentry_number(child, depth)
                 else:
-                    r = self.visit(child)
+                    r = self.visit(child, depth)
                 if r is None:
                     r = ()
                 elif not isinstance(r, (list, tuple)):
@@ -386,7 +403,7 @@ class Converter(object):
                 items.append(child)
         return ET.Element(moin_page('list'), attrib=attrib, children=items)
 
-    def visit_qandaentry_qanda(self, element):
+    def visit_qandaentry_qanda(self, element, depth):
         items = []
         for child in element:
             if isinstance(child, ET.Element):
@@ -397,14 +414,14 @@ class Converter(object):
                 elif child.tag.name == 'answer':
                     item_label = ET.Element(moin_page('list-item-label'), attrib={}, children="A:")
                 else:
-                    r = self.visit(child)
+                    r = self.visit(child, depth)
                     if r is None:
                         r = ()
                     elif not isinstance(r, (list, tuple)):
                         r = (r, )
                     items.extend(r)
                 if item_label is not None:
-                    item_body = ET.Element(moin_page('list-item-body'), attrib={}, children=self.visit(child))
+                    item_body = ET.Element(moin_page('list-item-body'), attrib={}, children=self.visit(child, depth))
                     r = (item_label, item_body)
                     list_item = ET.Element(moin_page('list-item'), attrib={}, children=r)
                     items.append(list_item)
@@ -412,15 +429,15 @@ class Converter(object):
                 items.append(child)
         return items
 
-    def visit_qandaset_qanda(self, element):
+    def visit_qandaset_qanda(self, element, depth):
         items = []
         for child in element:
             if isinstance(child, ET.Element):
                 r = ()
                 if child.tag.name == 'qandaentry':
-                    r = self.visit_qandaentry_qanda(child)
+                    r = self.visit_qandaentry_qanda(child, depth)
                 else:
-                    r = self.visit(child)
+                    r = self.visit(child, depth)
                 if r is None:
                     r = ()
                 elif not isinstance(r, (list, tuple)):
@@ -430,20 +447,20 @@ class Converter(object):
                 items.append(child)
         return ET.Element(moin_page('list'), attrib={}, children=items)
 
-    def visit_simple_list(self, moin_page_tag, attrib, element):
+    def visit_simple_list(self, moin_page_tag, attrib, element, depth):
         list_item_tags = set(['listitem', 'step', 'member'])
         items = []
         for child in element:
             if isinstance(child, ET.Element):
                 if child.tag.name in list_item_tags:
-                    children = self.visit(child)
+                    children = self.visit(child, depth)
                     list_item_body = ET.Element(moin_page('list-item-body'), attrib={}, children=children)
                     tag = ET.Element(moin_page('list-item'), attrib={},
                                      children=[list_item_body])
                     tag = (tag, )
                     items.extend(tag)
                 else:
-                    r = self.visit(child)
+                    r = self.visit(child, depth)
                     if r is None:
                         r = ()
                     elif not isinstance(r, (list, tuple)):
