@@ -251,21 +251,23 @@ class Converter(object):
             ret = self.new(html.dl, attrib_new)
 
         for item in elem:
-            if item.tag.uri == moin_page and item.tag.name == 'list-item':
-                if not generate:
-                    for label in item:
-                        if label.tag.uri == moin_page and label.tag.name == 'list-item-label':
-                            ret_label = self.new_copy(html.dt, label)
-                            ret.append(ret_label)
-
-                for body in item:
-                    if body.tag.uri == moin_page and body.tag.name == 'list-item-body':
-                        if generate:
-                            ret_body = self.new_copy(html.li, body)
-                        else:
-                            ret_body = self.new_copy(html.dd, body)
-                        ret.append(ret_body)
-                        break
+            if isinstance(item, ET.Element):
+                if item.tag.uri == moin_page and item.tag.name == 'list-item':
+                    if not generate:
+                        for label in item:
+                            if isinstance(label, ET.Element):
+                                if label.tag.uri == moin_page and label.tag.name == 'list-item-label':
+                                    ret_label = self.new_copy(html.dt, label)
+                                    ret.append(ret_label)
+                    for body in item:
+                        if isinstance(body, ET.Element):
+                            if body.tag.uri == moin_page and body.tag.name == 'list-item-body':
+                                if generate:
+                                    ret_body = self.new_copy(html.li, body)
+                                else:
+                                    ret_body = self.new_copy(html.dd, body)
+                                ret.append(ret_body)
+                                break
 
         return ret
 
