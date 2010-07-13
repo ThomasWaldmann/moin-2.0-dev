@@ -48,9 +48,10 @@ class Converter(object):
         # The content is given to the converter as a list of string,
         # line per line.
         # So we will concatenate all in one string.
-        docbook_str = ''
+        docbook_str = u''
         docbook_str = docbook_str.join(content)
-        tree = ET.XML(docbook_str)
+        # TODO : Check why the XML parser from Element Tree need ByteString
+        tree = ET.XML(docbook_str.encode('utf-8'))
 
         return self.visit(tree)
 
