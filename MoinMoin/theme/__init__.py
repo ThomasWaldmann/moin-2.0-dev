@@ -29,11 +29,10 @@ modules = pysupport.getPackageModules(__file__)
 class ThemeBase(object):
     """ Base class for themes
 
-    This class supply all the standard template that sub classes can
+    This class supplies all the standard template that sub classes can
     use without rewriting the same code. If you want to change certain
     elements, override them.
     """
-
     name = 'base'
 
     _ = lambda x: x  # We don't have gettext at this moment, so we fake it
@@ -122,11 +121,13 @@ class ThemeBase(object):
         @param request: the request object
         """
         self.request = request
+        # TODO: get rid of this vvv
         page = request.page
         if page is None:
             path = urlparse.urlparse(request.getBaseURL()).path[1:]
             page = Page(request, path)
         self.page = page
+        # TODO: get rid of this ^^^
         item_name = page.page_name
         self.item_name = item_name
         storage = request.storage
@@ -177,12 +178,12 @@ class ThemeBase(object):
 
     def translated_item_name(self, item_en):
         """
-        Get a translated Item Name.
-        If page exists return it, if not return item_name in English.
+        Get a translated item name.
+        If a translated item exists return its name, if not return item name in English.
+
         @param item_name: string
         @rtype: string
         """
-        # TODO: Convert to ITEM! TOP-PRIORITY
         request = self.request
         item_lang_request = request.getText(item_en)
         if self.storage.has_item(item_lang_request):
@@ -200,7 +201,6 @@ class ThemeBase(object):
         @rtype: string
         @return: title in breadcrumbs
         """
-        # just showing a page, no action
         item_name = self.item_name
         segments = item_name.split('/')
         content = []
@@ -215,10 +215,10 @@ class ThemeBase(object):
         """
         Assemble the username / userprefs link
 
-        @param d: parameter dictionary
         @rtype: unicode
         @return: username
         """
+        # TODO: split this method into multiple methods
         request = self.request
         _ = request.getText
         href = request.href
@@ -366,8 +366,6 @@ class ThemeBase(object):
                 name = u'%s...%s' % (name[:half + left], name[-half:])
         return name
 
-    maxPagenameLength = 25  # maximum length for shortened page names
-
     def navibar(self):
         """
         Assemble the navibar
@@ -381,7 +379,6 @@ class ThemeBase(object):
         current = self.item_name
 
         # Process config navi_bar
-        # TODO: Optimize performance and caching with Jinja
         for text in request.cfg.navi_bar:
             pagename, url, link_text, title = self.splitNavilink(text)
             items.append(('wikilink', url, link_text, title))
@@ -398,7 +395,6 @@ class ThemeBase(object):
             if sistername == request.cfg.interwikiname:  # it is THIS wiki
                 items.append(('sisterwiki current', sisterurl, sistername))
             else:
-                # TODO optimize performance
                 cache = caching.CacheEntry(request, 'sisters', sistername, 'farm', use_pickle=True)
                 if cache.exists():
                     data = cache.content()
@@ -476,13 +472,10 @@ class ThemeBase(object):
             trail = user.getTrail()
             if trail:
                 for pagename in trail:
+                    # TODO: cleanup code below
                     try:
                         interwiki, page = wikiutil.split_interwiki(pagename)
                         if interwiki != request.cfg.interwikiname and interwiki != 'Self':
-                            #link = (request.formatter.interwikilink(True, interwiki, page) +
-                            #        self.shortenPagename(page) +
-                            #        request.formatter.interwikilink(False, interwiki, page))
-                            # TODO: Converting this to new version of interwikilink, still need feedback
                             href = wikiutil.interwiki_item_url(request, interwiki, pagename)
                             interwiki_item = self.shortenPagename(page), href, True, interwiki
                             items.append(interwiki_item)
@@ -546,7 +539,7 @@ class ThemeBase(object):
             info = "%s  (%s)" % (wikiutil.escape(pagename), info)
             return info
 
-    def universal_edit_button(self):
+    def universal_edit_button(self): # TODO: give this a better name that describes what this method tells
         """
         Should we show an edit link in the header?
         User have permission? If yes, show the universal edit button.
@@ -567,13 +560,11 @@ class ThemeBase(object):
         enabled browsers, and acceptable behavior for those who prefer
         not to use Javascript.
 
-        TODO: Move actionsMenuInit() into body onload - requires that the theme will render body,
-        it is currently done in wikiutil/page.
-
         @param page: current page, Page object
         @rtype: unicode
         @return: actions menu html fragment
         """
+        # TODO: Move actionsMenuInit() into body onload
         request = self.request
         _ = request.getText
         rev = request.rev
@@ -727,13 +718,15 @@ class ThemeBase(object):
             msg = '<div class="%s">%s</div>' % (msg_class, msg)
         self.msg_list.append(msg)
 
+    # TODO: reimplement on-wiki-page sidebar definition with converter2
+
     # Properties ##############################################################
 
     @property
     def special_item_names(self):
         """
-        Used to test if an item is in this list. (base.html)
-        If is, put customizable html (cfg.html_head_index)
+        Return a list of item names for items that are considered "index" items.
+        For index items, base.html adds cfg.html_head_index.
 
         @rtype: list
         @return: list of item names
@@ -779,8 +772,6 @@ class ThemeBase(object):
         self.page = page
         self.item_name = page.page_name or ''
         self.head_title = text
-
-        # Render with Jinja
         request.write(self.render_content(page.page_name))
 
     def render_content(self, item_name, content=None, title=None, page=None, pagename=None,
@@ -825,15 +816,14 @@ class ThemeBase(object):
                                     **keywords)
         return html
 
-    #TODO: reimplement on-wiki-page sidebar definition with converter2
-
     def render_template(self, filename='layout.html', **context):
+        # TODO: change it to be render(self, name, **context)
         """
-        Base function that renders using Jinja2.
+        Base function that renders a template using Jinja2.
 
-        @param filename: name of the template will be render.
-        @param context: used to passes variables to template.
-        @return: template rendered by jinja2
+        @param filename: name of the template to render.
+        @param context: used to pass variables to template.
+        @return: rendered output
         """
         template = self.env.get_template(filename)
         return template.render(**context)
@@ -870,7 +860,7 @@ def load_theme_fallback(request, theme_name=None):
     @param theme_name: the name of the theme
     @type theme_name: str
     @rtype: int
-    @return: A statuscode for how successful the loading was
+    @return: A status code for how successful the loading was
              0 - theme was loaded
              1 - fallback to default theme
              2 - serious fallback to builtin theme
@@ -886,3 +876,4 @@ def load_theme_fallback(request, theme_name=None):
             fallback = 2
             from MoinMoin.theme.modernized import Theme
             request.theme = Theme(request)
+
