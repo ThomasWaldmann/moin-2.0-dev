@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 MoinMoin - Tests for MoinMoin.converter2.docbook_in
 
@@ -20,13 +21,13 @@ logging = log.getLogger(__name__)
 import StringIO
 
 class Base(object):
-    input_namespaces = ns_all = 'xmlns="%s" xmlns:db="%s"' % (
+    input_namespaces = ns_all = u'xmlns="%s" xmlns:db="%s"' % (
         docbook.namespace,
         docbook.namespace)
 
     output_namespaces = {
-        moin_page.namespace: '',
-        xlink.namespace: 'xlink',
+        moin_page.namespace: u'',
+        xlink.namespace: u'xlink',
     }
 
     input_re = re.compile(r'^(<[a-z:]+)')
@@ -45,7 +46,7 @@ class Base(object):
 
     def do(self, input, xpath_query):
         string_to_parse = self.handle_output(input, args={})
-        logging.debug("After the DOCBOOK_IN conversion : %s" % string_to_parse)
+        logging.debug(u"After the DOCBOOK_IN conversion : %s" % string_to_parse)
         tree = etree.parse(StringIO.StringIO(string_to_parse))
         assert (tree.xpath(xpath_query))
 
@@ -59,6 +60,9 @@ class TestConverter(Base):
              '/page/body[p="Test"]'),
             ('<article><sect1><title>Heading 1</title> <para>First Paragraph</para></sect1></article>',
              '/page/body[./h[@outline-level="1"][text()="Heading 1"]][./p[text()="First Paragraph"]]'),
+            # Test for conversion with unicode char
+            (u'<article><para>안녕 유빈</para></article>',
+             u'/page/body[p="안녕 유빈"]'),
         ]
         for i in data:
             yield (self.do, ) + i
