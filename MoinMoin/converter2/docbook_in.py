@@ -172,6 +172,20 @@ class Converter(object):
         return self.new_copy(moin_page.p, element, attrib={})
 
     def visit_docbook_sect(self, element):
+        """
+        This is the function to convert numbered section.
+
+        Numbered section use tag like <sectN> where N is the number
+        of the section between 1 and 5.
+
+        The section are supposed to be correctly nested.
+
+        We only convert a section to an heading if one of the children
+        is a title element.
+
+        TODO : See if we can unify with recursive section below.
+        TODO : Add div element, with specific id
+        """
         title = ''
         for child in element:
             if isinstance(child, ET.Element):
