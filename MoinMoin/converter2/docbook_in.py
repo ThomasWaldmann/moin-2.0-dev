@@ -144,6 +144,14 @@ class Converter(object):
         body = moin_page.body(children=children)
         return moin_page.page(children=[body])
 
+    def visit_docbook_footnote(self, element, depth):
+        attrib = {}
+        key = moin_page('note-class')
+        attrib[key] = "footnote"
+        children = self.new(moin_page('note-body'), attrib={},
+                            children=self.do_children(element, depth))
+        return self.new(moin_page.note, attrib=attrib, children=[children])
+
     def visit_docbook_glossdef(self, element, depth):
         return self.new_copy(moin_page('list-item-body'),
                              element, depth, attrib={})
