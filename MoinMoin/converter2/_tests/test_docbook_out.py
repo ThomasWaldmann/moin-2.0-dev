@@ -122,7 +122,7 @@ class TestConverter(Base):
 
     def test_paragraph_elements(self):
         data = [
-            ('<page><body><p>Text Para<note note-class="footnote"><note-body>Text Footnote</note-body></note></p></body></page>',
+            ('<page><body><p>Text Para<note page:note-class="footnote"><note-body>Text Footnote</note-body></note></p></body></page>',
              '/article/para[text()="Text Para"]/footnote[para="Text Footnote"]'),
         ]
         for i in data:
