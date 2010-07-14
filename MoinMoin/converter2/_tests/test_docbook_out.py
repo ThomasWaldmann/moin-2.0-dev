@@ -44,15 +44,6 @@ class Base(object):
         from cStringIO import StringIO
         file = StringIO()
         tree = ET.ElementTree(elem)
-
-    def handle_input(self, input):
-        i = self.input_re.sub(r'\1 ' + self.input_namespaces, input)
-        return ET.XML(i)
-
-    def handle_output(self, elem, **options):
-        from cStringIO import StringIO
-        file = StringIO()
-        tree = ET.ElementTree(elem)
         tree.write(file, namespaces=self.output_namespaces, **options)
         return self.output_re.sub(u'', file.getvalue())
 
