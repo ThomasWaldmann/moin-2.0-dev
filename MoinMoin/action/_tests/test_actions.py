@@ -8,7 +8,6 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import py
 from MoinMoin.wsgiapp import handle_action
 from MoinMoin.storage.backends.memory import MemoryBackend
 
