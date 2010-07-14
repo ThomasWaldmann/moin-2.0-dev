@@ -211,12 +211,12 @@ class ThemeBase(object):
             current_item += '/'
         return content
 
-    def username(self):
+    def user_breadcrumbs(self):
         """
-        Assemble the username / userprefs link
+        Assemble the username / userprefs using breadcrumbs (was: username)
 
-        @rtype: unicode
-        @return: username
+        @rtype: list
+        @return: actions of user in breadcrumbs
         """
         # TODO: split this method into multiple methods
         request = self.request
