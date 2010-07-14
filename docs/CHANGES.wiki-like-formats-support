@@ -1,0 +1,15 @@
+MoinMoin Wiki-like-formats-support Version History
+========================
+
+Version 2.0:
+
+  Developer notes:
+  *TODO:
+    * DOM->Moinwiki converter.
+    * reST support:
+      * reST->DOM converter.
+      * DOM->reST converter.
+    * Mediawiki support:
+      * Mediawiki->DOM converter.
+      * DOM->Mediawiki converter.
+ 
