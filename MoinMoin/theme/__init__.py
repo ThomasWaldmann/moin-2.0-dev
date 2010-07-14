@@ -263,7 +263,7 @@ class ThemeBase(object):
                 url = href(item_name, do='login', login=1)
             if request.cfg.auth_have_login:
                 url = url or href(item_name, do='login')
-                item = url, _("Login"), 'css_id="login" rel="nofollow"', True
+                item = url, _("Login"), 'class="login" rel="nofollow"', True
                 userlinks.append(item)
         return userlinks
 
