@@ -201,6 +201,26 @@ class Converter(object):
         """
         return self.new_copy(docbook.term, element, attrib={})
 
+    def visit_moinpage_note(self, element):
+        note_class = element.get(moin_page('note-class'))
+        # We only convert footnote, we do not convert endnote yet
+        if note_class != 'footnote':
+            return
+
+        # We will check the presence of a body
+        body = None
+        for child in element:
+            if isinstance(child, ET.Element):
+                if child.tag.uri == moin_page:
+                    if child.tag.name == 'note-body':
+                        body = self.do_children(child)
+        # We process note only with note-body child
+        if not(body):
+            return
+
+        body = self.new(docbook.para, attrib={}, children=body)
+        return self.new(docbook.footnote, attrib={}, children=[body])
+
     def visit_moinpage_table(self, element):
         # TODO : Attributes conversion
         return self.new_copy(docbook.table, element, attrib={})
