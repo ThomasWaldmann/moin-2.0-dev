@@ -80,7 +80,7 @@
         {{ html_head }}
     {% endif %}  
     
-    {% for src in ['svg', 'common', 'jquery'] %}
+    {% for src in ['jquery' ,'svg', 'common'] %}
         <script type="text/javascript" src="{{ static_href('common/js/%s.js' % src) }}"></script>
     {% endfor %}
     
