@@ -473,15 +473,12 @@ class ThemeBase(object):
             if trail:
                 for item_name in trail:
                     # TODO: cleanup code below
-                    try:
-                        interwiki, page = wikiutil.split_interwiki(item_name)
-                        if interwiki != request.cfg.interwikiname and interwiki != 'Self':
-                            href = wikiutil.interwiki_item_url(request, interwiki, item_name)
-                            interwiki_item = self.shortenPagename(page), href, True, interwiki
-                            items.append(interwiki_item)
-                            continue
-                    except ValueError:
-                        pass
+                    interwiki, page = wikiutil.split_interwiki(item_name)
+                    if interwiki != request.cfg.interwikiname and interwiki != 'Self':
+                        href = wikiutil.interwiki_item_url(request, interwiki, item_name)
+                        interwiki_item = self.shortenPagename(page), href, True, interwiki
+                        items.append(interwiki_item)
+                        continue
                     exists = self.storage.has_item(item_name)
                     title = self.shortenPagename(item_name)
                     trail_item = title, item_name, exists, ''
