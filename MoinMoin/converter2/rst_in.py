@@ -112,7 +112,7 @@ class NodeVisitor():
 
     def visit_bullet_list(self, node):
         self.open_moin_page_node(moin_page.list(
-                        attrib={moin_page.item_label_generate: 'unordered'}))
+                        attrib={moin_page.item_label_generate: u'unordered'}))
 
     def depart_bullet_list(self, node):
         self.close_moin_page_node()
@@ -125,7 +125,7 @@ class NodeVisitor():
 
     def visit_definition_list(self, node):
         self.open_moin_page_node(moin_page.list(
-                        attrib={moin_page.item_label_generate: 'definition'}))
+                        attrib={moin_page.item_label_generate: u'definition'}))
 
     def depart_definition_list(self, node):
         self.close_moin_page_node()
@@ -149,7 +149,7 @@ class NodeVisitor():
         self.open_moin_page_node(moin_page.table_cell())
         self.open_moin_page_node(moin_page.strong())
         # TODO: i18n for docutils:
-        self.open_moin_page_node("Author:")
+        self.open_moin_page_node(u"Author:")
         self.close_moin_page_node()
         self.close_moin_page_node()
         self.close_moin_page_node()
@@ -164,7 +164,7 @@ class NodeVisitor():
         self.open_moin_page_node(moin_page.table_cell())
         self.open_moin_page_node(moin_page.strong())
         # TODO: i18n for docutils:
-        self.open_moin_page_node("Version:")
+        self.open_moin_page_node(u"Version:")
         self.close_moin_page_node()
         self.close_moin_page_node()
         self.close_moin_page_node()
@@ -179,7 +179,7 @@ class NodeVisitor():
         self.open_moin_page_node(moin_page.table_cell())
         self.open_moin_page_node(moin_page.strong())
         # TODO: i18n for docutils:
-        self.open_moin_page_node("Copyright:")
+        self.open_moin_page_node(u"Copyright:")
         self.close_moin_page_node()
         self.close_moin_page_node()
         self.close_moin_page_node()
@@ -210,12 +210,12 @@ class NodeVisitor():
 
     def visit_enumerated_list(self, node):
         enum_style = {'arabic': None,
-                'loweralpha': 'lower-alpha',
-                'upperalpha': 'upper-alpha',
-                'lowerroman': 'lower-roman',
-                'upperroman': 'upper-roman'}
+                'loweralpha': u'lower-alpha',
+                'upperalpha': u'upper-alpha',
+                'lowerroman': u'lower-roman',
+                'upperroman': u'upper-roman'}
         new_node = moin_page.list(
-                attrib={moin_page.item_label_generate: 'ordered'})
+                attrib={moin_page.item_label_generate: u'ordered'})
         type = enum_style.get(node['enumtype'], None)
         if type:
             new_node.set(moin_page.list_style_type, type)
@@ -245,7 +245,7 @@ class NodeVisitor():
     def visit_field_name(self, node):
         self.open_moin_page_node(moin_page.table_cell())
         self.open_moin_page_node(moin_page.strong())
-        self.open_moin_page_node('%s:' % node.astext())
+        self.open_moin_page_node(u'%s:' % node.astext())
         node.children = []
         self.close_moin_page_node()
 
@@ -273,7 +273,7 @@ class NodeVisitor():
 
     def visit_footnote_reference(self, node):
         new_footnote = moin_page.note(
-                            attrib={moin_page.note_class: 'footnote'})
+                            attrib={moin_page.note_class: u'footnote'})
         self.open_moin_page_node(new_footnote)
         self.footnotes[node.children[0]] = new_footnote
         node.children = []
@@ -293,15 +293,15 @@ class NodeVisitor():
         alt = node.get('alt', None)
         if alt:
             new_node.set(moin_page.alt, node['uri'])
-        arg = node.get('width', '')
+        arg = node.get('width', u'')
         if arg:
             new_node.set(moin_page.width, arg)
-        arg = node.get('height', '')
+        arg = node.get('height', u'')
         if arg:
             new_node.set(moin_page.height, arg)
 
         # TODO: there is no 'scale' attribute in moinwiki
-        arg = node.get('scale', '')
+        arg = node.get('scale', u'')
         if arg:
             new_node.set(moin_page.scale, arg)
 
@@ -352,10 +352,10 @@ class NodeVisitor():
         self.close_moin_page_node()
 
     def visit_literal_block(self, node):
-        parser = node.get('parser', '')
+        parser = node.get('parser', u'')
         if parser:
             named_args = re.findall(r"(\w+)=(\w+)", parser)
-            simple_args = re.findall("(?:\s)\w+(?:\s|$)", parser)
+            simple_args = re.findall(r"(?:\s)\w+(?:\s|$)", parser)
             print named_args, simple_args
             args = []
             for value in simple_args:
@@ -389,17 +389,17 @@ class NodeVisitor():
         pass
 
     def visit_reference(self, node):
-        refuri = node.get('refuri', '')
-        if refuri.startswith('<<') and refuri.endswith('>>'): # moin macro
-            macro_name = refuri[2:-2].split('(')[0]
-            if macro_name == "TableOfContents":
-                arguments = refuri[2:-2].split('(')[1][:-1].split(',')
+        refuri = node.get('refuri', u'')
+        if refuri.startswith(u'<<') and refuri.endswith(u'>>'): # moin macro
+            macro_name = refuri[2:-2].split(u'(')[0]
+            if macro_name == u"TableOfContents":
+                arguments = refuri[2:-2].split(u'(')[1][:-1].split(u',')
                 node = moin_page.table_of_content()
                 self.open_moin_page_node(node)
                 if arguments and arguments[0]:
                     node.set(moin_page.outline_level, arguments[0])
                 return
-            arguments = refuri[2:-2].split('(')[1][:-1].split(',')
+            arguments = refuri[2:-2].split(u'(')[1][:-1].split(u',')
             self.open_moin_page_node(
                 moin_page.part(
                     attrib={
@@ -459,7 +459,7 @@ class NodeVisitor():
     def visit_subscript(self, node):
         self.open_moin_page_node(
             moin_page.span(
-                attrib={moin_page.baseline_shift: 'sub'}))
+                attrib={moin_page.baseline_shift: u'sub'}))
 
     def depart_subscript(self, node):
         self.close_moin_page_node()
@@ -477,7 +477,7 @@ class NodeVisitor():
     def visit_superscript(self, node):
         self.open_moin_page_node(
             moin_page.span(
-                attrib={moin_page.baseline_shift: 'super'}))
+                attrib={moin_page.baseline_shift: u'super'}))
 
     def depart_superscript(self, node):
         self.close_moin_page_node()
@@ -660,9 +660,9 @@ class MoinDirectives:
             state_machine.insert_input(lines, 'MoinDirectives')
         """
         if content:
-            macro = '<<Include(%s)>>' % content[0]
+            macro = u'<<Include(%s)>>' % content[0]
         else:
-            macro = '<<Include()>>'
+            macro = u'<<Include()>>'
         ref = reference(macro, refuri=macro)
         return [ref]
 
@@ -682,10 +682,10 @@ class MoinDirectives:
         # content contains macro to be called
         if len(content):
             # Allow either with or without brackets
-            if content[0].startswith('<<'):
+            if content[0].startswith(u'<<'):
                 macro = content[0]
             else:
-                macro = '<<%s>>' % content[0]
+                macro = u'<<%s>>' % content[0]
             ref = reference(macro, refuri=macro)
             ref['name'] = macro
             return [ref]
@@ -700,11 +700,11 @@ class MoinDirectives:
                             content_offset, block_text, state, state_machine):
         text = ''
         for i in content:
-            m = re.search(':(\w+): (\w+)', i)
+            m = re.search(r':(\w+): (\w+)', i)
             if m and len(m.groups()) == 2:
-                if m.groups()[0] == 'depth':
+                if m.groups()[0] == u'depth':
                     text = m.groups()[1]
-        macro = '<<TableOfContents(%s)>>' % text
+        macro = u'<<TableOfContents(%s)>>' % text
         ref = reference(macro, refuri=macro)
         ref['name'] = macro
         return [ref]
@@ -718,7 +718,7 @@ class MoinDirectives:
                 content_offset, block_text, state, state_machine):
         block = literal_block()
         block['parser'] = content[0]
-        block.children = [nodes.Text("\n".join(content[1:]))]
+        block.children = [nodes.Text(u"\n".join(content[1:]))]
         return [block]
 
     parser.has_content = parser.content = True
