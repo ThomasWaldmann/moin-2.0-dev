@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
 
+{% import "editbar.html" as editbar with context %}
+
 {% block extra_header %}
-    {% include "editbar.html" %}
+    {{ editbar }}
 {% endblock %} 
 
 {% block item %}
@@ -85,6 +87,6 @@
 {% endblock %}
 
 {% block extra_footer %}
-    {% include "editbar.html" %}
+    {{ editbar }}
 {% endblock %}
 
