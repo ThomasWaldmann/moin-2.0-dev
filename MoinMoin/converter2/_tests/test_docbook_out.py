@@ -124,6 +124,8 @@ class TestConverter(Base):
         data = [
             ('<page><body><p>Text Para<note page:note-class="footnote"><note-body>Text Footnote</note-body></note></p></body></page>',
              '/article/para[text()="Text Para"]/footnote[para="Text Footnote"]'),
+            ('<page><body><p><a xlink:href="uri:test" xlink:title="title">link</a></p></body></page>',
+              '/article/para/link[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
         ]
         for i in data:
             yield (self.do, ) + i
