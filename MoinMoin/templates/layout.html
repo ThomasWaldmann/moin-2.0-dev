@@ -76,9 +76,14 @@
 {% set trail_items = theme.path_breadcrumbs() %}
 {% if trail_items %}
     <div id="pagetrail">
-    {% for item_name, item_path, exists, title in trail_items %}
-        <a href="{{ href(item_path) }}" {% if not exists %}class="nonexistent"{% endif %}
-        {% if title %}title="{{ title }}"{% endif %}>
+    {% for wiki_name, item_name, item_href, exists, err in trail_items %}
+        <a href="{{ href(item_href)|e }}"
+        {% if wiki_name %}
+            title="{{ wiki_name }}"
+            class="{% if err %}badinterwiki{% else %}interwiki{% endif %}"
+        {% else %}
+            {% if not exists %}class="nonexistent"{% endif %}
+        {% endif %}>
             {{ item_name }}
         </a>
         {% if not loop.last %}
