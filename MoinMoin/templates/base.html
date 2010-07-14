@@ -80,8 +80,8 @@
         {{ html_head }}
     {% endif %}  
     
-    {% for src in ['svg', 'common'] %}
-        <script type="text/javascript" src="{{ href("%s/common/js/%s.js" % (cfg.url_prefix_local, src))|e }}"></script>
+    {% for src in ['svg', 'common', 'jquery'] %}
+        <script type="text/javascript" src="{{ static_href('common/js/%s.js' % src) }}"></script>
     {% endfor %}
     
     {% for media, name in theme.stylesheets %}
