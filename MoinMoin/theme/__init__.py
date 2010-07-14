@@ -471,17 +471,17 @@ class ThemeBase(object):
         if not user.valid or user.show_trail:
             trail = user.getTrail()
             if trail:
-                for item_name in trail:
+                for item in trail:
                     # TODO: cleanup code below
-                    interwiki, page = wikiutil.split_interwiki(item_name)
-                    if interwiki != request.cfg.interwikiname and interwiki != 'Self':
-                        href = wikiutil.interwiki_item_url(request, interwiki, item_name)
-                        interwiki_item = self.shortenPagename(page), href, True, interwiki
+                    wiki_name, item_name = wikiutil.split_interwiki(item)
+                    if wiki_name != request.cfg.interwikiname and wiki_name != 'Self':
+                        href = wikiutil.interwiki_item_url(request, wiki_name, item_name)
+                        interwiki_item = item_name, href, True, wiki_name
                         items.append(interwiki_item)
                         continue
                     exists = self.storage.has_item(item_name)
-                    title = self.shortenPagename(item_name)
-                    trail_item = title, item_name, exists, ''
+                    # TODO: Implement shortenPagename as filter in Jinja and apply in Item_name
+                    trail_item = item_name, item_name, exists, ''
                     items.append(trail_item)
         return items
 
