@@ -27,11 +27,14 @@ class Base(object):
         xlink.namespace)
     output_namespaces = {
         docbook.namespace: '',
-        moin_page.namespace: 'page'
+        moin_page.namespace: 'page',
+        xlink.namespace: 'xlink'
     }
 
+    namespaces_xpath = {'xlink': xlink.namespace}
+
     input_re = re.compile(r'^(<[a-z:]+)')
-    output_re = re.compile(r'\s+xmlns(:\S+)?="[^"]+"')
+    output_re = re.compile(r'\s+xmlns="[^"]+"')
 
     def handle_input(self, input):
         i = self.input_re.sub(r'\1 ' + self.input_namespaces, input)
@@ -58,7 +61,7 @@ class Base(object):
         string_to_parse = self.handle_output(out)
         logging.debug("After the docbook_OUT conversion : %s" % string_to_parse)
         tree = etree.parse(StringIO.StringIO(string_to_parse))
-        assert (tree.xpath(xpath))
+        assert (tree.xpath(xpath, namespaces=self.namespaces_xpath))
 
 class TestConverter(Base):
     def setup_class(self):
