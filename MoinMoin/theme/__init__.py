@@ -471,18 +471,16 @@ class ThemeBase(object):
         if not user.valid or user.show_trail:
             trail = user.getTrail()
             if trail:
-                for item in trail:
-                    # TODO: cleanup code below
-                    wiki_name, item_name = wikiutil.split_interwiki(item)
-                    if wiki_name != request.cfg.interwikiname and wiki_name != 'Self':
-                        href = wikiutil.interwiki_item_url(request, wiki_name, item_name)
-                        interwiki_item = item_name, href, True, wiki_name
-                        items.append(interwiki_item)
-                        continue
-                    exists = self.storage.has_item(item_name)
-                    # TODO: Implement shortenPagename as filter in Jinja and apply in Item_name
-                    trail_item = item_name, item_name, exists, ''
-                    items.append(trail_item)
+                for interwiki_item_name in trail:
+                    wiki_name, item_name = wikiutil.split_interwiki(interwiki_item_name)
+                    wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
+                    href = wikiutil.join_wiki(wiki_base_url, item_name)
+                    if wiki_name in [request.cfg.interwikiname, 'Self', ]:
+                        exists = self.storage.has_item(item_name)
+                        wiki_name = '' # means "this wiki" for the theme code
+                    else:
+                        exists = True # we can't detect existance of remote items
+                    items.append((wiki_name, item_name, href, exists, err))
         return items
 
     def shouldShowPageInfo(self):
