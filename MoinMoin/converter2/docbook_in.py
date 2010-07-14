@@ -34,6 +34,8 @@ class Converter(object):
     }
 
     sect_re = re.compile('sect[1-5]')
+    section_depth = 0
+    heading_level = 0
 
     @classmethod
     def _factory(cls, input, output, request, **kw):
@@ -205,6 +207,41 @@ class Converter(object):
         attrib = {}
         attrib[key] = heading_level
         return self.new(moin_page.h, attrib=attrib, children=title)
+
+    def visit_docbook_section(self, element, depth):
+        """
+        This is the function to convert recursive section.
+
+        Recursive section use tag like <section> only.
+
+        Each section, inside another section is a subsection.
+
+        To convert it, we will use the depth of the element, and
+        two attributes of the converter which indicate the
+        current depth of the section and the current level heading.
+        """
+
+        if depth > self.section_depth:
+            self.section_depth = self.section_depth + 1
+            self.heading_level = self.heading_level + 1
+        elif depth < self.section_depth:
+            self.section_depth = self.section_depth - 1
+            self.heading_level = self.heading_level - 1
+
+        title = ''
+        result = []
+        for child in element:
+            if isinstance(child, ET.Element):
+                uri = child.tag.uri
+                name = self.docbook_namespace.get(uri, None)
+                if name == 'docbook' and child.tag.name == 'title':
+                    title = child
+        key = moin_page('outline-level')
+        attrib = {}
+        attrib[key] = self.heading_level
+        result.append(self.new(moin_page.h, attrib=attrib, children=title))
+        result.extend(self.do_children(element, depth))
+        return result
 
     def visit_docbook_seglistitem(self, element, labels, depth):
         """
