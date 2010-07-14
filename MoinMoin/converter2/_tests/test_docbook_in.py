@@ -75,6 +75,9 @@ class TestConverter(Base):
             # Test simple recursive section conversion into headings.
             ('<article><section><title>Heading 1</title> <para>First</para><section><title>Heading 2</title><para>Second</para></section></section></article>',
              '/page/body[h[1][@outline-level="1"][text()="Heading 1"]][p[1][text()="First"]][h[2][@outline-level="2"][text()="Heading 2"]][p[2][text()="Second"]]'),
+            # Test complex recursive section conversion into headings.
+            ('<article><section><title>Heading 1 A</title><para>First</para><section><title>Heading 2 A</title><para>Second</para><section><title>Heading 3 A</title><para>Third</para></section></section></section><section><title>Heading 1 B</title><para>Fourth</para></section></article>',
+             '/page/body[h[1][@outline-level="1"][text()="Heading 1 A"]][p[1][text()="First"]][h[2][@outline-level="2"][text()="Heading 2 A"]][p[2][text()="Second"]][h[3][@outline-level="3"][text()="Heading 3 A"]][p[3][text()="Third"]][h[4][@outline-level="1"][text()="Heading 1 B"]][p[4][text()="Fourth"]]'),
         ]
 
         for i in data:
