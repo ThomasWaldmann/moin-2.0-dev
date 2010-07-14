@@ -230,8 +230,8 @@ class Converter(object):
             self.section_depth = self.section_depth + 1
             self.heading_level = self.heading_level + 1
         elif depth < self.section_depth:
-            self.section_depth = self.section_depth - 1
-            self.heading_level = self.heading_level - 1
+            self.heading_level = self.heading_level - (self.section_depth - depth)
+            self.section_depth = depth
 
         title = ''
         result = []
