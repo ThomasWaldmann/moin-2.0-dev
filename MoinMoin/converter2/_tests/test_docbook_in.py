@@ -21,9 +21,10 @@ logging = log.getLogger(__name__)
 import StringIO
 
 class Base(object):
-    input_namespaces = ns_all = u'xmlns="%s" xmlns:db="%s"' % (
+    input_namespaces = ns_all = u'xmlns="%s" xmlns:db="%s" xmlns:xlink="%s"' % (
         docbook.namespace,
-        docbook.namespace)
+        docbook.namespace,
+        xlink.namespace)
 
     output_namespaces = {
         moin_page.namespace: u'',
@@ -144,6 +145,21 @@ class TestConverter(Base):
         data = [
             ('<article><para>Text Para<footnote><para>Text Footnote</para></footnote></para></article>',
              '/page/body/p[text()="Text Para"]/note[@note-class="footnote"]/note-body/p[text()="Text Footnote"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_link(self):
+        data = [
+            # Normal link, with conversion of all the xlink attributes
+            ('<article><para><link xlink:href="uri:test" xlink:title="title">link</link></para></article>',
+             '/page/body/p/a[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
+            # XREF link TODO : Check that it works with any href attribute
+            #('<article><para><xref xlink:href="uri:test" xlink:title="title">link</link></para></article>',
+            # '/page/body/p/a[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
+            # Old link from DocBook v.4.X for backward compatibility 
+            ('<article><para><ulink url="url:test">link</ulink></para></article>',
+             '/page/body/p/a[@xlink:href="uri:test"][text()="link"]'),
         ]
         for i in data:
             yield (self.do, ) + i
