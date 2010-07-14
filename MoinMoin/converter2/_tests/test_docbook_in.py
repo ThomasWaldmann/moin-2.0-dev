@@ -139,3 +139,11 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_misc(self):
+        data = [
+            ('<article><para>Text Para<footnote><para>Text Footnote</para></footnote></para></article>',
+             '/page/body/p[text()="Text Para"]/note[@note-class="footnote"]/note-body/p[text()="Text Footnote"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
