@@ -267,7 +267,7 @@ class ThemeBase(object):
                 userlinks.append(item)
         return userlinks
 
-    def splitNavilink(self, text, localize=1):
+    def split_navilink(self, text, localize=1):
         """
         Split navibar links into pagename, link to page
 
@@ -374,14 +374,14 @@ class ThemeBase(object):
 
         # Process config navi_bar
         for text in request.cfg.navi_bar:
-            pagename, url, link_text, title = self.splitNavilink(text)
+            pagename, url, link_text, title = self.split_navilink(text)
             items.append(('wikilink', url, link_text, title))
 
         # Add user links to wiki links.
         userlinks = self.user.getQuickLinks()
         for text in userlinks:
             # Split text without localization, user knows what he wants
-            pagename, url, link_text, title = self.splitNavilink(text, localize=0)
+            pagename, url, link_text, title = self.split_navilink(text, localize=0)
             items.append(('userlink', url, link_text, title))
 
         # Add sister pages.
