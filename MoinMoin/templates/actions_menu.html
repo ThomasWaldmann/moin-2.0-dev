@@ -12,7 +12,9 @@
             {% endfor %}
         </select>
         <input type="submit" value="{{ _('Do') }}">
-        {{ rev_field }}
+        {% if rev %}
+            <input type="hidden" name="rev" value="{{ rev.revno }}">
+        {% endif %}
     </div>
     <script type="text/javascript">
     <!--// Init menu

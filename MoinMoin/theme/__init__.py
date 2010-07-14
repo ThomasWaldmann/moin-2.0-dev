@@ -646,12 +646,7 @@ class ThemeBase(object):
                 title = _(title)
                 options.append((do, False, title))
 
-        context = {
-            'label': titles['__title__'],
-            'options': options,
-            'rev_field': rev is not None and '<input type="hidden" name="rev" value="%d">' % rev or '',
-            }
-        return self.render_template('actions_menu.html', **context)
+        return self.render_template('actions_menu.html', label=titles['__title__'], options=options)
 
     def shouldShowEditbar(self):
         """
