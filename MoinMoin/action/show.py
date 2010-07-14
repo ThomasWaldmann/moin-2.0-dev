@@ -11,5 +11,7 @@ def execute(item_name, request):
     mimetype = request.values.get('mimetype')
     item = Item.create(request, item_name, mimetype=mimetype, rev_no=request.rev)
     content = item.do_show()
-    request.theme.render_content(item_name, content)
+    request.headers.add('Content-Type', 'text/html; charset=utf-8')
+    # Have to do this because Item renders itself show.html
+    return content
 

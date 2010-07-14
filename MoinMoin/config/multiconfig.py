@@ -788,8 +788,6 @@ options_no_group_name = {
     ('stylesheets', [],
      "List of tuples (media, csshref) to insert after theme css, before user css, see HelpOnThemes."),
 
-    ('supplementation_page', False,
-     "if True, show a link to the supplementation page in the theme"),
     ('supplementation_page_name', u'Discussion',
      "default name of the supplementation (sub)page [unicode]"),
     ('supplementation_page_template', u'DiscussionTemplate',
@@ -800,11 +798,6 @@ options_no_group_name = {
 
     ('trail_size', 5,
      "Number of items in the trail of recently visited items"),
-
-    ('page_footer1', '', "Custom HTML markup sent ''before'' the system footer."),
-    ('page_footer2', '', "Custom HTML markup sent ''after'' the system footer."),
-    ('page_header1', '', "Custom HTML markup sent ''before'' the system header / title area but after the body tag."),
-    ('page_header2', '', "Custom HTML markup sent ''after'' the system header / title area (and body tag)."),
 
     ('changed_time_fmt', '%H:%M', "Time format used on Recent``Changes for page edits within the last 24 hours"),
     ('date_fmt', '%Y-%m-%d', "System date format, used mostly in Recent``Changes"),
@@ -823,7 +816,6 @@ options_no_group_name = {
     ('show_section_numbers', False,
      'show section numbers in headings by default'),
     ('show_timings', False, "show some timing values at bottom of a page"),
-    ('show_version', False, "show moin's version at the bottom of a page"),
     ('show_rename_redirect', False, "if True, offer creation of redirect pages when renaming wiki pages"),
 
     ('page_credits',

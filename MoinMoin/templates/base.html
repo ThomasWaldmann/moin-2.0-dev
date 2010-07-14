@@ -1,11 +1,118 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
-    <head>
-        <title>{{ title|e }} - MoinMoin Wiki</title>
-    </head>
-    <body>
-        {{ content }}
-    </body>
-</html>
+<head>
+    {#
+        include charset information - needed for moin_dump or any other case
+        when reading the html without a web server  
+    #}
+    
+    <meta http-equiv="Content-Type" content="{{ theme.output_mimetype }};charset={{ theme.output_charset }}">
+    
+    {# Search engine precautions / optimizations #}
+    
+    {{ cfg.html_head }}
+    
+    {% if theme.request.query_string %}
+        {# if it is an action or edit/search, send query headers (noindex,nofollow): #}
+        {{ cfg.html_head_queries }}
+    {% elif theme.request.method == 'POST' or theme.item_name in ['BadContent', 'LocalBadContent', ] %}
+        {# we don't want to have BadContent stuff indexed: #}
+        {{ cfg.html_head_posts }}
+    {% elif theme.item_name in theme.special_item_names %}
+        {# if it is a special page, index it and follow the links - we do it #}
+        {# for the original, English pages as well as for (the possibly modified frontpage #}
+        {{ cfg.html_head_index }}
+    {% else %}
+        {# if it is a normal page, index it, but do not follow the links, because #}
+        {# there are a lot of illegal links (like actions) or duplicates: #}
+        {{ cfg.html_head_normal }}
+    {% endif %}
+    
+    {% for head in user_head %}
+        {{ head }}
+    {% endfor %}
+    {% if pi_refresh %}
+        {{ '<meta http-equiv="refresh" content="%d;URL=%s"' % pi_refresh }}
+    {% endif %}
+    {% if theme.item_name and allow_doubleclick and 
+        theme.user.edit_on_doubleclick and theme.item_writable %}
+            <meta name="edit_on_doubleclick" content="1">
+    {% endif %}
+      
+    {% set meta_keywords = theme.request.getPragma('keywords') %}
+    {% if meta_keywords %}
+        <meta name="keywords" content="{{ meta_keywords }}">
+    {% endif %}
+    
+    {% set meta_description = theme.request.getPragma('description') %}
+    {% if meta_description %}
+        <meta name="description" content="{{ meta_description }}">
+    {% endif %}
+    
+    <title> 
+    {{ title }} - 
+        {% if cfg.html_pagetitle %}
+            {{ cfg.html_pagetitle|e }}
+        {% else %}
+            {{ cfg.sitename|e }}
+        {% endif %}
+    </title>
+    
+    <link rel="shortcut icon" href="{{ static_href("favicon.ico") }}">
+    
+    <link rel="Search" href="{{ href(translated_item_name('FindPage'))|e }}">
+    <link rel="Index" href="{{ href(translated_item_name('TitleIndex'))|e }}">
+    <link rel="Glossary" href="{{ href(translated_item_name('WordIndex'))|e }}">
+    <link rel="Help" href="{{ href(translated_item_name('HelpOnFormatting'))|e }}">
+    <link rel="Start" href="{{ href(translated_item_name(cfg.page_front_page))|e }}">
+    {% set parent_page = theme.parent_page() %}
+    {% if parent_page %}
+        <link rel="Up" href="{{ href(parent_page)|e }}">
+    {% endif %}
+    
+    {# ueb refers to universal edit button #}
+    {% if theme.universal_edit_button() %}
+        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href(theme.item_name, do='modify')|e }}">
+    {% endif %}   
+    
+    <link rel="alternate" title="{{ theme.item_name|e }} changes" href="{{ href(theme.item_name, do='atom_feed')|e }}" type="application/atom+xml">
+    {% if html_head %}
+        {{ html_head }}
+    {% endif %}  
+    
+    {% for src in ['svg', 'common', 'jquery'] %}
+        <script type="text/javascript" src="{{ static_href('common/js/%s.js' % src) }}"></script>
+    {% endfor %}
+    
+    {% for media, name in theme.stylesheets %}
+    <link charset="utf-8" type="text/css" media="{{ media }}" rel="stylesheet" href="{{ static_href(theme.name, 'css', '%s.css' % name)|e }}">
+    {% endfor %}
+    
+    {% for media, url in cfg.stylesheets %}
+    <link charset="utf-8" type="text/css" media="{{ media }}" rel="stylesheet" href="{{ url|e }}">
+    {% endfor %}
+    
+    {% if theme.user.valid and theme.user.css_url %}
+    <link charset="utf-8" type="text/css" media="all" rel="stylesheet" href="{{ theme.user.css_url|e }}">
+    {% endif %}
 
+    <!-- css only for MS IE6/IE7 browsers -->
+    <!--[if lt IE 8]>
+    <link charset="utf-8" type="text/css" media="all" rel="stylesheet" href="{{ static_href(theme.name, 'css', 'msie.css')|e }}">
+    <![endif]-->
+    
+    <script type="text/javascript">
+    <!--
+    var search_hint = " {{ _('Search') }}";
+    //-->
+    </script>
+</head>
+<body {% if body_onload %}onload="{{ body_onload }}"{% endif %} lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
+
+{% block layout %}
+    <h1>Extend this block only if you want to change layout. If you want to put content, extends layout.html and use placeholders item and content.</h1>
+{% endblock %}
+
+</body>
+</html>
 
