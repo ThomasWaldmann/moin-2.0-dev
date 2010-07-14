@@ -104,6 +104,21 @@ class Converter(object):
         # Otherwise we process the children of the unknown element
         return self.do_children(element)
 
+    def visit_moinpage_a(self, element):
+        """
+        LINK Conversion.
+
+        Link are defined using the XLINK namespace either
+        for the DOM Tree and in DocBook specification, so
+        the converter can just copy each xlink: attribute
+        into an <a> tag.
+        """
+        attrib = {}
+        for key, value in element.attrib.iteritems():
+          if key.uri == xlink:
+              attrib[key] = value
+        return self.new_copy(docbook.link, element, attrib=attrib)
+
     def visit_moinpage_h(self, element):
         """
         There is not really heading in DocBook, but rather section with
