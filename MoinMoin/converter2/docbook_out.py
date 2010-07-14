@@ -115,8 +115,8 @@ class Converter(object):
         """
         attrib = {}
         for key, value in element.attrib.iteritems():
-          if key.uri == xlink:
-              attrib[key] = value
+            if key.uri == xlink:
+                attrib[key] = value
         return self.new_copy(docbook.link, element, attrib=attrib)
 
     def visit_moinpage_h(self, element):
