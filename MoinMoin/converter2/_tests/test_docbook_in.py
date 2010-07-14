@@ -157,7 +157,7 @@ class TestConverter(Base):
             # XREF link TODO : Check that it works with any href attribute
             #('<article><para><xref xlink:href="uri:test" xlink:title="title">link</link></para></article>',
             # '/page/body/p/a[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
-            # Old link from DocBook v.4.X for backward compatibility 
+            # Old link from DocBook v.4.X for backward compatibility
             ('<article><para><ulink url="url:test">link</ulink></para></article>',
              '/page/body/p/a[@xlink:href="uri:test"][text()="link"]'),
         ]
