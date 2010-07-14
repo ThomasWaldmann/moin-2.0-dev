@@ -124,32 +124,8 @@ class Converter(object):
         self.status = ['text', ]
         self.last_closed = None
         self.list_item_label = []
-       
         return self.open(root)
-        """
-        next_child = self.children[-1].next()
-        if isinstance(next_child, ET.Element):
-            # open function can change self.output
-            ret_open = self.open(next_child)
-            self.output.append(ret_open)
-        else:
-            if self.status[-1] == "table" or self.status[-1] == "list":
-                if self.last_closed == "p":
-                    self.output.append(u'<<BR>>')
-            elif self.status[-1] == "text":
-                if self.last_closed == "p":
-                    self.output.append(u'\n')
-            self.output.append(next_child)
-            self.last_closed = 'text'
-        self.children.pop()
-        next_parent = self.opened.pop()
-        if next_parent:
-            # close function can change self.output
-            close_ret = self.close(next_parent)
-            self.output.append(close_ret)
 
-        return u''.join(self.output)
-        """
     def open_children(self, elem):
         childrens_output = []
         for child in elem:
@@ -167,8 +143,6 @@ class Converter(object):
                 childrens_output.append(u'%s%s' % (ret, child))
                 self.last_closed = 'text'
         return u''.join(childrens_output)
-
-        
 
     def open(self, elem):
         uri = elem.tag.uri
@@ -188,25 +162,7 @@ class Converter(object):
             self.last_closed = elem.tag.name.replace('-', '_')
             return ret
         return self.open_children(elem)
-    """
-    def close(self, elem):
-        uri = elem.tag.uri
-        name = self.namespaces.get(uri, None)
-        if name is not None:
-            n = 'close_' + name
-            f = getattr(self, n, None)
-            if f is not None:
-                return f(elem)
-        return u''
 
-    def close_moinpage(self, elem):
-        n = 'close_moinpage_' + elem.tag.name.replace('-', '_')
-        self.last_closed = elem.tag.name.replace('-', '_')
-        f = getattr(self, n, None)
-        if f:
-            return f(elem)
-        return u''
-    """
     def open_moinpage_a(self, elem):
         href = elem.get(xlink.href, None)
 
@@ -238,11 +194,7 @@ class Converter(object):
         if args:
             ret += Moinwiki.a_separator + args
         return ret + Moinwiki.a_close
-    """
-    def close_moinpage_a(self, elem):
-        # dummy, open_moinpage_a does all the job
-        return Moinwiki.a_close
-    """
+
     def open_moinpage_blockcode(self, elem):
         text = u''.join(elem.itertext())
         max_subpage_lvl = 3
@@ -251,27 +203,16 @@ class Converter(object):
                 max_subpage_lvl = len(s) + 1
         ret = u'%s\n%s\n%s\n' % (Moinwiki.verbatim_open * max_subpage_lvl, text, Moinwiki.verbatim_close * max_subpage_lvl)
         return ret
-    """
-    def close_moinpage_blockcode(self, elem):
-        # Dummy, open_moinpage_code is does all the job
-        return u''
-    """
+
     def open_moinpage_code(self, elem):
         ret = Moinwiki.monospace
         ret += u''.join(elem.itertext())
         ret += Moinwiki.monospace
         return ret
-    """
-    def close_moinpage_code(self, elem):
-        # Dummy, open_moinpage_code is does all the job
-        return u''
-    """
+
     def open_moinpage_div(self, elem):
         return u''
-    """
-    def close_moinpage_div(self, elem):
-        return u''
-    """
+
     def open_moinpage_emphasis(self, elem):
         childrens_output = self.open_children(elem)
         return "%s%s%s" % (Moinwiki.emphasis, childrens_output, Moinwiki.emphasis)
@@ -344,7 +285,7 @@ class Converter(object):
             if class_ == "footnote":
                 return u'<<FootNote(%s)>>' % self.open_children(elem)
             self.status.pop()
-        return u'' 
+        return u''
 
     def open_moinpage_object(self, elem):
         # TODO: this can be done with one regex:
@@ -374,7 +315,7 @@ class Converter(object):
             elif self.last_closed:
                 ret = Moinwiki.p + self.open_children(elem) + Moinwiki.p
             else:
-                 ret = self.open_children(elem) + Moinwiki.p
+                ret = self.open_children(elem) + Moinwiki.p
         elif self.status[-2] == 'table':
             if self.last_closed and self.last_closed != 'table_cell'\
                                 and self.last_closed != 'table_row':
@@ -388,7 +329,7 @@ class Converter(object):
                                 and self.last_closed != 'list_item_label':
                 ret = Moinwiki.linebreak + self.open_children(elem)
             else:
-                 ret = self.open_children(elem)
+                ret = self.open_children(elem)
         else:
             ret = self.open_children(elem)
         self.status.pop()
@@ -403,7 +344,9 @@ class Converter(object):
         if len(self.status) > 1:
             ret = u"#!wiki"
             max_subpage_lvl = 3
+            self.status.append('text')
             childrens_output = self.open_children(elem)
+            self.status.pop()
             for s in findall(r'}+', childrens_output):
                 if max_subpage_lvl <= len(s):
                     max_subpage_lvl = len(s) + 1
@@ -415,7 +358,6 @@ class Converter(object):
         return childrens_output
 
     def open_moinpage_body(self, elem):
-        print self.status
         class_ = elem.get(moin_page.class_, u'').replace(u' ', u'/')
         if class_:
             ret = u' %s\n' % class_
@@ -447,19 +389,11 @@ class Converter(object):
                 ret = u"%s\n%s\n}}}\n" % (ret, u' '.join(elem.itertext()))
                 return ret
         return unescape(elem.get(moin_page.alt, u'')) + u"\n"
-    """
-    def close_moinpage_part(self, elem):
-        return u''
-    """
     def open_moinpage_inline_part(self, elem):
         ret = self.open_moinpage_part(elem)
         if ret[-1] == u'\n':
             ret = ret[:-1]
         return ret
-    """
-    def close_moinpage_inline_part(self, elem):
-        return u''
-    """
     def open_moinpage_separator(self, elem):
         return Moinwiki.separator + u'\n'
 
@@ -502,7 +436,7 @@ class Converter(object):
     def open_moinpage_table_header(self, elem):
         # is this correct rowclass?
         self.table_rowsclass = 'table-header'
-        ret = self.open_children(elem) 
+        ret = self.open_children(elem)
         self.table_rowsclass = u''
         return ret
 
@@ -511,7 +445,7 @@ class Converter(object):
         ret = self.open_children(elem)
         self.table_rowsclass = u''
         return ret
-    
+
     def open_moinpage_table_body(self, elem):
         self.table_rowsclass = ''
         return self.open_children(elem)
