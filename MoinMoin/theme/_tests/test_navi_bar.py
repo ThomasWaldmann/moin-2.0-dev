@@ -14,15 +14,14 @@ class TestNaviBar(object):
         self.theme = ThemeBase(self.request)
 
     def test_itemname(self):
-        item_name, url, link_text, interwiki = self.theme.splitNavilink('ItemName')
+        item_name, href, link_text, interwiki = self.theme.splitNavilink('ItemName')
         assert link_text == 'ItemName'
-        assert url == '/ItemName'
         assert interwiki == ''
         
     def test_itemname_with_text(self):
-        item_name, url, link_text, interwiki = self.theme.splitNavilink('[[ItemName|LinkText]]')
+        item_name, href, link_text, interwiki = self.theme.splitNavilink('[[ItemName|LinkText]]')
         assert link_text == 'LinkText'
-        assert url == '/ItemName'
+        assert href == 'ItemName'
         assert interwiki == ''
         
     def test_interwiki(self):

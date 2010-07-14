@@ -295,28 +295,28 @@ class ThemeBase(object):
         if text.startswith('[[') and text.endswith(']]'):
             text = text[2:-2]
             try:
-                pagename, title = text.split('|', 1)
-                pagename = pagename.strip()
+                item_name, title = text.split('|', 1)
+                item_name = item_name.strip()
                 title = title.strip()
                 localize = 0
             except (ValueError, TypeError):
                 # Just use the text as is.
-                pagename = text.strip()
+                item_name = text.strip()
         else:
-            pagename = text
+            item_name = text
 
-        if wikiutil.is_URL(pagename):
+        if wikiutil.is_URL(item_name):
             if not title:
-                title = pagename
-            url = self.request.href(pagename)
-            return pagename, url, title, wiki_local
+                title = item_name
+            url = self.request.href(item_name)
+            return item_name, url, title, wiki_local
 
         # remove wiki: url prefix
-        if pagename.startswith("wiki:"):
-            pagename = pagename[5:]
+        if item_name.startswith("wiki:"):
+            item_name = item_name[5:]
 
         # try handling interwiki links
-        wiki_name, item_name = wikiutil.split_interwiki(pagename)
+        wiki_name, item_name = wikiutil.split_interwiki(item_name)
         wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
         href = wikiutil.join_wiki(wiki_base_url, item_name)
         if wiki_name not in [request.cfg.interwikiname, 'Self', ]:
@@ -325,17 +325,15 @@ class ThemeBase(object):
             return item_name, href, title, wiki_name
                 
         # Handle regular pagename like "FrontPage"
-        pagename = wikiutil.normalize_pagename(pagename, request.cfg)
+        item_name = wikiutil.normalize_pagename(item_name, request.cfg)
 
         # Use localized pages for the current user
         if localize:
-            pagename = self.translated_item_name(pagename)
+            item_name = self.translated_item_name(item_name)
 
         if not title:
-            title = self.shortenPagename(pagename)
-
-        url = self.request.href(pagename)
-        return pagename, url, title, wiki_local
+            title = item_name
+        return item_name, item_name, title, wiki_local
 
     def shortenPagename(self, name):
         """
