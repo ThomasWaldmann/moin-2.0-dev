@@ -114,9 +114,10 @@ def execute(item_name, request):
                                   textcha=textcha,
                                   ticket=wikiutil.createTicket(request),
                                  )
-        request.theme.render_content(item_name, content, title=title)
+        return content
     elif request.method == 'POST':
         if 'create' in request.form:
             request.theme.add_msg(_create_user(request), "dialog")
-        request.theme.render_content(item_name, title=title)
+        content = request.theme.render_content(item_name, title=title)
+        return content
 

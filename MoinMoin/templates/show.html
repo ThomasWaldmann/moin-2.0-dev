@@ -1,17 +1,25 @@
-{% extends "base_contentonly.html" %}
-{% block content %}
-{% if not rev %}
-This item exists, but not this revision.
-{% else %}
-{% block headline %}
-<h1>Item: {{ rev.item.name }} {% if rev.revno != last_rev_no %}(Revision {{ rev.revno }}){% endif %}</h1>
+{% extends "layout.html" %}
+
+{% import "editbar.html" as editbar with context %}
+
+{% block extra_header %}
+    {{ editbar }}
+{% endblock %} 
+
+{% block item %}
+    {% if not rev %}
+    This item exists, but not this revision.
+    {% else %}
+    {% block headline %}
+    <h1>Item: {{ rev.item.name }} {% if rev.revno != last_rev_no %}(Revision {{ rev.revno }}){% endif %}</h1>
+    {% endblock %}
+    Data:
+    {{ data_rendered }}
+    <hr>Meta:
+    {{ meta_rendered }}
+    {% endif %}
 {% endblock %}
-Data:
-{{ data_rendered }}
-<hr>Meta:
-{{ meta_rendered }}
-{% endif %}
-{% endblock %}
+
 {% block history %}
     {% if log %}
     <hr>History:
@@ -59,6 +67,7 @@ Data:
         </form>
     {% endif %}
 {% endblock %}
+
 {% block index %}
     {% if index %}
         <hr>Index of sub items:
@@ -66,5 +75,18 @@ Data:
             <a href="{{ href(fullname)|e }}">{{ relname|e }} ({{ mimetype|e }})</a> 
         {% endfor %}
     {% endif %}
+{% endblock %}
+
+{% block extra_content %}
+{% set info = theme.pageinfo() %}
+{% if info %}
+    <div id="pagebottom">
+        <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}"> {{ info }}</p>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_footer %}
+    {{ editbar }}
 {% endblock %}
 

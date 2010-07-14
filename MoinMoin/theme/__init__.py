@@ -3,11 +3,13 @@
     MoinMoin - Theme Package
 
     @copyright: 2003-2009 MoinMoin:ThomasWaldmann,
-                2008 MoinMoin:RadomirDopieralski
+                2008 MoinMoin:RadomirDopieralski,
+                2010 MoinMoin:DiogenesAugustoFernandesHerminio
     @license: GNU GPL, see COPYING for details.
 """
 
 import os, StringIO
+import urlparse
 
 from jinja2 import Environment, FileSystemLoader, Template, FileSystemBytecodeCache, Markup
 
@@ -24,14 +26,13 @@ from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 modules = pysupport.getPackageModules(__file__)
 
 
-class ThemeBase:
+class ThemeBase(object):
     """ Base class for themes
 
-    This class supply all the standard template that sub classes can
+    This class supplies all the standard template that sub classes can
     use without rewriting the same code. If you want to change certain
     elements, override them.
     """
-
     name = 'base'
 
     _ = lambda x: x  # We don't have gettext at this moment, so we fake it
@@ -111,21 +112,7 @@ class ThemeBase:
         ('projection',  'projection'),
         )
 
-    # Used in print mode
-    stylesheets_print = (
-        # media         basename
-        ('all',         'common'),
-        ('all',         'print'),
-        )
-
-    # Used in slide show mode
-    stylesheets_projection = (
-        # media         basename
-        ('all',         'common'),
-        ('all',         'projection'),
-       )
-
-    stylesheetsCharset = 'utf-8'
+    maxPagenameLength = 25  # maximum length for shortened page names
 
     def __init__(self, request):
         """
@@ -134,10 +121,30 @@ class ThemeBase:
         @param request: the request object
         """
         self.request = request
+        # TODO: get rid of this vvv
+        page = request.page
+        if page is None:
+            path = urlparse.urlparse(request.getBaseURL()).path[1:]
+            page = Page(request, path)
+        self.page = page
+        # TODO: get rid of this ^^^
+        item_name = page.page_name
+        self.item_name = item_name
+        storage = request.storage
+        self.storage = storage
+        self.item_exists = storage.has_item(item_name)
+        self.output_mimetype = page.output_mimetype
+        self.output_charset = page.output_charset
         self.cfg = request.cfg
-        self._cache = {} # Used to cache elements that may be used several times
-        self._status = []
-        self._send_title_called = False
+        user = request.user
+        self.user = user
+        self.item_readable = user.may.read(item_name)
+        self.item_writable = user.may.write(item_name)
+        self.ui_lang = request.lang
+        self.ui_dir = i18n.getDirection(self.ui_lang)
+        self.content_lang = request.content_lang
+        self.content_dir = i18n.getDirection(self.content_lang)
+        self.msg_list = []
 
         jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
         try:
@@ -150,10 +157,6 @@ class ThemeBase:
         self.env = Environment(loader=FileSystemLoader(jinja_templatedir),
                                bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'),
                                extensions=['jinja2.ext.i18n'])
-        self.env.globals.update(dict(
-            href=request.href,
-            abs_href=request.abs_href,
-        ))
         from werkzeug import url_quote, url_encode
         self.env.filters['urlencode'] = lambda x: url_encode(x)
         self.env.filters['urlquote'] = lambda x: url_quote(x)
@@ -164,138 +167,109 @@ class ThemeBase:
                                                                         rev.get(EDIT_LOG_USERID),
                                                                         rev.get(EDIT_LOG_ADDR),
                                                                         rev.get(EDIT_LOG_HOSTNAME))
+        self.env.globals.update({
+                                'theme': self,
+                                'cfg': request.cfg,
+                                '_': request.getText,
+                                'href': request.href,
+                                'static_href': request.static_href,
+                                'abs_href': request.abs_href,
+                                'translated_item_name': self.translated_item_name})
 
-    def emit_custom_html(self, html):
+    def translated_item_name(self, item_en):
         """
-        generate custom HTML code in `html`
+        Get a translated item name.
+        If a translated item exists return its name, if not return item name in English.
 
-        @param html: a string or a callable object, in which case
-                     it is called and its return value is used
+        @param item_name: string
         @rtype: string
-        @return: string with html
-        """
-        if html:
-            if callable(html):
-                html = html(self.request)
-        return html
-
-    def logo(self):
-        """ Assemble logo with link to front page
-
-        The logo contain an image and or text or any html markup the
-        admin inserted in the config file. Everything it enclosed inside
-        a div with id="logo".
-
-        @rtype: unicode
-        @return: logo html
-        """
-        html = u''
-        if self.cfg.logo_string:
-            page = wikiutil.getFrontPage(self.request)
-            logo = page.link_to_raw(self.request, self.cfg.logo_string)
-            html = u'''<div id="logo">%s</div>''' % logo
-        return html
-
-    def interwiki(self, d):
-        """ Assemble the interwiki name display, linking to page_front_page
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: interwiki html
-        """
-        if self.request.cfg.show_interwiki:
-            page = wikiutil.getFrontPage(self.request)
-            text = self.request.cfg.interwikiname or 'Self'
-            link = page.link_to(self.request, text=text, rel='nofollow')
-            html = u'<span id="interwiki">%s<span class="sep">: </span></span>' % link
-        else:
-            html = u''
-        return html
-
-    def title(self, d):
-        """ Assemble the title (now using breadcrumbs)
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: title html
-        """
-        _ = self.request.getText
-        # just showing a page, no action
-        segments = d['page_name'].split('/')
-        link_text = segments[-1]
-        link_title = _('Click to do a full-text search for this title')
-        link_query = {'do': 'fullsearch',
-                      'context': '180',
-                      'value': 'linkto:"%s"' % d['page_name'],
-        }
-        link = d['page'].link_to(self.request, link_text,
-                                 querystr=link_query, title=link_title,
-                                 css_class='backlink', rel='nofollow')
-        if len(segments) <= 1:
-            html = link
-        else:
-            content = []
-            curpage = ''
-            for s in segments[:-1]:
-                curpage += s
-                content.append(Page(self.request,
-                                    curpage).link_to(self.request, s))
-                curpage += '/'
-            path_html = u'<span class="sep">/</span>'.join(content)
-            html = u'<span class="pagepath">%s</span><span class="sep">/</span>%s' % (path_html, link)
-
-        html = u'<span id="pagelocation">%s</span>' % html
-        return html
-
-    def username(self, d):
-        """ Assemble the username / userprefs link
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: username html
         """
         request = self.request
+        item_lang_request = request.getText(item_en)
+        if self.storage.has_item(item_lang_request):
+            return item_lang_request
+
+        item_lang_default = i18n.getText(item_en, request, self.cfg.language_default)
+        if self.storage.has_item(item_lang_default):
+            return item_lang_default
+        return item_en
+
+    def location_breadcrumbs(self):
+        """
+        Assemble the location using breadcrumbs (was: title)
+
+        @rtype: string
+        @return: title in breadcrumbs
+        """
+        item_name = self.item_name
+        segments = item_name.split('/')
+        content = []
+        current_item = ''
+        for s in segments:
+            current_item += s
+            content.append((s, current_item, self.storage.has_item(current_item)))
+            current_item += '/'
+        return content
+
+    def username(self):
+        """
+        Assemble the username / userprefs link
+
+        @rtype: unicode
+        @return: username
+        """
+        # TODO: split this method into multiple methods
+        request = self.request
         _ = request.getText
+        href = request.href
+        item_name = self.item_name
+        user = self.user
 
         userlinks = []
         # Add username/homepage link for registered users. We don't care
         # if it exists, the user can create it.
-        if request.user.valid and request.user.name:
-            interwiki = wikiutil.getInterwikiHomePage(request)
-            name = request.user.name
-            aliasname = request.user.aliasname
+        if user.valid and user.name:
+            wikiname, itemname = wikiutil.getInterwikiHomePage(request)
+            name = user.name
+            aliasname = user.aliasname
             if not aliasname:
                 aliasname = name
-            title = "%s @ %s" % (aliasname, interwiki[0])
+            title = "%s @ %s" % (aliasname, wikiname)
             # link to (interwiki) user homepage
-            homelink = (request.formatter.interwikilink(1, title=title, id="userhome", generated=True, *interwiki) +
-                        request.formatter.text(name) +
-                        request.formatter.interwikilink(0, title=title, id="userhome", *interwiki))
-            userlinks.append(homelink)
-            # link to userprefs action
-            if 'userprefs' not in self.request.cfg.actions_excluded:
-                userlinks.append(d['page'].link_to(request, text=_('Settings'),
-                                               querystr={'do': 'userprefs'}, id='userprefs', rel='nofollow'))
+            if wikiname == "Self":
+                exists = self.storage.has_item(itemname)
+            else:
+                # We cannot check if wiki pages exists in remote wikis
+                exists = True
+            interwiki_href = wikiutil.interwiki_item_url(self.request, wiki_name=wikiname, item_name=itemname)
+            item = interwiki_href, aliasname, 'id="userhome" title="%s"' % title, exists
 
-        if request.user.valid:
-            if request.user.auth_method in request.cfg.auth_can_logout:
-                userlinks.append(d['page'].link_to(request, text=_('Logout'),
-                                                   querystr={'do': 'logout', 'logout': 'logout'}, id='logout', rel='nofollow'))
+            userlinks.append(item)
+            # link to userprefs action
+            if 'userprefs' not in self.cfg.actions_excluded:
+                item = (href(item_name, do='userprefs'), _('Settings'),
+                        'class="userprefs" rel="nofollow"', True)
+                userlinks.append(item)
+
+        if user.valid:
+            if user.auth_method in request.cfg.auth_can_logout:
+                item = (href(item_name, do='logout', logout='logout'), _('Logout'),
+                        'class="logout" rel="nofollow"', True)
+                userlinks.append(item)
         else:
-            query = {'do': 'login'}
+            url = None
             # special direct-login link if the auth methods want no input
             if request.cfg.auth_login_inputs == ['special_no_input']:
-                query['login'] = '1'
+                url = href(item_name, do='login', login=1)
             if request.cfg.auth_have_login:
-                userlinks.append(d['page'].link_to(request, text=_("Login"),
-                                                   querystr=query, id='login', rel='nofollow'))
-
-        userlinks_html = u'<span class="sep"> | </span>'.join(userlinks)
-        html = u'<div id="username">%s</div>' % userlinks_html
-        return html
+                url = url or href(item_name, do='login')
+                item = url, _("Login"), 'class="login" rel="nofollow"', True
+                userlinks.append(item)
+        return userlinks
 
     def splitNavilink(self, text, localize=1):
-        """ Split navibar links into pagename, link to page
+        """
+        Split navibar links into pagename, link to page
 
         Admin or user might want to use shorter navibar items by using
         the [[page|title]] or [[url|title]] syntax. In this case, we don't
@@ -314,7 +288,6 @@ class ThemeBase:
         @return: pagename or url, link to page or url
         """
         request = self.request
-        fmt = request.formatter
         title = None
 
         # Handle [[pagename|title]] or [[url|title]] formats
@@ -334,8 +307,8 @@ class ThemeBase:
         if wikiutil.is_URL(pagename):
             if not title:
                 title = pagename
-            link = fmt.url(1, pagename) + fmt.text(title) + fmt.url(0)
-            return pagename, link
+            url = self.request.href(pagename)
+            return pagename, url, title, ''
 
         # remove wiki: url prefix
         if pagename.startswith("wiki:"):
@@ -350,8 +323,8 @@ class ThemeBase:
             else:
                 if not title:
                     title = page
-                link = fmt.interwikilink(True, interwiki, page) + fmt.text(title) + fmt.interwikilink(False, interwiki, page)
-                return pagename, link
+                url = wikiutil.interwiki_item_url(request, interwiki, pagename)
+                return pagename, url, title, interwiki
         except ValueError:
             pass
 
@@ -360,22 +333,17 @@ class ThemeBase:
 
         # Use localized pages for the current user
         if localize:
-            page = wikiutil.getLocalizedPage(request, pagename)
-        else:
-            page = Page(request, pagename)
-
-        pagename = page.page_name # can be different, due to i18n
+            pagename = self.translated_item_name(pagename)
 
         if not title:
-            title = page.page_name
-            title = self.shortenPagename(title)
+            title = self.shortenPagename(pagename)
 
-        link = page.link_to(request, title)
-
-        return pagename, link
+        url = self.request.href(pagename)
+        return pagename, url, title, ''
 
     def shortenPagename(self, name):
-        """ Shorten page names
+        """
+        Shorten page names
 
         Shorten very long page names that tend to break the user
         interface. The short name is usually fine, unless really stupid
@@ -398,83 +366,47 @@ class ThemeBase:
                 name = u'%s...%s' % (name[:half + left], name[-half:])
         return name
 
-    maxPagenameLength = 25  # maximum length for shortened page names
-
-    def navibar(self, d):
-        """ Assemble the navibar
+    def navibar(self):
+        """
+        Assemble the navibar
 
         @param d: parameter dictionary
         @rtype: unicode
         @return: navibar html
         """
         request = self.request
-        found = {} # pages we found. prevent duplicates
-        items = [] # navibar items
-        item = u'<li class="%s">%s</li>'
-        current = d['page_name']
+        items = []  # navibar items
+        current = self.item_name
 
         # Process config navi_bar
-        if request.cfg.navi_bar:
-            for text in request.cfg.navi_bar:
-                pagename, link = self.splitNavilink(text)
-                if pagename == current:
-                    cls = 'wikilink current'
-                else:
-                    cls = 'wikilink'
-                items.append(item % (cls, link))
-                found[pagename] = 1
+        for text in request.cfg.navi_bar:
+            pagename, url, link_text, title = self.splitNavilink(text)
+            items.append(('wikilink', url, link_text, title))
 
-        # Add user links to wiki links, eliminating duplicates.
-        userlinks = request.user.getQuickLinks()
+        # Add user links to wiki links.
+        userlinks = self.user.getQuickLinks()
         for text in userlinks:
             # Split text without localization, user knows what he wants
-            pagename, link = self.splitNavilink(text, localize=0)
-            if not pagename in found:
-                if pagename == current:
-                    cls = 'userlink current'
-                else:
-                    cls = 'userlink'
-                items.append(item % (cls, link))
-                found[pagename] = 1
-
-        # Add current page at end of local pages
-        if not current in found:
-            title = d['page'].page_name
-            title = self.shortenPagename(title)
-            link = d['page'].link_to(request, title)
-            cls = 'current'
-            items.append(item % (cls, link))
+            pagename, url, link_text, title = self.splitNavilink(text, localize=0)
+            items.append(('userlink', url, link_text, title))
 
         # Add sister pages.
         for sistername, sisterurl in request.cfg.sistersites:
-            if sistername == request.cfg.interwikiname: # it is THIS wiki
-                cls = 'sisterwiki current'
-                items.append(item % (cls, sistername))
+            if sistername == request.cfg.interwikiname:  # it is THIS wiki
+                items.append(('sisterwiki current', sisterurl, sistername))
             else:
-                # TODO optimize performance
                 cache = caching.CacheEntry(request, 'sisters', sistername, 'farm', use_pickle=True)
                 if cache.exists():
                     data = cache.content()
                     sisterpages = data['sisterpages']
                     if current in sisterpages:
-                        cls = 'sisterwiki'
                         url = sisterpages[current]
-                        link = request.formatter.url(1, url) + \
-                               request.formatter.text(sistername) +\
-                               request.formatter.url(0)
-                        items.append(item % (cls, link))
-
-        # Assemble html
-        items = u''.join(items)
-        html = u'''
-<ul id="navibar">
-%s
-</ul>
-''' % items
-        return html
+                        items.append(('sisterwiki', url, sistername, ''))
+        return items
 
     def get_icon(self, icon):
-        """ Return icon data from self.icons
+        """
+        Return icon data from self.icons
 
         If called from <<Icon(file)>> we have a filename, not a
         key. Using filenames is deprecated, but for now, we simulate old
@@ -501,8 +433,7 @@ class ThemeBase:
             else:
                 alt, icon, w, h = '', icon, '', ''
 
-        img_url = "%s/%s/img/%s" % (self.cfg.url_prefix_static, self.name, icon)
-
+        img_url = self.request.static_href(self.name, 'img', icon)
         return alt, img_url, w, h
 
     def make_icon(self, icon, vars=None, **kw):
@@ -527,131 +458,36 @@ class ThemeBase:
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
-    def msg(self, d):
-        """ Assemble the msg display
-
-        Display a message with a widget or simple strings with a clear message link.
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: msg display html
+    def path_breadcrumbs(self):
         """
-        _ = self.request.getText
-        msgs = d['msg']
+        Assemble path breadcrumbs (a.k.a.: trail)
 
-        result = u""
-        close = d['page'].link_to(self.request, text=_('Clear message'), css_class="clear-link")
-        for msg, msg_class in msgs:
-            try:
-                result += u'<p>%s</p>' % msg.render()
-                close = ''
-            except AttributeError:
-                if msg and msg_class:
-                    result += u'<p><div class="%s">%s</div></p>' % (msg_class, msg)
-                elif msg:
-                    result += u'<p>%s</p>\n' % msg
-        if result:
-            html = result + close
-            return u'<div id="message">\n%s\n</div>\n' % html
-        else:
-            return u''
-
-        return u'<div id="message">\n%s\n</div>\n' % html
-
-    def trail(self, d):
-        """ Assemble page trail
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: trail html
+        @rtype: list
+        @return: path breadcrumbs items in tuple (item_name, url, exists)
         """
         request = self.request
-        user = request.user
-        html = ''
+        user = self.user
+        items = []
         if not user.valid or user.show_trail:
             trail = user.getTrail()
             if trail:
-                items = []
-                for pagename in trail:
-                    try:
-                        interwiki, page = wikiutil.split_interwiki(pagename)
-                        if interwiki != request.cfg.interwikiname and interwiki != 'Self':
-                            link = (self.request.formatter.interwikilink(True, interwiki, page) +
-                                    self.shortenPagename(page) +
-                                    self.request.formatter.interwikilink(False, interwiki, page))
-                            items.append(link)
-                            continue
-                        else:
-                            pagename = page
+                for item_name in trail:
+                    # TODO: cleanup code below
+                    interwiki, page = wikiutil.split_interwiki(item_name)
+                    if interwiki != request.cfg.interwikiname and interwiki != 'Self':
+                        href = wikiutil.interwiki_item_url(request, interwiki, item_name)
+                        interwiki_item = self.shortenPagename(page), href, True, interwiki
+                        items.append(interwiki_item)
+                        continue
+                    exists = self.storage.has_item(item_name)
+                    title = self.shortenPagename(item_name)
+                    trail_item = title, item_name, exists, ''
+                    items.append(trail_item)
+        return items
 
-                    except ValueError:
-                        pass
-                    page = Page(request, pagename)
-                    title = page.page_name
-                    title = self.shortenPagename(title)
-                    link = page.link_to(request, title)
-                    items.append(link)
-                html = u'<div id="pagetrail">%s</div>' % u'<span class="sep"> &raquo; </span>'.join(items)
-        return html
-
-    def _stylesheet_link(self, theme, media, href, title=None):
+    def shouldShowPageInfo(self):
         """
-        Create a link tag for a stylesheet.
-
-        @param theme: True: href gives the basename of a theme stylesheet,
-                      False: href is a full url of a user/admin defined stylesheet.
-        @param media: 'all', 'screen', 'print', 'projection', ...
-        @param href: see param theme
-        @param title: optional title (for alternate stylesheets), see
-                      http://www.w3.org/Style/Examples/007/alternatives
-        @rtype: string
-        @return: stylesheet link html
-        """
-        if theme:
-            href = '%s/%s/css/%s.css' % (self.cfg.url_prefix_static, self.name, href)
-        attrs = 'type="text/css" charset="%s" media="%s" href="%s"' % (
-                self.stylesheetsCharset, media, href, )
-        if title:
-            return '<link rel="alternate stylesheet" %s title="%s">' % (attrs, title)
-        else:
-            return '<link rel="stylesheet" %s>' % attrs
-
-    def html_stylesheets(self, d):
-        """ Assemble html head stylesheet links
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: stylesheets links
-        """
-        request = self.request
-        # Check mode
-        if d.get('print_mode'):
-            media = d.get('media', 'print')
-            stylesheets = getattr(self, 'stylesheets_' + media)
-        else:
-            stylesheets = self.stylesheets
-
-        theme_css = [self._stylesheet_link(True, *stylesheet) for stylesheet in stylesheets]
-        cfg_css = [self._stylesheet_link(False, *stylesheet) for stylesheet in request.cfg.stylesheets]
-
-        msie_css = """
-<!-- css only for MS IE6/IE7 browsers -->
-<!--[if lt IE 8]>
-   %s
-<![endif]-->
-""" % self._stylesheet_link(True, 'all', 'msie')
-
-        # Add user css url (assuming that user css uses same charset)
-        href = request.user.valid and request.user.css_url
-        if href and href.lower() != "none":
-            user_css = self._stylesheet_link(False, 'all', href)
-        else:
-            user_css = ''
-
-        return '\n'.join(theme_css + cfg_css + [msie_css, user_css])
-
-    def shouldShowPageinfo(self, page):
-        """ Should we show page info?
+        Should we show page info?
 
         Should be implemented by actions. For now, we check here by action
         name and page.
@@ -660,198 +496,55 @@ class ThemeBase:
         @rtype: bool
         @return: true if should show page info
         """
-        if page.exists() and self.request.user.may.read(page.page_name):
+        if self.item_exists and self.item_readable:
             # These actions show the page content.
             # TODO: on new action, page info will not show.
             # A better solution will be if the action itself answer the question: showPageInfo().
             contentActions = [u'', u'show', u'refresh', u'preview', u'diff',
-                              u'subscribe', u'rename', u'copy',
+                              u'subscribe', u'rename', u'copy', u'backlink',
                              ]
             return self.request.action in contentActions
         return False
 
-    def pageinfo(self, page):
-        """ Return html fragment with page meta data
+    def pageinfo(self):
+        """
+        Return info with page meta data
 
         Since page information uses translated text, it uses the ui
         language and direction. It looks strange sometimes, but
         translated text using page direction looks worse.
 
         @param page: current page
-        @rtype: unicode
+        @rtype: string
         @return: page last edit information
         """
         _ = self.request.getText
-        html = ''
-        if self.shouldShowPageinfo(page):
-            info = page.last_edit(printable=True)
-            if info:
-                if info['editor']:
-                    info = _("last edited %(timestamp)s by %(editor)s") % info
-                else:
-                    info = _("last modified %(timestamp)s") % info
-                pagename = page.page_name
-                if self.request.cfg.show_interwiki:
-                    pagename = "%s: %s" % (self.request.cfg.interwikiname, pagename)
-                info = "%s  (%s)" % (wikiutil.escape(pagename), info)
-                html = '<p id="pageinfo" class="info"%(lang)s>%(info)s</p>\n' % {
-                    'lang': self.ui_lang_attr(),
-                    'info': info
-                    }
-        return html
+        page = self.page
 
-    def searchform(self, d):
+        info = page.last_edit(printable=True)
+        if info:
+            if info['editor']:
+                info = _("last edited %(timestamp)s by %(editor)s") % info
+            else:
+                info = _("last modified %(timestamp)s") % info
+            pagename = self.item_name
+            if self.cfg.show_interwiki:
+                pagename = "%s: %s" % (self.cfg.interwikiname, pagename)
+            info = "%s  (%s)" % (wikiutil.escape(pagename), info)
+            return info
+
+    def universal_edit_button(self): # TODO: give this a better name that describes what this method tells
         """
-        assemble HTML code for the search forms
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: search form html
+        Should we show an edit link in the header?
+        User have permission? If yes, show the universal edit button.
+        @rtype: boolean
         """
-        _ = self.request.getText
-        form = self.request.values
-        updates = {
-            'search_label': _('Search:'),
-            'search_value': wikiutil.escape(form.get('value', ''), 1),
-            'search_full_label': _('Text'),
-            'search_title_label': _('Titles'),
-            'url': self.request.href(d['page'].page_name)
-            }
-        d.update(updates)
+        can_modify = 'modify' not in self.cfg.actions_excluded
+        return can_modify and self.item_exists and self.item_writable
 
-        html = u'''
-<form id="searchform" method="get" action="%(url)s">
-<div>
-<input type="hidden" name="do" value="fullsearch">
-<input type="hidden" name="context" value="180">
-<label for="searchinput">%(search_label)s</label>
-<input id="searchinput" type="text" name="value" value="%(search_value)s" size="20"
-    onfocus="searchFocus(this)" onblur="searchBlur(this)"
-    onkeyup="searchChange(this)" onchange="searchChange(this)" alt="Search">
-<input id="titlesearch" name="titlesearch" type="submit"
-    value="%(search_title_label)s" alt="Search Titles">
-<input id="fullsearch" name="fullsearch" type="submit"
-    value="%(search_full_label)s" alt="Search Full Text">
-</div>
-</form>
-<script type="text/javascript">
-<!--// Initialize search form
-var f = document.getElementById('searchform');
-f.getElementsByTagName('label')[0].style.display = 'none';
-var e = document.getElementById('searchinput');
-searchChange(e);
-searchBlur(e);
-//-->
-</script>
-''' % d
-        return html
-
-    def showversion(self, d, **keywords):
+    def actions_menu(self):
         """
-        assemble HTML code for copyright and version display
-
-        @param d: parameter dictionary
-        @rtype: string
-        @return: copyright and version display html
-        """
-        html = ''
-        if self.cfg.show_version and not keywords.get('print_mode', 0):
-            html = (u'<div id="version">MoinMoin Release %s [Revision %s], '
-                     'Copyright by Juergen Hermann et al.</div>') % (version.release, version.revision, )
-        return html
-
-    def headscript(self, d):
-        """ Return html head script with common functions
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: script for html head
-        """
-        _ = self.request.getText
-        script = u"""
-<script type="text/javascript">
-<!--
-var search_hint = "%(search_hint)s";
-//-->
-</script>
-""" % {
-    'search_hint': _('Search'),
-    }
-        return script
-
-    def rsslink(self, d):
-        """ Create (atom) feed link for recent changes of the CURRENT item.
-
-        TODO: the link for the global (all items) recent changes shall be
-              emitted on action rc output (.../?do=atom_feed&all=1).
-
-        @rtype: unicode
-        @return: link element
-        """
-        request = self.request
-        page = d['page']
-        url = page.url(request, querystr={'do': 'atom_feed', }, escape=0)
-        link = (u'<link rel="alternate" title="%s changes" '
-                u'href="%s" type="application/atom+xml">') % (
-                    wikiutil.escape(page.page_name, True),
-                    wikiutil.escape(url, True) )
-        return link
-
-    def html_head(self, d):
-        """ Assemble html head
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: html head
-        """
-        html = [
-            u'<title>%(title)s - %(sitename)s</title>' % {
-                'title': wikiutil.escape(d['title']),
-                'sitename': wikiutil.escape(d['sitename']),
-            },
-            self.externalScript('svg', 'data-path="%(jspath)s"'),
-            self.externalScript('common'),
-            self.headscript(d), # Should move to separate .js file
-            self.html_stylesheets(d),
-            self.rsslink(d),
-            self.universal_edit_button(d),
-            ]
-        return '\n'.join(html)
-
-    def externalScript(self, name, attrs=''):
-        """ Format external script html """
-        jspath = '%s/common/js' % self.request.cfg.url_prefix_local
-        attrs = attrs % locals()
-        return '<script type="text/javascript" src="%(jspath)s/%(name)s.js" %(attrs)s></script>' % locals()
-
-    def universal_edit_button(self, d, **keywords):
-        """ Generate HTML for an edit link in the header."""
-        page = d['page']
-        if 'modify' in self.request.cfg.actions_excluded:
-            return ""
-        may_write = self.request.user.may.write(page.page_name)
-        if not (page.exists() and may_write):
-            return ""  # Why ""?
-        _ = self.request.getText
-        querystr = {'do': 'modify'}
-        # XXX is this actually used?
-        text = _(u'Modify') if may_write else _(u'Immutable Page')
-        url = page.url(self.request, querystr=querystr, escape=0)
-        return (u'<link rel="alternate" type="application/wiki" '
-                u'title="%s" href="%s">' % (text, url))
-
-    def credits(self, d, **keywords):
-        """ Create credits html from credits list """
-        if isinstance(self.cfg.page_credits, (list, tuple)):
-            items = ['<li>%s</li>' % i for i in self.cfg.page_credits]
-            html = '<ul id="credits">\n%s\n</ul>\n' % ''.join(items)
-        else:
-            # Old config using string, output as is
-            html = self.cfg.page_credits
-        return html
-
-    def actionsMenu(self, page):
-        """ Create actions menu list and items data dict
+        Create actions menu list and items data dict
 
         The menu will contain the same items always, but items that are
         not available will be disabled (some broken browsers will let
@@ -861,13 +554,11 @@ var search_hint = "%(search_hint)s";
         enabled browsers, and acceptable behavior for those who prefer
         not to use Javascript.
 
-        TODO: Move actionsMenuInit() into body onload - requires that the theme will render body,
-              it is currently done in wikiutil/page.
-
         @param page: current page, Page object
         @rtype: unicode
         @return: actions menu html fragment
         """
+        # TODO: Move actionsMenuInit() into body onload
         request = self.request
         _ = request.getText
         rev = request.rev
@@ -887,6 +578,7 @@ var search_hint = "%(search_hint)s";
             'SubscribeUser',
             'PackagePages',
             'SyncPages',
+            'backlink',
             ]
 
         titles = {
@@ -906,132 +598,56 @@ var search_hint = "%(search_hint)s";
             'PackagePages': _('Package Pages'),
             'RenderAsDocbook': _('Render as Docbook'),
             'SyncPages': _('Sync Pages'),
+            'backlink': _('What links here?'),
             }
 
         options = []
-        option = '<option value="%(do)s"%(disabled)s>%(title)s</option>'
-        # class="disabled" is a workaround for browsers that ignore
-        # "disabled", e.g IE, Safari
-        # for XHTML: data['disabled'] = ' disabled="disabled"'
-        disabled = ' disabled class="disabled"'
 
         # Format standard actions
         available = actionmod.get_names(request.cfg)
         for action in menu:
-            data = {'do': action, 'disabled': '', 'title': titles[action]}
+            do = action
+            disabled = False
+            title = titles[action]
             # removes excluded actions from the more actions menu
             if action in request.cfg.actions_excluded:
                 continue
 
-            # Enable delete cache only if page can use caching
-            if action == 'refresh':
-                if not page.canUseCache():
-                    data['do'] = 'show'
-                    data['disabled'] = disabled
-
             # SubscribeUser action enabled only if user has admin rights
-            if action == 'SubscribeUser' and not request.user.may.admin(page.page_name):
-                data['do'] = 'show'
-                data['disabled'] = disabled
+            if action == 'SubscribeUser' and not self.user.may.admin(self.item_name):
+                do = 'show'
+                disabled = True
 
             # Special menu items. Without javascript, executing will
             # just return to the page.
             if action.startswith('__'):
-                data['do'] = 'show'
+                do = 'show'
 
             # Actions which are not available for this wiki, user or page
-            if (action == '__separator__' or
-                (action[0].isupper() and not action in available)):
-                data['disabled'] = disabled
-
-            options.append(option % data)
+            if action == '__separator__' or (action[0].isupper() and not action in available):
+                disabled = True
+            options.append((do, disabled, title))
 
         # Add custom actions not in the standard menu
         more = [item for item in available if not item in titles]
         more.sort()
         if more:
             # Add separator
-            separator = option % {'do': 'show', 'disabled': disabled,
-                                  'title': titles['__separator__']}
+            separator = ('show', True, titles['__separator__'])
             options.append(separator)
             # Add more actions (all enabled)
             for action in more:
-                data = {'do': action, 'disabled': ''}
-                # Always add spaces: LikePages -> Like Pages
-                # XXX do not create page just for using split_title -
-                # creating pages for non-existent does 2 storage lookups
-                #title = Page(request, action).split_title(force=1)
+                do = action
                 title = action
                 # Use translated version if available
-                data['title'] = _(title)
-                options.append(option % data)
+                title = _(title)
+                options.append((do, False, title))
 
-        data = {
-            'label': titles['__title__'],
-            'options': '\n'.join(options),
-            'rev_field': rev is not None and '<input type="hidden" name="rev" value="%d">' % rev or '',
-            'do_button': _("Do"),
-            'url': self.request.href(page.page_name)
-            }
-        html = '''
-<form class="actionsmenu" method="GET" action="%(url)s">
-<div>
-    <label>%(label)s</label>
-    <select name="do"
-        onchange="if ((this.selectedIndex != 0) &&
-                      (this.options[this.selectedIndex].disabled == false)) {
-                this.form.submit();
-            }
-            this.selectedIndex = 0;">
-        %(options)s
-    </select>
-    <input type="submit" value="%(do_button)s">
-    %(rev_field)s
-</div>
-<script type="text/javascript">
-<!--// Init menu
-actionsMenuInit('%(label)s');
-//-->
-</script>
-</form>
-''' % data
+        return self.render_template('actions_menu.html', label=titles['__title__'], options=options)
 
-        return html
-
-    def editbar(self, d):
-        """ Assemble the page edit bar.
-
-        Create html on first call, then return cached html.
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: iconbar html
+    def shouldShowEditbar(self):
         """
-        page = d['page']
-        if not self.shouldShowEditbar(page):
-            return ''
-
-        html = self._cache.get('editbar')
-        if html is None:
-            # Remove empty items and format as list. The item for showing inline comments
-            # is hidden by default. It gets activated through javascript only if inline
-            # comments exist on the page.
-            items = []
-            for item in self.editbarItems(page):
-                if item:
-                    if 'nbcomment' in item:
-                        # hiding the complete list item is cosmetically better than just
-                        # hiding the contents (e.g. for sidebar themes).
-                        items.append('<li class="toggleCommentsButton" style="display:none;">%s</li>' % item)
-                    else:
-                        items.append('<li>%s</li>' % item)
-            html = u'<ul class="editbar">%s</ul>\n' % ''.join(items)
-            self._cache['editbar'] = html
-
-        return html
-
-    def shouldShowEditbar(self, page):
-        """ Should we show the editbar?
+        Should we show the editbar?
 
         Actions should implement this, because only the action knows if
         the edit bar makes sense. Until it goes into actions, we do the
@@ -1043,7 +659,7 @@ actionsMenuInit('%(label)s');
         """
         # Show editbar only for existing pages, that the user may read.
         # If you may not read, you can't edit, so you don't need editbar.
-        if (page.exists() and self.request.user.may.read(page.page_name)):
+        if self.item_exists and self.item_readable:
             form = self.request.form
             action = self.request.action
             # Do not show editbar on edit but on save/cancel
@@ -1052,223 +668,32 @@ actionsMenuInit('%(label)s');
                         not form.has_key('button_cancel'))
         return False
 
-    def editbarItems(self, page):
-        """ Return list of items to show on the editbar
-
-        This is separate method to make it easy to customize the
-        edtibar in sub classes.
+    def parent_page(self):
         """
-        _ = self.request.getText
-        editbar_actions = []
-        for editbar_item in self.request.cfg.edit_bar:
-            if (editbar_item == 'Discussion' and
-               (self.request.getPragma('supplementation-page', self.request.cfg.supplementation_page)
-                                                   in (True, 1, 'on', '1'))):
-                    editbar_actions.append(self.supplementation_page_nameLink(page))
-            elif editbar_item == 'Comments':
-                # we just use <a> to get same style as other links, but we add some dummy
-                # link target to get correct mouseover pointer appearance. return false
-                # keeps the browser away from jumping to the link target::
-                editbar_actions.append('<a href="#" class="nbcomment" onClick="toggleComments();return false;">%s</a>' % _('Comments'))
-            elif editbar_item == 'Modify':
-                editbar_actions.append(self.modifyLink(page))
-            elif editbar_item == 'Download':
-                editbar_actions.append(self.downloadLink(page))
-            elif editbar_item == 'Subscribe':
-                editbar_actions.append(self.subscribeLink(page))
-            elif editbar_item == 'Quicklink':
-                editbar_actions.append(self.quicklinkLink(page))
-            elif editbar_item == 'ActionsMenu':
-                editbar_actions.append(self.actionsMenu(page))
-        return editbar_actions
-
-    def supplementation_page_nameLink(self, page):
-        """Return a link to the discussion page
-
-           If the discussion page doesn't exist and the user
-           has no right to create it, show a disabled link.
-        """
-        _ = self.request.getText
-        suppl_name = self.request.cfg.supplementation_page_name
-        suppl_name_full = "%s/%s" % (page.page_name, suppl_name)
-
-        test = Page(self.request, suppl_name_full)
-        if not test.exists() and not self.request.user.may.write(suppl_name_full):
-            return ('<span class="disabled">%s</span>' % _(suppl_name))
-        else:
-            return page.link_to(self.request, text=_(suppl_name),
-                                querystr={'do': 'supplementation'}, css_class='nbsupplementation', rel='nofollow')
-
-    def modifyLink(self, page):
-        """ Return a link to the modify action """
-        if 'modify' in self.request.cfg.actions_excluded:
-            return ""
-
-        _ = self.request.getText
-        querystr = {'do': 'modify'}
-        may_write = self.request.user.may.write(page.page_name)
-        text = _(u'Modify') if may_write else _(u'Immutable Page')
-        attrs = {'rel': 'nofollow', }
-        # TODO: Remove link alltogether when item immutable
-        return page.link_to(self.request, text=text, querystr=querystr, **attrs)
-
-    def downloadLink(self, page):
-        """ Return a link to the get action """
-        if 'get' in self.request.cfg.actions_excluded:
-            return ""
-
-        _ = self.request.getText
-        querystr = {'do': 'get'}
-        text = _('Download')
-        attrs = {'rel': 'nofollow', }
-        return page.link_to(self.request, text=text, querystr=querystr, **attrs)
-
-    def subscribeLink(self, page):
-        """ Return subscribe/unsubscribe link to valid users
-
+        Return name of parent page for the current page
         @rtype: unicode
-        @return: subscribe or unsubscribe link
+        @return: parent page name
         """
-        if not ((self.cfg.mail_enabled or self.cfg.jabber_enabled) and self.request.user.valid):
-            return ''
+        item_name = self.item_name
+        parent_page_name = wikiutil.ParentPageName(item_name)
+        if item_name and parent_page_name:
+            return parent_page_name
 
-        _ = self.request.getText
-        if self.request.user.isSubscribedTo([page.page_name]):
-            action, text = 'unsubscribe', _("Unsubscribe")
-        else:
-            action, text = 'subscribe', _("Subscribe")
-        if action in self.request.cfg.actions_excluded:
-            return ""
-        return page.link_to(self.request, text=text, querystr={'do': action}, css_class='nbsubscribe', rel='nofollow')
-
-    def quicklinkLink(self, page):
-        """ Return add/remove quicklink link
-
-        @rtype: unicode
-        @return: link to add or remove a quicklink
+    def link_supplementation_page(self):
         """
-        if not self.request.user.valid:
-            return ''
+        If the discussion page doesn't exist and the user
+        has no right to create it, show a disabled link.
 
-        _ = self.request.getText
-        if self.request.user.isQuickLinkedTo([page.page_name]):
-            action, text = 'quickunlink', _("Remove Link")
-        else:
-            action, text = 'quicklink', _("Add Link")
-        if action in self.request.cfg.actions_excluded:
-            return ""
-        return page.link_to(self.request, text=text, querystr={'do': action}, css_class='nbquicklink', rel='nofollow')
-
-    def startPage(self):
-        """ Start page div with page language and direction
-
-        @rtype: unicode
-        @return: page div with language and direction attribtues
+        @rtype: bool
         """
-        return u'<div id="page"%s>\n' % self.content_lang_attr()
+        suppl_name = self.cfg.supplementation_page_name
+        suppl_name_full = "%s/%s" % (self.item_name, suppl_name)
 
-    def endPage(self):
-        """ End page div
-
-        Add an empty page bottom div to prevent floating elements to
-        float out of the page bottom over the footer.
-        """
-        return '<div id="pagebottom"></div>\n</div>\n'
-
-    # Public functions #####################################################
-
-    def header(self, d, **kw):
-        """ Assemble wiki header
-
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: page header html
-        """
-        html = [
-            # Pre header custom html
-            self.emit_custom_html(self.cfg.page_header1),
-
-            # Header
-            u'<div id="header">',
-            self.searchform(d),
-            self.logo(),
-            self.username(d),
-            u'<h1 id="locationline">',
-            self.interwiki(d),
-            self.title(d),
-            u'</h1>',
-            self.trail(d),
-            self.navibar(d),
-            #u'<hr id="pageline">',
-            u'<div id="pageline"><hr style="display:none;"></div>',
-            self.msg(d),
-            self.editbar(d),
-            u'</div>',
-
-            # Post header custom html (not recommended)
-            self.emit_custom_html(self.cfg.page_header2),
-
-            # Start of page
-            self.startPage(),
-        ]
-        return u'\n'.join(html)
-
-    def footer(self, d, **keywords):
-        """ Assemble wiki footer
-
-        @param d: parameter dictionary
-        @keyword ...:...
-        @rtype: unicode
-        @return: page footer html
-        """
-        page = d['page']
-        html = [
-            # End of page
-            self.pageinfo(page),
-            self.endPage(),
-
-            # Pre footer custom html (not recommended!)
-            self.emit_custom_html(self.cfg.page_footer1),
-
-            # Footer
-            u'<div id="footer">',
-            self.editbar(d),
-            self.credits(d),
-            self.showversion(d, **keywords),
-            u'</div>',
-
-            # Post footer custom html
-            self.emit_custom_html(self.cfg.page_footer2),
-            ]
-        return u'\n'.join(html)
-
-    # Language stuff ####################################################
-
-    def ui_lang_attr(self):
-        """Generate language attributes for user interface elements
-
-        User interface elements use the user language (if any), kept in
-        request.lang.
-
-        @rtype: string
-        @return: lang and dir html attributes
-        """
-        lang = self.request.lang
-        return ' lang="%s" dir="%s"' % (lang, i18n.getDirection(lang))
-
-    def content_lang_attr(self):
-        """Generate language attributes for wiki page content
-
-        Page content uses the page language or the wiki default language.
-
-        @rtype: string
-        @return: lang and dir html attributes
-        """
-        lang = self.request.content_lang
-        return ' lang="%s" dir="%s"' % (lang, i18n.getDirection(lang))
+        return self.storage.has_item(suppl_name_full) or self.user.may.write(suppl_name_full)
 
     def add_msg(self, msg, msg_class=None):
-        """ Adds a message to a list which will be used to generate status
+        """
+        Adds a message to a list which will be used to generate status
         information.
 
         @param msg: additional message
@@ -1276,23 +701,44 @@ actionsMenuInit('%(label)s');
         """
         if not msg_class:
             msg_class = 'dialog'
-        if self._send_title_called:
-            import traceback
-            logging.warning("Calling add_msg() after send_title(): no message can be added.")
-            logging.info('\n'.join(['Call stack for add_msg():'] + traceback.format_stack()))
+        try:
+            msg = msg.render()
+        except AttributeError:
+            msg = '<div class="%s">%s</div>' % (msg_class, msg)
+        self.msg_list.append(msg)
 
-            return
-        self._status.append((msg, msg_class))
+    # TODO: reimplement on-wiki-page sidebar definition with converter2
 
-    # stuff from wikiutil.py
-    def send_title(self, text, **keywords):
+    # Properties ##############################################################
+
+    @property
+    def special_item_names(self):
+        """
+        Return a list of item names for items that are considered "index" items.
+        For index items, base.html adds cfg.html_head_index.
+
+        @rtype: list
+        @return: list of item names
+        """
+        page_front_page = self.translated_item_name(self.cfg.page_front_page)
+        page_title_index = self.translated_item_name('TitleIndex')
+        page_site_navigation = self.translated_item_name('SiteNavigation')
+        page_find_page = self.translated_item_name('FindPage')
+        return [page_front_page, self.cfg.page_front_page,
+                page_title_index, 'TitleIndex',
+                page_find_page, 'FindPage',
+                page_site_navigation, 'SiteNavigation',
+               ]
+
+    # Public Functions ########################################################
+
+    def send_title(self, text, content=None, **keywords):
         """
         Output the page header (and title).
 
         @param text: the title text
         @keyword page: the page instance that called us - using this is more efficient than using pagename..
         @keyword pagename: 'PageName'
-        @keyword print_mode: 1 (or 0)
         @keyword media: css media type, defaults to 'screen'
         @keyword allow_doubleclick: 1 (or 0)
         @keyword html_head: additional <head> code
@@ -1301,7 +747,6 @@ actionsMenuInit('%(label)s');
         """
         request = self.request
         _ = request.getText
-        rev = request.rev
 
         if keywords.has_key('page'):
             page = keywords['page']
@@ -1311,274 +756,71 @@ actionsMenuInit('%(label)s');
             page = Page(request, pagename)
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
-        scriptname = request.script_root
+        #Attributes to use directly in template
+        # Or to reduce parameters of functions of JinjaTheme
+        self.page = page
+        self.item_name = page.page_name or ''
+        self.head_title = text
+        request.write(self.render_content(page.page_name))
 
-        # get name of system pages
-        page_front_page = wikiutil.getFrontPage(request).page_name
-        page_help_contents = wikiutil.getLocalizedPage(request, 'HelpContents').page_name
-        page_title_index = wikiutil.getLocalizedPage(request, 'TitleIndex').page_name
-        page_site_navigation = wikiutil.getLocalizedPage(request, 'SiteNavigation').page_name
-        page_word_index = wikiutil.getLocalizedPage(request, 'WordIndex').page_name
-        page_help_formatting = wikiutil.getLocalizedPage(request, 'HelpOnFormatting').page_name
-        page_find_page = wikiutil.getLocalizedPage(request, 'FindPage').page_name
-        home_page = wikiutil.getInterwikiHomePage(request) # sorry theme API change!!! Either None or tuple (wikiname,pagename) now.
-        page_parent_page = getattr(page.getParentPage(), 'page_name', None)
-
-        # set content_type, including charset, so web server doesn't touch it:
-        request.content_type = "text/html; charset=%s" % (config.charset, )
-
-        # Prepare the HTML <head> element
-        user_head = [request.cfg.html_head]
-
-        # include charset information - needed for moin_dump or any other case
-        # when reading the html without a web server
-        user_head.append('''<meta http-equiv="Content-Type" content="%s;charset=%s">\n''' % (page.output_mimetype, page.output_charset))
-
-        meta_keywords = request.getPragma('keywords')
-        meta_desc = request.getPragma('description')
-        if meta_keywords:
-            user_head.append('<meta name="keywords" content="%s">\n' % wikiutil.escape(meta_keywords, 1))
-        if meta_desc:
-            user_head.append('<meta name="description" content="%s">\n' % wikiutil.escape(meta_desc, 1))
-
-        #  add meta statement if user has doubleclick on edit turned on or it is default
-        if (pagename and keywords.get('allow_doubleclick', 0) and
-            not keywords.get('print_mode', 0) and
-            request.user.edit_on_doubleclick):
-            if request.user.may.write(pagename): # separating this gains speed
-                user_head.append('<meta name="edit_on_doubleclick" content="%s">\n' % (request.script_root or '/'))
-
-        # search engine precautions / optimization:
-        # if it is an action or edit/search, send query headers (noindex,nofollow):
-        if request.query_string:
-            user_head.append(request.cfg.html_head_queries)
-        elif request.method == 'POST':
-            user_head.append(request.cfg.html_head_posts)
-        # we don't want to have BadContent stuff indexed:
-        elif pagename in ['BadContent', 'LocalBadContent', ]:
-            user_head.append(request.cfg.html_head_posts)
-        # if it is a special page, index it and follow the links - we do it
-        # for the original, English pages as well as for (the possibly
-        # modified) frontpage:
-        elif pagename in [page_front_page, request.cfg.page_front_page,
-                          page_title_index, 'TitleIndex',
-                          page_find_page, 'FindPage',
-                          page_site_navigation, 'SiteNavigation',
-                         ]:
-            user_head.append(request.cfg.html_head_index)
-        # if it is a normal page, index it, but do not follow the links, because
-        # there are a lot of illegal links (like actions) or duplicates:
-        else:
-            user_head.append(request.cfg.html_head_normal)
-
-        if 'pi_refresh' in keywords and keywords['pi_refresh']:
-            user_head.append('<meta http-equiv="refresh" content="%d;URL=%s">' % keywords['pi_refresh'])
-
-        # output buffering increases latency but increases throughput as well
-        output = []
-        # later: <html xmlns=\"http://www.w3.org/1999/xhtml\">
-        output.append("""\
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-%s
-%s
-%s
-""" % (
-            ''.join(user_head),
-            self.html_head({
-                'page': page,
-                'title': text,
-                'sitename': request.cfg.html_pagetitle or request.cfg.sitename,
-                'print_mode': keywords.get('print_mode', False),
-                'media': keywords.get('media', 'screen'),
-            }),
-            keywords.get('html_head', ''),
-        ))
-
-        # Links
-        output.append('<link rel="Start" href="%s">\n' % request.href(page_front_page))
-        if pagename and page_parent_page:
-            output.append('<link rel="Up" href="%s">\n' % request.href(page_parent_page))
-
-        output.extend([
-            '<link rel="Search" href="%s">\n' % request.href(page_find_page),
-            '<link rel="Index" href="%s">\n' % request.href(page_title_index),
-            '<link rel="Glossary" href="%s">\n' % request.href(page_word_index),
-            '<link rel="Help" href="%s">\n' % request.href(page_help_formatting),
-                      ])
-
-        output.append("</head>\n")
-        request.write(''.join(output))
-        output = []
-
-        # start the <body>
-        bodyattr = []
-        if keywords.has_key('body_attr'):
-            bodyattr.append(' ')
-            bodyattr.append(keywords['body_attr'])
-
-        # Set body to the user interface language and direction
-        bodyattr.append(' %s' % self.ui_lang_attr())
-
-        body_onload = keywords.get('body_onload', '')
-        if body_onload:
-            bodyattr.append(''' onload="%s"''' % body_onload)
-        output.append('\n<body%s>\n' % ''.join(bodyattr))
-
-        # Output -----------------------------------------------------------
-
-        # If in print mode, start page div and emit the title
-        if keywords.get('print_mode', 0):
-            d = {
-                'title_text': text,
-                'page': page,
-                'page_name': pagename or '',
-                'rev': rev,
-            }
-            request.themedict = d
-            output.append(self.startPage())
-            output.append(self.interwiki(d))
-            output.append(self.title(d))
-
-        # In standard mode, emit theme.header
-        else:
-            exists = pagename and page.exists()
-            # prepare dict for theme code:
-            d = {
-                'theme': self.name,
-                'script_name': scriptname,
-                'title_text': text,
-                'logo_string': request.cfg.logo_string,
-                'site_name': request.cfg.sitename,
-                'page': page,
-                'rev': rev,
-                'pagesize': pagename and page.size() or 0,
-                # exists checked to avoid creation of empty edit-log for non-existing pages
-                'last_edit_info': exists and page.last_edit_info() or '',
-                'page_name': pagename or '',
-                'page_find_page': page_find_page,
-                'page_front_page': page_front_page,
-                'home_page': home_page,
-                'page_help_contents': page_help_contents,
-                'page_help_formatting': page_help_formatting,
-                'page_parent_page': page_parent_page,
-                'page_title_index': page_title_index,
-                'page_word_index': page_word_index,
-                'user_name': request.user.name,
-                'user_valid': request.user.valid,
-                'msg': self._status,
-                'trail': keywords.get('trail', None),
-            }
-
-            # add quoted versions of pagenames
-            newdict = {}
-            for key in d:
-                if key.startswith('page_'):
-                    if not d[key] is None:
-                        newdict['q_'+key] = wikiutil.quoteWikinameURL(d[key])
-                    else:
-                        newdict['q_'+key] = None
-            d.update(newdict)
-            request.themedict = d
-
-            # now call the theming code to do the rendering
-            output.append(self.header(d))
-
-        # emit it
-        request.write(''.join(output))
-        output = []
-        self._send_title_called = True
-
-    def send_footer(self, pagename, **keywords):
+    def render_content(self, item_name, content=None, title=None, page=None, pagename=None,
+                        allow_doubleclick=None, pi_refresh=None, html_head=None, trail=None, **keywords):
         """
-        Output the page footer.
-
-        @param pagename: WikiName of the page
-        @keyword print_mode: true, when page is displayed in Print mode
+        Render some content plus Theme header/footer.
+        If content is None, the normal Item content for item_name will be rendered.
         """
         request = self.request
-        d = request.themedict
+        _ = request.getText
 
-        # Emit end of page in print mode, or complete footer in standard mode
-        if keywords.get('print_mode', 0):
-            request.write(self.pageinfo(d['page']))
-            request.write(self.endPage())
+        #TODO: Have to fix this code (looks ugly for me)
+        if keywords.has_key('page'):
+            page = keywords['page']
+            pagename = page.page_name
         else:
-            request.write(self.footer(d, **keywords))
+            pagename = item_name
+            page = Page(request, pagename)
+        if keywords.get('msg', ''):
+            raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
 
-    # stuff moved from request.py
-    def send_closing_html(self):
-        """ generate timing info html and closing html tag,
-            everyone calling send_title must call this at the end to close
-            the body and html tags.
-        """
-        request = self.request
-
-        # as this is the last chance to emit some html, we stop the clocks:
-        request.clock.stop('run')
-        request.clock.stop('total')
-
-        # Close html code
-        if request.cfg.show_timings:
-            request.write('<ul id="timings">\n')
-            for t in request.clock.dump():
-                request.write('<li>%s</li>\n' % t)
-            request.write('</ul>\n')
-        #request.write('<!-- auth_method == %s -->' % repr(request.user.auth_method))
-        request.write('</body>\n</html>\n\n')
-
-    def render_content(self, item_name, content=None, title=None):
-        """ render some content plus Theme header/footer.
-            If content is None, the normal Item content for item_name will be rendered.
-        """
-        request = self.request
         if content is None:
             item = Item.create(request, item_name)
             content = item.do_show()
         if title is None:
             title = item_name
-        if getattr(request.cfg, 'templating', False):
-            template = self.env.get_template('base.html')
-            html = template.render(gettext=self.request.getText,
-                                   item_name=item_name,
-                                   title=title,
-                                   content=content,
-                                  )
-            request.write(html)
-        else:
-            request.headers.add('Content-Type', 'text/html; charset=utf-8')
-            # Use user interface language for this generated page
-            request.setContentLanguage(request.lang)
-            request.theme.send_title(title, pagename=item_name)
-            request.write(content)
-            request.theme.send_footer(item_name)
-            request.theme.send_closing_html()
 
-    def sidebar(self, d, **keywords):
-        """ Display page called SideBar as an additional element on every page
+        #Attributes to use directly in template
+        # Or to reduce parameters of functions of JinjaTheme
+        self.page = page
+        self.item_name = page.page_name or ''
+        self.head_title = title
 
-        @param d: parameter dictionary
-        @rtype: string
-        @return: sidebar html
+        html = self.render_template(gettext=self.request.getText,
+                                    item_name=item_name,
+                                    title=title,
+                                    content=content,
+                                    allow_doubleclick=allow_doubleclick,
+                                    pi_refresh=pi_refresh,
+                                    html_head=html_head,
+                                    trail=trail,
+                                    **keywords)
+        return html
+
+    def render_template(self, filename='layout.html', **context):
+        # TODO: change it to be render(self, name, **context)
         """
-        # Check which page to display, return nothing if doesn't exist.
-        sidebar = self.request.getPragma('sidebar', u'SideBar')
-        page = Page(self.request, sidebar)
-        if not page.exists():
-            return u""
-        # Capture the page's generated HTML in a buffer.
-        buffer = StringIO.StringIO()
-        self.request.redirect(buffer)
-        try:
-            page.send_page(content_only=1, content_id="sidebar")
-        finally:
-            self.request.redirect()
-        return u'<div class="sidebar">%s</div>' % buffer.getvalue()
+        Base function that renders a template using Jinja2.
+
+        @param filename: name of the template to render.
+        @param context: used to pass variables to template.
+        @return: rendered output
+        """
+        template = self.env.get_template(filename)
+        return template.render(**context)
 
 
 class ThemeNotFound(Exception):
     """ Thrown if the supplied theme could not be found anywhere """
+
 
 def load_theme(request, theme_name=None):
     """ Load a theme for this request.
@@ -1599,6 +841,7 @@ def load_theme(request, theme_name=None):
 
     return Theme(request)
 
+
 def load_theme_fallback(request, theme_name=None):
     """ Try loading a theme, falling back to defaults on error.
 
@@ -1606,7 +849,7 @@ def load_theme_fallback(request, theme_name=None):
     @param theme_name: the name of the theme
     @type theme_name: str
     @rtype: int
-    @return: A statuscode for how successful the loading was
+    @return: A status code for how successful the loading was
              0 - theme was loaded
              1 - fallback to default theme
              2 - serious fallback to builtin theme

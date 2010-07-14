@@ -571,6 +571,18 @@ def join_wiki(wikiurl, wikitail):
     else:
         return wikiurl + wikitail
 
+def interwiki_item_url(request, wiki_name='', item_name=''):
+    """
+    Get Interwiki url with item_name.
+    
+    @rtype: unicode
+    """
+    wikitag, wikiurl, wikitail, wikitag_bad = resolve_interwiki(request, wiki_name, item_name)
+    wikiurl = mapURL(request, wikiurl)
+    if wikitag == 'Self': # for own wiki, do simple links
+        return wikitail
+    else: # return InterWiki hyperlink
+        return join_wiki(wikiurl, wikitail)
 
 #############################################################################
 ### Page types (based on page names)
