@@ -289,6 +289,7 @@ class ThemeBase(object):
         """
         request = self.request
         title = None
+        wiki_local = '' # means local wiki
 
         # Handle [[pagename|title]] or [[url|title]] formats
         if text.startswith('[[') and text.endswith(']]'):
@@ -308,26 +309,21 @@ class ThemeBase(object):
             if not title:
                 title = pagename
             url = self.request.href(pagename)
-            return pagename, url, title, ''
+            return pagename, url, title, wiki_local
 
         # remove wiki: url prefix
         if pagename.startswith("wiki:"):
             pagename = pagename[5:]
 
         # try handling interwiki links
-        try:
-            interwiki, page = wikiutil.split_interwiki(pagename)
-            thiswiki = request.cfg.interwikiname
-            if interwiki == thiswiki or interwiki == 'Self':
-                pagename = page
-            else:
-                if not title:
-                    title = page
-                url = wikiutil.interwiki_item_url(request, interwiki, pagename)
-                return pagename, url, title, interwiki
-        except ValueError:
-            pass
-
+        wiki_name, item_name = wikiutil.split_interwiki(pagename)
+        wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
+        href = wikiutil.join_wiki(wiki_base_url, item_name)
+        if wiki_name not in [request.cfg.interwikiname, 'Self', ]:
+            if not title:
+                title = item_name
+            return item_name, href, title, wiki_name
+                
         # Handle regular pagename like "FrontPage"
         pagename = wikiutil.normalize_pagename(pagename, request.cfg)
 
@@ -339,7 +335,7 @@ class ThemeBase(object):
             title = self.shortenPagename(pagename)
 
         url = self.request.href(pagename)
-        return pagename, url, title, ''
+        return pagename, url, title, wiki_local
 
     def shortenPagename(self, name):
         """
