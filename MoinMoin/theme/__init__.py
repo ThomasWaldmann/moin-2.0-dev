@@ -241,9 +241,10 @@ class ThemeBase(object):
             else:
                 # We cannot check if wiki pages exists in remote wikis
                 exists = True
-            interwiki_href = wikiutil.interwiki_item_url(self.request, wiki_name=wikiname, item_name=itemname)
-            item = interwiki_href, aliasname, 'id="userhome" title="%s"' % title, exists
-
+            wiki_name, item_name = wikiutil.split_interwiki(itemname)
+            wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
+            wiki_href = wikiutil.join_wiki(wiki_base_url, item_name)
+            item = wiki_href, aliasname, 'id="userhome" title="%s"' % title, exists
             userlinks.append(item)
             # link to userprefs action
             if 'userprefs' not in self.cfg.actions_excluded:
