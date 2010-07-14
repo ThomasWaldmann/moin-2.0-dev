@@ -471,23 +471,20 @@ class ThemeBase(object):
         if not user.valid or user.show_trail:
             trail = user.getTrail()
             if trail:
-                for pagename in trail:
+                for item_name in trail:
                     # TODO: cleanup code below
                     try:
-                        interwiki, page = wikiutil.split_interwiki(pagename)
+                        interwiki, page = wikiutil.split_interwiki(item_name)
                         if interwiki != request.cfg.interwikiname and interwiki != 'Self':
-                            href = wikiutil.interwiki_item_url(request, interwiki, pagename)
+                            href = wikiutil.interwiki_item_url(request, interwiki, item_name)
                             interwiki_item = self.shortenPagename(page), href, True, interwiki
                             items.append(interwiki_item)
                             continue
-                        else:
-                            pagename = page
-
                     except ValueError:
                         pass
-                    exists = self.storage.has_item(pagename)
-                    title = self.shortenPagename(pagename)
-                    trail_item = title, pagename, exists, ''
+                    exists = self.storage.has_item(item_name)
+                    title = self.shortenPagename(item_name)
+                    trail_item = title, item_name, exists, ''
                     items.append(trail_item)
         return items
 
