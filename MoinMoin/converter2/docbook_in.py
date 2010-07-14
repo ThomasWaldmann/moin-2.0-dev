@@ -135,7 +135,12 @@ class Converter(object):
         return self.do_children(element, depth)
 
     def visit_docbook_article(self, element, depth):
-        children = self.do_children(element, depth)
+        # TODO : Automatically add a ToC, need to see how to let
+        # the user specify it.
+        children = []
+        children.append(ET.Element(moin_page('table-of-content')))
+        children.extend(self.do_children(element, depth))
+
         body = moin_page.body(children=children)
         return moin_page.page(children=[body])
 
