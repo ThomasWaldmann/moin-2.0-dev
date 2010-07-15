@@ -165,3 +165,14 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_code(self):
+        data = [
+            ('<article><screen>Text</screen></article>',
+             '/page/body[blockcode="Text"]'),
+            # Test for <screen> with CDATA
+            ('<article><screen><![CDATA[Text]]></screen></article>',
+             '/page/body[blockcode="Text"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
