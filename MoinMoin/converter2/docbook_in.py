@@ -437,6 +437,12 @@ class Converter(object):
         """
         attrib = {}
         href = element.get(docbook.url)
+        # Since it is an element of DocBook v.4,
+        # The namespace does not always work, so we will try to retrive the attribute whatever
+        if not(href):
+            for key, value in element.attrib.iteritems():
+                if key.name == 'url':
+                    href = value
         key = xlink.href
         attrib[key] = href
         return self.new_copy(moin_page.a, element, depth, attrib=attrib)
