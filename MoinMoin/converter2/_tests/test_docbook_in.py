@@ -181,7 +181,7 @@ class TestConverter(Base):
         data = [
             # Test for image conversion
             ('<article><para><inlinemediaobject><imageobject><imagedata fileref="test.png"/></imageobject></inlinemediaobject></para></article>',
-              '/page/body/object/@xlink:href="test.png"'),
+              '/page/body/p/object/@xlink:href="test.png"'),
         ]
         for i in data:
             yield (self.do, ) + i
