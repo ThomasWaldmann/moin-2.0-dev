@@ -78,12 +78,12 @@
 {% endblock %}
 
 {% block extra_content %}
-{% set info = theme.pageinfo() %}
-{% if info %}
     <div id="pagebottom">
-        <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}"> {{ info }}</p>
+        <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
+            {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
+            {{ theme.item_name }}({{ _("edited %s by %s" % (user.getFormattedDateTime(rev.timestamp), rev|user_format )) }})
+        </p>
     </div>
-{% endif %}
 {% endblock %}
 
 {% block extra_footer %}
