@@ -507,8 +507,75 @@ class ThemeBase(object):
         """
         can_modify = 'modify' not in self.cfg.actions_excluded
         return can_modify and self.item_exists and self.item_writable
+        
+    def shouldShowEditbar(self):
+        """
+        Should we show the editbar?
 
-    def actions_menu(self):
+        Actions should implement this, because only the action knows if
+        the edit bar makes sense. Until it goes into actions, we do the
+        checking here.
+
+        @param page: current page
+        @rtype: bool
+        @return: true if editbar should show
+        """
+        # Show editbar only for existing pages, that the user may read.
+        # If you may not read, you can't edit, so you don't need editbar.
+        if self.item_exists and self.item_readable:
+            form = self.request.form
+            action = self.request.action
+            # Do not show editbar on edit but on save/cancel
+            return not (action == 'modify' and
+                        not form.has_key('button_save') and
+                        not form.has_key('button_cancel'))
+        return False
+
+    def parent_page(self):
+        """
+        Return name of parent page for the current page
+        @rtype: unicode
+        @return: parent page name
+        """
+        item_name = self.item_name
+        parent_page_name = wikiutil.ParentPageName(item_name)
+        if item_name and parent_page_name:
+            return parent_page_name
+
+    def link_supplementation_page(self):
+        """
+        If the discussion page doesn't exist and the user
+        has no right to create it, show a disabled link.
+
+        @rtype: bool
+        """
+        suppl_name = self.cfg.supplementation_page_name
+        suppl_name_full = "%s/%s" % (self.item_name, suppl_name)
+
+        return self.storage.has_item(suppl_name_full) or self.user.may.write(suppl_name_full)
+
+    def add_msg(self, msg, msg_class=None):
+        """
+        Adds a message to a list which will be used to generate status
+        information.
+
+        @param msg: additional message
+        @param msg_class: html class for the div of the additional message.
+        """
+        if not msg_class:
+            msg_class = 'dialog'
+        try:
+            msg = msg.render()
+        except AttributeError:
+            msg = '<div class="%s">%s</div>' % (msg_class, msg)
+        self.msg_list.append(msg)
+
+    # TODO: reimplement on-wiki-page sidebar definition with converter2
+
+    # Properties ##############################################################
+
+    @property
+    def actions_menu_options(self):
         """
         Create actions menu list and items data dict
 
@@ -520,9 +587,8 @@ class ThemeBase(object):
         enabled browsers, and acceptable behavior for those who prefer
         not to use Javascript.
 
-        @param page: current page, Page object
-        @rtype: unicode
-        @return: actions menu html fragment
+        @rtype: list
+        @return: options of actions menu
         """
         # TODO: Move actionsMenuInit() into body onload
         request = self.request
@@ -609,73 +675,7 @@ class ThemeBase(object):
                 title = _(title)
                 options.append((do, False, title))
 
-        return self.render_template('actions_menu.html', label=titles['__title__'], options=options)
-
-    def shouldShowEditbar(self):
-        """
-        Should we show the editbar?
-
-        Actions should implement this, because only the action knows if
-        the edit bar makes sense. Until it goes into actions, we do the
-        checking here.
-
-        @param page: current page
-        @rtype: bool
-        @return: true if editbar should show
-        """
-        # Show editbar only for existing pages, that the user may read.
-        # If you may not read, you can't edit, so you don't need editbar.
-        if self.item_exists and self.item_readable:
-            form = self.request.form
-            action = self.request.action
-            # Do not show editbar on edit but on save/cancel
-            return not (action == 'modify' and
-                        not form.has_key('button_save') and
-                        not form.has_key('button_cancel'))
-        return False
-
-    def parent_page(self):
-        """
-        Return name of parent page for the current page
-        @rtype: unicode
-        @return: parent page name
-        """
-        item_name = self.item_name
-        parent_page_name = wikiutil.ParentPageName(item_name)
-        if item_name and parent_page_name:
-            return parent_page_name
-
-    def link_supplementation_page(self):
-        """
-        If the discussion page doesn't exist and the user
-        has no right to create it, show a disabled link.
-
-        @rtype: bool
-        """
-        suppl_name = self.cfg.supplementation_page_name
-        suppl_name_full = "%s/%s" % (self.item_name, suppl_name)
-
-        return self.storage.has_item(suppl_name_full) or self.user.may.write(suppl_name_full)
-
-    def add_msg(self, msg, msg_class=None):
-        """
-        Adds a message to a list which will be used to generate status
-        information.
-
-        @param msg: additional message
-        @param msg_class: html class for the div of the additional message.
-        """
-        if not msg_class:
-            msg_class = 'dialog'
-        try:
-            msg = msg.render()
-        except AttributeError:
-            msg = '<div class="%s">%s</div>' % (msg_class, msg)
-        self.msg_list.append(msg)
-
-    # TODO: reimplement on-wiki-page sidebar definition with converter2
-
-    # Properties ##############################################################
+        return options
 
     @property
     def special_item_names(self):

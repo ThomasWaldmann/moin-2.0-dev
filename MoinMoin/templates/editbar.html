@@ -75,7 +75,7 @@
     {% endif %}
     
     {% if 'ActionsMenu' in cfg.edit_bar %}
-        <li>{{ theme.actions_menu() }}</li>
+        <li>{% include 'actions_menu.html' %}</li>
     {% endif %}
     
 {% endif %}
