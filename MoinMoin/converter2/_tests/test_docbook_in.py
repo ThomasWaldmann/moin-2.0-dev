@@ -160,7 +160,7 @@ class TestConverter(Base):
             #('<article><para><xref xlink:href="uri:test" xlink:title="title">link</link></para></article>',
             # '/page/body/p/a[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
             # Old link from DocBook v.4.X for backward compatibility
-            ('<article><para><ulink db:url="url:test">link</ulink></para></article>',
+            ('<article><para><ulink url="url:test">link</ulink></para></article>',
              '/page/body/p/a[@xlink:href="url:test"][text()="link"]'),
         ]
         for i in data:
