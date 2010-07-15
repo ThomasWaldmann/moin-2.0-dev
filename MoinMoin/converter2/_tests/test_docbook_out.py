@@ -122,6 +122,9 @@ class TestConverter(Base):
             # Link conversion
             ('<page><body><p><a xlink:href="uri:test" xlink:title="title">link</a></p></body></page>',
               '/article/para/link[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
+            # Blockcode conversion into <screen>
+            ('<page><body><blockcode>Text</blockcode></body></page>',
+             '/article[screen="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
