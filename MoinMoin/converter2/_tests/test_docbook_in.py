@@ -176,3 +176,12 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_object(self):
+        data = [
+            # Test for image conversion
+            ('<article><para><inlinemediaobject><imageobject><imagedata fileref="test.png"/></imageobject></inlinemediaobject></para></article>',
+              '/page/body/object/@xlink:href="test.png"'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
