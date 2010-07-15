@@ -119,6 +119,9 @@ class Converter(object):
                 attrib[key] = value
         return self.new_copy(docbook.link, element, attrib=attrib)
 
+    def visit_moinpage_blockcode(self, element):
+        return self.new_copy(docbook.screen, element, attrib={})
+
     def visit_moinpage_h(self, element):
         """
         There is not really heading in DocBook, but rather section with
