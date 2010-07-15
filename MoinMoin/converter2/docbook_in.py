@@ -175,6 +175,26 @@ class Converter(object):
         return self.visit_simple_list(moin_page.list, attrib,
                                       element, depth)
 
+    def visit_docbook_link(self, element, depth):
+        """
+        LINK Conversion.
+
+        There is two kind of links in DocBook :
+        One using the xlink namespace.
+        The other one using linkend attribute.
+
+        The xlink attribute can directly be used in the <a> tag of the
+        DOM Tree.
+
+        For the linkend attribute, we need to have a system supporting
+        the anchors.
+        """
+        attrib = {}
+        for key, value in element.attrib.iteritems():
+            if key.uri == xlink:
+                attrib[key] = value
+        return self.new_copy(moin_page.a, element, depth, attrib=attrib)
+
     def visit_docbook_orderedlist(self, element, depth):
         attrib = {}
         key = moin_page('item-label-generate')
