@@ -136,10 +136,9 @@ class ThemeBase(object):
         self.output_mimetype = page.output_mimetype
         self.output_charset = page.output_charset
         self.cfg = request.cfg
-        user = request.user
-        self.user = user
-        self.item_readable = user.may.read(item_name)
-        self.item_writable = user.may.write(item_name)
+        self.user = request.user
+        self.item_readable = request.user.may.read(item_name)
+        self.item_writable = request.user.may.write(item_name)
         self.ui_lang = request.lang
         self.ui_dir = i18n.getDirection(self.ui_lang)
         self.content_lang = request.content_lang
@@ -169,6 +168,7 @@ class ThemeBase(object):
                                                                         rev.get(EDIT_LOG_HOSTNAME))
         self.env.globals.update({
                                 'theme': self,
+                                'user': request.user,
                                 'cfg': request.cfg,
                                 '_': request.getText,
                                 'href': request.href,
@@ -498,33 +498,6 @@ class ThemeBase(object):
                              ]
             return self.request.action in contentActions
         return False
-
-    def pageinfo(self):
-        """
-        Return info with page meta data
-
-        Since page information uses translated text, it uses the ui
-        language and direction. It looks strange sometimes, but
-        translated text using page direction looks worse.
-
-        @param page: current page
-        @rtype: string
-        @return: page last edit information
-        """
-        _ = self.request.getText
-        page = self.page
-
-        info = page.last_edit(printable=True)
-        if info:
-            if info['editor']:
-                info = _("last edited %(timestamp)s by %(editor)s") % info
-            else:
-                info = _("last modified %(timestamp)s") % info
-            pagename = self.item_name
-            if self.cfg.show_interwiki:
-                pagename = "%s: %s" % (self.cfg.interwikiname, pagename)
-            info = "%s  (%s)" % (wikiutil.escape(pagename), info)
-            return info
 
     def universal_edit_button(self): # TODO: give this a better name that describes what this method tells
         """
