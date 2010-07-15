@@ -168,6 +168,13 @@ class Converter(object):
         return self.new_copy(moin_page('list-item-label'),
                              element, depth, attrib={})
 
+    def visit_docbook_imagedata(self, element, depth):
+        attrib = {}
+        href = element.get('fileref')
+        key = xlink.href
+        attrib[key] = href
+        return ET.Element(moin_page.object, attrib=attrib)
+
     def visit_docbook_itemizedlist(self, element, depth):
         attrib = {}
         key = moin_page('item-label-generate')
