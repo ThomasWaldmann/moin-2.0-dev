@@ -429,6 +429,18 @@ class Converter(object):
         return self.new_copy(moin_page.table_cell,
                              element, depth, attrib=attrib)
 
+    def visit_docbook_ulink(self, element, depth):
+        """
+        NB : <ulink> is not a part of DocBook v.5 however we
+        support it in our converter since it is still widely used
+        and it helps to keep a compatibility with DocBook v.4
+        """
+        attrib = {}
+        href = element.get(docbook.url)
+        key = xlink.href
+        attrib[key] = href
+        return self.new_copy(moin_page.a, element, depth, attrib=attrib)
+
     def visit_docbook_variablelist(self, element, depth):
         return self.new_copy(moin_page.list, element, depth, attrib={})
 
