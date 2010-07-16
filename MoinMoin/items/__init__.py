@@ -441,9 +441,6 @@ class NonExistent(Item):
             ('text/x.moin.creole', 'Wiki (Creole)'),
             ('text/html', 'unsafe html'),
             ('text/x-safe-html', 'safe html'),
-            # The following mimetype is just for test purpose
-            # It should be replace by a html or x-safe-html in the release
-            ('text/x.moin.html', 'html for MoinMoin'),
         ]),
         ('highlighted text items', [
             ('text/x-diff', 'diff/patch'),
@@ -1348,36 +1345,6 @@ class SafeHTML(Text):
     format_args = supported_mimetypes[0]
 
     # XXX duplicated from HTML class
-    def do_modify(self, template_name):
-        if template_name:
-            item = Item.create(self.request, template_name)
-            data_text = self.data_storage_to_internal(item.data)
-        else:
-            data_text = self.data_storage_to_internal(self.data)
-        meta_text = self.meta_dict_to_text(self.meta)
-        template = self.env.get_template('modify_text_html.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
-                                  revno=0,
-                                  data_text=data_text,
-                                  meta_text=meta_text,
-                                  lang='en', direction='ltr',
-                                  help=self.modify_help,
-                                  url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
-                                 )
-        return content
-
-class MoinHTML(Text):
-    """
-    Dummy Type to input HTML and store it in the Dom Tree
-
-    Very similar to SafeHTML, Should not be kept in the final release.
-
-    This is only for DEBUG purpose.
-    """
-    supported_mimetypes = ['text/x.moin.html']
-
     def do_modify(self, template_name):
         if template_name:
             item = Item.create(self.request, template_name)
