@@ -211,62 +211,29 @@ class ThemeBase(object):
             current_item += '/'
         return content
 
-    def user_breadcrumbs(self):
-        """
-        Assemble the username / userprefs using breadcrumbs (was: username)
-
-        @rtype: list
-        @return: actions of user in breadcrumbs
-        """
-        # TODO: split this method into multiple methods
-        request = self.request
-        _ = request.getText
-        href = request.href
-        item_name = self.item_name
+    def userhome(self):
+    # Add username/homepage link for registered users. We don't care
+    # if it exists, the user can create it.
         user = self.user
+        request = self.request
+        item_name = self.item_name
 
-        userlinks = []
-        # Add username/homepage link for registered users. We don't care
-        # if it exists, the user can create it.
-        if user.valid and user.name:
-            wikiname, itemname = wikiutil.getInterwikiHomePage(request)
-            name = user.name
-            aliasname = user.aliasname
-            if not aliasname:
-                aliasname = name
-            title = "%s @ %s" % (aliasname, wikiname)
-            # link to (interwiki) user homepage
-            if wikiname == "Self":
-                exists = self.storage.has_item(itemname)
-            else:
-                # We cannot check if wiki pages exists in remote wikis
-                exists = True
-            wiki_name, item_name = wikiutil.split_interwiki(itemname)
-            wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
-            wiki_href = wikiutil.join_wiki(wiki_base_url, item_name)
-            item = wiki_href, aliasname, 'id="userhome" title="%s"' % title, exists
-            userlinks.append(item)
-            # link to userprefs action
-            if 'userprefs' not in self.cfg.actions_excluded:
-                item = (href(item_name, do='userprefs'), _('Settings'),
-                        'class="userprefs" rel="nofollow"', True)
-                userlinks.append(item)
-
-        if user.valid:
-            if user.auth_method in request.cfg.auth_can_logout:
-                item = (href(item_name, do='logout', logout='logout'), _('Logout'),
-                        'class="logout" rel="nofollow"', True)
-                userlinks.append(item)
+        wikiname, itemname = wikiutil.getInterwikiHomePage(request)
+        name = user.name
+        aliasname = user.aliasname
+        if not aliasname:
+            aliasname = name
+        title = "%s @ %s" % (aliasname, wikiname)
+        # link to (interwiki) user homepage
+        if wikiname == "Self":
+            exists = self.storage.has_item(itemname)
         else:
-            url = None
-            # special direct-login link if the auth methods want no input
-            if request.cfg.auth_login_inputs == ['special_no_input']:
-                url = href(item_name, do='login', login=1)
-            if request.cfg.auth_have_login:
-                url = url or href(item_name, do='login')
-                item = url, _("Login"), 'class="login" rel="nofollow"', True
-                userlinks.append(item)
-        return userlinks
+            # We cannot check if wiki pages exists in remote wikis
+            exists = True
+        wiki_name, item_name = wikiutil.split_interwiki(itemname)
+        wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
+        wiki_href = wikiutil.join_wiki(wiki_base_url, item_name)
+        return wiki_href, aliasname, title, exists
 
     def split_navilink(self, text, localize=1):
         """
@@ -552,6 +519,17 @@ class ThemeBase(object):
     # TODO: reimplement on-wiki-page sidebar definition with converter2
 
     # Properties ##############################################################
+
+    @property
+    def login_url(self):
+        request = self.request
+        href = request.href
+        url = ''
+        if request.cfg.auth_login_inputs == ['special_no_input']:
+            url = href(do='login', login=1)
+        if request.cfg.auth_have_login:
+            url = url or href(do='login')
+        return url
 
     @property
     def actions_menu_options(self):
