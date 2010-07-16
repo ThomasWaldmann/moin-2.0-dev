@@ -144,6 +144,22 @@ class Converter(object):
         body = moin_page.body(children=children)
         return moin_page.page(children=[body])
 
+    def visit_docbook_emphasis(self, element, depth):
+        """
+        emphasis element, is the only way to apply some style
+        on a DocBook element directly from the DocBook tree.
+
+        Basically, you can use it for "italic" and "bold" style.
+
+        However, it is still semantic, so we call it emphasis and strong.
+        """
+        for key, value in element.attrib.iteritems():
+            if key.name == 'role' and value == 'strong':
+                return self.new_copy(moin_page.strong, element,
+                                     depth, attrib={})
+        return self.new_copy(moin_page.emphasis, element,
+                             depth, attrib={})
+
     def visit_docbook_footnote(self, element, depth):
         attrib = {}
         key = moin_page('note-class')
