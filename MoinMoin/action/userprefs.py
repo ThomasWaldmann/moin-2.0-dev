@@ -103,4 +103,4 @@ def execute(pagename, request):
         title = _("Settings")
     request.theme.add_msg(msg, msg_class)
     content = "%s%s%s" % (request.formatter.startContent("content"), text, request.formatter.endContent())
-    return request.theme.render_template('content.html', title=title, content=content)
+    return request.theme.render('content.html', title=title, content=content)
