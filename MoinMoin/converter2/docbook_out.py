@@ -18,7 +18,6 @@ class Converter(object):
     """
     Converter application/x.moin.document -> application/docbook+xml
     """
-
     namespaces_visit = {
         moin_page: 'moinpage'
     }
@@ -64,7 +63,6 @@ class Converter(object):
         It first converts the children of the element,
         and then the element itself
         """
-
         children = self.do_children(element)
         return self.new(tag, attrib, children)
 
@@ -94,7 +92,6 @@ class Converter(object):
         We will choose the most appropriate procedure to convert
         the element according to his name
         """
-
         method_name = 'visit_moinpage_' + element.tag.name.replace('-', '_')
         method = getattr(self, method_name, None)
         if method:
@@ -138,7 +135,6 @@ class Converter(object):
         A section is closed when we have a new heading with an equal or
         higher level.
         """
-
         depth = element.get(moin_page('outline-level'))
         # We will have a new section
         # under another section
@@ -169,7 +165,6 @@ class Converter(object):
 
         Or a specific function to handle definition list.
         """
-
         item_label_generate = element.get(moin_page('item-label-generate'))
         if 'ordered' == item_label_generate:
             attrib = {}
