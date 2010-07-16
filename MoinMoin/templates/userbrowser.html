@@ -1,4 +1,6 @@
-<table>
+{% extends "layout.html" %}
+{% block content %}
+    <table>
     <tr>
         <th>Username</th>
         <th>Member of Groups</th>
@@ -38,4 +40,5 @@
     </tr>
     {% endfor %}
 </table>
+{% endblock %}
 
