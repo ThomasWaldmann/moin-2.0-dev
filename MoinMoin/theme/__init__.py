@@ -569,7 +569,6 @@ class ThemeBase(object):
         @rtype: list
         @return: options of actions menu
         """
-        # TODO: Move actionsMenuInit() into body onload
         request = self.request
         _ = request.getText
 
