@@ -176,6 +176,9 @@ class TestConverter(Base):
             # PROGRAMLISTING --> BLOCKCODE
             ('<article><programlisting>Text</programlisting></article>',
              '/page/body[blockcode="Text"]'),
+            # LITERAL --> CODE
+            ('<article><para>text<literal>literal</literal></para></article>',
+             '/page/body/p[text()="text"][literal="literal"]'),
         ]
         for i in data:
             yield (self.do, ) + i
