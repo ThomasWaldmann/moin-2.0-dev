@@ -17,8 +17,7 @@ def execute(item_name, request):
     item = Item.create(request, item_name, rev_no=request.rev)
     if request.method == 'GET':
         content = item.do_delete()
-        request.headers.add('Content-Type', 'text/html; charset=utf-8')
-        request.write(content)
+        return content
     elif request.method == 'POST':
         cancelled = 'button_cancel' in request.form
         if not cancelled:
