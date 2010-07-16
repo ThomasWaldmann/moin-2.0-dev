@@ -17,4 +17,4 @@ def execute(item_name, request):
         rev_no = request.rev
     item = Item.create(request, item_name, rev_no=rev_no)
     content = item.do_highlight()
-    request.theme.render_content(item_name, content)
+    return content
