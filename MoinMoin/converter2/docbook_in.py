@@ -239,6 +239,9 @@ class Converter(object):
     def visit_docbook_para(self, element, depth):
         return self.new_copy(moin_page.p, element, depth, attrib={})
 
+    def visit_docbook_phrase(self, element, depth):
+        return self.new_copy(moin_page.span, element, depth, attrib={})
+
     def visit_docbook_programlisting(self, element, depth):
         return self.new_copy(moin_page.blockcode, element, depth, attrib={})
 
