@@ -134,7 +134,9 @@ class TestConverter(Base):
             # SPAN baseline-shift=super --> superscript
             ('<page><body><p>sub<span page:baseline-shift="super">super</span>script</p></body></page>',
              '/article/para[text()="script"][superscript="super"]'),
-
+            # STRONG --> EMPHASIS role='strong'
+            ('<page><body><p>text<strong>strong</strong></p></body></page>',
+             '/article/para[text()="text"]/emphasis[role="strong"][text()="strong"]'),
         ]
         for i in data:
             yield (self.do, ) + i
