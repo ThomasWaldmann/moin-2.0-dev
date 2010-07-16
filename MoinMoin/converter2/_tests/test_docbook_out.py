@@ -136,7 +136,7 @@ class TestConverter(Base):
              '/article/para[text()="script"][superscript="super"]'),
             # STRONG --> EMPHASIS role='strong'
             ('<page><body><p>text<strong>strong</strong></p></body></page>',
-             '/article/para[text()="text"]/emphasis[role="strong"][text()="strong"]'),
+             '/article/para[text()="text"]/emphasis[@role="strong"][text()="strong"]'),
             # EMPHASIS --> EMPHASIS
             ('<page><body><p>text<emphasis>emphasis</emphasis></p></body></page>',
              '/article/para[text()="text"][emphasis="emphasis"]'),
