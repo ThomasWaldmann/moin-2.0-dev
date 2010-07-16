@@ -30,7 +30,6 @@ class Converter(object):
     """
     Converter application/docbook+xml -> x.moin.document
     """
-
     # Namespace of our input data
     docbook_namespace = {
         docbook.namespace: 'docbook'
@@ -122,7 +121,6 @@ class Converter(object):
         We will detect the name of the tag, and pick the correct method
         to convert it.
         """
-
         # We have a section tag
         if self.sect_re.match(element.tag.name):
             result = []
@@ -291,7 +289,6 @@ class Converter(object):
         two attributes of the converter which indicate the
         current depth of the section and the current level heading.
         """
-
         if depth > self.section_depth:
             self.section_depth = self.section_depth + 1
             self.heading_level = self.heading_level + 1
