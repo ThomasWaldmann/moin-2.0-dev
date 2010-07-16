@@ -1,10 +1,13 @@
 # -*- coding: iso-8859-1 -*-
 """
 MoinMoin - DocBook input converter
+Converts a DocBook document into an internal document tree.
 
-Converts a DocBook tree into an internal document tree.
+Currently support DocBook v5.
 
-Currently support DocBook v.5.0
+Some elements of DocBook v4 specification are also supported
+for backward compatibility :
+  * ulink
 
 @copyright: 2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details.
