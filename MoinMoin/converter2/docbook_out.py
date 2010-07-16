@@ -313,6 +313,23 @@ class Converter(object):
     def visit_moinpage_p(self, element):
         return self.new_copy(docbook.para, element, attrib={})
 
+    def visit_moinpage_span(self, element):
+        """
+        The span element is used in the DOM Tree to define some specific formatting. So each attribute will give different resulting tag.
+
+        TODO : Add support for text-decoration attribute
+        TODO : Add support for font-size attribute
+        """
+        # Check for the attributes of span
+        for key, value in element.attrib.iteritems():
+            if key.name == 'baseline-shift':
+                if value == 'super':
+                    return self.new_copy(docbook.superscript, element, attrib={})
+                if value == 'sub':
+                    return self.new_copy(docbook.subscript, element, attrib={})
+
+        return self.new_copy(docbook.phrase, element, attrib={})
+
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
 default_registry.register(Converter._factory, type_moin_document,
