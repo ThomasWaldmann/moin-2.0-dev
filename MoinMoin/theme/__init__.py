@@ -159,9 +159,9 @@ class ThemeBase(object):
         from werkzeug import url_quote, url_encode
         self.env.filters['urlencode'] = lambda x: url_encode(x)
         self.env.filters['urlquote'] = lambda x: url_quote(x)
-        self.env.filters['datetime_format'] = lambda tm, u=request.user: u.getFormattedDateTime(tm)
-        self.env.filters['date_format'] = lambda tm, u=request.user: u.getFormattedDate(tm)
-        self.env.filters['user_format'] = lambda rev, request=request: \
+        self.env.filters['datetime_format'] = lambda tm, u = request.user: u.getFormattedDateTime(tm)
+        self.env.filters['date_format'] = lambda tm, u = request.user: u.getFormattedDate(tm)
+        self.env.filters['user_format'] = lambda rev, request = request: \
                                               user.get_printable_editor(request,
                                                                         rev.get(EDIT_LOG_USERID),
                                                                         rev.get(EDIT_LOG_ADDR),
@@ -202,12 +202,12 @@ class ThemeBase(object):
         @return: title in breadcrumbs
         """
         item_name = self.item_name
-        segments = item_name.split('/')
+        full_item_name = item_name.split('/')
         content = []
         current_item = ''
-        for s in segments:
-            current_item += s
-            content.append((s, current_item, self.storage.has_item(current_item)))
+        for name in full_item_name:
+            current_item += name
+            content.append((name, current_item, self.storage.has_item(current_item)))
             current_item += '/'
         return content
 
@@ -310,7 +310,7 @@ class ThemeBase(object):
             if not title:
                 title = item_name
             url = self.request.href(item_name)
-            return item_name, url, title, wiki_local
+            return url, title, wiki_local
 
         # remove wiki: url prefix
         if item_name.startswith("wiki:"):
@@ -323,7 +323,7 @@ class ThemeBase(object):
         if wiki_name not in [request.cfg.interwikiname, 'Self', ]:
             if not title:
                 title = item_name
-            return item_name, href, title, wiki_name
+            return href, title, wiki_name
 
         # Handle regular pagename like "FrontPage"
         item_name = wikiutil.normalize_pagename(item_name, request.cfg)
@@ -334,7 +334,7 @@ class ThemeBase(object):
 
         if not title:
             title = item_name
-        return item_name, item_name, title, wiki_local
+        return item_name, title, wiki_local
 
     def shortenPagename(self, name):
         """
@@ -375,14 +375,14 @@ class ThemeBase(object):
 
         # Process config navi_bar
         for text in request.cfg.navi_bar:
-            pagename, url, link_text, title = self.split_navilink(text)
+            url, link_text, title = self.split_navilink(text)
             items.append(('wikilink', url, link_text, title))
 
         # Add user links to wiki links.
         userlinks = self.user.getQuickLinks()
         for text in userlinks:
             # Split text without localization, user knows what he wants
-            pagename, url, link_text, title = self.split_navilink(text, localize=0)
+            url, link_text, title = self.split_navilink(text, localize=0)
             items.append(('userlink', url, link_text, title))
 
         # Add sister pages.
@@ -572,7 +572,6 @@ class ThemeBase(object):
         # TODO: Move actionsMenuInit() into body onload
         request = self.request
         _ = request.getText
-        rev = request.rev
 
         menu = [
             'rc',
@@ -677,7 +676,7 @@ class ThemeBase(object):
 
     # Public Functions ########################################################
 
-    def send_title(self, text, content=None, **keywords):
+    def send_title(self, text, **keywords):
         """
         Output the page header (and title).
 
@@ -701,11 +700,6 @@ class ThemeBase(object):
             page = Page(request, pagename)
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
-        #Attributes to use directly in template
-        # Or to reduce parameters of functions of JinjaTheme
-        self.page = page
-        self.item_name = page.page_name or ''
-        self.head_title = text
         request.write(self.render_content(page.page_name))
 
     def render_content(self, item_name, content=None, title=None, page=None, pagename=None,
@@ -732,12 +726,6 @@ class ThemeBase(object):
             content = item.do_show()
         if title is None:
             title = item_name
-
-        #Attributes to use directly in template
-        # Or to reduce parameters of functions of JinjaTheme
-        self.page = page
-        self.item_name = page.page_name or ''
-        self.head_title = title
 
         html = self.render_template(gettext=self.request.getText,
                                     item_name=item_name,
