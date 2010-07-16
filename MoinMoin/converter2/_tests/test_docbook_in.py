@@ -191,3 +191,25 @@ class TestConverter(Base):
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_style_element(self):
+        data = [
+            # EMPHASIS --> EMPHASIS
+            ('<article><para>text<emphasis>emphasis</emphasis></para></article>',
+             '/page/body/p[text()="text"][emphasis="emphasis"]'),
+            # EMPHASIS role='strong' --> STRONG
+            ('<article><para>text<emphasis db:role="strong">strong</emphasis></para></article>',
+             '/page/body/p[text()="text"][strong="strong"]'),
+            # SUBSCRIPT --> SPAN baseline-shift = 'sub'
+            ('<article><para><subscript>sub</subscript>script</para></article>',
+             '/page/body/p[text()="script"]/span[@baseline-shift="sub"][text()="sub"]'),
+            # SUPERSCRIPT --> SPAN baseline-shift = 'super'
+            ('<article><para><superscript>super</superscript>script</para></article>',
+             '/page/body/p[text()="script"]/span[@baseline-shift="super"][text()="super"]'),
+            # PHRASE --> SPAN
+            ('<article><para><phrase>text</phrase></para></article>',
+             '/page/body/p[span="text"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
