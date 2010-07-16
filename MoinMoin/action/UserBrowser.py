@@ -46,9 +46,6 @@ def get_account_infos(request):
 
 
 def execute(item_name, request):
-    template = request.theme.env.get_template('userbrowser.html')
-    content = template.render(gettext=request.getText,
-                              user_accounts=get_account_infos(request),
-                             )
-    request.theme.render_content(item_name, content)
+    return request.theme.render('userbrowser.html',
+                                user_accounts=get_account_infos(request))
 
