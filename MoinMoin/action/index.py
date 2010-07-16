@@ -10,5 +10,4 @@ from MoinMoin.items import Item
 def execute(item_name, request):
     item = Item.create(request, item_name)
     content = item.do_index()
-    request.theme.render_content(item_name, content)
-
+    return content
