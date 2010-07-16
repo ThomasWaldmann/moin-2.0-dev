@@ -17,13 +17,13 @@ class TestNaviBar(object):
         href, link_text, interwiki = self.theme.split_navilink('ItemName')
         assert link_text == 'ItemName'
         assert interwiki == ''
-        
+
     def test_itemname_with_text(self):
         href, link_text, interwiki = self.theme.split_navilink('[[ItemName|LinkText]]')
         assert link_text == 'LinkText'
         assert href == 'ItemName'
         assert interwiki == ''
-        
+
     def test_interwiki(self):
         url, link_text, interwiki = self.theme.split_navilink('MoinMoin:ItemName')
         assert link_text == 'ItemName'
