@@ -1,14 +1,14 @@
 SoC 2010 : Valentin JANIAUT
 ==========================
 
-The goal is to add support for different conversions between the DOM Tree and different format, especially HTML and DocBook. 
-
 DOM - HTML
 ==========
 
-Have a working converter from HTML to the DOM Tree. 
+ * Support conversion of unsafe HTML document into the internal DOM tree.
+ * Support HTML 4, with no style support.
 
 DocBook - DOM
 =============
 
-Have a working circular converter from Docbook to the DOM Tree and from DOM Tree to  DocBook. 
+ * Support conversion of a DocBook v5 document into the internal DOM tree.
+ * Support conversion of an internal DOM tree into a DocBook v5 document.
