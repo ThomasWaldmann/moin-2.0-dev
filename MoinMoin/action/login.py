@@ -23,15 +23,15 @@ def execute(item_name, request):
             if hint:
                 login_hints.append(hint)
         content = request.theme.render('login.html',
-                                                gettext=request.getText,
-                                                login_hints=login_hints,
-                                                login_inputs=request.cfg.auth_login_inputs,
-                                                title=title
-                                                )
+                                        login_hints=login_hints,
+                                        login_inputs=request.cfg.auth_login_inputs,
+                                        title=title
+                                        )
+
     elif request.method == 'POST':
         if 'login' in request.form:
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
                     request.theme.add_msg(msg, "error")
-        content = request.theme.render_content(item_name, title=title)
+        content = request.theme.render('content.html', title=title)
     return content
