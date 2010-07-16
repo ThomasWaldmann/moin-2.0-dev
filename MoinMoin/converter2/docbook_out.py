@@ -124,6 +124,9 @@ class Converter(object):
         children = ''.join(['<![CDATA[', code_str, ']]>'])
         return self.new(docbook.screen, attrib={}, children=children)
 
+    def visit_moinpage_emphasis(self, element):
+        return self.new_copy(docbook.emphasis, element, attrib={})
+
     def visit_moinpage_h(self, element):
         """
         There is not really heading in DocBook, but rather section with
