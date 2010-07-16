@@ -120,7 +120,9 @@ class Converter(object):
         return self.new_copy(docbook.link, element, attrib=attrib)
 
     def visit_moinpage_blockcode(self, element):
-        return self.new_copy(docbook.screen, element, attrib={})
+        code_str = ''.join(element)
+        children = ''.join(['<![CDATA[', code_str, ']]>'])
+        return self.new(docbook.screen, attrib={}, children=children)
 
     def visit_moinpage_h(self, element):
         """
