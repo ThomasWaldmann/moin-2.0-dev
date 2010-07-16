@@ -27,7 +27,6 @@ class Converter(object):
     """
     Converter html -> .x.moin.document
     """
-
     # Namespace of our input data
     html_namespace = {
         html.namespace: 'xhtml',
@@ -81,7 +80,6 @@ class Converter(object):
 
         TODO: Add support for different arguments
         """
-
         # Be sure we have empty string in the base url
         self.base_url = ''
 
@@ -181,7 +179,6 @@ class Converter(object):
         We will detect the name of the tag, and apply an appropriate
         procedure to convert it.
         """
-
         # Our element can be converted directly, just by changing the namespace
         if element.tag.name in self.symmetric_tags:
             return self.new_copy_symmetric(element, attrib={})
@@ -299,7 +296,6 @@ class Converter(object):
         """
         <del>Text</del> --> <span text-decoration="underline">Text</span>
         """
-
         key = moin_page('text-decoration')
         attrib = {}
         attrib[key] = 'line-through'
