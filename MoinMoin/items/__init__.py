@@ -450,6 +450,7 @@ class NonExistent(Item):
             ('text/plain', 'plain text'),
             ('text/csv', 'csv'),
             ('text/x-irclog', 'IRC log'),
+            ('application/docbook+xml', 'DocBook document'),
         ]),
         ('image items', [
             ('image/jpeg', 'JPEG'),
@@ -1170,7 +1171,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
 
 class Text(Binary):
     """ Any kind of text """
-    supported_mimetypes = ['text/']
+    supported_mimetypes = ['text/', 'application/docbook+xml']
     converter_mimetype = None
 
     # text/plain mandates crlf - but in memory, we want lf only
@@ -1275,9 +1276,6 @@ class HTML(Text):
     """ HTML markup """
     supported_mimetypes = ['text/html']
 
-    def _render_data(self):
-        return self.data_storage_to_internal(self.data)
-
     def do_modify(self, template_name):
         if template_name:
             item = Item.create(self.request, template_name)
@@ -1346,6 +1344,10 @@ class SafeHTML(Text):
                                   url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
                                  )
         return content
+
+class DocBook(Text):
+    """ DocBook Document """
+    supported_mimetypes = ['application/docbook+xml']
 
 
 class DiffPatch(Text):
