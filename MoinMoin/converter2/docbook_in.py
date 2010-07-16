@@ -218,6 +218,9 @@ class Converter(object):
                 attrib[key] = value
         return self.new_copy(moin_page.a, element, depth, attrib=attrib)
 
+    def visit_docbook_literal(self, element, depth):
+        return self.new_copy(moin_page.code, element, depth, attrib={})
+
     def visit_docbook_orderedlist(self, element, depth):
         attrib = {}
         key = moin_page('item-label-generate')
