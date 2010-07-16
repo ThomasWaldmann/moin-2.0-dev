@@ -108,16 +108,14 @@ def execute(item_name, request):
             textcha = textcha and textcha.render()
         else:
             textcha = None
-        template = request.theme.env.get_template('newaccount.html')
-        content = template.render(gettext=request.getText,
-                                  title=title,
-                                  textcha=textcha,
-                                  ticket=wikiutil.createTicket(request),
-                                 )
-        return content
+        content = request.theme.render('newaccount.html',
+                                        title=title,
+                                        textcha=textcha,
+                                        ticket=wikiutil.createTicket(request),
+                                        )
     elif request.method == 'POST':
         if 'create' in request.form:
             request.theme.add_msg(_create_user(request), "dialog")
-        content = request.theme.render_content(item_name, title=title)
-        return content
+        content = request.theme.render('content.html', title=title)
+    return content
 
