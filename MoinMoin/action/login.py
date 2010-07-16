@@ -21,7 +21,7 @@ def execute(item_name, request):
             hint = authmethod.login_hint(request)
             if hint:
                 login_hints.append(hint)
-        content = request.theme.render_template('login.html',
+        content = request.theme.render('login.html',
                                                 gettext=request.getText,
                                                 login_hints=login_hints,
                                                 login_inputs=request.cfg.auth_login_inputs,

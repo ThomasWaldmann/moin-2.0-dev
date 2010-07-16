@@ -727,7 +727,7 @@ class ThemeBase(object):
         if title is None:
             title = item_name
 
-        html = self.render_template(gettext=self.request.getText,
+        html = self.render(gettext=self.request.getText,
                                     item_name=item_name,
                                     title=title,
                                     content=content,
@@ -738,8 +738,7 @@ class ThemeBase(object):
                                     **keywords)
         return html
 
-    def render_template(self, filename='layout.html', **context):
-        # TODO: change it to be render(self, name, **context)
+    def render(self, name='layout.html', **context):
         """
         Base function that renders a template using Jinja2.
 
@@ -747,7 +746,7 @@ class ThemeBase(object):
         @param context: used to pass variables to template.
         @return: rendered output
         """
-        template = self.env.get_template(filename)
+        template = self.env.get_template(name)
         return template.render(**context)
 
 
