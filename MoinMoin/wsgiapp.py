@@ -3,7 +3,8 @@
     MoinMoin - WSGI application
 
     @copyright: 2003-2008 MoinMoin:ThomasWaldmann,
-                2008-2008 MoinMoin:FlorianKrupicka
+                2008-2008 MoinMoin:FlorianKrupicka,
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 import os

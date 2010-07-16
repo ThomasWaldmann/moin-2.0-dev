@@ -3,6 +3,7 @@
     MoinMoin - show diff between 2 item revisions
 
     @copyright: 2009 MoinMoin:ThomasWaldmann
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 # TODO get_item and get_revision calls may raise an AccessDeniedError.

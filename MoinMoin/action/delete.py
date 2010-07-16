@@ -7,6 +7,7 @@
     trashbin).
 
     @copyright: 2009 MoinMoin:ThomasWaldmann
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 

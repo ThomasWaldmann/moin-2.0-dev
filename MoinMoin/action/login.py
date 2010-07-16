@@ -8,7 +8,8 @@
     TODO: re-add multistage login (see moin/1.9-storage).
 
     @copyright: 2005-2006 Radomirs Cirskis <nad2000@gmail.com>,
-                2006,2009 MoinMoin:ThomasWaldmann
+                2006,2009 MoinMoin:ThomasWaldmann,
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 

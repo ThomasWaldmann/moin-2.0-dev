@@ -3,7 +3,8 @@
     MoinMoin - modernized theme (just a small wrapper, everything else
     is in ThemeBase now.
 
-    @copyright: 2008 Radomir Dopieralski
+    @copyright: 2008 Radomir Dopieralski,
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 
