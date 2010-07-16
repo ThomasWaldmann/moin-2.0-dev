@@ -1299,9 +1299,6 @@ class HTML(Text):
     """ HTML markup """
     supported_mimetypes = ['text/html']
 
-    def _render_data(self):
-        return self.data_storage_to_internal(self.data)
-
     def do_modify(self, template_name):
         if template_name:
             item = Item.create(self.request, template_name)
