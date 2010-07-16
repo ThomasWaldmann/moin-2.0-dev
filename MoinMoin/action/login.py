@@ -13,6 +13,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from MoinMoin.items import Item
+
 def execute(item_name, request):
     _ = request.getText
     title = _("Login")
@@ -33,5 +35,7 @@ def execute(item_name, request):
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
                     request.theme.add_msg(msg, "error")
-        content = request.theme.render('content.html', title=title)
+        
+        item = Item.create(request, item_name)
+        content = item.do_show()
     return content

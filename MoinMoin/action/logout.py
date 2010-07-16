@@ -10,6 +10,7 @@
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
+from MoinMoin.items import Item
 
 def execute(item_name, request):
     _ = request.getText
@@ -23,5 +24,6 @@ def execute(item_name, request):
         # something went wrong
         msg = _("You are still logged in."), "warning"
     request.theme.add_msg(*msg)
-    content = request.theme.render('content.html', title=title)
+    item = Item.create(request, item_name)
+    content = item.do_show()
     return content
