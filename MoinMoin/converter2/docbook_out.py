@@ -330,6 +330,12 @@ class Converter(object):
 
         return self.new_copy(docbook.phrase, element, attrib={})
 
+    def visit_moinpage_strong(self, element):
+        attrib = {}
+        key = docbook.role
+        attrib[key] = "strong"
+        return self.new_copy(docbook.emphasis, element, attrib=attrib)
+
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
 default_registry.register(Converter._factory, type_moin_document,
