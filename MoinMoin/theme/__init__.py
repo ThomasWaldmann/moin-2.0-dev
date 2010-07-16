@@ -699,43 +699,7 @@ class ThemeBase(object):
             page = Page(request, pagename)
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
-        request.write(self.render_content(page.page_name))
-
-    def render_content(self, item_name, content=None, title=None, page=None, pagename=None,
-                        allow_doubleclick=None, pi_refresh=None, html_head=None, trail=None, **keywords):
-        """
-        Render some content plus Theme header/footer.
-        If content is None, the normal Item content for item_name will be rendered.
-        """
-        request = self.request
-        _ = request.getText
-
-        #TODO: Have to fix this code (looks ugly for me)
-        if keywords.has_key('page'):
-            page = keywords['page']
-            pagename = page.page_name
-        else:
-            pagename = item_name
-            page = Page(request, pagename)
-        if keywords.get('msg', ''):
-            raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
-
-        if content is None:
-            item = Item.create(request, item_name)
-            content = item.do_show()
-        if title is None:
-            title = item_name
-
-        html = self.render(gettext=self.request.getText,
-                                    item_name=item_name,
-                                    title=title,
-                                    content=content,
-                                    allow_doubleclick=allow_doubleclick,
-                                    pi_refresh=pi_refresh,
-                                    html_head=html_head,
-                                    trail=trail,
-                                    **keywords)
-        return html
+        request.write(self.render('show.html'))
 
     def render(self, name='layout.html', **context):
         """
