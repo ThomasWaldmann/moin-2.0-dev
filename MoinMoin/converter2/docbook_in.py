@@ -386,6 +386,20 @@ class Converter(object):
         attrib[key] = 'unordered'
         return self.visit_simple_list(moin_page.list, attrib, element, depth)
 
+    def visit_docbook_subscript(self, element, depth):
+        attrib = {}
+        key = moin_page('baseline-shift')
+        attrib[key] = 'sub'
+        return self.new_copy(moin_page.span, element,
+                             depth, attrib=attrib)
+
+    def visit_docbook_superscript(self, element, depth):
+        attrib = {}
+        key = moin_page('baseline-shift')
+        attrib[key] = 'super'
+        return self.new_copy(moin_page.span, element,
+                             depth, attrib=attrib)
+
     def visit_docbook_term(self, element, depth):
         return self.new_copy(moin_page('list-item-label'),
                              element, depth, attrib={})
