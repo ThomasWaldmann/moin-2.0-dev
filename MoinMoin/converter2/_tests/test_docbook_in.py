@@ -173,6 +173,9 @@ class TestConverter(Base):
             # Test for <screen> with CDATA
             ('<article><screen><![CDATA[Text]]></screen></article>',
              '/page/body[blockcode="Text"]'),
+            # PROGRAMLISTING --> BLOCKCODE
+            ('<article><programlisting>Text</programlisting></article>',
+             '/page/body[blockcode="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
