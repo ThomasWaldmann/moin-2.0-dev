@@ -128,6 +128,13 @@ class TestConverter(Base):
             # SPAN --> PHRASE
             ('<page><body><p><span>Text</span></p></body></page>',
              '/article/para[phrase="Text"]'),
+            # SPAN baseline-shift=sub --> subscript
+            ('<page><body><p>sub<span page:baseline-shift="sub">sub</span>script</p></body></page>',
+             '/article/para[text()="script"][subscript="sub"]'),
+            # SPAN baseline-shift=super --> superscript
+            ('<page><body><p>sub<span page:baseline-shift="super">super</span>script</p></body></page>',
+             '/article/para[text()="script"][superscript="super"]'),
+
         ]
         for i in data:
             yield (self.do, ) + i
