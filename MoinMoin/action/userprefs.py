@@ -61,13 +61,8 @@ def _create_prefs_page(request, sel=None):
 
 
 def _create_page(request, cancel=False):
-    # returns text, title, msg_class, msg
+    # returns text, title
     pagename = request.page.page_name
-
-    if 'handler' in request.values:
-        msg_class, msg = _handle_submission(request)
-    else:
-        msg_class, msg = None, None
 
     sub = request.args.get('sub', '')
     cls = None
@@ -81,9 +76,9 @@ def _create_page(request, cancel=False):
     obj = cls and cls(request)
 
     if not obj or not obj.allowed():
-        return _create_prefs_page(request), None, msg_class, msg
+        return _create_prefs_page(request), None
 
-    return obj.create_form(), obj.title, msg_class, msg
+    return obj.create_form(), obj.title
 
 
 def execute(pagename, request):
@@ -93,7 +88,7 @@ def execute(pagename, request):
         request.theme.add_msg(_("You must login to use this action: %(action)s.") % {"action": actname}, "error")
         return Page.Page(request, pagename).send_page()
 
-    text, title, msg_class, msg = _create_page(request)
+    text, title = _create_page(request)
     if title:
         # XXX: we would like to make "Settings" here a link back
         #      to the generic userprefs page but that is impossible
@@ -102,6 +97,5 @@ def execute(pagename, request):
         title = _("Settings") + ": " + title
     else:
         title = _("Settings")
-    request.theme.add_msg(msg, msg_class)
     content = "%s%s%s" % (request.formatter.startContent("content"), text, request.formatter.endContent())
     return request.theme.render('content.html', title=title, content=content)
