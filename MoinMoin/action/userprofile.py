@@ -29,5 +29,5 @@ def execute(item_name, request):
         theuser.save()
         request.theme.add_msg('%s.%s: %s -> %s' % tuple([wikiutil.escape(s) for s in [user_name, key, oldval, val]]), "info")
 
-    request.theme.render_content(item_name)
+    return request.theme.render('content.html')
 
