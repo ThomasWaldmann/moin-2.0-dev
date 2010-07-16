@@ -290,7 +290,7 @@ class ThemeBase(object):
         """
         request = self.request
         title = None
-        wiki_local = '' # means local wiki
+        wiki_local = ''  # means local wiki
 
         # Handle [[pagename|title]] or [[url|title]] formats
         if text.startswith('[[') and text.endswith(']]'):
@@ -324,7 +324,7 @@ class ThemeBase(object):
             if not title:
                 title = item_name
             return item_name, href, title, wiki_name
-                
+
         # Handle regular pagename like "FrontPage"
         item_name = wikiutil.normalize_pagename(item_name, request.cfg)
 
@@ -472,34 +472,13 @@ class ThemeBase(object):
                     href = wikiutil.join_wiki(wiki_base_url, item_name)
                     if wiki_name in [request.cfg.interwikiname, 'Self', ]:
                         exists = self.storage.has_item(item_name)
-                        wiki_name = '' # means "this wiki" for the theme code
+                        wiki_name = ''  # means "this wiki" for the theme code
                     else:
-                        exists = True # we can't detect existance of remote items
+                        exists = True  # we can't detect existance of remote items
                     items.append((wiki_name, item_name, href, exists, err))
         return items
 
-    def shouldShowPageInfo(self):
-        """
-        Should we show page info?
-
-        Should be implemented by actions. For now, we check here by action
-        name and page.
-
-        @param page: current page
-        @rtype: bool
-        @return: true if should show page info
-        """
-        if self.item_exists and self.item_readable:
-            # These actions show the page content.
-            # TODO: on new action, page info will not show.
-            # A better solution will be if the action itself answer the question: showPageInfo().
-            contentActions = [u'', u'show', u'refresh', u'preview', u'diff',
-                              u'subscribe', u'rename', u'copy', u'backlink',
-                             ]
-            return self.request.action in contentActions
-        return False
-
-    def universal_edit_button(self): # TODO: give this a better name that describes what this method tells
+    def universal_edit_button(self):  # TODO: give this a better name that describes what this method tells
         """
         Should we show an edit link in the header?
         User have permission? If yes, show the universal edit button.
@@ -507,7 +486,7 @@ class ThemeBase(object):
         """
         can_modify = 'modify' not in self.cfg.actions_excluded
         return can_modify and self.item_exists and self.item_writable
-        
+
     def shouldShowEditbar(self):
         """
         Should we show the editbar?
