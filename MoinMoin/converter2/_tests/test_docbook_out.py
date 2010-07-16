@@ -137,6 +137,9 @@ class TestConverter(Base):
             # STRONG --> EMPHASIS role='strong'
             ('<page><body><p>text<strong>strong</strong></p></body></page>',
              '/article/para[text()="text"]/emphasis[role="strong"][text()="strong"]'),
+            # EMPHASIS --> EMPHASIS
+            ('<page><body><p>text<emphasis>emphasis</emphasis></p></body></page>',
+             '/article/para[text()="text"][emphasis="emphasis"]'),
         ]
         for i in data:
             yield (self.do, ) + i
