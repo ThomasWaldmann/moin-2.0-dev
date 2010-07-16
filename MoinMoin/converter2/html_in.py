@@ -1,12 +1,12 @@
 # -*- coding: iso-8859-1 -*-
 """
 MoinMoin - HTML input converter
+Converts an html4 document into an internal document tree.
 
-Converts an HTML Tree into an internal document tree.
+TODO : Add support for style
 
 @copyright: 2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details.
-@TODO : * Add basic support for the styles
 """
 
 from __future__ import absolute_import
