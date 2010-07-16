@@ -23,4 +23,5 @@ def execute(item_name, request):
         # something went wrong
         msg = _("You are still logged in."), "warning"
     request.theme.add_msg(*msg)
-    request.theme.render_content(item_name, title=title)
+    content = request.theme.render('content.html', title=title)
+    return content
