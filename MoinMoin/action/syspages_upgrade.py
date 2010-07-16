@@ -17,11 +17,9 @@ from MoinMoin.storage.error import BackendError
 def execute(item_name, request):
     _ = request.getText
     if request.method == 'GET':
-        env = request.theme.env
-        template = env.get_template('action_query.html')
         action = 'syspages_upgrade'
         label = 'Upgrade System Pages'
-        content = template.render(gettext=request.getText,
+        content = request.theme.render('action_query.html',
                                   action=action,
                                   label=label,
                                   no_comment=True,
@@ -37,6 +35,6 @@ def execute(item_name, request):
                 content = _('<br> System pages upgrade failed due to the following error: %s.' % e)
             else:
                 content = _('<br> System pages have been upgraded successfully!')
-
-    request.theme.render_content(item_name, content)
+            content = request.theme.render('content.html', content=content)
+    return content
 
