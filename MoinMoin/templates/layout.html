@@ -32,14 +32,26 @@
 </div>
 
 <div id="username">
-    {% for url, text, extra_attrs, exists in theme.user_breadcrumbs() %}
-        <a href="{{ url|e }}" {% if not exists %}class="nonexistent"{% endif %} {{extra_attrs}}>
-            {{ text }}
-        </a>
-        {% if not loop.last %}
+    {% if user.valid %}
+        {% if user.name %}
+            {% set wiki_href, aliasname, title, exists = theme.userhome() %}
+            <a href="{{ wiki_href }}|e" {% if not exists %}class="nonexistent"{% endif %} rel="nofollow" title="{{ title }}">
+                {{ aliasname }}
+            </a>
             <span class="sep"> | </span>
+            {% if 'userprefs' not in cfg.actions_excluded %}
+                <a href="{{ href(do='userprefs')|e }}" class="userprefs" rel="nofollow">{{ _('Settings') }}</a>
+                <span class="sep"> | </span>
+            {% endif %}
         {% endif %}
-    {% endfor %}
+        {% if user.auth_method in cfg.auth_can_logout %}
+            <a href="{{ href(do='logout', logout='logout')|e }}" class="logout" rel="nofollow">
+                {{ _('Logout') }}
+            </a>
+        {% endif %}
+    {% else %}
+        <a href="{{ theme.login_url|e }}" class="login" rel="nofollow">{{ _('Login') }}</a>
+    {% endif %}
 </div>
 
 
