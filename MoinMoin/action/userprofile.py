@@ -2,7 +2,8 @@
 """
     MoinMoin - set values in user profile
 
-    @copyright: 2008-2009 MoinMoin:ThomasWaldmann
+    @copyright: 2008-2009 MoinMoin:ThomasWaldmann,
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 from MoinMoin import user, wikiutil

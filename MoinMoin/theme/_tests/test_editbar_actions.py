@@ -2,7 +2,8 @@
 """
     MoinMoin - MoinMoin.theme Tests
 
-    @copyright: 2008 MoinMoin:ReimarBauer
+    @copyright: 2008 MoinMoin:ReimarBauer,
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 

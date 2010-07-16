@@ -2,8 +2,9 @@
 """
     MoinMoin - user settings action
 
-    @copyright: 2006 Radomir Dopieralski
-                2007, 2008 MoinMoin:JohannesBerg
+    @copyright: 2006 Radomir Dopieralski,
+                2007, 2008 MoinMoin:JohannesBerg,
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 

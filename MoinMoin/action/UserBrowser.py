@@ -5,7 +5,8 @@
     TODO: use Item, not Page
 
     @copyright: 2001-2003 Juergen Hermann <jh@web.de>,
-                2009 MoinMoin:ThomasWaldmann
+                2009 MoinMoin:ThomasWaldmann,
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 

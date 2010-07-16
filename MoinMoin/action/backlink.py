@@ -5,7 +5,7 @@
     This action is used to get page_name and do
     a search using this parameter.
 
-    @copyright: 2010 MoinMoin:DiogenesAugustoFernandesHerminio
+    @copyright: 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 
