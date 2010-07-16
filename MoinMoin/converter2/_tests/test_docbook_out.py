@@ -125,6 +125,9 @@ class TestConverter(Base):
             # Blockcode conversion into <screen> with CDATA
             ('<page><body><blockcode>Text</blockcode></body></page>',
              '/article[screen="<![CDATA[Text]]>"]'),
+            # SPAN --> PHRASE
+            ('<page><body><p><span>Text</span></p></body></page>',
+             '/article/para[phrase="Text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
