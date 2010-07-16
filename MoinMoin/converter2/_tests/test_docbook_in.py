@@ -178,7 +178,7 @@ class TestConverter(Base):
              '/page/body[blockcode="Text"]'),
             # LITERAL --> CODE
             ('<article><para>text<literal>literal</literal></para></article>',
-             '/page/body/p[text()="text"][literal="literal"]'),
+             '/page/body/p[text()="text"][code="literal"]'),
         ]
         for i in data:
             yield (self.do, ) + i
