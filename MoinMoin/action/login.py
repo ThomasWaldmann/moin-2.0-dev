@@ -35,7 +35,7 @@ def execute(item_name, request):
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
                     request.theme.add_msg(msg, "error")
-        
+
         item = Item.create(request, item_name)
         content = item.do_show()
     return content
