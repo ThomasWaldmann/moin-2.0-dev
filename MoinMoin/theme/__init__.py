@@ -121,22 +121,13 @@ class ThemeBase(object):
         @param request: the request object
         """
         self.request = request
-        # TODO: get rid of this vvv
-        page = request.page
-        if page is None:
-            path = urlparse.urlparse(request.getBaseURL()).path[1:]
-            page = Page(request, path)
-        self.page = page
-        # TODO: get rid of this ^^^
-        item_name = page.page_name
-        self.item_name = item_name
-        storage = request.storage
-        self.storage = storage
-        self.item_exists = storage.has_item(item_name)
-        self.output_mimetype = page.output_mimetype
-        self.output_charset = page.output_charset
         self.cfg = request.cfg
         self.user = request.user
+        self.item_name = item_name = request.item_name
+        self.storage = storage = request.storage
+        self.item_exists = storage.has_item(item_name)
+        self.output_mimetype = 'text/html' # was: page.output_mimetype
+        self.output_charset = 'utf-8' # was: page.output_charset
         self.item_readable = request.user.may.read(item_name)
         self.item_writable = request.user.may.write(item_name)
         self.ui_lang = request.lang

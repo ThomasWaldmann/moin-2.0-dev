@@ -173,46 +173,24 @@ def run(context):
         context.finish()
         context.clock.stop('run')
 
-def remove_prefix(path, prefix=None):
-    """ Remove an url prefix from the path info and return shortened path. """
-    # we can have all action URLs like this: /action/ActionName/PageName?action=ActionName&...
-    # this is just for robots.txt being able to forbid them for crawlers
-    if prefix is not None:
-        prefix = '/%s/' % prefix # e.g. '/action/'
-        if path.startswith(prefix):
-            # remove prefix and action name
-            path = path[len(prefix):]
-            action, path = (path.split('/', 1) + ['', ''])[:2]
-            path = '/' + path
-    return path
 
 def dispatch(request, context, action_name='show'):
-    cfg = context.cfg
-
-    # The last component in path_info is the page name, if any
-    path = remove_prefix(request.path, cfg.url_prefix_action)
-
-    if path.startswith('/'):
-        pagename = wikiutil.normalize_pagename(path, cfg)
-    else:
-        pagename = None
-
     # need to inform caches that content changes based on:
     # * cookie (even if we aren't sending one now)
     # * User-Agent (because a bot might be denied and get no content)
     # * Accept-Language (except if moin is told to ignore browser language)
     hs = HeaderSet(('Cookie', 'User-Agent'))
-    if not cfg.language_ignore_browser:
+    if not context.cfg.language_ignore_browser:
         hs.add('Accept-Language')
     request.headers['Vary'] = str(hs)
 
     # Handle request. We have these options:
     # 1. jump to page where user left off
-    if not pagename and context.user.remember_last_visit and action_name == 'show':
+    if not context.item_name and context.user.remember_last_visit and action_name == 'show':
         response = redirect_last_visited(context)
     # 2. handle action
     else:
-        response = handle_action(context, pagename, action_name)
+        response = handle_action(context, context.item_name, action_name)
     if isinstance(response, Context):
         response = response.request
     return response

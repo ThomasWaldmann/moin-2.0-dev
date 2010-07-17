@@ -483,10 +483,6 @@ class Page(object):
                 action = None # we don't support getting the action out of a str
 
             querystr = wikiutil.makeQueryString(querystr)
-
-            # make action URLs denyable by robots.txt:
-            if action is not None and request.cfg.url_prefix_action is not None:
-                url = "%s/%s/%s" % (request.cfg.url_prefix_action, action, url)
             url = '%s?%s' % (url, querystr)
 
         if not relative:

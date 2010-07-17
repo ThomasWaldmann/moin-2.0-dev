@@ -368,10 +368,6 @@ class ConfigFunctionality(object):
         # Cache variables for the properties below
         self._iwid = self._iwid_full = self._meta_dict = None
 
-        action_prefix = self.url_prefix_action
-        if action_prefix is not None and action_prefix.endswith('/'): # make sure there is no trailing '/'
-            self.url_prefix_action = action_prefix[:-1]
-
         if self.url_prefix_local is None:
             self.url_prefix_local = self.url_prefix_static
 
@@ -866,9 +862,6 @@ options_no_group_name = {
      "used as the base URL for some Javascript - set this to a URL on same server as the wiki if your url_prefix_static points to a different server."),
     ('url_prefix_ckeditor', None,
      "used as the base URL for CKeditor - similar to url_prefix_local, but just for CKeditor."),
-
-    ('url_prefix_action', None,
-     "Use 'action' to enable action URL generation to be compatible with robots.txt. It will generate .../action/info/PageName?action=info then. Recommended for internet wikis."),
 
     ('notification_bot_uri', None, "URI of the Jabber notification bot."),
 
