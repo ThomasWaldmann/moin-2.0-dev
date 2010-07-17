@@ -49,8 +49,8 @@
         <meta name="description" content="{{ meta_description }}">
     {% endif %}
     
-    <title> 
-    {{ title }} - 
+    <title>
+    {% if title %}{{ title }}{% else %}{{ theme.item_name }}{% endif %} - 
         {% if cfg.html_pagetitle %}
             {{ cfg.html_pagetitle|e }}
         {% else %}
