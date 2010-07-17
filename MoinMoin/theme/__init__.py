@@ -445,15 +445,6 @@ class ThemeBase(object):
                     items.append((wiki_name, item_name, href, exists, err))
         return items
 
-    def universal_edit_button(self):  # TODO: give this a better name that describes what this method tells
-        """
-        Should we show an edit link in the header?
-        User have permission? If yes, show the universal edit button.
-        @rtype: boolean
-        """
-        can_modify = 'modify' not in self.cfg.actions_excluded
-        return can_modify and self.item_exists and self.item_writable
-
     def shouldShowEditbar(self):
         """
         Should we show the editbar?
