@@ -3,7 +3,7 @@
 MoinMoin - DocBook input converter
 Converts a DocBook document into an internal document tree.
 
-Currently support DocBook v5.
+Currently supports DocBook v5.
 
 Some elements of DocBook v4 specification are also supported
 for backward compatibility :
