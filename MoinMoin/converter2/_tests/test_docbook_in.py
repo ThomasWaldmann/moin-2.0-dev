@@ -8,6 +8,7 @@ MoinMoin - Tests for MoinMoin.converter2.docbook_in
 
 import py.test
 import re
+import StringIO
 
 try:
     from lxml import etree
@@ -18,7 +19,6 @@ from MoinMoin.converter2.docbook_in import *
 from emeraldtree.tree import *
 from MoinMoin import log
 logging = log.getLogger(__name__)
-import StringIO
 
 class Base(object):
     input_namespaces = ns_all = u'xmlns="%s" xmlns:db="%s" xmlns:xlink="%s"' % (
