@@ -526,9 +526,9 @@ class ThemeBase(object):
         href = request.href
         url = ''
         if request.cfg.auth_login_inputs == ['special_no_input']:
-            url = href(do='login', login=1)
+            url = href(self.item_name, do='login', login=1)
         if request.cfg.auth_have_login:
-            url = url or href(do='login')
+            url = url or href(self.item_name, do='login')
         return url
 
     @property
