@@ -5,6 +5,7 @@
     See also MoinMoin/action/userprefs.py
 
     @copyright: 2007 MoinMoin:Johannesberg
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 from MoinMoin.util import pysupport
@@ -80,8 +81,9 @@ class UserPrefBase(object):
         self._table = html.TABLE(border="0")
 
         # Use the user interface language and direction
-        lang_attr = self.request.theme.ui_lang_attr()
-        _form.append(html.Raw('<div class="userpref"%s>' % lang_attr))
+        ui_lang = self.request.theme.ui_lang
+        ui_dir = self.request.theme.ui_dir
+        _form.append(html.Raw('<div class="userpref" lang="%s" dir="%s">' % (ui_lang, ui_dir)))
         para = html.P()
         _form.append(para)
         if explanation:

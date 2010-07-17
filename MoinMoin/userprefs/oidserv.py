@@ -3,6 +3,7 @@
     MoinMoin - OpenID preferences
 
     @copyright: 2007     MoinMoin:JohannesBerg
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -95,8 +96,9 @@ class Settings(UserPrefBase):
 
         ret = html.P()
         # Use the user interface language and direction
-        lang_attr = self.request.theme.ui_lang_attr()
-        ret.append(html.Raw('<div %s>' % lang_attr))
+        ui_lang = self.request.theme.ui_lang
+        ui_dir = self.request.theme.ui_dir
+        ret.append(html.Raw('<div lang="%s" dir="%s">' % (ui_lang, ui_dir)))
         self._table = html.TABLE(border="0")
         ret.append(self._table)
         ret.append(html.Raw("</div>"))
