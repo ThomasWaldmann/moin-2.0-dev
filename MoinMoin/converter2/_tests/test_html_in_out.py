@@ -14,7 +14,7 @@ import re
 try:
     from lxml import etree
 except:
-    py.test.py.test.skip("lxml module required to run test for html_in_out converter.")
+    py.test.skip("lxml module required to run test for html_in_out converter.")
 
 from MoinMoin.converter2.html_in import Converter as HTML_IN
 from MoinMoin.converter2.html_out import Converter as HTML_OUT
