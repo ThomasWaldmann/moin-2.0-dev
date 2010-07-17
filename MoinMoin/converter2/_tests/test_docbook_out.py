@@ -43,8 +43,7 @@ class Base(object):
         return ET.XML(i)
 
     def handle_output(self, elem, **options):
-        from cStringIO import StringIO
-        file = StringIO()
+        file = StringIO.StringIO()
         tree = ET.ElementTree(elem)
         tree.write(file, namespaces=self.output_namespaces, **options)
         return self.output_re.sub(u'', file.getvalue())
