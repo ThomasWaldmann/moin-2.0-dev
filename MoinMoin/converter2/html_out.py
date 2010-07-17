@@ -169,6 +169,9 @@ class Converter(object):
 
         return pre
 
+    def visit_moinpage_blockquote(self, elem):
+        return  self.new_copy(html.blockquote, elem)
+
     def visit_moinpage_code(self, elem):
         return self.new_copy(html.tt, elem)
 
@@ -229,6 +232,16 @@ class Converter(object):
 
         if generate:
             if generate == 'ordered':
+                style = attrib.get('list-style-type')
+                if style:
+                    if style == 'upper-alpha':
+                        attrib_new[html('type')] = 'A'
+                    elif style == 'upper-roman':
+                        attrib_new[html('type')] = 'I'
+                    elif style == 'lower-roman':
+                        attrib_new[html('type')] = 'i'
+                    elif style == 'lower-alpha':
+                        attrib_new[html('type')] = 'a'
                 ret = self.new(html.ol, attrib_new)
             elif generate == 'unordered':
                 ret = self.new(html.ul, attrib_new)
@@ -238,21 +251,23 @@ class Converter(object):
             ret = self.new(html.dl, attrib_new)
 
         for item in elem:
-            if item.tag.uri == moin_page and item.tag.name == 'list-item':
-                if not generate:
-                    for label in item:
-                        if label.tag.uri == moin_page and label.tag.name == 'list-item-label':
-                            ret_label = self.new_copy(html.dt, label)
-                            ret.append(ret_label)
-
-                for body in item:
-                    if body.tag.uri == moin_page and body.tag.name == 'list-item-body':
-                        if generate:
-                            ret_body = self.new_copy(html.li, body)
-                        else:
-                            ret_body = self.new_copy(html.dd, body)
-                        ret.append(ret_body)
-                        break
+            if isinstance(item, ET.Element):
+                if item.tag.uri == moin_page and item.tag.name == 'list-item':
+                    if not generate:
+                        for label in item:
+                            if isinstance(label, ET.Element):
+                                if label.tag.uri == moin_page and label.tag.name == 'list-item-label':
+                                    ret_label = self.new_copy(html.dt, label)
+                                    ret.append(ret_label)
+                    for body in item:
+                        if isinstance(body, ET.Element):
+                            if body.tag.uri == moin_page and body.tag.name == 'list-item-body':
+                                if generate:
+                                    ret_body = self.new_copy(html.li, body)
+                                else:
+                                    ret_body = self.new_copy(html.dd, body)
+                                ret.append(ret_body)
+                                break
 
         return ret
 
@@ -320,11 +335,39 @@ class Converter(object):
 
         return html.p()
 
+    def visit_moinpage_quote(self, elem):
+        return self.new_copy(html.quote, elem)
+
     def visit_moinpage_separator(self, elem):
         return self.new(html.hr)
 
     def visit_moinpage_span(self, elem):
-        # TODO
+        # TODO : Fix bug if a span has multiple attributes
+        # Check for the attributes of span
+        attrib = Attributes(elem)
+        # Check for the baseline-shift (subscript or superscript)
+        generate = attrib.get('baseline-shift')
+        if generate:
+            if generate == 'sub':
+                return self.new_copy(html.sub, elem)
+            elif generate == 'super':
+                return self.new_copy(html.sup, elem)
+        generate = attrib.get('text-decoration')
+        if generate:
+            if generate == 'underline':
+                return self.new_copy(html.ins, elem)
+            elif generate == 'line-through':
+                return self.new_copy(html('del'), elem)
+        generate = attrib.get('font-size')
+        if generate:
+            if generate == '85%':
+                return self.new_copy(html.small, elem)
+            elif generate == '120%':
+                return self.new_copy(html.big, elem)
+        generate = attrib.get('html-element')
+        if generate:
+            return self.new_copy(html(generate), elem)
+        # If no any attributes is handled by our converter, just return span
         return self.new_copy(html.span, elem)
 
     def visit_moinpage_strong(self, elem):
