@@ -1171,7 +1171,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
 
 class Text(Binary):
     """ Any kind of text """
-    supported_mimetypes = ['text/', 'application/docbook+xml']
+    supported_mimetypes = ['text/']
     converter_mimetype = None
 
     # text/plain mandates crlf - but in memory, we want lf only
