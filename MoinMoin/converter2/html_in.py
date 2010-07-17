@@ -11,17 +11,18 @@ TODO : Add support for style
 
 from __future__ import absolute_import
 
+import re
+
 from emeraldtree import ElementTree as ET
 from emeraldtree.html import HTML
-
-from MoinMoin import wikiutil
-from MoinMoin.util.tree import html, moin_page, xlink
-from ._wiki_macro import ConverterMacro
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-import re
+from MoinMoin import wikiutil
+from MoinMoin.util.tree import html, moin_page, xlink
+
+from ._wiki_macro import ConverterMacro
 
 class Converter(object):
     """
