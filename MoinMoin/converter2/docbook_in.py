@@ -19,12 +19,13 @@ import re
 
 from emeraldtree import ElementTree as ET
 
-from MoinMoin import wikiutil
-from MoinMoin.util.tree import moin_page, xlink, docbook
-from ._wiki_macro import ConverterMacro
-
 from MoinMoin import log
 logging = log.getLogger(__name__)
+
+from MoinMoin import wikiutil
+from MoinMoin.util.tree import moin_page, xlink, docbook
+
+from ._wiki_macro import ConverterMacro
 
 class Converter(object):
     """
