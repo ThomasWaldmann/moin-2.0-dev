@@ -15,6 +15,8 @@ for backward compatibility :
 
 from __future__ import absolute_import
 
+import re
+
 from emeraldtree import ElementTree as ET
 
 from MoinMoin import wikiutil
@@ -23,8 +25,6 @@ from ._wiki_macro import ConverterMacro
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
-
-import re
 
 class Converter(object):
     """
