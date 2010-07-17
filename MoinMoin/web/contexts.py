@@ -101,6 +101,17 @@ class Context(object):
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, self.personalities)
 
+
+def get_item_name(context):
+    # The last component in path_info is the page name, if any
+    path = context.request.path
+    if path.startswith('/'):
+        item_name = wikiutil.normalize_pagename(path, context.cfg)
+    else:
+        item_name = None
+    return item_name
+
+
 class BaseContext(Context):
     """ Implements a basic context, that provides some common attributes.
     Most attributes are lazily initialized via descriptors. """
@@ -117,7 +128,8 @@ class BaseContext(Context):
     html_formatter = EnvironProxy('html_formatter', lambda o: text_html.Formatter(o))
     formatter = EnvironProxy('formatter', lambda o: o.html_formatter)
 
-    page = EnvironProxy('page', None)
+    page = EnvironProxy('page', None) # TODO deprecated, get rid of this
+    item_name = EnvironProxy('item_name', lambda o: get_item_name(o))
 
     # now the more complex factories
     def cfg(self):
