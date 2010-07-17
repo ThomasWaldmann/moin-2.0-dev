@@ -8,15 +8,15 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, StringIO
+import os
 import urlparse
 
-from jinja2 import Environment, FileSystemLoader, Template, FileSystemBytecodeCache, Markup
+from jinja2 import Environment, FileSystemLoader, FileSystemBytecodeCache
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin import i18n, wikiutil, config, version, caching, user
+from MoinMoin import i18n, wikiutil, caching, user
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
 from MoinMoin.Page import Page
