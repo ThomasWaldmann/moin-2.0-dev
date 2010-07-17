@@ -3,6 +3,7 @@
     MoinMoin - create account action
 
     @copyright: 2007 MoinMoin:JohannesBerg
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -62,8 +63,9 @@ def _create_form(request):
     url = request.page.url(request)
     ret = html.FORM(action=url)
     ret.append(html.INPUT(type='hidden', name='do', value='recoverpass'))
-    lang_attr = request.theme.ui_lang_attr()
-    ret.append(html.Raw('<div class="userpref"%s>' % lang_attr))
+    ui_lang = request.theme.ui_lang
+    ui_dir = request.theme.ui_dir
+    ret.append(html.Raw('<div class="userpref" lang="%s" dir="%s">' % (ui_lang, ui_dir)))
     tbl = html.TABLE(border="0")
     ret.append(tbl)
     ret.append(html.Raw('</div>'))
@@ -96,8 +98,9 @@ def _create_token_form(request, name=None, token=None):
     url = request.page.url(request)
     ret = html.FORM(action=url)
     ret.append(html.INPUT(type='hidden', name='do', value='recoverpass'))
-    lang_attr = request.theme.ui_lang_attr()
-    ret.append(html.Raw('<div class="userpref"%s>' % lang_attr))
+    ui_lang = request.theme.ui_lang
+    ui_dir = request.theme.ui_dir
+    ret.append(html.Raw('<div class="userpref" lang="%s" dir="%s">' % (ui_lang, ui_dir)))
     tbl = html.TABLE(border="0")
     ret.append(tbl)
     ret.append(html.Raw('</div>'))
