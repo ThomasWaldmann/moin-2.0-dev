@@ -187,8 +187,8 @@ class ThemeBase(object):
         """
         Assemble the location using breadcrumbs (was: title)
 
-        @rtype: string
-        @return: title in breadcrumbs
+        @rtype: list
+        @return: path breadcrumbs items in tuple (segment_name, item_name, exists)
         """
         item_name = self.item_name
         full_item_name = item_name.split('/')
@@ -199,6 +199,31 @@ class ThemeBase(object):
             content.append((name, current_item, self.storage.has_item(current_item)))
             current_item += '/'
         return content
+
+    def path_breadcrumbs(self):
+        """
+        Assemble the path breadcrumbs (a.k.a.: trail)
+
+        @rtype: list
+        @return: path breadcrumbs items in tuple (wiki_name, item_name, url, exists, err)
+        """
+        request = self.request
+        user = self.user
+        items = []
+        if not user.valid or user.show_trail:
+            trail = user.getTrail()
+            if trail:
+                for interwiki_item_name in trail:
+                    wiki_name, item_name = wikiutil.split_interwiki(interwiki_item_name)
+                    wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
+                    href = wikiutil.join_wiki(wiki_base_url, item_name)
+                    if wiki_name in [request.cfg.interwikiname, 'Self', ]:
+                        exists = self.storage.has_item(item_name)
+                        wiki_name = ''  # means "this wiki" for the theme code
+                    else:
+                        exists = True  # we can't detect existance of remote items
+                    items.append((wiki_name, item_name, href, exists, err))
+        return items
 
     def userhome(self):
     # Add username/homepage link for registered users. We don't care
@@ -408,31 +433,6 @@ class ThemeBase(object):
         alt = self.request.getText(alt)
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
-
-    def path_breadcrumbs(self):
-        """
-        Assemble path breadcrumbs (a.k.a.: trail)
-
-        @rtype: list
-        @return: path breadcrumbs items in tuple (item_name, url, exists)
-        """
-        request = self.request
-        user = self.user
-        items = []
-        if not user.valid or user.show_trail:
-            trail = user.getTrail()
-            if trail:
-                for interwiki_item_name in trail:
-                    wiki_name, item_name = wikiutil.split_interwiki(interwiki_item_name)
-                    wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
-                    href = wikiutil.join_wiki(wiki_base_url, item_name)
-                    if wiki_name in [request.cfg.interwikiname, 'Self', ]:
-                        exists = self.storage.has_item(item_name)
-                        wiki_name = ''  # means "this wiki" for the theme code
-                    else:
-                        exists = True  # we can't detect existance of remote items
-                    items.append((wiki_name, item_name, href, exists, err))
-        return items
 
     def shouldShowEditbar(self):
         """
