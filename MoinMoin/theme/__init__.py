@@ -19,7 +19,6 @@ logging = log.getLogger(__name__)
 from MoinMoin import i18n, wikiutil, caching, user
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
-from MoinMoin.Page import Page
 from MoinMoin.util import pysupport
 from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 
@@ -648,18 +647,9 @@ class ThemeBase(object):
         @keyword body_attr: additional <body> attributes
         @keyword body_onload: additional "onload" JavaScript code
         """
-        request = self.request
-        _ = request.getText
-
-        if keywords.has_key('page'):
-            page = keywords['page']
-            pagename = page.page_name
-        else:
-            pagename = keywords.get('pagename', '')
-            page = Page(request, pagename)
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
-        request.write(self.render('show.html'))
+        self.request.write(self.render('show.html'))
 
     def render(self, name='layout.html', **context):
         """
