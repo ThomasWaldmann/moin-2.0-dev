@@ -27,10 +27,7 @@
         {# there are a lot of illegal links (like actions) or duplicates: #}
         {{ cfg.html_head_normal }}
     {% endif %}
-    
-    {% for head in user_head %}
-        {{ head }}
-    {% endfor %}
+
     {% if pi_refresh %}
         {{ '<meta http-equiv="refresh" content="%d;URL=%s"' % pi_refresh }}
     {% endif %}
