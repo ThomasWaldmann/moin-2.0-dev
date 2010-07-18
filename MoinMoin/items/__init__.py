@@ -428,6 +428,7 @@ class Item(object):
         template = self.env.get_template('index.html')
         content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
+                                  rev=self.rev,
                                   index=self.flat_index(),
                                  )
         return content
