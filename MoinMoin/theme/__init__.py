@@ -25,7 +25,8 @@ modules = pysupport.getPackageModules(__file__)
 
 
 class ThemeBase(object):
-    """ Base class for themes
+    """
+    Base class for themes
 
     This class supplies all the standard template that sub classes can
     use without rewriting the same code. If you want to change certain
@@ -224,8 +225,10 @@ class ThemeBase(object):
         return breadcrumbs
 
     def userhome(self):
-    # Add username/homepage link for registered users. We don't care
-    # if it exists, the user can create it.
+        """
+        Return a tuple (url, aliasname, title, exists) that is used by theme
+        to render the user homepage link.
+        """
         user = self.user
         request = self.request
         item_name = self.item_name
@@ -344,9 +347,8 @@ class ThemeBase(object):
         """
         Assemble the navibar
 
-        @param d: parameter dictionary
-        @rtype: unicode
-        @return: navibar html
+        @rtype: list
+        @return: list of tuples (css_class, url, link_text, title)
         """
         request = self.request
         items = []  # navibar items
@@ -458,6 +460,7 @@ class ThemeBase(object):
     def parent_page(self):
         """
         Return name of parent page for the current page
+
         @rtype: unicode
         @return: parent page name
         """
@@ -500,6 +503,9 @@ class ThemeBase(object):
 
     @property
     def login_url(self):
+        """
+        Return URL usable for user login
+        """
         request = self.request
         href = request.href
         url = ''
@@ -652,7 +658,7 @@ class ThemeBase(object):
         """
         Base function that renders a template using Jinja2.
 
-        @param filename: name of the template to render.
+        @param name: name of the template to render.
         @param context: used to pass variables to template.
         @return: rendered output
         """
@@ -665,7 +671,8 @@ class ThemeNotFound(Exception):
 
 
 def load_theme(request, theme_name=None):
-    """ Load a theme for this request.
+    """
+    Load a theme for this request.
 
     @param request: moin request
     @param theme_name: the name of the theme
@@ -685,7 +692,8 @@ def load_theme(request, theme_name=None):
 
 
 def load_theme_fallback(request, theme_name=None):
-    """ Try loading a theme, falling back to defaults on error.
+    """
+    Try loading a theme, falling back to defaults on error.
 
     @param request: moin request
     @param theme_name: the name of the theme
