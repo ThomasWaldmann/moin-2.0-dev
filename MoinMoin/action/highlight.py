@@ -3,7 +3,8 @@
     MoinMoin - Action to save item content to a file download
 
     @copyright: 2009 MoinMoin:ThomasWaldmann,
-                2010 MoinMoin:ReimarBauer
+                2010 MoinMoin:ReimarBauer,
+                2010 MoinMoin:DiogenesAugusto
 
     @license: GNU GPL, see COPYING for details.
 """
