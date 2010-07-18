@@ -2,14 +2,13 @@
 """
     MoinMoin - Theme Package
 
-    @copyright: 2003-2009 MoinMoin:ThomasWaldmann,
+    @copyright: 2003-2010 MoinMoin:ThomasWaldmann,
                 2008 MoinMoin:RadomirDopieralski,
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 
 import os
-import urlparse
 
 from jinja2 import Environment, FileSystemLoader, FileSystemBytecodeCache
 
