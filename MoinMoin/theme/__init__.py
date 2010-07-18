@@ -188,17 +188,15 @@ class ThemeBase(object):
         Assemble the location using breadcrumbs (was: title)
 
         @rtype: list
-        @return: path breadcrumbs items in tuple (segment_name, item_name, exists)
+        @return: location breadcrumbs items in tuple (segment_name, item_name, exists)
         """
-        item_name = self.item_name
-        full_item_name = item_name.split('/')
-        content = []
+        breadcrumbs = []
         current_item = ''
-        for name in full_item_name:
-            current_item += name
-            content.append((name, current_item, self.storage.has_item(current_item)))
+        for segment in self.item_name.split('/'):
+            current_item += segment
+            breadcrumbs.append((segment, current_item, self.storage.has_item(current_item)))
             current_item += '/'
-        return content
+        return breadcrumbs
 
     def path_breadcrumbs(self):
         """
@@ -209,7 +207,7 @@ class ThemeBase(object):
         """
         request = self.request
         user = self.user
-        items = []
+        breadcrumbs = []
         if not user.valid or user.show_trail:
             trail = user.getTrail()
             if trail:
@@ -222,8 +220,8 @@ class ThemeBase(object):
                         wiki_name = ''  # means "this wiki" for the theme code
                     else:
                         exists = True  # we can't detect existance of remote items
-                    items.append((wiki_name, item_name, href, exists, err))
-        return items
+                    breadcrumbs.append((wiki_name, item_name, href, exists, err))
+        return breadcrumbs
 
     def userhome(self):
     # Add username/homepage link for registered users. We don't care
