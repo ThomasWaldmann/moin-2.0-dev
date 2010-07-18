@@ -5,7 +5,8 @@
     The superuser can select an item containing system pages that should be installed.
     It is also possible to upgrade already existing system pages this way.
 
-    @copyright: 2009 MoinMoin:ChristopherDenter
+    @copyright: 2009 MoinMoin:ChristopherDenter,
+                2010 MoinMoin:DiogenesAugusto
 
     @license: GNU GPL, see COPYING for details.
 """
