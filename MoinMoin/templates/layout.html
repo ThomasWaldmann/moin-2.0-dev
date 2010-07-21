@@ -74,7 +74,7 @@
         <span class="pagepath">
             {% for item_name, item_path, exists in theme.location_breadcrumbs() %}
                 <a href="{{ href(item_path) }}" {% if not exists %}class="nonexistent"{% endif %}>
-                    {{ item_name }}
+                    {{ item_name|shorten_item_name }}
                 </a>
                 {% if not loop.last %}
                     <span class="sep">/</span>
@@ -96,7 +96,7 @@
         {% else %}
             {% if not exists %}class="nonexistent"{% endif %}
         {% endif %}>
-            {{ item_name }}
+            {{ item_name|shorten_item_name }}
         </a>
         {% if not loop.last %}
             <span class="sep"> &raquo; </span>
