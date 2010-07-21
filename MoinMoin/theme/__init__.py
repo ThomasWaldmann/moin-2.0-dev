@@ -21,6 +21,8 @@ from MoinMoin.items import Item
 from MoinMoin.util import pysupport
 from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 
+from MoinMoin.theme.filters import shorten_item_name
+
 modules = pysupport.getPackageModules(__file__)
 
 
@@ -111,8 +113,6 @@ class ThemeBase(object):
         ('projection',  'projection'),
         )
 
-    maxPagenameLength = 25  # maximum length for shortened page names
-
     def __init__(self, request):
         """
         Initialize the theme object.
@@ -151,6 +151,7 @@ class ThemeBase(object):
         self.env.filters['urlquote'] = lambda x: url_quote(x)
         self.env.filters['datetime_format'] = lambda tm, u = request.user: u.getFormattedDateTime(tm)
         self.env.filters['date_format'] = lambda tm, u = request.user: u.getFormattedDate(tm)
+        self.env.filters['shorten_item_name'] = shorten_item_name
         self.env.filters['user_format'] = lambda rev, request = request: \
                                               user.get_printable_editor(request,
                                                                         rev.get(EDIT_LOG_USERID),
@@ -317,31 +318,6 @@ class ThemeBase(object):
         if not title:
             title = item_name
         return item_name, title, wiki_local
-
-    def shortenPagename(self, name):
-        """
-        Shorten page names
-
-        Shorten very long page names that tend to break the user
-        interface. The short name is usually fine, unless really stupid
-        long names are used (WYGIWYD).
-
-        If you don't like to do this in your theme, or want to use
-        different algorithm, override this method.
-
-        @param name: page name, unicode
-        @rtype: unicode
-        @return: shortened version.
-        """
-        maxLength = self.maxPagenameLength
-        # First use only the sub page name, that might be enough
-        if len(name) > maxLength:
-            name = name.split('/')[-1]
-            # If it's not enough, replace the middle with '...'
-            if len(name) > maxLength:
-                half, left = divmod(maxLength - 3, 2)
-                name = u'%s...%s' % (name[:half + left], name[-half:])
-        return name
 
     def navibar(self):
         """
