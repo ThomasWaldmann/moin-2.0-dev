@@ -361,9 +361,15 @@ class Converter(object):
         generate = attrib.get('font-size')
         if generate:
             if generate == '85%':
-                return self.new_copy(html.small, elem)
+                attribute = {}
+                key = html('class')
+                attribute[key] = 'small'
+                return self.new_copy(html.span, elem, attribute)
             elif generate == '120%':
-                return self.new_copy(html.big, elem)
+                attribute = {}
+                key = html('class')
+                attribute[key] = 'big'
+                return self.new_copy(html.span, elem, attribute)
         generate = attrib.get('html-element')
         if generate:
             return self.new_copy(html(generate), elem)
