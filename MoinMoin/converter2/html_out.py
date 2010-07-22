@@ -235,13 +235,13 @@ class Converter(object):
                 style = attrib.get('list-style-type')
                 if style:
                     if style == 'upper-alpha':
-                        attrib_new[html('type')] = 'A'
+                        attrib_new[html('class')] = 'upperalpha_list'
                     elif style == 'upper-roman':
-                        attrib_new[html('type')] = 'I'
+                        attrib_new[html('class')] = 'upperroman_list'
                     elif style == 'lower-roman':
-                        attrib_new[html('type')] = 'i'
+                        attrib_new[html('class')] = 'lowerroman_list'
                     elif style == 'lower-alpha':
-                        attrib_new[html('type')] = 'a'
+                        attrib_new[html('class')] = 'loweralpha_list'
                 ret = self.new(html.ol, attrib_new)
             elif generate == 'unordered':
                 ret = self.new(html.ul, attrib_new)
