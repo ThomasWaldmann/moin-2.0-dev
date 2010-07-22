@@ -30,14 +30,12 @@
             <meta name="edit_on_doubleclick" content="1" />
     {% endif %}
 
-    {% set meta_keywords = theme.request.getPragma('keywords') %}
-    {% if meta_keywords %}
-        <meta name="keywords" content="{{ meta_keywords }}" />
+    {% if theme.meta_keywords %}
+        <meta name="keywords" content="{{ theme.meta_keywords }}" />
     {% endif %}
 
-    {% set meta_description = theme.request.getPragma('description') %}
-    {% if meta_description %}
-        <meta name="description" content="{{ meta_description }}" />
+    {% if theme.meta_description %}
+        <meta name="description" content="{{ theme.meta_description }}" />
     {% endif %}
 
     <title>

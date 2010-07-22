@@ -359,10 +359,10 @@ class SlideshowAction:
     item_last_slide = last_slide
 
     def item_date(self):
-        return wikiutil.escape(self.request.getPragma('date', defval=''))
+        return '' # wikiutil.escape(self.request.getPragma('date', defval='')) #getPragma is gone
 
     def item_author(self):
-        return wikiutil.escape(self.request.getPragma('author', defval=''))
+        return '' # wikiutil.escape(self.request.getPragma('author', defval='')) #getPragma is gone
 
     def item_counter(self):
         return "%d|%d" % (self.slideNumber, self.last_slide())

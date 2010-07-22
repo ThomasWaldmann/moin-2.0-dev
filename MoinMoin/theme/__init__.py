@@ -134,6 +134,9 @@ class ThemeBase(object):
         self.content_lang = request.content_lang
         self.content_dir = i18n.getDirection(self.content_lang)
         self.msg_list = []
+        # for html head:
+        self.meta_keywords = ''
+        self.meta_description = ''
 
         jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
         try:
