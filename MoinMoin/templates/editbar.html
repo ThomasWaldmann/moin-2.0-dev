@@ -89,9 +89,9 @@
                             <option value="{{ do }}" {% if disabled %}disabled class="disabled"{% endif %}> {{ title }}</option>
                         {% endfor %}
                     </select>
-                    <input type="submit" value="{{ _('Do') }}">
+                    <input type="submit" value="{{ _('Do') }}" />
                     {% if rev %}
-                        <input type="hidden" name="rev" value="{{ rev.revno }}">
+                        <input type="hidden" name="rev" value="{{ rev.revno }}" />
                     {% endif %}
                 </div>
             </form>

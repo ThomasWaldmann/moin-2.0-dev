@@ -15,7 +15,8 @@
     {% endblock %}
     Data:
     {{ data_rendered }}
-    <hr>Meta:
+    <hr />
+    Meta:
     {{ meta_rendered }}
     {% endif %}
 {% endblock %}
@@ -25,14 +26,14 @@
     <hr>History:
         <form action="" method="GET">
         <div id="page-history">
-        <input type="hidden" name="do" value="diff">
+        <input type="hidden" name="do" value="diff" />
         <table>
             <tr>
                 <th>Name</th>
-                <th align="right">#</th>
+                <th>#</th>
                 <th>Date</th>
-                <th align="right">Size</th>
-                <th align="right"><input type="submit" value="Diff"></th>
+                <th>Size</th>
+                <th><input type="submit" value="Diff" /></th>
                 <th>Editor</th>
                 <th>MimeType</th>
                 <th>Comment</th>
@@ -41,12 +42,12 @@
             {% for entry in log %}
             <tr>
                 <td>{{ entry.name|e }}</td>
-                <td align="right">{{ entry.rev_no }}</td>
+                <td>{{ entry.rev_no }}</td>
                 <td>{{ entry.mtime }}</td>
-                <td align="right">{{ entry.size }}</td>
+                <td>{{ entry.size }}</td>
                 <td>
-                    <input type="radio" name="rev1" value="{{ entry.rev_no }}">
-                    <input type="radio" name="rev2" value="{{ entry.rev_no }}">
+                    <input type="radio" name="rev1" value="{{ entry.rev_no }}" />
+                    <input type="radio" name="rev2" value="{{ entry.rev_no }}" />
                 </td>
                 <td>{{ entry.editor }}</td>
                 <td>{{ entry.mimetype|e }}</td>
