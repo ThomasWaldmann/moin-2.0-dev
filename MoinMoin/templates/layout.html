@@ -115,11 +115,11 @@
 <div id="pageline">
     <hr style="display:none;" />
 </div>
- 
+
 {% if theme.msg_list %}
     <div id="message">
         {% for msg in theme.msg_list %}
-                <p>{{ msg }}</p>            
+                <p>{{ msg }}</p>
         {% endfor %}
         <a href="{{ href(theme.item_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
     </div>
@@ -143,7 +143,7 @@
         {% block index %}{% endblock %}
         </div>
     {% endblock %}
-    
+
     {% block extra_content %}{% endblock %}
 
 </div>

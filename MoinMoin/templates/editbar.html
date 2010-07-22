@@ -1,7 +1,7 @@
-<ul class="editbar">    
+<ul class="editbar">
 {% if theme.shouldShowEditbar() %}
     {% if 'Modify' in cfg.edit_bar %}
-        {% if not 'modify' in cfg.actions_excluded %} 
+        {% if not 'modify' in cfg.actions_excluded %}
             <li>
             {% if theme.item_writable %}
                 <a href="{{ href(theme.item_name, do='modify')|e }}" rel="nofollow"> {{ _('Modify') }}</a>
@@ -61,7 +61,7 @@
             <a href="#" class="nbcomment" onClick="toggleComments();return false;">{{ _('Comments') }}</a>
         </li>
     {% endif %}
-    
+
     {% if 'Discussion' in cfg.edit_bar %}
         <li>
         {% if theme.link_supplementation_page() %}
@@ -73,7 +73,7 @@
         {% endif %}
         </li>
     {% endif %}
-    
+
     {% if 'ActionsMenu' in cfg.edit_bar %}
         <li>
             <form class="actionsmenu" method="GET" action="{{ href(theme.item_name)|e }}">
@@ -97,7 +97,7 @@
             </form>
         </li>
     {% endif %}
-    
+
 {% endif %}
 
 </ul>
