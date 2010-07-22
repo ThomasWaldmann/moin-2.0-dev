@@ -8,20 +8,21 @@ MoinMoin - Tests for MoinMoin.converter2.html_in and
 @license: GNU GPL, see COPYING for details
 """
 
-import py.test
+import StringIO
 import re
 
+import py.test
 try:
     from lxml import etree
 except:
-    py.test.py.test.skip("lxml module required to run test for html_in_out converter.")
+    py.test.skip("lxml module required to run test for html_in_out converter.")
+
+from MoinMoin import log
+logging = log.getLogger(__name__)
 
 from MoinMoin.converter2.html_in import Converter as HTML_IN
 from MoinMoin.converter2.html_out import Converter as HTML_OUT
 from MoinMoin.util.tree import html, moin_page, xlink
-from MoinMoin import log
-logging = log.getLogger(__name__)
-import StringIO
 
 class Base(object):
 

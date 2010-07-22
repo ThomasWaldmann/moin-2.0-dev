@@ -5,19 +5,21 @@ MoinMoin - Tests for MoinMoin.converter2.docbook_out
 @license: GNU GPL, see COPYING for details.
 """
 
-import py.test
 import re
+import StringIO
 
+import py.test
 try:
     from lxml import etree
 except:
     py.test.skip("lxml module required to run test for docbook_out converter.")
 
-from MoinMoin.converter2.docbook_out import *
 from emeraldtree.tree import *
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
-import StringIO
+
+from MoinMoin.converter2.docbook_out import *
 
 class Base(object):
     input_namespaces = ns_all = 'xmlns="%s" xmlns:page="%s" xmlns:html="%s" xmlns:xlink="%s"' % (
@@ -41,8 +43,7 @@ class Base(object):
         return ET.XML(i)
 
     def handle_output(self, elem, **options):
-        from cStringIO import StringIO
-        file = StringIO()
+        file = StringIO.StringIO()
         tree = ET.ElementTree(elem)
         tree.write(file, namespaces=self.output_namespaces, **options)
         return self.output_re.sub(u'', file.getvalue())
@@ -122,9 +123,24 @@ class TestConverter(Base):
             # Link conversion
             ('<page><body><p><a xlink:href="uri:test" xlink:title="title">link</a></p></body></page>',
               '/article/para/link[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
-            # Blockcode conversion into <screen>
+            # Blockcode conversion into <screen> with CDATA
             ('<page><body><blockcode>Text</blockcode></body></page>',
-             '/article[screen="Text"]'),
+             '/article[screen="<![CDATA[Text]]>"]'),
+            # SPAN --> PHRASE
+            ('<page><body><p><span>Text</span></p></body></page>',
+             '/article/para[phrase="Text"]'),
+            # SPAN baseline-shift=sub --> subscript
+            ('<page><body><p>sub<span page:baseline-shift="sub">sub</span>script</p></body></page>',
+             '/article/para[text()="script"][subscript="sub"]'),
+            # SPAN baseline-shift=super --> superscript
+            ('<page><body><p>sub<span page:baseline-shift="super">super</span>script</p></body></page>',
+             '/article/para[text()="script"][superscript="super"]'),
+            # STRONG --> EMPHASIS role='strong'
+            ('<page><body><p>text<strong>strong</strong></p></body></page>',
+             '/article/para[text()="text"]/emphasis[@role="strong"][text()="strong"]'),
+            # EMPHASIS --> EMPHASIS
+            ('<page><body><p>text<emphasis>emphasis</emphasis></p></body></page>',
+             '/article/para[text()="text"][emphasis="emphasis"]'),
         ]
         for i in data:
             yield (self.do, ) + i

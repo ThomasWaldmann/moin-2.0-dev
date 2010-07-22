@@ -6,19 +6,21 @@ MoinMoin - Tests for MoinMoin.converter2.docbook_in
 @license: GNU GPL, see COPYING for details.
 """
 
-import py.test
 import re
+import StringIO
 
+import py.test
 try:
     from lxml import etree
 except:
     py.test.skip("lxml module required to run test for docbook_in converter.")
 
-from MoinMoin.converter2.docbook_in import *
 from emeraldtree.tree import *
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
-import StringIO
+
+from MoinMoin.converter2.docbook_in import *
 
 class Base(object):
     input_namespaces = ns_all = u'xmlns="%s" xmlns:db="%s" xmlns:xlink="%s"' % (
@@ -103,15 +105,20 @@ class TestConverter(Base):
              '/page/body/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # ORDERED LIST with upperalpha numeration --> ordered list with upper-alpha list-style-type
             ('<article><orderedlist db:numeration="upperalpha"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+
+            # <page><body><list item-label-generage="ordered" list-style-type="upper-alpha"><list-item><list-item-body>Ordered Item 1</list-item-body></list-item><list-item><list-item-body>Ordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][@list-style-type="upper-alpha"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # ORDERED LIST with loweralpha numeration --> ordered list with lower-alpha list-style-type
             ('<article><orderedlist db:numeration="loweralpha"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+            # <page><body><list item-label-generage="ordered" list-style-type="lower-alpha"><list-item><list-item-body>Ordered Item 1</list-item-body></list-item><list-item><list-item-body>Ordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][@list-style-type="lower-alpha"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # ORDERED LIST with upperroman numeration --> ordered list with upper-roman list-style-type
             ('<article><orderedlist db:numeration="upperroman"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+            # <page><body><list item-label-generage="ordered" list-style-type="upper-roman"><list-item><list-item-body>Ordered Item 1</list-item-body></list-item><list-item><list-item-body>Ordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][@list-style-type="upper-roman"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # ORDERED LIST with lowerroman numeration --> ordered list with lower-roman list-style-type
             ('<article><orderedlist db:numeration="lowerroman"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+            # <page><body><list item-label-generage="ordered" list-style-type="lower-roman"><list-item><list-item-body>Ordered Item 1</list-item-body></list-item><list-item><list-item-body>Ordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][@list-style-type="lower-roman"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # VARIABLE LIST --> list
             ('<article><variablelist><varlistentry><term>Term 1</term><listitem>Definition 1</listitem></varlistentry><varlistentry><term>Term 2</term><listitem>Definition 2</listitem></varlistentry></variablelist></article>',
@@ -180,6 +187,12 @@ class TestConverter(Base):
             # Test for <screen> with CDATA
             ('<article><screen><![CDATA[Text]]></screen></article>',
              '/page/body[blockcode="Text"]'),
+            # PROGRAMLISTING --> BLOCKCODE
+            ('<article><programlisting>Text</programlisting></article>',
+             '/page/body[blockcode="Text"]'),
+            # LITERAL --> CODE
+            ('<article><para>text<literal>literal</literal></para></article>',
+             '/page/body/p[text()="text"][code="literal"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -188,7 +201,29 @@ class TestConverter(Base):
         data = [
             # Test for image conversion
             ('<article><para><inlinemediaobject><imageobject><imagedata fileref="test.png"/></imageobject></inlinemediaobject></para></article>',
-              '/page/body/object/@xlink:href="test.png"'),
+              '/page/body/p/object/@xlink:href="test.png"'),
         ]
         for i in data:
             yield (self.do, ) + i
+
+    def test_style_element(self):
+        data = [
+            # EMPHASIS --> EMPHASIS
+            ('<article><para>text<emphasis>emphasis</emphasis></para></article>',
+             '/page/body/p[text()="text"][emphasis="emphasis"]'),
+            # EMPHASIS role='strong' --> STRONG
+            ('<article><para>text<emphasis db:role="strong">strong</emphasis></para></article>',
+             '/page/body/p[text()="text"][strong="strong"]'),
+            # SUBSCRIPT --> SPAN baseline-shift = 'sub'
+            ('<article><para><subscript>sub</subscript>script</para></article>',
+             '/page/body/p[text()="script"]/span[@baseline-shift="sub"][text()="sub"]'),
+            # SUPERSCRIPT --> SPAN baseline-shift = 'super'
+            ('<article><para><superscript>super</superscript>script</para></article>',
+             '/page/body/p[text()="script"]/span[@baseline-shift="super"][text()="super"]'),
+            # PHRASE --> SPAN
+            ('<article><para><phrase>text</phrase></para></article>',
+             '/page/body/p[span="text"]'),
+        ]
+        for i in data:
+            yield (self.do, ) + i
+

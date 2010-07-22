@@ -1390,7 +1390,11 @@ class CodeGenerator(NodeVisitor):
             self.write(repr(val))
 
     def visit_TemplateData(self, node, frame):
-        self.write(repr(node.as_const(frame.eval_ctx)))
+        try:
+            self.write(repr(node.as_const(frame.eval_ctx)))
+        except nodes.Impossible:
+            self.write('(context.eval_ctx.autoescape and Markup or identity)(%r)'
+                       % node.data)
 
     def visit_Tuple(self, node, frame):
         self.write('(')
@@ -1579,6 +1583,11 @@ class CodeGenerator(NodeVisitor):
 
     def visit_MarkSafe(self, node, frame):
         self.write('Markup(')
+        self.visit(node.expr, frame)
+        self.write(')')
+
+    def visit_MarkSafeIfAutoescape(self, node, frame):
+        self.write('(context.eval_ctx.autoescape and Markup or identity)(')
         self.visit(node.expr, frame)
         self.write(')')
 

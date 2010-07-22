@@ -5,19 +5,20 @@ MoinMoin - Tests for MoinMoin.converter2.html_in
 @license: GNU GPL, see COPYING for details.
 """
 
-import py.test
 import re
+import StringIO
 
+import py.test
 try:
     from lxml import etree
 except:
     py.test.skip("lxml module required to run test for html_in converter.")
 
-from MoinMoin.converter2.html_in import *
 from emeraldtree.tree import *
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
-import StringIO
+from MoinMoin.converter2.html_in import *
 
 class Base(object):
     namespaces = {

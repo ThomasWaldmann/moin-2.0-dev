@@ -1,33 +1,33 @@
 # -*- coding: iso-8859-1 -*-
 """
 MoinMoin - HTML input converter
+Converts an XHTML document into an internal document tree.
 
-Converts an HTML Tree into an internal document tree.
+TODO : Add support for style
 
 @copyright: 2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details.
-@TODO : * Add basic support for the styles
 """
 
 from __future__ import absolute_import
 
+import re
+
 from emeraldtree import ElementTree as ET
 from emeraldtree.html import HTML
-
-from MoinMoin import wikiutil
-from MoinMoin.util.tree import html, moin_page, xlink
-from ._wiki_macro import ConverterMacro
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-import re
+from MoinMoin import wikiutil
+from MoinMoin.util.tree import html, moin_page, xlink
+
+from ._wiki_macro import ConverterMacro
 
 class Converter(object):
     """
     Converter html -> .x.moin.document
     """
-
     # Namespace of our input data
     html_namespace = {
         html.namespace: 'xhtml',
@@ -81,7 +81,6 @@ class Converter(object):
 
         TODO: Add support for different arguments
         """
-
         # Be sure we have empty string in the base url
         self.base_url = ''
 
@@ -181,7 +180,6 @@ class Converter(object):
         We will detect the name of the tag, and apply an appropriate
         procedure to convert it.
         """
-
         # Our element can be converted directly, just by changing the namespace
         if element.tag.name in self.symmetric_tags:
             return self.new_copy_symmetric(element, attrib={})
@@ -299,7 +297,6 @@ class Converter(object):
         """
         <del>Text</del> --> <span text-decoration="underline">Text</span>
         """
-
         key = moin_page('text-decoration')
         attrib = {}
         attrib[key] = 'line-through'
@@ -534,4 +531,4 @@ class Converter(object):
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
-default_registry.register(Converter._factory, Type('text/x.moin.html'), type_moin_document)
+default_registry.register(Converter._factory, Type('text/html'), type_moin_document)

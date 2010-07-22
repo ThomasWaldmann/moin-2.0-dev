@@ -1,415 +1,135 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Translations template for PROJECT.
+# Copyright (C) 2010 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-02-07 14:05+0100\n"
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2010-07-12 00:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.5\n"
 
-#, python-format
-msgid "Argument \"%s\" must be a boolean value, not \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Argument must be a boolean value, not \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Argument \"%s\" must be an integer value, not \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Argument must be an integer value, not \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Argument \"%s\" must be a floating point value, not \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Argument must be a floating point value, not \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Argument \"%s\" must be a complex value, not \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Argument must be a complex value, not \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Argument \"%s\" must be one of \"%s\", not \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Argument must be one of \"%s\", not \"%s\""
-msgstr ""
-
-msgid "Too many arguments"
-msgstr ""
-
-msgid "Cannot have arguments without name following named arguments"
-msgstr ""
-
-#, python-format
-msgid "Argument \"%s\" is required"
-msgstr ""
-
-#, python-format
-msgid "No argument named \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Expected \"=\" to follow \"%(token)s\""
-msgstr ""
-
-#, python-format
-msgid "Expected a value for key \"%(token)s\""
-msgstr ""
-
-msgid "Your changes are not saved!"
-msgstr ""
-
-msgid "You are not allowed to edit this page."
-msgstr ""
-
-msgid "Page is immutable!"
-msgstr ""
-
-msgid "Cannot edit old revisions!"
-msgstr ""
-
-msgid "The lock you held timed out. Be prepared for editing conflicts!"
-msgstr ""
-
-msgid "Page name is too long, try shorter name."
-msgstr ""
-
-#, python-format
-msgid "Draft of \"%(pagename)s\""
-msgstr ""
-
-#, python-format
-msgid "Edit \"%(pagename)s\""
-msgstr ""
-
-#, python-format
-msgid "Preview of \"%(pagename)s\""
-msgstr ""
-
-#, python-format
-msgid "Your edit lock on %(lock_page)s has expired!"
-msgstr ""
-
-#, python-format
-msgid "Your edit lock on %(lock_page)s will expire in # minutes."
-msgstr ""
-
-#, python-format
-msgid "Your edit lock on %(lock_page)s will expire in # seconds."
-msgstr ""
-
-msgid "Someone else deleted this page while you were editing!"
-msgstr ""
-
-msgid "Someone else changed this page while you were editing!"
-msgstr ""
-
+#: MoinMoin/Page.py:720
 msgid ""
-"Someone else saved this page while you were editing!\n"
-"Please review the page and save then. Do not save this page as it is!"
+"The backed up content of this page is deprecated and will rank lower in "
+"search results!"
 msgstr ""
 
-msgid "[Content loaded from draft]"
-msgstr ""
-
+#: MoinMoin/Page.py:767
 #, python-format
-msgid "[Content of new page loaded from %s]"
+msgid "Revision %(rev)d as of %(date)s"
 msgstr ""
 
+#: MoinMoin/Page.py:777
 #, python-format
-msgid "[Template %s not found]"
+msgid "Redirected from page \"%(page)s\""
 msgstr ""
 
+#: MoinMoin/Page.py:781
 #, python-format
-msgid "[You may not read %s]"
+msgid "This page redirects to page \"%(page)s\""
 msgstr ""
 
-#, python-format
-msgid ""
-"'''<<BR>>Your draft based on revision %(draft_rev)d (saved %"
-"(draft_timestamp_str)s) can be loaded instead of the current revision %"
-"(page_rev)d by using the load draft button - in case you lost your last edit "
-"somehow without saving it.''' A draft gets saved for you when you do a "
-"preview, cancel an edit or unsuccessfully save."
+#: MoinMoin/Page.py:1029 MoinMoin/macro2/NewPage.py:53
+msgid "Create New Page"
 msgstr ""
 
-#, python-format
-msgid "Describe %s here."
+#: MoinMoin/Page.py:1032
+msgid "You are not allowed to view this page."
 msgstr ""
 
-msgid "Check Spelling"
+#: MoinMoin/PageEditor.py:284
+msgid "Someone else saved this page while you were editing!"
 msgstr ""
 
-msgid "Save Changes"
-msgstr ""
-
-msgid "Cancel"
-msgstr ""
-
-#, python-format
-msgid ""
-"By hitting '''%(save_button_text)s''' you put your changes under the %"
-"(license_link)s.\n"
-"If you don't want that, hit '''%(cancel_button_text)s''' to cancel your "
-"changes."
-msgstr ""
-
-msgid "Preview"
-msgstr ""
-
-msgid "GUI Mode"
-msgstr ""
-
-msgid "Load Draft"
-msgstr ""
-
-msgid "Trivial change"
-msgstr ""
-
-msgid "Comment:"
-msgstr ""
-
-msgid "<No addition>"
-msgstr ""
-
-#, python-format
-msgid "Add to: %(category)s"
-msgstr ""
-
-msgid "Remove trailing whitespace from each line"
-msgstr ""
-
-msgid "Edit was cancelled."
-msgstr ""
-
-msgid "You can't copy to an empty pagename."
-msgstr ""
-
-msgid "You are not allowed to copy this page!"
-msgstr ""
-
-#, python-format
-msgid ""
-"'''A page with the name {{{'%s'}}} already exists.'''\n"
-"\n"
-"Try a different name."
-msgstr ""
-
-#, python-format
-msgid "Could not copy page because of file system error: %s."
-msgstr ""
-
-msgid "You are not allowed to rename this page!"
-msgstr ""
-
-msgid "You can't rename to an empty pagename."
-msgstr ""
-
-#, python-format
-msgid "Could not rename page because of file system error: %s."
-msgstr ""
-
-msgid "You are not allowed to delete this page!"
-msgstr ""
-
-msgid "Thank you for your changes. Your attention to detail is appreciated."
-msgstr ""
-
-#, python-format
-msgid "Page \"%s\" was successfully deleted!"
-msgstr ""
-
-#, python-format
-msgid "Page could not get locked. Unexpected error (errno=%d)."
-msgstr ""
-
-msgid "Page could not get locked. Missing 'current' file?"
-msgstr ""
-
-#, python-format
-msgid ""
-"Unable to determine current page revision from the 'current' file. The page %"
-"s is damaged and cannot be edited right now."
-msgstr ""
-
-#, python-format
-msgid "Cannot save page %s, no storage space left."
-msgstr ""
-
-#, python-format
-msgid "An I/O error occurred while saving page %s (errno=%d)"
-msgstr ""
-
+#: MoinMoin/PageEditor.py:346
 msgid "You are not allowed to edit this page!"
 msgstr ""
 
+#: MoinMoin/PageEditor.py:349
 msgid "You cannot save empty pages."
 msgstr ""
 
-msgid "You already saved this page!"
-msgstr ""
-
-msgid "You already edited this page! Please do not use the back button."
-msgstr ""
-
+#: MoinMoin/PageEditor.py:352
 msgid "You did not change the page content, not saved!"
 msgstr ""
 
-msgid ""
-"You can't change ACLs on this page since you have no admin rights on it!"
+#: MoinMoin/PageEditor.py:368
+msgid "Thank you for your changes. Your attention to detail is appreciated."
 msgstr ""
 
+#: MoinMoin/PageEditor.py:392
 msgid "Notifications sent to:"
 msgstr ""
 
+#: MoinMoin/PageEditor.py:463
 #, python-format
 msgid ""
 "The lock of %(owner)s timed out %(mins_ago)d minute(s) ago, and you were "
 "granted the lock for this page."
 msgstr ""
 
+#: MoinMoin/PageEditor.py:469
 #, python-format
-msgid ""
-"Other users will be ''blocked'' from editing this page until %(bumptime)s."
+msgid "Other users will be blocked from editing this page until %(bumptime)s."
 msgstr ""
 
+#: MoinMoin/PageEditor.py:473
 #, python-format
 msgid ""
-"Other users will be ''warned'' until %(bumptime)s that you are editing this "
+"Other users will be warned until %(bumptime)s that you are editing this "
 "page."
 msgstr ""
 
+#: MoinMoin/PageEditor.py:476
 msgid "Use the Preview button to extend the locking period."
 msgstr ""
 
+#: MoinMoin/PageEditor.py:484
 #, python-format
 msgid ""
-"This page is currently ''locked'' for editing by %(owner)s until %(timestamp)"
-"s, i.e. for %(mins_valid)d minute(s)."
+"This page is currently locked for editing by %(owner)s until "
+"%(timestamp)s, i.e. for %(mins_valid)d minute(s)."
 msgstr ""
 
+#: MoinMoin/PageEditor.py:491
 #, python-format
 msgid ""
-"This page was opened for editing or last previewed at %(timestamp)s by %"
-"(owner)s.<<BR>>\n"
-"'''You should ''refrain from editing'' this page for at least another %"
-"(mins_valid)d minute(s),\n"
-"to avoid editing conflicts.'''<<BR>>\n"
+"This page was opened for editing or last previewed at %(timestamp)s by "
+"%(owner)s.\n"
+"You should refrain from editing this page for at least another "
+"%(mins_valid)d minute(s),\n"
+"to avoid editing conflicts.\n"
 "To leave the editor, press the Cancel button."
 msgstr ""
 
+#: MoinMoin/PageEditor.py:516 MoinMoin/user.py:113 MoinMoin/user.py:882
 msgid "<unknown>"
 msgstr ""
 
-#, python-format
-msgid "Invalid highlighting regular expression \"%(regex)s\": %(error)s"
+#: MoinMoin/user.py:174
+msgid "anonymous"
 msgstr ""
 
-msgid ""
-"The backed up content of this page is deprecated and will not be included in "
-"search results!"
-msgstr ""
-
-#, python-format
-msgid "Revision %(rev)d as of %(date)s"
-msgstr ""
-
-#, python-format
-msgid "Redirected from page \"%(page)s\""
-msgstr ""
-
-#, python-format
-msgid "This page redirects to page \"%(page)s\""
-msgstr ""
-
-msgid "Create New Page"
-msgstr ""
-
-msgid "You are not allowed to view this page."
-msgstr ""
-
-msgid "The wiki is currently not reachable."
-msgstr ""
-
-msgid "Invalid username or password."
-msgstr ""
-
-#, python-format
-msgid ""
-"The remote wiki uses a different InterWiki name (%(remotename)s) internally "
-"than you specified (%(localname)s)."
-msgstr ""
-
-msgid "Text mode"
-msgstr ""
-
-#, python-format
-msgid "The package needs a newer version of MoinMoin (at least %s)."
-msgstr ""
-
-msgid "The theme name is not set."
-msgstr ""
-
-msgid "Installing theme files is only supported for standalone type servers."
-msgstr ""
-
-#, python-format
-msgid "Installation of '%(filename)s' failed."
-msgstr ""
-
-#, python-format
-msgid "The file %s is not a MoinMoin package file."
-msgstr ""
-
-#, python-format
-msgid "The page %s does not exist."
-msgstr ""
-
-msgid "Invalid package file header."
-msgstr ""
-
-msgid "Package file format unsupported."
-msgstr ""
-
-#, python-format
-msgid "Unknown function %(func)s in line %(lineno)i."
-msgstr ""
-
-#, python-format
-msgid "The file %s was not found in the package."
-msgstr ""
-
+#: MoinMoin/user.py:949
 #, python-format
 msgid ""
 "Login Name: %s\n"
 "\n"
 "Password recovery token: %s\n"
 "\n"
-"Password reset URL: %s/?action=recoverpass&name=%s&token=%s\n"
+"Password reset URL: %s\n"
 msgstr ""
 
+#: MoinMoin/user.py:959
 msgid ""
 "Somebody has requested to email you a password recovery token.\n"
 "\n"
@@ -418,155 +138,968 @@ msgid ""
 "recovery token.\n"
 msgstr ""
 
+#: MoinMoin/user.py:968
 #, python-format
 msgid "[%(sitename)s] Your wiki account data"
 msgstr ""
 
-msgid "Line"
+#: MoinMoin/wikisync.py:180
+msgid "The wiki is currently not reachable."
 msgstr ""
 
-msgid "No differences found!"
+#: MoinMoin/wikisync.py:189 MoinMoin/auth/__init__.py:251
+#: MoinMoin/auth/ldap_login.py:199 MoinMoin/auth/ldap_login.py:246
+#: MoinMoin/auth/mysql_group.py:66
+msgid "Invalid username or password."
 msgstr ""
 
-msgid "Deletions are marked like this."
-msgstr ""
-
-msgid "Additions are marked like this."
-msgstr ""
-
+#: MoinMoin/wikisync.py:197
 #, python-format
 msgid ""
-"Sorry, can not save page because \"%(content)s\" is not allowed in this wiki."
+"The remote wiki uses a different InterWiki name (%(remotename)s) "
+"internally than you specified (%(localname)s)."
 msgstr ""
 
+#: MoinMoin/wikiutil.py:1523
 #, python-format
-msgid ""
-"Results %(bs)s%(hitsFrom)d - %(hitsTo)d%(be)s of %(aboutHits)s %(bs)s%(hits)d"
-"%(be)s results out of about %(pages)d pages."
+msgid "Argument \"%s\" must be a boolean value, not \"%s\""
 msgstr ""
 
-msgid "seconds"
-msgstr ""
-
-msgid "Previous"
-msgstr ""
-
-msgid "Next"
-msgstr ""
-
-msgid "rev"
-msgstr ""
-
-msgid "current"
-msgstr ""
-
+#: MoinMoin/wikiutil.py:1527
 #, python-format
-msgid "last modified: %s"
+msgid "Argument must be a boolean value, not \"%s\""
 msgstr ""
 
+#: MoinMoin/wikiutil.py:1555
+#, python-format
+msgid "Argument \"%s\" must be an integer value, not \"%s\""
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1559
+#, python-format
+msgid "Argument must be an integer value, not \"%s\""
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1586
+#, python-format
+msgid "Argument \"%s\" must be a floating point value, not \"%s\""
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1590
+#, python-format
+msgid "Argument must be a floating point value, not \"%s\""
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1619
+#, python-format
+msgid "Argument \"%s\" must be a complex value, not \"%s\""
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1623
+#, python-format
+msgid "Argument must be a complex value, not \"%s\""
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1678
+#, python-format
+msgid "Argument \"%s\" must be one of \"%s\", not \"%s\""
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1683
+#, python-format
+msgid "Argument must be one of \"%s\", not \"%s\""
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1911
+msgid "Too many arguments"
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1916
+msgid "Cannot have arguments without name following named arguments"
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1932
+#, python-format
+msgid "Argument \"%s\" is required"
+msgstr ""
+
+#: MoinMoin/wikiutil.py:1944
+#, python-format
+msgid "No argument named \"%s\""
+msgstr ""
+
+#: MoinMoin/wikiutil.py:2003
+#, python-format
+msgid "Expected \"=\" to follow \"%(token)s\""
+msgstr ""
+
+#: MoinMoin/wikiutil.py:2012
+#, python-format
+msgid "Expected a value for key \"%(token)s\""
+msgstr ""
+
+#: MoinMoin/action/GraphInfo.py:78
+#, python-format
+msgid "Revert to revision %(revno)d."
+msgstr ""
+
+#: MoinMoin/action/GraphInfo.py:80
+#, python-format
+msgid "Renamed from '%(oldpagename)s'."
+msgstr ""
+
+#: MoinMoin/action/GraphInfo.py:116 MoinMoin/items/__init__.py:541
+#: MoinMoin/macro2/SystemInfo.py:145
+msgid "N/A"
+msgstr ""
+
+#: MoinMoin/action/GraphInfo.py:129
+msgid "Revision History"
+msgstr ""
+
+#: MoinMoin/action/GraphInfo.py:131
+msgid "No log entries found."
+msgstr ""
+
+#: MoinMoin/action/GraphInfo.py:135
+msgid "Diff"
+msgstr ""
+
+#: MoinMoin/action/GraphInfo.py:219
+#, python-format
+msgid "Info for \"%s\""
+msgstr ""
+
+#: MoinMoin/action/LikePages.py:33
+#, python-format
+msgid "No pages like \"%s\"!"
+msgstr ""
+
+#: MoinMoin/action/LikePages.py:39
+#, python-format
+msgid "Exactly one page like \"%s\" found, redirecting to page."
+msgstr ""
+
+#: MoinMoin/action/LikePages.py:47
+#, python-format
+msgid "Pages like \"%s\""
+msgstr ""
+
+#: MoinMoin/action/LikePages.py:222
+#, python-format
+msgid "%(matchcount)d %(matches)s for \"%(title)s\""
+msgstr ""
+
+#: MoinMoin/action/LikePages.py:224 MoinMoin/search/results.py:812
 msgid "match"
 msgstr ""
 
+#: MoinMoin/action/LikePages.py:224 MoinMoin/search/results.py:812
 msgid "matches"
 msgstr ""
 
-msgid "about"
-msgstr ""
-
-msgid "anonymous"
-msgstr ""
-
-msgid "Language"
-msgstr ""
-
-msgid "<Browser setting>"
-msgstr ""
-
-msgid "Others"
-msgstr ""
-
-msgid "Date"
-msgstr ""
-
-msgid "Views/day"
-msgstr ""
-
-msgid "Edits/day"
-msgstr ""
-
-msgid "Page hits and edits"
-msgstr ""
-
+#: MoinMoin/action/LocalSiteMap.py:38
 #, python-format
-msgid "%(chart_title)s for %(filterpage)s"
+msgid "Local Site Map for \"%s\""
 msgstr ""
 
+#: MoinMoin/action/LocalSiteMap.py:77
+msgid "view"
+msgstr ""
+
+#: MoinMoin/action/MyPages.py:22 MoinMoin/auth/http.py:91
+msgid "Please log in first."
+msgstr ""
+
+#: MoinMoin/action/MyPages.py:35
+msgid "Please first create a homepage before creating additional pages."
+msgstr ""
+
+#: MoinMoin/action/MyPages.py:38
+#, python-format
 msgid ""
-"green=view\n"
-"red=edit"
+"You can add some additional sub pages to your already existing homepage "
+"here.\n"
+"\n"
+"You can choose how open to other readers or writers those pages shall be,"
+"\n"
+"access is controlled by group membership of the corresponding group page."
+"\n"
+"\n"
+"Just enter the sub page's name and click on the button to create a new "
+"page.\n"
+"\n"
+"Before creating access protected pages, make sure the corresponding group"
+" page\n"
+"exists and has the appropriate members in it. Use HomepageGroupsTemplate "
+"for creating\n"
+"the group pages.\n"
+"\n"
+"||'''Add a new personal page:'''||'''Related access control list "
+"group:'''||\n"
+"||<<NewPage(HomepageReadWritePageTemplate,read-write "
+"page,%(username)s)>>||[[%(username)s/ReadWriteGroup]]||\n"
+"||<<NewPage(HomepageReadPageTemplate,read-only "
+"page,%(username)s)>>||[[%(username)s/ReadGroup]]||\n"
+"||<<NewPage(HomepagePrivatePageTemplate,private "
+"page,%(username)s)>>||%(username)s only||\n"
+"\n"
 msgstr ""
 
-msgid "date"
+#: MoinMoin/action/MyPages.py:64
+msgid "MyPages management"
 msgstr ""
 
-msgid "# of hits"
+#: MoinMoin/action/SlideShow.py:308 MoinMoin/macro/Navigation.py:163
+msgid "Edit"
 msgstr ""
 
-msgid "Charts are not available!"
+#: MoinMoin/action/SlideShow.py:310
+msgid "Edit slide show"
 msgstr ""
 
-msgid "Page Size Distribution"
+#: MoinMoin/action/SlideShow.py:311 MoinMoin/action/newpage.py:68
+msgid "You are not allowed to edit this page."
 msgstr ""
 
-msgid "page size upper bound [bytes]"
+#: MoinMoin/action/SlideShow.py:315
+msgid "Quit"
 msgstr ""
 
-msgid "# of pages of this size"
+#: MoinMoin/action/SlideShow.py:315
+msgid "Quit slide show"
 msgstr ""
 
-msgid "User agent"
+#: MoinMoin/action/SlideShow.py:320
+msgid "Show first slide (up arrow)"
 msgstr ""
 
-msgid "Distribution of User-Agent Types"
+#: MoinMoin/action/SlideShow.py:325
+msgid "Show last slide (down arrow)"
 msgstr ""
 
-msgid "Could not contact botbouncer.com."
+#: MoinMoin/action/SlideShow.py:330
+msgid "Show previous slide (left arrow)"
 msgstr ""
 
-msgid "Failed to connect to database."
+#: MoinMoin/action/SlideShow.py:335
+msgid "Show next slide (right arrow)"
 msgstr ""
 
+#: MoinMoin/action/SubscribeUser.py:20
+#, python-format
+msgid "Subscribe users to the page %s"
+msgstr ""
+
+#: MoinMoin/action/SubscribeUser.py:29
+msgid "Enter user names (comma separated):"
+msgstr ""
+
+#: MoinMoin/action/SubscribeUser.py:61
+#, python-format
+msgid "Subscribed for %s:"
+msgstr ""
+
+#: MoinMoin/action/SubscribeUser.py:118
+msgid "Not a user:"
+msgstr ""
+
+#: MoinMoin/action/SubscribeUser.py:129
+msgid "You are not allowed to perform this action."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:67
+#, python-format
+msgid "Rolled back changes to the page %s."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:71
+msgid "Exception while calling rollback function:"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:139
+msgid ""
+"Please enter your password of your account at the remote wiki below. You "
+"should trust both wikis because the password could be read by the wiki "
+"administrators."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:140 MoinMoin/action/serveopenid.py:360
+#: MoinMoin/auth/openidrp.py:94 MoinMoin/auth/openidrp.py:124
+#: MoinMoin/config/multiconfig.py:1102
+msgid "Name"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:142 MoinMoin/auth/openidrp.py:129
+#: MoinMoin/userprefs/changepass.py:79
+msgid "Password"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:145 MoinMoin/action/login.py:17
+#: MoinMoin/theme/__init__.py:290
+msgid "Login"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:146 MoinMoin/action/__init__.py:59
+#: MoinMoin/action/serveopenid.py:409 MoinMoin/userprefs/changepass.py:91
+#: MoinMoin/userprefs/notification.py:156
+#: MoinMoin/userprefs/notification.py:177 MoinMoin/userprefs/oid.py:231
+#: MoinMoin/userprefs/oidserv.py:110 MoinMoin/userprefs/prefs.py:329
+#: MoinMoin/userprefs/suid.py:96
+msgid "Cancel"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:189
+msgid "Operation was canceled."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:192 MoinMoin/action/__init__.py:211
+#: MoinMoin/action/newaccount.py:23 MoinMoin/userprefs/changepass.py:47
+#: MoinMoin/userprefs/notification.py:87 MoinMoin/userprefs/oid.py:147
+#: MoinMoin/userprefs/prefs.py:226 MoinMoin/userprefs/suid.py:44
+#, python-format
+msgid "Please use the interactive user interface to use action %(actionname)s!"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:198
+msgid "The only supported directions are BOTH and DOWN."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:201
+msgid ""
+"Please set an interwikiname in your wikiconfig (see HelpOnConfiguration) "
+"to be able to use this action."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:204
+msgid ""
+"Incorrect parameters. Please supply at least the 'remoteWiki' parameter. "
+"Refer to HelpOnSynchronisation for help."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:213
+msgid "The 'remoteWiki' is unknown."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:223
+msgid "A severe error occurred:"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:226
+msgid "Synchronisation finished. Look below for the status messages."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:275
+msgid "Synchronisation started -"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:287
+#, python-format
+msgid ""
+"Got a list of %s local and %s remote pages. This results in %s pages to "
+"process."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:292
+#, python-format
+msgid "After filtering: %s pages"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:302
+#, python-format
+msgid "Skipped page %s because of no write access to local page."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:335
+#, python-format
+msgid "Deleted page %s locally."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:337
+#, python-format
+msgid "Error while deleting page %s locally:"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:345
+#, python-format
+msgid "Deleted page %s remotely."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:347
+#, python-format
+msgid "Error while deleting page %s remotely:"
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:350
+#, python-format
+msgid ""
+"The item %s cannot be merged automatically but was changed in both wikis."
+" Please delete it in one of both wikis and try again."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:353
+#, python-format
+msgid ""
+"The item %s has different mime types in both wikis and cannot be merged. "
+"Please delete it in one of both wikis or unify the mime type, and try "
+"again."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:356
+#, python-format
+msgid ""
+"The item %s was renamed locally. This is not implemented yet. Therefore "
+"the full synchronisation history is lost for this page."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:367
+#, python-format
+msgid "Synchronising page %s with remote page %s ..."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:381
+#, python-format
+msgid "The page %s was deleted remotely but changed locally."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:386
+#, python-format
+msgid ""
+"The page %s could not be synced. The remote page was renamed. This is not"
+" supported yet. You may want to delete one of the pages to get it synced."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:404
+#, python-format
+msgid "Skipped page %s because of a locally or remotely unresolved conflict."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:408
+#, python-format
+msgid ""
+"This is the first synchronisation between the local and the remote wiki "
+"for the page %s."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:480 MoinMoin/action/SyncPages.py:494
+#, python-format
+msgid ""
+"The page %s could not be merged because you are not allowed to modify the"
+" page in the remote wiki."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:498
+#, python-format
+msgid "Page %s successfully merged."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:500
+#, python-format
+msgid "Page %s contains conflicts that were introduced on the remote side."
+msgstr ""
+
+#: MoinMoin/action/SyncPages.py:502
+#, python-format
+msgid "Page %s merged with conflicts."
+msgstr ""
+
+#: MoinMoin/action/__init__.py:61
+msgid "Do it."
+msgstr ""
+
+#: MoinMoin/action/__init__.py:107
+#, python-format
+msgid "Execute action %(actionname)s?"
+msgstr ""
+
+#: MoinMoin/action/__init__.py:193
+#, python-format
+msgid "Action %(actionname)s is excluded in this wiki!"
+msgstr ""
+
+#: MoinMoin/action/__init__.py:199
+#, python-format
+msgid "You are not allowed to use action %(actionname)s on this page!"
+msgstr ""
+
+#: MoinMoin/action/backup.py:53
+msgid "Wiki Backup"
+msgstr ""
+
+#: MoinMoin/action/backup.py:57
+msgid ""
+"= Downloading a backup =\n"
+"\n"
+"Please note:\n"
+" * Store backups in a safe and secure place - they contain sensitive "
+"information.\n"
+" * Make sure your wiki configuration backup_* values are correct and "
+"complete.\n"
+" * Make sure the backup file you get contains everything you need in case"
+" of problems.\n"
+" * Make sure it is downloaded without problems.\n"
+"\n"
+"To get a backup, just click here:"
+msgstr ""
+
+#: MoinMoin/action/backup.py:76
+msgid "Backup"
+msgstr ""
+
+#: MoinMoin/action/backup.py:104
+msgid "You are not allowed to do remote backup."
+msgstr ""
+
+#: MoinMoin/action/backup.py:113
+#, python-format
+msgid "Unknown backup subaction: %s."
+msgstr ""
+
+#: MoinMoin/action/bookmark.py:19 MoinMoin/action/subscribe.py:16
+#: MoinMoin/action/unsubscribe.py:16 MoinMoin/action/userprefs.py:92
+#, python-format
+msgid "You must login to use this action: %(action)s."
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:134
+#, python-format
+msgid "Only pages changed since '%s' are being displayed!"
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:137
+msgid ""
+"The modification date you entered was not recognized and is therefore not"
+" considered for the search results!"
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:163 MoinMoin/macro/FullSearch.py:99
+#: MoinMoin/macro/PageList.py:25
+#, python-format
+msgid "Please use a more selective search term instead of \"%s\""
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:171
+#, python-format
+msgid "Title Search: \"%s\""
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:175
+#, python-format
+msgid "Advanced Search: \"%s\""
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:177
+#, python-format
+msgid "Full Text Search: \"%s\""
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:187 MoinMoin/macro/PageList.py:37
+#, python-format
+msgid ""
+"Your search query \"%s\" is invalid. Please refer to HelpOnSearching for "
+"more information."
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:214
+#, python-format
+msgid ""
+"Your search query '%s' didn't return any results. Please change some "
+"terms and refer to HelpOnSearching for more information.%s"
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:219
+msgid "Consider performing a"
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:221
+msgid "full-text search with your search terms"
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:244
+msgid ""
+"You're performing a title search that might not include all related "
+"results of your search query in this wiki."
+msgstr ""
+
+#: MoinMoin/action/fullsearch.py:248
+msgid "Click here to perform a full-text search with your search terms!"
+msgstr ""
+
+#: MoinMoin/action/links.py:20
+#, python-format
+msgid "Full Link List for \"%s\""
+msgstr ""
+
+#: MoinMoin/action/logout.py:15 MoinMoin/theme/__init__.py:282
+msgid "Logout"
+msgstr ""
+
+#: MoinMoin/action/logout.py:20
+msgid "You are now logged out."
+msgstr ""
+
+#: MoinMoin/action/logout.py:23
+msgid "You are still logged in."
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:26
+msgid "TextCha: Wrong answer! Go back and try again..."
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:35 MoinMoin/userprefs/prefs.py:81
+msgid "Empty user name. Please enter a user name."
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:39 MoinMoin/userprefs/prefs.py:70
+#, python-format
+msgid ""
+"Invalid user name '%s'.\n"
+"Name may contain any Unicode alpha numeric character, with optional one\n"
+"space between words. Group page name is not allowed."
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:45 MoinMoin/userprefs/prefs.py:78
+msgid "This user name already belongs to somebody else."
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:53 MoinMoin/action/recoverpass.py:170
+#: MoinMoin/userprefs/changepass.py:54
+msgid "Passwords don't match!"
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:55 MoinMoin/userprefs/changepass.py:56
+msgid "Please specify a password!"
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:61 MoinMoin/action/recoverpass.py:178
+#: MoinMoin/userprefs/changepass.py:62
+#, python-format
+msgid "Password not acceptable: %s"
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:75 MoinMoin/userprefs/prefs.py:93
+msgid ""
+"Please provide your email address. If you lose your login information, "
+"you can get it by email."
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:81 MoinMoin/userprefs/prefs.py:100
+msgid "This email already belongs to somebody else."
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:86
+msgid "User account created! You can use this account to login now..."
+msgstr ""
+
+#: MoinMoin/action/newaccount.py:104
+msgid "Create Account"
+msgstr ""
+
+#: MoinMoin/action/newpage.py:35
+msgid "Cannot create a new page without a page name.  Please specify a page name."
+msgstr ""
+
+#: MoinMoin/action/quicklink.py:16
+msgid "You must login to add a quicklink."
+msgstr ""
+
+#: MoinMoin/action/quicklink.py:19
+msgid "A quicklink to this page has been added for you."
+msgstr ""
+
+#: MoinMoin/action/quicklink.py:21
+msgid "A quicklink to this page could not be added for you."
+msgstr ""
+
+#: MoinMoin/action/quicklink.py:23
+msgid "You already have a quicklink to this page."
+msgstr ""
+
+#: MoinMoin/action/quickunlink.py:17
+msgid "You must login to remove a quicklink."
+msgstr ""
+
+#: MoinMoin/action/quickunlink.py:20
+msgid "Your quicklink to this page has been removed."
+msgstr ""
+
+#: MoinMoin/action/quickunlink.py:22
+msgid "Your quicklink to this page could not be removed."
+msgstr ""
+
+#: MoinMoin/action/quickunlink.py:24
+msgid "You need to have a quicklink to this page to remove it."
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:22
+msgid "If this account exists an email was sent."
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:29 MoinMoin/action/recoverpass.py:158
+msgid ""
+"This wiki is not enabled for mail processing.\n"
+"Contact the owner of the wiki, who can enable email."
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:57
+msgid "Please provide a valid email address or a username!"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:73 MoinMoin/action/recoverpass.py:107
+msgid "Username"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:79 MoinMoin/config/multiconfig.py:1104
+#: MoinMoin/userprefs/notification.py:101
+msgid "Email"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:89
+msgid "Mail me my account data"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:114
+msgid "Recovery token"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:121
+msgid "New password"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:127
+msgid "New password (repeat)"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:136
+msgid "Reset my password"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:182
+msgid "Your password has been changed, you can log in now."
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:185
+msgid "Your token is invalid!"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:193
+msgid "Password reset"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:197
+msgid "Password reset - enter a new password below."
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:211
+msgid "Lost password"
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:215
+msgid ""
+"\n"
+"Recovering a lost password -\n"
+"If you have forgotten your password, provide your email address or\n"
+"username and click on 'Mail me my account data'.\n"
+"You will receive an email containing a recovery token that can be\n"
+"used to change your password. The email will also contain further\n"
+"instructions."
+msgstr ""
+
+#: MoinMoin/action/recoverpass.py:227
+msgid ""
+"\n"
+"Password reset -\n"
+"If you already have received the email with the recovery token, enter "
+"your\n"
+"username, the recovery token and a new password (twice) below."
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:311
+msgid ""
+"You need to manually go to your OpenID provider wiki\n"
+"and log in before you can use your OpenID. MoinMoin will\n"
+"never allow you to enter your password here.\n"
+"\n"
+"Once you have logged in, simply reload this page."
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:318
+msgid "OpenID Trust verification"
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:323
+#, python-format
+msgid "The site %s has asked for your identity."
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:326
+#, python-format
+msgid ""
+"\n"
+"If you approve, the site represented by the trust root below will be\n"
+"told that you control the identity URL %s. (If you are using a delegated\n"
+"identity, the site will take care of reversing the\n"
+"delegation on its own.)"
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:350
+msgid "Trust root"
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:355
+msgid "Identity URL"
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:365
+msgid "Remember decision"
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:369
+msgid "Remember this trust decision and don't ask again"
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:377
+msgid "Approve"
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:378
+msgid "Don't approve"
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:390
+msgid "OpenID not served"
+msgstr ""
+
+#: MoinMoin/action/serveopenid.py:395
+msgid ""
+"\n"
+"Unfortunately you have not created your homepage yet. Therefore,\n"
+"we cannot serve an OpenID for you. Please create your homepage first\n"
+"and then reload this page or click the button below to cancel this\n"
+"verification."
+msgstr ""
+
+#: MoinMoin/action/subscribe.py:22
+msgid "You are not allowed to subscribe to a page you can't read."
+msgstr ""
+
+#: MoinMoin/action/subscribe.py:26
+msgid "This wiki is not enabled for mail/Jabber processing."
+msgstr ""
+
+#: MoinMoin/action/subscribe.py:30
+msgid "You must log in to use subscriptions."
+msgstr ""
+
+#: MoinMoin/action/subscribe.py:34
+msgid ""
+"Add your email address or Jabber ID in your user settings to use "
+"subscriptions."
+msgstr ""
+
+#: MoinMoin/action/subscribe.py:38
+msgid "You are already subscribed to this page."
+msgstr ""
+
+#: MoinMoin/action/subscribe.py:42
+msgid "You have been subscribed to this page."
+msgstr ""
+
+#: MoinMoin/action/subscribe.py:44
+msgid "You could not get subscribed to this page."
+msgstr ""
+
+#: MoinMoin/action/supplementation.py:19
+msgid "You are not allowed to create the supplementation page."
+msgstr ""
+
+#: MoinMoin/action/syspages_upgrade.py:37
+#, python-format
+msgid "<br> System pages upgrade failed due to the following error: %s."
+msgstr ""
+
+#: MoinMoin/action/syspages_upgrade.py:39
+msgid "<br> System pages have been upgraded successfully!"
+msgstr ""
+
+#: MoinMoin/action/thread_monitor.py:20 MoinMoin/action/thread_monitor.py:43
+msgid "You are not allowed to use this action."
+msgstr ""
+
+#: MoinMoin/action/unsubscribe.py:22
+msgid "Your subscription to this page has been removed."
+msgstr ""
+
+#: MoinMoin/action/unsubscribe.py:24
+msgid "Can't remove regular expression subscription!"
+msgstr ""
+
+#: MoinMoin/action/unsubscribe.py:25
+msgid "Edit the subscription regular expressions in your settings."
+msgstr ""
+
+#: MoinMoin/action/unsubscribe.py:29
+msgid "You need to be subscribed to unsubscribe."
+msgstr ""
+
+#: MoinMoin/action/userprefs.py:45
+msgid "Please choose:"
+msgstr ""
+
+#: MoinMoin/action/userprefs.py:101 MoinMoin/action/userprefs.py:103
+#: MoinMoin/theme/__init__.py:277
+msgid "Settings"
+msgstr ""
+
+#: MoinMoin/action/userprofile.py:17
+msgid "Only superuser is allowed to use this action."
+msgstr ""
+
+#: MoinMoin/auth/__init__.py:243 MoinMoin/auth/ldap_login.py:129
 msgid "Missing password. Please enter user name and password."
 msgstr ""
 
+#: MoinMoin/auth/__init__.py:263
 #, python-format
 msgid ""
-"If you do not have an account, <a href=\"%(userprefslink)s\">you can create "
-"one now</a>. <a href=\"%(sendmypasswordlink)s\">Forgot your password?</a>"
+"If you do not have an account, <a href=\"%(userprefslink)s\">you can "
+"create one now</a>. "
 msgstr ""
 
-msgid "You need to log in."
+#: MoinMoin/auth/__init__.py:265
+#, python-format
+msgid "<a href=\"%(sendmypasswordlink)s\">Forgot your password?</a>"
 msgstr ""
 
+#: MoinMoin/auth/botbouncer.py:45
+msgid "Could not contact botbouncer.com."
+msgstr ""
+
+#: MoinMoin/auth/ldap_login.py:260
 #, python-format
 msgid "LDAP server %(server)s failed."
 msgstr ""
 
+#: MoinMoin/auth/mysql_group.py:55
+msgid "Failed to connect to database."
+msgstr ""
+
+#: MoinMoin/auth/openidrp.py:85
 msgid ""
 "Please choose an account name now.\n"
 "If you choose an existing account name you will be asked for the\n"
 "password and be able to associate the account with your OpenID."
 msgstr ""
 
-msgid "Name"
-msgstr ""
-
+#: MoinMoin/auth/openidrp.py:101
 msgid "Choose this name"
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:106
 msgid "This is not a valid username, choose a different one."
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:116
 msgid ""
 "The username you have chosen is already\n"
 "taken. If it is your username, enter your password below to associate\n"
@@ -574,104 +1107,238 @@ msgid ""
 "username and leave the password field blank."
 msgstr ""
 
-msgid "Password"
-msgstr ""
-
+#: MoinMoin/auth/openidrp.py:136
 msgid "Associate this name"
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:150 MoinMoin/auth/openidrp.py:151
+#: MoinMoin/userprefs/oid.py:112
 #, python-format
 msgid "OpenID error: %s."
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:153
+msgid "OpenID verification canceled."
+msgstr ""
+
+#: MoinMoin/auth/openidrp.py:154 MoinMoin/userprefs/oid.py:114
 msgid "Verification canceled."
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:156
+#, python-format
+msgid "OpenID success. id: %s"
+msgstr ""
+
+#: MoinMoin/auth/openidrp.py:180
+msgid "OpenID failure"
+msgstr ""
+
+#: MoinMoin/auth/openidrp.py:181 MoinMoin/userprefs/oid.py:130
 msgid "OpenID failure."
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:186 MoinMoin/auth/openidrp.py:211
+msgid "No OpenID found in session."
+msgstr ""
+
+#: MoinMoin/auth/openidrp.py:224
 msgid "Your account is now associated to your OpenID."
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:226
 msgid "The password you entered is not valid."
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:243
+msgid "OpenID error: unknown continuation stage"
+msgstr ""
+
+#: MoinMoin/auth/openidrp.py:247 MoinMoin/userprefs/oid.py:214
 msgid "OpenID verification requires that you click this button:"
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:278
 msgid "Anonymous sessions need to be enabled for OpenID login."
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:293 MoinMoin/userprefs/oid.py:76
 msgid "Failed to resolve OpenID."
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:295 MoinMoin/userprefs/oid.py:78
 msgid "OpenID discovery failure, not a valid OpenID."
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:298
 msgid "No OpenID."
 msgstr ""
 
+#: MoinMoin/auth/openidrp.py:321
 msgid ""
-"If you do not have an account yet, you can still log in with your OpenID and "
-"create one during login."
+"If you do not have an account yet, you can still log in with your OpenID "
+"and create one during login."
 msgstr ""
 
+#: MoinMoin/config/multiconfig.py:647
+msgid "Password is too short."
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:649
+msgid "Password has not enough different characters."
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:655
+msgid "Password is too easy (password contains name or name contains password)."
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:664
+msgid "Password is too easy (keyboard sequence)."
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1066
+msgid "Publish my email (not my wiki homepage) in author info"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1067
+msgid "Open editor on double click"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1068
+msgid "After login, jump to last visited page"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1069
+msgid "Show comment sections"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1070
+msgid "Show trail of recently visited items"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1071
+msgid "Show fancy diffs"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1072
+msgid "Remember login information"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1074
+msgid "Disable this account forever"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1102
+msgid "(Use FirstnameLastname)"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1103
+msgid "Alias-Name"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1105
+msgid "Jabber ID"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1106
+msgid "User CSS URL"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1106
+msgid "(Leave it empty for disabling user CSS)"
+msgstr ""
+
+#: MoinMoin/config/multiconfig.py:1107
+msgid "Editor size"
+msgstr ""
+
+#: MoinMoin/converter2/html_out.py:442
+msgid "Contents"
+msgstr ""
+
+#: MoinMoin/converter2/macro.py:116 MoinMoin/converter2/macro.py:162
+#: MoinMoin/macro/__init__.py:127
+#, python-format
+msgid "<<%(macro_name)s: execution failed [%(error_msg)s] (see also the log)>>"
+msgstr ""
+
+#: MoinMoin/events/__init__.py:49
 msgid "Page has been modified"
 msgstr ""
 
+#: MoinMoin/events/__init__.py:61
 msgid "Page has been modified in a trivial fashion"
 msgstr ""
 
+#: MoinMoin/events/__init__.py:73
 msgid "Page has been renamed"
 msgstr ""
 
+#: MoinMoin/events/__init__.py:86
 msgid "Page has been deleted"
 msgstr ""
 
+#: MoinMoin/events/__init__.py:98
 msgid "Page has been copied"
 msgstr ""
 
-msgid "A new attachment has been added"
-msgstr ""
-
+#: MoinMoin/events/__init__.py:111
 msgid "A page has been reverted to a previous state"
 msgstr ""
 
+#: MoinMoin/events/__init__.py:124
 msgid "A user has subscribed to a page"
 msgstr ""
 
+#: MoinMoin/events/__init__.py:157
 msgid "A new account has been created"
 msgstr ""
 
+#: MoinMoin/events/__init__.py:168
+msgid "An account has been changed."
+msgstr ""
+
+#: MoinMoin/events/emailnotify.py:45
 #, python-format
 msgid "[%(sitename)s] %(trivial)sUpdate of \"%(pagename)s\" by %(username)s"
 msgstr ""
 
+#: MoinMoin/events/emailnotify.py:46
 msgid "Trivial "
 msgstr ""
 
-#, python-format
-msgid ""
-"Attachment link: %(attach)s\n"
-"Page link: %(page)s\n"
+#: MoinMoin/events/emailnotify.py:53
+msgid "Comment:"
 msgstr ""
 
+#: MoinMoin/events/jabbernotify.py:132
+msgid "Changed page"
+msgstr ""
+
+#: MoinMoin/events/jabbernotify.py:133
+msgid "Page changed"
+msgstr ""
+
+#: MoinMoin/events/notification.py:84
 #, python-format
 msgid ""
 "Dear Wiki user,\n"
 "\n"
-"You have subscribed to a wiki page or wiki category on \"%(sitename)s\" for "
-"change notification.\n"
+"You have subscribed to a wiki page or wiki category on \"%(sitename)s\" "
+"for change notification.\n"
 "\n"
 "The \"%(pagename)s\" page has been changed by %(editor)s:\n"
 msgstr ""
 
+#: MoinMoin/events/notification.py:94
 msgid "New page:\n"
 msgstr ""
 
+#: MoinMoin/events/notification.py:101
 msgid "No differences found!\n"
 msgstr ""
 
+#: MoinMoin/events/notification.py:104
 #, python-format
 msgid ""
 "Dear wiki user,\n"
@@ -683,6 +1350,7 @@ msgid ""
 "\n"
 msgstr ""
 
+#: MoinMoin/events/notification.py:113
 #, python-format
 msgid ""
 "Dear wiki user,\n"
@@ -690,2016 +1358,1443 @@ msgid ""
 "You have subscribed to a wiki page \"%(sitename)s\" for change "
 "notification.\n"
 "\n"
-"The page \"%(pagename)s\" has been renamed from \"%(oldname)s\" by %(editor)"
-"s:\n"
+"The page \"%(pagename)s\" has been renamed from \"%(oldname)s\" by "
+"%(editor)s:\n"
 msgstr ""
 
+#: MoinMoin/events/notification.py:139
 #, python-format
-msgid "New user account created on %(sitename)s"
+msgid "[%(sitename)s] New user account created"
 msgstr ""
 
+#: MoinMoin/events/notification.py:140
 #, python-format
 msgid ""
-"Dear Superuser, a new user has just been created on %(sitename)s\". Details "
-"follow:\n"
+"Dear Superuser, a new user has just been created on \"%(sitename)s\". "
+"Details follow:\n"
 "\n"
 "    User name: %(username)s\n"
 "    Email address: %(useremail)s"
 msgstr ""
 
-#, python-format
-msgid "New attachment added to page %(pagename)s on %(sitename)s"
+#: MoinMoin/formatter/text_html.py:840
+msgid "Toggle line numbers"
 msgstr ""
 
-#, python-format
-msgid ""
-"Dear Wiki user,\n"
-"\n"
-"You have subscribed to a wiki page \"%(page_name)s\" for change "
-"notification. An attachment has been added to that page by %(editor)s. "
-"Following detailed information is available:\n"
-"\n"
-"Attachment name: %(attach_name)s\n"
-"Attachment size: %(attach_size)s\n"
-msgstr ""
-
-msgid "Attachment link"
-msgstr ""
-
-msgid "Page link"
-msgstr ""
-
-msgid "Changed page"
-msgstr ""
-
-msgid "Page changed"
-msgstr ""
-
-msgid ""
-" Emphasis:: <<Verbatim('')>>''italics''<<Verbatim('')>>; <<Verbatim(''')"
-">>'''bold'''<<Verbatim(''')>>; <<Verbatim(''''')>>'''''bold "
-"italics'''''<<Verbatim(''''')>>; <<Verbatim('')>>''mixed ''<<Verbatim(''')"
-">>'''''bold'''<<Verbatim(''')>> and italics''<<Verbatim('')>>; <<Verbatim"
-"(----)>> horizontal rule.\n"
-" Headings:: = Title 1 =; == Title 2 ==; === Title 3 ===; ==== Title 4 ====; "
-"===== Title 5 =====.\n"
-" Lists:: space and one of: * bullets; 1., a., A., i., I. numbered items; 1."
-"#n start numbering at n; space alone indents.\n"
-" Links:: <<Verbatim(JoinCapitalizedWords)>>; <<Verbatim([[target|linktext]])"
-">>.\n"
-" Tables:: || cell text |||| cell text spanning 2 columns ||;    no trailing "
-"white space allowed after tables or titles.\n"
-"\n"
-"(!) For more help, see HelpOnEditing or SyntaxReference.\n"
-msgstr ""
-
-#, python-format
-msgid "Expected \"%(wanted)s\" after \"%(key)s\", got \"%(token)s\""
-msgstr ""
-
-#, python-format
-msgid "Expected an integer \"%(key)s\" before \"%(token)s\""
-msgstr ""
-
-#, python-format
-msgid "Expected an integer \"%(arg)s\" after \"%(key)s\""
-msgstr ""
-
-#, python-format
-msgid "Expected a color value \"%(arg)s\" after \"%(key)s\""
-msgstr ""
-
-msgid "XSLT option disabled, please look at HelpOnConfiguration."
-msgstr ""
-
-msgid "XSLT processing is not available, please install 4suite 1.x."
-msgstr ""
-
-#, python-format
-msgid "%(errortype)s processing error"
-msgstr ""
-
-msgid ""
-"Rendering of reStructured text is not possible, please install Docutils."
-msgstr ""
-
-msgid ""
-"{{{\n"
-"Emphasis: *italic* **bold** ``monospace``\n"
-"\n"
-"Headings: Heading 1  Heading 2  Heading 3\n"
-"          =========  ---------  ~~~~~~~~~\n"
-"\n"
-"Horizontal rule: ----\n"
-"\n"
-"Links: TrailingUnderscore_ `multi word with backticks`_ external_\n"
-"\n"
-".. _external: http://external-site.example.org/foo/\n"
-"\n"
-"Lists: * bullets; 1., a. numbered items.\n"
-"}}}\n"
-"(!) For more help, see the\n"
-"[[http://docutils.sourceforge.net/docs/user/rst/quickref.html|"
-"reStructuredText Quick Reference]].\n"
-msgstr ""
-
-msgid "**Maximum number of allowed includes exceeded**"
-msgstr ""
-
-#, python-format
-msgid "**You are not allowed to read the page: %s**"
-msgstr ""
-
-#, python-format
-msgid "**Could not find the referenced page: %s**"
-msgstr ""
-
-msgid ""
-" Emphasis:: <<Verbatim(//)>>''italics''<<Verbatim(//)>>; <<Verbatim(**)"
-">>'''bold'''<<Verbatim(**)>>; <<Verbatim(**//)>>'''''bold "
-"italics'''''<<Verbatim(//**)>>; <<Verbatim(//)>>''mixed ''<<Verbatim(**)"
-">>'''''bold'''<<Verbatim(**)>> and italics''<<Verbatim(//)>>;\n"
-" Horizontal Rule:: <<Verbatim(----)>>\n"
-" Force Linebreak:: <<Verbatim(\\\\)>>\n"
-" Headings:: = Title 1 =; == Title 2 ==; === Title 3 ===; ==== Title 4 ====; "
-"===== Title 5 =====.\n"
-" Lists:: * bullets; ** sub-bullets; # numbered items; ## numbered sub "
-"items.\n"
-" Links:: <<Verbatim([[target]])>>; <<Verbatim([[target|linktext]])>>.\n"
-" Tables:: |= header text | cell text | more cell text |;\n"
-"\n"
-"(!) For more help, see HelpOnEditing or HelpOnCreoleSyntax.\n"
-msgstr ""
-
-msgid "Preferences"
-msgstr ""
-
-#, python-format
-msgid ""
-"Invalid user name {{{'%s'}}}.\n"
-"Name may contain any Unicode alpha numeric character, with optional one\n"
-"space between words. Group page name is not allowed."
-msgstr ""
-
-msgid "This user name already belongs to somebody else."
-msgstr ""
-
-msgid "Empty user name. Please enter a user name."
-msgstr ""
-
-msgid ""
-"Please provide your email address. If you lose your login information, you "
-"can get it by email."
-msgstr ""
-
-msgid "This email already belongs to somebody else."
-msgstr ""
-
-msgid "This jabber id already belongs to somebody else."
-msgstr ""
-
-#, python-format
-msgid "The theme '%(theme_name)s' could not be loaded!"
-msgstr ""
-
-msgid "User preferences saved!"
-msgstr ""
-
-msgid "Default"
-msgstr ""
-
-msgid "the one preferred"
-msgstr ""
-
-msgid "free choice"
-msgstr ""
-
-msgid "Save"
-msgstr ""
-
-msgid "Preferred theme"
-msgstr ""
-
-msgid "Editor Preference"
-msgstr ""
-
-msgid "Editor shown on UI"
-msgstr ""
-
-msgid "Time zone"
-msgstr ""
-
-msgid "Your time is"
-msgstr ""
-
-msgid "Server time is"
-msgstr ""
-
-msgid "Date format"
-msgstr ""
-
-msgid "Preferred language"
-msgstr ""
-
-msgid "General options"
-msgstr ""
-
-msgid "Quick links"
-msgstr ""
-
-msgid "Switch user"
-msgstr ""
-
-msgid "No user selected"
-msgstr ""
-
-msgid ""
-"You can now change the settings of the selected user account; log out to get "
-"back to your account."
-msgstr ""
-
-msgid "You are the only user."
-msgstr ""
-
-msgid ""
-"As a superuser, you can temporarily assume the identity of another user."
-msgstr ""
-
-msgid "Select User"
-msgstr ""
-
-msgid "Change password"
-msgstr ""
-
-msgid "Passwords don't match!"
-msgstr ""
-
-msgid "Please specify a password!"
-msgstr ""
-
-#, python-format
-msgid "Password not acceptable: %s"
-msgstr ""
-
-msgid "Your password has been changed."
-msgstr ""
-
-msgid "To change your password, enter a new password twice."
-msgstr ""
-
-msgid "Password repeat"
-msgstr ""
-
-msgid "Notification"
-msgstr ""
-
-msgid "Notification settings saved!"
-msgstr ""
-
-msgid "'''Email'''"
-msgstr ""
-
-msgid "'''Jabber'''"
-msgstr ""
-
-msgid "'''Event type'''"
-msgstr ""
-
-msgid "Select the events you want to be notified about."
-msgstr ""
-
-msgid ""
-"Before you can be notified, you need to provide a way to contact you in the "
-"general preferences."
-msgstr ""
-
-msgid "Subscribed events"
-msgstr ""
-
-msgid "Subscribed wiki pages<<BR>>(one regex per line)"
-msgstr ""
-
-msgid "OpenID server"
-msgstr ""
-
-msgid "The selected websites have been removed."
-msgstr ""
-
-msgid "Trusted websites"
-msgstr ""
-
-msgid "Remove selected"
-msgstr ""
-
-msgid "OpenID settings"
-msgstr ""
-
-msgid "Cannot remove all OpenIDs."
-msgstr ""
-
-msgid "The selected OpenIDs have been removed."
-msgstr ""
-
-msgid "No OpenID given."
-msgstr ""
-
-msgid "OpenID is already present."
-msgstr ""
-
-msgid "This OpenID is already used for another account."
-msgstr ""
-
-msgid "OpenID added successfully."
-msgstr ""
-
-msgid "Current OpenIDs"
-msgstr ""
-
-msgid "Add OpenID"
-msgstr ""
-
-msgid "Options --pages and --search are mutually exclusive!"
-msgstr ""
-
-msgid "You must specify an output file!"
-msgstr ""
-
-msgid "No pages specified using --pages or --search, assuming full package."
-msgstr ""
-
-msgid "All attachments included into the package."
-msgstr ""
-
-msgid "Output file already exists! Cowardly refusing to continue!"
-msgstr ""
-
-msgid "Username"
-msgstr ""
-
-msgid "Member of Groups"
-msgstr ""
-
-msgid "Email"
-msgstr ""
-
-msgid "Jabber"
-msgstr ""
-
-msgid "Action"
-msgstr ""
-
-msgid "Disable user"
-msgstr ""
-
-msgid "Enable user"
-msgstr ""
-
-msgid "disabled"
-msgstr ""
-
-msgid "Mail account data"
-msgstr ""
-
-msgid "OpenID"
-msgstr ""
-
-msgid "Login"
-msgstr ""
-
-#, python-format
-msgid "Local Site Map for \"%s\""
-msgstr ""
-
-msgid "Please log in first."
-msgstr ""
-
-msgid "Please first create a homepage before creating additional pages."
-msgstr ""
-
-#, python-format
-msgid ""
-"You can add some additional sub pages to your already existing homepage "
-"here.\n"
-"\n"
-"You can choose how open to other readers or writers those pages shall be,\n"
-"access is controlled by group membership of the corresponding group page.\n"
-"\n"
-"Just enter the sub page's name and click on the button to create a new "
-"page.\n"
-"\n"
-"Before creating access protected pages, make sure the corresponding group "
-"page\n"
-"exists and has the appropriate members in it. Use HomepageGroupsTemplate for "
-"creating\n"
-"the group pages.\n"
-"\n"
-"||'''Add a new personal page:'''||'''Related access control list "
-"group:'''||\n"
-"||<<NewPage(HomepageReadWritePageTemplate,read-write page,%(username)s)>>||"
-"[[%(username)s/ReadWriteGroup]]||\n"
-"||<<NewPage(HomepageReadPageTemplate,read-only page,%(username)s)>>||[[%"
-"(username)s/ReadGroup]]||\n"
-"||<<NewPage(HomepagePrivatePageTemplate,private page,%(username)s)>>||%"
-"(username)s only||\n"
-"\n"
-msgstr ""
-
-msgid "MyPages management"
-msgstr ""
-
-#, python-format
-msgid "Please use the interactive user interface to use action %(actionname)s!"
-msgstr ""
-
-msgid "TextCha: Wrong answer! Go back and try again..."
-msgstr ""
-
-#, python-format
-msgid "You must login to use this action: %(action)s."
-msgstr ""
-
-msgid "You are not allowed to subscribe to a page you can't read."
-msgstr ""
-
-msgid "This wiki is not enabled for mail/Jabber processing."
-msgstr ""
-
-msgid "You must log in to use subscriptions."
-msgstr ""
-
-msgid ""
-"Add your email address or Jabber ID in your user settings to use "
-"subscriptions."
-msgstr ""
-
-msgid "You are already subscribed to this page."
-msgstr ""
-
-msgid "You have been subscribed to this page."
-msgstr ""
-
-msgid "You could not get subscribed to this page."
-msgstr ""
-
-msgid ""
-"Cannot create a new page without a page name.  Please specify a page name."
-msgstr ""
-
-msgid "Do it."
-msgstr ""
-
-#, python-format
-msgid "Execute action %(actionname)s?"
-msgstr ""
-
-#, python-format
-msgid "Action %(actionname)s is excluded in this wiki!"
-msgstr ""
-
-#, python-format
-msgid "You are not allowed to use action %(actionname)s on this page!"
-msgstr ""
-
-msgid "If this account exists an email was sent."
-msgstr ""
-
-msgid ""
-"This wiki is not enabled for mail processing.\n"
-"Contact the owner of the wiki, who can enable email."
-msgstr ""
-
-msgid "Please provide a valid email address or a username!"
-msgstr ""
-
-msgid "Mail me my account data"
-msgstr ""
-
-msgid "Recovery token"
-msgstr ""
-
-msgid "New password"
-msgstr ""
-
-msgid "New password (repeat)"
-msgstr ""
-
-msgid "Reset my password"
-msgstr ""
-
-msgid "Your password has been changed, you can log in now."
-msgstr ""
-
-msgid "Your token is invalid!"
-msgstr ""
-
-msgid "Password reset"
-msgstr ""
-
-msgid ""
-"\n"
-"== Password reset ==\n"
-"Enter a new password below."
-msgstr ""
-
-msgid "Lost password"
-msgstr ""
-
-msgid ""
-"\n"
-"== Recovering a lost password ==\n"
-"If you have forgotten your password, provide your email address or\n"
-"username and click on '''Mail me my account data'''.\n"
-"You will receive an email containing a recovery token that can be\n"
-"used to change your password. The email will also contain further\n"
-"instructions."
-msgstr ""
-
-msgid ""
-"\n"
-"=== Password reset ===\n"
-"If you already have received the email with the recovery token, enter your\n"
-"username, the recovery token and a new password (twice) below."
-msgstr ""
-
-msgid "Wiki Backup"
-msgstr ""
-
-msgid ""
-"= Downloading a backup =\n"
-"\n"
-"Please note:\n"
-" * Store backups in a safe and secure place - they contain sensitive "
-"information.\n"
-" * Make sure your wiki configuration backup_* values are correct and "
-"complete.\n"
-" * Make sure the backup file you get contains everything you need in case of "
-"problems.\n"
-" * Make sure it is downloaded without problems.\n"
-"\n"
-"To get a backup, just click here:"
-msgstr ""
-
-msgid "Backup"
-msgstr ""
-
-msgid "You are not allowed to do remote backup."
-msgstr ""
-
-#, python-format
-msgid "Unknown backup subaction: %s."
-msgstr ""
-
-msgid "You must login to add a quicklink."
-msgstr ""
-
-msgid "A quicklink to this page has been added for you."
-msgstr ""
-
-msgid "A quicklink to this page could not be added for you."
-msgstr ""
-
-msgid "You already have a quicklink to this page."
-msgstr ""
-
-msgid "You need to provide a chart type!"
-msgstr ""
-
-#, python-format
-msgid "Bad chart type \"%s\"!"
-msgstr ""
-
-msgid "Load"
-msgstr ""
-
-msgid "Pagename not specified!"
-msgstr ""
-
-msgid "Upload page content"
-msgstr ""
-
-msgid ""
-"You can upload content for the page named below. If you change the page "
-"name, you can also upload content for another page. If the page name is "
-"empty, we derive the page name from the file name."
-msgstr ""
-
-msgid "File to load page content from"
-msgstr ""
-
-msgid "Comment"
-msgstr ""
-
-msgid "Page Name"
-msgstr ""
-
-msgid "You are not allowed to create the supplementation page."
-msgstr ""
-
-msgid "You must login to remove a quicklink."
-msgstr ""
-
-msgid "Your quicklink to this page has been removed."
-msgstr ""
-
-msgid "Your quicklink to this page could not be removed."
-msgstr ""
-
-msgid "You need to have a quicklink to this page to remove it."
-msgstr ""
-
-#, python-format
-msgid "[%d attachments]"
-msgstr ""
-
-#, python-format
-msgid ""
-"There are <a href=\"%(link)s\">%(count)s attachment(s)</a> stored for this "
-"page."
-msgstr ""
-
-msgid "Filename of attachment not specified!"
-msgstr ""
-
-#, python-format
-msgid "Attachment '%(filename)s' does not exist!"
-msgstr ""
-
-msgid ""
-"To refer to attachments on a page, use '''{{{attachment:filename}}}''', \n"
-"as shown below in the list of files. \n"
-"Do '''NOT''' use the URL of the {{{[get]}}} link, \n"
-"since this is subject to change and can break easily."
-msgstr ""
-
-msgid "del"
-msgstr ""
-
-msgid "move"
-msgstr ""
-
-msgid "get"
-msgstr ""
-
-msgid "edit"
-msgstr ""
-
-msgid "view"
-msgstr ""
-
-msgid "unzip"
-msgstr ""
-
-msgid "install"
-msgstr ""
-
-#, python-format
-msgid "No attachments stored for %(pagename)s"
-msgstr ""
-
-msgid "Edit drawing"
-msgstr ""
-
-msgid "New Attachment"
-msgstr ""
-
-msgid "File to upload"
-msgstr ""
-
-msgid "Rename to"
-msgstr ""
-
-msgid "Overwrite existing attachment of same name"
-msgstr ""
-
-msgid "Upload"
-msgstr ""
-
-msgid "Attached Files"
-msgstr ""
-
-msgid "You are not allowed to attach a file to this page."
-msgstr ""
-
-#, python-format
-msgid "Unsupported AttachFile sub-action: %s"
-msgstr ""
-
-#, python-format
-msgid "Attachments for \"%(pagename)s\""
-msgstr ""
-
-msgid "You are not allowed to overwrite a file attachment of this page."
-msgstr ""
-
-msgid ""
-"No file content. Delete non ASCII characters from the file name and try "
-"again."
-msgstr ""
-
-#, python-format
-msgid ""
-"Attachment '%(target)s' (remote name '%(filename)s') with %(bytes)d bytes "
-"saved."
-msgstr ""
-
-#, python-format
-msgid "Attachment '%(target)s' (remote name '%(filename)s') already exists."
-msgstr ""
-
-msgid "You are not allowed to save a drawing on this page."
-msgstr ""
-
-msgid "You are not allowed to delete attachments on this page."
-msgstr ""
-
-#, python-format
-msgid "Attachment '%(filename)s' deleted."
-msgstr ""
-
-#, python-format
-msgid "Attachment '%(new_pagename)s/%(new_filename)s' already exists."
-msgstr ""
-
-#, python-format
-msgid ""
-"Attachment '%(pagename)s/%(filename)s' moved to '%(new_pagename)s/%"
-"(new_filename)s'."
-msgstr ""
-
-msgid "Nothing changed"
-msgstr ""
-
-#, python-format
-msgid "Page '%(new_pagename)s' does not exist or you don't have enough rights."
-msgstr ""
-
-msgid "Move aborted!"
-msgstr ""
-
-msgid "Please use the interactive user interface to move attachments!"
-msgstr ""
-
-msgid "You are not allowed to move attachments from this page."
-msgstr ""
-
-msgid "Move aborted because new page name is empty."
-msgstr ""
-
-#, python-format
-msgid "Please use a valid filename for attachment '%(filename)s'."
-msgstr ""
-
-msgid "Move aborted because new attachment name is empty."
-msgstr ""
-
-msgid "Move"
-msgstr ""
-
-msgid "New page name"
-msgstr ""
-
-msgid "New attachment name"
-msgstr ""
-
-msgid "You are not allowed to get attachments from this page."
-msgstr ""
-
-msgid "You are not allowed to install files."
-msgstr ""
-
-#, python-format
-msgid "Attachment '%(filename)s' installed."
-msgstr ""
-
-msgid "You are not allowed to unzip attachments of this page."
-msgstr ""
-
-#, python-format
-msgid "The file %(filename)s is not a .zip file."
-msgstr ""
-
-#, python-format
-msgid ""
-"Attachment '%(filename)s' not unzipped because some files in the zip are "
-"either not in the same directory or exceeded the single file size limit (%"
-"(maxsize_file)d kB)."
-msgstr ""
-
-#, python-format
-msgid ""
-"Attachment '%(filename)s' not unzipped because it would have exceeded the "
-"per page attachment storage size limit (%(size)d kB)."
-msgstr ""
-
-#, python-format
-msgid ""
-"Attachment '%(filename)s' not unzipped because it would have exceeded the "
-"per page attachment count limit (%(count)d)."
-msgstr ""
-
-#, python-format
-msgid ""
-"Attachment '%(filename)s' partially unzipped (did not overwrite: %(filelist)"
-"s)."
-msgstr ""
-
-#, python-format
-msgid "Attachment '%(filename)s' unzipped."
-msgstr ""
-
-msgid "A severe error occurred:"
-msgstr ""
-
-#, python-format
-msgid "Attachment '%(filename)s'"
-msgstr ""
-
-msgid "Download"
-msgstr ""
-
-msgid "Package script:"
-msgstr ""
-
-msgid "File Name"
-msgstr ""
-
-msgid "Modified"
-msgstr ""
-
-msgid "Size"
-msgstr ""
-
-msgid "Unknown file type, cannot display this attachment inline."
-msgstr ""
-
-msgid "You are not allowed to view attachments of this page."
-msgstr ""
-
-#, python-format
-msgid "attachment:%(filename)s of %(pagename)s"
-msgstr ""
-
-#, python-format
-msgid "Full Link List for \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Subscribe users to the page %s"
-msgstr ""
-
-msgid "Enter user names (comma separated):"
-msgstr ""
-
-#, python-format
-msgid "Subscribed for %s:"
-msgstr ""
-
-msgid "Not a user:"
-msgstr ""
-
-msgid "You are not allowed to perform this action."
-msgstr ""
-
-msgid "You are not allowed to use this action."
-msgstr ""
-
-msgid "Rename Page"
-msgstr ""
-
-msgid "This page is already deleted or was never created!"
-msgstr ""
-
-msgid "Rename all /subpages too?"
-msgstr ""
-
-msgid "New name"
-msgstr ""
-
-msgid "Optional reason for the renaming"
-msgstr ""
-
-msgid "Really rename this page?"
-msgstr ""
-
-#, python-format
-msgid "No pages like \"%s\"!"
-msgstr ""
-
-#, python-format
-msgid "Exactly one page like \"%s\" found, redirecting to page."
-msgstr ""
-
-#, python-format
-msgid "Pages like \"%s\""
-msgstr ""
-
-#, python-format
-msgid "%(matchcount)d %(matches)s for \"%(title)s\""
-msgstr ""
-
-#, python-format
-msgid "Invalid filename \"%s\"!"
-msgstr ""
-
-#, python-format
-msgid "Created the package %s containing the pages %s."
-msgstr ""
-
-msgid "Include all attachments?"
-msgstr ""
-
-msgid "Package pages"
-msgstr ""
-
-msgid "Package name"
-msgstr ""
-
-msgid "List of page names - separated by a comma"
-msgstr ""
-
-msgid "Delete"
-msgstr ""
-
-msgid "Delete all /subpages too?"
-msgstr ""
-
-msgid "Optional reason for the deletion"
-msgstr ""
-
-msgid "Really delete this page?"
-msgstr ""
-
-msgid "You are now logged out."
-msgstr ""
-
-#, python-format
-msgid "Rolled back changes to the page %s."
-msgstr ""
-
-msgid "Exception while calling rollback function:"
-msgstr ""
-
-msgid ""
-"Please enter your password of your account at the remote wiki below. "
-"<<BR>> /!\\ You should trust both wikis because the password could be read "
-"by the particular administrators."
-msgstr ""
-
-msgid "Operation was canceled."
-msgstr ""
-
-msgid "The only supported directions are BOTH and DOWN."
-msgstr ""
-
-msgid ""
-"Please set an interwikiname in your wikiconfig (see HelpOnConfiguration) to "
-"be able to use this action."
-msgstr ""
-
-msgid ""
-"Incorrect parameters. Please supply at least the ''remoteWiki'' parameter. "
-"Refer to HelpOnSynchronisation for help."
-msgstr ""
-
-msgid "The ''remoteWiki'' is unknown."
-msgstr ""
-
-msgid "Synchronisation finished. Look below for the status messages."
-msgstr ""
-
-msgid "Synchronisation started -"
-msgstr ""
-
-#, python-format
-msgid ""
-"Got a list of %s local and %s remote pages. This results in %s pages to "
-"process."
-msgstr ""
-
-#, python-format
-msgid "After filtering: %s pages"
-msgstr ""
-
-#, python-format
-msgid "Skipped page %s because of no write access to local page."
-msgstr ""
-
-#, python-format
-msgid "Deleted page %s locally."
-msgstr ""
-
-#, python-format
-msgid "Error while deleting page %s locally:"
-msgstr ""
-
-#, python-format
-msgid "Deleted page %s remotely."
-msgstr ""
-
-#, python-format
-msgid "Error while deleting page %s remotely:"
-msgstr ""
-
-#, python-format
-msgid ""
-"The item %s cannot be merged automatically but was changed in both wikis. "
-"Please delete it in one of both wikis and try again."
-msgstr ""
-
-#, python-format
-msgid ""
-"The item %s has different mime types in both wikis and cannot be merged. "
-"Please delete it in one of both wikis or unify the mime type, and try again."
-msgstr ""
-
-#, python-format
-msgid ""
-"The item %s was renamed locally. This is not implemented yet. Therefore the "
-"full synchronisation history is lost for this page."
-msgstr ""
-
-#, python-format
-msgid "Synchronising page %s with remote page %s ..."
-msgstr ""
-
-#, python-format
-msgid "The page %s was deleted remotely but changed locally."
-msgstr ""
-
-#, python-format
-msgid ""
-"The page %s could not be synced. The remote page was renamed. This is not "
-"supported yet. You may want to delete one of the pages to get it synced."
-msgstr ""
-
-#, python-format
-msgid "Skipped page %s because of a locally or remotely unresolved conflict."
-msgstr ""
-
-#, python-format
-msgid ""
-"This is the first synchronisation between the local and the remote wiki for "
-"the page %s."
-msgstr ""
-
-#, python-format
-msgid ""
-"The page %s could not be merged because you are not allowed to modify the "
-"page in the remote wiki."
-msgstr ""
-
-#, python-format
-msgid "Page %s successfully merged."
-msgstr ""
-
-#, python-format
-msgid "Page %s contains conflicts that were introduced on the remote side."
-msgstr ""
-
-#, python-format
-msgid "Page %s merged with conflicts."
-msgstr ""
-
-msgid "Editor"
-msgstr ""
-
-msgid "Pages"
-msgstr ""
-
-msgid "Select Author"
-msgstr ""
-
-msgid "Revert all!"
-msgstr ""
-
-msgid "Only superuser is allowed to use this action."
-msgstr ""
-
-msgid "No older revisions available!"
-msgstr ""
-
-#, python-format
-msgid "Diff for \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Differences between revisions %d and %d"
-msgstr ""
-
-#, python-format
-msgid "(spanning %d versions)"
-msgstr ""
-
-msgid "Revert to this revision"
-msgstr ""
-
-msgid "Previous change"
-msgstr ""
-
-msgid "Next change"
-msgstr ""
-
-#, python-format
-msgid "The page was saved %(count)d times, though!"
-msgstr ""
-
-msgid "(ignoring whitespace)"
-msgstr ""
-
-msgid "Ignore changes in the amount of whitespace"
-msgstr ""
-
-#, python-format
-msgid "(including %(localwords)d %(pagelink)s)"
-msgstr ""
-
-#, python-format
-msgid ""
-"The following %(badwords)d words could not be found in the dictionary of %"
-"(totalwords)d words%(localwords)s and are highlighted below:"
-msgstr ""
-
-msgid "Add checked words to dictionary"
-msgstr ""
-
-msgid "No spelling errors found!"
-msgstr ""
-
-msgid "You can't save spelling words."
-msgstr ""
-
-msgid "You can't check spelling on a page you can't read."
-msgstr ""
-
-msgid "Copy Page"
-msgstr ""
-
-msgid "Copy all /subpages too?"
-msgstr ""
-
-msgid "Optional reason for the copying"
-msgstr ""
-
-msgid "Really copy this page?"
-msgstr ""
-
-msgid "Revert"
-msgstr ""
-
-msgid "You are not allowed to revert this page!"
-msgstr ""
-
-msgid ""
-"You were viewing the current revision of this page when you called the "
-"revert action. If you want to revert to an older revision, first view that "
-"older revision and then call revert to this (older) revision again."
-msgstr ""
-
-msgid "Optional reason for reverting this page"
-msgstr ""
-
-msgid "Really revert this page?"
-msgstr ""
-
-msgid ""
-"You need to manually go to your OpenID provider wiki\n"
-"and log in before you can use your OpenID. MoinMoin will\n"
-"never allow you to enter your password here.\n"
-"\n"
-"Once you have logged in, simply reload this page."
-msgstr ""
-
-msgid "OpenID Trust verification"
-msgstr ""
-
-#, python-format
-msgid "The site %s has asked for your identity."
-msgstr ""
-
-#, python-format
-msgid ""
-"\n"
-"If you approve, the site represented by the trust root below will be\n"
-"told that you control the identity URL %s. (If you are using a delegated\n"
-"identity, the site will take care of reversing the\n"
-"delegation on its own.)"
-msgstr ""
-
-msgid "Trust root"
-msgstr ""
-
-msgid "Identity URL"
-msgstr ""
-
-msgid "Remember decision"
-msgstr ""
-
-msgid "Remember this trust decision and don't ask again"
-msgstr ""
-
-msgid "Approve"
-msgstr ""
-
-msgid "Don't approve"
-msgstr ""
-
-msgid "OpenID not served"
-msgstr ""
-
-msgid ""
-"\n"
-"Unfortunately you have not created your homepage yet. Therefore,\n"
-"we cannot serve an OpenID for you. Please create your homepage first\n"
-"and then reload this page or click the button below to cancel this\n"
-"verification."
-msgstr ""
-
-msgid "Please choose:"
-msgstr ""
-
-msgid "Settings"
-msgstr ""
-
-msgid "General Information"
-msgstr ""
-
-#, python-format
-msgid "Page size: %d"
-msgstr ""
-
-msgid "SHA digest of this page's content is:"
-msgstr ""
-
-msgid "The following users subscribed to this page:"
-msgstr ""
-
-msgid "This page links to the following pages:"
-msgstr ""
-
-msgid "Diff"
-msgstr ""
-
-msgid "to previous"
-msgstr ""
-
-#, python-format
-msgid "Revert to revision %(rev)d."
-msgstr ""
-
-#, python-format
-msgid "Renamed from '%(oldpagename)s'."
-msgstr ""
-
-msgid "N/A"
-msgstr ""
-
-msgid "Revision History"
-msgstr ""
-
-msgid "No log entries found."
-msgstr ""
-
-#, python-format
-msgid "Info for \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Show \"%(title)s\""
-msgstr ""
-
-msgid "General Page Infos"
-msgstr ""
-
-#, python-format
-msgid "(!) Only pages changed since '''%s''' are being displayed!"
-msgstr ""
-
-msgid ""
-"/!\\ The modification date you entered was not recognized and is therefore "
-"not considered for the search results!"
-msgstr ""
-
-#, python-format
-msgid "Please use a more selective search term instead of {{{\"%s\"}}}"
-msgstr ""
-
-#, python-format
-msgid "Title Search: \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Advanced Search: \"%s\""
-msgstr ""
-
-#, python-format
-msgid "Full Text Search: \"%s\""
-msgstr ""
-
-#, python-format
-msgid ""
-"Your search query {{{\"%s\"}}} is invalid. Please refer to HelpOnSearching "
-"for more information."
-msgstr ""
-
-#, python-format
-msgid ""
-"Your search query {{{\"%s\"}}} didn't return any results. Please change some "
-"terms and refer to HelpOnSearching for more information.%s"
-msgstr ""
-
-msgid "(!) Consider performing a"
-msgstr ""
-
-msgid "full-text search with your search terms"
-msgstr ""
-
-msgid ""
-"(!) You're performing a title search that might not include all related "
-"results of your search query in this wiki. <<BR>>"
-msgstr ""
-
-msgid "Click here to perform a full-text search with your search terms!"
-msgstr ""
-
-msgid "User account created! You can use this account to login now..."
-msgstr ""
-
-msgid "(Use FirstnameLastname)"
-msgstr ""
-
-msgid "TextCha (required)"
-msgstr ""
-
-msgid "Create Profile"
-msgstr ""
-
-msgid "Create Account"
-msgstr ""
-
-msgid "Your subscription to this page has been removed."
-msgstr ""
-
-msgid "Can't remove regular expression subscription!"
-msgstr ""
-
-msgid "Edit the subscription regular expressions in your settings."
-msgstr ""
-
-msgid "You need to be subscribed to unsubscribe."
-msgstr ""
-
-msgid "Password is too short."
-msgstr ""
-
-msgid "Password has not enough different characters."
-msgstr ""
-
-msgid ""
-"Password is too easy (password contains name or name contains password)."
-msgstr ""
-
-msgid "Password is too easy (keyboard sequence)."
-msgstr ""
-
-msgid "Diffs"
-msgstr ""
-
-msgid "Info"
-msgstr ""
-
-msgid "Edit"
-msgstr ""
-
-msgid "UnSubscribe"
-msgstr ""
-
-msgid "Subscribe"
-msgstr ""
-
-msgid "Raw"
-msgstr ""
-
-msgid "XML"
-msgstr ""
-
-msgid "Print"
-msgstr ""
-
-msgid "View"
-msgstr ""
-
-msgid "Up"
-msgstr ""
-
-msgid "Publish my email (not my wiki homepage) in author info"
-msgstr ""
-
-msgid "Open editor on double click"
-msgstr ""
-
-msgid "After login, jump to last visited page"
-msgstr ""
-
-msgid "Show comment sections"
-msgstr ""
-
-msgid "Show question mark for non-existing pagelinks"
-msgstr ""
-
-msgid "Show page trail"
-msgstr ""
-
-msgid "Show icon toolbar"
-msgstr ""
-
-msgid "Show top/bottom links in headings"
-msgstr ""
-
-msgid "Show fancy diffs"
-msgstr ""
-
-msgid "Add spaces to displayed wiki names"
-msgstr ""
-
-msgid "Remember login information"
-msgstr ""
-
-msgid "Disable this account forever"
-msgstr ""
-
-msgid "Alias-Name"
-msgstr ""
-
-msgid "Jabber ID"
-msgstr ""
-
-msgid "User CSS URL"
-msgstr ""
-
-msgid "(Leave it empty for disabling user CSS)"
-msgstr ""
-
-msgid "Editor size"
-msgstr ""
-
-msgid "Unsubscribe"
-msgstr ""
-
-msgid "Home"
-msgstr ""
-
-msgid "[RSS]"
-msgstr ""
-
-msgid "[DELETED]"
-msgstr ""
-
-msgid "[UPDATED]"
-msgstr ""
-
-msgid "[RENAMED]"
-msgstr ""
-
-msgid "[CONFLICT]"
-msgstr ""
-
-msgid "[NEW]"
-msgstr ""
-
-msgid "[DIFF]"
-msgstr ""
-
-msgid "[BOTTOM]"
-msgstr ""
-
-msgid "[TOP]"
-msgstr ""
-
-msgid "Click to do a full-text search for this title"
-msgstr ""
-
-msgid "Logout"
-msgstr ""
-
-msgid "Clear message"
-msgstr ""
-
-#, python-format
-msgid "last edited %(time)s by %(editor)s"
-msgstr ""
-
-#, python-format
-msgid "last modified %(time)s"
-msgstr ""
-
-msgid "Search:"
-msgstr ""
-
-msgid "Text"
-msgstr ""
-
-msgid "Titles"
-msgstr ""
-
-msgid "Search"
-msgstr ""
-
-msgid "More Actions:"
-msgstr ""
-
-msgid "------------------------"
-msgstr ""
-
-msgid "Raw Text"
-msgstr ""
-
-msgid "Print View"
-msgstr ""
-
-msgid "Delete Cache"
-msgstr ""
-
-msgid "Delete Page"
-msgstr ""
-
-msgid "Like Pages"
-msgstr ""
-
-msgid "Local Site Map"
-msgstr ""
-
-msgid "My Pages"
-msgstr ""
-
-msgid "Subscribe User"
-msgstr ""
-
-msgid "Remove Spam"
-msgstr ""
-
-msgid "Package Pages"
-msgstr ""
-
-msgid "Render as Docbook"
-msgstr ""
-
-msgid "Sync Pages"
-msgstr ""
-
-msgid "Do"
-msgstr ""
-
-msgid "Comments"
-msgstr ""
-
-msgid "Edit (Text)"
-msgstr ""
-
-msgid "Edit (GUI)"
-msgstr ""
-
-msgid "Immutable Page"
-msgstr ""
-
-msgid "Remove Link"
-msgstr ""
-
-msgid "Add Link"
-msgstr ""
-
-msgid "Attachments"
-msgstr ""
-
-#, python-format
-msgid "Show %s days."
-msgstr ""
-
-msgid "Wiki Markup"
-msgstr ""
-
-msgid "DeleteCache"
-msgstr ""
-
-#, python-format
-msgid "(cached %s)"
-msgstr ""
-
-msgid "Or try one of these actions:"
-msgstr ""
-
-msgid "Wiki"
-msgstr ""
-
-msgid "Page"
-msgstr ""
-
-msgid "User"
-msgstr ""
-
-msgid "[ATTACH]"
-msgstr ""
-
-msgid "Variable name"
-msgstr ""
-
-msgid "Description"
-msgstr ""
-
-#, python-format
-msgid "Upload new attachment \"%(filename)s\""
-msgstr ""
-
-#, python-format
-msgid ""
-"%(extension_name)s %(extension_type)s: Required argument %(argument_name)s "
-"missing."
-msgstr ""
-
-#, python-format
-msgid ""
-"%(extension_name)s %(extension_type)s: Invalid %(argument_name)s=%"
-"(argument_value)s!"
-msgstr ""
-
-#, python-format
-msgid ""
-"Current configuration does not allow embedding of the file %(file)s because "
-"of its mimetype %(mimetype)s."
-msgstr ""
-
-msgid "Embedded"
-msgstr ""
-
-msgid "Include system pages"
-msgstr ""
-
-msgid "Exclude system pages"
-msgstr ""
-
-msgid "Go To Page"
-msgstr ""
-
-msgid "Markup"
-msgstr ""
-
-msgid "Display"
-msgstr ""
-
-msgid "Wiki configuration"
-msgstr ""
-
-msgid ""
-"This table shows all settings in this wiki that do not have default values. "
-"Settings that the configuration system doesn't know about are shown in "
-"''italic'', those may be due to third-party extensions needing configuration "
-"or settings that were removed from Moin."
-msgstr ""
-
-msgid "Setting"
-msgstr ""
-
-msgid "Search for items"
-msgstr ""
-
-msgid "containing all the following terms"
-msgstr ""
-
-msgid "containing one or more of the following terms"
-msgstr ""
-
-msgid "not containing the following terms"
-msgstr ""
-
-msgid "last modified since (e.g. last 2 weeks)"
-msgstr ""
-
-msgid "any category"
-msgstr ""
-
-msgid "any language"
-msgstr ""
-
-msgid "any mimetype"
-msgstr ""
-
-msgid "Categories"
-msgstr ""
-
-msgid "File Type"
-msgstr ""
-
-msgid "Search only in titles"
-msgstr ""
-
-msgid "Case-sensitive search"
-msgstr ""
-
-msgid "Exclude underlay"
-msgstr ""
-
-msgid "No system items"
-msgstr ""
-
-msgid "Search in all page revisions"
-msgstr ""
-
-msgid "Go get it!"
-msgstr ""
-
-msgid "File attachment browser"
-msgstr ""
-
-msgid "User account browser"
-msgstr ""
-
-msgid "No wanted pages in this wiki."
-msgstr ""
-
-#, python-format
-msgid "Unsupported navigation scheme '%(scheme)s'!"
-msgstr ""
-
-msgid "No parent page found!"
-msgstr ""
-
-msgid "Slideshow"
-msgstr ""
-
-msgid "Start"
-msgstr ""
-
-#, python-format
-msgid "Slide %(pos)d of %(size)d"
-msgstr ""
-
-msgid "Contents"
-msgstr ""
-
-msgid "Search Titles"
-msgstr ""
-
-msgid "Display context of search results"
-msgstr ""
-
-msgid "Case-sensitive searching"
-msgstr ""
-
-msgid "Search Text"
-msgstr ""
-
-#, python-format
-msgid "No quotes on %(pagename)s."
-msgstr ""
-
-msgid "Python Version"
-msgstr ""
-
-msgid "MoinMoin Version"
-msgstr ""
-
-#, python-format
-msgid "Release %s [Revision %s]"
-msgstr ""
-
-msgid "4Suite Version"
-msgstr ""
-
-msgid "Number of pages"
-msgstr ""
-
-msgid "Number of system pages"
-msgstr ""
-
-msgid "Accumulated page sizes"
-msgstr ""
-
-#, python-format
-msgid "Disk usage of %(data_dir)s/pages/"
-msgstr ""
-
-#, python-format
-msgid "Disk usage of %(data_dir)s/"
-msgstr ""
-
-msgid "Entries in edit log"
-msgstr ""
-
-msgid "NONE"
-msgstr ""
-
-msgid "Global extension macros"
-msgstr ""
-
-msgid "Local extension macros"
-msgstr ""
-
-msgid "Global extension actions"
-msgstr ""
-
-msgid "Local extension actions"
-msgstr ""
-
-msgid "Global parsers"
-msgstr ""
-
-msgid "Local extension parsers"
-msgstr ""
-
-msgid "Disabled"
-msgstr ""
-
-msgid "Enabled"
-msgstr ""
-
-msgid "index available"
-msgstr ""
-
-msgid "index unavailable"
-msgstr ""
-
-msgid "Xapian and/or Python Xapian bindings not installed"
-msgstr ""
-
-msgid "Xapian search"
-msgstr ""
-
-msgid "Stemming for Xapian"
-msgstr ""
-
-msgid "Active threads"
-msgstr ""
-
-#, python-format
-msgid "Upload of attachment '%(filename)s'."
-msgstr ""
-
-#, python-format
-msgid "Drawing '%(filename)s' saved."
-msgstr ""
-
-#, python-format
-msgid "%(mins)dm ago"
-msgstr ""
-
-msgid "(no bookmark set)"
-msgstr ""
-
-#, python-format
-msgid "(currently set to %s)"
-msgstr ""
-
-msgid "Delete bookmark"
-msgstr ""
-
-msgid "Set bookmark"
-msgstr ""
-
-msgid "[Bookmark reached]"
-msgstr ""
-
-#, python-format
-msgid "Invalid include arguments \"%s\"!"
-msgstr ""
-
-#, python-format
-msgid "Nothing found for \"%s\"!"
-msgstr ""
-
-msgid "No orphaned pages in this wiki."
-msgstr ""
-
-msgid "From"
-msgstr ""
-
-msgid "To"
-msgstr ""
-
-msgid "Content"
-msgstr ""
-
-#, python-format
-msgid "Connection to mailserver '%(server)s' failed: %(reason)s"
-msgstr ""
-
-msgid "Mail not sent"
-msgstr ""
-
-msgid "Mail sent OK"
-msgstr ""
-
-msgid "[all]"
-msgstr ""
-
-msgid "[not empty]"
-msgstr ""
-
-msgid "[empty]"
-msgstr ""
-
-msgid "filter"
-msgstr ""
-
-#, python-format
-msgid "Unknown action %(action_name)s."
-msgstr ""
-
-#, python-format
-msgid "You are not allowed to do %(action_name)s on this page."
-msgstr ""
-
-msgid "Login and try again."
-msgstr ""
-
-msgid "FrontPage"
-msgstr ""
-
-msgid "RecentChanges"
-msgstr ""
-
+#: MoinMoin/i18n/strings.py:37
 msgid "TitleIndex"
 msgstr ""
 
+#: MoinMoin/i18n/strings.py:38
 msgid "WordIndex"
 msgstr ""
 
+#: MoinMoin/i18n/strings.py:39
 msgid "FindPage"
 msgstr ""
 
-msgid "SiteNavigation"
-msgstr ""
-
-msgid "HelpContents"
-msgstr ""
-
-msgid "HelpOnFormatting"
-msgstr ""
-
-msgid "WikiLicense"
-msgstr ""
-
+#: MoinMoin/i18n/strings.py:40
 msgid "MissingPage"
 msgstr ""
 
+#: MoinMoin/i18n/strings.py:41
 msgid "MissingHomePage"
 msgstr ""
 
-msgid "Mon"
+#: MoinMoin/i18n/strings.py:42
+msgid "WikiHomePage"
 msgstr ""
 
-msgid "Tue"
+#: MoinMoin/i18n/strings.py:45
+msgid "WikiName"
 msgstr ""
 
-msgid "Wed"
+#: MoinMoin/i18n/strings.py:46
+msgid "WikiWikiWeb"
 msgstr ""
 
-msgid "Thu"
+#: MoinMoin/i18n/strings.py:50
+msgid "FrontPage"
 msgstr ""
 
-msgid "Fri"
+#: MoinMoin/i18n/strings.py:51
+msgid "WikiSandBox"
 msgstr ""
 
-msgid "Sat"
+#: MoinMoin/i18n/strings.py:52
+msgid "InterWiki"
 msgstr ""
 
+#: MoinMoin/i18n/strings.py:53
+msgid "AbandonedPages"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:54
+msgid "OrphanedPages"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:55
+msgid "WantedPages"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:56
+msgid "EventStats"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:57
+msgid "EventStats/HitCounts"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:58
+msgid "EventStats/Languages"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:59
+msgid "EventStats/UserAgents"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:60
+msgid "PageSize"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:61
+msgid "PageHits"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:62
+msgid "RandomPage"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:63
+msgid "XsltVersion"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:64
+msgid "FortuneCookies"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:65
+msgid "WikiLicense"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:73
+msgid "CategoryCategory"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:74
+msgid "CategoryHomepage"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:83
+msgid "CategoryTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:84
+msgid "HomepageTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:88
+msgid "HelpTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:89
+msgid "HomepageReadWritePageTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:90
+msgid "HomepageReadPageTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:91
+msgid "HomepagePrivatePageTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:92
+msgid "HomepageGroupsTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:93
+msgid "SlideShowHandOutTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:94
+msgid "SlideShowTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:95
+msgid "SlideTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:96
+msgid "SyncJobTemplate"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:103
+msgid "HelpOnConfiguration"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:104
+msgid "HelpOnConfiguration/EmailSupport"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:105
+msgid "HelpOnConfiguration/SecurityPolicy"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:106
+msgid "HelpOnConfiguration/FileAttachments"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:107
+msgid "HelpOnConfiguration/SupplementationPage"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:108
+msgid "HelpOnConfiguration/SurgeProtection"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:109
+msgid "HelpOnConfiguration/UserPreferences"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:110
+msgid "HelpOnPackageInstaller"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:111
+msgid "HelpOnUpdatingPython"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:112
+msgid "HelpOnAdministration"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:113
+msgid "HelpOnAuthentication"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:114
+msgid "HelpOnAuthentication/ExternalCookie"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:115
+msgid "HelpOnMoinCommand"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:116
+msgid "HelpOnMoinCommand/ExportDump"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:117
+msgid "HelpOnNotification"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:118
+msgid "HelpOnSessions"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:119
+msgid "HelpOnUserHandling"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:120
+msgid "HelpOnXapian"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:128
+msgid "HelpOnMoinWikiSyntax"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:129
+msgid "HelpOnCreoleSyntax"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:134
+msgid "HelpOnFormatting"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:135
+msgid "MoinMoin"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:136
+msgid "HelpContents"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:137
+msgid "HelpForBeginners"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:138
+msgid "HelpForUsers"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:139
+msgid "HelpIndex"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:140
+msgid "HelpOnAccessControlLists"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:141
+msgid "HelpOnActions"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:142
+msgid "HelpOnAdmonitions"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:143
+msgid "HelpOnAutoAdmin"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:144
+msgid "HelpOnCategories"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:145
+msgid "HelpOnDictionaries"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:146
+msgid "HelpOnDrawings"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:147
+msgid "HelpOnEditLocks"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:148
+msgid "HelpOnEditing"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:149
+msgid "HelpOnEditing/SubPages"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:150
+msgid "HelpOnGraphicalEditor"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:151
+msgid "HelpOnGroups"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:152
+msgid "HelpOnHeadlines"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:153
+msgid "HelpOnImages"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:154
+msgid "HelpOnLanguages"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:155
+msgid "HelpOnLinking"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:156
+msgid "HelpOnLinking/NotesLinks"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:157
+msgid "HelpOnLists"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:158
+msgid "HelpOnLogin"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:159
+msgid "HelpOnMacros"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:160
+msgid "HelpOnMacros/EmbedObject"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:161
+msgid "HelpOnMacros/Include"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:162
+msgid "HelpOnMacros/MailTo"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:163
+msgid "HelpOnMacros/MonthCalendar"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:164
+msgid "HelpOnNavigation"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:165
+msgid "HelpOnOpenIDProvider"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:166
+msgid "HelpOnPageCreation"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:167
+msgid "HelpOnPageDeletion"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:168 MoinMoin/parser/highlight.py:186
+#: MoinMoin/parser/highlight.py:187
+msgid "HelpOnParsers"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:169
+msgid "HelpOnParsers/ReStructuredText"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:170
+msgid "HelpOnParsers/ReStructuredText/RstPrimer"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:171
+msgid "HelpOnProcessingInstructions"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:172
+msgid "HelpOnRules"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:173
+msgid "HelpOnSearching"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:174
+msgid "HelpOnSlideShows"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:175
+msgid "HelpOnSlideShows/000 Introduction"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:176
+msgid "HelpOnSlideShows/100 Creating the slides"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:177
+msgid "HelpOnSlideShows/900 Last but not least: Running your presentation"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:178
+msgid "HelpOnSmileys"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:179
+msgid "HelpOnSpam"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:180
+msgid "HelpOnSpellCheck"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:181
+msgid "HelpOnSuperUser"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:182
+msgid "HelpOnSynchronisation"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:183
+msgid "HelpOnTables"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:184
+msgid "HelpOnTemplates"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:185
+msgid "HelpOnThemes"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:186
+msgid "HelpOnUserPreferences"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:187
+msgid "HelpOnVariables"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:188
+msgid "HelpOnXmlPages"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:189
+msgid "HelpOnComments"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:190
+msgid "HelpOnSubscribing"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:193
+msgid "CamelCase"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:200
+msgid "WikiCourse"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:201
+msgid "WikiCourse/01 What is a MoinMoin wiki?"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:202
+msgid "WikiCourse/02 Finding information"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:203
+msgid "WikiCourse/03 Staying up to date"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:204
+msgid "WikiCourse/04 Creating a wiki account"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:205
+msgid "WikiCourse/05 User preferences"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:206
+msgid "WikiCourse/06 Your own wiki homepage"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:207
+msgid "WikiCourse/07 The text editor"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:208
+msgid "WikiCourse/08 Hot Keys"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:209
+msgid "WikiCourse/10 Text layout with wiki markup"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:210
+msgid "WikiCourse/11 Paragraphs"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:211
+msgid "WikiCourse/12 Headlines"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:212
+msgid "WikiCourse/13 Lists"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:213
+msgid "WikiCourse/14 Text styles"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:214
+msgid "WikiCourse/15 Tables"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:215
+msgid "WikiCourse/16 Wiki internal links"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:216
+msgid "WikiCourse/17 External links"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:217
+msgid "WikiCourse/18 Attachments"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:218
+msgid "WikiCourse/19 Symbols"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:219
+msgid "WikiCourse/20 Dynamic content"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:220
+msgid "WikiCourse/21 Macros"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:221
+msgid "WikiCourse/22 Parsers"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:222
+msgid "WikiCourse/23 Actions"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:223
+msgid "WikiCourse/30 The graphical editor"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:224
+msgid "WikiCourse/40 Creating more pages"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:225
+msgid "WikiCourse/50 Wiki etiquette"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:226
+msgid "WikiCourse/51 Applications"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:227
+msgid "WikiCourse/52 Structure in the wiki"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:228
+msgid "WikiCourseHandOut"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:282
 msgid "Sun"
 msgstr ""
 
-msgid "AttachFile"
+#: MoinMoin/i18n/strings.py:282
+msgid "Mon"
 msgstr ""
 
-msgid "DeletePage"
+#: MoinMoin/i18n/strings.py:282
+msgid "Tue"
 msgstr ""
 
+#: MoinMoin/i18n/strings.py:282
+msgid "Wed"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:282
+msgid "Thu"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:282
+msgid "Fri"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:282
+msgid "Sat"
+msgstr ""
+
+#: MoinMoin/i18n/strings.py:285
 msgid "LikePages"
 msgstr ""
 
+#: MoinMoin/i18n/strings.py:286
 msgid "LocalSiteMap"
 msgstr ""
 
-msgid "RenamePage"
-msgstr ""
-
-msgid "SpellCheck"
-msgstr ""
-
+#: MoinMoin/i18n/strings.py:291
 msgid "Discussion"
 msgstr ""
 
+#: MoinMoin/items/__init__.py:779
 #, python-format
-msgid "Inlined image: %(url)s"
+msgid "ZIP listing of %(itemname)s"
 msgstr ""
 
-#, python-format
-msgid "Create new drawing \"%(filename)s (opens in new window)\""
+#: MoinMoin/items/__init__.py:781 MoinMoin/items/__init__.py:880
+msgid "Size"
 msgstr ""
 
+#: MoinMoin/items/__init__.py:782 MoinMoin/items/__init__.py:881
+msgid "Modified"
+msgstr ""
+
+#: MoinMoin/items/__init__.py:783 MoinMoin/items/__init__.py:882
+msgid "File Name"
+msgstr ""
+
+#: MoinMoin/items/__init__.py:878
+#, python-format
+msgid "TAR listing of %(itemname)s"
+msgstr ""
+
+#: MoinMoin/items/__init__.py:1377 MoinMoin/items/__init__.py:1465
 #, python-format
 msgid "Edit drawing %(filename)s (opens in new window)"
 msgstr ""
 
+#: MoinMoin/items/__init__.py:1394 MoinMoin/items/__init__.py:1482
 #, python-format
 msgid "Clickable drawing: %(filename)s"
 msgstr ""
 
-msgid "Toggle line numbers"
+#: MoinMoin/macro/AdvancedSearch.py:70
+msgid "Search for items"
 msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:82
+msgid "containing all the following terms"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:85
+msgid "containing one or more of the following terms"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:88
+msgid "not containing the following terms"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:95
+msgid "last modified since (e.g. 2 weeks before)"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:104
+msgid "any category"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:114
+msgid "any language"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:121
+msgid "any mimetype"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:139
+msgid "Categories"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:140
+msgid "Language"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:141
+msgid "File Type"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:145
+msgid "Search only in titles"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:149
+msgid "Case-sensitive search"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:153
+msgid "No system items"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:159
+msgid "Search in all page revisions"
+msgstr ""
+
+#: MoinMoin/macro/AdvancedSearch.py:174
+msgid "Go get it!"
+msgstr ""
+
+#: MoinMoin/macro/FullSearch.py:52
+msgid "Search Titles"
+msgstr ""
+
+#: MoinMoin/macro/FullSearch.py:59
+msgid "Display context of search results"
+msgstr ""
+
+#: MoinMoin/macro/FullSearch.py:62
+msgid "Case-sensitive searching"
+msgstr ""
+
+#: MoinMoin/macro/FullSearch.py:65
+msgid "Search Text"
+msgstr ""
+
+#: MoinMoin/macro/HighlighterList.py:45
+msgid "Lexer description"
+msgstr ""
+
+#: MoinMoin/macro/HighlighterList.py:46
+msgid "Lexer names"
+msgstr ""
+
+#: MoinMoin/macro/HighlighterList.py:47
+msgid "File patterns"
+msgstr ""
+
+#: MoinMoin/macro/HighlighterList.py:48
+msgid "Mimetypes"
+msgstr ""
+
+#: MoinMoin/macro/Navigation.py:101
+#, python-format
+msgid "Unsupported navigation scheme '%(scheme)s'!"
+msgstr ""
+
+#: MoinMoin/macro/Navigation.py:122 MoinMoin/macro/Navigation.py:192
+msgid "No parent page found!"
+msgstr ""
+
+#: MoinMoin/macro/Navigation.py:161
+msgid "Wiki"
+msgstr ""
+
+#: MoinMoin/macro/Navigation.py:167
+msgid "Slideshow"
+msgstr ""
+
+#: MoinMoin/macro/Navigation.py:179
+msgid "Start"
+msgstr ""
+
+#: MoinMoin/macro/Navigation.py:216
+#, python-format
+msgid "Slide %(pos)d of %(size)d"
+msgstr ""
+
+#: MoinMoin/macro/OrphanedPages.py:37
+msgid "No orphaned pages in this wiki."
+msgstr ""
+
+#: MoinMoin/macro/ShowSmileys.py:30
+msgid "Markup"
+msgstr ""
+
+#: MoinMoin/macro/ShowSmileys.py:31
+msgid "Display"
+msgstr ""
+
+#: MoinMoin/macro/WantedPages.py:29 MoinMoin/macro/__init__.py:240
+msgid "Include system pages"
+msgstr ""
+
+#: MoinMoin/macro/WantedPages.py:29 MoinMoin/macro/__init__.py:240
+msgid "Exclude system pages"
+msgstr ""
+
+#: MoinMoin/macro/WantedPages.py:69
+msgid "No wanted pages in this wiki."
+msgstr ""
+
+#: MoinMoin/macro2/GoTo.py:30
+msgid "Go To Page"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:57
+msgid "Python Version"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:58
+msgid "MoinMoin Version"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:58
+#, python-format
+msgid "Release %s [Revision %s]"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:75
+msgid "4Suite Version"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:89
+msgid "Number of pages"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:90
+msgid "Number of system pages"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:92
+msgid "Accumulated page sizes"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:94
+msgid "NONE"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:96
+msgid "Global extension macros"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:97
+msgid "Local extension macros"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:102
+msgid "Global extension actions"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:105
+msgid "Local extension actions"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:107
+msgid "Global parsers"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:108
+msgid "Local extension parsers"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:116
+msgid "Xapian and/or Python Xapian bindings not installed"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:119
+msgid "Disabled"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:119
+msgid "Enabled"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:125
+msgid "index unavailable"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:125
+msgid "index available"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:129 MoinMoin/search/results.py:752
+#, python-format
+msgid "last modified: %s"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:132
+msgid "Xapian search"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:136
+msgid "Stemming for Xapian"
+msgstr ""
+
+#: MoinMoin/macro2/SystemInfo.py:145
+msgid "Active threads"
+msgstr ""
+
+#: MoinMoin/macro2/WikiConfig.py:40
+msgid "Wiki configuration"
+msgstr ""
+
+#: MoinMoin/macro2/WikiConfig.py:42
+msgid ""
+"This table shows all settings in this wiki that do not have default "
+"values. Settings that the configuration system doesn't know about are "
+"shown in italic, those may be due to third-party extensions needing "
+"configuration or settings that were removed from Moin."
+msgstr ""
+
+#: MoinMoin/macro2/WikiConfig.py:56 MoinMoin/macro2/WikiConfigHelp.py:42
+msgid "Variable name"
+msgstr ""
+
+#: MoinMoin/macro2/WikiConfig.py:56
+msgid "Setting"
+msgstr ""
+
+#: MoinMoin/macro2/WikiConfigHelp.py:42 MoinMoin/userprefs/prefs.py:275
+#: MoinMoin/userprefs/prefs.py:297 MoinMoin/userprefs/prefs.py:306
+#: MoinMoin/userprefs/prefs.py:314
+msgid "Default"
+msgstr ""
+
+#: MoinMoin/macro2/WikiConfigHelp.py:42
+msgid "Description"
+msgstr ""
+
+#: MoinMoin/mail/mailimport.py:296
+msgid "Date"
+msgstr ""
+
+#: MoinMoin/mail/mailimport.py:296
+msgid "From"
+msgstr ""
+
+#: MoinMoin/mail/mailimport.py:296
+msgid "To"
+msgstr ""
+
+#: MoinMoin/mail/mailimport.py:296
+msgid "Content"
+msgstr ""
+
+#: MoinMoin/mail/mailimport.py:296
+msgid "Attachments"
+msgstr ""
+
+#: MoinMoin/mail/sendmail.py:83
+msgid "No recipients, nothing to do"
+msgstr ""
+
+#: MoinMoin/mail/sendmail.py:157
+#, python-format
+msgid "Connection to mailserver '%(server)s' failed: %(reason)s"
+msgstr ""
+
+#: MoinMoin/mail/sendmail.py:173
+msgid "Mail not sent"
+msgstr ""
+
+#: MoinMoin/mail/sendmail.py:176
+msgid "Mail sent OK"
+msgstr ""
+
+#: MoinMoin/parser/highlight.py:189
+#, python-format
+msgid ""
+"Syntax highlighting not supported for '%(mimetype)s', see "
+"%(highlight_help_page)s."
+msgstr ""
+
+#: MoinMoin/search/results.py:285
+#, python-format
+msgid ""
+"Results %(bs)s%(hitsFrom)d - %(hitsTo)d%(be)s of %(aboutHits)s "
+"%(bs)s%(hits)d%(be)s results out of about %(pages)d pages."
+msgstr ""
+
+#: MoinMoin/search/results.py:298
+msgid "seconds"
+msgstr ""
+
+#: MoinMoin/search/results.py:695
+msgid "Previous"
+msgstr ""
+
+#: MoinMoin/search/results.py:716
+msgid "Next"
+msgstr ""
+
+#: MoinMoin/search/results.py:749 MoinMoin/search/results.py:751
+msgid "rev"
+msgstr ""
+
+#: MoinMoin/search/results.py:749
+msgid "current"
+msgstr ""
+
+#: MoinMoin/search/Xapian/search.py:71
+msgid "about"
+msgstr ""
+
+#: MoinMoin/templates/show.html:46
+msgid "show"
+msgstr ""
+
+#: MoinMoin/templates/show.html:47
+msgid "get"
+msgstr ""
+
+#: MoinMoin/templates/show.html:48
+msgid "highlight"
+msgstr ""
+
+#: MoinMoin/templates/show.html:52
+msgid "revert"
+msgstr ""
+
+#: MoinMoin/templates/show.html:54
+msgid "destroy"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:43
+msgid "[ATTACH]"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:45
+msgid "[RSS]"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:46
+msgid "[DELETED]"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:47
+msgid "[UPDATED]"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:48
+msgid "[RENAMED]"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:49
+msgid "[CONFLICT]"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:50
+msgid "[NEW]"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:51
+msgid "[DIFF]"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:53
+msgid "[BOTTOM]"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:54
+msgid "[TOP]"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:226
+msgid "Click to do a full-text search for this title"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:543
+msgid "Clear message"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:690
+#, python-format
+msgid "last edited %(timestamp)s by %(editor)s"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:692
+#, python-format
+msgid "last modified %(timestamp)s"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:714
+msgid "Search:"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:716
+msgid "Text"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:717
+msgid "Titles"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:778
+msgid "Search"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:838 MoinMoin/theme/__init__.py:1110
+msgid "Modify"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:838 MoinMoin/theme/__init__.py:1110
+msgid "Immutable Page"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:894
+msgid "More Actions:"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:896
+msgid "------------------------"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:897
+msgid "Delete Cache"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:898
+msgid "Rename Item"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:899
+msgid "Delete Item"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:900
+msgid "Recent Changes"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:901
+msgid "Copy Item"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:902
+msgid "Like Pages"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:903
+msgid "Local Site Map"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:904
+msgid "My Pages"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:905
+msgid "Subscribe User"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:906
+msgid "Package Pages"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:907
+msgid "Render as Docbook"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:908
+msgid "Sync Pages"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:973
+msgid "Do"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:1072
+msgid "Comments"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:1122
+msgid "Download"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:1137
+msgid "Unsubscribe"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:1139
+msgid "Subscribe"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:1155
+msgid "Remove Link"
+msgstr ""
+
+#: MoinMoin/theme/__init__.py:1157
+msgid "Add Link"
+msgstr ""
+
+#: MoinMoin/userprefs/changepass.py:24 MoinMoin/userprefs/changepass.py:89
+msgid "Change password"
+msgstr ""
+
+#: MoinMoin/userprefs/changepass.py:67
+msgid "Your password has been changed."
+msgstr ""
+
+#: MoinMoin/userprefs/changepass.py:76
+msgid "To change your password, enter a new password twice."
+msgstr ""
+
+#: MoinMoin/userprefs/changepass.py:81
+msgid "Password repeat"
+msgstr ""
+
+#: MoinMoin/userprefs/notification.py:23
+msgid "Notification"
+msgstr ""
+
+#: MoinMoin/userprefs/notification.py:72
+msgid "Notification settings saved!"
+msgstr ""
+
+#: MoinMoin/userprefs/notification.py:103
+msgid "Jabber"
+msgstr ""
+
+#: MoinMoin/userprefs/notification.py:110
+msgid "Event type"
+msgstr ""
+
+#: MoinMoin/userprefs/notification.py:142
+msgid "Select the events you want to be notified about."
+msgstr ""
+
+#: MoinMoin/userprefs/notification.py:153
+msgid ""
+"Before you can be notified, you need to provide a way to contact you in "
+"the general preferences."
+msgstr ""
+
+#: MoinMoin/userprefs/notification.py:159
+msgid "Subscribed events"
+msgstr ""
+
+#: MoinMoin/userprefs/notification.py:167
+msgid "Subscribed wiki pages (one regex per line)"
+msgstr ""
+
+#: MoinMoin/userprefs/notification.py:175 MoinMoin/userprefs/prefs.py:329
+msgid "Save"
+msgstr ""
+
+#: MoinMoin/userprefs/oid.py:34
+msgid "OpenID settings"
+msgstr ""
+
+#: MoinMoin/userprefs/oid.py:54
+msgid "Cannot remove all OpenIDs."
+msgstr ""
+
+#: MoinMoin/userprefs/oid.py:57
+msgid "The selected OpenIDs have been removed."
+msgstr ""
+
+#: MoinMoin/userprefs/oid.py:65 MoinMoin/userprefs/oid.py:81
+msgid "No OpenID given."
+msgstr ""
+
+#: MoinMoin/userprefs/oid.py:69 MoinMoin/userprefs/oid.py:120
+msgid "OpenID is already present."
+msgstr ""
+
+#: MoinMoin/userprefs/oid.py:123
+msgid "This OpenID is already used for another account."
+msgstr ""
+
+#: MoinMoin/userprefs/oid.py:128
+msgid "OpenID added successfully."
+msgstr ""
+
+#: MoinMoin/userprefs/oid.py:181
+msgid "Current OpenIDs"
+msgstr ""
+
+#: MoinMoin/userprefs/oid.py:182 MoinMoin/userprefs/oidserv.py:88
+msgid "Remove selected"
+msgstr ""
+
+#: MoinMoin/userprefs/oid.py:191 MoinMoin/userprefs/oid.py:197
+msgid "Add OpenID"
+msgstr ""
+
+#: MoinMoin/userprefs/oidserv.py:23
+msgid "OpenID server"
+msgstr ""
+
+#: MoinMoin/userprefs/oidserv.py:48
+msgid "The selected websites have been removed."
+msgstr ""
+
+#: MoinMoin/userprefs/oidserv.py:87
+msgid "Trusted websites"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:36
+msgid "Preferences"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:116
+msgid "This jabber id already belongs to somebody else."
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:161
+#, python-format
+msgid "The theme '%(theme_name)s' could not be loaded!"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:210
+msgid "User preferences saved!"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:287
+msgid "<Browser setting>"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:315
+msgid "the one preferred"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:316
+msgid "free choice"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:346
+msgid "Preferred theme"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:350
+msgid "Editor Preference"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:352
+msgid "Editor shown on UI"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:355
+msgid "Time zone"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:356
+msgid "Your time is"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:359
+msgid "Server time is"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:365
+msgid "Date format"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:368
+msgid "Preferred language"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:382
+msgid "General options"
+msgstr ""
+
+#: MoinMoin/userprefs/prefs.py:384
+msgid "Quick links"
+msgstr ""
+
+#: MoinMoin/userprefs/suid.py:25
+msgid "Switch user"
+msgstr ""
+
+#: MoinMoin/userprefs/suid.py:49 MoinMoin/userprefs/suid.py:52
+msgid "No user selected"
+msgstr ""
+
+#: MoinMoin/userprefs/suid.py:59
+msgid ""
+"You can now change the settings of the selected user account; log out to "
+"get back to your account."
+msgstr ""
+
+#: MoinMoin/userprefs/suid.py:74
+msgid "You are the only user."
+msgstr ""
+
+#: MoinMoin/userprefs/suid.py:83
+msgid "As a superuser, you can temporarily assume the identity of another user."
+msgstr ""
+
+#: MoinMoin/userprefs/suid.py:87 MoinMoin/userprefs/suid.py:91
+msgid "Select User"
+msgstr ""
+
+#: MoinMoin/util/diff_html.py:43
+msgid "Line"
+msgstr ""
+
+#: MoinMoin/util/diff_html.py:60
+msgid "No differences found!"
+msgstr ""
+
+#: MoinMoin/util/diff_html.py:67
+msgid "Deletions are marked like this."
+msgstr ""
+
+#: MoinMoin/util/diff_html.py:67
+msgid "Additions are marked like this."
+msgstr ""
+
+#: MoinMoin/widget/browser.py:59
+msgid "[all]"
+msgstr ""
+
+#: MoinMoin/widget/browser.py:61
+msgid "[not empty]"
+msgstr ""
+
+#: MoinMoin/widget/browser.py:63
+msgid "[empty]"
+msgstr ""
+
+#: MoinMoin/widget/browser.py:65
+msgid "filter"
+msgstr ""
+

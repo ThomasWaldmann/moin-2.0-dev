@@ -36,9 +36,9 @@ def _create_user(request):
 
     # Don't allow creating users with invalid names
     if not user.isValidName(request, theuser.name):
-        return _("""Invalid user name {{{'%s'}}}.
+        return _("""Invalid user name '%s'.
 Name may contain any Unicode alpha numeric character, with optional one
-space between words. Group page name is not allowed.""", wiki=True) % wikiutil.escape(theuser.name)
+space between words. Group page name is not allowed.""") % wikiutil.escape(theuser.name)
 
     # Name required to be unique. Check if name belong to another user.
     if user.getUserId(request, theuser.name):

@@ -13,7 +13,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import os, re, tarfile, time, datetime, shutil
+import os, re, tarfile, time, datetime, shutil, base64
 from StringIO import StringIO
 import json
 import hashlib
@@ -441,9 +441,6 @@ class NonExistent(Item):
             ('text/x.moin.creole', 'Wiki (Creole)'),
             ('text/html', 'unsafe html'),
             ('text/x-safe-html', 'safe html'),
-            # The following mimetype is just for test purpose
-            # It should be replace by a html or x-safe-html in the release
-            ('text/x.moin.html', 'html for MoinMoin'),
         ]),
         ('highlighted text items', [
             ('text/x-diff', 'diff/patch'),
@@ -484,6 +481,7 @@ class NonExistent(Item):
         ('drawing items', [
             ('application/x-twikidraw', 'TDRAW'),
             ('application/x-anywikidraw', 'ADRAW'),
+            ('application/x-svgdraw', 'SVGDRAW'),
         ]),
 
         ('other items', [
@@ -499,14 +497,10 @@ class NonExistent(Item):
     def do_show(self):
         self.request.status_code = 404
         template = self.env.get_template('show_type_selection.html')
-        content = []
-        content.append(template.render(gettext=self.request.getText,
+        content = template.render(gettext=self.request.getText,
                                   item_name=self.name,
-                                  mimetype_groups=self.mimetype_groups, ))
-
-        template = self.env.get_template('show_package_install.html')
-        content.append(template.render(gettext=self.request.getText, ))
-        return '<hr>'.join(content)
+                                  mimetype_groups=self.mimetype_groups, )
+        return content
 
     def do_get(self):
         self.request.status_code = 404
@@ -955,6 +949,63 @@ class SvgImage(RenderableImage):
     supported_mimetypes = ['image/svg+xml']
 
 
+class SvgDraw(TarMixin, Image):
+    """ drawings by svg-edit. It creates two files (svg, png) which are stored as tar file. """
+
+    supported_mimetypes = ['application/x-svgdraw']
+    modify_help = ""
+
+    def modify(self):
+        # called from modify UI/POST
+        request = self.request
+        filepath = request.values.get('filepath')
+        filecontent = filepath.decode('base_64')
+        filename = request.values.get('filename').strip()
+        basepath, basename = os.path.split(filename)
+        basename, ext = os.path.splitext(basename)
+        if ext == '.png':
+            filecontent = base64.urlsafe_b64decode(filecontent.split(',')[1])
+        content_length = None # len(filecontent)
+        self.put_member(filename, filecontent, content_length,
+                        expected_members=set(['drawing.svg', 'drawing.png']))
+
+    def do_modify(self, template_name):
+        """
+        Fills params into the template for initialzing of the the java applet.
+        The applet is called for doing modifications.
+        """
+        request = self.request
+        if 'drawing.svg' in self.list_members():
+            drawpath = self.url(do='get', from_tar='drawing.svg')
+        else:
+            drawpath = ''
+
+        #drawpath = self.url(do='get', from_tar='drawing.svg')
+        svg_params = {
+            'drawpath': drawpath,
+            'itemname': self.name,
+            'savelink': self.url(do='modify', mimetype=self.supported_mimetypes[0]),
+            'pubpath': request.cfg.url_prefix_static + "/applets/svg-edit/",
+        }
+
+        template = self.env.get_template("modify_svg-edit.html")
+        content = template.render(gettext=self.request.getText,
+                                  item_name=self.name,
+                                  rows_meta=ROWS_META, cols=COLS,
+                                  revno=0,
+                                  meta_text=self.meta_dict_to_text(self.meta),
+                                  help=self.modify_help,
+                                  t=svg_params,
+                                 )
+        return content
+
+    def _render_data(self):
+        request = self.request
+        drawing_url = self.url(do='get', from_tar='drawing.svg')
+        png_url = self.url(do='get', from_tar='drawing.png')
+        return '<img src="%s" alt=%s>' % (png_url, drawing_url)
+
+
 class RenderableBitmapImage(RenderableImage):
     """ PNG/JPEG/GIF images use <img> tag (better browser support than <object>) """
     supported_mimetypes = [] # if mimetype is also transformable, please list
@@ -1120,7 +1171,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
 
 class Text(Binary):
     """ Any kind of text """
-    supported_mimetypes = ['text/', 'application/docbook+xml']
+    supported_mimetypes = ['text/']
     converter_mimetype = None
 
     # text/plain mandates crlf - but in memory, we want lf only
@@ -1170,80 +1221,6 @@ class Text(Binary):
         # TODO: Switch to xml
         doc.write(out.fromunicode, method='html')
         return out.tounicode()
-
-    def do_get(self):
-        """
-        Here is a rough implementation of the get action with
-        conversion.
-
-        It is only for test purpose and it is working only for
-        'text/docbook' mimetype.
-
-        The idea behind this implementation is to detect wether the
-        text object should be (and can be) converted according
-        to the mimetype of the item, and the mimetype in the request.
-
-        So to get a docbook from any item just request
-        ItemName?do=get&mimetype=text/docbook
-        """
-        # Import a bunch of stuffs to realize conversion
-        # Probably not really clean to do it here
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.mime import Type, type_moin_document
-        from MoinMoin.util.tree import moin_page
-        from cStringIO import StringIO
-        from MoinMoin.converter2.docbook_out import *
-        from emeraldtree.tree import *
-        request = self.request
-
-        # We catch a mimetype parameter from the request
-        request_mimetype = request.values.get('mimetype')
-
-        # We just test if the mimetype is 'text/docbook'
-        # If not, we use the normal get action
-        # We should rather test here if the conversion is possible
-        if request_mimetype != 'text/docbook':
-            return super(Text, self).do_get()
-
-        # If we are here, we will convert into a DocBook document
-        # This code is format specific, and should probably
-        # be moved in an appropriate method
-        output_namespaces = {
-            docbook.namespace: '',
-            moin_page.namespace: 'page'
-            }
-
-        # Get the converter from the factory
-        # Include, and link are not used at this time
-        input_conv = reg.get(Type(self.mimetype),
-            type_moin_document, request=request)
-        output_conv = reg.get(type_moin_document,
-            Type('application/docbook+xml'), request=request)
-
-        doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
-        doc = output_conv(doc)
-
-        # We convert the result into a StringIO object
-        # With the appropriate namespace
-        # Some other operation should probably be done here to
-        # like adding a doctype
-        file_to_send = StringIO()
-        tree = ET.ElementTree(doc)
-        tree.write(file_to_send, namespaces=output_namespaces)
-
-        # We determine the different parameters for the reply
-        mt = wikiutil.MimeType(mimestr='application/docbook+xml')
-        content_disposition = mt.content_disposition(request.cfg)
-        content_type = mt.content_type()
-
-        # After creation of the StringIO, the pointer is at the and
-        # so position of the pointer is the size.
-        # and then we should move it back at the beginning of the file
-        content_length = file_to_send.tell()
-        file_to_send.seek(0)
-
-        # We call the parent method send to return the file
-        return super(Text, self)._send(content_type, content_length, None, file_to_send, content_disposition=content_disposition)
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
@@ -1299,9 +1276,6 @@ class HTML(Text):
     """ HTML markup """
     supported_mimetypes = ['text/html']
 
-    def _render_data(self):
-        return self.data_storage_to_internal(self.data)
-
     def do_modify(self, template_name):
         if template_name:
             item = Item.create(self.request, template_name)
@@ -1351,36 +1325,6 @@ class SafeHTML(Text):
     format_args = supported_mimetypes[0]
 
     # XXX duplicated from HTML class
-    def do_modify(self, template_name):
-        if template_name:
-            item = Item.create(self.request, template_name)
-            data_text = self.data_storage_to_internal(item.data)
-        else:
-            data_text = self.data_storage_to_internal(self.data)
-        meta_text = self.meta_dict_to_text(self.meta)
-        template = self.env.get_template('modify_text_html.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
-                                  revno=0,
-                                  data_text=data_text,
-                                  meta_text=meta_text,
-                                  lang='en', direction='ltr',
-                                  help=self.modify_help,
-                                  url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
-                                 )
-        return content
-
-class MoinHTML(Text):
-    """
-    Dummy Type to input HTML and store it in the Dom Tree
-
-    Very similar to SafeHTML, Should not be kept in the final release.
-
-    This is only for DEBUG purpose.
-    """
-    supported_mimetypes = ['text/x.moin.html']
-
     def do_modify(self, template_name):
         if template_name:
             item = Item.create(self.request, template_name)

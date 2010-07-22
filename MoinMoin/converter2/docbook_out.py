@@ -1,7 +1,6 @@
 """
 MoinMoin - DocBook output converter
-
-Converts an internal document tree into a DocBook v.5 tree.
+Converts an internal document tree into a DocBook v5 document.
 
 @copyright: 2010 MoinMoin:ValentinJaniaut,
             table conversion based on html_out table conversion by Bastian Blank
@@ -19,7 +18,6 @@ class Converter(object):
     """
     Converter application/x.moin.document -> application/docbook+xml
     """
-
     namespaces_visit = {
         moin_page: 'moinpage'
     }
@@ -65,7 +63,6 @@ class Converter(object):
         It first converts the children of the element,
         and then the element itself
         """
-
         children = self.do_children(element)
         return self.new(tag, attrib, children)
 
@@ -95,7 +92,6 @@ class Converter(object):
         We will choose the most appropriate procedure to convert
         the element according to his name
         """
-
         method_name = 'visit_moinpage_' + element.tag.name.replace('-', '_')
         method = getattr(self, method_name, None)
         if method:
@@ -120,7 +116,12 @@ class Converter(object):
         return self.new_copy(docbook.link, element, attrib=attrib)
 
     def visit_moinpage_blockcode(self, element):
-        return self.new_copy(docbook.screen, element, attrib={})
+        code_str = ''.join(element)
+        children = ''.join(['<![CDATA[', code_str, ']]>'])
+        return self.new(docbook.screen, attrib={}, children=children)
+
+    def visit_moinpage_emphasis(self, element):
+        return self.new_copy(docbook.emphasis, element, attrib={})
 
     def visit_moinpage_h(self, element):
         """
@@ -134,7 +135,6 @@ class Converter(object):
         A section is closed when we have a new heading with an equal or
         higher level.
         """
-
         depth = element.get(moin_page('outline-level'))
         # We will have a new section
         # under another section
@@ -165,7 +165,6 @@ class Converter(object):
 
         Or a specific function to handle definition list.
         """
-
         item_label_generate = element.get(moin_page('item-label-generate'))
         if 'ordered' == item_label_generate:
             attrib = {}
@@ -310,6 +309,29 @@ class Converter(object):
 
     def visit_moinpage_p(self, element):
         return self.new_copy(docbook.para, element, attrib={})
+
+    def visit_moinpage_span(self, element):
+        """
+        The span element is used in the DOM Tree to define some specific formatting. So each attribute will give different resulting tag.
+
+        TODO : Add support for text-decoration attribute
+        TODO : Add support for font-size attribute
+        """
+        # Check for the attributes of span
+        for key, value in element.attrib.iteritems():
+            if key.name == 'baseline-shift':
+                if value == 'super':
+                    return self.new_copy(docbook.superscript, element, attrib={})
+                if value == 'sub':
+                    return self.new_copy(docbook.subscript, element, attrib={})
+
+        return self.new_copy(docbook.phrase, element, attrib={})
+
+    def visit_moinpage_strong(self, element):
+        attrib = {}
+        key = docbook.role
+        attrib[key] = "strong"
+        return self.new_copy(docbook.emphasis, element, attrib=attrib)
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
