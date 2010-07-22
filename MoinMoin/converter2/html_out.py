@@ -173,7 +173,7 @@ class Converter(object):
         return  self.new_copy(html.blockquote, elem)
 
     def visit_moinpage_code(self, elem):
-        return self.new_copy(html.tt, elem)
+        return self.new_copy(html.code, elem)
 
     def visit_moinpage_div(self, elem):
         return self.new_copy(html.div, elem)

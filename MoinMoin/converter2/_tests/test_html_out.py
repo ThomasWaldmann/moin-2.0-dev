@@ -82,7 +82,7 @@ class TestConverter(Base):
             ('<page:page><page:body><page:blockcode>Code</page:blockcode></page:body></page:page>',
                 '/div[pre="Code"]'),
             ('<page:page><page:body><page:p><page:code>Code</page:code></page:p></page:body></page:page>',
-                '/div/p[tt="Code"]'),
+                '/div/p[code="Code"]'),
             ('<page:page><page:body><page:separator/></page:body></page:page>',
                 '/div/hr'),
             ('<page:page><page:body><page:div><page:p>Text</page:p></page:div></page:body></page:page>',
