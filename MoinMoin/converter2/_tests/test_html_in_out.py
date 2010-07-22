@@ -145,13 +145,13 @@ class TestConverter(Base):
     def test_code(self):
         data = [
             ('<html><div><code>Code</code></div></html>',
-             '/div/div[tt="Code"]'),
+             '/div/div[code="Code"]'),
             ('<html><div><samp>Code</samp></div></html>',
-             '/div/div[tt="Code"]'),
+             '/div/div[code="Code"]'),
             ('<html><pre>Code</pre></html>',
               '/div[pre="Code"]'),
             ('<html><p><tt>Code</tt></p></html>',
-              '/div/p[tt="Code"]'),
+              '/div/p[code="Code"]'),
         ]
         for i in data:
             yield (self.do, ) + i
