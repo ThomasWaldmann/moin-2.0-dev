@@ -4,7 +4,7 @@
 
 {% block extra_header %}
     {{ editbar }}
-{% endblock %} 
+{% endblock %}
 
 {% block content %}
     {% if not rev %}
@@ -73,7 +73,7 @@
     {% if index %}
         <hr>Index of sub items:
         {% for fullname, relname, mimetype in index %}
-            <a href="{{ href(fullname)|e }}">{{ relname|e }} ({{ mimetype|e }})</a> 
+            <a href="{{ href(fullname)|e }}">{{ relname|e }} ({{ mimetype|e }})</a>
         {% endfor %}
     {% endif %}
 {% endblock %}
