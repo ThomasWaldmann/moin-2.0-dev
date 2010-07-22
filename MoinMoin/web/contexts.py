@@ -386,7 +386,6 @@ class AuxilaryMixin(object):
     parsePageLinks_running = EnvironProxy('parsePageLinks_running', lambda o: {})
     mode_getpagelinks = EnvironProxy('mode_getpagelinks', 0)
 
-    pragma = EnvironProxy('pragma', lambda o: {})
     _login_messages = EnvironProxy('_login_messages', lambda o: [])
     _login_multistage = EnvironProxy('_login_multistage', None)
     _login_multistage_name = EnvironProxy('_login_multistage_name', None)
@@ -418,20 +417,6 @@ class AuxilaryMixin(object):
             del self._fmt_hd_counters
         if hasattr(self, 'uid_generator'):
             del self.uid_generator
-
-    def getPragma(self, key, defval=None):
-        """ Query a pragma value (#pragma processing instruction)
-
-            Keys are not case-sensitive.
-        """
-        return self.pragma.get(key.lower(), defval)
-
-    def setPragma(self, key, value):
-        """ Set a pragma value (#pragma processing instruction)
-
-            Keys are not case-sensitive.
-        """
-        self.pragma[key.lower()] = value
 
 class XMLRPCContext(HTTPContext, AuxilaryMixin):
     """ Context to act during a XMLRPC request. """
