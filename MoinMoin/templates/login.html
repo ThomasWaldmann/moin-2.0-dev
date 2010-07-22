@@ -2,29 +2,29 @@
 {% block item %}
 <form action="" name="loginform" method="POST" enctype="multipart/form-data">
     <div class="userpref">
-        <input type="hidden" name="do" value="login">
+        <input type="hidden" name="do" value="login" />
         <table border="0">
             {% if 'username' in login_inputs %}
             <tr>
                 <td><b>Name</b></td>
-                <td><input type="text" size="32" name="name"></td>
+                <td><input type="text" size="32" name="name" /></td>
             </tr>
             {% endif %}
             {% if 'password' in login_inputs %}
             <tr>
                 <td><b>Password</b></td>
-                <td><input type="password" size="32" name="password"></td>
+                <td><input type="password" size="32" name="password" /></td>
             </tr>
             {% endif %}
             {% if 'openid_identifier' in login_inputs %}
             <tr>
                 <td><b>OpenID</b></td>
-                <td><input type="text" size="32" name="openid_identifier" id="openididentifier"></td>
+                <td><input type="text" size="32" name="openid_identifier" id="openididentifier" /></td>
             </tr>
             {% endif %}
             <tr>
                 <td></td>
-                <td><input type="submit" name="login" value="Login"></td>
+                <td><input type="submit" name="login" value="Login" /></td>
             </tr>
         </table>
         {% for hint in login_hints %}
