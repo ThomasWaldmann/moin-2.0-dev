@@ -60,11 +60,14 @@ class TestConverter(Base):
     def test_base(self):
         data = [
             ('<article><para>Test</para></article>',
+            # <page><body><p>Test</p></body></page>
              '/page/body[p="Test"]'),
             ('<article><sect1><title>Heading 1</title> <para>First Paragraph</para></sect1></article>',
+            # <page><body><h outline-level="1">Heading 1</h><p>First Paragraph</p></body></page>
              '/page/body[./h[@outline-level="1"][text()="Heading 1"]][./p[text()="First Paragraph"]]'),
             # Test for conversion with unicode char
             (u'<article><para>안녕 유빈</para></article>',
+            # <page><body><p>안녕 유빈</p></body></page>
              u'/page/body[p="안녕 유빈"]'),
         ]
         for i in data:
@@ -74,12 +77,14 @@ class TestConverter(Base):
         data = [
             # Test simple numbered section conversion into headings.
             ('<article><sect1><title>Heading 1</title> <para>First</para><sect2><title>Heading 2</title><para>Second</para></sect2></sect1></article>',
+            # <page><body><h outline-level="1">Heading 1</h><p>First</p><h outline-level="2">Heading 2</h><p>Second</p></body></page>
              '/page/body[h[1][@outline-level="1"][text()="Heading 1"]][p[1][text()="First"]][h[2][@outline-level="2"][text()="Heading 2"]][p[2][text()="Second"]]'),
-            # Test simple recursive section conversion into headings.
             ('<article><section><title>Heading 1</title> <para>First</para><section><title>Heading 2</title><para>Second</para></section></section></article>',
+            # <page><body><h outline-level="1">Heading 1</h><p>First</p><h outline-level="2">Heading 2</h><p>Second</p></body></page>
              '/page/body[h[1][@outline-level="1"][text()="Heading 1"]][p[1][text()="First"]][h[2][@outline-level="2"][text()="Heading 2"]][p[2][text()="Second"]]'),
             # Test complex recursive section conversion into headings.
             ('<article><section><title>Heading 1 A</title><para>First</para><section><title>Heading 2 A</title><para>Second</para><section><title>Heading 3 A</title><para>Third</para></section></section></section><section><title>Heading 1 B</title><para>Fourth</para></section></article>',
+            # <page><body><h outline-level="1">Heading 1 A</h><p>First</p><h outline-level="2">Heading 2 A</h><p>Second</p><h outline-level="3">Heading 3 A</h><p>Third</p><h outline-level="1">Heading 1 B</h><p>Fourth</p></body></page>
              '/page/body[h[1][@outline-level="1"][text()="Heading 1 A"]][p[1][text()="First"]][h[2][@outline-level="2"][text()="Heading 2 A"]][p[2][text()="Second"]][h[3][@outline-level="3"][text()="Heading 3 A"]][p[3][text()="Third"]][h[4][@outline-level="1"][text()="Heading 1 B"]][p[4][text()="Fourth"]]'),
         ]
 
@@ -90,9 +95,11 @@ class TestConverter(Base):
         data = [
             # ITEMIZED LIST --> unordered list
             ('<article><itemizedlist><listitem>Unordered Item 1</listitem><listitem>Unordered Item 2</listitem></itemizedlist></article>',
+            # <page><body><list item-label-generate="unordered"><list-item><list-item-body>Unordered Item 1</list-item-body></list-item><list-item><list-item-body>Unordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="unordered"][list-item[1]/list-item-body[text()="Unordered Item 1"]][list-item[2]/list-item-body[text()="Unordered Item 2"]]'),
             # ORDERED LIST --> ordered list
             ('<article><orderedlist><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
+            # <page><body><list item-label-generate="ordered"><list-item><list-item-body>Ordered Item 1</list-item-body></list-item><list-item><list-item-body>Ordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # ORDERED LIST with upperalpha numeration --> ordered list with upper-alpha list-style-type
             ('<article><orderedlist db:numeration="upperalpha"><listitem>Ordered Item 1</listitem><listitem>Ordered Item 2</listitem></orderedlist></article>',
