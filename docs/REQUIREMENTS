@@ -57,8 +57,6 @@ mysql_group auth: MySQLdb python module
 
 openidrp auth: openid python module
 
-stats charts: gdchart python module
-
 jabberbot: pyxmpp SVN revision 665 or release >= 1.0.1
 
 
@@ -108,8 +106,8 @@ minimum: 0.5.1 will work, maybe 0.5 also
 
 jinja2
 ======
-shipped: 2.4.1
-minimum: 2.3(?)
+shipped: 2.5
+minimum: 2.5
 
 
 xappy (High-Level Python library for Xapian)
@@ -130,30 +128,58 @@ shipped: 0.5.8
 minimum: 0.5.6
 
 
+babel
+=====
+shipped: 0.9.5 + patch
+minimum: 0.9.5(?)
+Note:
+0.9.5 needs patch from moin/2.0-dev changeset de6a753a8363 to remove its usage of pkg_resources (setuptools)
+
+
+pytz
+====
+shipped: 2010h
+minimum: 2010h(?)
+
+
 Replacements for Python stdlib modules
 ======================================
-difflib.py (fixes broken Python 2.4.3 difflib, see comment in file)
-HeaderFixed.py ("copied from email.Header because the original is broken")
-tarfile.py (misc. brokenness up to Python 2.6, see comment in file)
+None currently.
 
 
-Other stuff
-===========
-BasicAuthTransport.py (taken from Amos' XML-RPC HowTo)
-python_compatibility.py (to be compatible with older Pythons)
+B) stuff below MoinMoin/web/static/htdocs/
+
+ckeditor
+========
+shipped: 3.3.1
+required: 3.0(?)
 
 
-B) MoinMoin/web/static/htdocs/applets/FCKEditor/
-shipped: 2.6.6
-required: 2.6.x
-
-
-C) MoinMoin/web/static/htdocs/applets/TWikiDrawPlugin/
+TWikiDrawPlugin
+===============
 shipped: Using a modified TWikiDrawPlugin see README in contrib/TWikiDrawPlugin 
 required: see shipped
 
 
-D) MoinMoin/web/static/htdocs/applets/anywikidraw/
+anywikidraw
+===========
 shipped: 0.14
 required: 0.14
 
+
+JQuery
+======
+shipped: 1.4.2
+required: 1.4(?)
+
+
+svgweb
+======
+shipped: 2010-04-09 dracolisk release
+required: ?
+
+
+svg-edit
+========
+shipped: Version 2.5 slightly modified
+required see shipped

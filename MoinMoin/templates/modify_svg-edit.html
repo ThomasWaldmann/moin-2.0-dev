@@ -1,0 +1,9 @@
+{% extends "modify_applet.html" %}
+{% block data_editor %}
+<p>
+<img src="{{ t.pngpath }}">
+<object data="{{ t.pubpath }}svg-editor.html?paramurl={{ t.drawpath }}&item=/{{ t.itemname }}" type="text/html" width="100%" height="600"></object>
+</p>
+<br>
+{% endblock %}
+

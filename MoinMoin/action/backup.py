@@ -17,9 +17,9 @@
 """
 
 import os, re, time
+import tarfile
 
 from MoinMoin import wikiutil
-from MoinMoin.support import tarfile
 
 
 def addFiles(path, tar, exclude_func):
@@ -62,7 +62,7 @@ Please note:
  * Make sure the backup file you get contains everything you need in case of problems.
  * Make sure it is downloaded without problems.
 
-To get a backup, just click here:""", wiki=True))
+To get a backup, just click here:"""))
 
     request.write("""
 <form action="%(baseurl)s/%(pagename)s" method="POST" enctype="multipart/form-data">

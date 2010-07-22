@@ -392,11 +392,6 @@ class PageEditor(Page):
                             info = _("Notifications sent to:")
                             msg = msg + "<p>%s %s</p>" % (info, ", ".join(recipients))
 
-            # Update page trail with the page we just saved.
-            # This is needed for NewPage macro with backto because it does not
-            # send the page we just saved.
-            request.user.addTrail(self)
-
         # remove lock (forcibly if we were allowed to break it by the UI)
         # !!! this is a little fishy, since the lock owner might not notice
         # we broke his lock ==> but revision checking during preview will
@@ -472,12 +467,12 @@ class PageLock:
 
             if self.locktype == 'lock':
                 msg.append(_(
-                    "Other users will be ''blocked'' from editing this page until %(bumptime)s.",
-                    wiki=True) % {'bumptime': bumptime})
+                    "Other users will be blocked from editing this page until %(bumptime)s.",
+                    ) % {'bumptime': bumptime})
             else:
                 msg.append(_(
-                    "Other users will be ''warned'' until %(bumptime)s that you are editing this page.",
-                    wiki=True) % {'bumptime': bumptime})
+                    "Other users will be warned until %(bumptime)s that you are editing this page.",
+                    ) % {'bumptime': bumptime})
             msg.append(_(
                 "Use the Preview button to extend the locking period."
                 ))
@@ -487,17 +482,17 @@ class PageLock:
             if self.locktype == 'lock':
                 # lout out user
                 result = 0, _(
-                    "This page is currently ''locked'' for editing by %(owner)s until %(timestamp)s,"
+                    "This page is currently locked for editing by %(owner)s until %(timestamp)s,"
                     " i.e. for %(mins_valid)d minute(s).",
-                    wiki=True) % {'owner': owner, 'timestamp': timestamp, 'mins_valid': mins_valid}
+                    ) % {'owner': owner, 'timestamp': timestamp, 'mins_valid': mins_valid}
             else:
                 # warn user about existing lock
 
                 result = 1, _(
-"""This page was opened for editing or last previewed at %(timestamp)s by %(owner)s.<<BR>>
-'''You should ''refrain from editing'' this page for at least another %(mins_valid)d minute(s),
-to avoid editing conflicts.'''<<BR>>
-To leave the editor, press the Cancel button.""", wiki=True) % {
+"""This page was opened for editing or last previewed at %(timestamp)s by %(owner)s.
+You should refrain from editing this page for at least another %(mins_valid)d minute(s),
+to avoid editing conflicts.
+To leave the editor, press the Cancel button.""") % {
                     'timestamp': timestamp, 'owner': owner, 'mins_valid': mins_valid}
 
         return result

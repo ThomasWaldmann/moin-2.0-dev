@@ -3,8 +3,8 @@
 """
     MoinMoin installer
 
-    @copyright: 2001-2005 by Jürgen Hermann <jh@web.de>,
-                2006-2007 by MoinMoin:ThomasWaldmann
+    @copyright: 2001-2005 by Juergen Hermann <jh@web.de>,
+                2006-2010 by MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -25,8 +25,7 @@ def isbad(name):
     """ Whether name should not be installed """
     return (name.startswith('.') or
             name.startswith('#') or
-            name.endswith('.pickle') or
-            name == 'CVS')
+            name.endswith('.pickle'))
 
 def isgood(name):
     """ Whether name should be installed """
@@ -219,7 +218,7 @@ setup_args = {
     a personal notes organizer deployed on a laptop or home web server,
     a company knowledge base deployed on an intranet, or an Internet server
     open to individuals sharing the same interests, goals or projects.""",
-    'classifiers': """Development Status :: 5 - Production/Stable
+    'classifiers': """Development Status :: 2 - Pre-Alpha
 Environment :: No Input/Output (Daemon)
 Environment :: Web Environment
 Environment :: Win32 (MS Windows)
@@ -238,34 +237,17 @@ Intended Audience :: Science/Research
 Intended Audience :: System Administrators
 Intended Audience :: Telecommunications Industry
 License :: OSI Approved :: GNU General Public License (GPL)
-Natural Language :: Chinese (Simplified)
-Natural Language :: Chinese (Traditional)
-Natural Language :: Danish
-Natural Language :: Dutch
 Natural Language :: English
-Natural Language :: French
-Natural Language :: German
-Natural Language :: Hebrew
-Natural Language :: Hungarian
-Natural Language :: Italian
-Natural Language :: Javanese
-Natural Language :: Korean
-Natural Language :: Norwegian
-Natural Language :: Russian
-Natural Language :: Serbian
-Natural Language :: Spanish
-Natural Language :: Vietnamese
+Operating System :: OS Independent
 Operating System :: MacOS :: MacOS X
 Operating System :: Microsoft :: Windows
-Operating System :: Microsoft :: Windows :: Windows 95/98/2000
-Operating System :: Microsoft :: Windows :: Windows NT/2000
-Operating System :: OS Independent
 Operating System :: POSIX
-Operating System :: POSIX :: BSD :: FreeBSD
+Operating System :: POSIX :: BSD
 Operating System :: POSIX :: Linux
 Operating System :: Unix
 Programming Language :: Python
-Topic :: Communications :: Conferencing
+Topic :: Internet :: WWW/HTTP :: WSGI
+Topic :: Internet :: WWW/HTTP :: WSGI :: Application
 Topic :: Internet :: WWW/HTTP :: Dynamic Content
 Topic :: Office/Business :: Groupware
 Topic :: Text Processing :: Markup""".splitlines(),
@@ -277,6 +259,7 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'MoinMoin.auth',
         'MoinMoin.auth.openidrp_ext',
         'MoinMoin.config',
+        'MoinMoin.converter2',
         'MoinMoin.datastruct',
         'MoinMoin.datastruct.backends',
         'MoinMoin.events',
@@ -287,6 +270,7 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'MoinMoin.items',
         'MoinMoin.logfile',
         'MoinMoin.macro',
+        'MoinMoin.macro2',
         'MoinMoin.mail',
         'MoinMoin.parser',
         'MoinMoin.script',
@@ -306,6 +290,9 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'MoinMoin.search.queryparser',
         'MoinMoin.security',
         'MoinMoin.support',
+        'MoinMoin.support.babel',
+        'MoinMoin.support.babel.messages',
+        'MoinMoin.support.emeraldtree',
         'MoinMoin.support.flup',
         'MoinMoin.support.flup.client',
         'MoinMoin.support.flup.server',
@@ -315,6 +302,13 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'MoinMoin.support.pygments.formatters',
         'MoinMoin.support.pygments.lexers',
         'MoinMoin.support.pygments.styles',
+        'MoinMoin.support.pytz',
+        'MoinMoin.support.sqlalchemy',
+        'MoinMoin.support.sqlalchemy.databases',
+        'MoinMoin.support.sqlalchemy.engine',
+        'MoinMoin.support.sqlalchemy.ext',
+        'MoinMoin.support.sqlalchemy.orm',
+        'MoinMoin.support.sqlalchemy.sql',
         'MoinMoin.support.werkzeug',
         'MoinMoin.support.werkzeug.contrib',
         'MoinMoin.support.werkzeug.debug',
@@ -329,7 +323,6 @@ Topic :: Text Processing :: Markup""".splitlines(),
         'MoinMoin.web',
         'MoinMoin.web.static',
         'MoinMoin.widget',
-        'MoinMoin.wikixml',
         'MoinMoin.xmlrpc',
 
         # all other _tests are missing here, either we have all or nothing:
@@ -349,6 +342,8 @@ Topic :: Text Processing :: Markup""".splitlines(),
                                                           strip_prefix='MoinMoin/web/static/'),
                      'MoinMoin.templates': make_filelist('MoinMoin/templates',
                                                           strip_prefix='MoinMoin/templates/'),
+                     'MoinMoin.support': make_filelist('MoinMoin/support',
+                                                       strip_prefix='MoinMoin/support/'),
                     },
 
     # Override certain command classes with our own ones

@@ -1,10 +1,13 @@
 # -*- coding: iso-8859-1 -*-
 """
 MoinMoin - DocBook input converter
+Converts a DocBook document into an internal document tree.
 
-Converts a DocBook tree into an internal document tree.
+Currently supports DocBook v5.
 
-Currently support DocBook v.5.0
+Some elements of DocBook v4 specification are also supported
+for backward compatibility :
+  * ulink
 
 @copyright: 2010 MoinMoin:ValentinJaniaut
 @license: GNU GPL, see COPYING for details.
@@ -12,22 +15,22 @@ Currently support DocBook v.5.0
 
 from __future__ import absolute_import
 
-from emeraldtree import ElementTree as ET
+import re
 
-from MoinMoin import wikiutil
-from MoinMoin.util.tree import moin_page, xlink, docbook
-from ._wiki_macro import ConverterMacro
+from emeraldtree import ElementTree as ET
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-import re
+from MoinMoin import wikiutil
+from MoinMoin.util.tree import moin_page, xlink, docbook
+
+from ._wiki_macro import ConverterMacro
 
 class Converter(object):
     """
     Converter application/docbook+xml -> x.moin.document
     """
-
     # Namespace of our input data
     docbook_namespace = {
         docbook.namespace: 'docbook'
@@ -119,7 +122,6 @@ class Converter(object):
         We will detect the name of the tag, and pick the correct method
         to convert it.
         """
-
         # We have a section tag
         if self.sect_re.match(element.tag.name):
             result = []
@@ -144,6 +146,22 @@ class Converter(object):
         body = moin_page.body(children=children)
         return moin_page.page(children=[body])
 
+    def visit_docbook_emphasis(self, element, depth):
+        """
+        emphasis element, is the only way to apply some style
+        on a DocBook element directly from the DocBook tree.
+
+        Basically, you can use it for "italic" and "bold" style.
+
+        However, it is still semantic, so we call it emphasis and strong.
+        """
+        for key, value in element.attrib.iteritems():
+            if key.name == 'role' and value == 'strong':
+                return self.new_copy(moin_page.strong, element,
+                                     depth, attrib={})
+        return self.new_copy(moin_page.emphasis, element,
+                             depth, attrib={})
+
     def visit_docbook_footnote(self, element, depth):
         attrib = {}
         key = moin_page('note-class')
@@ -167,6 +185,13 @@ class Converter(object):
     def visit_docbook_glossterm(self, element, depth):
         return self.new_copy(moin_page('list-item-label'),
                              element, depth, attrib={})
+
+    def visit_docbook_imagedata(self, element, depth):
+        attrib = {}
+        href = element.get('fileref')
+        key = xlink.href
+        attrib[key] = href
+        return ET.Element(moin_page.object, attrib=attrib)
 
     def visit_docbook_itemizedlist(self, element, depth):
         attrib = {}
@@ -195,6 +220,9 @@ class Converter(object):
                 attrib[key] = value
         return self.new_copy(moin_page.a, element, depth, attrib=attrib)
 
+    def visit_docbook_literal(self, element, depth):
+        return self.new_copy(moin_page.code, element, depth, attrib={})
+
     def visit_docbook_orderedlist(self, element, depth):
         attrib = {}
         key = moin_page('item-label-generate')
@@ -212,6 +240,12 @@ class Converter(object):
 
     def visit_docbook_para(self, element, depth):
         return self.new_copy(moin_page.p, element, depth, attrib={})
+
+    def visit_docbook_phrase(self, element, depth):
+        return self.new_copy(moin_page.span, element, depth, attrib={})
+
+    def visit_docbook_programlisting(self, element, depth):
+        return self.new_copy(moin_page.blockcode, element, depth, attrib={})
 
     def visit_docbook_screen(self, element, depth):
         return self.new_copy(moin_page.blockcode, element, depth, attrib={})
@@ -256,7 +290,6 @@ class Converter(object):
         two attributes of the converter which indicate the
         current depth of the section and the current level heading.
         """
-
         if depth > self.section_depth:
             self.section_depth = self.section_depth + 1
             self.heading_level = self.heading_level + 1
@@ -356,6 +389,20 @@ class Converter(object):
         key = moin_page('item-label-generate')
         attrib[key] = 'unordered'
         return self.visit_simple_list(moin_page.list, attrib, element, depth)
+
+    def visit_docbook_subscript(self, element, depth):
+        attrib = {}
+        key = moin_page('baseline-shift')
+        attrib[key] = 'sub'
+        return self.new_copy(moin_page.span, element,
+                             depth, attrib=attrib)
+
+    def visit_docbook_superscript(self, element, depth):
+        attrib = {}
+        key = moin_page('baseline-shift')
+        attrib[key] = 'super'
+        return self.new_copy(moin_page.span, element,
+                             depth, attrib=attrib)
 
     def visit_docbook_term(self, element, depth):
         return self.new_copy(moin_page('list-item-label'),

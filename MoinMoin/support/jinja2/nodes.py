@@ -15,7 +15,11 @@
 import operator
 from itertools import chain, izip
 from collections import deque
-from jinja2.utils import Markup
+from jinja2.utils import Markup, MethodType, FunctionType
+
+
+#: the types we support for context functions
+_context_function_types = (FunctionType, MethodType)
 
 
 _binop_to_func = {
@@ -438,7 +442,10 @@ class TemplateData(Literal):
     fields = ('data',)
 
     def as_const(self, eval_ctx=None):
-        if get_eval_context(self, eval_ctx).autoescape:
+        eval_ctx = get_eval_context(self, eval_ctx)
+        if eval_ctx.volatile:
+            raise Impossible()
+        if eval_ctx.autoescape:
             return Markup(self.data)
         return self.data
 
@@ -585,12 +592,13 @@ class Call(Expr):
 
         # don't evaluate context functions
         args = [x.as_const(eval_ctx) for x in self.args]
-        if getattr(obj, 'contextfunction', False):
-            raise Impossible()
-        elif getattr(obj, 'evalcontextfunction', False):
-            args.insert(0, eval_ctx)
-        elif getattr(obj, 'environmentfunction', False):
-            args.insert(0, self.environment)
+        if isinstance(obj, _context_function_types):
+            if getattr(obj, 'contextfunction', False):
+                raise Impossible()
+            elif getattr(obj, 'evalcontextfunction', False):
+                args.insert(0, eval_ctx)
+            elif getattr(obj, 'environmentfunction', False):
+                args.insert(0, self.environment)
 
         kwargs = dict(x.as_const(eval_ctx) for x in self.kwargs)
         if self.dyn_args is not None:
@@ -638,7 +646,8 @@ class Getattr(Expr):
             raise Impossible()
         try:
             eval_ctx = get_eval_context(self, eval_ctx)
-            return self.environment.getattr(self.node.as_const(eval_ctx), arg)
+            return self.environment.getattr(self.node.as_const(eval_ctx),
+                                            self.attr)
         except:
             raise Impossible()
 
@@ -821,6 +830,24 @@ class MarkSafe(Expr):
     def as_const(self, eval_ctx=None):
         eval_ctx = get_eval_context(self, eval_ctx)
         return Markup(self.expr.as_const(eval_ctx))
+
+
+class MarkSafeIfAutoescape(Expr):
+    """Mark the wrapped expression as safe (wrap it as `Markup`) but
+    only if autoescaping is active.
+
+    .. versionadded:: 2.5
+    """
+    fields = ('expr',)
+
+    def as_const(self, eval_ctx=None):
+        eval_ctx = get_eval_context(self, eval_ctx)
+        if eval_ctx.volatile:
+            raise Impossible()
+        expr = self.expr.as_const(eval_ctx)
+        if eval_ctx.autoescape:
+            return Markup(expr)
+        return expr
 
 
 class ContextReference(Expr):
