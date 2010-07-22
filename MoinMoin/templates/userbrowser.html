@@ -24,17 +24,17 @@
         </td>
         <td>
             <form action="">
-                <input type="hidden" name="do" value="userprofile">
-                <input type="hidden" name="name" value="{{ u.name }}">
-                <input type="hidden" name="key" value="disabled">
-                <input type="hidden" name="val" value="{{ u.disabled and "0" or "1" }}">
-                <input type="submit" name="userprofile" value="{{ u.disabled and "Enable user" or "Disable user" }}">
+                <input type="hidden" name="do" value="userprofile" />
+                <input type="hidden" name="name" value="{{ u.name }}" />
+                <input type="hidden" name="key" value="disabled" />
+                <input type="hidden" name="val" value="{{ u.disabled and "0" or "1" }}" />
+                <input type="submit" name="userprofile" value="{{ u.disabled and "Enable user" or "Disable user" }}" />
             </form>
             <form action="">
-                <input type="hidden" name="do" value="recoverpass">
-                <input type="hidden" name="email" value="{{ u.email }}">
-                <input type="hidden" name="account_sendmail" value="1">
-                <input type="submit" name="recoverpass" value="{{ "Mail account data" }}">
+                <input type="hidden" name="do" value="recoverpass" />
+                <input type="hidden" name="email" value="{{ u.email }}" />
+                <input type="hidden" name="account_sendmail" value="1" />
+                <input type="submit" name="recoverpass" value="{{ "Mail account data" }}" />
             </form>
         </td>
     </tr>
