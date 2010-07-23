@@ -21,7 +21,7 @@ from MoinMoin.storage.error import AccessDeniedError, StorageError
 from MoinMoin.storage.serialization import unserialize
 from MoinMoin.storage.backends import router, acl, memory
 from MoinMoin.Page import Page
-from MoinMoin.items import Item
+from MoinMoin.items import Item, MIMETYPE
 from MoinMoin import auth, config, i18n, user, wikiutil, xmlrpc, error
 
 from flask import Flask, request, g, url_for
@@ -384,7 +384,81 @@ def logout():
     item = Item.create(request, item_name)
     return item.do_show()
 
-# +diff/<int:rev1>:<int:rev2>/<path:item_name>
+@app.route('/+diffsince/<int:timestamp>/<path:item_name>')
+def diffsince(item_name, timestamp):
+    date = timestamp
+    # this is how we get called from "recent changes"
+    # try to find the latest rev1 before bookmark <date>
+    item = g.context.storage.get_item(item_name)
+    revnos = item.list_revisions()
+    revnos.reverse()  # begin with latest rev
+    for revno in revnos:
+        revision = item.get_revision(revno)
+        if revision.timestamp <= date:
+            rev1 = revision.revno
+            break
+    else:
+        rev1 = revno  # if we didn't find a rev, we just take oldest rev we have
+    rev2 = -1  # and compare it with latest we have
+    return _diff(item, rev1, rev2)
+
+@app.route('/+diff/<path:item_name>')
+def diff(item_name):
+    # TODO get_item and get_revision calls may raise an AccessDeniedError.
+    #      If this happens for get_item, don't show the diff at all
+    #      If it happens for get_revision, we may just want to skip that rev in the list
+    item = g.context.storage.get_item(item_name)
+    rev1 = g.context.values.get('rev1')
+    rev2 = g.context.values.get('rev2')
+    return _diff(item, rev1, rev2)
+
+def _diff(item, revno1, revno2):
+    try:
+        revno1 = int(revno1)
+    except (ValueError, TypeError):
+        revno1 = -2
+    try:
+        revno2 = int(revno2)
+    except (ValueError, TypeError):
+        revno2 = -1
+
+    item_name = item.name
+    # get (absolute) current revision number
+    current_revno = item.get_revision(-1).revno
+    # now we can calculate the absolute revnos if we don't have them yet
+    if revno1 < 0:
+        revno1 += current_revno + 1
+    if revno2 < 0:
+        revno2 += current_revno + 1
+
+    if revno1 > revno2:
+        oldrevno, newrevno = revno2, revno1
+    else:
+        oldrevno, newrevno = revno1, revno2
+
+    oldrev = item.get_revision(oldrevno)
+    newrev = item.get_revision(newrevno)
+
+    oldmt = oldrev.get(MIMETYPE)
+    newmt = newrev.get(MIMETYPE)
+
+    if oldmt == newmt:
+        # easy, exactly the same mimetype, call do_diff for it
+        commonmt = newmt
+    else:
+        oldmajor = oldmt.split('/')[0]
+        newmajor = newmt.split('/')[0]
+        if oldmajor == newmajor:
+            # at least same major mimetype, use common base item class
+            commonmt = newmajor + '/'
+        else:
+            # nothing in common
+            commonmt = ''
+
+    item = Item.create(g.context, item_name, mimetype=commonmt, rev_no=newrevno)
+    return item.do_diff(oldrev, newrev)
+
+
 # +feed/atom
 # favicon.ico / robots.txt
 # off-with-his-head

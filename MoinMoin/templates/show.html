@@ -24,9 +24,8 @@
 {% block history %}
     {% if log %}
     <hr>History:
-        <form action="" method="GET">
+    <form action="{{ href('+diff', item_name) }}" method="GET">
         <div id="page-history">
-        <input type="hidden" name="do" value="diff" />
         <table>
             <tr>
                 <th>Name</th>
