@@ -23,6 +23,7 @@ from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
 from werkzeug import http_date, quote_etag
+import flask
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
@@ -648,17 +649,19 @@ There is no help, you're doomed!
         if_none_match = request.if_none_match
         if if_none_match and hash in if_none_match:
             request.status_code = 304
+            return
         else:
-            self._do_get_modified(hash)
+            return self._do_get_modified(hash)
 
     def _do_get_modified(self, hash):
         request = self.request
         from_cache = request.values.get('from_cache')
         from_tar = request.values.get('from_tar')
-        self._do_get(hash, from_cache, from_tar)
+        return self._do_get(hash, from_cache, from_tar)
 
     def _do_get(self, hash, from_cache=None, from_tar=None):
         request = self.request
+        filename = None
         if from_cache:
             content_disposition = None
             sendcache = SendCache(request, from_cache)
@@ -693,24 +696,11 @@ There is no help, you're doomed!
             content_length = rev.size
             file_to_send = rev
 
-        self._send(content_type, content_length, hash, file_to_send,
-                   content_disposition=content_disposition)
-
-    def _send(self, content_type, content_length, hash, file_to_send,
-              filename=None, content_disposition=None):
-        request = self.request
-        if hash:
-            # if item has no hash metadata, hash is None
-            request.headers.add('Cache-Control', 'public')
-            request.headers.add('Etag', quote_etag(hash))
-        if content_disposition is not None:
-            request.headers.add('Content-Disposition', content_disposition)
-
-        request.status_code = 200
-        request.content_type = content_type
-        request.content_length = content_length
-        request.send_file(file_to_send)
-
+        # we have hash for etag, but werkzeug creates its own one
+        # TODO: handle content_disposition is not None
+        return flask.send_file(file_to_send, mimetype=content_type,
+                               as_attachment=False, attachment_filename=filename,
+                               conditional=True)
 
 
 class RenderableBinary(Binary):
