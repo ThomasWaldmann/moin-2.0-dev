@@ -252,14 +252,14 @@ def get_item(item_name, rev):
 # +modify/<path:item_name>
 # +revert/<path:item_name>
 # +diff/<int:rev1>:<int:rev2>/<path:item_name>
-# +history/<int:rev1>:<int:rev2>/<path:item_name>
+# +history/<path:item_name>?from=x&to=y
 # +history/<path:item_name>
 # +history
 # +feed/atom
 # +index/<path:item_name>
 # favicon.ico / robots.txt
-# +login (use referrer to stay on current item? or ?next=next_location)
-# +logout (use referrer to stay on current item?)
+# +login ( ?next=next_location check if target is in the wiki and not outside domain )
+# +logout ( same )
 # off-with-his-head
 
 if __name__ == '__main__':
