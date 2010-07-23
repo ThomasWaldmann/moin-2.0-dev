@@ -27,3 +27,4 @@ def shorten_item_name(name, length=25):
             half, left = divmod(length - 3, 2)
             name = u'%s...%s' % (name[:half + left], name[-half:])
     return name
+
