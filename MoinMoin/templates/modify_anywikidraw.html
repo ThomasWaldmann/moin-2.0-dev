@@ -3,10 +3,12 @@
 <p>
 <img src="{{ t.pngpath }}" />
 <applet code="org.anywikidraw.moinmoin.MoinMoinDrawingApplet.class"  codebase="." archive="{{ t.pubpath }}/AnyWikiDrawForMoinMoin.jar" width="800" height="620">
-<param name="DrawingName" value="{{ t.name }}" />
-<param name="DrawingURL" value="{{ t.drawpath }}" />
+<param name="DrawingName" value="drawing.svg" />
+{% if t.drawpath %} 
+<param name="DrawingURL" value="{{ t.pagelink }}?do=get&amp;from_tar=drawing.svg" />
+{% endif %}
 <param name="PageURL" value="{{ t.pagelink }}" />
-<param name="UploadURL" value="{{ t.savelink }}" />
+<param name="UploadURL" value="{{ t.pagelink }}?do=modify&amp;mimetype=application/x-anywikidraw" />
 <param name="Locale" value="en" />
 <param name="codebase_lookup" value="false" />
 <param name="classloader_cache" value="false" />
