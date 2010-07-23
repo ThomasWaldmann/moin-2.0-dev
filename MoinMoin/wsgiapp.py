@@ -273,6 +273,19 @@ def modify_item(item_name):
             return werkzeug.redirect(url_for('show_item', item_name=item_name))
         # Nick Booker: Any handling necessary here for TwikiDraw / AnyWikiDraw?
 
+
+@app.route('/+revert/<int:rev>/<itemname:item_name>', methods=['GET', 'POST'])
+def revert_item(item_name, rev):
+    item = Item.create(g.context, item_name, rev_no=rev)
+    if request.method == 'GET':
+        return item.do_revert()
+    elif request.method == 'POST':
+        cancelled = 'button_cancel' in g.context.form
+        if not cancelled:
+            item.revert()
+        return werkzeug.redirect(url_for('show_item', item_name=item_name))
+
+
 @app.route('/+index/<itemname:item_name>')
 @app.route('/+index', defaults=dict(item_name=''))
 def index(item_name):
