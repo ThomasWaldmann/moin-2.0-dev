@@ -52,15 +52,15 @@
                 <td>{{ entry.editor }}</td>
                 <td>{{ entry.mimetype|e }}</td>
                 <td>{{ entry.comment|e }}</td>
-                <td><a href="{{ href(entry.name, rev=entry.rev_no)|e }}">{{ _('show') }}</a></td>
-                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='get')|e }}">{{ _('get') }}</a></td>
-                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='highlight')|e }}">{{_('highlight') }}</a></td>
+                <td><a href="{{ href('+show', entry.rev_no, entry.name)|e }}">{{ _('show') }}</a></td>
+                <td><a href="{{ href('+get', entry.rev_no, entry.name)|e }}">{{ _('get') }}</a></td>
+                <td><a href="{{ href('+highlight', entry.rev_no, entry.name)|e }}">{{_('highlight') }}</a></td>
                 {% if entry.rev_no == last_rev_no %}
                 <td>current revision</td>
                 {% else %}
-                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='revert')|e }}">{{ _('revert') }}</a></td>
+                <td><a href="{{ href('+revert', entry.rev_no, entry.name)|e }}">{{ _('revert') }}</a></td>
                 {% endif %}
-                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='destroy')|e }}">{{ _('destroy') }}</a></td>
+                <td><a href="{{ href('+destroy', entry.rev_no, entry.name)|e }}">{{ _('destroy') }}</a></td>
             </tr>
             {% endfor %}
         </table>

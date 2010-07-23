@@ -39,12 +39,12 @@
             </a>
             <span class="sep"> | </span>
             {% if 'userprefs' not in cfg.actions_excluded %}
-                <a href="{{ href(item_name, do='userprefs')|e }}" class="userprefs" rel="nofollow">{{ _('Settings') }}</a>
+                <a href="{{ href('+userprefs')|e }}" class="userprefs" rel="nofollow">{{ _('Settings') }}</a>
                 <span class="sep"> | </span>
             {% endif %}
         {% endif %}
         {% if user.auth_method in cfg.auth_can_logout %}
-            <a href="{{ href(item_name, do='logout', logout='logout')|e }}" class="logout" rel="nofollow">
+            <a href="{{ href('+logout')|e }}" class="logout" rel="nofollow">
                 {{ _('Logout') }}
             </a>
         {% endif %}
