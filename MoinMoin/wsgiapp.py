@@ -301,6 +301,45 @@ def history(item_name):
     return request.theme.render('rc.html', item_name=item_name, history=history)
 
 
+@app.route('/+quicklink/<itemname:item_name>')
+def quicklink(item_name):
+    """ Add the current wiki page to the user quicklinks """
+    request = g.context
+    _ = request.getText
+
+    if not request.user.valid:
+        request.theme.add_msg(_("You must login to add a quicklink."), "error")
+    elif not request.user.isQuickLinkedTo([item_name]):
+        if request.user.addQuicklink(item_name):
+            request.theme.add_msg(_('A quicklink to this page has been added for you.'), "info")
+        else: # should not happen
+            request.theme.add_msg(_('A quicklink to this page could not be added for you.'), "error")
+    else:
+        request.theme.add_msg(_('You already have a quicklink to this page.'))
+    item = Item.create(request, item_name)
+    return item.do_show()
+
+@app.route('/+quickunlink/<itemname:item_name>')
+def quickunlink(item_name):
+    """ Remove the current wiki page from the user's quicklinks """
+    request = g.context
+    _ = request.getText
+    msg = None
+
+    if not request.user.valid:
+        msg = _("You must login to remove a quicklink.")
+    elif request.user.isQuickLinkedTo([item_name]):
+        if request.user.removeQuicklink(item_name):
+            msg = _('Your quicklink to this page has been removed.')
+        else: # should not happen
+            msg = _('Your quicklink to this page could not be removed.')
+    else:
+        msg = _('You need to have a quicklink to this page to remove it.')
+    if msg:
+        request.theme.add_msg(msg)
+    item = Item.create(request, item_name)
+    return item.do_show()
+
 @app.route('/+login', methods=['GET', 'POST'])
 def login():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
