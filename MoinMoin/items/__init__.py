@@ -977,16 +977,13 @@ class SvgDraw(TarMixin, Image):
         The applet is called for doing modifications.
         """
         request = self.request
+        drawpath = ""
         if 'drawing.svg' in self.list_members():
-            drawpath = self.url(do='get', from_tar='drawing.svg')
-        else:
-            drawpath = ''
+            drawpath = self.url()
 
-        #drawpath = self.url(do='get', from_tar='drawing.svg')
         svg_params = {
             'drawpath': drawpath,
             'itemname': self.name,
-            'savelink': self.url(do='modify', mimetype=self.supported_mimetypes[0]),
             'pubpath': request.cfg.url_prefix_static + "/applets/svg-edit/",
         }
 
@@ -1413,12 +1410,8 @@ class TWikiDraw(TarMixin, Image):
         request = self.request
         twd_params = {
             'pubpath': request.cfg.url_prefix_static + '/applets/TWikiDrawPlugin',
-            'pngpath': self.url(do='get', from_tar='drawing.png'),
-            'drawpath': self.url(do='get', from_tar='drawing.draw'),
-            'savelink': self.url(do='modify', mimetype=self.supported_mimetypes[0]),
             'pagelink': self.url(),
             'helplink': self.modify_help,
-            'basename': 'drawing',
         }
         template = self.env.get_template("modify_twikidraw.html")
         content = template.render(gettext=self.request.getText,
@@ -1496,16 +1489,13 @@ class AnyWikiDraw(TarMixin, Image):
         The applet is called for doing modifications.
         """
         request = self.request
+        drawpath = ""
         if 'drawing.svg' in self.list_members():
-            drawpath = self.url(do='get', from_tar='drawing.svg')
-        else:
-            drawpath = ''
+            drawpath = self.url()
 
         awd_params = {
-            'name': 'drawing.svg',
             'drawpath': drawpath,
             'pagelink': self.url(),
-            'savelink': self.url(do='modify', mimetype=self.supported_mimetypes[0]),
             'pubpath': request.cfg.url_prefix_static + "/applets/anywikidraw/lib",
         }
 
