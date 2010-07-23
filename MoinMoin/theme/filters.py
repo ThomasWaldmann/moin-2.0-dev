@@ -9,11 +9,11 @@
 def shorten_item_name(name, length=25):
     """
     Shorten item names
-    
+
     Shorten very long item names that tend to break the user
     interface. The short name is usually fine, unless really stupid
     long names are used (WYGIWYD).
-    
+
     @param name: item name, unicode
     @param length: maximum length for shortened item names, int
     @rtype: unicode
@@ -27,3 +27,4 @@ def shorten_item_name(name, length=25):
             half, left = divmod(length - 3, 2)
             name = u'%s...%s' % (name[:half + left], name[-half:])
     return name
+
