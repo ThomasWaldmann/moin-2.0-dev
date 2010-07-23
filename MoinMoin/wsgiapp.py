@@ -24,7 +24,7 @@ from MoinMoin.Page import Page
 from MoinMoin.items import Item
 from MoinMoin import auth, config, i18n, user, wikiutil, xmlrpc, error
 
-from flask import Flask, request, g
+from flask import Flask, request, g, url_for
 import werkzeug
 
 
@@ -241,7 +241,7 @@ def show_item(item_name, rev):
 
 @app.route('/+show/<itemname:item_name>')
 def redirect_show_item(item_name):
-    return redirect(url_for('show_item', item_name=item_name))
+    return werkzeug.redirect(url_for('show_item', item_name=item_name))
 
 @app.route('/+get/<int:rev>/<itemname:item_name>')
 @app.route('/+get/<itemname:item_name>', defaults=dict(rev=-1))
