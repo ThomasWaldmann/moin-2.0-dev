@@ -632,6 +632,7 @@ There is no help, you're doomed!
 
         template = self.env.get_template('diff.html')
         content = template.render(gettext=self.request.getText,
+                                  item_name=self.name,
                                   rev=self.rev,
                                   log=log,
                                   first_rev_no=rev_nos[0],
