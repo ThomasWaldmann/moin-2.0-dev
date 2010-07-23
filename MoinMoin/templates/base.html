@@ -64,7 +64,7 @@
         <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href('+modify', item_name)|e }}" />
     {% endif %}
 
-    <link rel="alternate" title="{{ item_name|e }} changes" href="{{ href(item_name, do='atom_feed')|e }}" type="application/atom+xml" />
+    <link rel="alternate" title="{{ item_name|e }} changes" href="{{ href('+feed', 'atom', item_name)|e }}" type="application/atom+xml" />
 
     {% if html_head %}
         {{ html_head }}

@@ -12,7 +12,7 @@ This item does not exist (yet), but you can try creating it now. Please select t
     <tr>
         <td>
         {% for mname, mlabel in mimetypes %}
-            <a href="{{ href(item_name, do='show', mimetype=mname)|e }}">{{ mlabel|e }}</a> -
+            <a href="{{ href(item_name, mimetype=mname)|e }}">{{ mlabel|e }}</a> -
         {% endfor %}
         </td>
     </tr>
