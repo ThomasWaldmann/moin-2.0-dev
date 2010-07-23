@@ -279,11 +279,16 @@ def index(item_name):
     item = Item.create(g.context, item_name)
     return item.do_index()
 
+@app.route('/+history/<itemname:item_name>')
+@app.route('/+history', defaults=dict(item_name=''))
+def history(item_name):
+    request = g.context
+    # TODO: No fake-metadata anymore, fix this
+    history = request.storage.history(item_name=item_name)
+    return request.theme.render('rc.html', item_name=item_name, history=history)
+
 # +revert/<path:item_name>
 # +diff/<int:rev1>:<int:rev2>/<path:item_name>
-# +history/<path:item_name>?from=x&to=y
-# +history/<path:item_name>
-# +history
 # +feed/atom
 # favicon.ico / robots.txt
 # +login ( ?next=next_location check if target is in the wiki and not outside domain )
