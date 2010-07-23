@@ -249,6 +249,30 @@ def get_item(item_name, rev):
     item = Item.create(g.context, item_name, rev_no=rev)
     return item.do_get()
 
+@app.route('/+modify/<itemname:item_name>', methods=['GET', 'POST'])
+def modify_item(item_name):
+    """Modify the wiki item item_name.
+
+    On GET, displays a form.
+    On POST, saves the new page (unless there's an error in input, or cancelled).
+    After successful POST, redirects to the page.
+    """
+    mimetype = g.context.values.get('mimetype', 'text/plain')
+    template_name = g.context.values.get('template')
+    item = Item.create(g.context, item_name, mimetype=mimetype)
+    if request.method == 'GET':
+        content = item.do_modify(template_name)
+        return content
+    elif g.context.method == 'POST':
+        cancelled = 'button_cancel' in g.context.form
+        if not cancelled:
+            item.modify()
+        if not mimetype in ('application/x-twikidraw', 'application/x-anywikidraw'):
+            # TwikiDraw and AnyWikiDraw can send more than one request
+            # the follwowing line breaks it
+            return werkzeug.redirect(url_for('show_item', item_name=item_name))
+        # Nick Booker: Any handling necessary here for TwikiDraw / AnyWikiDraw?
+
 # +modify/<path:item_name>
 # +revert/<path:item_name>
 # +diff/<int:rev1>:<int:rev2>/<path:item_name>
