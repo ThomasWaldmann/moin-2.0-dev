@@ -17,3 +17,4 @@ def execute(item_name, request):
     return request.theme.render('rc.html',
                                 history=history,
                                 )
+
