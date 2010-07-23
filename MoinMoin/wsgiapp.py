@@ -273,14 +273,18 @@ def modify_item(item_name):
             return werkzeug.redirect(url_for('show_item', item_name=item_name))
         # Nick Booker: Any handling necessary here for TwikiDraw / AnyWikiDraw?
 
-# +modify/<path:item_name>
+@app.route('/+index/<itemname:item_name>')
+@app.route('/+index', defaults=dict(item_name=''))
+def index(item_name):
+    item = Item.create(g.context, item_name)
+    return item.do_index()
+
 # +revert/<path:item_name>
 # +diff/<int:rev1>:<int:rev2>/<path:item_name>
 # +history/<path:item_name>?from=x&to=y
 # +history/<path:item_name>
 # +history
 # +feed/atom
-# +index/<path:item_name>
 # favicon.ico / robots.txt
 # +login ( ?next=next_location check if target is in the wiki and not outside domain )
 # +logout ( same )
