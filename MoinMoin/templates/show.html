@@ -83,7 +83,7 @@
     <div id="pagebottom">
         <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
             {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
-            {{ theme.item_name }} ({{ _("edited %s by %s" % (user.getFormattedDateTime(rev.timestamp), rev|user_format )) }})
+            {{ item_name }} ({{ _("edited %s by %s" % (user.getFormattedDateTime(rev.timestamp), rev|user_format )) }})
         </p>
     </div>
     {% endif %}

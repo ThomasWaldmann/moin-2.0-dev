@@ -122,13 +122,9 @@ class ThemeBase(object):
         self.request = request
         self.cfg = request.cfg
         self.user = request.user
-        self.item_name = item_name = request.item_name
-        self.storage = storage = request.storage
-        self.item_exists = storage.has_item(item_name)
+        self.storage = request.storage
         self.output_mimetype = 'text/html' # was: page.output_mimetype
         self.output_charset = 'utf-8' # was: page.output_charset
-        self.item_readable = request.user.may.read(item_name)
-        self.item_writable = request.user.may.write(item_name)
         self.ui_lang = request.lang
         self.ui_dir = i18n.getDirection(self.ui_lang)
         self.content_lang = request.content_lang
@@ -168,7 +164,18 @@ class ThemeBase(object):
                                 'href': request.href,
                                 'static_href': request.static_href,
                                 'abs_href': request.abs_href,
-                                'translated_item_name': self.translated_item_name})
+                                'item_name': 'handlers need to give it',
+                                'translated_item_name': self.translated_item_name,
+                                })
+
+    def item_exists(self, item_name):
+        return self.storage.has_item(item_name)
+
+    def item_readable(self, item_name):
+        return self.request.user.may.read(item_name)
+
+    def item_writable(self, item_name):
+        return self.request.user.may.write(item_name)
 
     def translated_item_name(self, item_en):
         """
@@ -188,7 +195,7 @@ class ThemeBase(object):
             return item_lang_default
         return item_en
 
-    def location_breadcrumbs(self):
+    def location_breadcrumbs(self, item_name):
         """
         Assemble the location using breadcrumbs (was: title)
 
@@ -197,7 +204,7 @@ class ThemeBase(object):
         """
         breadcrumbs = []
         current_item = ''
-        for segment in self.item_name.split('/'):
+        for segment in item_name.split('/'):
             current_item += segment
             breadcrumbs.append((segment, current_item, self.storage.has_item(current_item)))
             current_item += '/'
@@ -235,7 +242,6 @@ class ThemeBase(object):
         """
         user = self.user
         request = self.request
-        item_name = self.item_name
 
         wikiname, itemname = wikiutil.getInterwikiHomePage(request)
         name = user.name
@@ -322,7 +328,7 @@ class ThemeBase(object):
             title = item_name
         return item_name, title, wiki_local
 
-    def navibar(self):
+    def navibar(self, item_name):
         """
         Assemble the navibar
 
@@ -331,7 +337,7 @@ class ThemeBase(object):
         """
         request = self.request
         items = []  # navibar items
-        current = self.item_name
+        current = item_name
 
         # Process config navi_bar
         for text in request.cfg.navi_bar:
@@ -413,7 +419,7 @@ class ThemeBase(object):
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
-    def shouldShowEditbar(self):
+    def shouldShowEditbar(self, item_name):
         """
         Should we show the editbar?
 
@@ -427,7 +433,7 @@ class ThemeBase(object):
         """
         # Show editbar only for existing pages, that the user may read.
         # If you may not read, you can't edit, so you don't need editbar.
-        if self.item_exists and self.item_readable:
+        if self.item_exists(item_name) and self.item_readable(item_name):
             form = self.request.form
             action = self.request.action
             # Do not show editbar on edit but on save/cancel
@@ -436,19 +442,18 @@ class ThemeBase(object):
                         not form.has_key('button_cancel'))
         return False
 
-    def parent_page(self):
+    def parent_page(self, item_name):
         """
         Return name of parent page for the current page
 
         @rtype: unicode
         @return: parent page name
         """
-        item_name = self.item_name
         parent_page_name = wikiutil.ParentPageName(item_name)
         if item_name and parent_page_name:
             return parent_page_name
 
-    def link_supplementation_page(self):
+    def link_supplementation_page(self, item_name):
         """
         If the discussion page doesn't exist and the user
         has no right to create it, show a disabled link.
@@ -456,7 +461,7 @@ class ThemeBase(object):
         @rtype: bool
         """
         suppl_name = self.cfg.supplementation_page_name
-        suppl_name_full = "%s/%s" % (self.item_name, suppl_name)
+        suppl_name_full = "%s/%s" % (item_name, suppl_name)
 
         return self.storage.has_item(suppl_name_full) or self.user.may.write(suppl_name_full)
 
@@ -480,8 +485,7 @@ class ThemeBase(object):
 
     # Properties ##############################################################
 
-    @property
-    def login_url(self):
+    def login_url(self, item_name):
         """
         Return URL usable for user login
         """
@@ -489,13 +493,12 @@ class ThemeBase(object):
         href = request.href
         url = ''
         if request.cfg.auth_login_inputs == ['special_no_input']:
-            url = href(self.item_name, do='login', login=1)
+            url = href(item_name, do='login', login=1)
         if request.cfg.auth_have_login:
-            url = url or href(self.item_name, do='login')
+            url = url or href(item_name, do='login')
         return url
 
-    @property
-    def actions_menu_options(self):
+    def actions_menu_options(self, item_name):
         """
         Create actions menu list and items data dict
 
@@ -564,7 +567,7 @@ class ThemeBase(object):
                 continue
 
             # SubscribeUser action enabled only if user has admin rights
-            if action == 'SubscribeUser' and not self.user.may.admin(self.item_name):
+            if action == 'SubscribeUser' and not self.user.may.admin(item_name):
                 do = 'show'
                 disabled = True
 
