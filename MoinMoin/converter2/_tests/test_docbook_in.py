@@ -122,24 +122,30 @@ class TestConverter(Base):
              '/page/body/list[@item-label-generate="ordered"][@list-style-type="lower-roman"][list-item[1]/list-item-body[text()="Ordered Item 1"]][list-item[2]/list-item-body[text()="Ordered Item 2"]]'),
             # VARIABLE LIST --> list
             ('<article><variablelist><varlistentry><term>Term 1</term><listitem>Definition 1</listitem></varlistentry><varlistentry><term>Term 2</term><listitem>Definition 2</listitem></varlistentry></variablelist></article>',
+            # <page><body><list><list-item><list-item-label>Termm 1</list-item-label><list-item-body>Definition 1</list-item-body></list-item><list-item><list-item-label>Term 2</list-item-label><list-item-body>Definition 2</list-item-body></list-item></list></body></page>
             '/page/body/list[list-item[1][list-item-label="Term 1"][list-item-body="Definition 1"]][list-item[2][list-item-label="Term 2"][list-item-body="Definition 2"]]'),
             # PROCEDURE --> ordered list (with arabic numeration)
             ('<article><procedure><step>First Step</step><step>Second Step</step></procedure></article>',
+            # <page><body><list item-label-generate="ordered"><list-item><list-item-body>First Step</list-item-body></list-item><list-item><list-item-body>Second Step</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="ordered"][list-item[1]/list-item-body[text()="First Step"]][list-item[2]/list-item-body[text()="Second Step"]]'),
             # GLOSS LIST --> Definition list
             ('<article><glosslist><glossentry><glossterm>Term 1</glossterm><glossdef><para>Definition 1</para></glossdef></glossentry><glossentry><glossterm>Term 2</glossterm><glossdef><para>Definition 2</para></glossdef></glossentry></glosslist></article>',
+            # <page><body><list><list-item><list-item-label>Termm 1</list-item-label><list-item-body>Definition 1</list-item-body></list-item><list-item><list-item-label>Term 2</list-item-label><list-item-body>Definition 2</list-item-body></list-item></list></body></page>
             '/page/body/list[list-item[1][list-item-label="Term 1"][list-item-body[p="Definition 1"]]][list-item[2][list-item-label="Term 2"][list-item-body[p="Definition 2"]]]'),
             # SEGMENTED LIST --> Definition List
             ('<article><segmentedlist><segtitle>Term 1</segtitle><segtitle>Term 2</segtitle><segtitle>Term 3</segtitle><seglistitem><seg>Def 1:1</seg><seg>Def 1:2</seg><seg>Def 1:3</seg></seglistitem><seglistitem><seg>Def 2:1</seg><seg>Def 2:2</seg><seg>Def 2:3</seg></seglistitem></segmentedlist></article>',
               '/page/body/list[list-item[1][list-item-label="Term 1"][list-item-body="Def 1:1"]][list-item[2][list-item-label="Term 2"][list-item-body="Def 1:2"]][list-item[3][list-item-label="Term 3"][list-item-body="Def 1:3"]][list-item[4][list-item-label="Term 1"][list-item-body="Def 2:1"]][list-item[5][list-item-label="Term 2"][list-item-body="Def 2:2"]][list-item[6][list-item-label="Term 3"][list-item-body="Def 2:3"]]'),
             # SIMPLE LIST --> unordered list
             ('<article><simplelist><member>Item 1</member><member>Item 2</member></simplelist></article>',
+            # <page><body><list item-label-generate="unordered"><list-item><list-item-body>Unordered Item 1</list-item-body></list-item><list-item><list-item-body>Unordered Item 2</list-item-body></list-item></list></body></page>
              '/page/body/list[@item-label-generate="unordered"][list-item[1]/list-item-body[text()="Item 1"]][list-item[2]/list-item-body[text()="Item 2"]]'),
             # Q and A set with defaultlabel = number --> ordered list
             ("<article><qandaset db:defaultlabel='number'><qandaentry><question><para>Question 1</para></question><answer><para>Answer 1</para></answer></qandaentry><qandaentry><question><para>Question 2</para></question><answer><para>Answer 2</para></answer></qandaentry></qandaset></article> ",
+            # <page><body><list item-label-generate="ordered"><list-item><list-item-body><p>Question1</p><p>Answer 1</p></list-item-body></list-item><list-item><list-item-body><p>Question 2</p><p>Answer 2</p></list-item-body></list-item></body></page>
              '/page/body/list[@item-label-generate="ordered"][list-item[1]/list-item-body[p[1][text()="Question 1"]][p[2][text()="Answer 1"]]][list-item[2]/list-item-body[p[1][text()="Question 2"]][p[2][text()="Answer 2"]]]'),
             # Q and A set with defaultlabel = qanda --> definition list, with Q: and A: for the label
             ("<article><qandaset db:defaultlabel='qanda'><qandaentry><question><para>Question 1</para></question><answer><para>Answer 1</para></answer></qandaentry><qandaentry><question><para>Question 2</para></question><answer><para>Answer 2</para></answer></qandaentry></qandaset></article> ",
+            # <page><body><list><list-item><list-item-label>Q: </list-item-label><list-item-body>Question 1</list-item-body></list-item><list-item><list-item-label>A: </list-item-label><list-item-body>Answer 1</list-item-body></list-item><list-item><list-item-label>Q: </list-item-label><list-item-body>Question 2</list-item-body></list-item><list-item><list-item-label>A: </list-item-label><list-item-body>Answer 2</list-item-body></list-item>
               '/page/body/list[list-item[1][list-item-label="Q:"][list-item-body="Question 1"]][list-item[2][list-item-label="A:"][list-item-body="Answer 1"]][list-item[3][list-item-label="Q:"][list-item-body="Question 2"]][list-item[4][list-item-label="A:"][list-item-body="Answer 2"]]'),
         ]
         for i in data:
@@ -148,10 +154,13 @@ class TestConverter(Base):
     def test_table(self):
         data = [
             ('<article><table><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table></article>',
+            # <page><body><table><table-header><table-row><table-cell>Header</table-cell></table-row></table-header><table-footer><table-row><table-cell>Footer</table-cell></table-row></table-footer><table-body><table-row><table-cell>Cell</table-row></table-cell></table></body></page>
              '/page/body/table[./table-header/table-row[table-cell="Header"]][./table-footer/table-row[table-cell="Footer"]][./table-body/table-row[table-cell="Cell"]]'),
             ('<article><table><tbody><tr><td db:colspan="2">Cell</td></tr></tbody></table></article>',
+            # <page><body><table><table-body><table-row><table-cell number-columns-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>
              '/page/body/table/table-body/table-row/table-cell[text()="Cell"][@number-columns-spanned="2"]'),
             ('<article><table><tbody><tr><td db:rowspan="2">Cell</td></tr></tbody></table></article>',
+            # <page><body><table><table-body><table-row><table-cell number-rows-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>
              '/page/body/table/table-body/table-row/table-cell[text()="Cell"][@number-rows-spanned="2"]'),
         ]
         for i in data:
@@ -160,6 +169,7 @@ class TestConverter(Base):
     def test_misc(self):
         data = [
             ('<article><para>Text Para<footnote><para>Text Footnote</para></footnote></para></article>',
+            # <page><body><p>Text Para<note note-class="footnote"><note-body><p>Text Footnote</p></note-body></note></p></body></page>
              '/page/body/p[text()="Text Para"]/note[@note-class="footnote"]/note-body/p[text()="Text Footnote"]'),
         ]
         for i in data:
@@ -169,12 +179,14 @@ class TestConverter(Base):
         data = [
             # Normal link, with conversion of all the xlink attributes
             ('<article><para><link xlink:href="uri:test" xlink:title="title">link</link></para></article>',
+            # <page><body><p><a xlink:href="uri:test" xlink:title="title">link</a></p></body></page>
              '/page/body/p/a[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
             # XREF link TODO : Check that it works with any href attribute
             #('<article><para><xref xlink:href="uri:test" xlink:title="title">link</link></para></article>',
             # '/page/body/p/a[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
             # Old link from DocBook v.4.X for backward compatibility
             ('<article><para><ulink url="url:test">link</ulink></para></article>',
+            # <page><body><p><a xlink:href="url:test">link</a></p></body></page>
              '/page/body/p/a[@xlink:href="url:test"][text()="link"]'),
         ]
         for i in data:
@@ -183,15 +195,19 @@ class TestConverter(Base):
     def test_code(self):
         data = [
             ('<article><screen>Text</screen></article>',
+            # <page><body><blockcode>Text</blockcode></body></page>
              '/page/body[blockcode="Text"]'),
             # Test for <screen> with CDATA
             ('<article><screen><![CDATA[Text]]></screen></article>',
+            # <page><body><blockcode>Text</blockcode></body></page>
              '/page/body[blockcode="Text"]'),
             # PROGRAMLISTING --> BLOCKCODE
             ('<article><programlisting>Text</programlisting></article>',
+            # <page><body><blockcode>Text</blockcode></body></page>
              '/page/body[blockcode="Text"]'),
             # LITERAL --> CODE
             ('<article><para>text<literal>literal</literal></para></article>',
+            # <page><body><p>text<code>literal</code></p></body></page>
              '/page/body/p[text()="text"][code="literal"]'),
         ]
         for i in data:
@@ -201,6 +217,7 @@ class TestConverter(Base):
         data = [
             # Test for image conversion
             ('<article><para><inlinemediaobject><imageobject><imagedata fileref="test.png"/></imageobject></inlinemediaobject></para></article>',
+            # <page><body><p><object xlink:href="test.png" /></p></body></page>
               '/page/body/p/object/@xlink:href="test.png"'),
         ]
         for i in data:
@@ -210,18 +227,23 @@ class TestConverter(Base):
         data = [
             # EMPHASIS --> EMPHASIS
             ('<article><para>text<emphasis>emphasis</emphasis></para></article>',
+            # <page><body><p>text<emphasis>emphasis</emphasis></p></body></page>
              '/page/body/p[text()="text"][emphasis="emphasis"]'),
             # EMPHASIS role='strong' --> STRONG
             ('<article><para>text<emphasis db:role="strong">strong</emphasis></para></article>',
+            # <page><body><p>text<strong>strong</strong></p></body></page>
              '/page/body/p[text()="text"][strong="strong"]'),
             # SUBSCRIPT --> SPAN baseline-shift = 'sub'
             ('<article><para><subscript>sub</subscript>script</para></article>',
+            # <page><body><p>script<span baseline-shift="sub">sub</span></p></body></page>
              '/page/body/p[text()="script"]/span[@baseline-shift="sub"][text()="sub"]'),
             # SUPERSCRIPT --> SPAN baseline-shift = 'super'
             ('<article><para><superscript>super</superscript>script</para></article>',
+            # <page><body><p>script<span baseline-shift="super">super</span></p></body></page>
              '/page/body/p[text()="script"]/span[@baseline-shift="super"][text()="super"]'),
             # PHRASE --> SPAN
             ('<article><para><phrase>text</phrase></para></article>',
+            # <page><body><p><span>text</span></p></body></page>
              '/page/body/p[span="text"]'),
         ]
         for i in data:
