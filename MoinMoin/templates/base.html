@@ -9,10 +9,10 @@
     {% if theme.request.query_string %}
         {# if it is an action or edit/search, send query headers (noindex,nofollow): #}
         {{ cfg.html_head_queries }}
-    {% elif theme.request.method == 'POST' or theme.item_name in ['BadContent', 'LocalBadContent', ] %}
+    {% elif theme.request.method == 'POST' or item_name in ['BadContent', 'LocalBadContent', ] %}
         {# we don't want to have BadContent stuff indexed: #}
         {{ cfg.html_head_posts }}
-    {% elif theme.item_name in theme.special_item_names %}
+    {% elif item_name in theme.special_item_names %}
         {# if it is a special page, index it and follow the links - we do it #}
         {# for the original, English pages as well as for (the possibly modified frontpage #}
         {{ cfg.html_head_index }}
@@ -25,7 +25,7 @@
     {% if pi_refresh %}
         {{ '<meta http-equiv="refresh" content="%d;URL=%s" />' % pi_refresh }}
     {% endif %}
-    {% if theme.item_name and allow_doubleclick and
+    {% if item_name and allow_doubleclick and
         theme.user.edit_on_doubleclick and theme.item_writable %}
             <meta name="edit_on_doubleclick" content="1" />
     {% endif %}
@@ -39,7 +39,7 @@
     {% endif %}
 
     <title>
-    {% if title %}{{ title }}{% else %}{{ theme.item_name }}{% endif %} -
+    {% if title %}{{ title }}{% else %}{{ item_name }}{% endif %} -
         {% if cfg.html_pagetitle %}
             {{ cfg.html_pagetitle|e }}
         {% else %}
@@ -54,17 +54,17 @@
     <link rel="Glossary" href="{{ href(translated_item_name('WordIndex'))|e }}" />
     <link rel="Help" href="{{ href(translated_item_name('HelpOnFormatting'))|e }}" />
     <link rel="Start" href="{{ href(translated_item_name(cfg.page_front_page))|e }}" />
-    {% set parent_page = theme.parent_page() %}
+    {% set parent_page = theme.parent_page(item_name) %}
     {% if parent_page %}
         <link rel="Up" href="{{ href(parent_page)|e }}" />
     {% endif %}
 
     {# universal edit button support #}
     {% if theme.item_writable and 'modify' not in cfg.actions_excluded %}
-        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href(theme.item_name, do='modify')|e }}" />
+        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href(item_name, do='modify')|e }}" />
     {% endif %}
 
-    <link rel="alternate" title="{{ theme.item_name|e }} changes" href="{{ href(theme.item_name, do='atom_feed')|e }}" type="application/atom+xml" />
+    <link rel="alternate" title="{{ item_name|e }} changes" href="{{ href(item_name, do='atom_feed')|e }}" type="application/atom+xml" />
 
     {% if html_head %}
         {{ html_head }}
