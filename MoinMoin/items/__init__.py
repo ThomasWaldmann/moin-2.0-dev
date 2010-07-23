@@ -977,14 +977,14 @@ class SvgDraw(TarMixin, Image):
         The applet is called for doing modifications.
         """
         request = self.request
-        drawpath = ""
+        draw_url = ""
         if 'drawing.svg' in self.list_members():
-            drawpath = self.url()
+            draw_url = self.url()
 
         svg_params = {
-            'drawpath': drawpath,
+            'draw_url': draw_url,
             'itemname': self.name,
-            'pubpath': request.cfg.url_prefix_static + "/applets/svg-edit/",
+            'url_prefix_static': request.cfg.url_prefix_static,
         }
 
         template = self.env.get_template("modify_svg-edit.html")
@@ -1409,9 +1409,9 @@ class TWikiDraw(TarMixin, Image):
         """
         request = self.request
         twd_params = {
-            'pubpath': request.cfg.url_prefix_static + '/applets/TWikiDrawPlugin',
-            'pagelink': self.url(),
-            'helplink': self.modify_help,
+            'url_prefix_static': request.cfg.url_prefix_static,
+            'url': self.url(),
+            'help_url': self.modify_help,
         }
         template = self.env.get_template("modify_twikidraw.html")
         content = template.render(gettext=self.request.getText,
@@ -1489,14 +1489,14 @@ class AnyWikiDraw(TarMixin, Image):
         The applet is called for doing modifications.
         """
         request = self.request
-        drawpath = ""
+        draw_url = ""
         if 'drawing.svg' in self.list_members():
-            drawpath = self.url()
+            draw_url = self.url()
 
         awd_params = {
-            'drawpath': drawpath,
-            'pagelink': self.url(),
-            'pubpath': request.cfg.url_prefix_static + "/applets/anywikidraw/lib",
+            'draw_url': draw_url,
+            'url': self.url(),
+            'url_prefix_static': request.cfg.url_prefix_static,
         }
 
         template = self.env.get_template("modify_anywikidraw.html")
