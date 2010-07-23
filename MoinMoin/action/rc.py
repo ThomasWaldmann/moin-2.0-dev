@@ -14,6 +14,7 @@ def execute(item_name, request):
         item_name = u''
     # TODO: No fake-metadata anymore, fix this
     history = request.storage.history(item_name=item_name)
-    return request.theme.render('rc.html', 
+    return request.theme.render('rc.html',
                                 history=history,
                                 )
+
