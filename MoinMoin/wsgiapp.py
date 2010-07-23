@@ -300,12 +300,54 @@ def history(item_name):
     history = request.storage.history(item_name=item_name)
     return request.theme.render('rc.html', item_name=item_name, history=history)
 
-# +revert/<path:item_name>
+
+@app.route('/+login', methods=['GET', 'POST'])
+def login():
+    # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    item_name = 'LoggedIn' # XXX
+    request = g.context
+    _ = request.getText
+    title = _("Login")
+    if request.method == 'GET':
+        login_hints = []
+        for authmethod in request.cfg.auth:
+            hint = authmethod.login_hint(request)
+            if hint:
+                login_hints.append(hint)
+        return request.theme.render('login.html',
+                                    login_hints=login_hints,
+                                    login_inputs=request.cfg.auth_login_inputs,
+                                    title=title
+                                   )
+    if request.method == 'POST':
+        if 'login' in request.form:
+            if hasattr(request, '_login_messages'):
+                for msg in request._login_messages:
+                    request.theme.add_msg(msg, "error")
+        item = Item.create(request, item_name)
+        return item.do_show()
+
+@app.route('/+logout')
+def logout():
+    item_name = 'LoggedOut' # XXX
+    request = g.context
+    _ = request.getText
+    title = _("Logout")
+    # if the user really was logged out say so,
+    # but if the user manually added ?do=logout
+    # and that isn't really supported, then don't
+    if not request.user.valid:
+        msg = _("You are now logged out."), "info"
+    else:
+        # something went wrong
+        msg = _("You are still logged in."), "warning"
+    request.theme.add_msg(*msg)
+    item = Item.create(request, item_name)
+    return item.do_show()
+
 # +diff/<int:rev1>:<int:rev2>/<path:item_name>
 # +feed/atom
 # favicon.ico / robots.txt
-# +login ( ?next=next_location check if target is in the wiki and not outside domain )
-# +logout ( same )
 # off-with-his-head
 
 if __name__ == '__main__':
