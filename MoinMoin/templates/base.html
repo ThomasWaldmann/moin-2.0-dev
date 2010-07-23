@@ -61,7 +61,7 @@
 
     {# universal edit button support #}
     {% if theme.item_writable and 'modify' not in cfg.actions_excluded %}
-        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href(item_name, do='modify')|e }}" />
+        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href('+modify', item_name)|e }}" />
     {% endif %}
 
     <link rel="alternate" title="{{ item_name|e }} changes" href="{{ href(item_name, do='atom_feed')|e }}" type="application/atom+xml" />
