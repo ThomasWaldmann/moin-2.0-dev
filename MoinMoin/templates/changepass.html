@@ -1,0 +1,25 @@
+{% block content %}
+<form action="{{ itemname }}" method="POST">
+     <input type="hidden" name="do" value="userprefs">
+     <input type="hidden" name="handler" value="changepass">
+     <div class="userpref" lang="en" dir="ltr">
+         <p>To change your password, enter a new password twice.</p>
+         <table>
+             <tr>
+                 <td><b>Password</b>   </td>
+                 <td><input type="password" name="password1" size="36"></td>
+             </tr>
+             <tr>
+                 <td><b>Password repeat</b>   </td>
+                 <td><input type="password" name="password2" size="36"></td>
+             </tr>
+             <tr>
+                 <td><b></b>   </td>
+                 <td><input type="submit" name="save" value="Change password"> <input type="submit" name="cancel" value="Cancel"></td>
+             </tr>
+         </table>
+     </div>
+     <input type="hidden" name="ticket" value="{{ ticket }}">
+</form>
+{% endblock %}
+
