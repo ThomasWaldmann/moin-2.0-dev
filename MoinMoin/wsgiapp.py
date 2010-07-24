@@ -24,7 +24,7 @@ from MoinMoin.Page import Page
 from MoinMoin.items import Item, MIMETYPE
 from MoinMoin import auth, config, i18n, user, wikiutil, xmlrpc, error
 
-from flask import Flask, request, g, url_for
+from flask import Flask, request, g, url_for, render_template
 import werkzeug
 
 
@@ -173,14 +173,48 @@ def setup_i18n_postauth(context):
     logging.debug("setup_i18n_postauth returns %r" % lang)
     return lang
 
+class MoinFlask(Flask):
+    # TODO: at all places where we insert html into output, use the Markup
+    # class of flask/jinja so we can switch autoescape on in the end.
+    def select_jinja_autoescape(self, filename):
+        return False
 
-application = app = Flask('MoinMoin', '/moin_static200')
+application = app = MoinFlask('MoinMoin', '/moin_static200')
 
 from werkzeug.routing import PathConverter
 class ItemNameConverter(PathConverter):
     pass #regex = r'[^+].*?'
 
 app.url_map.converters['itemname'] = ItemNameConverter
+
+
+def setup_jinja_env(request):
+    from werkzeug import url_quote, url_encode
+    from MoinMoin.theme.filters import shorten_item_name
+    from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
+    theme = request.theme
+    app.jinja_env.filters['urlencode'] = lambda x: url_encode(x)
+    app.jinja_env.filters['urlquote'] = lambda x: url_quote(x)
+    app.jinja_env.filters['datetime_format'] = lambda tm, u = request.user: u.getFormattedDateTime(tm)
+    app.jinja_env.filters['date_format'] = lambda tm, u = request.user: u.getFormattedDate(tm)
+    app.jinja_env.filters['shorten_item_name'] = shorten_item_name
+    app.jinja_env.filters['user_format'] = lambda rev, request = request: \
+                                          user.get_printable_editor(request,
+                                                                    rev.get(EDIT_LOG_USERID),
+                                                                    rev.get(EDIT_LOG_ADDR),
+                                                                    rev.get(EDIT_LOG_HOSTNAME))
+    app.jinja_env.globals.update({
+                            'theme': theme,
+                            'user': request.user,
+                            'cfg': request.cfg,
+                            '_': request.getText,
+                            'href': request.href,
+                            'static_href': request.static_href,
+                            'abs_href': request.abs_href,
+                            'item_name': 'handlers need to give it',
+                            'translated_item_name': theme.translated_item_name,
+                            })
+
 
 @app.before_request
 def before():
@@ -213,6 +247,9 @@ def before():
 
     context.clock.stop('init')
     protect_backends(context)
+
+    setup_jinja_env(context)
+
     g.context = context
     # if return value is not None, it is the final response
 
@@ -298,7 +335,7 @@ def history(item_name):
     request = g.context
     # TODO: No fake-metadata anymore, fix this
     history = request.storage.history(item_name=item_name)
-    return request.theme.render('rc.html', item_name=item_name, history=history)
+    return render_template('rc.html', item_name=item_name, history=history)
 
 
 @app.route('/+quicklink/<itemname:item_name>')
@@ -353,7 +390,7 @@ def login():
             hint = authmethod.login_hint(request)
             if hint:
                 login_hints.append(hint)
-        return request.theme.render('login.html',
+        return render_template('login.html',
                                     login_hints=login_hints,
                                     login_inputs=request.cfg.auth_login_inputs,
                                     title=title

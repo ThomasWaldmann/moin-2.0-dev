@@ -9,6 +9,7 @@
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
+from flask import render_template
 
 from MoinMoin import user, wikiutil
 from MoinMoin.Page import Page
@@ -47,6 +48,6 @@ def get_account_infos(request):
 
 
 def execute(item_name, request):
-    return request.theme.render('userbrowser.html',
-                                user_accounts=get_account_infos(request))
+    return render_template('userbrowser.html',
+                           user_accounts=get_account_infos(request))
 
