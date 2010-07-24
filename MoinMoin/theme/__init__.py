@@ -10,7 +10,7 @@
 
 import os
 
-from jinja2 import Environment, FileSystemLoader, FileSystemBytecodeCache
+from flask import flash
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -19,8 +19,6 @@ from MoinMoin import i18n, wikiutil, caching, user
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
 from MoinMoin.util import pysupport
-
-from MoinMoin.theme.filters import shorten_item_name
 
 modules = pysupport.getPackageModules(__file__)
 
@@ -442,9 +440,9 @@ class ThemeBase(object):
             msg_class = 'dialog'
         try:
             msg = msg.render()
+            self.msg_list.append(msg)
         except AttributeError:
-            msg = '<div class="%s">%s</div>' % (msg_class, msg)
-        self.msg_list.append(msg)
+            flash(msg, msg_class)
 
     # TODO: reimplement on-wiki-page sidebar definition with converter2
 
