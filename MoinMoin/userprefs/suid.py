@@ -3,15 +3,16 @@
     MoinMoin - switch user form
 
     @copyright: 2001-2004 Juergen Hermann <jh@web.de>,
-                2003-2007 MoinMoin:ThomasWaldmann
-                2007      MoinMoin:JohannesBerg
+                2003-2007 MoinMoin:ThomasWaldmann,
+                2007      MoinMoin:JohannesBerg,
+                2010      MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
 
 from MoinMoin import user, util, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
-
+from MoinMoin.action.UserBrowser import get_account_infos
 
 class Settings(UserPrefBase):
 
@@ -58,41 +59,11 @@ class Settings(UserPrefBase):
         request.user = theuser
         return  _("You can now change the settings of the selected user account; log out to get back to your account.")
 
-    def _user_select(self):
-        options = []
-        users = user.getUserList(self.request)
-        current_uid = self.request.user.id
-        for uid in users:
-            if uid != current_uid:
-                name = user.User(self.request, id=uid).name
-                options.append((uid, name))
-        options.sort(lambda x, y: cmp(x[1].lower(), y[1].lower()))
-
-        if not options:
-            _ = self._
-            self._only = True
-            return _("You are the only user.")
-
-        self._only = False
-        size = min(10, len(options))
-        return util.web.makeSelection('selected_user', options, current_uid, size=size)
-
     def create_form(self):
         """ Create the complete HTML form code. """
-        _ = self._
-        form = self.make_form(html.Text(_('As a superuser, you can temporarily '
-                                          'assume the identity of another user.')))
-
-        ticket = wikiutil.createTicket(self.request)
-        self.make_row(_('Select User'), [self._user_select()], valign="top")
-        form.append(html.INPUT(type="hidden", name="ticket", value="%s" % ticket))
-        if not self._only:
-            buttons = [html.INPUT(type="submit", name="select_user",
-                                  value=_('Select User')),
-                       ' ', ]
-        else:
-            buttons = []
-        buttons.append(html.INPUT(type="submit", name="cancel",
-                                  value=_('Cancel')))
-        self.make_row('', buttons)
-        return unicode(form)
+        user_accounts=get_account_infos(self.request)
+        if len(user_accounts) > 1:
+            return self.request.theme.render('suid.html',
+                                             user_accounts=user_accounts,
+                                             ticket=wikiutil.createTicket(self.request))
+        return "You are the only user."
