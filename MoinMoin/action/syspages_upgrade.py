@@ -10,6 +10,7 @@
 
     @license: GNU GPL, see COPYING for details.
 """
+from flask import render_template
 
 from MoinMoin.storage.backends import upgrade_syspages
 from MoinMoin.storage.error import BackendError
@@ -20,13 +21,13 @@ def execute(item_name, request):
     if request.method == 'GET':
         action = 'syspages_upgrade'
         label = 'Upgrade System Pages'
-        content = request.theme.render('action_query.html',
-                                  action=action,
-                                  label=label,
-                                  no_comment=True,
-                                  target=' '  # stupid template...
-                                  )
-    elif request.method == 'POST':
+        return render_template('action_query.html',
+                               action=action,
+                               label=label,
+                               no_comment=True,
+                               target=' '  # stupid template...
+                              )
+    if request.method == 'POST':
         cancelled = 'button_cancel' in request.form
         if not cancelled:
             syspages = request.form.get('target')
@@ -36,6 +37,5 @@ def execute(item_name, request):
                 content = _('<br> System pages upgrade failed due to the following error: %s.' % e)
             else:
                 content = _('<br> System pages have been upgraded successfully!')
-            content = request.theme.render('content.html', content=content)
-    return content
+            return render_template('content.html', content=content)
 

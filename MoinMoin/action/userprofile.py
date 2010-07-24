@@ -6,6 +6,8 @@
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
+from flask import render_template
+
 from MoinMoin import user, wikiutil
 
 def execute(item_name, request):
@@ -30,5 +32,5 @@ def execute(item_name, request):
         theuser.save()
         request.theme.add_msg('%s.%s: %s -> %s' % tuple([wikiutil.escape(s) for s in [user_name, key, oldval, val]]), "info")
 
-    return request.theme.render('content.html')
+    return render_template('content.html')
 

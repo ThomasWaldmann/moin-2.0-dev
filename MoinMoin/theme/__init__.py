@@ -19,7 +19,6 @@ from MoinMoin import i18n, wikiutil, caching, user
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
 from MoinMoin.util import pysupport
-from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
 
 from MoinMoin.theme.filters import shorten_item_name
 
@@ -133,40 +132,6 @@ class ThemeBase(object):
         # for html head:
         self.meta_keywords = ''
         self.meta_description = ''
-
-        jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
-        try:
-            os.mkdir(jinja_cachedir)
-        except:
-            pass
-
-        jinja_templatedir = os.path.join(os.path.dirname(__file__), '..', 'templates')
-
-        self.env = Environment(loader=FileSystemLoader(jinja_templatedir),
-                               bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'),
-                               extensions=['jinja2.ext.i18n'])
-        from werkzeug import url_quote, url_encode
-        self.env.filters['urlencode'] = lambda x: url_encode(x)
-        self.env.filters['urlquote'] = lambda x: url_quote(x)
-        self.env.filters['datetime_format'] = lambda tm, u = request.user: u.getFormattedDateTime(tm)
-        self.env.filters['date_format'] = lambda tm, u = request.user: u.getFormattedDate(tm)
-        self.env.filters['shorten_item_name'] = shorten_item_name
-        self.env.filters['user_format'] = lambda rev, request = request: \
-                                              user.get_printable_editor(request,
-                                                                        rev.get(EDIT_LOG_USERID),
-                                                                        rev.get(EDIT_LOG_ADDR),
-                                                                        rev.get(EDIT_LOG_HOSTNAME))
-        self.env.globals.update({
-                                'theme': self,
-                                'user': request.user,
-                                'cfg': request.cfg,
-                                '_': request.getText,
-                                'href': request.href,
-                                'static_href': request.static_href,
-                                'abs_href': request.abs_href,
-                                'item_name': 'handlers need to give it',
-                                'translated_item_name': self.translated_item_name,
-                                })
 
     def item_exists(self, item_name):
         return self.storage.has_item(item_name)
