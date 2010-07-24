@@ -116,6 +116,11 @@
     <hr style="display:none;" />
 </div>
 
+{% for category, msg in get_flashed_messages(with_categories=true) %}
+    <p class="flash-{{ category }}">{{ msg }}</p>
+{% endfor %}
+
+{# kill msg_list after all is using flashed_messages #}
 {% if theme.msg_list %}
     <div id="message">
         {% for msg in theme.msg_list %}

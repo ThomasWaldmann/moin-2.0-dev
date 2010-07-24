@@ -24,7 +24,7 @@ from MoinMoin.Page import Page
 from MoinMoin.items import Item, MIMETYPE
 from MoinMoin import auth, config, i18n, user, wikiutil, xmlrpc, error
 
-from flask import Flask, request, g, url_for, render_template
+from flask import Flask, request, g, url_for, render_template, flash
 import werkzeug
 
 
@@ -178,6 +178,9 @@ class MoinFlask(Flask):
     # class of flask/jinja so we can switch autoescape on in the end.
     def select_jinja_autoescape(self, filename):
         return False
+
+    secret_key = "thisisnotsecret"
+
 
 application = app = MoinFlask('MoinMoin', '/moin_static200')
 
@@ -345,16 +348,16 @@ def quicklink(item_name):
     _ = request.getText
 
     if not request.user.valid:
-        request.theme.add_msg(_("You must login to add a quicklink."), "error")
+        msg = _("You must login to add a quicklink."), "error"
     elif not request.user.isQuickLinkedTo([item_name]):
         if request.user.addQuicklink(item_name):
-            request.theme.add_msg(_('A quicklink to this page has been added for you.'), "info")
+            msg = _('A quicklink to this page has been added for you.'), "info"
         else: # should not happen
-            request.theme.add_msg(_('A quicklink to this page could not be added for you.'), "error")
+            msg = _('A quicklink to this page could not be added for you.'), "error"
     else:
-        request.theme.add_msg(_('You already have a quicklink to this page.'))
-    item = Item.create(request, item_name)
-    return item.do_show()
+        msg = _('You already have a quicklink to this page.'), "info"
+    flash(*msg)
+    return werkzeug.redirect(url_for('show_root'), code=302)
 
 @app.route('/+quickunlink/<itemname:item_name>')
 def quickunlink(item_name):
@@ -364,16 +367,16 @@ def quickunlink(item_name):
     msg = None
 
     if not request.user.valid:
-        msg = _("You must login to remove a quicklink.")
+        msg = _("You must login to remove a quicklink."), "warning"
     elif request.user.isQuickLinkedTo([item_name]):
         if request.user.removeQuicklink(item_name):
-            msg = _('Your quicklink to this page has been removed.')
+            msg = _('Your quicklink to this page has been removed.'), "info"
         else: # should not happen
-            msg = _('Your quicklink to this page could not be removed.')
+            msg = _('Your quicklink to this page could not be removed.'), "error"
     else:
-        msg = _('You need to have a quicklink to this page to remove it.')
+        msg = _('You need to have a quicklink to this page to remove it.'), "info"
     if msg:
-        request.theme.add_msg(msg)
+        flash(*msg)
     item = Item.create(request, item_name)
     return item.do_show()
 
@@ -385,23 +388,20 @@ def login():
     _ = request.getText
     title = _("Login")
     if request.method == 'GET':
-        login_hints = []
         for authmethod in request.cfg.auth:
             hint = authmethod.login_hint(request)
             if hint:
-                login_hints.append(hint)
+                flash(hint, "info")
         return render_template('login.html',
-                                    login_hints=login_hints,
-                                    login_inputs=request.cfg.auth_login_inputs,
-                                    title=title
-                                   )
+                               login_inputs=request.cfg.auth_login_inputs,
+                               title=title
+                              )
     if request.method == 'POST':
         if 'login' in request.form:
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
-                    request.theme.add_msg(msg, "error")
-        item = Item.create(request, item_name)
-        return item.do_show()
+                    flash(msg, "error")
+    return werkzeug.redirect(url_for('show_root'), code=302)
 
 @app.route('/+logout')
 def logout():
@@ -413,13 +413,11 @@ def logout():
     # but if the user manually added ?do=logout
     # and that isn't really supported, then don't
     if not request.user.valid:
-        msg = _("You are now logged out."), "info"
+        flash(_("You are now logged out."), "info")
     else:
         # something went wrong
-        msg = _("You are still logged in."), "warning"
-    request.theme.add_msg(*msg)
-    item = Item.create(request, item_name)
-    return item.do_show()
+        flash(_("You are still logged in."), "warning")
+    return werkzeug.redirect(url_for('show_root'), code=302)
 
 @app.route('/+diffsince/<int:timestamp>/<path:item_name>')
 def diffsince(item_name, timestamp):
