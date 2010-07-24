@@ -13,6 +13,34 @@ from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
 
 
+def get_notify_info(request):
+    _ = request.getText
+    types = []
+    if request.cfg.mail_enabled and request.user.email:
+        types.append(('email', _("Email")))
+    if request.cfg.jabber_enabled and request.user.jid:
+        types.append(('jabber', _("Jabber")))
+    isSuperUser = request.user.isSuperUser()
+    notify_infos = []
+    event_list = events.get_subscribable_events()
+    allowed = []
+    for key in event_list.keys():
+        if not event_list[key]['superuser'] or isSuperUser:
+            allowed.append((key, event_list[key]['desc']))
+
+    for evname, evdescr in allowed:
+        for notiftype, notifdescr in types:
+            checked = ""
+            if evname in getattr(request.user,
+                                 '%s_subscribed_events' % notiftype):
+                checked = "checked"
+            notify_infos.append(dict(name='subscribe:%s:%s' % (notiftype, evname),
+                                     checked=checked,
+                                     text=html.Raw(request.getText(evdescr)))
+                      )
+    return notify_infos
+
+
 class Settings(UserPrefBase):
     def __init__(self, request):
         """ Initialize user settings form. """
@@ -90,93 +118,12 @@ class Settings(UserPrefBase):
         if form.has_key('save'): # Save user profile
             return self._save_notification_settings()
 
-    # form generation part
-
-    def _event_select(self):
-        """ Create event subscription list. """
-        _ = self._
-
-        types = []
-        if self.cfg.mail_enabled and self.request.user.email:
-            types.append(('email', _("Email")))
-        if self.cfg.jabber_enabled and self.request.user.jid:
-            types.append(('jabber', _("Jabber")))
-
-        table = html.TABLE()
-        header = html.TR()
-        table.append(header)
-        for name, descr in types:
-            header.append(html.TH().append(html.Raw(descr)))
-        header.append(html.TH(align='left').append(html.Raw(_("Event type"))))
-
-        event_list = events.get_subscribable_events()
-        super = self.request.user.isSuperUser()
-
-        # Create a list of (value, name) tuples for display as radiobuttons
-        # Only include super-user visible events if current user has these rights.
-        # It's cosmetic - the check for super-user rights should be performed
-        # in event handling code as well!
-        allowed = []
-        for key in event_list.keys():
-            if not event_list[key]['superuser'] or super:
-                allowed.append((key, event_list[key]['desc']))
-
-        for evname, evdescr in allowed:
-            tr = html.TR()
-            table.append(tr)
-            for notiftype, notifdescr in types:
-                checked = evname in getattr(self.request.user,
-                                            '%s_subscribed_events' % notiftype)
-                tr.append(html.TD().append(html.INPUT(
-                        type='checkbox',
-                        checked=checked,
-                        name='subscribe:%s:%s' % (notiftype, evname))))
-            tr.append(html.TD().append(html.Raw(self.request.getText(evdescr))))
-
-        return table
 
     def create_form(self):
         """ Create the complete HTML form code. """
-        _ = self._
-        self._form = self.make_form(
-            _('Select the events you want to be notified about.'))
-
-        self._form.append(html.INPUT(type="hidden", name="do", value="userprefs"))
-        self._form.append(html.INPUT(type="hidden", name="handler", value="prefs"))
-
-        ticket = wikiutil.createTicket(self.request)
-        self._form.append(html.INPUT(type="hidden", name="ticket", value="%s" % ticket))
-
-        if (not (self.cfg.mail_enabled and self.request.user.email)
-            and not (self.cfg.jabber_enabled and self.request.user.jid)):
-            self.make_row('', [html.Text(
-                _("Before you can be notified, you need to provide a way"
-                  " to contact you in the general preferences."))])
-            self.make_row('', [
-                html.INPUT(type="submit", name="cancel", value=_("Cancel"))])
-            return unicode(self._form)
-
-        self.make_row(_('Subscribed events'), [self._event_select()])
-
-        # Get list of subscribe pages, DO NOT sort! it should
-        # stay in the order the user entered it in his input
-        # box.
-        notifylist = self.request.user.getSubscriptionList()
-
-        self.make_row(
-            html.Raw(_('Subscribed wiki pages (one regex per line)')),
-            [html.TEXTAREA(name="subscribed_items", rows="6", cols="50").append(
-                '\n'.join(notifylist)), ],
-            valign="top"
-        )
-
-        # Add buttons
-        self.make_row('', [
-            html.INPUT(type="submit", name="save", value=_("Save")),
-            ' ',
-            html.INPUT(type="submit", name="cancel", value=_("Cancel"))])
-
-        return unicode(self._form)
+        return self.request.theme.render('notification.html',
+                                          notify=get_notify_info(self.request),
+                                          ticket=wikiutil.createTicket(self.request))
 
     def allowed(self):
         return UserPrefBase.allowed(self) and (
