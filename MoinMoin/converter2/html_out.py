@@ -173,7 +173,7 @@ class Converter(object):
         return  self.new_copy(html.blockquote, elem)
 
     def visit_moinpage_code(self, elem):
-        return self.new_copy(html.tt, elem)
+        return self.new_copy(html.code, elem)
 
     def visit_moinpage_div(self, elem):
         return self.new_copy(html.div, elem)
@@ -235,13 +235,13 @@ class Converter(object):
                 style = attrib.get('list-style-type')
                 if style:
                     if style == 'upper-alpha':
-                        attrib_new[html('type')] = 'A'
+                        attrib_new[html('class')] = 'upperalpha_list'
                     elif style == 'upper-roman':
-                        attrib_new[html('type')] = 'I'
+                        attrib_new[html('class')] = 'upperroman_list'
                     elif style == 'lower-roman':
-                        attrib_new[html('type')] = 'i'
+                        attrib_new[html('class')] = 'lowerroman_list'
                     elif style == 'lower-alpha':
-                        attrib_new[html('type')] = 'a'
+                        attrib_new[html('class')] = 'loweralpha_list'
                 ret = self.new(html.ol, attrib_new)
             elif generate == 'unordered':
                 ret = self.new(html.ul, attrib_new)
@@ -361,9 +361,15 @@ class Converter(object):
         generate = attrib.get('font-size')
         if generate:
             if generate == '85%':
-                return self.new_copy(html.small, elem)
+                attribute = {}
+                key = html('class')
+                attribute[key] = 'small'
+                return self.new_copy(html.span, elem, attribute)
             elif generate == '120%':
-                return self.new_copy(html.big, elem)
+                attribute = {}
+                key = html('class')
+                attribute[key] = 'big'
+                return self.new_copy(html.span, elem, attribute)
         generate = attrib.get('html-element')
         if generate:
             return self.new_copy(html(generate), elem)
