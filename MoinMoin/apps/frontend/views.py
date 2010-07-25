@@ -23,6 +23,7 @@ def show_root():
 def robots():
     return Response("""\
 User-agent: *
+Crawl-delay: 20
 Disallow: /+modify/
 Disallow: /+revert/
 Disallow: /+index/
