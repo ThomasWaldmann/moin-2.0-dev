@@ -23,7 +23,7 @@ class MoinFlask(Flask):
     secret_key = "thisisnotsecret"
 
 
-app = MoinFlask('MoinMoin', '/moin_static200')
+app = MoinFlask('MoinMoin')
 
 from werkzeug.routing import PathConverter
 app.url_map.converters['itemname'] = PathConverter
