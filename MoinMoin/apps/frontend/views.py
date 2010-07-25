@@ -9,7 +9,7 @@
 """
 
 import werkzeug
-from flask import request, g, url_for
+from flask import request, g, url_for, Response
 
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item
@@ -19,6 +19,22 @@ def show_root():
     location = 'FrontPage' # wikiutil.getFrontPage(g.context)
     return werkzeug.redirect(location, code=302)
 
+@frontend.route('/robots.txt')
+def robots():
+    return Response("""\
+User-agent: *
+Disallow: /+modify/
+Disallow: /+revert/
+Disallow: /+index/
+Disallow: /+quicklink/
+Disallow: /+quickunlink/
+Disallow: /+login
+Disallow: /+logout/
+Disallow: /+diffsince/
+Disallow: /+diff/
+Disallow: /+admin/
+Allow: /
+""", mimetype='text/plain')
 
 @frontend.route('/<itemname:item_name>', defaults=dict(rev=-1))
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
@@ -252,6 +268,5 @@ def _diff(item, revno1, revno2):
     return item.do_diff(oldrev, newrev)
 
 # +feed/atom
-# favicon.ico / robots.txt
 # off-with-his-head
 
