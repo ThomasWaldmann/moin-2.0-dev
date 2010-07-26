@@ -398,6 +398,8 @@ class User:
 
         # Copy user data into user object
         for key, val in user_data.items():
+            if isinstance(val, tuple):
+                val = list(val)
             vars(self)[key] = val
 
         if not self.disabled:
