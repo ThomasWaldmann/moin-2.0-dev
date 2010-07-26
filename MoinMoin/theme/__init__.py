@@ -483,7 +483,7 @@ class ThemeBase(object):
             # XXX currently everything is dispatching to frontend.show_item,
             # fix this as soon we have the right methods there:
             # title, internal name, disabled
-            (_('Recent Changes'), 'global_history', 'frontend.global_history', False, ),
+            (_('Global History'), 'global_history', 'frontend.global_history', False, ),
             # Translation may need longer or shorter separator:
             (_('------------------------'), 'show', 'frontend.show_item', True),
             (_('What links here?'), 'backlinks', 'frontend.backlinks', False, ),

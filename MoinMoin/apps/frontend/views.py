@@ -121,7 +121,7 @@ def _search(**args):
 @frontend.route('/+history/<itemname:item_name>')
 def history(item_name):
     history = g.context.storage.history(item_name=item_name)
-    return render_template('rc.html', item_name=item_name, history=history)
+    return render_template('history.html', item_name=item_name, history=history)
 
 
 @frontend.route('/+history')

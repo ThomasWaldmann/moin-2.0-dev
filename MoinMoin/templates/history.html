@@ -1,7 +1,13 @@
 {% extends "show.html" %}
 {% block item %}
-    <h1>Recent Changes</h1>
-    <table id="recentchanges">
+<h1>
+    {% if item_name %}
+    {{ _("History of '%(item_name)s'") % dict(item_name=item_name) }}
+    {% else %}
+    {{ _("Global History") }}
+    {% endif %}
+</h1>
+    <table class="history">
         <thead>
             <tr>
                 <th>Timestamp</th>
@@ -29,3 +35,4 @@
         </tbody>
     </table>
 {% endblock %}
+
