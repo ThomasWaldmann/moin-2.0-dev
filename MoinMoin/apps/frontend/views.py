@@ -126,7 +126,8 @@ def history(item_name):
 
 @frontend.route('/+history')
 def global_history():
-    return history('')
+    history = g.context.storage.history(item_name='')
+    return render_template('global_history.html', history=history)
 
 
 @frontend.route('/+quicklink/<itemname:item_name>')

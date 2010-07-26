@@ -21,53 +21,6 @@
     {% endif %}
 {% endblock %}
 
-{% block history %}
-    {% if log %}
-    <hr>History:
-    <form action="{{ href('+diff', item_name) }}" method="GET">
-        <div id="page-history">
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>#</th>
-                <th>Date</th>
-                <th>Size</th>
-                <th><input type="submit" value="Diff" /></th>
-                <th>Editor</th>
-                <th>MimeType</th>
-                <th>Comment</th>
-                <th colspan="5">Actions</th>
-            </tr>
-            {% for entry in log %}
-            <tr>
-                <td>{{ entry.name|e }}</td>
-                <td>{{ entry.rev_no }}</td>
-                <td>{{ entry.mtime }}</td>
-                <td>{{ entry.size }}</td>
-                <td>
-                    <input type="radio" name="rev1" value="{{ entry.rev_no }}" />
-                    <input type="radio" name="rev2" value="{{ entry.rev_no }}" />
-                </td>
-                <td>{{ entry.editor }}</td>
-                <td>{{ entry.mimetype|e }}</td>
-                <td>{{ entry.comment|e }}</td>
-                <td><a href="{{ href('+show', entry.rev_no, entry.name)|e }}">{{ _('show') }}</a></td>
-                <td><a href="{{ href('+get', entry.rev_no, entry.name)|e }}">{{ _('get') }}</a></td>
-                <td><a href="{{ href('+highlight', entry.rev_no, entry.name)|e }}">{{_('highlight') }}</a></td>
-                {% if entry.rev_no == last_rev_no %}
-                <td>current revision</td>
-                {% else %}
-                <td><a href="{{ href('+revert', entry.rev_no, entry.name)|e }}">{{ _('revert') }}</a></td>
-                {% endif %}
-                <td><a href="{{ href('+destroy', entry.rev_no, entry.name)|e }}">{{ _('destroy') }}</a></td>
-            </tr>
-            {% endfor %}
-        </table>
-        </div>
-        </form>
-    {% endif %}
-{% endblock %}
-
 {% block index %}
     {% if index %}
         <hr>Index of sub items:

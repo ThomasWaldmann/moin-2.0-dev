@@ -1,38 +1,49 @@
 {% extends "show.html" %}
-{% block item %}
-<h1>
-    {% if item_name %}
-    {{ _("History of '%(item_name)s'") % dict(item_name=item_name) }}
-    {% else %}
-    {{ _("Global History") }}
-    {% endif %}
-</h1>
-    <table class="history">
-        <thead>
+
+{% block content %}
+    {% if history %}
+    <h1>{{ _("History of '%(item_name)s'") % dict(item_name=item_name) }}</h1>
+    <form action="{{ href('+diff', item_name) }}" method="GET">
+        <div id="page-history">
+        <table>
             <tr>
-                <th>Timestamp</th>
-                <th>Action</th>
-                <th>Item name</th>
-                <th>Revision #</th>
-                <th>Revision type</th>
-                <th>Submitter</th>
+                <th>Name</th>
+                <th>#</th>
+                <th>Date</th>
+                <th>Size</th>
+                <th><input type="submit" value="Diff" /></th>
+                <th>Editor</th>
+                <th>MimeType</th>
                 <th>Comment</th>
+                <th colspan="5">Actions</th>
             </tr>
-        </thead>
-        <tbody>
-        {% for rev in history %}
-        <tr>
-            <td>{{ rev.timestamp|datetime_format }}</td>
-            <td>{{ rev.edit_log_action }}</td>
-            <td><a href="{{ href(rev.item.name)|e }}">{{ rev.item.name|e }}</a>
-                {% if rev.item.name != rev.name %} ({{ rev.name|e }}){% endif %}</td>
-            <td>{{ rev.revno }}</td>
-            <td>{{ rev.mimetype }}</td>
-            <td>{{ rev|user_format }}</td>
-            <td>{{ rev.edit_log_comment }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            {% for rev in history %}
+            <tr>
+                <td>{{ rev.name|e }}</td>
+                <td>{{ rev.revno }}</td>
+                <td>{{ rev.timestamp|datetime_format }}</td>
+                <td>{{ rev.size }}</td>
+                <td>
+                    <input type="radio" name="rev1" value="{{ rev.revno }}" />
+                    <input type="radio" name="rev2" value="{{ rev.revno }}" />
+                </td>
+                <td>{{ rev|user_format }}</td>
+                <td>{{ rev.mimetype|e }}</td>
+                <td>{{ rev.edit_log_comment|e }}</td>
+                <td><a href="{{ href('+show', rev.revno, rev.item.name)|e }}">{{ _('show') }}</a></td>
+                <td><a href="{{ href('+get', rev.revno, rev.item.name)|e }}">{{ _('get') }}</a></td>
+                <td><a href="{{ href('+highlight', rev.revno, rev.item.name)|e }}">{{_('highlight') }}</a></td>
+                {% if rev.revno == last_rev_no %}
+                <td>current revision</td>
+                {% else %}
+                <td><a href="{{ href('+revert', rev.revno, rev.item.name)|e }}">{{ _('revert') }}</a></td>
+                {% endif %}
+                <td><a href="{{ href('+destroy', rev.revno, rev.item.name)|e }}">{{ _('destroy') }}</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+        </form>
+    {% endif %}
 {% endblock %}
 
