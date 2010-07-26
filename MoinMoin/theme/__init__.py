@@ -10,7 +10,7 @@
 
 import os
 
-from flask import flash
+from flask import flash, url_for
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -357,7 +357,7 @@ class ThemeBase(object):
             else:
                 alt, icon, w, h = '', icon, '', ''
 
-        img_url = self.request.static_href(self.name, 'img', icon)
+        img_url = url_for('static', filename='%s/img/%s' % (self.name, icon))
         return alt, img_url, w, h
 
     def make_icon(self, icon, vars=None, **kw):

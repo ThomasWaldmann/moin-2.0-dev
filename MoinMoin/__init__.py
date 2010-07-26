@@ -217,7 +217,6 @@ def setup_jinja_env(request):
                             'cfg': request.cfg,
                             '_': request.getText,
                             'href': request.href,
-                            'static_href': request.static_href,
                             'abs_href': request.abs_href,
                             'item_name': 'handlers need to give it',
                             'translated_item_name': theme.translated_item_name,
