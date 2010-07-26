@@ -21,15 +21,6 @@
     {% endif %}
 {% endblock %}
 
-{% block index %}
-    {% if index %}
-        <hr>Index of sub items:
-        {% for fullname, relname, mimetype in index %}
-            <a href="{{ href(fullname)|e }}">{{ relname|e }} ({{ mimetype|e }})</a>
-        {% endfor %}
-    {% endif %}
-{% endblock %}
-
 {% block extra_content %}
     {% if rev %}
     <div id="pagebottom">
