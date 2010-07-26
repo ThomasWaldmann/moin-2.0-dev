@@ -1203,6 +1203,8 @@ class Text(Binary):
                 includes='expandall', request=request)
         link_conv = reg.get(type_moin_document, type_moin_document,
                 links='extern', request=request)
+        smiley_conv = reg.get(type_moin_document, type_moin_document,
+                icon='smiley', request=request)
         # TODO: Real output format
         html_conv = reg.get(type_moin_document,
                 Type('application/x-xhtml-moin-page'), request=request)
@@ -1212,6 +1214,7 @@ class Text(Binary):
         doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
         doc = include_conv(doc)
+        doc = smiley_conv(doc)
         doc = link_conv(doc)
         doc = html_conv(doc)
 
