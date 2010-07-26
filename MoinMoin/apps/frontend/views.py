@@ -14,7 +14,7 @@ import werkzeug
 from flask import request, g, url_for, flash, render_template, Response
 
 from MoinMoin.apps.frontend import frontend
-from MoinMoin.items import Item
+from MoinMoin.items import Item, MIMETYPE
 
 @frontend.route('/')
 def show_root():
