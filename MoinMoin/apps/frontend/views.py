@@ -27,6 +27,10 @@ def robots():
 User-agent: *
 Crawl-delay: 20
 Disallow: /+modify/
+Disallow: /+copy/
+Disallow: /+delete/
+Disallow: /+destroy/
+Disallow: /+rename/
 Disallow: /+revert/
 Disallow: /+index/
 Disallow: /+quicklink/
@@ -89,11 +93,66 @@ def modify_item(item_name):
 def revert_item(item_name, rev):
     item = Item.create(g.context, item_name, rev_no=rev)
     if request.method == 'GET':
-        return item.do_revert()
+        return render_template(item.revert_template, item=item)
     elif request.method == 'POST':
-        cancelled = 'button_cancel' in g.context.form
-        if not cancelled:
+        if 'button_ok' in request.form:
             item.revert()
+        return werkzeug.redirect(url_for('show_item', item_name=item_name))
+
+
+@frontend.route('/+copy/<itemname:item_name>', methods=['GET', 'POST'])
+def copy_item(item_name):
+    item = Item.create(g.context, item_name)
+    if request.method == 'GET':
+        return render_template(item.copy_template, item=item)
+    if request.method == 'POST':
+        if 'button_ok' in request.form:
+            target = request.form.get('target')
+            comment = request.form.get('comment')
+            item.copy(target, comment)
+            redirect_to = target
+        else:
+            redirect_to = item_name
+        return werkzeug.redirect(url_for('show_item', item_name=redirect_to))
+
+
+@frontend.route('/+rename/<itemname:item_name>', methods=['GET', 'POST'])
+def rename_item(item_name):
+    item = Item.create(g.context, item_name)
+    if request.method == 'GET':
+        return render_template(item.rename_template, item=item)
+    if request.method == 'POST':
+        if 'button_ok' in request.form:
+            target = request.form.get('target')
+            comment = request.form.get('comment')
+            item.rename(target, comment)
+            redirect_to = target
+        else:
+            redirect_to = item_name
+        return werkzeug.redirect(url_for('show_item', item_name=redirect_to))
+
+
+@frontend.route('/+delete/<itemname:item_name>', methods=['GET', 'POST'])
+def delete_item(item_name):
+    item = Item.create(g.context, item_name)
+    if request.method == 'GET':
+        return render_template(item.delete_template, item=item)
+    elif request.method == 'POST':
+        if 'button_ok' in request.form:
+            comment = request.form.get('comment')
+            item.delete(comment)
+        return werkzeug.redirect(url_for('show_item', item_name=item_name))
+
+
+@frontend.route('/+destroy/<itemname:item_name>', methods=['GET', 'POST'])
+def destroy_item(item_name):
+    item = Item.create(g.context, item_name)
+    if request.method == 'GET':
+        return render_template(item.destroy_template, item=item)
+    if request.method == 'POST':
+        if 'button_ok' in request.form:
+            comment = request.form.get('comment')
+            item.destroy(comment)
         return werkzeug.redirect(url_for('show_item', item_name=item_name))
 
 
