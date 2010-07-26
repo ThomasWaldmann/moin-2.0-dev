@@ -270,6 +270,14 @@ def _diff(item, revno1, revno2):
     item = Item.create(g.context, item_name, mimetype=commonmt, rev_no=newrevno)
     return item.do_diff(oldrev, newrev)
 
+
+@frontend.route('/+dispatch', methods=['GET', ])
+def dispatch():
+    args = request.values.to_dict()
+    endpoint = str(args.pop('endpoint'))
+    return werkzeug.redirect(url_for(endpoint, **args), code=302)
+
+
 # +feed/atom
 # off-with-his-head
 
