@@ -32,22 +32,17 @@
         </li>
     {% endif %}
 
-    {% if 'Subscribe' in cfg.edit_bar %}
-        {% if (cfg.mail_enabled or cfg.jabber_enabled) and theme.user.valid %}
-            {% if not theme.user.isSubscribedTo([item_name]) %}
-                {% if not 'subscribe' in cfg.actions_excluded %}
-                    <li>
-                        <a class="nbsubscribe" href="{{ href('+subscribe', item_name)|e }}" rel="nofollow">{{ _('Subscribe') }}</a>
-                    </li>
-                {% endif %}
+    {% if 'Subscribe' in cfg.edit_bar and theme.user.valid and 'subscribe' not in cfg.actions_excluded
+       and (cfg.mail_enabled or cfg.jabber_enabled) %}
+        <li>
+            <a class="nbsubscribe" href="{{ href('+subscribe', item_name)|e }}" rel="nofollow">
+            {% if theme.user.isSubscribedTo([item_name]) %}
+                    {{ _('Unsubscribe') }}
             {% else %}
-                {% if not 'unsubscribe' in cfg.actions_excluded %}
-                    <li>
-                        <a class="nbsubscribe" href="{{ href('+unsubscribe', item_name)|e }}" rel="nofollow">{{ _('Unsubscribe') }}</a>
-                    </li>
-                {% endif %}
+                    {{ _('Subscribe') }}
             {% endif %}
-        {% endif %}
+            </a>
+        </li>
     {% endif %}
 
     {% if 'Comments' in cfg.edit_bar %}

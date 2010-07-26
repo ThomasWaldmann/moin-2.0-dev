@@ -30,6 +30,7 @@ Disallow: /+modify/
 Disallow: /+revert/
 Disallow: /+index/
 Disallow: /+quicklink/
+Disallow: /+subscribe/
 Disallow: /+login
 Disallow: /+logout/
 Disallow: /+diffsince/
@@ -119,13 +120,44 @@ def quicklink_item(item_name):
     u = request.user
     msg = None
     if not u.valid:
-        msg = _("You must login to add/remove a quicklink."), "error"
+        msg = _("You must login to use this action: %(action)s.") % {"action": "quicklink/quickunlink"}, "error"
     elif not request.user.isQuickLinkedTo([item_name]):
         if not u.addQuicklink(item_name):
             msg = _('A quicklink to this page could not be added for you.'), "error"
     else:
         if not u.removeQuicklink(item_name):
             msg = _('Your quicklink to this page could not be removed.'), "error"
+    if msg:
+        flash(*msg)
+    item = Item.create(request, item_name)
+    return item.do_show()
+
+
+@frontend.route('/+subscribe/<itemname:item_name>')
+def subscribe_item(item_name):
+    """ Add/Remove the current wiki item to/from the user's subscriptions """
+    request = g.context
+    _ = request.getText
+    u = request.user
+    cfg = request.cfg
+    msg = None
+    if not u.valid:
+        msg = _("You must login to use this action: %(action)s.") % {"action": "subscribe/unsubscribe"}, "error"
+    elif not u.may.read(item_name):
+        msg = _("You are not allowed to subscribe to an item you may not read."), "error"
+    elif not cfg.mail_enabled and not cfg.jabber_enabled:
+        msg = _("This wiki is not enabled for mail/Jabber processing."), "error"
+    elif not u.email and not u.jid:
+        msg = _("Add your email address or Jabber ID in your user settings to use subscriptions."), "error"
+    elif u.isSubscribedTo([item_name]):
+        # Try to unsubscribe
+        if not u.unsubscribe(item_name):
+            msg = _("Can't remove regular expression subscription!") + u' ' + \
+                  _("Edit the subscription regular expressions in your settings."), "error"
+    else:
+        # Try to subscribe
+        if not u.subscribe(item_name):
+            msg = _('You could not get subscribed to this item.'), "error"
     if msg:
         flash(*msg)
     item = Item.create(request, item_name)
