@@ -54,6 +54,12 @@
         </li>
     {% endif %}
 
+    {% if 'Index' in cfg.edit_bar and 'index' not in cfg.actions_excluded %}
+        <li>
+            <a class="nbindex" href="{{ href('+index', item_name)|e }}" rel="nofollow">{{ _('Index') }}</a>
+        </li>
+    {% endif %}
+
     {% if 'Supplementation' in cfg.edit_bar and 'supplementation' not in cfg.actions_excluded %}
         {% for sub_item_name in cfg.supplementation_item_names %}
             {% set current_sub = item_name.rsplit('/', 1)[-1] %}

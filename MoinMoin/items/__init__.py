@@ -420,12 +420,7 @@ class Item(object):
                  if u'/' not in relname]
         return index
 
-    def do_index(self):
-        return render_template('index.html',
-                               item_name=self.name,
-                               rev=self.rev,
-                               index=self.flat_index(),
-                              )
+    index_template = 'index.html'
 
 
 class NonExistent(Item):

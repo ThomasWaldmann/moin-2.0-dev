@@ -472,6 +472,7 @@ class ThemeBase(object):
             # fix this as soon we have the right methods there:
             # title, internal name, disabled
             (_('Global History'), 'global_history', 'frontend.global_history', False, ),
+            (_('Global Index'), 'global_index', 'frontend.global_index', False, ),
             # Translation may need longer or shorter separator:
             (_('------------------------'), 'show', 'frontend.show_item', True),
             (_('What links here?'), 'backlinks', 'frontend.backlinks', False, ),
