@@ -30,7 +30,6 @@ Disallow: /+modify/
 Disallow: /+revert/
 Disallow: /+index/
 Disallow: /+quicklink/
-Disallow: /+quickunlink/
 Disallow: /+login
 Disallow: /+logout/
 Disallow: /+diffsince/
@@ -113,42 +112,24 @@ def history(item_name):
 
 
 @frontend.route('/+quicklink/<itemname:item_name>')
-def quicklink(item_name):
-    """ Add the current wiki page to the user quicklinks """
+def quicklink_item(item_name):
+    """ Add/Remove the current wiki page to/from the user quicklinks """
     request = g.context
     _ = request.getText
-
-    if not request.user.valid:
-        msg = _("You must login to add a quicklink."), "error"
+    u = request.user
+    if not u.valid:
+        msg = _("You must login to add/remove a quicklink."), "error"
     elif not request.user.isQuickLinkedTo([item_name]):
-        if request.user.addQuicklink(item_name):
+        if u.addQuicklink(item_name):
             msg = _('A quicklink to this page has been added for you.'), "info"
         else: # should not happen
             msg = _('A quicklink to this page could not be added for you.'), "error"
     else:
-        msg = _('You already have a quicklink to this page.'), "info"
-    flash(*msg)
-    return werkzeug.redirect(url_for('show_root'), code=302)
-
-
-@frontend.route('/+quickunlink/<itemname:item_name>')
-def quickunlink(item_name):
-    """ Remove the current wiki page from the user's quicklinks """
-    request = g.context
-    _ = request.getText
-    msg = None
-
-    if not request.user.valid:
-        msg = _("You must login to remove a quicklink."), "warning"
-    elif request.user.isQuickLinkedTo([item_name]):
-        if request.user.removeQuicklink(item_name):
+        if u.removeQuicklink(item_name):
             msg = _('Your quicklink to this page has been removed.'), "info"
         else: # should not happen
             msg = _('Your quicklink to this page could not be removed.'), "error"
-    else:
-        msg = _('You need to have a quicklink to this page to remove it.'), "info"
-    if msg:
-        flash(*msg)
+    flash(*msg)
     item = Item.create(request, item_name)
     return item.do_show()
 
