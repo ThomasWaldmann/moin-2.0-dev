@@ -476,11 +476,11 @@ class ThemeBase(object):
             # Translation may need longer or shorter separator:
             (_('------------------------'), 'show', 'frontend.show_item', True),
             (_('What links here?'), 'backlinks', 'frontend.backlinks', False, ),
-            (_('Copy Item'), 'copy', 'frontend.show_item', False, ),
-            (_('Rename Item'), 'rename', 'frontend.show_item', False, ),
-            (_('Delete Item'), 'delete', 'frontend.show_item', False, ),
+            (_('Copy Item'), 'copy', 'frontend.copy_item', False, ),
+            (_('Rename Item'), 'rename', 'frontend.rename_item', False, ),
+            (_('Delete Item'), 'delete', 'frontend.delete_item', False, ),
+            (_('Destroy Item'), 'destroy', 'frontend.destroy_item', False, ),
         ]
-
         options = []
         for title, action, endpoint, disabled in menu:
             # removes excluded actions from the more actions menu
