@@ -117,19 +117,17 @@ def quicklink_item(item_name):
     request = g.context
     _ = request.getText
     u = request.user
+    msg = None
     if not u.valid:
         msg = _("You must login to add/remove a quicklink."), "error"
     elif not request.user.isQuickLinkedTo([item_name]):
-        if u.addQuicklink(item_name):
-            msg = _('A quicklink to this page has been added for you.'), "info"
-        else: # should not happen
+        if not u.addQuicklink(item_name):
             msg = _('A quicklink to this page could not be added for you.'), "error"
     else:
-        if u.removeQuicklink(item_name):
-            msg = _('Your quicklink to this page has been removed.'), "info"
-        else: # should not happen
+        if not u.removeQuicklink(item_name):
             msg = _('Your quicklink to this page could not be removed.'), "error"
-    flash(*msg)
+    if msg:
+        flash(*msg)
     item = Item.create(request, item_name)
     return item.do_show()
 
