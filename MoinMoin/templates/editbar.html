@@ -55,15 +55,17 @@
     {% endif %}
 
     {% if 'Supplementation' in cfg.edit_bar and 'supplementation' not in cfg.actions_excluded %}
-        <li>
-        {% if theme.link_supplementation_page(item_name) %}
-            <a class="nbsupplementation" href="{{ href('+supplementation', item_name)|e }}" rel="nofollow">
-                 {{ _(cfg.supplementation_page_name) }}
-            </a>
-        {% else %}
-            <span class="disabled">{{ _(cfg.supplementation_page_name) }}</span>
-        {% endif %}
-        </li>
+        {% for sub_item_name in cfg.supplementation_item_names %}
+            {% set current_sub = item_name.rsplit('/', 1)[-1] %}
+            {% if not current_sub in cfg.supplementation_item_names %}
+                {% set supp_name = '%s/%s' % (item_name, sub_item_name) %}
+                {% if theme.storage.has_item(supp_name) or theme.user.may.write(supp_name) %}
+                    <li>
+                        <a class="nbsupplementation" href="{{ href(supp_name)|e }}" rel="nofollow">{{ _(sub_item_name) }}</a>
+                    </li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
     {% endif %}
 
     {% if 'ActionsMenu' in cfg.edit_bar %}
