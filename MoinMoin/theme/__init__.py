@@ -480,85 +480,24 @@ class ThemeBase(object):
         _ = request.getText
 
         menu = [
-            'rc',
-            '__separator__',
-            'delete',
-            'rename',
-            'copy',
-            '__separator__',
-            'RenderAsDocbook',
-            'refresh',
-            'LikePages',
-            'LocalSiteMap',
-            'MyPages',
-            'SubscribeUser',
-            'PackagePages',
-            'SyncPages',
-            'backlink',
-            ]
-
-        titles = {
-            # action: menu title
-            '__title__': _("More Actions:"),
-            # Translation may need longer or shorter separator
-            '__separator__': _('------------------------'),
-            'refresh': _('Delete Cache'),
-            'rename': _('Rename Item'),
-            'delete': _('Delete Item'),
-            'rc': _('Recent Changes'),
-            'copy': _('Copy Item'),
-            'LikePages': _('Like Pages'),
-            'LocalSiteMap': _('Local Site Map'),
-            'MyPages': _('My Pages'),
-            'SubscribeUser': _('Subscribe User'),
-            'PackagePages': _('Package Pages'),
-            'RenderAsDocbook': _('Render as Docbook'),
-            'SyncPages': _('Sync Pages'),
-            'backlink': _('What links here?'),
-            }
+            # XXX currently everything is dispatching to frontend.show_item,
+            # fix this as soon we have the right methods there:
+            # title, internal name, disabled
+            (_('Recent Changes'), 'rc', 'frontend.show_item', False, ),
+            (_('What links here?'), 'backlink', 'frontend.show_item', False, ),
+            # Translation may need longer or shorter separator:
+            (_('------------------------'), 'show', 'frontend.show_item', True),
+            (_('Delete Item'), 'delete', 'frontend.show_item', False, ),
+            (_('Rename Item'), 'rename', 'frontend.show_item', False, ),
+            (_('Copy Item'), 'copy', 'frontend.show_item', False, ),
+        ]
 
         options = []
-
-        # Format standard actions
-        available = actionmod.get_names(request.cfg)
-        for action in menu:
-            do = action
-            disabled = False
-            title = titles[action]
+        for title, action, endpoint, disabled in menu:
             # removes excluded actions from the more actions menu
             if action in request.cfg.actions_excluded:
                 continue
-
-            # SubscribeUser action enabled only if user has admin rights
-            if action == 'SubscribeUser' and not self.user.may.admin(item_name):
-                do = 'show'
-                disabled = True
-
-            # Special menu items. Without javascript, executing will
-            # just return to the page.
-            if action.startswith('__'):
-                do = 'show'
-
-            # Actions which are not available for this wiki, user or page
-            if action == '__separator__' or (action[0].isupper() and not action in available):
-                disabled = True
-            options.append((do, disabled, title))
-
-        # Add custom actions not in the standard menu
-        more = [item for item in available if not item in titles]
-        more.sort()
-        if more:
-            # Add separator
-            separator = ('show', True, titles['__separator__'])
-            options.append(separator)
-            # Add more actions (all enabled)
-            for action in more:
-                do = action
-                title = action
-                # Use translated version if available
-                title = _(title)
-                options.append((do, False, title))
-
+            options.append((title, disabled, endpoint))
         return options
 
     @property

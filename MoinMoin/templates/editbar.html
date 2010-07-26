@@ -76,20 +76,21 @@
 
     {% if 'ActionsMenu' in cfg.edit_bar %}
         <li>
-            <form class="actionsmenu" method="GET" action="{{ href(item_name)|e }}">
+            <form class="actionsmenu" method="GET" action="{{ url_for('frontend.dispatch')|e }}">
                 <div>
-                    <label>{{ _('More actions') }}</label>
-                    <select name="do"
+                    <label>{{ _('More Actions:') }}</label>
+                    <select name="endpoint"
                         onchange="if ((this.selectedIndex != 0) &&
                                       (this.options[this.selectedIndex].disabled == false)) {
                                 this.form.submit();
                             }
                             this.selectedIndex = 0;">
-                        {% for do, disabled, title in theme.actions_menu_options(item_name) %}
-                            <option value="{{ do }}" {% if disabled %}disabled class="disabled"{% endif %}> {{ title }}</option>
+                        {% for title, disabled, endpoint in theme.actions_menu_options(item_name) %}
+                            <option value="{{ endpoint }}"{% if disabled %} disabled class="disabled"{% endif %}>{{ title }}</option>
                         {% endfor %}
                     </select>
-                    <input type="submit" value="{{ _('Do') }}" />
+                    <input type="submit" value="{{ _('Do') }}" /> {# XXX current js relies in this being first input elem! #}
+                    <input type="hidden" name="item_name" value="{{ item_name }}" />
                     {% if rev %}
                         <input type="hidden" name="rev" value="{{ rev.revno }}" />
                     {% endif %}
