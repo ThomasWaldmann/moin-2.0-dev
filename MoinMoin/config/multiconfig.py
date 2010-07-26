@@ -785,10 +785,8 @@ options_no_group_name = {
     ('stylesheets', [],
      "List of tuples (media, csshref) to insert after theme css, before user css, see HelpOnThemes."),
 
-    ('supplementation_page_name', u'Discussion',
-     "default name of the supplementation (sub)page [unicode]"),
-    ('supplementation_page_template', u'DiscussionTemplate',
-     "default template used for creation of the supplementation page [unicode]"),
+    ('supplementation_item_names', [u'Discussion', ],
+     "List of names of the supplementation (sub)items [unicode]"),
 
     ('interwiki_preferred', [], "In dialogues, show those wikis at the top of the list."),
     ('sistersites', [], "list of tuples `('WikiName', 'sisterpagelist_fetch_url')`"),
