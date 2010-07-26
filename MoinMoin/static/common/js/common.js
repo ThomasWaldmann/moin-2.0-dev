@@ -57,7 +57,7 @@ function actionsMenuInit(title) {
                 var select = div.getElementsByTagName('select')[0];
                 var item = document.createElement('option');
                 item.appendChild(document.createTextNode(title));
-                item.value = 'show';
+                item.value = 'frontend.show_item';
                 select.insertBefore(item, select.options[0]);
                 select.selectedIndex = 0;
             }

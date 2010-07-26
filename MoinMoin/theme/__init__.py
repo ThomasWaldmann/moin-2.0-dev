@@ -10,7 +10,7 @@
 
 import os
 
-from jinja2 import Environment, FileSystemLoader, FileSystemBytecodeCache
+from flask import flash
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -19,9 +19,6 @@ from MoinMoin import i18n, wikiutil, caching, user
 from MoinMoin import action as actionmod
 from MoinMoin.items import Item
 from MoinMoin.util import pysupport
-from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
-
-from MoinMoin.theme.filters import shorten_item_name
 
 modules = pysupport.getPackageModules(__file__)
 
@@ -122,13 +119,9 @@ class ThemeBase(object):
         self.request = request
         self.cfg = request.cfg
         self.user = request.user
-        self.item_name = item_name = request.item_name
-        self.storage = storage = request.storage
-        self.item_exists = storage.has_item(item_name)
+        self.storage = request.storage
         self.output_mimetype = 'text/html' # was: page.output_mimetype
         self.output_charset = 'utf-8' # was: page.output_charset
-        self.item_readable = request.user.may.read(item_name)
-        self.item_writable = request.user.may.write(item_name)
         self.ui_lang = request.lang
         self.ui_dir = i18n.getDirection(self.ui_lang)
         self.content_lang = request.content_lang
@@ -138,37 +131,14 @@ class ThemeBase(object):
         self.meta_keywords = ''
         self.meta_description = ''
 
-        jinja_cachedir = os.path.join(request.cfg.cache_dir, 'jinja')
-        try:
-            os.mkdir(jinja_cachedir)
-        except:
-            pass
+    def item_exists(self, item_name):
+        return self.storage.has_item(item_name)
 
-        jinja_templatedir = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    def item_readable(self, item_name):
+        return self.request.user.may.read(item_name)
 
-        self.env = Environment(loader=FileSystemLoader(jinja_templatedir),
-                               bytecode_cache=FileSystemBytecodeCache(jinja_cachedir, '%s'),
-                               extensions=['jinja2.ext.i18n'])
-        from werkzeug import url_quote, url_encode
-        self.env.filters['urlencode'] = lambda x: url_encode(x)
-        self.env.filters['urlquote'] = lambda x: url_quote(x)
-        self.env.filters['datetime_format'] = lambda tm, u = request.user: u.getFormattedDateTime(tm)
-        self.env.filters['date_format'] = lambda tm, u = request.user: u.getFormattedDate(tm)
-        self.env.filters['shorten_item_name'] = shorten_item_name
-        self.env.filters['user_format'] = lambda rev, request = request: \
-                                              user.get_printable_editor(request,
-                                                                        rev.get(EDIT_LOG_USERID),
-                                                                        rev.get(EDIT_LOG_ADDR),
-                                                                        rev.get(EDIT_LOG_HOSTNAME))
-        self.env.globals.update({
-                                'theme': self,
-                                'user': request.user,
-                                'cfg': request.cfg,
-                                '_': request.getText,
-                                'href': request.href,
-                                'static_href': request.static_href,
-                                'abs_href': request.abs_href,
-                                'translated_item_name': self.translated_item_name})
+    def item_writable(self, item_name):
+        return self.request.user.may.write(item_name)
 
     def translated_item_name(self, item_en):
         """
@@ -188,7 +158,7 @@ class ThemeBase(object):
             return item_lang_default
         return item_en
 
-    def location_breadcrumbs(self):
+    def location_breadcrumbs(self, item_name):
         """
         Assemble the location using breadcrumbs (was: title)
 
@@ -197,7 +167,7 @@ class ThemeBase(object):
         """
         breadcrumbs = []
         current_item = ''
-        for segment in self.item_name.split('/'):
+        for segment in item_name.split('/'):
             current_item += segment
             breadcrumbs.append((segment, current_item, self.storage.has_item(current_item)))
             current_item += '/'
@@ -235,7 +205,6 @@ class ThemeBase(object):
         """
         user = self.user
         request = self.request
-        item_name = self.item_name
 
         wikiname, itemname = wikiutil.getInterwikiHomePage(request)
         name = user.name
@@ -322,7 +291,7 @@ class ThemeBase(object):
             title = item_name
         return item_name, title, wiki_local
 
-    def navibar(self):
+    def navibar(self, item_name):
         """
         Assemble the navibar
 
@@ -331,7 +300,7 @@ class ThemeBase(object):
         """
         request = self.request
         items = []  # navibar items
-        current = self.item_name
+        current = item_name
 
         # Process config navi_bar
         for text in request.cfg.navi_bar:
@@ -413,7 +382,7 @@ class ThemeBase(object):
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
-    def shouldShowEditbar(self):
+    def shouldShowEditbar(self, item_name):
         """
         Should we show the editbar?
 
@@ -427,7 +396,7 @@ class ThemeBase(object):
         """
         # Show editbar only for existing pages, that the user may read.
         # If you may not read, you can't edit, so you don't need editbar.
-        if self.item_exists and self.item_readable:
+        if self.item_exists(item_name) and self.item_readable(item_name):
             form = self.request.form
             action = self.request.action
             # Do not show editbar on edit but on save/cancel
@@ -436,19 +405,18 @@ class ThemeBase(object):
                         not form.has_key('button_cancel'))
         return False
 
-    def parent_page(self):
+    def parent_page(self, item_name):
         """
         Return name of parent page for the current page
 
         @rtype: unicode
         @return: parent page name
         """
-        item_name = self.item_name
         parent_page_name = wikiutil.ParentPageName(item_name)
         if item_name and parent_page_name:
             return parent_page_name
 
-    def link_supplementation_page(self):
+    def link_supplementation_page(self, item_name):
         """
         If the discussion page doesn't exist and the user
         has no right to create it, show a disabled link.
@@ -456,7 +424,7 @@ class ThemeBase(object):
         @rtype: bool
         """
         suppl_name = self.cfg.supplementation_page_name
-        suppl_name_full = "%s/%s" % (self.item_name, suppl_name)
+        suppl_name_full = "%s/%s" % (item_name, suppl_name)
 
         return self.storage.has_item(suppl_name_full) or self.user.may.write(suppl_name_full)
 
@@ -472,16 +440,15 @@ class ThemeBase(object):
             msg_class = 'dialog'
         try:
             msg = msg.render()
+            self.msg_list.append(msg)
         except AttributeError:
-            msg = '<div class="%s">%s</div>' % (msg_class, msg)
-        self.msg_list.append(msg)
+            flash(msg, msg_class)
 
     # TODO: reimplement on-wiki-page sidebar definition with converter2
 
     # Properties ##############################################################
 
-    @property
-    def login_url(self):
+    def login_url(self, item_name):
         """
         Return URL usable for user login
         """
@@ -489,13 +456,12 @@ class ThemeBase(object):
         href = request.href
         url = ''
         if request.cfg.auth_login_inputs == ['special_no_input']:
-            url = href(self.item_name, do='login', login=1)
+            url = href('+login', login=1)
         if request.cfg.auth_have_login:
-            url = url or href(self.item_name, do='login')
+            url = url or href('+login')
         return url
 
-    @property
-    def actions_menu_options(self):
+    def actions_menu_options(self, item_name):
         """
         Create actions menu list and items data dict
 
@@ -514,85 +480,24 @@ class ThemeBase(object):
         _ = request.getText
 
         menu = [
-            'rc',
-            '__separator__',
-            'delete',
-            'rename',
-            'copy',
-            '__separator__',
-            'RenderAsDocbook',
-            'refresh',
-            'LikePages',
-            'LocalSiteMap',
-            'MyPages',
-            'SubscribeUser',
-            'PackagePages',
-            'SyncPages',
-            'backlink',
-            ]
-
-        titles = {
-            # action: menu title
-            '__title__': _("More Actions:"),
-            # Translation may need longer or shorter separator
-            '__separator__': _('------------------------'),
-            'refresh': _('Delete Cache'),
-            'rename': _('Rename Item'),
-            'delete': _('Delete Item'),
-            'rc': _('Recent Changes'),
-            'copy': _('Copy Item'),
-            'LikePages': _('Like Pages'),
-            'LocalSiteMap': _('Local Site Map'),
-            'MyPages': _('My Pages'),
-            'SubscribeUser': _('Subscribe User'),
-            'PackagePages': _('Package Pages'),
-            'RenderAsDocbook': _('Render as Docbook'),
-            'SyncPages': _('Sync Pages'),
-            'backlink': _('What links here?'),
-            }
+            # XXX currently everything is dispatching to frontend.show_item,
+            # fix this as soon we have the right methods there:
+            # title, internal name, disabled
+            (_('Recent Changes'), 'rc', 'frontend.show_item', False, ),
+            (_('What links here?'), 'backlink', 'frontend.show_item', False, ),
+            # Translation may need longer or shorter separator:
+            (_('------------------------'), 'show', 'frontend.show_item', True),
+            (_('Delete Item'), 'delete', 'frontend.show_item', False, ),
+            (_('Rename Item'), 'rename', 'frontend.show_item', False, ),
+            (_('Copy Item'), 'copy', 'frontend.show_item', False, ),
+        ]
 
         options = []
-
-        # Format standard actions
-        available = actionmod.get_names(request.cfg)
-        for action in menu:
-            do = action
-            disabled = False
-            title = titles[action]
+        for title, action, endpoint, disabled in menu:
             # removes excluded actions from the more actions menu
             if action in request.cfg.actions_excluded:
                 continue
-
-            # SubscribeUser action enabled only if user has admin rights
-            if action == 'SubscribeUser' and not self.user.may.admin(self.item_name):
-                do = 'show'
-                disabled = True
-
-            # Special menu items. Without javascript, executing will
-            # just return to the page.
-            if action.startswith('__'):
-                do = 'show'
-
-            # Actions which are not available for this wiki, user or page
-            if action == '__separator__' or (action[0].isupper() and not action in available):
-                disabled = True
-            options.append((do, disabled, title))
-
-        # Add custom actions not in the standard menu
-        more = [item for item in available if not item in titles]
-        more.sort()
-        if more:
-            # Add separator
-            separator = ('show', True, titles['__separator__'])
-            options.append(separator)
-            # Add more actions (all enabled)
-            for action in more:
-                do = action
-                title = action
-                # Use translated version if available
-                title = _(title)
-                options.append((do, False, title))
-
+            options.append((title, disabled, endpoint))
         return options
 
     @property
