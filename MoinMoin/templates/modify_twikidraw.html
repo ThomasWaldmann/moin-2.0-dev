@@ -1,14 +1,13 @@
 {% extends "modify_applet.html" %}
 {% block data_editor %}
 <p>
-<img src="{{ t.pngpath }}" />
-<applet code="CH.ifa.draw.twiki.TWikiDraw.class" archive="{{ t.pubpath }}/twikidraw.jar" width="640" height="480">
-<param name="drawpath" value="{{ t.drawpath }}" />
-<param name="pngpath"  value="{{ t.pngpath }}" />
-<param name="savepath" value="{{ t.savelink }}" />
-<param name="basename" value="{{ t.basename }}" />
-<param name="viewpath" value="{{ t.pagelink }}" />
-<param name="helppath" value="{{ t.helplink }}" />
+<applet code="CH.ifa.draw.twiki.TWikiDraw.class" archive="{{ t.url_prefix_static }}/applets/TWikiDrawPlugin/twikidraw.jar" width="640" height="480">
+<param name="drawpath" value="{{ t.url }}?do=get&amp;from_tar=drawing.draw" />
+<param name="pngpath"  value="{{ t.url }}?do=get&amp;from_tar=drawing.png" />
+<param name="savepath" value="{{ t.url }}?do=modify&amp;mimetype=application/x-twikidraw" />
+<param name="basename" value="drawing" />
+<param name="viewpath" value="{{ t.url }}" />
+<param name="helppath" value="{{ t.help_url }}" />
 <strong>NOTE:</strong> You need a Java enabled browser to edit the drawing example.
 </applet>
 </p>

@@ -17,3 +17,6 @@
 ^MANIFEST
 .DS_Store
 .sqlite$
+.orig$
+.rej$
+.~$

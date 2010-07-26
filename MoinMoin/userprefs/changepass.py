@@ -72,23 +72,5 @@ class Settings(UserPrefBase):
 
     def create_form(self, create_only=False, recover_only=False):
         """ Create the complete HTML form code. """
-        _ = self._
-        form = self.make_form(html.Text(_("To change your password, "
-                                          "enter a new password twice.")))
-
-        self.make_row(_('Password'),
-                      [html.INPUT(type="password", size=36, name="password1")])
-        self.make_row(_('Password repeat'),
-                      [html.INPUT(type="password", size=36, name="password2")])
-
-        ticket = wikiutil.createTicket(self.request)
-        form.append(html.INPUT(type="hidden", name="ticket", value="%s" % ticket))
-
-        # Add buttons
-        self.make_row('', [
-                html.INPUT(type="submit", name='save', value=_("Change password")),
-                ' ',
-                html.INPUT(type="submit", name='cancel', value=_("Cancel")),
-              ])
-
-        return unicode(form)
+        return self.request.theme.render('changepass.html',
+                                          ticket=wikiutil.createTicket(self.request))

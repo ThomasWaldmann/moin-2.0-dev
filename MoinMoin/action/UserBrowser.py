@@ -36,6 +36,7 @@ def get_account_infos(request):
                                      if request.dicts.has_member(groupname, account.name)])
 
         account_infos.append(dict(
+            uid=uid,
             namelink=namelink,
             name=account.name,
             email=account.email,
