@@ -22,7 +22,6 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from werkzeug import http_date, quote_etag
 from flask import send_file, render_template
 
 from MoinMoin import wikiutil, config, user
@@ -196,7 +195,6 @@ class Item(object):
     def do_modify(self, template_name):
         # XXX think about and add item template support
         return render_template('modify_binary.html',
-                               gettext=self.request.getText,
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
@@ -206,7 +204,6 @@ class Item(object):
 
     def _action_query(self, action, label=None, target=None, revno=None):
         return render_template('action_query.html',
-                               gettext=self.request.getText,
                                action=action,
                                label=label or action,
                                item_name=self.name,
@@ -425,7 +422,6 @@ class Item(object):
 
     def do_index(self):
         return render_template('index.html',
-                               gettext=self.request.getText,
                                item_name=self.name,
                                rev=self.rev,
                                index=self.flat_index(),
@@ -496,7 +492,6 @@ class NonExistent(Item):
     def do_show(self):
         self.request.status_code = 404
         return render_template('show_type_selection.html',
-                               gettext=self.request.getText,
                                item_name=self.name,
                                mimetype_groups=self.mimetype_groups,
                               )
@@ -583,7 +578,6 @@ There is no help, you're doomed!
             index = self.flat_index()
 
         return render_template(html_template,
-                               gettext=self.request.getText,
                                item_name=self.name,
                                rev=self.rev,
                                mimetype=self.mimetype,
@@ -606,7 +600,6 @@ There is no help, you're doomed!
         item = self.rev.item
         rev_nos = item.list_revisions()
         return render_template('diff.html',
-                               gettext=self.request.getText,
                                item_name=self.name,
                                rev=self.rev,
                                first_rev_no=rev_nos[0],
@@ -952,7 +945,6 @@ class SvgDraw(TarMixin, Image):
         }
 
         return render_template("modify_svg-edit.html",
-                               gettext=self.request.getText,
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
@@ -1201,7 +1193,6 @@ class Text(Binary):
             data_text = self.data_storage_to_internal(self.data)
         meta_text = self.meta_dict_to_text(self.meta)
         return render_template('modify_text.html',
-                               gettext=self.request.getText,
                                item_name=self.name,
                                rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                revno=0,
@@ -1224,7 +1215,6 @@ class Text(Binary):
         del buffer
 
         return render_template('highlight.html',
-                               gettext=self.request.getText,
                                item_name=self.name,
                                data_text=content,
                                lang='en', direction='ltr',
@@ -1245,7 +1235,6 @@ class HTML(Text):
             data_text = self.data_storage_to_internal(self.data)
         meta_text = self.meta_dict_to_text(self.meta)
         return render_template('modify_text_html.html',
-                               gettext=self.request.getText,
                                item_name=self.name,
                                rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                revno=0,
@@ -1293,7 +1282,6 @@ class SafeHTML(Text):
             data_text = self.data_storage_to_internal(self.data)
         meta_text = self.meta_dict_to_text(self.meta)
         return render_template('modify_text_html.html',
-                               gettext=self.request.getText,
                                item_name=self.name,
                                rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
                                revno=0,
@@ -1374,7 +1362,6 @@ class TWikiDraw(TarMixin, Image):
             'help_url': self.modify_help,
         }
         return render_template("modify_twikidraw.html",
-                               gettext=self.request.getText,
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
@@ -1459,7 +1446,6 @@ class AnyWikiDraw(TarMixin, Image):
         }
 
         return render_template("modify_anywikidraw.html",
-                               gettext=self.request.getText,
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
