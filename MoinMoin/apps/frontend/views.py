@@ -98,10 +98,16 @@ def revert_item(item_name, rev):
 
 
 @frontend.route('/+index/<itemname:item_name>')
-@frontend.route('/+index', defaults=dict(item_name=''))
 def index(item_name):
     item = Item.create(g.context, item_name)
-    return item.do_index()
+    return render_template(item.index_template, item=item)
+
+
+@frontend.route('/+index')
+def global_index():
+    item_name = ''
+    item = Item.create(g.context, item_name)
+    return render_template(item.index_template, item=item)
 
 
 @frontend.route('/+backlinks/<itemname:item_name>')
