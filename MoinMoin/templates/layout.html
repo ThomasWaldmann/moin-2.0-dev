@@ -3,7 +3,7 @@
 {% block layout %}
 <div id="header">
 
-<form id="searchform" method="get" action="{{ href(theme.item_name) }}">
+<form id="searchform" method="get" action="{{ href(item_name) }}">
     <div>
         <input type="hidden" name="do" value="fullsearch" />
         <input type="hidden" name="context" value="180" />
@@ -39,17 +39,17 @@
             </a>
             <span class="sep"> | </span>
             {% if 'userprefs' not in cfg.actions_excluded %}
-                <a href="{{ href(theme.item_name, do='userprefs')|e }}" class="userprefs" rel="nofollow">{{ _('Settings') }}</a>
+                <a href="{{ href('+userprefs')|e }}" class="userprefs" rel="nofollow">{{ _('Settings') }}</a>
                 <span class="sep"> | </span>
             {% endif %}
         {% endif %}
         {% if user.auth_method in cfg.auth_can_logout %}
-            <a href="{{ href(theme.item_name, do='logout', logout='logout')|e }}" class="logout" rel="nofollow">
+            <a href="{{ href('+logout')|e }}" class="logout" rel="nofollow">
                 {{ _('Logout') }}
             </a>
         {% endif %}
     {% else %}
-        <a href="{{ theme.login_url|e }}" class="login" rel="nofollow">{{ _('Login') }}</a>
+        <a href="{{ theme.login_url(item_name)|e }}" class="login" rel="nofollow">{{ _('Login') }}</a>
     {% endif %}
 </div>
 
@@ -71,9 +71,9 @@
 
     <span id="pagelocation">
         <span class="pagepath">
-            {% for item_name, item_path, exists in theme.location_breadcrumbs() %}
-                <a href="{{ href(item_path) }}" {% if not exists %}class="nonexistent"{% endif %}>
-                    {{ item_name|shorten_item_name }}
+            {% for segment_name, segment_path, exists in theme.location_breadcrumbs(item_name) %}
+                <a href="{{ href(segment_path) }}" {% if not exists %}class="nonexistent"{% endif %}>
+                    {{ segment_name|shorten_item_name }}
                 </a>
                 {% if not loop.last %}
                     <span class="sep">/</span>
@@ -105,7 +105,7 @@
 {% endif %}
 
 <ul id="navibar">
-    {% for cls, url, text, title in theme.navibar() %}
+    {% for cls, url, text, title in theme.navibar(item_name) %}
         <li class="{{ cls }}">
             <a href="{{ url|e }}" {% if title %}title="{{ title }}"{% endif %}>{{ text }}</a>
         </li>
@@ -116,12 +116,17 @@
     <hr style="display:none;" />
 </div>
 
+{% for category, msg in get_flashed_messages(with_categories=true) %}
+    <p class="flash-{{ category }}">{{ msg }}</p>
+{% endfor %}
+
+{# kill msg_list after all is using flashed_messages #}
 {% if theme.msg_list %}
     <div id="message">
         {% for msg in theme.msg_list %}
                 <p>{{ msg }}</p>
         {% endfor %}
-        <a href="{{ href(theme.item_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
+        <a href="{{ href(item_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
     </div>
 {% endif %}
 

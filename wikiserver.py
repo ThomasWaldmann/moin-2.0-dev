@@ -1,36 +1,17 @@
 #!/usr/bin/env python
 """
-    Start script for the standalone Wiki server.
+    Start script for the Wiki server.
 
-    @copyright: 2007 MoinMoin:ForrestVoight
+    @copyright: 2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
+from os import path
+support = path.abspath(path.join(path.dirname(__file__), 'MoinMoin', 'support'))
 
-import sys, os
+import sys
+sys.path.insert(0, support)
 
-# a) Configuration of Python's code search path
-#    If you already have set up the PYTHONPATH environment variable for the
-#    stuff you see below, you don't need to do a1) and a2).
+from MoinMoin import app
 
-# a1) Path of the directory where the MoinMoin code package is located.
-#     Needed if you installed with --prefix=PREFIX or you didn't use setup.py.
-#sys.path.insert(0, 'PREFIX/lib/python2.5/site-packages')
-
-# a2) Path of the directory where wikiconfig.py / farmconfig.py is located.
-moinpath = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
-sys.path.insert(0, moinpath)
-os.chdir(moinpath)
-
-# b) Configuration of moin's logging
-#    If you have set up MOINLOGGINGCONF environment variable, you don't need this!
-#    You also don't need this if you are happy with the builtin defaults.
-#    See wiki/config/logging/... for some sample config files.
-from MoinMoin import log
-log.load_config('wikiserverlogging.conf')
-
-from MoinMoin.script import MoinScript
-
-if __name__ == '__main__':
-    sys.argv = ["moin.py", "server", "standalone"]
-    MoinScript().run()
+app.run(host='127.0.0.1', port=8080, debug=True)
 
