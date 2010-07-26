@@ -196,9 +196,31 @@ def setup_i18n_postauth(context):
     return lang
 
 
+def shorten_item_name(name, length=25):
+    """
+    Shorten item names
+
+    Shorten very long item names that tend to break the user
+    interface. The short name is usually fine, unless really stupid
+    long names are used (WYGIWYD).
+
+    @param name: item name, unicode
+    @param length: maximum length for shortened item names, int
+    @rtype: unicode
+    @return: shortened version.
+    """
+    # First use only the sub page name, that might be enough
+    if len(name) > length:
+        name = name.split('/')[-1]
+        # If it's not enough, replace the middle with '...'
+        if len(name) > length:
+            half, left = divmod(length - 3, 2)
+            name = u'%s...%s' % (name[:half + left], name[-half:])
+    return name
+
+
 def setup_jinja_env(request):
     from werkzeug import url_quote, url_encode
-    from MoinMoin.theme.filters import shorten_item_name
     from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
     theme = request.theme
     app.jinja_env.filters['urlencode'] = lambda x: url_encode(x)
