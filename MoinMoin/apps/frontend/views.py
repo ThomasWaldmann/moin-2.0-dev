@@ -31,6 +31,7 @@ Disallow: /+revert/
 Disallow: /+index/
 Disallow: /+quicklink/
 Disallow: /+subscribe/
+Disallow: /+backlinks/
 Disallow: /+login
 Disallow: /+logout/
 Disallow: /+diffsince/
@@ -101,6 +102,20 @@ def revert_item(item_name, rev):
 def index(item_name):
     item = Item.create(g.context, item_name)
     return item.do_index()
+
+
+@frontend.route('/+backlinks/<itemname:item_name>')
+def backlinks(item_name):
+    return _search(value='linkto:"%s"' % item_name, context=180)
+
+
+@frontend.route('/+search')
+def search():
+    return _search()
+
+
+def _search(**args):
+    return "searching for %r not implemented yet" % args
 
 
 @frontend.route('/+history/<itemname:item_name>')
