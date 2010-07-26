@@ -20,22 +20,16 @@
         {% endif %}
     {% endif %}
 
-    {% if 'Quicklink' in cfg.edit_bar %}
-        {% if theme.user.valid %}
-            {% if not theme.user.isQuickLinkedTo([item_name]) %}
-                {% if not 'quicklink' in cfg.actions_excluded %}
-                    <li>
-                        <a class="nbquicklink" href="{{ href('+quicklink', item_name)|e }}" rel="nofollow">{{ _('Add Link') }}</a>
-                    </li>
-                {% endif %}
+    {% if 'Quicklink' in cfg.edit_bar and theme.user.valid and 'quicklink' not in cfg.actions_excluded %}
+        <li>
+            <a class="nbquicklink" href="{{ href('+quicklink', item_name)|e }}" rel="nofollow">
+            {% if theme.user.isQuickLinkedTo([item_name]) %}
+                {{ _('Remove Link') }}
             {% else %}
-                {% if not 'quickunlink' in cfg.actions_excluded %}
-                    <li>
-                        <a class="nbquicklink" href="{{ href('+quickunlink', item_name)|e }}" rel="nofollow">{{ _('Remove Link') }}</a>
-                    </li>
-                {% endif %}
+                {{ _('Add Link') }}
             {% endif %}
-        {% endif %}
+            </a>
+        </li>
     {% endif %}
 
     {% if 'Subscribe' in cfg.edit_bar %}
