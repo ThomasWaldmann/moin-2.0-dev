@@ -20,6 +20,12 @@
         {% endif %}
     {% endif %}
 
+    {% if 'History' in cfg.edit_bar and 'history' not in cfg.actions_excluded %}
+        <li>
+            <a href="{{ href('+history', item_name)|e }}" rel="nofollow">{{ _('History') }}</a>
+        </li>
+    {% endif %}
+
     {% if 'Quicklink' in cfg.edit_bar and theme.user.valid and 'quicklink' not in cfg.actions_excluded %}
         <li>
             <a class="nbquicklink" href="{{ href('+quicklink', item_name)|e }}" rel="nofollow">
