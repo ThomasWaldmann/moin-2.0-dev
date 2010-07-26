@@ -119,12 +119,14 @@ def _search(**args):
 
 
 @frontend.route('/+history/<itemname:item_name>')
-@frontend.route('/+history', defaults=dict(item_name=''))
 def history(item_name):
-    request = g.context
-    # TODO: No fake-metadata anymore, fix this
-    history = request.storage.history(item_name=item_name)
+    history = g.context.storage.history(item_name=item_name)
     return render_template('rc.html', item_name=item_name, history=history)
+
+
+@frontend.route('/+history')
+def global_history():
+    return history('')
 
 
 @frontend.route('/+quicklink/<itemname:item_name>')

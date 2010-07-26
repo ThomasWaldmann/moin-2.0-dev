@@ -800,7 +800,7 @@ options_no_group_name = {
     ('date_fmt', '%Y-%m-%d', "System date format, used mostly in Recent``Changes"),
     ('datetime_fmt', '%Y-%m-%d %H:%M:%S', 'Default format for dates and times (when the user has no preferences or chose the "default" date format)'),
 
-    ('edit_bar', ['Modify', 'Download', 'Comments', 'Discussion', 'Subscribe', 'Quicklink', 'ActionsMenu'],
+    ('edit_bar', ['Modify', 'Download', 'History', 'Comments', 'Discussion', 'Subscribe', 'Quicklink', 'ActionsMenu'],
      'list of edit bar entries'),
     ('history_count', (100, 200), "number of revisions shown for info/history action (default_count_shown, max_count_shown)"),
 

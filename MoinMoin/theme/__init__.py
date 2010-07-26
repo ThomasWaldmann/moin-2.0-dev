@@ -483,13 +483,13 @@ class ThemeBase(object):
             # XXX currently everything is dispatching to frontend.show_item,
             # fix this as soon we have the right methods there:
             # title, internal name, disabled
-            (_('Recent Changes'), 'rc', 'frontend.show_item', False, ),
-            (_('What links here?'), 'backlink', 'frontend.backlinks', False, ),
+            (_('Recent Changes'), 'global_history', 'frontend.global_history', False, ),
             # Translation may need longer or shorter separator:
             (_('------------------------'), 'show', 'frontend.show_item', True),
-            (_('Delete Item'), 'delete', 'frontend.show_item', False, ),
-            (_('Rename Item'), 'rename', 'frontend.show_item', False, ),
+            (_('What links here?'), 'backlinks', 'frontend.backlinks', False, ),
             (_('Copy Item'), 'copy', 'frontend.show_item', False, ),
+            (_('Rename Item'), 'rename', 'frontend.show_item', False, ),
+            (_('Delete Item'), 'delete', 'frontend.show_item', False, ),
         ]
 
         options = []
