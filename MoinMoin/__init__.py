@@ -6,7 +6,7 @@ This creates the WSGI application (using Flask) as "app".
 
 @copyright: 2000-2006 by Juergen Hermann <jh@web.de>,
             2002-2010 MoinMoin:ThomasWaldmann,
-            2008-2008 MoinMoin:FlorianKrupicka,
+            2008 MoinMoin:FlorianKrupicka,
             2010 MoinMoin:DiogenesAugusto
 @license: GNU GPL, see COPYING for details.
 """

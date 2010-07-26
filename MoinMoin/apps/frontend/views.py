@@ -4,12 +4,14 @@
     
     This shows the usual things users see when using the wiki.
 
-    @copyright: 2010 MoinMoin:ThomasWaldmann
-    @license: GNU GPL, see COPYING for details.
+    @copyright: 2003-2010 MoinMoin:ThomasWaldmann,
+                2008 MoinMoin:FlorianKrupicka,
+                2010 MoinMoin:DiogenesAugusto
+@license: GNU GPL, see COPYING for details.
 """
 
 import werkzeug
-from flask import request, g, url_for, Response
+from flask import request, g, url_for, flash, render_template, Response
 
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item
