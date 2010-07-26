@@ -303,8 +303,16 @@ def _diff(item, revno1, revno2):
             commonmt = ''
 
     item = Item.create(g.context, item_name, mimetype=commonmt, rev_no=newrevno)
-    return item.do_diff(oldrev, newrev)
-
+    rev_nos = item.rev.item.list_revisions()
+    return render_template(item.diff_template,
+                           item=item,
+                           item_name=item.name,
+                           rev=item.rev,
+                           first_rev_no=rev_nos[0],
+                           last_rev_no=rev_nos[-1],
+                           oldrev=oldrev,
+                           newrev=newrev,
+                          )
 
 @frontend.route('/+dispatch', methods=['GET', ])
 def dispatch():
