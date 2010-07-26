@@ -529,22 +529,6 @@ There is no help, you're doomed!
             return ''
     data = property(fget=get_data)
 
-    def _revlog(self, item, rev_nos):
-        log = []
-        for rev_no in reversed(rev_nos):
-            r = item.get_revision(rev_no)
-            log.append(dict(
-                name=r[NAME],
-                rev_no=rev_no,
-                size=r.size,
-                mtime=self.request.user.getFormattedDateTime(float(r.timestamp)),
-                editor=user.get_printable_editor(self.request,
-                       r.get(EDIT_LOG_USERID), r.get(EDIT_LOG_ADDR), r.get(EDIT_LOG_HOSTNAME)) or _("N/A"),
-                comment=r.get(EDIT_LOG_COMMENT, ''),
-                mimetype=r.get(MIMETYPE, ''),
-            ))
-        return log
-
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
         """ we can't transclude (render) this, thus we just link to the item """
@@ -582,11 +566,10 @@ There is no help, you're doomed!
         if item is None:
             # it is the dummy item -> this is a new and empty item
             show_templates = True
-            rev_nos = log = []
+            rev_nos = []
         else:
             show_templates = False
             rev_nos = item.list_revisions()
-            log = self._revlog(item, rev_nos)
         if show_templates:
             item_templates = self.get_templates(self.mimetype)
             html_template = 'show_template_selection.html'
@@ -603,7 +586,6 @@ There is no help, you're doomed!
                                gettext=self.request.getText,
                                item_name=self.name,
                                rev=self.rev,
-                               log=log,
                                mimetype=self.mimetype,
                                templates=item_templates,
                                first_rev_no=rev_nos and rev_nos[0],
@@ -623,13 +605,10 @@ There is no help, you're doomed!
     def do_diff(self, oldrev, newrev):
         item = self.rev.item
         rev_nos = item.list_revisions()
-        log = self._revlog(item, rev_nos)
-
         return render_template('diff.html',
                                gettext=self.request.getText,
                                item_name=self.name,
                                rev=self.rev,
-                               log=log,
                                first_rev_no=rev_nos[0],
                                last_rev_no=rev_nos[-1],
                                index=self.flat_index(),
