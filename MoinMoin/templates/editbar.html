@@ -1,23 +1,19 @@
 <ul class="editbar">
-{% if theme.shouldShowEditbar(item_name) %}
-    {% if 'Modify' in cfg.edit_bar %}
-        {% if not 'modify' in cfg.actions_excluded %}
-            <li>
-            {% if theme.item_writable %}
-                <a href="{{ href('+modify', item_name)|e }}" rel="nofollow"> {{ _('Modify') }}</a>
-            {% else %}
-                {{ _('Immutable Page')}}
-            {% endif %}
-            </li>
+    {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded
+       and theme.shouldShowEditbar(item_name) %}
+        <li>
+        {% if theme.item_writable %}
+            <a href="{{ href('+modify', item_name)|e }}" rel="nofollow"> {{ _('Modify') }}</a>
+        {% else %}
+            {{ _('Immutable Item')}}
         {% endif %}
+        </li>
     {% endif %}
 
-    {% if 'Download' in cfg.edit_bar %}
-        {% if not 'get' in cfg.actions_excluded %}
-            <li>
-                <a href="{{ href('+get', item_name)|e }}" rel="nofollow">{{ _('Download') }}</a>
-            </li>
-        {% endif %}
+    {% if 'Download' in cfg.edit_bar and 'get' not in cfg.actions_excluded %}
+        <li>
+            <a href="{{ href('+get', item_name)|e }}" rel="nofollow">{{ _('Download') }}</a>
+        </li>
     {% endif %}
 
     {% if 'History' in cfg.edit_bar and 'history' not in cfg.actions_excluded %}
@@ -26,7 +22,8 @@
         </li>
     {% endif %}
 
-    {% if 'Quicklink' in cfg.edit_bar and theme.user.valid and 'quicklink' not in cfg.actions_excluded %}
+    {% if 'Quicklink' in cfg.edit_bar and 'quicklink' not in cfg.actions_excluded
+       and theme.user.valid %}
         <li>
             <a class="nbquicklink" href="{{ href('+quicklink', item_name)|e }}" rel="nofollow">
             {% if theme.user.isQuickLinkedTo([item_name]) %}
@@ -38,8 +35,8 @@
         </li>
     {% endif %}
 
-    {% if 'Subscribe' in cfg.edit_bar and theme.user.valid and 'subscribe' not in cfg.actions_excluded
-       and (cfg.mail_enabled or cfg.jabber_enabled) %}
+    {% if 'Subscribe' in cfg.edit_bar and 'subscribe' not in cfg.actions_excluded
+       and theme.user.valid and (cfg.mail_enabled or cfg.jabber_enabled) %}
         <li>
             <a class="nbsubscribe" href="{{ href('+subscribe', item_name)|e }}" rel="nofollow">
             {% if theme.user.isSubscribedTo([item_name]) %}
@@ -51,18 +48,18 @@
         </li>
     {% endif %}
 
-    {% if 'Comments' in cfg.edit_bar %}
+    {% if 'Comments' in cfg.edit_bar and 'comments' not in cfg.actions_excluded %}
         <li class="toggleCommentsButton" style="display:none;">
             <a href="#" class="nbcomment" onClick="toggleComments();return false;">{{ _('Comments') }}</a>
         </li>
     {% endif %}
 
-    {% if 'Discussion' in cfg.edit_bar %}
+    {% if 'Supplementation' in cfg.edit_bar and 'supplementation' not in cfg.actions_excluded %}
         <li>
         {% if theme.link_supplementation_page(item_name) %}
             <a class="nbsupplementation" href="{{ href('+supplementation', item_name)|e }}" rel="nofollow">
                  {{ _(cfg.supplementation_page_name) }}
-             </a>
+            </a>
         {% else %}
             <span class="disabled">{{ _(cfg.supplementation_page_name) }}</span>
         {% endif %}
@@ -93,8 +90,5 @@
             </form>
         </li>
     {% endif %}
-
-{% endif %}
-
 </ul>
 
