@@ -484,7 +484,7 @@ class ThemeBase(object):
             # fix this as soon we have the right methods there:
             # title, internal name, disabled
             (_('Recent Changes'), 'rc', 'frontend.show_item', False, ),
-            (_('What links here?'), 'backlink', 'frontend.show_item', False, ),
+            (_('What links here?'), 'backlink', 'frontend.backlinks', False, ),
             # Translation may need longer or shorter separator:
             (_('------------------------'), 'show', 'frontend.show_item', True),
             (_('Delete Item'), 'delete', 'frontend.show_item', False, ),
