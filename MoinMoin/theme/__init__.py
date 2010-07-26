@@ -416,18 +416,6 @@ class ThemeBase(object):
         if item_name and parent_page_name:
             return parent_page_name
 
-    def link_supplementation_page(self, item_name):
-        """
-        If the discussion page doesn't exist and the user
-        has no right to create it, show a disabled link.
-
-        @rtype: bool
-        """
-        suppl_name = self.cfg.supplementation_page_name
-        suppl_name_full = "%s/%s" % (item_name, suppl_name)
-
-        return self.storage.has_item(suppl_name_full) or self.user.may.write(suppl_name_full)
-
     def add_msg(self, msg, msg_class=None):
         """
         Adds a message to a list which will be used to generate status
