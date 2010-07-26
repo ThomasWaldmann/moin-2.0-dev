@@ -584,26 +584,14 @@ There is no help, you're doomed!
                                index=index,
                               )
 
+    diff_template = 'diff.html'
+
     def _render_data_diff(self, oldrev, newrev):
         hash_name = self.request.cfg.hash_algorithm
         if oldrev[hash_name] == newrev[hash_name]:
             return "The items have the same data hash code (that means they very likely have the same data)."
         else:
             return "The items have different data."
-
-    def do_diff(self, oldrev, newrev):
-        item = self.rev.item
-        rev_nos = item.list_revisions()
-        return render_template('diff.html',
-                               item_name=self.name,
-                               rev=self.rev,
-                               first_rev_no=rev_nos[0],
-                               last_rev_no=rev_nos[-1],
-                               index=self.flat_index(),
-                               oldrev=oldrev,
-                               newrev=newrev,
-                               data_diff_rendered=self._render_data_diff(oldrev, newrev),
-                              )
 
     def do_get(self):
         request = self.request
