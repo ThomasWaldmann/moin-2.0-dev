@@ -1,6 +1,5 @@
 <ul class="editbar">
-    {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded
-       and theme.shouldShowEditbar(item_name) %}
+    {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded %}
         <li>
         {% if theme.item_writable %}
             <a href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" rel="nofollow"> {{ _('Modify') }}</a>
