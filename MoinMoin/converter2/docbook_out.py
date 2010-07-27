@@ -120,6 +120,9 @@ class Converter(object):
         children = ''.join(['<![CDATA[', code_str, ']]>'])
         return self.new(docbook.screen, attrib={}, children=children)
 
+    def visit_moinpage_code(self, element):
+        return self.new_copy(docbook.literal, element, attrib={})
+
     def visit_moinpage_emphasis(self, element):
         return self.new_copy(docbook.emphasis, element, attrib={})
 
