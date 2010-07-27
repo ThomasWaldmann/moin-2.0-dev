@@ -25,7 +25,7 @@
     {% if 'Quicklink' in cfg.edit_bar and 'quicklink' not in cfg.actions_excluded
        and theme.user.valid %}
         <li>
-            <a class="nbquicklink" href="{{ url_for('frontend.quicklink', item_name=item_name)|e }}" rel="nofollow">
+            <a class="nbquicklink" href="{{ url_for('frontend.quicklink_item', item_name=item_name)|e }}" rel="nofollow">
             {% if theme.user.isQuickLinkedTo([item_name]) %}
                 {{ _('Remove Link') }}
             {% else %}
@@ -38,7 +38,7 @@
     {% if 'Subscribe' in cfg.edit_bar and 'subscribe' not in cfg.actions_excluded
        and theme.user.valid and (cfg.mail_enabled or cfg.jabber_enabled) %}
         <li>
-            <a class="nbsubscribe" href="{{ url_for('frontend.subscribe', item_name=item_name)|e }}" rel="nofollow">
+            <a class="nbsubscribe" href="{{ url_for('frontend.subscribe_item', item_name=item_name)|e }}" rel="nofollow">
             {% if theme.user.isSubscribedTo([item_name]) %}
                     {{ _('Unsubscribe') }}
             {% else %}
