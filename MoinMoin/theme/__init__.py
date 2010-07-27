@@ -10,7 +10,7 @@
 
 import os
 
-from flask import flash, url_for
+from flask import flash, url_for, render_template
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -523,20 +523,14 @@ class ThemeBase(object):
         @keyword body_attr: additional <body> attributes
         @keyword body_onload: additional "onload" JavaScript code
         """
+        # TODO: get rid of this
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
         self.request.write(self.render('show.html'))
 
     def render(self, name='layout.html', **context):
-        """
-        Base function that renders a template using Jinja2.
-
-        @param name: name of the template to render.
-        @param context: used to pass variables to template.
-        @return: rendered output
-        """
-        template = self.env.get_template(name)
-        return template.render(**context)
+        # TODO: get rid of all calls to this, call render_template of flask directly
+        return render_template(name, **context)
 
 
 class ThemeNotFound(Exception):
