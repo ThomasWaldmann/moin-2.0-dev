@@ -20,7 +20,7 @@ from MoinMoin import user, wikiutil
 
 @frontend.route('/')
 def show_root():
-    location = 'FrontPage' # wikiutil.getFrontPage(g.context)
+    location = url_for('frontend.show_item', item_name='FrontPage') # wikiutil.getFrontPage(g.context)
     return werkzeug.redirect(location, code=302)
 
 @frontend.route('/robots.txt')
@@ -277,7 +277,6 @@ def register():
     else:
         return Response('No MoinAuth in auth list', 403)
 
-    title = _("Create Account")
     if request.method == 'GET':
         textcha = TextCha(request)
         if textcha.is_enabled():
@@ -328,7 +327,6 @@ def login():
     item_name = 'LoggedIn' # XXX
     request = g.context
     _ = request.getText
-    title = _("Login")
     if request.method == 'GET':
         for authmethod in request.cfg.auth:
             hint = authmethod.login_hint(request)
@@ -336,14 +334,14 @@ def login():
                 flash(hint, "info")
         return render_template('login.html',
                                login_inputs=request.cfg.auth_login_inputs,
-                               title=title
+                               title=_("Login"),
                               )
     if request.method == 'POST':
         if 'login' in request.form:
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
                     flash(msg, "error")
-    return werkzeug.redirect(url_for('show_root'), code=302)
+        return werkzeug.redirect(url_for('show_root'), code=302)
 
 
 @frontend.route('/+logout')
@@ -351,15 +349,14 @@ def logout():
     item_name = 'LoggedOut' # XXX
     request = g.context
     _ = request.getText
-    title = _("Logout")
     # if the user really was logged out say so,
     # but if the user manually added ?do=logout
     # and that isn't really supported, then don't
-    if not request.user.valid:
-        flash(_("You are now logged out."), "info")
-    else:
+    if request.user.valid:
         # something went wrong
         flash(_("You are still logged in."), "warning")
+    else:
+        flash(_("You are now logged out."), "info")
     return werkzeug.redirect(url_for('show_root'), code=302)
 
 
@@ -453,8 +450,4 @@ def dispatch():
     args = request.values.to_dict()
     endpoint = str(args.pop('endpoint'))
     return werkzeug.redirect(url_for(endpoint, **args), code=302)
-
-
-# +feed/atom
-# off-with-his-head
 
