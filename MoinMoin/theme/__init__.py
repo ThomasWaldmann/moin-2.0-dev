@@ -400,29 +400,6 @@ class ThemeBase(object):
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
-    def shouldShowEditbar(self, item_name):
-        """
-        Should we show the editbar?
-
-        Actions should implement this, because only the action knows if
-        the edit bar makes sense. Until it goes into actions, we do the
-        checking here.
-
-        @param page: current page
-        @rtype: bool
-        @return: true if editbar should show
-        """
-        # Show editbar only for existing pages, that the user may read.
-        # If you may not read, you can't edit, so you don't need editbar.
-        if self.item_exists(item_name) and self.item_readable(item_name):
-            form = self.request.form
-            action = self.request.action
-            # Do not show editbar on edit but on save/cancel
-            return not (action == 'modify' and
-                        not form.has_key('button_save') and
-                        not form.has_key('button_cancel'))
-        return False
-
     def parent_page(self, item_name):
         """
         Return name of parent page for the current page
