@@ -7,6 +7,7 @@
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
+from flask import render_template
 
 from MoinMoin import Page, wikiutil
 from MoinMoin.widget import html
@@ -98,4 +99,5 @@ def execute(pagename, request):
     else:
         title = _("Settings")
     content = "%s%s%s" % (request.formatter.startContent("content"), text, request.formatter.endContent())
-    return request.theme.render('content.html', title=title, content=content)
+    return render_template('content.html', title=title, content=content)
+

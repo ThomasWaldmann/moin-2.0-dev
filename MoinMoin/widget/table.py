@@ -5,6 +5,7 @@
     @copyright: 2010 MoinMoin:ThomasWaldmann
     @license: GNU GPL, see COPYING for details.
 """
+from flask import render_template_string
 
 
 class Table(object):
@@ -107,25 +108,21 @@ class Table(object):
             row[key] = value
         self.rows.append(row)
 
-    def render(self, env):
+    def render(self):
         """
         render the table
 
         @param env: templating environment of jinja2
         """
-        t = env.from_string(self.template)
-        return t.render(table=self)
+        return render_template_string(self.template, table=self)
 
 
 if __name__ == '__main__':
-    from jinja2 import Environment
-    env = Environment()
-
     t = Table(css_class="sometable", caption="Table Caption", empty='-', header=True, footer=True)
     t.add_column(key="c1", head="Column 1 Head", css_class="class1")
     t.add_column(key="c2", foot="Column 2 Foot")
     t.add_row(c1=1)
     t.add_row(c2=2)
     t.add_row(c1=1, c2=2)
-    print t.render(env)
+    print t.render()
 

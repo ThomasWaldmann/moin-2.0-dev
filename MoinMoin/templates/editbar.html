@@ -1,95 +1,96 @@
 <ul class="editbar">
-{% if theme.shouldShowEditbar() %}
-    {% if 'Modify' in cfg.edit_bar %}
-        {% if not 'modify' in cfg.actions_excluded %}
-            <li>
-            {% if theme.item_writable %}
-                <a href="{{ href(theme.item_name, do='modify')|e }}" rel="nofollow"> {{ _('Modify') }}</a>
+    {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded
+       and theme.shouldShowEditbar(item_name) %}
+        <li>
+        {% if theme.item_writable %}
+            <a href="{{ href('+modify', item_name)|e }}" rel="nofollow"> {{ _('Modify') }}</a>
+        {% else %}
+            {{ _('Immutable Item')}}
+        {% endif %}
+        </li>
+    {% endif %}
+
+    {% if 'Download' in cfg.edit_bar and 'get' not in cfg.actions_excluded %}
+        <li>
+            <a href="{{ href('+get', item_name)|e }}" rel="nofollow">{{ _('Download') }}</a>
+        </li>
+    {% endif %}
+
+    {% if 'History' in cfg.edit_bar and 'history' not in cfg.actions_excluded %}
+        <li>
+            <a href="{{ href('+history', item_name)|e }}" rel="nofollow">{{ _('History') }}</a>
+        </li>
+    {% endif %}
+
+    {% if 'Quicklink' in cfg.edit_bar and 'quicklink' not in cfg.actions_excluded
+       and theme.user.valid %}
+        <li>
+            <a class="nbquicklink" href="{{ href('+quicklink', item_name)|e }}" rel="nofollow">
+            {% if theme.user.isQuickLinkedTo([item_name]) %}
+                {{ _('Remove Link') }}
             {% else %}
-                {{ _('Immutable Page')}}
+                {{ _('Add Link') }}
             {% endif %}
-            </li>
-        {% endif %}
+            </a>
+        </li>
     {% endif %}
 
-    {% if 'Download' in cfg.edit_bar %}
-        {% if not 'get' in cfg.actions_excluded %}
-            <li>
-                <a href="{{ href(theme.item_name, do='get')|e }}" rel="nofollow">{{ _('Download') }}</a>
-            </li>
-        {% endif %}
-    {% endif %}
-
-    {% if 'Quicklink' in cfg.edit_bar %}
-        {% if theme.user.valid %}
-            {% if not theme.user.isQuickLinkedTo([theme.item_name]) %}
-                {% if not 'quicklink' in cfg.actions_excluded %}
-                    <li>
-                        <a class="nbquicklink" href="{{ href(theme.item_name, do='quicklink')|e }}" rel="nofollow">{{ _('Add Link') }}</a>
-                    </li>
-                {% endif %}
+    {% if 'Subscribe' in cfg.edit_bar and 'subscribe' not in cfg.actions_excluded
+       and theme.user.valid and (cfg.mail_enabled or cfg.jabber_enabled) %}
+        <li>
+            <a class="nbsubscribe" href="{{ href('+subscribe', item_name)|e }}" rel="nofollow">
+            {% if theme.user.isSubscribedTo([item_name]) %}
+                    {{ _('Unsubscribe') }}
             {% else %}
-                {% if not 'quickunlink' in cfg.actions_excluded %}
-                    <li>
-                        <a class="nbquicklink" href="{{ href(theme.item_name, do='quickunlink')|e }}" rel="nofollow">{{ _('Remove Link') }}</a>
-                    </li>
-                {% endif %}
+                    {{ _('Subscribe') }}
             {% endif %}
-        {% endif %}
+            </a>
+        </li>
     {% endif %}
 
-    {% if 'Subscribe' in cfg.edit_bar %}
-        {% if (cfg.mail_enabled or cfg.jabber_enabled) and theme.user.valid %}
-            {% if not theme.user.isSubscribedTo([theme.item_name]) %}
-                {% if not 'subscribe' in cfg.actions_excluded %}
-                    <li>
-                        <a class="nbsubscribe" href="{{ href(theme.item_name, do='subscribe')|e }}" rel="nofollow">{{ _('Subscribe') }}</a>
-                    </li>
-                {% endif %}
-            {% else %}
-                {% if not 'unsubscribe' in cfg.actions_excluded %}
-                    <li>
-                        <a class="nbsubscribe" href="{{ href(theme.item_name, do='unsubscribe')|e }}" rel="nofollow">{{ _('Unsubscribe') }}</a>
-                    </li>
-                {% endif %}
-            {% endif %}
-        {% endif %}
-    {% endif %}
-
-    {% if 'Comments' in cfg.edit_bar %}
+    {% if 'Comments' in cfg.edit_bar and 'comments' not in cfg.actions_excluded %}
         <li class="toggleCommentsButton" style="display:none;">
             <a href="#" class="nbcomment" onClick="toggleComments();return false;">{{ _('Comments') }}</a>
         </li>
     {% endif %}
 
-    {% if 'Discussion' in cfg.edit_bar %}
+    {% if 'Index' in cfg.edit_bar and 'index' not in cfg.actions_excluded %}
         <li>
-        {% if theme.link_supplementation_page() %}
-            <a class="nbsupplementation" href="{{ href(theme.item_name, do="supplementation")|e }}" rel="nofollow">
-                 {{ _(cfg.supplementation_page_name) }}
-             </a>
-        {% else %}
-            <span class="disabled">{{ _(cfg.supplementation_page_name) }}</span>
-        {% endif %}
+            <a class="nbindex" href="{{ href('+index', item_name)|e }}" rel="nofollow">{{ _('Index') }}</a>
         </li>
+    {% endif %}
+
+    {% if 'Supplementation' in cfg.edit_bar and 'supplementation' not in cfg.actions_excluded %}
+        {% for sub_item_name in cfg.supplementation_item_names %}
+            {% set current_sub = item_name.rsplit('/', 1)[-1] %}
+            {% if not current_sub in cfg.supplementation_item_names %}
+                {% set supp_name = '%s/%s' % (item_name, sub_item_name) %}
+                {% if theme.storage.has_item(supp_name) or theme.user.may.write(supp_name) %}
+                    <li>
+                        <a class="nbsupplementation" href="{{ href(supp_name)|e }}" rel="nofollow">{{ _(sub_item_name) }}</a>
+                    </li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
     {% endif %}
 
     {% if 'ActionsMenu' in cfg.edit_bar %}
         <li>
-            <form class="actionsmenu" method="GET" action="{{ href(theme.item_name)|e }}">
+            <form class="actionsmenu" method="GET" action="{{ url_for('frontend.dispatch')|e }}">
                 <div>
-                    <label>{{ _('More actions') }}</label>
-                    <select name="do"
+                    <label>{{ _('More Actions:') }}</label>
+                    <select name="endpoint"
                         onchange="if ((this.selectedIndex != 0) &&
                                       (this.options[this.selectedIndex].disabled == false)) {
                                 this.form.submit();
                             }
                             this.selectedIndex = 0;">
-                        {% for do, disabled, title in theme.actions_menu_options %}
-                            <option value="{{ do }}" {% if disabled %}disabled class="disabled"{% endif %}> {{ title }}</option>
+                        {% for title, disabled, endpoint in theme.actions_menu_options(item_name) %}
+                            <option value="{{ endpoint }}"{% if disabled %} disabled class="disabled"{% endif %}>{{ title }}</option>
                         {% endfor %}
                     </select>
-                    <input type="submit" value="{{ _('Do') }}" />
+                    <input type="submit" value="{{ _('Do') }}" /> {# XXX current js relies in this being first input elem! #}
+                    <input type="hidden" name="item_name" value="{{ item_name }}" />
                     {% if rev %}
                         <input type="hidden" name="rev" value="{{ rev.revno }}" />
                     {% endif %}
@@ -97,8 +98,5 @@
             </form>
         </li>
     {% endif %}
-
-{% endif %}
-
 </ul>
 

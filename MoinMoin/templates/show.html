@@ -21,69 +21,12 @@
     {% endif %}
 {% endblock %}
 
-{% block history %}
-    {% if log %}
-    <hr>History:
-        <form action="" method="GET">
-        <div id="page-history">
-        <input type="hidden" name="do" value="diff" />
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>#</th>
-                <th>Date</th>
-                <th>Size</th>
-                <th><input type="submit" value="Diff" /></th>
-                <th>Editor</th>
-                <th>MimeType</th>
-                <th>Comment</th>
-                <th colspan="5">Actions</th>
-            </tr>
-            {% for entry in log %}
-            <tr>
-                <td>{{ entry.name|e }}</td>
-                <td>{{ entry.rev_no }}</td>
-                <td>{{ entry.mtime }}</td>
-                <td>{{ entry.size }}</td>
-                <td>
-                    <input type="radio" name="rev1" value="{{ entry.rev_no }}" />
-                    <input type="radio" name="rev2" value="{{ entry.rev_no }}" />
-                </td>
-                <td>{{ entry.editor }}</td>
-                <td>{{ entry.mimetype|e }}</td>
-                <td>{{ entry.comment|e }}</td>
-                <td><a href="{{ href(entry.name, rev=entry.rev_no)|e }}">{{ _('show') }}</a></td>
-                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='get')|e }}">{{ _('get') }}</a></td>
-                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='highlight')|e }}">{{_('highlight') }}</a></td>
-                {% if entry.rev_no == last_rev_no %}
-                <td>current revision</td>
-                {% else %}
-                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='revert')|e }}">{{ _('revert') }}</a></td>
-                {% endif %}
-                <td><a href="{{ href(entry.name, rev=entry.rev_no, do='destroy')|e }}">{{ _('destroy') }}</a></td>
-            </tr>
-            {% endfor %}
-        </table>
-        </div>
-        </form>
-    {% endif %}
-{% endblock %}
-
-{% block index %}
-    {% if index %}
-        <hr>Index of sub items:
-        {% for fullname, relname, mimetype in index %}
-            <a href="{{ href(fullname)|e }}">{{ relname|e }} ({{ mimetype|e }})</a>
-        {% endfor %}
-    {% endif %}
-{% endblock %}
-
 {% block extra_content %}
     {% if rev %}
     <div id="pagebottom">
         <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
             {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
-            {{ theme.item_name }} ({{ _("edited %s by %s" % (user.getFormattedDateTime(rev.timestamp), rev|user_format )) }})
+            {{ item_name }} ({{ _("edited %s by %s" % (user.getFormattedDateTime(rev.timestamp), rev|user_format )) }})
         </p>
     </div>
     {% endif %}

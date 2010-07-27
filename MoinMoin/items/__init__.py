@@ -22,7 +22,7 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from werkzeug import http_date, quote_etag
+from flask import send_file, render_template
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
@@ -133,7 +133,6 @@ class Item(object):
 
     def __init__(self, request, name, rev=None, mimetype=None, formatter=None):
         self.request = request
-        self.env = request.theme.env
         self.name = name
         self.rev = rev
         self.mimetype = mimetype
@@ -195,26 +194,22 @@ class Item(object):
 
     def do_modify(self, template_name):
         # XXX think about and add item template support
-        template = self.env.get_template('modify_binary.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rows_meta=ROWS_META, cols=COLS,
-                                  revno=0,
-                                  meta_text=self.meta_dict_to_text(self.meta),
-                                  help=self.modify_help,
-                                 )
-        return content
+        return render_template('modify_binary.html',
+                               item_name=self.name,
+                               rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               meta_text=self.meta_dict_to_text(self.meta),
+                               help=self.modify_help,
+                              )
 
     def _action_query(self, action, label=None, target=None, revno=None):
-        template = self.env.get_template('action_query.html')
-        content = template.render(gettext=self.request.getText,
-                                  action=action,
-                                  label=label or action,
-                                  item_name=self.name,
-                                  revno=revno,
-                                  target=target,
-                                 )
-        return content
+        return render_template('action_query.html',
+                               action=action,
+                               label=label or action,
+                               item_name=self.name,
+                               revno=revno,
+                               target=target,
+                              )
 
     def do_rename(self):
         return self._action_query('rename', target=self.name)
@@ -425,14 +420,7 @@ class Item(object):
                  if u'/' not in relname]
         return index
 
-    def do_index(self):
-        template = self.env.get_template('index.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rev=self.rev,
-                                  index=self.flat_index(),
-                                 )
-        return content
+    index_template = 'index.html'
 
 
 class NonExistent(Item):
@@ -498,11 +486,10 @@ class NonExistent(Item):
 
     def do_show(self):
         self.request.status_code = 404
-        template = self.env.get_template('show_type_selection.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  mimetype_groups=self.mimetype_groups, )
-        return content
+        return render_template('show_type_selection.html',
+                               item_name=self.name,
+                               mimetype_groups=self.mimetype_groups,
+                              )
 
     def do_get(self):
         self.request.status_code = 404
@@ -531,22 +518,6 @@ There is no help, you're doomed!
         else:
             return ''
     data = property(fget=get_data)
-
-    def _revlog(self, item, rev_nos):
-        log = []
-        for rev_no in reversed(rev_nos):
-            r = item.get_revision(rev_no)
-            log.append(dict(
-                name=r[NAME],
-                rev_no=rev_no,
-                size=r.size,
-                mtime=self.request.user.getFormattedDateTime(float(r.timestamp)),
-                editor=user.get_printable_editor(self.request,
-                       r.get(EDIT_LOG_USERID), r.get(EDIT_LOG_ADDR), r.get(EDIT_LOG_HOSTNAME)) or _("N/A"),
-                comment=r.get(EDIT_LOG_COMMENT, ''),
-                mimetype=r.get(MIMETYPE, ''),
-            ))
-        return log
 
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
@@ -585,11 +556,10 @@ There is no help, you're doomed!
         if item is None:
             # it is the dummy item -> this is a new and empty item
             show_templates = True
-            rev_nos = log = []
+            rev_nos = []
         else:
             show_templates = False
             rev_nos = item.list_revisions()
-            log = self._revlog(item, rev_nos)
         if show_templates:
             item_templates = self.get_templates(self.mimetype)
             html_template = 'show_template_selection.html'
@@ -602,20 +572,19 @@ There is no help, you're doomed!
             meta_rendered=self._render_meta()
             index = self.flat_index()
 
-        template = self.env.get_template(html_template)
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rev=self.rev,
-                                  log=log,
-                                  mimetype=self.mimetype,
-                                  templates=item_templates,
-                                  first_rev_no=rev_nos and rev_nos[0],
-                                  last_rev_no=rev_nos and rev_nos[-1],
-                                  data_rendered=data_rendered,
-                                  meta_rendered=meta_rendered,
-                                  index=index,
-                                 )
-        return content
+        return render_template(html_template,
+                               item_name=self.name,
+                               rev=self.rev,
+                               mimetype=self.mimetype,
+                               templates=item_templates,
+                               first_rev_no=rev_nos and rev_nos[0],
+                               last_rev_no=rev_nos and rev_nos[-1],
+                               data_rendered=data_rendered,
+                               meta_rendered=meta_rendered,
+                               index=index,
+                              )
+
+    diff_template = 'diff.html'
 
     def _render_data_diff(self, oldrev, newrev):
         hash_name = self.request.cfg.hash_algorithm
@@ -624,41 +593,25 @@ There is no help, you're doomed!
         else:
             return "The items have different data."
 
-    def do_diff(self, oldrev, newrev):
-        item = self.rev.item
-        rev_nos = item.list_revisions()
-        log = self._revlog(item, rev_nos)
-
-        template = self.env.get_template('diff.html')
-        content = template.render(gettext=self.request.getText,
-                                  rev=self.rev,
-                                  log=log,
-                                  first_rev_no=rev_nos[0],
-                                  last_rev_no=rev_nos[-1],
-                                  index=self.flat_index(),
-                                  oldrev=oldrev,
-                                  newrev=newrev,
-                                  data_diff_rendered=self._render_data_diff(oldrev, newrev),
-                                 )
-        return content
-
     def do_get(self):
         request = self.request
         hash = self.rev.get(request.cfg.hash_algorithm)
         if_none_match = request.if_none_match
         if if_none_match and hash in if_none_match:
             request.status_code = 304
+            return
         else:
-            self._do_get_modified(hash)
+            return self._do_get_modified(hash)
 
     def _do_get_modified(self, hash):
         request = self.request
         from_cache = request.values.get('from_cache')
         from_tar = request.values.get('from_tar')
-        self._do_get(hash, from_cache, from_tar)
+        return self._do_get(hash, from_cache, from_tar)
 
     def _do_get(self, hash, from_cache=None, from_tar=None):
         request = self.request
+        filename = None
         if from_cache:
             content_disposition = None
             sendcache = SendCache(request, from_cache)
@@ -693,24 +646,11 @@ There is no help, you're doomed!
             content_length = rev.size
             file_to_send = rev
 
-        self._send(content_type, content_length, hash, file_to_send,
-                   content_disposition=content_disposition)
-
-    def _send(self, content_type, content_length, hash, file_to_send,
-              filename=None, content_disposition=None):
-        request = self.request
-        if hash:
-            # if item has no hash metadata, hash is None
-            request.headers.add('Cache-Control', 'public')
-            request.headers.add('Etag', quote_etag(hash))
-        if content_disposition is not None:
-            request.headers.add('Content-Disposition', content_disposition)
-
-        request.status_code = 200
-        request.content_type = content_type
-        request.content_length = content_length
-        request.send_file(file_to_send)
-
+        # we have hash for etag, but werkzeug creates its own one
+        # TODO: handle content_disposition is not None
+        return send_file(file_to_send, mimetype=content_type,
+                         as_attachment=False, attachment_filename=filename,
+                         conditional=True)
 
 
 class RenderableBinary(Binary):
@@ -787,7 +727,7 @@ class ApplicationZip(Application):
         t.add_column(key="fname", label=_("File Name"))
         for row in rows:
             t.add_row(**row)
-        return t.render(self.env)
+        return t.render()
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
@@ -886,7 +826,7 @@ class ApplicationXTar(TarMixin, Application):
         t.add_column(key="fname", label=_("File Name"))
         for row in rows:
             t.add_row(**row)
-        return t.render(self.env)
+        return t.render()
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
@@ -987,16 +927,14 @@ class SvgDraw(TarMixin, Image):
             'url_prefix_static': request.cfg.url_prefix_static,
         }
 
-        template = self.env.get_template("modify_svg-edit.html")
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rows_meta=ROWS_META, cols=COLS,
-                                  revno=0,
-                                  meta_text=self.meta_dict_to_text(self.meta),
-                                  help=self.modify_help,
-                                  t=svg_params,
-                                 )
-        return content
+        return render_template("modify_svg-edit.html",
+                               item_name=self.name,
+                               rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               meta_text=self.meta_dict_to_text(self.meta),
+                               help=self.modify_help,
+                               t=svg_params,
+                              )
 
     def _render_data(self):
         request = self.request
@@ -1240,21 +1178,18 @@ class Text(Binary):
         else:
             data_text = self.data_storage_to_internal(self.data)
         meta_text = self.meta_dict_to_text(self.meta)
-        template = self.env.get_template('modify_text.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
-                                  revno=0,
-                                  data_text=data_text,
-                                  meta_text=meta_text,
-                                  lang='en', direction='ltr',
-                                  help=self.modify_help,
-                                 )
-        return content
+        return render_template('modify_text.html',
+                               item_name=self.name,
+                               rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               data_text=data_text,
+                               meta_text=meta_text,
+                               lang='en', direction='ltr',
+                               help=self.modify_help,
+                              )
 
     def do_highlight(self):
         request = self.request
-        template = self.env.get_template('highlight.html')
         data_text = self.data_storage_to_internal(self.data)
         Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", 'highlight')
         parser = Parser(data_text, request, format_args=self.mimetype)
@@ -1265,12 +1200,12 @@ class Text(Binary):
         request.redirect()
         del buffer
 
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  data_text=content,
-                                  lang='en', direction='ltr',
-                                  help=self.modify_help,
-                                 )
+        return render_template('highlight.html',
+                               item_name=self.name,
+                               data_text=content,
+                               lang='en', direction='ltr',
+                               help=self.modify_help,
+                              )
         return content
 
 
@@ -1285,18 +1220,16 @@ class HTML(Text):
         else:
             data_text = self.data_storage_to_internal(self.data)
         meta_text = self.meta_dict_to_text(self.meta)
-        template = self.env.get_template('modify_text_html.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
-                                  revno=0,
-                                  data_text=data_text,
-                                  meta_text=meta_text,
-                                  lang='en', direction='ltr',
-                                  help=self.modify_help,
-                                  url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
-                                 )
-        return content
+        return render_template('modify_text_html.html',
+                               item_name=self.name,
+                               rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               data_text=data_text,
+                               meta_text=meta_text,
+                               lang='en', direction='ltr',
+                               help=self.modify_help,
+                               url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
+                              )
 
 
 
@@ -1334,18 +1267,16 @@ class SafeHTML(Text):
         else:
             data_text = self.data_storage_to_internal(self.data)
         meta_text = self.meta_dict_to_text(self.meta)
-        template = self.env.get_template('modify_text_html.html')
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
-                                  revno=0,
-                                  data_text=data_text,
-                                  meta_text=meta_text,
-                                  lang='en', direction='ltr',
-                                  help=self.modify_help,
-                                  url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
-                                 )
-        return content
+        return render_template('modify_text_html.html',
+                               item_name=self.name,
+                               rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               data_text=data_text,
+                               meta_text=meta_text,
+                               lang='en', direction='ltr',
+                               help=self.modify_help,
+                               url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
+                              )
 
 class DocBook(Text):
     """ DocBook Document """
@@ -1416,16 +1347,14 @@ class TWikiDraw(TarMixin, Image):
             'url': self.url(),
             'help_url': self.modify_help,
         }
-        template = self.env.get_template("modify_twikidraw.html")
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rows_meta=ROWS_META, cols=COLS,
-                                  revno=0,
-                                  meta_text=self.meta_dict_to_text(self.meta),
-                                  help=self.modify_help,
-                                  t=twd_params,
-                                 )
-        return content
+        return render_template("modify_twikidraw.html",
+                               item_name=self.name,
+                               rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               meta_text=self.meta_dict_to_text(self.meta),
+                               help=self.modify_help,
+                               t=twd_params,
+                              )
 
     def _render_data(self):
         request = self.request
@@ -1502,16 +1431,14 @@ class AnyWikiDraw(TarMixin, Image):
             'url_prefix_static': request.cfg.url_prefix_static,
         }
 
-        template = self.env.get_template("modify_anywikidraw.html")
-        content = template.render(gettext=self.request.getText,
-                                  item_name=self.name,
-                                  rows_meta=ROWS_META, cols=COLS,
-                                  revno=0,
-                                  meta_text=self.meta_dict_to_text(self.meta),
-                                  help=self.modify_help,
-                                  t=awd_params,
-                                 )
-        return content
+        return render_template("modify_anywikidraw.html",
+                               item_name=self.name,
+                               rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               meta_text=self.meta_dict_to_text(self.meta),
+                               help=self.modify_help,
+                               t=awd_params,
+                              )
 
     def _render_data(self):
         request = self.request

@@ -657,14 +657,6 @@ class Page(object):
                 if request.cfg.openid_server_enable_user:
                     pi['openid.user'] = args
 
-            elif verb == "pragma":
-                try:
-                    key, val = args.split(' ', 1)
-                except (ValueError, TypeError):
-                    pass
-                else:
-                    request.setPragma(key, val)
-
         return pi
 
     def send_page(self, **keywords):

@@ -7,6 +7,7 @@
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
+from flask import render_template
 
 from MoinMoin import user, wikiutil
 from MoinMoin.security.textcha import TextCha
@@ -109,14 +110,13 @@ def execute(item_name, request):
             textcha = textcha and textcha.render()
         else:
             textcha = None
-        content = request.theme.render('newaccount.html',
-                                        title=title,
-                                        textcha=textcha,
-                                        ticket=wikiutil.createTicket(request),
-                                        )
-    elif request.method == 'POST':
+        return render_template('newaccount.html',
+                               title=title,
+                               textcha=textcha,
+                               ticket=wikiutil.createTicket(request),
+                              )
+    if request.method == 'POST':
         if 'create' in request.form:
             request.theme.add_msg(_create_user(request), "dialog")
-        content = request.theme.render('content.html', title=title)
-    return content
+        return render_template('content.html', title=title)
 

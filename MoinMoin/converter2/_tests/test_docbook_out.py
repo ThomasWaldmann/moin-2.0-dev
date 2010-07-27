@@ -61,7 +61,8 @@ class TestConverter(Base):
 
     def test_base(self):
         data = [
-            ('<page><body><p>Test</p></body></page>',
+           ('<page><body><p>Test</p></body></page>',
+            # <article><para>Test</para></article>
               '/article[para="Test"]'),
         ]
         for i in data:
@@ -79,24 +80,31 @@ class TestConverter(Base):
         data = [
             # Simple unordered list
             ('<page><body><list page:item-label-generate="unordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
+             # <article><itemizedlist><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></itemizedlist></article>
              '/article/itemizedlist[listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
             # Simple ordered list (use default arabic numeration)
             ('<page><body><list page:item-label-generate="ordered"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
+             # <article><orderedlist numeration="arabic"><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></orderedlist></article>
              '/article/orderedlist[@numeration="arabic"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
             # Simple ordered list with upper-alpha numeration
             ('<page><body><list page:item-label-generate="ordered" page:list-style-type="upper-alpha"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
+             # <article><orderedlist numeration="upperalpha"><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></orderedlist></article>
              '/article/orderedlist[@numeration="upperalpha"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
             # Simple ordered list with lower-alpha numeration
             ('<page><body><list page:item-label-generate="ordered" page:list-style-type="lower-alpha"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
+             # <article><orderedlist numeration="loweralpha"><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></orderedlist></article>
              '/article/orderedlist[@numeration="loweralpha"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
             # Simple ordered list with upper-roman numeration
             ('<page><body><list page:item-label-generate="ordered" page:list-style-type="upper-roman"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
+             # <article><orderedlist numeration="upperroman"><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></orderedlist></article>
              '/article/orderedlist[@numeration="upperroman"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
             # Simple ordered list with lower-roman numeration
             ('<page><body><list page:item-label-generate="ordered" page:list-style-type="lower-roman"><list-item><list-item-body>Item 1</list-item-body></list-item><list-item><list-item-body>Item 2</list-item-body></list-item></list></body></page>',
+             # <article><orderedlist numeration="lowerroman"><listitem><para>Item 1</para></listitem><listitem><para>Item 2</para></listitem></orderedlist></article>
              '/article/orderedlist[@numeration="lowerroman"][listitem[1]/para[text()="Item 1"]][listitem[2]/para[text()="Item 2"]]'),
             # Simple definition list
             ('<page><body><list><list-item><list-item-label>First Term</list-item-label><list-item-body>First Definition</list-item-body></list-item><list-item><list-item-label>Second Term</list-item-label><list-item-body>Second Definition</list-item-body></list-item></list></body></page>',
+             # <article><variablelist><varlistentry><term>First Term</term><listitem><para>First Definition</para></listitem></varlistentry><varlistentry><term>Second term</term><listitem><para>Second Definition</para></listitem></varlistentry></variablelist></article>
              '/article/variablelist[varlistentry[1][./term[text()="First Term"]][./listitem/para[text()="First Definition"]]][varlistentry[2][./term[text()="Second Term"]][./listitem/para[text()="Second Definition"]]]')
         ]
 
@@ -106,10 +114,13 @@ class TestConverter(Base):
     def test_table(self):
         data = [
             ('<page><body><table><table-header><table-row><table-cell>Header</table-cell></table-row></table-header><table-footer><table-row><table-cell>Footer</table-cell></table-row></table-footer><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></body></page>',
+            # <article><table><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table>
                 '/article/table[thead/tr[td="Header"]][tfoot/tr[td="Footer"]][tbody/tr[td="Cell"]]'),
             ('<page><body><table><table-body><table-row><table-cell page:number-columns-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>',
+             # <article><table><tbody><tr><td colspan="2">Cell</td></tr></tbody></table></article>
                 '/article/table/tbody/tr/td[@colspan="2"][text()="Cell"]'),
             ('<page><body><table><table-body><table-row><table-cell page:number-rows-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>',
+            # <article><table><tbody><tr><td rowspan="2">Cell</td></tr></tbody></table></article>
                 '/article/table/tbody/tr/td[@rowspan="2"][text()="Cell"]'),
         ]
         for i in data:
@@ -119,27 +130,35 @@ class TestConverter(Base):
         data = [
             # Footnote conversion
             ('<page><body><p>Text Para<note page:note-class="footnote"><note-body>Text Footnote</note-body></note></p></body></page>',
+             # <article><para>Text Para<footnote>Text Footnote</footnote></para></article>
              '/article/para[text()="Text Para"]/footnote[para="Text Footnote"]'),
             # Link conversion
             ('<page><body><p><a xlink:href="uri:test" xlink:title="title">link</a></p></body></page>',
+              # <article><para><link xlink:href="uri:test" xlink:title="title">link</link></para></article>
               '/article/para/link[@xlink:href="uri:test"][@xlink:title="title"][text()="link"]'),
             # Blockcode conversion into <screen> with CDATA
             ('<page><body><blockcode>Text</blockcode></body></page>',
+              # <article><screen><![CDATA[Text]]></screen></article>
              '/article[screen="<![CDATA[Text]]>"]'),
             # SPAN --> PHRASE
             ('<page><body><p><span>Text</span></p></body></page>',
+              # <article><para><phrase>Text</phrase></para></article>
              '/article/para[phrase="Text"]'),
             # SPAN baseline-shift=sub --> subscript
             ('<page><body><p>sub<span page:baseline-shift="sub">sub</span>script</p></body></page>',
+             # <article><para>script<subscript>sub</subscript></para></article>
              '/article/para[text()="script"][subscript="sub"]'),
             # SPAN baseline-shift=super --> superscript
             ('<page><body><p>sub<span page:baseline-shift="super">super</span>script</p></body></page>',
+             # <article><para>script</para><superscript>super</superscript></article>
              '/article/para[text()="script"][superscript="super"]'),
             # STRONG --> EMPHASIS role='strong'
             ('<page><body><p>text<strong>strong</strong></p></body></page>',
+             # <article><para>text<emphasis role="strong">strong</emphasis></para>
              '/article/para[text()="text"]/emphasis[@role="strong"][text()="strong"]'),
             # EMPHASIS --> EMPHASIS
             ('<page><body><p>text<emphasis>emphasis</emphasis></p></body></page>',
+             # <article><para>text<emphasis>emphasis</emphasis></para>
              '/article/para[text()="text"][emphasis="emphasis"]'),
         ]
         for i in data:

@@ -253,17 +253,17 @@ class MoinAuth(BaseAuth):
     def login_hint(self, request):
         _ = request.getText
         #if request.cfg.openidrp_registration_url:
-        #    userprefslink = request.cfg.openidrp_registration_url
+        #    register_url = request.cfg.openidrp_registration_url
         #else:
-        userprefslink = request.page.url(request, querystr={'do': 'newaccount'})
-        sendmypasswordlink = request.page.url(request, querystr={'do': 'recoverpass'})
+        register_url = request.href('+register')
+        recover_url = request.href('+recoverpass')
 
         msg = ''
         #if request.cfg.openidrp_allow_registration:
-        msg = _('If you do not have an account, <a href="%(userprefslink)s">you can create one now</a>. ') % {
-              'userprefslink': userprefslink}
-        msg += _('<a href="%(sendmypasswordlink)s">Forgot your password?</a>') % {
-               'sendmypasswordlink': sendmypasswordlink}
+        msg = _('If you do not have an account, <a href="%(register_url)s">you can create one now</a>. ') % {
+              'register_url': register_url}
+        msg += _('<a href="%(recover_url)s">Forgot your password?</a>') % {
+               'recover_url': recover_url}
         return msg
 
         #return _('If you do not have an account, <a href="%(userprefslink)s">you can create one now</a>. '
