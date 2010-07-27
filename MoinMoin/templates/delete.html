@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>{{ _("Delete '%(item_name)s'") % dict(item_name=item.name) }}</h1>
+<form action="{{ url_for('frontend.delete_item', item_name=item.name) }}" method="POST" enctype="multipart/form-data">
+<fieldset style="border: none; padding: 0;">
+<label for="comment">{{ _("Comment") }}</label>    
+<input type="text" name="comment" size="80" maxlength="200" value="" />
+<br>
+<input class="button" type="submit" name="button_ok" value="{{ _('Delete') }}" />
+<input class="button" type="submit" name="button_cancel" value="{{ _('Cancel') }}" />
+</fieldset>
+</form>
+{% endblock %}
+
