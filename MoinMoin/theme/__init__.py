@@ -132,12 +132,30 @@ class ThemeBase(object):
         self.meta_description = ''
 
     def item_exists(self, item_name):
+        """
+        Get a boolean indicating whether an item_name exists or not.
+        
+        @param item_name: string
+        @rtype: boolean
+        """
         return self.storage.has_item(item_name)
 
     def item_readable(self, item_name):
+        """
+        Get a boolean indicating whether the user in request can read in item_name.
+        
+        @param item_name: string
+        @rtype: boolean
+        """
         return self.request.user.may.read(item_name)
 
     def item_writable(self, item_name):
+        """
+        Get a boolean indicating whether the user in request can write in item_name.
+        
+        @param item_name: string
+        @rtype: boolean
+        """
         return self.request.user.may.write(item_name)
 
     def translated_item_name(self, item_en):
@@ -264,7 +282,7 @@ class ThemeBase(object):
         if wikiutil.is_URL(item_name):
             if not title:
                 title = item_name
-            url = self.request.href(item_name)
+            url = item_name  #no need to use href, item_name is already an url
             return url, title, wiki_local
 
         # remove wiki: url prefix
@@ -436,12 +454,11 @@ class ThemeBase(object):
 
     # Properties ##############################################################
 
-    def login_url(self, item_name):
+    def login_url(self):
         """
         Return URL usable for user login
         """
         request = self.request
-        href = request.href
         url = ''
         if request.cfg.auth_login_inputs == ['special_no_input']:
             url = url_for('frontend.login', login=1)
