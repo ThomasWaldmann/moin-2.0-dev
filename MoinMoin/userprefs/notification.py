@@ -11,7 +11,7 @@
 from MoinMoin import events, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
-
+from flask import render_template
 
 def get_notify_info(request):
     _ = request.getText
@@ -121,7 +121,7 @@ class Settings(UserPrefBase):
 
     def create_form(self):
         """ Create the complete HTML form code. """
-        return self.request.theme.render('notification.html',
+        return render_template('notification.html',
                                           notify=get_notify_info(self.request),
                                           ticket=wikiutil.createTicket(self.request))
 
