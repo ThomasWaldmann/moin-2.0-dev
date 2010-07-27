@@ -11,7 +11,7 @@
 from MoinMoin import user, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
-
+from flask import render_template
 
 class Settings(UserPrefBase):
     def __init__(self, request):
@@ -72,5 +72,5 @@ class Settings(UserPrefBase):
 
     def create_form(self, create_only=False, recover_only=False):
         """ Create the complete HTML form code. """
-        return self.request.theme.render('changepass.html',
+        return render_template('changepass.html',
                                           ticket=wikiutil.createTicket(self.request))

@@ -526,11 +526,7 @@ class ThemeBase(object):
         # TODO: get rid of this
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
-        self.request.write(self.render('show.html'))
-
-    def render(self, name='layout.html', **context):
-        # TODO: get rid of all calls to this, call render_template of flask directly
-        return render_template(name, **context)
+        raise DeprecationWarning("Using send_title is deprecated! Use return_template of flask directly.")
 
 
 class ThemeNotFound(Exception):
