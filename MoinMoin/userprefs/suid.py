@@ -13,6 +13,7 @@ from MoinMoin import user, util, wikiutil
 from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
 from MoinMoin.action.UserBrowser import get_account_infos
+from flask import render_template
 
 class Settings(UserPrefBase):
 
@@ -63,7 +64,7 @@ class Settings(UserPrefBase):
         """ Create the complete HTML form code. """
         user_accounts=get_account_infos(self.request)
         if len(user_accounts) > 1:
-            return self.request.theme.render('suid.html',
+            return render_template('suid.html',
                                              user_accounts=user_accounts,
                                              ticket=wikiutil.createTicket(self.request))
         return "You are the only user."

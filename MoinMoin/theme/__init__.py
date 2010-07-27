@@ -132,12 +132,30 @@ class ThemeBase(object):
         self.meta_description = ''
 
     def item_exists(self, item_name):
+        """
+        Get a boolean indicating whether an item_name exists or not.
+        
+        @param item_name: string
+        @rtype: boolean
+        """
         return self.storage.has_item(item_name)
 
     def item_readable(self, item_name):
+        """
+        Get a boolean indicating whether the user in request can read in item_name.
+        
+        @param item_name: string
+        @rtype: boolean
+        """
         return self.request.user.may.read(item_name)
 
     def item_writable(self, item_name):
+        """
+        Get a boolean indicating whether the user in request can write in item_name.
+        
+        @param item_name: string
+        @rtype: boolean
+        """
         return self.request.user.may.write(item_name)
 
     def translated_item_name(self, item_en):
@@ -150,11 +168,11 @@ class ThemeBase(object):
         """
         request = self.request
         item_lang_request = request.getText(item_en)
-        if self.storage.has_item(item_lang_request):
+        if self.item_exists(item_lang_request):
             return item_lang_request
 
         item_lang_default = i18n.getText(item_en, request, self.cfg.language_default)
-        if self.storage.has_item(item_lang_default):
+        if self.item_exists(item_lang_default):
             return item_lang_default
         return item_en
 
@@ -169,7 +187,7 @@ class ThemeBase(object):
         current_item = ''
         for segment in item_name.split('/'):
             current_item += segment
-            breadcrumbs.append((segment, current_item, self.storage.has_item(current_item)))
+            breadcrumbs.append((segment, current_item, self.item_exists(current_item)))
             current_item += '/'
         return breadcrumbs
 
@@ -191,7 +209,7 @@ class ThemeBase(object):
                     wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
                     href = wikiutil.join_wiki(wiki_base_url, item_name)
                     if wiki_name in [request.cfg.interwikiname, 'Self', ]:
-                        exists = self.storage.has_item(item_name)
+                        exists = self.item_exists(item_name)
                         wiki_name = ''  # means "this wiki" for the theme code
                     else:
                         exists = True  # we can't detect existance of remote items
@@ -200,8 +218,10 @@ class ThemeBase(object):
 
     def userhome(self):
         """
-        Return a tuple (url, aliasname, title, exists) that is used by theme
-        to render the user homepage link.
+        Assemble arguments used to build user homepage link
+        
+        @rtype: tuple
+        @return: arguments of user homepage link in tuple (wiki_href, aliasname, title, exists)
         """
         user = self.user
         request = self.request
@@ -214,7 +234,7 @@ class ThemeBase(object):
         title = "%s @ %s" % (aliasname, wikiname)
         # link to (interwiki) user homepage
         if wikiname == "Self":
-            exists = self.storage.has_item(itemname)
+            exists = self.item_exists(itemname)
         else:
             # We cannot check if wiki pages exists in remote wikis
             exists = True
@@ -251,28 +271,27 @@ class ThemeBase(object):
         if text.startswith('[[') and text.endswith(']]'):
             text = text[2:-2]
             try:
-                item_name, title = text.split('|', 1)
-                item_name = item_name.strip()
+                target, title = text.split('|', 1)
+                target = target.strip()
                 title = title.strip()
                 localize = 0
             except (ValueError, TypeError):
                 # Just use the text as is.
-                item_name = text.strip()
+                target = text.strip()
         else:
-            item_name = text
+            target = text
 
-        if wikiutil.is_URL(item_name):
+        if wikiutil.is_URL(target):
             if not title:
-                title = item_name
-            url = self.request.href(item_name)
-            return url, title, wiki_local
+                title = target
+            return target, title, wiki_local
 
         # remove wiki: url prefix
-        if item_name.startswith("wiki:"):
-            item_name = item_name[5:]
+        if target.startswith("wiki:"):
+            target = target[5:]
 
         # try handling interwiki links
-        wiki_name, item_name = wikiutil.split_interwiki(item_name)
+        wiki_name, item_name = wikiutil.split_interwiki(target)
         wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
         href = wikiutil.join_wiki(wiki_base_url, item_name)
         if wiki_name not in [request.cfg.interwikiname, 'Self', ]:
@@ -382,29 +401,6 @@ class ThemeBase(object):
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
-    def shouldShowEditbar(self, item_name):
-        """
-        Should we show the editbar?
-
-        Actions should implement this, because only the action knows if
-        the edit bar makes sense. Until it goes into actions, we do the
-        checking here.
-
-        @param page: current page
-        @rtype: bool
-        @return: true if editbar should show
-        """
-        # Show editbar only for existing pages, that the user may read.
-        # If you may not read, you can't edit, so you don't need editbar.
-        if self.item_exists(item_name) and self.item_readable(item_name):
-            form = self.request.form
-            action = self.request.action
-            # Do not show editbar on edit but on save/cancel
-            return not (action == 'modify' and
-                        not form.has_key('button_save') and
-                        not form.has_key('button_cancel'))
-        return False
-
     def parent_page(self, item_name):
         """
         Return name of parent page for the current page
@@ -436,12 +432,14 @@ class ThemeBase(object):
 
     # Properties ##############################################################
 
-    def login_url(self, item_name):
+    def login_url(self):
         """
         Return URL usable for user login
+        
+        @rtype: string
+        @return: url for user login
         """
         request = self.request
-        href = request.href
         url = ''
         if request.cfg.auth_login_inputs == ['special_no_input']:
             url = url_for('frontend.login', login=1)
@@ -526,15 +524,13 @@ class ThemeBase(object):
         # TODO: get rid of this
         if keywords.get('msg', ''):
             raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
-        self.request.write(self.render('show.html'))
-
-    def render(self, name='layout.html', **context):
-        # TODO: get rid of all calls to this, call render_template of flask directly
-        return render_template(name, **context)
+        raise DeprecationWarning("Using send_title is deprecated! Use return_template of flask directly.")
 
 
 class ThemeNotFound(Exception):
-    """ Thrown if the supplied theme could not be found anywhere """
+    """
+    Thrown if the supplied theme could not be found anywhere
+    """
 
 
 def load_theme(request, theme_name=None):
