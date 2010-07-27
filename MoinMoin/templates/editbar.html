@@ -3,7 +3,7 @@
        and theme.shouldShowEditbar(item_name) %}
         <li>
         {% if theme.item_writable %}
-            <a href="{{ href('+modify', item_name)|e }}" rel="nofollow"> {{ _('Modify') }}</a>
+            <a href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" rel="nofollow"> {{ _('Modify') }}</a>
         {% else %}
             {{ _('Immutable Item')}}
         {% endif %}
@@ -12,20 +12,20 @@
 
     {% if 'Download' in cfg.edit_bar and 'get' not in cfg.actions_excluded %}
         <li>
-            <a href="{{ href('+get', item_name)|e }}" rel="nofollow">{{ _('Download') }}</a>
+            <a href="{{ url_for('frontend.get_item', item_name=item_name)|e }}" rel="nofollow">{{ _('Download') }}</a>
         </li>
     {% endif %}
 
     {% if 'History' in cfg.edit_bar and 'history' not in cfg.actions_excluded %}
         <li>
-            <a href="{{ href('+history', item_name)|e }}" rel="nofollow">{{ _('History') }}</a>
+            <a href="{{ url_for('frontend.history', item_name=item_name)|e }}" rel="nofollow">{{ _('History') }}</a>
         </li>
     {% endif %}
 
     {% if 'Quicklink' in cfg.edit_bar and 'quicklink' not in cfg.actions_excluded
        and theme.user.valid %}
         <li>
-            <a class="nbquicklink" href="{{ href('+quicklink', item_name)|e }}" rel="nofollow">
+            <a class="nbquicklink" href="{{ url_for('frontend.quicklink', item_name=item_name)|e }}" rel="nofollow">
             {% if theme.user.isQuickLinkedTo([item_name]) %}
                 {{ _('Remove Link') }}
             {% else %}
@@ -38,7 +38,7 @@
     {% if 'Subscribe' in cfg.edit_bar and 'subscribe' not in cfg.actions_excluded
        and theme.user.valid and (cfg.mail_enabled or cfg.jabber_enabled) %}
         <li>
-            <a class="nbsubscribe" href="{{ href('+subscribe', item_name)|e }}" rel="nofollow">
+            <a class="nbsubscribe" href="{{ url_for('frontend.subscribe', item_name=item_name)|e }}" rel="nofollow">
             {% if theme.user.isSubscribedTo([item_name]) %}
                     {{ _('Unsubscribe') }}
             {% else %}
@@ -56,7 +56,7 @@
 
     {% if 'Index' in cfg.edit_bar and 'index' not in cfg.actions_excluded %}
         <li>
-            <a class="nbindex" href="{{ href('+index', item_name)|e }}" rel="nofollow">{{ _('Index') }}</a>
+            <a class="nbindex" href="{{ url_for('frontend.index', item_name=item_name)|e }}" rel="nofollow">{{ _('Index') }}</a>
         </li>
     {% endif %}
 
@@ -67,7 +67,7 @@
                 {% set supp_name = '%s/%s' % (item_name, sub_item_name) %}
                 {% if theme.storage.has_item(supp_name) or theme.user.may.write(supp_name) %}
                     <li>
-                        <a class="nbsupplementation" href="{{ href(supp_name)|e }}" rel="nofollow">{{ _(sub_item_name) }}</a>
+                        <a class="nbsupplementation" href="{{ url_for('frontend.show_item', item_name=supp_name)|e }}" rel="nofollow">{{ _(sub_item_name) }}</a>
                     </li>
                 {% endif %}
             {% endif %}

@@ -3,7 +3,7 @@
 {% block content %}
     {% if history %}
     <h1>{{ _("History of '%(item_name)s'") % dict(item_name=item_name) }}</h1>
-    <form action="{{ href('+diff', item_name) }}" method="GET">
+    <form action="{{ url_for('frontend.diff', item_name=item_name) }}" method="GET">
         <div id="page-history">
         <table>
             <tr>
@@ -30,15 +30,15 @@
                 <td>{{ rev|user_format }}</td>
                 <td>{{ rev.mimetype|e }}</td>
                 <td>{{ rev.edit_log_comment|e }}</td>
-                <td><a href="{{ href('+show', rev.revno, rev.item.name)|e }}">{{ _('show') }}</a></td>
-                <td><a href="{{ href('+get', rev.revno, rev.item.name)|e }}">{{ _('get') }}</a></td>
-                <td><a href="{{ href('+highlight', rev.revno, rev.item.name)|e }}">{{_('highlight') }}</a></td>
+                <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('show') }}</a></td>
+                <td><a href="{{ url_for('frontend.get_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('get') }}</a></td>
+                <td><a href="{{ url_for('frontend.highlight_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{_('highlight') }}</a></td>
                 {% if rev.revno == last_rev_no %}
                 <td>current revision</td>
                 {% else %}
-                <td><a href="{{ href('+revert', rev.revno, rev.item.name)|e }}">{{ _('revert') }}</a></td>
+                <td><a href="{{ url_for('frontend.revert_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('revert') }}</a></td>
                 {% endif %}
-                <td><a href="{{ href('+destroy', rev.revno, rev.item.name)|e }}">{{ _('destroy') }}</a></td>
+                <td><a href="{{ url_for('frontend.destroy_item', item_name=rev.item.name, rev=rev.revno)|e }}">{{ _('destroy') }}</a></td>
             </tr>
             {% endfor %}
         </table>

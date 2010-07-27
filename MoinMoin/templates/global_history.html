@@ -18,7 +18,7 @@
         <tr>
             <td>{{ rev.timestamp|datetime_format }}</td>
             <td>{{ rev.edit_log_action }}</td>
-            <td><a href="{{ href(rev.item.name)|e }}">{{ rev.item.name|e }}</a>
+            <td><a href="{{ url_for('frontend.show_item', item_name=rev.item.name)|e }}">{{ rev.item.name|e }}</a>
                 {% if rev.item.name != rev.name %} ({{ rev.name|e }}){% endif %}</td>
             <td>{{ rev.revno }}</td>
             <td>{{ rev.mimetype }}</td>
