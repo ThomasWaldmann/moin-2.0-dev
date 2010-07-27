@@ -218,8 +218,10 @@ class ThemeBase(object):
 
     def userhome(self):
         """
-        Return a tuple (url, aliasname, title, exists) that is used by theme
-        to render the user homepage link.
+        Assemble arguments used to build user homepage link
+        
+        @rtype: tuple
+        @return: arguments of user homepage link in tuple (wiki_href, aliasname, title, exists)
         """
         user = self.user
         request = self.request
@@ -433,6 +435,9 @@ class ThemeBase(object):
     def login_url(self):
         """
         Return URL usable for user login
+        
+        @rtype: string
+        @return: url for user login
         """
         request = self.request
         url = ''
@@ -523,7 +528,9 @@ class ThemeBase(object):
 
 
 class ThemeNotFound(Exception):
-    """ Thrown if the supplied theme could not be found anywhere """
+    """
+    Thrown if the supplied theme could not be found anywhere
+    """
 
 
 def load_theme(request, theme_name=None):
