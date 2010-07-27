@@ -295,3 +295,7 @@ app.register_module(frontend)
 
 from MoinMoin.apps.admin import admin
 app.register_module(admin, url_prefix='/+admin')
+
+from MoinMoin.apps.feed import feed
+app.register_module(feed, url_prefix='/+feed')
+

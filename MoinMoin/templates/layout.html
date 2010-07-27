@@ -3,7 +3,7 @@
 {% block layout %}
 <div id="header">
 
-<form id="searchform" method="get" action="{{ href(item_name) }}">
+<form id="searchform" method="get" action="{{ url_for('frontend.search') }}">
     <div>
         <input type="hidden" name="do" value="fullsearch" />
         <input type="hidden" name="context" value="180" />
@@ -27,7 +27,7 @@
 </script>
 
 <div id="logo">
-    <a href="{{ href(translated_item_name(cfg.page_front_page))|e }}">{{ cfg.logo_string }}</a>
+    <a href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page))|e }}">{{ cfg.logo_string }}</a>
 </div>
 
 <div id="username">
@@ -39,7 +39,7 @@
             </a>
             <span class="sep"> | </span>
             {% if 'userprefs' not in cfg.actions_excluded %}
-                <a href="{{ href('+userprefs')|e }}" class="userprefs" rel="nofollow">{{ _('Settings') }}</a>
+                <a href="{{ url_for('frontend.userprefs')|e }}" class="userprefs" rel="nofollow">{{ _('Settings') }}</a>
                 <span class="sep"> | </span>
             {% endif %}
         {% endif %}
@@ -58,7 +58,7 @@
 
     {% if cfg.show_interwiki %}
     <span id="interwiki">
-        <a href="{{ href(translated_item_name(cfg.page_front_page)) }}" rel="nofollow">
+        <a href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page)) }}" rel="nofollow">
             {% if cfg.interwikiname %}
                 {{ cfg.interwikiname }}
             {% else %}
@@ -72,7 +72,7 @@
     <span id="pagelocation">
         <span class="pagepath">
             {% for segment_name, segment_path, exists in theme.location_breadcrumbs(item_name) %}
-                <a href="{{ href(segment_path) }}" {% if not exists %}class="nonexistent"{% endif %}>
+                <a href="{{ url_for('frontend.show_item', item_name=segment_path) }}" {% if not exists %}class="nonexistent"{% endif %}>
                     {{ segment_name|shorten_item_name }}
                 </a>
                 {% if not loop.last %}
@@ -88,7 +88,7 @@
 {% if trail_items %}
     <div id="pagetrail">
     {% for wiki_name, item_name, item_href, exists, err in trail_items %}
-        <a href="{{ href(item_href)|e }}"
+        <a href="{{ url_for('frontend.show_item', item_name=item_href)|e }}"
         {% if wiki_name %}
             title="{{ wiki_name }}"
             class="{% if err %}badinterwiki{% else %}interwiki{% endif %}"
@@ -126,7 +126,7 @@
         {% for msg in theme.msg_list %}
                 <p>{{ msg }}</p>
         {% endfor %}
-        <a href="{{ href(item_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
+        <a href="{{ url_for('frontend.show_item', item_name=item_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
     </div>
 {% endif %}
 

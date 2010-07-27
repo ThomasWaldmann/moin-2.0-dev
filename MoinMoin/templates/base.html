@@ -49,22 +49,22 @@
 
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" />
 
-    <link rel="Search" href="{{ href(translated_item_name('FindPage'))|e }}" />
-    <link rel="Index" href="{{ href(translated_item_name('TitleIndex'))|e }}" />
-    <link rel="Glossary" href="{{ href(translated_item_name('WordIndex'))|e }}" />
-    <link rel="Help" href="{{ href(translated_item_name('HelpOnFormatting'))|e }}" />
-    <link rel="Start" href="{{ href(translated_item_name(cfg.page_front_page))|e }}" />
+    <link rel="Search" href="{{ url_for('frontend.show_item', item_name=translated_item_name('FindPage'))|e }}" />
+    <link rel="Index" href="{{ url_for('frontend.show_item', item_name=translated_item_name('TitleIndex'))|e }}" />
+    <link rel="Glossary" href="{{ url_for('frontend.show_item', item_name=translated_item_name('WordIndex'))|e }}" />
+    <link rel="Help" href="{{ url_for('frontend.show_item', item_name=translated_item_name('HelpOnFormatting'))|e }}" />
+    <link rel="Start" href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page))|e }}" />
     {% set parent_page = theme.parent_page(item_name) %}
     {% if parent_page %}
-        <link rel="Up" href="{{ href(parent_page)|e }}" />
+        <link rel="Up" href="{{ url_for('frontend.show_item', item_name=parent_page)|e }}" />
     {% endif %}
 
     {# universal edit button support #}
     {% if theme.item_writable and 'modify' not in cfg.actions_excluded %}
-        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ href('+modify', item_name)|e }}" />
+        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" />
     {% endif %}
 
-    <link rel="alternate" title="{{ item_name|e }} changes" href="{{ href('+feed', 'atom', item_name)|e }}" type="application/atom+xml" />
+    <link rel="alternate" title="{{ item_name|e }} changes" href="{{ url_for('feed.atom', item_name=item_name)|e }}" type="application/atom+xml" />
 
     {% if html_head %}
         {{ html_head }}

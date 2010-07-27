@@ -38,6 +38,7 @@ Disallow: /+subscribe/
 Disallow: /+backlinks/
 Disallow: /+register
 Disallow: /+recoverpass
+Disallow: /+userprefs
 Disallow: /+login
 Disallow: /+logout
 Disallow: /+diffsince/
@@ -65,6 +66,13 @@ def redirect_show_item(item_name):
 def get_item(item_name, rev):
     item = Item.create(g.context, item_name, rev_no=rev)
     return item.do_get()
+
+
+@frontend.route('/+highlight/<int:rev>/<itemname:item_name>')
+@frontend.route('/+highlight/<itemname:item_name>', defaults=dict(rev=-1))
+def highlight_item(item_name, rev):
+    item = Item.create(g.context, item_name, rev_no=rev)
+    return item.do_highlight()
 
 
 @frontend.route('/+modify/<itemname:item_name>', methods=['GET', 'POST'])
@@ -264,6 +272,16 @@ def register():
 def recoverpass():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
     item_name = 'RecoverPass' # XXX
+    if request.method == 'GET':
+        return "NotImplemented"
+    if request.method == 'POST':
+        return "NotImplemented"
+
+
+@frontend.route('/+userprefs', methods=['GET', 'POST'])
+def userprefs():
+    # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    item_name = 'UserPrefs' # XXX
     if request.method == 'GET':
         return "NotImplemented"
     if request.method == 'POST':
