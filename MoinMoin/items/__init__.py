@@ -10,6 +10,7 @@
                 2009 MoinMoin:ReimarBauer,
                 2009 MoinMoin:ChristopherDenter,
                 2009 MoinMoin:BastianBlank,
+                2010 MoinMoin:ValentinJaniaut,
                 2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
