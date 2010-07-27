@@ -11,6 +11,8 @@ from __future__ import absolute_import
 
 from emeraldtree import ElementTree as ET
 
+from MoinMoin import log
+logging = log.getLogger(__name__)
 from MoinMoin.util.tree import html, moin_page, xlink, docbook
 
 class Converter(object):
@@ -20,6 +22,8 @@ class Converter(object):
     namespaces_visit = {
         moin_page: 'moinpage'
     }
+
+    unsupported_tags = set(['separator', ])
 
     @classmethod
     def _factory(cls):
@@ -92,12 +96,17 @@ class Converter(object):
         We will choose the most appropriate procedure to convert
         the element according to his name
         """
+        # Check that the tag is supported
+        if element.tag.name in self.unsupported_tags:
+            logging.warning("Unsupported tag : %s" % element.tag.name)
+            return self.do_children(element)
         method_name = 'visit_moinpage_' + element.tag.name.replace('-', '_')
         method = getattr(self, method_name, None)
         if method:
             return method(element)
 
         # Otherwise we process the children of the unknown element
+        logging.warning("Unknown tag : %s" % element.tag.name)
         return self.do_children(element)
 
     def visit_moinpage_a(self, element):
