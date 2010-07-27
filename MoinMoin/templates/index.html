@@ -1,15 +1,20 @@
-{% extends "show.html" %}
+{% extends "layout.html" %}
 
-{% block headline %}
-<h1>Index{% if item_name %} of sub items of {{ item_name|e }}{% endif %}</h1>
-{% endblock %}
-
-{% block index %}
+{% block item %}
+    <h1>
+        {% if item.name %}
+        Index of sub items of '{{ item.name|e }}'
+        {% else %}
+        Global Index
+        {% endif %}
+    </h1>
+    {% set index = item.flat_index() %}
     {% if index %}
         <ul>
         {% for fullname, relname, mimetype in index %}
-            <li><a href="{{ href(fullname)|e }}">{{ relname|e }} ({{ mimetype|e }})</a></li>
+            <li><a href="{{ url_for('show_item', item_name=fullname)|e }}">{{ relname|e }} ({{ mimetype|e }})</a></li>
         {% endfor %}
         </ul>
     {% endif %}
 {% endblock %}
+

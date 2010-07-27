@@ -3,7 +3,8 @@
     MoinMoin - Preferences Form
 
     @copyright: 2001-2004 Juergen Hermann <jh@web.de>,
-                2003-2007 MoinMoin:ThomasWaldmann
+                2003-2007 MoinMoin:ThomasWaldmann,
+                2010 MoinMoin:ReimarBauer
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -11,7 +12,6 @@ import time
 
 from MoinMoin import user, util, wikiutil, events
 from MoinMoin.theme import load_theme_fallback
-from MoinMoin.widget import html
 from MoinMoin.userprefs import UserPrefBase
 
 
@@ -24,6 +24,157 @@ from MoinMoin.userprefs import UserPrefBase
 #    - wiki settings (editor, fancy diffs, theme, ...)
 #    - quick links (or leave in wiki settings?)
 ####
+
+_date_formats = {# datetime_fmt & date_fmt
+        'iso': '%Y-%m-%d %H:%M:%S & %Y-%m-%d',
+        'us': '%m/%d/%Y %I:%M:%S %p & %m/%d/%Y',
+        'euro': '%d.%m.%Y %H:%M:%S & %d.%m.%Y',
+        'rfc': '%a %b %d %H:%M:%S %Y & %a %b %d %Y',
+    }
+
+def _user(request):
+    """ Create elementary user attributes """
+    _ = request.getText
+    u = request.user
+    user_params = dict(name=dict(param=u.name, title=_("Name"), comment=_("(Use FirstnameLastname)")),
+                       aliasname=dict(param=u.aliasname, title=_("Alias-Name"), comment=""),
+                       email=dict(param=u.email, title=_("Email"), comment=""),
+                       jid=dict(param=u.jid, title=_("Jabber ID"), comment=""),
+                       css_url=dict(param=u.css_url, title=_("User CSS URL"), comment=_("(Leave it empty for disabling user CSS)")))
+    return user_params
+
+def _dtfmt_select(request):
+    """ Create date format selection. """
+    _ = request.getText
+    date_formats = [dict(value="", text=_('Default'))]
+    dt_d_combined = '%s & %s' % (request.user.datetime_fmt, request.user.date_fmt)
+
+    for key in _date_formats.keys():
+        selected = ""
+        if _date_formats[key] == dt_d_combined[0]:
+            selected = "selected"
+        date_formats.append(dict(value=key, text=_date_formats[key], selected=selected))
+    return date_formats
+
+def _theme_select(request):
+    """ Create theme selection. """
+    _ = request.getText
+    cur_theme = request.user.valid and request.user.theme_name or request.cfg.theme_default
+
+    theme_selection = [dict(value="<default>", text="&lt;%s&gt;" % _("Default"), selected="")]
+    for theme in wikiutil.getPlugins('theme', request.cfg):
+        selected = ""
+        if theme == cur_theme:
+            selected = "selected"
+        theme_selection.append(dict(value=theme,
+                                    text=theme,
+                                    selected=selected))
+    return theme_selection
+
+def _editor_default_select(request):
+    """ Create editor selection. """
+    _ = request.getText
+    editor_default = request.user.valid and request.user.editor_default or request.cfg.editor_default
+    options = [("<default>", "&lt;%s&gt;" % _("Default"))]
+    editor_default_selection = []
+    for editor in ['text', 'gui', ]:
+        selected = ""
+        if editor == editor_default:
+            selected = "selected"
+        editor_default_selection.append(dict(value=editor,
+                                             text=editor,
+                                             selected=selected))
+    return editor_default_selection
+
+def _prefered_editor(request):
+    """ Create editor selection. """
+    _ = request.getText
+    editor_ui = request.user.valid and request.user.editor_ui or request.cfg.editor_ui
+    prefered_editor = [dict(value="<default>", text="&lt;%s&gt;" % _("Default"), selected="selected"),
+                       dict(value="theonepreferred", text=_("the one preferred"), selected=""),
+                       dict(value="freechoice", text=_("free choice"), selected="")]
+    return prefered_editor
+
+def _tz_select(request, enabled=True):
+    """ Create time zone selection. """
+    _ = request.getText
+    tz = 0
+    if request.user.valid:
+        tz_offset = int(request.user.tz_offset)
+
+    time_zone = []
+    now = time.time()
+    for halfhour in range(-47, 48):
+        offset = halfhour * 1800
+        t = now + offset
+        selected = ""
+        if offset == tz_offset:
+            selected = "selected"
+        time_zone.append(dict(value=str(offset),
+                              selected=selected,
+                              text='%s [%s%s:%s]' % (
+                time.strftime(request.cfg.datetime_fmt, time.gmtime(t)),
+                "+-"[offset < 0],
+                "%02d" % (abs(offset) / 3600),
+                "%02d" % (abs(offset) % 3600 / 60),
+            ),
+        ))
+    return time_zone
+
+def _lang_select(request, enabled=True):
+    """ Create language selection. """
+    from MoinMoin import i18n
+    _ = request.getText
+    cur_lang = request.user.language
+
+    langs = i18n.wikiLanguages().items()
+    langs.sort(lambda x, y: cmp(x[1]['x-language'], y[1]['x-language']))
+    languages = [dict(value="", text="&lt;%s&gt;" % _('Browser setting'), selected="")]
+    for lang in langs:
+        selected = ""
+        name = lang[1]['x-language']
+        if name == cur_lang:
+            selected = "selected"
+        languages.append(dict(value=lang[0],
+                         text=name,
+                         selected=selected))
+    return languages
+
+def get_userprefs_info(request):
+    _ = request.getText
+    u = request.user
+    # boolean user options
+    general_options = []
+    checkbox_fields = request.cfg.user_checkbox_fields
+    checkbox_fields.sort(lambda a, b: cmp(a[1](_), b[1](_)))
+    for key, label in checkbox_fields:
+        if not key in request.cfg.user_checkbox_remove:
+            disabled = ""
+            if key in request.cfg.user_checkbox_disable:
+                disabled = "disabled"
+            checked = ""
+            if getattr(u, key, False):
+                checked = "checked"
+            general_options.append(dict(name=key,
+                                        checked=checked,
+                                        disabled=disabled,
+                                        text=label(_)))
+
+    server_time = "%s %s (UTC)" % (_('Server time is'), time.strftime(request.cfg.datetime_fmt, time.gmtime()))
+    your_time = "%s %s" % (_('Your time is'), time.strftime(request.cfg.datetime_fmt, time.gmtime(time.time())))
+
+    return dict(user=_user(request),
+                date_formats=dict(title=_("Date format"), param=_dtfmt_select(request)),
+                editor_default_selection=dict(title=_("Editor Preference"), param=_editor_default_select(request)),
+                edit_rows=dict(title=_("Editor size"), param=u.edit_rows),
+                general_options=dict(title=_("General options"), param=general_options),
+                prefered_language=dict(title=_("Preferred language"), param=_lang_select(request)),
+                prefered_editor=dict(title=_("Editor shown on UI"), param=_prefered_editor(request)),
+                quick_links=dict(title="Quick links", param='\n'.join(u.getQuickLinks())),
+                server_time=server_time,
+                theme_selection=dict(title=_("Preferred theme"), param=_theme_select(request)),
+                time_zone=dict(title=_("Time zone"), param=_tz_select(request)),
+                your_time=your_time)
 
 class Settings(UserPrefBase):
     def __init__(self, request):
@@ -141,7 +292,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
 
         # datetime format
         try:
-            dt_d_combined = Settings._date_formats.get(form['datetime_fmt'], '')
+            dt_d_combined = _date_formats.get(form['datetime_fmt'], '')
             u.datetime_fmt, u.date_fmt = dt_d_combined.split(' & ')
         except (KeyError, ValueError):
             pass # keep the default
@@ -228,178 +379,22 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
         if 'save' in form: # Save user profile
             return self._save_user_prefs()
 
-    # form generation part
-
-    _date_formats = { # datetime_fmt & date_fmt
-        'iso': '%Y-%m-%d %H:%M:%S & %Y-%m-%d',
-        'us': '%m/%d/%Y %I:%M:%S %p & %m/%d/%Y',
-        'euro': '%d.%m.%Y %H:%M:%S & %d.%m.%Y',
-        'rfc': '%a %b %d %H:%M:%S %Y & %a %b %d %Y',
-    }
-
-    def _tz_select(self, enabled=True):
-        """ Create time zone selection. """
-        tz = 0
-        if self.request.user.valid:
-            tz = int(self.request.user.tz_offset)
-
-        options = []
-        now = time.time()
-        for halfhour in range(-47, 48):
-            offset = halfhour * 1800
-            t = now + offset
-
-            options.append((
-                str(offset),
-                '%s [%s%s:%s]' % (
-                    time.strftime(self.cfg.datetime_fmt, time.gmtime(t)),
-                    "+-"[offset < 0],
-                    "%02d" % (abs(offset) / 3600),
-                    "%02d" % (abs(offset) % 3600 / 60),
-                ),
-            ))
-
-        return util.web.makeSelection('tz_offset', options, str(tz), 1, False, enabled)
-
-
     def _dtfmt_select(self):
         """ Create date format selection. """
         _ = self._
         try:
             dt_d_combined = '%s & %s' % (self.request.user.datetime_fmt, self.request.user.date_fmt)
             selected = [
-                k for k, v in self._date_formats.items()
+                k for k, v in _date_formats.items()
                     if v == dt_d_combined][0]
         except IndexError:
             selected = ''
-        options = [('', _('Default'))] + self._date_formats.items()
+        options = [('', _('Default'))] + _date_formats.items()
 
         return util.web.makeSelection('datetime_fmt', options, selected)
 
-
-    def _lang_select(self, enabled=True):
-        """ Create language selection. """
-        from MoinMoin import i18n
-        _ = self._
-        cur_lang = self.request.user.language
-        langs = i18n.wikiLanguages().items()
-        langs.sort(lambda x, y: cmp(x[1]['x-language'], y[1]['x-language']))
-        options = [('', _('<Browser setting>'))]
-        for lang in langs:
-            name = lang[1]['x-language']
-            options.append((lang[0], name))
-
-        return util.web.makeSelection('language', options, cur_lang, 1, False, enabled)
-
-    def _theme_select(self):
-        """ Create theme selection. """
-        cur_theme = self.request.user.valid and self.request.user.theme_name or self.cfg.theme_default
-        options = [("<default>", "<%s>" % self._("Default"))]
-        for theme in wikiutil.getPlugins('theme', self.request.cfg):
-            options.append((theme, theme))
-
-        return util.web.makeSelection('theme_name', options, cur_theme)
-
-    def _editor_default_select(self):
-        """ Create editor selection. """
-        editor_default = self.request.user.valid and self.request.user.editor_default or self.cfg.editor_default
-        options = [("<default>", "<%s>" % self._("Default"))]
-        for editor in ['text', 'gui', ]:
-            options.append((editor, editor))
-        return util.web.makeSelection('editor_default', options, editor_default)
-
-    def _editor_ui_select(self):
-        """ Create editor selection. """
-        editor_ui = self.request.user.valid and self.request.user.editor_ui or self.cfg.editor_ui
-        options = [("<default>", "<%s>" % self._("Default")),
-                   ("theonepreferred", self._("the one preferred")),
-                   ("freechoice", self._("free choice")),
-                  ]
-        return util.web.makeSelection('editor_ui', options, editor_ui)
-
-
     def create_form(self):
-        """ Create the complete HTML form code. """
-        _ = self._
-        request = self.request
-        u = request.user
-        self._form = self.make_form()
+        return self.request.theme.render('userprefs.html',
+                                             userprefs=get_userprefs_info(self.request),
+                                             ticket=wikiutil.createTicket(self.request))
 
-        if u.valid:
-            buttons = [('save', _('Save')), ('cancel', _('Cancel')), ]
-            uf_remove = self.cfg.user_form_remove
-            uf_disable = self.cfg.user_form_disable
-            for attr in u.auth_attribs:
-                uf_disable.append(attr)
-            for key, label, type, length, textafter in self.cfg.user_form_fields:
-                default = self.cfg.user_form_defaults[key]
-                if not key in uf_remove:
-                    if key in uf_disable:
-                        self.make_row(_(label),
-                                  [html.INPUT(type=type, size=length, name=key, disabled=True,
-                                   value=getattr(u, key)), ' ', _(textafter), ])
-                    else:
-                        self.make_row(_(label),
-                                  [html.INPUT(type=type, size=length, name=key, value=getattr(u, key)), ' ', _(textafter), ])
-
-            if not self.cfg.theme_force and not "theme_name" in self.cfg.user_form_remove:
-                self.make_row(_('Preferred theme'), [self._theme_select()])
-
-            if not self.cfg.editor_force:
-                if not "editor_default" in self.cfg.user_form_remove:
-                    self.make_row(_('Editor Preference'), [self._editor_default_select()])
-                if not "editor_ui" in self.cfg.user_form_remove:
-                    self.make_row(_('Editor shown on UI'), [self._editor_ui_select()])
-
-            if not "tz_offset" in self.cfg.user_form_remove:
-                self.make_row(_('Time zone'), [
-                    _('Your time is'), ' ',
-                    self._tz_select(),
-                    html.BR(),
-                    _('Server time is'), ' ',
-                    time.strftime(self.cfg.datetime_fmt, time.gmtime()),
-                    ' (UTC)',
-                ])
-
-            if not "datetime_fmt" in self.cfg.user_form_remove:
-                self.make_row(_('Date format'), [self._dtfmt_select()])
-
-            if not "language" in self.cfg.user_form_remove:
-                self.make_row(_('Preferred language'), [self._lang_select()])
-
-            # boolean user options
-            bool_options = []
-            checkbox_fields = self.cfg.user_checkbox_fields
-            checkbox_fields.sort(lambda a, b: cmp(a[1](_), b[1](_)))
-            for key, label in checkbox_fields:
-                if not key in self.cfg.user_checkbox_remove:
-                    bool_options.extend([
-                        html.INPUT(type="checkbox", name=key, value="True",
-                            checked=getattr(u, key, False),
-                            disabled=key in self.cfg.user_checkbox_disable),
-                        ' ', label(_), html.BR(),
-                    ])
-            self.make_row(_('General options'), bool_options, valign="top")
-
-            self.make_row(_('Quick links'), [
-                html.TEXTAREA(name="quicklinks", rows="6", cols="50")
-                    .append('\n'.join(u.getQuickLinks())),
-            ], valign="top")
-
-            self._form.append(html.INPUT(type="hidden", name="do", value="userprefs"))
-            self._form.append(html.INPUT(type="hidden", name="handler", value="prefs"))
-
-            ticket = wikiutil.createTicket(request)
-            self._form.append(html.INPUT(type="hidden", name="ticket", value="%s" % ticket))
-
-        # Add buttons
-        button_cell = []
-        for name, label in buttons:
-            if not name in self.cfg.user_form_remove:
-                button_cell.extend([
-                    html.INPUT(type="submit", name=name, value=label),
-                    ' ',
-                ])
-        self.make_row('', button_cell)
-
-        return unicode(self._form)
