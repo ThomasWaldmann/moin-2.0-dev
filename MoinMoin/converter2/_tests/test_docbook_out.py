@@ -140,6 +140,10 @@ class TestConverter(Base):
             ('<page><body><blockcode>Text</blockcode></body></page>',
               # <article><screen><![CDATA[Text]]></screen></article>
              '/article[screen="<![CDATA[Text]]>"]'),
+            # Code conversion into <literal>
+            ('<page><body><p><code>Text</code></p></body></page>',
+              # <article><para><literal>Text</literal></para></article>
+             '/article/para[literal="Text"]'),
             # SPAN --> PHRASE
             ('<page><body><p><span>Text</span></p></body></page>',
               # <article><para><phrase>Text</phrase></para></article>
