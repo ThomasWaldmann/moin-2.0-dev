@@ -138,6 +138,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from werkzeug import redirect, abort, url_quote, url_quote_plus
+from flask import url_for
 
 from MoinMoin import user, wikiutil
 
@@ -255,8 +256,8 @@ class MoinAuth(BaseAuth):
         #if request.cfg.openidrp_registration_url:
         #    register_url = request.cfg.openidrp_registration_url
         #else:
-        register_url = request.href('+register')
-        recover_url = request.href('+recoverpass')
+        register_url = url_for('frontend.register')
+        recover_url = url_for('frontend.recoverpass')
 
         msg = ''
         #if request.cfg.openidrp_allow_registration:

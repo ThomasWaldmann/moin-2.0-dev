@@ -36,13 +36,16 @@ Disallow: /+index/
 Disallow: /+quicklink/
 Disallow: /+subscribe/
 Disallow: /+backlinks/
+Disallow: /+register
+Disallow: /+recoverpass
 Disallow: /+login
-Disallow: /+logout/
+Disallow: /+logout
 Disallow: /+diffsince/
 Disallow: /+diff/
 Disallow: /+admin/
 Allow: /
 """, mimetype='text/plain')
+
 
 @frontend.route('/<itemname:item_name>', defaults=dict(rev=-1))
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
@@ -245,6 +248,26 @@ def subscribe_item(item_name):
         flash(*msg)
     item = Item.create(request, item_name)
     return item.do_show()
+
+
+@frontend.route('/+register', methods=['GET', 'POST'])
+def register():
+    # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    item_name = 'Register' # XXX
+    if request.method == 'GET':
+        return "NotImplemented"
+    if request.method == 'POST':
+        return "NotImplemented"
+
+
+@frontend.route('/+recoverpass', methods=['GET', 'POST'])
+def recoverpass():
+    # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    item_name = 'RecoverPass' # XXX
+    if request.method == 'GET':
+        return "NotImplemented"
+    if request.method == 'POST':
+        return "NotImplemented"
 
 
 @frontend.route('/+login', methods=['GET', 'POST'])
