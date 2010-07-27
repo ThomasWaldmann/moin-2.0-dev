@@ -15,6 +15,8 @@ from flask import request, g, url_for, flash, render_template, Response
 
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, MIMETYPE
+from MoinMoin import user, wikiutil
+
 
 @frontend.route('/')
 def show_root():
@@ -261,11 +263,43 @@ def subscribe_item(item_name):
 @frontend.route('/+register', methods=['GET', 'POST'])
 def register():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    request = g.context
+    _ = request.getText
+    cfg = request.cfg
     item_name = 'Register' # XXX
+
+    from MoinMoin.auth import MoinAuth
+    from MoinMoin.security.textcha import TextCha
+
+    for auth in cfg.auth:
+        if isinstance(auth, MoinAuth):
+            break
+    else:
+        return Response('No MoinAuth in auth list', 403)
+
+    title = _("Create Account")
     if request.method == 'GET':
-        return "NotImplemented"
+        textcha = TextCha(request)
+        if textcha.is_enabled():
+            textcha = textcha and textcha.render()
+        else:
+            textcha = None
+        return render_template('newaccount.html',
+                               title=_("Create Account"),
+                               textcha=textcha,
+                               ticket=wikiutil.createTicket(request),
+                              )
     if request.method == 'POST':
-        return "NotImplemented"
+        if 'create' in request.form:
+            if False: # TODO re-add this later: not wikiutil.checkTicket(request, request.form.get('ticket', '')):
+                msg = _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'newaccount'}
+            elif not TextCha(request).check_answer_from_form():
+                msg = _('TextCha: Wrong answer! Go back and try again...')
+            else:
+                msg = user.create_user(request)
+            if msg:
+                flash(msg, "error")
+        return werkzeug.redirect(url_for('frontend.show_root'), code=302)
 
 
 @frontend.route('/+recoverpass', methods=['GET', 'POST'])

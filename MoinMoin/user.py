@@ -11,9 +11,11 @@
     Some related code is in the userprefs modules.
 
     @copyright: 2000-2004 Juergen Hermann <jh@web.de>,
-                2003-2007 MoinMoin:ThomasWaldmann,
+                2003-2010 MoinMoin:ThomasWaldmann,
+                2007 MoinMoin:JohannesBerg,
                 2007 MoinMoin:HeinrichWendel,
-                2008 MoinMoin:ChristopherDenter
+                2008 MoinMoin:ChristopherDenter,
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -23,6 +25,70 @@ import hmac
 
 from MoinMoin import config, caching, wikiutil, i18n, events
 from MoinMoin.util import random_string
+
+
+def create_user(request):
+    """ create a user using POST form data """
+    _ = request.getText
+    form = request.form
+
+    # Create user profile
+    theuser = User(request, auth_method="new-user")
+
+    # Require non-empty name
+    try:
+        theuser.name = form['name']
+    except KeyError:
+        return _("Empty user name. Please enter a user name.")
+
+    # Don't allow creating users with invalid names
+    if not isValidName(request, theuser.name):
+        return _("""Invalid user name '%s'.
+Name may contain any Unicode alpha numeric character, with optional one
+space between words. Group page name is not allowed.""") % wikiutil.escape(theuser.name)
+
+    # Name required to be unique. Check if name belong to another user.
+    if getUserId(request, theuser.name):
+        return _("This user name already belongs to somebody else.")
+
+    # try to get the password and pw repeat
+    password = form.get('password1', '')
+    password2 = form.get('password2', '')
+
+    # Check if password is given and matches with password repeat
+    if password != password2:
+        return _("Passwords don't match!")
+    if not password:
+        return _("Please specify a password!")
+
+    pw_checker = request.cfg.password_checker
+    if pw_checker:
+        pw_error = pw_checker(request, theuser.name, password)
+        if pw_error:
+            return _("Password not acceptable: %s") % wikiutil.escape(pw_error)
+
+    # Encode password
+    if password and not password.startswith('{SHA}'):
+        try:
+            theuser.enc_password = encodePassword(password)
+        except UnicodeError, err:
+            # Should never happen
+            return "Can't encode password: %s" % wikiutil.escape(str(err))
+
+    # try to get the email, for new users it is required
+    email = wikiutil.clean_input(form.get('email', ''))
+    theuser.email = email.strip()
+    if not theuser.email and 'email' not in request.cfg.user_form_remove:
+        return _("Please provide your email address. If you lose your"
+                 " login information, you can get it by email.")
+
+    # Email should be unique - see also MoinMoin/script/accounts/moin_usercheck.py
+    if theuser.email and request.cfg.user_email_unique:
+        if get_by_email_address(request, theuser.email):
+            return _("This email already belongs to somebody else.")
+
+    # save data
+    theuser.save()
 
 
 def get_user_backend(request):
