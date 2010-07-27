@@ -444,9 +444,9 @@ class ThemeBase(object):
         href = request.href
         url = ''
         if request.cfg.auth_login_inputs == ['special_no_input']:
-            url = href('+login', login=1)
+            url = url_for('frontend.login', login=1)
         if request.cfg.auth_have_login:
-            url = url or href('+login')
+            url = url or url_for('frontend.login')
         return url
 
     def actions_menu_options(self, item_name):

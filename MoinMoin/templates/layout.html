@@ -44,7 +44,7 @@
             {% endif %}
         {% endif %}
         {% if user.auth_method in cfg.auth_can_logout %}
-            <a href="{{ href('+logout')|e }}" class="logout" rel="nofollow">
+            <a href="{{ url_for('frontend.logout')|e }}" class="logout" rel="nofollow">
                 {{ _('Logout') }}
             </a>
         {% endif %}
