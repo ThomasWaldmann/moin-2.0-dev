@@ -269,28 +269,27 @@ class ThemeBase(object):
         if text.startswith('[[') and text.endswith(']]'):
             text = text[2:-2]
             try:
-                item_name, title = text.split('|', 1)
-                item_name = item_name.strip()
+                target, title = text.split('|', 1)
+                target = target.strip()
                 title = title.strip()
                 localize = 0
             except (ValueError, TypeError):
                 # Just use the text as is.
-                item_name = text.strip()
+                target = text.strip()
         else:
-            item_name = text
+            target = text
 
-        if wikiutil.is_URL(item_name):
+        if wikiutil.is_URL(target):
             if not title:
-                title = item_name
-            url = item_name  #no need to use href, item_name is already an url
-            return url, title, wiki_local
+                title = target
+            return target, title, wiki_local
 
         # remove wiki: url prefix
-        if item_name.startswith("wiki:"):
-            item_name = item_name[5:]
+        if target.startswith("wiki:"):
+            target = target[5:]
 
         # try handling interwiki links
-        wiki_name, item_name = wikiutil.split_interwiki(item_name)
+        wiki_name, item_name = wikiutil.split_interwiki(target)
         wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
         href = wikiutil.join_wiki(wiki_base_url, item_name)
         if wiki_name not in [request.cfg.interwikiname, 'Self', ]:
