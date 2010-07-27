@@ -202,30 +202,6 @@ class Item(object):
                                help=self.modify_help,
                               )
 
-    def _action_query(self, action, label=None, target=None, revno=None):
-        return render_template('action_query.html',
-                               action=action,
-                               label=label or action,
-                               item_name=self.name,
-                               revno=revno,
-                               target=target,
-                              )
-
-    def do_rename(self):
-        return self._action_query('rename', target=self.name)
-
-    def do_copy(self):
-        return self._action_query('copy', target=self.name)
-
-    def do_delete(self):
-        return self._action_query('delete')
-
-    def do_destroy(self):
-        return self._action_query('destroy', revno=self.rev.revno)
-
-    def do_revert(self):
-        return self._action_query('revert', revno=self.rev.revno)
-
     def _write_stream(self, content, new_rev, bufsize=8192):
         hash_name = self.request.cfg.hash_algorithm
         hash = hashlib.new(hash_name)
@@ -584,7 +560,12 @@ There is no help, you're doomed!
                                index=index,
                               )
 
+    copy_template = 'copy.html'
+    delete_template = 'delete.html'
+    destroy_template = 'destroy.html'
     diff_template = 'diff.html'
+    rename_template = 'rename.html'
+    revert_template = 'revert.html'
 
     def _render_data_diff(self, oldrev, newrev):
         hash_name = self.request.cfg.hash_algorithm
