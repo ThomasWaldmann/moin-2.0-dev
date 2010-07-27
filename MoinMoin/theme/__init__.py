@@ -150,11 +150,11 @@ class ThemeBase(object):
         """
         request = self.request
         item_lang_request = request.getText(item_en)
-        if self.storage.has_item(item_lang_request):
+        if self.item_exists(item_lang_request):
             return item_lang_request
 
         item_lang_default = i18n.getText(item_en, request, self.cfg.language_default)
-        if self.storage.has_item(item_lang_default):
+        if self.item_exists(item_lang_default):
             return item_lang_default
         return item_en
 
@@ -169,7 +169,7 @@ class ThemeBase(object):
         current_item = ''
         for segment in item_name.split('/'):
             current_item += segment
-            breadcrumbs.append((segment, current_item, self.storage.has_item(current_item)))
+            breadcrumbs.append((segment, current_item, self.item_exists(current_item)))
             current_item += '/'
         return breadcrumbs
 
@@ -191,7 +191,7 @@ class ThemeBase(object):
                     wiki_name, wiki_base_url, item_name, err = wikiutil.resolve_interwiki(request, wiki_name, item_name)
                     href = wikiutil.join_wiki(wiki_base_url, item_name)
                     if wiki_name in [request.cfg.interwikiname, 'Self', ]:
-                        exists = self.storage.has_item(item_name)
+                        exists = self.item_exists(item_name)
                         wiki_name = ''  # means "this wiki" for the theme code
                     else:
                         exists = True  # we can't detect existance of remote items
@@ -214,7 +214,7 @@ class ThemeBase(object):
         title = "%s @ %s" % (aliasname, wikiname)
         # link to (interwiki) user homepage
         if wikiname == "Self":
-            exists = self.storage.has_item(itemname)
+            exists = self.item_exists(itemname)
         else:
             # We cannot check if wiki pages exists in remote wikis
             exists = True
