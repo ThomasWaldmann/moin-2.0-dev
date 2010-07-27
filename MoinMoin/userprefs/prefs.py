@@ -13,7 +13,7 @@ import time
 from MoinMoin import user, util, wikiutil, events
 from MoinMoin.theme import load_theme_fallback
 from MoinMoin.userprefs import UserPrefBase
-
+from flask import render_template
 
 #################################################################
 # This is still a mess.
@@ -394,7 +394,7 @@ space between words. Group page name is not allowed.""") % wikiutil.escape(new_n
         return util.web.makeSelection('datetime_fmt', options, selected)
 
     def create_form(self):
-        return self.request.theme.render('userprefs.html',
+        return render_template('userprefs.html',
                                              userprefs=get_userprefs_info(self.request),
                                              ticket=wikiutil.createTicket(self.request))
 
