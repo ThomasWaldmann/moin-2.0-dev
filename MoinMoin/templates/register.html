@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% block item %}
+<h1>{{ _("Create Account") }}</h1>
 <form action="{{ url_for('frontend.register')|e }}" name="newaccountform" method="POST" enctype="multipart/form-data">
     <div class="userpref">
         <input type="hidden" name="do" value="newaccount" />

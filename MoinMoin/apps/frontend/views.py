@@ -283,7 +283,7 @@ def register():
             textcha = textcha and textcha.render()
         else:
             textcha = None
-        return render_template('newaccount.html',
+        return render_template('register.html',
                                title=_("Create Account"),
                                textcha=textcha,
                                ticket=wikiutil.createTicket(request),
@@ -291,7 +291,7 @@ def register():
     if request.method == 'POST':
         if 'create' in request.form:
             if False: # TODO re-add this later: not wikiutil.checkTicket(request, request.form.get('ticket', '')):
-                msg = _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'newaccount'}
+                msg = _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'register'}
             elif not TextCha(request).check_answer_from_form():
                 msg = _('TextCha: Wrong answer! Go back and try again...')
             else:
