@@ -26,7 +26,7 @@ class Converter(object):
     unsupported_tags = set(['separator', ])
 
     @classmethod
-    def _factory(cls):
+    def _factory(cls, input, output, request, **kw):
         return cls()
 
     def __call__(self, element):
