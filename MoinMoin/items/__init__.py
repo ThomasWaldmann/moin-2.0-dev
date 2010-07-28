@@ -108,7 +108,7 @@ class Item(object):
                     rev = DummyRev(mimetype)
                     logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
             logging.debug("Got item %r, revision: %r" % (name, rev_no))
-        mimetype = rev.get(MIMETYPE) or 'application/x-unknown' # XXX why do we need ... or ..?
+        mimetype = rev.get(MIMETYPE)
         logging.debug("Item %r, got mimetype %r from revision meta" % (name, mimetype))
         logging.debug("Item %r, rev meta dict: %r" % (name, dict(rev)))
 
@@ -495,6 +495,12 @@ class NonExistent(Item):
     def do_get(self):
         self.request.status_code = 404
 
+    def _convert(self):
+        self.request.status_code = 404
+
+    def internal_representation(self):
+        self.request.status_code = 404
+
     def do_highlight(self):
         self.request.status_code = 404
 
@@ -594,6 +600,12 @@ There is no help, you're doomed!
         else:
             return "The items have different data."
 
+    def _convert(self):
+        return "Impossible to convert the data to the mimetype : %s" % self.request.values.get('mimetype')
+
+    def internal_representation(self):
+        return "Impossible to convert the data to the internal representation tree"
+
     def do_get(self):
         request = self.request
         hash = self.rev.get(request.cfg.hash_algorithm)
@@ -652,7 +664,6 @@ There is no help, you're doomed!
         return send_file(file_to_send, mimetype=content_type,
                          as_attachment=False, attachment_filename=filename,
                          conditional=True)
-
 
 class RenderableBinary(Binary):
     """ This is a base class for some binary stuff that renders with a object tag. """
@@ -1189,6 +1200,43 @@ class Text(Binary):
                                help=self.modify_help,
                               )
 
+    def internal_representation(self):
+        """
+        Return the internal representation of a document using a DOM Tree
+        """
+        request = self.request
+
+        # We will see if we can perform the conversion:
+        # FROM_mimetype --> DOM
+        # if so we perform the transformation, otherwise we don't
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.iri import Iri
+        from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import moin_page, xlink
+        namespaces = {
+            moin_page.namespace: '',
+            xlink.namespace: 'xlink',
+        }
+        input_conv = reg.get(Type(self.mimetype), type_moin_document,
+                request=request)
+        if not from_conv:
+            raise "We cannot handle the conversion from %s to the DOM tree" % self.mimetype
+        include_conv = reg.get(type_moin_document, type_moin_document,
+                includes='expandall', request=request)
+        link_conv = reg.get(type_moin_document, type_moin_document,
+                links='extern', request=request)
+        smiley_conv = reg.get(type_moin_document, type_moin_document,
+                icon='smiley', request=request)
+
+        # We can process the conversion
+        links = Iri(scheme='wiki', authority='', path='/' + self.name)
+        doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
+        doc.set(moin_page.page_href, unicode(links))
+        doc = include_conv(doc)
+        doc = smiley_conv(doc)
+        doc = link_conv(doc)
+        return doc
+
     def do_highlight(self):
         request = self.request
         data_text = self.data_storage_to_internal(self.data)
@@ -1231,8 +1279,6 @@ class HTML(Text):
                                help=self.modify_help,
                                url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
                               )
-
-
 
 class MoinWiki(Text):
     """ MoinMoin wiki markup """
@@ -1282,6 +1328,48 @@ class SafeHTML(Text):
 class DocBook(Text):
     """ DocBook Document """
     supported_mimetypes = ['application/docbook+xml']
+
+    def _convert(self, doc):
+        from emeraldtree import ElementTree as ET
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import docbook, xlink
+
+        request = self.request
+
+        # We convert the internal representation of the document
+        # into a DocBook document
+        conv = reg.get(type_moin_document,
+                       Type('application/docbook+xml'), request=request)
+
+        doc = conv(doc)
+
+        # We determine the different namespaces of the output form
+        output_namespaces = {
+             docbook.namespace: '',
+             xlink.namespace: 'xlink',
+         }
+
+        # We convert the result into a StringIO object
+        # With the appropriate namespace
+        # TODO: Some other operation should probably be done here too
+        # like adding a doctype
+        file_to_send = StringIO()
+        tree = ET.ElementTree(doc)
+        tree.write(file_to_send, namespaces=output_namespaces)
+
+        # We determine the different parameters for the reply
+        mt = wikiutil.MimeType(mimestr='application/docbook+xml')
+        content_disposition = mt.content_disposition(request.cfg)
+        content_type = mt.content_type()
+        # After creation of the StringIO, we are at the end of the file
+        # so position is the size the file.
+        # and then we should move it back at the beginning of the file
+        content_length = file_to_send.tell()
+        file_to_send.seek(0)
+        # We call the flask method to return the file
+        return send_file(file_to_send, mimetype=content_type,
+                         as_attachment=False, conditional=True)
 
 
 class DiffPatch(Text):
