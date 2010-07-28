@@ -10,16 +10,17 @@
 @license: GNU GPL, see COPYING for details.
 """
 
-import werkzeug
-from flask import request, g, url_for, flash, render_template, Response
+from flask import request, g, url_for, flash, render_template, Response, redirect
 
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, MIMETYPE
+from MoinMoin import user, wikiutil
+
 
 @frontend.route('/')
 def show_root():
-    location = 'FrontPage' # wikiutil.getFrontPage(g.context)
-    return werkzeug.redirect(location, code=302)
+    location = url_for('frontend.show_item', item_name='FrontPage') # wikiutil.getFrontPage(g.context)
+    return redirect(location)
 
 @frontend.route('/robots.txt')
 def robots():
@@ -58,7 +59,7 @@ def show_item(item_name, rev):
 
 @frontend.route('/+show/<itemname:item_name>')
 def redirect_show_item(item_name):
-    return werkzeug.redirect(url_for('show_item', item_name=item_name))
+    return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+get/<int:rev>/<itemname:item_name>')
@@ -96,7 +97,7 @@ def modify_item(item_name):
         if not mimetype in ('application/x-twikidraw', 'application/x-anywikidraw'):
             # TwikiDraw and AnyWikiDraw can send more than one request
             # the follwowing line breaks it
-            return werkzeug.redirect(url_for('show_item', item_name=item_name))
+            return redirect(url_for('show_item', item_name=item_name))
         # Nick Booker: Any handling necessary here for TwikiDraw / AnyWikiDraw?
 
 
@@ -108,7 +109,7 @@ def revert_item(item_name, rev):
     elif request.method == 'POST':
         if 'button_ok' in request.form:
             item.revert()
-        return werkzeug.redirect(url_for('show_item', item_name=item_name))
+        return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+copy/<itemname:item_name>', methods=['GET', 'POST'])
@@ -124,7 +125,7 @@ def copy_item(item_name):
             redirect_to = target
         else:
             redirect_to = item_name
-        return werkzeug.redirect(url_for('show_item', item_name=redirect_to))
+        return redirect(url_for('show_item', item_name=redirect_to))
 
 
 @frontend.route('/+rename/<itemname:item_name>', methods=['GET', 'POST'])
@@ -140,7 +141,7 @@ def rename_item(item_name):
             redirect_to = target
         else:
             redirect_to = item_name
-        return werkzeug.redirect(url_for('show_item', item_name=redirect_to))
+        return redirect(url_for('show_item', item_name=redirect_to))
 
 
 @frontend.route('/+delete/<itemname:item_name>', methods=['GET', 'POST'])
@@ -152,7 +153,7 @@ def delete_item(item_name):
         if 'button_ok' in request.form:
             comment = request.form.get('comment')
             item.delete(comment)
-        return werkzeug.redirect(url_for('show_item', item_name=item_name))
+        return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+destroy/<itemname:item_name>', methods=['GET', 'POST'])
@@ -164,7 +165,7 @@ def destroy_item(item_name):
         if 'button_ok' in request.form:
             comment = request.form.get('comment')
             item.destroy(comment)
-        return werkzeug.redirect(url_for('show_item', item_name=item_name))
+        return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+index/<itemname:item_name>')
@@ -261,11 +262,42 @@ def subscribe_item(item_name):
 @frontend.route('/+register', methods=['GET', 'POST'])
 def register():
     # TODO use ?next=next_location check if target is in the wiki and not outside domain
+    request = g.context
+    _ = request.getText
+    cfg = request.cfg
     item_name = 'Register' # XXX
+
+    from MoinMoin.auth import MoinAuth
+    from MoinMoin.security.textcha import TextCha
+
+    for auth in cfg.auth:
+        if isinstance(auth, MoinAuth):
+            break
+    else:
+        return Response('No MoinAuth in auth list', 403)
+
     if request.method == 'GET':
-        return "NotImplemented"
+        textcha = TextCha(request)
+        if textcha.is_enabled():
+            textcha = textcha and textcha.render()
+        else:
+            textcha = None
+        return render_template('register.html',
+                               title=_("Create Account"),
+                               textcha=textcha,
+                               ticket=wikiutil.createTicket(request),
+                              )
     if request.method == 'POST':
-        return "NotImplemented"
+        if 'create' in request.form:
+            if False: # TODO re-add this later: not wikiutil.checkTicket(request, request.form.get('ticket', '')):
+                msg = _('Please use the interactive user interface to use action %(actionname)s!') % {'actionname': 'register'}
+            elif not TextCha(request).check_answer_from_form():
+                msg = _('TextCha: Wrong answer! Go back and try again...')
+            else:
+                msg = user.create_user(request)
+            if msg:
+                flash(msg, "error")
+        return redirect(url_for('frontend.show_root'))
 
 
 @frontend.route('/+recoverpass', methods=['GET', 'POST'])
@@ -294,7 +326,6 @@ def login():
     item_name = 'LoggedIn' # XXX
     request = g.context
     _ = request.getText
-    title = _("Login")
     if request.method == 'GET':
         for authmethod in request.cfg.auth:
             hint = authmethod.login_hint(request)
@@ -302,14 +333,14 @@ def login():
                 flash(hint, "info")
         return render_template('login.html',
                                login_inputs=request.cfg.auth_login_inputs,
-                               title=title
+                               title=_("Login"),
                               )
     if request.method == 'POST':
         if 'login' in request.form:
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
                     flash(msg, "error")
-    return werkzeug.redirect(url_for('show_root'), code=302)
+        return redirect(url_for('show_root'))
 
 
 @frontend.route('/+logout')
@@ -317,16 +348,15 @@ def logout():
     item_name = 'LoggedOut' # XXX
     request = g.context
     _ = request.getText
-    title = _("Logout")
     # if the user really was logged out say so,
     # but if the user manually added ?do=logout
     # and that isn't really supported, then don't
-    if not request.user.valid:
-        flash(_("You are now logged out."), "info")
-    else:
+    if request.user.valid:
         # something went wrong
         flash(_("You are still logged in."), "warning")
-    return werkzeug.redirect(url_for('show_root'), code=302)
+    else:
+        flash(_("You are now logged out."), "info")
+    return redirect(url_for('show_root'))
 
 
 @frontend.route('/+diffsince/<int:timestamp>/<path:item_name>')
@@ -418,9 +448,5 @@ def _diff(item, revno1, revno2):
 def dispatch():
     args = request.values.to_dict()
     endpoint = str(args.pop('endpoint'))
-    return werkzeug.redirect(url_for(endpoint, **args), code=302)
-
-
-# +feed/atom
-# off-with-his-head
+    return redirect(url_for(endpoint, **args))
 
