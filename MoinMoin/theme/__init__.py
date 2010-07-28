@@ -401,16 +401,16 @@ class ThemeBase(object):
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
-    def parent_page(self, item_name):
+    def parent_item(self, item_name):
         """
         Return name of parent page for the current page
 
         @rtype: unicode
-        @return: parent page name
+        @return: parent item name
         """
-        parent_page_name = wikiutil.ParentPageName(item_name)
-        if item_name and parent_page_name:
-            return parent_page_name
+        parent_item_name = wikiutil.ParentItemName(item_name)
+        if item_name and parent_item_name:
+            return parent_item_name
 
     def add_msg(self, msg, msg_class=None):
         """

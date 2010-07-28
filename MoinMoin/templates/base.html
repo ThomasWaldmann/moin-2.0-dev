@@ -54,8 +54,8 @@
     <link rel="Glossary" href="{{ url_for('frontend.show_item', item_name=translated_item_name('WordIndex'))|e }}" />
     <link rel="Help" href="{{ url_for('frontend.show_item', item_name=translated_item_name('HelpOnFormatting'))|e }}" />
     <link rel="Start" href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page))|e }}" />
-    {% set parent_page = theme.parent_page(item_name) %}
-    {% if parent_page %}
+    {% set parent_item = theme.parent_item(item_name) %}
+    {% if parent_item %}
         <link rel="Up" href="{{ url_for('frontend.show_item', item_name=parent_page)|e }}" />
     {% endif %}
 
