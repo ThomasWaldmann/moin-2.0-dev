@@ -1,4 +1,9 @@
 {% extends "layout.html" %}
+
+{% block feed %}
+{{ url_for('feed.atom')|e }}
+{% endblock %}
+
 {% block content %}
 <h1>{{ _("Global History") }}</h1>
     <table class="history">
