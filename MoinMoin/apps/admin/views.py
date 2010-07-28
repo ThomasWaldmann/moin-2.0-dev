@@ -10,8 +10,7 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import werkzeug
-from flask import request, g, url_for, render_template, flash
+from flask import request, g, url_for, render_template, flash, redirect
 
 from MoinMoin.apps.admin import admin
 from MoinMoin import user, wikiutil
@@ -67,7 +66,7 @@ def userprofile(user_name):
             flash('%s.%s: %s -> %s' % tuple([wikiutil.escape(s) for s in [user_name, key, oldval, val]]), "info")
         else:
             flash("ticket fail")
-    return werkzeug.redirect(url_for('admin.userbrowser'), code=302)
+    return redirect(url_for('admin.userbrowser'))
 
 
 @admin.route('/mail_recovery_token', methods=['GET', 'POST', ])
@@ -76,5 +75,5 @@ def mail_recovery_token():
     Send user an email so he can reset his password.
     """
     flash("mail recovery token not implemented yet")
-    return werkzeug.redirect(url_for('admin.userbrowser'), code=302)
+    return redirect(url_for('admin.userbrowser'))
 

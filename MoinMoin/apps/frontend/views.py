@@ -10,8 +10,7 @@
 @license: GNU GPL, see COPYING for details.
 """
 
-import werkzeug
-from flask import request, g, url_for, flash, render_template, Response
+from flask import request, g, url_for, flash, render_template, Response, redirect
 
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, MIMETYPE
@@ -21,7 +20,7 @@ from MoinMoin import user, wikiutil
 @frontend.route('/')
 def show_root():
     location = url_for('frontend.show_item', item_name='FrontPage') # wikiutil.getFrontPage(g.context)
-    return werkzeug.redirect(location, code=302)
+    return redirect(location)
 
 @frontend.route('/robots.txt')
 def robots():
@@ -60,7 +59,7 @@ def show_item(item_name, rev):
 
 @frontend.route('/+show/<itemname:item_name>')
 def redirect_show_item(item_name):
-    return werkzeug.redirect(url_for('show_item', item_name=item_name))
+    return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+get/<int:rev>/<itemname:item_name>')
@@ -98,7 +97,7 @@ def modify_item(item_name):
         if not mimetype in ('application/x-twikidraw', 'application/x-anywikidraw'):
             # TwikiDraw and AnyWikiDraw can send more than one request
             # the follwowing line breaks it
-            return werkzeug.redirect(url_for('show_item', item_name=item_name))
+            return redirect(url_for('show_item', item_name=item_name))
         # Nick Booker: Any handling necessary here for TwikiDraw / AnyWikiDraw?
 
 
@@ -110,7 +109,7 @@ def revert_item(item_name, rev):
     elif request.method == 'POST':
         if 'button_ok' in request.form:
             item.revert()
-        return werkzeug.redirect(url_for('show_item', item_name=item_name))
+        return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+copy/<itemname:item_name>', methods=['GET', 'POST'])
@@ -126,7 +125,7 @@ def copy_item(item_name):
             redirect_to = target
         else:
             redirect_to = item_name
-        return werkzeug.redirect(url_for('show_item', item_name=redirect_to))
+        return redirect(url_for('show_item', item_name=redirect_to))
 
 
 @frontend.route('/+rename/<itemname:item_name>', methods=['GET', 'POST'])
@@ -142,7 +141,7 @@ def rename_item(item_name):
             redirect_to = target
         else:
             redirect_to = item_name
-        return werkzeug.redirect(url_for('show_item', item_name=redirect_to))
+        return redirect(url_for('show_item', item_name=redirect_to))
 
 
 @frontend.route('/+delete/<itemname:item_name>', methods=['GET', 'POST'])
@@ -154,7 +153,7 @@ def delete_item(item_name):
         if 'button_ok' in request.form:
             comment = request.form.get('comment')
             item.delete(comment)
-        return werkzeug.redirect(url_for('show_item', item_name=item_name))
+        return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+destroy/<itemname:item_name>', methods=['GET', 'POST'])
@@ -166,7 +165,7 @@ def destroy_item(item_name):
         if 'button_ok' in request.form:
             comment = request.form.get('comment')
             item.destroy(comment)
-        return werkzeug.redirect(url_for('show_item', item_name=item_name))
+        return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+index/<itemname:item_name>')
@@ -298,7 +297,7 @@ def register():
                 msg = user.create_user(request)
             if msg:
                 flash(msg, "error")
-        return werkzeug.redirect(url_for('frontend.show_root'), code=302)
+        return redirect(url_for('frontend.show_root'))
 
 
 @frontend.route('/+recoverpass', methods=['GET', 'POST'])
@@ -341,7 +340,7 @@ def login():
             if hasattr(request, '_login_messages'):
                 for msg in request._login_messages:
                     flash(msg, "error")
-        return werkzeug.redirect(url_for('show_root'), code=302)
+        return redirect(url_for('show_root'))
 
 
 @frontend.route('/+logout')
@@ -357,7 +356,7 @@ def logout():
         flash(_("You are still logged in."), "warning")
     else:
         flash(_("You are now logged out."), "info")
-    return werkzeug.redirect(url_for('show_root'), code=302)
+    return redirect(url_for('show_root'))
 
 
 @frontend.route('/+diffsince/<int:timestamp>/<path:item_name>')
@@ -449,5 +448,5 @@ def _diff(item, revno1, revno2):
 def dispatch():
     args = request.values.to_dict()
     endpoint = str(args.pop('endpoint'))
-    return werkzeug.redirect(url_for(endpoint, **args), code=302)
+    return redirect(url_for(endpoint, **args))
 
