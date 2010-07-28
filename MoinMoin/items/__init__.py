@@ -1219,7 +1219,7 @@ class Text(Binary):
         }
         input_conv = reg.get(Type(self.mimetype), type_moin_document,
                 request=request)
-        if not from_conv:
+        if not input_conv:
             raise "We cannot handle the conversion from %s to the DOM tree" % self.mimetype
         include_conv = reg.get(type_moin_document, type_moin_document,
                 includes='expandall', request=request)
