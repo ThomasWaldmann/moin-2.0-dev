@@ -64,7 +64,12 @@
         <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" />
     {% endif %}
 
-    <link rel="alternate" title="{{ item_name|e }} changes" href="{{ url_for('feed.atom', item_name=item_name)|e }}" type="application/atom+xml" />
+    <link rel="alternate" title="{{ item_name|e }} changes" href="
+    {% if global_history %}
+        {{ url_for('feed.atom')|e }}
+    {% else %}
+        {{ url_for('feed.atom', item_name=item_name)|e }}
+    {% endif %}" type="application/atom+xml" />
 
     {% if html_head %}
         {{ html_head }}
