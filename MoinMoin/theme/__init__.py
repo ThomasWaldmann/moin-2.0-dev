@@ -403,7 +403,7 @@ class ThemeBase(object):
 
     def parent_item(self, item_name):
         """
-        Return name of parent page for the current page
+        Return name of parent item for the current item
 
         @rtype: unicode
         @return: parent item name
@@ -496,14 +496,14 @@ class ThemeBase(object):
         @rtype: list
         @return: list of item names
         """
-        page_front_page = self.translated_item_name(self.cfg.page_front_page)
-        page_title_index = self.translated_item_name('TitleIndex')
-        page_site_navigation = self.translated_item_name('SiteNavigation')
-        page_find_page = self.translated_item_name('FindPage')
-        return [page_front_page, self.cfg.page_front_page,
-                page_title_index, 'TitleIndex',
-                page_find_page, 'FindPage',
-                page_site_navigation, 'SiteNavigation',
+        item_front_page = self.translated_item_name(self.cfg.page_front_page)
+        item_title_index = self.translated_item_name('TitleIndex')
+        item_site_navigation = self.translated_item_name('SiteNavigation')
+        item_find_page = self.translated_item_name('FindPage')
+        return [item_front_page, self.cfg.page_front_page,
+                item_title_index, 'TitleIndex',
+                item_find_page, 'FindPage',
+                item_site_navigation, 'SiteNavigation',
                ]
 
     # Public Functions ########################################################
