@@ -29,11 +29,16 @@ class Converter(object):
     def _factory(cls, input, output, request, **kw):
         return cls()
 
-    def __call__(self, element):
+    def __call__(self, element, **kw):
         self.section_children = {}
         self.parent_section = 0
         self.current_section = 0
         self.root_section = 10
+        if 'title' in kw:
+            self.title = kw['title']
+        else:
+            self.title = 'Untitled'
+
         return self.visit(element)
 
     def do_children(self, element):
@@ -301,6 +306,8 @@ class Converter(object):
         return ET.Element(docbook_tag, attrib=attrib, children=list_items)
 
     def visit_moinpage_page(self, element):
+        title = ET.Element(docbook('title'), attrib={}, children=[self.title])
+        info = ET.Element(docbook.info, attrib={}, children=[title])
         for item in element:
             if item.tag.uri == moin_page and item.tag.name == 'body':
                 c = self.do_children(item)
@@ -319,8 +326,9 @@ class Converter(object):
                             section = ET.Element(docbook(section_tag),
                                                  attrib={}, children=v)
                     return ET.Element(docbook.article,
-                                      attrib={}, children=[section])
+                                      attrib={}, children=[info, section])
                 else:
+                    c.insert(0, info)
                     return ET.Element(docbook.article, attrib={}, children=c)
 
         raise RuntimeError('page:page need to contain exactly one page body tag, got %r'

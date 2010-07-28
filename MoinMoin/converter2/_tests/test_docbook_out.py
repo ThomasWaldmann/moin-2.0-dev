@@ -61,9 +61,11 @@ class TestConverter(Base):
 
     def test_base(self):
         data = [
+           # NB: All the output contain the <info> section, but for a better
+           #     readability, I did not wrote it in the snippet except this one
            ('<page><body><p>Test</p></body></page>',
-            # <article><para>Test</para></article>
-              '/article[para="Test"]'),
+            # <article><info><title>Untitled</title></info><para>Test</para></article>
+              '/article[./info[title="Untitled"]][para="Test"]'),
         ]
         for i in data:
             yield (self.do, ) + i
