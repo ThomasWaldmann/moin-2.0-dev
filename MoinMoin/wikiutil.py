@@ -789,7 +789,7 @@ def RelPageName(context, pagename):
         return PARENT_PREFIX * go_up + '/'.join(pagename_frags)
 
 
-def ParentPageName(pagename):
+def ParentItemName(pagename):
     """
     Return the parent pagename.
 
