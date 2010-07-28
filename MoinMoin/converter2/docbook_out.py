@@ -33,6 +33,7 @@ class Converter(object):
         self.section_children = {}
         self.parent_section = 0
         self.current_section = 0
+        self.table_counter = 0
         self.root_section = 10
         if 'title' in kw:
             self.title = kw['title']
@@ -259,7 +260,15 @@ class Converter(object):
 
     def visit_moinpage_table(self, element):
         # TODO : Attributes conversion
-        return self.new_copy(docbook.table, element, attrib={})
+        title = element.get(html('title'))
+        if not title:
+            #TODO: Translation
+            title = "Table %d" % self.table_counter
+        self.table_counter = self.table_counter + 1
+        caption = ET.Element(docbook('caption'), attrib={}, children=[title])
+        children = [caption]
+        children.extend(self.do_children(element))
+        return self.new(docbook.table, attrib={}, children=children)
 
     def visit_moinpage_table_body(self, element):
         # TODO : Attributes conversion
