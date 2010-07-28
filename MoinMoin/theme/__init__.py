@@ -135,7 +135,7 @@ class ThemeBase(object):
         """
         Get a boolean indicating whether an item_name exists or not.
         
-        @param item_name: string
+        @param item_name: unicode
         @rtype: boolean
         """
         return self.storage.has_item(item_name)
@@ -144,7 +144,7 @@ class ThemeBase(object):
         """
         Get a boolean indicating whether the user in request can read in item_name.
         
-        @param item_name: string
+        @param item_name: unicode
         @rtype: boolean
         """
         return self.request.user.may.read(item_name)
@@ -153,7 +153,7 @@ class ThemeBase(object):
         """
         Get a boolean indicating whether the user in request can write in item_name.
         
-        @param item_name: string
+        @param item_name: unicode
         @rtype: boolean
         """
         return self.request.user.may.write(item_name)
@@ -163,8 +163,8 @@ class ThemeBase(object):
         Get a translated item name.
         If a translated item exists return its name, if not return item name in English.
 
-        @param item_name: string
-        @rtype: string
+        @param item_name: unicode
+        @rtype: unicode
         """
         request = self.request
         item_lang_request = request.getText(item_en)
@@ -355,9 +355,9 @@ class ThemeBase(object):
         key. Using filenames is deprecated, but for now, we simulate old
         behavior.
 
-        @param icon: icon name or file name (string)
+        @param icon: icon name or file name (unicode)
         @rtype: tuple
-        @return: alt (unicode), href (string), width, height (int)
+        @return: alt (unicode), href (unicode), width, height (int)
         """
         if icon in self.icons:
             alt, icon, w, h = self.icons[icon]
@@ -387,7 +387,7 @@ class ThemeBase(object):
 
         @param icon: icon id (dict key)
         @param vars: ...
-        @rtype: string
+        @rtype: unicode
         @return: icon html (img tag)
         """
         if vars is None:
@@ -436,7 +436,7 @@ class ThemeBase(object):
         """
         Return URL usable for user login
         
-        @rtype: string
+        @rtype: unicode
         @return: url for user login
         """
         request = self.request
