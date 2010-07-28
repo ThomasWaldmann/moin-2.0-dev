@@ -115,9 +115,11 @@ class TestConverter(Base):
 
     def test_table(self):
         data = [
+            # All the table output caption, just wrote a test and snippet
+            # for the first test.
             ('<page><body><table><table-header><table-row><table-cell>Header</table-cell></table-row></table-header><table-footer><table-row><table-cell>Footer</table-cell></table-row></table-footer><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></body></page>',
-            # <article><table><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table>
-                '/article/table[thead/tr[td="Header"]][tfoot/tr[td="Footer"]][tbody/tr[td="Cell"]]'),
+            # <article><table><caption>Table 0</caption><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table>
+                '/article/table[caption="Table 0"][thead/tr[td="Header"]][tfoot/tr[td="Footer"]][tbody/tr[td="Cell"]]'),
             ('<page><body><table><table-body><table-row><table-cell page:number-columns-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>',
              # <article><table><tbody><tr><td colspan="2">Cell</td></tr></tbody></table></article>
                 '/article/table/tbody/tr/td[@colspan="2"][text()="Cell"]'),
