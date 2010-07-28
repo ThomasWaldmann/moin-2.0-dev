@@ -56,3 +56,20 @@ def sitemap():
     content = render_template('misc/sitemap.xml', sitemap=sitemap)
     return Response(content, mimetype='text/xml')
 
+
+@misc.route('/urls_names')
+def urls_names():
+    """
+    List of all item URLs and names, e.g. for sisteritems.
+
+    This view generates a list of item URLs and item names, so that other wikis
+    can implement SisterWiki functionality easily.
+    See: http://usemod.com/cgi-bin/mb.pl?SisterSitesImplementationGuide
+    """
+    request = g.context
+    # XXX we currently also get user items, fix this
+    item_names = [item.name for item in request.storage.iteritems()]
+    item_names.sort()
+    content = render_template('misc/urls_names.txt', item_names=item_names)
+    return Response(content, mimetype='text/plain')
+
