@@ -26,6 +26,7 @@ def robots():
     return Response("""\
 User-agent: *
 Crawl-delay: 20
+Disallow: /+convert/
 Disallow: /+modify/
 Disallow: /+revert/
 Disallow: /+index/
@@ -59,6 +60,25 @@ def get_item(item_name, rev):
     item = Item.create(g.context, item_name, rev_no=rev)
     return item.do_get()
 
+@frontend.route('/+convert/<itemname:item_name>')
+def convert_item(item_name):
+    """
+    return a converted item.
+
+    We create two items : the original one, and an empty
+    one with the expected mimetype for the converted item.
+
+    To get the converted item, we just feed his converter,
+    with the internal representation of the item.
+    """
+    mimetype = request.values.get('mimetype')
+    item = Item.create(g.context, item_name, rev_no=-1)
+    # We don't care about the name of the converted object
+    # It should just be a name which does not exist.
+    # XXX Maybe use a random name to be sure it does not exist
+    item_name_converted = item_name + 'converted'
+    converted_item = Item.create(g.context, item_name_converted, mimetype=mimetype)
+    return converted_item._convert(item.internal_representation())
 
 @frontend.route('/+modify/<itemname:item_name>', methods=['GET', 'POST'])
 def modify_item(item_name):
