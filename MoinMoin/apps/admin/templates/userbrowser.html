@@ -2,16 +2,16 @@
 {% block content %}
     <table>
     <tr>
-        <th>Username</th>
-        <th>Member of Groups</th>
-        <th>Email</th>
-        <th>Jabber</th>
-        <th>Action</th>
+        <th>{{ _("User name") }}</th>
+        <th>{{ _("Member of Groups") }}</th>
+        <th>{{ _("Email address") }}</th>
+        <th>{{ _("Jabber ID") }}</th>
+        <th>{{ _("Actions") }}</th>
     </tr>
     {% for u in user_accounts %}
     <tr>
-        <td>{{ u.namelink }} {{ u.disabled and "(%s)" % "disabled" or ""}}</td>
-        <td>{{ u.grouppage_links }}</td>
+        <td><a href="{{ url_for('frontend.show_item', item_name=u.name) }}">{{ u.name }}</a>{{ u.disabled and " (%s)" % _("disabled") or ""}}</td>
+        <td>{{ u.groups|join(',') }}</td>
         <td>
             {% if u.email %}
             <a href="mailto:{{ u.email|urlquote }}" class="mailto">{{ u.email|e }}</a>
@@ -23,18 +23,15 @@
             {% endif %}
         </td>
         <td>
-            <form action="">
-                <input type="hidden" name="do" value="userprofile" />
-                <input type="hidden" name="name" value="{{ u.name }}" />
+            <form action="{{ url_for('admin.userprofile', user_name=u.name) }}" method="GET">
                 <input type="hidden" name="key" value="disabled" />
                 <input type="hidden" name="val" value="{{ u.disabled and "0" or "1" }}" />
-                <input type="submit" name="userprofile" value="{{ u.disabled and "Enable user" or "Disable user" }}" />
+                <input type="submit" name="userprofile" value="{{ u.disabled and _("Enable user") or _("Disable user") }}" />
             </form>
-            <form action="">
-                <input type="hidden" name="do" value="recoverpass" />
+            <form action="{{ url_for('admin.mail_recovery_token') }}" method="GET">
                 <input type="hidden" name="email" value="{{ u.email }}" />
                 <input type="hidden" name="account_sendmail" value="1" />
-                <input type="submit" name="recoverpass" value="{{ "Mail account data" }}" />
+                <input type="submit" name="recoverpass" value="{{ _("Mail account data") }}" />
             </form>
         </td>
     </tr>
