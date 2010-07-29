@@ -11,7 +11,8 @@ from __future__ import absolute_import
 
 from emeraldtree import ElementTree as ET
 
-from MoinMoin import wikiutil
+from MoinMoin import log
+logging = log.getLogger(__name__)
 from MoinMoin.util.tree import html, moin_page, xlink, docbook
 
 class Converter(object):
@@ -22,15 +23,25 @@ class Converter(object):
         moin_page: 'moinpage'
     }
 
+    unsupported_tags = set(['separator', ])
+
     @classmethod
     def _factory(cls, input, output, request, **kw):
         return cls()
 
-    def __call__(self, element):
+    def __call__(self, element, **kw):
         self.section_children = {}
         self.parent_section = 0
         self.current_section = 0
+        self.table_counter = 0
         self.root_section = 10
+        # We can define the title of the document
+        # using the title keyword in the argument
+        if 'title' in kw:
+            self.title = kw['title']
+        else:
+            self.title = 'Untitled'
+
         return self.visit(element)
 
     def do_children(self, element):
@@ -52,7 +63,8 @@ class Converter(object):
         Return a new element in the DocBook tree
         """
         if self.current_section > 0:
-            self.section_children[self.current_section].append(ET.Element(tag, attrib=attrib, children=children))
+            self.section_children[self.current_section].append(
+                ET.Element(tag, attrib=attrib, children=children))
         else:
             return ET.Element(tag, attrib=attrib, children=children)
 
@@ -92,12 +104,17 @@ class Converter(object):
         We will choose the most appropriate procedure to convert
         the element according to his name
         """
+        # Check that the tag is supported
+        if element.tag.name in self.unsupported_tags:
+            logging.warning("Unsupported tag : %s" % element.tag.name)
+            return self.do_children(element)
         method_name = 'visit_moinpage_' + element.tag.name.replace('-', '_')
         method = getattr(self, method_name, None)
         if method:
             return method(element)
 
         # Otherwise we process the children of the unknown element
+        logging.warning("Unknown tag : %s" % element.tag.name)
         return self.do_children(element)
 
     def visit_moinpage_a(self, element):
@@ -119,6 +136,9 @@ class Converter(object):
         code_str = ''.join(element)
         children = ''.join(['<![CDATA[', code_str, ']]>'])
         return self.new(docbook.screen, attrib={}, children=children)
+
+    def visit_moinpage_code(self, element):
+        return self.new_copy(docbook.literal, element, attrib={})
 
     def visit_moinpage_emphasis(self, element):
         return self.new_copy(docbook.emphasis, element, attrib={})
@@ -152,7 +172,7 @@ class Converter(object):
             if self.parent_section != 0:
                 section_tag = 'sect%d' % self.parent_section
                 section = ET.Element(docbook(section_tag), attrib={},
-                                     children=self.section_children[self.current_section])
+                          children=self.section_children[self.current_section])
                 self.section_children[self.parent_section].append(section)
                 self.current_section = int(depth)
 
@@ -181,9 +201,11 @@ class Converter(object):
             else:
                 attrib[docbook('numeration')] = 'arabic'
 
-            return self.handle_simple_list(docbook.orderedlist, element, attrib=attrib)
+            return self.handle_simple_list(docbook.orderedlist,
+                                           element, attrib=attrib)
         elif 'unordered' == item_label_generate:
-            return self.handle_simple_list(docbook.itemizedlist, element, attrib={})
+            return self.handle_simple_list(docbook.itemizedlist,
+                                           element, attrib={})
         else:
             return self.new_copy(docbook.variablelist, element, attrib={})
 
@@ -240,7 +262,15 @@ class Converter(object):
 
     def visit_moinpage_table(self, element):
         # TODO : Attributes conversion
-        return self.new_copy(docbook.table, element, attrib={})
+        title = element.get(html('title'))
+        if not title:
+            #TODO: Translation
+            title = "Table %d" % self.table_counter
+        self.table_counter = self.table_counter + 1
+        caption = ET.Element(docbook('caption'), attrib={}, children=[title])
+        children = [caption]
+        children.extend(self.do_children(element))
+        return self.new(docbook.table, attrib={}, children=children)
 
     def visit_moinpage_table_body(self, element):
         # TODO : Attributes conversion
@@ -287,32 +317,41 @@ class Converter(object):
         return ET.Element(docbook_tag, attrib=attrib, children=list_items)
 
     def visit_moinpage_page(self, element):
+        title = ET.Element(docbook('title'), attrib={}, children=[self.title])
+        info = ET.Element(docbook.info, attrib={}, children=[title])
         for item in element:
             if item.tag.uri == moin_page and item.tag.name == 'body':
                 c = self.do_children(item)
                 if not(c):
-                    self.section_children = sorted(self.section_children.items(), reverse=True)
+                    self.section_children = sorted(self.section_children.items(),
+                                                   reverse=True)
                     section = None
                     for k, v in self.section_children:
                         if section:
                             section_tag = 'sect%d' % k
                             v.append(section)
-                            section = ET.Element(docbook(section_tag), attrib={}, children=v)
+                            section = ET.Element(docbook(section_tag),
+                                                 attrib={}, children=v)
                         else:
                             section_tag = 'sect%d' % k
-                            section = ET.Element(docbook(section_tag), attrib={}, children=v)
-                    return ET.Element(docbook.article, attrib={}, children=[section])
+                            section = ET.Element(docbook(section_tag),
+                                                 attrib={}, children=v)
+                    return ET.Element(docbook.article,
+                                      attrib={}, children=[info, section])
                 else:
+                    c.insert(0, info)
                     return ET.Element(docbook.article, attrib={}, children=c)
 
-        raise RuntimeError('page:page need to contain exactly one page body tag, got %r' % element[:])
+        raise RuntimeError('page:page need to contain exactly one page body tag, got %r'
+                            % element[:])
 
     def visit_moinpage_p(self, element):
         return self.new_copy(docbook.para, element, attrib={})
 
     def visit_moinpage_span(self, element):
         """
-        The span element is used in the DOM Tree to define some specific formatting. So each attribute will give different resulting tag.
+        The span element is used in the DOM Tree to define some specific formatting.
+        So each attribute will give different resulting tag.
 
         TODO : Add support for text-decoration attribute
         TODO : Add support for font-size attribute
@@ -321,7 +360,8 @@ class Converter(object):
         for key, value in element.attrib.iteritems():
             if key.name == 'baseline-shift':
                 if value == 'super':
-                    return self.new_copy(docbook.superscript, element, attrib={})
+                    return self.new_copy(docbook.superscript,
+                                         element, attrib={})
                 if value == 'sub':
                     return self.new_copy(docbook.subscript, element, attrib={})
 
