@@ -75,8 +75,30 @@ def get_item(item_name, rev):
 @frontend.route('/+highlight/<int:rev>/<itemname:item_name>')
 @frontend.route('/+highlight/<itemname:item_name>', defaults=dict(rev=-1))
 def highlight_item(item_name, rev):
+    from MoinMoin.items import Text, NonExistent
     item = Item.create(g.context, item_name, rev_no=rev)
-    return item.do_highlight()
+    if isinstance(item, Text):
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import Type, type_moin_document
+        data_text = item.data_storage_to_internal(item.data)
+        # TODO: use registry as soon as it is in there
+        from MoinMoin.converter2.pygments_in import Converter as PygmentsConverter
+        pygments_conv = PygmentsConverter(g.context, mimetype=item.mimetype)
+        doc = pygments_conv(data_text.split(u'\n'))
+        # TODO: Real output format
+        html_conv = reg.get(type_moin_document,
+                Type('application/x-xhtml-moin-page'), request=g.context)
+        doc = html_conv(doc)
+        from array import array
+        out = array('u')
+        # TODO: Switch to xml
+        doc.write(out.fromunicode, method='html')
+        content = out.tounicode()
+    elif isinstance(item, NonExistent):
+        return redirect(url_for('frontend.show_item', item_name=item_name))
+    else:
+        content = u"highlighting not supported"
+    return render_template('highlight.html', item_name=item.name, data_text=content)
 
 
 @frontend.route('/+modify/<itemname:item_name>', methods=['GET', 'POST'])

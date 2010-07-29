@@ -470,9 +470,6 @@ class NonExistent(Item):
     def do_get(self):
         self.request.status_code = 404
 
-    def do_highlight(self):
-        self.request.status_code = 404
-
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return (self.formatter.url(1, self.url(), css='nonexistent', title='click to create item') +
@@ -523,9 +520,6 @@ There is no help, you're doomed!
         item_iterator = self.search_item(term)
         items = [item.name for item in item_iterator]
         return sorted(items)
-
-    def do_highlight(self):
-        return '' # XXX we can't highlight the data, maybe show some "data icon" as a placeholder?
 
     def do_show(self):
         item = self.rev.item
@@ -1165,26 +1159,6 @@ class Text(Binary):
                                lang='en', direction='ltr',
                                help=self.modify_help,
                               )
-
-    def do_highlight(self):
-        request = self.request
-        data_text = self.data_storage_to_internal(self.data)
-        Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", 'highlight')
-        parser = Parser(data_text, request, format_args=self.mimetype)
-        buffer = StringIO()
-        request.redirect(buffer)
-        parser.format(self.formatter)
-        content = buffer.getvalue()
-        request.redirect()
-        del buffer
-
-        return render_template('highlight.html',
-                               item_name=self.name,
-                               data_text=content,
-                               lang='en', direction='ltr',
-                               help=self.modify_help,
-                              )
-        return content
 
 
 class HTML(Text):
