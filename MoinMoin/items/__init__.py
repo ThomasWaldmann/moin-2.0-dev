@@ -402,21 +402,19 @@ class Item(object):
 class NonExistent(Item):
     supported_mimetypes = ['application/x-unknown']
     mimetype_groups = [
-        ('page markup text items', [
+        ('markup text items', [
             ('text/x.moin.wiki', 'Wiki (MoinMoin)'),
             ('text/x.moin.creole', 'Wiki (Creole)'),
-            ('text/html', 'unsafe html'),
             ('text/x-safe-html', 'safe html'),
-        ]),
-        ('highlighted text items', [
-            ('text/x-diff', 'diff/patch'),
-            ('text/x-python', 'python code'),
+            ('text/html', 'unsafe html'),
+            ('application/docbook+xml', 'DocBook'),
         ]),
         ('other text items', [
             ('text/plain', 'plain text'),
+            ('text/x-diff', 'diff/patch'),
+            ('text/x-python', 'python code'),
             ('text/csv', 'csv'),
             ('text/x-irclog', 'IRC log'),
-            ('application/docbook+xml', 'DocBook document'),
         ]),
         ('image items', [
             ('image/jpeg', 'JPEG'),
@@ -470,9 +468,6 @@ class NonExistent(Item):
     def do_get(self):
         self.request.status_code = 404
 
-    def do_highlight(self):
-        self.request.status_code = 404
-
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return (self.formatter.url(1, self.url(), css='nonexistent', title='click to create item') +
@@ -523,9 +518,6 @@ There is no help, you're doomed!
         item_iterator = self.search_item(term)
         items = [item.name for item in item_iterator]
         return sorted(items)
-
-    def do_highlight(self):
-        return '' # XXX we can't highlight the data, maybe show some "data icon" as a placeholder?
 
     def do_show(self):
         item = self.rev.item
@@ -1166,25 +1158,23 @@ class Text(Binary):
                                help=self.modify_help,
                               )
 
-    def do_highlight(self):
-        request = self.request
-        data_text = self.data_storage_to_internal(self.data)
-        Parser = wikiutil.searchAndImportPlugin(request.cfg, "parser", 'highlight')
-        parser = Parser(data_text, request, format_args=self.mimetype)
-        buffer = StringIO()
-        request.redirect(buffer)
-        parser.format(self.formatter)
-        content = buffer.getvalue()
-        request.redirect()
-        del buffer
 
-        return render_template('highlight.html',
-                               item_name=self.name,
-                               data_text=content,
-                               lang='en', direction='ltr',
-                               help=self.modify_help,
-                              )
-        return content
+class MoinWiki(Text):
+    """ MoinMoin wiki markup """
+    supported_mimetypes = ['text/x-unidentified-wiki-format',
+                           'text/x.moin.wiki',
+                          ]  # XXX Improve mimetype handling
+    converter_mimetype = 'text/x.moin.wiki'
+
+
+class CreoleWiki(Text):
+    """ Creole wiki markup """
+    supported_mimetypes = ['text/x.moin.creole']
+
+
+class DocBook(Text):
+    """ DocBook Document """
+    supported_mimetypes = ['application/docbook+xml']
 
 
 class HTML(Text):
@@ -1206,80 +1196,13 @@ class HTML(Text):
                                meta_text=meta_text,
                                lang='en', direction='ltr',
                                help=self.modify_help,
-                               url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
                               )
 
 
 
-class MoinWiki(Text):
-    """ MoinMoin wiki markup """
-    supported_mimetypes = ['text/x-unidentified-wiki-format',
-                           'text/x.moin.wiki',
-                          ]  # XXX Improve mimetype handling
-    converter_mimetype = 'text/x.moin.wiki'
-
-
-class CreoleWiki(Text):
-    """ Creole wiki markup """
-    supported_mimetypes = ['text/x.moin.creole']
-
-
-class CSV(Text):
-    """ Comma Separated Values format """
-    supported_mimetypes = ['text/csv']
-    format = 'csv'
-    format_args = ''
-
-
-class SafeHTML(Text):
-    """ HTML markup """
+class SafeHTML(HTML):
+    """ Safe HTML markup - we'll filter dangerous stuff """
     supported_mimetypes = ['text/x-safe-html']
-    format = 'html'
-    format_args = supported_mimetypes[0]
-
-    # XXX duplicated from HTML class
-    def do_modify(self, template_name):
-        if template_name:
-            item = Item.create(self.request, template_name)
-            data_text = self.data_storage_to_internal(item.data)
-        else:
-            data_text = self.data_storage_to_internal(self.data)
-        meta_text = self.meta_dict_to_text(self.meta)
-        return render_template('modify_text_html.html',
-                               item_name=self.name,
-                               rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
-                               revno=0,
-                               data_text=data_text,
-                               meta_text=meta_text,
-                               lang='en', direction='ltr',
-                               help=self.modify_help,
-                               url_prefix_ckeditor=self.request.cfg.url_prefix_ckeditor,
-                              )
-
-class DocBook(Text):
-    """ DocBook Document """
-    supported_mimetypes = ['application/docbook+xml']
-
-
-class DiffPatch(Text):
-    """ diff output / patch input format """
-    supported_mimetypes = ['text/x-diff']
-    format = 'highlight'
-    format_args = supported_mimetypes[0]
-
-
-class IRCLog(Text):
-    """ Internet Relay Chat Log """
-    supported_mimetypes = ['text/x-irclog']
-    format = 'highlight'
-    format_args = supported_mimetypes[0]
-
-
-class PythonSrc(Text):
-    """ Python source code """
-    supported_mimetypes = ['text/x-python']
-    format = 'highlight'
-    format_args = supported_mimetypes[0]
 
 
 class TWikiDraw(TarMixin, Image):

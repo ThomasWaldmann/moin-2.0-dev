@@ -63,14 +63,30 @@ class TreeFormatter(pygments.formatter.Formatter):
 
 
 class Converter(object):
-    def __init__(self, request, type):
-        self.request, self.type = request, type
+    def __init__(self, request, name=None, mimetype=None):
+        """
+        Create a Pygments Converter, either name (the pygments alias name / short
+        name of the wanted lexer) or the mimetype needs to be given.
+
+        @param name: pygments lexer name
+        @param mimetype: mimetype for pygments lexer lookup
+        """
+        self.request, self.name, self.mimetype = request, name, mimetype
+        assert name or mimetype
 
     def __call__(self, content, arguments=None):
         blockcode = moin_page.blockcode(attrib={moin_page.class_: 'codearea'})
 
         content = u'\n'.join(content)
-        lexer = pygments.lexers.get_lexer_by_name(self.type)
+        try:
+            if self.name:
+                lexer = pygments.lexers.get_lexer_by_name(self.name)
+            elif self.mimetype:
+                lexer = pygments.lexers.get_lexer_for_mimetype(self.mimetype)
+            else:
+                raise pygments.util.ClassNotFound
+        except pygments.util.ClassNotFound:
+            lexer = pygments.lexers.get_lexer_by_name('text')
         pygments.highlight(content, lexer, TreeFormatter(), blockcode)
 
         body = moin_page.body(children=(blockcode, ))
@@ -79,18 +95,18 @@ class Converter(object):
 
 def _factory(type_input, type_output, **kw):
     if type_moin_document.issupertype(type_output):
-        pygments_type = None
+        pygments_name = None
         # first we check the input type against all mimetypes pygments knows:
         for name, short_names, patterns, mime_types in pygments.lexers.get_all_lexers():
             for mt in mime_types:
                 if Type(mt).issupertype(type_input):
-                    pygments_type = short_names[0]
+                    pygments_name = short_names[0]
                     break
-            if pygments_type:
+            if pygments_name:
                 break
         # if we still don't know the lexer name for pygments, check some formats
         # that were supported by special parsers in moin 1.x:
-        if pygments_type is None:
+        if pygments_name is None:
             moin_pygments = [
                 ('python', 'python'),
                 ('diff', 'diff'),
@@ -102,12 +118,13 @@ def _factory(type_input, type_output, **kw):
             ]
             for moin_format, pygments_name in moin_pygments:
                 if Type('x-moin/format;name=%s' % moin_format).issupertype(type_input):
-                    pygments_type = pygments_name
                     break
+            else:
+                pygments_name = None
 
-        if pygments_type:
+        if pygments_name:
             def real_factory(request):
-                return Converter(request, pygments_type)
+                return Converter(request, name=pygments_name)
             return real_factory
 
 
