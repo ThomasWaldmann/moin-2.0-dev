@@ -238,7 +238,6 @@ def setup_jinja_env(request):
                             'user': request.user,
                             'cfg': request.cfg,
                             '_': request.getText,
-                            'href': request.href,
                             'item_name': 'handlers need to give it',
                             'translated_item_name': theme.translated_item_name,
                             })
