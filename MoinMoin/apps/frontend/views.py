@@ -10,11 +10,14 @@
 @license: GNU GPL, see COPYING for details.
 """
 
+import re
+import difflib
+
 from flask import request, g, url_for, flash, render_template, Response, redirect
 
 from MoinMoin.apps.frontend import frontend
 from MoinMoin.items import Item, MIMETYPE
-from MoinMoin import user, wikiutil
+from MoinMoin import config, user, wikiutil
 
 
 @frontend.route('/')
@@ -72,8 +75,30 @@ def get_item(item_name, rev):
 @frontend.route('/+highlight/<int:rev>/<itemname:item_name>')
 @frontend.route('/+highlight/<itemname:item_name>', defaults=dict(rev=-1))
 def highlight_item(item_name, rev):
+    from MoinMoin.items import Text, NonExistent
     item = Item.create(g.context, item_name, rev_no=rev)
-    return item.do_highlight()
+    if isinstance(item, Text):
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import Type, type_moin_document
+        data_text = item.data_storage_to_internal(item.data)
+        # TODO: use registry as soon as it is in there
+        from MoinMoin.converter2.pygments_in import Converter as PygmentsConverter
+        pygments_conv = PygmentsConverter(g.context, mimetype=item.mimetype)
+        doc = pygments_conv(data_text.split(u'\n'))
+        # TODO: Real output format
+        html_conv = reg.get(type_moin_document,
+                Type('application/x-xhtml-moin-page'), request=g.context)
+        doc = html_conv(doc)
+        from array import array
+        out = array('u')
+        # TODO: Switch to xml
+        doc.write(out.fromunicode, method='html')
+        content = out.tounicode()
+    elif isinstance(item, NonExistent):
+        return redirect(url_for('frontend.show_item', item_name=item_name))
+    else:
+        content = u"highlighting not supported"
+    return render_template('highlight.html', item_name=item.name, data_text=content)
 
 
 @frontend.route('/+modify/<itemname:item_name>', methods=['GET', 'POST'])
@@ -443,6 +468,156 @@ def _diff(item, revno1, revno2):
                            oldrev=oldrev,
                            newrev=newrev,
                           )
+
+
+@frontend.route('/+similar_names/<itemname:item_name>')
+def similar_names(item_name):
+    """
+    list similar item names
+
+    @copyright: 2001 Richard Jones <richard@bizarsoftware.com.au>,
+                2001 Juergen Hermann <jh@web.de>
+    @license: GNU GPL, see COPYING for details.
+    """
+    _ = g.context.getText
+    start, end, matches = findMatches(item_name)
+    keys = matches.keys()
+    keys.sort()
+    # TODO later we could add titles for the misc ranks:
+    # 8 item_name
+    # 4 "%s/..." % item_name
+    # 3 "%s...%s" % (start, end)
+    # 1 "%s..." % (start, )
+    # 2 "...%s" % (end, )
+    item_names = []
+    for wanted_rank in [8, 4, 3, 1, 2, ]:
+        for item_name in keys:
+            item_rank = matches[item_name]
+            if item_rank == wanted_rank:
+                item_names.append(item_name)
+    return render_template("item_link_list.html",
+                           headline=_("Items with similar names"),
+                           item_names=item_names)
+
+
+def findMatches(item_name, s_re=None, e_re=None):
+    """ Find similar item names.
+
+    @param item_name: name to match
+    @param request: current reqeust
+    @param s_re: start re for wiki matching
+    @param e_re: end re for wiki matching
+    @rtype: tuple
+    @return: start word, end word, matches dict
+    """
+    request = g.context
+    item_names = [item.name for item in request.storage.iteritems()]
+    if item_name in item_names:
+        item_names.remove(item_name)
+    # Get matches using wiki way, start and end of word
+    start, end, matches = wikiMatches(item_name, item_names, start_re=s_re, end_re=e_re)
+    # Get the best 10 close matches
+    close_matches = {}
+    found = 0
+    for name in closeMatches(item_name, item_names):
+        if name not in matches:
+            # Skip names already in matches
+            close_matches[name] = 8
+            found += 1
+            # Stop after 10 matches
+            if found == 10:
+                break
+    # Finally, merge both dicts
+    matches.update(close_matches)
+    return start, end, matches
+
+
+def wikiMatches(item_name, item_names, start_re=None, end_re=None):
+    """
+    Get item names that starts or ends with same word as this item name.
+
+    Matches are ranked like this:
+        4 - item is subitem of item_name
+        3 - match both start and end
+        2 - match end
+        1 - match start
+
+    @param item_name: item name to match
+    @param item_names: list of item names
+    @param start_re: start word re (compile regex)
+    @param end_re: end word re (compile regex)
+    @rtype: tuple
+    @return: start, end, matches dict
+    """
+    if start_re is None:
+        start_re = re.compile('([%s][%s]+)' % (config.chars_upper,
+                                               config.chars_lower))
+    if end_re is None:
+        end_re = re.compile('([%s][%s]+)$' % (config.chars_upper,
+                                              config.chars_lower))
+
+    # If we don't get results with wiki words matching, fall back to
+    # simple first word and last word, using spaces.
+    words = item_name.split()
+    match = start_re.match(item_name)
+    if match:
+        start = match.group(1)
+    else:
+        start = words[0]
+
+    match = end_re.search(item_name)
+    if match:
+        end = match.group(1)
+    else:
+        end = words[-1]
+
+    matches = {}
+    subitem = item_name + '/'
+
+    # Find any matching item names and rank by type of match
+    for name in item_names:
+        if name.startswith(subitem):
+            matches[name] = 4
+        else:
+            if name.startswith(start):
+                matches[name] = 1
+            if name.endswith(end):
+                matches[name] = matches.get(name, 0) + 2
+
+    return start, end, matches
+
+
+def closeMatches(item_name, item_names):
+    """ Get close matches.
+
+    Return all matching item names with rank above cutoff value.
+
+    @param item_name: item name to match
+    @param item_names: list of item names
+    @rtype: list
+    @return: list of matching item names, sorted by rank
+    """
+    # Match using case insensitive matching
+    # Make mapping from lower item names to item names.
+    lower = {}
+    for name in item_names:
+        key = name.lower()
+        if key in lower:
+            lower[key].append(name)
+        else:
+            lower[key] = [name]
+
+    # Get all close matches
+    all_matches = difflib.get_close_matches(item_name.lower(), lower.keys(),
+                                            len(lower), cutoff=0.6)
+
+    # Replace lower names with original names
+    matches = []
+    for name in all_matches:
+        matches.extend(lower[name])
+
+    return matches
+
 
 @frontend.route('/+dispatch', methods=['GET', ])
 def dispatch():
