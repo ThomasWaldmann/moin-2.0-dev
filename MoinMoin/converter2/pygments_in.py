@@ -78,10 +78,15 @@ class Converter(object):
         blockcode = moin_page.blockcode(attrib={moin_page.class_: 'codearea'})
 
         content = u'\n'.join(content)
-        if self.name:
-            lexer = pygments.lexers.get_lexer_by_name(self.name)
-        elif self.mimetype:
-            lexer = pygments.lexers.get_lexer_for_mimetype(self.mimetype)
+        try:
+            if self.name:
+                lexer = pygments.lexers.get_lexer_by_name(self.name)
+            elif self.mimetype:
+                lexer = pygments.lexers.get_lexer_for_mimetype(self.mimetype)
+            else:
+                raise pygments.util.ClassNotFound
+        except pygments.util.ClassNotFound:
+            lexer = pygments.lexers.get_lexer_by_name('text')
         pygments.highlight(content, lexer, TreeFormatter(), blockcode)
 
         body = moin_page.body(children=(blockcode, ))
