@@ -1,5 +1,5 @@
 <ul class="editbar">
-    {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded %}
+    {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded -%}
         <li>
         {% if theme.item_writable %}
             <a href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" rel="nofollow"> {{ _('Modify') }}</a>
@@ -7,35 +7,31 @@
             {{ _('Immutable Item')}}
         {% endif %}
         </li>
-    {% endif %}
-
-    {% if 'Download' in cfg.edit_bar and 'get' not in cfg.actions_excluded %}
+    {%- endif %}
+    {% if 'Download' in cfg.edit_bar and 'get' not in cfg.actions_excluded -%}
         <li>
             <a href="{{ url_for('frontend.get_item', item_name=item_name)|e }}" rel="nofollow">{{ _('Download') }}</a>
         </li>
-    {% endif %}
-
-    {% if 'History' in cfg.edit_bar and 'history' not in cfg.actions_excluded %}
+    {%- endif %}
+    {% if 'History' in cfg.edit_bar and 'history' not in cfg.actions_excluded -%}
         <li>
             <a href="{{ url_for('frontend.history', item_name=item_name)|e }}" rel="nofollow">{{ _('History') }}</a>
         </li>
-    {% endif %}
-
+    {%- endif %}
     {% if 'Quicklink' in cfg.edit_bar and 'quicklink' not in cfg.actions_excluded
-       and theme.user.valid %}
+       and theme.user.valid -%}
         <li>
             <a class="nbquicklink" href="{{ url_for('frontend.quicklink_item', item_name=item_name)|e }}" rel="nofollow">
-            {% if theme.user.isQuickLinkedTo([item_name]) %}
+            {% if theme.user.isQuickLinkedTo([item_name]) -%}
                 {{ _('Remove Link') }}
-            {% else %}
+            {% else -%}
                 {{ _('Add Link') }}
-            {% endif %}
+            {%- endif %}
             </a>
         </li>
-    {% endif %}
-
+    {%- endif %}
     {% if 'Subscribe' in cfg.edit_bar and 'subscribe' not in cfg.actions_excluded
-       and theme.user.valid and (cfg.mail_enabled or cfg.jabber_enabled) %}
+       and theme.user.valid and (cfg.mail_enabled or cfg.jabber_enabled) -%}
         <li>
             <a class="nbsubscribe" href="{{ url_for('frontend.subscribe_item', item_name=item_name)|e }}" rel="nofollow">
             {% if theme.user.isSubscribedTo([item_name]) %}
@@ -45,34 +41,30 @@
             {% endif %}
             </a>
         </li>
-    {% endif %}
-
-    {% if 'Comments' in cfg.edit_bar and 'comments' not in cfg.actions_excluded %}
+    {%- endif %}
+    {% if 'Comments' in cfg.edit_bar and 'comments' not in cfg.actions_excluded -%}
         <li class="toggleCommentsButton" style="display:none;">
             <a href="#" class="nbcomment" onClick="toggleComments();return false;">{{ _('Comments') }}</a>
         </li>
-    {% endif %}
-
-    {% if 'Index' in cfg.edit_bar and 'index' not in cfg.actions_excluded %}
+    {%- endif %}
+    {% if 'Index' in cfg.edit_bar and 'index' not in cfg.actions_excluded -%}
         <li>
             <a class="nbindex" href="{{ url_for('frontend.index', item_name=item_name)|e }}" rel="nofollow">{{ _('Index') }}</a>
         </li>
-    {% endif %}
-
-    {% if 'Supplementation' in cfg.edit_bar and 'supplementation' not in cfg.actions_excluded %}
-        {% for sub_item_name in cfg.supplementation_item_names %}
+    {%- endif %}
+    {% if 'Supplementation' in cfg.edit_bar and 'supplementation' not in cfg.actions_excluded -%}
+        {%- for sub_item_name in cfg.supplementation_item_names -%}
             {% set current_sub = item_name.rsplit('/', 1)[-1] %}
-            {% if not current_sub in cfg.supplementation_item_names %}
-                {% set supp_name = '%s/%s' % (item_name, sub_item_name) %}
+            {%- if not current_sub in cfg.supplementation_item_names -%}
+                {% set supp_name = '%s/%s' % (item_name, sub_item_name) -%}
                 {% if theme.storage.has_item(supp_name) or theme.user.may.write(supp_name) %}
                     <li>
                         <a class="nbsupplementation" href="{{ url_for('frontend.show_item', item_name=supp_name)|e }}" rel="nofollow">{{ _(sub_item_name) }}</a>
                     </li>
-                {% endif %}
-            {% endif %}
-        {% endfor %}
-    {% endif %}
-
+                {%- endif %}
+            {%- endif %}
+        {%- endfor -%}
+    {%- endif %}
     {% if 'ActionsMenu' in cfg.edit_bar %}
         <li>
             <form class="actionsmenu" method="GET" action="{{ url_for('frontend.dispatch')|e }}">
@@ -96,5 +88,5 @@
                 </div>
             </form>
         </li>
-    {% endif %}
+    {%- endif %}
 </ul>
