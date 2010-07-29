@@ -1,6 +1,7 @@
 <!DOCTYPE html>{# this is html5, xmlish variant #}
 <html>
 <head>
+{% block head %}
     <meta charset="{{ theme.output_charset }}" />
 
     {{ cfg.html_head }}
@@ -64,9 +65,6 @@
         <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" />
     {% endif %}
 
-    <link rel="alternate" title="{{ item_name|e }} changes" href="{% block feed %}{{ url_for('feed.atom', item_name=item_name)|e }}
-    {% endblock %}" type="application/atom+xml" />
-
     {% if html_head %}
         {{ html_head }}
     {% endif %}
@@ -97,6 +95,7 @@
     var search_hint = " {{ _('Search') }}";
     //-->
     </script>
+{% endblock %}
 </head>
 <body onload="actionsMenuInit('{{ _('More Actions:') }}'); {% if body_onload %}{{ body_onload }}{% endif %}" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
 

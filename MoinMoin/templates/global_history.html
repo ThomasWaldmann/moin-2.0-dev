@@ -1,7 +1,8 @@
 {% extends "layout.html" %}
 
-{% block feed %}
-{{ url_for('feed.atom')|e }}
+{% block head %}
+{{ super() }}
+<link rel="alternate" title="Global changes" href="{{ url_for('feed.atom')|e }}" type="application/atom+xml" />
 {% endblock %}
 
 {% block content %}
