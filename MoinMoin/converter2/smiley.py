@@ -85,16 +85,20 @@ class Converter(object):
         return content
 
     def do_children(self, element):
+        new_child = []
         if element.tag.name in self.tag_to_ignore:
             return
         for child in element:
             if isinstance(child, ET.Element):
-                self.do_children(child)
+                return self.do_children(child)
             else:
-                # We delete the text, and recreate a list, with the old text
-                # and the new object tags.
-                element.remove(child)
-                [element.append(item) for item in self.do_smiley(child)]
+                # We replace the text smiley by the equivalent object tag
+                # And we put this in a new list of child with the old child too
+                [new_child.append(item) for item in self.do_smiley(child)]
+        # We remove all the old child
+        element.clear()
+        # And we replace it by the new one
+        element.extend(new_child)
 
     def do_smiley(self, element):
         """
