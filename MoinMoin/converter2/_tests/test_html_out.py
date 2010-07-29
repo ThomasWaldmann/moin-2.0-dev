@@ -82,7 +82,7 @@ class TestConverter(Base):
             ('<page:page><page:body><page:blockcode>Code</page:blockcode></page:body></page:page>',
                 '/div[pre="Code"]'),
             ('<page:page><page:body><page:p><page:code>Code</page:code></page:p></page:body></page:page>',
-                '/div/p[tt="Code"]'),
+                '/div/p[code="Code"]'),
             ('<page:page><page:body><page:separator/></page:body></page:page>',
                 '/div/hr'),
             ('<page:page><page:body><page:div><page:p>Text</page:p></page:div></page:body></page:page>',
@@ -138,9 +138,9 @@ class TestConverter(Base):
             ('<page><body><p><span text-decoration="line-through">stroke</span></p></body></page>',
                 '/div/p[del="stroke"]'),
             ('<page><body><p><span font-size="85%">small</span></p></body></page>',
-                '/div/p[small="small"]'),
+                '/div/p/span[@class="small"][text()="small"]'),
             ('<page><body><p><span font-size="120%">big</span></p></body></page>',
-                '/div/p[big="big"]'),
+                '/div/p/span[@class="big"][text()="big"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -154,13 +154,13 @@ class TestConverter(Base):
             ('<page><body><list><list-item><list-item-label>Label</list-item-label><list-item-body>Item</list-item-body></list-item></list></body></page>',
                 '/div/dl[dt="Label"][dd="Item"]'),
             ('<page><body><list item-label-generate="ordered" list-style-type="upper-alpha"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
-                '/div/ol[@type="A"][li="Item"]'),
+                '/div/ol[@class="upperalpha_list"][li="Item"]'),
             ('<page><body><list item-label-generate="ordered" list-style-type="lower-alpha"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
-                '/div/ol[@type="a"][li="Item"]'),
+                '/div/ol[@class="loweralpha_list"][li="Item"]'),
             ('<page><body><list item-label-generate="ordered" list-style-type="upper-roman"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
-                '/div/ol[@type="I"][li="Item"]'),
+                '/div/ol[@class="upperroman_list"][li="Item"]'),
             ('<page><body><list item-label-generate="ordered" list-style-type="lower-roman"><list-item><list-item-body>Item</list-item-body></list-item></list></body></page>',
-                '/div/ol[@type="i"][li="Item"]'),
+                '/div/ol[@class="lowerroman_list"][li="Item"]'),
         ]
         for i in data:
             yield (self.do, ) + i

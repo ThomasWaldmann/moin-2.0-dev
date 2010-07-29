@@ -20,7 +20,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil
-from MoinMoin.util.tree import html, moin_page, xlink
+from MoinMoin.util.tree import html, moin_page, xlink, xml
 
 from ._wiki_macro import ConverterMacro
 
@@ -63,6 +63,10 @@ class Converter(object):
                         'label', 'legend', 'link', 'map', 'menu', 'noframes', 'noscript',
                         'optgroup', 'option', 'param', 'script', 'select', 'style',
                         'textarea', 'title', 'var'])
+
+    # standard_attributes are html attributes which are used
+    # directly in the DOM tree, without any conversion
+    standard_attributes = set(['title', 'class', 'style'])
 
     # Regular expression to detect an html heading tag
     heading_re = re.compile('h[1-6]')
@@ -139,7 +143,8 @@ class Converter(object):
         It first converts the child of the element,
         and the element itself.
         """
-        # TODO: Handle Attributes correctly
+        attrib_new = self.convert_attributes(element)
+        attrib.update(attrib_new)
         children = self.do_children(element)
         return self.new(tag, attrib, children)
 
@@ -152,6 +157,16 @@ class Converter(object):
         """
         tag = ET.QName(element.tag.name, moin_page)
         return self.new_copy(tag, element, attrib)
+
+    def convert_attributes(self, element):
+        result = {}
+        for key, value in element.attrib.iteritems():
+            if key.uri == html and \
+                value in self.standard_attributes:
+                result[key] = value
+            if key.name == 'id':
+                result[xml('id')] = value
+        return result
 
     def visit(self, element):
         """
