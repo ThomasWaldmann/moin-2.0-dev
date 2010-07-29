@@ -5,41 +5,37 @@
     <meta charset="{{ theme.output_charset }}" />
     {{ cfg.html_head }}
     {# Search engine precautions / optimizations #}
-    {% if theme.request.query_string %}
+    {%- if theme.request.query_string -%}
         {# if it is an action or edit/search, send query headers (noindex,nofollow): #}
         {{ cfg.html_head_queries }}
-    {% elif theme.request.method == 'POST' or item_name in ['BadContent', 'LocalBadContent', ] %}
+    {%- elif theme.request.method == 'POST' or item_name in ['BadContent', 'LocalBadContent', ] -%}
         {# we don't want to have BadContent stuff indexed: #}
         {{ cfg.html_head_posts }}
-    {% elif item_name in theme.special_item_names %}
+    {%- elif item_name in theme.special_item_names -%}
         {# if it is a special page, index it and follow the links - we do it #}
         {# for the original, English pages as well as for (the possibly modified frontpage #}
         {{ cfg.html_head_index }}
-    {% else %}
+    {%- else -%}
         {# if it is a normal page, index it, but do not follow the links, because #}
         {# there are a lot of illegal links (like actions) or duplicates: #}
         {{ cfg.html_head_normal }}
-    {% endif %}
-    {% if pi_refresh %}
+    {%- endif %}
+    {% if pi_refresh -%}
         {{ '<meta http-equiv="refresh" content="%d;URL=%s" />' % pi_refresh }}
-    {% endif %}
-    {% if item_name and allow_doubleclick and
-        theme.user.edit_on_doubleclick and theme.item_writable %}
+    {%- endif %}
+    {%- if item_name and allow_doubleclick and
+        theme.user.edit_on_doubleclick and theme.item_writable -%}
             <meta name="edit_on_doubleclick" content="1" />
-    {% endif %}
-    {% if theme.meta_keywords %}
+    {%- endif %}
+    {%- if theme.meta_keywords -%}
         <meta name="keywords" content="{{ theme.meta_keywords }}" />
-    {% endif %}
-    {% if theme.meta_description %}
+    {%- endif %}
+    {%- if theme.meta_description -%}
         <meta name="description" content="{{ theme.meta_description }}" />
-    {% endif %}
+    {%- endif %}
     <title>
-    {% if title %}{{ title }}{% else %}{{ item_name }}{% endif %} -
-        {% if cfg.html_pagetitle %}
-            {{ cfg.html_pagetitle|e }}
-        {% else %}
-            {{ cfg.sitename|e }}
-        {% endif %}
+    {%- if title -%}{{ title }}{% else %}{{ item_name }}{%- endif %} -
+    {%- if cfg.html_pagetitle -%} {{ cfg.html_pagetitle|e }}{% else %}{{ cfg.sitename|e }}{%- endif -%}
     </title>
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" />
     <link rel="Search" href="{{ url_for('frontend.show_item', item_name=translated_item_name('FindPage'))|e }}" />
@@ -48,24 +44,24 @@
     <link rel="Help" href="{{ url_for('frontend.show_item', item_name=translated_item_name('HelpOnFormatting'))|e }}" />
     <link rel="Start" href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page))|e }}" />
     {% set parent_item = theme.parent_item(item_name) %}
-    {% if parent_item %}
+    {%- if parent_item -%}
         <link rel="Up" href="{{ url_for('frontend.show_item', item_name=parent_page)|e }}" />
-    {% endif %}
-    {% if html_head %}
+    {%- endif %}
+    {%- if html_head -%}
         {{ html_head }}
-    {% endif %}
-    {% for src in ['jquery' ,'svg', 'common'] %}
+    {%- endif %}
+    {% for src in ['jquery' ,'svg', 'common'] -%}
         <script type="text/javascript" src="{{ url_for('static', filename='common/js/%s.js' % src) }}"></script>
     {% endfor %}
-    {% for media, name in theme.stylesheets %}
+    {% for media, name in theme.stylesheets -%}
         <link media="{{ media }}" rel="stylesheet" href="{{ url_for('static', filename='%s/css/%s.css' % (theme.name, name))|e }}" />
     {% endfor %}
-    {% for media, url in cfg.stylesheets %}
+    {% for media, url in cfg.stylesheets -%}
         <link media="{{ media }}" rel="stylesheet" href="{{ url|e }}" />
-    {% endfor %}
-    {% if theme.user.valid and theme.user.css_url %}
+    {%- endfor %}
+    {% if theme.user.valid and theme.user.css_url -%}
         <link media="all" rel="stylesheet" href="{{ theme.user.css_url|e }}" />
-    {% endif %}
+    {%- endif %}
     <!--[if lt IE 9]>
         {# TODO: use a local copy later #}
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
