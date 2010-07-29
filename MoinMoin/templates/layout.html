@@ -55,15 +55,10 @@
 
 
 <h1 id="locationline">
-
     {% if cfg.show_interwiki %}
     <span id="interwiki">
         <a href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page)) }}" rel="nofollow">
-            {% if cfg.interwikiname %}
-                {{ cfg.interwikiname }}
-            {% else %}
-                Self
-            {% endif %}
+            {% if cfg.interwikiname %}{{ cfg.interwikiname }}{% else %}Self{% endif %}
         </a>
         <span class="sep">: </span>
     </span>
@@ -75,13 +70,10 @@
                 <a href="{{ url_for('frontend.show_item', item_name=segment_path) }}" {% if not exists %}class="nonexistent"{% endif %}>
                     {{ segment_name|shorten_item_name }}
                 </a>
-                {% if not loop.last %}
-                    <span class="sep">/</span>
-                {% endif %}
+                {% if not loop.last %}<span class="sep">/</span>{% endif %}
             {% endfor %}
         </span>
     </span>
-
 </h1>
 
 {% set trail_items = theme.path_breadcrumbs() %}
@@ -97,9 +89,7 @@
         {% endif %}>
             {{ item_name|shorten_item_name }}
         </a>
-        {% if not loop.last %}
-            <span class="sep"> &raquo; </span>
-        {% endif %}
+        {% if not loop.last %}<span class="sep"> &raquo; </span>{% endif %}
     {% endfor %}
     </div>
 {% endif %}
@@ -125,14 +115,12 @@
 </div>
 
 <div id="page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
-
     {# ALL CONTENT TEMPLATES SHOULD HAVE IMPLEMENTS THIS BLOCK #}
     {% block item %}
         <div id="content">
         {% block content %}{% endblock %}
         </div>
     {% endblock %}
-
 </div>
 
 <div id="footer">
