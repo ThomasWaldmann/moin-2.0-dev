@@ -8,11 +8,14 @@ time, along with a navigation aid.
 @copyright: 2005 Jim Clark,
             2005 Nir Soffer,
             2008 MoinMoin:ThomasWaldmann,
-            2009 MoinMoin:ReimarBauer
+            2009 MoinMoin:ReimarBauer,
+            2010 MoinMoin:DiogenesAugusto
 @license: GNU GPL, see COPYING for details.
 """
 
 import re, time
+
+from flask import flash
 
 from MoinMoin import config, wikiutil, i18n, error
 from MoinMoin.Page import Page
@@ -162,7 +165,7 @@ class SlideshowAction:
             self.request.setContentLanguage(language)
             self.request.write(self.template % self)
         except Error, err:
-            self.request.theme.add_msg(wikiutil.escape(unicode(err)), "error")
+            flash(wikiutil.escape(unicode(err)), "error")
             self.page.send_page()
 
     # Private ----------------------------------------------------------------

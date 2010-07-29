@@ -126,7 +126,6 @@ class ThemeBase(object):
         self.ui_dir = i18n.getDirection(self.ui_lang)
         self.content_lang = request.content_lang
         self.content_dir = i18n.getDirection(self.content_lang)
-        self.msg_list = []
         # for html head:
         self.meta_keywords = ''
         self.meta_description = ''
@@ -412,22 +411,6 @@ class ThemeBase(object):
         if item_name and parent_item_name:
             return parent_item_name
 
-    def add_msg(self, msg, msg_class=None):
-        """
-        Adds a message to a list which will be used to generate status
-        information.
-
-        @param msg: additional message
-        @param msg_class: html class for the div of the additional message.
-        """
-        if not msg_class:
-            msg_class = 'dialog'
-        try:
-            msg = msg.render()
-            self.msg_list.append(msg)
-        except AttributeError:
-            flash(msg, msg_class)
-
     # TODO: reimplement on-wiki-page sidebar definition with converter2
 
     # Properties ##############################################################
@@ -523,7 +506,7 @@ class ThemeBase(object):
         """
         # TODO: get rid of this
         if keywords.get('msg', ''):
-            raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
+            raise DeprecationWarning("Using send_page(msg=) and theme.msg() is deprecated! Use flash of flask instead.")
         raise DeprecationWarning("Using send_title is deprecated! Use return_template of flask directly.")
 
 

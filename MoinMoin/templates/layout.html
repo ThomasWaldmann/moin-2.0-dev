@@ -120,16 +120,6 @@
     <p class="flash-{{ category }}">{{ msg }}</p>
 {% endfor %}
 
-{# kill msg_list after all is using flashed_messages #}
-{% if theme.msg_list %}
-    <div id="message">
-        {% for msg in theme.msg_list %}
-                <p>{{ msg }}</p>
-        {% endfor %}
-        <a href="{{ url_for('frontend.show_item', item_name=item_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
-    </div>
-{% endif %}
-
 {% block extra_header %}{% endblock %}
 
 </div>

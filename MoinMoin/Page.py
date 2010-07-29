@@ -13,6 +13,8 @@
 
 import os, re, codecs
 
+from flask import flash
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -705,7 +707,7 @@ class Page(object):
         if 'deprecated' in pi:
             # deprecated page, append last backup version to current contents
             # (which should be a short reason why the page is deprecated)
-            request.theme.add_msg(_('The backed up content of this page is deprecated and will rank lower in search results!'), "warning")
+            flash(_('The backed up content of this page is deprecated and will rank lower in search results!'), "warning")
 
             revisions = self.getRevList()
             if len(revisions) >= 2: # XXX shouldn't that be ever the case!? Looks like not.
@@ -751,7 +753,7 @@ class Page(object):
             # send the page header
             if self.default_formatter:
                 if self.rev != -1:
-                    request.theme.add_msg("<strong>%s</strong><br>" % (
+                    flash("<strong>%s</strong><br>" % (
                         _('Revision %(rev)d as of %(date)s') % {
                             'rev': self.rev,
                             'date': self.mtime(printable=True)
@@ -761,11 +763,11 @@ class Page(object):
                 # Less annoying now without the warning sign.
                 if 'redirect' in request.values:
                     redir = request.values['redirect']
-                    request.theme.add_msg('<strong>%s</strong><br>' % (
+                    flash('<strong>%s</strong><br>' % (
                         _('Redirected from page "%(page)s"') % {'page':
                             wikiutil.link_tag(request, wikiutil.quoteWikinameURL(redir) + "?action=show", redir)}), "info")
                 if 'redirect' in pi:
-                    request.theme.add_msg('<strong>%s</strong><br>' % (
+                    flash('<strong>%s</strong><br>' % (
                         _('This page redirects to page "%(page)s"') % {'page': wikiutil.escape(pi['redirect'])}), "info")
 
                 title = self.page_name
