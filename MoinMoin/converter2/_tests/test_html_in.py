@@ -24,9 +24,12 @@ class Base(object):
     namespaces = {
         moin_page.namespace: '',
         xlink.namespace: 'xlink',
+        html.namespace: 'html',
     }
 
-    namespaces_xpath = {'xlink': xlink.namespace}
+    namespaces_xpath = {'xlink': xlink.namespace,
+                        'html': html.namespace,
+    }
 
     output_re = re.compile(r'\s+xmlns="[^"]+"')
 
@@ -64,6 +67,10 @@ class TestConverter(Base):
             ('<div><p>Test</p></div>',
              # <page><body><p>Test</p></page></body>
              '/page/body[p="Test"]'),
+             # Test attributes conversion
+             ('<div><p class="class" style="style" title="title">Test</p></div>',
+             # <page><body><p html:class="class" html:style="style" html:title="title">Test</p></body></page>
+             '/page/body/p[@html:class="class"][@html:style="style"][@html:title="title"][text()="Test"]'),
         ]
         for i in data:
             yield (self.do, ) + i
