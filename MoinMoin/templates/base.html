@@ -51,10 +51,6 @@
     {% if parent_item %}
         <link rel="Up" href="{{ url_for('frontend.show_item', item_name=parent_page)|e }}" />
     {% endif %}
-    {# universal edit button support #}
-    {% if theme.item_writable and 'modify' not in cfg.actions_excluded %}
-        <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" />
-    {% endif %}
     {% if html_head %}
         {{ html_head }}
     {% endif %}
