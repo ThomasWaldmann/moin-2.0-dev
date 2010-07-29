@@ -108,7 +108,7 @@ class Item(object):
                     rev = DummyRev(mimetype)
                     logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
             logging.debug("Got item %r, revision: %r" % (name, rev_no))
-        mimetype = rev.get(MIMETYPE)
+        mimetype = rev.get(MIMETYPE) or 'application/x-unknown' # XXX: Why do we need ... or ... ?
         logging.debug("Item %r, got mimetype %r from revision meta" % (name, mimetype))
         logging.debug("Item %r, rev meta dict: %r" % (name, dict(rev)))
 
