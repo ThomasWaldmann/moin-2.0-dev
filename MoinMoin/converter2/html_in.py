@@ -20,7 +20,7 @@ from MoinMoin import log
 logging = log.getLogger(__name__)
 
 from MoinMoin import wikiutil
-from MoinMoin.util.tree import html, moin_page, xlink
+from MoinMoin.util.tree import html, moin_page, xlink, xml
 
 from ._wiki_macro import ConverterMacro
 
@@ -164,6 +164,8 @@ class Converter(object):
             if key.uri == html and \
                 value in self.standard_attributes:
                 result[key] = value
+            if key.name == 'id':
+                result[xml('id')] = value
         return result
 
     def visit(self, element):
