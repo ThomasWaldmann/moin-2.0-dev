@@ -35,6 +35,8 @@ class Converter(object):
         self.current_section = 0
         self.table_counter = 0
         self.root_section = 10
+        # We can define the title of the document
+        # using the title keyword in the argument
         if 'title' in kw:
             self.title = kw['title']
         else:
