@@ -1,5 +1,10 @@
 {% extends "layout.html" %}
 
+{% block head %}
+{{ super() }}
+<link rel="alternate" title="{{ item_name|e }} changes" href="{{ url_for('feed.atom', item_name=item_name)|e }}" type="application/atom+xml" />
+{% endblock %}
+
 {% import "editbar.html" as editbar with context %}
 
 {% block extra_header %}
