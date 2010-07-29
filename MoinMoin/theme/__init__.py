@@ -60,41 +60,6 @@ class ThemeBase(object):
         # search forms
         'searchbutton': ("[?]",                  "moin-search.png",   16, 16),
         'interwiki':  ("[%(wikitag)s]",          "moin-inter.png",    16, 16),
-
-        # smileys (this is CONTENT, but good looking smileys depend on looking
-        # adapted to the theme background color and theme style in general)
-        #vvv    ==      vvv  this must be the same for GUI editor converter
-        'X-(':        ("X-(",                    'angry.png',         16, 16),
-        ':D':         (":D",                     'biggrin.png',       16, 16),
-        '<:(':        ("<:(",                    'frown.png',         16, 16),
-        ':o':         (":o",                     'redface.png',       16, 16),
-        ':(':         (":(",                     'sad.png',           16, 16),
-        ':)':         (":)",                     'smile.png',         16, 16),
-        'B)':         ("B)",                     'smile2.png',        16, 16),
-        ':))':        (":))",                    'smile3.png',        16, 16),
-        ';)':         (";)",                     'smile4.png',        16, 16),
-        '/!\\':       ("/!\\",                   'alert.png',         16, 16),
-        '<!>':        ("<!>",                    'attention.png',     16, 16),
-        '(!)':        ("(!)",                    'idea.png',          16, 16),
-        ':-?':        (":-?",                    'tongue.png',        16, 16),
-        ':\\':        (":\\",                    'ohwell.png',        16, 16),
-        '>:>':        (">:>",                    'devil.png',         16, 16),
-        '|)':         ("|)",                     'tired.png',         16, 16),
-        ':-(':        (":-(",                    'sad.png',           16, 16),
-        ':-)':        (":-)",                    'smile.png',         16, 16),
-        'B-)':        ("B-)",                    'smile2.png',        16, 16),
-        ':-))':       (":-))",                   'smile3.png',        16, 16),
-        ';-)':        (";-)",                    'smile4.png',        16, 16),
-        '|-)':        ("|-)",                    'tired.png',         16, 16),
-        '(./)':       ("(./)",                   'checkmark.png',     16, 16),
-        '{OK}':       ("{OK}",                   'thumbs-up.png',     16, 16),
-        '{X}':        ("{X}",                    'icon-error.png',    16, 16),
-        '{i}':        ("{i}",                    'icon-info.png',     16, 16),
-        '{1}':        ("{1}",                    'prio1.png',         15, 13),
-        '{2}':        ("{2}",                    'prio2.png',         15, 13),
-        '{3}':        ("{3}",                    'prio3.png',         15, 13),
-        '{*}':        ("{*}",                    'star_on.png',       16, 16),
-        '{o}':        ("{o}",                    'star_off.png',      16, 16),
     }
     del _
 
