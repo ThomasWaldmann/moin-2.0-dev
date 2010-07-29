@@ -30,7 +30,8 @@
     {% endif %}
 {% endblock %}
 
-{% block extra_content %}
+{% block item %}
+    {{ super() }}
     {% if rev %}
     <div id="pagebottom">
         <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
