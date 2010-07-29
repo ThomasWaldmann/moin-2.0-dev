@@ -5,10 +5,14 @@
     This is the backend of the search form. Search pages and print results.
 
     @copyright: 2001 by Juergen Hermann <jh@web.de>
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 
 import re, time
+
+from flask import flash
+
 from MoinMoin.Page import Page
 from MoinMoin import wikiutil
 from parsedatetime.parsedatetime import Calendar
@@ -160,7 +164,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
     # check for sensible search term
     stripped = needle.strip()
     if len(stripped) == 0:
-        request.theme.add_msg(_('Please use a more selective search term instead '
+        flash(_('Please use a more selective search term instead '
                 'of "%s"') % wikiutil.escape(needle), "error")
         Page(request, pagename).send_page()
         return
@@ -184,7 +188,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
         query = QueryParser(case=case, regex=regex,
                 titlesearch=titlesearch).parse_query(needle)
     except QueryError: # catch errors in the search query
-        request.theme.add_msg(_('Your search query "%s" is invalid. Please refer to '
+        flash(_('Your search query "%s" is invalid. Please refer to '
                 'HelpOnSearching for more information.') % wikiutil.escape(needle), "error")
         Page(request, pagename).send_page()
         return
@@ -211,7 +215,7 @@ def execute(pagename, request, fieldname='value', titlesearch=0, statistic=0):
         querydict = dict(wikiutil.parseQueryString(request.query_string))
         querydict.update({'titlesearch': 0})
 
-        request.theme.add_msg(_("Your search query '%s' didn't return any results. "
+        flash(_("Your search query '%s' didn't return any results. "
                 "Please change some terms and refer to HelpOnSearching for "
                 "more information.%s") % (wikiutil.escape(needle),
                     titlesearch and ''.join([

@@ -7,6 +7,8 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+from flask import flash
+
 from MoinMoin import user, wikiutil
 from MoinMoin.Page import Page
 from MoinMoin.widget import html
@@ -158,7 +160,7 @@ def execute(pagename, request):
     form = request.values # link in mail -> GET request
 
     if not request.cfg.mail_enabled:
-        request.theme.add_msg(_("""This wiki is not enabled for mail processing.
+        flash(_("""This wiki is not enabled for mail processing.
 Contact the owner of the wiki, who can enable email."""), 'warning')
         page.send_page()
         return
@@ -187,7 +189,7 @@ Contact the owner of the wiki, who can enable email."""), 'warning')
                 else:
                     msg = _('Your token is invalid!')
         if msg:
-            request.theme.add_msg(msg, msg_type)
+            flash(msg, msg_type)
         if msg_type != 'error':
             page.send_page()
             return
@@ -208,7 +210,7 @@ Contact the owner of the wiki, who can enable email."""), 'warning')
         if request.method != 'POST':
             return
         msg = _do_recover(request)
-        request.theme.add_msg(msg, "dialog")
+        flash(msg, "dialog")
         page.send_page()
     else: # show create form
         request.theme.send_title(_("Lost password"), pagename=pagename)

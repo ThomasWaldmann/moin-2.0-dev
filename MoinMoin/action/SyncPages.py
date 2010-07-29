@@ -5,6 +5,7 @@
     This action allows you to synchronise pages of two wikis.
 
     @copyright: 2006 MoinMoin:AlexanderSchremmer
+                2010 MoinMoin:DiogenesAugusto
     @license: GNU GPL, see COPYING for details.
 """
 
@@ -12,6 +13,7 @@ import re
 import traceback
 import StringIO # not relevant for speed, so we do not need cStringIO
 
+from flask import flash
 
 from MoinMoin import wikiutil
 from MoinMoin.packages import unpackLine, packLine
@@ -168,7 +170,7 @@ class ActionClass(object):
 </div>
 </form>
 """ % d
-        self.request.theme.add_msg(html_form, "dialog")
+        flash(html_form, "dialog")
         self.page.send_page()
 
     def render(self):
@@ -212,7 +214,7 @@ class ActionClass(object):
             if not remote.valid:
                 raise ActionStatus(_("The 'remoteWiki' is unknown."), "error")
         except ActionStatus, e:
-            self.request.theme.add_msg(*e.args)
+            flash(*e.args)
         else:
             try:
                 try:
@@ -223,7 +225,7 @@ class ActionClass(object):
                     self.log_status(self.ERROR, _("A severe error occurred:"), raw_suffix=temp_file.getvalue())
                     raise
                 else:
-                    self.request.theme.add_msg(u"%s" % (_("Synchronisation finished. Look below for the status messages."), ), "info")
+                    flash(u"%s" % (_("Synchronisation finished. Look below for the status messages."), ), "info")
             finally:
                 self.call_rollback_funcs()
                 # XXX aquire readlock on self.page
