@@ -66,6 +66,8 @@ class TestConverter(Base):
              '/div/div/p[1]/br'),
             ('<div><p>Test</p></div>',
              '/div[p="Test"]'),
+            ('<div><p class="class" title="title">Test</p></div>',
+             '/div/p[@class="class"][@title="title"][text()="Test"]'),
         ]
         for i in data:
             yield(self.do, ) + i
