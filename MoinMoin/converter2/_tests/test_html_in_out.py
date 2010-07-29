@@ -66,6 +66,8 @@ class TestConverter(Base):
              '/div/div/p[1]/br'),
             ('<div><p>Test</p></div>',
              '/div[p="Test"]'),
+            ('<div><p class="class" title="title">Test</p></div>',
+             '/div/p[@class="class"][@title="title"][text()="Test"]'),
         ]
         for i in data:
             yield(self.do, ) + i
@@ -103,9 +105,9 @@ class TestConverter(Base):
             ('<html><p><u>underline</u></p></html>',
              '/div/p[ins="underline"]'),
             ('<html><p><big>Test</big></p></html>',
-              '/div/p[big="Test"]'),
+              '/div/p/span[@class="big"][text()="Test"]'),
             ('<html><p><small>Test</small></p></html>',
-              '/div/p[small="Test"]'),
+              '/div/p/span[@class="small"][text()="Test"]'),
             ('<html><p><ins>underline</ins></p></html>',
              '/div/p[ins="underline"]'),
             ('<html><p><del>Test</del></p></html>',
@@ -145,13 +147,13 @@ class TestConverter(Base):
     def test_code(self):
         data = [
             ('<html><div><code>Code</code></div></html>',
-             '/div/div[tt="Code"]'),
+             '/div/div[code="Code"]'),
             ('<html><div><samp>Code</samp></div></html>',
-             '/div/div[tt="Code"]'),
+             '/div/div[code="Code"]'),
             ('<html><pre>Code</pre></html>',
               '/div[pre="Code"]'),
             ('<html><p><tt>Code</tt></p></html>',
-              '/div/p[tt="Code"]'),
+              '/div/p[code="Code"]'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -163,13 +165,13 @@ class TestConverter(Base):
             ('<html><div><ol><li>Item</li></ol></div></html>',
               '/div/div/ol[li="Item"]'),
             ('<html><div><ol type="A"><li>Item</li></ol></div></html>',
-              '/div/div/ol[@type="A"][li="Item"]'),
+              '/div/div/ol[@class="upperalpha_list"][li="Item"]'),
             ('<html><div><ol type="I"><li>Item</li></ol></div></html>',
-              '/div/div/ol[@type="I"][li="Item"]'),
+              '/div/div/ol[@class="upperroman_list"][li="Item"]'),
             ('<html><div><ol type="a"><li>Item</li></ol></div></html>',
-              '/div/div/ol[@type="a"][li="Item"]'),
-            ('<html><div><ol type="i"><li>Item</li></ol></div></html>',
-              '/div/div/ol[@type="i"][li="Item"]'),
+              '/div/div/ol[@class="loweralpha_list"][li="Item"]'),
+            ('<html><div><ol type="i"><li>Item<li></ol></div></html>',
+              '/div/div/ol[@class="lowerroman_list"][li="Item"]'),
             ('<html><div><dl><dt>Label</dt><dd>Item</dd></dl></div></html>',
              '/div/div/dl[dt="Label"][dd="Item"]'),
             ('<html><div><dir><li>Item</li></dir></div></html>',
