@@ -100,14 +100,17 @@ class ConverterExternOutput(ConverterBase):
 
         elem.set(self._tag_xlink_href, output)
 
-class ConverterPagelinks(ConverterBase):
+class ConverterItemLinks(ConverterBase):
+    """
+    determine all links to other wiki items in this document
+    """
     @classmethod
     def _factory(cls, input, output, request, links=None, **kw):
-        if links == 'pagelinks':
+        if links == 'itemlinks':
             return cls(request)
 
     def __init__(self, request):
-        super(ConverterPagelinks, self).__init__(request)
+        super(ConverterItemLinks, self).__init__(request)
         self.links = set()
 
     def handle_wikilocal(self, elem, input, page):
@@ -126,10 +129,13 @@ class ConverterPagelinks(ConverterBase):
         self.links.add(path)
 
     def get_links(self):
+        """
+        return a list of unicode link target item names
+        """
         return [unicode(link) for link in self.links]
 
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
 default_registry.register(ConverterExternOutput._factory, type_moin_document, type_moin_document)
-default_registry.register(ConverterPagelinks._factory, type_moin_document, type_moin_document)
+default_registry.register(ConverterItemLinks._factory, type_moin_document, type_moin_document)
