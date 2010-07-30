@@ -23,7 +23,7 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from flask import send_file, render_template
+from flask import url_for, send_file, render_template
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
@@ -911,8 +911,7 @@ class SvgDraw(TarMixin, Image):
 
     def do_modify(self, template_name):
         """
-        Fills params into the template for initialzing of the the java applet.
-        The applet is called for doing modifications.
+        Fills params into the template for initializing of the applet.
         """
         request = self.request
         draw_url = ""
@@ -936,9 +935,10 @@ class SvgDraw(TarMixin, Image):
 
     def _render_data(self):
         request = self.request
-        drawing_url = self.url(do='get', from_tar='drawing.svg')
-        png_url = self.url(do='get', from_tar='drawing.png')
-        return '<img src="%s" alt=%s>' % (png_url, drawing_url)
+        item_name = self.name
+        drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
+        png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
+        return '<img src="%s" alt="%s" />' % (png_url, drawing_url)
 
 
 class RenderableBitmapImage(RenderableImage):
@@ -1386,8 +1386,8 @@ class TWikiDraw(TarMixin, Image):
     def _render_data(self):
         request = self.request
         item_name = self.name
-        drawing_url = self.url(do='get', from_tar='drawing.draw')
-        png_url = self.url(do='get', from_tar='drawing.png')
+        drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.draw')
+        png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': item_name}
 
         mapfile = self.get_member('drawing.map')
@@ -1403,13 +1403,11 @@ class TWikiDraw(TarMixin, Image):
             # add alt and title tags to areas
             image_map = re.sub(r'href\s*=\s*"((?!%TWIKIDRAW%).+?)"', r'href="\1" alt="\1" title="\1"', image_map)
             image_map = image_map.replace('%TWIKIDRAW%"', '%s" alt="%s" title="%s"' % (drawing_url, title, title))
-            # unxml, because 4.01 concrete will not validate />
-            image_map = image_map.replace('/>', '>')
             title = _('Clickable drawing: %(filename)s') % {'filename': item_name}
 
-            return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (png_url, title, mapid)
+            return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid)
         else:
-            return '<img src="%s" alt=%s>' % (png_url, title)
+            return '<img src="%s" alt="%s" />' % (png_url, title)
 
 
 class AnyWikiDraw(TarMixin, Image):
@@ -1459,8 +1457,9 @@ class AnyWikiDraw(TarMixin, Image):
 
     def _render_data(self):
         request = self.request
-        drawing_url = self.url(do='get', from_tar='drawing.svg')
-        png_url = self.url(do='get', from_tar='drawing.png')
+        item_name = self.name
+        drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
+        png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
         title = _('Edit drawing %(filename)s (opens in new window)') % {'filename': self.name}
 
         mapfile = self.get_member('drawing.map')
@@ -1479,7 +1478,7 @@ class AnyWikiDraw(TarMixin, Image):
             # unxml, because 4.01 concrete will not validate />
             image_map = image_map.replace(u'/>', u'>')
             title = _('Clickable drawing: %(filename)s') % {'filename': self.name}
-            return image_map + '<img src="%s" alt="%s" usemap="#%s">' % (png_url, title, mapid)
+            return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid)
         else:
-            return '<img src="%s" alt=%s>' % (png_url, title)
+            return '<img src="%s" alt="%s" />' % (png_url, title)
 
