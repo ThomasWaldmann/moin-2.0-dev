@@ -175,6 +175,15 @@ class TestConverter(Base):
             ('<page><body><p>Line 1<line-break />Line 2</p></body></page>',
              #<article><para>Line 1<sbr />Line 2</para></article>
              '/article/para[text()="Line 1"]/sbr'),
+            # QUOTE --> QUOTE
+            ('<page><body><p>Text<quote>quotation</quote></p></body></page>',
+             # <article><para>Text<quote>quotation</quote></para></body></page>
+             '/article/para[text()="Text"][quote="quotation"]'),
+            # BLOCKQUOTE --> BLOCKQUOTE
+            ('<page><body><blockquote page:source="Socrates">One thing only I know, and that is that I know nothing.</blockquote></body></page>',
+             # <article><blockquote><attribution>Socrates</attribution><para>One thing ... nothing</para></blockquote></article>
+             '/article/blockquote[attribution="Socrates"][para="One thing only I know, and that is that I know nothing."]'),
+
         ]
         for i in data:
             yield (self.do, ) + i
