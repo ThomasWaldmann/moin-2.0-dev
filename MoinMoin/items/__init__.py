@@ -338,9 +338,20 @@ class Item(object):
         newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, request.remote_addr))
         if request.user.valid:
             newrev[EDIT_LOG_USERID] = unicode(request.user.id)
+        self.before_revision_commit(meta, data)
         storage_item.commit()
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
+
+    def before_revision_commit(self, meta, data):
+        """
+        hook that can be used to add more meta data to a revision before
+        it is committed.
+
+        @param meta: current meta data dict, mutable - modify as wanted
+        @param data: either str or open file
+        """
+        pass
 
     def search_item(self, term=None):
         """ search items matching the term or,
