@@ -1335,19 +1335,12 @@ class TWikiDraw(TarMixin, Image):
         Fills params into the template for initialzing of the the java applet.
         The applet is called for doing modifications.
         """
-        request = self.request
-        twd_params = {
-            'url_prefix_static': request.cfg.url_prefix_static,
-            'url': self.url(),
-            'help_url': self.modify_help,
-        }
         return render_template("modify_twikidraw.html",
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
                                meta_text=self.meta_dict_to_text(self.meta),
                                help=self.modify_help,
-                               t=twd_params,
                               )
 
     def _render_data(self):
@@ -1414,24 +1407,14 @@ class AnyWikiDraw(TarMixin, Image):
         Fills params into the template for initialzing of the the java applet.
         The applet is called for doing modifications.
         """
-        request = self.request
-        draw_url = ""
-        if 'drawing.svg' in self.list_members():
-            draw_url = self.url()
-
-        awd_params = {
-            'draw_url': draw_url,
-            'url': self.url(),
-            'url_prefix_static': request.cfg.url_prefix_static,
-        }
-
+        drawing_exists = 'drawing.svg' in self.list_members()
         return render_template("modify_anywikidraw.html",
                                item_name=self.name,
                                rows_meta=ROWS_META, cols=COLS,
                                revno=0,
                                meta_text=self.meta_dict_to_text(self.meta),
                                help=self.modify_help,
-                               t=awd_params,
+                               drawing_exists=drawing_exists,
                               )
 
     def _render_data(self):
