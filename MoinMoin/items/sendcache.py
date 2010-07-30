@@ -29,6 +29,8 @@
 import hashlib
 import hmac
 
+from flask import url_for
+
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
@@ -182,7 +184,7 @@ class SendCache(object):
 
     def url(self):
         """ return URL for the object cached for key """
-        return self.request.href(action='get', from_cache=self.key)
+        return url_for('frontend.get_item', item_name='', from_cache=self.key)
 
     def _get_headers(self):
         """ get headers cached for key """
