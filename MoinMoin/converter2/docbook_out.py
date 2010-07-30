@@ -137,6 +137,17 @@ class Converter(object):
         children = ''.join(['<![CDATA[', code_str, ']]>'])
         return self.new(docbook.screen, attrib={}, children=children)
 
+    def visit_moinpage_blockquote(self, element):
+        author = element.get(moin_page('source'))
+        print author
+        if not author:
+            # TODO: Internationalisation
+            author = "Unknown"
+        attribution = self.new(docbook('attribution'), attrib={}, children=[author])
+        children = self.do_children(element)
+        para = self.new(docbook('para'), attrib={}, children=children)
+        return self.new(docbook('blockquote'), attrib={}, children=[attribution, para])
+
     def visit_moinpage_code(self, element):
         return self.new_copy(docbook.literal, element, attrib={})
 
@@ -350,6 +361,9 @@ class Converter(object):
 
     def visit_moinpage_p(self, element):
         return self.new_copy(docbook.para, element, attrib={})
+
+    def visit_moinpage_quote(self, element):
+        return self.new_copy(docbook.quote, element, attrib={})
 
     def visit_moinpage_span(self, element):
         """
