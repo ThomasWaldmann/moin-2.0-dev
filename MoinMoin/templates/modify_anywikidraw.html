@@ -1,19 +1,21 @@
 {% extends "modify_applet.html" %}
 {% block data_editor %}
 <p>
-<applet code="org.anywikidraw.moinmoin.MoinMoinDrawingApplet.class"  codebase="." archive="{{ t.url_prefix_static }}/applets/anywikidraw/lib/AnyWikiDrawForMoinMoin.jar" width="800" height="620">
+<applet code="org.anywikidraw.moinmoin.MoinMoinDrawingApplet.class" codebase="."
+        archive="{{ url_for('static', filename='applets/anywikidraw/lib/AnyWikiDrawForMoinMoin.jar') }}"
+        width="800" height="620">
 <param name="DrawingName" value="drawing.svg" />
-{% if t.draw_url %} 
-<param name="DrawingURL" value="{{ t.url }}?do=get&amp;from_tar=drawing.svg" />
+{% if drawing_exists %} 
+<param name="DrawingURL" value="{{ url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg') }}" />
 {% endif %}
-<param name="PageURL" value="{{ t.url }}" />
-<param name="UploadURL" value="{{ t.url }}?do=modify&amp;mimetype=application/x-anywikidraw" />
+<param name="PageURL" value="{{ url_for('frontend.show_item', item_name=item_name) }}" />
+<param name="UploadURL" value="{{ url_for('frontend.modify_item', item_name=item_name, mimetype='application/x-anywikidraw') }}" />
 <param name="Locale" value="en" />
 <param name="codebase_lookup" value="false" />
 <param name="classloader_cache" value="false" />
 <param name="boxborder" value="false" />
 <param name="centerimage" value="true" />
-<strong>NOTE:</strong> You need a Java enabled browser to edit the drawing example.
+<strong>NOTE:</strong> You need a Java enabled browser to edit the drawing.
 </applet>
 </p>
 <br />

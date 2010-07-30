@@ -139,11 +139,10 @@ def modify_item(item_name):
         cancelled = 'button_cancel' in g.context.form
         if not cancelled:
             item.modify()
-        if not mimetype in ('application/x-twikidraw', 'application/x-anywikidraw'):
-            # TwikiDraw and AnyWikiDraw can send more than one request
-            # the follwowing line breaks it
-            return redirect(url_for('show_item', item_name=item_name))
-        # Nick Booker: Any handling necessary here for TwikiDraw / AnyWikiDraw?
+        if mimetype in ('application/x-twikidraw', 'application/x-anywikidraw'):
+            # TWikiDraw/AnyWikiDraw POST more than once, redirecting would break them
+            return "OK"
+        return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+revert/<int:rev>/<itemname:item_name>', methods=['GET', 'POST'])
