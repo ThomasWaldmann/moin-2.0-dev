@@ -1140,7 +1140,7 @@ class Text(Binary):
         # TODO: determine itemlinks at a better suited place, e.g. before a new
         # revision is committed, so it can be put into metadata of the revision.
         itemlinks_conv = reg.get(type_moin_document, type_moin_document,
-                links='pagelinks', request=request)
+                links='itemlinks', request=request)
         doc = itemlinks_conv(doc)
         logging.debug("links: %r" % itemlinks_conv.get_links())
 
