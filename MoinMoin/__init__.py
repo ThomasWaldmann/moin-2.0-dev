@@ -234,6 +234,8 @@ def setup_jinja_env(request):
                                                                     rev.get(EDIT_LOG_ADDR),
                                                                     rev.get(EDIT_LOG_HOSTNAME))
     app.jinja_env.globals.update({
+                            'isinstance': isinstance,
+                            'list': list,
                             'theme': theme,
                             'user': request.user,
                             'cfg': request.cfg,

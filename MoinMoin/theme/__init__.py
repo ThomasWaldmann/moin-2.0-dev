@@ -474,6 +474,7 @@ class ThemeBase(object):
             # Translation may need longer or shorter separator:
             (_('------------------------'), 'show', 'frontend.show_item', True),
             (_('What links here?'), 'backlinks', 'frontend.backlinks', False, ),
+            (_('Local Site Map'), 'sitemap', 'frontend.sitemap', False, ),
             (_('Copy Item'), 'copy', 'frontend.copy_item', False, ),
             (_('Rename Item'), 'rename', 'frontend.rename_item', False, ),
             (_('Delete Item'), 'delete', 'frontend.delete_item', False, ),

@@ -16,7 +16,7 @@ import difflib
 from flask import request, g, url_for, flash, render_template, Response, redirect
 
 from MoinMoin.apps.frontend import frontend
-from MoinMoin.items import Item, MIMETYPE
+from MoinMoin.items import Item, MIMETYPE, ITEMLINKS
 from MoinMoin import config, user, wikiutil
 
 
@@ -643,4 +643,51 @@ def dispatch():
     args = request.values.to_dict()
     endpoint = str(args.pop('endpoint'))
     return redirect(url_for(endpoint, **args))
+
+
+@frontend.route('/+sitemap/<item_name>')
+def sitemap(item_name):
+    """
+    sitemap view shows item link structure, relative to current item
+    """
+    sitemap = NestedItemListBuilder(g.context).recurse_build([item_name])
+    del sitemap[0] # don't show current item name as sole toplevel list item
+    return render_template('sitemap.html', item_name=item_name, sitemap=sitemap)
+
+
+class NestedItemListBuilder(object):
+    def __init__(self, request):
+        self.request = request
+        self.children = set()
+        self.numnodes = 0
+        self.maxnodes = 35 # approx. max count of nodes, not strict
+
+    def recurse_build(self, names):
+        result = []
+        if self.numnodes < self.maxnodes:
+            for name in names:
+                self.children.add(name)
+                result.append(name)
+                self.numnodes += 1
+                childs = self.childs(name)
+                if childs:
+                    childs = self.recurse_build(childs)
+                    result.append(childs)
+        return result
+
+    def childs(self, name):
+        # does not recurse
+        item = self.request.storage.get_item(name)
+        rev = item.get_revision(-1)
+        itemlinks = rev[ITEMLINKS]
+        return [child for child in itemlinks if self.is_ok(child)]
+
+    def is_ok(self, child):
+        if child not in self.children:
+            if not self.request.user.may.read(child):
+                return False
+            if self.request.storage.has_item(child):
+                self.children.add(child)
+                return True
+        return False
 
