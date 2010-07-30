@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
 {% block layout %}
+
+{{ theme.emit_custom_html(cfg.custom_before_header) }}
+
 <div id="header">
 
 <form id="searchform" method="get" action="{{ url_for('frontend.search')|e }}">
@@ -113,6 +116,8 @@
 
 </div>
 
+{{ theme.emit_custom_html(cfg.custom_after_header) }}
+
 <div id="page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
     {# ALL CONTENT TEMPLATES SHOULD HAVE IMPLEMENTS THIS BLOCK #}
     {% block item -%}
@@ -122,6 +127,8 @@
     {%- endblock %}
 </div>
 
+{{ theme.emit_custom_html(cfg.custom_before_footer) }}
+
 <div id="footer">
     {% block extra_footer %}<hr>{% endblock %}
     <ul id="credits">
@@ -130,6 +137,8 @@
         {% endfor %}
     </ul>
 </div>
+
+{{ theme.emit_custom_html(cfg.custom_after_footer) }}
 
 {% set null = theme.request.clock.stop('run') %}
 {% set null = theme.request.clock.stop('total') %}
