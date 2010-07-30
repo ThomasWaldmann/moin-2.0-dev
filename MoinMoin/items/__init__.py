@@ -54,6 +54,7 @@ SYSPAGE_VERSION = "syspage_version"
 MIMETYPE = "mimetype"
 SIZE = "size"
 LANGUAGE = "language"
+ITEMLINKS = "itemlinks"
 
 EDIT_LOG_ACTION = "edit_log_action"
 EDIT_LOG_ADDR = "edit_log_addr"
@@ -334,24 +335,25 @@ class Item(object):
         assert mimetype is not None
         newrev[MIMETYPE] = unicode(meta.get(MIMETYPE, mimetype))
         newrev[EDIT_LOG_ACTION] = unicode(action)
-        newrev[EDIT_LOG_ADDR] = unicode(request.remote_addr)
-        newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, request.remote_addr))
-        if request.user.valid:
-            newrev[EDIT_LOG_USERID] = unicode(request.user.id)
-        self.before_revision_commit(meta, data)
+        self.before_revision_commit(newrev, data)
         storage_item.commit()
         #event = FileAttachedEvent(request, pagename, target, new_rev.size)
         #send_event(event)
 
-    def before_revision_commit(self, meta, data):
+    def before_revision_commit(self, newrev, data):
         """
         hook that can be used to add more meta data to a revision before
         it is committed.
 
-        @param meta: current meta data dict, mutable - modify as wanted
-        @param data: either str or open file
+        @param newrev: new (still uncommitted) revision - modify as wanted
+        @param data: either str or open file (we can avoid having to read/seek
+                     rev's data with this)
         """
-        pass
+        request = self.request
+        newrev[EDIT_LOG_ADDR] = unicode(request.remote_addr)
+        newrev[EDIT_LOG_HOSTNAME] = unicode(wikiutil.get_hostname(request, request.remote_addr))
+        if request.user.valid:
+            newrev[EDIT_LOG_USERID] = unicode(request.user.id)
 
     def search_item(self, term=None):
         """ search items matching the term or,
@@ -1148,13 +1150,6 @@ class Text(Binary):
         doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
 
-        # TODO: determine itemlinks at a better suited place, e.g. before a new
-        # revision is committed, so it can be put into metadata of the revision.
-        itemlinks_conv = reg.get(type_moin_document, type_moin_document,
-                links='itemlinks', request=request)
-        doc = itemlinks_conv(doc)
-        logging.debug("links: %r" % itemlinks_conv.get_links())
-
         doc = include_conv(doc)
         doc = smiley_conv(doc)
         doc = link_conv(doc)
@@ -1229,7 +1224,33 @@ class Text(Binary):
         doc = link_conv(doc)
         return doc
 
-class MoinWiki(Text):
+class MarkupItem(Text):
+    """ some kind of item with markup (and internal links) """
+    def before_revision_commit(self, newrev, data):
+        """
+        add ITEMLINKS metadata
+        """
+        super(MarkupItem, self).before_revision_commit(newrev, data)
+
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.iri import Iri
+        from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import moin_page
+
+        request = self.request
+        input_conv = reg.get(Type(self.mimetype), type_moin_document,
+                request=request)
+        itemlinks_conv = reg.get(type_moin_document, type_moin_document,
+                links='itemlinks', request=request)
+
+        i = Iri(scheme='wiki', authority='', path='/' + self.name)
+
+        doc = input_conv(self.data_storage_to_internal(data).split(u'\n'))
+        doc.set(moin_page.page_href, unicode(i))
+        doc = itemlinks_conv(doc)
+        newrev[ITEMLINKS] = itemlinks_conv.get_links() 
+
+class MoinWiki(MarkupItem):
     """ MoinMoin wiki markup """
     supported_mimetypes = ['text/x-unidentified-wiki-format',
                            'text/x.moin.wiki',
@@ -1237,7 +1258,7 @@ class MoinWiki(Text):
     converter_mimetype = 'text/x.moin.wiki'
 
 
-class CreoleWiki(Text):
+class CreoleWiki(MarkupItem):
     """ Creole wiki markup """
     supported_mimetypes = ['text/x.moin.creole']
 
