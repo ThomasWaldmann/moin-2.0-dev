@@ -171,6 +171,10 @@ class TestConverter(Base):
             ('<page><body><p>text<emphasis>emphasis</emphasis></p></body></page>',
              # <article><para>text<emphasis>emphasis</emphasis></para>
              '/article/para[text()="text"][emphasis="emphasis"]'),
+            # LINE-BREAK --> SBR
+            ('<page><body><p>Line 1<line-break />Line 2</p></body></page>',
+             #<article><para>Line 1<sbr />Line 2</para></article>
+             '/article/para[text()="Line 1"]/sbr'),
         ]
         for i in data:
             yield (self.do, ) + i

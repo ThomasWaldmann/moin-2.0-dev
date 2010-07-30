@@ -176,6 +176,9 @@ class Converter(object):
                 self.section_children[self.parent_section].append(section)
                 self.current_section = int(depth)
 
+    def visit_moinpage_line_break(self, element):
+        return docbook.sbr()
+
     def visit_moinpage_list(self, element):
         """
         Function called to handle the conversion of list.
