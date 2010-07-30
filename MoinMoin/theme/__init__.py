@@ -285,7 +285,8 @@ class ThemeBase(object):
 
         if not title:
             title = item_name
-        return item_name, title, wiki_local
+        href = url_for('frontend.show_item', item_name=item_name)
+        return href, title, wiki_local
 
     def navibar(self, item_name):
         """
