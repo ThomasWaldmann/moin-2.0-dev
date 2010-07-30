@@ -555,5 +555,11 @@ TD.tip {
 #content div.caution { background-image: url("../img/admon-caution.png"); }
 #content div.warning { background-image: url("../img/admon-warning.png"); }
 
+/* remove borders of fieldset in copy/rename/delete/revert/modify actions */
+#content form fieldset {
+    border: none;
+    padding: 0;
+}
+
 /* admonition end */
 
