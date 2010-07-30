@@ -102,9 +102,13 @@ class ConverterExternOutput(ConverterBase):
 
 class ConverterPagelinks(ConverterBase):
     @classmethod
-    def _factory(cls, input, output, links=None, **kw):
+    def _factory(cls, input, output, request, links=None, **kw):
         if links == 'pagelinks':
             return cls(request)
+
+    def __init__(self, request):
+        super(ConverterPagelinks, self).__init__(request)
+        self.links = set()
 
     def handle_wikilocal(self, elem, input, page):
         if not input.path or ':' in input.path:
@@ -113,18 +117,17 @@ class ConverterPagelinks(ConverterBase):
         path = input.path
 
         if path[0] == '':
-            path = page.path[1:].extend(path[1:])
+            p = page.path[1:] 
+            p.extend(path[1:])
+            path = p
         elif path[0] == '..':
             path = page.path[1:] + path[1:]
 
         self.links.add(path)
 
-    def __call__(self, tree):
-        self.links = set()
+    def get_links(self):
+        return [unicode(link) for link in self.links]
 
-        super(ConverterPagelinks, self).__call__(tree)
-
-        return self.links
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document

@@ -1136,6 +1136,14 @@ class Text(Binary):
 
         doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
         doc.set(moin_page.page_href, unicode(i))
+
+        # TODO: determine itemlinks at a better suited place, e.g. before a new
+        # revision is committed, so it can be put into metadata of the revision.
+        itemlinks_conv = reg.get(type_moin_document, type_moin_document,
+                links='pagelinks', request=request)
+        doc = itemlinks_conv(doc)
+        logging.debug("links: %r" % itemlinks_conv.get_links())
+
         doc = include_conv(doc)
         doc = smiley_conv(doc)
         doc = link_conv(doc)
