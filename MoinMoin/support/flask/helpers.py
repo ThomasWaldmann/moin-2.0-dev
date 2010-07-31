@@ -26,7 +26,12 @@ except ImportError:
     try:
         import json
     except ImportError:
-        json_available = False
+        try:
+            # Google Appengine offers simplejson via django
+            from django.utils import simplejson as json
+        except ImportError:
+            json_available = False
+
 
 from werkzeug import Headers, wrap_file, is_resource_modified, cached_property
 from werkzeug.exceptions import NotFound
@@ -51,6 +56,15 @@ if not json_available or '\\/' not in json.dumps('/'):
         return json.dumps(*args, **kwargs).replace('/', '\\/')
 else:
     _tojson_filter = json.dumps
+
+
+def _endpoint_from_view_func(view_func):
+    """Internal helper that returns the default endpoint for a given
+    function.  This always is the function name.
+    """
+    assert view_func is not None, 'expected view func if endpoint ' \
+                                  'is not provided.'
+    return view_func.__name__
 
 
 def jsonify(*args, **kwargs):
@@ -84,6 +98,48 @@ def jsonify(*args, **kwargs):
         _assert_have_json()
     return current_app.response_class(json.dumps(dict(*args, **kwargs),
         indent=None if request.is_xhr else 2), mimetype='application/json')
+
+
+def make_response(*args):
+    """Sometimes it is necessary to set additional headers in a view.  Because
+    views do not have to return response objects but can return a value that
+    is converted into a response object by Flask itself, it becomes tricky to
+    add headers to it.  This function can be called instead of using a return
+    and you will get a response object which you can use to attach headers.
+
+    If view looked like this and you want to add a new header::
+
+        def index():
+            return render_template('index.html', foo=42)
+
+    You can now do something like this::
+
+        def index():
+            response = make_response(render_template('index.html', foo=42))
+            response.headers['X-Parachutes'] = 'parachutes are cool'
+            return response
+
+    This function accepts the very same arguments you can return from a
+    view function.  This for example creates a response with a 404 error
+    code::
+
+        response = make_response(render_template('not_found.html'), 404)
+
+    Internally this function does the following things:
+
+    -   if no arguments are passed, it creates a new response argument
+    -   if one argument is passed, :meth:`flask.Flask.make_response`
+        is invoked with it.
+    -   if more than one argument is passed, the arguments are passed
+        to the :meth:`flask.Flask.make_response` function as tuple.
+
+    .. versionadded:: 0.6
+    """
+    if not args:
+        return current_app.response_class()
+    if len(args) == 1:
+        args = args[0]
+    return current_app.make_response(args)
 
 
 def url_for(endpoint, **values):
@@ -191,13 +247,9 @@ def get_flashed_messages(with_categories=False):
     return flashes
 
 
-def send_file(filename_or_fp=None,
-              mimetype=None,
-              as_attachment=False, attachment_filename=None,
-              add_etags=True,
-              cache_timeout=60 * 60 * 12, conditional=False,
-              etag=None,
-              file=None, filename=None):
+def send_file(filename_or_fp, mimetype=None, as_attachment=False,
+              attachment_filename=None, add_etags=True,
+              cache_timeout=60 * 60 * 12, conditional=False):
     """Sends the contents of a file to the client.  This will use the
     most efficient method available and configured.  By default it will
     try to use the WSGI server's file_wrapper support.  Alternatively
@@ -222,11 +274,12 @@ def send_file(filename_or_fp=None,
        The `add_etags`, `cache_timeout` and `conditional` parameters were
        added.  The default behaviour is now to attach etags.
 
-    .. versionadded:: 0.6
-       The `file`, `filename` and `etag` parameters were added.
-       `filename_or_fp` is deprecated now.
-
-    :param filename_or_fp: *** DEPRECATED - use file/filename param ***
+    :param filename_or_fp: the filename of the file to send.  This is
+                           relative to the :attr:`~Flask.root_path` if a
+                           relative path is specified.
+                           Alternatively a file object might be provided
+                           in which case `X-Sendfile` might not work and
+                           fall back to the traditional method.
     :param mimetype: the mimetype of the file if provided, otherwise
                      auto detection happens.
     :param as_attachment: set to `True` if you want to send this file with
@@ -236,45 +289,17 @@ def send_file(filename_or_fp=None,
     :param add_etags: set to `False` to disable attaching of etags.
     :param conditional: set to `True` to enable conditional responses.
     :param cache_timeout: the timeout in seconds for the headers.
-    :param etag: you can give an etag here, None means to try to compute the
-                 etag from the file's filesystem metadata.
-    :param file: a file object, if we can't make up the filename and you
-                 do not provide it, `X-Sendfile` will not work and we'll
-                 fall back to the traditional method.
-    :param filename: the filesystem filename of the file to send,
-                     None means to try to autodetect it from `name` attr
-                     of the given file object. If you give '' it will not
-                     try to autodetect, nor assume that this is a fs file.
-                     the filename of the file to send.  This is relative to
-                     the :attr:`~Flask.root_path` if a relative path is
-                     specified.
     """
-    if filename_or_fp is not None:
-        current_app.logger.warning('send_file filename_or_fp param is deprecated, use file=... and/or filename=...')
-
-    if filename is None:
-        if file is not None:
-            filename = getattr(file, 'name', None)
-        # vv support for deprecated filename_or_fp param vv
-        elif isinstance(filename_or_fp, basestring):
-            filename = filename_or_fp
-        elif hasattr(filename_or_fp, 'read'):
-            filename = getattr(filename_or_fp, 'name', None)
-        # ^^ support for deprecated filename_or_fp param ^^
-
-    if filename is None:
-        raise ValueError("can't determine filename")
-
-    if filename:
+    mtime = None
+    if isinstance(filename_or_fp, basestring):
+        filename = filename_or_fp
+        file = None
+    else:
+        file = filename_or_fp
+        filename = getattr(file, 'name', None)
+    if filename is not None:
         if not os.path.isabs(filename):
             filename = os.path.join(current_app.root_path, filename)
-
-    # vv support for deprecated filename_or_fp param vv
-    if file is None:
-        if hasattr(filename_or_fp, 'read'):
-            file = filename_or_fp
-    # ^^ support for deprecated filename_or_fp param ^^
-
     if mimetype is None and (filename or attachment_filename):
         mimetype = mimetypes.guess_type(filename or attachment_filename)[0]
     if mimetype is None:
@@ -283,7 +308,7 @@ def send_file(filename_or_fp=None,
     headers = Headers()
     if as_attachment:
         if attachment_filename is None:
-            if not filename:
+            if filename is None:
                 raise TypeError('filename unavailable, required for '
                                 'sending as attachment')
             attachment_filename = os.path.basename(filename)
@@ -291,34 +316,39 @@ def send_file(filename_or_fp=None,
                     filename=attachment_filename)
 
     if current_app.use_x_sendfile and filename:
-        if file:
+        if file is not None:
             file.close()
         headers['X-Sendfile'] = filename
         data = None
     else:
-        if not file and filename:
+        if file is None:
             file = open(filename, 'rb')
+            mtime = os.path.getmtime(filename)
         data = wrap_file(request.environ, file)
 
     rv = current_app.response_class(data, mimetype=mimetype, headers=headers,
                                     direct_passthrough=True)
+
+    # if we know the file modification date, we can store it as the
+    # current time to better support conditional requests.  Werkzeug
+    # as of 0.6.1 will override this value however in the conditional
+    # response with the current time.  This will be fixed in Werkzeug
+    # with a new release, however many WSGI servers will still emit
+    # a separate date header.
+    if mtime is not None:
+        rv.date = int(mtime)
 
     rv.cache_control.public = True
     if cache_timeout:
         rv.cache_control.max_age = cache_timeout
         rv.expires = int(time() + cache_timeout)
 
-    if add_etags:
-        if filename and etag is None:
-            etag = 'flask-%s-%s-%s' % (
-                os.path.getmtime(filename),
-                os.path.getsize(filename),
-                adler32(filename) & 0xffffffff
-            )
-        if etag is not None:
-            rv.set_etag(etag)
-        else:
-            raise ValueError("can't determine etag - please give etag or filename")
+    if add_etags and filename is not None:
+        rv.set_etag('flask-%s-%s-%s' % (
+            os.path.getmtime(filename),
+            os.path.getsize(filename),
+            adler32(filename) & 0xffffffff
+        ))
         if conditional:
             rv = rv.make_conditional(request)
             # make sure we don't send x-sendfile for servers that
@@ -397,9 +427,7 @@ class _PackageBoundObject(object):
 
         .. versionadded:: 0.5
         """
-        template_folder = os.path.join(self.root_path, 'templates')
-        if os.path.isdir(template_folder):
-            return FileSystemLoader(template_folder)
+        return FileSystemLoader(os.path.join(self.root_path, 'templates'))
 
     def send_static_file(self, filename):
         """Function used internally to send static files from the static
