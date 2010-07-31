@@ -643,10 +643,14 @@ There is no help, you're doomed!
             content_length = rev.size
             file_to_send = rev
 
-        # we have hash for etag, but werkzeug creates its own one
         # TODO: handle content_disposition is not None
-        return send_file(file_to_send, mimetype=content_type,
+        # Important: empty filename keeps flask from trying to autodetect filename,
+        # as this would not work for us, because our file's are not necessarily fs files.
+        return send_file(file=file_to_send, filename='',
+                         mimetype=content_type,
                          as_attachment=False, attachment_filename=filename,
+                         cache_timeout=10, # wiki data can change rapidly
+                         use_etags=True, etag=hash,
                          conditional=True)
 
 class RenderableBinary(Binary):
@@ -1326,9 +1330,14 @@ class HTML(Text):
         # and then we should move it back at the beginning of the file
         content_length = file_to_send.tell()
         file_to_send.seek(0)
-        # We call the flask method to return the file
-        return send_file(file_to_send, mimetype=content_type,
-                         as_attachment=False, conditional=True)
+        # Important: empty filename keeps flask from trying to autodetect filename,
+        # as this would not work for us, because our file's are not necessarily fs files.
+        return send_file(file=file_to_send, filename='',
+                         mimetype=content_type,
+                         as_attachment=False, attachment_filename=None,
+                         cache_timeout=10, # wiki data can change rapidly
+                         use_etags=False, etag=None,
+                         conditional=True)
 
 
 class SafeHTML(HTML):
