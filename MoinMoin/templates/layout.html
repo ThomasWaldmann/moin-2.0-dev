@@ -2,7 +2,7 @@
 
 {% block layout %}
 
-{{ theme.emit_custom_html(cfg.custom_before_header) }}
+{{ theme.emit_custom_html(cfg.html_before_header) }}
 
 <div id="header">
 
@@ -116,7 +116,7 @@
 
 </div>
 
-{{ theme.emit_custom_html(cfg.custom_after_header) }}
+{{ theme.emit_custom_html(cfg.html_after_header) }}
 
 <div id="page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
     {# ALL CONTENT TEMPLATES SHOULD HAVE IMPLEMENTS THIS BLOCK #}
@@ -127,7 +127,7 @@
     {%- endblock %}
 </div>
 
-{{ theme.emit_custom_html(cfg.custom_before_footer) }}
+{{ theme.emit_custom_html(cfg.html_before_footer) }}
 
 <div id="footer">
     {% block extra_footer %}<hr>{% endblock %}
@@ -138,7 +138,7 @@
     </ul>
 </div>
 
-{{ theme.emit_custom_html(cfg.custom_after_footer) }}
+{{ theme.emit_custom_html(cfg.html_after_footer) }}
 
 {% set null = theme.request.clock.stop('run') %}
 {% set null = theme.request.clock.stop('total') %}
