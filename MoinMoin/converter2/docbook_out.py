@@ -13,6 +13,7 @@ from emeraldtree import ElementTree as ET
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
+from MoinMoin import wikiutil
 from MoinMoin.util.tree import html, moin_page, xlink, docbook
 
 class Converter(object):
@@ -137,6 +138,17 @@ class Converter(object):
         children = ''.join(['<![CDATA[', code_str, ']]>'])
         return self.new(docbook.screen, attrib={}, children=children)
 
+    def visit_moinpage_blockquote(self, element):
+        author = element.get(moin_page('source'))
+        print author
+        if not author:
+            # TODO: Internationalisation
+            author = "Unknown"
+        attribution = self.new(docbook('attribution'), attrib={}, children=[author])
+        children = self.do_children(element)
+        para = self.new(docbook('para'), attrib={}, children=children)
+        return self.new(docbook('blockquote'), attrib={}, children=[attribution, para])
+
     def visit_moinpage_code(self, element):
         return self.new_copy(docbook.literal, element, attrib={})
 
@@ -175,6 +187,9 @@ class Converter(object):
                           children=self.section_children[self.current_section])
                 self.section_children[self.parent_section].append(section)
                 self.current_section = int(depth)
+
+    def visit_moinpage_line_break(self, element):
+        return docbook.sbr()
 
     def visit_moinpage_list(self, element):
         """
@@ -259,6 +274,24 @@ class Converter(object):
 
         body = self.new(docbook.para, attrib={}, children=body)
         return self.new(docbook.footnote, attrib={}, children=[body])
+
+    def visit_moinpage_object(self, element):
+        href = element.get(xlink.href, None)
+        attrib = {}
+        if href:
+            if wikiutil.isPicture(href):
+                attrib[docbook.fileref] = href
+                object_data = self.new(docbook.imagedata, attrib=attrib,
+                                       children=[])
+                object_element = self.new(docbook.imageobject, attrib={},
+                                          children=[object_data])
+            else:
+                return
+        else:
+            return
+        return self.new(docbook.inlinemediaobject, attrib={},
+                        children=[object_element])
+
 
     def visit_moinpage_table(self, element):
         # TODO : Attributes conversion
@@ -347,6 +380,9 @@ class Converter(object):
 
     def visit_moinpage_p(self, element):
         return self.new_copy(docbook.para, element, attrib={})
+
+    def visit_moinpage_quote(self, element):
+        return self.new_copy(docbook.quote, element, attrib={})
 
     def visit_moinpage_span(self, element):
         """
