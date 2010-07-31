@@ -191,7 +191,7 @@ def setup_i18n_postauth(context):
     logging.debug("setup_i18n_postauth returns %r" % lang)
     return lang
 
-
+@app.template_filter()
 def shorten_item_name(name, length=25):
     """
     Shorten item names
@@ -219,7 +219,6 @@ def setup_jinja_env(request):
     from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
     app.jinja_env.filters['datetime_format'] = lambda tm, u = request.user: u.getFormattedDateTime(tm)
     app.jinja_env.filters['date_format'] = lambda tm, u = request.user: u.getFormattedDate(tm)
-    app.jinja_env.filters['shorten_item_name'] = shorten_item_name
     app.jinja_env.filters['user_format'] = lambda rev, request = request: \
                                           user.get_printable_editor(request,
                                                                     rev.get(EDIT_LOG_USERID),
