@@ -191,9 +191,13 @@ def get_flashed_messages(with_categories=False):
     return flashes
 
 
-def send_file(filename_or_fp, mimetype=None, as_attachment=False,
-              attachment_filename=None, add_etags=True,
-              cache_timeout=60 * 60 * 12, conditional=False):
+def send_file(filename_or_fp=None,
+              mimetype=None,
+              as_attachment=False, attachment_filename=None,
+              add_etags=True,
+              cache_timeout=60 * 60 * 12, conditional=False,
+              etag=None,
+              file=None, filename=None):
     """Sends the contents of a file to the client.  This will use the
     most efficient method available and configured.  By default it will
     try to use the WSGI server's file_wrapper support.  Alternatively
@@ -218,12 +222,11 @@ def send_file(filename_or_fp, mimetype=None, as_attachment=False,
        The `add_etags`, `cache_timeout` and `conditional` parameters were
        added.  The default behaviour is now to attach etags.
 
-    :param filename_or_fp: the filename of the file to send.  This is
-                           relative to the :attr:`~Flask.root_path` if a
-                           relative path is specified.
-                           Alternatively a file object might be provided
-                           in which case `X-Sendfile` might not work and
-                           fall back to the traditional method.
+    .. versionadded:: 0.6
+       The `file`, `filename` and `etag` parameters were added.
+       `filename_or_fp` is deprecated now.
+
+    :param filename_or_fp: *** DEPRECATED - use file/filename param ***
     :param mimetype: the mimetype of the file if provided, otherwise
                      auto detection happens.
     :param as_attachment: set to `True` if you want to send this file with
@@ -233,16 +236,45 @@ def send_file(filename_or_fp, mimetype=None, as_attachment=False,
     :param add_etags: set to `False` to disable attaching of etags.
     :param conditional: set to `True` to enable conditional responses.
     :param cache_timeout: the timeout in seconds for the headers.
+    :param etag: you can give an etag here, None means to try to compute the
+                 etag from the file's filesystem metadata.
+    :param file: a file object, if we can't make up the filename and you
+                 do not provide it, `X-Sendfile` will not work and we'll
+                 fall back to the traditional method.
+    :param filename: the filesystem filename of the file to send,
+                     None means to try to autodetect it from `name` attr
+                     of the given file object. If you give '' it will not
+                     try to autodetect, nor assume that this is a fs file.
+                     the filename of the file to send.  This is relative to
+                     the :attr:`~Flask.root_path` if a relative path is
+                     specified.
     """
-    if isinstance(filename_or_fp, basestring):
-        filename = filename_or_fp
-        file = None
-    else:
-        file = filename_or_fp
-        filename = getattr(file, 'name', None)
-    if filename is not None:
+    if filename_or_fp is not None:
+        current_app.logger.warning('send_file filename_or_fp param is deprecated, use file=... and/or filename=...')
+
+    if filename is None:
+        if file is not None:
+            filename = getattr(file, 'name', None)
+        # vv support for deprecated filename_or_fp param vv
+        elif isinstance(filename_or_fp, basestring):
+            filename = filename_or_fp
+        elif hasattr(filename_or_fp, 'read'):
+            filename = getattr(filename_or_fp, 'name', None)
+        # ^^ support for deprecated filename_or_fp param ^^
+
+    if filename is None:
+        raise ValueError("can't determine filename")
+
+    if filename:
         if not os.path.isabs(filename):
             filename = os.path.join(current_app.root_path, filename)
+
+    # vv support for deprecated filename_or_fp param vv
+    if file is None:
+        if hasattr(filename_or_fp, 'read'):
+            file = filename_or_fp
+    # ^^ support for deprecated filename_or_fp param ^^
+
     if mimetype is None and (filename or attachment_filename):
         mimetype = mimetypes.guess_type(filename or attachment_filename)[0]
     if mimetype is None:
@@ -251,7 +283,7 @@ def send_file(filename_or_fp, mimetype=None, as_attachment=False,
     headers = Headers()
     if as_attachment:
         if attachment_filename is None:
-            if filename is None:
+            if not filename:
                 raise TypeError('filename unavailable, required for '
                                 'sending as attachment')
             attachment_filename = os.path.basename(filename)
@@ -259,12 +291,12 @@ def send_file(filename_or_fp, mimetype=None, as_attachment=False,
                     filename=attachment_filename)
 
     if current_app.use_x_sendfile and filename:
-        if file is not None:
+        if file:
             file.close()
         headers['X-Sendfile'] = filename
         data = None
     else:
-        if file is None:
+        if not file and filename:
             file = open(filename, 'rb')
         data = wrap_file(request.environ, file)
 
@@ -276,12 +308,17 @@ def send_file(filename_or_fp, mimetype=None, as_attachment=False,
         rv.cache_control.max_age = cache_timeout
         rv.expires = int(time() + cache_timeout)
 
-    if add_etags and filename is not None:
-        rv.set_etag('flask-%s-%s-%s' % (
-            os.path.getmtime(filename),
-            os.path.getsize(filename),
-            adler32(filename) & 0xffffffff
-        ))
+    if add_etags:
+        if filename and etag is None:
+            etag = 'flask-%s-%s-%s' % (
+                os.path.getmtime(filename),
+                os.path.getsize(filename),
+                adler32(filename) & 0xffffffff
+            )
+        if etag is not None:
+            rv.set_etag(etag)
+        else:
+            raise ValueError("can't determine etag - please give etag or filename")
         if conditional:
             rv = rv.make_conditional(request)
             # make sure we don't send x-sendfile for servers that
