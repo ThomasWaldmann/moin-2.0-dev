@@ -23,7 +23,8 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from flask import url_for, send_file, render_template, Response, abort
+from flask import g, request, url_for, send_file, render_template, Response, abort
+from werkzeug import is_resource_modified
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
@@ -593,13 +594,11 @@ There is no help, you're doomed!
         return "Impossible to convert the data to the internal representation tree"
 
     def do_get(self):
-        request = self.request
-        hash = self.rev.get(request.cfg.hash_algorithm)
-        if_none_match = request.if_none_match
-        if if_none_match and hash in if_none_match:
-            abort(304)
-        else:
+        hash = self.rev.get(g.context.cfg.hash_algorithm)
+        if is_resource_modified(request.environ, hash): # use hash as etag
             return self._do_get_modified(hash)
+        else:
+            return Response(status=304)
 
     def _do_get_modified(self, hash):
         request = self.request
@@ -1061,7 +1060,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
             from_cache = cache.key
         else:
             from_cache = request.values.get('from_cache')
-        self._do_get(hash, from_cache=from_cache)
+        return self._do_get(hash, from_cache=from_cache)
 
     def _render_data_diff(self, oldrev, newrev):
         try:
