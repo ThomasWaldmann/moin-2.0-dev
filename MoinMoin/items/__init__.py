@@ -643,7 +643,7 @@ There is no help, you're doomed!
                          mimetype=content_type,
                          as_attachment=False, attachment_filename=filename,
                          cache_timeout=10, # wiki data can change rapidly
-                         use_etags=True, etag=hash,
+                         add_etags=True, etag=hash,
                          conditional=True)
 
 class RenderableBinary(Binary):
@@ -1330,7 +1330,7 @@ class HTML(Text):
                          mimetype=content_type,
                          as_attachment=False, attachment_filename=None,
                          cache_timeout=10, # wiki data can change rapidly
-                         use_etags=False, etag=None,
+                         add_etags=False, etag=None,
                          conditional=True)
 
 
