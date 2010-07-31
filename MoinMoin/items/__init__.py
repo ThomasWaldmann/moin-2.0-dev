@@ -148,15 +148,6 @@ class Item(object):
         return self.rev or {}
     meta = property(fget=get_meta)
 
-    def url(self, _absolute=False, **kw):
-        """ return URL for this item, optionally as absolute URL """
-        href = _absolute and self.request.abs_href or self.request.href
-        return href(self.name, **kw)
-
-    def rev_url(self, _absolute=False, **kw):
-        """ return URL for this item and this revision, optionally as absolute URL """
-        return self.url(rev=self.rev.revno, _absolute=_absolute, **kw)
-
     transclude_acceptable_attrs = []
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
@@ -491,8 +482,10 @@ class NonExistent(Item):
 
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
-        return (self.formatter.url(1, self.url(), css='nonexistent', title='click to create item') +
-                self.formatter.text(self.name) + # maybe use some "broken image" icon instead?
+        item_name = self.name
+        url = url_for('frontend.show_item', item_name=item_name)
+        return (self.formatter.url(1, url, css='nonexistent', title='click to create item') +
+                self.formatter.text(item_name) + # maybe use some "broken image" icon instead?
                 self.formatter.url(0))
 
 
@@ -518,7 +511,7 @@ There is no help, you're doomed!
             tag_attrs = {}
         if query_args is None:
             query_args = {}
-        url = self.rev_url(**query_args)
+        url = url_for('frontend.show_item', item_name=item_name, rev=self.rev.revno)
         return (self.formatter.url(1, url, **tag_attrs) +
                 self.formatter.text(desc) +
                 self.formatter.url(0))
@@ -677,7 +670,8 @@ class RenderableBinary(Binary):
             query_args['do'] = 'get'
         if params is None:
             params = self.transclude_params
-        url = self.rev_url(**query_args)
+        item_name = self.name
+        url = url_for('frontend.get_item', item_name=item_name, rev=self.rev.revno)
         return (self.formatter.transclusion(1, data=url, **tag_attrs) +
                 ''.join([self.formatter.transclusion_param(**p) for p in params]) +
                 self.formatter.text(desc) +
@@ -918,7 +912,7 @@ class SvgDraw(TarMixin, Image):
         request = self.request
         draw_url = ""
         if 'drawing.svg' in self.list_members():
-            draw_url = self.url()
+            draw_url = url_for('frontend.get_item', item_name=self.name)
 
         svg_params = {
             'draw_url': draw_url,
@@ -962,7 +956,7 @@ class RenderableBitmapImage(RenderableImage):
                     tag_attrs[attr] = desc
         if 'do' not in query_args:
             query_args['do'] = 'get'
-        url = self.rev_url(**query_args)
+        url = url_for('frontend.get_item', item_name=self.name) # XXX add revno
         return self.formatter.image(src=url, **tag_attrs)
 
     def _render_data(self):
