@@ -77,6 +77,7 @@ class Converter(object):
         return content
 
     def do_children(self, element):
+        new_child = []
         if element.tag.name in self.tags_to_ignore:
             return
         new_child = []
