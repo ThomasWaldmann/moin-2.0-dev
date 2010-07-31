@@ -2,7 +2,7 @@
 {% block content %}
 <h1>{{ _("DESTROY '%(item_name)s'") % dict(item_name=item.name) }}</h1>
 <form action="{{ url_for('frontend.destroy_item', item_name=item.name) }}" method="POST" enctype="multipart/form-data">
-<fieldset style="border: none; padding: 0;">
+<fieldset>
 <label for="comment">{{ _("Comment") }}</label>    
 <input type="text" name="comment" size="80" maxlength="200" value="" />
 <br>
@@ -11,4 +11,3 @@
 </fieldset>
 </form>
 {% endblock %}
-

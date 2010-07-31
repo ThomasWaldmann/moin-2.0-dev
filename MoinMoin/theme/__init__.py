@@ -60,41 +60,6 @@ class ThemeBase(object):
         # search forms
         'searchbutton': ("[?]",                  "moin-search.png",   16, 16),
         'interwiki':  ("[%(wikitag)s]",          "moin-inter.png",    16, 16),
-
-        # smileys (this is CONTENT, but good looking smileys depend on looking
-        # adapted to the theme background color and theme style in general)
-        #vvv    ==      vvv  this must be the same for GUI editor converter
-        'X-(':        ("X-(",                    'angry.png',         16, 16),
-        ':D':         (":D",                     'biggrin.png',       16, 16),
-        '<:(':        ("<:(",                    'frown.png',         16, 16),
-        ':o':         (":o",                     'redface.png',       16, 16),
-        ':(':         (":(",                     'sad.png',           16, 16),
-        ':)':         (":)",                     'smile.png',         16, 16),
-        'B)':         ("B)",                     'smile2.png',        16, 16),
-        ':))':        (":))",                    'smile3.png',        16, 16),
-        ';)':         (";)",                     'smile4.png',        16, 16),
-        '/!\\':       ("/!\\",                   'alert.png',         16, 16),
-        '<!>':        ("<!>",                    'attention.png',     16, 16),
-        '(!)':        ("(!)",                    'idea.png',          16, 16),
-        ':-?':        (":-?",                    'tongue.png',        16, 16),
-        ':\\':        (":\\",                    'ohwell.png',        16, 16),
-        '>:>':        (">:>",                    'devil.png',         16, 16),
-        '|)':         ("|)",                     'tired.png',         16, 16),
-        ':-(':        (":-(",                    'sad.png',           16, 16),
-        ':-)':        (":-)",                    'smile.png',         16, 16),
-        'B-)':        ("B-)",                    'smile2.png',        16, 16),
-        ':-))':       (":-))",                   'smile3.png',        16, 16),
-        ';-)':        (";-)",                    'smile4.png',        16, 16),
-        '|-)':        ("|-)",                    'tired.png',         16, 16),
-        '(./)':       ("(./)",                   'checkmark.png',     16, 16),
-        '{OK}':       ("{OK}",                   'thumbs-up.png',     16, 16),
-        '{X}':        ("{X}",                    'icon-error.png',    16, 16),
-        '{i}':        ("{i}",                    'icon-info.png',     16, 16),
-        '{1}':        ("{1}",                    'prio1.png',         15, 13),
-        '{2}':        ("{2}",                    'prio2.png',         15, 13),
-        '{3}':        ("{3}",                    'prio3.png',         15, 13),
-        '{*}':        ("{*}",                    'star_on.png',       16, 16),
-        '{o}':        ("{o}",                    'star_off.png',      16, 16),
     }
     del _
 
@@ -126,7 +91,6 @@ class ThemeBase(object):
         self.ui_dir = i18n.getDirection(self.ui_lang)
         self.content_lang = request.content_lang
         self.content_dir = i18n.getDirection(self.content_lang)
-        self.msg_list = []
         # for html head:
         self.meta_keywords = ''
         self.meta_description = ''
@@ -135,7 +99,7 @@ class ThemeBase(object):
         """
         Get a boolean indicating whether an item_name exists or not.
         
-        @param item_name: string
+        @param item_name: unicode
         @rtype: boolean
         """
         return self.storage.has_item(item_name)
@@ -144,7 +108,7 @@ class ThemeBase(object):
         """
         Get a boolean indicating whether the user in request can read in item_name.
         
-        @param item_name: string
+        @param item_name: unicode
         @rtype: boolean
         """
         return self.request.user.may.read(item_name)
@@ -153,7 +117,7 @@ class ThemeBase(object):
         """
         Get a boolean indicating whether the user in request can write in item_name.
         
-        @param item_name: string
+        @param item_name: unicode
         @rtype: boolean
         """
         return self.request.user.may.write(item_name)
@@ -163,8 +127,8 @@ class ThemeBase(object):
         Get a translated item name.
         If a translated item exists return its name, if not return item name in English.
 
-        @param item_name: string
-        @rtype: string
+        @param item_name: unicode
+        @rtype: unicode
         """
         request = self.request
         item_lang_request = request.getText(item_en)
@@ -175,6 +139,19 @@ class ThemeBase(object):
         if self.item_exists(item_lang_default):
             return item_lang_default
         return item_en
+
+    def emit_custom_html(self, html):
+        """
+        Generate custom HTML code in `html`
+        @param html: a string or a callable object, in which case
+                 it is called and its return value is used
+        @rtype: string
+        @return: string with html
+        """
+        if html:
+            if callable(html):
+                html = html(self.request)
+        return html
 
     def location_breadcrumbs(self, item_name):
         """
@@ -308,7 +285,8 @@ class ThemeBase(object):
 
         if not title:
             title = item_name
-        return item_name, title, wiki_local
+        href = url_for('frontend.show_item', item_name=item_name)
+        return href, title, wiki_local
 
     def navibar(self, item_name):
         """
@@ -355,9 +333,9 @@ class ThemeBase(object):
         key. Using filenames is deprecated, but for now, we simulate old
         behavior.
 
-        @param icon: icon name or file name (string)
+        @param icon: icon name or file name (unicode)
         @rtype: tuple
-        @return: alt (unicode), href (string), width, height (int)
+        @return: alt (unicode), href (unicode), width, height (int)
         """
         if icon in self.icons:
             alt, icon, w, h = self.icons[icon]
@@ -387,7 +365,7 @@ class ThemeBase(object):
 
         @param icon: icon id (dict key)
         @param vars: ...
-        @rtype: string
+        @rtype: unicode
         @return: icon html (img tag)
         """
         if vars is None:
@@ -401,32 +379,16 @@ class ThemeBase(object):
         tag = self.request.formatter.image(src=img, alt=alt, width=w, height=h, **kw)
         return tag
 
-    def parent_page(self, item_name):
+    def parent_item(self, item_name):
         """
-        Return name of parent page for the current page
+        Return name of parent item for the current item
 
         @rtype: unicode
-        @return: parent page name
+        @return: parent item name
         """
-        parent_page_name = wikiutil.ParentPageName(item_name)
-        if item_name and parent_page_name:
-            return parent_page_name
-
-    def add_msg(self, msg, msg_class=None):
-        """
-        Adds a message to a list which will be used to generate status
-        information.
-
-        @param msg: additional message
-        @param msg_class: html class for the div of the additional message.
-        """
-        if not msg_class:
-            msg_class = 'dialog'
-        try:
-            msg = msg.render()
-            self.msg_list.append(msg)
-        except AttributeError:
-            flash(msg, msg_class)
+        parent_item_name = wikiutil.ParentItemName(item_name)
+        if item_name and parent_item_name:
+            return parent_item_name
 
     # TODO: reimplement on-wiki-page sidebar definition with converter2
 
@@ -436,7 +398,7 @@ class ThemeBase(object):
         """
         Return URL usable for user login
         
-        @rtype: string
+        @rtype: unicode
         @return: url for user login
         """
         request = self.request
@@ -497,14 +459,14 @@ class ThemeBase(object):
         @rtype: list
         @return: list of item names
         """
-        page_front_page = self.translated_item_name(self.cfg.page_front_page)
-        page_title_index = self.translated_item_name('TitleIndex')
-        page_site_navigation = self.translated_item_name('SiteNavigation')
-        page_find_page = self.translated_item_name('FindPage')
-        return [page_front_page, self.cfg.page_front_page,
-                page_title_index, 'TitleIndex',
-                page_find_page, 'FindPage',
-                page_site_navigation, 'SiteNavigation',
+        item_front_page = self.translated_item_name(self.cfg.page_front_page)
+        item_title_index = self.translated_item_name('TitleIndex')
+        item_site_navigation = self.translated_item_name('SiteNavigation')
+        item_find_page = self.translated_item_name('FindPage')
+        return [item_front_page, self.cfg.page_front_page,
+                item_title_index, 'TitleIndex',
+                item_find_page, 'FindPage',
+                item_site_navigation, 'SiteNavigation',
                ]
 
     # Public Functions ########################################################
@@ -524,7 +486,7 @@ class ThemeBase(object):
         """
         # TODO: get rid of this
         if keywords.get('msg', ''):
-            raise DeprecationWarning("Using send_page(msg=) is deprecated! Use theme.add_msg() instead!")
+            raise DeprecationWarning("Using send_page(msg=) and theme.msg() is deprecated! Use flash of flask instead.")
         raise DeprecationWarning("Using send_title is deprecated! Use return_template of flask directly.")
 
 

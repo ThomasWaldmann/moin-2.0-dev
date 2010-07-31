@@ -1,4 +1,10 @@
 {% extends "layout.html" %}
+
+{% block head %}
+{{ super() }}
+<link rel="alternate" title="Global changes" href="{{ url_for('feed.atom')|e }}" type="application/atom+xml" />
+{% endblock %}
+
 {% block content %}
 <h1>{{ _("Global History") }}</h1>
     <table class="history">
@@ -29,4 +35,3 @@
         </tbody>
     </table>
 {% endblock %}
-

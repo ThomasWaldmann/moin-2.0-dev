@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 
 {% block layout %}
+
+{{ theme.emit_custom_html(cfg.custom_before_header) }}
+
 <div id="header">
 
-<form id="searchform" method="get" action="{{ url_for('frontend.search') }}">
+<form id="searchform" method="get" action="{{ url_for('frontend.search')|e }}">
     <div>
         <input type="hidden" name="do" value="fullsearch" />
         <input type="hidden" name="context" value="180" />
@@ -31,18 +34,18 @@
 </div>
 
 <div id="username">
-    {% if user.valid %}
-        {% if user.name %}
+    {% if user.valid -%}
+        {% if user.name -%}
             {% set wiki_href, aliasname, title, exists = theme.userhome() %}
             <a href="{{ wiki_href|e }}" {% if not exists %}class="nonexistent"{% endif %} rel="nofollow" title="{{ title }}">
                 {{ aliasname }}
             </a>
             <span class="sep"> | </span>
-            {% if 'userprefs' not in cfg.actions_excluded %}
+            {% if 'userprefs' not in cfg.actions_excluded -%}
                 <a href="{{ url_for('frontend.userprefs')|e }}" class="userprefs" rel="nofollow">{{ _('Settings') }}</a>
                 <span class="sep"> | </span>
-            {% endif %}
-        {% endif %}
+            {%- endif %}
+        {%- endif %}
         {% if user.auth_method in cfg.auth_can_logout %}
             <a href="{{ url_for('frontend.logout')|e }}" class="logout" rel="nofollow">
                 {{ _('Logout') }}
@@ -50,38 +53,29 @@
         {% endif %}
     {% else %}
         <a href="{{ theme.login_url()|e }}" class="login" rel="nofollow">{{ _('Login') }}</a>
-    {% endif %}
+    {%- endif %}
 </div>
 
 
 <h1 id="locationline">
-
-    {% if cfg.show_interwiki %}
+    {% if cfg.show_interwiki -%}
     <span id="interwiki">
-        <a href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page)) }}" rel="nofollow">
-            {% if cfg.interwikiname %}
-                {{ cfg.interwikiname }}
-            {% else %}
-                Self
-            {% endif %}
+        <a href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page))|e }}" rel="nofollow">
+            {% if cfg.interwikiname %}{{ cfg.interwikiname }}{% else %}Self{% endif %}
         </a>
         <span class="sep">: </span>
     </span>
-    {% endif %}
-
+    {%- endif %}
     <span id="pagelocation">
         <span class="pagepath">
-            {% for segment_name, segment_path, exists in theme.location_breadcrumbs(item_name) %}
-                <a href="{{ url_for('frontend.show_item', item_name=segment_path) }}" {% if not exists %}class="nonexistent"{% endif %}>
+            {% for segment_name, segment_path, exists in theme.location_breadcrumbs(item_name) -%}
+                <a href="{{ url_for('frontend.show_item', item_name=segment_path)|e }}" {% if not exists %}class="nonexistent"{% endif %}>
                     {{ segment_name|shorten_item_name }}
                 </a>
-                {% if not loop.last %}
-                    <span class="sep">/</span>
-                {% endif %}
-            {% endfor %}
+                {% if not loop.last -%}<span class="sep">/</span>{%- endif %}
+            {%- endfor %}
         </span>
     </span>
-
 </h1>
 
 {% set trail_items = theme.path_breadcrumbs() %}
@@ -89,17 +83,15 @@
     <div id="pagetrail">
     {% for wiki_name, item_name, item_href, exists, err in trail_items %}
         <a href="{{ url_for('frontend.show_item', item_name=item_href)|e }}"
-        {% if wiki_name %}
+        {%- if wiki_name -%}
             title="{{ wiki_name }}"
             class="{% if err %}badinterwiki{% else %}interwiki{% endif %}"
-        {% else %}
-            {% if not exists %}class="nonexistent"{% endif %}
-        {% endif %}>
+        {%- else -%}
+            {% if not exists -%}class="nonexistent"{%- endif -%}
+        {%- endif %}>
             {{ item_name|shorten_item_name }}
         </a>
-        {% if not loop.last %}
-            <span class="sep"> &raquo; </span>
-        {% endif %}
+        {% if not loop.last %}<span class="sep"> &raquo; </span>{% endif %}
     {% endfor %}
     </div>
 {% endif %}
@@ -120,41 +112,33 @@
     <p class="flash-{{ category }}">{{ msg }}</p>
 {% endfor %}
 
-{# kill msg_list after all is using flashed_messages #}
-{% if theme.msg_list %}
-    <div id="message">
-        {% for msg in theme.msg_list %}
-                <p>{{ msg }}</p>
-        {% endfor %}
-        <a href="{{ url_for('frontend.show_item', item_name=item_name) }}" class="clear-link">{{ _('Clear Message') }}</a>
-    </div>
-{% endif %}
-
 {% block extra_header %}{% endblock %}
 
 </div>
 
-<div id="page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
+{{ theme.emit_custom_html(cfg.custom_after_header) }}
 
+<div id="page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
     {# ALL CONTENT TEMPLATES SHOULD HAVE IMPLEMENTS THIS BLOCK #}
-    {% block item %}
+    {% block item -%}
         <div id="content">
         {% block content %}{% endblock %}
         </div>
-    {% endblock %}
-
-    {% block extra_content %}{% endblock %}
-
+    {%- endblock %}
 </div>
+
+{{ theme.emit_custom_html(cfg.custom_before_footer) }}
 
 <div id="footer">
     {% block extra_footer %}<hr>{% endblock %}
     <ul id="credits">
-        {% for credit in cfg.page_credits %}
+        {% for credit in cfg.page_credits -%}
             <li> {{ credit }} </li>
         {% endfor %}
     </ul>
 </div>
+
+{{ theme.emit_custom_html(cfg.custom_after_footer) }}
 
 {% set null = theme.request.clock.stop('run') %}
 {% set null = theme.request.clock.stop('total') %}
@@ -168,4 +152,3 @@
     </ul>
 {% endif %}
 {% endblock %}
-
