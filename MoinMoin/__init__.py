@@ -12,12 +12,14 @@ This creates the WSGI application (using Flask) as "app".
 """
 
 from flask import Flask, request, g, url_for, render_template, flash
+from werkzeug import ImmutableDict
 
 class MoinFlask(Flask):
     # TODO: at all places where we insert html into output, use the Markup
     # class of flask/jinja so we can switch autoescape on in the end.
-    def select_jinja_autoescape(self, filename):
-        return False
+    jinja_options = ImmutableDict(
+        autoescape=False,
+    )
 
     secret_key = "thisisnotsecret"
 
