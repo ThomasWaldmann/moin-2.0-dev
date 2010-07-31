@@ -1,6 +1,6 @@
 # -*- coding: ascii -*-
 """
-MoinMoin - a wiki engine in Python
+MoinMoin - a wiki engine in Python.
 
 This creates the WSGI application (using Flask) as "app".
 
@@ -12,7 +12,6 @@ This creates the WSGI application (using Flask) as "app".
 """
 
 from flask import Flask, request, g, url_for, render_template, flash
-import werkzeug
 
 class MoinFlask(Flask):
     # TODO: at all places where we insert html into output, use the Markup
@@ -34,17 +33,12 @@ import os, sys
 from MoinMoin import log
 logging = log.getLogger(__name__)
 
-from MoinMoin.web.contexts import AllContext, Context, XMLRPCContext
-from MoinMoin.web.exceptions import HTTPException, Forbidden
-from MoinMoin.web.request import Request, MoinMoinFinish, HeaderSet
-from MoinMoin.web.utils import check_forbidden, check_surge_protect, fatal_response, \
-    redirect_last_visited
-from MoinMoin.storage.error import AccessDeniedError, StorageError
+from MoinMoin.web.contexts import AllContext
+from MoinMoin.web.request import Request
+from MoinMoin.storage.error import StorageError
 from MoinMoin.storage.serialization import unserialize
 from MoinMoin.storage.backends import router, acl, memory
-from MoinMoin.Page import Page
-from MoinMoin.items import Item, MIMETYPE
-from MoinMoin import auth, config, i18n, user, wikiutil, xmlrpc, error
+from MoinMoin import auth, config, i18n, user
 
 
 def set_umask(new_mask=0777^config.umask):
@@ -220,11 +214,7 @@ def shorten_item_name(name, length=25):
 
 
 def setup_jinja_env(request):
-    from werkzeug import url_quote, url_encode
     from MoinMoin.items import EDIT_LOG_USERID, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME
-    theme = request.theme
-    app.jinja_env.filters['urlencode'] = lambda x: url_encode(x)
-    app.jinja_env.filters['urlquote'] = lambda x: url_quote(x)
     app.jinja_env.filters['datetime_format'] = lambda tm, u = request.user: u.getFormattedDateTime(tm)
     app.jinja_env.filters['date_format'] = lambda tm, u = request.user: u.getFormattedDate(tm)
     app.jinja_env.filters['shorten_item_name'] = shorten_item_name
@@ -236,12 +226,12 @@ def setup_jinja_env(request):
     app.jinja_env.globals.update({
                             'isinstance': isinstance,
                             'list': list,
-                            'theme': theme,
+                            'theme': request.theme,
                             'user': request.user,
                             'cfg': request.cfg,
                             '_': request.getText,
                             'item_name': 'handlers need to give it',
-                            'translated_item_name': theme.translated_item_name,
+                            'translated_item_name': request.theme.translated_item_name,
                             })
 
 
