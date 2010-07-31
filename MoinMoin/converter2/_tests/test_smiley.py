@@ -63,6 +63,9 @@ class TestConverter(Base):
              '/page/body[code="bla bla :-) bla bla"]'),
             ('<page><body><p>:-) :-(</p></body></page>',
              '/page/body/p[object[1][@xlink:href="%s/modernized/img/smileys/smile.png"]][object[2][@xlink:href="%s/modernized/img/smileys/sad.png"]]' % (url_prefix_static, url_prefix_static)),
+            # Test to check we do not have bug with newline in the string
+            ('<page><body><p>1\n2\n3\n4</p></body></page>',
+             '/page/body[p="1\n2\n3\n4"]'),
            ]
         for i in data:
             yield (self.do, ) + i
