@@ -116,10 +116,13 @@ class TestConverter(Base):
     def test_table(self):
         data = [
             # All the table output caption, just wrote a test and snippet
-            # for the first test.
+            # for the two first tests.
             ('<page><body><table><table-header><table-row><table-cell>Header</table-cell></table-row></table-header><table-footer><table-row><table-cell>Footer</table-cell></table-row></table-footer><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></body></page>',
             # <article><table><caption>Table 0</caption><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table>
                 '/article/table[caption="Table 0"][thead/tr[td="Header"]][tfoot/tr[td="Footer"]][tbody/tr[td="Cell"]]'),
+            ('<page><body><table html:title="Title"><table-header><table-row><table-cell>Header</table-cell></table-row></table-header><table-footer><table-row><table-cell>Footer</table-cell></table-row></table-footer><table-body><table-row><table-cell>Cell</table-cell></table-row></table-body></table></body></page>',
+            # <article><table><caption>Title</caption><thead><tr><td>Header</td></tr></thead><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td>Cell</td></tr></tbody></table>
+                '/article/table[caption="Title"][thead/tr[td="Header"]][tfoot/tr[td="Footer"]][tbody/tr[td="Cell"]]'),
             ('<page><body><table><table-body><table-row><table-cell page:number-columns-spanned="2">Cell</table-cell></table-row></table-body></table></body></page>',
              # <article><table><tbody><tr><td colspan="2">Cell</td></tr></tbody></table></article>
                 '/article/table/tbody/tr/td[@colspan="2"][text()="Cell"]'),
@@ -168,6 +171,28 @@ class TestConverter(Base):
             ('<page><body><p>text<emphasis>emphasis</emphasis></p></body></page>',
              # <article><para>text<emphasis>emphasis</emphasis></para>
              '/article/para[text()="text"][emphasis="emphasis"]'),
+            # LINE-BREAK --> SBR
+            ('<page><body><p>Line 1<line-break />Line 2</p></body></page>',
+             #<article><para>Line 1<sbr />Line 2</para></article>
+             '/article/para[text()="Line 1"]/sbr'),
+            # QUOTE --> QUOTE
+            ('<page><body><p>Text<quote>quotation</quote></p></body></page>',
+             # <article><para>Text<quote>quotation</quote></para></body></page>
+             '/article/para[text()="Text"][quote="quotation"]'),
+            # BLOCKQUOTE --> BLOCKQUOTE
+            ('<page><body><blockquote page:source="Socrates">One thing only I know, and that is that I know nothing.</blockquote></body></page>',
+             # <article><blockquote><attribution>Socrates</attribution><para>One thing ... nothing</para></blockquote></article>
+             '/article/blockquote[attribution="Socrates"][para="One thing only I know, and that is that I know nothing."]'),
+
+        ]
+        for i in data:
+            yield (self.do, ) + i
+
+    def test_object(self):
+        data = [
+            ('<page><body><p><object xlink:href="pics.png" /></p></body></page>',
+             # <article><para><inlinemediaobject><imageobject><imagedata fileref="uri"></imageobject></inlinemediaobject></para></article>
+             '/article/para/inlinemediaobject/imageobject/imagedata[@fileref="pics.png"]'),
         ]
         for i in data:
             yield (self.do, ) + i
