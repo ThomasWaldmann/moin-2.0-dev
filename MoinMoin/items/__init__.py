@@ -23,7 +23,7 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from flask import url_for, send_file, render_template
+from flask import url_for, send_file, render_template, Response, abort
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
@@ -473,20 +473,20 @@ class NonExistent(Item):
     ]
 
     def do_show(self):
-        self.request.status_code = 404
-        return render_template('show_type_selection.html',
-                               item_name=self.name,
-                               mimetype_groups=self.mimetype_groups,
-                              )
+        content = render_template('show_type_selection.html',
+                                  item_name=self.name,
+                                  mimetype_groups=self.mimetype_groups,
+                                 )
+        return Response(content, 404)
 
     def do_get(self):
-        self.request.status_code = 404
+        abort(404)
 
     def _convert(self):
-        self.request.status_code = 404
+        abort(404)
 
     def internal_representation(self):
-        self.request.status_code = 404
+        abort(404)
 
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
@@ -597,8 +597,7 @@ There is no help, you're doomed!
         hash = self.rev.get(request.cfg.hash_algorithm)
         if_none_match = request.if_none_match
         if if_none_match and hash in if_none_match:
-            request.status_code = 304
-            return
+            abort(304)
         else:
             return self._do_get_modified(hash)
 
