@@ -2,7 +2,7 @@
 {% block content %}
 <h1>{{ _("Rename '%(item_name)s'") % dict(item_name=item.name) }}</h1>
 <form action="{{ url_for('frontend.rename_item', item_name=item.name) }}" method="POST" enctype="multipart/form-data">
-<fieldset style="border: none; padding: 0;">
+<fieldset>
 <label for="target">{{ _("Target") }}</label>    
 <input type="text" name="target" size="80" maxlength="200" value="{{ item.name }}" />
 <br>
@@ -14,4 +14,3 @@
 </fieldset>
 </form>
 {% endblock %}
-

@@ -1,5 +1,14 @@
 {% extends "layout.html" %}
 
+{% block head %}
+{{ super() }}
+<link rel="alternate" title="{{ item_name|e }} changes" href="{{ url_for('feed.atom', item_name=item_name)|e }}" type="application/atom+xml" />
+{# universal edit button support #}
+{%- if theme.item_writable and 'modify' not in cfg.actions_excluded -%}
+    <link rel="alternate" type="application/wiki" title="{{ _('Modify') }}" href="{{ url_for('frontend.modify_item', item_name=item_name)|e }}" />
+{%- endif %}
+{% endblock %}
+
 {% import "editbar.html" as editbar with context %}
 
 {% block extra_header %}
@@ -21,12 +30,13 @@
     {% endif %}
 {% endblock %}
 
-{% block extra_content %}
+{% block item %}
+    {{ super() }}
     {% if rev %}
     <div id="pagebottom">
         <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
             {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
-            {{ item_name }} ({{ _("edited %s by %s" % (user.getFormattedDateTime(rev.timestamp), rev|user_format )) }})
+            {{ item_name }} ({{ _("edited %s by %s") % (user.getFormattedDateTime(rev.timestamp), rev|user_format) }})
         </p>
     </div>
     {% endif %}
@@ -35,4 +45,3 @@
 {% block extra_footer %}
     {{ editbar }}
 {% endblock %}
-

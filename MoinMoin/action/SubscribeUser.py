@@ -4,17 +4,21 @@
 
    @copyright: 2003 Daniela Nicklas <nicklas@informatik.uni-stuttgart.de>,
                2005 MoinMoin:AlexanderSchremmer,
-               2009 MoinMoin:ThomasWaldmann
+               2009 MoinMoin:ThomasWaldmann,
+               2010 MoinMoin:DiogenesAugusto
    @license: GNU GPL, see COPYING for details.
 """
 
 import sys, os, re
 
+from flask import flash
+
 from MoinMoin.Page import Page
 from MoinMoin import user
 from MoinMoin import wikiutil
 
-
+# TODO: Convert this into Jinja Template and remove use of functions deprecated in ThemeBase
+    
 def show_form(pagename, request):
     _ = request.getText
     request.theme.send_title(_("Subscribe users to the page %s") % pagename, pagename=pagename)
@@ -126,7 +130,7 @@ def execute(pagename, request):
     _ = request.getText
     if not request.user.may.admin(pagename):
         thispage = Page(request, pagename)
-        request.theme.add_msg(_("You are not allowed to perform this action."), "error")
+        flash(_("You are not allowed to perform this action."), "error")
         return thispage.send_page()
     elif 'users' not in request.form:
         show_form(pagename, request)

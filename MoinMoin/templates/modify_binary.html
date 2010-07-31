@@ -2,7 +2,7 @@
 {% block content %}
 <h1>Modifying {{ item_name }}</h1>
 <form action="" method="POST" enctype="multipart/form-data">
-<fieldset style="border: none; padding: 0;">
+<fieldset>
 <input type="hidden" name="action" value="modify" />
 <input type="hidden" name="rev" value="{{ revno }}" />
 <input class="button" type="submit" name="button_save" value="Save" />
@@ -18,4 +18,3 @@
 </fieldset>
 </form>
 {% endblock %}
-

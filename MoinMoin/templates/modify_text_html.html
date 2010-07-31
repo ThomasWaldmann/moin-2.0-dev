@@ -1,11 +1,15 @@
 {% extends "modify_binary.html" %}
-{% block data_editor %}
+
+{% block head %}
+{{ super() }}
 <script type="text/javascript" src="{{ url_for('static', filename='applets/ckeditor/ckeditor.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='applets/ckeditor/contents.css') }}" />
+{% endblock %}
+
+{% block data_editor %}
 <p>
     <textarea class="ckeditor" id="data_text" name="data_text" rows="{{ rows_data }}" cols="{{ cols }}">{{
         data_text|e
     }}</textarea>
 </p>
 {% endblock %}
-
