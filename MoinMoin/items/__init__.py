@@ -150,11 +150,6 @@ class Item(object):
         return self.rev or {}
     meta = property(fget=get_meta)
 
-    transclude_acceptable_attrs = []
-
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.name, self.mimetype))
-
     def _render_meta(self):
         # override this in child classes
         return ''
@@ -558,14 +553,6 @@ class NonExistent(Item):
                                mimetype_groups=self.mimetype_groups,
                               )
 
-    transclude_acceptable_attrs = []
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        item_name = self.name
-        url = url_for('frontend.show_item', item_name=item_name)
-        return (self.formatter.url(1, url, css='nonexistent', title='click to create item') +
-                self.formatter.text(item_name) + # maybe use some "broken image" icon instead?
-                self.formatter.url(0))
-
 
 class Binary(Item):
     """ An arbitrary binary item, fallback class for every item mimetype. """
@@ -581,18 +568,6 @@ There is no help, you're doomed!
         else:
             return ''
     data = property(fget=get_data)
-
-    transclude_acceptable_attrs = []
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        """ we can't transclude (render) this, thus we just link to the item """
-        if tag_attrs is None:
-            tag_attrs = {}
-        if query_args is None:
-            query_args = {}
-        url = url_for('frontend.show_item', item_name=item_name, rev=self.rev.revno)
-        return (self.formatter.url(1, url, **tag_attrs) +
-                self.formatter.text(desc) +
-                self.formatter.url(0))
 
     def _render_meta(self):
         return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta, use_filter=False)
@@ -702,42 +677,6 @@ class RenderableBinary(Binary):
     """ This is a base class for some binary stuff that renders with a object tag. """
     supported_mimetypes = []
 
-    width = "100%"
-    height = "100%"
-    transclude_params = []
-    transclude_acceptable_attrs = ['class', 'title', 'width', 'height', # no style because of JS
-                                   'type', 'standby', ] # we maybe need a hack for <PARAM> here
-    def transclude(self, desc, tag_attrs=None, query_args=None, params=None):
-        if tag_attrs is None:
-            tag_attrs = {}
-        if 'type' not in tag_attrs:
-            tag_attrs['type'] = self.mimetype
-        if self.width and 'width' not in tag_attrs:
-            tag_attrs['width'] = self.width
-        if self.height and 'height' not in tag_attrs:
-            tag_attrs['height'] = self.height
-        if query_args is None:
-            query_args = {}
-        if 'do' not in query_args:
-            query_args['do'] = 'get'
-        if params is None:
-            params = self.transclude_params
-        item_name = self.name
-        url = url_for('frontend.get_item', item_name=item_name, rev=self.rev.revno)
-        return (self.formatter.transclusion(1, data=url, **tag_attrs) +
-                ''.join([self.formatter.transclusion_param(**p) for p in params]) +
-                self.formatter.text(desc) +
-                self.formatter.transclusion(0))
-
-
-class PlayableBinary(RenderableBinary):
-    """ This is a base class for some binary stuff that plays with a object tag. """
-    transclude_params = [
-        dict(name='stop', value='1', valuetype='data'),
-        dict(name='play', value='0', valuetype='data'),
-        dict(name='autoplay', value='0', valuetype='data'),
-    ]
-
 
 class Application(Binary):
     supported_mimetypes = []
@@ -773,9 +712,6 @@ class ApplicationZip(Application):
         for row in rows:
             t.add_row(**row)
         return t.render()
-
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        return self._render_data()
 
 
 class TarMixin(object):
@@ -875,52 +811,17 @@ class ApplicationXTar(TarMixin, Application):
             t.add_row(**row)
         return t.render()
 
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        return self._render_data()
-
-
-class RenderableApplication(RenderableBinary):
-    supported_mimetypes = []
-
-
-class PlayableApplication(PlayableBinary):
-    supported_mimetypes = []
-
 
 class PDF(Application):
     supported_mimetypes = ['application/pdf', ]
-
-
-class Flash(PlayableApplication):
-    supported_mimetypes = ['application/x-shockwave-flash', ]
 
 
 class Video(Binary):
     supported_mimetypes = ['video/', ]
 
 
-class PlayableVideo(PlayableBinary):
-    supported_mimetypes = ['video/mpg', 'video/fli', 'video/mp4', 'video/quicktime',
-                           'video/ogg', 'video/x-flv', 'video/x-ms-asf', 'video/x-ms-wm',
-                           'video/x-ms-wmv', 'video/x-msvideo',
-                          ]
-    width = "640px"
-    height = "400px"
-
-
 class Audio(Binary):
     supported_mimetypes = ['audio/', ]
-
-
-class PlayableAudio(PlayableBinary):
-    supported_mimetypes = ['audio/midi', 'audio/x-aiff', 'audio/x-ms-wma',
-                           'audio/x-pn-realaudio',
-                           'audio/x-wav',
-                           'audio/mpeg',
-                           'audio/ogg',
-                          ]
-    width = "200px"
-    height = "100px"
 
 
 class Image(Binary):
@@ -942,23 +843,6 @@ class RenderableBitmapImage(RenderableImage):
     """ PNG/JPEG/GIF images use <img> tag (better browser support than <object>) """
     supported_mimetypes = [] # if mimetype is also transformable, please list
                              # in TransformableImage ONLY!
-
-    transclude_acceptable_attrs = ['class', 'title', 'longdesc', 'width', 'height', 'align', ] # no style because of JS
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        if tag_attrs is None:
-            tag_attrs = {}
-        if query_args is None:
-            query_args = {}
-        if 'class' not in tag_attrs:
-            tag_attrs['class'] = 'image'
-        if desc:
-            for attr in ['alt', 'title', ]:
-                if attr not in tag_attrs:
-                    tag_attrs[attr] = desc
-        if 'do' not in query_args:
-            query_args['do'] = 'get'
-        url = url_for('frontend.get_item', item_name=self.name) # XXX add revno
-        return self.formatter.image(src=url, **tag_attrs)
 
 
 class TransformableBitmapImage(RenderableBitmapImage):
@@ -1123,9 +1007,6 @@ class Text(Binary):
 
     def feed_input_conv(self):
         return self.data_storage_to_internal(self.data).split(u'\n')
-
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        return self._render_data()
 
     def _render_data_diff(self, oldrev, newrev):
         from MoinMoin.util import diff_html
