@@ -11,7 +11,8 @@
 
 {% import "editbar.html" as editbar with context %}
 
-{% block extra_header %}
+{% block header %}
+    {{ super() }}
     {{ editbar }}
 {% endblock %}
 
