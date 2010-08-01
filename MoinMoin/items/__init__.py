@@ -72,7 +72,7 @@ _ = lambda x: x
 class Item(object):
 
     @classmethod
-    def create(cls, request, name=u'', mimetype='application/x-unknown', rev_no=None,
+    def create(cls, request, name=u'', mimetype='application/x-nonexistent', rev_no=None,
                formatter=None, item=None):
         class DummyRev(dict):
             def __init__(self, mimetype):
@@ -110,7 +110,7 @@ class Item(object):
                     rev = DummyRev(mimetype)
                     logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
             logging.debug("Got item %r, revision: %r" % (name, rev_no))
-        mimetype = rev.get(MIMETYPE) or 'application/x-unknown' # XXX: Why do we need ... or ... ?
+        mimetype = rev.get(MIMETYPE) or 'application/octet-stream' # XXX: Why do we need ... or ... ?
         logging.debug("Item %r, got mimetype %r from revision meta" % (name, mimetype))
         logging.debug("Item %r, rev meta dict: %r" % (name, dict(rev)))
 
@@ -406,7 +406,7 @@ class Item(object):
 
 
 class NonExistent(Item):
-    supported_mimetypes = ['application/x-unknown']
+    supported_mimetypes = ['application/x-nonexistent']
     mimetype_groups = [
         ('markup text items', [
             ('text/x.moin.wiki', 'Wiki (MoinMoin)'),
