@@ -64,7 +64,7 @@ EDIT_LOG_USERID = "edit_log_userid"
 EDIT_LOG_EXTRA = "edit_log_extra"
 EDIT_LOG_COMMENT = "edit_log_comment"
 
-
+EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
 
 # dummy getText function until we have a real one:
 _ = lambda x: x
@@ -519,8 +519,58 @@ There is no help, you're doomed!
     def _render_meta(self):
         return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta, use_filter=False)
 
+    def feed_input_conv(self):
+        return self.name
+
+    def internal_representation(self):
+        """
+        Return the internal representation of a document using a DOM Tree
+        """
+        request = self.request
+
+        # We will see if we can perform the conversion:
+        # FROM_mimetype --> DOM
+        # if so we perform the transformation, otherwise we don't
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.iri import Iri
+        from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import moin_page, xlink
+        input_conv = reg.get(Type(self.mimetype), type_moin_document,
+                request=request)
+        if not input_conv:
+            raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
+        include_conv = reg.get(type_moin_document, type_moin_document,
+                includes='expandall', request=request)
+        link_conv = reg.get(type_moin_document, type_moin_document,
+                links='extern', request=request)
+        smiley_conv = reg.get(type_moin_document, type_moin_document,
+                icon='smiley', request=request)
+
+        # We can process the conversion
+        links = Iri(scheme='wiki', authority='', path='/' + self.name)
+        input = self.feed_input_conv()
+        doc = input_conv(input)
+        doc.set(moin_page.page_href, unicode(links))
+        doc = include_conv(doc)
+        doc = smiley_conv(doc)
+        doc = link_conv(doc)
+        return doc
+
     def _render_data(self):
-        return '' # XXX we can't render the data, maybe show some "data icon" as a placeholder?
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import Type, type_moin_document
+        request = self.request
+        # TODO: Real output format
+        html_conv = reg.get(type_moin_document,
+                Type('application/x-xhtml-moin-page'), request=request)
+        doc = self.internal_representation()
+        doc = html_conv(doc)
+
+        from array import array
+        out = array('u')
+        # TODO: Switch to xml
+        doc.write(out.fromunicode, method='html')
+        return out.tounicode()
 
     def get_templates(self, mimetype=None):
         """ create a list of templates (for some specific mimetype) """
@@ -582,9 +632,6 @@ There is no help, you're doomed!
 
     def _convert(self):
         return "Impossible to convert the data to the mimetype : %s" % self.request.values.get('mimetype')
-
-    def internal_representation(self):
-        return "Impossible to convert the data to the internal representation tree"
 
     def do_get(self):
         hash = self.rev.get(g.context.cfg.hash_algorithm)
@@ -677,9 +724,6 @@ class RenderableBinary(Binary):
                 ''.join([self.formatter.transclusion_param(**p) for p in params]) +
                 self.formatter.text(desc) +
                 self.formatter.transclusion(0))
-
-    def _render_data(self):
-        return self.transclude('{{%s [%s]}}' % (self.name, self.mimetype))
 
 
 class PlayableBinary(RenderableBinary):
@@ -908,34 +952,6 @@ class RenderableBitmapImage(RenderableImage):
         url = url_for('frontend.get_item', item_name=self.name) # XXX add revno
         return self.formatter.image(src=url, **tag_attrs)
 
-    def _render_data(self):
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.iri import Iri
-        from MoinMoin.util.mime import Type, type_moin_document
-        from MoinMoin.util.tree import moin_page
-
-        request = self.request
-        input_conv = reg.get(Type(self.mimetype), type_moin_document,
-                request=request)
-        link_conv = reg.get(type_moin_document, type_moin_document,
-                links='extern', request=request)
-        # TODO: Real output format
-        html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'), request=request)
-
-        i = Iri(scheme='wiki', authority='', path='/' + self.name)
-
-        doc = input_conv(self.name)
-        doc.set(moin_page.page_href, unicode(i))
-        doc = link_conv(doc)
-        doc = html_conv(doc)
-
-        from array import array
-        out = array('u')
-        # TODO: Switch to xml
-        doc.write(out.fromunicode, method='html')
-        return out.tounicode()
-
 
 class TransformableBitmapImage(RenderableBitmapImage):
     """ We can transform (resize, rotate, mirror) some image types """
@@ -1096,54 +1112,8 @@ class Text(Binary):
         """ convert data from storage format to memory format """
         return data.decode(config.charset).replace(u'\r\n', u'\n')
 
-    def internal_representation(self):
-        """
-        Return the internal representation of a document using a DOM Tree
-        """
-        request = self.request
-
-        # We will see if we can perform the conversion:
-        # FROM_mimetype --> DOM
-        # if so we perform the transformation, otherwise we don't
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.iri import Iri
-        from MoinMoin.util.mime import Type, type_moin_document
-        from MoinMoin.util.tree import moin_page, xlink
-        input_conv = reg.get(Type(self.mimetype), type_moin_document,
-                request=request)
-        if not input_conv:
-            raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
-        include_conv = reg.get(type_moin_document, type_moin_document,
-                includes='expandall', request=request)
-        link_conv = reg.get(type_moin_document, type_moin_document,
-                links='extern', request=request)
-        smiley_conv = reg.get(type_moin_document, type_moin_document,
-                icon='smiley', request=request)
-
-        # We can process the conversion
-        links = Iri(scheme='wiki', authority='', path='/' + self.name)
-        doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
-        doc.set(moin_page.page_href, unicode(links))
-        doc = include_conv(doc)
-        doc = smiley_conv(doc)
-        doc = link_conv(doc)
-        return doc
-
-    def _render_data(self):
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.mime import Type, type_moin_document
-        request = self.request
-        # TODO: Real output format
-        html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'), request=request)
-        doc = self.internal_representation()
-        doc = html_conv(doc)
-
-        from array import array
-        out = array('u')
-        # TODO: Switch to xml
-        doc.write(out.fromunicode, method='html')
-        return out.tounicode()
+    def feed_input_conv(self):
+        return self.data_storage_to_internal(self.data).split(u'\n')
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
