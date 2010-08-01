@@ -1147,33 +1147,47 @@ class Text(Binary):
         """ convert data from storage format to memory format """
         return data.decode(config.charset).replace(u'\r\n', u'\n')
 
-    def _render_data(self):
+    def internal_representation(self):
+        """
+        Return the internal representation of a document using a DOM Tree
+        """
+        request = self.request
+
+        # We will see if we can perform the conversion:
+        # FROM_mimetype --> DOM
+        # if so we perform the transformation, otherwise we don't
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.iri import Iri
         from MoinMoin.util.mime import Type, type_moin_document
-        from MoinMoin.util.tree import moin_page
-
-        request = self.request
+        from MoinMoin.util.tree import moin_page, xlink
         input_conv = reg.get(Type(self.mimetype), type_moin_document,
                 request=request)
+        if not input_conv:
+            raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
         include_conv = reg.get(type_moin_document, type_moin_document,
                 includes='expandall', request=request)
         link_conv = reg.get(type_moin_document, type_moin_document,
                 links='extern', request=request)
         smiley_conv = reg.get(type_moin_document, type_moin_document,
                 icon='smiley', request=request)
-        # TODO: Real output format
-        html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'), request=request)
 
-        i = Iri(scheme='wiki', authority='', path='/' + self.name)
-
+        # We can process the conversion
+        links = Iri(scheme='wiki', authority='', path='/' + self.name)
         doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
-        doc.set(moin_page.page_href, unicode(i))
-
+        doc.set(moin_page.page_href, unicode(links))
         doc = include_conv(doc)
         doc = smiley_conv(doc)
         doc = link_conv(doc)
+        return doc
+
+    def _render_data(self):
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import Type, type_moin_document
+        request = self.request
+        # TODO: Real output format
+        html_conv = reg.get(type_moin_document,
+                Type('application/x-xhtml-moin-page'), request=request)
+        doc = self.internal_representation()
         doc = html_conv(doc)
 
         from array import array
@@ -1207,43 +1221,6 @@ class Text(Binary):
                                lang='en', direction='ltr',
                                help=self.modify_help,
                               )
-
-    def internal_representation(self):
-        """
-        Return the internal representation of a document using a DOM Tree
-        """
-        request = self.request
-
-        # We will see if we can perform the conversion:
-        # FROM_mimetype --> DOM
-        # if so we perform the transformation, otherwise we don't
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.iri import Iri
-        from MoinMoin.util.mime import Type, type_moin_document
-        from MoinMoin.util.tree import moin_page, xlink
-        namespaces = {
-            moin_page.namespace: '',
-            xlink.namespace: 'xlink',
-        }
-        input_conv = reg.get(Type(self.mimetype), type_moin_document,
-                request=request)
-        if not input_conv:
-            raise "We cannot handle the conversion from %s to the DOM tree" % self.mimetype
-        include_conv = reg.get(type_moin_document, type_moin_document,
-                includes='expandall', request=request)
-        link_conv = reg.get(type_moin_document, type_moin_document,
-                links='extern', request=request)
-        smiley_conv = reg.get(type_moin_document, type_moin_document,
-                icon='smiley', request=request)
-
-        # We can process the conversion
-        links = Iri(scheme='wiki', authority='', path='/' + self.name)
-        doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
-        doc.set(moin_page.page_href, unicode(links))
-        doc = include_conv(doc)
-        doc = smiley_conv(doc)
-        doc = link_conv(doc)
-        return doc
 
 class MarkupItem(Text):
     """ some kind of item with markup (and internal links) """
