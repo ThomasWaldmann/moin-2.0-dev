@@ -960,7 +960,32 @@ class RenderableBitmapImage(RenderableImage):
         return self.formatter.image(src=url, **tag_attrs)
 
     def _render_data(self):
-        return self.transclude(self.name)
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.iri import Iri
+        from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import moin_page
+
+        request = self.request
+        input_conv = reg.get(Type(self.mimetype), type_moin_document,
+                request=request)
+        link_conv = reg.get(type_moin_document, type_moin_document,
+                links='extern', request=request)
+        # TODO: Real output format
+        html_conv = reg.get(type_moin_document,
+                Type('application/x-xhtml-moin-page'), request=request)
+
+        i = Iri(scheme='wiki', authority='', path='/' + self.name)
+
+        doc = input_conv(self.name)
+        doc.set(moin_page.page_href, unicode(i))
+        doc = link_conv(doc)
+        doc = html_conv(doc)
+
+        from array import array
+        out = array('u')
+        # TODO: Switch to xml
+        doc.write(out.fromunicode, method='html')
+        return out.tounicode()
 
 
 class TransformableBitmapImage(RenderableBitmapImage):
