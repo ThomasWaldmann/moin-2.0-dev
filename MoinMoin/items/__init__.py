@@ -605,6 +605,8 @@ There is no help, you're doomed!
         else:
             return "The items have different data."
 
+    _render_data_diff_text = _render_data_diff
+
     def _convert(self):
         return "Impossible to convert the data to the mimetype : %s" % self.request.values.get('mimetype')
 
@@ -978,6 +980,9 @@ class TransformableBitmapImage(RenderableBitmapImage):
         url = url_for('frontend.get_item', item_name=self.name, from_cache=cache.key)
         return self.formatter.image(src=url)
 
+    def _render_data_diff_text(self, oldrev, newrev):
+        return super(TransformableBitmapImage, self)._render_data_diff_text(oldrev, newrev)
+
 
 class Text(Binary):
     """ Any kind of text """
@@ -1009,6 +1014,13 @@ class Text(Binary):
         return diff_html.diff(self.request,
                               self.data_storage_to_internal(oldrev.read()),
                               self.data_storage_to_internal(newrev.read()))
+    
+    def _render_data_diff_text(self, oldrev, newrev):
+        from MoinMoin.util import diff_text
+        oldlines = self.data_storage_to_internal(oldrev.read()).split('\n')
+        newlines = self.data_storage_to_internal(newrev.read()).split('\n')
+        difflines = diff_text.diff(oldlines, newlines)
+        return '\n'.join(difflines)
 
     def do_modify(self, template_name):
         if template_name is None and isinstance(self.rev, DummyRev):
