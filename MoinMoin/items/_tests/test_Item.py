@@ -19,7 +19,7 @@ class TestItem:
         item = Item.create(self.request, 'DoesNotExist')
         assert isinstance(item, NonExistent)
         meta, data = item.meta, item.data
-        assert meta == {MIMETYPE: 'application/x-unknown'}
+        assert meta == {MIMETYPE: 'application/x-nonexistent'}
         assert data == ''
 
     def testClassFinder(self):
