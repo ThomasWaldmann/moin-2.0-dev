@@ -70,6 +70,9 @@ class TestConverter(Base):
             # Test to check we do not have bug with newline in the string
             ('<page><body><p>1\n2\n3\n4</p></body></page>',
              '/page/body[p="1\n2\n3\n4"]'),
+            # Test to check the attributes are correctly converted
+            ('<page><body><p><a xlink:href="uri">link</a></p></body></page>',
+             '/page/body/p/a[@xlink:href="uri"][text()="link"]'),
            ]
         for i in data:
             yield (self.do, ) + i
