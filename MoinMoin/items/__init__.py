@@ -23,7 +23,8 @@ import hashlib
 from MoinMoin import caching, log
 logging = log.getLogger(__name__)
 
-from flask import url_for, send_file, render_template, Response, abort
+from flask import g, request, url_for, send_file, render_template, Response, abort
+from werkzeug import is_resource_modified
 
 from MoinMoin import wikiutil, config, user
 from MoinMoin.storage.error import NoSuchItemError, NoSuchRevisionError, AccessDeniedError, \
@@ -71,12 +72,12 @@ _ = lambda x: x
 class Item(object):
 
     @classmethod
-    def create(cls, request, name=u'', mimetype='application/x-unknown', rev_no=None,
-               formatter=None, item=None):
+    def create(cls, request, name=u'', mimetype=None, rev_no=None, formatter=None, item=None):
         class DummyRev(dict):
             def __init__(self, mimetype):
                 self[MIMETYPE] = mimetype
                 self.item = None
+                self.timestamp = 0
             def read(self, size=-1):
                 return ''
             def seek(self, offset, whence=0):
@@ -86,6 +87,8 @@ class Item(object):
 
         if rev_no is None:
             rev_no = -1
+        if mimetype is None:
+            mimetype = 'application/x-nonexistent'
 
         try:
             if item is None:
@@ -109,7 +112,7 @@ class Item(object):
                     rev = DummyRev(mimetype)
                     logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
             logging.debug("Got item %r, revision: %r" % (name, rev_no))
-        mimetype = rev.get(MIMETYPE) or 'application/x-unknown' # XXX: Why do we need ... or ... ?
+        mimetype = rev.get(MIMETYPE) or mimetype # XXX: Why do we need ... or ... ?
         logging.debug("Item %r, got mimetype %r from revision meta" % (name, mimetype))
         logging.debug("Item %r, rev meta dict: %r" % (name, dict(rev)))
 
@@ -147,19 +150,99 @@ class Item(object):
         return self.rev or {}
     meta = property(fget=get_meta)
 
-    def url(self, _absolute=False, **kw):
-        """ return URL for this item, optionally as absolute URL """
-        href = _absolute and self.request.abs_href or self.request.href
-        return href(self.name, **kw)
-
-    def rev_url(self, _absolute=False, **kw):
-        """ return URL for this item and this revision, optionally as absolute URL """
-        return self.url(rev=self.rev.revno, _absolute=_absolute, **kw)
-
     transclude_acceptable_attrs = []
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.name, self.mimetype))
+
+    def _render_meta(self):
+        # override this in child classes
+        return ''
+
+    def feed_input_conv(self):
+        return self.name
+
+    def internal_representation(self):
+        """
+        Return the internal representation of a document using a DOM Tree
+        """
+        request = self.request
+
+        # We will see if we can perform the conversion:
+        # FROM_mimetype --> DOM
+        # if so we perform the transformation, otherwise we don't
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.iri import Iri
+        from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import moin_page, xlink
+        input_conv = reg.get(Type(self.mimetype), type_moin_document,
+                request=request)
+        if not input_conv:
+            raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
+        include_conv = reg.get(type_moin_document, type_moin_document,
+                includes='expandall', request=request)
+        link_conv = reg.get(type_moin_document, type_moin_document,
+                links='extern', request=request)
+        smiley_conv = reg.get(type_moin_document, type_moin_document,
+                icon='smiley', request=request)
+
+        # We can process the conversion
+        links = Iri(scheme='wiki', authority='', path='/' + self.name)
+        input = self.feed_input_conv()
+        doc = input_conv(input)
+        doc.set(moin_page.page_href, unicode(links))
+        doc = include_conv(doc)
+        #doc = smiley_conv(doc) # XXX kills hrefs!
+        doc = link_conv(doc)
+        return doc
+
+    def _render_data(self):
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import Type, type_moin_document
+        request = self.request
+        # TODO: Real output format
+        html_conv = reg.get(type_moin_document,
+                Type('application/x-xhtml-moin-page'), request=request)
+        doc = self.internal_representation()
+        doc = html_conv(doc)
+
+        from array import array
+        out = array('u')
+        # TODO: Switch to xml
+        doc.write(out.fromunicode, method='html')
+        return out.tounicode()
+
+    def do_show(self):
+        item = self.rev.item
+        if item is None:
+            # it is the dummy item -> this is a new and empty item
+            rev_nos = []
+        else:
+            rev_nos = item.list_revisions()
+        return render_template('show.html',
+                               item_name=self.name,
+                               rev=self.rev,
+                               mimetype=self.mimetype,
+                               first_rev_no=rev_nos and rev_nos[0],
+                               last_rev_no=rev_nos and rev_nos[-1],
+                               meta_rendered=self._render_meta(),
+                               data_rendered=self._render_data(),
+                              )
+
+    def _do_modify_show_templates(self):
+        # call this if the item is still empty
+        rev_nos = []
+        item_templates = self.get_templates(self.mimetype)
+        return render_template('modify_show_template_selection.html',
+                               item_name=self.name,
+                               rev=self.rev,
+                               mimetype=self.mimetype,
+                               templates=item_templates,
+                               first_rev_no=rev_nos and rev_nos[0],
+                               last_rev_no=rev_nos and rev_nos[-1],
+                               meta_rendered='',
+                               data_rendered='',
+                              )
 
     def meta_filter(self, meta):
         """ kill metadata entries that we set automatically when saving """
@@ -193,16 +276,6 @@ class Item(object):
     def get_data(self):
         return '' # TODO create a better method for binary stuff
     data = property(fget=get_data)
-
-    def do_modify(self, template_name):
-        # XXX think about and add item template support
-        return render_template('modify_binary.html',
-                               item_name=self.name,
-                               rows_meta=ROWS_META, cols=COLS,
-                               revno=0,
-                               meta_text=self.meta_dict_to_text(self.meta),
-                               help=self.modify_help,
-                              )
 
     def _write_stream(self, content, new_rev, bufsize=8192):
         hash_name = self.request.cfg.hash_algorithm
@@ -414,7 +487,7 @@ class Item(object):
 
 
 class NonExistent(Item):
-    supported_mimetypes = ['application/x-unknown']
+    supported_mimetypes = ['application/x-nonexistent']
     mimetype_groups = [
         ('markup text items', [
             ('text/x.moin.wiki', 'Wiki (MoinMoin)'),
@@ -472,26 +545,25 @@ class NonExistent(Item):
         ]),
     ]
 
-    def do_show(self):
-        content = render_template('show_type_selection.html',
-                                  item_name=self.name,
-                                  mimetype_groups=self.mimetype_groups,
-                                 )
-        return Response(content, 404)
-
     def do_get(self):
         abort(404)
 
     def _convert(self):
         abort(404)
 
-    def internal_representation(self):
-        abort(404)
+    def do_modify(self, template_name):
+        # XXX think about and add item template support
+        return render_template('modify_show_type_selection.html',
+                               item_name=self.name,
+                               mimetype_groups=self.mimetype_groups,
+                              )
 
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
-        return (self.formatter.url(1, self.url(), css='nonexistent', title='click to create item') +
-                self.formatter.text(self.name) + # maybe use some "broken image" icon instead?
+        item_name = self.name
+        url = url_for('frontend.show_item', item_name=item_name)
+        return (self.formatter.url(1, url, css='nonexistent', title='click to create item') +
+                self.formatter.text(item_name) + # maybe use some "broken image" icon instead?
                 self.formatter.url(0))
 
 
@@ -517,16 +589,13 @@ There is no help, you're doomed!
             tag_attrs = {}
         if query_args is None:
             query_args = {}
-        url = self.rev_url(**query_args)
+        url = url_for('frontend.show_item', item_name=item_name, rev=self.rev.revno)
         return (self.formatter.url(1, url, **tag_attrs) +
                 self.formatter.text(desc) +
                 self.formatter.url(0))
 
     def _render_meta(self):
         return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta, use_filter=False)
-
-    def _render_data(self):
-        return '' # XXX we can't render the data, maybe show some "data icon" as a placeholder?
 
     def get_templates(self, mimetype=None):
         """ create a list of templates (for some specific mimetype) """
@@ -539,37 +608,16 @@ There is no help, you're doomed!
         items = [item.name for item in item_iterator]
         return sorted(items)
 
-    def do_show(self):
-        item = self.rev.item
-        if item is None:
-            # it is the dummy item -> this is a new and empty item
-            show_templates = True
-            rev_nos = []
-        else:
-            show_templates = False
-            rev_nos = item.list_revisions()
-        if show_templates:
-            item_templates = self.get_templates(self.mimetype)
-            html_template = 'show_template_selection.html'
-            meta_rendered = data_rendered = ''
-            index = []
-        else:
-            item_templates = []
-            html_template = 'show.html'
-            data_rendered=self._render_data()
-            meta_rendered=self._render_meta()
-            index = self.flat_index()
-
-        return render_template(html_template,
+    def do_modify(self, template_name):
+        # XXX think about and add item template support
+        #if self.rev.item is None and template_name is None:
+        #    return self._do_modify_show_templates()
+        return render_template('modify_binary.html',
                                item_name=self.name,
-                               rev=self.rev,
-                               mimetype=self.mimetype,
-                               templates=item_templates,
-                               first_rev_no=rev_nos and rev_nos[0],
-                               last_rev_no=rev_nos and rev_nos[-1],
-                               data_rendered=data_rendered,
-                               meta_rendered=meta_rendered,
-                               index=index,
+                               rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               meta_text=self.meta_dict_to_text(self.meta),
+                               help=self.modify_help,
                               )
 
     copy_template = 'copy.html'
@@ -589,17 +637,12 @@ There is no help, you're doomed!
     def _convert(self):
         return "Impossible to convert the data to the mimetype : %s" % self.request.values.get('mimetype')
 
-    def internal_representation(self):
-        return "Impossible to convert the data to the internal representation tree"
-
     def do_get(self):
-        request = self.request
-        hash = self.rev.get(request.cfg.hash_algorithm)
-        if_none_match = request.if_none_match
-        if if_none_match and hash in if_none_match:
-            abort(304)
-        else:
+        hash = self.rev.get(g.context.cfg.hash_algorithm)
+        if is_resource_modified(request.environ, hash): # use hash as etag
             return self._do_get_modified(hash)
+        else:
+            return Response(status=304)
 
     def _do_get_modified(self, hash):
         request = self.request
@@ -644,11 +687,16 @@ There is no help, you're doomed!
             content_length = rev.size
             file_to_send = rev
 
-        # we have hash for etag, but werkzeug creates its own one
         # TODO: handle content_disposition is not None
-        return send_file(file_to_send, mimetype=content_type,
+        # Important: empty filename keeps flask from trying to autodetect filename,
+        # as this would not work for us, because our file's are not necessarily fs files.
+        return send_file(file=file_to_send, filename='',
+                         mimetype=content_type,
                          as_attachment=False, attachment_filename=filename,
+                         cache_timeout=10, # wiki data can change rapidly
+                         add_etags=True, etag=hash,
                          conditional=True)
+
 
 class RenderableBinary(Binary):
     """ This is a base class for some binary stuff that renders with a object tag. """
@@ -674,14 +722,12 @@ class RenderableBinary(Binary):
             query_args['do'] = 'get'
         if params is None:
             params = self.transclude_params
-        url = self.rev_url(**query_args)
+        item_name = self.name
+        url = url_for('frontend.get_item', item_name=item_name, rev=self.rev.revno)
         return (self.formatter.transclusion(1, data=url, **tag_attrs) +
                 ''.join([self.formatter.transclusion_param(**p) for p in params]) +
                 self.formatter.text(desc) +
                 self.formatter.transclusion(0))
-
-    def _render_data(self):
-        return self.transclude('{{%s [%s]}}' % (self.name, self.mimetype))
 
 
 class PlayableBinary(RenderableBinary):
@@ -888,58 +934,6 @@ class SvgImage(RenderableImage):
     supported_mimetypes = ['image/svg+xml']
 
 
-class SvgDraw(TarMixin, Image):
-    """ drawings by svg-edit. It creates two files (svg, png) which are stored as tar file. """
-
-    supported_mimetypes = ['application/x-svgdraw']
-    modify_help = ""
-
-    def modify(self):
-        # called from modify UI/POST
-        request = self.request
-        filepath = request.values.get('filepath')
-        filecontent = filepath.decode('base_64')
-        filename = request.values.get('filename').strip()
-        basepath, basename = os.path.split(filename)
-        basename, ext = os.path.splitext(basename)
-        if ext == '.png':
-            filecontent = base64.urlsafe_b64decode(filecontent.split(',')[1])
-        content_length = None # len(filecontent)
-        self.put_member(filename, filecontent, content_length,
-                        expected_members=set(['drawing.svg', 'drawing.png']))
-
-    def do_modify(self, template_name):
-        """
-        Fills params into the template for initializing of the applet.
-        """
-        request = self.request
-        draw_url = ""
-        if 'drawing.svg' in self.list_members():
-            draw_url = self.url()
-
-        svg_params = {
-            'draw_url': draw_url,
-            'itemname': self.name,
-            'url_prefix_static': request.cfg.url_prefix_static,
-        }
-
-        return render_template("modify_svg-edit.html",
-                               item_name=self.name,
-                               rows_meta=ROWS_META, cols=COLS,
-                               revno=0,
-                               meta_text=self.meta_dict_to_text(self.meta),
-                               help=self.modify_help,
-                               t=svg_params,
-                              )
-
-    def _render_data(self):
-        request = self.request
-        item_name = self.name
-        drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
-        png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
-        return '<img src="%s" alt="%s" />' % (png_url, drawing_url)
-
-
 class RenderableBitmapImage(RenderableImage):
     """ PNG/JPEG/GIF images use <img> tag (better browser support than <object>) """
     supported_mimetypes = [] # if mimetype is also transformable, please list
@@ -959,11 +953,8 @@ class RenderableBitmapImage(RenderableImage):
                     tag_attrs[attr] = desc
         if 'do' not in query_args:
             query_args['do'] = 'get'
-        url = self.rev_url(**query_args)
+        url = url_for('frontend.get_item', item_name=self.name) # XXX add revno
         return self.formatter.image(src=url, **tag_attrs)
-
-    def _render_data(self):
-        return self.transclude(self.name)
 
 
 class TransformableBitmapImage(RenderableBitmapImage):
@@ -1061,7 +1052,7 @@ class TransformableBitmapImage(RenderableBitmapImage):
             from_cache = cache.key
         else:
             from_cache = request.values.get('from_cache')
-        self._do_get(hash, from_cache=from_cache)
+        return self._do_get(hash, from_cache=from_cache)
 
     def _render_data_diff(self, oldrev, newrev):
         try:
@@ -1125,40 +1116,8 @@ class Text(Binary):
         """ convert data from storage format to memory format """
         return data.decode(config.charset).replace(u'\r\n', u'\n')
 
-    def _render_data(self):
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.iri import Iri
-        from MoinMoin.util.mime import Type, type_moin_document
-        from MoinMoin.util.tree import moin_page
-
-        request = self.request
-        input_conv = reg.get(Type(self.mimetype), type_moin_document,
-                request=request)
-        include_conv = reg.get(type_moin_document, type_moin_document,
-                includes='expandall', request=request)
-        link_conv = reg.get(type_moin_document, type_moin_document,
-                links='extern', request=request)
-        smiley_conv = reg.get(type_moin_document, type_moin_document,
-                icon='smiley', request=request)
-        # TODO: Real output format
-        html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'), request=request)
-
-        i = Iri(scheme='wiki', authority='', path='/' + self.name)
-
-        doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
-        doc.set(moin_page.page_href, unicode(i))
-
-        doc = include_conv(doc)
-        doc = smiley_conv(doc)
-        doc = link_conv(doc)
-        doc = html_conv(doc)
-
-        from array import array
-        out = array('u')
-        # TODO: Switch to xml
-        doc.write(out.fromunicode, method='html')
-        return out.tounicode()
+    def feed_input_conv(self):
+        return self.data_storage_to_internal(self.data).split(u'\n')
 
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self._render_data()
@@ -1170,6 +1129,8 @@ class Text(Binary):
                               self.data_storage_to_internal(newrev.read()))
 
     def do_modify(self, template_name):
+        if self.rev.item is None and template_name is None:
+            return self._do_modify_show_templates()
         if template_name:
             item = Item.create(self.request, template_name)
             data_text = self.data_storage_to_internal(item.data)
@@ -1186,42 +1147,6 @@ class Text(Binary):
                                help=self.modify_help,
                               )
 
-    def internal_representation(self):
-        """
-        Return the internal representation of a document using a DOM Tree
-        """
-        request = self.request
-
-        # We will see if we can perform the conversion:
-        # FROM_mimetype --> DOM
-        # if so we perform the transformation, otherwise we don't
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.iri import Iri
-        from MoinMoin.util.mime import Type, type_moin_document
-        from MoinMoin.util.tree import moin_page, xlink
-        namespaces = {
-            moin_page.namespace: '',
-            xlink.namespace: 'xlink',
-        }
-        input_conv = reg.get(Type(self.mimetype), type_moin_document,
-                request=request)
-        if not input_conv:
-            raise "We cannot handle the conversion from %s to the DOM tree" % self.mimetype
-        include_conv = reg.get(type_moin_document, type_moin_document,
-                includes='expandall', request=request)
-        link_conv = reg.get(type_moin_document, type_moin_document,
-                links='extern', request=request)
-        smiley_conv = reg.get(type_moin_document, type_moin_document,
-                icon='smiley', request=request)
-
-        # We can process the conversion
-        links = Iri(scheme='wiki', authority='', path='/' + self.name)
-        doc = input_conv(self.data_storage_to_internal(self.data).split(u'\n'))
-        doc.set(moin_page.page_href, unicode(links))
-        doc = include_conv(doc)
-        doc = smiley_conv(doc)
-        doc = link_conv(doc)
-        return doc
 
 class MarkupItem(Text):
     """ some kind of item with markup (and internal links) """
@@ -1249,6 +1174,7 @@ class MarkupItem(Text):
         doc = itemlinks_conv(doc)
         newrev[ITEMLINKS] = itemlinks_conv.get_links() 
 
+
 class MoinWiki(MarkupItem):
     """ MoinMoin wiki markup """
     supported_mimetypes = ['text/x-unidentified-wiki-format',
@@ -1265,6 +1191,8 @@ class CreoleWiki(MarkupItem):
 class DocBook(Text):
     """ DocBook Document """
     supported_mimetypes = ['application/docbook+xml']
+
+
 
     def _convert(self, doc):
         from emeraldtree import ElementTree as ET
@@ -1304,16 +1232,21 @@ class DocBook(Text):
         # and then we should move it back at the beginning of the file
         content_length = file_to_send.tell()
         file_to_send.seek(0)
-        # We call the flask method to return the file
-        return send_file(file_to_send, mimetype=content_type,
-                         as_attachment=False, conditional=True)
-
-
+        # Important: empty filename keeps flask from trying to autodetect filename,
+        # as this would not work for us, because our file's are not necessarily fs files.
+        return send_file(file=file_to_send, filename='',
+                         mimetype=content_type,
+                         as_attachment=False, attachment_filename=None,
+                         cache_timeout=10, # wiki data can change rapidly
+                         add_etags=False, etag=None,
+                         conditional=True)
 class HTML(Text):
     """ HTML markup """
     supported_mimetypes = ['text/html']
 
     def do_modify(self, template_name):
+        if self.rev.item is None and template_name is None:
+            return self._do_modify_show_templates()
         if template_name:
             item = Item.create(self.request, template_name)
             data_text = self.data_storage_to_internal(item.data)
@@ -1480,4 +1413,58 @@ class AnyWikiDraw(TarMixin, Image):
             return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid)
         else:
             return '<img src="%s" alt="%s" />' % (png_url, title)
+
+
+class SvgDraw(TarMixin, Image):
+    """ drawings by svg-edit. It creates two files (svg, png) which are stored as tar file. """
+
+    supported_mimetypes = ['application/x-svgdraw']
+    modify_help = ""
+
+    def modify(self):
+        # called from modify UI/POST
+        request = self.request
+        filepath = request.values.get('filepath')
+        filecontent = filepath.decode('base_64')
+        filename = request.values.get('filename').strip()
+        basepath, basename = os.path.split(filename)
+        basename, ext = os.path.splitext(basename)
+        if ext == '.png':
+            filecontent = base64.urlsafe_b64decode(filecontent.split(',')[1])
+        content_length = None # len(filecontent)
+        self.put_member(filename, filecontent, content_length,
+                        expected_members=set(['drawing.svg', 'drawing.png']))
+
+    def do_modify(self, template_name):
+        """
+        Fills params into the template for initializing of the applet.
+        """
+        request = self.request
+        draw_url = ""
+        if 'drawing.svg' in self.list_members():
+            draw_url = url_for('frontend.get_item', item_name=self.name)
+
+        svg_params = {
+            'draw_url': draw_url,
+            'itemname': self.name,
+            'url_prefix_static': request.cfg.url_prefix_static,
+        }
+
+        return render_template("modify_svg-edit.html",
+                               item_name=self.name,
+                               rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               meta_text=self.meta_dict_to_text(self.meta),
+                               help=self.modify_help,
+                               t=svg_params,
+                              )
+
+    def _render_data(self):
+        request = self.request
+        item_name = self.name
+        drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
+        png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
+        return '<img src="%s" alt="%s" />' % (png_url, drawing_url)
+
+
 
