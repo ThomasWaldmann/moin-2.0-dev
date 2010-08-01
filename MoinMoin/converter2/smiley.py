@@ -100,7 +100,7 @@ class Converter(object):
                 # So we can replace in this content the text smiley 
                 # by the equivalent object tag.
                 # And then we put this in a new list of child with the old child too
-                [new_children.append(item) for item in self.do_smiley(child)]
+                new_children.extend(self.do_smiley(child))
 
         # The following statement are executed only if we converted
         # text smiley into object element.
