@@ -12,11 +12,10 @@ This item does not exist (yet), but you can try creating it now. Please select t
     <tr>
         <td>
         {% for mname, mlabel in mimetypes %}
-            <a href="{{ url_for('frontend.show_item', item_name=item_name, mimetype=mname)|e }}">{{ mlabel|e }}</a> -
+            <a href="{{ url_for('frontend.modify_item', item_name=item_name, mimetype=mname)|e }}">{{ mlabel|e }}</a> -
         {% endfor %}
         </td>
     </tr>
     {% endfor %}
 </table>
-
 {% endblock %}

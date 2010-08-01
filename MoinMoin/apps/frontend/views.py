@@ -57,8 +57,7 @@ Allow: /
 @frontend.route('/+show/<int:rev>/<itemname:item_name>')
 def show_item(item_name, rev):
     g.context.user.addTrail(item_name)
-    mimetype = request.values.get('mimetype')
-    item = Item.create(g.context, item_name, mimetype=mimetype, rev_no=rev)
+    item = Item.create(g.context, item_name, rev_no=rev)
     return item.do_show()
 
 @frontend.route('/+show/<itemname:item_name>')
@@ -129,7 +128,7 @@ def modify_item(item_name):
     On POST, saves the new page (unless there's an error in input, or cancelled).
     After successful POST, redirects to the page.
     """
-    mimetype = g.context.values.get('mimetype', 'text/plain')
+    mimetype = g.context.values.get('mimetype')
     template_name = g.context.values.get('template')
     item = Item.create(g.context, item_name, mimetype=mimetype)
     if request.method == 'GET':

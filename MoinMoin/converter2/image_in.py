@@ -23,10 +23,9 @@ class Converter(object):
     def __call__(self, content):
         item_name = content # we just give the name of the item in the content
         attrib = {
-            xlink.href: Iri(scheme='wiki.local', path=item_name), # TODO: we need "get" url, not "show"
+            xlink.href: Iri(scheme='wiki', authority='', path='/'+item_name), # TODO: we need "modify" url, not "show"
         }
-        image = ET.Element(moin_page('object'), attrib=attrib, children={})
-        return image
+        return moin_page.object_(attrib=attrib, children={})
 
 
 from . import default_registry
