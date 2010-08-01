@@ -199,6 +199,7 @@ class Item(object):
     def _render_data(self):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import html
         request = self.request
         # TODO: Real output format
         html_conv = reg.get(type_moin_document,
@@ -208,8 +209,7 @@ class Item(object):
 
         from array import array
         out = array('u')
-        # TODO: Switch to xml
-        doc.write(out.fromunicode, method='html')
+        doc.write(out.fromunicode, namespaces={html.namespace: ''}, method='xml')
         return out.tounicode()
 
     def do_show(self):
