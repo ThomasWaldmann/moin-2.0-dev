@@ -1,7 +1,7 @@
 """
-MoinMoin - Image converter
+MoinMoin - converter for non-existing items
 
-Convert image to <object> tag for the DOM Tree.
+Convert a non-existent item to the DOM Tree.
 
 @copyright: 2010 MoinMoin:ThomasWaldmann
 @license: GNU GPL, see COPYING for details.
@@ -14,7 +14,7 @@ from MoinMoin.util.tree import moin_page, xlink
 
 class Converter(object):
     """
-    Convert an image to the corresponding <object> in the DOM Tree
+    Convert a non-existing item to DOM Tree.
     """
     @classmethod
     def _factory(cls, input, output, **kw):
@@ -25,13 +25,10 @@ class Converter(object):
         attrib = {
             xlink.href: Iri(scheme='wiki', authority='', path='/'+item_name), # TODO: we need "modify" url, not "show"
         }
-        return moin_page.object_(attrib=attrib, children={})
+        return moin_page.a(attrib=attrib, children=["%s does not exist. Create it?" % item_name])
 
 
 from . import default_registry
 from MoinMoin.util.mime import Type, type_moin_document
-default_registry.register(Converter._factory, Type('image/svg+xml'), type_moin_document)
-default_registry.register(Converter._factory, Type('image/png'), type_moin_document)
-default_registry.register(Converter._factory, Type('image/jpeg'), type_moin_document)
-default_registry.register(Converter._factory, Type('image/gif'), type_moin_document)
+default_registry.register(Converter._factory, Type('application/x-nonexistent'), type_moin_document)
 

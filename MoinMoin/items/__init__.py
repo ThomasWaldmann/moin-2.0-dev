@@ -72,12 +72,12 @@ _ = lambda x: x
 class Item(object):
 
     @classmethod
-    def create(cls, request, name=u'', mimetype='application/x-nonexistent', rev_no=None,
-               formatter=None, item=None):
+    def create(cls, request, name=u'', mimetype=None, rev_no=None, formatter=None, item=None):
         class DummyRev(dict):
             def __init__(self, mimetype):
                 self[MIMETYPE] = mimetype
                 self.item = None
+                self.timestamp = 0
             def read(self, size=-1):
                 return ''
             def seek(self, offset, whence=0):
@@ -87,6 +87,8 @@ class Item(object):
 
         if rev_no is None:
             rev_no = -1
+        if mimetype is None:
+            mimetype = 'application/x-nonexistent'
 
         try:
             if item is None:
@@ -110,7 +112,7 @@ class Item(object):
                     rev = DummyRev(mimetype)
                     logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
             logging.debug("Got item %r, revision: %r" % (name, rev_no))
-        mimetype = rev.get(MIMETYPE) or 'application/octet-stream' # XXX: Why do we need ... or ... ?
+        mimetype = rev.get(MIMETYPE) or mimetype # XXX: Why do we need ... or ... ?
         logging.debug("Item %r, got mimetype %r from revision meta" % (name, mimetype))
         logging.debug("Item %r, rev meta dict: %r" % (name, dict(rev)))
 
@@ -153,6 +155,95 @@ class Item(object):
     def transclude(self, desc, tag_attrs=None, query_args=None):
         return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.name, self.mimetype))
 
+    def _render_meta(self):
+        # override this in child classes
+        return ''
+
+    def feed_input_conv(self):
+        return self.name
+
+    def internal_representation(self):
+        """
+        Return the internal representation of a document using a DOM Tree
+        """
+        request = self.request
+
+        # We will see if we can perform the conversion:
+        # FROM_mimetype --> DOM
+        # if so we perform the transformation, otherwise we don't
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.iri import Iri
+        from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import moin_page, xlink
+        input_conv = reg.get(Type(self.mimetype), type_moin_document,
+                request=request)
+        if not input_conv:
+            raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
+        include_conv = reg.get(type_moin_document, type_moin_document,
+                includes='expandall', request=request)
+        link_conv = reg.get(type_moin_document, type_moin_document,
+                links='extern', request=request)
+        smiley_conv = reg.get(type_moin_document, type_moin_document,
+                icon='smiley', request=request)
+
+        # We can process the conversion
+        links = Iri(scheme='wiki', authority='', path='/' + self.name)
+        input = self.feed_input_conv()
+        doc = input_conv(input)
+        doc.set(moin_page.page_href, unicode(links))
+        doc = include_conv(doc)
+        #doc = smiley_conv(doc) # XXX kills hrefs!
+        doc = link_conv(doc)
+        return doc
+
+    def _render_data(self):
+        from MoinMoin.converter2 import default_registry as reg
+        from MoinMoin.util.mime import Type, type_moin_document
+        request = self.request
+        # TODO: Real output format
+        html_conv = reg.get(type_moin_document,
+                Type('application/x-xhtml-moin-page'), request=request)
+        doc = self.internal_representation()
+        doc = html_conv(doc)
+
+        from array import array
+        out = array('u')
+        # TODO: Switch to xml
+        doc.write(out.fromunicode, method='html')
+        return out.tounicode()
+
+    def do_show(self):
+        item = self.rev.item
+        if item is None:
+            # it is the dummy item -> this is a new and empty item
+            rev_nos = []
+        else:
+            rev_nos = item.list_revisions()
+        return render_template('show.html',
+                               item_name=self.name,
+                               rev=self.rev,
+                               mimetype=self.mimetype,
+                               first_rev_no=rev_nos and rev_nos[0],
+                               last_rev_no=rev_nos and rev_nos[-1],
+                               meta_rendered=self._render_meta(),
+                               data_rendered=self._render_data(),
+                              )
+
+    def _do_modify_show_templates(self):
+        # call this if the item is still empty
+        rev_nos = []
+        item_templates = self.get_templates(self.mimetype)
+        return render_template('modify_show_template_selection.html',
+                               item_name=self.name,
+                               rev=self.rev,
+                               mimetype=self.mimetype,
+                               templates=item_templates,
+                               first_rev_no=rev_nos and rev_nos[0],
+                               last_rev_no=rev_nos and rev_nos[-1],
+                               meta_rendered='',
+                               data_rendered='',
+                              )
+
     def meta_filter(self, meta):
         """ kill metadata entries that we set automatically when saving """
         hash_name = self.request.cfg.hash_algorithm
@@ -185,16 +276,6 @@ class Item(object):
     def get_data(self):
         return '' # TODO create a better method for binary stuff
     data = property(fget=get_data)
-
-    def do_modify(self, template_name):
-        # XXX think about and add item template support
-        return render_template('modify_binary.html',
-                               item_name=self.name,
-                               rows_meta=ROWS_META, cols=COLS,
-                               revno=0,
-                               meta_text=self.meta_dict_to_text(self.meta),
-                               help=self.modify_help,
-                              )
 
     def _write_stream(self, content, new_rev, bufsize=8192):
         hash_name = self.request.cfg.hash_algorithm
@@ -464,21 +545,18 @@ class NonExistent(Item):
         ]),
     ]
 
-    def do_show(self):
-        content = render_template('show_type_selection.html',
-                                  item_name=self.name,
-                                  mimetype_groups=self.mimetype_groups,
-                                 )
-        return Response(content, 404)
-
     def do_get(self):
         abort(404)
 
     def _convert(self):
         abort(404)
 
-    def internal_representation(self):
-        abort(404)
+    def do_modify(self, template_name):
+        # XXX think about and add item template support
+        return render_template('modify_show_type_selection.html',
+                               item_name=self.name,
+                               mimetype_groups=self.mimetype_groups,
+                              )
 
     transclude_acceptable_attrs = []
     def transclude(self, desc, tag_attrs=None, query_args=None):
@@ -519,59 +597,6 @@ There is no help, you're doomed!
     def _render_meta(self):
         return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta, use_filter=False)
 
-    def feed_input_conv(self):
-        return self.name
-
-    def internal_representation(self):
-        """
-        Return the internal representation of a document using a DOM Tree
-        """
-        request = self.request
-
-        # We will see if we can perform the conversion:
-        # FROM_mimetype --> DOM
-        # if so we perform the transformation, otherwise we don't
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.iri import Iri
-        from MoinMoin.util.mime import Type, type_moin_document
-        from MoinMoin.util.tree import moin_page, xlink
-        input_conv = reg.get(Type(self.mimetype), type_moin_document,
-                request=request)
-        if not input_conv:
-            raise TypeError("We cannot handle the conversion from %s to the DOM tree" % self.mimetype)
-        include_conv = reg.get(type_moin_document, type_moin_document,
-                includes='expandall', request=request)
-        link_conv = reg.get(type_moin_document, type_moin_document,
-                links='extern', request=request)
-        smiley_conv = reg.get(type_moin_document, type_moin_document,
-                icon='smiley', request=request)
-
-        # We can process the conversion
-        links = Iri(scheme='wiki', authority='', path='/' + self.name)
-        input = self.feed_input_conv()
-        doc = input_conv(input)
-        doc.set(moin_page.page_href, unicode(links))
-        doc = include_conv(doc)
-        doc = smiley_conv(doc)
-        doc = link_conv(doc)
-        return doc
-
-    def _render_data(self):
-        from MoinMoin.converter2 import default_registry as reg
-        from MoinMoin.util.mime import Type, type_moin_document
-        request = self.request
-        # TODO: Real output format
-        html_conv = reg.get(type_moin_document,
-                Type('application/x-xhtml-moin-page'), request=request)
-        doc = self.internal_representation()
-        doc = html_conv(doc)
-
-        from array import array
-        out = array('u')
-        # TODO: Switch to xml
-        doc.write(out.fromunicode, method='html')
-        return out.tounicode()
-
     def get_templates(self, mimetype=None):
         """ create a list of templates (for some specific mimetype) """
         from MoinMoin.search.term import NameRE, AND, LastRevisionMetaDataMatch
@@ -583,37 +608,16 @@ There is no help, you're doomed!
         items = [item.name for item in item_iterator]
         return sorted(items)
 
-    def do_show(self):
-        item = self.rev.item
-        if item is None:
-            # it is the dummy item -> this is a new and empty item
-            show_templates = True
-            rev_nos = []
-        else:
-            show_templates = False
-            rev_nos = item.list_revisions()
-        if show_templates:
-            item_templates = self.get_templates(self.mimetype)
-            html_template = 'show_template_selection.html'
-            meta_rendered = data_rendered = ''
-            index = []
-        else:
-            item_templates = []
-            html_template = 'show.html'
-            data_rendered=self._render_data()
-            meta_rendered=self._render_meta()
-            index = self.flat_index()
-
-        return render_template(html_template,
+    def do_modify(self, template_name):
+        # XXX think about and add item template support
+        #if self.rev.item is None and template_name is None:
+        #    return self._do_modify_show_templates()
+        return render_template('modify_binary.html',
                                item_name=self.name,
-                               rev=self.rev,
-                               mimetype=self.mimetype,
-                               templates=item_templates,
-                               first_rev_no=rev_nos and rev_nos[0],
-                               last_rev_no=rev_nos and rev_nos[-1],
-                               data_rendered=data_rendered,
-                               meta_rendered=meta_rendered,
-                               index=index,
+                               rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               meta_text=self.meta_dict_to_text(self.meta),
+                               help=self.modify_help,
                               )
 
     copy_template = 'copy.html'
@@ -1125,6 +1129,8 @@ class Text(Binary):
                               self.data_storage_to_internal(newrev.read()))
 
     def do_modify(self, template_name):
+        if self.rev.item is None and template_name is None:
+            return self._do_modify_show_templates()
         if template_name:
             item = Item.create(self.request, template_name)
             data_text = self.data_storage_to_internal(item.data)
@@ -1192,6 +1198,8 @@ class HTML(Text):
     supported_mimetypes = ['text/html']
 
     def do_modify(self, template_name):
+        if self.rev.item is None and template_name is None:
+            return self._do_modify_show_templates()
         if template_name:
             item = Item.create(self.request, template_name)
             data_text = self.data_storage_to_internal(item.data)
