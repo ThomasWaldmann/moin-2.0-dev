@@ -69,22 +69,34 @@ EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, 
 # dummy getText function until we have a real one:
 _ = lambda x: x
 
-class Item(object):
 
+class DummyRev(dict):
+    """ if we have no stored Revision, we use this dummy """
+    def __init__(self, item, mimetype):
+        self[MIMETYPE] = mimetype
+        self.item = item
+        self.timestamp = 0
+        self.revno = None
+    def read(self, size=-1):
+        return ''
+    def seek(self, offset, whence=0):
+        pass
+    def tell(self):
+        return 0
+
+
+class DummyItem(object):
+    """ if we have no stored Item, we use this dummy """
+    def __init__(self, name):
+        self.name = name
+    def list_revisions(self):
+        return [] # same as an empty Item
+
+
+class Item(object):
+    """ Highlevel (not storage) Item """
     @classmethod
     def create(cls, request, name=u'', mimetype=None, rev_no=None, formatter=None, item=None):
-        class DummyRev(dict):
-            def __init__(self, mimetype):
-                self[MIMETYPE] = mimetype
-                self.item = None
-                self.timestamp = 0
-            def read(self, size=-1):
-                return ''
-            def seek(self, offset, whence=0):
-                pass
-            def tell(self):
-                return 0
-
         if rev_no is None:
             rev_no = -1
         if mimetype is None:
@@ -97,7 +109,8 @@ class Item(object):
                 name = item.name
         except NoSuchItemError:
             logging.debug("No such item: %r" % name)
-            rev = DummyRev(mimetype)
+            item = DummyItem(name)
+            rev = DummyRev(item, mimetype)
             logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
         else:
             logging.debug("Got item: %r" % name)
@@ -109,7 +122,7 @@ class Item(object):
                     # XXX add some message about invalid revision
                 except NoSuchRevisionError:
                     logging.debug("Item %r has no revisions." % name)
-                    rev = DummyRev(mimetype)
+                    rev = DummyRev(item, mimetype)
                     logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
             logging.debug("Got item %r, revision: %r" % (name, rev_no))
         mimetype = rev.get(MIMETYPE) or mimetype # XXX: Why do we need ... or ... ?
@@ -208,18 +221,20 @@ class Item(object):
         return out.tounicode()
 
     def do_show(self):
-        item = self.rev.item
-        if item is None:
-            # it is the dummy item -> this is a new and empty item
-            rev_nos = []
+        rev_nos = self.rev.item.list_revisions()
+        if rev_nos:
+            first_rev = rev_nos[0]
+            last_rev = rev_nos[-1]
         else:
-            rev_nos = item.list_revisions()
+            # Note: rev.revno of DummyRev is None
+            first_rev = None
+            last_rev = None
         return render_template('show.html',
                                item_name=self.name,
                                rev=self.rev,
                                mimetype=self.mimetype,
-                               first_rev_no=rev_nos and rev_nos[0],
-                               last_rev_no=rev_nos and rev_nos[-1],
+                               first_rev_no=first_rev,
+                               last_rev_no=last_rev,
                                meta_rendered=self._render_meta(),
                                data_rendered=self._render_data(),
                               )
@@ -585,7 +600,7 @@ There is no help, you're doomed!
 
     def do_modify(self, template_name):
         # XXX think about and add item template support
-        #if self.rev.item is None and template_name is None:
+        #if template_name is None and isinstance(self.rev, DummyRev):
         #    return self._do_modify_show_templates()
         return render_template('modify_binary.html',
                                item_name=self.name,
@@ -1015,7 +1030,7 @@ class Text(Binary):
                               self.data_storage_to_internal(newrev.read()))
 
     def do_modify(self, template_name):
-        if self.rev.item is None and template_name is None:
+        if template_name is None and isinstance(self.rev, DummyRev):
             return self._do_modify_show_templates()
         if template_name:
             item = Item.create(self.request, template_name)
@@ -1084,7 +1099,7 @@ class HTML(Text):
     supported_mimetypes = ['text/html']
 
     def do_modify(self, template_name):
-        if self.rev.item is None and template_name is None:
+        if template_name is None and isinstance(self.rev, DummyRev):
             return self._do_modify_show_templates()
         if template_name:
             item = Item.create(self.request, template_name)
