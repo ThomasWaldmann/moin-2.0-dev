@@ -220,25 +220,6 @@ class Item(object):
         doc.write(out.fromunicode, namespaces={html.namespace: ''}, method='xml')
         return out.tounicode()
 
-    def do_show(self):
-        rev_nos = self.rev.item.list_revisions()
-        if rev_nos:
-            first_rev = rev_nos[0]
-            last_rev = rev_nos[-1]
-        else:
-            # Note: rev.revno of DummyRev is None
-            first_rev = None
-            last_rev = None
-        return render_template('show.html',
-                               item_name=self.name,
-                               rev=self.rev,
-                               mimetype=self.mimetype,
-                               first_rev_no=first_rev,
-                               last_rev_no=last_rev,
-                               meta_rendered=self._render_meta(),
-                               data_rendered=self._render_data(),
-                              )
-
     def _do_modify_show_templates(self):
         # call this if the item is still empty
         rev_nos = []
