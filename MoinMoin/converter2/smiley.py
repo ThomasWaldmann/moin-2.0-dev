@@ -93,7 +93,7 @@ class Converter(object):
                 if children is None:
                     children = ()
                 elif not isinstance(children, (list, tuple)):
-                    children = ()
+                    children = (children, )
                 new_children.extend(children)
             else:
                 # If the child is not an instance of ET.Element, we have a text
