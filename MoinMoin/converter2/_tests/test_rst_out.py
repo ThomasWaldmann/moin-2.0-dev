@@ -125,7 +125,7 @@ class TestConverter(Base):
     def test_note(self):
         data = [
             (u'<page:page><page:body><page:p>Abra <page:note page:note-class="footnote">arba</page:note></page:p></page:body></page:page>', u'Abra  [#]_ \n\n\n.. [#] arba\n\n'),
-            (u'<page:page><page:body><page:p>Abra <page:note page:ote-class="footnote">arba</page:note></page:p><page:p>Abra <page:note page:note-class="footnote">arba</page:note></page:p><page:p>Abra <page:note page:note-class="footnote">arba</page:note><page:note page:note-class="footnote">arba</page:note></page:p></page:body></page:page>', u'Abra \n\nAbra  [#]_ \n\nAbra  [#]_  [#]_ \n\n\n.. [#] arba\n\n.. [#] arba\n\n.. [#] arba\n\n'),
+            (u'<page:page><page:body><page:p>Abra <page:note page:note-class="footnote">arba</page:note></page:p><page:p>Abra <page:note page:note-class="footnote">arba</page:note></page:p><page:p>Abra <page:note page:note-class="footnote">arba</page:note><page:note page:note-class="footnote">arba</page:note></page:p></page:body></page:page>', u'Abra  [#]_ \n\nAbra  [#]_ \n\nAbra  [#]_  [#]_ \n\n\n.. [#] arba\n\n.. [#] arba\n\n.. [#] arba\n\n.. [#] arba\n\n'),
         ]
         for i in data:
             yield (self.do, ) + i
@@ -155,7 +155,7 @@ class TestConverter(Base):
 
 """),
             (u"<page:page><page:body><page:list page:item-label-generate=\"unordered\"><page:list-item><page:list-item-body><page:p>A</page:p><page:blockcode> test </page:blockcode></page:list-item-body></page:list-item></page:list></page:body></page:page>", u"* A::\n\n     test \n\n\n"),
-            (u'<page:page><page:body><page:table><page:table-body><page:table-row><page:table-cell><page:p><page:strong>A</page:strong></page:p><page:line_break /><page:p><page:strong>A</page:strong></page:p></page:table-cell><page:table-cell><page:strong>B</page:strong><page:line_break /><page:strong>B</page:strong></page:table-cell></page:table-row></page:table-body></page:table></page:body></page:page>', '+-----+-----+\n|**A**|**B**|\n|     |     |\n|     |**B**|\n|**A**|     |\n+-----+-----+\n\n'),
+            (u'<page:page><page:body><page:table><page:table-body><page:table-row><page:table-cell><page:p><page:strong>A</page:strong></page:p><page:line_break /><page:p><page:strong>A</page:strong></page:p></page:table-cell><page:table-cell><page:strong>B</page:strong><page:line_break /><page:strong>B</page:strong></page:table-cell></page:table-row></page:table-body></page:table></page:body></page:page>', '+-----+-----+\n|**A**|**B**|\n|     |     |\n|**A**|**B**|\n+-----+-----+\n\n'),
         ]
         for i in data:
             yield (self.do, ) + i
