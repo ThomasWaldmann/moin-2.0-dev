@@ -64,7 +64,7 @@ EDIT_LOG_USERID = "edit_log_userid"
 EDIT_LOG_EXTRA = "edit_log_extra"
 EDIT_LOG_COMMENT = "edit_log_comment"
 
-EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, EDIT_LOG_EXTRA, EDIT_LOG_COMMENT]
+
 
 # dummy getText function until we have a real one:
 _ = lambda x: x
@@ -646,6 +646,7 @@ There is no help, you're doomed!
                          add_etags=True, etag=hash,
                          conditional=True)
 
+
 class RenderableBinary(Binary):
     """ This is a base class for some binary stuff that renders with a object tag. """
     supported_mimetypes = []
@@ -883,58 +884,6 @@ class RenderableImage(RenderableBinary):
 class SvgImage(RenderableImage):
     """ SVG images use <object> tag mechanism from RenderableBinary base class """
     supported_mimetypes = ['image/svg+xml']
-
-
-class SvgDraw(TarMixin, Image):
-    """ drawings by svg-edit. It creates two files (svg, png) which are stored as tar file. """
-
-    supported_mimetypes = ['application/x-svgdraw']
-    modify_help = ""
-
-    def modify(self):
-        # called from modify UI/POST
-        request = self.request
-        filepath = request.values.get('filepath')
-        filecontent = filepath.decode('base_64')
-        filename = request.values.get('filename').strip()
-        basepath, basename = os.path.split(filename)
-        basename, ext = os.path.splitext(basename)
-        if ext == '.png':
-            filecontent = base64.urlsafe_b64decode(filecontent.split(',')[1])
-        content_length = None # len(filecontent)
-        self.put_member(filename, filecontent, content_length,
-                        expected_members=set(['drawing.svg', 'drawing.png']))
-
-    def do_modify(self, template_name):
-        """
-        Fills params into the template for initializing of the applet.
-        """
-        request = self.request
-        draw_url = ""
-        if 'drawing.svg' in self.list_members():
-            draw_url = url_for('frontend.get_item', item_name=self.name)
-
-        svg_params = {
-            'draw_url': draw_url,
-            'itemname': self.name,
-            'url_prefix_static': request.cfg.url_prefix_static,
-        }
-
-        return render_template("modify_svg-edit.html",
-                               item_name=self.name,
-                               rows_meta=ROWS_META, cols=COLS,
-                               revno=0,
-                               meta_text=self.meta_dict_to_text(self.meta),
-                               help=self.modify_help,
-                               t=svg_params,
-                              )
-
-    def _render_data(self):
-        request = self.request
-        item_name = self.name
-        drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
-        png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
-        return '<img src="%s" alt="%s" />' % (png_url, drawing_url)
 
 
 class RenderableBitmapImage(RenderableImage):
@@ -1222,6 +1171,7 @@ class Text(Binary):
                                help=self.modify_help,
                               )
 
+
 class MarkupItem(Text):
     """ some kind of item with markup (and internal links) """
     def before_revision_commit(self, newrev, data):
@@ -1247,6 +1197,7 @@ class MarkupItem(Text):
         doc.set(moin_page.page_href, unicode(i))
         doc = itemlinks_conv(doc)
         newrev[ITEMLINKS] = itemlinks_conv.get_links() 
+
 
 class MoinWiki(MarkupItem):
     """ MoinMoin wiki markup """
@@ -1484,4 +1435,58 @@ class AnyWikiDraw(TarMixin, Image):
             return image_map + '<img src="%s" alt="%s" usemap="#%s" />' % (png_url, title, mapid)
         else:
             return '<img src="%s" alt="%s" />' % (png_url, title)
+
+
+class SvgDraw(TarMixin, Image):
+    """ drawings by svg-edit. It creates two files (svg, png) which are stored as tar file. """
+
+    supported_mimetypes = ['application/x-svgdraw']
+    modify_help = ""
+
+    def modify(self):
+        # called from modify UI/POST
+        request = self.request
+        filepath = request.values.get('filepath')
+        filecontent = filepath.decode('base_64')
+        filename = request.values.get('filename').strip()
+        basepath, basename = os.path.split(filename)
+        basename, ext = os.path.splitext(basename)
+        if ext == '.png':
+            filecontent = base64.urlsafe_b64decode(filecontent.split(',')[1])
+        content_length = None # len(filecontent)
+        self.put_member(filename, filecontent, content_length,
+                        expected_members=set(['drawing.svg', 'drawing.png']))
+
+    def do_modify(self, template_name):
+        """
+        Fills params into the template for initializing of the applet.
+        """
+        request = self.request
+        draw_url = ""
+        if 'drawing.svg' in self.list_members():
+            draw_url = url_for('frontend.get_item', item_name=self.name)
+
+        svg_params = {
+            'draw_url': draw_url,
+            'itemname': self.name,
+            'url_prefix_static': request.cfg.url_prefix_static,
+        }
+
+        return render_template("modify_svg-edit.html",
+                               item_name=self.name,
+                               rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               meta_text=self.meta_dict_to_text(self.meta),
+                               help=self.modify_help,
+                               t=svg_params,
+                              )
+
+    def _render_data(self):
+        request = self.request
+        item_name = self.name
+        drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
+        png_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.png')
+        return '<img src="%s" alt="%s" />' % (png_url, drawing_url)
+
+
 
