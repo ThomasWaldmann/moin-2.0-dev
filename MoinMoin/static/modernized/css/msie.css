@@ -17,7 +17,7 @@ a.interwiki { padding-left: 19px; background: url(../img/moin-inter.png) left ce
 #message .warning { padding-left: 21px; background: url(../img/alert.png) left center no-repeat; }
 #message .error { padding-left: 21px; background: url(../img/icon-error.png) left center no-repeat; }
 
-#pagetrail li, #pagelocation li {
+#moin-pagetrail li, #moin-pagelocation li {
     border-left: 1px solid #AAA;
     padding: 0 0.3em;
 }
@@ -33,5 +33,5 @@ span.anchor { display: none; }
  * characters and displaying them correctly. We don't know any negative side
  * effects of this workaround:
  */
-* html div#page, * html div#header { height: 0.001%; }
+* html div#moin-page, * html div#moin-header { height: 0.001%; }
 
