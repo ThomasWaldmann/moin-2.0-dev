@@ -53,7 +53,10 @@ class MoinWikiWriter(object):
         self.imagesrcresolver = imagesrcresolver # e.g. "http://anyhost/redir?img=IMAGENAME" where IMAGENAME is substituted
         self.debug = debug
         self.references = []
-        self.root = None
+        self.current_node = moin_page.body()
+        self.root = moin_page.page(children=(self.current_node, ))
+        self.path = [self.root, self.current_node]
+
         self.errors = []
         self.languagelinks = []
         self.categorylinks = []
@@ -61,21 +64,21 @@ class MoinWikiWriter(object):
     def mointree(self):
         return self.root
 
+    def open_moin_page_node(self, mointree_element):
+        self.current_node.append(mointree_element)
+        self.current_node = mointree_element
+        self.path.append(mointree_element)
+
+    def close_moin_page_node(self):
+        self.path.pop()
+        self.current_node = self.path[-1]
+
     def asstring(self):
         return ET.tostring(self.getTree())
 
-    def writeText(self, obj, parent):
-        if parent.getchildren(): # add to tail of last tag
-            t = parent.getchildren()[-1]
-            if not t.tail:
-                t.tail = obj.caption
-            else:
-                t.tail += obj.caption
-        else:
-            if not parent.text:
-                parent.text = obj.caption
-            else:
-                parent.text += obj.caption
+    def writeText(self, obj):
+            self.open_moin_page_node(obj.asText())
+            self.close_moin_page_node()
 
     def writedebug(self, obj, parent, comment=""):
         parent.append(ET.Comment(text.replace("--", " - - "))) # FIXME (hot fix)
@@ -87,28 +90,23 @@ class MoinWikiWriter(object):
         self.root.append(ET.Comment(out.getvalue().replace("--", " - - ")))
 
 
-    def write(self, obj, parent=None):
+    def write(self, obj):
         if isinstance(obj, parser.Text):
-            self.writeText(obj, parent)
+            self.writeText(obj)
         else:
             # check for method
-            m = "mdwrite" + obj.__class__.__name__
+            m = "mdopen" + obj.__class__.__name__
+            m=getattr(self, m, None)
+            if m: # find handler
+                m(obj)
+
+            for c in obj.children[:]:
+                self.write(c)
+
+            m = "mdclose" + obj.__class__.__name__
             m=getattr(self, m, None)
             if m: # find handler
                 e = m(obj)
-            if isinstance(e, SkipChildren): # do not process children of this node
-                if e.element is not None:
-                    saveAddChild(parent, e.element)
-                return # skip
-            elif e is None:
-                pass # do nothing
-                e = parent
-            else:
-                if not saveAddChild(parent, e):
-                    return #
-
-            for c in obj.children[:]:
-                ce = self.write(c, e)
 
 
     def writeChildren(self, obj, parent): # use this to avoid bugs!
@@ -116,82 +114,146 @@ class MoinWikiWriter(object):
         for c in obj:
             self.write(c, parent)
 
-    def mdwriteArticle(self, a):
-        """
-        this generates the root element if not available
-        """
+    def mdopenArticle(self, a):
         pass
 
-    def mdwriteNode(self, obj):
+    def mdopenNode(self, obj):
         pass
 
-    def mdwriteBreakingReturn(self, obj):
+    def mdopenBreakingReturn(self, obj):
+        node = moin_page.line_break()
+        self.open_moin_page_node(node)
+
+    def mdcloseBreakingReturn(self, obj):
+        self.close_moin_page_node()
+
+
+    def mdopenChapter(self, obj):
         pass
 
-    def mdwriteChapter(self, obj):
+    def mdopenSection(self, obj):
+        level = 1 + obj.getSectionLevel()
+        node = moin_page.h(attrib={moin_page.outline_level: level})
+        self.open_moin_page_node(node)
+
+    def mdcloseSection(self, obj):
+        self.close_moin_page_node()
+
+    def mdopenPreFormatted(self, n):
+        node = moin_page.code()
+        self.open_moin_page_node(node)
+
+    def mdclosePreFormatted(self, n):
+        self.close_moin_page_node()
+
+    def mdopenParagraph(self, obj):
+        node = moin_page.p()
+        self.open_moin_page_node(node)
+
+    def mdcloseParagraph(self, obj):
+        self.close_moin_page_node()
+
+    def mdopenEmphasized(self, obj):
+        node = moin_page.emhpasis()
+        self.open_moin_page_node(node)
+
+    def mdcloseEmphasized(self, obj):
+        self.close_moin_page_node()
+
+    def mdopenStrong(self, obj):
+        node = moin_page.strong()
+        self.open_moin_page_node(node)
+
+    def mdcloseStrong(self, obj):
+        self.close_moin_page_node()
+
+    def mdopenBlockquote(self, s):
+        self.open_moin_page_node(moin_page.list())
+        self.open_moin_page_node(moin_page.list_item())
+        self.open_moin_page_node(moin_page.list_item_body())
+
+    def mdcloseBlockquote(self, s):
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+        self.close_moin_page_node()
+
+    def mdopenIndented(self, s):
         pass
 
-
-    def mdwriteSection(self, obj):
+    def mdopenItem(self, item):
         pass
 
-    def mdwritePreFormatted(self, n):
+    list_type = {
+        "ol": (u'ordered', None),
+        "ul": (u'unordered', None),
+        None: (None, None)
+        }
+
+    def mdopenItemList(self, lst):
+        node = moin_page.list()
+        type = self.list_type.get(getattr(lst, "tagname", None))
+        if type:
+            node.set(moin_page.item_label_generate, type[0])
+            node.set(moin_page.list_style_type, type[1])
+        self.open_moin_page_node(node)
+
+    def mdcloseItemList(self, lst):
+        self.close_moin_page_node()
+
+    def mdopenDefinitionList(self, obj):
         pass
 
-
-    def mdwriteParagraph(self, obj):
+    def mdopenDefinitionTerm(self, obj):
         pass
 
-    def mdwriteEmphasized(self, obj):
+    def mdopenDefinitionDescription(self, obj):
         pass
 
-    def mdwriteStrong(self, obj):
+    def mdopenTable(self, t):
         pass
 
-    def mdwriteBlockquote(self, s):
+    def mdopenCell(self, cell):
         pass
 
-    def mdwriteIndented(self, s):
+    def mdopenRow(self, row):
         pass
 
-    def mdwriteItem(self, item):
+    def mdopenCite(self, obj):
         pass
 
-    def mdwriteItemList(self, lst):
+    def mdopenSup(self, obj):
+        node = moin_page.span(attrib={moin_page.baseline_shift: "super"})
+        self.open_moin_page_node(node)
+
+    def mdcloseSup(self, obj):
+        self.close_moin_page_node()
+
+    def mdopenSub(self, obj):
+        node = moin_page.span(attrib={moin_page.baseline_shift: "sub"})
+        self.open_moin_page_node(node)
+
+    def mdcloseSup(self, obj):
+        self.close_moin_page_node()
+
+    def mdopenCode(self, n):
+        node = moin_page.code()
+        self.open_moin_page_node(node)
+
+    def mdcloseCode(self, n):
+        self.close_moin_page_node()
+
+    mdopenSource = mdopenCode
+    mdcloseSource = mdcloseCode
+
+    def mdopenTagNode(self, obj):
+        if getattr(obj, "rawtagname", None) == u"br":
+            self.open_moin_page_node(moin_page.line_break())
+            self.close_moin_page_node()
+
+    def mdcloseTagNode(self, obj):
         pass
 
-    def mdwriteDefinitionList(self, obj):
-        pass
-
-    def mdwriteDefinitionTerm(self, obj):
-        pass
-
-    def mdwriteDefinitionDescription(self, obj):
-        pass
-
-    def mdwriteTable(self, t):
-        pass
-
-    def mdwriteCell(self, cell):
-        pass
-    def mdwriteRow(self, row):
-        pass
-
-    def mdwriteCite(self, obj):
-        pass
-
-    def mdwriteSup(self, obj):
-        pass
-
-    def mdwriteSub(self, obj):
-        pass
-
-    def mdwriteCode(self, n):
-        pass
-
-    mdwriteSource = mdwriteCode
-
-    def mdwriteMath(self, obj):
+    def mdopenMath(self, obj):
         """
         r = writerbase.renderMath(obj.caption, output_mode='mathml', render_engine='blahtexml')
         if not r:
@@ -212,8 +274,9 @@ class MoinWikiWriter(object):
         _withETElement(r, m)
         return m
         """
+        pass
 
-    def mdwriteImageLink(self, obj):
+    def mdopenImageLink(self, obj):
         """
         if not obj.target:
             return
@@ -223,78 +286,49 @@ class MoinWikiWriter(object):
 
     # Links ---------------------------------------------------------
 
-    def mdwriteLink(self, obj):
+    def mdopenLink(self, obj):
         pass
-    mdwriteArticleLink = mdwriteLink
-    mdwriteLangLink = mdwriteLink # FIXME
-    mdwriteNamespaceLink = mdwriteLink# FIXME
-    mdwriteInterwikiLink = mdwriteLink# FIXME
-    mdwriteSpecialLink = mdwriteLink# FIXME
+    mdopenArticleLink = mdopenLink
+    mdopenLangLink = mdopenLink # FIXME
+    mdopenNamespaceLink = mdopenLink# FIXME
+    mdopenInterwikiLink = mdopenLink# FIXME
+    mdopenSpecialLink = mdopenLink# FIXME
 
-    def mdwriteURL(self, obj):
-        pass
-
-    def mdwriteNamedURL(self, obj):
+    def mdopenURL(self, obj):
         pass
 
-    def mdwriteCategoryLink(self, obj):
+    def mdopenNamedURL(self, obj):
         pass
 
-    def mdwriteLangLink(self, obj): # FIXME no valid url (but uri)
+    def mdopenCategoryLink(self, obj):
         pass
 
-    def mdwriteImageMap(self, obj): # FIXME!
+    def mdopenLangLink(self, obj): # FIXME no valid url (but uri)
         pass
 
-    def mdwriteGallery(self, obj):
+    def mdopenImageMap(self, obj): # FIXME!
+        pass
+
+    def mdopenGallery(self, obj):
         pass
 
 # ------------------------------------------------------------------------------
 
-    def mdwriteDiv(self, obj):
+    def mdopenDiv(self, obj):
         return Element("para") # FIXME
 
-    def mdwriteSpan(self, obj):
+    def mdopenSpan(self, obj):
         pass # FIXME
 
-    def mdwriteHorizontalRule(self, obj):
+    def mdopenHorizontalRule(self, obj):
         pass # There is no equivalent in docbook
 
-    def mdwriteReference(self, t): # FIXME USE DOCBOOK FEATURES (needs parser support)
+    def mdopenReference(self, t): # FIXME USE DOCBOOK FEATURES (needs parser support)
         pass
 
-    def mdwriteReferenceList(self, t): # FIXME USE DOCBOOK FEATURES
+    def mdopenReferenceList(self, t): # FIXME USE DOCBOOK FEATURES
         pass
 
-# ----------------------------------- old xhtml writer stuff --------------
-
-    # Special Objects
-
-    def xwriteTimeline(self, obj):
-        pass
-
-    def xwriteHiero(self, obj): # FIXME parser support
-        pass
-
-    # others: Index, Gallery, ImageMap  FIXME
-    # see http://meta.wikimedia.org/wiki/Help:HTML_in_wikitext
-
-    # ------- TAG nodes (deprecated) ----------------
-
-    def xwriteOverline(self, s):
-        pass
-
-    def xwriteUnderline(self, s):
-        pass
-
-    def xwriteCenter(self, s):
-        pass
-
-    def xwriteStrike(self, s):
-        pass
-
-    def xwriteNode(self, n):
-        pass # simply write children
 
 """
 def preprocess(root):
@@ -323,6 +357,7 @@ writer.description = 'DocBook XML'
 writer.content_type = 'text/xml'
 writer.file_extension = 'xml'
 
+import mwlib.uparser
 
 class Converter(ConverterMacro):
     @classmethod
@@ -333,7 +368,10 @@ class Converter(ConverterMacro):
         from mwlib.dummydb import DummyDB
         from mwlib.uparser import parseString
         db = DummyDB()
-        r = parseString(title=fn, raw=input, wikidb=db)
+        #return mwlib.uparser.simpleparse(content)
+        r = parseString(title="Test", raw=content)
+        r.show()
         mww = MoinWikiWriter()
         mww.write(r) #maybe just write
         return mww.mointree()
+
