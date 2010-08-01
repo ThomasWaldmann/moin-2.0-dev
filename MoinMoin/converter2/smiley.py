@@ -108,7 +108,7 @@ class Converter(object):
         # text smiley into object element.
         if len(new_children) > 0:
             # We remove all the old child or the element
-            element.clear()
+            element.remove_all()
             # And we replace it by the new one
             element.extend(new_children)
 
