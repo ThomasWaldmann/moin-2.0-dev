@@ -259,24 +259,6 @@ textarea {
 
 .moin-editbar a, .moin-editbar a:visited { color: #0044B3; }
 
-#message {
-    clear: both;
-    margin: 0;
-    padding: 5px 10px;
-    border-bottom: 1px solid #c9c9c9;
-    background: #E6EAF0;
-}
-
-#message p {
-    margin: 5px 0;
-    padding: 0;
-    /* font-weight: bold; */
-}
-
-#message div.buttons {
-    font-weight: normal;
-}
-
 .dialog form {
     margin: 0 15px;
 }
