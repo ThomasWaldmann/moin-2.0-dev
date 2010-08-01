@@ -118,10 +118,12 @@
 {{ theme.emit_custom_html(cfg.html_after_header) }}
 
 <div id="moin-page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
-    {# ALL CONTENT TEMPLATES SHOULD HAVE IMPLEMENTS THIS BLOCK #}
     {% block item -%}
+        {# If you want editbar in your template, extend from show.html, not from here. #}
         <div id="moin-content">
-        {% block content %}{% endblock %}
+        {% block content %}
+            {# All content templates should have implement this block. #}
+        {% endblock %}
         </div>
     {%- endblock %}
 </div>
