@@ -199,6 +199,7 @@ class Item(object):
     def _render_data(self):
         from MoinMoin.converter2 import default_registry as reg
         from MoinMoin.util.mime import Type, type_moin_document
+        from MoinMoin.util.tree import html
         request = self.request
         # TODO: Real output format
         html_conv = reg.get(type_moin_document,
@@ -208,8 +209,7 @@ class Item(object):
 
         from array import array
         out = array('u')
-        # TODO: Switch to xml
-        doc.write(out.fromunicode, method='html')
+        doc.write(out.fromunicode, namespaces={html.namespace: ''}, method='xml')
         return out.tounicode()
 
     def do_show(self):
@@ -747,6 +747,8 @@ class ApplicationZip(Application):
     supported_mimetypes = ['application/zip']
 
     def _render_data(self):
+        # TODO: this could be a converter -> dom, then transcluding this kind
+        # of items and also rendering them with the code in base class could work
         import zipfile
         rows = []
         try:
@@ -849,6 +851,8 @@ class ApplicationXTar(TarMixin, Application):
     supported_mimetypes = ['application/x-tar', 'application/x-gtar']
 
     def _render_data(self):
+        # TODO: this could be a converter -> dom, then transcluding this kind
+        # of items and also rendering them with the code in base class could work
         import tarfile
         rows = []
         try:
@@ -1316,6 +1320,8 @@ class TWikiDraw(TarMixin, Image):
                               )
 
     def _render_data(self):
+        # TODO: this could be a converter -> dom, then transcluding this kind
+        # of items and also rendering them with the code in base class could work
         request = self.request
         item_name = self.name
         drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.draw')
@@ -1388,6 +1394,8 @@ class AnyWikiDraw(TarMixin, Image):
                               )
 
     def _render_data(self):
+        # TODO: this could be a converter -> dom, then transcluding this kind
+        # of items and also rendering them with the code in base class could work
         request = self.request
         item_name = self.name
         drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
@@ -1460,6 +1468,8 @@ class SvgDraw(TarMixin, Image):
                               )
 
     def _render_data(self):
+        # TODO: this could be a converter -> dom, then transcluding this kind
+        # of items and also rendering them with the code in base class could work
         request = self.request
         item_name = self.name
         drawing_url = url_for('frontend.get_item', item_name=item_name, from_tar='drawing.svg')
