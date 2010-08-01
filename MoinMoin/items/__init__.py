@@ -192,7 +192,7 @@ class Item(object):
         doc = input_conv(input)
         doc.set(moin_page.page_href, unicode(links))
         doc = include_conv(doc)
-        #doc = smiley_conv(doc) # XXX kills hrefs!
+        doc = smiley_conv(doc) # XXX kills hrefs!
         doc = link_conv(doc)
         return doc
 
