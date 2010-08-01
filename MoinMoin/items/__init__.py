@@ -69,22 +69,34 @@ EDIT_LOG = [EDIT_LOG_ACTION, EDIT_LOG_ADDR, EDIT_LOG_HOSTNAME, EDIT_LOG_USERID, 
 # dummy getText function until we have a real one:
 _ = lambda x: x
 
-class Item(object):
 
+class DummyRev(dict):
+    """ if we have no stored Revision, we use this dummy """
+    def __init__(self, item, mimetype):
+        self[MIMETYPE] = mimetype
+        self.item = item
+        self.timestamp = 0
+        self.revno = None
+    def read(self, size=-1):
+        return ''
+    def seek(self, offset, whence=0):
+        pass
+    def tell(self):
+        return 0
+
+
+class DummyItem(object):
+    """ if we have no stored Item, we use this dummy """
+    def __init__(self, name):
+        self.name = name
+    def list_revisions(self):
+        return [] # same as an empty Item
+
+
+class Item(object):
+    """ Highlevel (not storage) Item """
     @classmethod
     def create(cls, request, name=u'', mimetype=None, rev_no=None, formatter=None, item=None):
-        class DummyRev(dict):
-            def __init__(self, mimetype):
-                self[MIMETYPE] = mimetype
-                self.item = None
-                self.timestamp = 0
-            def read(self, size=-1):
-                return ''
-            def seek(self, offset, whence=0):
-                pass
-            def tell(self):
-                return 0
-
         if rev_no is None:
             rev_no = -1
         if mimetype is None:
@@ -97,7 +109,8 @@ class Item(object):
                 name = item.name
         except NoSuchItemError:
             logging.debug("No such item: %r" % name)
-            rev = DummyRev(mimetype)
+            item = DummyItem(name)
+            rev = DummyRev(item, mimetype)
             logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
         else:
             logging.debug("Got item: %r" % name)
@@ -109,7 +122,7 @@ class Item(object):
                     # XXX add some message about invalid revision
                 except NoSuchRevisionError:
                     logging.debug("Item %r has no revisions." % name)
-                    rev = DummyRev(mimetype)
+                    rev = DummyRev(item, mimetype)
                     logging.debug("Item %r, created dummy revision with mimetype %r" % (name, mimetype))
             logging.debug("Got item %r, revision: %r" % (name, rev_no))
         mimetype = rev.get(MIMETYPE) or mimetype # XXX: Why do we need ... or ... ?
@@ -149,11 +162,6 @@ class Item(object):
     def get_meta(self):
         return self.rev or {}
     meta = property(fget=get_meta)
-
-    transclude_acceptable_attrs = []
-
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        return self.formatter.text('(Item %s (%s): transclusion not implemented)' % (self.name, self.mimetype))
 
     def _render_meta(self):
         # override this in child classes
@@ -211,23 +219,6 @@ class Item(object):
         out = array('u')
         doc.write(out.fromunicode, namespaces={html.namespace: ''}, method='xml')
         return out.tounicode()
-
-    def do_show(self):
-        item = self.rev.item
-        if item is None:
-            # it is the dummy item -> this is a new and empty item
-            rev_nos = []
-        else:
-            rev_nos = item.list_revisions()
-        return render_template('show.html',
-                               item_name=self.name,
-                               rev=self.rev,
-                               mimetype=self.mimetype,
-                               first_rev_no=rev_nos and rev_nos[0],
-                               last_rev_no=rev_nos and rev_nos[-1],
-                               meta_rendered=self._render_meta(),
-                               data_rendered=self._render_data(),
-                              )
 
     def _do_modify_show_templates(self):
         # call this if the item is still empty
@@ -558,14 +549,6 @@ class NonExistent(Item):
                                mimetype_groups=self.mimetype_groups,
                               )
 
-    transclude_acceptable_attrs = []
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        item_name = self.name
-        url = url_for('frontend.show_item', item_name=item_name)
-        return (self.formatter.url(1, url, css='nonexistent', title='click to create item') +
-                self.formatter.text(item_name) + # maybe use some "broken image" icon instead?
-                self.formatter.url(0))
-
 
 class Binary(Item):
     """ An arbitrary binary item, fallback class for every item mimetype. """
@@ -581,18 +564,6 @@ There is no help, you're doomed!
         else:
             return ''
     data = property(fget=get_data)
-
-    transclude_acceptable_attrs = []
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        """ we can't transclude (render) this, thus we just link to the item """
-        if tag_attrs is None:
-            tag_attrs = {}
-        if query_args is None:
-            query_args = {}
-        url = url_for('frontend.show_item', item_name=item_name, rev=self.rev.revno)
-        return (self.formatter.url(1, url, **tag_attrs) +
-                self.formatter.text(desc) +
-                self.formatter.url(0))
 
     def _render_meta(self):
         return "<pre>%s</pre>" % self.meta_dict_to_text(self.meta, use_filter=False)
@@ -610,7 +581,7 @@ There is no help, you're doomed!
 
     def do_modify(self, template_name):
         # XXX think about and add item template support
-        #if self.rev.item is None and template_name is None:
+        #if template_name is None and isinstance(self.rev, DummyRev):
         #    return self._do_modify_show_templates()
         return render_template('modify_binary.html',
                                item_name=self.name,
@@ -702,42 +673,6 @@ class RenderableBinary(Binary):
     """ This is a base class for some binary stuff that renders with a object tag. """
     supported_mimetypes = []
 
-    width = "100%"
-    height = "100%"
-    transclude_params = []
-    transclude_acceptable_attrs = ['class', 'title', 'width', 'height', # no style because of JS
-                                   'type', 'standby', ] # we maybe need a hack for <PARAM> here
-    def transclude(self, desc, tag_attrs=None, query_args=None, params=None):
-        if tag_attrs is None:
-            tag_attrs = {}
-        if 'type' not in tag_attrs:
-            tag_attrs['type'] = self.mimetype
-        if self.width and 'width' not in tag_attrs:
-            tag_attrs['width'] = self.width
-        if self.height and 'height' not in tag_attrs:
-            tag_attrs['height'] = self.height
-        if query_args is None:
-            query_args = {}
-        if 'do' not in query_args:
-            query_args['do'] = 'get'
-        if params is None:
-            params = self.transclude_params
-        item_name = self.name
-        url = url_for('frontend.get_item', item_name=item_name, rev=self.rev.revno)
-        return (self.formatter.transclusion(1, data=url, **tag_attrs) +
-                ''.join([self.formatter.transclusion_param(**p) for p in params]) +
-                self.formatter.text(desc) +
-                self.formatter.transclusion(0))
-
-
-class PlayableBinary(RenderableBinary):
-    """ This is a base class for some binary stuff that plays with a object tag. """
-    transclude_params = [
-        dict(name='stop', value='1', valuetype='data'),
-        dict(name='play', value='0', valuetype='data'),
-        dict(name='autoplay', value='0', valuetype='data'),
-    ]
-
 
 class Application(Binary):
     supported_mimetypes = []
@@ -773,9 +708,6 @@ class ApplicationZip(Application):
         for row in rows:
             t.add_row(**row)
         return t.render()
-
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        return self._render_data()
 
 
 class TarMixin(object):
@@ -875,52 +807,17 @@ class ApplicationXTar(TarMixin, Application):
             t.add_row(**row)
         return t.render()
 
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        return self._render_data()
-
-
-class RenderableApplication(RenderableBinary):
-    supported_mimetypes = []
-
-
-class PlayableApplication(PlayableBinary):
-    supported_mimetypes = []
-
 
 class PDF(Application):
     supported_mimetypes = ['application/pdf', ]
-
-
-class Flash(PlayableApplication):
-    supported_mimetypes = ['application/x-shockwave-flash', ]
 
 
 class Video(Binary):
     supported_mimetypes = ['video/', ]
 
 
-class PlayableVideo(PlayableBinary):
-    supported_mimetypes = ['video/mpg', 'video/fli', 'video/mp4', 'video/quicktime',
-                           'video/ogg', 'video/x-flv', 'video/x-ms-asf', 'video/x-ms-wm',
-                           'video/x-ms-wmv', 'video/x-msvideo',
-                          ]
-    width = "640px"
-    height = "400px"
-
-
 class Audio(Binary):
     supported_mimetypes = ['audio/', ]
-
-
-class PlayableAudio(PlayableBinary):
-    supported_mimetypes = ['audio/midi', 'audio/x-aiff', 'audio/x-ms-wma',
-                           'audio/x-pn-realaudio',
-                           'audio/x-wav',
-                           'audio/mpeg',
-                           'audio/ogg',
-                          ]
-    width = "200px"
-    height = "100px"
 
 
 class Image(Binary):
@@ -942,23 +839,6 @@ class RenderableBitmapImage(RenderableImage):
     """ PNG/JPEG/GIF images use <img> tag (better browser support than <object>) """
     supported_mimetypes = [] # if mimetype is also transformable, please list
                              # in TransformableImage ONLY!
-
-    transclude_acceptable_attrs = ['class', 'title', 'longdesc', 'width', 'height', 'align', ] # no style because of JS
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        if tag_attrs is None:
-            tag_attrs = {}
-        if query_args is None:
-            query_args = {}
-        if 'class' not in tag_attrs:
-            tag_attrs['class'] = 'image'
-        if desc:
-            for attr in ['alt', 'title', ]:
-                if attr not in tag_attrs:
-                    tag_attrs[attr] = desc
-        if 'do' not in query_args:
-            query_args['do'] = 'get'
-        url = url_for('frontend.get_item', item_name=self.name) # XXX add revno
-        return self.formatter.image(src=url, **tag_attrs)
 
 
 class TransformableBitmapImage(RenderableBitmapImage):
@@ -1095,7 +975,8 @@ class TransformableBitmapImage(RenderableBitmapImage):
             diffimage.save(outfile, output_type)
             outfile.close()
             cache.put(None, content_type=content_type)
-        return self.transclude(desc='diff', query_args=dict(from_cache=cache.key))
+        url = url_for('frontend.get_item', item_name=self.name, from_cache=cache.key)
+        return self.formatter.image(src=url)
 
 
 class Text(Binary):
@@ -1123,9 +1004,6 @@ class Text(Binary):
     def feed_input_conv(self):
         return self.data_storage_to_internal(self.data).split(u'\n')
 
-    def transclude(self, desc, tag_attrs=None, query_args=None):
-        return self._render_data()
-
     def _render_data_diff(self, oldrev, newrev):
         from MoinMoin.util import diff_html
         return diff_html.diff(self.request,
@@ -1133,7 +1011,7 @@ class Text(Binary):
                               self.data_storage_to_internal(newrev.read()))
 
     def do_modify(self, template_name):
-        if self.rev.item is None and template_name is None:
+        if template_name is None and isinstance(self.rev, DummyRev):
             return self._do_modify_show_templates()
         if template_name:
             item = Item.create(self.request, template_name)
@@ -1191,12 +1069,36 @@ class CreoleWiki(MarkupItem):
     """ Creole wiki markup """
     supported_mimetypes = ['text/x.moin.creole']
 
+class HTML(Text):
+    """ HTML markup """
+    supported_mimetypes = ['text/html']
+
+    def do_modify(self, template_name):
+        if template_name is None and isinstance(self.rev, DummyRev):
+            return self._do_modify_show_templates()
+        if template_name:
+            item = Item.create(self.request, template_name)
+            data_text = self.data_storage_to_internal(item.data)
+        else:
+            data_text = self.data_storage_to_internal(self.data)
+        meta_text = self.meta_dict_to_text(self.meta)
+        return render_template('modify_text_html.html',
+                               item_name=self.name,
+                               rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
+                               revno=0,
+                               data_text=data_text,
+                               meta_text=meta_text,
+                               lang='en', direction='ltr',
+                               help=self.modify_help,
+                              )
+
+class SafeHTML(HTML):
+    """ Safe HTML markup - we'll filter dangerous stuff """
+    supported_mimetypes = ['text/x-safe-html']
 
 class DocBook(Text):
     """ DocBook Document """
     supported_mimetypes = ['application/docbook+xml']
-
-
 
     def _convert(self, doc):
         from emeraldtree import ElementTree as ET
@@ -1244,35 +1146,6 @@ class DocBook(Text):
                          cache_timeout=10, # wiki data can change rapidly
                          add_etags=False, etag=None,
                          conditional=True)
-class HTML(Text):
-    """ HTML markup """
-    supported_mimetypes = ['text/html']
-
-    def do_modify(self, template_name):
-        if self.rev.item is None and template_name is None:
-            return self._do_modify_show_templates()
-        if template_name:
-            item = Item.create(self.request, template_name)
-            data_text = self.data_storage_to_internal(item.data)
-        else:
-            data_text = self.data_storage_to_internal(self.data)
-        meta_text = self.meta_dict_to_text(self.meta)
-        return render_template('modify_text_html.html',
-                               item_name=self.name,
-                               rows_data=ROWS_DATA, rows_meta=ROWS_META, cols=COLS,
-                               revno=0,
-                               data_text=data_text,
-                               meta_text=meta_text,
-                               lang='en', direction='ltr',
-                               help=self.modify_help,
-                              )
-
-
-
-class SafeHTML(HTML):
-    """ Safe HTML markup - we'll filter dangerous stuff """
-    supported_mimetypes = ['text/x-safe-html']
-
 
 class TWikiDraw(TarMixin, Image):
     """
