@@ -129,12 +129,14 @@
 {{ theme.emit_custom_html(cfg.html_before_footer) }}
 
 <div id="moin-footer">
-    {% block extra_footer %}<hr>{% endblock %}
+{% block footer %}
+    {% block footer_hr %}<hr/>{% endblock %}
     <ul id="moin-credits">
         {% for credit in cfg.page_credits -%}
             <li> {{ credit }} </li>
         {% endfor %}
     </ul>
+{% endblock %}
 </div>
 
 {{ theme.emit_custom_html(cfg.html_after_footer) }}

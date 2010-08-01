@@ -43,6 +43,9 @@
     {% endif %}
 {% endblock %}
 
-{% block extra_footer %}
+{% block footer_hr %}{% endblock %}
+
+{% block footer %}
     {{ editbar }}
+    {{ super() }}
 {% endblock %}
