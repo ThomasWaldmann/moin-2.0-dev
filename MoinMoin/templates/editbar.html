@@ -1,4 +1,4 @@
-<ul class="editbar">
+<ul class="moin-editbar">
     {% if 'Modify' in cfg.edit_bar and 'modify' not in cfg.actions_excluded -%}
         <li>
         {% if theme.item_writable %}
@@ -67,7 +67,7 @@
     {%- endif %}
     {% if 'ActionsMenu' in cfg.edit_bar %}
         <li>
-            <form class="actionsmenu" method="GET" action="{{ url_for('frontend.dispatch')|e }}">
+            <form class="moin-actionsmenu" method="GET" action="{{ url_for('frontend.dispatch')|e }}">
                 <div>
                     <label>{{ _('More Actions:') }}</label>
                     <select name="endpoint"

@@ -24,7 +24,7 @@ a:hover {
     text-decoration: underline;
 }
 
-.info a {
+.moin-info a {
     color: gray;
 }
 
@@ -47,7 +47,7 @@ a.interwiki img, a.badinterwiki img {
 
 /* user interface styles */
 
-#header, #sidebar, #footer, #timings, #credits, #interwiki, #pagelocation {
+#moin-header, #moin-sidebar, #moin-footer, #moin-timings, #moin-credits, #moin-interwiki, #moin-pagelocation {
     display: none;
 }
 

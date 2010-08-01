@@ -27,8 +27,8 @@ h1:before {content:url(../../common/moinmoin.png); padding-right:10px; display: 
 
 /* Slide content */
 
-#content {margin-left: 20pt; margin-right: 0;}
-#content[dir="rtl"] {margin-left: 0; margin-right: 20pt;}
+#moin-content {margin-left: 20pt; margin-right: 0;}
+#moin-content[dir="rtl"] {margin-left: 0; margin-right: 20pt;}
 
 h2 { font-size: 28pt; color: #000;}
 h3 { font-size: 24pt; color: #000;}

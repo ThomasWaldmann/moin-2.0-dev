@@ -33,8 +33,8 @@
 {% block item %}
     {{ super() }}
     {% if rev %}
-    <div id="pagebottom">
-        <p id="pageinfo" class="info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
+    <div id="moin-pagebottom">
+        <p id="moin-pageinfo" class="moin-info" lang="{{ theme.ui_lang }}" dir="{{ theme.ui_dir }}">
             {% if cfg.show_interwiki %}{{ cfg.interwikiname }}:{% endif %}
             {{ item_name }} ({{ _("edited %s by %s") % (user.getFormattedDateTime(rev.timestamp), rev|user_format) }})
         </p>

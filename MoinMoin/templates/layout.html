@@ -4,7 +4,7 @@
 
 {{ theme.emit_custom_html(cfg.html_before_header) }}
 
-<div id="header">
+<div id="moin-header">
 
 <form id="searchform" method="get" action="{{ url_for('frontend.search')|e }}">
     <div>
@@ -29,11 +29,11 @@
     //-->
 </script>
 
-<div id="logo">
+<div id="moin-logo">
     <a href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page))|e }}">{{ cfg.logo_string }}</a>
 </div>
 
-<div id="username">
+<div id="moin-username">
     {% if user.valid -%}
         {% if user.name -%}
             {% set wiki_href, aliasname, title, exists = theme.userhome() %}
@@ -42,32 +42,32 @@
             </a>
             <span class="sep"> | </span>
             {% if 'userprefs' not in cfg.actions_excluded -%}
-                <a href="{{ url_for('frontend.userprefs')|e }}" class="userprefs" rel="nofollow">{{ _('Settings') }}</a>
+                <a href="{{ url_for('frontend.userprefs')|e }}" class="moin-userprefs" rel="nofollow">{{ _('Settings') }}</a>
                 <span class="sep"> | </span>
             {%- endif %}
         {%- endif %}
         {% if user.auth_method in cfg.auth_can_logout %}
-            <a href="{{ url_for('frontend.logout')|e }}" class="logout" rel="nofollow">
+            <a href="{{ url_for('frontend.logout')|e }}" class="moin-logout" rel="nofollow">
                 {{ _('Logout') }}
             </a>
         {% endif %}
     {% else %}
-        <a href="{{ theme.login_url()|e }}" class="login" rel="nofollow">{{ _('Login') }}</a>
+        <a href="{{ theme.login_url()|e }}" class="moin-login" rel="nofollow">{{ _('Login') }}</a>
     {%- endif %}
 </div>
 
 
-<h1 id="locationline">
+<h1 id="moin-locationline">
     {% if cfg.show_interwiki -%}
-    <span id="interwiki">
+    <span id="moin-interwiki">
         <a href="{{ url_for('frontend.show_item', item_name=translated_item_name(cfg.page_front_page))|e }}" rel="nofollow">
             {% if cfg.interwikiname %}{{ cfg.interwikiname }}{% else %}Self{% endif %}
         </a>
         <span class="sep">: </span>
     </span>
     {%- endif %}
-    <span id="pagelocation">
-        <span class="pagepath">
+    <span id="moin-pagelocation">
+        <span class="moin-pagepath">
             {% for segment_name, segment_path, exists in theme.location_breadcrumbs(item_name) -%}
                 <a href="{{ url_for('frontend.show_item', item_name=segment_path)|e }}" {% if not exists %}class="nonexistent"{% endif %}>
                     {{ segment_name|shorten_item_name }}
@@ -80,7 +80,7 @@
 
 {% set trail_items = theme.path_breadcrumbs() %}
 {% if trail_items %}
-    <div id="pagetrail">
+    <div id="moin-pagetrail">
     {% for wiki_name, item_name, item_href, exists, err in trail_items %}
         <a href="{{ url_for('frontend.show_item', item_name=item_href)|e }}"
         {%- if wiki_name -%}
@@ -96,7 +96,7 @@
     </div>
 {% endif %}
 
-<ul id="navibar">
+<ul id="moin-navibar">
     {% for cls, url, text, title in theme.navibar(item_name) %}
         <li class="{{ cls }}">
             <a href="{{ url|e }}" {% if title %}title="{{ title }}"{% endif %}>{{ text }}</a>
@@ -104,12 +104,12 @@
     {% endfor %}
 </ul>
 
-<div id="pageline">
+<div id="moin-pageline">
     <hr style="display:none;" />
 </div>
 
 {% for category, msg in get_flashed_messages(with_categories=true) %}
-    <p class="flash-{{ category }}">{{ msg }}</p>
+    <p class="moin-flash-{{ category }}">{{ msg }}</p>
 {% endfor %}
 
 {% block extra_header %}{% endblock %}
@@ -118,10 +118,10 @@
 
 {{ theme.emit_custom_html(cfg.html_after_header) }}
 
-<div id="page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
+<div id="moin-page" lang="{{ theme.content_lang }}" dir="{{ theme.content_dir }}">
     {# ALL CONTENT TEMPLATES SHOULD HAVE IMPLEMENTS THIS BLOCK #}
     {% block item -%}
-        <div id="content">
+        <div id="moin-content">
         {% block content %}{% endblock %}
         </div>
     {%- endblock %}
@@ -129,9 +129,9 @@
 
 {{ theme.emit_custom_html(cfg.html_before_footer) }}
 
-<div id="footer">
+<div id="moin-footer">
     {% block extra_footer %}<hr>{% endblock %}
-    <ul id="credits">
+    <ul id="moin-credits">
         {% for credit in cfg.page_credits -%}
             <li> {{ credit }} </li>
         {% endfor %}
@@ -145,7 +145,7 @@
 {% set timing_information = theme.request.clock.dump() %}
 
 {% if cfg.show_timings %}
-    <ul id="timings">
+    <ul id="moin-timings">
     {% for timing in timing_information %}
         <li> {{ timing }}</li>
     {% endfor %}
