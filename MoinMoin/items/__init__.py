@@ -1095,7 +1095,8 @@ class TransformableBitmapImage(RenderableBitmapImage):
             diffimage.save(outfile, output_type)
             outfile.close()
             cache.put(None, content_type=content_type)
-        return self.transclude(desc='diff', query_args=dict(from_cache=cache.key))
+        url = url_for('frontend.get_item', item_name=self.name, from_cache=cache.key)
+        return self.formatter.image(src=url)
 
 
 class Text(Binary):
