@@ -77,18 +77,16 @@ class Converter(object):
         return content
 
     def do_children(self, element):
-        # We will replace the child of the element if needed
-        # We will use new_child to store it temporarly
+        # We store the new children of the element in this list
         new_children = []
-        # If we do not want smiley conversion in specific tag
-        # We just skip it.
+
+        # If we do not want smiley conversion for the children of
+        # a specific element, we just stop the recursion.
         if element.tag.name in self.tags_to_ignore:
             return
         for child in element:
             if isinstance(child, ET.Element):
-                # As long child are instance of ET.Element
-                # We do not have text content, so we can go deeper
-                # in the recursion
+                # We have an ET.Element, so we continue the recursion
                 children = self.do_children(child)
                 if children is None:
                     children = ()
@@ -96,16 +94,11 @@ class Converter(object):
                     children = (children, )
                 new_children.extend(children)
             else:
-                # If the child is not an instance of ET.Element, we have a text
-                # So we can replace in this content the text smiley 
-                # by the equivalent object tag.
-                # And then we put this in a new list of child with the old child too
+                # Otherwise, we have a text node, so we convert the smileys
                 new_children.extend(self.do_smiley(child))
 
-        # The following statement are executed only if we converted
-        # text smiley into object element.
-        if len(new_children) > 0:
-            # We remove all the old child or the element
+        if new_children:
+            # We remove all the old children of the element
             element.remove_all()
             # And we replace it by the new one
             element.extend(new_children)
