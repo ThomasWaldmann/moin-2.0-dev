@@ -62,7 +62,8 @@ def atom(item_name):
                  summary=rev.get(EDIT_LOG_COMMENT, ''), summary_type='text',
                  content=content, content_type=content_type,
                  author=user.get_printable_editor(request,
-                             rev.get(EDIT_LOG_USERID), rev.get(EDIT_LOG_ADDR), rev.get(EDIT_LOG_HOSTNAME)),
+                             rev.get(EDIT_LOG_USERID), rev.get(EDIT_LOG_ADDR), rev.get(EDIT_LOG_HOSTNAME),
+                             mode='text'),
                  url=url_for('frontend.show_item', item_name=name, rev=this_revno, _external=True),
                  updated=datetime.utcfromtimestamp(rev.timestamp),
                 )

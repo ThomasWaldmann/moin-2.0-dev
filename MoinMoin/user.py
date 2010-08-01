@@ -199,8 +199,10 @@ def get_editor(request, userid, addr, hostname):
                 result = ('interwiki', interwiki)
     return result
 
-def get_printable_editor(request, userid, addr, hostname):
-    """ Return a HTML-safe string representing the user that did the edit.
+def get_printable_editor(request, userid, addr, hostname, mode='html'):
+    """
+    mode=='html': Return a HTML-safe string representing the user that did the edit.
+    mode=='text': Return a simple text string.
     """
     _ = request.getText
     if request.cfg.show_hosts and hostname and addr:
@@ -215,34 +217,46 @@ def get_printable_editor(request, userid, addr, hostname):
         if not aliasname:
             aliasname = name
         title = aliasname + title
-        text = (request.formatter.interwikilink(1, title=title, generated=True, *info) +
-                request.formatter.text(name) +
-                request.formatter.interwikilink(0, title=title, *info))
+        if mode == 'html':
+            text = (request.formatter.interwikilink(1, title=title, generated=True, *info) +
+                    request.formatter.text(name) +
+                    request.formatter.interwikilink(0, title=title, *info))
+        elif mode == 'text':
+            text = "%s (%s)" % (name, title)
     elif kind == 'email':
         name = userdata.name
         aliasname = userdata.aliasname
         if not aliasname:
             aliasname = name
         title = aliasname + title
-        url = 'mailto:%s' % info
-        text = (request.formatter.url(1, url, css='mailto', title=title) +
-                request.formatter.text(name) +
-                request.formatter.url(0))
+        if mode == 'html':
+            url = 'mailto:%s' % info
+            text = (request.formatter.url(1, url, css='mailto', title=title) +
+                    request.formatter.text(name) +
+                    request.formatter.url(0))
+        elif mode == 'text':
+            text = "%s <%s> (%s)" % (name, info, title)
     elif kind == 'ip':
         try:
             idx = info.index('.')
         except ValueError:
             idx = len(info)
         title = '???' + title
-        text = request.formatter.text(info[:idx])
+        if mode == 'html':
+            text = request.formatter.text(info[:idx])
+        elif mode == 'text':
+            text = title
     elif kind == 'anon':
         title = ''
         text = _('anonymous')
     else:
         raise Exception("unknown EditorData type")
-    return (request.formatter.span(1, title=title) +
-            text +
-            request.formatter.span(0))
+    if mode == 'html':
+        return (request.formatter.span(1, title=title) +
+                text +
+                request.formatter.span(0))
+    elif mode == 'text':
+        return text
 
 
 def encodePassword(pwd, salt=None):
