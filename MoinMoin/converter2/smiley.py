@@ -109,18 +109,18 @@ class Converter(object):
         by object elements, and the former text for the
         other element of the list.
         """
-        # We split our string into different element arround
+        # We split our string into different items arround
         # the matched smiley.
         splitted_string = re.split(self.smiley_re, element)
-        # And then for each element item of the list, if the
-        # item is a smiley, we replace this item by an object element
+        # And then for each item of the list,
+        # if it is a smiley, we replace it by an object element
         return [self.replace_smiley(item) for item in splitted_string]
 
     def replace_smiley(self, text):
         """
-        Replace a given string by the an object
+        Replace a given string by an <object>
         element if the string is exactly a smiley.
-        Otherwise return the string
+        Otherwise return the string without any change.
         """
         # Remove the space of the smiley_text if any
         smiley_text = text.strip()
