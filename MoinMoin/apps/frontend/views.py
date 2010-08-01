@@ -58,7 +58,23 @@ Allow: /
 def show_item(item_name, rev):
     g.context.user.addTrail(item_name)
     item = Item.create(g.context, item_name, rev_no=rev)
-    return item.do_show()
+    rev_nos = item.rev.item.list_revisions()
+    if rev_nos:
+        first_rev = rev_nos[0]
+        last_rev = rev_nos[-1]
+    else:
+        # Note: rev.revno of DummyRev is None
+        first_rev = None
+        last_rev = None
+    return render_template('show.html',
+                           item_name=item.name,
+                           rev=item.rev,
+                           mimetype=item.mimetype,
+                           first_rev_no=first_rev,
+                           last_rev_no=last_rev,
+                           meta_rendered=item._render_meta(),
+                           data_rendered=item._render_data(),
+                          )
 
 @frontend.route('/+show/<itemname:item_name>')
 def redirect_show_item(item_name):
@@ -267,8 +283,7 @@ def quicklink_item(item_name):
             msg = _('Your quicklink to this page could not be removed.'), "error"
     if msg:
         flash(*msg)
-    item = Item.create(request, item_name)
-    return item.do_show()
+    return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+subscribe/<itemname:item_name>')
@@ -298,8 +313,7 @@ def subscribe_item(item_name):
             msg = _('You could not get subscribed to this item.'), "error"
     if msg:
         flash(*msg)
-    item = Item.create(request, item_name)
-    return item.do_show()
+    return redirect(url_for('show_item', item_name=item_name))
 
 
 @frontend.route('/+register', methods=['GET', 'POST'])
