@@ -13,6 +13,7 @@ try:
     from lxml import etree
 except:
     py.test.skip("lxml module required to run test for docbook_out converter.")
+import flask
 
 from MoinMoin import log
 logging = log.getLogger(__name__)
@@ -45,7 +46,9 @@ class Base(object):
         return self.output_re.sub(u'', file.getvalue())
 
     def do(self, input, xpath_query, args={}):
-        out = self.conv(self.handle_input(input), **args)
+        with self.app.test_client() as c:
+            rv = c.get('/')
+            out = self.conv(self.handle_input(input), **args)
         after_conversion = self.handle_output(out)
         logging.debug("After the SMILEY conversion : %s" % after_conversion)
         tree = etree.parse(StringIO.StringIO(after_conversion))
@@ -54,15 +57,16 @@ class Base(object):
 class TestConverter(Base):
     def setup_class(self):
         self.conv = Converter()
+        self.app = flask.Flask('MoinMoin')
 
     def test_base(self):
         data = [
             ('<page><body><p>bla bla :-) bla bla</p></body></page>',
-              '/page/body/p/object[@xlink:href="%s/modernized/img/smileys/smile.png"]' % url_prefix_static),
+              '/page/body/p/object[@xlink:href="/static/modernized/img/smileys/smile.png"]'),
             ('<page><body><code>bla bla :-) bla bla</code></body></page>',
              '/page/body[code="bla bla :-) bla bla"]'),
             ('<page><body><p>:-) :-(</p></body></page>',
-             '/page/body/p[object[1][@xlink:href="%s/modernized/img/smileys/smile.png"]][object[2][@xlink:href="%s/modernized/img/smileys/sad.png"]]' % (url_prefix_static, url_prefix_static)),
+             '/page/body/p[object[1][@xlink:href="/static/modernized/img/smileys/smile.png"]][object[2][@xlink:href="/static/modernized/img/smileys/sad.png"]]'),
             # Test to check we do not have bug with newline in the string
             ('<page><body><p>1\n2\n3\n4</p></body></page>',
              '/page/body[p="1\n2\n3\n4"]'),
