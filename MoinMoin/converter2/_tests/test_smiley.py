@@ -73,6 +73,9 @@ class TestConverter(Base):
             # Test to check the attributes are correctly converted
             ('<page><body><p><a xlink:href="uri">link</a></p></body></page>',
              '/page/body/p/a[@xlink:href="uri"][text()="link"]'),
+            # Test with space between the elements
+            ('<page><body><table-of-content />     <p>text</p></body></page>',
+             '/page/body[p="text"]'),
            ]
         for i in data:
             yield (self.do, ) + i

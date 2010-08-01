@@ -102,6 +102,7 @@ class Converter(object):
             element.remove_all()
             # And we replace it by the new one
             element.extend(new_children)
+        return element
 
     def do_smiley(self, element):
         """
