@@ -62,12 +62,12 @@ class Converter(object):
         try:
             tree = ET.XML(docbook_str.encode('utf-8'))
         except ET.ParseError as detail:
-            return error(str(detail))
+            return self.error(str(detail))
 
         try:
             result = self.visit(tree, 0)
         except NameSpaceError as detail:
-            return error(str(detail))
+            return self.error(str(detail))
         return result
 
     def error(self, message):
