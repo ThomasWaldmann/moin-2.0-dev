@@ -442,21 +442,36 @@ class Converter(ConverterMacro):
     inline_object = r"""
         (?P<object>
             {{
-            (?P<object_target>.+?) \s*
+            \s*
+            (
+                (?P<object_url>
+                    [a-zA-Z0-9+.-]+
+                    ://
+                    [^|]+?
+                )
+                |
+                (?P<object_page> [^|]+? )
+            )
+            \s*
             ([|] \s* (?P<object_text>.+?) \s*)?
             }}
         )
     """
 
-    def inline_object_repl(self, stack, object, object_target, object_text=None):
+    def inline_object_repl(self, stack, object, object_page=None, object_url=None, object_text=None):
         """Handles objects included in the page."""
 
-        attrib = {xlink.href: object_target}
-        if object_text is not None:
-            attrib[moin_page.alt] = object_text
+        if object_page is not None:
+            target = unicode(Iri(scheme='wiki.local', path=object_page, query='do=get'))
+            text = object_page
+        else:
+            target = object_url
+            text = object_url
 
-        element = moin_page.object(attrib)
-        stack.top_append(element)
+        element = moin_page.object({xlink.href: target})
+        stack.push(element)
+        self.parse_inline(object_text or text, stack, self.link_desc_re)
+        stack.pop()
 
     inline_url = r"""
         (?P<url>
