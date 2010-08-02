@@ -56,8 +56,13 @@ class Converter(object):
         docbook_str = u''
         docbook_str = docbook_str.join(content)
         # TODO : Check why the XML parser from Element Tree need ByteString
-        tree = ET.XML(docbook_str.encode('utf-8'))
-
+        try:
+            tree = ET.XML(docbook_str.encode('utf-8'))
+        except ET.ParseError as detail:
+            error = self.new(moin_page('error'), attrib={}, children=[str(detail)])
+            part = self.new(moin_page('part'), attrib={}, children=[error])
+            body = self.new(moin_page('body'), attrib={}, children=[part])
+            return self.new(moin_page('page'), attrib={}, children=[body])
         return self.visit(tree, 0)
 
     def do_children(self, element, depth):
