@@ -20,7 +20,7 @@ EXCLUDE = [
     '/contrib/DesktopEdition/setup_py2exe.py', # has crlf
     '/contrib/TWikiDrawPlugin', # 3rd party java stuff
     '/MoinMoin/support', # 3rd party libs or non-broken stdlib stuff
-    '/MoinMoin/web/static/htdocs', # this is our dist static stuff
+    '/MoinMoin/static', # this is our dist static stuff
     '/MoinMoin/_tests/wiki', # this is our test wiki
 ]
 
