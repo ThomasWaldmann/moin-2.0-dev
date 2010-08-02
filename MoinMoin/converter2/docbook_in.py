@@ -42,7 +42,7 @@ class Converter(object):
     # DocBook elements which are completely ignored by our converter
     # We even do not process children of these elements
     # "Info" elements are the biggest part of this set
-    ignored_tags = set([#Info element
+    ignored_tags = set([#Info elements
                        'abstract', 'address', 'artpagenums', 'annotation',
                        'artpagenums', 'author', 'authorgroup',
                        'authorinitials', 'bibliocoverage', 'biblioid',
@@ -57,6 +57,12 @@ class Converter(object):
                        'pubdate', 'publisher', 'publishername',
                        'releaseinfo', 'revhistory', 'seriesvolnums',
                        'subjectset', 'volumenum',
+                       # Other bibliography elements
+                       'bibliodiv', 'biblioentry', 'bibliography',
+                       'bibliolist', 'bibliomixed', 'biblioref',
+                       'bibliorelation',
+                       # Callout elements
+                       'callout', 'calloutlist',
                        # Other elements
                        'info'])
 
