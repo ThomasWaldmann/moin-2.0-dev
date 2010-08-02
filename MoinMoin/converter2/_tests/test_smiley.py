@@ -76,6 +76,12 @@ class TestConverter(Base):
             # Test with space between the elements
             ('<page><body><table-of-content />     <p>text</p></body></page>',
              '/page/body[p="text"]'),
+            # Test the ignored tags
+            ('<page><body><p><code>:-)</code></p></body></page>',
+             '/page/body/p[code=":-)"]'),
+            # Test the ignored tags and subelement
+            ('<page><body><blockcode>:-)<strong>:-(</strong></blockcode></body></page>',
+              '/page/body/blockcode[text()=":-)"][strong=":-("]'),
            ]
         for i in data:
             yield (self.do, ) + i
