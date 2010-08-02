@@ -5,6 +5,7 @@
 <fieldset>
 <input type="hidden" name="action" value="modify" />
 <input type="hidden" name="rev" value="{{ revno }}" />
+{% block extra_form %}{% endblock %}
 {% block data_editor %}{% endblock %}
 <br />
 <label for="data_file">Upload file:</label><input type="file" id="data_file" name="data_file" />

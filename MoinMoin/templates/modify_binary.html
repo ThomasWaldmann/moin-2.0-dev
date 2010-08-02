@@ -1,20 +1,8 @@
-{% extends "layout.html" %}
-{% block content %}
-<h1>Modifying {{ item_name }}</h1>
-<form action="" method="POST" enctype="multipart/form-data">
-<fieldset>
-<input type="hidden" name="action" value="modify" />
-<input type="hidden" name="rev" value="{{ revno }}" />
+{% extends "modify_applet.html" %}
+{% block extra_form %}
 <input class="button" type="submit" name="button_save" value="Save" />
 <input class="button" type="submit" name="button_cancel" value="Cancel" />
 <br />
 <label for="comment">Comment:</label><input type="text" id="comment" name="comment" size="80" maxlength="200" value="" />
 <br />
-{% block data_editor %}{% endblock %}
-<br />
-<label for="data_file">Upload file:</label><input type="file" id="data_file" name="data_file" />
-<pre>{{ help }}</pre>
-<textarea name="meta_text" lang="en" dir="ltr" rows="{{ rows_meta }}" cols="{{ cols }}">{{ meta_text|e }}</textarea>
-</fieldset>
-</form>
 {% endblock %}
