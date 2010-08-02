@@ -220,6 +220,9 @@ class TestConverter(Base):
             ('<article><para>text<literal>literal</literal></para></article>',
             # <page><body><p>text<code>literal</code></p></body></page>
              '/page/body/p[text()="text"][code="literal"]'),
+            ('<article><blockquote><attribution>author</attribution>text</blockquote></article>',
+            # <page><body><blockquote source="author">text</blockquote></body></page>
+            '/page/body/blockquote[@source="author"][text()="text"]'),
         ]
         for i in data:
             yield (self.do, ) + i
