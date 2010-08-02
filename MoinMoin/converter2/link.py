@@ -10,8 +10,10 @@ special wiki links.
 
 from __future__ import absolute_import
 
+from werkzeug import url_decode, url_encode
+
 from MoinMoin import wikiutil
-from MoinMoin.util.iri import Iri
+from MoinMoin.util.iri import Iri, IriPath
 from MoinMoin.util.mime import type_moin_document
 from MoinMoin.util.tree import html, moin_page, xlink
 
@@ -54,48 +56,78 @@ class ConverterExternOutput(ConverterBase):
         if links == 'extern':
             return cls(request)
 
+    def _get_do(self, query):
+        """
+        get 'do' value from query string and remove do=value from querystring
+        """
+        query_dict = url_decode(query)
+        if 'do' in query_dict:
+            do = query_dict.pop('do')
+            if query_dict:
+                query = url_encode(query_dict)
+            else:
+                query = None
+        else:
+            do = None
+        return do, query
+
     # TODO: Deduplicate code
     def handle_wiki(self, elem, input):
-        link = Iri(query=input.query, fragment=input.fragment)
+        do, query = self._get_do(input.query)
+        link = Iri(query=query, fragment=input.fragment)
 
         if input.authority:
+            # interwiki link
             wikitag, wikiurl, wikitail, err = wikiutil.resolve_interwiki(self.request, input.authority, input.path[1:])
-
             if not err:
-                output = Iri(wikiutil.join_wiki(wikiurl, wikitail)) + link
-
                 elem.set(html.class_, 'interwiki')
+                if do is not None:
+                    # this will only work for wikis with compatible URL design
+                    # for other wikis, don't use do=... in your interwiki links
+                    wikitail = '/+' + do + wikitail
+                base = Iri(wikiutil.join_wiki(wikiurl, wikitail))
             else:
-                # TODO
-                link.path = input.path[1:]
-                output = self.url_root + link
-
+                # TODO (for now, we just link to Self:item_name in case of
+                # errors, see code below)
+                pass
         else:
-            link.path = input.path[1:]
-            output = self.url_root + link
+            err = False
 
-        elem.set(self._tag_xlink_href, output)
+        if not input.authority or err:
+            # local wiki link
+            if do is not None:
+                link.path = IriPath('+' + do + '/') + input.path[1:]
+            else:
+                link.path = input.path[1:]
+            base = self.url_root
+
+        elem.set(self._tag_xlink_href, base + link)
 
     def handle_wikilocal(self, elem, input, page):
-        link = Iri(query=input.query, fragment=input.fragment)
+        do, query = self._get_do(input.query)
+        link = Iri(query=query, fragment=input.fragment)
 
         if input.path:
             path = input.path
 
             if path[0] == '':
+                # /subitem
                 tmp = page.path[1:]
                 tmp.extend(path[1:])
-                link.path = tmp
+                path = tmp
             elif path[0] == '..':
-                link.path = page.path[1:] + path[1:]
-            else:
-                link.path = path
+                # ../sisteritem
+                path = page.path[1:] + path[1:]
 
-            if not self.request.storage.has_item(unicode(link.path)):
+            if not self.request.storage.has_item(unicode(path)):
                 elem.set(html.class_, 'nonexistent')
         else:
-            link.path = page.path[1:]
+            path = page.path[1:]
 
+        if do is not None:
+            link.path = IriPath('+' + do + '/') + path
+        else:
+            link.path = path
         output = self.url_root + link
 
         elem.set(self._tag_xlink_href, output)
