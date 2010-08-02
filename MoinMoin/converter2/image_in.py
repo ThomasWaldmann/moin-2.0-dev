@@ -23,7 +23,7 @@ class Converter(object):
     def __call__(self, content):
         item_name = content # we just give the name of the item in the content
         attrib = {
-            xlink.href: Iri(scheme='wiki', authority='', path='/'+item_name), # TODO: we need "modify" url, not "show"
+            xlink.href: Iri(scheme='wiki', authority='', path='/'+item_name, query='do=get'),
         }
         return moin_page.object_(attrib=attrib, children={})
 
