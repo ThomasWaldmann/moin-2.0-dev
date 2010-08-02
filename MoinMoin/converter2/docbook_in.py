@@ -133,7 +133,7 @@ class Converter(object):
             # We process children of the unknown element
             return self.do_children(element, depth)
         else:
-            raise NameSpaceError("Missing namespace")
+            raise NameSpaceError("Unknown namespace")
 
     def visit_docbook(self, element, depth):
         """
