@@ -77,20 +77,32 @@ class Converter(object):
         return content
 
     def do_children(self, element):
+        # We store the new children of the element in this list
+        new_children = []
+
+        # If we do not want smiley conversion for the children of
+        # a specific element, we do not process the conversion.
         if element.tag.name in self.tags_to_ignore:
-            return
-        new_child = []
+            return element
         for child in element:
             if isinstance(child, ET.Element):
-                return self.do_children(child)
+                # We have an ET.Element, so we continue the recursion
+                children = self.do_children(child)
+                if children is None:
+                    children = ()
+                elif not isinstance(children, (list, tuple)):
+                    children = (children, )
+                new_children.extend(children)
             else:
-                # We replace the text smiley by the equivalent object tag
-                # And we put this in a new list of child with the old child too
-                [new_child.append(item) for item in self.do_smiley(child)]
-        # We remove all the old child
-        element.clear()
-        # And we replace it by the new one
-        element.extend(new_child)
+                # Otherwise, we have a text node, so we convert the smileys
+                new_children.extend(self.do_smiley(child))
+
+        if new_children:
+            # We remove all the old children of the element
+            element.remove_all()
+            # And we replace it by the new one
+            element.extend(new_children)
+        return element
 
     def do_smiley(self, element):
         """
@@ -98,19 +110,22 @@ class Converter(object):
         by object elements, and the former text for the
         other element of the list.
         """
-        # We split our string into different element arround
+        # We split our string into different items arround
         # the matched smiley.
         splitted_string = re.split(self.smiley_re, element)
+        # And then for each item of the list,
+        # if it is a smiley, we replace it by an object element
         return [self.replace_smiley(item) for item in splitted_string]
 
     def replace_smiley(self, text):
         """
-        Replace a given string by the an object
+        Replace a given string by an <object>
         element if the string is exactly a smiley.
-        Otherwise return the string
+        Otherwise return the string without any change.
         """
         # Remove the space of the smiley_text if any
         smiley_text = text.strip()
+
         if smiley_text in self.smileys:
             icon, h, w = self.smileys[smiley_text]
             attrib = {}
@@ -118,7 +133,11 @@ class Converter(object):
             # TODO: Retrieve the name of the theme used by the user
             #        to get the correct smiley image
             attrib[key] = Iri(url_for('static', filename="modernized/img/smileys/%s" % icon))
+            # We return an object element instead of the text
             return ET.Element(moin_page('object'), attrib=attrib, children={})
+
+        # if the text was not a smiley, just return the text
+        # without any transformations
         return text
 
 from . import default_registry
