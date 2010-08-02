@@ -1,7 +1,7 @@
 # -*- coding: ascii -*-
 """
     MoinMoin - frontend views
-    
+
     This shows the usual things users see when using the wiki.
 
     @copyright: 2003-2010 MoinMoin:ThomasWaldmann,
