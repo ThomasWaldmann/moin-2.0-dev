@@ -27,6 +27,9 @@ from MoinMoin.util.tree import moin_page, xlink, docbook
 
 from ._wiki_macro import ConverterMacro
 
+class NameSpaceError(Exception):
+    pass
+
 class Converter(object):
     """
     Converter application/docbook+xml -> x.moin.document
@@ -63,7 +66,15 @@ class Converter(object):
             part = self.new(moin_page('part'), attrib={}, children=[error])
             body = self.new(moin_page('body'), attrib={}, children=[part])
             return self.new(moin_page('page'), attrib={}, children=[body])
-        return self.visit(tree, 0)
+
+        try:
+            result = self.visit(tree, 0)
+        except NameSpaceError as detail:
+            error = self.new(moin_page('error'), attrib={}, children=[str(detail)])
+            part = self.new(moin_page('part'), attrib={}, children=[error])
+            body = self.new(moin_page('body'), attrib={}, children=[part])
+            return self.new(moin_page('page'), attrib={}, children=[body])
+        return result
 
     def do_children(self, element, depth):
         """
@@ -118,6 +129,8 @@ class Converter(object):
 
             # We process children of the unknown element
             return self.do_children(element, depth)
+        else:
+            raise NameSpaceError("Missing namespace")
 
     def visit_docbook(self, element, depth):
         """
