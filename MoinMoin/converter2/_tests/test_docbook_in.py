@@ -261,7 +261,7 @@ class TestConverter(Base):
         data = [
             # Error : Xml not correctly formatted
             ('<article><para>Text</para>',
-             '/page/body/error'),
+             '/page/body/part/error'),
         ]
         for i in data:
             yield (self.do, ) + i
